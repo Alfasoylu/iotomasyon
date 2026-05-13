@@ -1,9 +1,8 @@
 # IOTOMASYON TASKS
 
 Project: Internal private CRM + product tracking system
-Domain: iotomasyon.com
-Stack: Next.js + TypeScript + Tailwind + shadcn/ui + Supabase + Vercel
-Repository: GitHub private
+Deployment target: GitHub + Vercel
+Implementation stack: Next.js + TypeScript + Tailwind + Prisma + SQLite + Zustand + Zod + React Hook Form
 
 RULE:
 Complete tasks in exact order.
@@ -16,7 +15,7 @@ After each completed task:
 
 ---
 
-# PHASE 0 — PROJECT FOUNDATION
+# PHASE 0 - PROJECT FOUNDATION
 
 ## TASK 0.1
 Initialize project
@@ -25,7 +24,6 @@ Acceptance criteria:
 - Next.js latest installed
 - TypeScript enabled
 - Tailwind configured
-- shadcn/ui installed
 - ESLint configured
 - app router enabled
 - clean project structure
@@ -34,7 +32,7 @@ Deliverables:
 - working local dev server
 - first Git commit
 
-Status: PENDING
+Status: DONE
 
 ---
 
@@ -50,13 +48,13 @@ Create:
 /hooks
 /services
 /utils
-/supabase
+/prisma
 /docs
 
 Acceptance:
 Clean scalable architecture exists
 
-Status: PENDING
+Status: DONE
 
 ---
 
@@ -67,67 +65,40 @@ Create:
 .env.example
 
 Variables:
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL
+SESSION_SECRET
+ADMIN_EMAIL
+ADMIN_PASSWORD
 
 Acceptance:
 Environment config ready
 
-Status: PENDING
+Status: DONE
 
 ---
 
-# PHASE 1 — DATABASE
+# PHASE 1 - DATABASE
 
 ## TASK 1.1
 Design database schema
 
 Create tables:
 
+users
 products
 customers
-interests
+product_interests
 notes
-stock_movements
-profiles
+follow_up_tasks
 
 Acceptance:
-SQL migration file exists
+Prisma schema and SQL source-of-truth file exist
 
-Status: PENDING
+Status: DONE
 
 ---
 
-## TASK 1.2
-Supabase setup
-
-Tasks:
-- connect project
-- verify database access
-- test insert/select
-
-Acceptance:
-Supabase connected successfully
-
-Status: PENDING
-
----
-
-## TASK 1.3
-Row level security
-
-Rules:
-authenticated users only
-
-Acceptance:
-public access blocked
-
-Status: PENDING
-
----
-
-# PHASE 2 — AUTH
+# PHASE 2 - AUTH
 
 ## TASK 2.1
 Login system
@@ -144,7 +115,7 @@ public signup
 Acceptance:
 internal users can log in
 
-Status: PENDING
+Status: DONE
 
 ---
 
@@ -155,17 +126,18 @@ Protect:
 dashboard
 products
 customers
-interests
+relationships
+tasks
 settings
 
 Acceptance:
 unauthenticated users redirected
 
-Status: PENDING
+Status: DONE
 
 ---
 
-# PHASE 3 — UI FRAMEWORK
+# PHASE 3 - UI FRAMEWORK
 
 ## TASK 3.1
 Main dashboard shell
@@ -180,19 +152,19 @@ Menu:
 Dashboard
 Products
 Customers
-Interests
-Stock
-Notes
+Relationships
+Tasks
+Search
 Settings
 
 Acceptance:
-navigation works
+navigation shell works
 
-Status: PENDING
+Status: DONE
 
 ---
 
-# PHASE 4 — PRODUCT SYSTEM
+# PHASE 4 - PRODUCT SYSTEM
 
 ## TASK 4.1
 Product CRUD
@@ -201,8 +173,13 @@ Fields:
 SKU
 name
 category
+brand
+model
 stock_quantity
 minimum_stock
+location
+description
+is_active
 
 Features:
 create
@@ -214,12 +191,12 @@ filter
 Acceptance:
 products manageable
 
-Status: PENDING
+Status: DONE
 
 ---
 
 ## TASK 4.2
-Product listing
+Product listing improvements
 
 Features:
 table view
@@ -230,290 +207,15 @@ pagination
 Acceptance:
 fast product browsing
 
-Status: PENDING
+Status: NEXT
 
 ---
 
-# PHASE 5 — CUSTOMER SYSTEM
-
-## TASK 5.1
-Customer CRUD
-
-Fields:
-name
-phone
-email
-company
-
-Features:
-create
-edit
-delete
-search
-
-Acceptance:
-customer records manageable
-
-Status: PENDING
-
----
-
-## TASK 5.2
-Customer profile page
-
-Show:
-basic info
-notes
-interested products
-followups
-
-Acceptance:
-single customer history visible
-
-Status: PENDING
-
----
-
-# PHASE 6 — PRODUCT INTEREST MATCHING
-
-## TASK 6.1
-Interest system
-
-Purpose:
-match customer to product
-
-Fields:
-customer
-product
-quantity_requested
-priority
-status
-follow_up_date
-
-Acceptance:
-product-customer relation works
-
-Status: PENDING
-
----
-
-## TASK 6.2
-Interest dashboard
-
-Views:
-all interests
-urgent followups
-waiting stock
-completed
-
-Acceptance:
-sales followup visibility
-
-Status: PENDING
-
----
-
-# PHASE 7 — NOTES SYSTEM
-
-## TASK 7.1
-Notes
-
-Attach notes to:
-customer
-product
-interest
-
-Acceptance:
-timeline history visible
-
-Status: PENDING
-
----
-
-# PHASE 8 — STOCK TRACKING
-
-## TASK 8.1
-Stock movement system
-
-Track:
-incoming
-outgoing
-manual adjustment
-
-Acceptance:
-stock updates correctly
-
-Status: PENDING
-
----
-
-## TASK 8.2
-Low stock alerts
-
-Logic:
-stock < minimum_stock
-
-Acceptance:
-warning indicators visible
-
-Status: PENDING
-
----
-
-# PHASE 9 — IMPORT / EXPORT
-
-## TASK 9.1
-Excel import
-
-Import:
-products
-customers
-
-Acceptance:
-bulk upload works
-
-Status: PENDING
-
----
-
-## TASK 9.2
-Excel export
-
-Export:
-products
-customers
-interests
-
-Acceptance:
-download works
-
-Status: PENDING
-
----
-
-# PHASE 10 — SEARCH
-
-## TASK 10.1
-Global search
-
-Search:
-SKU
-product
-customer
-phone
-email
-
-Acceptance:
-results under 2 seconds
-
-Status: PENDING
-
----
-
-# PHASE 11 — DEPLOYMENT
-
-## TASK 11.1
-Vercel deployment
-
-Tasks:
-connect GitHub
-production deploy
-
-Acceptance:
-live app works
-
-Status: PENDING
-
----
-
-## TASK 11.2
-Custom domain
-
-Connect:
-iotomasyon.com
-
-Acceptance:
-domain active
-
-Status: PENDING
-
----
-
-# PHASE 12 — HARDENING
-
-## TASK 12.1
-Error handling
-
-Add:
-empty states
-error states
-loading states
-
-Acceptance:
-stable UX
-
-Status: PENDING
-
----
-
-## TASK 12.2
-Security review
-
-Check:
-auth
-db rules
-api access
-env vars
-
-Acceptance:
-internal secure app
-
-Status: PENDING
-
----
-
-# PHASE 13 — MVP RELEASE
-
-## TASK 13.1
-Final QA
-
-Checklist:
-login works
-CRUD works
-interest matching works
-stock updates work
-import/export works
-deployment works
-
-Acceptance:
-usable internal MVP
-
-Status: PENDING
-
----
-
-# FORBIDDEN FEATURES
-
-DO NOT BUILD:
-- accounting
-- invoicing
-- payment gateway
-- marketplace integrations
-- whatsapp automation
-- AI chatbot
-- advanced analytics
-- public registration
-- SaaS billing
-
-Only MVP internal system.
-
----
-
-# SUCCESS METRICS
-
-Success if:
-- product searchable under 5 sec
-- customer history instantly visible
-- stock arrival followup possible
-- repeat customer tracking works
-- team can use daily
+# NEXT PHASE CANDIDATES
+
+1. Customer CRUD
+2. Product-customer relationship tracking
+3. Notes timeline
+4. Follow-up task reminders
+5. Global search
+6. Stock movement history

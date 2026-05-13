@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  ADMIN
+}
+
+enum InterestStatus {
+  NEW
+  WAITING_STOCK
+  CONTACTED
+  QUOTED
+  WON
+  LOST
+  CANCELLED
+}
+
+enum InterestPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String            @unique
+  passwordHash     String
+  name             String
+  role             UserRole          @default(ADMIN)
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  productsCreated  Product[]         @relation("CreatedProducts")
+  notesCreated     Note[]
+  interestsCreated ProductInterest[] @relation("CreatedInterests")
+  interestsOwned   ProductInterest[] @relation("AssignedInterests")
+  tasksCreated     FollowUpTask[]    @relation("CreatedTasks")
+  tasksOwned       FollowUpTask[]    @relation("AssignedTasks")
+}
+
+model Product {
+  id             String            @id @default(cuid())
+  sku            String            @unique
+  name           String
+  category       String?
+  brand          String?
+  model          String?
+  stockQuantity  Int               @default(0)
+  minimumStock   Int               @default(0)
+  location       String?
+  description    String?
+  isActive       Boolean           @default(true)
+  createdById    String?
+  createdBy      User?             @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  interests      ProductInterest[]
+  notes          Note[]
+  tasks          FollowUpTask[]
+
+  @@index([name])
+  @@index([category])
+  @@index([stockQuantity, minimumStock])
+}
+
+model Customer {
+  id           String            @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  company      String?
+  customerType String?
+  city         String?
+  district     String?
+  address      String?
+  taxOffice    String?
+  taxNumber    String?
+  source       String?
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  interests    ProductInterest[]
+  notes        Note[]
+  tasks        FollowUpTask[]
+
+  @@index([name])
+  @@index([phone])
+  @@index([email])
+}
+
+model ProductInterest {
+  id                String           @id @default(cuid())
+  customerId        String
+  productId         String
+  quantityRequested Int              @default(1)
+  targetPrice       Decimal?
+  quotedPrice       Decimal?
+  priority          InterestPriority @default(NORMAL)
+  status            InterestStatus   @default(NEW)
+  followUpAt        DateTime?
+  lastContactedAt   DateTime?
+  closedAt          DateTime?
+  source            String?
+  note              String?
+  createdById       String?
+  assignedToId      String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  customer          Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product           Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdBy         User?            @relation("CreatedInterests", fields: [createdById], references: [id], onDelete: SetNull)
+  assignedTo        User?            @relation("AssignedInterests", fields: [assignedToId], references: [id], onDelete: SetNull)
+  notes             Note[]
+
+  @@index([customerId])
+  @@index([productId])
+  @@index([status])
+  @@index([priority])
+  @@index([followUpAt])
+}
+
+model Note {
+  id         String           @id @default(cuid())
+  content    String
+  customerId String?
+  productId  String?
+  interestId String?
+  createdById String?
+  createdAt  DateTime         @default(now())
+  customer   Customer?        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product    Product?         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  interest   ProductInterest? @relation(fields: [interestId], references: [id], onDelete: Cascade)
+  createdBy  User?            @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@index([productId])
+  @@index([interestId])
+  @@index([createdAt])
+}
+
+model FollowUpTask {
+  id           String     @id @default(cuid())
+  title        String
+  details      String?
+  status       TaskStatus @default(PENDING)
+  dueAt        DateTime?
+  completedAt  DateTime?
+  customerId   String?
+  productId    String?
+  assignedToId String?
+  createdById  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  customer     Customer?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product      Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  assignedTo   User?      @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy    User?      @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([dueAt])
+}
