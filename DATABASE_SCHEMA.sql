@@ -1,15 +1,15 @@
 -- =========================================================
 -- IOTOMASYON DATABASE SCHEMA
 -- Phase 1 implementation source of truth
--- Runtime: Prisma ORM + SQLite
--- Migration target: PostgreSQL later
+-- Runtime: Prisma ORM + PostgreSQL
+-- Deployment target: Supabase PostgreSQL
 -- =========================================================
 
 -- Historical note:
--- Earlier planning documents referenced Supabase/PostgreSQL.
--- Phase 1 now runs on Prisma with SQLite for fast internal MVP delivery.
--- The schema below preserves the same CRM domain model while keeping the
--- table design portable for a later PostgreSQL migration.
+-- Earlier Phase 1 builds used Prisma with SQLite for rapid local delivery.
+-- The current architecture baseline has been corrected back to
+-- Supabase/PostgreSQL-compatible Prisma migrations so deployment matches
+-- the intended production target.
 
 -- =========================================================
 -- USERS

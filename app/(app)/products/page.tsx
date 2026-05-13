@@ -7,6 +7,8 @@ import { ProductFilters } from "@/components/products/product-filters";
 import { formatBooleanLabel } from "@/lib/utils";
 import { listProducts } from "@/services/product-service";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductsPage({
   searchParams,
 }: {
@@ -16,7 +18,7 @@ export default async function ProductsPage({
   const query = typeof params.q === "string" ? params.q : "";
   const status = typeof params.status === "string" ? params.status : "all";
   const stock = typeof params.stock === "string" ? params.stock : "all";
-  const products = await listProducts({ q: query, status, stock });
+  const { databaseAvailable, products } = await listProducts({ q: query, status, stock });
 
   return (
     <div className="space-y-6">
@@ -40,6 +42,12 @@ export default async function ProductsPage({
       <Card className="p-5">
         <ProductFilters initialQuery={query} initialStatus={status} initialStock={stock} />
       </Card>
+
+      {!databaseAvailable ? (
+        <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
+          Veritabani baglantisi su anda kullanilamiyor. Urun listesi gosterilemiyor.
+        </Card>
+      ) : null}
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
