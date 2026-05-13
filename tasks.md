@@ -2,7 +2,7 @@
 
 Project: Internal private CRM + product tracking system
 Deployment target: GitHub + Vercel
-Implementation stack: Next.js + TypeScript + Tailwind + Prisma + SQLite + Zustand + Zod + React Hook Form
+Implementation stack: Next.js + TypeScript + Tailwind + Prisma + PostgreSQL + Zustand + Zod + React Hook Form
 
 RULE:
 Complete tasks in exact order.
@@ -66,6 +66,7 @@ Create:
 
 Variables:
 DATABASE_URL
+DIRECT_URL
 SESSION_SECRET
 ADMIN_EMAIL
 ADMIN_PASSWORD

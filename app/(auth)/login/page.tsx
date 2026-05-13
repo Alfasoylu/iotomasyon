@@ -25,7 +25,7 @@ export default async function LoginPage() {
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             <Metric label="Modul" value="Auth + Dashboard + Products" />
-            <Metric label="Altyapi" value="Next 16 + Prisma + SQLite" />
+            <Metric label="Altyapi" value="Next 16 + Prisma + PostgreSQL" />
             <Metric label="Hazirlik" value="PostgreSQL migration-ready" />
           </div>
         </section>

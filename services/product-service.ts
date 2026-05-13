@@ -2,6 +2,7 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
+import { isDatabaseUnavailableError } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export type ProductFilters = {
@@ -31,29 +32,60 @@ export async function listProducts(filters: ProductFilters) {
     where.isActive = false;
   }
 
-  const products = await prisma.product.findMany({
-    where,
-    orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-  });
+  try {
+    const products = await prisma.product.findMany({
+      where,
+      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+    });
 
-  if (filters.stock === "low") {
-    return products.filter((product) => product.stockQuantity <= product.minimumStock);
+    if (filters.stock === "low") {
+      return {
+        databaseAvailable: true as const,
+        products: products.filter((product) => product.stockQuantity <= product.minimumStock),
+      };
+    }
+
+    return {
+      databaseAvailable: true as const,
+      products,
+    };
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return {
+        databaseAvailable: false as const,
+        products: [],
+      };
+    }
+
+    throw error;
   }
-
-  return products;
 }
 
 export async function getProductById(id: string) {
-  return prisma.product.findUnique({
-    where: { id },
-    include: {
-      createdBy: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
+  try {
+    return {
+      databaseAvailable: true as const,
+      product: await prisma.product.findUnique({
+        where: { id },
+        include: {
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
-      },
-    },
-  });
+      }),
+    };
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return {
+        databaseAvailable: false as const,
+        product: null,
+      };
+    }
+
+    throw error;
+  }
 }

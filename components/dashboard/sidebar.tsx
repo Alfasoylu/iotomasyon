@@ -8,11 +8,6 @@ import { useSidebarStore } from "@/hooks/use-sidebar-store";
 const navigation = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/products", label: "Products" },
-  { href: "/customers", label: "Customers" },
-  { href: "/relationships", label: "Relationships" },
-  { href: "/tasks", label: "Tasks" },
-  { href: "/search", label: "Search" },
-  { href: "/settings", label: "Settings" },
 ];
 
 export function Sidebar() {

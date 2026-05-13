@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getDashboardStats } from "@/services/dashboard-service";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const stats = await getDashboardStats();
 
@@ -41,6 +43,13 @@ export default async function DashboardPage() {
         <StatCard label="Tanimli lokasyon" value={stats.locationCount} />
       </section>
 
+      {!stats.databaseAvailable ? (
+        <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
+          Veritabani baglantisi su anda kullanilamiyor. Dashboard yuklendi ancak canli
+          metrikler gosterilemiyor.
+        </Card>
+      ) : null}
+
       <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card className="p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -49,7 +58,7 @@ export default async function DashboardPage() {
           <ul className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
             <li>Cookie tabanli tek admin authentication</li>
             <li>Korumali dashboard ve products routelari</li>
-            <li>Prisma + SQLite veri modeli</li>
+            <li>Prisma + Supabase PostgreSQL veri modeli</li>
             <li>Urun ekleme, guncelleme, silme, arama ve stok gorunumu</li>
           </ul>
         </Card>
