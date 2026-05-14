@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 import { getCurrentSession } from "@/lib/auth";
-import { formatCurrencyAmount } from "@/lib/quote-utils";
+import { resolveDisplayAmounts } from "@/lib/quote-utils";
 import { getQuoteById } from "@/services/quote-service";
 
 export const runtime = "nodejs";
@@ -27,7 +27,12 @@ export async function GET(
   const page = pdf.addPage([595, 842]);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const currency = quote.items[0]?.currency ?? "TRY";
+  const quoteCurrency = quote.items[0]?.currency ?? "TRY";
+  const displayOptions = {
+    currencyMode: (quote as { currencyMode?: string | null }).currencyMode,
+    exchangeRate: (quote as { exchangeRate?: string | number | { toString(): string } | null })
+      .exchangeRate,
+  };
 
   let y = 790;
   page.drawText(toPdfSafeText("Soylu Elektronik - Quote"), {
@@ -53,7 +58,7 @@ export async function GET(
     const lines = [
       toPdfSafeText(item.description),
       toPdfSafeText(
-        `Qty: ${item.quantity} | Unit: ${formatPdfMoney(item.unitPrice.toString(), item.currency)} | Total: ${formatPdfMoney(item.total.toString(), item.currency)}`,
+        `Qty: ${item.quantity} | Unit: ${resolveDisplayAmounts(item.unitPrice.toString(), item.currency, displayOptions)} | Total: ${resolveDisplayAmounts(item.total.toString(), item.currency, displayOptions)}`,
       ),
     ];
 
@@ -66,33 +71,53 @@ export async function GET(
   }
 
   y -= 10;
-  page.drawText(toPdfSafeText(`Subtotal: ${formatPdfMoney(quote.subtotal.toString(), currency)}`), {
-    x: 40,
-    y,
-    size: 11,
-    font: bold,
-  });
+  page.drawText(
+    toPdfSafeText(
+      `Subtotal: ${resolveDisplayAmounts(quote.subtotal.toString(), quoteCurrency, displayOptions)}`,
+    ),
+    {
+      x: 40,
+      y,
+      size: 11,
+      font: bold,
+    },
+  );
   y -= 18;
-  page.drawText(toPdfSafeText(`Discount: ${formatPdfMoney(quote.discountTotal.toString(), currency)}`), {
-    x: 40,
-    y,
-    size: 11,
-    font,
-  });
+  page.drawText(
+    toPdfSafeText(
+      `Discount: ${resolveDisplayAmounts(quote.discountTotal.toString(), quoteCurrency, displayOptions)}`,
+    ),
+    {
+      x: 40,
+      y,
+      size: 11,
+      font,
+    },
+  );
   y -= 18;
-  page.drawText(toPdfSafeText(`Tax: ${formatPdfMoney(quote.taxTotal.toString(), currency)}`), {
-    x: 40,
-    y,
-    size: 11,
-    font,
-  });
+  page.drawText(
+    toPdfSafeText(
+      `Tax: ${resolveDisplayAmounts(quote.taxTotal.toString(), quoteCurrency, displayOptions)}`,
+    ),
+    {
+      x: 40,
+      y,
+      size: 11,
+      font,
+    },
+  );
   y -= 18;
-  page.drawText(toPdfSafeText(`Total: ${formatPdfMoney(quote.total.toString(), currency)}`), {
-    x: 40,
-    y,
-    size: 12,
-    font: bold,
-  });
+  page.drawText(
+    toPdfSafeText(
+      `Total: ${resolveDisplayAmounts(quote.total.toString(), quoteCurrency, displayOptions)}`,
+    ),
+    {
+      x: 40,
+      y,
+      size: 12,
+      font: bold,
+    },
+  );
 
   y -= 34;
   page.drawText("Notes", { x: 40, y, size: 13, font: bold });
@@ -117,15 +142,11 @@ export async function GET(
   });
 }
 
-function formatPdfMoney(value: string, currency: string) {
-  const formatted = formatCurrencyAmount(value, currency);
-  return formatted.replace(/[^\d.,\- ]+/g, "").trim().concat(` ${currency.toUpperCase()}`);
-}
-
 function toPdfSafeText(value: string) {
   return value
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/₺/g, "TRY ")
     .replace(/ı/g, "i")
     .replace(/İ/g, "I")
     .replace(/[^\x20-\x7E\n\r\t]/g, "?");

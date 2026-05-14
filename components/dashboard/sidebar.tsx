@@ -33,7 +33,7 @@ export function Sidebar() {
           </p>
           <h1 className="mt-3 text-2xl font-semibold text-slate-900">Internal CRM</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Urun, musteri ve stok akisini tek ekrandan yonetin.
+            Ürün, müşteri ve stok akışını tek ekrandan yönetin.
           </p>
         </div>
 

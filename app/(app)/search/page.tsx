@@ -1,10 +1,10 @@
 import Link from "next/link";
 
+import { formatCustomerStatus, getCustomerStatusTone } from "@/lib/customer-utils";
+import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { globalSearch } from "@/services/search-service";
-import { formatCustomerStatus, getCustomerStatusTone } from "@/lib/customer-utils";
-import { formatQuoteStatus, getQuoteStatusTone, formatCurrencyAmount } from "@/lib/quote-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,7 @@ export default async function SearchPage({
             name="q"
             defaultValue={q}
             autoFocus
-            placeholder="Musteri, telefon, urun, teklif, not..."
+            placeholder="Müşteri, telefon, ürün, teklif, not..."
             className="h-12 flex-1 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
           />
           <button
@@ -53,11 +53,10 @@ export default async function SearchPage({
 
       {results ? (
         <div className="space-y-6">
-          {/* Customers */}
           {results.customers.length > 0 ? (
             <section>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Musteriler ({results.customers.length})
+                Müşteriler ({results.customers.length})
               </h2>
               <Card className="divide-y divide-slate-100">
                 {results.customers.map((c) => (
@@ -81,27 +80,26 @@ export default async function SearchPage({
             </section>
           ) : null}
 
-          {/* Quotes */}
           {results.quotes.length > 0 ? (
             <section>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
                 Teklifler ({results.quotes.length})
               </h2>
               <Card className="divide-y divide-slate-100">
-                {results.quotes.map((q) => (
+                {results.quotes.map((quote) => (
                   <Link
-                    key={q.id}
-                    href={`/quotes/${q.id}`}
+                    key={quote.id}
+                    href={`/quotes/${quote.id}`}
                     className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"
                   >
                     <div>
-                      <p className="font-semibold text-slate-900">{q.quoteNumber}</p>
+                      <p className="font-semibold text-slate-900">{quote.quoteNumber}</p>
                       <p className="text-sm text-slate-500">
-                        {q.customer.name} · {formatCurrencyAmount(q.total.toString(), "TRY")}
+                        {quote.customer.name} · {formatCurrencyAmount(quote.total.toString(), "TRY")}
                       </p>
                     </div>
-                    <Badge tone={getQuoteStatusTone(q.status)}>
-                      {formatQuoteStatus(q.status)}
+                    <Badge tone={getQuoteStatusTone(quote.status)}>
+                      {formatQuoteStatus(quote.status)}
                     </Badge>
                   </Link>
                 ))}
@@ -109,11 +107,10 @@ export default async function SearchPage({
             </section>
           ) : null}
 
-          {/* Products */}
           {results.products.length > 0 ? (
             <section>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Urunler ({results.products.length})
+                Ürünler ({results.products.length})
               </h2>
               <Card className="divide-y divide-slate-100">
                 {results.products.map((p) => (
@@ -133,7 +130,6 @@ export default async function SearchPage({
             </section>
           ) : null}
 
-          {/* Categories */}
           {results.categories.length > 0 ? (
             <section>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -160,14 +156,13 @@ export default async function SearchPage({
             </section>
           ) : null}
 
-          {/* Notes */}
           {results.notes.length > 0 ? (
             <section>
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
                 Notlar ({results.notes.length})
               </h2>
               <Card className="divide-y divide-slate-100">
-                {results.notes.map((n) => (
+                {results.notes.map((n) =>
                   n.customerId ? (
                     <Link
                       key={n.id}
@@ -175,23 +170,23 @@ export default async function SearchPage({
                       className="block px-5 py-4 hover:bg-slate-50"
                     >
                       <p className="text-sm font-semibold text-slate-900">{n.customer?.name}</p>
-                      <p className="mt-1 text-sm text-slate-600 line-clamp-2">{n.content}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-slate-600">{n.content}</p>
                     </Link>
                   ) : (
                     <div key={n.id} className="px-5 py-4">
-                      <p className="text-sm text-slate-600 line-clamp-2">{n.content}</p>
+                      <p className="line-clamp-2 text-sm text-slate-600">{n.content}</p>
                     </div>
-                  )
-                ))}
+                  ),
+                )}
               </Card>
             </section>
           ) : null}
 
           {results.customers.length === 0 &&
-            results.quotes.length === 0 &&
-            results.products.length === 0 &&
-            results.notes.length === 0 &&
-            results.categories.length === 0 ? (
+          results.quotes.length === 0 &&
+          results.products.length === 0 &&
+          results.notes.length === 0 &&
+          results.categories.length === 0 ? (
             <p className="text-sm text-slate-500">
               &quot;{q}&quot; için sonuç bulunamadı.
             </p>
