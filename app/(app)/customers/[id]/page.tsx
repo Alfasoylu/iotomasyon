@@ -110,6 +110,8 @@ export default async function CustomerDetailPage({
             <Info label="Vergi no" value={customer.taxNumber} />
             <Info label="Sehir" value={customer.city} />
             <Info label="Ulke" value={customer.country} />
+            <Info label="Müşteri kaynağı" value={customer.source} />
+            <Info label="Müşteri sahibi" value={customer.owner?.name} />
           </dl>
           <div className="mt-6 grid gap-4">
             <InfoBlock label="Adres" value={customer.address} />

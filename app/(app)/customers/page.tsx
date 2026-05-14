@@ -10,7 +10,7 @@ import {
   formatCustomerStatus,
   getCustomerStatusTone,
 } from "@/lib/customer-utils";
-import { listCustomers } from "@/services/customer-service";
+import { listCustomers, listUsersForSelect } from "@/services/customer-service";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +20,15 @@ export default async function CustomersPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const query = typeof params.q === "string" ? params.q : "";
-  const status = typeof params.status === "string" ? params.status : "all";
-  const { databaseAvailable, customers } = await listCustomers({ q: query, status });
+  const query     = typeof params.q         === "string" ? params.q         : "";
+  const status    = typeof params.status    === "string" ? params.status    : "all";
+  const source    = typeof params.source    === "string" ? params.source    : "all";
+  const ownedById = typeof params.ownedById === "string" ? params.ownedById : "all";
+
+  const [{ databaseAvailable, customers }, users] = await Promise.all([
+    listCustomers({ q: query, status, source, ownedById }),
+    listUsersForSelect(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -44,7 +50,13 @@ export default async function CustomersPage({
       </div>
 
       <Card className="p-5">
-        <CustomerFilters initialQuery={query} initialStatus={status} />
+        <CustomerFilters
+          initialQuery={query}
+          initialStatus={status}
+          initialSource={source}
+          initialOwnedById={ownedById}
+          users={users}
+        />
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
@@ -93,6 +105,8 @@ export default async function CustomersPage({
                 <th className="px-4 py-3">Musteri</th>
                 <th className="px-4 py-3">Iletisim</th>
                 <th className="px-4 py-3">Sehir</th>
+                <th className="px-4 py-3">Kaynak</th>
+                <th className="px-4 py-3">Sahip</th>
                 <th className="px-4 py-3">Durum</th>
                 <th className="px-4 py-3 text-right">Aksiyon</th>
               </tr>
@@ -100,7 +114,7 @@ export default async function CustomersPage({
             <tbody className="divide-y divide-slate-100 bg-white text-sm">
               {customers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
                     Bu filtrelerle eslesen musteri bulunamadi.
                   </td>
                 </tr>
@@ -117,6 +131,12 @@ export default async function CustomersPage({
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {[customer.city, customer.country].filter(Boolean).join(" / ") || "-"}
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      {customer.source ?? "-"}
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      {customer.owner?.name ?? "-"}
                     </td>
                     <td className="px-4 py-4">
                       <Badge tone={getCustomerStatusTone(customer.status)}>

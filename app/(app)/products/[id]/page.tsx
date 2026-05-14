@@ -73,6 +73,9 @@ export default async function ProductDetailPage({
         </div>
 
         <div className="flex gap-3">
+          <Link href={`/customers/new?productId=${product.id}`}>
+            <Button variant="secondary">Yeni Müşteri Ekle</Button>
+          </Link>
           <Link href={`/products/${product.id}/edit`}>
             <Button>Düzenle</Button>
           </Link>

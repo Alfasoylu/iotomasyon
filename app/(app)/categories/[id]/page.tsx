@@ -67,6 +67,9 @@ export default async function CategoryDetailPage({
         </div>
 
         <div className="flex gap-3">
+          <Link href={`/customers/new?categoryId=${category.id}`}>
+            <Button variant="secondary">Yeni Müşteri Ekle</Button>
+          </Link>
           {category.interests.length > 0 ? (
             <Link href={`/campaigns/new?categoryId=${category.id}`}>
               <Button>WhatsApp kampanyası oluştur</Button>

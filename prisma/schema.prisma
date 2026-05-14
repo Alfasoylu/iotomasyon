@@ -110,6 +110,7 @@ model User {
   quotesCreated            Quote[]
   categoryInterestsCreated CategoryInterest[] @relation("CreatedCategoryInterests")
   campaignsCreated         OutreachCampaign[] @relation("CreatedCampaigns")
+  customersOwned           Customer[]         @relation("OwnedCustomers")
 }
 
 model ProductCategory {
@@ -177,10 +178,12 @@ model Customer {
   taxOffice         String?
   taxNumber         String?
   source            String?
+  ownedById         String?
   isActive          Boolean            @default(true)
   lastContactedAt   DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+  owner               User?              @relation("OwnedCustomers", fields: [ownedById], references: [id], onDelete: SetNull)
   interests           ProductInterest[]
   categoryInterests   CategoryInterest[]
   timelineEntries     Note[]
@@ -192,6 +195,8 @@ model Customer {
   @@index([phone])
   @@index([email])
   @@index([status])
+  @@index([ownedById])
+  @@index([source])
 }
 
 model CategoryInterest {

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { CustomerForm } from "@/components/customers/customer-form";
 import { Card } from "@/components/ui/card";
-import { getCustomerById } from "@/services/customer-service";
+import { getCustomerById, listUsersForSelect } from "@/services/customer-service";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,10 @@ export default async function EditCustomerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { databaseAvailable, customer } = await getCustomerById(id);
+  const [{ databaseAvailable, customer }, users] = await Promise.all([
+    getCustomerById(id),
+    listUsersForSelect(),
+  ]);
 
   if (!databaseAvailable) {
     return (
@@ -59,18 +62,21 @@ export default async function EditCustomerPage({
         <CustomerForm
           mode="edit"
           customerId={customer.id}
+          users={users}
           initialValues={{
-            name: customer.name,
-            company: customer.company ?? "",
-            phone: customer.phone ?? "",
-            whatsapp: customer.whatsapp ?? "",
-            email: customer.email ?? "",
+            name:      customer.name,
+            company:   customer.company   ?? "",
+            phone:     customer.phone     ?? "",
+            whatsapp:  customer.whatsapp  ?? "",
+            email:     customer.email     ?? "",
             taxNumber: customer.taxNumber ?? "",
-            address: customer.address ?? "",
-            city: customer.city ?? "",
-            country: customer.country ?? "",
-            notes: customer.customerNotes ?? "",
-            status: customer.status,
+            address:   customer.address   ?? "",
+            city:      customer.city      ?? "",
+            country:   customer.country   ?? "",
+            notes:     customer.customerNotes ?? "",
+            status:    customer.status,
+            source:    customer.source    ?? "",
+            ownedById: customer.ownedById ?? "",
           }}
         />
       </Card>

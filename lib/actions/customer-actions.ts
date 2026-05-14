@@ -11,6 +11,7 @@ type CustomerField = keyof CustomerInput;
 
 export async function createCustomerAction(
   values: CustomerInput,
+  options?: { productId?: string; categoryId?: string },
 ): Promise<ActionResult<CustomerField>> {
   const parsed = customerSchema.safeParse(values);
 
@@ -22,15 +23,41 @@ export async function createCustomerAction(
     };
   }
 
-  await requireUser();
+  const user = await requireUser();
 
   try {
-    const customer = await prisma.customer.create({
-      data: normalizeCustomerData(parsed.data),
+    const customer = await prisma.$transaction(async (tx) => {
+      const c = await tx.customer.create({
+        data: normalizeCustomerData(parsed.data),
+      });
+
+      if (options?.productId) {
+        await tx.productInterest.create({
+          data: {
+            customerId: c.id,
+            productId: options.productId,
+            createdById: user.id,
+          },
+        });
+      }
+
+      if (options?.categoryId) {
+        await tx.categoryInterest.create({
+          data: {
+            customerId: c.id,
+            categoryId: options.categoryId,
+            createdById: user.id,
+          },
+        });
+      }
+
+      return c;
     });
 
     revalidatePath("/dashboard");
     revalidatePath("/customers");
+    if (options?.productId)  revalidatePath(`/products/${options.productId}`);
+    if (options?.categoryId) revalidatePath(`/categories/${options.categoryId}`);
 
     return {
       ok: true,
@@ -129,17 +156,19 @@ export async function deleteCustomerAction(customerId: string): Promise<ActionRe
 
 function normalizeCustomerData(input: CustomerInput) {
   return {
-    name: input.name.trim(),
-    company: emptyToNull(input.company),
-    phone: emptyToNull(input.phone),
-    whatsapp: emptyToNull(input.whatsapp),
-    email: emptyToNull(input.email?.toLowerCase()),
-    taxNumber: emptyToNull(input.taxNumber),
-    address: emptyToNull(input.address),
-    city: emptyToNull(input.city),
-    country: emptyToNull(input.country),
+    name:         input.name.trim(),
+    company:      emptyToNull(input.company),
+    phone:        emptyToNull(input.phone),
+    whatsapp:     emptyToNull(input.whatsapp),
+    email:        emptyToNull(input.email?.toLowerCase()),
+    taxNumber:    emptyToNull(input.taxNumber),
+    address:      emptyToNull(input.address),
+    city:         emptyToNull(input.city),
+    country:      emptyToNull(input.country),
     customerNotes: emptyToNull(input.notes),
-    status: input.status,
+    status:       input.status,
+    source:       emptyToNull(input.source),
+    ownedById:    emptyToNull(input.ownedById),
   };
 }
 

@@ -15,31 +15,41 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CUSTOMER_STATUS_OPTIONS,
+  CUSTOMER_SOURCE_OPTIONS,
   type CustomerFormValues,
 } from "@/types/customers";
+import type { UserOption } from "@/services/customer-service";
 
 const emptyValues: CustomerFormValues = {
-  name: "",
-  company: "",
-  phone: "",
-  whatsapp: "",
-  email: "",
+  name:      "",
+  company:   "",
+  phone:     "",
+  whatsapp:  "",
+  email:     "",
   taxNumber: "",
-  address: "",
-  city: "",
-  country: "",
-  notes: "",
-  status: "NEW",
+  address:   "",
+  city:      "",
+  country:   "",
+  notes:     "",
+  status:    "NEW",
+  source:    "",
+  ownedById: "",
 };
 
 export function CustomerForm({
   mode,
   customerId,
   initialValues,
+  users = [],
+  preselectedProductId,
+  preselectedCategoryId,
 }: {
   mode: "create" | "edit";
   customerId?: string;
   initialValues?: CustomerFormValues;
+  users?: UserOption[];
+  preselectedProductId?: string;
+  preselectedCategoryId?: string;
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
@@ -57,7 +67,10 @@ export function CustomerForm({
     startTransition(async () => {
       const result =
         mode === "create"
-          ? await createCustomerAction(values)
+          ? await createCustomerAction(values, {
+              productId:  preselectedProductId,
+              categoryId: preselectedCategoryId,
+            })
           : await updateCustomerAction(customerId ?? "", values);
 
       setPending(false);
@@ -66,15 +79,9 @@ export function CustomerForm({
         setServerMessage(result.message);
 
         for (const [fieldName, errors] of Object.entries(result.fieldErrors ?? {})) {
-          if (!errors?.length) {
-            continue;
-          }
-
-          form.setError(fieldName as keyof CustomerFormValues, {
-            message: errors[0],
-          });
+          if (!errors?.length) continue;
+          form.setError(fieldName as keyof CustomerFormValues, { message: errors[0] });
         }
-
         return;
       }
 
@@ -85,6 +92,15 @@ export function CustomerForm({
 
   return (
     <form onSubmit={submit} className="space-y-6">
+      {/* Pre-link notice */}
+      {(preselectedProductId || preselectedCategoryId) && (
+        <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          {preselectedProductId
+            ? "Müşteri kaydedilince seçili ürün ilgisi otomatik eklenir."
+            : "Müşteri kaydedilince seçili kategori ilgisi otomatik eklenir."}
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Musteri adi *" error={form.formState.errors.name?.message}>
           <Input {...form.register("name")} />
@@ -115,13 +131,35 @@ export function CustomerForm({
             {...form.register("status")}
             className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
           >
-            {CUSTOMER_STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
+            {CUSTOMER_STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </Field>
+        <Field label="Müşteri nereden geldi?" error={form.formState.errors.source?.message}>
+          <select
+            {...form.register("source")}
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+          >
+            <option value="">— Kaynak seçin —</option>
+            {CUSTOMER_SOURCE_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </Field>
+        {users.length > 0 && (
+          <Field label="Müşteri sahibi" error={form.formState.errors.ownedById?.message}>
+            <select
+              {...form.register("ownedById")}
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+            >
+              <option value="">— Sahip seçin —</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          </Field>
+        )}
       </div>
 
       <Field label="Adres" error={form.formState.errors.address?.message}>
@@ -137,12 +175,8 @@ export function CustomerForm({
       <div className="flex gap-3">
         <Button type="submit" disabled={pending}>
           {pending
-            ? mode === "create"
-              ? "Kaydediliyor..."
-              : "Guncelleniyor..."
-            : mode === "create"
-              ? "Musteriyi olustur"
-              : "Degisiklikleri kaydet"}
+            ? mode === "create" ? "Kaydediliyor..." : "Guncelleniyor..."
+            : mode === "create" ? "Musteriyi olustur" : "Degisiklikleri kaydet"}
         </Button>
         <Button
           type="button"
