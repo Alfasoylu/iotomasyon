@@ -121,10 +121,10 @@ export default async function QuoteDetailPage({
           <h2 className="text-lg font-semibold text-slate-950">Teklif özeti</h2>
           <dl className="mt-5 space-y-4">
             <Info label="Para birimi" value={formatQuoteCurrencyMode(currencyMode)} />
-            <Info label="Ara toplam" value={formatCurrencyAmount(quote.subtotal.toString(), quoteCurrency)} />
-            <Info label="İndirim" value={formatCurrencyAmount(quote.discountTotal.toString(), quoteCurrency)} />
-            <Info label="Vergi" value={formatCurrencyAmount(quote.taxTotal.toString(), quoteCurrency)} />
-            <Info label="Toplam" value={formatCurrencyAmount(quote.total.toString(), quoteCurrency)} />
+            <Info label="Ara toplam" value={(() => { const r = resolveDisplayAmounts(Number(quote.subtotal), quoteCurrency, currencyMode, exchangeRate); return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary; })()} />
+            <Info label="İndirim" value={(() => { const r = resolveDisplayAmounts(Number(quote.discountTotal), quoteCurrency, currencyMode, exchangeRate); return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary; })()} />
+            <Info label="Vergi" value={(() => { const r = resolveDisplayAmounts(Number(quote.taxTotal), quoteCurrency, currencyMode, exchangeRate); return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary; })()} />
+            <Info label="Toplam" value={(() => { const r = resolveDisplayAmounts(Number(quote.total), quoteCurrency, currencyMode, exchangeRate); return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary; })()} />
             <Info label="Oluşturulma" value={formatDateTime(quote.createdAt)} />
             {quote.sentAt ? <Info label="Gönderilme" value={formatDateTime(quote.sentAt)} /> : null}
             {quote.validityDate ? <Info label="Geçerlilik" value={formatDateTime(quote.validityDate)} /> : null}

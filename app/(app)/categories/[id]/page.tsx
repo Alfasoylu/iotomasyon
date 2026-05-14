@@ -27,11 +27,11 @@ export default async function CategoryDetailPage({
             Kategoriler
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Kategori gecici olarak kullanilamiyor
+            Kategori geçici olarak kullanılamıyor
           </h1>
         </div>
         <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
-          Veritabani baglantisi su anda kullanilamiyor.
+          Veritabanı bağlantısı şu anda kullanılamıyor.
         </Card>
       </div>
     );
@@ -76,7 +76,7 @@ export default async function CategoryDetailPage({
             </Link>
           ) : null}
           <Link href={`/categories/${category.id}/edit`}>
-            <Button variant="secondary">Duzenle</Button>
+            <Button variant="secondary">Düzenle</Button>
           </Link>
           <CategoryDeleteButton categoryId={category.id} />
         </div>
@@ -106,7 +106,7 @@ export default async function CategoryDetailPage({
 
           <div className="mt-6 space-y-2">
             {category.products.length === 0 ? (
-              <p className="text-sm text-slate-500">Bu kategoride henuz urun yok.</p>
+              <p className="text-sm text-slate-500">Bu kategoride henüz ürün yok.</p>
             ) : (
               category.products.map((product) => {
                 const isLow = product.stockQuantity <= product.minimumStock;
@@ -119,7 +119,7 @@ export default async function CategoryDetailPage({
                         <p className="text-xs text-slate-400">{product.sku}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {isLow ? <Badge tone="warning">Dusuk stok</Badge> : null}
+                        {isLow ? <Badge tone="warning">Düşük stok</Badge> : null}
                         <span className="text-sm font-medium text-slate-600">
                           {product.stockQuantity} adet
                         </span>
@@ -143,7 +143,7 @@ export default async function CategoryDetailPage({
 
           <div className="mt-6 space-y-3">
             {category.interests.length === 0 ? (
-              <p className="text-sm text-slate-500">Henuz kategori ilgisi kaydedilmedi.</p>
+              <p className="text-sm text-slate-500">Henüz kategori ilgisi kaydedilmedi.</p>
             ) : (
               category.interests.map((interest) => (
                 <Link key={interest.id} href={`/customers/${interest.customer.id}`}>

@@ -18,11 +18,11 @@ export default async function CategoriesPage() {
             Kategoriler
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Kategoriler gecici olarak kullanilamiyor
+            Kategoriler geçici olarak kullanılamıyor
           </h1>
         </div>
         <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
-          Veritabani baglantisi su anda kullanilamiyor.
+          Veritabanı bağlantısı şu anda kullanılamıyor.
         </Card>
       </div>
     );
@@ -42,7 +42,7 @@ export default async function CategoriesPage() {
             Kategoriler
           </h1>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            {categories.length} kategori &mdash; urün katalogunu ve müşteri ilgilerini organize edin.
+            {categories.length} kategori &mdash; ürün kataloğunu ve müşteri ilgilerini organize edin.
           </p>
         </div>
         <Link href="/categories/new">
@@ -52,9 +52,9 @@ export default async function CategoriesPage() {
 
       {categories.length === 0 ? (
         <Card className="p-12 text-center">
-          <p className="text-slate-500">Henuz kategori eklenmedi.</p>
+          <p className="text-slate-500">Henüz kategori eklenmedi.</p>
           <p className="mt-2 text-sm text-slate-400">
-            Ilk kategoriyi olusturmak icin &quot;Yeni kategori&quot; butonunu kullanin.
+            İlk kategoriyi oluşturmak için &quot;Yeni kategori&quot; butonunu kullanın.
           </p>
         </Card>
       ) : (

@@ -55,7 +55,7 @@ export async function createCustomerInterestAction(
   } catch {
     return {
       ok: false,
-      message: "Urun iliskisi kaydedilemedi.",
+      message: "Ürün ilişkisi kaydedilemedi.",
     };
   }
 }
@@ -76,7 +76,7 @@ export async function deleteCustomerInterestAction(
   } catch {
     return {
       ok: false,
-      message: "Urun iliskisi silinemedi.",
+      message: "Ürün ilişkisi silinemedi.",
     };
   }
 }
@@ -150,7 +150,7 @@ export async function createCustomerTaskAction(
   } catch {
     return {
       ok: false,
-      message: "Takip gorevi olusturulamadi.",
+      message: "Takip görevi oluşturulamadı.",
     };
   }
 }
@@ -177,7 +177,7 @@ export async function markCustomerContactedAction(customerId: string): Promise<A
     revalidatePath(`/customers/${customerId}`);
     return { ok: true };
   } catch {
-    return { ok: false, message: "Iletisim kaydi olusturulamadi." };
+    return { ok: false, message: "İletişim kaydı oluşturulamadı." };
   }
 }
 

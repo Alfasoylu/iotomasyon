@@ -110,7 +110,7 @@ export function CustomerForm({
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Musteri adi *" error={form.formState.errors.name?.message}>
+        <Field label="Müşteri adı *" error={form.formState.errors.name?.message}>
           <Input {...form.register("name")} />
         </Field>
         <Field label="Firma" error={form.formState.errors.company?.message}>
@@ -128,10 +128,10 @@ export function CustomerForm({
         <Field label="Vergi no" error={form.formState.errors.taxNumber?.message}>
           <Input {...form.register("taxNumber")} />
         </Field>
-        <Field label="Sehir" error={form.formState.errors.city?.message}>
+        <Field label="Şehir" error={form.formState.errors.city?.message}>
           <Input {...form.register("city")} />
         </Field>
-        <Field label="Ulke" error={form.formState.errors.country?.message}>
+        <Field label="Ülke" error={form.formState.errors.country?.message}>
           <Input {...form.register("country")} />
         </Field>
         <Field label="Durum" error={form.formState.errors.status?.message}>
@@ -195,15 +195,15 @@ export function CustomerForm({
       <div className="flex gap-3">
         <Button type="submit" disabled={pending}>
           {pending
-            ? mode === "create" ? "Kaydediliyor..." : "Guncelleniyor..."
-            : mode === "create" ? "Musteriyi olustur" : "Degisiklikleri kaydet"}
+            ? mode === "create" ? "Kaydediliyor..." : "Güncelleniyor..."
+            : mode === "create" ? "Müşteriyi oluştur" : "Değişiklikleri kaydet"}
         </Button>
         <Button
           type="button"
           variant="secondary"
           onClick={() => router.push(mode === "create" ? "/customers" : `/customers/${customerId}`)}
         >
-          Vazgec
+          Vazgeç
         </Button>
       </div>
     </form>

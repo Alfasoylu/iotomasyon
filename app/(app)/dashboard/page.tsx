@@ -50,12 +50,12 @@ export default async function DashboardPage() {
         </h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Bu ay kazanilan"
+            label="Bu ay kazanılan"
             value={formatCurrencyAmount(stats.monthlyRevenue, "TRY")}
             tone="success"
           />
           <StatCard
-            label="Toplam kazanilan"
+            label="Toplam kazanılan"
             value={formatCurrencyAmount(stats.wonRevenue, "TRY")}
           />
           <StatCard
@@ -73,8 +73,8 @@ export default async function DashboardPage() {
       {/* Pipeline funnel */}
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Satis hunisi
-        </h2>
+          Satış hunisi
+</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <StatCard label="Yeni" value={stats.newCustomerCount} />
           <StatCard label="İletişim kuruldu" value={stats.customerCount - stats.newCustomerCount - stats.wonCustomerCount - stats.lostDeals} />
@@ -100,8 +100,8 @@ export default async function DashboardPage() {
 
       {!stats.databaseAvailable ? (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
-          Veritabani baglantisi su anda kullanilamiyor. Dashboard yuklendi ancak canli
-          metrikler gosterilemiyor.
+          Veritabanı bağlantısı şu anda kullanılamıyor. Pano yüklendi ancak canlı
+          metrikler gösterilemiyor.
         </Card>
       ) : null}
 
@@ -138,11 +138,11 @@ export default async function DashboardPage() {
           <div className="mt-4 space-y-4">
             {!dueToday.databaseAvailable ? (
               <p className="text-sm leading-7 text-slate-600">
-                Veritabani baglantisi olmadan bugune ait follow-up kayitlari yuklenemedi.
+                Veritabanı bağlantısı olmadan bugüne ait takip kayıtları yüklenemedi.
               </p>
             ) : dueToday.tasks.length === 0 ? (
               <p className="text-sm leading-7 text-slate-600">
-                Bugun icin acik follow-up gorevi bulunmuyor.
+                Bugün için açık takip görevi bulunmuyor.
               </p>
             ) : (
               dueToday.tasks.map((task) => (

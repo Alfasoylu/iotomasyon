@@ -100,7 +100,7 @@ export default async function ProductDetailPage({
               <Info label="İthalatta gelen adet" value={`${product.importQuantity}`} />
             ) : null}
             {product.importUnitCostUsd != null ? (
-              <Info label="İthalat birim maliyet (USD)" value={`$${Number(product.importUnitCostUsd).toFixed(2)}`} />
+              <Info label="İthalat birim maliyeti (USD)" value={`$${Number(product.importUnitCostUsd).toFixed(2)}`} />
             ) : null}
             {product.inventoryCountDate ? (
               <Info label="Depo sayım tarihi" value={formatDateTime(product.inventoryCountDate)} />

@@ -58,7 +58,7 @@ export function CustomerNoteForm({ customerId }: { customerId: string }) {
         ))}
       </select>
 
-      <Textarea {...form.register("note")} className="min-h-24" placeholder="Musteri ile son gorusme notu" />
+      <Textarea {...form.register("note")} className="min-h-24" placeholder="Müşteri ile son görüşme notu" />
 
       {serverMessage ? <p className="text-sm text-red-600">{serverMessage}</p> : null}
 

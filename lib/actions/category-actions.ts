@@ -18,7 +18,7 @@ export async function createCategoryAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -41,12 +41,12 @@ export async function createCategoryAction(
     if (isUniqueSlugError(error)) {
       return {
         ok: false,
-        message: "Bu slug zaten kullaniliyor.",
-        fieldErrors: { slug: ["Bu slug zaten kullaniliyor."] },
+        message: "Bu slug zaten kullanılıyor.",
+        fieldErrors: { slug: ["Bu slug zaten kullanılıyor."] },
       };
     }
 
-    return { ok: false, message: "Kategori olusturulamadi." };
+    return { ok: false, message: "Kategori oluşturulamadı." };
   }
 }
 
@@ -60,7 +60,7 @@ export async function updateCategoryAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -68,8 +68,8 @@ export async function updateCategoryAction(
   if (parsed.data.parentId === categoryId) {
     return {
       ok: false,
-      message: "Bir kategori kendisinin ust kategorisi olamaz.",
-      fieldErrors: { parentId: ["Kendi kendine baglanti kurulamaz."] },
+      message: "Bir kategori kendisinin üst kategorisi olamaz.",
+      fieldErrors: { parentId: ["Kendi kendine bağlantı kurulamaz."] },
     };
   }
 
@@ -93,12 +93,12 @@ export async function updateCategoryAction(
     if (isUniqueSlugError(error)) {
       return {
         ok: false,
-        message: "Bu slug zaten kullaniliyor.",
-        fieldErrors: { slug: ["Bu slug zaten kullaniliyor."] },
+        message: "Bu slug zaten kullanılıyor.",
+        fieldErrors: { slug: ["Bu slug zaten kullanılıyor."] },
       };
     }
 
-    return { ok: false, message: "Kategori guncellenemedi." };
+    return { ok: false, message: "Kategori güncellenemedi." };
   }
 }
 
@@ -113,7 +113,7 @@ export async function deleteCategoryAction(categoryId: string): Promise<ActionRe
 
     return { ok: true, redirectTo: "/categories" };
   } catch {
-    return { ok: false, message: "Kategori silinemedi. Bagli urunler veya ilgiler olabilir." };
+    return { ok: false, message: "Kategori silinemedi. Bağlı ürünler veya ilgiler olabilir." };
   }
 }
 

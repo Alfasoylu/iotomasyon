@@ -16,9 +16,9 @@ const TRANSITIONS: Record<QuoteStatus, Array<"SENT" | "VIEWED" | "WON" | "LOST">
 };
 
 const LABELS: Record<string, string> = {
-  SENT: "Gonderildi olarak isaretle",
-  VIEWED: "Goruntulendi olarak isaretle",
-  WON: "Kazanildi",
+  SENT: "Gönderildi olarak işaretle",
+  VIEWED: "Görüntülendi olarak işaretle",
+  WON: "Kazanıldı",
   LOST: "Kaybedildi",
 };
 

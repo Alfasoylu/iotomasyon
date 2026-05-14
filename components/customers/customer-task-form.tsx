@@ -71,12 +71,12 @@ export function CustomerTaskForm({ customerId }: { customerId: string }) {
         ))}
       </select>
 
-      <Textarea {...form.register("description")} className="min-h-24" placeholder="Gorev aciklamasi" />
+      <Textarea {...form.register("description")} className="min-h-24" placeholder="Görev açıklaması" />
 
       {serverMessage ? <p className="text-sm text-red-600">{serverMessage}</p> : null}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Olusturuluyor..." : "Takip gorevi olustur"}
+        {pending ? "Oluşturuluyor..." : "Takip görevi oluştur"}
       </Button>
     </form>
   );

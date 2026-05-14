@@ -19,7 +19,7 @@ export async function createProductAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -51,16 +51,16 @@ export async function createProductAction(
     if (isUniqueSkuError(error)) {
       return {
         ok: false,
-        message: "Bu SKU zaten kullaniliyor.",
+        message: "Bu SKU zaten kullanılıyor.",
         fieldErrors: {
-          sku: ["Bu SKU zaten kullaniliyor."],
+          sku: ["Bu SKU zaten kullanılıyor."],
         },
       };
     }
 
     return {
       ok: false,
-      message: "Urun kaydi olusturulamadi.",
+      message: "Ürün kaydı oluşturulamadı.",
     };
   }
 }
@@ -76,7 +76,7 @@ export async function updateProductAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -107,16 +107,16 @@ export async function updateProductAction(
     if (isUniqueSkuError(error)) {
       return {
         ok: false,
-        message: "Bu SKU zaten kullaniliyor.",
+        message: "Bu SKU zaten kullanılıyor.",
         fieldErrors: {
-          sku: ["Bu SKU zaten kullaniliyor."],
+          sku: ["Bu SKU zaten kullanılıyor."],
         },
       };
     }
 
     return {
       ok: false,
-      message: "Urun guncellenemedi.",
+      message: "Ürün güncellenemedi.",
     };
   }
 }
@@ -139,7 +139,7 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
   } catch {
     return {
       ok: false,
-      message: "Urun silinemedi.",
+      message: "Ürün silinemedi.",
     };
   }
 }

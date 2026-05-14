@@ -18,7 +18,7 @@ export async function createCustomerAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -85,7 +85,7 @@ export async function createCustomerAction(
   } catch {
     return {
       ok: false,
-      message: "Musteri kaydi olusturulamadi.",
+      message: "Müşteri kaydı oluşturulamadı.",
     };
   }
 }
@@ -100,7 +100,7 @@ export async function updateCustomerAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -144,7 +144,7 @@ export async function updateCustomerAction(
   } catch {
     return {
       ok: false,
-      message: "Musteri guncellenemedi.",
+      message: "Müşteri güncellenemedi.",
     };
   }
 }
@@ -167,7 +167,7 @@ export async function updateCustomerStatusAction(
 
     return { ok: true };
   } catch {
-    return { ok: false, message: "Musteri durumu guncellenemedi." };
+    return { ok: false, message: "Müşteri durumu güncellenemedi." };
   }
 }
 
@@ -189,7 +189,7 @@ export async function deleteCustomerAction(customerId: string): Promise<ActionRe
   } catch {
     return {
       ok: false,
-      message: "Musteri silinemedi.",
+      message: "Müşteri silinemedi.",
     };
   }
 }

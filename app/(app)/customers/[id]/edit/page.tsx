@@ -24,19 +24,19 @@ export default async function EditCustomerPage({
       <div className="space-y-6">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Customers
+            Müşteriler
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Musteri duzenleme gecici olarak kullanilamiyor
+            Müşteri düzenleme geçici olarak kullanılamıyor
           </h1>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Veritabani baglantisi su anda kullanilamiyor. Baglanti geri geldiginde
-            bu ekran tekrar kullanilabilir olacak.
+            Veritabanı bağlantısı şu anda kullanılamıyor. Bağlantı geri geldiğinde
+            bu ekran tekrar kullanılabilir olacak.
           </p>
         </div>
 
         <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
-          Veritabanina ulasilamadigi icin musteri duzenleme formu yuklenemedi.
+          Veritabanına ulaşılamadığı için müşteri düzenleme formu yüklenemedi.
         </Card>
       </div>
     );
@@ -50,13 +50,13 @@ export default async function EditCustomerPage({
     <div className="space-y-6">
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Customers
+          Müşteriler
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          Musteri duzenle
+          Müşteri düzenle
         </h1>
         <p className="mt-2 text-sm leading-7 text-slate-600">
-          Musteri iletisim kaydini ve satis durumunu guncelleyin.
+          Müşteri iletişim kaydını ve satış durumunu güncelleyin.
         </p>
       </div>
 

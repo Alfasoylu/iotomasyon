@@ -44,7 +44,7 @@ export async function createCampaignAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }

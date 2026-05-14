@@ -56,7 +56,7 @@ export function CustomerFilters({
       <Input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Musteri, firma, telefon, WhatsApp veya e-posta ara"
+        placeholder="Müşteri, firma, telefon, WhatsApp veya e-posta ara"
       />
 
       <select
@@ -64,7 +64,7 @@ export function CustomerFilters({
         onChange={(event) => setStatus(event.target.value)}
         className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
       >
-        <option value="all">Tum durumlar</option>
+        <option value="all">Tüm durumlar</option>
         {CUSTOMER_STATUS_OPTIONS.map((option) => (
           <option key={option} value={option}>{formatCustomerStatus(option)}</option>
         ))}

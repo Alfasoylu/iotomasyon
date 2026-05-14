@@ -85,7 +85,7 @@ export async function createQuoteAction(
   } catch {
     return {
       ok: false,
-      message: "Teklif olusturulamadi.",
+      message: "Teklif oluşturulamadı.",
     };
   }
 }
@@ -111,7 +111,7 @@ export async function updateQuoteStatusAction(
     revalidatePath("/dashboard");
     return { ok: true };
   } catch {
-    return { ok: false, message: "Teklif durumu guncellenemedi." };
+    return { ok: false, message: "Teklif durumu güncellenemedi." };
   }
 }
 

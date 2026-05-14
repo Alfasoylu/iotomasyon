@@ -10,7 +10,7 @@ export async function loginAction(values: LoginInput): Promise<ActionResult<keyo
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -20,7 +20,7 @@ export async function loginAction(values: LoginInput): Promise<ActionResult<keyo
   if (!user) {
     return {
       ok: false,
-      message: "E-posta veya sifre hatali.",
+      message: "E-posta veya şifre hatalı.",
     };
   }
 

@@ -66,7 +66,7 @@ export function CustomerInterestForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Urun">
+        <Field label="Ürün">
           <select
             {...form.register("productId")}
             className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
@@ -78,7 +78,7 @@ export function CustomerInterestForm({
             ))}
           </select>
         </Field>
-        <Field label="Asama">
+        <Field label="Aşama">
           <select
             {...form.register("stage")}
             className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
@@ -97,7 +97,7 @@ export function CustomerInterestForm({
             {...form.register("quantity", { valueAsNumber: true })}
           />
         </Field>
-        <Field label="Teklif fiyati">
+        <Field label="Teklif fiyatı">
           <Input {...form.register("quotedPrice")} placeholder="Orn. 12500" />
         </Field>
         <Field label="Para birimi">
@@ -112,7 +112,7 @@ export function CustomerInterestForm({
       {serverMessage ? <p className="text-sm text-red-600">{serverMessage}</p> : null}
 
       <Button type="submit" disabled={pending || products.length === 0}>
-        {pending ? "Ekleniyor..." : "Urun ilgisi ekle"}
+        {pending ? "Ekleniyor..." : "Ürün ilgisi ekle"}
       </Button>
     </form>
   );
