@@ -1,21 +1,14 @@
-import type { QuoteStatus } from "@/types/quotes";
-
-type QuoteCurrencyMode = "USD" | "TRY" | "BOTH";
-
-type DisplayAmountOptions = {
-  currencyMode?: string | null;
-  exchangeRate?: string | number | { toString(): string } | null;
-};
+import type { QuoteCurrencyMode, QuoteStatus } from "@/types/quotes";
 
 export function formatQuoteStatus(status: QuoteStatus) {
   return (
     {
       DRAFT: "Taslak",
-      SENT: "Gonderildi",
-      VIEWED: "Goruntulendi",
-      WON: "Kazanildi",
+      SENT: "Gönderildi",
+      VIEWED: "Görüntülendi",
+      WON: "Kazanıldı",
       LOST: "Kaybedildi",
-      ACCEPTED: "Onaylandi",
+      ACCEPTED: "Onaylandı",
       DECLINED: "Reddedildi",
     }[status] ?? status
   );
@@ -52,73 +45,46 @@ export function formatPercentValue(value: string | number) {
   return `%${Number.isFinite(numeric) ? numeric : 0}`;
 }
 
+export function formatQuoteCurrencyMode(mode: QuoteCurrencyMode) {
+  return {
+    USD: "Sadece USD",
+    TRY: "Sadece TL",
+    BOTH: "USD + TL",
+  }[mode];
+}
+
 export function resolveDisplayAmounts(
-  value: string | number,
-  currency: string,
-  options?: DisplayAmountOptions,
-) {
-  const amount = typeof value === "number" ? value : Number(value);
-  const normalizedAmount = Number.isFinite(amount) ? amount : 0;
-  const normalizedCurrency = currency.toUpperCase() === "USD" ? "USD" : "TRY";
-  const mode = normalizeCurrencyMode(options?.currencyMode);
-  const exchangeRate = normalizeExchangeRate(options?.exchangeRate);
-
-  const tryAmount =
-    normalizedCurrency === "TRY"
-      ? normalizedAmount
-      : exchangeRate
-        ? normalizedAmount * exchangeRate
-        : null;
-  const usdAmount =
-    normalizedCurrency === "USD"
-      ? normalizedAmount
-      : exchangeRate
-        ? normalizedAmount / exchangeRate
-        : null;
-
-  if (mode === "BOTH") {
-    const usdLabel =
-      usdAmount !== null
-        ? `USD: ${formatCurrencyAmount(usdAmount, "USD")}`
-        : `USD: ${fallbackCurrencyAmount(normalizedAmount, normalizedCurrency)}`;
-    const tryLabel =
-      tryAmount !== null
-        ? `TRY: ${formatCurrencyAmount(tryAmount, "TRY")}`
-        : `TRY: ${fallbackCurrencyAmount(normalizedAmount, normalizedCurrency)}`;
-
-    return `${usdLabel} | ${tryLabel}`;
-  }
+  value: number,
+  itemCurrency: string,
+  mode: QuoteCurrencyMode,
+  exchangeRate: number | null,
+): { primary: string; secondary?: string } {
+  const isUsd = itemCurrency.toUpperCase() === "USD";
+  const rate = exchangeRate && exchangeRate > 0 ? exchangeRate : null;
 
   if (mode === "USD") {
-    return usdAmount !== null
-      ? formatCurrencyAmount(usdAmount, "USD")
-      : fallbackCurrencyAmount(normalizedAmount, normalizedCurrency);
+    const usdValue = isUsd ? value : rate ? value / rate : value;
+    return { primary: formatCurrencyAmount(usdValue, "USD") };
   }
 
-  return tryAmount !== null
-    ? formatCurrencyAmount(tryAmount, "TRY")
-    : fallbackCurrencyAmount(normalizedAmount, normalizedCurrency);
-}
-
-function normalizeCurrencyMode(mode?: string | null): QuoteCurrencyMode {
-  if (mode === "USD" || mode === "BOTH") {
-    return mode;
+  if (mode === "TRY") {
+    const tryValue = isUsd && rate ? value * rate : value;
+    return { primary: formatCurrencyAmount(tryValue, "TRY") };
   }
 
-  return "TRY";
-}
-
-function normalizeExchangeRate(value?: string | number | { toString(): string } | null) {
-  if (value === null || value === undefined) {
-    return null;
+  if (isUsd && rate) {
+    return {
+      primary: formatCurrencyAmount(value, "USD"),
+      secondary: formatCurrencyAmount(value * rate, "TRY"),
+    };
   }
 
-  const numeric =
-    typeof value === "number" ? value : Number.parseFloat(value.toString().replace(",", "."));
+  if (!isUsd && rate) {
+    return {
+      primary: formatCurrencyAmount(value, itemCurrency),
+      secondary: formatCurrencyAmount(value / rate, "USD"),
+    };
+  }
 
-  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
-}
-
-function fallbackCurrencyAmount(value: number, currency: string) {
-  return formatCurrencyAmount(value, currency === "USD" ? "USD" : "TRY");
+  return { primary: formatCurrencyAmount(value, itemCurrency) };
 }

@@ -9,8 +9,10 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
 import {
   formatCurrencyAmount,
+  formatQuoteCurrencyMode,
   formatQuoteStatus,
   getQuoteStatusTone,
+  resolveDisplayAmounts,
 } from "@/lib/quote-utils";
 import { getQuoteById } from "@/services/quote-service";
 
@@ -29,6 +31,8 @@ export default async function QuoteDetailPage({
   }
 
   const quoteCurrency = quote.items[0]?.currency ?? "TRY";
+  const currencyMode = quote.currencyMode ?? "TRY";
+  const exchangeRate = quote.exchangeRate != null ? Number(quote.exchangeRate) : null;
 
   return (
     <div className="space-y-6">
@@ -49,7 +53,7 @@ export default async function QuoteDetailPage({
           <QuoteStatusButtons quoteId={quote.id} currentStatus={quote.status} />
           <a href={`/quotes/${quote.id}/pdf`} target="_blank" rel="noreferrer">
             <span className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-50">
-              PDF export
+              PDF İndir
             </span>
           </a>
           <QuoteWhatsAppButton
@@ -58,7 +62,7 @@ export default async function QuoteDetailPage({
             customerName={quote.customer.name}
           />
           <Link href={`/customers/${quote.customerId}`}>
-            <Button variant="ghost">Musteriye don</Button>
+            <Button variant="ghost">Müşteriye dön</Button>
           </Link>
         </div>
       </div>
@@ -71,11 +75,11 @@ export default async function QuoteDetailPage({
               <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.25em] text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Kalem</th>
-                  <th className="px-4 py-3">Qty</th>
-                  <th className="px-4 py-3">Unit</th>
-                  <th className="px-4 py-3">Discount</th>
-                  <th className="px-4 py-3">Tax</th>
-                  <th className="px-4 py-3">Total</th>
+                  <th className="px-4 py-3">Miktar</th>
+                  <th className="px-4 py-3">Birim fiyat</th>
+                  <th className="px-4 py-3">İndirim</th>
+                  <th className="px-4 py-3">Vergi</th>
+                  <th className="px-4 py-3">Toplam</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white text-sm">
@@ -89,7 +93,10 @@ export default async function QuoteDetailPage({
                     </td>
                     <td className="px-4 py-4 text-slate-600">{item.quantity}</td>
                     <td className="px-4 py-4 text-slate-600">
-                      {formatCurrencyAmount(item.unitPrice.toString(), item.currency)}
+                      {(() => {
+                        const r = resolveDisplayAmounts(Number(item.unitPrice), item.currency, currencyMode, exchangeRate);
+                        return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary;
+                      })()}
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {formatCurrencyAmount(item.discount.toString(), item.currency)}
@@ -98,7 +105,10 @@ export default async function QuoteDetailPage({
                       {formatCurrencyAmount(item.tax.toString(), item.currency)}
                     </td>
                     <td className="px-4 py-4 font-semibold text-slate-900">
-                      {formatCurrencyAmount(item.total.toString(), item.currency)}
+                      {(() => {
+                        const r = resolveDisplayAmounts(Number(item.total), item.currency, currencyMode, exchangeRate);
+                        return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary;
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -108,16 +118,17 @@ export default async function QuoteDetailPage({
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Teklif ozeti</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Teklif özeti</h2>
           <dl className="mt-5 space-y-4">
-            <Info label="Subtotal" value={formatCurrencyAmount(quote.subtotal.toString(), quoteCurrency)} />
-            <Info label="Discount" value={formatCurrencyAmount(quote.discountTotal.toString(), quoteCurrency)} />
-            <Info label="Tax" value={formatCurrencyAmount(quote.taxTotal.toString(), quoteCurrency)} />
-            <Info label="Total" value={formatCurrencyAmount(quote.total.toString(), quoteCurrency)} />
-            <Info label="Olusturulma" value={formatDateTime(quote.createdAt)} />
-            {quote.sentAt ? <Info label="Gonderilme" value={formatDateTime(quote.sentAt)} /> : null}
-            {quote.validityDate ? <Info label="Gecerlilik" value={formatDateTime(quote.validityDate)} /> : null}
-            <Info label="Olusturan" value={quote.createdBy?.name ?? "System"} />
+            <Info label="Para birimi" value={formatQuoteCurrencyMode(currencyMode)} />
+            <Info label="Ara toplam" value={(() => { const r = resolveDisplayAmounts(Number(quote.subtotal), quoteCurrency, currencyMode, exchangeRate); return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary; })()} />
+            <Info label="İndirim" value={(() => { const r = resolveDisplayAmounts(Number(quote.discountTotal), quoteCurrency, currencyMode, exchangeRate); return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary; })()} />
+            <Info label="Vergi" value={(() => { const r = resolveDisplayAmounts(Number(quote.taxTotal), quoteCurrency, currencyMode, exchangeRate); return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary; })()} />
+            <Info label="Toplam" value={(() => { const r = resolveDisplayAmounts(Number(quote.total), quoteCurrency, currencyMode, exchangeRate); return r.secondary ? `${r.primary} / ${r.secondary}` : r.primary; })()} />
+            <Info label="Oluşturulma" value={formatDateTime(quote.createdAt)} />
+            {quote.sentAt ? <Info label="Gönderilme" value={formatDateTime(quote.sentAt)} /> : null}
+            {quote.validityDate ? <Info label="Geçerlilik" value={formatDateTime(quote.validityDate)} /> : null}
+            <Info label="Oluşturan" value={quote.createdBy?.name ?? "Sistem"} />
           </dl>
 
           <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">

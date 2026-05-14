@@ -20,11 +20,11 @@ export default async function LoginPage() {
             Elektronik ürün, müşteri ve stok akışını tek merkezden yönetin.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-slate-300">
-            Phase 1 için sistem tek admin hesabı ile çalışır. Giriş yaptıktan sonra
-            dashboard ve ürün modülü kullanıma hazırdır.
+            Phase 1 için sistem tek admin hesabı ile çalışır. Giriş yaptıktan sonra dashboard
+            ve ürün modülü kullanıma hazırdır.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <Metric label="Modul" value="Auth + Dashboard + Products" />
+            <Metric label="Modül" value="Auth + Dashboard + Products" />
             <Metric label="Altyapı" value="Next 16 + Prisma + PostgreSQL" />
             <Metric label="Hazırlık" value="PostgreSQL migration-ready" />
           </div>
@@ -36,8 +36,8 @@ export default async function LoginPage() {
           </p>
           <h2 className="mt-4 text-3xl font-semibold text-slate-950">Giriş yap</h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            İlk girişte sistem `ADMIN_EMAIL` ve `ADMIN_PASSWORD` bilgileri ile admin
-            hesabını otomatik oluşturur.
+            İlk girişte sistem `ADMIN_EMAIL` ve `ADMIN_PASSWORD` bilgileri ile admin hesabını
+            otomatik oluşturur.
           </p>
           <div className="mt-8">
             <LoginForm />

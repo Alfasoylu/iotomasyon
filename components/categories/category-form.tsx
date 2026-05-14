@@ -93,7 +93,7 @@ export function CategoryForm({
   return (
     <form onSubmit={submit} className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Kategori adi" error={form.formState.errors.name?.message}>
+        <Field label="Kategori adı" error={form.formState.errors.name?.message}>
           <Input {...form.register("name")} placeholder="orn. Endüstriyel Motorlar" />
         </Field>
 
@@ -110,7 +110,7 @@ export function CategoryForm({
           </div>
         </Field>
 
-        <Field label="Ust kategori (opsiyonel)" error={form.formState.errors.parentId?.message}>
+        <Field label="Üst kategori (opsiyonel)" error={form.formState.errors.parentId?.message}>
           <select
             {...form.register("parentId")}
             className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
@@ -125,8 +125,8 @@ export function CategoryForm({
         </Field>
       </div>
 
-      <Field label="Aciklama" error={form.formState.errors.description?.message}>
-        <Textarea {...form.register("description")} placeholder="Kategori hakkinda kisa aciklama" />
+      <Field label="Açıklama" error={form.formState.errors.description?.message}>
+        <Textarea {...form.register("description")} placeholder="Kategori hakkında kısa açıklama" />
       </Field>
 
       {serverMessage ? <p className="text-sm text-red-600">{serverMessage}</p> : null}
@@ -136,17 +136,17 @@ export function CategoryForm({
           {pending
             ? mode === "create"
               ? "Kaydediliyor..."
-              : "Guncelleniyor..."
+              : "Güncelleniyor..."
             : mode === "create"
-              ? "Kategori olustur"
-              : "Degisiklikleri kaydet"}
+              ? "Kategori oluştur"
+              : "Değişiklikleri kaydet"}
         </Button>
         <Button
           type="button"
           variant="secondary"
           onClick={() => router.push(mode === "create" ? "/categories" : `/categories/${categoryId}`)}
         >
-          Vazgec
+          Vazgeç
         </Button>
       </div>
     </form>

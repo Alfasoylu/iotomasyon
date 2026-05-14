@@ -10,7 +10,8 @@ import {
   formatCustomerStatus,
   getCustomerStatusTone,
 } from "@/lib/customer-utils";
-import { listCustomers } from "@/services/customer-service";
+import { listCustomers, listUsersForSelect } from "@/services/customer-service";
+import { listAttributes } from "@/services/attribute-service";
 
 export const dynamic = "force-dynamic";
 
@@ -20,52 +21,68 @@ export default async function CustomersPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const query = typeof params.q === "string" ? params.q : "";
-  const status = typeof params.status === "string" ? params.status : "all";
-  const { databaseAvailable, customers } = await listCustomers({ q: query, status });
+  const query       = typeof params.q           === "string" ? params.q           : "";
+  const status      = typeof params.status      === "string" ? params.status      : "all";
+  const source      = typeof params.source      === "string" ? params.source      : "all";
+  const ownedById   = typeof params.ownedById   === "string" ? params.ownedById   : "all";
+  const attributeId = typeof params.attributeId === "string" ? params.attributeId : "all";
+
+  const [{ databaseAvailable, customers }, users, attributes] = await Promise.all([
+    listCustomers({ q: query, status, source, ownedById, attributeId }),
+    listUsersForSelect(),
+    listAttributes(),
+  ]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Customers
+            Müşteriler
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Musteri portfoyu
+            Müşteri portföyü
           </h1>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Satis sureci icin musteri kayitlari, durum takibi ve iletisim bilgileri.
+            Satış süreci için müşteri kayıtları, durum takibi ve iletişim bilgileri.
           </p>
         </div>
         <Link href="/customers/new">
-          <Button>Yeni musteri</Button>
+          <Button>Yeni müşteri</Button>
         </Link>
       </div>
 
       <Card className="p-5">
-        <CustomerFilters initialQuery={query} initialStatus={status} />
+        <CustomerFilters
+          initialQuery={query}
+          initialStatus={status}
+          initialSource={source}
+          initialOwnedById={ownedById}
+          initialAttributeId={attributeId}
+          users={users}
+          attributes={attributes}
+        />
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
         <Card className="p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Sales pipeline
+            Satış hattı
           </p>
           <h2 className="mt-3 text-xl font-semibold text-slate-950">
-            Musteri durum panosu
+            Müşteri durum panosu
           </h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Kayitlari durum bazli izleyin ve satis surecindeki yogunlugu gorun.
+            Kayıtları durum bazlı izleyin ve satış sürecindeki yoğunluğu görün.
           </p>
         </Card>
 
         <Card className="p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            CSV import
+            CSV ile içe aktar
           </p>
           <h2 className="mt-3 text-xl font-semibold text-slate-950">
-            Musteri listesini iceri aktar
+            Müşteri listesini içe aktar
           </h2>
           <p className="mt-2 text-sm leading-7 text-slate-600">
             Kolon adlari: name, company, phone, whatsapp, email, taxNumber, address,
@@ -81,7 +98,7 @@ export default async function CustomersPage({
 
       {!databaseAvailable ? (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
-          Veritabani baglantisi su anda kullanilamiyor. Musteri listesi gosterilemiyor.
+          Veritabanı bağlantısı şu anda kullanılamıyor. Müşteri listesi gösterilemiyor.
         </Card>
       ) : null}
 
@@ -90,9 +107,11 @@ export default async function CustomersPage({
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.25em] text-slate-500">
               <tr>
-                <th className="px-4 py-3">Musteri</th>
-                <th className="px-4 py-3">Iletisim</th>
-                <th className="px-4 py-3">Sehir</th>
+                <th className="px-4 py-3">Müşteri</th>
+                <th className="px-4 py-3">İletişim</th>
+                <th className="px-4 py-3">Şehir</th>
+                <th className="px-4 py-3">Kaynak</th>
+                <th className="px-4 py-3">Sorumlu</th>
                 <th className="px-4 py-3">Durum</th>
                 <th className="px-4 py-3 text-right">Aksiyon</th>
               </tr>
@@ -100,8 +119,8 @@ export default async function CustomersPage({
             <tbody className="divide-y divide-slate-100 bg-white text-sm">
               {customers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
-                    Bu filtrelerle eslesen musteri bulunamadi.
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
+                    Bu filtrelerle eşleşen müşteri bulunamadı.
                   </td>
                 </tr>
               ) : (
@@ -117,6 +136,12 @@ export default async function CustomersPage({
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {[customer.city, customer.country].filter(Boolean).join(" / ") || "-"}
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      {customer.source ?? "-"}
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      {customer.owner?.name ?? "-"}
                     </td>
                     <td className="px-4 py-4">
                       <Badge tone={getCustomerStatusTone(customer.status)}>

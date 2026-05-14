@@ -43,7 +43,7 @@ export function QuoteWhatsAppButton({
         });
       }}
     >
-      {pending ? "Hazirlaniyor..." : "WhatsApp ile gonder"}
+      {pending ? "Hazırlanıyor..." : "WhatsApp ile gönder"}
     </Button>
   );
 }

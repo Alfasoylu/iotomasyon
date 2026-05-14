@@ -8,9 +8,22 @@ import { prisma } from "@/lib/prisma";
 export type CustomerFilters = {
   q?: string;
   status?: string;
+  source?: string;
+  ownedById?: string;
+  attributeId?: string;
+};
+
+export type UserOption = {
+  id: string;
+  name: string;
 };
 
 const customerDetailInclude = Prisma.validator<Prisma.CustomerInclude>()({
+  owner: { select: { id: true, name: true } },
+  attributeInterests: {
+    include: { attribute: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" as const },
+  },
   interests: {
     include: {
       product: { select: { id: true, name: true, sku: true } },
@@ -49,18 +62,30 @@ export type CustomerDetail = Prisma.CustomerGetPayload<{
   include: typeof customerDetailInclude;
 }>;
 
+export async function listUsersForSelect(): Promise<UserOption[]> {
+  try {
+    return await prisma.user.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+  } catch {
+    return [];
+  }
+}
+
 export async function listCustomers(filters: CustomerFilters) {
   const where: Prisma.CustomerWhereInput = {};
 
   if (filters.q) {
     where.OR = [
-      { name: { contains: filters.q, mode: "insensitive" } },
-      { company: { contains: filters.q, mode: "insensitive" } },
-      { phone: { contains: filters.q, mode: "insensitive" } },
-      { whatsapp: { contains: filters.q, mode: "insensitive" } },
-      { email: { contains: filters.q, mode: "insensitive" } },
-      { city: { contains: filters.q, mode: "insensitive" } },
-      { country: { contains: filters.q, mode: "insensitive" } },
+      { name:      { contains: filters.q, mode: "insensitive" } },
+      { company:   { contains: filters.q, mode: "insensitive" } },
+      { phone:     { contains: filters.q, mode: "insensitive" } },
+      { whatsapp:  { contains: filters.q, mode: "insensitive" } },
+      { email:     { contains: filters.q, mode: "insensitive" } },
+      { city:      { contains: filters.q, mode: "insensitive" } },
+      { country:   { contains: filters.q, mode: "insensitive" } },
       { taxNumber: { contains: filters.q, mode: "insensitive" } },
     ];
   }
@@ -69,11 +94,26 @@ export async function listCustomers(filters: CustomerFilters) {
     where.status = filters.status as Prisma.EnumCustomerStatusFilter["equals"];
   }
 
+  if (filters.source && filters.source !== "all") {
+    where.source = filters.source;
+  }
+
+  if (filters.ownedById && filters.ownedById !== "all") {
+    where.ownedById = filters.ownedById;
+  }
+
+  if (filters.attributeId && filters.attributeId !== "all") {
+    where.attributeInterests = { some: { attributeId: filters.attributeId } };
+  }
+
   try {
     return {
       databaseAvailable: true as const,
       customers: await prisma.customer.findMany({
         where,
+        include: {
+          owner: { select: { id: true, name: true } },
+        },
         orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       }),
     };

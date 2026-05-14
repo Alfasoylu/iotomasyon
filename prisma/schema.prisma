@@ -77,15 +77,54 @@ enum QuoteStatus {
   DECLINED
 }
 
+enum QuoteCurrencyMode {
+  USD
+  TRY
+  BOTH
+}
+
 enum OutreachStatus {
   DRAFT
   ACTIVE
   COMPLETED
 }
 
+model ProductAttribute {
+  id                String                       @id @default(cuid())
+  name              String                       @unique
+  createdAt         DateTime                     @default(now())
+  products          ProductAttributeAssignment[]
+  customerInterests CustomerAttributeInterest[]
+
+  @@index([name])
+}
+
+model ProductAttributeAssignment {
+  productId   String
+  attributeId String
+  createdAt   DateTime         @default(now())
+  product     Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attribute   ProductAttribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@id([productId, attributeId])
+  @@index([productId])
+  @@index([attributeId])
+}
+
+model CustomerAttributeInterest {
+  customerId  String
+  attributeId String
+  createdAt   DateTime         @default(now())
+  customer    Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  attribute   ProductAttribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, attributeId])
+  @@index([customerId])
+  @@index([attributeId])
+}
+
 enum RecipientStatus {
   PENDING
-  OPENED
   SENT
   REPLIED
   QUOTED
@@ -111,6 +150,7 @@ model User {
   quotesCreated            Quote[]
   categoryInterestsCreated CategoryInterest[] @relation("CreatedCategoryInterests")
   campaignsCreated         OutreachCampaign[] @relation("CreatedCampaigns")
+  customersOwned           Customer[]         @relation("OwnedCustomers")
 }
 
 model ProductCategory {
@@ -141,19 +181,25 @@ model Product {
   model           String?
   stockQuantity   Int              @default(0)
   minimumStock    Int              @default(0)
-  location        String?
-  description     String?
-  isActive        Boolean          @default(true)
+  location            String?
+  description         String?
+  isActive            Boolean          @default(true)
+  importDate          DateTime?
+  importQuantity      Int?
+  importUnitCostUsd   Decimal?
+  inventoryCountDate  DateTime?
+  inventoryCountStock Int?
   createdById     String?
   createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
   productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  interests       ProductInterest[]
-  notes           Note[]
-  tasks           FollowUpTask[]
-  quoteItems      QuoteItem[]
-  campaigns       OutreachCampaign[]
+  interests            ProductInterest[]
+  notes                Note[]
+  tasks                FollowUpTask[]
+  quoteItems           QuoteItem[]
+  campaigns            OutreachCampaign[]
+  attributeAssignments ProductAttributeAssignment[]
 
   @@index([name])
   @@index([category])
@@ -178,21 +224,26 @@ model Customer {
   taxOffice         String?
   taxNumber         String?
   source            String?
+  ownedById         String?
   isActive          Boolean            @default(true)
   lastContactedAt   DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+  owner               User?              @relation("OwnedCustomers", fields: [ownedById], references: [id], onDelete: SetNull)
   interests           ProductInterest[]
   categoryInterests   CategoryInterest[]
   timelineEntries     Note[]
   tasks               FollowUpTask[]
-  quotes              Quote[]
-  outreachRecipients  OutreachRecipient[]
+  quotes               Quote[]
+  outreachRecipients   OutreachRecipient[]
+  attributeInterests   CustomerAttributeInterest[]
 
   @@index([name])
   @@index([phone])
   @@index([email])
   @@index([status])
+  @@index([ownedById])
+  @@index([source])
 }
 
 model CategoryInterest {
@@ -299,6 +350,8 @@ model Quote {
   notes         String?
   validityDate  DateTime?
   sentAt        DateTime?
+  currencyMode  QuoteCurrencyMode @default(TRY)
+  exchangeRate  Decimal?
   subtotal      Decimal     @default(0)
   discountTotal Decimal     @default(0)
   taxTotal      Decimal     @default(0)

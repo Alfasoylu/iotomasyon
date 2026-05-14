@@ -64,7 +64,7 @@ export function LoginForm() {
 
       <div className="space-y-2">
         <label htmlFor="password" className="text-sm font-medium text-slate-700">
-          Sifre
+          Şifre
         </label>
         <Input
           id="password"
@@ -78,7 +78,7 @@ export function LoginForm() {
       {serverError ? <p className="text-sm text-red-600">{serverError}</p> : null}
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Giris yapiliyor..." : "Giris yap"}
+        {isPending ? "Giriş yapılıyor..." : "Giriş yap"}
       </Button>
     </form>
   );

@@ -9,7 +9,7 @@ export type CampaignCandidate = {
   company: string | null;
   phone: string | null;
   whatsapp: string | null;
-  source: "direct" | "category";
+  source: "direct" | "attribute" | "category";
 };
 
 export type CampaignFunnel = {
@@ -47,21 +47,27 @@ export type CampaignDetail = {
   recipients: CampaignRecipient[];
 };
 
-const SENT_STATUSES = new Set(["SENT", "REPLIED", "QUOTED", "WON", "LOST"]);
+const SENT_STATUSES    = new Set(["SENT", "REPLIED", "QUOTED", "WON", "LOST"]);
 const REPLIED_STATUSES = new Set(["REPLIED", "QUOTED", "WON", "LOST"]);
-const QUOTED_STATUSES = new Set(["QUOTED", "WON", "LOST"]);
+const QUOTED_STATUSES  = new Set(["QUOTED", "WON", "LOST"]);
 
 function computeFunnel(
-  recipients: { status: string; wonAmount: { toString(): string } | null }[],
+  recipients: { status: string; wonAmount: { toString(): string } | null; quoteId: string | null }[],
 ): CampaignFunnel {
   let sent = 0, replied = 0, quoted = 0, won = 0, revenue = 0;
+  // Dedup revenue by quoteId: same quote linked across multiple campaigns/recipients
+  // counts only once toward total revenue.
+  const countedQuoteIds = new Set<string>();
   for (const r of recipients) {
-    if (SENT_STATUSES.has(r.status)) sent++;
+    if (SENT_STATUSES.has(r.status))    sent++;
     if (REPLIED_STATUSES.has(r.status)) replied++;
-    if (QUOTED_STATUSES.has(r.status)) quoted++;
+    if (QUOTED_STATUSES.has(r.status))  quoted++;
     if (r.status === "WON") {
       won++;
-      revenue += r.wonAmount ? parseFloat(r.wonAmount.toString()) : 0;
+      if (r.wonAmount && r.quoteId && !countedQuoteIds.has(r.quoteId)) {
+        countedQuoteIds.add(r.quoteId);
+        revenue += parseFloat(r.wonAmount.toString());
+      }
     }
   }
   return { total: recipients.length, sent, replied, quoted, won, revenue };
@@ -95,6 +101,30 @@ export async function getCampaignCandidates(
           if (!seenIds.has(c.id)) {
             seenIds.add(c.id);
             candidates.push({ customerId: c.id, name: c.name, company: c.company, phone: c.phone, whatsapp: c.whatsapp, source: "direct" });
+          }
+        }
+
+        // Attribute-based matching (priority: direct > attribute > category)
+        const productAttrRows = await prisma.productAttributeAssignment.findMany({
+          where: { productId },
+          select: { attributeId: true },
+        });
+        if (productAttrRows.length > 0) {
+          const attrIds = productAttrRows.map((r) => r.attributeId);
+          const attrInterests = await prisma.customerAttributeInterest.findMany({
+            where: { attributeId: { in: attrIds } },
+            include: {
+              customer: { select: { id: true, name: true, company: true, phone: true, whatsapp: true } },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 500,
+          });
+          for (const ai of attrInterests) {
+            const c = ai.customer;
+            if (!seenIds.has(c.id)) {
+              seenIds.add(c.id);
+              candidates.push({ customerId: c.id, name: c.name, company: c.company, phone: c.phone, whatsapp: c.whatsapp, source: "attribute" });
+            }
           }
         }
 
@@ -216,7 +246,7 @@ export async function listCampaigns(): Promise<
       include: {
         product: { select: { name: true } },
         category: { select: { name: true } },
-        recipients: { select: { status: true, wonAmount: true } },
+        recipients: { select: { status: true, wonAmount: true, quoteId: true } },
       },
       orderBy: { createdAt: "desc" },
     });

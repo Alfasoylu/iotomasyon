@@ -126,31 +126,60 @@ export async function getProductIntelligence(productId: string) {
     });
 
     if (!product) {
-      return { databaseAvailable: true as const, directInterests: [], categoryInterests: [] };
+      return { databaseAvailable: true as const, directInterests: [], attributeInterests: [], categoryInterests: [] };
     }
 
-    const categoryInterests = product.categoryId
-      ? await prisma.categoryInterest.findMany({
-          where: { categoryId: product.categoryId },
+    const directCustomerIds = new Set(product.interests.map((i) => i.customer.id));
+
+    // Run category and attribute-ID lookups in parallel — both depend only on Q1.
+    const [categoryInterests, productAttrRows] = await Promise.all([
+      product.categoryId
+        ? prisma.categoryInterest.findMany({
+            where: { categoryId: product.categoryId },
+            include: {
+              customer: { select: { id: true, name: true, company: true, phone: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          })
+        : Promise.resolve([]),
+      prisma.productAttributeAssignment.findMany({
+        where: { productId },
+        select: { attributeId: true },
+      }),
+    ]);
+
+    const attrInterests = productAttrRows.length > 0
+      ? await prisma.customerAttributeInterest.findMany({
+          where: { attributeId: { in: productAttrRows.map((r) => r.attributeId) } },
           include: {
             customer: { select: { id: true, name: true, company: true, phone: true } },
+            attribute: { select: { id: true, name: true } },
           },
           orderBy: { createdAt: "desc" },
+          take: 500,
         })
       : [];
 
-    const directCustomerIds = new Set(product.interests.map((i) => i.customer.id));
+    const seenForAttribute = new Set(directCustomerIds);
+    const uniqueAttrInterests = attrInterests.filter((ai) => {
+      if (seenForAttribute.has(ai.customer.id)) return false;
+      seenForAttribute.add(ai.customer.id);
+      return true;
+    });
+
+    const categoryCustomerIds = new Set([...directCustomerIds, ...uniqueAttrInterests.map((ai) => ai.customer.id)]);
 
     return {
       databaseAvailable: true as const,
       directInterests: product.interests,
+      attributeInterests: uniqueAttrInterests,
       categoryInterests: categoryInterests.filter(
-        (ci) => !directCustomerIds.has(ci.customer.id),
+        (ci) => !categoryCustomerIds.has(ci.customer.id),
       ),
     };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
-      return { databaseAvailable: false as const, directInterests: [], categoryInterests: [] };
+      return { databaseAvailable: false as const, directInterests: [], attributeInterests: [], categoryInterests: [] };
     }
     throw error;
   }

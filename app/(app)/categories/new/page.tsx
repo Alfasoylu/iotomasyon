@@ -17,7 +17,7 @@ export default async function NewCategoryPage() {
           Yeni kategori
         </h1>
         <p className="mt-2 text-sm leading-7 text-slate-600">
-          Urun katalogunuzu organize etmek icin yeni bir kategori tanimlayin.
+          Ürün kataloğunuzu organize etmek için yeni bir kategori tanımlayın.
         </p>
       </div>
 

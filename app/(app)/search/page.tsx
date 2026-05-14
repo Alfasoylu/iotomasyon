@@ -1,9 +1,9 @@
 import Link from "next/link";
 
-import { formatCustomerStatus, getCustomerStatusTone } from "@/lib/customer-utils";
-import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { formatCustomerStatus, getCustomerStatusTone } from "@/lib/customer-utils";
+import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
 import { globalSearch } from "@/services/search-service";
 
 export const dynamic = "force-dynamic";
@@ -21,12 +21,8 @@ export default async function SearchPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Arama
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          Global arama
-        </h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Arama</p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Global arama</h1>
       </div>
 
       <form method="GET" action="/search">
@@ -47,9 +43,7 @@ export default async function SearchPage({
         </div>
       </form>
 
-      {q.length > 0 && q.length < 2 ? (
-        <p className="text-sm text-slate-500">En az 2 karakter girin.</p>
-      ) : null}
+      {q.length > 0 && q.length < 2 ? <p className="text-sm text-slate-500">En az 2 karakter girin.</p> : null}
 
       {results ? (
         <div className="space-y-6">
@@ -187,9 +181,7 @@ export default async function SearchPage({
           results.products.length === 0 &&
           results.notes.length === 0 &&
           results.categories.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              &quot;{q}&quot; için sonuç bulunamadı.
-            </p>
+            <p className="text-sm text-slate-500">&quot;{q}&quot; için sonuç bulunamadı.</p>
           ) : null}
         </div>
       ) : null}

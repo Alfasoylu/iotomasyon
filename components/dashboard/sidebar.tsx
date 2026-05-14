@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSidebarStore } from "@/hooks/use-sidebar-store";
 
 const navigation = [
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard", label: "Pano" },
   { href: "/customers", label: "Müşteriler" },
   { href: "/products", label: "Ürünler" },
   { href: "/categories", label: "Kategoriler" },
@@ -31,7 +31,7 @@ export function Sidebar() {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
             Iotomasyon
           </p>
-          <h1 className="mt-3 text-2xl font-semibold text-slate-900">Internal CRM</h1>
+          <h1 className="mt-3 text-2xl font-semibold text-slate-900">Dahili CRM</h1>
           <p className="mt-2 text-sm text-slate-600">
             Ürün, müşteri ve stok akışını tek ekrandan yönetin.
           </p>
@@ -59,9 +59,9 @@ export function Sidebar() {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Phase 6 active
+          Faz 8 aktif
           <p className="mt-2 font-medium text-slate-900">
-            WhatsApp kampanyaları, toplu outreach.
+            Türkçe arayüz, ithalat alanları, çoklu döviz.
           </p>
         </div>
       </aside>

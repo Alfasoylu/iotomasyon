@@ -25,17 +25,17 @@ export default async function ProductsPage({
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Products
+            Ürünler
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Urun katalugu
+            Ürün kataloğu
           </h1>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Phase 1 icin CRUD, arama ve dusuk stok gorunumu aktif.
+            Ürün kaydı, stok takibi ve ithalat bilgilerini yönetin.
           </p>
         </div>
         <Link href="/products/new">
-          <Button>Yeni urun</Button>
+          <Button>Yeni ürün</Button>
         </Link>
       </div>
 
@@ -45,7 +45,7 @@ export default async function ProductsPage({
 
       {!databaseAvailable ? (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
-          Veritabani baglantisi su anda kullanilamiyor. Urun listesi gosterilemiyor.
+          Veritabanı bağlantısı şu anda kullanılamıyor. Ürün listesi gösterilemiyor.
         </Card>
       ) : null}
 
@@ -55,7 +55,7 @@ export default async function ProductsPage({
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.25em] text-slate-500">
               <tr>
                 <th className="px-4 py-3">SKU</th>
-                <th className="px-4 py-3">Urun</th>
+                <th className="px-4 py-3">Ürün</th>
                 <th className="px-4 py-3">Kategori</th>
                 <th className="px-4 py-3">Lokasyon</th>
                 <th className="px-4 py-3">Stok</th>
@@ -67,7 +67,7 @@ export default async function ProductsPage({
               {products.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
-                    Bu filtrelerle eslesen urun bulunamadi.
+                    Bu filtrelerle eşleşen ürün bulunamadı.
                   </td>
                 </tr>
               ) : (
@@ -93,7 +93,7 @@ export default async function ProductsPage({
                             {product.stockQuantity}
                           </span>
                           <span className="text-slate-500">/ min {product.minimumStock}</span>
-                          {isLowStock ? <Badge tone="warning">Low</Badge> : null}
+                          {isLowStock ? <Badge tone="warning">Düşük stok</Badge> : null}
                         </div>
                       </td>
                       <td className="px-4 py-4 text-slate-600">

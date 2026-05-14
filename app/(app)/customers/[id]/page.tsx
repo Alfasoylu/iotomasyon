@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { CustomerAttributeSection } from "@/components/customers/customer-attribute-section";
 import { CategoryInterestDeleteButton } from "@/components/categories/category-interest-delete-button";
 import { CategoryInterestForm } from "@/components/categories/category-interest-form";
 import { CustomerDeleteButton } from "@/components/customers/customer-delete-button";
@@ -31,6 +32,7 @@ import {
   listCustomerInterestProducts,
 } from "@/services/customer-service";
 import { listCategoriesForSelect } from "@/services/category-service";
+import { listAttributes } from "@/services/attribute-service";
 import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
 
 export const dynamic = "force-dynamic";
@@ -41,10 +43,11 @@ export default async function CustomerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult] = await Promise.all([
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes] = await Promise.all([
     getCustomerById(id),
     listCustomerInterestProducts(),
     listCategoriesForSelect(),
+    listAttributes(),
   ]);
 
   if (!databaseAvailable) {
@@ -52,19 +55,19 @@ export default async function CustomerDetailPage({
       <div className="space-y-6">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Customers
+            Müşteriler
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Musteri detayi gecici olarak kullanilamiyor
+            Müşteri detayı geçici olarak kullanılamıyor
           </h1>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Veritabani baglantisi su anda kullanilamiyor. Baglanti geri geldiginde
-            musteri detaylari tekrar yuklenecek.
+            Veritabanı bağlantısı şu anda kullanılamıyor. Bağlantı geri geldiğinde
+            müşteri detayları tekrar yüklenecek.
           </p>
         </div>
 
         <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
-          Canli musteri verisi alinamadigi icin detay ekrani gosterilemiyor.
+          Canlı müşteri verisi alınamadığı için detay ekranı gösterilemiyor.
         </Card>
       </div>
     );
@@ -73,6 +76,9 @@ export default async function CustomerDetailPage({
   if (!customer) {
     notFound();
   }
+
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
 
   return (
     <div className="space-y-6">
@@ -94,7 +100,7 @@ export default async function CustomerDetailPage({
             customerName={customer.name}
           />
           <Link href={`/customers/${customer.id}/edit`}>
-            <Button>Duzenle</Button>
+            <Button>Düzenle</Button>
           </Link>
           <CustomerDeleteButton customerId={customer.id} />
         </div>
@@ -102,14 +108,16 @@ export default async function CustomerDetailPage({
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Musteri bilgileri</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Müşteri bilgileri</h2>
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             <Info label="Telefon" value={customer.phone} />
             <Info label="WhatsApp" value={customer.whatsapp} />
             <Info label="E-posta" value={customer.email} />
             <Info label="Vergi no" value={customer.taxNumber} />
-            <Info label="Sehir" value={customer.city} />
-            <Info label="Ulke" value={customer.country} />
+            <Info label="Şehir" value={customer.city} />
+            <Info label="Ülke" value={customer.country} />
+            <Info label="Müşteri kaynağı" value={customer.source} />
+            <Info label="Müşteri sahibi" value={customer.owner?.name} />
           </dl>
           <div className="mt-6 grid gap-4">
             <InfoBlock label="Adres" value={customer.address} />
@@ -118,24 +126,40 @@ export default async function CustomerDetailPage({
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Kayit metrikleri</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Kayıt metrikleri</h2>
           <dl className="mt-5 space-y-4">
-            <Info label="Olusturulma" value={formatDateTime(customer.createdAt)} />
-            <Info label="Guncellenme" value={formatDateTime(customer.updatedAt)} />
+            <Info label="Oluşturulma" value={formatDateTime(customer.createdAt)} />
+            <Info label="Güncellenme" value={formatDateTime(customer.updatedAt)} />
             {customer.lastContactedAt ? (
-              <Info label="Son iletisim" value={formatDateTime(customer.lastContactedAt)} />
+              <Info label="Son iletişim" value={formatDateTime(customer.lastContactedAt)} />
             ) : null}
           </dl>
         </Card>
       </div>
 
+      {allAttributes.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-slate-950">İlgi alanları</h2>
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            Müşterinin ilgilendiği ürün özellikleri. Kampanya eşleşmesinde kullanılır.
+          </p>
+          <div className="mt-5">
+            <CustomerAttributeSection
+              customerId={customer.id}
+              allAttributes={allAttributes}
+              initialAttributeIds={customer.attributeInterests.map((ai) => ai.attributeId)}
+            />
+          </div>
+        </Card>
+      )}
+
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">Urun ilgileri</h2>
+              <h2 className="text-lg font-semibold text-slate-950">Ürün ilgileri</h2>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                Musterinin ilgilendigi urunleri ve teklif surecini takip edin.
+                Müşterinin ilgilendiği ürünleri ve teklif sürecini takip edin.
               </p>
             </div>
             <Badge>{customer.interests.length} kayit</Badge>
@@ -150,7 +174,7 @@ export default async function CustomerDetailPage({
 
           <div className="mt-8 space-y-4">
             {customer.interests.length === 0 ? (
-              <p className="text-sm text-slate-500">Henuz urun ilgisi eklenmedi.</p>
+              <p className="text-sm text-slate-500">Henüz ürün ilgisi eklenmedi.</p>
             ) : (
               customer.interests.map((interest) => (
                 <div
@@ -256,7 +280,7 @@ export default async function CustomerDetailPage({
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-slate-950">Teklifler</h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Musteri icin teklif olusturun, PDF olarak disa aktarın ve WhatsApp ile gonderin.
+              Müşteri için teklif oluşturun, PDF olarak dışa aktarın ve WhatsApp ile gönderin.
             </p>
 
             <div className="mt-6">
@@ -265,7 +289,7 @@ export default async function CustomerDetailPage({
 
             <div className="mt-8 space-y-4">
               {customer.quotes.length === 0 ? (
-                <p className="text-sm text-slate-500">Henuz teklif olusturulmadi.</p>
+                <p className="text-sm text-slate-500">Henüz teklif oluşturulmadı.</p>
               ) : (
                 customer.quotes.map((quote) => (
                   <div
@@ -291,7 +315,7 @@ export default async function CustomerDetailPage({
                           href={`/quotes/${quote.id}`}
                           className="text-sm font-semibold text-slate-900 hover:text-[color:var(--accent)]"
                         >
-                          Teklifi ac
+                          Teklifi aç
                         </Link>
                       </div>
                     </div>
@@ -302,9 +326,9 @@ export default async function CustomerDetailPage({
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-slate-950">Not timeline</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Not zaman çizelgesi</h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Arama, e-posta, toplanti ve teklif notlarini kronolojik olarak kaydedin.
+              Arama, e-posta, toplantı ve teklif notlarını kronolojik olarak kaydedin.
             </p>
 
             <div className="mt-6">
@@ -313,7 +337,7 @@ export default async function CustomerDetailPage({
 
             <div className="mt-8 space-y-4">
               {customer.timelineEntries.length === 0 ? (
-                <p className="text-sm text-slate-500">Timeline icin not bulunmuyor.</p>
+                <p className="text-sm text-slate-500">Zaman çizelgesi için not bulunmuyor.</p>
               ) : (
                 customer.timelineEntries.map((entry) => (
                   <div
@@ -328,7 +352,7 @@ export default async function CustomerDetailPage({
                     </div>
                     <p className="mt-3 text-sm leading-7 text-slate-700">{entry.content}</p>
                     <p className="mt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
-                      {entry.createdBy?.name ?? "System"}
+                      {entry.createdBy?.name ?? "Sistem"}
                     </p>
                   </div>
                 ))
@@ -337,9 +361,9 @@ export default async function CustomerDetailPage({
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-slate-950">Takip gorevleri</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Takip görevleri</h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Acik follow-up kayitlarini planlayin ve tamamlandiginda kapatin.
+              Açık takip kayıtlarını planlayın ve tamamlandığında kapatın.
             </p>
 
             <div className="mt-6">
@@ -348,13 +372,13 @@ export default async function CustomerDetailPage({
 
             <div className="mt-8 space-y-4">
               {customer.tasks.length === 0 ? (
-                <p className="text-sm text-slate-500">Acik takip gorevi bulunmuyor.</p>
+                <p className="text-sm text-slate-500">Açık takip görevi bulunmuyor.</p>
               ) : (
                 customer.tasks.map((task) => {
                   const isOverdue =
                     task.status === "OPEN" &&
                     !!task.dueDate &&
-                    task.dueDate.getTime() < Date.now();
+                    task.dueDate.getTime() < now;
                   return (
                   <div
                     key={task.id}
@@ -374,7 +398,7 @@ export default async function CustomerDetailPage({
                           <Badge tone={getTaskPriorityTone(task.priority)}>
                             {formatTaskPriority(task.priority)}
                           </Badge>
-                          {isOverdue ? <Badge tone="danger">Overdue</Badge> : null}
+                          {isOverdue ? <Badge tone="danger">Gecikmiş</Badge> : null}
                         </div>
                         {task.description ? (
                           <p className="mt-3 text-sm leading-7 text-slate-600">

@@ -11,6 +11,7 @@ type ProductField = keyof ProductInput;
 
 export async function createProductAction(
   values: ProductInput,
+  attributeIds: string[] = [],
 ): Promise<ActionResult<ProductField>> {
   const user = await requireUser();
   const parsed = productSchema.safeParse(values);
@@ -18,17 +19,25 @@ export async function createProductAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
 
   try {
-    const product = await prisma.product.create({
-      data: {
-        ...normalizeProductData(parsed.data),
-        createdById: user.id,
-      },
+    const product = await prisma.$transaction(async (tx) => {
+      const p = await tx.product.create({
+        data: {
+          ...normalizeProductData(parsed.data),
+          createdById: user.id,
+        },
+      });
+      for (const attributeId of attributeIds) {
+        await tx.productAttributeAssignment.create({
+          data: { productId: p.id, attributeId },
+        });
+      }
+      return p;
     });
 
     revalidatePath("/dashboard");
@@ -42,16 +51,16 @@ export async function createProductAction(
     if (isUniqueSkuError(error)) {
       return {
         ok: false,
-        message: "Bu SKU zaten kullaniliyor.",
+        message: "Bu SKU zaten kullanılıyor.",
         fieldErrors: {
-          sku: ["Bu SKU zaten kullaniliyor."],
+          sku: ["Bu SKU zaten kullanılıyor."],
         },
       };
     }
 
     return {
       ok: false,
-      message: "Urun kaydi olusturulamadi.",
+      message: "Ürün kaydı oluşturulamadı.",
     };
   }
 }
@@ -59,6 +68,7 @@ export async function createProductAction(
 export async function updateProductAction(
   productId: string,
   values: ProductInput,
+  attributeIds: string[] = [],
 ): Promise<ActionResult<ProductField>> {
   await requireUser();
   const parsed = productSchema.safeParse(values);
@@ -66,15 +76,23 @@ export async function updateProductAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarini kontrol edin.",
+      message: "Form alanlarını kontrol edin.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
 
   try {
-    await prisma.product.update({
-      where: { id: productId },
-      data: normalizeProductData(parsed.data),
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id: productId },
+        data: normalizeProductData(parsed.data),
+      });
+      await tx.productAttributeAssignment.deleteMany({ where: { productId } });
+      for (const attributeId of attributeIds) {
+        await tx.productAttributeAssignment.create({
+          data: { productId, attributeId },
+        });
+      }
     });
 
     revalidatePath("/dashboard");
@@ -89,16 +107,16 @@ export async function updateProductAction(
     if (isUniqueSkuError(error)) {
       return {
         ok: false,
-        message: "Bu SKU zaten kullaniliyor.",
+        message: "Bu SKU zaten kullanılıyor.",
         fieldErrors: {
-          sku: ["Bu SKU zaten kullaniliyor."],
+          sku: ["Bu SKU zaten kullanılıyor."],
         },
       };
     }
 
     return {
       ok: false,
-      message: "Urun guncellenemedi.",
+      message: "Ürün güncellenemedi.",
     };
   }
 }
@@ -121,7 +139,7 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
   } catch {
     return {
       ok: false,
-      message: "Urun silinemedi.",
+      message: "Ürün silinemedi.",
     };
   }
 }
@@ -139,7 +157,18 @@ function normalizeProductData(input: ProductInput) {
     location: emptyToNull(input.location),
     description: emptyToNull(input.description),
     isActive: input.isActive,
+    importDate: emptyToNull(input.importDate) ? new Date(input.importDate) : null,
+    importQuantity: positiveIntOrNull(input.importQuantity),
+    importUnitCostUsd: emptyToNull(input.importUnitCostUsd),
+    inventoryCountDate: emptyToNull(input.inventoryCountDate) ? new Date(input.inventoryCountDate) : null,
+    inventoryCountStock: positiveIntOrNull(input.inventoryCountStock),
   };
+}
+
+function positiveIntOrNull(value: string | undefined): number | null {
+  if (!value || !value.trim()) return null;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
 function emptyToNull(value: string | undefined) {

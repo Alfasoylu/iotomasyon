@@ -25,7 +25,7 @@ export function LogoutButton() {
         });
       }}
     >
-      {pending ? "Cikiliyor..." : "Cikis"}
+      {pending ? "Çıkılıyor..." : "Çıkış"}
     </Button>
   );
 }

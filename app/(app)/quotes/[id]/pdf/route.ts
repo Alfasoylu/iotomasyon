@@ -28,14 +28,11 @@ export async function GET(
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const quoteCurrency = quote.items[0]?.currency ?? "TRY";
-  const displayOptions = {
-    currencyMode: (quote as { currencyMode?: string | null }).currencyMode,
-    exchangeRate: (quote as { exchangeRate?: string | number | { toString(): string } | null })
-      .exchangeRate,
-  };
+  const currencyMode = quote.currencyMode ?? "TRY";
+  const exchangeRate = quote.exchangeRate != null ? Number(quote.exchangeRate) : null;
 
   let y = 790;
-  page.drawText(toPdfSafeText("Soylu Elektronik - Quote"), {
+  page.drawText(toPdfSafeText("Soylu Elektronik - Teklif"), {
     x: 40,
     y,
     size: 18,
@@ -44,21 +41,24 @@ export async function GET(
   });
 
   y -= 30;
-  page.drawText(toPdfSafeText(`Quote: ${quote.quoteNumber}`), { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Teklif: ${quote.quoteNumber}`), { x: 40, y, size: 11, font });
   y -= 18;
-  page.drawText(toPdfSafeText(`Customer: ${quote.customer.name}`), { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Müşteri: ${quote.customer.name}`), { x: 40, y, size: 11, font });
   y -= 18;
-  page.drawText(toPdfSafeText(`Status: ${quote.status}`), { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Durum: ${quote.status}`), { x: 40, y, size: 11, font });
 
   y -= 34;
-  page.drawText("Items", { x: 40, y, size: 13, font: bold });
+  page.drawText("Kalemler", { x: 40, y, size: 13, font: bold });
   y -= 20;
 
   for (const item of quote.items) {
+    const unit = resolveDisplayAmounts(Number(item.unitPrice), item.currency, currencyMode, exchangeRate);
+    const total = resolveDisplayAmounts(Number(item.total), item.currency, currencyMode, exchangeRate);
+
     const lines = [
       toPdfSafeText(item.description),
       toPdfSafeText(
-        `Qty: ${item.quantity} | Unit: ${resolveDisplayAmounts(item.unitPrice.toString(), item.currency, displayOptions)} | Total: ${resolveDisplayAmounts(item.total.toString(), item.currency, displayOptions)}`,
+        `Adet: ${item.quantity} | Birim: ${formatDisplayPair(unit)} | Toplam: ${formatDisplayPair(total)}`,
       ),
     ];
 
@@ -73,7 +73,9 @@ export async function GET(
   y -= 10;
   page.drawText(
     toPdfSafeText(
-      `Subtotal: ${resolveDisplayAmounts(quote.subtotal.toString(), quoteCurrency, displayOptions)}`,
+      `Ara toplam: ${formatDisplayPair(
+        resolveDisplayAmounts(Number(quote.subtotal), quoteCurrency, currencyMode, exchangeRate),
+      )}`,
     ),
     {
       x: 40,
@@ -85,7 +87,9 @@ export async function GET(
   y -= 18;
   page.drawText(
     toPdfSafeText(
-      `Discount: ${resolveDisplayAmounts(quote.discountTotal.toString(), quoteCurrency, displayOptions)}`,
+      `İndirim: ${formatDisplayPair(
+        resolveDisplayAmounts(Number(quote.discountTotal), quoteCurrency, currencyMode, exchangeRate),
+      )}`,
     ),
     {
       x: 40,
@@ -97,7 +101,9 @@ export async function GET(
   y -= 18;
   page.drawText(
     toPdfSafeText(
-      `Tax: ${resolveDisplayAmounts(quote.taxTotal.toString(), quoteCurrency, displayOptions)}`,
+      `Vergi: ${formatDisplayPair(
+        resolveDisplayAmounts(Number(quote.taxTotal), quoteCurrency, currencyMode, exchangeRate),
+      )}`,
     ),
     {
       x: 40,
@@ -109,7 +115,9 @@ export async function GET(
   y -= 18;
   page.drawText(
     toPdfSafeText(
-      `Total: ${resolveDisplayAmounts(quote.total.toString(), quoteCurrency, displayOptions)}`,
+      `Toplam: ${formatDisplayPair(
+        resolveDisplayAmounts(Number(quote.total), quoteCurrency, currencyMode, exchangeRate),
+      )}`,
     ),
     {
       x: 40,
@@ -120,7 +128,7 @@ export async function GET(
   );
 
   y -= 34;
-  page.drawText("Notes", { x: 40, y, size: 13, font: bold });
+  page.drawText("Notlar", { x: 40, y, size: 13, font: bold });
   y -= 20;
   page.drawText(toPdfSafeText(quote.notes || "-"), {
     x: 40,
@@ -140,6 +148,10 @@ export async function GET(
       "Content-Disposition": `inline; filename="${quote.quoteNumber}.pdf"`,
     },
   });
+}
+
+function formatDisplayPair(result: { primary: string; secondary?: string }) {
+  return result.secondary ? `${result.primary} / ${result.secondary}` : result.primary;
 }
 
 function toPdfSafeText(value: string) {

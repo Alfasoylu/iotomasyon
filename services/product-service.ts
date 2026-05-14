@@ -74,6 +74,10 @@ export async function getProductById(id: string) {
           productCategory: {
             select: { id: true, name: true, slug: true },
           },
+          attributeAssignments: {
+            include: { attribute: { select: { id: true, name: true } } },
+            orderBy: { createdAt: "asc" as const },
+          },
         },
       }),
     };

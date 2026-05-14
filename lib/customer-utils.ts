@@ -8,12 +8,12 @@ import type {
 
 export function formatCustomerStatus(status: CustomerStatus) {
   return {
-    NEW: "New",
-    CONTACTED: "Contacted",
-    QUOTED: "Quoted",
-    NEGOTIATING: "Negotiating",
-    WON: "Won",
-    LOST: "Lost",
+    NEW: "Yeni",
+    CONTACTED: "İletişim Kuruldu",
+    QUOTED: "Teklif Verildi",
+    NEGOTIATING: "Müzakere",
+    WON: "Kazanıldı",
+    LOST: "Kaybedildi",
   }[status];
 }
 
@@ -35,12 +35,12 @@ export function getCustomerStatusTone(status: CustomerStatus) {
 
 export function formatInterestStage(stage: InterestStage) {
   return {
-    INTERESTED: "Interested",
-    PRICE_SENT: "Price sent",
-    NEGOTIATING: "Negotiating",
-    WAITING: "Waiting",
-    ORDERED: "Ordered",
-    CANCELLED: "Cancelled",
+    INTERESTED: "İlgileniyor",
+    PRICE_SENT: "Fiyat Gönderildi",
+    NEGOTIATING: "Müzakere",
+    WAITING: "Bekliyor",
+    ORDERED: "Sipariş Verildi",
+    CANCELLED: "İptal",
   }[stage];
 }
 
@@ -62,20 +62,20 @@ export function getInterestStageTone(stage: InterestStage) {
 
 export function formatNoteType(type: NoteType) {
   return {
-    NOTE: "Note",
-    CALL: "Call",
-    MEETING: "Meeting",
-    EMAIL: "Email",
+    NOTE: "Not",
+    CALL: "Çağrı",
+    MEETING: "Toplantı",
+    EMAIL: "E-posta",
     WHATSAPP: "WhatsApp",
-    QUOTE: "Quote",
+    QUOTE: "Teklif",
   }[type];
 }
 
 export function formatTaskStatus(status: TaskStatus) {
   return {
-    OPEN: "Open",
-    DONE: "Done",
-    CANCELLED: "Cancelled",
+    OPEN: "Açık",
+    DONE: "Tamamlandı",
+    CANCELLED: "İptal",
   }[status];
 }
 
@@ -93,10 +93,10 @@ export function getTaskStatusTone(status: TaskStatus) {
 
 export function formatTaskPriority(priority: TaskPriority) {
   return {
-    LOW: "Low",
-    MEDIUM: "Medium",
-    HIGH: "High",
-    URGENT: "Urgent",
+    LOW: "Düşük",
+    MEDIUM: "Orta",
+    HIGH: "Yüksek",
+    URGENT: "Acil",
   }[priority];
 }
 
