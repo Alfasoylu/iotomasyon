@@ -4,6 +4,7 @@ import { ProductForm } from "@/components/products/product-form";
 import { Card } from "@/components/ui/card";
 import { getProductById } from "@/services/product-service";
 import { listCategoriesForSelect } from "@/services/category-service";
+import { listAttributes } from "@/services/attribute-service";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,10 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ databaseAvailable, product }, { categories }] = await Promise.all([
+  const [{ databaseAvailable, product }, { categories }, allAttributes] = await Promise.all([
     getProductById(id),
     listCategoriesForSelect(),
+    listAttributes(),
   ]);
 
   if (!databaseAvailable) {
@@ -60,6 +62,8 @@ export default async function EditProductPage({
           mode="edit"
           productId={product.id}
           categories={categories}
+          allAttributes={allAttributes}
+          initialAttributeIds={product.attributeAssignments.map((a) => a.attributeId)}
           initialValues={{
             sku: product.sku,
             name: product.name,

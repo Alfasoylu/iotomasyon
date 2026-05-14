@@ -11,7 +11,7 @@ type CustomerField = keyof CustomerInput;
 
 export async function createCustomerAction(
   values: CustomerInput,
-  options?: { productId?: string; categoryId?: string },
+  options?: { productId?: string; categoryId?: string; attributeIds?: string[] },
 ): Promise<ActionResult<CustomerField>> {
   const parsed = customerSchema.safeParse(values);
 
@@ -51,6 +51,12 @@ export async function createCustomerAction(
         });
       }
 
+      for (const attributeId of options?.attributeIds ?? []) {
+        await tx.customerAttributeInterest.create({
+          data: { customerId: c.id, attributeId },
+        });
+      }
+
       return c;
     });
 
@@ -74,6 +80,7 @@ export async function createCustomerAction(
 export async function updateCustomerAction(
   customerId: string,
   values: CustomerInput,
+  attributeIds: string[] = [],
 ): Promise<ActionResult<CustomerField>> {
   const parsed = customerSchema.safeParse(values);
 
@@ -88,9 +95,17 @@ export async function updateCustomerAction(
   await requireUser();
 
   try {
-    await prisma.customer.update({
-      where: { id: customerId },
-      data: normalizeCustomerData(parsed.data),
+    await prisma.$transaction(async (tx) => {
+      await tx.customer.update({
+        where: { id: customerId },
+        data: normalizeCustomerData(parsed.data),
+      });
+      await tx.customerAttributeInterest.deleteMany({ where: { customerId } });
+      for (const attributeId of attributeIds) {
+        await tx.customerAttributeInterest.create({
+          data: { customerId, attributeId },
+        });
+      }
     });
 
     revalidatePath("/dashboard");

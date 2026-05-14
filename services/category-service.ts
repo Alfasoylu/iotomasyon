@@ -126,7 +126,7 @@ export async function getProductIntelligence(productId: string) {
     });
 
     if (!product) {
-      return { databaseAvailable: true as const, directInterests: [], categoryInterests: [] };
+      return { databaseAvailable: true as const, directInterests: [], attributeInterests: [], categoryInterests: [] };
     }
 
     const categoryInterests = product.categoryId
@@ -141,16 +141,41 @@ export async function getProductIntelligence(productId: string) {
 
     const directCustomerIds = new Set(product.interests.map((i) => i.customer.id));
 
+    const productAttrRows = await prisma.productAttributeAssignment.findMany({
+      where: { productId },
+      select: { attributeId: true },
+    });
+    const attrInterests = productAttrRows.length > 0
+      ? await prisma.customerAttributeInterest.findMany({
+          where: { attributeId: { in: productAttrRows.map((r) => r.attributeId) } },
+          include: {
+            customer: { select: { id: true, name: true, company: true, phone: true } },
+            attribute: { select: { id: true, name: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
+
+    const seenForAttribute = new Set(directCustomerIds);
+    const uniqueAttrInterests = attrInterests.filter((ai) => {
+      if (seenForAttribute.has(ai.customer.id)) return false;
+      seenForAttribute.add(ai.customer.id);
+      return true;
+    });
+
+    const categoryCustomerIds = new Set([...directCustomerIds, ...uniqueAttrInterests.map((ai) => ai.customer.id)]);
+
     return {
       databaseAvailable: true as const,
       directInterests: product.interests,
+      attributeInterests: uniqueAttrInterests,
       categoryInterests: categoryInterests.filter(
-        (ci) => !directCustomerIds.has(ci.customer.id),
+        (ci) => !categoryCustomerIds.has(ci.customer.id),
       ),
     };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
-      return { databaseAvailable: false as const, directInterests: [], categoryInterests: [] };
+      return { databaseAvailable: false as const, directInterests: [], attributeInterests: [], categoryInterests: [] };
     }
     throw error;
   }

@@ -9,7 +9,7 @@ export type CampaignCandidate = {
   company: string | null;
   phone: string | null;
   whatsapp: string | null;
-  source: "direct" | "category";
+  source: "direct" | "attribute" | "category";
 };
 
 export type CampaignFunnel = {
@@ -101,6 +101,29 @@ export async function getCampaignCandidates(
           if (!seenIds.has(c.id)) {
             seenIds.add(c.id);
             candidates.push({ customerId: c.id, name: c.name, company: c.company, phone: c.phone, whatsapp: c.whatsapp, source: "direct" });
+          }
+        }
+
+        // Attribute-based matching (priority: direct > attribute > category)
+        const productAttrRows = await prisma.productAttributeAssignment.findMany({
+          where: { productId },
+          select: { attributeId: true },
+        });
+        if (productAttrRows.length > 0) {
+          const attrIds = productAttrRows.map((r) => r.attributeId);
+          const attrInterests = await prisma.customerAttributeInterest.findMany({
+            where: { attributeId: { in: attrIds } },
+            include: {
+              customer: { select: { id: true, name: true, company: true, phone: true, whatsapp: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          });
+          for (const ai of attrInterests) {
+            const c = ai.customer;
+            if (!seenIds.has(c.id)) {
+              seenIds.add(c.id);
+              candidates.push({ customerId: c.id, name: c.name, company: c.company, phone: c.phone, whatsapp: c.whatsapp, source: "attribute" });
+            }
           }
         }
 

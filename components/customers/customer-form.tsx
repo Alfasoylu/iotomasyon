@@ -10,6 +10,7 @@ import {
   updateCustomerAction,
 } from "@/lib/actions/customer-actions";
 import { customerSchema } from "@/lib/validations/customer";
+import { AttributePicker } from "@/components/attributes/attribute-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,7 @@ import {
   CUSTOMER_SOURCE_OPTIONS,
   type CustomerFormValues,
 } from "@/types/customers";
+import type { AttributeOption } from "@/services/attribute-service";
 import type { UserOption } from "@/services/customer-service";
 
 const emptyValues: CustomerFormValues = {
@@ -41,6 +43,8 @@ export function CustomerForm({
   customerId,
   initialValues,
   users = [],
+  allAttributes = [],
+  initialAttributeIds = [],
   preselectedProductId,
   preselectedCategoryId,
 }: {
@@ -48,12 +52,15 @@ export function CustomerForm({
   customerId?: string;
   initialValues?: CustomerFormValues;
   users?: UserOption[];
+  allAttributes?: AttributeOption[];
+  initialAttributeIds?: string[];
   preselectedProductId?: string;
   preselectedCategoryId?: string;
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [selectedAttributeIds, setSelectedAttributeIds] = useState<string[]>(initialAttributeIds);
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -68,10 +75,11 @@ export function CustomerForm({
       const result =
         mode === "create"
           ? await createCustomerAction(values, {
-              productId:  preselectedProductId,
-              categoryId: preselectedCategoryId,
+              productId:    preselectedProductId,
+              categoryId:   preselectedCategoryId,
+              attributeIds: selectedAttributeIds,
             })
-          : await updateCustomerAction(customerId ?? "", values);
+          : await updateCustomerAction(customerId ?? "", values, selectedAttributeIds);
 
       setPending(false);
 
@@ -169,6 +177,18 @@ export function CustomerForm({
       <Field label="Notlar" error={form.formState.errors.notes?.message}>
         <Textarea {...form.register("notes")} className="min-h-24" />
       </Field>
+
+      {allAttributes.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-slate-700">İlgi alanları</p>
+          <p className="text-xs text-slate-500">Müşterinin ilgilendiği ürün özelliklerini seçin.</p>
+          <AttributePicker
+            value={selectedAttributeIds}
+            onChange={setSelectedAttributeIds}
+            options={allAttributes}
+          />
+        </div>
+      )}
 
       {serverMessage ? <p className="text-sm text-red-600">{serverMessage}</p> : null}
 

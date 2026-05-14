@@ -10,6 +10,7 @@ export type CustomerFilters = {
   status?: string;
   source?: string;
   ownedById?: string;
+  attributeId?: string;
 };
 
 export type UserOption = {
@@ -19,6 +20,10 @@ export type UserOption = {
 
 const customerDetailInclude = Prisma.validator<Prisma.CustomerInclude>()({
   owner: { select: { id: true, name: true } },
+  attributeInterests: {
+    include: { attribute: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" as const },
+  },
   interests: {
     include: {
       product: { select: { id: true, name: true, sku: true } },
@@ -95,6 +100,10 @@ export async function listCustomers(filters: CustomerFilters) {
 
   if (filters.ownedById && filters.ownedById !== "all") {
     where.ownedById = filters.ownedById;
+  }
+
+  if (filters.attributeId && filters.attributeId !== "all") {
+    where.attributeInterests = { some: { attributeId: filters.attributeId } };
   }
 
   try {

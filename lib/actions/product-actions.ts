@@ -11,6 +11,7 @@ type ProductField = keyof ProductInput;
 
 export async function createProductAction(
   values: ProductInput,
+  attributeIds: string[] = [],
 ): Promise<ActionResult<ProductField>> {
   const user = await requireUser();
   const parsed = productSchema.safeParse(values);
@@ -24,11 +25,19 @@ export async function createProductAction(
   }
 
   try {
-    const product = await prisma.product.create({
-      data: {
-        ...normalizeProductData(parsed.data),
-        createdById: user.id,
-      },
+    const product = await prisma.$transaction(async (tx) => {
+      const p = await tx.product.create({
+        data: {
+          ...normalizeProductData(parsed.data),
+          createdById: user.id,
+        },
+      });
+      for (const attributeId of attributeIds) {
+        await tx.productAttributeAssignment.create({
+          data: { productId: p.id, attributeId },
+        });
+      }
+      return p;
     });
 
     revalidatePath("/dashboard");
@@ -59,6 +68,7 @@ export async function createProductAction(
 export async function updateProductAction(
   productId: string,
   values: ProductInput,
+  attributeIds: string[] = [],
 ): Promise<ActionResult<ProductField>> {
   await requireUser();
   const parsed = productSchema.safeParse(values);
@@ -72,9 +82,17 @@ export async function updateProductAction(
   }
 
   try {
-    await prisma.product.update({
-      where: { id: productId },
-      data: normalizeProductData(parsed.data),
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id: productId },
+        data: normalizeProductData(parsed.data),
+      });
+      await tx.productAttributeAssignment.deleteMany({ where: { productId } });
+      for (const attributeId of attributeIds) {
+        await tx.productAttributeAssignment.create({
+          data: { productId, attributeId },
+        });
+      }
     });
 
     revalidatePath("/dashboard");

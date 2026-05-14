@@ -11,6 +11,7 @@ import {
   getCustomerStatusTone,
 } from "@/lib/customer-utils";
 import { listCustomers, listUsersForSelect } from "@/services/customer-service";
+import { listAttributes } from "@/services/attribute-service";
 
 export const dynamic = "force-dynamic";
 
@@ -20,14 +21,16 @@ export default async function CustomersPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const query     = typeof params.q         === "string" ? params.q         : "";
-  const status    = typeof params.status    === "string" ? params.status    : "all";
-  const source    = typeof params.source    === "string" ? params.source    : "all";
-  const ownedById = typeof params.ownedById === "string" ? params.ownedById : "all";
+  const query       = typeof params.q           === "string" ? params.q           : "";
+  const status      = typeof params.status      === "string" ? params.status      : "all";
+  const source      = typeof params.source      === "string" ? params.source      : "all";
+  const ownedById   = typeof params.ownedById   === "string" ? params.ownedById   : "all";
+  const attributeId = typeof params.attributeId === "string" ? params.attributeId : "all";
 
-  const [{ databaseAvailable, customers }, users] = await Promise.all([
-    listCustomers({ q: query, status, source, ownedById }),
+  const [{ databaseAvailable, customers }, users, attributes] = await Promise.all([
+    listCustomers({ q: query, status, source, ownedById, attributeId }),
     listUsersForSelect(),
+    listAttributes(),
   ]);
 
   return (
@@ -55,7 +58,9 @@ export default async function CustomersPage({
           initialStatus={status}
           initialSource={source}
           initialOwnedById={ownedById}
+          initialAttributeId={attributeId}
           users={users}
+          attributes={attributes}
         />
       </Card>
 

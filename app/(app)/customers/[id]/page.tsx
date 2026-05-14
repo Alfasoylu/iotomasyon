@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { CustomerAttributeSection } from "@/components/customers/customer-attribute-section";
 import { CategoryInterestDeleteButton } from "@/components/categories/category-interest-delete-button";
 import { CategoryInterestForm } from "@/components/categories/category-interest-form";
 import { CustomerDeleteButton } from "@/components/customers/customer-delete-button";
@@ -31,6 +32,7 @@ import {
   listCustomerInterestProducts,
 } from "@/services/customer-service";
 import { listCategoriesForSelect } from "@/services/category-service";
+import { listAttributes } from "@/services/attribute-service";
 import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
 
 export const dynamic = "force-dynamic";
@@ -41,10 +43,11 @@ export default async function CustomerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult] = await Promise.all([
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes] = await Promise.all([
     getCustomerById(id),
     listCustomerInterestProducts(),
     listCategoriesForSelect(),
+    listAttributes(),
   ]);
 
   if (!databaseAvailable) {
@@ -130,6 +133,22 @@ export default async function CustomerDetailPage({
           </dl>
         </Card>
       </div>
+
+      {allAttributes.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-slate-950">İlgi alanları</h2>
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            Müşterinin ilgilendiği ürün özellikleri. Kampanya eşleşmesinde kullanılır.
+          </p>
+          <div className="mt-5">
+            <CustomerAttributeSection
+              customerId={customer.id}
+              allAttributes={allAttributes}
+              initialAttributeIds={customer.attributeInterests.map((ai) => ai.attributeId)}
+            />
+          </div>
+        </Card>
+      )}
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="p-6">

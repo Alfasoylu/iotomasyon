@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildQueryString } from "@/lib/utils";
 import { CUSTOMER_STATUS_OPTIONS, CUSTOMER_SOURCE_OPTIONS } from "@/types/customers";
+import type { AttributeOption } from "@/services/attribute-service";
 import type { UserOption } from "@/services/customer-service";
 
 export function CustomerFilters({
@@ -14,32 +15,38 @@ export function CustomerFilters({
   initialStatus,
   initialSource,
   initialOwnedById,
+  initialAttributeId,
   users,
+  attributes = [],
 }: {
   initialQuery: string;
   initialStatus: string;
   initialSource: string;
   initialOwnedById: string;
+  initialAttributeId: string;
   users: UserOption[];
+  attributes?: AttributeOption[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [query,     setQuery]     = useState(initialQuery);
-  const [status,    setStatus]    = useState(initialStatus);
-  const [source,    setSource]    = useState(initialSource);
-  const [ownedById, setOwnedById] = useState(initialOwnedById);
+  const [query,       setQuery]       = useState(initialQuery);
+  const [status,      setStatus]      = useState(initialStatus);
+  const [source,      setSource]      = useState(initialSource);
+  const [ownedById,   setOwnedById]   = useState(initialOwnedById);
+  const [attributeId, setAttributeId] = useState(initialAttributeId);
 
   return (
     <form
-      className="grid gap-3 md:grid-cols-[minmax(0,2fr)_180px_180px_180px_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,2fr)_160px_160px_160px_160px_auto]"
       onSubmit={(event) => {
         event.preventDefault();
 
         const nextQuery = buildQueryString(searchParams, {
-          q:        query || undefined,
-          status:   status    !== "all" ? status    : undefined,
-          source:   source    !== "all" ? source    : undefined,
-          ownedById: ownedById !== "all" ? ownedById : undefined,
+          q:           query       || undefined,
+          status:      status      !== "all" ? status      : undefined,
+          source:      source      !== "all" ? source      : undefined,
+          ownedById:   ownedById   !== "all" ? ownedById   : undefined,
+          attributeId: attributeId !== "all" ? attributeId : undefined,
         });
 
         router.push(`/customers${nextQuery}`);
@@ -82,6 +89,19 @@ export function CustomerFilters({
           <option value="all">Tüm sahipler</option>
           {users.map((u) => (
             <option key={u.id} value={u.id}>{u.name}</option>
+          ))}
+        </select>
+      )}
+
+      {attributes.length > 0 && (
+        <select
+          value={attributeId}
+          onChange={(event) => setAttributeId(event.target.value)}
+          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+        >
+          <option value="all">Tüm özellikler</option>
+          {attributes.map((a) => (
+            <option key={a.id} value={a.id}>{a.name}</option>
           ))}
         </select>
       )}

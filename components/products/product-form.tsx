@@ -10,9 +10,11 @@ import {
   updateProductAction,
 } from "@/lib/actions/product-actions";
 import { productSchema } from "@/lib/validations/product";
+import { AttributePicker } from "@/components/attributes/attribute-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { AttributeOption } from "@/services/attribute-service";
 import type { ProductFormValues } from "@/types/products";
 
 type CategoryOption = { id: string; name: string };
@@ -36,15 +38,20 @@ export function ProductForm({
   productId,
   initialValues,
   categories,
+  allAttributes = [],
+  initialAttributeIds = [],
 }: {
   mode: "create" | "edit";
   productId?: string;
   initialValues?: ProductFormValues;
   categories?: CategoryOption[];
+  allAttributes?: AttributeOption[];
+  initialAttributeIds?: string[];
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [selectedAttributeIds, setSelectedAttributeIds] = useState<string[]>(initialAttributeIds);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -58,8 +65,8 @@ export function ProductForm({
     startTransition(async () => {
       const result =
         mode === "create"
-          ? await createProductAction(values)
-          : await updateProductAction(productId ?? "", values);
+          ? await createProductAction(values, selectedAttributeIds)
+          : await updateProductAction(productId ?? "", values, selectedAttributeIds);
 
       setPending(false);
 
@@ -135,6 +142,17 @@ export function ProductForm({
         <input type="checkbox" className="h-4 w-4" {...form.register("isActive")} />
         Aktif urun olarak listelensin
       </label>
+
+      {allAttributes.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-slate-700">Özellikler</p>
+          <AttributePicker
+            value={selectedAttributeIds}
+            onChange={setSelectedAttributeIds}
+            options={allAttributes}
+          />
+        </div>
+      )}
 
       {serverMessage ? <p className="text-sm text-red-600">{serverMessage}</p> : null}
 

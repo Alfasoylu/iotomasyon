@@ -1,11 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { ProductForm } from "@/components/products/product-form";
 import { listCategoriesForSelect } from "@/services/category-service";
+import { listAttributes } from "@/services/attribute-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
-  const { categories } = await listCategoriesForSelect();
+  const [{ categories }, allAttributes] = await Promise.all([
+    listCategoriesForSelect(),
+    listAttributes(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -22,7 +26,7 @@ export default async function NewProductPage() {
       </div>
 
       <Card className="p-6">
-        <ProductForm mode="create" categories={categories} />
+        <ProductForm mode="create" categories={categories} allAttributes={allAttributes} />
       </Card>
     </div>
   );

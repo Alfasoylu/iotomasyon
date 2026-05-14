@@ -1,5 +1,6 @@
 import { CustomerForm } from "@/components/customers/customer-form";
 import { Card } from "@/components/ui/card";
+import { listAttributes, getProductAttributeIds } from "@/services/attribute-service";
 import { listUsersForSelect } from "@/services/customer-service";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,11 @@ export default async function NewCustomerPage({
   const params = await searchParams;
   const productId  = typeof params.productId  === "string" ? params.productId  : undefined;
   const categoryId = typeof params.categoryId === "string" ? params.categoryId : undefined;
-  const users = await listUsersForSelect();
+  const [users, allAttributes, preselectedAttrIds] = await Promise.all([
+    listUsersForSelect(),
+    listAttributes(),
+    productId ? getProductAttributeIds(productId) : Promise.resolve([]),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -32,6 +37,8 @@ export default async function NewCustomerPage({
         <CustomerForm
           mode="create"
           users={users}
+          allAttributes={allAttributes}
+          initialAttributeIds={preselectedAttrIds}
           preselectedProductId={productId}
           preselectedCategoryId={categoryId}
         />

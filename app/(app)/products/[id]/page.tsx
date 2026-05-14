@@ -46,7 +46,7 @@ export default async function ProductDetailPage({
   if (!product) notFound();
 
   const isLowStock = product.stockQuantity <= product.minimumStock;
-  const { directInterests, categoryInterests } = intelligenceResult;
+  const { directInterests, attributeInterests, categoryInterests } = intelligenceResult;
 
   return (
     <div className="space-y-6">
@@ -94,6 +94,21 @@ export default async function ProductDetailPage({
             <Info label="Stok" value={`${product.stockQuantity}`} />
             <Info label="Minimum stok" value={`${product.minimumStock}`} />
           </dl>
+          {product.attributeAssignments.length > 0 && (
+            <div className="mt-6">
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Özellikler</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {product.attributeAssignments.map((a) => (
+                  <span
+                    key={a.attributeId}
+                    className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                  >
+                    {a.attribute.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
             {product.description || "Bu ürün için açıklama eklenmedi."}
           </div>
@@ -110,10 +125,10 @@ export default async function ProductDetailPage({
         </Card>
       </div>
 
-      {(directInterests.length > 0 || categoryInterests.length > 0) ? (
+      {(directInterests.length > 0 || attributeInterests.length > 0 || categoryInterests.length > 0) ? (
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-slate-700">
-            {directInterests.length + categoryInterests.length} potansiyel alıcı
+            {directInterests.length + attributeInterests.length + categoryInterests.length} potansiyel alıcı
           </p>
           <Link href={`/campaigns/new?productId=${product.id}`}>
             <Button>WhatsApp kampanyası oluştur</Button>
@@ -121,16 +136,16 @@ export default async function ProductDetailPage({
         </div>
       ) : null}
 
-      {(directInterests.length > 0 || categoryInterests.length > 0) ? (
-        <div className="grid gap-4 xl:grid-cols-2">
+      {(directInterests.length > 0 || attributeInterests.length > 0 || categoryInterests.length > 0) ? (
+        <div className="grid gap-4 xl:grid-cols-3">
           {directInterests.length > 0 ? (
             <Card className="p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-950">Doğrudan ilgili müşteriler</h2>
+                <h2 className="text-lg font-semibold text-slate-950">Doğrudan ilgili</h2>
                 <Badge>{directInterests.length}</Badge>
               </div>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                Bu ürünü özellikle talep eden müşteriler.
+                Bu ürünü özellikle talep edenler.
               </p>
               <div className="mt-5 space-y-2">
                 {directInterests.map((interest) => (
@@ -147,14 +162,39 @@ export default async function ProductDetailPage({
             </Card>
           ) : null}
 
+          {attributeInterests.length > 0 ? (
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-950">Özellik ilgili</h2>
+                <Badge>{attributeInterests.length}</Badge>
+              </div>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                Bu ürünün özellikleriyle eşleşen müşteriler.
+              </p>
+              <div className="mt-5 space-y-2">
+                {attributeInterests.map((ai) => (
+                  <Link key={`${ai.customerId}-${ai.attributeId}`} href={`/customers/${ai.customer.id}`}>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 hover:border-slate-200 transition">
+                      <p className="text-sm font-medium text-slate-900">{ai.customer.name}</p>
+                      {ai.customer.company ? (
+                        <p className="text-xs text-slate-500">{ai.customer.company}</p>
+                      ) : null}
+                      <p className="mt-1 text-xs text-slate-400">{ai.attribute.name}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          ) : null}
+
           {categoryInterests.length > 0 ? (
             <Card className="p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-950">Kategori ilgili müşteriler</h2>
+                <h2 className="text-lg font-semibold text-slate-950">Kategori ilgili</h2>
                 <Badge>{categoryInterests.length}</Badge>
               </div>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                Bu ürünün kategorisiyle ilgilenen, potansiyel alıcılar.
+                Bu ürünün kategorisiyle ilgilenen potansiyel alıcılar.
               </p>
               <div className="mt-5 space-y-2">
                 {categoryInterests.map((interest) => (
