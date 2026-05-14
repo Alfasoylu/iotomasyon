@@ -18,8 +18,8 @@ export const runtime = "nodejs";
 // ── Page constants ──────────────────────────────────────────────
 const PW = 595;
 const PH = 842;
-const ML = 40; // margin left
-const MR = 40; // margin right
+const ML = 40;
+const MR = 40;
 const CW = PW - ML - MR; // 515 usable width
 
 // ── Colour palette ──────────────────────────────────────────────
@@ -31,22 +31,19 @@ const C = {
   slate500: rgb(0.4, 0.44, 0.52),
   slate300: rgb(0.67, 0.71, 0.78),
   slate200: rgb(0.84, 0.87, 0.92),
-  slate100: rgb(0.93, 0.94, 0.96),
   slate50: rgb(0.97, 0.97, 0.99),
   white: rgb(1, 1, 1),
-  emerald50: rgb(0.94, 0.99, 0.97),
-  emerald200: rgb(0.6, 0.91, 0.8),
 };
 
-// ── Column layout for product table ────────────────────────────
+// ── Column layout ────────────────────────────────────────────────
 const COLS = [
-  { key: "num", x: ML + 6, w: 18, label: "NO" },
-  { key: "product", x: ML + 26, w: 106, label: "URUN / SKU" },
-  { key: "desc", x: ML + 134, w: 118, label: "ACIKLAMA" },
-  { key: "qty", x: ML + 254, w: 28, label: "ADET" },
-  { key: "price", x: ML + 284, w: 88, label: "BIRIM FIYAT" },
-  { key: "tax", x: ML + 374, w: 32, label: "KDV" },
-  { key: "total", x: ML + 408, w: 107, label: "TOPLAM" },
+  { key: "num",     x: ML + 6,   w: 18,  label: "NO" },
+  { key: "product", x: ML + 26,  w: 106, label: "ÜRÜN / SKU" },
+  { key: "desc",    x: ML + 134, w: 118, label: "AÇIKLAMA" },
+  { key: "qty",     x: ML + 254, w: 28,  label: "ADET" },
+  { key: "price",   x: ML + 284, w: 88,  label: "BİRİM FİYAT" },
+  { key: "tax",     x: ML + 374, w: 32,  label: "KDV" },
+  { key: "total",   x: ML + 408, w: 107, label: "TOPLAM" },
 ] as const;
 
 export async function GET(
@@ -76,12 +73,12 @@ export async function GET(
   const fontBytes = await readFile(fontPath);
   const font = await pdf.embedFont(fontBytes, { subset: true });
 
-  // ── Quote currency context ────────────────────────────────────
+  // ── Currency context ──────────────────────────────────────────
   const quoteCurrency = quote.items[0]?.currency ?? "TRY";
   const mode = quote.currencyMode ?? "TRY";
   const rate = quote.exchangeRate != null ? Number(quote.exchangeRate) : null;
+  const isBoth = mode === "BOTH";
 
-  // Currency formatter that avoids ₺ — uses "TL" prefix instead
   function pdfAmt(value: number, currency: string): string {
     const n = new Intl.NumberFormat("tr-TR", {
       minimumFractionDigits: 2,
@@ -90,30 +87,29 @@ export async function GET(
     return `${currency.toUpperCase() === "USD" ? "USD" : "TL"} ${n}`;
   }
 
-  function pdfPair(value: number, itemCurrency: string): string {
+  // Returns 1 string for TRY/USD mode; 2 strings (stacked) for BOTH mode.
+  function pdfLines(value: number, itemCurrency: string): string[] {
     const isUsd = itemCurrency.toUpperCase() === "USD";
     const r = rate && rate > 0 ? rate : null;
     if (mode === "USD") {
-      return pdfAmt(isUsd ? value : r ? value / r : value, "USD");
+      return [pdfAmt(isUsd ? value : r ? value / r : value, "USD")];
     }
     if (mode === "TRY") {
-      return pdfAmt(isUsd && r ? value * r : value, "TRY");
+      return [pdfAmt(isUsd && r ? value * r : value, "TRY")];
     }
-    // BOTH
-    if (isUsd && r) return `${pdfAmt(value, "USD")} / ${pdfAmt(value * r, "TRY")}`;
-    if (!isUsd && r) return `${pdfAmt(value, itemCurrency)} / ${pdfAmt(value / r, "USD")}`;
-    return pdfAmt(value, itemCurrency);
+    // BOTH — two independent lines
+    if (isUsd && r) return [pdfAmt(value, "USD"), pdfAmt(value * r, "TRY")];
+    if (!isUsd && r) return [pdfAmt(value, itemCurrency), pdfAmt(value / r, "USD")];
+    return [pdfAmt(value, itemCurrency)];
   }
 
   // ── Page state ────────────────────────────────────────────────
   let page = pdf.addPage([PW, PH]);
-  let y = PH; // cursor: top edge of next element (decrements downward)
+  let y = PH;
 
   function ensureSpace(needed: number) {
     if (y - needed < 56) {
       page = pdf.addPage([PW, PH]);
-      y = PH - 40;
-      // Continuation strip
       page.drawRectangle({ x: 0, y: PH - 24, width: PW, height: 24, color: C.navy });
       page.drawText(safe(COMPANY_SETTINGS.companyName), {
         x: ML, y: PH - 16, size: 8, font, color: C.white,
@@ -125,57 +121,53 @@ export async function GET(
     }
   }
 
-  // ── SECTION 1: Header bar ─────────────────────────────────────
+  // ── SECTION 1: Header ─────────────────────────────────────────
   const HEADER_H = 84;
-  // Accent stripe at very top
   page.drawRectangle({ x: 0, y: PH - 3, width: PW, height: 3, color: C.accent });
-  // Dark header
   page.drawRectangle({ x: 0, y: PH - HEADER_H, width: PW, height: HEADER_H - 3, color: C.navy });
 
-  // Company info — left
   drawTxt(page, font, safe(COMPANY_SETTINGS.companyName), ML, PH - 26, 15, C.white);
   drawTxt(page, font, safe(COMPANY_SETTINGS.tagline), ML, PH - 42, 8, C.slate300);
   drawTxt(page, font, safe(`${COMPANY_SETTINGS.email}  |  ${COMPANY_SETTINGS.phone}`), ML, PH - 55, 8, C.slate300);
   drawTxt(page, font, safe(COMPANY_SETTINGS.website), ML, PH - 67, 8, C.slate300);
 
-  // "FİYAT TEKLİFİ" — right
-  drawTxt(page, font, "FIYAT TEKLİFİ", PW - ML - 116, PH - 26, 13, C.white);
+  drawTxt(page, font, "FİYAT TEKLİFİ", PW - ML - 116, PH - 26, 13, C.white);
   drawTxt(page, font, safe(quote.quoteNumber), PW - ML - 116, PH - 42, 9, C.slate300);
 
   y = PH - HEADER_H - 10;
 
   // ── SECTION 2: Metadata strip ─────────────────────────────────
-  const META_H = 42;
+  const META_H = 44;
   page.drawRectangle({
     x: ML, y: y - META_H, width: CW, height: META_H,
     color: C.slate50, borderColor: C.slate200, borderWidth: 0.5,
   });
 
   const metaCols = [
-    ["TEKLIF NO", safe(quote.quoteNumber)],
+    ["TEKLİF NO", safe(quote.quoteNumber)],
     ["TARİH", fmtDate(quote.createdAt)],
-    ["GECERLİLİK", quote.validityDate ? fmtDate(quote.validityDate) : "Belirtilmedi"],
+    ["GEÇERLİLİK", quote.validityDate ? fmtDate(quote.validityDate) : "Belirtilmedi"],
     ["DURUM", safe(formatQuoteStatus(quote.status))],
   ] as const;
   const metaColW = CW / 4;
   metaCols.forEach(([label, value], i) => {
     const mx = ML + 10 + i * metaColW;
-    drawTxt(page, font, label, mx, y - 14, 7, C.slate500);
-    drawTxt(page, font, safe(value), mx, y - 28, 9, C.slate900);
+    drawTxt(page, font, label, mx, y - 15, 7, C.slate500);
+    drawTxt(page, font, safe(value), mx, y - 29, 9, C.slate900);
   });
 
   y -= META_H + 12;
 
   // ── SECTION 3: Customer block ─────────────────────────────────
-  const CUST_H = 74;
+  const CUST_H = 78;
   page.drawRectangle({
     x: ML, y: y - CUST_H, width: CW, height: CUST_H,
     color: C.white, borderColor: C.slate200, borderWidth: 0.5,
   });
-  drawTxt(page, font, "ALICI", ML + 10, y - 13, 7, C.slate500);
+  drawTxt(page, font, "ALICI", ML + 10, y - 14, 7, C.slate500);
 
   const custRows = [
-    ["Firma / Müsteri", safe(limitTxt(quote.customer.company ?? quote.customer.name, 40))],
+    ["Firma / Müşteri", safe(limitTxt(quote.customer.company ?? quote.customer.name, 40))],
     ["Yetkili", safe(limitTxt(quote.customer.name, 36))],
     ["Telefon", safe(quote.customer.phone ?? "-")],
     ["E-posta", safe(limitTxt(quote.customer.email ?? "-", 36))],
@@ -184,16 +176,16 @@ export async function GET(
     const col = i % 2;
     const row = Math.floor(i / 2);
     const cx = ML + 10 + col * (CW / 2);
-    const cy = y - 27 - row * 24;
-    drawTxt(page, font, safe(label), cx, cy + 10, 7, C.slate500);
+    const cy = y - 30 - row * 26;
+    drawTxt(page, font, safe(label), cx, cy + 11, 7, C.slate500);
     drawTxt(page, font, safe(value), cx, cy, 9, C.slate900);
   });
 
   y -= CUST_H + 12;
 
-  // ── SECTION 4: Table ──────────────────────────────────────────
+  // ── SECTION 4: Items table ────────────────────────────────────
   const TH_H = 22;
-  const ROW_H = 30;
+  const ROW_H = isBoth ? 38 : 28;
 
   function drawTableHeader() {
     page.drawRectangle({ x: ML, y: y - TH_H, width: CW, height: TH_H, color: C.navy });
@@ -207,7 +199,7 @@ export async function GET(
 
   quote.items.forEach((item, idx) => {
     ensureSpace(ROW_H + 4);
-    if (y === PH - 38) drawTableHeader(); // redraw header on new page
+    if (y === PH - 38) drawTableHeader();
 
     const shaded = idx % 2 === 1;
     page.drawRectangle({
@@ -216,8 +208,8 @@ export async function GET(
       borderColor: C.slate200, borderWidth: 0.5,
     });
 
-    const unitDisplay = pdfPair(Number(item.unitPrice), item.currency);
-    const totalDisplay = pdfPair(Number(item.total), item.currency);
+    const unitLines = pdfLines(Number(item.unitPrice), item.currency);
+    const totalLines = pdfLines(Number(item.total), item.currency);
     const taxRateDisplay =
       getStoredTaxRateDisplay(
         item.quantity,
@@ -229,14 +221,18 @@ export async function GET(
       ? `${limitTxt(item.product.name, 20)} (${item.product.sku})`
       : "Manuel kalem";
 
-    const ty = y - 12;
-    drawTxt(page, font, String(idx + 1), COLS[0].x, ty, 8, C.slate500);
-    drawTxt(page, font, safe(limitTxt(productLabel, 26)), COLS[1].x, ty, 8, C.slate900);
-    drawTxt(page, font, safe(limitTxt(item.description, 30)), COLS[2].x, ty, 8, C.slate700);
-    drawTxt(page, font, String(item.quantity), COLS[3].x, ty, 8, C.slate700);
-    drawTxt(page, font, safe(limitTxt(unitDisplay, 18)), COLS[4].x, ty, 8, C.slate700);
-    drawTxt(page, font, safe(taxRateDisplay), COLS[5].x, ty, 8, C.slate700);
-    drawTxt(page, font, safe(limitTxt(totalDisplay, 22)), COLS[6].x, ty, 8, C.slate900);
+    const ty1 = y - (isBoth ? 10 : 12);
+    const ty2 = ty1 - 12;
+
+    drawTxt(page, font, String(idx + 1), COLS[0].x, ty1, 8, C.slate500);
+    drawTxt(page, font, safe(limitTxt(productLabel, 26)), COLS[1].x, ty1, 8, C.slate900);
+    drawTxt(page, font, safe(limitTxt(item.description, 30)), COLS[2].x, ty1, 8, C.slate700);
+    drawTxt(page, font, String(item.quantity), COLS[3].x, ty1, 8, C.slate700);
+    drawTxt(page, font, safe(unitLines[0] ?? ""), COLS[4].x, ty1, 8, C.slate700);
+    if (unitLines[1]) drawTxt(page, font, safe(unitLines[1]), COLS[4].x, ty2, 7, C.slate500);
+    drawTxt(page, font, safe(taxRateDisplay), COLS[5].x, ty1, 8, C.slate700);
+    drawTxt(page, font, safe(totalLines[0] ?? ""), COLS[6].x, ty1, 8, C.slate900);
+    if (totalLines[1]) drawTxt(page, font, safe(totalLines[1]), COLS[6].x, ty2, 7, C.slate700);
 
     y -= ROW_H;
   });
@@ -244,72 +240,86 @@ export async function GET(
   y -= 10;
 
   // ── SECTION 5: Totals ─────────────────────────────────────────
-  ensureSpace(110);
+  const TX = PW - MR - 200; // totals block right-edge at PW - MR
+  const TOTALS_W = 200;
+  const SUB_ROW_H = isBoth ? 32 : 18;
+  const GT_H = isBoth ? 52 : 38;
+  ensureSpace(8 + 3 * SUB_ROW_H + 8 + GT_H + (rate ? 20 : 8) + 10);
 
-  const TX = ML + CW - 192; // right-align totals block
-  const subDisp = pdfPair(Number(quote.subtotal), quoteCurrency);
-  const discDisp = pdfPair(Number(quote.discountTotal), quoteCurrency);
-  const taxDisp = pdfPair(Number(quote.taxTotal), quoteCurrency);
-  const grandDisp = pdfPair(Number(quote.total), quoteCurrency);
-
-  const subRows: Array<[string, string]> = [
-    ["Ara Toplam", subDisp],
-    ["İndirim", discDisp],
-    ["KDV", taxDisp],
+  const subRows: Array<[string, string[]]> = [
+    ["İndirim", pdfLines(Number(quote.discountTotal), quoteCurrency)],
+    ["KDV", pdfLines(Number(quote.taxTotal), quoteCurrency)],
+    ["Ara Toplam", pdfLines(Number(quote.subtotal), quoteCurrency)],
   ];
 
-  subRows.forEach(([label, value], i) => {
-    const ry = y - 14 - i * 18;
-    drawTxt(page, font, safe(label), TX, ry, 9, C.slate500);
-    drawTxt(page, font, safe(value), TX + 96, ry, 9, C.slate700);
+  const rightEdge = TX + TOTALS_W - 8;
+  let sy = y - 8;
+  subRows.forEach(([label, lines]) => {
+    const line0 = safe(lines[0] ?? "");
+    const line0W = font.widthOfTextAtSize(line0, 9);
+    drawTxt(page, font, safe(label), TX + 6, sy, 9, C.slate500);
+    drawTxt(page, font, line0, rightEdge - line0W, sy, 9, C.slate700);
+    if (lines[1]) {
+      const line1 = safe(lines[1]);
+      const line1W = font.widthOfTextAtSize(line1, 8);
+      drawTxt(page, font, line1, rightEdge - line1W, sy - 14, 8, C.slate500);
+    }
+    sy -= SUB_ROW_H;
   });
 
-  y -= 14 + 3 * 18 + 8;
+  y = sy - 8;
 
   // Grand total — dark dominant box
-  const GT_H = 38;
-  page.drawRectangle({ x: TX - 4, y: y - GT_H, width: 196, height: GT_H, color: C.navy });
-  drawTxt(page, font, "GENEL TOPLAM", TX + 2, y - 13, 7, C.slate300);
-  drawTxt(page, font, safe(limitTxt(grandDisp, 26)), TX + 2, y - 28, 12, C.white);
+  page.drawRectangle({ x: TX, y: y - GT_H, width: TOTALS_W, height: GT_H, color: C.navy });
+  drawTxt(page, font, "GENEL TOPLAM", TX + 8, y - 13, 7, C.slate300);
+
+  const grandLines = pdfLines(Number(quote.total), quoteCurrency);
+  const grand0 = safe(grandLines[0] ?? "");
+  const grand0W = font.widthOfTextAtSize(grand0, 12);
+  drawTxt(page, font, grand0, rightEdge - grand0W, y - 28, 12, C.white);
+  if (grandLines[1]) {
+    const grand1 = safe(grandLines[1]);
+    const grand1W = font.widthOfTextAtSize(grand1, 9);
+    drawTxt(page, font, grand1, rightEdge - grand1W, y - 42, 9, C.slate300);
+  }
 
   y -= GT_H + 12;
 
-  // Exchange rate note
   if (rate && rate > 0) {
     const rateN = new Intl.NumberFormat("tr-TR", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(rate);
     drawTxt(page, font, safe(`Kur: 1 USD = TL ${rateN}`), ML, y, 8, C.slate500);
-    y -= 16;
+    y -= 18;
   }
 
-  y -= 6;
+  y -= 8;
 
   // ── SECTION 6: Commercial terms & notes ──────────────────────
-  ensureSpace(100);
+  const noteLines = quote.notes
+    ? wrapTxt(safe(`Not: ${quote.notes}`), 90).slice(0, 8)
+    : [];
+  const payLines = wrapTxt(safe(`Ödeme: ${COMPANY_SETTINGS.paymentTerms}`), 90).slice(0, 4);
+  const delLines = wrapTxt(safe(`Teslimat: ${COMPANY_SETTINGS.deliveryTerms}`), 90).slice(0, 4);
+  const warLines = wrapTxt(safe(`Garanti: ${COMPANY_SETTINGS.warrantyTerms}`), 90).slice(0, 4);
 
-  const termsLines = [
-    quote.notes ? `Not: ${quote.notes}` : null,
-    `Odeme: ${COMPANY_SETTINGS.paymentTerms}`,
-    `Teslimat: ${COMPANY_SETTINGS.deliveryTerms}`,
-    `Garanti: ${COMPANY_SETTINGS.warrantyTerms}`,
-  ].filter((x): x is string => Boolean(x));
+  const allTermLines = [...noteLines, ...payLines, ...delLines, ...warLines];
+  const TERM_LINE_H = 14;
+  const TERMS_H = 22 + allTermLines.length * TERM_LINE_H + 10;
 
-  const TERMS_H = Math.min(4 + termsLines.length * 22 + 24, 110);
+  ensureSpace(TERMS_H + 16);
+
   page.drawRectangle({
     x: ML, y: y - TERMS_H, width: CW, height: TERMS_H,
     color: C.slate50, borderColor: C.slate200, borderWidth: 0.5,
   });
-  drawTxt(page, font, "TİCARİ KOSULLAR VE NOTLAR", ML + 10, y - 13, 7, C.slate500);
+  drawTxt(page, font, "TİCARİ KOŞULLAR VE NOTLAR", ML + 10, y - 14, 7, C.slate500);
 
-  let termsY = y - 27;
-  for (const line of termsLines) {
-    const wrapped = wrapTxt(safe(line), 98).slice(0, 1);
-    for (const wl of wrapped) {
-      drawTxt(page, font, wl, ML + 10, termsY, 8, C.slate700);
-      termsY -= 16;
-    }
+  let termsY = y - 28;
+  for (const line of allTermLines) {
+    drawTxt(page, font, line, ML + 10, termsY, 8, C.slate700);
+    termsY -= TERM_LINE_H;
   }
 
   y -= TERMS_H + 10;
@@ -332,8 +342,8 @@ export async function GET(
     C.slate500,
   );
   if (quote.validityDate) {
-    const vText = safe(`Gecerlilik: ${fmtDate(quote.validityDate)}`);
-    drawTxt(page, font, vText, PW - MR - 100, FY, 8, C.slate500);
+    const vText = safe(`Geçerlilik: ${fmtDate(quote.validityDate)}`);
+    drawTxt(page, font, vText, PW - MR - 110, FY, 8, C.slate500);
   }
 
   const bytes = await pdf.save();
