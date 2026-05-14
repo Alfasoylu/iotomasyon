@@ -9,6 +9,9 @@ import type { CustomerStatus, Prisma } from "@prisma/client";
 type ImportResult = {
   ok: boolean;
   message: string;
+  created?: number;
+  updated?: number;
+  skipped?: number;
 };
 
 const FIELD_ALIASES: Record<string, string> = {
@@ -33,7 +36,9 @@ export async function importCustomersCsvAction(formData: FormData): Promise<Impo
     return { ok: false, message: "CSV dosyasi secin." };
   }
 
-  const text = await file.text();
+  const rawText = await file.text();
+  // Strip UTF-8 BOM if present
+  const text = rawText.startsWith("﻿") ? rawText.slice(1) : rawText;
   const rows = parseCsv(text);
 
   if (rows.length < 2) {
@@ -47,18 +52,22 @@ export async function importCustomersCsvAction(formData: FormData): Promise<Impo
     return { ok: false, message: "CSV icinde en az 'name' kolonu gerekli." };
   }
 
-  let processed = 0;
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
 
   for (const row of rows.slice(1)) {
     const record = Object.fromEntries(headers.map((header, index) => [header, row[index]?.trim() ?? ""]));
 
-    if (!record.name) {
+    // Skip empty rows
+    if (!record.name || record.name.trim().length < 2) {
+      skipped += 1;
       continue;
     }
 
-    const email = record.email?.toLowerCase() || null;
-    const phone = record.phone || null;
-    const whatsapp = record.whatsapp || null;
+    const email = record.email?.toLowerCase().trim() || null;
+    const phone = normalizePhone(record.phone) || null;
+    const whatsapp = normalizePhone(record.whatsapp) || null;
 
     const matchClauses: Prisma.CustomerWhereInput[] = [];
     if (email) {
@@ -98,11 +107,11 @@ export async function importCustomersCsvAction(formData: FormData): Promise<Impo
         where: { id: existing.id },
         data,
       });
+      updated += 1;
     } else {
       await prisma.customer.create({ data });
+      created += 1;
     }
-
-    processed += 1;
   }
 
   revalidatePath("/customers");
@@ -110,7 +119,10 @@ export async function importCustomersCsvAction(formData: FormData): Promise<Impo
 
   return {
     ok: true,
-    message: `${processed} musteri satiri islendi.`,
+    message: `Tamamlandi: ${created} yeni, ${updated} guncellendi, ${skipped} atlandi.`,
+    created,
+    updated,
+    skipped,
   };
 }
 
@@ -172,6 +184,13 @@ function parseCsv(input: string) {
 
 function emptyToNull(value: string | undefined) {
   return value && value.trim().length > 0 ? value.trim() : null;
+}
+
+function normalizePhone(value: string | undefined) {
+  if (!value) return null;
+  // Keep digits, +, and spaces; strip other chars
+  const cleaned = value.replace(/[^\d+\s\-()]/g, "").trim();
+  return cleaned.length >= 7 ? cleaned : null;
 }
 
 function parseCustomerStatus(value: string | undefined): CustomerStatus {

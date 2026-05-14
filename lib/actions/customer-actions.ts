@@ -82,6 +82,28 @@ export async function updateCustomerAction(
   }
 }
 
+export async function updateCustomerStatusAction(
+  customerId: string,
+  status: CustomerInput["status"],
+): Promise<ActionResult> {
+  await requireUser();
+
+  try {
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { status },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/customers");
+    revalidatePath(`/customers/${customerId}`);
+
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Musteri durumu guncellenemedi." };
+  }
+}
+
 export async function deleteCustomerAction(customerId: string): Promise<ActionResult> {
   await requireUser();
 

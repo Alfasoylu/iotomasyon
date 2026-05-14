@@ -1,6 +1,9 @@
 export const QUOTE_STATUS_OPTIONS = [
   "DRAFT",
   "SENT",
+  "VIEWED",
+  "WON",
+  "LOST",
   "ACCEPTED",
   "DECLINED",
 ] as const;
@@ -19,5 +22,6 @@ export type QuoteItemFormValues = {
 
 export type QuoteFormValues = {
   notes: string;
+  validityDate?: string;
   items: QuoteItemFormValues[];
 };

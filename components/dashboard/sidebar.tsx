@@ -7,8 +7,9 @@ import { useSidebarStore } from "@/hooks/use-sidebar-store";
 
 const navigation = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/products", label: "Products" },
-  { href: "/customers", label: "Customers" },
+  { href: "/customers", label: "Musteriler" },
+  { href: "/products", label: "Urunler" },
+  { href: "/search", label: "Arama" },
 ];
 
 export function Sidebar() {
@@ -56,9 +57,9 @@ export function Sidebar() {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Phase 1 active:
+          Phase 4 active
           <p className="mt-2 font-medium text-slate-900">
-            Auth, dashboard shell ve urun yonetimi.
+            WhatsApp CRM, kanban, gelir KPIs, global arama.
           </p>
         </div>
       </aside>

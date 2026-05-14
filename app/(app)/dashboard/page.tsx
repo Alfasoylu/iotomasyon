@@ -23,12 +23,12 @@ export default async function DashboardPage() {
       <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge tone="warning">Phase 3</Badge>
+            <Badge tone="success">Phase 4</Badge>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              Sales pipeline paneli hazir
+              CRM panosu
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-              Musteri, teklif, follow-up ve urun akisini tek panelden izleyin.
+              Satis hunisi, gelir takibi, urun performansi ve musteri sureclerini tek ekranda gorun.
             </p>
           </div>
 
@@ -36,33 +36,66 @@ export default async function DashboardPage() {
             <Link href="/customers">
               <Button>Musteri panosu</Button>
             </Link>
-            <Link href="/products/new">
-              <Button variant="secondary">Yeni urun</Button>
+            <Link href="/search">
+              <Button variant="secondary">Arama</Button>
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Toplam urun" value={stats.productCount} />
-        <StatCard label="Aktif urun" value={stats.activeProductCount} />
-        <StatCard label="Dusuk stok" value={stats.lowStockCount} accent />
-        <StatCard label="Tanimli lokasyon" value={stats.locationCount} />
-        <StatCard label="Toplam musteri" value={stats.customerCount} />
-        <StatCard label="Yeni musteri" value={stats.newCustomerCount} />
-        <StatCard label="Teklif verilen" value={stats.quotedCustomerCount} />
-        <StatCard label="Muzakerede" value={stats.negotiatingCustomerCount} accent />
-        <StatCard label="Kazanilan" value={stats.wonCustomerCount} />
-        <StatCard label="Acik follow-up" value={stats.openFollowups} />
-        <StatCard label="Geciken gorev" value={stats.overdueTasks} accent />
-        <StatCard label="Quotes sent" value={stats.quotesSent} />
-        <StatCard label="Open deals" value={stats.openDeals} />
-        <StatCard label="Lost deals" value={stats.lostDeals} accent />
-        <StatCard label="Conversion rate" value={formatPercentValue(stats.conversionRate.toFixed(1))} />
-        <StatCard
-          label="Won revenue"
-          value={formatCurrencyAmount(stats.wonRevenue, "TRY")}
-        />
+      {/* Revenue KPIs */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          Gelir
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Bu ay kazanilan"
+            value={formatCurrencyAmount(stats.monthlyRevenue, "TRY")}
+            tone="success"
+          />
+          <StatCard
+            label="Toplam kazanilan"
+            value={formatCurrencyAmount(stats.wonRevenue, "TRY")}
+          />
+          <StatCard
+            label="Ort. anlaşma büyüklüğü"
+            value={formatCurrencyAmount(stats.averageDealSize, "TRY")}
+          />
+          <StatCard
+            label="Kazanma oranı"
+            value={formatPercentValue(stats.conversionRate.toFixed(1))}
+            tone={stats.conversionRate > 30 ? "success" : "default"}
+          />
+        </div>
+      </section>
+
+      {/* Pipeline funnel */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          Satis hunisi
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          <StatCard label="Yeni" value={stats.newCustomerCount} />
+          <StatCard label="Iletisim kuruldu" value={stats.customerCount - stats.newCustomerCount - stats.wonCustomerCount - stats.lostDeals} />
+          <StatCard label="Teklif verildi" value={stats.quotedCustomerCount} tone="warning" />
+          <StatCard label="Muzakere" value={stats.negotiatingCustomerCount} tone="warning" />
+          <StatCard label="Kazanilan" value={stats.wonCustomerCount} tone="success" />
+          <StatCard label="Kaybedilen" value={stats.lostDeals} tone="danger" />
+        </div>
+      </section>
+
+      {/* Operations */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          Operasyon
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard label="Acik follow-up" value={stats.openFollowups} />
+          <StatCard label="Geciken gorev" value={stats.overdueTasks} tone="danger" />
+          <StatCard label="Teklif gonderildi" value={stats.quotesSent} />
+          <StatCard label="Toplam urun" value={stats.productCount} />
+        </div>
       </section>
 
       {!stats.databaseAvailable ? (
@@ -75,16 +108,27 @@ export default async function DashboardPage() {
       <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card className="p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            What is live
+            En cok satilan urunler
           </p>
-          <ul className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
-            <li>Cookie tabanli tek admin authentication</li>
-            <li>Korumali dashboard ve products routelari</li>
-            <li>Musteri CRUD, urun ilgileri, timeline notlari ve takip gorevleri</li>
-            <li>Teklif olusturma, pipeline kanban, PDF export ve WhatsApp akisi</li>
-            <li>Prisma + Supabase PostgreSQL veri modeli</li>
-            <li>CSV musteri import ve satis KPI genislemeleri</li>
-          </ul>
+          {stats.topProducts.length === 0 ? (
+            <p className="mt-5 text-sm text-slate-400">
+              Henuz kazanilan teklif kalemi yok.
+            </p>
+          ) : (
+            <ol className="mt-5 space-y-3">
+              {stats.topProducts.map((p, i) => (
+                <li key={p.productId} className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-900">{p.name}</p>
+                    <p className="text-xs text-slate-500">{p.sku} · {p.totalQty} adet</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
         </Card>
 
         <Card className="p-6">
@@ -120,19 +164,29 @@ export default async function DashboardPage() {
   );
 }
 
+const TONE_CLASSES: Record<string, string> = {
+  default: "",
+  success: "border-emerald-200 bg-emerald-50",
+  warning: "border-amber-200 bg-amber-50",
+  danger: "border-red-200 bg-red-50",
+};
+
 function StatCard({
   label,
   value,
-  accent = false,
+  tone = "default",
+  accent,
 }: {
   label: string;
   value: number | string;
+  tone?: "default" | "success" | "warning" | "danger";
   accent?: boolean;
 }) {
+  const resolvedTone = accent ? "warning" : tone;
   return (
-    <Card className={`p-5 ${accent ? "border-amber-200 bg-amber-50" : "p-5"}`}>
+    <Card className={`p-5 ${TONE_CLASSES[resolvedTone]}`}>
       <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{label}</p>
-      <p className="mt-5 text-4xl font-semibold text-slate-950">{value}</p>
+      <p className="mt-5 text-3xl font-semibold text-slate-950">{value}</p>
     </Card>
   );
 }

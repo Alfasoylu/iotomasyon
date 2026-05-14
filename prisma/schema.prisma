@@ -70,6 +70,9 @@ enum TaskPriority {
 enum QuoteStatus {
   DRAFT
   SENT
+  VIEWED
+  WON
+  LOST
   ACCEPTED
   DECLINED
 }
@@ -135,10 +138,11 @@ model Customer {
   taxOffice    String?
   taxNumber    String?
   source       String?
-  isActive     Boolean           @default(true)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  interests    ProductInterest[]
+  isActive        Boolean           @default(true)
+  lastContactedAt DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  interests       ProductInterest[]
   timelineEntries Note[]
   tasks        FollowUpTask[]
   quotes       Quote[]
@@ -233,6 +237,8 @@ model Quote {
   quoteNumber   String      @unique
   status        QuoteStatus @default(DRAFT)
   notes         String?
+  validityDate  DateTime?
+  sentAt        DateTime?
   subtotal      Decimal     @default(0)
   discountTotal Decimal     @default(0)
   taxTotal      Decimal     @default(0)
@@ -247,6 +253,7 @@ model Quote {
   @@index([customerId])
   @@index([status])
   @@index([createdAt])
+  @@index([validityDate])
 }
 
 model QuoteItem {

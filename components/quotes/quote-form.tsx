@@ -37,6 +37,7 @@ export function QuoteForm({
     resolver: zodResolver(quoteSchema),
     defaultValues: {
       notes: "",
+      validityDate: "",
       items: [{ ...emptyItem }],
     },
   });
@@ -130,6 +131,15 @@ export function QuoteForm({
       >
         Kalem ekle
       </Button>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            Gecerlilik tarihi
+          </label>
+          <Input type="date" {...form.register("validityDate")} />
+        </div>
+      </div>
 
       <Textarea {...form.register("notes")} className="min-h-24" placeholder="Teklif notu" />
 

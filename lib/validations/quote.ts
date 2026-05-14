@@ -12,6 +12,7 @@ export const quoteItemSchema = z.object({
 
 export const quoteSchema = z.object({
   notes: z.string().trim().max(2000),
+  validityDate: z.string().trim().optional(),
   items: z.array(quoteItemSchema).min(1, "En az bir kalem gerekli."),
 });
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { QuoteStatusButtons } from "@/components/quotes/quote-status-buttons";
 import { QuoteWhatsAppButton } from "@/components/quotes/quote-whatsapp-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ export default async function QuoteDetailPage({
         </div>
 
         <div className="flex flex-wrap gap-3">
+          <QuoteStatusButtons quoteId={quote.id} currentStatus={quote.status} />
           <a href={`/quotes/${quote.id}/pdf`} target="_blank" rel="noreferrer">
             <span className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-50">
               PDF export
@@ -112,8 +114,10 @@ export default async function QuoteDetailPage({
             <Info label="Discount" value={formatCurrencyAmount(quote.discountTotal.toString(), quoteCurrency)} />
             <Info label="Tax" value={formatCurrencyAmount(quote.taxTotal.toString(), quoteCurrency)} />
             <Info label="Total" value={formatCurrencyAmount(quote.total.toString(), quoteCurrency)} />
-            <Info label="Created" value={formatDateTime(quote.createdAt)} />
-            <Info label="Created by" value={quote.createdBy?.name ?? "System"} />
+            <Info label="Olusturulma" value={formatDateTime(quote.createdAt)} />
+            {quote.sentAt ? <Info label="Gonderilme" value={formatDateTime(quote.sentAt)} /> : null}
+            {quote.validityDate ? <Info label="Gecerlilik" value={formatDateTime(quote.validityDate)} /> : null}
+            <Info label="Olusturan" value={quote.createdBy?.name ?? "System"} />
           </dl>
 
           <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
