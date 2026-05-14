@@ -77,6 +77,9 @@ export default async function CustomerDetailPage({
     notFound();
   }
 
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -375,7 +378,7 @@ export default async function CustomerDetailPage({
                   const isOverdue =
                     task.status === "OPEN" &&
                     !!task.dueDate &&
-                    task.dueDate.getTime() < Date.now();
+                    task.dueDate.getTime() < now;
                   return (
                   <div
                     key={task.id}

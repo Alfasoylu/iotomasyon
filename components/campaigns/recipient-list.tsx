@@ -305,7 +305,7 @@ function RecipientCard({
         {status === "REPLIED" && (
           <>
             <Button type="button" variant="secondary" onClick={() => doReversal("SENT")}>
-              ← Gönderildi'ye al
+              ← Gönderildi&apos;ye al
             </Button>
             {!state.quoteId && (
               <Button type="button" variant="secondary" onClick={() => setShowQuoteLink((v) => !v)}>
