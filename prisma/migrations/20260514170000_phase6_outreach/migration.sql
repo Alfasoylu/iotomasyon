@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS "OutreachRecipient" (
     CONSTRAINT "OutreachRecipient_pkey" PRIMARY KEY ("id")
 );
 
--- Unique constraint (NOT VALID is not supported for UNIQUE in PostgreSQL; table is new so no row scan needed)
+-- Unique constraint
 ALTER TABLE "OutreachRecipient"
-  ADD CONSTRAINT IF NOT EXISTS "OutreachRecipient_campaignId_customerId_key"
+  ADD CONSTRAINT "OutreachRecipient_campaignId_customerId_key"
   UNIQUE ("campaignId", "customerId");
 
 -- Indexes
@@ -51,23 +51,23 @@ CREATE INDEX IF NOT EXISTS "OutreachCampaign_createdAt_idx"   ON "OutreachCampai
 CREATE INDEX IF NOT EXISTS "OutreachRecipient_campaignId_idx" ON "OutreachRecipient"("campaignId");
 CREATE INDEX IF NOT EXISTS "OutreachRecipient_customerId_idx" ON "OutreachRecipient"("customerId");
 
--- FKs (NOT VALID = no row scan, zero downtime)
+-- FKs (NOT VALID = no row scan on new tables; skips constraint check at creation time)
 ALTER TABLE "OutreachCampaign"
-  ADD CONSTRAINT IF NOT EXISTS "OutreachCampaign_productId_fkey"
+  ADD CONSTRAINT "OutreachCampaign_productId_fkey"
   FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE SET NULL NOT VALID;
 
 ALTER TABLE "OutreachCampaign"
-  ADD CONSTRAINT IF NOT EXISTS "OutreachCampaign_categoryId_fkey"
+  ADD CONSTRAINT "OutreachCampaign_categoryId_fkey"
   FOREIGN KEY ("categoryId") REFERENCES "ProductCategory"("id") ON DELETE SET NULL NOT VALID;
 
 ALTER TABLE "OutreachCampaign"
-  ADD CONSTRAINT IF NOT EXISTS "OutreachCampaign_createdById_fkey"
+  ADD CONSTRAINT "OutreachCampaign_createdById_fkey"
   FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL NOT VALID;
 
 ALTER TABLE "OutreachRecipient"
-  ADD CONSTRAINT IF NOT EXISTS "OutreachRecipient_campaignId_fkey"
+  ADD CONSTRAINT "OutreachRecipient_campaignId_fkey"
   FOREIGN KEY ("campaignId") REFERENCES "OutreachCampaign"("id") ON DELETE CASCADE NOT VALID;
 
 ALTER TABLE "OutreachRecipient"
-  ADD CONSTRAINT IF NOT EXISTS "OutreachRecipient_customerId_fkey"
+  ADD CONSTRAINT "OutreachRecipient_customerId_fkey"
   FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE NOT VALID;
