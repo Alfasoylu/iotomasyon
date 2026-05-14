@@ -33,7 +33,12 @@ import {
 } from "@/services/customer-service";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { listAttributes } from "@/services/attribute-service";
-import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
+import {
+  formatDisplayPair,
+  formatQuoteStatus,
+  getQuoteStatusTone,
+  resolveDisplayAmounts,
+} from "@/lib/quote-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -284,7 +289,12 @@ export default async function CustomerDetailPage({
             </p>
 
             <div className="mt-6">
-              <QuoteForm customerId={customer.id} products={productOptionsResult.products} />
+              <QuoteForm
+                customerId={customer.id}
+                customerName={customer.name}
+                customerCompany={customer.company}
+                products={productOptionsResult.products}
+              />
             </div>
 
             <div className="mt-8 space-y-4">
@@ -300,7 +310,14 @@ export default async function CustomerDetailPage({
                       <div>
                         <p className="font-semibold text-slate-900">{quote.quoteNumber}</p>
                         <p className="mt-1 text-sm text-slate-600">
-                          {formatCurrencyAmount(quote.total.toString(), quote.items[0]?.currency ?? "TRY")}
+                          {formatDisplayPair(
+                            resolveDisplayAmounts(
+                              Number(quote.total),
+                              quote.items[0]?.currency ?? "TRY",
+                              quote.currencyMode ?? "TRY",
+                              quote.exchangeRate != null ? Number(quote.exchangeRate) : null,
+                            ),
+                          )}
                         </p>
                         <p className="mt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
                           {formatDateTime(quote.createdAt)}

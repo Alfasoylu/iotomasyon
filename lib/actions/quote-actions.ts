@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  calculateQuoteLine,
+  calculateQuoteTotals,
+  DEFAULT_QUOTE_TAX_RATE,
+  normalizeDecimalInput,
+} from "@/lib/quote-utils";
 import { quoteSchema, type QuoteInput } from "@/lib/validations/quote";
 import type { ActionResult } from "@/types/actions";
 
@@ -25,34 +31,36 @@ export async function createQuoteAction(
 
   try {
     const preparedItems = parsed.data.items.map((item) => {
-      const quantity = item.quantity;
-      const unitPrice = decimalString(item.unitPrice);
-      const discount = decimalString(item.discount);
-      const tax = decimalString(item.tax);
-      const total = quantity * unitPrice - discount + tax;
+      const line = calculateQuoteLine(
+        item.quantity,
+        item.unitPrice,
+        item.discount,
+        item.tax || DEFAULT_QUOTE_TAX_RATE,
+      );
 
       return {
         productId: item.productId || null,
         description: item.description.trim(),
-        quantity,
-        unitPrice: unitPrice.toString(),
+        quantity: line.quantity,
+        unitPrice: line.unitPrice.toString(),
         currency: item.currency.trim().toUpperCase(),
-        discount: discount.toString(),
-        tax: tax.toString(),
-        total: total.toString(),
+        discount: line.discount.toString(),
+        tax: line.taxAmount.toString(),
+        total: line.total.toString(),
       };
     });
 
-    const subtotal = preparedItems.reduce(
-      (sum, item) => sum + Number(item.unitPrice) * item.quantity,
-      0,
+    const totals = calculateQuoteTotals(
+      parsed.data.items.map((item) => ({
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+        tax: item.tax || DEFAULT_QUOTE_TAX_RATE,
+      })),
     );
-    const discountTotal = preparedItems.reduce((sum, item) => sum + Number(item.discount), 0);
-    const taxTotal = preparedItems.reduce((sum, item) => sum + Number(item.tax), 0);
-    const total = preparedItems.reduce((sum, item) => sum + Number(item.total), 0);
 
     const exchangeRateNum = parsed.data.exchangeRate
-      ? Number.parseFloat(parsed.data.exchangeRate.replace(",", "."))
+      ? normalizeDecimalInput(parsed.data.exchangeRate)
       : null;
 
     const quote = await prisma.quote.create({
@@ -60,13 +68,14 @@ export async function createQuoteAction(
         customerId,
         quoteNumber: await createQuoteNumber(),
         currencyMode: parsed.data.currencyMode,
-        exchangeRate: exchangeRateNum && Number.isFinite(exchangeRateNum) ? exchangeRateNum.toString() : null,
+        exchangeRate:
+          exchangeRateNum && Number.isFinite(exchangeRateNum) ? exchangeRateNum.toString() : null,
         notes: emptyToNull(parsed.data.notes),
         validityDate: parsed.data.validityDate ? new Date(parsed.data.validityDate) : null,
-        subtotal: subtotal.toString(),
-        discountTotal: discountTotal.toString(),
-        taxTotal: taxTotal.toString(),
-        total: total.toString(),
+        subtotal: totals.subtotal.toString(),
+        discountTotal: totals.discountTotal.toString(),
+        taxTotal: totals.taxTotal.toString(),
+        total: totals.total.toString(),
         createdById: user.id,
         items: {
           create: preparedItems,
@@ -125,11 +134,6 @@ async function createQuoteNumber() {
   const seq = String(count + 1).padStart(4, "0");
   const year = new Date().getFullYear();
   return `QT-${year}-${seq}`;
-}
-
-function decimalString(value: string) {
-  const normalized = Number.parseFloat(value.replace(",", "."));
-  return Number.isFinite(normalized) ? normalized : 0;
 }
 
 function emptyToNull(value: string | undefined) {
