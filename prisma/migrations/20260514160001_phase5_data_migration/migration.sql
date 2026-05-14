@@ -20,7 +20,7 @@ slugged AS (
       regexp_replace(
         lower(
           translate(
-            TRIM(category),
+            raw_name,
             'ÇçĞğİıÖöŞşÜü',
             'ccggiioosSuu'
           )
@@ -28,10 +28,7 @@ slugged AS (
         '[^a-z0-9]+', '-', 'g'
       )
     ) AS slug
-  FROM "Product"
-  WHERE category IS NOT NULL
-    AND TRIM(category) <> ''
-  GROUP BY category
+  FROM distinct_categories
 )
 INSERT INTO "ProductCategory" ("id", "name", "slug", "updatedAt")
 SELECT
