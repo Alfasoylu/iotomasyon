@@ -5,8 +5,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { env } from "@/lib/env";
-import { prisma } from "@/lib/prisma";
+import { getAdminEmail, getAdminPassword } from "@/lib/env";
 import {
   createSessionToken,
   SESSION_COOKIE_NAME,
@@ -16,17 +15,18 @@ import {
 } from "@/lib/session";
 
 export async function ensureBootstrapAdmin() {
+  const { prisma } = await import("@/lib/prisma");
   const existingAdmin = await prisma.user.findFirst();
 
   if (existingAdmin) {
     return existingAdmin;
   }
 
-  const passwordHash = await hash(env.ADMIN_PASSWORD, 12);
+  const passwordHash = await hash(getAdminPassword(), 12);
 
   return prisma.user.create({
     data: {
-      email: env.ADMIN_EMAIL.toLowerCase(),
+      email: getAdminEmail().toLowerCase(),
       name: "Admin",
       passwordHash,
       role: "ADMIN",
@@ -35,6 +35,7 @@ export async function ensureBootstrapAdmin() {
 }
 
 export async function authenticateWithPassword(email: string, password: string) {
+  const { prisma } = await import("@/lib/prisma");
   await ensureBootstrapAdmin();
 
   const user = await prisma.user.findUnique({
@@ -74,6 +75,7 @@ export const getCurrentSession = cache(async () => {
     return null;
   }
 
+  const { prisma } = await import("@/lib/prisma");
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
     select: {

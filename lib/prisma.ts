@@ -3,14 +3,14 @@ import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
-import { env } from "@/lib/env";
+import { getDatabaseUrl } from "@/lib/env";
 
 declare global {
   var prisma: PrismaClient | undefined;
 }
 
 const adapter = new PrismaPg({
-  connectionString: env.DATABASE_URL,
+  connectionString: getDatabaseUrl(),
 });
 
 export const prisma =

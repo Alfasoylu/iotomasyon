@@ -1,8 +1,8 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
-import { env, isProduction } from "@/lib/env";
+import { getSessionSecret, isProduction } from "@/lib/env";
 
-const secret = new TextEncoder().encode(env.SESSION_SECRET);
+const secret = new TextEncoder().encode(getSessionSecret());
 export const SESSION_COOKIE_NAME = "iotomasyon_session";
 
 export type SessionPayload = JWTPayload & {

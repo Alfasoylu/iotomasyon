@@ -1,0 +1,14 @@
+
+> iotomasyon@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3015
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://127.0.0.1:3015
+- Network:       http://127.0.0.1:3015
+✓ Ready in 717ms
+
+○ Compiling /login ...
+ GET /login 200 in 3.9s (next.js: 3.4s, proxy.ts: 298ms, application-code: 286ms)
+ GET / 307 in 772ms (next.js: 611ms, proxy.ts: 10ms, application-code: 150ms)
+ GET /login 200 in 60ms (next.js: 4ms, proxy.ts: 7ms, application-code: 49ms)
+ GET /login 200 in 64ms (next.js: 4ms, proxy.ts: 6ms, application-code: 54ms)

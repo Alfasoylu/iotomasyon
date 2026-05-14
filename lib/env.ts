@@ -1,13 +1,10 @@
 import { z } from "zod";
 
-const envSchema = z.object({
-  DATABASE_URL: z.string().min(1),
-  DIRECT_URL: z.string().min(1),
-  SESSION_SECRET: z.string().min(32),
-  ADMIN_EMAIL: z.email(),
-  ADMIN_PASSWORD: z.string().min(8),
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-});
+const nodeEnvSchema = z.enum(["development", "test", "production"]).default("development");
+const databaseUrlSchema = z.string().min(1);
+const sessionSecretSchema = z.string().min(32);
+const adminEmailSchema = z.email();
+const adminPasswordSchema = z.string().min(8);
 
 function readRequiredEnv(name: keyof NodeJS.ProcessEnv) {
   const value = process.env[name];
@@ -19,14 +16,28 @@ function readRequiredEnv(name: keyof NodeJS.ProcessEnv) {
   return value;
 }
 
-const rawEnv = {
-  DATABASE_URL: readRequiredEnv("DATABASE_URL"),
-  DIRECT_URL: readRequiredEnv("DIRECT_URL"),
-  SESSION_SECRET: readRequiredEnv("SESSION_SECRET"),
-  ADMIN_EMAIL: readRequiredEnv("ADMIN_EMAIL"),
-  ADMIN_PASSWORD: readRequiredEnv("ADMIN_PASSWORD"),
-  NODE_ENV: process.env.NODE_ENV ?? "development",
-};
+export function getDatabaseUrl() {
+  return databaseUrlSchema.parse(readRequiredEnv("DATABASE_URL"));
+}
 
-export const env = envSchema.parse(rawEnv);
-export const isProduction = env.NODE_ENV === "production";
+export function getDirectUrl() {
+  return databaseUrlSchema.parse(readRequiredEnv("DIRECT_URL"));
+}
+
+export function getSessionSecret() {
+  return sessionSecretSchema.parse(readRequiredEnv("SESSION_SECRET"));
+}
+
+export function getAdminEmail() {
+  return adminEmailSchema.parse(readRequiredEnv("ADMIN_EMAIL"));
+}
+
+export function getAdminPassword() {
+  return adminPasswordSchema.parse(readRequiredEnv("ADMIN_PASSWORD"));
+}
+
+export function getNodeEnv() {
+  return nodeEnvSchema.parse(process.env.NODE_ENV ?? "development");
+}
+
+export const isProduction = getNodeEnv() === "production";

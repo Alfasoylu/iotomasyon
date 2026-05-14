@@ -1,0 +1,16 @@
+⨯ Error: Missing required environment variable: DATABASE_URL
+    at fz (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[root-of-the-server]__02-s9m~._.js:79:56213)
+    at module evaluation (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[root-of-the-server]__02-s9m~._.js:79:56296)
+    at instantiateModule (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[turbopack]_runtime.js:853:9)
+    at instantiateRuntimeModule (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[turbopack]_runtime.js:882:12)
+    at getOrInstantiateRuntimeModule (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[turbopack]_runtime.js:895:12)
+    at Object.m (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[turbopack]_runtime.js:898:18)
+    at Object.<anonymous> (C:\dev\iotomasyoncom\iotomasyon\.next\server\middleware.js:4:3)
+⨯ Error: Missing required environment variable: DATABASE_URL
+    at fz (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[root-of-the-server]__02-s9m~._.js:79:56213)
+    at module evaluation (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[root-of-the-server]__02-s9m~._.js:79:56296)
+    at instantiateModule (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[turbopack]_runtime.js:853:9)
+    at instantiateRuntimeModule (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[turbopack]_runtime.js:882:12)
+    at getOrInstantiateRuntimeModule (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[turbopack]_runtime.js:895:12)
+    at Object.m (C:\dev\iotomasyoncom\iotomasyon\.next\server\chunks\[turbopack]_runtime.js:898:18)
+    at Object.<anonymous> (C:\dev\iotomasyoncom\iotomasyon\.next\server\middleware.js:4:3)
