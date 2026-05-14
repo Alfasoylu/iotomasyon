@@ -10,10 +10,7 @@ import { customerTaskSchema } from "@/lib/validations/customer-crm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  TASK_PRIORITY_OPTIONS,
-  type CustomerTaskFormValues,
-} from "@/types/customers";
+import { type CustomerTaskFormValues } from "@/types/customers";
 
 export function CustomerTaskForm({ customerId }: { customerId: string }) {
   const router = useRouter();
@@ -64,11 +61,10 @@ export function CustomerTaskForm({ customerId }: { customerId: string }) {
         {...form.register("priority")}
         className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
       >
-        {TASK_PRIORITY_OPTIONS.map((priority) => (
-          <option key={priority} value={priority}>
-            {priority}
-          </option>
-        ))}
+        <option value="LOW">Düşük</option>
+        <option value="MEDIUM">Orta</option>
+        <option value="HIGH">Yüksek</option>
+        <option value="URGENT">Acil</option>
       </select>
 
       <Textarea {...form.register("description")} className="min-h-24" placeholder="Görev açıklaması" />
