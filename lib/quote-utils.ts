@@ -147,6 +147,33 @@ export function inferTaxRateFromStored(
   return Number(((taxAmount / discountedBase) * 100).toFixed(2));
 }
 
+export function getStoredTaxRateDisplay(
+  quantity: number,
+  unitPrice: string | number,
+  discount: string | number,
+  storedTaxAmount: string | number,
+) {
+  const taxAmount = Math.max(0, normalizeDecimalInput(storedTaxAmount));
+
+  if (taxAmount === 0) {
+    return "%0";
+  }
+
+  const inferredRate = inferTaxRateFromStored(quantity, unitPrice, discount, storedTaxAmount);
+  const roundedRate = Math.round(inferredRate);
+
+  if (
+    Number.isFinite(inferredRate) &&
+    roundedRate >= 0 &&
+    roundedRate <= 100 &&
+    Math.abs(inferredRate - roundedRate) <= 0.001
+  ) {
+    return formatPercentValue(roundedRate);
+  }
+
+  return null;
+}
+
 export function resolveDisplayAmounts(
   value: number,
   itemCurrency: string,

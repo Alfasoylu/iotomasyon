@@ -71,8 +71,8 @@ export function QuoteForm({
 
   const watchedItems =
     useWatch({
-    control: form.control,
-    name: "items",
+      control: form.control,
+      name: "items",
     }) ?? [];
 
   const items = useFieldArray({
@@ -331,7 +331,12 @@ export function QuoteForm({
               <SummaryRow
                 label="Ara toplam"
                 value={formatDisplayPair(
-                  resolveDisplayAmounts(totals.subtotal, baseCurrency, currencyMode, exchangeRate || null),
+                  resolveDisplayAmounts(
+                    totals.subtotal,
+                    baseCurrency,
+                    currencyMode,
+                    exchangeRate || null,
+                  ),
                 )}
               />
               <SummaryRow
@@ -348,13 +353,23 @@ export function QuoteForm({
               <SummaryRow
                 label="KDV"
                 value={formatDisplayPair(
-                  resolveDisplayAmounts(totals.taxTotal, baseCurrency, currencyMode, exchangeRate || null),
+                  resolveDisplayAmounts(
+                    totals.taxTotal,
+                    baseCurrency,
+                    currencyMode,
+                    exchangeRate || null,
+                  ),
                 )}
               />
               <SummaryRow
                 label="Genel toplam"
                 value={formatDisplayPair(
-                  resolveDisplayAmounts(totals.total, baseCurrency, currencyMode, exchangeRate || null),
+                  resolveDisplayAmounts(
+                    totals.total,
+                    baseCurrency,
+                    currencyMode,
+                    exchangeRate || null,
+                  ),
                 )}
                 strong
               />

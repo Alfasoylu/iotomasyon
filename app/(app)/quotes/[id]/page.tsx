@@ -9,11 +9,10 @@ import { Card } from "@/components/ui/card";
 import {
   formatCurrencyAmount,
   formatDisplayPair,
-  formatPercentValue,
   formatQuoteCurrencyMode,
   formatQuoteStatus,
   getQuoteStatusTone,
-  inferTaxRateFromStored,
+  getStoredTaxRateDisplay,
   resolveDisplayAmounts,
 } from "@/lib/quote-utils";
 import { formatDateTime } from "@/lib/utils";
@@ -66,9 +65,8 @@ export default async function QuoteDetailPage({
                 </p>
               </div>
               <p className="max-w-2xl text-sm leading-7 text-slate-600">
-                Müşteri için hazırlanan teklif, PDF ve WhatsApp paylaşımında aynı para
-                görünümünü kullanır. Aşağıda toplamlar, KDV görünümü ve geçerlilik bilgileri yer
-                alır.
+                Müşteri için hazırlanan teklif, PDF ve WhatsApp paylaşımında aynı para görünümünü
+                kullanır. Aşağıda toplamlar, KDV görünümü ve geçerlilik bilgileri yer alır.
               </p>
             </div>
 
@@ -138,18 +136,12 @@ export default async function QuoteDetailPage({
                       <th className="px-4 py-3">Adet</th>
                       <th className="px-4 py-3">Birim fiyat</th>
                       <th className="px-4 py-3">İndirim</th>
-                      <th className="px-4 py-3">KDV %</th>
+                      <th className="px-4 py-3">KDV</th>
                       <th className="px-4 py-3">Toplam</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white text-sm">
                     {quote.items.map((item) => {
-                      const taxRate = inferTaxRateFromStored(
-                        item.quantity,
-                        item.unitPrice.toString(),
-                        item.discount.toString(),
-                        item.tax.toString(),
-                      );
                       const unitDisplay = formatDisplayPair(
                         resolveDisplayAmounts(
                           Number(item.unitPrice),
@@ -157,6 +149,15 @@ export default async function QuoteDetailPage({
                           currencyMode,
                           exchangeRate,
                         ),
+                      );
+                      const taxAmountDisplay = formatDisplayPair(
+                        resolveDisplayAmounts(Number(item.tax), item.currency, currencyMode, exchangeRate),
+                      );
+                      const taxRateDisplay = getStoredTaxRateDisplay(
+                        item.quantity,
+                        item.unitPrice.toString(),
+                        item.discount.toString(),
+                        item.tax.toString(),
                       );
                       const totalRowDisplay = formatDisplayPair(
                         resolveDisplayAmounts(Number(item.total), item.currency, currencyMode, exchangeRate),
@@ -167,7 +168,9 @@ export default async function QuoteDetailPage({
                           <td className="px-4 py-4">
                             <p className="font-semibold text-slate-900">{item.description}</p>
                             <p className="text-slate-500">
-                              {item.product ? `${item.product.name} (${item.product.sku})` : "Manuel kalem"}
+                              {item.product
+                                ? `${item.product.name} (${item.product.sku})`
+                                : "Manuel kalem"}
                             </p>
                           </td>
                           <td className="px-4 py-4 text-slate-600">{item.quantity}</td>
@@ -175,7 +178,9 @@ export default async function QuoteDetailPage({
                           <td className="px-4 py-4 text-slate-600">
                             {formatCurrencyAmount(item.discount.toString(), item.currency)}
                           </td>
-                          <td className="px-4 py-4 text-slate-600">{formatPercentValue(taxRate)}</td>
+                          <td className="px-4 py-4 text-slate-600">
+                            {taxRateDisplay ?? taxAmountDisplay}
+                          </td>
                           <td className="px-4 py-4 font-semibold text-slate-900">
                             {totalRowDisplay}
                           </td>

@@ -10,11 +10,14 @@ import { COMPANY_SETTINGS } from "@/lib/company-settings";
 import {
   formatDisplayPair,
   formatQuoteStatus,
-  inferTaxRateFromStored,
+  getStoredTaxRateDisplay,
   resolveDisplayAmounts,
 } from "@/lib/quote-utils";
 import { getQuoteById } from "@/services/quote-service";
 
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+export const revalidate = 0;
 export const runtime = "nodejs";
 
 export async function GET(
@@ -56,7 +59,15 @@ export async function GET(
   const exchangeRate = quote.exchangeRate != null ? Number(quote.exchangeRate) : null;
 
   drawHeader(page, regular, strong);
-  drawMetadata(page, regular, strong, quote.quoteNumber, quote.createdAt, quote.validityDate, formatQuoteStatus(quote.status));
+  drawMetadata(
+    page,
+    regular,
+    strong,
+    quote.quoteNumber,
+    quote.createdAt,
+    quote.validityDate,
+    formatQuoteStatus(quote.status),
+  );
   drawCustomerBox(page, regular, strong, {
     companyOrName: quote.customer.company ?? quote.customer.name,
     contactName: quote.customer.name,
@@ -66,18 +77,21 @@ export async function GET(
   });
 
   let tableY = 516;
-  drawTableHeader(page, regular, strong, tableY);
+  drawTableHeader(page, strong, tableY);
   tableY -= 34;
 
   quote.items.forEach((item, index) => {
-    const taxRate = inferTaxRateFromStored(
+    const unitDisplay = formatDisplayPair(
+      resolveDisplayAmounts(Number(item.unitPrice), item.currency, currencyMode, exchangeRate),
+    );
+    const taxAmountDisplay = formatDisplayPair(
+      resolveDisplayAmounts(Number(item.tax), item.currency, currencyMode, exchangeRate),
+    );
+    const taxRateDisplay = getStoredTaxRateDisplay(
       item.quantity,
       item.unitPrice.toString(),
       item.discount.toString(),
       item.tax.toString(),
-    );
-    const unitDisplay = formatDisplayPair(
-      resolveDisplayAmounts(Number(item.unitPrice), item.currency, currencyMode, exchangeRate),
     );
     const totalDisplay = formatDisplayPair(
       resolveDisplayAmounts(Number(item.total), item.currency, currencyMode, exchangeRate),
@@ -89,7 +103,7 @@ export async function GET(
       description: item.description,
       quantity: String(item.quantity),
       unitDisplay,
-      taxRate: `${taxRate.toFixed(0)}%`,
+      taxDisplay: taxRateDisplay ?? taxAmountDisplay,
       totalDisplay,
       shaded: index % 2 === 0,
     });
@@ -223,7 +237,7 @@ function drawCustomerBox(
     borderColor: rgb(0.84, 0.87, 0.92),
     borderWidth: 1,
   });
-  page.drawText("Müşteri Bilgileri", {
+  page.drawText(safeText("Müşteri Bilgileri"), {
     x: 52,
     y: 622,
     size: 11,
@@ -245,7 +259,7 @@ function drawCustomerBox(
   drawLabelValue(page, font, strong, 300, 576, "E-posta", customer.email ?? "-");
 }
 
-function drawTableHeader(page: PDFPage, font: PDFFont, strong: PDFFont, y: number) {
+function drawTableHeader(page: PDFPage, strong: PDFFont, y: number) {
   page.drawRectangle({
     x: 36,
     y: y - 10,
@@ -259,12 +273,12 @@ function drawTableHeader(page: PDFPage, font: PDFFont, strong: PDFFont, y: numbe
     ["Ürün / Açıklama", 70],
     ["Adet", 280],
     ["Birim fiyat", 320],
-    ["KDV %", 430],
+    ["KDV", 430],
     ["Toplam", 470],
   ] as const;
 
   headers.forEach(([label, x]) => {
-    page.drawText(label, {
+    page.drawText(safeText(label), {
       x,
       y,
       size: 8,
@@ -285,7 +299,7 @@ function drawTableRow(
     description: string;
     quantity: string;
     unitDisplay: string;
-    taxRate: string;
+    taxDisplay: string;
     totalDisplay: string;
     shaded: boolean;
   },
@@ -301,14 +315,14 @@ function drawTableRow(
   });
 
   page.drawText(String(row.index), { x: 44, y, size: 9, font });
-  page.drawText(limitText(row.title, 28), {
+  page.drawText(safeText(limitText(row.title, 28)), {
     x: 70,
     y,
     size: 9,
     font: strong,
     color: rgb(0.12, 0.16, 0.22),
   });
-  page.drawText(limitText(row.description, 34), {
+  page.drawText(safeText(limitText(row.description, 34)), {
     x: 70,
     y: y - 12,
     size: 8,
@@ -316,9 +330,9 @@ function drawTableRow(
     color: rgb(0.36, 0.4, 0.46),
   });
   page.drawText(row.quantity, { x: 280, y, size: 9, font });
-  page.drawText(row.unitDisplay, { x: 320, y, size: 8, font });
-  page.drawText(row.taxRate, { x: 430, y, size: 8, font });
-  page.drawText(row.totalDisplay, { x: 470, y, size: 8, font });
+  page.drawText(safeText(row.unitDisplay), { x: 320, y, size: 8, font });
+  page.drawText(safeText(row.taxDisplay), { x: 430, y, size: 8, font });
+  page.drawText(safeText(row.totalDisplay), { x: 470, y, size: 8, font });
 }
 
 function drawTotalsBox(
@@ -337,7 +351,7 @@ function drawTotalsBox(
     borderColor: rgb(0.84, 0.87, 0.92),
     borderWidth: 1,
   });
-  page.drawText("Toplamlar", {
+  page.drawText(safeText("Toplamlar"), {
     x: 346,
     y: topY - 14,
     size: 11,
@@ -348,14 +362,14 @@ function drawTotalsBox(
   rows.forEach(([label, value], index) => {
     const rowY = topY - 36 - index * 18;
     const isLast = index === rows.length - 1;
-    page.drawText(label, {
+    page.drawText(safeText(label), {
       x: 346,
       y: rowY,
       size: isLast ? 10 : 9,
       font: isLast ? strong : font,
       color: rgb(0.2, 0.24, 0.3),
     });
-    page.drawText(value, {
+    page.drawText(safeText(value), {
       x: 462,
       y: rowY,
       size: isLast ? 10 : 9,
@@ -380,7 +394,7 @@ function drawFooter(
     borderColor: rgb(0.84, 0.87, 0.92),
     borderWidth: 1,
   });
-  page.drawText("Notlar ve Koşullar", {
+  page.drawText(safeText("Notlar ve Koşullar"), {
     x: 52,
     y: 160,
     size: 11,
