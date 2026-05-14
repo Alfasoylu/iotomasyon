@@ -67,8 +67,13 @@ export default async function CategoryDetailPage({
         </div>
 
         <div className="flex gap-3">
+          {category.interests.length > 0 ? (
+            <Link href={`/campaigns/new?categoryId=${category.id}`}>
+              <Button>WhatsApp kampanyası oluştur</Button>
+            </Link>
+          ) : null}
           <Link href={`/categories/${category.id}/edit`}>
-            <Button>Duzenle</Button>
+            <Button variant="secondary">Duzenle</Button>
           </Link>
           <CategoryDeleteButton categoryId={category.id} />
         </div>
