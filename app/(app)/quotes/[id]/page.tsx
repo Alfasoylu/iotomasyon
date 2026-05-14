@@ -54,6 +54,7 @@ export default async function QuoteDetailPage({
     <div className="space-y-6">
       {/* Hero */}
       <div className="overflow-hidden rounded-3xl bg-slate-950">
+        <div className="h-1 bg-orange-500" />
         <div className="px-6 py-8 xl:px-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="space-y-4">
@@ -112,12 +113,12 @@ export default async function QuoteDetailPage({
         </div>
 
         {/* Grand total accent bar */}
-        <div className="border-t border-slate-800 bg-slate-900 px-6 py-4 xl:px-8">
+        <div className="border-t border-orange-900/40 bg-slate-900 px-6 py-4 xl:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
               Genel Toplam
             </p>
-            <p className="text-2xl font-semibold text-white">{totalDisplay}</p>
+            <p className="text-2xl font-semibold text-orange-400">{totalDisplay}</p>
           </div>
         </div>
       </div>

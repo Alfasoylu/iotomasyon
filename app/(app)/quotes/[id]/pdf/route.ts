@@ -24,26 +24,27 @@ const CW = PW - ML - MR; // 515 usable width
 
 // ── Colour palette ──────────────────────────────────────────────
 const C = {
-  navy: rgb(0.05, 0.08, 0.16),
-  accent: rgb(0.13, 0.56, 0.95),
-  slate900: rgb(0.1, 0.13, 0.2),
-  slate700: rgb(0.22, 0.26, 0.34),
-  slate500: rgb(0.4, 0.44, 0.52),
-  slate300: rgb(0.67, 0.71, 0.78),
-  slate200: rgb(0.84, 0.87, 0.92),
-  slate50: rgb(0.97, 0.97, 0.99),
-  white: rgb(1, 1, 1),
+  charcoal:    rgb(0.067, 0.094, 0.153), // #111827
+  orange:      rgb(0.976, 0.451, 0.086), // #F97316
+  orangeLight: rgb(1.000, 0.969, 0.929), // #FFF7ED
+  slate900:    rgb(0.100, 0.130, 0.200),
+  slate700:    rgb(0.220, 0.260, 0.340),
+  slate500:    rgb(0.400, 0.440, 0.520),
+  slate300:    rgb(0.670, 0.710, 0.780),
+  slate200:    rgb(0.840, 0.870, 0.920),
+  slate50:     rgb(0.970, 0.970, 0.990),
+  white:       rgb(1, 1, 1),
 };
 
 // ── Column layout ────────────────────────────────────────────────
+// NO | ÜRÜN / AÇIKLAMA (merged) | ADET | BİRİM FİYAT | KDV | TOPLAM
 const COLS = [
-  { key: "num",     x: ML + 6,   w: 18,  label: "NO" },
-  { key: "product", x: ML + 26,  w: 106, label: "ÜRÜN / SKU" },
-  { key: "desc",    x: ML + 134, w: 118, label: "AÇIKLAMA" },
-  { key: "qty",     x: ML + 254, w: 28,  label: "ADET" },
-  { key: "price",   x: ML + 284, w: 88,  label: "BİRİM FİYAT" },
-  { key: "tax",     x: ML + 374, w: 32,  label: "KDV" },
-  { key: "total",   x: ML + 408, w: 107, label: "TOPLAM" },
+  { key: "num",   x: ML + 6,   w: 18,  label: "NO" },
+  { key: "item",  x: ML + 26,  w: 224, label: "ÜRÜN / AÇIKLAMA" },
+  { key: "qty",   x: ML + 252, w: 28,  label: "ADET" },
+  { key: "price", x: ML + 282, w: 88,  label: "BİRİM FİYAT" },
+  { key: "tax",   x: ML + 372, w: 32,  label: "KDV" },
+  { key: "total", x: ML + 406, w: 109, label: "TOPLAM" },
 ] as const;
 
 export async function GET(
@@ -110,7 +111,7 @@ export async function GET(
   function ensureSpace(needed: number) {
     if (y - needed < 56) {
       page = pdf.addPage([PW, PH]);
-      page.drawRectangle({ x: 0, y: PH - 24, width: PW, height: 24, color: C.navy });
+      page.drawRectangle({ x: 0, y: PH - 24, width: PW, height: 24, color: C.charcoal });
       page.drawText(safe(COMPANY_SETTINGS.companyName), {
         x: ML, y: PH - 16, size: 8, font, color: C.white,
       });
@@ -122,17 +123,25 @@ export async function GET(
   }
 
   // ── SECTION 1: Header ─────────────────────────────────────────
-  const HEADER_H = 84;
-  page.drawRectangle({ x: 0, y: PH - 3, width: PW, height: 3, color: C.accent });
-  page.drawRectangle({ x: 0, y: PH - HEADER_H, width: PW, height: HEADER_H - 3, color: C.navy });
+  const HEADER_H = 100;
+  // Orange accent stripe at very top
+  page.drawRectangle({ x: 0, y: PH - 3, width: PW, height: 3, color: C.orange });
+  // Dark charcoal header body
+  page.drawRectangle({ x: 0, y: PH - HEADER_H, width: PW, height: HEADER_H - 3, color: C.charcoal });
 
-  drawTxt(page, font, safe(COMPANY_SETTINGS.companyName), ML, PH - 26, 15, C.white);
-  drawTxt(page, font, safe(COMPANY_SETTINGS.tagline), ML, PH - 42, 8, C.slate300);
-  drawTxt(page, font, safe(`${COMPANY_SETTINGS.email}  |  ${COMPANY_SETTINGS.phone}`), ML, PH - 55, 8, C.slate300);
-  drawTxt(page, font, safe(COMPANY_SETTINGS.website), ML, PH - 67, 8, C.slate300);
+  // Orange vertical brand mark (logo placeholder)
+  page.drawRectangle({ x: ML, y: PH - 85, width: 4, height: 60, color: C.orange });
 
-  drawTxt(page, font, "FİYAT TEKLİFİ", PW - ML - 116, PH - 26, 13, C.white);
-  drawTxt(page, font, safe(quote.quoteNumber), PW - ML - 116, PH - 42, 9, C.slate300);
+  // Company info — left, offset from brand mark
+  drawTxt(page, font, safe(COMPANY_SETTINGS.companyName), ML + 10, PH - 26, 16, C.white);
+  drawTxt(page, font, safe(COMPANY_SETTINGS.tagline), ML + 10, PH - 44, 8, C.slate300);
+  drawTxt(page, font, safe(COMPANY_SETTINGS.address), ML + 10, PH - 57, 8, C.slate300);
+  drawTxt(page, font, safe(COMPANY_SETTINGS.phone), ML + 10, PH - 70, 8, C.slate300);
+  drawTxt(page, font, safe(`${COMPANY_SETTINGS.email}  |  ${COMPANY_SETTINGS.website}`), ML + 10, PH - 83, 8, C.slate300);
+
+  // "FİYAT TEKLİFİ" — right
+  drawTxt(page, font, "FİYAT TEKLİFİ", PW - ML - 116, PH - 28, 13, C.white);
+  drawTxt(page, font, safe(quote.quoteNumber), PW - ML - 116, PH - 46, 9, C.slate300);
 
   y = PH - HEADER_H - 10;
 
@@ -140,7 +149,7 @@ export async function GET(
   const META_H = 44;
   page.drawRectangle({
     x: ML, y: y - META_H, width: CW, height: META_H,
-    color: C.slate50, borderColor: C.slate200, borderWidth: 0.5,
+    color: C.orangeLight, borderColor: C.slate200, borderWidth: 0.5,
   });
 
   const metaCols = [
@@ -184,13 +193,13 @@ export async function GET(
   y -= CUST_H + 12;
 
   // ── SECTION 4: Items table ────────────────────────────────────
-  const TH_H = 22;
-  const ROW_H = isBoth ? 38 : 28;
+  const TH_H = 24;
+  const ROW_H = 54;
 
   function drawTableHeader() {
-    page.drawRectangle({ x: ML, y: y - TH_H, width: CW, height: TH_H, color: C.navy });
+    page.drawRectangle({ x: ML, y: y - TH_H, width: CW, height: TH_H, color: C.charcoal });
     COLS.forEach((col) => {
-      drawTxt(page, font, col.label, col.x, y - 14, 7, C.white);
+      drawTxt(page, font, col.label, col.x, y - 15, 7, C.white);
     });
     y -= TH_H;
   }
@@ -217,22 +226,38 @@ export async function GET(
         item.discount.toString(),
         item.tax.toString(),
       ) ?? `%${Math.round(Number(item.tax))}`;
-    const productLabel = item.product
-      ? `${limitTxt(item.product.name, 20)} (${item.product.sku})`
-      : "Manuel kalem";
 
-    const ty1 = y - (isBoth ? 10 : 12);
-    const ty2 = ty1 - 12;
+    // Vertical anchors within the row
+    const yCellTop = y - 12; // product name / primary text
+    const yCellSku  = y - 23; // sku / hint line
+    const yCellD1   = y - 35; // description line 1
+    const yCellD2   = y - 46; // description line 2
+    const tyR  = isBoth ? y - 14 : y - 26; // right columns primary anchor
+    const tyR2 = tyR - 12;                  // right columns secondary (BOTH mode)
 
-    drawTxt(page, font, String(idx + 1), COLS[0].x, ty1, 8, C.slate500);
-    drawTxt(page, font, safe(limitTxt(productLabel, 26)), COLS[1].x, ty1, 8, C.slate900);
-    drawTxt(page, font, safe(limitTxt(item.description, 30)), COLS[2].x, ty1, 8, C.slate700);
-    drawTxt(page, font, String(item.quantity), COLS[3].x, ty1, 8, C.slate700);
-    drawTxt(page, font, safe(unitLines[0] ?? ""), COLS[4].x, ty1, 8, C.slate700);
-    if (unitLines[1]) drawTxt(page, font, safe(unitLines[1]), COLS[4].x, ty2, 7, C.slate500);
-    drawTxt(page, font, safe(taxRateDisplay), COLS[5].x, ty1, 8, C.slate700);
-    drawTxt(page, font, safe(totalLines[0] ?? ""), COLS[6].x, ty1, 8, C.slate900);
-    if (totalLines[1]) drawTxt(page, font, safe(totalLines[1]), COLS[6].x, ty2, 7, C.slate700);
+    // Row number
+    drawTxt(page, font, String(idx + 1), COLS[0].x, yCellTop, 8, C.slate500);
+
+    // Merged item column: product name + SKU + description (2 lines)
+    if (item.product) {
+      drawTxt(page, font, safe(limitTxt(item.product.name, 40)), COLS[1].x, yCellTop, 9, C.slate900);
+      drawTxt(page, font, safe(item.product.sku), COLS[1].x, yCellSku, 7, C.slate500);
+      const descLines = wrapTxt(safe(item.description), 50).slice(0, 2);
+      if (descLines[0]) drawTxt(page, font, descLines[0], COLS[1].x, yCellD1, 8, C.slate700);
+      if (descLines[1]) drawTxt(page, font, descLines[1], COLS[1].x, yCellD2, 8, C.slate700);
+    } else {
+      // Manual item — description is the primary text
+      drawTxt(page, font, safe(limitTxt(item.description, 40)), COLS[1].x, yCellTop, 9, C.slate900);
+      drawTxt(page, font, "Manuel kalem", COLS[1].x, yCellSku, 7, C.slate500);
+    }
+
+    // Right columns
+    drawTxt(page, font, String(item.quantity), COLS[2].x, tyR, 8, C.slate700);
+    drawTxt(page, font, safe(unitLines[0] ?? ""), COLS[3].x, tyR, 8, C.slate700);
+    if (unitLines[1]) drawTxt(page, font, safe(unitLines[1]), COLS[3].x, tyR2, 7, C.slate500);
+    drawTxt(page, font, safe(taxRateDisplay), COLS[4].x, tyR, 8, C.slate700);
+    drawTxt(page, font, safe(totalLines[0] ?? ""), COLS[5].x, tyR, 8, C.slate900);
+    if (totalLines[1]) drawTxt(page, font, safe(totalLines[1]), COLS[5].x, tyR2, 7, C.slate700);
 
     y -= ROW_H;
   });
@@ -240,16 +265,16 @@ export async function GET(
   y -= 10;
 
   // ── SECTION 5: Totals ─────────────────────────────────────────
-  const TX = PW - MR - 200; // totals block right-edge at PW - MR
+  const TX = PW - MR - 200;
   const TOTALS_W = 200;
   const SUB_ROW_H = isBoth ? 32 : 18;
   const GT_H = isBoth ? 52 : 38;
   ensureSpace(8 + 3 * SUB_ROW_H + 8 + GT_H + (rate ? 20 : 8) + 10);
 
   const subRows: Array<[string, string[]]> = [
-    ["İndirim", pdfLines(Number(quote.discountTotal), quoteCurrency)],
-    ["KDV", pdfLines(Number(quote.taxTotal), quoteCurrency)],
     ["Ara Toplam", pdfLines(Number(quote.subtotal), quoteCurrency)],
+    ["İndirim",   pdfLines(Number(quote.discountTotal), quoteCurrency)],
+    ["KDV",       pdfLines(Number(quote.taxTotal), quoteCurrency)],
   ];
 
   const rightEdge = TX + TOTALS_W - 8;
@@ -269,9 +294,9 @@ export async function GET(
 
   y = sy - 8;
 
-  // Grand total — dark dominant box
-  page.drawRectangle({ x: TX, y: y - GT_H, width: TOTALS_W, height: GT_H, color: C.navy });
-  drawTxt(page, font, "GENEL TOPLAM", TX + 8, y - 13, 7, C.slate300);
+  // Grand total — charcoal box, orange label, white amount
+  page.drawRectangle({ x: TX, y: y - GT_H, width: TOTALS_W, height: GT_H, color: C.charcoal });
+  drawTxt(page, font, "GENEL TOPLAM", TX + 8, y - 13, 7, C.orange);
 
   const grandLines = pdfLines(Number(quote.total), quoteCurrency);
   const grand0 = safe(grandLines[0] ?? "");
