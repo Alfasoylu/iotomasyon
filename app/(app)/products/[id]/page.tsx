@@ -90,9 +90,24 @@ export default async function ProductDetailPage({
             <Info label="Kategori" value={product.productCategory?.name ?? product.category} />
             <Info label="Marka" value={product.brand} />
             <Info label="Model" value={product.model} />
-            <Info label="Lokasyon" value={product.location} />
+            <Info label="Konum" value={product.location} />
             <Info label="Stok" value={`${product.stockQuantity}`} />
             <Info label="Minimum stok" value={`${product.minimumStock}`} />
+            {product.importDate ? (
+              <Info label="İthalat tarihi" value={formatDateTime(product.importDate)} />
+            ) : null}
+            {product.importQuantity != null ? (
+              <Info label="İthalatta gelen adet" value={`${product.importQuantity}`} />
+            ) : null}
+            {product.importUnitCostUsd != null ? (
+              <Info label="İthalat birim maliyet (USD)" value={`$${Number(product.importUnitCostUsd).toFixed(2)}`} />
+            ) : null}
+            {product.inventoryCountDate ? (
+              <Info label="Depo sayım tarihi" value={formatDateTime(product.inventoryCountDate)} />
+            ) : null}
+            {product.inventoryCountStock != null ? (
+              <Info label="Sayım tarihindeki stok" value={`${product.inventoryCountStock}`} />
+            ) : null}
           </dl>
           {product.attributeAssignments.length > 0 && (
             <div className="mt-6">

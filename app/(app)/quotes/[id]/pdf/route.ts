@@ -30,7 +30,7 @@ export async function GET(
   const currency = quote.items[0]?.currency ?? "TRY";
 
   let y = 790;
-  page.drawText(toPdfSafeText("Soylu Elektronik - Quote"), {
+  page.drawText(toPdfSafeText("Soylu Elektronik - Teklif"), {
     x: 40,
     y,
     size: 18,
@@ -39,21 +39,21 @@ export async function GET(
   });
 
   y -= 30;
-  page.drawText(toPdfSafeText(`Quote: ${quote.quoteNumber}`), { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Teklif: ${quote.quoteNumber}`), { x: 40, y, size: 11, font });
   y -= 18;
-  page.drawText(toPdfSafeText(`Customer: ${quote.customer.name}`), { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Musteri: ${quote.customer.name}`), { x: 40, y, size: 11, font });
   y -= 18;
-  page.drawText(toPdfSafeText(`Status: ${quote.status}`), { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Durum: ${quote.status}`), { x: 40, y, size: 11, font });
 
   y -= 34;
-  page.drawText("Items", { x: 40, y, size: 13, font: bold });
+  page.drawText("Kalemler", { x: 40, y, size: 13, font: bold });
   y -= 20;
 
   for (const item of quote.items) {
     const lines = [
       toPdfSafeText(item.description),
       toPdfSafeText(
-        `Qty: ${item.quantity} | Unit: ${formatPdfMoney(item.unitPrice.toString(), item.currency)} | Total: ${formatPdfMoney(item.total.toString(), item.currency)}`,
+        `Adet: ${item.quantity} | Birim: ${formatPdfMoney(item.unitPrice.toString(), item.currency)} | Toplam: ${formatPdfMoney(item.total.toString(), item.currency)}`,
       ),
     ];
 
@@ -66,28 +66,28 @@ export async function GET(
   }
 
   y -= 10;
-  page.drawText(toPdfSafeText(`Subtotal: ${formatPdfMoney(quote.subtotal.toString(), currency)}`), {
+  page.drawText(toPdfSafeText(`Ara toplam: ${formatPdfMoney(quote.subtotal.toString(), currency)}`), {
     x: 40,
     y,
     size: 11,
     font: bold,
   });
   y -= 18;
-  page.drawText(toPdfSafeText(`Discount: ${formatPdfMoney(quote.discountTotal.toString(), currency)}`), {
+  page.drawText(toPdfSafeText(`Indirim: ${formatPdfMoney(quote.discountTotal.toString(), currency)}`), {
     x: 40,
     y,
     size: 11,
     font,
   });
   y -= 18;
-  page.drawText(toPdfSafeText(`Tax: ${formatPdfMoney(quote.taxTotal.toString(), currency)}`), {
+  page.drawText(toPdfSafeText(`Vergi: ${formatPdfMoney(quote.taxTotal.toString(), currency)}`), {
     x: 40,
     y,
     size: 11,
     font,
   });
   y -= 18;
-  page.drawText(toPdfSafeText(`Total: ${formatPdfMoney(quote.total.toString(), currency)}`), {
+  page.drawText(toPdfSafeText(`Toplam: ${formatPdfMoney(quote.total.toString(), currency)}`), {
     x: 40,
     y,
     size: 12,
@@ -95,7 +95,7 @@ export async function GET(
   });
 
   y -= 34;
-  page.drawText("Notes", { x: 40, y, size: 13, font: bold });
+  page.drawText("Notlar", { x: 40, y, size: 13, font: bold });
   y -= 20;
   page.drawText(toPdfSafeText(quote.notes || "-"), {
     x: 40,

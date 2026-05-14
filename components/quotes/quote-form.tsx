@@ -10,7 +10,7 @@ import { quoteSchema } from "@/lib/validations/quote";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { QuoteFormValues } from "@/types/quotes";
+import type { QuoteCurrencyMode, QuoteFormValues } from "@/types/quotes";
 
 const emptyItem = {
   productId: "",
@@ -38,9 +38,13 @@ export function QuoteForm({
     defaultValues: {
       notes: "",
       validityDate: "",
+      currencyMode: "TRY",
+      exchangeRate: "",
       items: [{ ...emptyItem }],
     },
   });
+
+  const watchedCurrencyMode = form.watch("currencyMode") as QuoteCurrencyMode;
 
   const items = useFieldArray({
     control: form.control,
@@ -75,7 +79,7 @@ export function QuoteForm({
                 {...form.register(`items.${index}.productId`)}
                 className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
               >
-                <option value="">Urun baglama (opsiyonel)</option>
+                <option value="">Ürün bağlama (opsiyonel)</option>
                 {products.map((product) => (
                   <option key={product.id} value={product.id}>
                     {product.name} ({product.sku})
@@ -84,7 +88,7 @@ export function QuoteForm({
               </select>
               <Input
                 {...form.register(`items.${index}.description`)}
-                placeholder="Kalem aciklamasi"
+                placeholder="Kalem açıklaması"
               />
               <Input
                 type="number"
@@ -102,7 +106,7 @@ export function QuoteForm({
               />
               <Input
                 {...form.register(`items.${index}.discount`)}
-                placeholder="Indirim"
+                placeholder="İndirim"
               />
               <Input
                 {...form.register(`items.${index}.tax`)}
@@ -117,7 +121,7 @@ export function QuoteForm({
                 className="mt-4 h-auto px-0 text-red-600 hover:bg-transparent hover:text-red-500"
                 onClick={() => items.remove(index)}
               >
-                Kalemi kaldir
+                Kalemi kaldır
               </Button>
             ) : null}
           </div>
@@ -135,7 +139,31 @@ export function QuoteForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
-            Gecerlilik tarihi
+            Para birimi modu
+          </label>
+          <select
+            {...form.register("currencyMode")}
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+          >
+            <option value="TRY">Sadece TL</option>
+            <option value="USD">Sadece USD</option>
+            <option value="BOTH">USD + TL</option>
+          </select>
+        </div>
+        {(watchedCurrencyMode === "TRY" || watchedCurrencyMode === "BOTH") && (
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              Döviz kuru (1 USD = ? TL)
+            </label>
+            <Input
+              {...form.register("exchangeRate")}
+              placeholder="Örn: 39.50"
+            />
+          </div>
+        )}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            Geçerlilik tarihi
           </label>
           <Input type="date" {...form.register("validityDate")} />
         </div>
@@ -146,7 +174,7 @@ export function QuoteForm({
       {serverMessage ? <p className="text-sm text-red-600">{serverMessage}</p> : null}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Olusturuluyor..." : "Teklif olustur"}
+        {pending ? "Oluşturuluyor..." : "Teklif oluştur"}
       </Button>
     </form>
   );

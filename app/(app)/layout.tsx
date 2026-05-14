@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               <MobileNavButton />
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  Internal workspace
+                  Dahili çalışma alanı
                 </p>
                 <h2 className="text-lg font-semibold text-slate-950">{user.name}</h2>
               </div>
@@ -26,7 +26,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
             <div className="flex items-center gap-3">
               <div className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-right md:block">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Account</p>
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Hesap</p>
                 <p className="text-sm font-medium text-slate-800">{user.email}</p>
               </div>
               <LogoutButton />

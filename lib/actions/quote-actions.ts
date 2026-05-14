@@ -51,10 +51,16 @@ export async function createQuoteAction(
     const taxTotal = preparedItems.reduce((sum, item) => sum + Number(item.tax), 0);
     const total = preparedItems.reduce((sum, item) => sum + Number(item.total), 0);
 
+    const exchangeRateNum = parsed.data.exchangeRate
+      ? Number.parseFloat(parsed.data.exchangeRate.replace(",", "."))
+      : null;
+
     const quote = await prisma.quote.create({
       data: {
         customerId,
         quoteNumber: await createQuoteNumber(),
+        currencyMode: parsed.data.currencyMode,
+        exchangeRate: exchangeRateNum && Number.isFinite(exchangeRateNum) ? exchangeRateNum.toString() : null,
         notes: emptyToNull(parsed.data.notes),
         validityDate: parsed.data.validityDate ? new Date(parsed.data.validityDate) : null,
         subtotal: subtotal.toString(),

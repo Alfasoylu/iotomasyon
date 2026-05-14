@@ -6,7 +6,7 @@ export function formatDateTime(value: Date) {
 }
 
 export function formatBooleanLabel(value: boolean) {
-  return value ? "Active" : "Passive";
+  return value ? "Aktif" : "Pasif";
 }
 
 export function buildQueryString(

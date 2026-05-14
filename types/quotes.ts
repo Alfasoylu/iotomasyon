@@ -10,6 +10,9 @@ export const QUOTE_STATUS_OPTIONS = [
 
 export type QuoteStatus = (typeof QUOTE_STATUS_OPTIONS)[number];
 
+export const QUOTE_CURRENCY_MODE_OPTIONS = ["USD", "TRY", "BOTH"] as const;
+export type QuoteCurrencyMode = (typeof QUOTE_CURRENCY_MODE_OPTIONS)[number];
+
 export type QuoteItemFormValues = {
   productId: string;
   description: string;
@@ -21,6 +24,8 @@ export type QuoteItemFormValues = {
 };
 
 export type QuoteFormValues = {
+  currencyMode: QuoteCurrencyMode;
+  exchangeRate: string;
   notes: string;
   validityDate?: string;
   items: QuoteItemFormValues[];

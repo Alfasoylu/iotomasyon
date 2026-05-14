@@ -157,7 +157,18 @@ function normalizeProductData(input: ProductInput) {
     location: emptyToNull(input.location),
     description: emptyToNull(input.description),
     isActive: input.isActive,
+    importDate: emptyToNull(input.importDate) ? new Date(input.importDate) : null,
+    importQuantity: positiveIntOrNull(input.importQuantity),
+    importUnitCostUsd: emptyToNull(input.importUnitCostUsd),
+    inventoryCountDate: emptyToNull(input.inventoryCountDate) ? new Date(input.inventoryCountDate) : null,
+    inventoryCountStock: positiveIntOrNull(input.inventoryCountStock),
   };
+}
+
+function positiveIntOrNull(value: string | undefined): number | null {
+  if (!value || !value.trim()) return null;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
 function emptyToNull(value: string | undefined) {

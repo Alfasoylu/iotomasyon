@@ -76,6 +76,11 @@ export default async function EditProductPage({
             location: product.location ?? "",
             description: product.description ?? "",
             isActive: product.isActive,
+            importDate: product.importDate ? product.importDate.toISOString().split("T")[0] : "",
+            importQuantity: product.importQuantity != null ? String(product.importQuantity) : "",
+            importUnitCostUsd: product.importUnitCostUsd != null ? String(product.importUnitCostUsd) : "",
+            inventoryCountDate: product.inventoryCountDate ? product.inventoryCountDate.toISOString().split("T")[0] : "",
+            inventoryCountStock: product.inventoryCountStock != null ? String(product.inventoryCountStock) : "",
           }}
         />
       </Card>

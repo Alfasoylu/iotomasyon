@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildQueryString } from "@/lib/utils";
 import { CUSTOMER_STATUS_OPTIONS, CUSTOMER_SOURCE_OPTIONS } from "@/types/customers";
+import { formatCustomerStatus } from "@/lib/customer-utils";
 import type { AttributeOption } from "@/services/attribute-service";
 import type { UserOption } from "@/services/customer-service";
 
@@ -65,7 +66,7 @@ export function CustomerFilters({
       >
         <option value="all">Tum durumlar</option>
         {CUSTOMER_STATUS_OPTIONS.map((option) => (
-          <option key={option} value={option}>{option}</option>
+          <option key={option} value={option}>{formatCustomerStatus(option)}</option>
         ))}
       </select>
 

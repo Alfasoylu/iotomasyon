@@ -31,6 +31,11 @@ const emptyValues: ProductFormValues = {
   location: "",
   description: "",
   isActive: true,
+  importDate: "",
+  importQuantity: "",
+  importUnitCostUsd: "",
+  inventoryCountDate: "",
+  inventoryCountStock: "",
 };
 
 export function ProductForm({
@@ -97,7 +102,7 @@ export function ProductForm({
         <Field label="SKU" error={form.formState.errors.sku?.message}>
           <Input {...form.register("sku")} />
         </Field>
-        <Field label="Urun adi" error={form.formState.errors.name?.message}>
+        <Field label="Ürün adı" error={form.formState.errors.name?.message}>
           <Input {...form.register("name")} />
         </Field>
         <Field label="Kategori" error={form.formState.errors.categoryId?.message}>
@@ -106,7 +111,7 @@ export function ProductForm({
               {...form.register("categoryId")}
               className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
             >
-              <option value="">-- Secin --</option>
+              <option value="">-- Seçin --</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -114,7 +119,7 @@ export function ProductForm({
               ))}
             </select>
           ) : (
-            <Input {...form.register("category")} placeholder="Kategori adi" />
+            <Input {...form.register("category")} placeholder="Kategori adı" />
           )}
         </Field>
         <Field label="Marka" error={form.formState.errors.brand?.message}>
@@ -123,7 +128,7 @@ export function ProductForm({
         <Field label="Model" error={form.formState.errors.model?.message}>
           <Input {...form.register("model")} />
         </Field>
-        <Field label="Lokasyon" error={form.formState.errors.location?.message}>
+        <Field label="Konum" error={form.formState.errors.location?.message}>
           <Input {...form.register("location")} placeholder="Raf / kutu / bin" />
         </Field>
         <Field label="Stok" error={form.formState.errors.stockQuantity?.message}>
@@ -134,14 +139,37 @@ export function ProductForm({
         </Field>
       </div>
 
-      <Field label="Aciklama" error={form.formState.errors.description?.message}>
+      <Field label="Açıklama" error={form.formState.errors.description?.message}>
         <Textarea {...form.register("description")} />
       </Field>
 
       <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
         <input type="checkbox" className="h-4 w-4" {...form.register("isActive")} />
-        Aktif urun olarak listelensin
+        Aktif ürün olarak listelensin
       </label>
+
+      <div className="space-y-3">
+        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">
+          İthalat ve envanter bilgileri
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="İthalat tarihi" error={form.formState.errors.importDate?.message}>
+            <Input type="date" {...form.register("importDate")} />
+          </Field>
+          <Field label="İthalatta gelen adet" error={form.formState.errors.importQuantity?.message}>
+            <Input type="number" min={0} {...form.register("importQuantity")} placeholder="0" />
+          </Field>
+          <Field label="İthalat birim maliyeti (USD)" error={form.formState.errors.importUnitCostUsd?.message}>
+            <Input {...form.register("importUnitCostUsd")} placeholder="0.00" />
+          </Field>
+          <Field label="Depo sayım tarihi" error={form.formState.errors.inventoryCountDate?.message}>
+            <Input type="date" {...form.register("inventoryCountDate")} />
+          </Field>
+          <Field label="Sayım tarihindeki stok" error={form.formState.errors.inventoryCountStock?.message}>
+            <Input type="number" min={0} {...form.register("inventoryCountStock")} placeholder="0" />
+          </Field>
+        </div>
+      </div>
 
       {allAttributes.length > 0 && (
         <div className="space-y-2">
@@ -161,17 +189,17 @@ export function ProductForm({
           {pending
             ? mode === "create"
               ? "Kaydediliyor..."
-              : "Guncelleniyor..."
+              : "Güncelleniyor..."
             : mode === "create"
-              ? "Urunu olustur"
-              : "Degisiklikleri kaydet"}
+              ? "Ürünü oluştur"
+              : "Değişiklikleri kaydet"}
         </Button>
         <Button
           type="button"
           variant="secondary"
           onClick={() => router.push(mode === "create" ? "/products" : `/products/${productId}`)}
         >
-          Vazgec
+          Vazgeç
         </Button>
       </div>
     </form>

@@ -77,6 +77,12 @@ enum QuoteStatus {
   DECLINED
 }
 
+enum QuoteCurrencyMode {
+  USD
+  TRY
+  BOTH
+}
+
 enum OutreachStatus {
   DRAFT
   ACTIVE
@@ -175,9 +181,14 @@ model Product {
   model           String?
   stockQuantity   Int              @default(0)
   minimumStock    Int              @default(0)
-  location        String?
-  description     String?
-  isActive        Boolean          @default(true)
+  location            String?
+  description         String?
+  isActive            Boolean          @default(true)
+  importDate          DateTime?
+  importQuantity      Int?
+  importUnitCostUsd   Decimal?
+  inventoryCountDate  DateTime?
+  inventoryCountStock Int?
   createdById     String?
   createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
   productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -339,6 +350,8 @@ model Quote {
   notes         String?
   validityDate  DateTime?
   sentAt        DateTime?
+  currencyMode  QuoteCurrencyMode @default(TRY)
+  exchangeRate  Decimal?
   subtotal      Decimal     @default(0)
   discountTotal Decimal     @default(0)
   taxTotal      Decimal     @default(0)

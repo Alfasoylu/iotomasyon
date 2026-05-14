@@ -10,4 +10,9 @@ export type ProductFormValues = {
   location: string;
   description: string;
   isActive: boolean;
+  importDate: string;
+  importQuantity: string;
+  importUnitCostUsd: string;
+  inventoryCountDate: string;
+  inventoryCountStock: string;
 };

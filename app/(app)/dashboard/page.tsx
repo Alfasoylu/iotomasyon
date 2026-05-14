@@ -23,18 +23,18 @@ export default async function DashboardPage() {
       <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge tone="success">Phase 4</Badge>
+            <Badge tone="success">Faz 8</Badge>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
               CRM panosu
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-              Satis hunisi, gelir takibi, urun performansi ve musteri sureclerini tek ekranda gorun.
+              Satış hunisi, gelir takibi, ürün performansı ve müşteri süreçlerini tek ekranda görün.
             </p>
           </div>
 
           <div className="flex gap-3">
             <Link href="/customers">
-              <Button>Musteri panosu</Button>
+              <Button>Müşteri panosu</Button>
             </Link>
             <Link href="/search">
               <Button variant="secondary">Arama</Button>
@@ -77,10 +77,10 @@ export default async function DashboardPage() {
         </h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <StatCard label="Yeni" value={stats.newCustomerCount} />
-          <StatCard label="Iletisim kuruldu" value={stats.customerCount - stats.newCustomerCount - stats.wonCustomerCount - stats.lostDeals} />
+          <StatCard label="İletişim kuruldu" value={stats.customerCount - stats.newCustomerCount - stats.wonCustomerCount - stats.lostDeals} />
           <StatCard label="Teklif verildi" value={stats.quotedCustomerCount} tone="warning" />
-          <StatCard label="Muzakere" value={stats.negotiatingCustomerCount} tone="warning" />
-          <StatCard label="Kazanilan" value={stats.wonCustomerCount} tone="success" />
+          <StatCard label="Müzakere" value={stats.negotiatingCustomerCount} tone="warning" />
+          <StatCard label="Kazanılan" value={stats.wonCustomerCount} tone="success" />
           <StatCard label="Kaybedilen" value={stats.lostDeals} tone="danger" />
         </div>
       </section>
@@ -91,10 +91,10 @@ export default async function DashboardPage() {
           Operasyon
         </h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Acik follow-up" value={stats.openFollowups} />
-          <StatCard label="Geciken gorev" value={stats.overdueTasks} tone="danger" />
-          <StatCard label="Teklif gonderildi" value={stats.quotesSent} />
-          <StatCard label="Toplam urun" value={stats.productCount} />
+          <StatCard label="Açık görev" value={stats.openFollowups} />
+          <StatCard label="Geciken görev" value={stats.overdueTasks} tone="danger" />
+          <StatCard label="Teklif gönderildi" value={stats.quotesSent} />
+          <StatCard label="Toplam ürün" value={stats.productCount} />
         </div>
       </section>
 
@@ -108,11 +108,11 @@ export default async function DashboardPage() {
       <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card className="p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            En cok satilan urunler
+            En çok satılan ürünler
           </p>
           {stats.topProducts.length === 0 ? (
             <p className="mt-5 text-sm text-slate-400">
-              Henuz kazanilan teklif kalemi yok.
+              Henüz kazanılan teklif kalemi yok.
             </p>
           ) : (
             <ol className="mt-5 space-y-3">
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
 
         <Card className="p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Due today
+            Bugün yapılacaklar
           </p>
           <div className="mt-4 space-y-4">
             {!dueToday.databaseAvailable ? (
@@ -149,7 +149,7 @@ export default async function DashboardPage() {
                 <div key={task.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="font-semibold text-slate-900">{task.title}</p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {task.customer?.name ?? "Musteri baglantisi yok"}
+                    {task.customer?.name ?? "Müşteri bağlantısı yok"}
                   </p>
                   <p className="mt-2 text-xs uppercase tracking-[0.25em] text-slate-400">
                     {task.dueDate ? formatDateTime(task.dueDate) : "Termin yok"}
