@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session";
 
-const protectedPrefixes = ["/dashboard", "/products", "/customers"];
+const protectedPrefixes = ["/dashboard", "/products", "/customers", "/quotes"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

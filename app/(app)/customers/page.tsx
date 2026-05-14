@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { CustomerImportForm } from "@/components/customers/customer-import-form";
+import { CustomerKanbanBoard } from "@/components/customers/customer-kanban-board";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -44,6 +46,38 @@ export default async function CustomersPage({
       <Card className="p-5">
         <CustomerFilters initialQuery={query} initialStatus={status} />
       </Card>
+
+      <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
+        <Card className="p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Sales pipeline
+          </p>
+          <h2 className="mt-3 text-xl font-semibold text-slate-950">
+            Musteri durum panosu
+          </h2>
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            Kayitlari durum bazli izleyin ve satis surecindeki yogunlugu gorun.
+          </p>
+        </Card>
+
+        <Card className="p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+            CSV import
+          </p>
+          <h2 className="mt-3 text-xl font-semibold text-slate-950">
+            Musteri listesini iceri aktar
+          </h2>
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            Kolon adlari: name, company, phone, whatsapp, email, taxNumber, address,
+            city, country, notes, status
+          </p>
+          <div className="mt-5">
+            <CustomerImportForm />
+          </div>
+        </Card>
+      </div>
+
+      <CustomerKanbanBoard customers={customers} />
 
       {!databaseAvailable ? (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">

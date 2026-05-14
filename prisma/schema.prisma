@@ -67,6 +67,13 @@ enum TaskPriority {
   URGENT
 }
 
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+}
+
 model User {
   id               String            @id @default(cuid())
   email            String            @unique
@@ -82,6 +89,7 @@ model User {
   interestsOwned   ProductInterest[] @relation("AssignedInterests")
   tasksCreated     FollowUpTask[]    @relation("CreatedTasks")
   tasksOwned       FollowUpTask[]    @relation("AssignedTasks")
+  quotesCreated    Quote[]
 }
 
 model Product {
@@ -103,6 +111,7 @@ model Product {
   interests      ProductInterest[]
   notes          Note[]
   tasks          FollowUpTask[]
+  quoteItems     QuoteItem[]
 
   @@index([name])
   @@index([category])
@@ -132,6 +141,7 @@ model Customer {
   interests    ProductInterest[]
   timelineEntries Note[]
   tasks        FollowUpTask[]
+  quotes       Quote[]
 
   @@index([name])
   @@index([phone])
@@ -215,4 +225,45 @@ model FollowUpTask {
   @@index([status])
   @@index([dueDate])
   @@index([priority])
+}
+
+model Quote {
+  id            String      @id @default(cuid())
+  customerId    String
+  quoteNumber   String      @unique
+  status        QuoteStatus @default(DRAFT)
+  notes         String?
+  subtotal      Decimal     @default(0)
+  discountTotal Decimal     @default(0)
+  taxTotal      Decimal     @default(0)
+  total         Decimal     @default(0)
+  createdById   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  customer      Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdBy     User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  items         QuoteItem[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model QuoteItem {
+  id          String   @id @default(cuid())
+  quoteId     String
+  productId   String?
+  description String
+  quantity    Int
+  unitPrice   Decimal
+  currency    String   @default("TRY")
+  discount    Decimal  @default(0)
+  tax         Decimal  @default(0)
+  total       Decimal  @default(0)
+  createdAt   DateTime @default(now())
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@index([productId])
 }

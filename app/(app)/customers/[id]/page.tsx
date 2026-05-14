@@ -7,6 +7,7 @@ import { CustomerInterestForm } from "@/components/customers/customer-interest-f
 import { CustomerNoteForm } from "@/components/customers/customer-note-form";
 import { CustomerTaskCompleteButton } from "@/components/customers/customer-task-complete-button";
 import { CustomerTaskForm } from "@/components/customers/customer-task-form";
+import { QuoteForm } from "@/components/quotes/quote-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import {
   getCustomerById,
   listCustomerInterestProducts,
 } from "@/services/customer-service";
+import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -180,6 +182,54 @@ export default async function CustomerDetailPage({
         </Card>
 
         <div className="space-y-4">
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold text-slate-950">Teklifler</h2>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              Musteri icin teklif olusturun, PDF olarak disa aktarın ve WhatsApp ile gonderin.
+            </p>
+
+            <div className="mt-6">
+              <QuoteForm customerId={customer.id} products={productOptionsResult.products} />
+            </div>
+
+            <div className="mt-8 space-y-4">
+              {customer.quotes.length === 0 ? (
+                <p className="text-sm text-slate-500">Henuz teklif olusturulmadi.</p>
+              ) : (
+                customer.quotes.map((quote) => (
+                  <div
+                    key={quote.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <p className="font-semibold text-slate-900">{quote.quoteNumber}</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {formatCurrencyAmount(quote.total.toString(), quote.items[0]?.currency ?? "TRY")}
+                        </p>
+                        <p className="mt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
+                          {formatDateTime(quote.createdAt)}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-start gap-3 md:items-end">
+                        <Badge tone={getQuoteStatusTone(quote.status)}>
+                          {formatQuoteStatus(quote.status)}
+                        </Badge>
+                        <Link
+                          href={`/quotes/${quote.id}`}
+                          className="text-sm font-semibold text-slate-900 hover:text-[color:var(--accent)]"
+                        >
+                          Teklifi ac
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-slate-950">Not timeline</h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">

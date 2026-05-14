@@ -3,34 +3,41 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getDashboardStats } from "@/services/dashboard-service";
+import { formatCurrencyAmount, formatPercentValue } from "@/lib/quote-utils";
+import { formatDateTime } from "@/lib/utils";
+import {
+  getDashboardStats,
+  getDueTodayFollowups,
+} from "@/services/dashboard-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const stats = await getDashboardStats();
+  const [stats, dueToday] = await Promise.all([
+    getDashboardStats(),
+    getDueTodayFollowups(),
+  ]);
 
   return (
     <div className="space-y-6">
       <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge tone="warning">Phase 1</Badge>
+            <Badge tone="warning">Phase 3</Badge>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-              Dashboard shell hazir
+              Sales pipeline paneli hazir
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-              Bu ilk surum, urun operasyonunu ayaga kaldirir: giris, korumali alan,
-              temel KPI kartlari ve urun kayit akisi.
+              Musteri, teklif, follow-up ve urun akisini tek panelden izleyin.
             </p>
           </div>
 
           <div className="flex gap-3">
-            <Link href="/products/new">
-              <Button>Yeni urun</Button>
+            <Link href="/customers">
+              <Button>Musteri panosu</Button>
             </Link>
-            <Link href="/products">
-              <Button variant="secondary">Urun listesi</Button>
+            <Link href="/products/new">
+              <Button variant="secondary">Yeni urun</Button>
             </Link>
           </div>
         </div>
@@ -48,6 +55,14 @@ export default async function DashboardPage() {
         <StatCard label="Kazanilan" value={stats.wonCustomerCount} />
         <StatCard label="Acik follow-up" value={stats.openFollowups} />
         <StatCard label="Geciken gorev" value={stats.overdueTasks} accent />
+        <StatCard label="Quotes sent" value={stats.quotesSent} />
+        <StatCard label="Open deals" value={stats.openDeals} />
+        <StatCard label="Lost deals" value={stats.lostDeals} accent />
+        <StatCard label="Conversion rate" value={formatPercentValue(stats.conversionRate.toFixed(1))} />
+        <StatCard
+          label="Won revenue"
+          value={formatCurrencyAmount(stats.wonRevenue, "TRY")}
+        />
       </section>
 
       {!stats.databaseAvailable ? (
@@ -66,22 +81,39 @@ export default async function DashboardPage() {
             <li>Cookie tabanli tek admin authentication</li>
             <li>Korumali dashboard ve products routelari</li>
             <li>Musteri CRUD, urun ilgileri, timeline notlari ve takip gorevleri</li>
+            <li>Teklif olusturma, pipeline kanban, PDF export ve WhatsApp akisi</li>
             <li>Prisma + Supabase PostgreSQL veri modeli</li>
-            <li>Urun ekleme, guncelleme, silme, arama ve stok gorunumu</li>
+            <li>CSV musteri import ve satis KPI genislemeleri</li>
           </ul>
         </Card>
 
         <Card className="p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Next critical task
+            Due today
           </p>
-          <h2 className="mt-4 text-xl font-semibold text-slate-950">
-            Search, import/export ve satis pipeline raporlari
-          </h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            Phase 2 cekirdegi tamamlandiginda sonraki adim global arama, veri aktarimi
-            ve ekip kullanimi icin daha guclu pipeline gorunumleri olmali.
-          </p>
+          <div className="mt-4 space-y-4">
+            {!dueToday.databaseAvailable ? (
+              <p className="text-sm leading-7 text-slate-600">
+                Veritabani baglantisi olmadan bugune ait follow-up kayitlari yuklenemedi.
+              </p>
+            ) : dueToday.tasks.length === 0 ? (
+              <p className="text-sm leading-7 text-slate-600">
+                Bugun icin acik follow-up gorevi bulunmuyor.
+              </p>
+            ) : (
+              dueToday.tasks.map((task) => (
+                <div key={task.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="font-semibold text-slate-900">{task.title}</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {task.customer?.name ?? "Musteri baglantisi yok"}
+                  </p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.25em] text-slate-400">
+                    {task.dueDate ? formatDateTime(task.dueDate) : "Termin yok"}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
         </Card>
       </section>
     </div>
@@ -94,7 +126,7 @@ function StatCard({
   accent = false,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   accent?: boolean;
 }) {
   return (

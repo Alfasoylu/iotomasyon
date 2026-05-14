@@ -14,3 +14,5 @@
  GET /login 200 in 64ms (next.js: 4ms, proxy.ts: 6ms, application-code: 54ms)
  GET /login 200 in 86ms (next.js: 13ms, proxy.ts: 9ms, application-code: 64ms)
 ✓ Compiled in 826ms
+✓ Compiled in 102ms
+[?25h

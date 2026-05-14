@@ -95,6 +95,14 @@ export async function getCustomerById(id: string) {
           },
           orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
         },
+        quotes: {
+          include: {
+            items: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 
