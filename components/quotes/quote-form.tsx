@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createQuoteAction } from "@/lib/actions/quote-actions";
+import { COMPANY_SETTINGS } from "@/lib/company-settings";
 import {
   calculateQuoteLine,
   calculateQuoteTotals,
@@ -55,6 +56,9 @@ export function QuoteForm({
       validityDate: "",
       currencyMode: "TRY",
       exchangeRate: "",
+      paymentTerms: COMPANY_SETTINGS.paymentTerms,
+      deliveryTerms: COMPANY_SETTINGS.deliveryTerms,
+      warrantyTerms: COMPANY_SETTINGS.warrantyTerms,
       items: [{ ...emptyItem }],
     },
   });
@@ -313,6 +317,39 @@ export function QuoteForm({
                 placeholder="Ödeme, teslimat, kapsam veya ek açıklamaları yazın."
               />
             </Field>
+          </Card>
+
+          <Card className="p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Ticari Koşullar
+            </p>
+            <h3 className="mt-2 text-xl font-semibold text-slate-950">Bu teklife özel koşullar</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Boş bırakılırsa varsayılan şirket koşulları kullanılır.
+            </p>
+            <div className="mt-5 space-y-4">
+              <Field label="Ödeme koşulu">
+                <Textarea
+                  {...form.register("paymentTerms")}
+                  className="min-h-[60px] resize-none"
+                  placeholder={COMPANY_SETTINGS.paymentTerms}
+                />
+              </Field>
+              <Field label="Teslimat koşulu">
+                <Textarea
+                  {...form.register("deliveryTerms")}
+                  className="min-h-[60px] resize-none"
+                  placeholder={COMPANY_SETTINGS.deliveryTerms}
+                />
+              </Field>
+              <Field label="Garanti koşulu">
+                <Textarea
+                  {...form.register("warrantyTerms")}
+                  className="min-h-[60px] resize-none"
+                  placeholder={COMPANY_SETTINGS.warrantyTerms}
+                />
+              </Field>
+            </div>
           </Card>
         </div>
 

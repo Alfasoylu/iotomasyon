@@ -71,6 +71,9 @@ export async function createQuoteAction(
         exchangeRate:
           exchangeRateNum && Number.isFinite(exchangeRateNum) ? exchangeRateNum.toString() : null,
         notes: emptyToNull(parsed.data.notes),
+        paymentTerms: emptyToNull(parsed.data.paymentTerms),
+        deliveryTerms: emptyToNull(parsed.data.deliveryTerms),
+        warrantyTerms: emptyToNull(parsed.data.warrantyTerms),
         validityDate: parsed.data.validityDate ? new Date(parsed.data.validityDate) : null,
         subtotal: totals.subtotal.toString(),
         discountTotal: totals.discountTotal.toString(),

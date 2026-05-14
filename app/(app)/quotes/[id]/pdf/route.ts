@@ -168,11 +168,12 @@ export async function GET(
   y -= META_H + 12;
 
   // ── SECTION 3: Customer block ─────────────────────────────────
-  const CUST_H = 78;
+  const CUST_H = 88;
   page.drawRectangle({
     x: ML, y: y - CUST_H, width: CW, height: CUST_H,
     color: C.white, borderColor: C.slate200, borderWidth: 0.5,
   });
+  // "ALICI" section label at top of box
   drawTxt(page, font, "ALICI", ML + 10, y - 14, 7, C.slate500);
 
   const custRows = [
@@ -181,11 +182,12 @@ export async function GET(
     ["Telefon", safe(quote.customer.phone ?? "-")],
     ["E-posta", safe(limitTxt(quote.customer.email ?? "-", 36))],
   ];
+  // Start first data row at y-36 to leave clear gap below "ALICI" title
   custRows.forEach(([label, value], i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
     const cx = ML + 10 + col * (CW / 2);
-    const cy = y - 30 - row * 26;
+    const cy = y - 36 - row * 26;
     drawTxt(page, font, safe(label), cx, cy + 11, 7, C.slate500);
     drawTxt(page, font, safe(value), cx, cy, 9, C.slate900);
   });
@@ -325,9 +327,12 @@ export async function GET(
   const noteLines = quote.notes
     ? wrapTxt(safe(`Not: ${quote.notes}`), 90).slice(0, 8)
     : [];
-  const payLines = wrapTxt(safe(`Ödeme: ${COMPANY_SETTINGS.paymentTerms}`), 90).slice(0, 4);
-  const delLines = wrapTxt(safe(`Teslimat: ${COMPANY_SETTINGS.deliveryTerms}`), 90).slice(0, 4);
-  const warLines = wrapTxt(safe(`Garanti: ${COMPANY_SETTINGS.warrantyTerms}`), 90).slice(0, 4);
+  const payText = quote.paymentTerms ?? COMPANY_SETTINGS.paymentTerms;
+  const delText = quote.deliveryTerms ?? COMPANY_SETTINGS.deliveryTerms;
+  const warText = quote.warrantyTerms ?? COMPANY_SETTINGS.warrantyTerms;
+  const payLines = payText ? wrapTxt(safe(`Ödeme: ${payText}`), 90).slice(0, 4) : [];
+  const delLines = delText ? wrapTxt(safe(`Teslimat: ${delText}`), 90).slice(0, 4) : [];
+  const warLines = warText ? wrapTxt(safe(`Garanti: ${warText}`), 90).slice(0, 4) : [];
 
   const allTermLines = [...noteLines, ...payLines, ...delLines, ...warLines];
   const TERM_LINE_H = 14;

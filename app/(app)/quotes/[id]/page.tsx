@@ -300,9 +300,9 @@ export default async function QuoteDetailPage({
               Ticari Koşullar
             </p>
             <div className="mt-5 space-y-4">
-              <TermBlock label="Ödeme" value={COMPANY_SETTINGS.paymentTerms} />
-              <TermBlock label="Teslimat" value={COMPANY_SETTINGS.deliveryTerms} />
-              <TermBlock label="Garanti" value={COMPANY_SETTINGS.warrantyTerms} />
+              <TermBlock label="Ödeme" value={quote.paymentTerms ?? COMPANY_SETTINGS.paymentTerms} />
+              <TermBlock label="Teslimat" value={quote.deliveryTerms ?? COMPANY_SETTINGS.deliveryTerms} />
+              <TermBlock label="Garanti" value={quote.warrantyTerms ?? COMPANY_SETTINGS.warrantyTerms} />
             </div>
           </Card>
 

@@ -28,5 +28,8 @@ export type QuoteFormValues = {
   exchangeRate: string;
   notes: string;
   validityDate?: string;
+  paymentTerms?: string;
+  deliveryTerms?: string;
+  warrantyTerms?: string;
   items: QuoteItemFormValues[];
 };

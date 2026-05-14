@@ -348,6 +348,9 @@ model Quote {
   quoteNumber   String      @unique
   status        QuoteStatus @default(DRAFT)
   notes         String?
+  paymentTerms  String?
+  deliveryTerms String?
+  warrantyTerms String?
   validityDate  DateTime?
   sentAt        DateTime?
   currencyMode  QuoteCurrencyMode @default(TRY)
