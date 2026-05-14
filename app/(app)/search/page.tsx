@@ -133,6 +133,33 @@ export default async function SearchPage({
             </section>
           ) : null}
 
+          {/* Categories */}
+          {results.categories.length > 0 ? (
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Kategoriler ({results.categories.length})
+              </h2>
+              <Card className="divide-y divide-slate-100">
+                {results.categories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/categories/${cat.id}`}
+                    className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-900">{cat.name}</p>
+                      <p className="text-sm text-slate-500">{cat.slug}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge>{cat._count.products} ürün</Badge>
+                      <Badge tone="default">{cat._count.interests} ilgi</Badge>
+                    </div>
+                  </Link>
+                ))}
+              </Card>
+            </section>
+          ) : null}
+
           {/* Notes */}
           {results.notes.length > 0 ? (
             <section>
@@ -163,9 +190,10 @@ export default async function SearchPage({
           {results.customers.length === 0 &&
             results.quotes.length === 0 &&
             results.products.length === 0 &&
-            results.notes.length === 0 ? (
+            results.notes.length === 0 &&
+            results.categories.length === 0 ? (
             <p className="text-sm text-slate-500">
-              &quot;{q}&quot; icin sonuc bulunamadi.
+              &quot;{q}&quot; için sonuç bulunamadı.
             </p>
           ) : null}
         </div>

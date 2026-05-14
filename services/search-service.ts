@@ -4,11 +4,11 @@ import { prisma } from "@/lib/prisma";
 
 export async function globalSearch(q: string) {
   const term = q.trim();
-  if (term.length < 2) return { customers: [], quotes: [], products: [], notes: [] };
+  if (term.length < 2) return { customers: [], quotes: [], products: [], notes: [], categories: [] };
 
   const contains = { contains: term, mode: "insensitive" as const };
 
-  const [customers, quotes, products, notes] = await Promise.all([
+  const [customers, quotes, products, notes, categories] = await Promise.all([
     prisma.customer.findMany({
       where: {
         OR: [
@@ -58,7 +58,17 @@ export async function globalSearch(q: string) {
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+    prisma.productCategory.findMany({
+      where: {
+        OR: [{ name: contains }, { description: contains }, { slug: contains }],
+      },
+      include: {
+        _count: { select: { products: true, interests: true } },
+      },
+      orderBy: { name: "asc" },
+      take: 10,
+    }),
   ]);
 
-  return { customers, quotes, products, notes };
+  return { customers, quotes, products, notes, categories };
 }

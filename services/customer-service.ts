@@ -10,6 +10,45 @@ export type CustomerFilters = {
   status?: string;
 };
 
+const customerDetailInclude = Prisma.validator<Prisma.CustomerInclude>()({
+  interests: {
+    include: {
+      product: { select: { id: true, name: true, sku: true } },
+      createdBy: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  },
+  categoryInterests: {
+    include: {
+      category: { select: { id: true, name: true, slug: true } },
+      createdBy: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  },
+  timelineEntries: {
+    include: {
+      createdBy: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  },
+  tasks: {
+    include: {
+      createdBy: { select: { id: true, name: true } },
+    },
+    orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
+  },
+  quotes: {
+    include: {
+      items: { orderBy: { createdAt: "asc" } },
+    },
+    orderBy: { createdAt: "desc" },
+  },
+});
+
+export type CustomerDetail = Prisma.CustomerGetPayload<{
+  include: typeof customerDetailInclude;
+}>;
+
 export async function listCustomers(filters: CustomerFilters) {
   const where: Prisma.CustomerWhereInput = {};
 
@@ -50,81 +89,24 @@ export async function listCustomers(filters: CustomerFilters) {
   }
 }
 
-export async function getCustomerById(id: string) {
+export async function getCustomerById(id: string): Promise<
+  | { databaseAvailable: true; customer: CustomerDetail | null }
+  | { databaseAvailable: false; customer: null }
+> {
   try {
     const customer = await prisma.customer.findUnique({
       where: { id },
-      include: {
-        interests: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                sku: true,
-              },
-            },
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        },
-        timelineEntries: {
-          include: {
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        },
-        tasks: {
-          include: {
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-          orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
-        },
-        quotes: {
-          include: {
-            items: {
-              orderBy: { createdAt: "asc" },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        },
-      },
+      include: customerDetailInclude,
     });
 
     return {
-      databaseAvailable: true as const,
-      customer: customer
-        ? {
-            ...customer,
-            tasks: customer.tasks.map((task) => ({
-              ...task,
-              isOverdue:
-                task.status === "OPEN" &&
-                !!task.dueDate &&
-                task.dueDate.getTime() < Date.now(),
-            })),
-          }
-        : null,
+      databaseAvailable: true,
+      customer,
     };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
       return {
-        databaseAvailable: false as const,
+        databaseAvailable: false,
         customer: null,
       };
     }

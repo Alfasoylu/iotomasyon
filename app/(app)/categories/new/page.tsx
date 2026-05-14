@@ -1,28 +1,28 @@
 import { Card } from "@/components/ui/card";
-import { ProductForm } from "@/components/products/product-form";
+import { CategoryForm } from "@/components/categories/category-form";
 import { listCategoriesForSelect } from "@/services/category-service";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewProductPage() {
+export default async function NewCategoryPage() {
   const { categories } = await listCategoriesForSelect();
 
   return (
     <div className="space-y-6">
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Ürünler
+          Kategoriler
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          Yeni ürün oluştur
+          Yeni kategori
         </h1>
         <p className="mt-2 text-sm leading-7 text-slate-600">
-          SKU, stok ve lokasyon bilgilerini kaydederek envanteri aratılabilir hale getirin.
+          Urun katalogunuzu organize etmek icin yeni bir kategori tanimlayin.
         </p>
       </div>
 
       <Card className="p-6">
-        <ProductForm mode="create" categories={categories} />
+        <CategoryForm mode="create" parentOptions={categories} />
       </Card>
     </div>
   );

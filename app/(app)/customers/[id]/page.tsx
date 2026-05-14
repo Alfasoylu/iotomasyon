@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { CategoryInterestDeleteButton } from "@/components/categories/category-interest-delete-button";
+import { CategoryInterestForm } from "@/components/categories/category-interest-form";
 import { CustomerDeleteButton } from "@/components/customers/customer-delete-button";
 import { CustomerWhatsAppButton } from "@/components/customers/customer-whatsapp-button";
 import { CustomerInterestDeleteButton } from "@/components/customers/customer-interest-delete-button";
@@ -28,6 +30,7 @@ import {
   getCustomerById,
   listCustomerInterestProducts,
 } from "@/services/customer-service";
+import { listCategoriesForSelect } from "@/services/category-service";
 import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
 
 export const dynamic = "force-dynamic";
@@ -38,9 +41,10 @@ export default async function CustomerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ databaseAvailable, customer }, productOptionsResult] = await Promise.all([
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult] = await Promise.all([
     getCustomerById(id),
     listCustomerInterestProducts(),
+    listCategoriesForSelect(),
   ]);
 
   if (!databaseAvailable) {
@@ -192,6 +196,64 @@ export default async function CustomerDetailPage({
 
         <div className="space-y-4">
           <Card className="p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-950">Kategori ilgileri</h2>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  Müşterinin ilgilendiği ürün kategorilerini takip edin.
+                </p>
+              </div>
+              <Badge>{customer.categoryInterests.length} kayıt</Badge>
+            </div>
+
+            <div className="mt-6">
+              <CategoryInterestForm
+                customerId={customer.id}
+                categories={categoryOptionsResult.categories}
+              />
+            </div>
+
+            <div className="mt-8 space-y-4">
+              {customer.categoryInterests.length === 0 ? (
+                <p className="text-sm text-slate-500">Henüz kategori ilgisi eklenmedi.</p>
+              ) : (
+                customer.categoryInterests.map((ci) => (
+                  <div
+                    key={ci.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <Link
+                          href={`/categories/${ci.category.id}`}
+                          className="font-semibold text-slate-900 hover:text-[color:var(--accent)]"
+                        >
+                          {ci.category.name}
+                        </Link>
+                        {ci.notes ? (
+                          <p className="mt-2 text-sm leading-7 text-slate-600">{ci.notes}</p>
+                        ) : null}
+                        <p className="mt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
+                          {formatDateTime(ci.createdAt)}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-start gap-3 md:items-end">
+                        <Badge tone={getInterestStageTone(ci.stage)}>
+                          {formatInterestStage(ci.stage)}
+                        </Badge>
+                        <CategoryInterestDeleteButton
+                          customerId={customer.id}
+                          interestId={ci.id}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+
+          <Card className="p-6">
             <h2 className="text-lg font-semibold text-slate-950">Teklifler</h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
               Musteri icin teklif olusturun, PDF olarak disa aktarın ve WhatsApp ile gonderin.
@@ -288,11 +350,16 @@ export default async function CustomerDetailPage({
               {customer.tasks.length === 0 ? (
                 <p className="text-sm text-slate-500">Acik takip gorevi bulunmuyor.</p>
               ) : (
-                customer.tasks.map((task) => (
+                customer.tasks.map((task) => {
+                  const isOverdue =
+                    task.status === "OPEN" &&
+                    !!task.dueDate &&
+                    task.dueDate.getTime() < Date.now();
+                  return (
                   <div
                     key={task.id}
                     className={`rounded-2xl border p-4 ${
-                      task.isOverdue
+                      isOverdue
                         ? "border-red-200 bg-red-50"
                         : "border-slate-200 bg-slate-50"
                     }`}
@@ -307,7 +374,7 @@ export default async function CustomerDetailPage({
                           <Badge tone={getTaskPriorityTone(task.priority)}>
                             {formatTaskPriority(task.priority)}
                           </Badge>
-                          {task.isOverdue ? <Badge tone="danger">Overdue</Badge> : null}
+                          {isOverdue ? <Badge tone="danger">Overdue</Badge> : null}
                         </div>
                         {task.description ? (
                           <p className="mt-3 text-sm leading-7 text-slate-600">
@@ -327,7 +394,8 @@ export default async function CustomerDetailPage({
                       ) : null}
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           </Card>

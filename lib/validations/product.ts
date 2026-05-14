@@ -4,6 +4,7 @@ export const productSchema = z.object({
   sku: z.string().trim().min(2, "SKU gerekli."),
   name: z.string().trim().min(2, "Urun adi gerekli."),
   category: z.string().trim().max(120),
+  categoryId: z.string().trim(),
   brand: z.string().trim().max(120),
   model: z.string().trim().max(120),
   stockQuantity: z.number().int().min(0, "Stok negatif olamaz."),

@@ -78,79 +78,119 @@ enum QuoteStatus {
 }
 
 model User {
-  id               String            @id @default(cuid())
-  email            String            @unique
-  passwordHash     String
-  name             String
-  role             UserRole          @default(ADMIN)
-  isActive         Boolean           @default(true)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  productsCreated  Product[]         @relation("CreatedProducts")
-  notesCreated     Note[]
-  interestsCreated ProductInterest[] @relation("CreatedInterests")
-  interestsOwned   ProductInterest[] @relation("AssignedInterests")
-  tasksCreated     FollowUpTask[]    @relation("CreatedTasks")
-  tasksOwned       FollowUpTask[]    @relation("AssignedTasks")
-  quotesCreated    Quote[]
+  id                       String             @id @default(cuid())
+  email                    String             @unique
+  passwordHash             String
+  name                     String
+  role                     UserRole           @default(ADMIN)
+  isActive                 Boolean            @default(true)
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  productsCreated          Product[]          @relation("CreatedProducts")
+  notesCreated             Note[]
+  interestsCreated         ProductInterest[]  @relation("CreatedInterests")
+  interestsOwned           ProductInterest[]  @relation("AssignedInterests")
+  tasksCreated             FollowUpTask[]     @relation("CreatedTasks")
+  tasksOwned               FollowUpTask[]     @relation("AssignedTasks")
+  quotesCreated            Quote[]
+  categoryInterestsCreated CategoryInterest[] @relation("CreatedCategoryInterests")
+}
+
+model ProductCategory {
+  id          String             @id @default(cuid())
+  name        String
+  slug        String             @unique
+  description String?
+  parentId    String?
+  parent      ProductCategory?   @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    ProductCategory[]  @relation("CategoryTree")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  products    Product[]
+  interests   CategoryInterest[]
+
+  @@index([slug])
+  @@index([parentId])
 }
 
 model Product {
-  id             String            @id @default(cuid())
-  sku            String            @unique
-  name           String
-  category       String?
-  brand          String?
-  model          String?
-  stockQuantity  Int               @default(0)
-  minimumStock   Int               @default(0)
-  location       String?
-  description    String?
-  isActive       Boolean           @default(true)
-  createdById    String?
-  createdBy      User?             @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  interests      ProductInterest[]
-  notes          Note[]
-  tasks          FollowUpTask[]
-  quoteItems     QuoteItem[]
+  id              String           @id @default(cuid())
+  sku             String           @unique
+  name            String
+  category        String?
+  categoryId      String?
+  brand           String?
+  model           String?
+  stockQuantity   Int              @default(0)
+  minimumStock    Int              @default(0)
+  location        String?
+  description     String?
+  isActive        Boolean          @default(true)
+  createdById     String?
+  createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
+  productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  interests       ProductInterest[]
+  notes           Note[]
+  tasks           FollowUpTask[]
+  quoteItems      QuoteItem[]
 
   @@index([name])
   @@index([category])
+  @@index([categoryId])
   @@index([stockQuantity, minimumStock])
 }
 
 model Customer {
-  id           String            @id @default(cuid())
-  name         String
-  phone        String?
-  whatsapp     String?
-  email        String?
-  company      String?
-  status       CustomerStatus    @default(NEW)
-  country      String?
-  customerNotes String?          @map("notes")
-  customerType String?
-  city         String?
-  district     String?
-  address      String?
-  taxOffice    String?
-  taxNumber    String?
-  source       String?
-  isActive        Boolean           @default(true)
-  lastContactedAt DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  interests       ProductInterest[]
-  timelineEntries Note[]
-  tasks        FollowUpTask[]
-  quotes       Quote[]
+  id                String             @id @default(cuid())
+  name              String
+  phone             String?
+  whatsapp          String?
+  email             String?
+  company           String?
+  status            CustomerStatus     @default(NEW)
+  country           String?
+  customerNotes     String?            @map("notes")
+  customerType      String?
+  city              String?
+  district          String?
+  address           String?
+  taxOffice         String?
+  taxNumber         String?
+  source            String?
+  isActive          Boolean            @default(true)
+  lastContactedAt   DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  interests         ProductInterest[]
+  categoryInterests CategoryInterest[]
+  timelineEntries   Note[]
+  tasks             FollowUpTask[]
+  quotes            Quote[]
 
   @@index([name])
   @@index([phone])
   @@index([email])
   @@index([status])
+}
+
+model CategoryInterest {
+  id          String          @id @default(cuid())
+  customerId  String
+  categoryId  String
+  stage       InterestStage   @default(INTERESTED)
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  createdById String?
+  customer    Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  category    ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdBy   User?           @relation("CreatedCategoryInterests", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([customerId, categoryId])
+  @@index([customerId])
+  @@index([categoryId])
 }
 
 model ProductInterest {
