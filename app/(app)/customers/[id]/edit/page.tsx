@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { CustomerForm } from "@/components/customers/customer-form";
 import { Card } from "@/components/ui/card";
-import { listAttributes, getCustomerAttributeInterestIds } from "@/services/attribute-service";
+import { listAttributes } from "@/services/attribute-service";
 import { getCustomerById, listUsersForSelect } from "@/services/customer-service";
 
 export const dynamic = "force-dynamic";
@@ -13,11 +13,10 @@ export default async function EditCustomerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [{ databaseAvailable, customer }, users, allAttributes, currentAttributeIds] = await Promise.all([
+  const [{ databaseAvailable, customer }, users, allAttributes] = await Promise.all([
     getCustomerById(id),
     listUsersForSelect(),
     listAttributes(),
-    getCustomerAttributeInterestIds(id),
   ]);
 
   if (!databaseAvailable) {
@@ -67,7 +66,7 @@ export default async function EditCustomerPage({
           customerId={customer.id}
           users={users}
           allAttributes={allAttributes}
-          initialAttributeIds={currentAttributeIds}
+          initialAttributeIds={customer.attributeInterests.map((ai) => ai.attributeId)}
           initialValues={{
             name:      customer.name,
             company:   customer.company   ?? "",

@@ -6,48 +6,30 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types/actions";
 
+// Canonical normalization: all attribute names stored lowercase.
+// Prevents "Inverter" / "inverter" / "INVERTER" fragmentation in the tag namespace.
+function normalizeAttributeName(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
 // Create attribute if not exists; return its id.
 export async function upsertAttributeAction(
   name: string,
 ): Promise<ActionResult & { id?: string; name?: string }> {
   await requireUser();
-  const trimmed = name.trim();
-  if (!trimmed) return { ok: false, message: "Özellik adı gereklidir." };
+  const normalized = normalizeAttributeName(name);
+  if (!normalized) return { ok: false, message: "Özellik adı gereklidir." };
 
   try {
     const attr = await prisma.productAttribute.upsert({
-      where: { name: trimmed },
+      where: { name: normalized },
       update: {},
-      create: { name: trimmed },
+      create: { name: normalized },
       select: { id: true, name: true },
     });
     return { ok: true, id: attr.id, name: attr.name };
   } catch {
     return { ok: false, message: "Özellik oluşturulamadı." };
-  }
-}
-
-// Replace the full attribute set for a product atomically.
-export async function setProductAttributesAction(
-  productId: string,
-  attributeIds: string[],
-): Promise<ActionResult> {
-  await requireUser();
-
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.productAttributeAssignment.deleteMany({ where: { productId } });
-      for (const attributeId of attributeIds) {
-        await tx.productAttributeAssignment.create({
-          data: { productId, attributeId },
-        });
-      }
-    });
-    revalidatePath(`/products/${productId}`);
-    revalidatePath("/products");
-    return { ok: true };
-  } catch {
-    return { ok: false, message: "Özellikler kaydedilemedi." };
   }
 }
 

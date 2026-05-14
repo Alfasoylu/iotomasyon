@@ -94,7 +94,7 @@ function QuoteLinkForm({
   onLinked,
 }: {
   recipientId: string;
-  onLinked: (quoteId: string, quoteNumber: string) => void;
+  onLinked: (quoteId: string, quoteNumber: string, quoteTotal: string | null) => void;
 }) {
   const [quoteNum, setQuoteNum] = useState("");
   const [error, setError] = useState<string>();
@@ -110,7 +110,7 @@ function QuoteLinkForm({
       if (!result.ok) {
         setError(result.message ?? "Hata oluştu.");
       } else if (result.quoteId) {
-        onLinked(result.quoteId, quoteNum.trim());
+        onLinked(result.quoteId, quoteNum.trim(), result.quoteTotal ?? null);
       }
     });
   }
@@ -368,8 +368,8 @@ function RecipientCard({
       {showQuoteLink && !state.quoteId && (
         <QuoteLinkForm
           recipientId={r.id}
-          onLinked={(quoteId, quoteNumber) => {
-            setState((prev) => ({ ...prev, status: "QUOTED", quoteId, quoteNumber }));
+          onLinked={(quoteId, quoteNumber, quoteTotal) => {
+            setState((prev) => ({ ...prev, status: "QUOTED", quoteId, quoteNumber, quoteTotal }));
             setShowQuoteLink(false);
           }}
         />

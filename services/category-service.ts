@@ -129,22 +129,25 @@ export async function getProductIntelligence(productId: string) {
       return { databaseAvailable: true as const, directInterests: [], attributeInterests: [], categoryInterests: [] };
     }
 
-    const categoryInterests = product.categoryId
-      ? await prisma.categoryInterest.findMany({
-          where: { categoryId: product.categoryId },
-          include: {
-            customer: { select: { id: true, name: true, company: true, phone: true } },
-          },
-          orderBy: { createdAt: "desc" },
-        })
-      : [];
-
     const directCustomerIds = new Set(product.interests.map((i) => i.customer.id));
 
-    const productAttrRows = await prisma.productAttributeAssignment.findMany({
-      where: { productId },
-      select: { attributeId: true },
-    });
+    // Run category and attribute-ID lookups in parallel — both depend only on Q1.
+    const [categoryInterests, productAttrRows] = await Promise.all([
+      product.categoryId
+        ? prisma.categoryInterest.findMany({
+            where: { categoryId: product.categoryId },
+            include: {
+              customer: { select: { id: true, name: true, company: true, phone: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          })
+        : Promise.resolve([]),
+      prisma.productAttributeAssignment.findMany({
+        where: { productId },
+        select: { attributeId: true },
+      }),
+    ]);
+
     const attrInterests = productAttrRows.length > 0
       ? await prisma.customerAttributeInterest.findMany({
           where: { attributeId: { in: productAttrRows.map((r) => r.attributeId) } },
@@ -153,6 +156,7 @@ export async function getProductIntelligence(productId: string) {
             attribute: { select: { id: true, name: true } },
           },
           orderBy: { createdAt: "desc" },
+          take: 500,
         })
       : [];
 

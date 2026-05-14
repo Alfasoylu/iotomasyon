@@ -25,6 +25,19 @@ export async function createCustomerAction(
 
   const user = await requireUser();
 
+  const attributeIds = options?.attributeIds ?? [];
+  if (attributeIds.length > 0) {
+    const validCount = await prisma.productAttribute.count({
+      where: { id: { in: attributeIds } },
+    });
+    if (validCount !== attributeIds.length) {
+      return {
+        ok: false,
+        message: "Geçersiz özellik seçimi. Sayfayı yenileyip tekrar deneyin.",
+      };
+    }
+  }
+
   try {
     const customer = await prisma.$transaction(async (tx) => {
       const c = await tx.customer.create({
@@ -51,7 +64,7 @@ export async function createCustomerAction(
         });
       }
 
-      for (const attributeId of options?.attributeIds ?? []) {
+      for (const attributeId of attributeIds) {
         await tx.customerAttributeInterest.create({
           data: { customerId: c.id, attributeId },
         });
@@ -93,6 +106,18 @@ export async function updateCustomerAction(
   }
 
   await requireUser();
+
+  if (attributeIds.length > 0) {
+    const validCount = await prisma.productAttribute.count({
+      where: { id: { in: attributeIds } },
+    });
+    if (validCount !== attributeIds.length) {
+      return {
+        ok: false,
+        message: "Geçersiz özellik seçimi. Sayfayı yenileyip tekrar deneyin.",
+      };
+    }
+  }
 
   try {
     await prisma.$transaction(async (tx) => {

@@ -117,6 +117,7 @@ export async function getCampaignCandidates(
               customer: { select: { id: true, name: true, company: true, phone: true, whatsapp: true } },
             },
             orderBy: { createdAt: "desc" },
+            take: 500,
           });
           for (const ai of attrInterests) {
             const c = ai.customer;

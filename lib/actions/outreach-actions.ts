@@ -52,29 +52,33 @@ export async function createCampaignAction(
   const { productId, categoryId, message, offerText, price, currency, selectedCustomerIds, customerPhones } =
     parsed.data;
 
-  const campaign = await prisma.outreachCampaign.create({
-    data: {
-      productId: productId || null,
-      categoryId: categoryId || null,
-      message,
-      offerText: offerText || null,
-      price: price ? parseFloat(price) : null,
-      currency,
-      createdById: user.id,
-      recipients: {
-        create: selectedCustomerIds.map((customerId) => ({
-          customerId,
-          phone: customerPhones[customerId] ?? null,
-        })),
+  try {
+    const campaign = await prisma.outreachCampaign.create({
+      data: {
+        productId: productId || null,
+        categoryId: categoryId || null,
+        message,
+        offerText: offerText || null,
+        price: price ? parseFloat(price) : null,
+        currency,
+        createdById: user.id,
+        recipients: {
+          create: selectedCustomerIds.map((customerId) => ({
+            customerId,
+            phone: customerPhones[customerId] ?? null,
+          })),
+        },
       },
-    },
-  });
+    });
 
-  revalidatePath("/campaigns");
-  if (productId) revalidatePath(`/products/${productId}`);
-  if (categoryId) revalidatePath(`/categories/${categoryId}`);
+    revalidatePath("/campaigns");
+    if (productId) revalidatePath(`/products/${productId}`);
+    if (categoryId) revalidatePath(`/categories/${categoryId}`);
 
-  return { ok: true, campaignId: campaign.id };
+    return { ok: true, campaignId: campaign.id };
+  } catch {
+    return { ok: false, message: "Kampanya oluşturulamadı." };
+  }
 }
 
 // PENDING → SENT only. Uses a dedicated guard — not the shared VALID_TRANSITIONS
@@ -163,7 +167,7 @@ export async function updateRecipientStatusAction(
 export async function linkRecipientToQuoteAction(
   recipientId: string,
   quoteNumber: string,
-): Promise<ActionResult & { quoteId?: string }> {
+): Promise<ActionResult & { quoteId?: string; quoteTotal?: string }> {
   await requireUser();
 
   if (!quoteNumber.trim()) {
@@ -199,5 +203,5 @@ export async function linkRecipientToQuoteAction(
   });
 
   revalidatePath("/campaigns");
-  return { ok: true, quoteId: quote.id };
+  return { ok: true, quoteId: quote.id, quoteTotal: quote.total.toString() };
 }
