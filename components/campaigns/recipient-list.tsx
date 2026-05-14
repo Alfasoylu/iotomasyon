@@ -28,22 +28,31 @@ function personalizeMessage(
   price: string | null,
   currency: string,
 ): string {
+  const hasFiyatPlaceholder = template.includes("{fiyat}");
   let msg = template
     .replace("{isim}", name)
     .replace("{teklif_metni}", offerText ?? "")
     .replace("{fiyat}", price ? `${price} ${currency}` : "");
 
-  if (price) {
+  // Only append price footer when template has no {fiyat} — avoids duplication
+  if (price && !hasFiyatPlaceholder) {
     msg += `\n\n💰 Fiyat: ${price} ${currency}`;
   }
 
   return msg;
 }
 
+function normalizePhone(raw: string): string {
+  const cleaned = raw.replace(/\D/g, "");
+  if (cleaned.startsWith("90") && cleaned.length === 12) return cleaned;   // already 90xxxxxxxxxx
+  if (cleaned.startsWith("0") && cleaned.length === 11) return `90${cleaned.slice(1)}`; // 0xxxxxxxxxx → 90xxxxxxxxxx
+  if (cleaned.length === 10 && cleaned.startsWith("5")) return `90${cleaned}`;          // bare TR mobile
+  return cleaned; // international or already correct
+}
+
 function waLink(phone: string | null, message: string): string | null {
   if (!phone) return null;
-  const cleaned = phone.replace(/\D/g, "");
-  const normalized = cleaned.startsWith("0") ? `90${cleaned.slice(1)}` : cleaned;
+  const normalized = normalizePhone(phone);
   return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
 }
 

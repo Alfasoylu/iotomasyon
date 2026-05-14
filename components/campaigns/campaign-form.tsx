@@ -60,10 +60,15 @@ export function CampaignForm({ productId, categoryId, productName, categoryName,
   }
 
   function personalizedMessage(name: string): string {
-    return message
+    const hasFiyat = message.includes("{fiyat}");
+    let msg = message
       .replace("{isim}", name)
       .replace("{teklif_metni}", offerText || "(teklif metni)")
       .replace("{fiyat}", price ? `${price} ${currency}` : "");
+    if (price && !hasFiyat) {
+      msg += `\n\n💰 Fiyat: ${price} ${currency}`;
+    }
+    return msg;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -234,7 +239,6 @@ export function CampaignForm({ productId, categoryId, productName, categoryName,
             </h2>
             <pre className="whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-700">
               {personalizedMessage(first.name)}
-              {price ? `\n\n💰 Fiyat: ${price} ${currency}` : ""}
             </pre>
           </div>
         );

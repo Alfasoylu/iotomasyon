@@ -39,10 +39,10 @@ CREATE TABLE IF NOT EXISTS "OutreachRecipient" (
     CONSTRAINT "OutreachRecipient_pkey" PRIMARY KEY ("id")
 );
 
--- Unique constraint
+-- Unique constraint (NOT VALID is not supported for UNIQUE in PostgreSQL; table is new so no row scan needed)
 ALTER TABLE "OutreachRecipient"
-  ADD CONSTRAINT "OutreachRecipient_campaignId_customerId_key"
-  UNIQUE ("campaignId", "customerId") NOT VALID;
+  ADD CONSTRAINT IF NOT EXISTS "OutreachRecipient_campaignId_customerId_key"
+  UNIQUE ("campaignId", "customerId");
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS "OutreachCampaign_productId_idx"   ON "OutreachCampaign"("productId");
