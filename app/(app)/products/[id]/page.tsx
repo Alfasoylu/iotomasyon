@@ -108,6 +108,17 @@ export default async function ProductDetailPage({
       </div>
 
       {(directInterests.length > 0 || categoryInterests.length > 0) ? (
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-slate-700">
+            {directInterests.length + categoryInterests.length} potansiyel alıcı
+          </p>
+          <Link href={`/campaigns/new?productId=${product.id}`}>
+            <Button>WhatsApp kampanyası oluştur</Button>
+          </Link>
+        </div>
+      ) : null}
+
+      {(directInterests.length > 0 || categoryInterests.length > 0) ? (
         <div className="grid gap-4 xl:grid-cols-2">
           {directInterests.length > 0 ? (
             <Card className="p-6">

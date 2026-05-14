@@ -11,6 +11,7 @@ const navigation = [
   { href: "/products", label: "Ürünler" },
   { href: "/categories", label: "Kategoriler" },
   { href: "/search", label: "Arama" },
+  { href: "/campaigns", label: "Kampanyalar" },
 ];
 
 export function Sidebar() {
@@ -58,9 +59,9 @@ export function Sidebar() {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Phase 5 active
+          Phase 6 active
           <p className="mt-2 font-medium text-slate-900">
-            Kategoriler, ürün zekası, kategori ilgileri.
+            WhatsApp kampanyaları, toplu outreach.
           </p>
         </div>
       </aside>
