@@ -53,11 +53,6 @@ export function formatQuoteCurrencyMode(mode: QuoteCurrencyMode) {
   }[mode];
 }
 
-/**
- * Returns display strings for an amount given the quote's currency mode.
- * itemCurrency: the currency the price was entered in (e.g. "USD" or "TRY")
- * exchangeRate: TRY per 1 USD (e.g. 39.25). null means no conversion available.
- */
 export function resolveDisplayAmounts(
   value: number,
   itemCurrency: string,
@@ -77,18 +72,19 @@ export function resolveDisplayAmounts(
     return { primary: formatCurrencyAmount(tryValue, "TRY") };
   }
 
-  // BOTH
   if (isUsd && rate) {
     return {
       primary: formatCurrencyAmount(value, "USD"),
       secondary: formatCurrencyAmount(value * rate, "TRY"),
     };
   }
+
   if (!isUsd && rate) {
     return {
       primary: formatCurrencyAmount(value, itemCurrency),
       secondary: formatCurrencyAmount(value / rate, "USD"),
     };
   }
+
   return { primary: formatCurrencyAmount(value, itemCurrency) };
 }

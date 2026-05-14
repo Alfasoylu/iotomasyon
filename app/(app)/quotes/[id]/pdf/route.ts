@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 import { getCurrentSession } from "@/lib/auth";
-import { formatCurrencyAmount } from "@/lib/quote-utils";
+import { resolveDisplayAmounts } from "@/lib/quote-utils";
 import { getQuoteById } from "@/services/quote-service";
 
 export const runtime = "nodejs";
@@ -27,7 +27,9 @@ export async function GET(
   const page = pdf.addPage([595, 842]);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const currency = quote.items[0]?.currency ?? "TRY";
+  const quoteCurrency = quote.items[0]?.currency ?? "TRY";
+  const currencyMode = quote.currencyMode ?? "TRY";
+  const exchangeRate = quote.exchangeRate != null ? Number(quote.exchangeRate) : null;
 
   let y = 790;
   page.drawText(toPdfSafeText("Soylu Elektronik - Teklif"), {
@@ -41,7 +43,7 @@ export async function GET(
   y -= 30;
   page.drawText(toPdfSafeText(`Teklif: ${quote.quoteNumber}`), { x: 40, y, size: 11, font });
   y -= 18;
-  page.drawText(toPdfSafeText(`Musteri: ${quote.customer.name}`), { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Müşteri: ${quote.customer.name}`), { x: 40, y, size: 11, font });
   y -= 18;
   page.drawText(toPdfSafeText(`Durum: ${quote.status}`), { x: 40, y, size: 11, font });
 
@@ -50,10 +52,13 @@ export async function GET(
   y -= 20;
 
   for (const item of quote.items) {
+    const unit = resolveDisplayAmounts(Number(item.unitPrice), item.currency, currencyMode, exchangeRate);
+    const total = resolveDisplayAmounts(Number(item.total), item.currency, currencyMode, exchangeRate);
+
     const lines = [
       toPdfSafeText(item.description),
       toPdfSafeText(
-        `Adet: ${item.quantity} | Birim: ${formatPdfMoney(item.unitPrice.toString(), item.currency)} | Toplam: ${formatPdfMoney(item.total.toString(), item.currency)}`,
+        `Adet: ${item.quantity} | Birim: ${formatDisplayPair(unit)} | Toplam: ${formatDisplayPair(total)}`,
       ),
     ];
 
@@ -66,33 +71,61 @@ export async function GET(
   }
 
   y -= 10;
-  page.drawText(toPdfSafeText(`Ara toplam: ${formatPdfMoney(quote.subtotal.toString(), currency)}`), {
-    x: 40,
-    y,
-    size: 11,
-    font: bold,
-  });
+  page.drawText(
+    toPdfSafeText(
+      `Ara toplam: ${formatDisplayPair(
+        resolveDisplayAmounts(Number(quote.subtotal), quoteCurrency, currencyMode, exchangeRate),
+      )}`,
+    ),
+    {
+      x: 40,
+      y,
+      size: 11,
+      font: bold,
+    },
+  );
   y -= 18;
-  page.drawText(toPdfSafeText(`Indirim: ${formatPdfMoney(quote.discountTotal.toString(), currency)}`), {
-    x: 40,
-    y,
-    size: 11,
-    font,
-  });
+  page.drawText(
+    toPdfSafeText(
+      `İndirim: ${formatDisplayPair(
+        resolveDisplayAmounts(Number(quote.discountTotal), quoteCurrency, currencyMode, exchangeRate),
+      )}`,
+    ),
+    {
+      x: 40,
+      y,
+      size: 11,
+      font,
+    },
+  );
   y -= 18;
-  page.drawText(toPdfSafeText(`Vergi: ${formatPdfMoney(quote.taxTotal.toString(), currency)}`), {
-    x: 40,
-    y,
-    size: 11,
-    font,
-  });
+  page.drawText(
+    toPdfSafeText(
+      `Vergi: ${formatDisplayPair(
+        resolveDisplayAmounts(Number(quote.taxTotal), quoteCurrency, currencyMode, exchangeRate),
+      )}`,
+    ),
+    {
+      x: 40,
+      y,
+      size: 11,
+      font,
+    },
+  );
   y -= 18;
-  page.drawText(toPdfSafeText(`Toplam: ${formatPdfMoney(quote.total.toString(), currency)}`), {
-    x: 40,
-    y,
-    size: 12,
-    font: bold,
-  });
+  page.drawText(
+    toPdfSafeText(
+      `Toplam: ${formatDisplayPair(
+        resolveDisplayAmounts(Number(quote.total), quoteCurrency, currencyMode, exchangeRate),
+      )}`,
+    ),
+    {
+      x: 40,
+      y,
+      size: 12,
+      font: bold,
+    },
+  );
 
   y -= 34;
   page.drawText("Notlar", { x: 40, y, size: 13, font: bold });
@@ -117,15 +150,15 @@ export async function GET(
   });
 }
 
-function formatPdfMoney(value: string, currency: string) {
-  const formatted = formatCurrencyAmount(value, currency);
-  return formatted.replace(/[^\d.,\- ]+/g, "").trim().concat(` ${currency.toUpperCase()}`);
+function formatDisplayPair(result: { primary: string; secondary?: string }) {
+  return result.secondary ? `${result.primary} / ${result.secondary}` : result.primary;
 }
 
 function toPdfSafeText(value: string) {
   return value
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/₺/g, "TRY ")
     .replace(/ı/g, "i")
     .replace(/İ/g, "I")
     .replace(/[^\x20-\x7E\n\r\t]/g, "?");
