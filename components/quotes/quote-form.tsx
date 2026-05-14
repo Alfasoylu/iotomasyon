@@ -207,16 +207,6 @@ export function QuoteForm({
               </div>
             </div>
 
-            <div className="hidden border-b border-slate-200 bg-slate-50 px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500 xl:grid xl:grid-cols-[1.4fr_2fr_80px_130px_110px_110px_90px_140px] xl:gap-4">
-              <span>Ürün</span>
-              <span>Açıklama</span>
-              <span>Adet</span>
-              <span>Birim fiyat</span>
-              <span>Para birimi</span>
-              <span>İndirim</span>
-              <span>KDV %</span>
-              <span>Satır toplamı</span>
-            </div>
 
             <div className="space-y-4 px-6 py-6">
               {items.fields.map((field, index) => {
@@ -271,63 +261,70 @@ export function QuoteForm({
                       </div>
                     </div>
 
-                    <div className="space-y-4 p-5 xl:grid xl:grid-cols-[1.4fr_2fr_80px_130px_110px_110px_90px_140px] xl:gap-4 xl:space-y-0">
-                      <Field label="Ürün" compact>
-                        <select
-                          {...form.register(`items.${index}.productId`)}
-                          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-                        >
-                          <option value="">Ürün bağlama (opsiyonel)</option>
-                          {products.map((product) => (
-                            <option key={product.id} value={product.id}>
-                              {product.name} ({product.sku})
-                            </option>
-                          ))}
-                        </select>
-                      </Field>
+                    <div className="space-y-3 p-5">
+                      {/* Satır 1: ürün seçici + açıklama — tam genişlik */}
+                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
+                        <Field label="Ürün">
+                          <select
+                            {...form.register(`items.${index}.productId`)}
+                            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+                          >
+                            <option value="">Ürün bağlama (opsiyonel)</option>
+                            {products.map((product) => (
+                              <option key={product.id} value={product.id}>
+                                {product.name} ({product.sku})
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
 
-                      <Field label="Açıklama" compact>
-                        <Input
-                          {...form.register(`items.${index}.description`)}
-                          placeholder="Teklifte görünecek açıklama"
-                        />
-                      </Field>
+                        <Field label="Açıklama">
+                          <Textarea
+                            {...form.register(`items.${index}.description`)}
+                            className="min-h-[72px] resize-none"
+                            placeholder="Teklifte görünecek açıklama"
+                          />
+                        </Field>
+                      </div>
 
-                      <Field label="Adet" compact>
-                        <Input
-                          type="number"
-                          min={1}
-                          {...form.register(`items.${index}.quantity`, { valueAsNumber: true })}
-                        />
-                      </Field>
+                      {/* Satır 2: sayısal alanlar */}
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-[80px_130px_100px_100px_80px_1fr]">
+                        <Field label="Adet">
+                          <Input
+                            type="number"
+                            min={1}
+                            {...form.register(`items.${index}.quantity`, { valueAsNumber: true })}
+                          />
+                        </Field>
 
-                      <Field label="Birim fiyat" compact>
-                        <Input {...form.register(`items.${index}.unitPrice`)} placeholder="0,00" />
-                      </Field>
+                        <Field label="Birim fiyat">
+                          <Input {...form.register(`items.${index}.unitPrice`)} placeholder="0,00" />
+                        </Field>
 
-                      <Field label="Para birimi" compact>
-                        <Input
-                          {...form.register(`items.${index}.currency`)}
-                          placeholder="TRY veya USD"
-                        />
-                      </Field>
+                        <Field label="Para birimi">
+                          <Input
+                            {...form.register(`items.${index}.currency`)}
+                            placeholder="TRY veya USD"
+                          />
+                        </Field>
 
-                      <Field label="İndirim" compact>
-                        <Input {...form.register(`items.${index}.discount`)} placeholder="0" />
-                      </Field>
+                        <Field label="İndirim">
+                          <Input {...form.register(`items.${index}.discount`)} placeholder="0" />
+                        </Field>
 
-                      <Field label="KDV %" compact>
-                        <Input
-                          {...form.register(`items.${index}.tax`)}
-                          placeholder={String(DEFAULT_QUOTE_TAX_RATE)}
-                        />
-                      </Field>
+                        <Field label="KDV %">
+                          <Input
+                            {...form.register(`items.${index}.tax`)}
+                            placeholder={String(DEFAULT_QUOTE_TAX_RATE)}
+                          />
+                        </Field>
 
-                      <Field label="Satır toplamı" compact>
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950">
-                          {rowDisplay}
-                        </div>
-                      </Field>
+                        <Field label="Satır toplamı">
+                          <div className="flex h-11 items-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-950">
+                            {rowDisplay}
+                          </div>
+                        </Field>
+                      </div>
                     </div>
 
                     <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-4">
