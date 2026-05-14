@@ -21,8 +21,14 @@ CREATE TYPE "RecipientStatus" AS ENUM (
   'LOST'
 );
 
+-- Drop default first — PostgreSQL cannot auto-cast a column default during enum type swap
+ALTER TABLE "OutreachRecipient" ALTER COLUMN "status" DROP DEFAULT;
+
 ALTER TABLE "OutreachRecipient"
   ALTER COLUMN "status" TYPE "RecipientStatus"
   USING "status"::text::"RecipientStatus";
+
+-- Restore default with the new type
+ALTER TABLE "OutreachRecipient" ALTER COLUMN "status" SET DEFAULT 'PENDING'::"RecipientStatus";
 
 DROP TYPE "RecipientStatus_old";
