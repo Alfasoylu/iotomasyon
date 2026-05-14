@@ -5,6 +5,8 @@ import { getCurrentSession } from "@/lib/auth";
 import { formatCurrencyAmount } from "@/lib/quote-utils";
 import { getQuoteById } from "@/services/quote-service";
 
+export const runtime = "nodejs";
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -28,7 +30,7 @@ export async function GET(
   const currency = quote.items[0]?.currency ?? "TRY";
 
   let y = 790;
-  page.drawText("Soylu Elektronik - Quote", {
+  page.drawText(toPdfSafeText("Soylu Elektronik - Quote"), {
     x: 40,
     y,
     size: 18,
@@ -37,11 +39,11 @@ export async function GET(
   });
 
   y -= 30;
-  page.drawText(`Quote: ${quote.quoteNumber}`, { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Quote: ${quote.quoteNumber}`), { x: 40, y, size: 11, font });
   y -= 18;
-  page.drawText(`Customer: ${quote.customer.name}`, { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Customer: ${quote.customer.name}`), { x: 40, y, size: 11, font });
   y -= 18;
-  page.drawText(`Status: ${quote.status}`, { x: 40, y, size: 11, font });
+  page.drawText(toPdfSafeText(`Status: ${quote.status}`), { x: 40, y, size: 11, font });
 
   y -= 34;
   page.drawText("Items", { x: 40, y, size: 13, font: bold });
@@ -49,8 +51,10 @@ export async function GET(
 
   for (const item of quote.items) {
     const lines = [
-      `${item.description}`,
-      `Qty: ${item.quantity} | Unit: ${formatCurrencyAmount(item.unitPrice.toString(), item.currency)} | Total: ${formatCurrencyAmount(item.total.toString(), item.currency)}`,
+      toPdfSafeText(item.description),
+      toPdfSafeText(
+        `Qty: ${item.quantity} | Unit: ${formatPdfMoney(item.unitPrice.toString(), item.currency)} | Total: ${formatPdfMoney(item.total.toString(), item.currency)}`,
+      ),
     ];
 
     for (const line of lines) {
@@ -62,28 +66,28 @@ export async function GET(
   }
 
   y -= 10;
-  page.drawText(`Subtotal: ${formatCurrencyAmount(quote.subtotal.toString(), currency)}`, {
+  page.drawText(toPdfSafeText(`Subtotal: ${formatPdfMoney(quote.subtotal.toString(), currency)}`), {
     x: 40,
     y,
     size: 11,
     font: bold,
   });
   y -= 18;
-  page.drawText(`Discount: ${formatCurrencyAmount(quote.discountTotal.toString(), currency)}`, {
+  page.drawText(toPdfSafeText(`Discount: ${formatPdfMoney(quote.discountTotal.toString(), currency)}`), {
     x: 40,
     y,
     size: 11,
     font,
   });
   y -= 18;
-  page.drawText(`Tax: ${formatCurrencyAmount(quote.taxTotal.toString(), currency)}`, {
+  page.drawText(toPdfSafeText(`Tax: ${formatPdfMoney(quote.taxTotal.toString(), currency)}`), {
     x: 40,
     y,
     size: 11,
     font,
   });
   y -= 18;
-  page.drawText(`Total: ${formatCurrencyAmount(quote.total.toString(), currency)}`, {
+  page.drawText(toPdfSafeText(`Total: ${formatPdfMoney(quote.total.toString(), currency)}`), {
     x: 40,
     y,
     size: 12,
@@ -93,15 +97,36 @@ export async function GET(
   y -= 34;
   page.drawText("Notes", { x: 40, y, size: 13, font: bold });
   y -= 20;
-  page.drawText(quote.notes || "-", { x: 40, y, size: 10, font, maxWidth: 500, lineHeight: 14 });
+  page.drawText(toPdfSafeText(quote.notes || "-"), {
+    x: 40,
+    y,
+    size: 10,
+    font,
+    maxWidth: 500,
+    lineHeight: 14,
+  });
 
   const bytes = await pdf.save();
 
-  return new NextResponse(Buffer.from(bytes), {
+  return new NextResponse(new Uint8Array(bytes), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `inline; filename="${quote.quoteNumber}.pdf"`,
     },
   });
+}
+
+function formatPdfMoney(value: string, currency: string) {
+  const formatted = formatCurrencyAmount(value, currency);
+  return formatted.replace(/[^\d.,\- ]+/g, "").trim().concat(` ${currency.toUpperCase()}`);
+}
+
+function toPdfSafeText(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/İ/g, "I")
+    .replace(/[^\x20-\x7E\n\r\t]/g, "?");
 }

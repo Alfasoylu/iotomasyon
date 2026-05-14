@@ -45,9 +45,11 @@ export default async function QuoteDetailPage({
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Link href={`/quotes/${quote.id}/pdf`} target="_blank">
-            <Button variant="secondary">PDF export</Button>
-          </Link>
+          <a href={`/quotes/${quote.id}/pdf`} target="_blank" rel="noreferrer">
+            <span className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-50">
+              PDF export
+            </span>
+          </a>
           <QuoteWhatsAppButton
             quoteId={quote.id}
             phone={quote.customer.whatsapp ?? quote.customer.phone}
