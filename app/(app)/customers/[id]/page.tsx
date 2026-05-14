@@ -85,9 +85,12 @@ export default async function CustomerDetailPage({
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
 
+  const recentQuotes = customer.quotes.slice(0, 3);
+
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_360px]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+      {/* ── Main workspace ─────────────────────────────────────── */}
+      <div className="min-w-0 space-y-6">
         <Card className="p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -99,10 +102,6 @@ export default async function CustomerDetailPage({
               </h1>
               <p className="mt-2 text-sm text-slate-500">
                 {customer.company ?? "Firma belirtilmedi"}
-              </p>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
-                Müşteri ilişkisi, teklif hazırlığı, notlar ve takip görevlerini tek çalışma alanında
-                yönetin.
               </p>
             </div>
 
@@ -120,20 +119,7 @@ export default async function CustomerDetailPage({
           </div>
         </Card>
 
-        <Card className="p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Kısa görünüm
-          </p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-            <MetricCard label="Telefon" value={customer.phone || "-"} />
-            <MetricCard label="WhatsApp" value={customer.whatsapp || "-"} />
-            <MetricCard label="Son iletişim" value={customer.lastContactedAt ? formatDateTime(customer.lastContactedAt) : "-"} />
-            <MetricCard label="Teklif sayısı" value={String(customer.quotes.length)} />
-          </div>
-        </Card>
-      </div>
-
-      <CustomerWorkspaceTabs
+        <CustomerWorkspaceTabs
         defaultTabId="overview"
         tabs={[
           {
@@ -538,6 +524,76 @@ export default async function CustomerDetailPage({
           },
         ]}
       />
+      </div>
+
+      {/* ── Sticky right rail (desktop only) ───────────────────── */}
+      <aside className="hidden xl:block">
+        <div className="sticky top-6 space-y-4">
+          {/* Contact quick info */}
+          <Card className="p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              İletişim
+            </p>
+            <div className="mt-4 space-y-3">
+              <RailItem label="Telefon" value={customer.phone || "-"} />
+              <RailItem label="WhatsApp" value={customer.whatsapp || "-"} />
+              <RailItem label="E-posta" value={customer.email || "-"} />
+              {customer.lastContactedAt ? (
+                <RailItem label="Son iletişim" value={formatDateTime(customer.lastContactedAt)} />
+              ) : null}
+            </div>
+          </Card>
+
+          {/* Quick actions */}
+          <Card className="p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Hızlı işlemler
+            </p>
+            <div className="mt-4 flex flex-col gap-2">
+              <CustomerWhatsAppButton
+                customerId={customer.id}
+                phone={customer.whatsapp ?? customer.phone}
+                customerName={customer.name}
+              />
+              <Link href={`/customers/${customer.id}/edit`} className="w-full">
+                <Button variant="secondary" className="w-full">
+                  Müşteriyi düzenle
+                </Button>
+              </Link>
+            </div>
+          </Card>
+
+          {/* Recent quotes */}
+          <Card className="overflow-hidden">
+            <div className="border-b border-slate-200 px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Son teklifler
+              </p>
+              <p className="mt-1 text-lg font-semibold text-slate-950">
+                {customer.quotes.length} teklif
+              </p>
+            </div>
+            {recentQuotes.length === 0 ? (
+              <p className="px-5 py-4 text-sm text-slate-500">Henüz teklif yok.</p>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {recentQuotes.map((quote) => (
+                  <Link
+                    key={quote.id}
+                    href={`/quotes/${quote.id}`}
+                    className="block px-5 py-3 transition hover:bg-slate-50"
+                  >
+                    <p className="text-sm font-semibold text-slate-900">{quote.quoteNumber}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {formatDateTime(quote.createdAt)}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      </aside>
     </div>
   );
 }
@@ -574,11 +630,13 @@ function InfoBlock({
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function RailItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">{label}</p>
-      <p className="mt-2 text-sm font-medium text-slate-900">{value}</p>
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-medium text-slate-900">{value}</p>
     </div>
   );
 }

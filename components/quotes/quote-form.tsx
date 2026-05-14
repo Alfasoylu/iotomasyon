@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createQuoteAction } from "@/lib/actions/quote-actions";
+import { COMPANY_SETTINGS } from "@/lib/company-settings";
 import {
   calculateQuoteLine,
   calculateQuoteTotals,
@@ -248,16 +249,26 @@ export function QuoteForm({
                         </p>
                       </div>
 
-                      {items.fields.length > 1 ? (
+                      <div className="flex items-center gap-3">
                         <Button
                           type="button"
                           variant="ghost"
-                          className="h-auto px-0 text-red-600 hover:bg-transparent hover:text-red-500"
-                          onClick={() => items.remove(index)}
+                          className="h-auto px-0 text-slate-500 hover:bg-transparent hover:text-slate-900"
+                          onClick={() => items.append({ ...form.getValues(`items.${index}`) })}
                         >
-                          Kalemi kaldır
+                          Çoğalt
                         </Button>
-                      ) : null}
+                        {items.fields.length > 1 ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-auto px-0 text-red-600 hover:bg-transparent hover:text-red-500"
+                            onClick={() => items.remove(index)}
+                          >
+                            Kaldır
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
 
                     <div className="space-y-4 p-5 xl:grid xl:grid-cols-[1.4fr_2fr_80px_130px_110px_110px_90px_140px] xl:gap-4 xl:space-y-0">
@@ -355,9 +366,30 @@ export function QuoteForm({
                 />
               </Field>
 
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-                PDF tarafında notlar, ödeme/teslimat şartları ve geçerlilik metni profesyonel teklif
-                akışıyla birlikte yer alır.
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  Ticari Koşullar (Varsayılan)
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-700">Ödeme</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {COMPANY_SETTINGS.paymentTerms}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-700">Teslimat</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {COMPANY_SETTINGS.deliveryTerms}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-700">Garanti</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {COMPANY_SETTINGS.warrantyTerms}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </Card>
