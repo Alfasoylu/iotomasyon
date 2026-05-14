@@ -131,6 +131,7 @@ function normalizeProductData(input: ProductInput) {
     sku: input.sku.trim().toUpperCase(),
     name: input.name.trim(),
     category: emptyToNull(input.category),
+    categoryId: emptyToNull(input.categoryId),
     brand: emptyToNull(input.brand),
     model: emptyToNull(input.model),
     stockQuantity: input.stockQuantity,

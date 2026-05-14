@@ -5,9 +5,11 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
+  categoryInterestSchema,
   customerInterestSchema,
   customerTaskSchema,
   customerTimelineNoteSchema,
+  type CategoryInterestInput,
   type CustomerInterestInput,
   type CustomerTaskInput,
   type CustomerTimelineNoteInput,
@@ -202,6 +204,55 @@ export async function completeCustomerTaskAction(
       ok: false,
       message: "Gorev tamamlanamadi.",
     };
+  }
+}
+
+export async function createCategoryInterestAction(
+  customerId: string,
+  values: CategoryInterestInput,
+): Promise<ActionResult<keyof CategoryInterestInput>> {
+  const user = await requireUser();
+  const parsed = categoryInterestSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Kategori ilgi formunu kontrol edin.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    await prisma.categoryInterest.create({
+      data: {
+        customerId,
+        categoryId: parsed.data.categoryId,
+        stage: parsed.data.stage,
+        notes: emptyToNull(parsed.data.notes),
+        createdById: user.id,
+      },
+    });
+
+    revalidatePath(`/customers/${customerId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Bu musteri bu kategoriye zaten eklenмis." };
+  }
+}
+
+export async function deleteCategoryInterestAction(
+  customerId: string,
+  interestId: string,
+): Promise<ActionResult> {
+  await requireUser();
+
+  try {
+    await prisma.categoryInterest.delete({ where: { id: interestId } });
+
+    revalidatePath(`/customers/${customerId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Kategori ilgisi silinemedi." };
   }
 }
 

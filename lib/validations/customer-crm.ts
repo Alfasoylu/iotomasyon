@@ -6,6 +6,14 @@ import {
   TASK_PRIORITY_OPTIONS,
 } from "@/types/customers";
 
+export const categoryInterestSchema = z.object({
+  categoryId: z.string().min(1, "Kategori secin."),
+  stage: z.enum(INTEREST_STAGE_OPTIONS),
+  notes: z.string().trim().max(2000),
+});
+
+export type CategoryInterestInput = z.infer<typeof categoryInterestSchema>;
+
 export const customerInterestSchema = z.object({
   productId: z.string().min(1, "Urun secin."),
   quantity: z.number().int().min(1, "Miktar en az 1 olmali."),

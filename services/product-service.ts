@@ -69,23 +69,18 @@ export async function getProductById(id: string) {
         where: { id },
         include: {
           createdBy: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
+            select: { id: true, name: true, email: true },
+          },
+          productCategory: {
+            select: { id: true, name: true, slug: true },
           },
         },
       }),
     };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
-      return {
-        databaseAvailable: false as const,
-        product: null,
-      };
+      return { databaseAvailable: false as const, product: null };
     }
-
     throw error;
   }
 }

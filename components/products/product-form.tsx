@@ -15,10 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ProductFormValues } from "@/types/products";
 
+type CategoryOption = { id: string; name: string };
+
 const emptyValues: ProductFormValues = {
   sku: "",
   name: "",
   category: "",
+  categoryId: "",
   brand: "",
   model: "",
   stockQuantity: 0,
@@ -32,10 +35,12 @@ export function ProductForm({
   mode,
   productId,
   initialValues,
+  categories,
 }: {
   mode: "create" | "edit";
   productId?: string;
   initialValues?: ProductFormValues;
+  categories?: CategoryOption[];
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
@@ -88,8 +93,22 @@ export function ProductForm({
         <Field label="Urun adi" error={form.formState.errors.name?.message}>
           <Input {...form.register("name")} />
         </Field>
-        <Field label="Kategori" error={form.formState.errors.category?.message}>
-          <Input {...form.register("category")} />
+        <Field label="Kategori" error={form.formState.errors.categoryId?.message}>
+          {categories && categories.length > 0 ? (
+            <select
+              {...form.register("categoryId")}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700"
+            >
+              <option value="">-- Secin --</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Input {...form.register("category")} placeholder="Kategori adi" />
+          )}
         </Field>
         <Field label="Marka" error={form.formState.errors.brand?.message}>
           <Input {...form.register("brand")} />
