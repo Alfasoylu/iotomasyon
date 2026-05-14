@@ -255,10 +255,13 @@ export function QuoteForm({
                       </Field>
 
                       <Field label="Para birimi">
-                        <Input
+                        <select
                           {...form.register(`items.${index}.currency`)}
-                          placeholder="TRY veya USD"
-                        />
+                          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+                        >
+                          <option value="TRY">TRY ₺</option>
+                          <option value="USD">USD $</option>
+                        </select>
                       </Field>
 
                       <Field label="İndirim">

@@ -12,6 +12,7 @@ const navigation = [
   { href: "/categories", label: "Kategoriler" },
   { href: "/search", label: "Arama" },
   { href: "/campaigns", label: "Kampanyalar" },
+  { href: "/activity", label: "Aktiviteler" },
 ];
 
 export function Sidebar() {

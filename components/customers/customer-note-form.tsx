@@ -9,10 +9,7 @@ import { createCustomerNoteAction } from "@/lib/actions/customer-crm-actions";
 import { customerTimelineNoteSchema } from "@/lib/validations/customer-crm";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  NOTE_TYPE_OPTIONS,
-  type CustomerTimelineNoteFormValues,
-} from "@/types/customers";
+import { type CustomerTimelineNoteFormValues } from "@/types/customers";
 
 export function CustomerNoteForm({ customerId }: { customerId: string }) {
   const router = useRouter();
@@ -51,11 +48,12 @@ export function CustomerNoteForm({ customerId }: { customerId: string }) {
         {...form.register("type")}
         className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
       >
-        {NOTE_TYPE_OPTIONS.map((type) => (
-          <option key={type} value={type}>
-            {type}
-          </option>
-        ))}
+        <option value="NOTE">Not</option>
+        <option value="CALL">Arama</option>
+        <option value="MEETING">Toplantı</option>
+        <option value="EMAIL">E-posta</option>
+        <option value="WHATSAPP">WhatsApp</option>
+        <option value="QUOTE">Teklif</option>
       </select>
 
       <Textarea {...form.register("note")} className="min-h-24" placeholder="Müşteri ile son görüşme notu" />
