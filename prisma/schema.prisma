@@ -28,9 +28,43 @@ enum InterestPriority {
 }
 
 enum TaskStatus {
-  PENDING
-  COMPLETED
+  OPEN
+  DONE
   CANCELLED
+}
+
+enum CustomerStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  NEGOTIATING
+  WON
+  LOST
+}
+
+enum InterestStage {
+  INTERESTED
+  PRICE_SENT
+  NEGOTIATING
+  WAITING
+  ORDERED
+  CANCELLED
+}
+
+enum NoteType {
+  NOTE
+  CALL
+  MEETING
+  EMAIL
+  WHATSAPP
+  QUOTE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 model User {
@@ -79,8 +113,12 @@ model Customer {
   id           String            @id @default(cuid())
   name         String
   phone        String?
+  whatsapp     String?
   email        String?
   company      String?
+  status       CustomerStatus    @default(NEW)
+  country      String?
+  customerNotes String?          @map("notes")
   customerType String?
   city         String?
   district     String?
@@ -92,48 +130,53 @@ model Customer {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   interests    ProductInterest[]
-  notes        Note[]
+  timelineEntries Note[]
   tasks        FollowUpTask[]
 
   @@index([name])
   @@index([phone])
   @@index([email])
+  @@index([status])
 }
 
 model ProductInterest {
-  id                String           @id @default(cuid())
-  customerId        String
-  productId         String
-  quantityRequested Int              @default(1)
-  targetPrice       Decimal?
-  quotedPrice       Decimal?
-  priority          InterestPriority @default(NORMAL)
-  status            InterestStatus   @default(NEW)
-  followUpAt        DateTime?
-  lastContactedAt   DateTime?
-  closedAt          DateTime?
-  source            String?
-  note              String?
-  createdById       String?
-  assignedToId      String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  customer          Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  product           Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdBy         User?            @relation("CreatedInterests", fields: [createdById], references: [id], onDelete: SetNull)
-  assignedTo        User?            @relation("AssignedInterests", fields: [assignedToId], references: [id], onDelete: SetNull)
-  notes             Note[]
+  id              String           @id @default(cuid())
+  customerId      String
+  productId       String
+  quantity        Int              @default(1) @map("quantityRequested")
+  quotedPrice     Decimal?
+  currency        String           @default("TRY")
+  stage           InterestStage    @default(INTERESTED)
+  interestNotes   String?          @map("note")
+  targetPrice     Decimal?
+  priority        InterestPriority @default(NORMAL)
+  status          InterestStatus   @default(NEW)
+  followUpAt      DateTime?
+  lastContactedAt DateTime?
+  closedAt        DateTime?
+  source          String?
+  createdById     String?
+  assignedToId    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  customer        Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdBy       User?            @relation("CreatedInterests", fields: [createdById], references: [id], onDelete: SetNull)
+  assignedTo      User?            @relation("AssignedInterests", fields: [assignedToId], references: [id], onDelete: SetNull)
+  notes           Note[]
 
   @@index([customerId])
   @@index([productId])
   @@index([status])
   @@index([priority])
   @@index([followUpAt])
+  @@index([stage])
 }
 
 model Note {
   id          String           @id @default(cuid())
   content     String
+  type        NoteType         @default(NOTE)
   customerId  String?
   productId   String?
   interestId  String?
@@ -151,23 +194,25 @@ model Note {
 }
 
 model FollowUpTask {
-  id           String     @id @default(cuid())
+  id           String       @id @default(cuid())
   title        String
-  details      String?
-  status       TaskStatus @default(PENDING)
-  dueAt        DateTime?
+  description  String?      @map("details")
+  dueDate      DateTime?    @map("dueAt")
+  status       TaskStatus   @default(OPEN)
+  priority     TaskPriority @default(MEDIUM)
   completedAt  DateTime?
   customerId   String?
   productId    String?
   assignedToId String?
   createdById  String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  customer     Customer?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  product      Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  assignedTo   User?      @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
-  createdBy    User?      @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  assignedTo   User?        @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy    User?        @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([status])
-  @@index([dueAt])
+  @@index([dueDate])
+  @@index([priority])
 }

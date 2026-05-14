@@ -41,6 +41,13 @@ export default async function DashboardPage() {
         <StatCard label="Aktif urun" value={stats.activeProductCount} />
         <StatCard label="Dusuk stok" value={stats.lowStockCount} accent />
         <StatCard label="Tanimli lokasyon" value={stats.locationCount} />
+        <StatCard label="Toplam musteri" value={stats.customerCount} />
+        <StatCard label="Yeni musteri" value={stats.newCustomerCount} />
+        <StatCard label="Teklif verilen" value={stats.quotedCustomerCount} />
+        <StatCard label="Muzakerede" value={stats.negotiatingCustomerCount} accent />
+        <StatCard label="Kazanilan" value={stats.wonCustomerCount} />
+        <StatCard label="Acik follow-up" value={stats.openFollowups} />
+        <StatCard label="Geciken gorev" value={stats.overdueTasks} accent />
       </section>
 
       {!stats.databaseAvailable ? (
@@ -58,6 +65,7 @@ export default async function DashboardPage() {
           <ul className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
             <li>Cookie tabanli tek admin authentication</li>
             <li>Korumali dashboard ve products routelari</li>
+            <li>Musteri CRUD, urun ilgileri, timeline notlari ve takip gorevleri</li>
             <li>Prisma + Supabase PostgreSQL veri modeli</li>
             <li>Urun ekleme, guncelleme, silme, arama ve stok gorunumu</li>
           </ul>
@@ -68,11 +76,11 @@ export default async function DashboardPage() {
             Next critical task
           </p>
           <h2 className="mt-4 text-xl font-semibold text-slate-950">
-            Customer module ve urun-musteri iliski takibi
+            Search, import/export ve satis pipeline raporlari
           </h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            Phase 2&apos;de musteri CRUD, iliski kayitlari, not timeline&apos;i ve takip gorevleri
-            eklenmeli. Mevcut schema bu genislemeyi destekleyecek sekilde kuruldu.
+            Phase 2 cekirdegi tamamlandiginda sonraki adim global arama, veri aktarimi
+            ve ekip kullanimi icin daha guclu pipeline gorunumleri olmali.
           </p>
         </Card>
       </section>
