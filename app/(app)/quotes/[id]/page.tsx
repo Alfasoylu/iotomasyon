@@ -92,6 +92,9 @@ export default async function QuoteDetailPage({
 
             <div className="flex flex-wrap gap-3">
               <QuoteStatusButtons quoteId={quote.id} currentStatus={quote.status} />
+              <Link href={`/quotes/${quote.id}/edit`}>
+                <Button variant="secondary">Düzenle</Button>
+              </Link>
               <a href={`/quotes/${quote.id}/pdf`} target="_blank" rel="noreferrer">
                 <Button variant="secondary">PDF indir</Button>
               </a>

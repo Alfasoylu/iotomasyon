@@ -196,6 +196,7 @@ export async function completeCustomerTaskAction(
       },
     });
 
+    revalidatePath("/tasks");
     revalidatePath(`/customers/${customerId}`);
     revalidatePath("/dashboard");
     return { ok: true };

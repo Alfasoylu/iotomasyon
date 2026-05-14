@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createQuoteAction } from "@/lib/actions/quote-actions";
+import { createQuoteAction, updateQuoteAction } from "@/lib/actions/quote-actions";
 import { COMPANY_SETTINGS } from "@/lib/company-settings";
 import {
   calculateQuoteLine,
@@ -39,11 +39,15 @@ export function QuoteForm({
   customerName,
   customerCompany,
   products,
+  quoteId,
+  initialValues,
 }: {
   customerId: string;
   customerName?: string;
   customerCompany?: string | null;
   products: Array<{ id: string; name: string; sku: string }>;
+  quoteId?: string;
+  initialValues?: Partial<QuoteFormValues>;
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
@@ -60,6 +64,7 @@ export function QuoteForm({
       deliveryTerms: COMPANY_SETTINGS.deliveryTerms,
       warrantyTerms: COMPANY_SETTINGS.warrantyTerms,
       items: [{ ...emptyItem }],
+      ...initialValues,
     },
   });
 
@@ -95,12 +100,16 @@ export function QuoteForm({
     })),
   );
 
+  const isEdit = Boolean(quoteId);
+
   const submit = form.handleSubmit((values) => {
     setPending(true);
     setServerMessage(undefined);
 
     startTransition(async () => {
-      const result = await createQuoteAction(customerId, values);
+      const result = isEdit
+        ? await updateQuoteAction(quoteId!, values)
+        : await createQuoteAction(customerId, values);
       setPending(false);
 
       if (!result.ok) {
@@ -124,7 +133,7 @@ export function QuoteForm({
                   Teklif ayarları
                 </p>
                 <h3 className="mt-3 text-2xl font-semibold text-slate-950">
-                  Profesyonel teklif oluştur
+                  {isEdit ? "Teklifi düzenle" : "Profesyonel teklif oluştur"}
                 </h3>
                 <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
                   Kur, KDV, geçerlilik ve satır detaylarını tek ekranda düzenleyin.
@@ -423,7 +432,9 @@ export function QuoteForm({
             {serverMessage ? <p className="mt-4 text-sm text-red-600">{serverMessage}</p> : null}
 
             <Button type="submit" disabled={pending} className="mt-6 w-full">
-              {pending ? "Teklif hazırlanıyor..." : "Teklifi oluştur"}
+              {pending
+                ? isEdit ? "Kaydediliyor..." : "Teklif hazırlanıyor..."
+                : isEdit ? "Değişiklikleri kaydet" : "Teklifi oluştur"}
             </Button>
           </Card>
         </div>
