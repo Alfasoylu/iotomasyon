@@ -153,6 +153,32 @@ export async function createCustomerTaskAction(
   }
 }
 
+export async function markCustomerContactedAction(customerId: string): Promise<ActionResult> {
+  const user = await requireUser();
+
+  try {
+    await prisma.$transaction([
+      prisma.customer.update({
+        where: { id: customerId },
+        data: { lastContactedAt: new Date() },
+      }),
+      prisma.note.create({
+        data: {
+          customerId,
+          content: "WhatsApp ile iletisim kuruldu.",
+          type: "WHATSAPP",
+          createdById: user.id,
+        },
+      }),
+    ]);
+
+    revalidatePath(`/customers/${customerId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Iletisim kaydi olusturulamadi." };
+  }
+}
+
 export async function completeCustomerTaskAction(
   customerId: string,
   taskId: string,

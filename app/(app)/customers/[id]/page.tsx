@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CustomerDeleteButton } from "@/components/customers/customer-delete-button";
+import { CustomerWhatsAppButton } from "@/components/customers/customer-whatsapp-button";
 import { CustomerInterestDeleteButton } from "@/components/customers/customer-interest-delete-button";
 import { CustomerInterestForm } from "@/components/customers/customer-interest-form";
 import { CustomerNoteForm } from "@/components/customers/customer-note-form";
@@ -82,7 +83,12 @@ export default async function CustomerDetailPage({
           <p className="mt-2 text-sm text-slate-500">{customer.company ?? "Firma belirtilmedi"}</p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <CustomerWhatsAppButton
+            customerId={customer.id}
+            phone={customer.whatsapp ?? customer.phone}
+            customerName={customer.name}
+          />
           <Link href={`/customers/${customer.id}/edit`}>
             <Button>Duzenle</Button>
           </Link>
@@ -112,6 +118,9 @@ export default async function CustomerDetailPage({
           <dl className="mt-5 space-y-4">
             <Info label="Olusturulma" value={formatDateTime(customer.createdAt)} />
             <Info label="Guncellenme" value={formatDateTime(customer.updatedAt)} />
+            {customer.lastContactedAt ? (
+              <Info label="Son iletisim" value={formatDateTime(customer.lastContactedAt)} />
+            ) : null}
           </dl>
         </Card>
       </div>

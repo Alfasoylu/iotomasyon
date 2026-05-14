@@ -1,0 +1,175 @@
+import Link from "next/link";
+
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { globalSearch } from "@/services/search-service";
+import { formatCustomerStatus, getCustomerStatusTone } from "@/lib/customer-utils";
+import { formatQuoteStatus, getQuoteStatusTone, formatCurrencyAmount } from "@/lib/quote-utils";
+
+export const dynamic = "force-dynamic";
+
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const q = typeof params.q === "string" ? params.q.trim() : "";
+
+  const results = q.length >= 2 ? await globalSearch(q) : null;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          Arama
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          Global arama
+        </h1>
+      </div>
+
+      <form method="GET" action="/search">
+        <div className="flex gap-3">
+          <input
+            name="q"
+            defaultValue={q}
+            autoFocus
+            placeholder="Musteri, telefon, urun, teklif, not..."
+            className="h-12 flex-1 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+          />
+          <button
+            type="submit"
+            className="inline-flex h-12 items-center justify-center rounded-xl bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Ara
+          </button>
+        </div>
+      </form>
+
+      {q.length > 0 && q.length < 2 ? (
+        <p className="text-sm text-slate-500">En az 2 karakter girin.</p>
+      ) : null}
+
+      {results ? (
+        <div className="space-y-6">
+          {/* Customers */}
+          {results.customers.length > 0 ? (
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Musteriler ({results.customers.length})
+              </h2>
+              <Card className="divide-y divide-slate-100">
+                {results.customers.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/customers/${c.id}`}
+                    className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-900">{c.name}</p>
+                      <p className="text-sm text-slate-500">
+                        {[c.company, c.phone, c.email].filter(Boolean).join(" · ")}
+                      </p>
+                    </div>
+                    <Badge tone={getCustomerStatusTone(c.status)}>
+                      {formatCustomerStatus(c.status)}
+                    </Badge>
+                  </Link>
+                ))}
+              </Card>
+            </section>
+          ) : null}
+
+          {/* Quotes */}
+          {results.quotes.length > 0 ? (
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Teklifler ({results.quotes.length})
+              </h2>
+              <Card className="divide-y divide-slate-100">
+                {results.quotes.map((q) => (
+                  <Link
+                    key={q.id}
+                    href={`/quotes/${q.id}`}
+                    className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-900">{q.quoteNumber}</p>
+                      <p className="text-sm text-slate-500">
+                        {q.customer.name} · {formatCurrencyAmount(q.total.toString(), "TRY")}
+                      </p>
+                    </div>
+                    <Badge tone={getQuoteStatusTone(q.status)}>
+                      {formatQuoteStatus(q.status)}
+                    </Badge>
+                  </Link>
+                ))}
+              </Card>
+            </section>
+          ) : null}
+
+          {/* Products */}
+          {results.products.length > 0 ? (
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Urunler ({results.products.length})
+              </h2>
+              <Card className="divide-y divide-slate-100">
+                {results.products.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/products/${p.id}`}
+                    className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"
+                  >
+                    <div>
+                      <p className="font-semibold text-slate-900">{p.name}</p>
+                      <p className="text-sm text-slate-500">{p.sku} · {p.category ?? "Kategori yok"}</p>
+                    </div>
+                    <span className="text-sm text-slate-400">Stok: {p.stockQuantity}</span>
+                  </Link>
+                ))}
+              </Card>
+            </section>
+          ) : null}
+
+          {/* Notes */}
+          {results.notes.length > 0 ? (
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Notlar ({results.notes.length})
+              </h2>
+              <Card className="divide-y divide-slate-100">
+                {results.notes.map((n) => (
+                  n.customerId ? (
+                    <Link
+                      key={n.id}
+                      href={`/customers/${n.customerId}`}
+                      className="block px-5 py-4 hover:bg-slate-50"
+                    >
+                      <p className="text-sm font-semibold text-slate-900">{n.customer?.name}</p>
+                      <p className="mt-1 text-sm text-slate-600 line-clamp-2">{n.content}</p>
+                    </Link>
+                  ) : (
+                    <div key={n.id} className="px-5 py-4">
+                      <p className="text-sm text-slate-600 line-clamp-2">{n.content}</p>
+                    </div>
+                  )
+                ))}
+              </Card>
+            </section>
+          ) : null}
+
+          {results.customers.length === 0 &&
+            results.quotes.length === 0 &&
+            results.products.length === 0 &&
+            results.notes.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              &quot;{q}&quot; icin sonuc bulunamadi.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}

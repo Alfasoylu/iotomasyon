@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function getDashboardStats() {
   try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
     const [
       productCount,
       activeProducts,
@@ -18,6 +21,9 @@ export async function getDashboardStats() {
       overdueTasks,
       quotesSent,
       acceptedRevenue,
+      monthlyRevenue,
+      averageDeal,
+      topProducts,
     ] = await Promise.all([
       prisma.product.count(),
       prisma.product.findMany({
@@ -46,12 +52,33 @@ export async function getDashboardStats() {
       }),
       prisma.quote.count({
         where: {
-          status: { in: ["SENT", "ACCEPTED", "DECLINED"] },
+          status: { in: ["SENT", "VIEWED", "ACCEPTED", "DECLINED", "WON", "LOST"] },
         },
       }),
       prisma.quote.aggregate({
-        where: { status: "ACCEPTED" },
+        where: { status: { in: ["ACCEPTED", "WON"] } },
         _sum: { total: true },
+      }),
+      prisma.quote.aggregate({
+        where: {
+          status: { in: ["ACCEPTED", "WON"] },
+          createdAt: { gte: startOfMonth },
+        },
+        _sum: { total: true },
+      }),
+      prisma.quote.aggregate({
+        where: { status: { in: ["ACCEPTED", "WON"] } },
+        _avg: { total: true },
+      }),
+      prisma.quoteItem.groupBy({
+        by: ["productId"],
+        where: {
+          productId: { not: null },
+          quote: { status: { in: ["ACCEPTED", "WON"] } },
+        },
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 5,
       }),
     ]);
 
@@ -63,6 +90,17 @@ export async function getDashboardStats() {
     const openDeals = newCustomerCount + quotedCustomerCount + negotiatingCustomerCount;
     const lostDeals = await prisma.customer.count({ where: { status: "LOST" } });
     const conversionRate = customerCount > 0 ? (wonCustomerCount / customerCount) * 100 : 0;
+
+    // Resolve top product names
+    const productIds = topProducts.map((r) => r.productId).filter(Boolean) as string[];
+    const productNames =
+      productIds.length > 0
+        ? await prisma.product.findMany({
+            where: { id: { in: productIds } },
+            select: { id: true, name: true, sku: true },
+          })
+        : [];
+    const productMap = Object.fromEntries(productNames.map((p) => [p.id, p]));
 
     return {
       databaseAvailable: true as const,
@@ -79,9 +117,17 @@ export async function getDashboardStats() {
       overdueTasks,
       quotesSent,
       wonRevenue: Number(acceptedRevenue._sum.total ?? 0),
+      monthlyRevenue: Number(monthlyRevenue._sum.total ?? 0),
+      averageDealSize: Number(averageDeal._avg.total ?? 0),
       lostDeals,
       openDeals,
       conversionRate,
+      topProducts: topProducts.map((r) => ({
+        productId: r.productId!,
+        name: productMap[r.productId!]?.name ?? r.productId!,
+        sku: productMap[r.productId!]?.sku ?? "",
+        totalQty: r._sum.quantity ?? 0,
+      })),
     };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
@@ -100,9 +146,12 @@ export async function getDashboardStats() {
         overdueTasks: 0,
         quotesSent: 0,
         wonRevenue: 0,
+        monthlyRevenue: 0,
+        averageDealSize: 0,
         lostDeals: 0,
         openDeals: 0,
         conversionRate: 0,
+        topProducts: [],
       };
     }
 

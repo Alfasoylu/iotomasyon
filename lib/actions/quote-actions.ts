@@ -56,6 +56,7 @@ export async function createQuoteAction(
         customerId,
         quoteNumber: await createQuoteNumber(),
         notes: emptyToNull(parsed.data.notes),
+        validityDate: parsed.data.validityDate ? new Date(parsed.data.validityDate) : null,
         subtotal: subtotal.toString(),
         discountTotal: discountTotal.toString(),
         taxTotal: taxTotal.toString(),
@@ -83,19 +84,20 @@ export async function createQuoteAction(
   }
 }
 
-export async function markQuoteSentAction(quoteId: string): Promise<ActionResult> {
+export async function updateQuoteStatusAction(
+  quoteId: string,
+  status: "SENT" | "VIEWED" | "WON" | "LOST",
+): Promise<ActionResult> {
   await requireUser();
 
   try {
+    const data: Record<string, unknown> = { status };
+    if (status === "SENT") data.sentAt = new Date();
+
     const quote = await prisma.quote.update({
       where: { id: quoteId },
-      data: {
-        status: "SENT",
-      },
-      select: {
-        id: true,
-        customerId: true,
-      },
+      data,
+      select: { id: true, customerId: true },
     });
 
     revalidatePath(`/quotes/${quote.id}`);
@@ -103,8 +105,13 @@ export async function markQuoteSentAction(quoteId: string): Promise<ActionResult
     revalidatePath("/dashboard");
     return { ok: true };
   } catch {
-    return { ok: false, message: "Teklif gonderim durumu guncellenemedi." };
+    return { ok: false, message: "Teklif durumu guncellenemedi." };
   }
+}
+
+/** @deprecated use updateQuoteStatusAction */
+export async function markQuoteSentAction(quoteId: string): Promise<ActionResult> {
+  return updateQuoteStatusAction(quoteId, "SENT");
 }
 
 async function createQuoteNumber() {

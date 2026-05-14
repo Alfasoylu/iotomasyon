@@ -1,24 +1,29 @@
 import type { QuoteStatus } from "@/types/quotes";
 
 export function formatQuoteStatus(status: QuoteStatus) {
-  return {
-    DRAFT: "Draft",
-    SENT: "Sent",
-    ACCEPTED: "Accepted",
-    DECLINED: "Declined",
-  }[status];
+  return (
+    {
+      DRAFT: "Taslak",
+      SENT: "Gonderildi",
+      VIEWED: "Goruntulendi",
+      WON: "Kazanildi",
+      LOST: "Kaybedildi",
+      ACCEPTED: "Onaylandi",
+      DECLINED: "Reddedildi",
+    }[status] ?? status
+  );
 }
 
 export function getQuoteStatusTone(status: QuoteStatus) {
-  if (status === "ACCEPTED") {
+  if (status === "WON" || status === "ACCEPTED") {
     return "success" as const;
   }
 
-  if (status === "DECLINED") {
+  if (status === "LOST" || status === "DECLINED") {
     return "danger" as const;
   }
 
-  if (status === "SENT") {
+  if (status === "SENT" || status === "VIEWED") {
     return "warning" as const;
   }
 
