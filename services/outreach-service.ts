@@ -12,6 +12,27 @@ export type CampaignCandidate = {
   source: "direct" | "category";
 };
 
+export type CampaignFunnel = {
+  total: number;
+  sent: number;
+  replied: number;
+  quoted: number;
+  won: number;
+  revenue: number;
+};
+
+export type CampaignRecipient = {
+  id: string;
+  phone: string | null;
+  status: string;
+  sentAt: Date | null;
+  repliedAt: Date | null;
+  wonAmount: string | null;
+  quoteId: string | null;
+  quote: { id: string; quoteNumber: string; total: string } | null;
+  customer: { id: string; name: string; company: string | null };
+};
+
 export type CampaignDetail = {
   id: string;
   message: string;
@@ -22,14 +43,29 @@ export type CampaignDetail = {
   createdAt: Date;
   product: { id: string; name: string; sku: string } | null;
   category: { id: string; name: string; slug: string } | null;
-  recipients: {
-    id: string;
-    phone: string | null;
-    status: string;
-    sentAt: Date | null;
-    customer: { id: string; name: string; company: string | null };
-  }[];
+  funnel: CampaignFunnel;
+  recipients: CampaignRecipient[];
 };
+
+const SENT_STATUSES = new Set(["SENT", "REPLIED", "QUOTED", "WON", "LOST"]);
+const REPLIED_STATUSES = new Set(["REPLIED", "QUOTED", "WON", "LOST"]);
+const QUOTED_STATUSES = new Set(["QUOTED", "WON", "LOST"]);
+
+function computeFunnel(
+  recipients: { status: string; wonAmount: { toString(): string } | null }[],
+): CampaignFunnel {
+  let sent = 0, replied = 0, quoted = 0, won = 0, revenue = 0;
+  for (const r of recipients) {
+    if (SENT_STATUSES.has(r.status)) sent++;
+    if (REPLIED_STATUSES.has(r.status)) replied++;
+    if (QUOTED_STATUSES.has(r.status)) quoted++;
+    if (r.status === "WON") {
+      won++;
+      revenue += r.wonAmount ? parseFloat(r.wonAmount.toString()) : 0;
+    }
+  }
+  return { total: recipients.length, sent, replied, quoted, won, revenue };
+}
 
 export async function getCampaignCandidates(
   productId?: string | null,
@@ -121,6 +157,7 @@ export async function getCampaignById(id: string): Promise<
         recipients: {
           include: {
             customer: { select: { id: true, name: true, company: true } },
+            quote: { select: { id: true, quoteNumber: true, total: true } },
           },
           orderBy: { createdAt: "asc" },
         },
@@ -129,11 +166,27 @@ export async function getCampaignById(id: string): Promise<
 
     if (!campaign) return { databaseAvailable: true, campaign: null };
 
+    const recipients: CampaignRecipient[] = campaign.recipients.map((r) => ({
+      id: r.id,
+      phone: r.phone,
+      status: r.status,
+      sentAt: r.sentAt,
+      repliedAt: r.repliedAt,
+      wonAmount: r.wonAmount ? r.wonAmount.toString() : null,
+      quoteId: r.quoteId,
+      quote: r.quote
+        ? { id: r.quote.id, quoteNumber: r.quote.quoteNumber, total: r.quote.total.toString() }
+        : null,
+      customer: r.customer,
+    }));
+
     return {
       databaseAvailable: true,
       campaign: {
         ...campaign,
         price: campaign.price ? campaign.price.toString() : null,
+        funnel: computeFunnel(campaign.recipients),
+        recipients,
       },
     };
   } catch (error) {
@@ -144,8 +197,18 @@ export async function getCampaignById(id: string): Promise<
   }
 }
 
+export type CampaignListItem = {
+  id: string;
+  message: string;
+  status: string;
+  createdAt: Date;
+  product: { name: string } | null;
+  category: { name: string } | null;
+  funnel: CampaignFunnel;
+};
+
 export async function listCampaigns(): Promise<
-  | { databaseAvailable: true; campaigns: { id: string; message: string; status: string; createdAt: Date; product: { name: string } | null; category: { name: string } | null; _count: { recipients: number } }[] }
+  | { databaseAvailable: true; campaigns: CampaignListItem[] }
   | { databaseAvailable: false; campaigns: [] }
 > {
   try {
@@ -153,11 +216,23 @@ export async function listCampaigns(): Promise<
       include: {
         product: { select: { name: true } },
         category: { select: { name: true } },
-        _count: { select: { recipients: true } },
+        recipients: { select: { status: true, wonAmount: true } },
       },
       orderBy: { createdAt: "desc" },
     });
-    return { databaseAvailable: true, campaigns };
+
+    return {
+      databaseAvailable: true,
+      campaigns: campaigns.map((c) => ({
+        id: c.id,
+        message: c.message,
+        status: c.status,
+        createdAt: c.createdAt,
+        product: c.product,
+        category: c.category,
+        funnel: computeFunnel(c.recipients),
+      })),
+    };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
       return { databaseAvailable: false, campaigns: [] };

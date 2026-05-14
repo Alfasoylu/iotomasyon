@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { CampaignFunnel } from "@/components/campaigns/campaign-funnel";
 import { RecipientList } from "@/components/campaigns/recipient-list";
 import { getCampaignById } from "@/services/outreach-service";
 
@@ -63,6 +64,10 @@ export default async function CampaignDetailPage({
         </div>
       </div>
 
+      {/* Conversion funnel */}
+      <CampaignFunnel funnel={campaign.funnel} currency={campaign.currency} />
+
+      {/* Offer details */}
       {campaign.offerText || campaign.price ? (
         <Card className="p-4">
           <div className="flex flex-wrap gap-6 text-sm">
@@ -84,6 +89,7 @@ export default async function CampaignDetailPage({
         </Card>
       ) : null}
 
+      {/* Recipients */}
       <Card className="p-6">
         <h2 className="mb-4 text-base font-semibold text-slate-900">
           WhatsApp linkleri ve mesajlar

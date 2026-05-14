@@ -87,6 +87,10 @@ enum RecipientStatus {
   PENDING
   OPENED
   SENT
+  REPLIED
+  QUOTED
+  WON
+  LOST
 }
 
 model User {
@@ -302,9 +306,10 @@ model Quote {
   createdById   String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-  customer      Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  createdBy     User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  items         QuoteItem[]
+  customer           Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdBy          User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  items              QuoteItem[]
+  outreachRecipients OutreachRecipient[]
 
   @@index([customerId])
   @@index([status])
@@ -360,11 +365,16 @@ model OutreachRecipient {
   phone      String?
   status     RecipientStatus  @default(PENDING)
   sentAt     DateTime?
+  repliedAt  DateTime?
+  quoteId    String?
+  wonAmount  Decimal?
   createdAt  DateTime         @default(now())
   campaign   OutreachCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  quote      Quote?           @relation(fields: [quoteId], references: [id], onDelete: SetNull)
 
   @@unique([campaignId, customerId])
   @@index([campaignId])
   @@index([customerId])
+  @@index([quoteId])
 }

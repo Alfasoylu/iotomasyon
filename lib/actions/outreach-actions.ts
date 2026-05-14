@@ -60,3 +60,61 @@ export async function markRecipientSentAction(recipientId: string): Promise<Acti
   revalidatePath("/campaigns");
   return { ok: true };
 }
+
+export async function updateRecipientStatusAction(
+  recipientId: string,
+  status: "REPLIED" | "WON" | "LOST",
+): Promise<ActionResult> {
+  await requireUser();
+
+  const data: Record<string, unknown> = { status };
+  if (status === "REPLIED") data.repliedAt = new Date();
+
+  if (status === "WON") {
+    const recipient = await prisma.outreachRecipient.findUnique({
+      where: { id: recipientId },
+      select: { quoteId: true, quote: { select: { total: true } } },
+    });
+    if (recipient?.quote?.total) {
+      data.wonAmount = recipient.quote.total;
+    }
+  }
+
+  await prisma.outreachRecipient.update({
+    where: { id: recipientId },
+    data,
+  });
+
+  revalidatePath("/campaigns");
+  return { ok: true };
+}
+
+export async function linkRecipientToQuoteAction(
+  recipientId: string,
+  quoteNumber: string,
+): Promise<ActionResult & { quoteId?: string }> {
+  await requireUser();
+
+  const recipient = await prisma.outreachRecipient.findUnique({
+    where: { id: recipientId },
+    select: { customerId: true },
+  });
+  if (!recipient) return { ok: false, message: "Alıcı bulunamadı." };
+
+  const quote = await prisma.quote.findFirst({
+    where: {
+      quoteNumber: quoteNumber.trim(),
+      customerId: recipient.customerId,
+    },
+    select: { id: true, total: true },
+  });
+  if (!quote) return { ok: false, message: "Bu müşteriye ait teklif bulunamadı." };
+
+  await prisma.outreachRecipient.update({
+    where: { id: recipientId },
+    data: { status: "QUOTED", quoteId: quote.id },
+  });
+
+  revalidatePath("/campaigns");
+  return { ok: true, quoteId: quote.id };
+}
