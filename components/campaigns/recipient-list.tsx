@@ -50,34 +50,35 @@ function waLink(phone: string | null, message: string): string | null {
   return `https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent(message)}`;
 }
 
+// OPENED removed — dead status, never set in application code
 const STATUS_ORDER = ["PENDING", "SENT", "REPLIED", "QUOTED", "WON", "LOST"] as const;
 type Status = (typeof STATUS_ORDER)[number];
 
 const STATUS_LABEL: Record<Status, string> = {
   PENDING: "Bekliyor",
-  SENT: "Gönderildi",
+  SENT:    "Gönderildi",
   REPLIED: "Cevap verdi",
-  QUOTED: "Teklif çıktı",
-  WON: "Kazanıldı",
-  LOST: "Kaybedildi",
+  QUOTED:  "Teklif çıktı",
+  WON:     "Kazanıldı",
+  LOST:    "Kaybedildi",
 };
 
 const STATUS_COLOR: Record<Status, string> = {
   PENDING: "text-slate-500",
-  SENT: "text-blue-600",
+  SENT:    "text-blue-600",
   REPLIED: "text-violet-600",
-  QUOTED: "text-amber-600",
-  WON: "text-emerald-700",
-  LOST: "text-red-500",
+  QUOTED:  "text-amber-600",
+  WON:     "text-emerald-700",
+  LOST:    "text-red-500",
 };
 
 const CARD_BG: Record<Status, string> = {
   PENDING: "border-slate-200 bg-white",
-  SENT: "border-blue-100 bg-blue-50/40",
+  SENT:    "border-blue-100 bg-blue-50/40",
   REPLIED: "border-violet-100 bg-violet-50/40",
-  QUOTED: "border-amber-100 bg-amber-50/40",
-  WON: "border-emerald-200 bg-emerald-50",
-  LOST: "border-red-100 bg-red-50/40",
+  QUOTED:  "border-amber-100 bg-amber-50/40",
+  WON:     "border-emerald-200 bg-emerald-50",
+  LOST:    "border-red-100 bg-red-50/40",
 };
 
 type RecipientState = {
@@ -155,19 +156,51 @@ function RecipientCard({
     wonAmount: r.wonAmount,
   });
   const [showQuoteLink, setShowQuoteLink] = useState(false);
+  const [actionError, setActionError] = useState<string>();
 
   const msg = personalizeMessage(message, r.customer.name, offerText, price, currency);
   const link = waLink(r.phone, msg);
   const { status } = state;
 
-  function doStatus(next: "SENT" | "REPLIED" | "WON" | "LOST") {
+  // Forward transitions (REPLIED, WON, LOST) via updateRecipientStatusAction
+  function doStatus(next: "REPLIED" | "WON" | "LOST") {
+    setActionError(undefined);
     startTransition(async () => {
-      if (next === "SENT") {
-        await markRecipientSentAction(r.id);
-      } else {
-        await updateRecipientStatusAction(r.id, next);
+      const result = await updateRecipientStatusAction(r.id, next);
+      if (!result.ok) {
+        setActionError(result.message ?? "İşlem başarısız.");
+        return;
       }
-      setState((prev) => ({ ...prev, status: next as Status }));
+      setState((prev) => ({ ...prev, status: next }));
+    });
+  }
+
+  // PENDING → SENT (sets sentAt)
+  function doMarkSent() {
+    setActionError(undefined);
+    startTransition(async () => {
+      const result = await markRecipientSentAction(r.id);
+      if (!result.ok) {
+        setActionError(result.message ?? "İşlem başarısız.");
+        return;
+      }
+      setState((prev) => ({ ...prev, status: "SENT" }));
+    });
+  }
+
+  // Reversals: WON/LOST → QUOTED, REPLIED → SENT
+  // Requires confirmation before calling server.
+  function doReversal(next: "QUOTED" | "SENT") {
+    const targetLabel = next === "QUOTED" ? "Teklif çıktı" : "Gönderildi";
+    if (!window.confirm(`Durumu "${targetLabel}" olarak geri almak istediğinize emin misiniz?`)) return;
+    setActionError(undefined);
+    startTransition(async () => {
+      const result = await updateRecipientStatusAction(r.id, next);
+      if (!result.ok) {
+        setActionError(result.message ?? "İşlem başarısız.");
+        return;
+      }
+      setState((prev) => ({ ...prev, status: next }));
     });
   }
 
@@ -227,31 +260,39 @@ function RecipientCard({
         </p>
       ) : null}
 
+      {/* Server-side error feedback */}
+      {actionError ? (
+        <p className="text-xs text-red-600">{actionError}</p>
+      ) : null}
+
       {/* Action buttons by status */}
       <div className="flex flex-wrap gap-2">
+
+        {/* PENDING */}
         {status === "PENDING" && (
-          <Button type="button" variant="secondary" onClick={() => doStatus("SENT")}>
+          <Button type="button" variant="secondary" onClick={doMarkSent}>
             Gönderildi işaretle
           </Button>
         )}
 
-        {(status === "SENT" || status === "REPLIED") && (
+        {/* SENT */}
+        {status === "SENT" && (
           <>
-            {status === "SENT" && (
-              <Button type="button" variant="secondary" onClick={() => doStatus("REPLIED")}>
-                Cevap verdi
-              </Button>
-            )}
+            <Button type="button" variant="secondary" onClick={() => doStatus("REPLIED")}>
+              Cevap verdi
+            </Button>
             {!state.quoteId && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowQuoteLink((v) => !v)}
-              >
-                Teklif oluştur
+              <Button type="button" variant="secondary" onClick={() => setShowQuoteLink((v) => !v)}>
+                Teklif bağla
               </Button>
             )}
-            <Button type="button" variant="secondary" onClick={() => doStatus("WON")}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => doStatus("WON")}
+              disabled={!state.quoteId}
+              title={!state.quoteId ? "Kazanıldı için önce teklif bağlayın" : undefined}
+            >
               Kazanıldı
             </Button>
             <Button type="button" variant="secondary" onClick={() => doStatus("LOST")}>
@@ -260,6 +301,33 @@ function RecipientCard({
           </>
         )}
 
+        {/* REPLIED */}
+        {status === "REPLIED" && (
+          <>
+            <Button type="button" variant="secondary" onClick={() => doReversal("SENT")}>
+              ← Gönderildi'ye al
+            </Button>
+            {!state.quoteId && (
+              <Button type="button" variant="secondary" onClick={() => setShowQuoteLink((v) => !v)}>
+                Teklif bağla
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => doStatus("WON")}
+              disabled={!state.quoteId}
+              title={!state.quoteId ? "Kazanıldı için önce teklif bağlayın" : undefined}
+            >
+              Kazanıldı
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => doStatus("LOST")}>
+              Kaybedildi
+            </Button>
+          </>
+        )}
+
+        {/* QUOTED */}
         {status === "QUOTED" && (
           <>
             <Button type="button" variant="secondary" onClick={() => doStatus("WON")}>
@@ -271,20 +339,32 @@ function RecipientCard({
           </>
         )}
 
+        {/* WON — terminal with reversal */}
         {status === "WON" && (
-          <span className="inline-flex items-center text-xs font-semibold text-emerald-700">
-            ✓ Kazanıldı
-          </span>
+          <>
+            <span className="inline-flex items-center text-xs font-semibold text-emerald-700">
+              ✓ Kazanıldı
+            </span>
+            <Button type="button" variant="secondary" onClick={() => doReversal("QUOTED")}>
+              ← Geri al
+            </Button>
+          </>
         )}
 
+        {/* LOST — terminal with reversal */}
         {status === "LOST" && (
-          <span className="inline-flex items-center text-xs font-semibold text-red-500">
-            ✗ Kaybedildi
-          </span>
+          <>
+            <span className="inline-flex items-center text-xs font-semibold text-red-500">
+              ✗ Kaybedildi
+            </span>
+            <Button type="button" variant="secondary" onClick={() => doReversal("QUOTED")}>
+              ← Geri al
+            </Button>
+          </>
         )}
       </div>
 
-      {/* Teklif no entry — for SENT/REPLIED states without linked quote */}
+      {/* Quote number entry — only for SENT/REPLIED without linked quote */}
       {showQuoteLink && !state.quoteId && (
         <QuoteLinkForm
           recipientId={r.id}

@@ -85,7 +85,6 @@ enum OutreachStatus {
 
 enum RecipientStatus {
   PENDING
-  OPENED
   SENT
   REPLIED
   QUOTED
