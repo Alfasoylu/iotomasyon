@@ -6,6 +6,8 @@ import { formatNoteType } from "@/lib/customer-utils";
 import { formatDateTime } from "@/lib/utils";
 import { listActivities, listUsersWithActivity } from "@/services/activity-service";
 import type { NoteType } from "@/types/customers";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,7 @@ export default async function ActivityPage({
 }: {
   searchParams: Promise<{ userId?: string; type?: string; page?: string }>;
 }) {
+  await requirePermission(PERMISSIONS.ACTIVITY_READ);
   const sp = await searchParams;
   const userId = sp.userId ?? "all";
   const type = sp.type ?? "all";

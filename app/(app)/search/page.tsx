@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { formatCustomerStatus, getCustomerStatusTone } from "@/lib/customer-utils";
 import { formatCurrencyAmount, formatQuoteStatus, getQuoteStatusTone } from "@/lib/quote-utils";
 import { globalSearch } from "@/services/search-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,7 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requirePermission(PERMISSIONS.SEARCH_READ);
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q.trim() : "";
 

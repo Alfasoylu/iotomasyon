@@ -5,7 +5,8 @@ import fontkit from "@pdf-lib/fontkit";
 import { NextResponse } from "next/server";
 import { PDFDocument, PDFFont, PDFPage, rgb } from "pdf-lib";
 
-import { getCurrentSession } from "@/lib/auth";
+import { getCurrentSession, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { COMPANY_SETTINGS } from "@/lib/company-settings";
 import { formatQuoteStatus, getStoredTaxRateDisplay } from "@/lib/quote-utils";
 import { getQuoteById } from "@/services/quote-service";
@@ -53,6 +54,8 @@ export async function GET(
 ) {
   const user = await getCurrentSession();
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
+  if (!(await checkPermission(user, PERMISSIONS.QUOTES_READ)))
+    return new NextResponse("Forbidden", { status: 403 });
 
   const { id } = await params;
   const quote = await getQuoteById(id);

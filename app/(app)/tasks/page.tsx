@@ -12,6 +12,8 @@ import {
 import { formatDateTime } from "@/lib/utils";
 import { listTasks, listUsersWithTasks } from "@/services/task-service";
 import type { TaskPriority, TaskStatus } from "@/types/customers";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +42,7 @@ export default async function TasksPage({
     page?: string;
   }>;
 }) {
+  await requirePermission(PERMISSIONS.TASKS_READ);
   const sp = await searchParams;
   const status = sp.status ?? "OPEN";
   const priority = sp.priority ?? "all";

@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
 import { getProductById } from "@/services/product-service";
 import { getProductIntelligence } from "@/services/category-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,7 @@ export default async function ProductDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.PRODUCTS_READ);
   const { id } = await params;
   const [{ databaseAvailable, product }, intelligenceResult] = await Promise.all([
     getProductById(id),

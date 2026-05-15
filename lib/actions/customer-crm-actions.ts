@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireUser } from "@/lib/auth";
+import { requireUser, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import {
   categoryInterestSchema,
@@ -16,6 +17,8 @@ import {
 } from "@/lib/validations/customer-crm";
 import type { ActionResult } from "@/types/actions";
 
+const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
+
 type InterestField = keyof CustomerInterestInput;
 type NoteField = keyof CustomerTimelineNoteInput;
 type TaskField = keyof CustomerTaskInput;
@@ -25,6 +28,7 @@ export async function createCustomerInterestAction(
   values: CustomerInterestInput,
 ): Promise<ActionResult<InterestField>> {
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
   const parsed = customerInterestSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -64,7 +68,8 @@ export async function deleteCustomerInterestAction(
   customerId: string,
   interestId: string,
 ): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
 
   try {
     await prisma.productInterest.delete({
@@ -86,6 +91,7 @@ export async function createCustomerNoteAction(
   values: CustomerTimelineNoteInput,
 ): Promise<ActionResult<NoteField>> {
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
   const parsed = customerTimelineNoteSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -121,6 +127,7 @@ export async function createCustomerTaskAction(
   values: CustomerTaskInput,
 ): Promise<ActionResult<TaskField>> {
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.TASKS_CREATE))) return PERM_DENIED;
   const parsed = customerTaskSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -157,6 +164,7 @@ export async function createCustomerTaskAction(
 
 export async function markCustomerContactedAction(customerId: string): Promise<ActionResult> {
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
 
   try {
     await prisma.$transaction([
@@ -185,7 +193,8 @@ export async function completeCustomerTaskAction(
   customerId: string,
   taskId: string,
 ): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.TASKS_UPDATE))) return PERM_DENIED;
 
   try {
     await prisma.followUpTask.update({
@@ -213,6 +222,7 @@ export async function createCategoryInterestAction(
   values: CategoryInterestInput,
 ): Promise<ActionResult<keyof CategoryInterestInput>> {
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
   const parsed = categoryInterestSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -245,7 +255,8 @@ export async function deleteCategoryInterestAction(
   customerId: string,
   interestId: string,
 ): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
 
   try {
     await prisma.categoryInterest.delete({ where: { id: interestId } });

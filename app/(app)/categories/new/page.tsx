@@ -1,10 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { CategoryForm } from "@/components/categories/category-form";
 import { listCategoriesForSelect } from "@/services/category-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewCategoryPage() {
+  await requirePermission(PERMISSIONS.CATEGORIES_CREATE);
   const { categories } = await listCategoriesForSelect();
 
   return (

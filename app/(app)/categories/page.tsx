@@ -4,10 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { listCategories } from "@/services/category-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
+  await requirePermission(PERMISSIONS.CATEGORIES_READ);
   const { databaseAvailable, categories } = await listCategories();
 
   if (!databaseAvailable) {

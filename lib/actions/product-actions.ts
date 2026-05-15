@@ -3,9 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth";
+import { requireUser, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { productSchema, type ProductInput } from "@/lib/validations/product";
 import type { ActionResult } from "@/types/actions";
+
+const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
 
 type ProductField = keyof ProductInput;
 
@@ -14,6 +17,8 @@ export async function createProductAction(
   attributeIds: string[] = [],
 ): Promise<ActionResult<ProductField>> {
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.PRODUCTS_CREATE))) return PERM_DENIED;
+
   const parsed = productSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -70,7 +75,9 @@ export async function updateProductAction(
   values: ProductInput,
   attributeIds: string[] = [],
 ): Promise<ActionResult<ProductField>> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.PRODUCTS_UPDATE))) return PERM_DENIED;
+
   const parsed = productSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -122,7 +129,8 @@ export async function updateProductAction(
 }
 
 export async function deleteProductAction(productId: string): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.PRODUCTS_DELETE))) return PERM_DENIED;
 
   try {
     await prisma.product.delete({

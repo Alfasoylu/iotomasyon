@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { ProductFilters } from "@/components/products/product-filters";
 import { formatBooleanLabel } from "@/lib/utils";
 import { listProducts } from "@/services/product-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requirePermission(PERMISSIONS.PRODUCTS_READ);
   const params = await searchParams;
   const query = typeof params.q === "string" ? params.q : "";
   const status = typeof params.status === "string" ? params.status : "all";

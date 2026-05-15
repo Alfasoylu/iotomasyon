@@ -2,10 +2,13 @@ import { Card } from "@/components/ui/card";
 import { ProductForm } from "@/components/products/product-form";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { listAttributes } from "@/services/attribute-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
+  await requirePermission(PERMISSIONS.PRODUCTS_CREATE);
   const [{ categories }, allAttributes] = await Promise.all([
     listCategoriesForSelect(),
     listAttributes(),

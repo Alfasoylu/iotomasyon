@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { formatInterestStage, getInterestStageTone } from "@/lib/customer-utils";
 import { formatDateTime } from "@/lib/utils";
 import { getCategoryById } from "@/services/category-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,7 @@ export default async function CategoryDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.CATEGORIES_READ);
   const { id } = await params;
   const { databaseAvailable, category } = await getCategoryById(id);
 

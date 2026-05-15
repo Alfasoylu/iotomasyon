@@ -18,6 +18,8 @@ import {
 } from "@/lib/quote-utils";
 import { formatDateTime } from "@/lib/utils";
 import { getQuoteById } from "@/services/quote-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,7 @@ export default async function QuoteDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.QUOTES_READ);
   const { id } = await params;
   const quote = await getQuoteById(id);
 

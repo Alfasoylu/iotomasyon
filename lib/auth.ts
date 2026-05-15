@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { getAdminEmail, getAdminPassword } from "@/lib/env";
+import { resolvePermission, type ResolvedUser } from "@/lib/permissions";
 import {
   createSessionToken,
   SESSION_COOKIE_NAME,
@@ -13,6 +14,8 @@ import {
   verifySessionToken,
   type SessionPayload,
 } from "@/lib/session";
+
+// ── Bootstrap ────────────────────────────────────────────────────────────────
 
 export async function ensureBootstrapAdmin() {
   const { prisma } = await import("@/lib/prisma");
@@ -34,6 +37,8 @@ export async function ensureBootstrapAdmin() {
   });
 }
 
+// ── Authentication ───────────────────────────────────────────────────────────
+
 export async function authenticateWithPassword(email: string, password: string) {
   const { prisma } = await import("@/lib/prisma");
   await ensureBootstrapAdmin();
@@ -54,10 +59,11 @@ export async function authenticateWithPassword(email: string, password: string) 
   return user;
 }
 
+// ── Session helpers ───────────────────────────────────────────────────────────
+
 export async function createUserSession(payload: SessionPayload) {
   const token = await createSessionToken(payload);
   const cookieStore = await cookies();
-
   cookieStore.set(SESSION_COOKIE_NAME, token, sessionCookieOptions);
 }
 
@@ -66,7 +72,12 @@ export async function clearUserSession() {
   cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
-export const getCurrentSession = cache(async () => {
+// ── Session reads ────────────────────────────────────────────────────────────
+// cache() deduplates within a single React server component render tree.
+// This means getCurrentSession() runs at most once per request regardless
+// of how many components/actions call it.
+
+export const getCurrentSession = cache(async (): Promise<ResolvedUser | null> => {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   const payload = await verifySessionToken(token);
@@ -84,6 +95,14 @@ export const getCurrentSession = cache(async () => {
       name: true,
       role: true,
       isActive: true,
+      // Load all user permission overrides in the same query.
+      // Used by resolvePermission() without additional DB calls.
+      userPermissions: {
+        select: {
+          granted: true,
+          permission: { select: { key: true } },
+        },
+      },
     },
   });
 
@@ -91,10 +110,17 @@ export const getCurrentSession = cache(async () => {
     return null;
   }
 
-  return user;
+  return {
+    ...user,
+    role: user.role as string,
+  };
 });
 
-export async function requireUser() {
+// ── requireUser ───────────────────────────────────────────────────────────────
+// Use in page server components and server actions.
+// Redirects to /login if not authenticated.
+
+export async function requireUser(): Promise<ResolvedUser> {
   const user = await getCurrentSession();
 
   if (!user) {
@@ -102,4 +128,30 @@ export async function requireUser() {
   }
 
   return user;
+}
+
+// ── requirePermission ─────────────────────────────────────────────────────────
+// For page server components: redirects to /403 if permission denied.
+// Do NOT use in server actions — use checkPermission() instead.
+
+export async function requirePermission(permission: string): Promise<ResolvedUser> {
+  const user = await requireUser();
+  const permitted = await resolvePermission(user, permission);
+
+  if (!permitted) {
+    redirect("/403");
+  }
+
+  return user;
+}
+
+// ── checkPermission ───────────────────────────────────────────────────────────
+// For server actions: returns boolean — caller decides how to respond.
+// Server actions must return ActionResult on failure, not call redirect().
+
+export async function checkPermission(
+  user: ResolvedUser,
+  permission: string,
+): Promise<boolean> {
+  return resolvePermission(user, permission);
 }

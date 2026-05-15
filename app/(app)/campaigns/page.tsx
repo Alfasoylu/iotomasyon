@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
 import { listCampaigns } from "@/services/outreach-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,7 @@ function FunnelBar({ sent, total }: { sent: number; total: number }) {
 }
 
 export default async function CampaignsPage() {
+  await requirePermission(PERMISSIONS.CAMPAIGNS_READ);
   const { databaseAvailable, campaigns } = await listCampaigns();
 
   return (

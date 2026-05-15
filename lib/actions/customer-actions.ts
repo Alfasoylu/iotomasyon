@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireUser } from "@/lib/auth";
+import { requireUser, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { customerSchema, type CustomerInput } from "@/lib/validations/customer";
 import type { ActionResult } from "@/types/actions";
+
+const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
 
 type CustomerField = keyof CustomerInput;
 
@@ -24,6 +27,7 @@ export async function createCustomerAction(
   }
 
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_CREATE))) return PERM_DENIED;
 
   const attributeIds = options?.attributeIds ?? [];
   if (attributeIds.length > 0) {
@@ -105,7 +109,8 @@ export async function updateCustomerAction(
     };
   }
 
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
 
   if (attributeIds.length > 0) {
     const validCount = await prisma.productAttribute.count({
@@ -153,7 +158,8 @@ export async function updateCustomerStatusAction(
   customerId: string,
   status: CustomerInput["status"],
 ): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
 
   try {
     await prisma.customer.update({
@@ -172,7 +178,8 @@ export async function updateCustomerStatusAction(
 }
 
 export async function deleteCustomerAction(customerId: string): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_DELETE))) return PERM_DENIED;
 
   try {
     await prisma.customer.delete({

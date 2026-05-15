@@ -8,6 +8,10 @@ datasource db {
 
 enum UserRole {
   ADMIN
+  SALES
+  OPERATIONS
+  MARKETPLACE_OPERATOR
+  CUSTOM
 }
 
 enum InterestStatus {
@@ -132,6 +136,66 @@ enum RecipientStatus {
   LOST
 }
 
+// ── RBAC models ─────────────────────────────────────────────────
+
+// System and custom role metadata + default permission mapping.
+// key must match a UserRole enum value exactly.
+// isSystem=true rows cannot be deleted via admin UI.
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  name        String
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  permissions RolePermission[]
+}
+
+// Canonical permission registry.
+// Dangerous permissions (migrations.approve, destructiveActions.approve)
+// must never appear in RolePermission rows — UserPermission only.
+model Permission {
+  id              String           @id @default(cuid())
+  key             String           @unique
+  name            String
+  category        String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  rolePermissions RolePermission[]
+  userPermissions UserPermission[]
+
+  @@index([category])
+}
+
+// Default permissions per role.
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+// Per-user permission overrides.
+// granted=true  → explicit grant  (overrides role defaults)
+// granted=false → explicit deny   (overrides role defaults and grants)
+// Dangerous permissions: only path to access — no role default applies.
+model UserPermission {
+  userId       String
+  permissionId String
+  granted      Boolean
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
+}
+
 model User {
   id                       String             @id @default(cuid())
   email                    String             @unique
@@ -141,6 +205,9 @@ model User {
   isActive                 Boolean            @default(true)
   createdAt                DateTime           @default(now())
   updatedAt                DateTime           @updatedAt
+  // RBAC — no new column; relation only
+  userPermissions          UserPermission[]
+  // existing relations unchanged
   productsCreated          Product[]          @relation("CreatedProducts")
   notesCreated             Note[]
   interestsCreated         ProductInterest[]  @relation("CreatedInterests")

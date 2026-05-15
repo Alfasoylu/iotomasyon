@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { getLocations } from "@/lib/turkey-locations";
 import { listAttributes } from "@/services/attribute-service";
 import { getCustomerById, listUsersForSelect } from "@/services/customer-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,7 @@ export default async function EditCustomerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.CUSTOMERS_UPDATE);
   const { id } = await params;
   const [{ databaseAvailable, customer }, users, allAttributes] = await Promise.all([
     getCustomerById(id),

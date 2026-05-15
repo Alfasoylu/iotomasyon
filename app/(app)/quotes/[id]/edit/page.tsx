@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { QuoteForm } from "@/components/quotes/quote-form";
 import { listProducts } from "@/services/product-service";
 import { getQuoteById } from "@/services/quote-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,7 @@ export default async function QuoteEditPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.QUOTES_UPDATE);
   const { id } = await params;
   const [quote, productsResult] = await Promise.all([
     getQuoteById(id),

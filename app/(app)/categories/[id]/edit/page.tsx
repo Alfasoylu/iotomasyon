@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { CategoryForm } from "@/components/categories/category-form";
 import { getCategoryById, listCategoriesForSelect } from "@/services/category-service";
 import type { CategoryFormValues } from "@/types/categories";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,7 @@ export default async function EditCategoryPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.CATEGORIES_UPDATE);
   const { id } = await params;
   const [{ category }, { categories }] = await Promise.all([
     getCategoryById(id),

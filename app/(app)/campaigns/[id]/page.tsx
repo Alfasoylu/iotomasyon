@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { CampaignFunnel } from "@/components/campaigns/campaign-funnel";
 import { RecipientList } from "@/components/campaigns/recipient-list";
 import { getCampaignById } from "@/services/outreach-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,7 @@ export default async function CampaignDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.CAMPAIGNS_READ);
   const { id } = await params;
   const { databaseAvailable, campaign } = await getCampaignById(id);
 

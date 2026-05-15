@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireUser } from "@/lib/auth";
+import { requireUser, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import type { CustomerStatus, Prisma } from "@prisma/client";
 
@@ -28,8 +29,11 @@ const FIELD_ALIASES: Record<string, string> = {
   status: "status",
 };
 
+const PERM_DENIED: ImportResult = { ok: false, message: "Bu işlem için yetkiniz yok." };
+
 export async function importCustomersCsvAction(formData: FormData): Promise<ImportResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_CREATE))) return PERM_DENIED;
 
   const file = formData.get("file");
   if (!(file instanceof File)) {

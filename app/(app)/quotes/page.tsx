@@ -10,6 +10,8 @@ import {
 } from "@/lib/quote-utils";
 import { formatDateTime } from "@/lib/utils";
 import { listQuotes } from "@/services/quote-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,7 @@ export default async function QuotesPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string; page?: string }>;
 }) {
+  await requirePermission(PERMISSIONS.QUOTES_READ);
   const sp = await searchParams;
   const status = sp.status ?? "all";
   const q = sp.q ?? "";

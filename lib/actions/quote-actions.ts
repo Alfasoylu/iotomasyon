@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireUser } from "@/lib/auth";
+import { requireUser, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+
+const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
 import {
   calculateQuoteLine,
   calculateQuoteTotals,
@@ -20,6 +23,7 @@ export async function createQuoteAction(
   values: QuoteInput,
 ): Promise<ActionResult<QuoteField>> {
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.QUOTES_CREATE))) return PERM_DENIED;
   const parsed = quoteSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -106,7 +110,8 @@ export async function updateQuoteAction(
   quoteId: string,
   values: QuoteInput,
 ): Promise<ActionResult<QuoteField>> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.QUOTES_UPDATE))) return PERM_DENIED;
   const parsed = quoteSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -188,7 +193,8 @@ export async function updateQuoteStatusAction(
   quoteId: string,
   status: "SENT" | "VIEWED" | "WON" | "LOST",
 ): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.QUOTES_UPDATE))) return PERM_DENIED;
 
   try {
     const data: Record<string, unknown> = { status };

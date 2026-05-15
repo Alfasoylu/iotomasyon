@@ -12,6 +12,8 @@ import {
 } from "@/lib/customer-utils";
 import { listCustomers, listUsersForSelect } from "@/services/customer-service";
 import { listAttributes } from "@/services/attribute-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,7 @@ export default async function CustomersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const params = await searchParams;
   const query       = typeof params.q           === "string" ? params.q           : "";
   const status      = typeof params.status      === "string" ? params.status      : "all";

@@ -38,6 +38,8 @@ import { formatDateTime } from "@/lib/utils";
 import { listAttributes } from "@/services/attribute-service";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { getCustomerById, listCustomerInterestProducts } from "@/services/customer-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +48,7 @@ export default async function CustomerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
   const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes] =
     await Promise.all([

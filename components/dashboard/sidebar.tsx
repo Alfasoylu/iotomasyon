@@ -5,19 +5,13 @@ import { usePathname } from "next/navigation";
 
 import { useSidebarStore } from "@/hooks/use-sidebar-store";
 
-const navigation = [
-  { href: "/dashboard", label: "Pano" },
-  { href: "/customers", label: "Müşteriler" },
-  { href: "/quotes", label: "Teklifler" },
-  { href: "/tasks", label: "Görevler" },
-  { href: "/products", label: "Ürünler" },
-  { href: "/categories", label: "Kategoriler" },
-  { href: "/search", label: "Arama" },
-  { href: "/campaigns", label: "Kampanyalar" },
-  { href: "/activity", label: "Aktiviteler" },
-];
+export type NavItem = { href: string; label: string };
 
-export function Sidebar() {
+interface SidebarProps {
+  items: NavItem[];
+}
+
+export function Sidebar({ items }: SidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebarStore();
 
@@ -41,7 +35,7 @@ export function Sidebar() {
         </div>
 
         <nav className="mt-6 flex flex-1 flex-col gap-1">
-          {navigation.map((item) => {
+          {items.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (

@@ -14,7 +14,9 @@ export const SESSION_COOKIE_NAME = "iotomasyon_session";
 export type SessionPayload = JWTPayload & {
   userId: string;
   email: string;
-  role: "ADMIN";
+  // Widened from "ADMIN" literal to string — accepts all UserRole enum values.
+  // Existing tokens with role:"ADMIN" remain valid after this change.
+  role: string;
 };
 
 export async function createSessionToken(payload: SessionPayload) {

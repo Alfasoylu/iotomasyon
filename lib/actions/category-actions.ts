@@ -2,17 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireUser } from "@/lib/auth";
+import { requireUser, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { categorySchema, type CategoryInput } from "@/lib/validations/category";
 import type { ActionResult } from "@/types/actions";
+
+const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
 
 type CategoryField = keyof CategoryInput;
 
 export async function createCategoryAction(
   values: CategoryInput,
 ): Promise<ActionResult<CategoryField>> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CATEGORIES_CREATE))) return PERM_DENIED;
   const parsed = categorySchema.safeParse(values);
 
   if (!parsed.success) {
@@ -54,7 +58,8 @@ export async function updateCategoryAction(
   categoryId: string,
   values: CategoryInput,
 ): Promise<ActionResult<CategoryField>> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CATEGORIES_UPDATE))) return PERM_DENIED;
   const parsed = categorySchema.safeParse(values);
 
   if (!parsed.success) {
@@ -103,7 +108,8 @@ export async function updateCategoryAction(
 }
 
 export async function deleteCategoryAction(categoryId: string): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CATEGORIES_DELETE))) return PERM_DENIED;
 
   try {
     await prisma.productCategory.delete({ where: { id: categoryId } });

@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { CampaignForm } from "@/components/campaigns/campaign-form";
 import { getCampaignCandidates } from "@/services/outreach-service";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,7 @@ export default async function NewCampaignPage({
 }: {
   searchParams: Promise<{ productId?: string; categoryId?: string }>;
 }) {
+  await requirePermission(PERMISSIONS.CAMPAIGNS_CREATE);
   const { productId, categoryId } = await searchParams;
 
   if (!productId && !categoryId) notFound();

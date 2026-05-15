@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireUser } from "@/lib/auth";
+import { requireUser, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+
+const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
 import { createCampaignSchema } from "@/lib/validations/outreach";
 import type { ActionResult } from "@/types/actions";
 
@@ -39,6 +42,7 @@ export async function createCampaignAction(
   values: unknown,
 ): Promise<ActionResult & { campaignId?: string }> {
   const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CAMPAIGNS_CREATE))) return PERM_DENIED;
   const parsed = createCampaignSchema.safeParse(values);
 
   if (!parsed.success) {
@@ -84,7 +88,8 @@ export async function createCampaignAction(
 // PENDING → SENT only. Uses a dedicated guard — not the shared VALID_TRANSITIONS
 // map — to prevent REPLIED→SENT from going through the sentAt-updating path.
 export async function markRecipientSentAction(recipientId: string): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CAMPAIGNS_UPDATE))) return PERM_DENIED;
 
   const recipient = await prisma.outreachRecipient.findUnique({
     where: { id: recipientId },
@@ -120,7 +125,8 @@ export async function updateRecipientStatusAction(
   recipientId: string,
   status: "REPLIED" | "WON" | "LOST" | "SENT" | "QUOTED",
 ): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CAMPAIGNS_UPDATE))) return PERM_DENIED;
 
   const recipient = await prisma.outreachRecipient.findUnique({
     where: { id: recipientId },
@@ -168,7 +174,8 @@ export async function linkRecipientToQuoteAction(
   recipientId: string,
   quoteNumber: string,
 ): Promise<ActionResult & { quoteId?: string; quoteTotal?: string }> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CAMPAIGNS_UPDATE))) return PERM_DENIED;
 
   if (!quoteNumber.trim()) {
     return { ok: false, message: "Teklif numarası gereklidir." };

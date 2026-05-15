@@ -2,9 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireUser } from "@/lib/auth";
+import { requireUser, checkPermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types/actions";
+
+const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
 
 // Canonical normalization: all attribute names stored lowercase.
 // Prevents "Inverter" / "inverter" / "INVERTER" fragmentation in the tag namespace.
@@ -16,7 +19,8 @@ function normalizeAttributeName(raw: string): string {
 export async function upsertAttributeAction(
   name: string,
 ): Promise<ActionResult & { id?: string; name?: string }> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.ATTRIBUTES_CREATE))) return PERM_DENIED;
   const normalized = normalizeAttributeName(name);
   if (!normalized) return { ok: false, message: "Özellik adı gereklidir." };
 
@@ -39,7 +43,8 @@ export async function toggleCustomerAttributeInterestAction(
   attributeId: string,
   add: boolean,
 ): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
 
   try {
     if (add) {

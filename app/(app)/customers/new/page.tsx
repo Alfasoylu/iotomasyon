@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { listAttributes, getProductAttributeIds } from "@/services/attribute-service";
 import { listUsersForSelect } from "@/services/customer-service";
 import { getLocations } from "@/lib/turkey-locations";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,7 @@ export default async function NewCustomerPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requirePermission(PERMISSIONS.CUSTOMERS_CREATE);
   const params = await searchParams;
   const productId  = typeof params.productId  === "string" ? params.productId  : undefined;
   const categoryId = typeof params.categoryId === "string" ? params.categoryId : undefined;

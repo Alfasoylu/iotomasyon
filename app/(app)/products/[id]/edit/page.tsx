@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { getProductById } from "@/services/product-service";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { listAttributes } from "@/services/attribute-service";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,7 @@ export default async function EditProductPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission(PERMISSIONS.PRODUCTS_UPDATE);
   const { id } = await params;
   const [{ databaseAvailable, product }, { categories }, allAttributes] = await Promise.all([
     getProductById(id),
