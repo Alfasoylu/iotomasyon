@@ -2,7 +2,13 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
 import { getSessionSecret, isProduction } from "@/lib/env";
 
-const secret = new TextEncoder().encode(getSessionSecret());
+// Lazy — evaluated at request time, NOT at module load time.
+// This prevents next build from throwing "Missing SESSION_SECRET"
+// when it statically analyses the /campaigns/new import chain.
+function getSecret(): Uint8Array {
+  return new TextEncoder().encode(getSessionSecret());
+}
+
 export const SESSION_COOKIE_NAME = "iotomasyon_session";
 
 export type SessionPayload = JWTPayload & {
@@ -16,7 +22,7 @@ export async function createSessionToken(payload: SessionPayload) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(secret);
+    .sign(getSecret());
 }
 
 export async function verifySessionToken(token: string | undefined) {
@@ -25,7 +31,7 @@ export async function verifySessionToken(token: string | undefined) {
   }
 
   try {
-    const result = await jwtVerify<SessionPayload>(token, secret, {
+    const result = await jwtVerify<SessionPayload>(token, getSecret(), {
       algorithms: ["HS256"],
     });
 

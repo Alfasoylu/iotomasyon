@@ -25,13 +25,13 @@ export default async function NewCustomerPage({
     <div className="space-y-6">
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Customers
+          Müşteriler
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          Yeni musteri olustur
+          Yeni müşteri oluştur
         </h1>
         <p className="mt-2 text-sm leading-7 text-slate-600">
-          Yeni musteri kaydi ekleyerek satis takibini merkezilesin.
+          Yeni müşteri kaydı ekleyerek satış takibini merkezileştirin.
         </p>
       </div>
 

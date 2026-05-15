@@ -2,7 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session";
 
-const protectedPrefixes = ["/dashboard", "/products", "/customers", "/quotes"];
+// All (app) routes. Middleware is the first line of defence;
+// app/(app)/layout.tsx also calls requireUser() as a second layer.
+const protectedPrefixes = [
+  "/dashboard",
+  "/products",
+  "/customers",
+  "/quotes",
+  "/tasks",
+  "/campaigns",
+  "/categories",
+  "/search",
+  "/activity",
+];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

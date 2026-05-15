@@ -6,20 +6,25 @@ import { PrismaClient } from "@prisma/client";
 import { getDatabaseUrl } from "@/lib/env";
 
 declare global {
-  var prisma: PrismaClient | undefined;
+  var _prismaClient: PrismaClient | undefined;
 }
 
-const adapter = new PrismaPg({
-  connectionString: getDatabaseUrl(),
-});
-
-export const prisma =
-  global.prisma ??
-  new PrismaClient({
+function makePrismaClient(): PrismaClient {
+  const adapter = new PrismaPg({ connectionString: getDatabaseUrl() });
+  return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["warn"] : [],
   });
-
-if (process.env.NODE_ENV !== "production") {
-  global.prisma = prisma;
 }
+
+// Lazy proxy — DATABASE_URL is only read when the first query fires,
+// NOT when this module is imported. This prevents next build from
+// throwing "Missing DATABASE_URL" while collecting page configurations.
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    if (!global._prismaClient) {
+      global._prismaClient = makePrismaClient();
+    }
+    return Reflect.get(global._prismaClient, prop, receiver);
+  },
+});

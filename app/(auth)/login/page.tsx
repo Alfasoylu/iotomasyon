@@ -15,18 +15,18 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.2fr_0.9fr]">
         <section className="rounded-[2rem] border border-[color:var(--border)] bg-slate-950 px-8 py-10 text-white shadow-2xl">
-          <p className="text-sm uppercase tracking-[0.4em] text-white/60">Iotomasyon</p>
+          <p className="text-sm uppercase tracking-[0.4em] text-white/60">iotomasyon</p>
           <h1 className="mt-6 max-w-lg text-4xl font-semibold leading-tight">
-            Elektronik ürün, müşteri ve stok akışını tek merkezden yönetin.
+            Müşteri, teklif ve görev yönetimini tek merkezden yönetin.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-slate-300">
-            Phase 1 için sistem tek admin hesabı ile çalışır. Giriş yaptıktan sonra dashboard
-            ve ürün modülü kullanıma hazırdır.
+            IoT ve otomasyon sektörüne özel CRM. Müşteri takibi, teklif hazırlama,
+            görev planlaması ve kampanya yönetimi tek ekranda.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <Metric label="Modül" value="Auth + Dashboard + Products" />
-            <Metric label="Altyapı" value="Next 16 + Prisma + PostgreSQL" />
-            <Metric label="Hazırlık" value="PostgreSQL migration-ready" />
+            <Metric label="Müşteri" value="Takip + Pipeline + Segmentasyon" />
+            <Metric label="Teklif" value="PDF + Durum + Revizyon" />
+            <Metric label="Görev" value="Ekip + Öncelik + Hatırlatıcı" />
           </div>
         </section>
 
