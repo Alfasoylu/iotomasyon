@@ -73,6 +73,13 @@ Known missing core systems:
 - listing coverage monitoring
 - image pipeline
 - product import intelligence
+- supplier intelligence
+- import cost calculator
+- SKU/barcode data hygiene
+- audit log governance
+- backup / rollback strategy
+- executive KPI dashboard
+- task automation rules
 
 ---
 
@@ -104,6 +111,24 @@ Only systems that directly increase:
 - profit
 - inventory accuracy
 - sales output
+
+## Rule 5
+Every important business action must be traceable.
+
+This includes:
+- product cost changes
+- stock changes
+- marketplace listing changes
+- customer status changes
+- quote changes
+- permission changes
+
+## Rule 6
+Marketplace write operations are forbidden until read-only dashboards are stable.
+
+## Rule 7
+Procurement suggestions must never allocate all available capital automatically.
+Admin approval is required.
 
 ---
 
@@ -286,6 +311,13 @@ Per product required fields:
 - landed unit cost
 - warehouse count date
 - counted stock quantity
+- stock source
+- stock confidence level
+- last stock sync date
+- last manual stock count user
+- minimum stock threshold
+- reorder lead time
+- shelf/location code
 - standard shipping cost
 - editable shipping override
 - standard marketplace commission
@@ -317,6 +349,12 @@ Metrics:
 - net profit
 - margin %
 - ROI %
+- VAT impact
+- packaging cost
+- marketplace service fee
+- payment fee
+- defect/return reserve
+- landed cost history
 
 Views:
 Per product:
@@ -388,6 +426,12 @@ Engine outputs:
 - capital allocation per SKU
 - expected ROI
 
+Safety rules:
+- never allocate 100% of available capital
+- keep reserve capital percentage
+- admin approval required before purchase action
+- rank products by ROI + velocity + risk
+
 Exit criteria:
 owner gets purchase suggestions
 
@@ -400,10 +444,15 @@ Connect Entegra.
 
 Requirements:
 - XML fetch
+- XML source configuration
 - scheduled sync
 - stock updates
 - normal price
 - dealer price
+- sync logs
+- failed sync alerts
+- manual override protection
+- price update preview before applying
 
 Rules:
 manual override allowed
@@ -436,11 +485,17 @@ Example:
 
 Per listing:
 - platform
+- platform listing ID
 - listing URL
 - listing barcode
 - listing SKU
 - listing title
 - active/inactive
+- last checked date
+- last known status
+- linked/unlinked status
+- responsible staff user
+- notes
 
 Exit criteria:
 listing visibility complete
@@ -461,6 +516,14 @@ Alerts:
 
 Tasks:
 auto task creation
+
+Monitoring rules:
+- monitoring frequency
+- broken URL detection
+- listing missing task creation
+- high stock but no listing alert
+- zero stock but live listing alert
+- stale listing check
 
 Example:
 "SKU X not listed on Trendyol"
@@ -485,6 +548,12 @@ Required:
 
 No write operations.
 
+READ ONLY means:
+- no stock push
+- no price push
+- no listing update
+- no order status update
+
 Exit criteria:
 Trendyol intelligence dashboard active
 
@@ -503,6 +572,13 @@ Metrics:
 - commissions
 - shipping
 - net margin
+- product-level return rate
+- platform-level return rate
+- net profit after returns
+- top 50 winners
+- top 50 losers
+- products with sales but low margin
+- products with high stock but low sales
 
 Views:
 - per product
@@ -577,6 +653,12 @@ Signals:
 - ROI
 - return risk
 - available capital
+- supplier lead time
+- MOQ
+- defect rate
+- supplier reliability
+- reorder urgency
+- expected cash conversion time
 
 Outputs:
 - reorder now
@@ -586,6 +668,119 @@ Outputs:
 
 Exit:
 procurement assistant operational
+
+---
+
+# Phase 20 — Supplier Intelligence
+
+Goal:
+Know which suppliers help the business grow profitably.
+
+Required:
+- supplier list
+- supplier contact info
+- supplier product relations
+- MOQ
+- lead time
+- defect rate
+- return/complaint history
+- purchase history
+- average landed cost
+- reliability score
+
+Exit:
+admin can compare suppliers by profit, speed and reliability.
+
+---
+
+# Phase 21 — Import Cost Calculator
+
+Goal:
+Calculate true landed cost before buying.
+
+Inputs:
+- RMB product price
+- USD product price
+- exchange rates
+- carton quantity
+- carton weight
+- shipping method
+- shipping cost
+- customs multiplier
+- other expenses
+
+Outputs:
+- landed unit cost
+- recommended selling price
+- estimated margin
+- estimated ROI
+- buy / do not buy signal
+
+Exit:
+admin can evaluate imports before ordering.
+
+---
+
+# Phase 22 — Executive KPI Dashboard
+
+Goal:
+Give admin one screen to control the business.
+
+Widgets:
+- total stock value
+- available capital
+- monthly revenue
+- monthly gross profit
+- estimated net profit
+- top 50 profitable products
+- slow moving stock
+- high return products
+- missing marketplace listings
+- low stock alerts
+- procurement recommendations
+- open sales tasks
+- quote conversion rate
+
+Exit:
+admin can understand business health in under 60 seconds.
+
+---
+
+# Phase 23 — Data Hygiene / SKU Governance
+
+Goal:
+Prevent bad data from destroying reports.
+
+Required:
+- duplicate SKU detection
+- duplicate barcode detection
+- missing barcode report
+- missing cost report
+- missing category report
+- missing marketplace link report
+- invalid price report
+- orphan marketplace listing report
+
+Exit:
+admin can clean bad product data before automation.
+
+---
+
+# Phase 24 — Backup / Rollback / Migration Safety
+
+Goal:
+Protect production data.
+
+Required:
+- pre-migration checklist
+- Supabase backup checklist
+- rollback notes for every migration
+- seed/demo data separation
+- production write approval rule
+- dangerous operation warning
+
+Exit:
+production changes become safer.
 
 ---
 
