@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { UserRoleForm } from "@/components/admin/user-role-form";
 import { UserPermissionGrid, type PermissionRow } from "@/components/admin/user-permission-grid";
+import { UserRoleForm } from "@/components/admin/user-role-form";
 import { getCurrentSession, requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { ROLE_LABELS, type UserRole } from "@/lib/user-roles";
+import { getSupportedUserRoles } from "@/lib/user-role-support";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +18,11 @@ export default async function AdminUserDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [{ id }, currentSession] = await Promise.all([params, getCurrentSession()]);
+  const [{ id }, currentSession, supportedRoles] = await Promise.all([
+    params,
+    getCurrentSession(),
+    getSupportedUserRoles(),
+  ]);
 
   await requirePermission(PERMISSIONS.USERS_READ);
   const canManagePerms = currentSession
@@ -43,13 +49,11 @@ export default async function AdminUserDetailPage({
 
   if (!targetUser) notFound();
 
-  // Load all permissions grouped by category
   const allPermissions = await prisma.permission.findMany({
     orderBy: [{ category: "asc" }, { name: "asc" }],
     select: { id: true, key: true, name: true, category: true },
   });
 
-  // Load role defaults for the user's current role
   const roleRecord = await prisma.role.findUnique({
     where: { key: targetUser.role },
     select: {
@@ -60,13 +64,11 @@ export default async function AdminUserDetailPage({
     roleRecord?.permissions.map((rp) => rp.permission.key) ?? [],
   );
 
-  // Build per-user override map
   const overrideMap = new Map<string, boolean>();
   for (const up of targetUser.userPermissions) {
     overrideMap.set(up.permission.key, up.granted);
   }
 
-  // Compose full permission rows
   const permissionRows: PermissionRow[] = allPermissions.map((perm) => ({
     id: perm.id,
     key: perm.key,
@@ -77,17 +79,14 @@ export default async function AdminUserDetailPage({
   }));
 
   const isCurrentUser = currentSession?.id === targetUser.id;
-  const ROLE_LABELS: Record<string, string> = {
-    ADMIN: "Admin", SALES: "Satış", OPERATIONS: "Operasyon",
-    MARKETPLACE_OPERATOR: "Mağaza Operatörü", CUSTOM: "Özel",
-  };
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          <Link href="/admin/users" className="hover:text-slate-700">Kullanıcılar</Link>
+          <Link href="/admin/users" className="hover:text-slate-700">
+            Kullanıcılar
+          </Link>
           {" / "}
           {targetUser.name}
         </p>
@@ -99,22 +98,21 @@ export default async function AdminUserDetailPage({
           <Badge tone={targetUser.isActive ? "success" : "danger"}>
             {targetUser.isActive ? "Aktif" : "Pasif"}
           </Badge>
-          <Badge tone="default">{ROLE_LABELS[targetUser.role] ?? targetUser.role}</Badge>
+          <Badge tone="default">{ROLE_LABELS[targetUser.role as UserRole] ?? targetUser.role}</Badge>
         </div>
       </div>
 
-      {/* Role & Status */}
       <Card className="p-6">
         <h2 className="mb-4 text-base font-semibold text-slate-900">Rol ve hesap durumu</h2>
         <UserRoleForm
           userId={targetUser.id}
-          currentRole={targetUser.role as "ADMIN" | "SALES" | "OPERATIONS" | "MARKETPLACE_OPERATOR" | "CUSTOM"}
+          currentRole={targetUser.role as UserRole}
+          supportedRoles={supportedRoles}
           isActive={targetUser.isActive}
           isCurrentUser={isCurrentUser}
         />
       </Card>
 
-      {/* Permission overrides */}
       <Card className="p-6">
         <div className="mb-4 flex items-start justify-between">
           <div>

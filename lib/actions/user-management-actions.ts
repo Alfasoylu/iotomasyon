@@ -6,11 +6,13 @@ import { hash } from "bcryptjs";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { ALL_USER_ROLES, type UserRole } from "@/lib/user-roles";
+import { isUserRoleSupported } from "@/lib/user-role-support";
 import type { ActionResult } from "@/types/actions";
 
 const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
-
-type UserRole = "ADMIN" | "SALES" | "OPERATIONS" | "MARKETPLACE_OPERATOR" | "CUSTOM";
+const ROLE_UNAVAILABLE_MESSAGE =
+  "Seçilen rol bu veritabanında henüz aktif değil. Phase 5 migrasyonu uygulanmalı.";
 
 export async function updateUserRoleAction(
   targetUserId: string,
@@ -19,14 +21,16 @@ export async function updateUserRoleAction(
   const user = await requireUser();
   if (!(await checkPermission(user, PERMISSIONS.USERS_UPDATE))) return PERM_DENIED;
 
-  // Prevent a user from changing their own role (safety guard).
   if (targetUserId === user.id) {
     return { ok: false, message: "Kendi rolünüzü değiştiremezsiniz." };
   }
 
-  const validRoles: UserRole[] = ["ADMIN", "SALES", "OPERATIONS", "MARKETPLACE_OPERATOR", "CUSTOM"];
-  if (!validRoles.includes(role)) {
+  if (!ALL_USER_ROLES.includes(role)) {
     return { ok: false, message: "Geçersiz rol." };
+  }
+
+  if (!(await isUserRoleSupported(role))) {
+    return { ok: false, message: ROLE_UNAVAILABLE_MESSAGE };
   }
 
   try {
@@ -44,9 +48,9 @@ export async function updateUserRoleAction(
 
 /**
  * Set or remove a per-user permission override.
- * granted = true  → explicit grant
- * granted = false → explicit deny
- * granted = null  → remove override (fall back to role default)
+ * granted = true  -> explicit grant
+ * granted = false -> explicit deny
+ * granted = null  -> remove override (fall back to role default)
  */
 export async function setUserPermissionAction(
   targetUserId: string,
@@ -61,7 +65,6 @@ export async function setUserPermissionAction(
     if (!permission) return { ok: false, message: "İzin bulunamadı." };
 
     if (granted === null) {
-      // Remove override
       await prisma.userPermission.deleteMany({
         where: { userId: targetUserId, permissionId: permission.id },
       });
@@ -118,6 +121,14 @@ export async function createUserAction(values: {
 
   if (values.password.length < 8) {
     return { ok: false, message: "Şifre en az 8 karakter olmalıdır." };
+  }
+
+  if (!ALL_USER_ROLES.includes(values.role)) {
+    return { ok: false, message: "Geçersiz rol." };
+  }
+
+  if (!(await isUserRoleSupported(values.role))) {
+    return { ok: false, message: ROLE_UNAVAILABLE_MESSAGE };
   }
 
   try {

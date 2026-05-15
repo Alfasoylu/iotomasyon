@@ -3,21 +3,16 @@
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { createUserAction } from "@/lib/actions/user-management-actions";
+import { ROLE_LABELS, type UserRole } from "@/lib/user-roles";
 
-type UserRole = "ADMIN" | "SALES" | "OPERATIONS" | "MARKETPLACE_OPERATOR" | "CUSTOM";
+interface NewUserFormProps {
+  supportedRoles: UserRole[];
+}
 
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: "SALES",                label: "Satış" },
-  { value: "OPERATIONS",           label: "Operasyon" },
-  { value: "MARKETPLACE_OPERATOR", label: "Mağaza Operatörü" },
-  { value: "CUSTOM",               label: "Özel" },
-  { value: "ADMIN",                label: "Admin" },
-];
-
-export function NewUserForm() {
+export function NewUserForm({ supportedRoles }: NewUserFormProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +20,9 @@ export function NewUserForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("SALES");
+  const [role, setRole] = useState<UserRole>(
+    supportedRoles.includes("SALES") ? "SALES" : (supportedRoles[0] ?? "ADMIN"),
+  );
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,9 +93,9 @@ export function NewUserForm() {
             onChange={(e) => setRole(e.target.value as UserRole)}
             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-slate-400 focus:outline-none"
           >
-            {ROLE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {supportedRoles.map((supportedRole) => (
+              <option key={supportedRole} value={supportedRole}>
+                {ROLE_LABELS[supportedRole]}
               </option>
             ))}
           </select>

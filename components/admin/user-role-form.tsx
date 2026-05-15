@@ -3,30 +3,28 @@
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 
-import {
-  updateUserRoleAction,
-  toggleUserActiveAction,
-} from "@/lib/actions/user-management-actions";
 import { Button } from "@/components/ui/button";
-
-type UserRole = "ADMIN" | "SALES" | "OPERATIONS" | "MARKETPLACE_OPERATOR" | "CUSTOM";
-
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: "ADMIN",                label: "Admin" },
-  { value: "SALES",                label: "Satış" },
-  { value: "OPERATIONS",           label: "Operasyon" },
-  { value: "MARKETPLACE_OPERATOR", label: "Mağaza Operatörü" },
-  { value: "CUSTOM",               label: "Özel" },
-];
+import {
+  toggleUserActiveAction,
+  updateUserRoleAction,
+} from "@/lib/actions/user-management-actions";
+import { ROLE_LABELS, type UserRole } from "@/lib/user-roles";
 
 interface UserRoleFormProps {
   userId: string;
   currentRole: UserRole;
+  supportedRoles: UserRole[];
   isActive: boolean;
   isCurrentUser: boolean;
 }
 
-export function UserRoleForm({ userId, currentRole, isActive, isCurrentUser }: UserRoleFormProps) {
+export function UserRoleForm({
+  userId,
+  currentRole,
+  supportedRoles,
+  isActive,
+  isCurrentUser,
+}: UserRoleFormProps) {
   const router = useRouter();
   const [role, setRole] = useState<UserRole>(currentRole);
   const [rolePending, setRolePending] = useState(false);
@@ -76,9 +74,9 @@ export function UserRoleForm({ userId, currentRole, isActive, isCurrentUser }: U
             disabled={isCurrentUser || rolePending}
             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-slate-400 focus:outline-none disabled:opacity-50"
           >
-            {ROLE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {supportedRoles.map((supportedRole) => (
+              <option key={supportedRole} value={supportedRole}>
+                {ROLE_LABELS[supportedRole]}
               </option>
             ))}
           </select>

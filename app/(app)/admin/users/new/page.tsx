@@ -1,11 +1,13 @@
 import { NewUserForm } from "@/components/admin/new-user-form";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { getSupportedUserRoles } from "@/lib/user-role-support";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewUserPage() {
   await requirePermission(PERMISSIONS.USERS_CREATE);
+  const supportedRoles = await getSupportedUserRoles();
 
   return (
     <div className="space-y-6">
@@ -21,7 +23,7 @@ export default async function NewUserPage() {
         </p>
       </div>
 
-      <NewUserForm />
+      <NewUserForm supportedRoles={supportedRoles} />
     </div>
   );
 }
