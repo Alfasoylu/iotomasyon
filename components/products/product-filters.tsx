@@ -40,7 +40,7 @@ export function ProductFilters({
       <Input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="SKU, urun adi, marka veya lokasyon ara"
+        placeholder="SKU, ürün adı, marka veya lokasyon ara"
       />
 
       <select

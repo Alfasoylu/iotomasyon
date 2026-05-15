@@ -237,7 +237,7 @@ export async function createCategoryInterestAction(
     revalidatePath(`/customers/${customerId}`);
     return { ok: true };
   } catch {
-    return { ok: false, message: "Bu musteri bu kategoriye zaten eklenмis." };
+    return { ok: false, message: "Bu müşteri bu kategoriye zaten eklenmiş." };
   }
 }
 
