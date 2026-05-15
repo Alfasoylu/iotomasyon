@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import {
   createCustomerAction,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/customer-actions";
 import { customerSchema } from "@/lib/validations/customer";
 import { AttributePicker } from "@/components/attributes/attribute-picker";
+import { LocationCombobox } from "@/components/customers/location-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +32,7 @@ const emptyValues: CustomerFormValues = {
   taxNumber: "",
   address:   "",
   city:      "",
-  country:   "",
+  district:  "",
   notes:     "",
   status:    "NEW",
   source:    "",
@@ -47,6 +48,8 @@ export function CustomerForm({
   initialAttributeIds = [],
   preselectedProductId,
   preselectedCategoryId,
+  cities = [],
+  districtsByCity = {},
 }: {
   mode: "create" | "edit";
   customerId?: string;
@@ -56,6 +59,8 @@ export function CustomerForm({
   initialAttributeIds?: string[];
   preselectedProductId?: string;
   preselectedCategoryId?: string;
+  cities?: string[];
+  districtsByCity?: Record<string, string[]>;
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
@@ -66,6 +71,10 @@ export function CustomerForm({
     resolver: zodResolver(customerSchema),
     defaultValues: initialValues ?? emptyValues,
   });
+
+  const selectedCity = useWatch({ control: form.control, name: "city" }) ?? "";
+  const selectedDistrict = useWatch({ control: form.control, name: "district" }) ?? "";
+  const districtOptions = districtsByCity[selectedCity] ?? [];
 
   const submit = form.handleSubmit((values) => {
     setServerMessage(undefined);
@@ -128,12 +137,36 @@ export function CustomerForm({
         <Field label="Vergi no" error={form.formState.errors.taxNumber?.message}>
           <Input {...form.register("taxNumber")} />
         </Field>
-        <Field label="Şehir" error={form.formState.errors.city?.message}>
-          <Input {...form.register("city")} />
+
+        {/* City combobox */}
+        <Field label="İl" error={form.formState.errors.city?.message}>
+          <LocationCombobox
+            options={cities}
+            value={selectedCity}
+            onChange={(val) => {
+              form.setValue("city", val, { shouldValidate: true });
+              form.setValue("district", "");
+            }}
+            placeholder="İl seçin veya yazın..."
+          />
         </Field>
-        <Field label="Ülke" error={form.formState.errors.country?.message}>
-          <Input {...form.register("country")} />
+
+        {/* District combobox — key resets component when city changes */}
+        <Field label="İlçe" error={form.formState.errors.district?.message}>
+          <LocationCombobox
+            key={selectedCity}
+            options={districtOptions}
+            value={selectedDistrict}
+            onChange={(val) =>
+              form.setValue("district", val, { shouldValidate: true })
+            }
+            placeholder={
+              selectedCity ? "İlçe seçin veya yazın..." : "Önce il seçin"
+            }
+            disabled={!selectedCity}
+          />
         </Field>
+
         <Field label="Durum" error={form.formState.errors.status?.message}>
           <select
             {...form.register("status")}

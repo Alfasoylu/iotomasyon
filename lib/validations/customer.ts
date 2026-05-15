@@ -19,7 +19,7 @@ export const customerSchema = z.object({
   taxNumber: z.string().trim().max(40),
   address:   z.string().trim().max(1000),
   city:      z.string().trim().max(120),
-  country:   z.string().trim().max(120),
+  district:  z.string().trim().max(120),
   notes:     z.string().trim().max(2000),
   status:    z.enum(CUSTOMER_STATUS_OPTIONS),
   source:    z.string().trim().max(80),

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { CustomerForm } from "@/components/customers/customer-form";
 import { Card } from "@/components/ui/card";
+import { getLocations } from "@/lib/turkey-locations";
 import { listAttributes } from "@/services/attribute-service";
 import { getCustomerById, listUsersForSelect } from "@/services/customer-service";
 
@@ -18,6 +19,7 @@ export default async function EditCustomerPage({
     listUsersForSelect(),
     listAttributes(),
   ]);
+  const { cities, districtsByCity } = getLocations();
 
   if (!databaseAvailable) {
     return (
@@ -76,12 +78,14 @@ export default async function EditCustomerPage({
             taxNumber: customer.taxNumber ?? "",
             address:   customer.address   ?? "",
             city:      customer.city      ?? "",
-            country:   customer.country   ?? "",
+            district:  customer.district  ?? "",
             notes:     customer.customerNotes ?? "",
             status:    customer.status,
             source:    customer.source    ?? "",
             ownedById: customer.ownedById ?? "",
           }}
+          cities={cities}
+          districtsByCity={districtsByCity}
         />
       </Card>
     </div>

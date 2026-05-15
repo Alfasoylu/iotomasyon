@@ -2,6 +2,7 @@ import { CustomerForm } from "@/components/customers/customer-form";
 import { Card } from "@/components/ui/card";
 import { listAttributes, getProductAttributeIds } from "@/services/attribute-service";
 import { listUsersForSelect } from "@/services/customer-service";
+import { getLocations } from "@/lib/turkey-locations";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default async function NewCustomerPage({
     listAttributes(),
     productId ? getProductAttributeIds(productId) : Promise.resolve([]),
   ]);
+  const { cities, districtsByCity } = getLocations();
 
   return (
     <div className="space-y-6">
@@ -41,6 +43,8 @@ export default async function NewCustomerPage({
           initialAttributeIds={preselectedAttrIds}
           preselectedProductId={productId}
           preselectedCategoryId={categoryId}
+          cities={cities}
+          districtsByCity={districtsByCity}
         />
       </Card>
     </div>

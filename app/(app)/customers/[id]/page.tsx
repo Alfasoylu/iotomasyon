@@ -135,8 +135,8 @@ export default async function CustomerDetailPage({
                     <Info label="WhatsApp" value={customer.whatsapp} />
                     <Info label="E-posta" value={customer.email} />
                     <Info label="Vergi no" value={customer.taxNumber} />
-                    <Info label="Şehir" value={customer.city} />
-                    <Info label="Ülke" value={customer.country} />
+                    <Info label="İl" value={customer.city} />
+                    <Info label="İlçe" value={customer.district} />
                     <Info label="Müşteri kaynağı" value={customer.source} />
                     <Info label="Müşteri sahibi" value={customer.owner?.name} />
                   </dl>

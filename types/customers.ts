@@ -66,7 +66,7 @@ export type CustomerFormValues = {
   taxNumber: string;
   address: string;
   city: string;
-  country: string;
+  district: string;
   notes: string;
   status: CustomerStatus;
   source: string;
