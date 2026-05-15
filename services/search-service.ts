@@ -2,13 +2,18 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 
+const EMPTY = { customers: [], quotes: [], products: [], notes: [], categories: [] };
+
 export async function globalSearch(q: string) {
   const term = q.trim();
-  if (term.length < 2) return { customers: [], quotes: [], products: [], notes: [], categories: [] };
+  if (term.length < 2) return EMPTY;
 
   const contains = { contains: term, mode: "insensitive" as const };
 
+  try {
   const [customers, quotes, products, notes, categories] = await Promise.all([
+    // Use explicit select to avoid including Phase 6 columns that may not
+    // exist yet on pre-migration databases.
     prisma.customer.findMany({
       where: {
         OR: [
@@ -19,6 +24,10 @@ export async function globalSearch(q: string) {
           { email: contains },
           { taxNumber: contains },
         ],
+      },
+      select: {
+        id: true, name: true, company: true, phone: true, email: true,
+        status: true, city: true, country: true, updatedAt: true,
       },
       orderBy: { updatedAt: "desc" },
       take: 10,
@@ -71,4 +80,7 @@ export async function globalSearch(q: string) {
   ]);
 
   return { customers, quotes, products, notes, categories };
+  } catch {
+    return EMPTY;
+  }
 }

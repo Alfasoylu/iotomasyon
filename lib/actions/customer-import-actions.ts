@@ -84,11 +84,12 @@ export async function importCustomersCsvAction(formData: FormData): Promise<Impo
       matchClauses.push({ whatsapp });
     }
 
+    // Use explicit select so the query never touches Phase 6 columns
+    // that may not yet exist in the production database.
     const existing = matchClauses.length
       ? await prisma.customer.findFirst({
-          where: {
-            OR: matchClauses,
-          },
+          where: { OR: matchClauses },
+          select: { id: true },
         })
       : null;
 

@@ -29,40 +29,60 @@ export default async function AdminUserDetailPage({
     ? await checkPermission(currentSession, PERMISSIONS.PERMISSIONS_MANAGE)
     : false;
 
-  const targetUser = await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isActive: true,
-      createdAt: true,
-      userPermissions: {
-        select: {
-          granted: true,
-          permission: { select: { id: true, key: true } },
+  // Try to load user with Phase 5 permission overrides.
+  // Falls back to basic user data if Phase 5 tables haven't been migrated yet.
+  type UserWithPerms = {
+    id: string; name: string; email: string; role: string;
+    isActive: boolean; createdAt: Date;
+    userPermissions: Array<{ granted: boolean; permission: { id: string; key: string } }>;
+  };
+  let targetUser: UserWithPerms | null = null;
+  let phase5Available = true;
+
+  try {
+    const row = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true, name: true, email: true, role: true, isActive: true, createdAt: true,
+        userPermissions: {
+          select: { granted: true, permission: { select: { id: true, key: true } } },
         },
       },
-    },
-  });
+    });
+    targetUser = row ? { ...row, role: row.role as string } : null;
+  } catch {
+    phase5Available = false;
+    const row = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true },
+    });
+    targetUser = row ? { ...row, role: row.role as string, userPermissions: [] } : null;
+  }
 
   if (!targetUser) notFound();
 
-  const allPermissions = await prisma.permission.findMany({
-    orderBy: [{ category: "asc" }, { name: "asc" }],
-    select: { id: true, key: true, name: true, category: true },
-  });
+  let allPermissions: { id: string; key: string; name: string; category: string }[] = [];
+  let roleDefaultKeys = new Set<string>();
 
-  const roleRecord = await prisma.role.findUnique({
-    where: { key: targetUser.role },
-    select: {
-      permissions: { select: { permission: { select: { key: true } } } },
-    },
-  });
-  const roleDefaultKeys = new Set(
-    roleRecord?.permissions.map((rp) => rp.permission.key) ?? [],
-  );
+  if (phase5Available) {
+    try {
+      const [perms, roleRecord] = await Promise.all([
+        prisma.permission.findMany({
+          orderBy: [{ category: "asc" }, { name: "asc" }],
+          select: { id: true, key: true, name: true, category: true },
+        }),
+        prisma.role.findUnique({
+          where: { key: targetUser.role },
+          select: { permissions: { select: { permission: { select: { key: true } } } } },
+        }),
+      ]);
+      allPermissions = perms;
+      roleDefaultKeys = new Set(roleRecord?.permissions.map((rp) => rp.permission.key) ?? []);
+    } catch {
+      // Phase 5 tables inaccessible mid-request — proceed with empty collections.
+      phase5Available = false;
+    }
+  }
 
   const overrideMap = new Map<string, boolean>();
   for (const up of targetUser.userPermissions) {
@@ -126,11 +146,17 @@ export default async function AdminUserDetailPage({
             {targetUser.userPermissions.length} geçersiz kılma
           </p>
         </div>
-        <UserPermissionGrid
-          userId={targetUser.id}
-          permissions={permissionRows}
-          canEdit={canManagePerms && !isCurrentUser}
-        />
+        {!phase5Available ? (
+          <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            İzin yönetimi için Phase 5 veritabanı migrasyonunun uygulanması gerekiyor.
+          </p>
+        ) : (
+          <UserPermissionGrid
+            userId={targetUser.id}
+            permissions={permissionRows}
+            canEdit={canManagePerms && !isCurrentUser}
+          />
+        )}
       </Card>
     </div>
   );

@@ -2,7 +2,7 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
-import { isDatabaseUnavailableError } from "@/lib/database";
+import { isDatabaseUnavailableError, isSchemaMismatchError } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export type CustomerFilters = {
@@ -111,6 +111,8 @@ export async function listCustomers(filters: CustomerFilters) {
     where.customerType = filters.customerType as import("@prisma/client").CustomerType;
   }
 
+  const orderBy = [{ updatedAt: "desc" as const }, { name: "asc" as const }];
+
   try {
     return {
       databaseAvailable: true as const,
@@ -119,15 +121,43 @@ export async function listCustomers(filters: CustomerFilters) {
         include: {
           owner: { select: { id: true, name: true } },
         },
-        orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+        orderBy,
       }),
     };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
-      return {
-        databaseAvailable: false as const,
-        customers: [],
-      };
+      return { databaseAvailable: false as const, customers: [] };
+    }
+
+    if (isSchemaMismatchError(error)) {
+      // Phase 6 migration not yet applied — fall back to a query that
+      // omits the new columns (monthlySalesPotential, platformNotes) and
+      // ignores the customerType enum filter (column is still TEXT).
+      const fallbackWhere: Prisma.CustomerWhereInput = { ...where, customerType: undefined };
+
+      try {
+        const rows = await prisma.customer.findMany({
+          where: fallbackWhere,
+          select: {
+            id: true, name: true, phone: true, whatsapp: true, email: true,
+            company: true, status: true, country: true, customerNotes: true,
+            customerType: true, city: true, district: true, address: true,
+            taxOffice: true, taxNumber: true, source: true, ownedById: true,
+            isActive: true, lastContactedAt: true, createdAt: true, updatedAt: true,
+            owner: { select: { id: true, name: true } },
+          },
+          orderBy,
+        });
+        // Merge with null stubs for Phase 6 fields to satisfy TypeScript types.
+        const customers = rows.map((r) => ({
+          ...r,
+          monthlySalesPotential: null as null,
+          platformNotes: null as null,
+        }));
+        return { databaseAvailable: true as const, customers };
+      } catch {
+        return { databaseAvailable: false as const, customers: [] };
+      }
     }
 
     throw error;
@@ -144,16 +174,11 @@ export async function getCustomerById(id: string): Promise<
       include: customerDetailInclude,
     });
 
-    return {
-      databaseAvailable: true,
-      customer,
-    };
+    return { databaseAvailable: true as const, customer };
   } catch (error) {
-    if (isDatabaseUnavailableError(error)) {
-      return {
-        databaseAvailable: false,
-        customer: null,
-      };
+    if (isDatabaseUnavailableError(error) || isSchemaMismatchError(error)) {
+      // Phase 6 migration not yet applied, or DB unavailable.
+      return { databaseAvailable: false as const, customer: null };
     }
 
     throw error;

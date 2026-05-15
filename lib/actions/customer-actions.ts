@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { isSchemaMismatchError } from "@/lib/database";
 import { customerSchema, type CustomerInput } from "@/lib/validations/customer";
 import type { ActionResult } from "@/types/actions";
 
@@ -45,7 +46,7 @@ export async function createCustomerAction(
   try {
     const customer = await prisma.$transaction(async (tx) => {
       const c = await tx.customer.create({
-        data: normalizeCustomerData(parsed.data),
+        data: normalizeCustomerData(parsed.data) as Parameters<typeof tx.customer.create>[0]["data"],
       });
 
       if (options?.productId) {
@@ -86,11 +87,11 @@ export async function createCustomerAction(
       ok: true,
       redirectTo: `/customers/${customer.id}`,
     };
-  } catch {
-    return {
-      ok: false,
-      message: "Müşteri kaydı oluşturulamadı.",
-    };
+  } catch (error) {
+    if (isSchemaMismatchError(error)) {
+      return { ok: false, message: "Veritabanı şeması henüz güncellenmemiş. Lütfen yöneticiyle iletişime geçin." };
+    }
+    return { ok: false, message: "Müşteri kaydı oluşturulamadı." };
   }
 }
 
@@ -128,7 +129,7 @@ export async function updateCustomerAction(
     await prisma.$transaction(async (tx) => {
       await tx.customer.update({
         where: { id: customerId },
-        data: normalizeCustomerData(parsed.data),
+        data: normalizeCustomerData(parsed.data) as Parameters<typeof tx.customer.update>[0]["data"],
       });
       await tx.customerAttributeInterest.deleteMany({ where: { customerId } });
       for (const attributeId of attributeIds) {
@@ -146,11 +147,11 @@ export async function updateCustomerAction(
       ok: true,
       redirectTo: `/customers/${customerId}`,
     };
-  } catch {
-    return {
-      ok: false,
-      message: "Müşteri güncellenemedi.",
-    };
+  } catch (error) {
+    if (isSchemaMismatchError(error)) {
+      return { ok: false, message: "Veritabanı şeması henüz güncellenmemiş. Lütfen yöneticiyle iletişime geçin." };
+    }
+    return { ok: false, message: "Müşteri güncellenemedi." };
   }
 }
 
