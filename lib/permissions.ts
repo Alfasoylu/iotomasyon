@@ -165,18 +165,25 @@ export async function getRoleDefaults(roleKey: string): Promise<Set<string>> {
   }
 
   const { prisma } = await import("@/lib/prisma");
-  const role = await prisma.role.findUnique({
-    where: { key: roleKey },
-    include: {
-      permissions: {
-        include: {
-          permission: { select: { key: true } },
+
+  let defaults = new Set<string>();
+  try {
+    const role = await prisma.role.findUnique({
+      where: { key: roleKey },
+      include: {
+        permissions: {
+          include: {
+            permission: { select: { key: true } },
+          },
         },
       },
-    },
-  });
+    });
+    defaults = new Set<string>(role?.permissions.map((rp) => rp.permission.key) ?? []);
+  } catch {
+    // Role/Permission tables not yet migrated — treat role as having no defaults.
+    // ADMIN bypass in resolvePermission() ensures ADMIN users retain full access.
+  }
 
-  const defaults = new Set<string>(role?.permissions.map((rp) => rp.permission.key) ?? []);
   _roleDefaultsCache.set(roleKey, defaults);
   return defaults;
 }

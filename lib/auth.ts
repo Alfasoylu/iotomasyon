@@ -87,33 +87,55 @@ export const getCurrentSession = cache(async (): Promise<ResolvedUser | null> =>
   }
 
   const { prisma } = await import("@/lib/prisma");
-  const user = await prisma.user.findUnique({
-    where: { id: payload.userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      isActive: true,
-      // Load all user permission overrides in the same query.
-      // Used by resolvePermission() without additional DB calls.
-      userPermissions: {
-        select: {
-          granted: true,
-          permission: { select: { key: true } },
+
+  // Try to load user with permission overrides.
+  // Falls back to empty userPermissions if the Phase 5 tables don't exist yet
+  // (i.e. migration hasn't been applied to this environment).
+  let user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    isActive: boolean;
+    userPermissions: Array<{ granted: boolean; permission: { key: string } }>;
+  } | null = null;
+
+  try {
+    const row = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        userPermissions: {
+          select: {
+            granted: true,
+            permission: { select: { key: true } },
+          },
         },
       },
-    },
-  });
+    });
+    if (row) {
+      user = { ...row, role: row.role as string };
+    }
+  } catch {
+    // Phase 5 tables not yet migrated — load user without permission overrides.
+    const row = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, name: true, role: true, isActive: true },
+    });
+    if (row) {
+      user = { ...row, role: row.role as string, userPermissions: [] };
+    }
+  }
 
   if (!user || !user.isActive) {
     return null;
   }
 
-  return {
-    ...user,
-    role: user.role as string,
-  };
+  return user;
 });
 
 // ── requireUser ───────────────────────────────────────────────────────────────
