@@ -19,6 +19,10 @@
 ### CRM
 - Implemented single internal authentication flow
 - Added protected application shell
+- Added RBAC foundation with role and permission schema support
+- Added admin user management routes
+- Added permission-aware navigation filtering
+- Added server-side permission resolution foundation
 - Implemented customer CRUD
 - Added customer lifecycle status flow
 - Added customer note and task linkage foundations

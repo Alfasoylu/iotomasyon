@@ -6,12 +6,12 @@ This document defines the authorization model for IOTOMASYON.
 
 It exists to prevent ad-hoc permission decisions during RBAC implementation.
 
-This is the target permission architecture for Phase 5.
+This document defines the target permission architecture and the intended direction of the current Phase 5 foundation.
 
 Important:
 - Current production auth is single internal auth.
-- RBAC is NOT implemented yet.
-- This document defines the intended model.
+- RBAC foundation is implemented.
+- This document still defines the broader intended model and remaining direction.
 
 ---
 

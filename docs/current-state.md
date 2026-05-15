@@ -36,6 +36,8 @@ It is not yet:
 Implemented modules:
 - authentication (single internal auth)
 - protected app shell
+- RBAC foundation
+- admin user management
 - product management
 - category management
 - attribute system
@@ -66,15 +68,16 @@ Clarification:
 Current auth state:
 - single internal auth
 - internal login/logout flow exists
+- RBAC foundation exists
 - protected routes exist
 - app shell protection exists
 
 Current limitation:
-- not RBAC-ready
+- RBAC is not yet roadmap-complete
 
 Meaning:
-- the system is still effectively admin-centric
-- it is not ready for permission-aware company-wide rollout
+- server-side permission enforcement and permission-aware navigation exist
+- broader restricted-user rollout still needs acceptance validation
 
 ---
 
@@ -157,7 +160,7 @@ Current meaning:
 
 ## Known Technical Debt
 
-- auth not RBAC-ready
+- RBAC foundation exists but is not yet rollout-complete
 - product cost model incomplete
 - no marketplace schema
 - no XML ingestion architecture

@@ -34,6 +34,8 @@ Current reality:
 Implemented modules:
 - authentication (single internal auth)
 - protected app shell
+- RBAC foundation
+- admin user management
 - product management
 - category management
 - attribute system
@@ -120,8 +122,9 @@ Verified outcome:
 - app shell is protected
 
 Notes:
-- current auth is single internal auth
-- RBAC not implemented
+- current auth base remains single internal auth
+- RBAC foundation is implemented
+- broader rollout verification and governance hardening remain incomplete
 
 ---
 
@@ -183,13 +186,19 @@ Verified outcome:
 ---
 
 ## Phase 5 — Role Based Access Control (RBAC)
-Status: NOT STARTED
+Status: PARTIAL
+
+Completed:
+- expanded role model in schema
+- permission matrix foundation in code
+- permission-aware sidebar visibility
+- server-side permission enforcement foundation
+- admin user management routes
 
 Missing:
-- real multi-user role system
-- permission matrix
-- permission-aware sidebar visibility
-- server-side permission enforcement beyond single internal auth
+- broader restricted-user rollout verification
+- permission governance documentation hardening
+- full organization-wide acceptance validation
 
 ---
 
@@ -414,7 +423,7 @@ Missing:
 
 # Technical Debt
 
-- auth not RBAC-ready
+- RBAC foundation exists but full governance and rollout verification are incomplete
 - product cost model incomplete
 - no marketplace schema
 - no XML ingestion architecture

@@ -2,36 +2,100 @@
 
 ## Purpose
 
-This document is the single source of truth for the current Prisma schema reality.
+This document describes the actual current Prisma schema state.
 
-It must describe:
-- what actually exists in `prisma/schema.prisma`
-- what current relationships are active
-- what current schema limits exist
+It is the schema companion to:
+- `docs/PROGRESS.md`
+- `docs/current-state.md`
+- `prisma/schema.prisma`
 
-It must not describe roadmap-only concepts as implemented schema.
+It must stay factual.
+
+Roadmap intent must not be documented here as if it already exists in schema.
 
 ---
 
 ## Current Core Models
 
+### Role
+
+Purpose:
+- RBAC role metadata
+- default permission grouping
+
+Key relationships:
+- `Role` -> `RolePermission`
+
+Important fields:
+- `id`
+- `key`
+- `name`
+- `isSystem`
+- `createdAt`
+- `updatedAt`
+
+### Permission
+
+Purpose:
+- canonical permission registry
+
+Key relationships:
+- `Permission` -> `RolePermission`
+- `Permission` -> `UserPermission`
+
+Important fields:
+- `id`
+- `key`
+- `name`
+- `category`
+- `createdAt`
+- `updatedAt`
+
+### RolePermission
+
+Purpose:
+- default permission mapping for a role
+
+Key relationships:
+- `roleId` -> `Role`
+- `permissionId` -> `Permission`
+
+Important fields:
+- `roleId`
+- `permissionId`
+
+### UserPermission
+
+Purpose:
+- per-user permission override
+- explicit grant or explicit deny
+
+Key relationships:
+- `userId` -> `User`
+- `permissionId` -> `Permission`
+
+Important fields:
+- `userId`
+- `permissionId`
+- `granted`
+- `createdAt`
+
 ### User
 
 Purpose:
 - internal application user identity
-- creator/owner/assignee relationships
+- owner/creator/assignee relationships
+- RBAC override anchor
 
 Key relationships:
-- creates products
-- creates notes
-- creates interests
-- owns interests
-- creates tasks
-- owns tasks
-- creates quotes
-- creates category interests
-- creates campaigns
-- owns customers
+- `User` -> `UserPermission`
+- `User` -> `Product`
+- `User` -> `Customer`
+- `User` -> `ProductInterest`
+- `User` -> `FollowUpTask`
+- `User` -> `Quote`
+- `User` -> `CategoryInterest`
+- `User` -> `OutreachCampaign`
 
 Important fields:
 - `id`
@@ -47,13 +111,13 @@ Important fields:
 
 Purpose:
 - product category tree
-- category-level product and customer relationship context
+- category-level relationship context
 
 Key relationships:
-- parent/child category tree
-- linked to products
-- linked to category interests
-- linked to campaigns
+- self-referencing parent/child tree
+- `ProductCategory` -> `Product`
+- `ProductCategory` -> `CategoryInterest`
+- `ProductCategory` -> `OutreachCampaign`
 
 Important fields:
 - `id`
@@ -68,17 +132,17 @@ Important fields:
 
 Purpose:
 - core product record
-- inventory-oriented product base
-- quote item and outreach context
+- product-side anchor for CRM relationships, quotes, campaigns, and future inventory intelligence
 
 Key relationships:
-- belongs to optional category
-- linked to product interests
-- linked to notes
-- linked to tasks
-- linked to quote items
-- linked to campaigns
-- linked to attribute assignments
+- optional `categoryId` -> `ProductCategory`
+- optional `createdById` -> `User`
+- `Product` -> `ProductInterest`
+- `Product` -> `Note`
+- `Product` -> `FollowUpTask`
+- `Product` -> `QuoteItem`
+- `Product` -> `OutreachCampaign`
+- `Product` -> `ProductAttributeAssignment`
 
 Important fields:
 - `id`
@@ -108,8 +172,8 @@ Purpose:
 - reusable product/customer attribute vocabulary
 
 Key relationships:
-- assigned to products
-- linked to customer attribute interests
+- `ProductAttribute` -> `ProductAttributeAssignment`
+- `ProductAttribute` -> `CustomerAttributeInterest`
 
 Important fields:
 - `id`
@@ -119,10 +183,11 @@ Important fields:
 ### ProductAttributeAssignment
 
 Purpose:
-- junction between products and attributes
+- product-to-attribute junction
 
 Key relationships:
-- product ↔ attribute
+- `productId` -> `Product`
+- `attributeId` -> `ProductAttribute`
 
 Important fields:
 - `productId`
@@ -133,17 +198,17 @@ Important fields:
 
 Purpose:
 - CRM customer record
-- anchor for notes, tasks, interests, quotes, outreach, and ownership
+- anchor for notes, tasks, quotes, outreach, and relationship tracking
 
 Key relationships:
-- linked to product interests
-- linked to category interests
-- linked to timeline notes
-- linked to follow-up tasks
-- linked to quotes
-- linked to outreach recipients
-- linked to attribute interests
-- optional owner user
+- optional `ownedById` -> `User`
+- `Customer` -> `ProductInterest`
+- `Customer` -> `CategoryInterest`
+- `Customer` -> `Note`
+- `Customer` -> `FollowUpTask`
+- `Customer` -> `Quote`
+- `Customer` -> `OutreachRecipient`
+- `Customer` -> `CustomerAttributeInterest`
 
 Important fields:
 - `id`
@@ -171,10 +236,11 @@ Important fields:
 ### CustomerAttributeInterest
 
 Purpose:
-- junction between customers and attributes
+- customer-to-attribute junction
 
 Key relationships:
-- customer ↔ attribute
+- `customerId` -> `Customer`
+- `attributeId` -> `ProductAttribute`
 
 Important fields:
 - `customerId`
@@ -187,8 +253,9 @@ Purpose:
 - category-level customer relationship tracking
 
 Key relationships:
-- customer ↔ category
-- created by optional user
+- `customerId` -> `Customer`
+- `categoryId` -> `ProductCategory`
+- optional `createdById` -> `User`
 
 Important fields:
 - `id`
@@ -203,14 +270,14 @@ Important fields:
 ### ProductInterest
 
 Purpose:
-- product-level customer interest and follow-up tracking
+- product-level customer interest and sales follow-up tracking
 
 Key relationships:
-- belongs to customer
-- belongs to product
-- optional creator user
-- optional assignee user
-- linked to notes
+- `customerId` -> `Customer`
+- `productId` -> `Product`
+- optional `createdById` -> `User`
+- optional `assignedToId` -> `User`
+- `ProductInterest` -> `Note`
 
 Important fields:
 - `id`
@@ -239,10 +306,10 @@ Purpose:
 - timeline/note record across customer, product, or interest context
 
 Key relationships:
-- optional customer
-- optional product
-- optional interest
-- optional creator user
+- optional `customerId` -> `Customer`
+- optional `productId` -> `Product`
+- optional `interestId` -> `ProductInterest`
+- optional `createdById` -> `User`
 
 Important fields:
 - `id`
@@ -260,10 +327,10 @@ Purpose:
 - follow-up task tracking
 
 Key relationships:
-- optional customer
-- optional product
-- optional assigned user
-- optional creator user
+- optional `customerId` -> `Customer`
+- optional `productId` -> `Product`
+- optional `assignedToId` -> `User`
+- optional `createdById` -> `User`
 
 Important fields:
 - `id`
@@ -286,10 +353,10 @@ Purpose:
 - quote workflow v1 record
 
 Key relationships:
-- belongs to customer
-- optional creator user
-- has quote items
-- linked to outreach recipients
+- `customerId` -> `Customer`
+- optional `createdById` -> `User`
+- `Quote` -> `QuoteItem`
+- `Quote` -> `OutreachRecipient`
 
 Important fields:
 - `id`
@@ -318,8 +385,8 @@ Purpose:
 - line item inside a quote
 
 Key relationships:
-- belongs to quote
-- optional product link
+- `quoteId` -> `Quote`
+- optional `productId` -> `Product`
 
 Important fields:
 - `id`
@@ -340,10 +407,10 @@ Purpose:
 - outbound campaign container
 
 Key relationships:
-- optional product
-- optional category
-- optional creator user
-- has outreach recipients
+- optional `productId` -> `Product`
+- optional `categoryId` -> `ProductCategory`
+- optional `createdById` -> `User`
+- `OutreachCampaign` -> `OutreachRecipient`
 
 Important fields:
 - `id`
@@ -364,9 +431,9 @@ Purpose:
 - recipient-level campaign tracking
 
 Key relationships:
-- belongs to campaign
-- belongs to customer
-- optional linked quote
+- `campaignId` -> `OutreachCampaign`
+- `customerId` -> `Customer`
+- optional `quoteId` -> `Quote`
 
 Important fields:
 - `id`
@@ -401,41 +468,42 @@ Important fields:
 
 ## Current Active Relationships
 
-- `User` → `Product`
-- `User` → `Customer`
-- `User` → `ProductInterest`
-- `User` → `FollowUpTask`
-- `User` → `Quote`
-- `User` → `CategoryInterest`
-- `User` → `OutreachCampaign`
-- `ProductCategory` → `Product`
-- `ProductCategory` → `CategoryInterest`
-- `ProductCategory` → `OutreachCampaign`
-- `Product` ↔ `ProductAttribute` through `ProductAttributeAssignment`
-- `Customer` ↔ `ProductAttribute` through `CustomerAttributeInterest`
-- `Customer` ↔ `Product` through `ProductInterest`
-- `Customer` ↔ `ProductCategory` through `CategoryInterest`
-- `Customer` → `Note`
-- `Customer` → `FollowUpTask`
-- `Customer` → `Quote`
-- `Customer` → `OutreachRecipient`
-- `Quote` → `QuoteItem`
-- `Quote` ↔ `OutreachRecipient`
-- `OutreachCampaign` → `OutreachRecipient`
+- `Role` <-> `Permission` through `RolePermission`
+- `User` <-> `Permission` through `UserPermission`
+- `User` -> `Product`
+- `User` -> `Customer`
+- `User` -> `ProductInterest`
+- `User` -> `FollowUpTask`
+- `User` -> `Quote`
+- `User` -> `CategoryInterest`
+- `User` -> `OutreachCampaign`
+- `ProductCategory` -> `Product`
+- `ProductCategory` -> `CategoryInterest`
+- `ProductCategory` -> `OutreachCampaign`
+- `Product` <-> `ProductAttribute` through `ProductAttributeAssignment`
+- `Customer` <-> `ProductAttribute` through `CustomerAttributeInterest`
+- `Customer` <-> `Product` through `ProductInterest`
+- `Customer` <-> `ProductCategory` through `CategoryInterest`
+- `Customer` -> `Note`
+- `Customer` -> `FollowUpTask`
+- `Customer` -> `Quote`
+- `Customer` -> `OutreachRecipient`
+- `Quote` -> `QuoteItem`
+- `Quote` -> `OutreachRecipient`
+- `OutreachCampaign` -> `OutreachRecipient`
 
 ---
 
 ## Technical Constraints
 
-- Current auth schema supports single internal auth, not RBAC.
-- Current `User.role` field exists for legacy/simple internal auth only.
-- It does NOT represent a complete RBAC permission governance system.
-- Role presence must not be interpreted as implemented authorization architecture.
-- There is no permission matrix model in Prisma.
-- Product cost data is partial and not a profitability engine.
+- Current schema includes RBAC foundation models.
+- Current `User.role` field still exists and participates in the internal auth foundation.
+- Current `User.role` field does NOT represent a complete RBAC permission governance system by itself.
+- Role and permission tables must not be interpreted as roadmap-complete authorization architecture.
+- Product cost data is partial and is not yet a profitability engine.
 - Quote schema supports quote workflow v1, not quote professionalization v2.
-- Current activity-related models are not audit-grade event history.
-- Current schema is relationship-aware for CRM, but not intelligence-complete.
+- Current activity-related models are operational timeline models, not audit-grade event history.
+- Current schema is relationship-aware for CRM and quoting, but not intelligence-complete.
 
 ---
 
@@ -445,7 +513,6 @@ Important fields:
 - no supplier schema
 - no profitability schema
 - no XML ingestion schema
-- no RBAC permission schema
 - no executive KPI schema
 - no procurement decision schema
 - no import cost calculator schema
@@ -458,6 +525,7 @@ Important fields:
 - Prisma migration folder exists under `prisma/migrations`
 - The project is operating on committed migration history, not ad hoc schema-only assumptions
 - Production architecture assumes Supabase PostgreSQL
+- Current schema now includes RBAC-related models and therefore requires migration discipline for auth/permission changes
 - Future schema-heavy phases increase migration risk significantly
 
 Schema safety notes:

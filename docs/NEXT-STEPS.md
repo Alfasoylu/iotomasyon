@@ -24,10 +24,11 @@ Current reality:
 - relationship engine exists
 - task and outreach foundations exist
 - Turkish location layer exists
+- RBAC foundation exists
 - intelligence systems do not exist yet
 
 This means the product is operationally useful for internal CRM and quote workflows, but not yet ready for:
-- safe multi-user rollout
+- permission-complete multi-user rollout
 - owner-grade financial intelligence
 - marketplace intelligence
 - procurement intelligence
@@ -53,18 +54,17 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means establishing minimum safety rules before Phase 5+ implementation
 
-### Priority 1 — Phase 5: RBAC
+### Priority 1 — Phase 5: RBAC Hardening and Rollout Verification
 
 Why:
-Safe multi-user rollout is impossible without permissions.
+Safe multi-user rollout is impossible without verified permissions.
 
 Deliverables:
-- user model review
-- role model
-- permission matrix
-- protected routes by permission
-- sidebar permission filtering
-- admin user management UI
+- restricted-user smoke testing
+- permission matrix verification against implemented routes/actions
+- financial permission boundary verification
+- admin user management QA
+- documentation alignment across schema/current-state/progress docs
 
 Acceptance:
 - admin can create and disable user accounts
@@ -72,7 +72,7 @@ Acceptance:
 - blocked users cannot access restricted routes
 - server-side permission checks enforce access rules
 - sidebar visibility reflects permission state
-- financial modules are admin-only by design
+- documented permission model matches implemented foundation
 
 ### Priority 2 — Phase 6: Customer Intelligence Expansion
 
