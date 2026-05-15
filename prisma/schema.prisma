@@ -93,6 +93,16 @@ enum OutreachStatus {
   COMPLETED
 }
 
+enum CustomerType {
+  TOPTAN
+  PERAKENDE
+  SITE_YONETICISI
+  GUVENLIK_SIRKETI
+  MAGAZA
+  ONLINE_SATICI
+  CUSTOM
+}
+
 model ProductAttribute {
   id                String                       @id @default(cuid())
   name              String                       @unique
@@ -283,8 +293,10 @@ model Customer {
   company           String?
   status            CustomerStatus     @default(NEW)
   country           String?
-  customerNotes     String?            @map("notes")
-  customerType      String?
+  customerNotes         String?            @map("notes")
+  customerType          CustomerType?
+  monthlySalesPotential Decimal?
+  platformNotes         String?
   city              String?
   district          String?
   address           String?

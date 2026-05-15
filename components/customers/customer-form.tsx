@@ -18,25 +18,30 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   CUSTOMER_STATUS_OPTIONS,
   CUSTOMER_SOURCE_OPTIONS,
+  CUSTOMER_TYPE_OPTIONS,
+  CUSTOMER_TYPE_LABELS,
   type CustomerFormValues,
 } from "@/types/customers";
 import type { AttributeOption } from "@/services/attribute-service";
 import type { UserOption } from "@/services/customer-service";
 
 const emptyValues: CustomerFormValues = {
-  name:      "",
-  company:   "",
-  phone:     "",
-  whatsapp:  "",
-  email:     "",
-  taxNumber: "",
-  address:   "",
-  city:      "",
-  district:  "",
-  notes:     "",
-  status:    "NEW",
-  source:    "",
-  ownedById: "",
+  name:                  "",
+  company:               "",
+  phone:                 "",
+  whatsapp:              "",
+  email:                 "",
+  taxNumber:             "",
+  address:               "",
+  city:                  "",
+  district:              "",
+  notes:                 "",
+  status:                "NEW",
+  source:                "",
+  ownedById:             "",
+  customerType:          "",
+  monthlySalesPotential: "",
+  platformNotes:         "",
 };
 
 export function CustomerForm({
@@ -188,6 +193,26 @@ export function CustomerForm({
             ))}
           </select>
         </Field>
+        <Field label="Müşteri tipi" error={form.formState.errors.customerType?.message}>
+          <select
+            {...form.register("customerType")}
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+          >
+            <option value="">— Tip seçin —</option>
+            {CUSTOMER_TYPE_OPTIONS.map((t) => (
+              <option key={t} value={t}>{CUSTOMER_TYPE_LABELS[t]}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Aylık satış potansiyeli (USD)" error={form.formState.errors.monthlySalesPotential?.message}>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            {...form.register("monthlySalesPotential")}
+          />
+        </Field>
         {users.length > 0 && (
           <Field label="Müşteri sahibi" error={form.formState.errors.ownedById?.message}>
             <select
@@ -209,6 +234,14 @@ export function CustomerForm({
 
       <Field label="Notlar" error={form.formState.errors.notes?.message}>
         <Textarea {...form.register("notes")} className="min-h-24" />
+      </Field>
+
+      <Field label="Platform notları" error={form.formState.errors.platformNotes?.message}>
+        <Textarea
+          {...form.register("platformNotes")}
+          className="min-h-24"
+          placeholder="Platform özelinde notlar (ör. Trendyol mağaza linki, özel anlaşmalar...)"
+        />
       </Field>
 
       {allAttributes.length > 0 && (

@@ -73,19 +73,24 @@ export default async function EditCustomerPage({
           allAttributes={allAttributes}
           initialAttributeIds={customer.attributeInterests.map((ai) => ai.attributeId)}
           initialValues={{
-            name:      customer.name,
-            company:   customer.company   ?? "",
-            phone:     customer.phone     ?? "",
-            whatsapp:  customer.whatsapp  ?? "",
-            email:     customer.email     ?? "",
-            taxNumber: customer.taxNumber ?? "",
-            address:   customer.address   ?? "",
-            city:      customer.city      ?? "",
-            district:  customer.district  ?? "",
-            notes:     customer.customerNotes ?? "",
-            status:    customer.status,
-            source:    customer.source    ?? "",
-            ownedById: customer.ownedById ?? "",
+            name:                  customer.name,
+            company:               customer.company      ?? "",
+            phone:                 customer.phone        ?? "",
+            whatsapp:              customer.whatsapp     ?? "",
+            email:                 customer.email        ?? "",
+            taxNumber:             customer.taxNumber    ?? "",
+            address:               customer.address      ?? "",
+            city:                  customer.city         ?? "",
+            district:              customer.district     ?? "",
+            notes:                 customer.customerNotes ?? "",
+            status:                customer.status,
+            source:                customer.source       ?? "",
+            ownedById:             customer.ownedById    ?? "",
+            customerType:          customer.customerType ?? "",
+            monthlySalesPotential: customer.monthlySalesPotential != null
+              ? String(customer.monthlySalesPotential)
+              : "",
+            platformNotes:         customer.platformNotes ?? "",
           }}
           cities={cities}
           districtsByCity={districtsByCity}

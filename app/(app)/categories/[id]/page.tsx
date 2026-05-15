@@ -10,6 +10,7 @@ import { formatDateTime } from "@/lib/utils";
 import { getCategoryById } from "@/services/category-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 
 export const dynamic = "force-dynamic";
 
@@ -152,9 +153,14 @@ export default async function CategoryDetailPage({
                 <Link key={interest.id} href={`/customers/${interest.customer.id}`}>
                   <div className="flex items-start justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 hover:border-slate-200 transition">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {interest.customer.name}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {interest.customer.name}
+                        </p>
+                        {interest.customer.customerType ? (
+                          <Badge tone="default">{CUSTOMER_TYPE_LABELS[interest.customer.customerType]}</Badge>
+                        ) : null}
+                      </div>
                       {interest.customer.company ? (
                         <p className="text-xs text-slate-500">{interest.customer.company}</p>
                       ) : null}

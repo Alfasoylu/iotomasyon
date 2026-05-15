@@ -6,7 +6,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { buildQueryString } from "@/lib/utils";
-import { CUSTOMER_STATUS_OPTIONS, CUSTOMER_SOURCE_OPTIONS } from "@/types/customers";
+import {
+  CUSTOMER_STATUS_OPTIONS,
+  CUSTOMER_SOURCE_OPTIONS,
+  CUSTOMER_TYPE_OPTIONS,
+  CUSTOMER_TYPE_LABELS,
+} from "@/types/customers";
 import { formatCustomerStatus } from "@/lib/customer-utils";
 import type { AttributeOption } from "@/services/attribute-service";
 import type { UserOption } from "@/services/customer-service";
@@ -17,6 +22,7 @@ export function CustomerFilters({
   initialSource,
   initialOwnedById,
   initialAttributeId,
+  initialCustomerType,
   users,
   attributes = [],
 }: {
@@ -25,29 +31,32 @@ export function CustomerFilters({
   initialSource: string;
   initialOwnedById: string;
   initialAttributeId: string;
+  initialCustomerType: string;
   users: UserOption[];
   attributes?: AttributeOption[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [query,       setQuery]       = useState(initialQuery);
-  const [status,      setStatus]      = useState(initialStatus);
-  const [source,      setSource]      = useState(initialSource);
-  const [ownedById,   setOwnedById]   = useState(initialOwnedById);
-  const [attributeId, setAttributeId] = useState(initialAttributeId);
+  const [query,        setQuery]        = useState(initialQuery);
+  const [status,       setStatus]       = useState(initialStatus);
+  const [source,       setSource]       = useState(initialSource);
+  const [ownedById,    setOwnedById]    = useState(initialOwnedById);
+  const [attributeId,  setAttributeId]  = useState(initialAttributeId);
+  const [customerType, setCustomerType] = useState(initialCustomerType);
 
   return (
     <form
-      className="grid gap-3 md:grid-cols-[minmax(0,2fr)_160px_160px_160px_160px_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,2fr)_160px_160px_160px_160px_160px_auto]"
       onSubmit={(event) => {
         event.preventDefault();
 
         const nextQuery = buildQueryString(searchParams, {
-          q:           query       || undefined,
-          status:      status      !== "all" ? status      : undefined,
-          source:      source      !== "all" ? source      : undefined,
-          ownedById:   ownedById   !== "all" ? ownedById   : undefined,
-          attributeId: attributeId !== "all" ? attributeId : undefined,
+          q:            query        || undefined,
+          status:       status       !== "all" ? status       : undefined,
+          source:       source       !== "all" ? source       : undefined,
+          ownedById:    ownedById    !== "all" ? ownedById    : undefined,
+          attributeId:  attributeId  !== "all" ? attributeId  : undefined,
+          customerType: customerType !== "all" ? customerType : undefined,
         });
 
         router.push(`/customers${nextQuery}`);
@@ -106,6 +115,17 @@ export function CustomerFilters({
           ))}
         </select>
       )}
+
+      <select
+        value={customerType}
+        onChange={(event) => setCustomerType(event.target.value)}
+        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+      >
+        <option value="all">Tüm tipler</option>
+        {CUSTOMER_TYPE_OPTIONS.map((t) => (
+          <option key={t} value={t}>{CUSTOMER_TYPE_LABELS[t]}</option>
+        ))}
+      </select>
 
       <Button type="submit">Filtrele</Button>
     </form>

@@ -11,6 +11,7 @@ export type CustomerFilters = {
   source?: string;
   ownedById?: string;
   attributeId?: string;
+  customerType?: string;
 };
 
 export type UserOption = {
@@ -104,6 +105,10 @@ export async function listCustomers(filters: CustomerFilters) {
 
   if (filters.attributeId && filters.attributeId !== "all") {
     where.attributeInterests = { some: { attributeId: filters.attributeId } };
+  }
+
+  if (filters.customerType && filters.customerType !== "all") {
+    where.customerType = filters.customerType as import("@prisma/client").CustomerType;
   }
 
   try {

@@ -1,3 +1,25 @@
+export const CUSTOMER_TYPE_OPTIONS = [
+  "TOPTAN",
+  "PERAKENDE",
+  "SITE_YONETICISI",
+  "GUVENLIK_SIRKETI",
+  "MAGAZA",
+  "ONLINE_SATICI",
+  "CUSTOM",
+] as const;
+
+export type CustomerType = (typeof CUSTOMER_TYPE_OPTIONS)[number];
+
+export const CUSTOMER_TYPE_LABELS: Record<CustomerType, string> = {
+  TOPTAN:           "Toptan",
+  PERAKENDE:        "Perakende",
+  SITE_YONETICISI:  "Site Yöneticisi",
+  GUVENLIK_SIRKETI: "Güvenlik Şirketi",
+  MAGAZA:           "Mağaza",
+  ONLINE_SATICI:    "Online Satıcı",
+  CUSTOM:           "Özel",
+};
+
 export const CUSTOMER_STATUS_OPTIONS = [
   "NEW",
   "CONTACTED",
@@ -71,6 +93,9 @@ export type CustomerFormValues = {
   status: CustomerStatus;
   source: string;
   ownedById: string;
+  customerType: string;
+  monthlySalesPotential: string;
+  platformNotes: string;
 };
 
 export type CustomerInterestFormValues = {

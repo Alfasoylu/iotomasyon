@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { InterestStage } from "@prisma/client";
+import type { CustomerType, InterestStage } from "@prisma/client";
 
 import { isDatabaseUnavailableError } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
@@ -33,7 +33,7 @@ export type CategoryDetail = {
     stage: InterestStage;
     notes: string | null;
     createdAt: Date;
-    customer: { id: string; name: string; company: string | null; phone: string | null };
+    customer: { id: string; name: string; company: string | null; phone: string | null; customerType: CustomerType | null };
     createdBy: { id: string; name: string } | null;
   }[];
 };
@@ -76,7 +76,7 @@ export async function getCategoryById(id: string): Promise<
         },
         interests: {
           include: {
-            customer: { select: { id: true, name: true, company: true, phone: true } },
+            customer: { select: { id: true, name: true, company: true, phone: true, customerType: true } },
             createdBy: { select: { id: true, name: true } },
           },
           orderBy: { createdAt: "desc" },
@@ -118,7 +118,7 @@ export async function getProductIntelligence(productId: string) {
         categoryId: true,
         interests: {
           include: {
-            customer: { select: { id: true, name: true, company: true, phone: true } },
+            customer: { select: { id: true, name: true, company: true, phone: true, customerType: true } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -137,7 +137,7 @@ export async function getProductIntelligence(productId: string) {
         ? prisma.categoryInterest.findMany({
             where: { categoryId: product.categoryId },
             include: {
-              customer: { select: { id: true, name: true, company: true, phone: true } },
+              customer: { select: { id: true, name: true, company: true, phone: true, customerType: true } },
             },
             orderBy: { createdAt: "desc" },
           })
@@ -152,7 +152,7 @@ export async function getProductIntelligence(productId: string) {
       ? await prisma.customerAttributeInterest.findMany({
           where: { attributeId: { in: productAttrRows.map((r) => r.attributeId) } },
           include: {
-            customer: { select: { id: true, name: true, company: true, phone: true } },
+            customer: { select: { id: true, name: true, company: true, phone: true, customerType: true } },
             attribute: { select: { id: true, name: true } },
           },
           orderBy: { createdAt: "desc" },

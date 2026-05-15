@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CUSTOMER_STATUS_OPTIONS } from "@/types/customers";
+import { CUSTOMER_STATUS_OPTIONS, CUSTOMER_TYPE_OPTIONS } from "@/types/customers";
 
 const optionalEmail = z
   .string()
@@ -21,9 +21,12 @@ export const customerSchema = z.object({
   city:      z.string().trim().max(120),
   district:  z.string().trim().max(120),
   notes:     z.string().trim().max(2000),
-  status:    z.enum(CUSTOMER_STATUS_OPTIONS),
-  source:    z.string().trim().max(80),
-  ownedById: z.string().trim().max(40),
+  status:                z.enum(CUSTOMER_STATUS_OPTIONS),
+  source:                z.string().trim().max(80),
+  ownedById:             z.string().trim().max(40),
+  customerType:          z.string().trim().max(40),
+  monthlySalesPotential: z.string().trim().max(20),
+  platformNotes:         z.string().trim().max(2000),
 });
 
 export type CustomerInput = z.infer<typeof customerSchema>;

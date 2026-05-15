@@ -202,21 +202,26 @@ export async function deleteCustomerAction(customerId: string): Promise<ActionRe
 }
 
 function normalizeCustomerData(input: CustomerInput) {
+  const customerTypeRaw = input.customerType?.trim();
+  const mspRaw = input.monthlySalesPotential?.trim();
   return {
-    name:         input.name.trim(),
-    company:      emptyToNull(input.company),
-    phone:        emptyToNull(input.phone),
-    whatsapp:     emptyToNull(input.whatsapp),
-    email:        emptyToNull(input.email?.toLowerCase()),
-    taxNumber:    emptyToNull(input.taxNumber),
-    address:      emptyToNull(input.address),
-    city:         emptyToNull(input.city),
-    district:     emptyToNull(input.district),
-    country:      "Türkiye",
-    customerNotes: emptyToNull(input.notes),
-    status:       input.status,
-    source:       emptyToNull(input.source),
-    ownedById:    emptyToNull(input.ownedById),
+    name:                  input.name.trim(),
+    company:               emptyToNull(input.company),
+    phone:                 emptyToNull(input.phone),
+    whatsapp:              emptyToNull(input.whatsapp),
+    email:                 emptyToNull(input.email?.toLowerCase()),
+    taxNumber:             emptyToNull(input.taxNumber),
+    address:               emptyToNull(input.address),
+    city:                  emptyToNull(input.city),
+    district:              emptyToNull(input.district),
+    country:               "Türkiye",
+    customerNotes:         emptyToNull(input.notes),
+    status:                input.status,
+    source:                emptyToNull(input.source),
+    ownedById:             emptyToNull(input.ownedById),
+    customerType:          customerTypeRaw ? (customerTypeRaw as import("@prisma/client").CustomerType) : null,
+    monthlySalesPotential: mspRaw && mspRaw.length > 0 ? parseFloat(mspRaw) : null,
+    platformNotes:         emptyToNull(input.platformNotes),
   };
 }
 

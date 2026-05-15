@@ -10,6 +10,7 @@ import {
   formatCustomerStatus,
   getCustomerStatusTone,
 } from "@/lib/customer-utils";
+import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 import { listCustomers, listUsersForSelect } from "@/services/customer-service";
 import { listAttributes } from "@/services/attribute-service";
 import { requirePermission } from "@/lib/auth";
@@ -24,14 +25,15 @@ export default async function CustomersPage({
 }) {
   await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const params = await searchParams;
-  const query       = typeof params.q           === "string" ? params.q           : "";
-  const status      = typeof params.status      === "string" ? params.status      : "all";
-  const source      = typeof params.source      === "string" ? params.source      : "all";
-  const ownedById   = typeof params.ownedById   === "string" ? params.ownedById   : "all";
-  const attributeId = typeof params.attributeId === "string" ? params.attributeId : "all";
+  const query        = typeof params.q            === "string" ? params.q            : "";
+  const status       = typeof params.status       === "string" ? params.status       : "all";
+  const source       = typeof params.source       === "string" ? params.source       : "all";
+  const ownedById    = typeof params.ownedById    === "string" ? params.ownedById    : "all";
+  const attributeId  = typeof params.attributeId  === "string" ? params.attributeId  : "all";
+  const customerType = typeof params.customerType === "string" ? params.customerType : "all";
 
   const [{ databaseAvailable, customers }, users, attributes] = await Promise.all([
-    listCustomers({ q: query, status, source, ownedById, attributeId }),
+    listCustomers({ q: query, status, source, ownedById, attributeId, customerType }),
     listUsersForSelect(),
     listAttributes(),
   ]);
@@ -62,6 +64,7 @@ export default async function CustomersPage({
           initialSource={source}
           initialOwnedById={ownedById}
           initialAttributeId={attributeId}
+          initialCustomerType={customerType}
           users={users}
           attributes={attributes}
         />
@@ -113,6 +116,7 @@ export default async function CustomersPage({
                 <th className="px-4 py-3">Müşteri</th>
                 <th className="px-4 py-3">İletişim</th>
                 <th className="px-4 py-3">Şehir</th>
+                <th className="px-4 py-3">Tip</th>
                 <th className="px-4 py-3">Kaynak</th>
                 <th className="px-4 py-3">Sorumlu</th>
                 <th className="px-4 py-3">Durum</th>
@@ -122,7 +126,7 @@ export default async function CustomersPage({
             <tbody className="divide-y divide-slate-100 bg-white text-sm">
               {customers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                     Bu filtrelerle eşleşen müşteri bulunamadı.
                   </td>
                 </tr>
@@ -139,6 +143,11 @@ export default async function CustomersPage({
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {[customer.city, customer.country].filter(Boolean).join(" / ") || "-"}
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">
+                      {customer.customerType
+                        ? CUSTOMER_TYPE_LABELS[customer.customerType]
+                        : "-"}
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {customer.source ?? "-"}
