@@ -1,0 +1,11 @@
+{
+  "name": "iotomasyon-crm",
+  "version": "1.0.0",
+  "description": "IoT ve OT sektörüne özel Türkiye CRM asistanı. Müşteri takibi, teklif yönetimi, görev planlaması ve kampanya analizi yapar.",
+  "author": {
+    "name": "iotomasyon.com"
+  },
+  "scope": "user",
+  "requires_profile": true,
+  "profile_path": "CLAUDE.md"
+}
