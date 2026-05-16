@@ -195,6 +195,7 @@ export async function listCustomerInterestProducts() {
           id: true,
           name: true,
           sku: true,
+          sellingPriceTry: true,
         },
         orderBy: [{ name: "asc" }, { sku: "asc" }],
       }),

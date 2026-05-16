@@ -34,24 +34,48 @@ const emptyItem = {
   tax: String(DEFAULT_QUOTE_TAX_RATE),
 };
 
+type TemplateItem = {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  currency: string;
+  discount: number;
+  tax: number;
+  productId?: string | null;
+};
+
+type TemplateOption = {
+  id: string;
+  name: string;
+  description?: string | null;
+  paymentTerms?: string | null;
+  deliveryTerms?: string | null;
+  warrantyTerms?: string | null;
+  notes?: string | null;
+  items: TemplateItem[];
+};
+
 export function QuoteForm({
   customerId,
   customerName,
   customerCompany,
   products,
+  templates,
   quoteId,
   initialValues,
 }: {
   customerId: string;
   customerName?: string;
   customerCompany?: string | null;
-  products: Array<{ id: string; name: string; sku: string }>;
+  products: Array<{ id: string; name: string; sku: string; sellingPriceTry?: number | null }>;
+  templates?: TemplateOption[];
   quoteId?: string;
   initialValues?: Partial<QuoteFormValues>;
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema),
@@ -101,6 +125,28 @@ export function QuoteForm({
   );
 
   const isEdit = Boolean(quoteId);
+
+  function loadTemplate(templateId: string) {
+    const tpl = templates?.find((t) => t.id === templateId);
+    if (!tpl) return;
+    if (tpl.paymentTerms) form.setValue("paymentTerms", tpl.paymentTerms);
+    if (tpl.deliveryTerms) form.setValue("deliveryTerms", tpl.deliveryTerms);
+    if (tpl.warrantyTerms) form.setValue("warrantyTerms", tpl.warrantyTerms);
+    if (tpl.notes) form.setValue("notes", tpl.notes);
+    if (tpl.items.length > 0) {
+      const newItems = tpl.items.map((item) => ({
+        productId: item.productId ?? "",
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: String(item.unitPrice),
+        currency: item.currency,
+        discount: String(item.discount),
+        tax: String(item.tax),
+      }));
+      form.setValue("items", newItems);
+    }
+    setSelectedTemplateId("");
+  }
 
   const submit = form.handleSubmit((values) => {
     setPending(true);
@@ -184,10 +230,37 @@ export function QuoteForm({
 
           <Card className="overflow-hidden">
             <div className="border-b border-slate-200 px-6 py-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Satır editörü
-              </p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-950">Teklif kalemleri</h3>
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                    Satır editörü
+                  </p>
+                  <h3 className="mt-2 text-xl font-semibold text-slate-950">Teklif kalemleri</h3>
+                </div>
+                {templates && templates.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedTemplateId}
+                      onChange={(e) => setSelectedTemplateId(e.target.value)}
+                      className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                    >
+                      <option value="">— Şablon seç —</option>
+                      {templates.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={!selectedTemplateId}
+                      onClick={() => loadTemplate(selectedTemplateId)}
+                    >
+                      Şablondan Yükle
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-4 px-6 py-6">
@@ -235,17 +308,38 @@ export function QuoteForm({
 
                     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
                       <Field label="Ürün">
-                        <select
-                          {...form.register(`items.${index}.productId`)}
-                          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-                        >
-                          <option value="">Ürün bağlama (opsiyonel)</option>
-                          {products.map((product) => (
-                            <option key={product.id} value={product.id}>
-                              {product.name} ({product.sku})
-                            </option>
-                          ))}
-                        </select>
+                        {(() => {
+                          const { onChange: rhfOnChange, ...restReg } = form.register(`items.${index}.productId`);
+                          return (
+                            <select
+                              {...restReg}
+                              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+                              onChange={(e) => {
+                                rhfOnChange(e);
+                                const pid = e.target.value;
+                                if (pid) {
+                                  const p = products.find((pr) => pr.id === pid);
+                                  if (p) {
+                                    if (!form.getValues(`items.${index}.description`)) {
+                                      form.setValue(`items.${index}.description`, p.name);
+                                    }
+                                    if (p.sellingPriceTry != null && p.sellingPriceTry > 0) {
+                                      form.setValue(`items.${index}.unitPrice`, String(p.sellingPriceTry));
+                                      form.setValue(`items.${index}.currency`, "TRY");
+                                    }
+                                  }
+                                }
+                              }}
+                            >
+                              <option value="">Ürün bağlama (opsiyonel)</option>
+                              {products.map((product) => (
+                                <option key={product.id} value={product.id}>
+                                  {product.name} ({product.sku})
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        })()}
                       </Field>
 
                       <Field label="Açıklama" className="xl:col-span-3">

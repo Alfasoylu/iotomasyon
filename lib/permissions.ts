@@ -59,6 +59,9 @@ export const PERMISSIONS = {
   QUOTES_UPDATE:          "quotes.update",
   QUOTES_DELETE:          "quotes.delete",
   QUOTES_SEND:            "quotes.send",
+  // Phase 18 — Quote Templates
+  QUOTE_TEMPLATES_READ:   "quoteTemplates.read",
+  QUOTE_TEMPLATES_WRITE:  "quoteTemplates.write",
 
   // Tasks
   TASKS_READ:             "tasks.read",

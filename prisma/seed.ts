@@ -72,6 +72,8 @@ const PERMISSIONS = [
   { key: "quotes.update",               name: "Teklif Düzenleme",                category: "quotes" },
   { key: "quotes.delete",               name: "Teklif Silme",                    category: "quotes" },
   { key: "quotes.send",                 name: "Teklif Gönderme",                 category: "quotes" },
+  { key: "quoteTemplates.read",         name: "Teklif Şablonu Görüntüleme",      category: "quotes" },
+  { key: "quoteTemplates.write",        name: "Teklif Şablonu Yönetimi",         category: "quotes" },
 
   // Tasks
   { key: "tasks.read",                  name: "Görev Görüntüleme",               category: "tasks" },
@@ -157,6 +159,8 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
     "quotes.create",
     "quotes.update",
     "quotes.send",
+    "quoteTemplates.read",
+    "quoteTemplates.write",
     "tasks.read",
     "tasks.create",
     "tasks.update",

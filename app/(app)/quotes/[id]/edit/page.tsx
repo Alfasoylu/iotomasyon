@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { QuoteForm } from "@/components/quotes/quote-form";
 import { listProducts } from "@/services/product-service";
 import { getQuoteById } from "@/services/quote-service";
+import { listQuoteTemplates } from "@/services/quote-template-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -15,9 +16,10 @@ export default async function QuoteEditPage({
 }) {
   await requirePermission(PERMISSIONS.QUOTES_UPDATE);
   const { id } = await params;
-  const [quote, productsResult] = await Promise.all([
+  const [quote, productsResult, templates] = await Promise.all([
     getQuoteById(id),
     listProducts({}),
+    listQuoteTemplates(),
   ]);
 
   if (!quote) notFound();
@@ -67,7 +69,25 @@ export default async function QuoteEditPage({
         customerId={quote.customerId}
         customerName={quote.customer.name}
         customerCompany={quote.customer.company}
-        products={products.map((p) => ({ id: p.id, name: p.name, sku: p.sku }))}
+        products={products.map((p) => ({ id: p.id, name: p.name, sku: p.sku ?? "", sellingPriceTry: p.sellingPriceTry ? Number(p.sellingPriceTry) : null }))}
+        templates={templates.map((t) => ({
+          id: t.id,
+          name: t.name,
+          description: t.description,
+          paymentTerms: t.paymentTerms,
+          deliveryTerms: t.deliveryTerms,
+          warrantyTerms: t.warrantyTerms,
+          notes: t.notes,
+          items: t.items.map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: Number(item.unitPrice),
+            currency: item.currency,
+            discount: Number(item.discount),
+            tax: Number(item.tax),
+            productId: item.productId,
+          })),
+        }))}
         quoteId={quote.id}
         initialValues={initialValues}
       />

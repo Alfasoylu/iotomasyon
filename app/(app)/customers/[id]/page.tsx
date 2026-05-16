@@ -38,6 +38,7 @@ import { formatDateTime } from "@/lib/utils";
 import { listAttributes } from "@/services/attribute-service";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { getCustomerById, listCustomerInterestProducts } from "@/services/customer-service";
+import { listQuoteTemplates } from "@/services/quote-template-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -50,12 +51,13 @@ export default async function CustomerDetailPage({
 }) {
   await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes] =
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates] =
     await Promise.all([
       getCustomerById(id),
       listCustomerInterestProducts(),
       listCategoriesForSelect(),
       listAttributes(),
+      listQuoteTemplates(),
     ]);
 
   if (!databaseAvailable) {
@@ -338,7 +340,30 @@ export default async function CustomerDetailPage({
                       customerId={customer.id}
                       customerName={customer.name}
                       customerCompany={customer.company}
-                      products={productOptionsResult.products}
+                      products={productOptionsResult.products.map((p) => ({
+                        id: p.id,
+                        name: p.name,
+                        sku: p.sku ?? "",
+                        sellingPriceTry: p.sellingPriceTry ? Number(p.sellingPriceTry) : null,
+                      }))}
+                      templates={quoteTemplates.map((t) => ({
+                        id: t.id,
+                        name: t.name,
+                        description: t.description,
+                        paymentTerms: t.paymentTerms,
+                        deliveryTerms: t.deliveryTerms,
+                        warrantyTerms: t.warrantyTerms,
+                        notes: t.notes,
+                        items: t.items.map((item) => ({
+                          description: item.description,
+                          quantity: item.quantity,
+                          unitPrice: Number(item.unitPrice),
+                          currency: item.currency,
+                          discount: Number(item.discount),
+                          tax: Number(item.tax),
+                          productId: item.productId,
+                        })),
+                      }))}
                     />
                   </div>
                 </Card>

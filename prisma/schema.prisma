@@ -272,6 +272,7 @@ model User {
   marketplaceMappings      MarketplaceProductMapping[]    @relation("MappingCreatedBy")
   questionActionLogs       MarketplaceQuestionActionLog[] @relation("QuestionActionUser")
   returnActionLogs         MarketplaceReturnActionLog[]   @relation("ReturnActionUser")
+  quoteTemplates           QuoteTemplate[]                @relation("TemplatesCreated")
 }
 
 model ProductCategory {
@@ -353,6 +354,7 @@ model Product {
   attributeAssignments ProductAttributeAssignment[]
   marketplaceListings  MarketplaceListing[]
   marketplaceMappings  MarketplaceProductMapping[]
+  quoteTemplateItems   QuoteTemplateItem[]            @relation("TemplateItems")
 
   @@index([name])
   @@index([barcode])
@@ -549,6 +551,45 @@ model QuoteItem {
   product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([quoteId])
+  @@index([productId])
+}
+
+// Phase 18 — Quote Templates
+model QuoteTemplate {
+  id            String              @id @default(cuid())
+  name          String
+  description   String?
+  paymentTerms  String?
+  deliveryTerms String?
+  warrantyTerms String?
+  notes         String?
+  currencyMode  QuoteCurrencyMode   @default(TRY)
+  isActive      Boolean             @default(true)
+  createdById   String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  createdBy     User?               @relation("TemplatesCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  items         QuoteTemplateItem[]
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model QuoteTemplateItem {
+  id          String        @id @default(cuid())
+  templateId  String
+  productId   String?
+  description String
+  quantity    Int           @default(1)
+  unitPrice   Decimal
+  currency    String        @default("TRY")
+  discount    Decimal       @default(0)
+  tax         Decimal       @default(20)
+  sortOrder   Int           @default(0)
+  template    QuoteTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  product     Product?      @relation("TemplateItems", fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([templateId])
   @@index([productId])
 }
 

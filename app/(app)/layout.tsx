@@ -12,7 +12,8 @@ import { PERMISSIONS } from "@/lib/permissions";
 const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/dashboard",  label: "Pano" },
   { href: "/customers",  label: "Müşteriler",  permission: PERMISSIONS.CUSTOMERS_READ },
-  { href: "/quotes",     label: "Teklifler",   permission: PERMISSIONS.QUOTES_READ },
+  { href: "/quotes",           label: "Teklifler",      permission: PERMISSIONS.QUOTES_READ },
+  { href: "/quotes/templates", label: "Teklif Şablonları", permission: PERMISSIONS.QUOTE_TEMPLATES_READ },
   { href: "/tasks",      label: "Görevler",    permission: PERMISSIONS.TASKS_READ },
   { href: "/products",   label: "Ürünler",     permission: PERMISSIONS.PRODUCTS_READ },
   { href: "/categories", label: "Kategoriler", permission: PERMISSIONS.CATEGORIES_READ },
