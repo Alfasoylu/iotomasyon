@@ -144,3 +144,11 @@
 - Added "Satış potansiyeli" section to product create/edit form (3 channel inputs)
 - Added "Yatırım skoru" card to product detail page: monthly ciro, kâr, adet, devir süresi, per-channel breakdown
 - Added SATIN AL / BEKLE / ALMA / Veri yok badge to product detail header
+
+### Phase 10 — Capital Allocation Engine (ADMIN ONLY)
+- Created `CapitalConfig` table: totalCapitalTry, reservePct, desiredTurnoverMonths
+- Applied migration to production Supabase PostgreSQL
+- Created `lib/capital-allocation.ts`: locked capital, deployable capital, greedy ranked allocation engine
+- Created `/admin/capital` page: capital config form, 5-column summary, purchase suggestion table with safety warning
+- Added "Sermaye" link to sidebar (EXECUTIVE_READ permission)
+- Reserve safety enforced: reserve % of available capital never allocated

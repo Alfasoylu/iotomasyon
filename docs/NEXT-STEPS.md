@@ -58,23 +58,26 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 10: Capital Allocation Engine (ADMIN ONLY)
+### Priority 1 — Phase 11: XML Inventory Sync
 
 Why:
-Profitability and demand scoring are both live. Capital allocation is the next decision layer — it tells the owner which products to buy with available capital, in what quantities, and with what expected ROI.
+Capital allocation and investment scoring need reliable, up-to-date stock data. XML sync from Entegra closes the gap between manual entry and real inventory state.
 
 Deliverables:
-- Admin-only capital configuration page: total capital, locked capital, reserve %, desired turnover period
-- Engine: rank products by ROI × velocity × risk, allocate available capital across top-ranked products
-- Output: recommended products, suggested quantities, capital per SKU, expected ROI
-- Safety rules: never allocate 100% of capital, keep reserve, admin approval required before any purchase action
+- XML source configuration (URL + auth)
+- Scheduled sync architecture (Vercel cron or similar)
+- Stock quantity + price updates from XML
+- Sync logs (last sync time, success/failure, records updated)
+- Failed sync alerts
+- Manual override protection (manually set values survive XML sync unless explicitly allowed)
+- Price update preview before applying
 
 Acceptance:
-- admin can input available capital and get a ranked purchase suggestion list
-- system never suggests allocating full capital (reserve enforced)
-- suggestions are explainable (based on score + cost + demand)
+- inventory updates automatically from Entegra XML feed
+- sync is observable (logs, timestamps)
+- manual overrides are not blindly clobbered
 
-### Priority 2 — Phase 11: XML Inventory Sync
+### Priority 2 — Phase 18: Quote Professionalization 2.0
 
 Why:
 Inventory intelligence should connect to real external inventory signals before marketplace analytics grows.
@@ -157,9 +160,8 @@ Phase dependencies:
 - Phase 7 ✓ complete — inventory intelligence fields are production-active.
 - Phase 8 ✓ complete — per-channel profitability engine is production-active.
 - Phase 9 ✓ complete — investment score and BUY/WAIT/DO_NOT_BUY signal are production-active.
-- Phase 10 depends on Phase 8 and Phase 9 because capital allocation without cost and demand quality is dangerous.
-- Phase 9 depends on Phase 8 because investment scoring without profitability is weak.
-- Phase 10 depends on Phase 8 and Phase 9 because capital allocation without cost and demand quality is dangerous.
+- Phase 10 ✓ complete — admin capital allocation page with ranked purchase suggestions and reserve safety.
+- Phase 11 provides real stock feed data that improves allocation accuracy.
 - Phase 11 should arrive before deep marketplace intelligence because external stock feeds affect listing accuracy.
 - Phase 12 and Phase 13 should exist before any marketplace automation because visibility must come before control.
 - Phase 14 must remain read-only until listing registry and monitoring are stable.

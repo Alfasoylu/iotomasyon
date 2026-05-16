@@ -291,14 +291,21 @@ Verified outcome:
 ---
 
 ## Phase 10 — Capital Allocation Engine
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- capital input model
-- reserve rules
-- allocation logic
-- ROI + velocity + risk ranking
-- admin approval gate for purchase suggestions
+Completed:
+- `CapitalConfig` table migrated to production: totalCapitalTry, reservePct (default 20%), desiredTurnoverMonths (default 3)
+- `lib/capital-allocation.ts`: locked capital calculation, deployable = available − reserve, greedy allocation ranked by investmentScore DESC
+- Per-suggestion output: suggestedQty, allocatedAmount, expectedMonthlyROI
+- Admin-only page `/admin/capital`: config form (persistent), 5-column capital summary, purchase suggestions table
+- Reserve safety: deployable capital always < available capital, reserve never touched
+- Safety warning on page: "Bu liste öneridir — satın alma kararı vermez"
+- Sidebar link "Sermaye" (EXECUTIVE_READ permission — ADMIN only)
+
+Verified outcome:
+- Browser test: ₺5M total → ₺900 locked → ₺4.999.100 available → ₺999.820 reserve → ₺3.999.280 deployable
+- Config saves, page refreshes, allocation table renders
+- Warning text visible, suggestion table or empty state shown
 
 ---
 
