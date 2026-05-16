@@ -117,6 +117,24 @@ enum XmlSyncStatus {
   ERROR
 }
 
+enum MarketplacePlatform {
+  TRENDYOL
+  HEPSIBURADA
+  N11
+  PTTAVM
+  KOCTAS
+  TEKNOSA
+  TEMU
+  CUSTOM
+}
+
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  UNKNOWN
+}
+
 enum StockConfidence {
   HIGH
   MEDIUM
@@ -250,6 +268,7 @@ model User {
   campaignsCreated         OutreachCampaign[] @relation("CreatedCampaigns")
   customersOwned           Customer[]         @relation("OwnedCustomers")
   capitalConfigs           CapitalConfig[]
+  marketplaceListings      MarketplaceListing[]     @relation("ListingResponsible")
 }
 
 model ProductCategory {
@@ -327,6 +346,7 @@ model Product {
   quoteItems           QuoteItem[]
   campaigns            OutreachCampaign[]
   attributeAssignments ProductAttributeAssignment[]
+  marketplaceListings  MarketplaceListing[]
 
   @@index([name])
   @@index([barcode])
@@ -587,6 +607,31 @@ model CapitalConfig {
   updatedAt             DateTime @updatedAt
   updatedById           String?
   updatedBy             User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+// Phase 12 — Marketplace Listing Registry
+model MarketplaceListing {
+  id                String              @id @default(cuid())
+  productId         String
+  platform          MarketplacePlatform
+  platformListingId String?
+  listingUrl        String?
+  listingBarcode    String?
+  listingSku        String?
+  listingTitle      String?
+  status            ListingStatus       @default(UNKNOWN)
+  lastCheckedAt     DateTime?
+  notes             String?
+  responsibleId     String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  product           Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  responsible       User?               @relation("ListingResponsible", fields: [responsibleId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([platform])
+  @@index([status])
+  @@index([responsibleId])
 }
 
 model OutreachRecipient {
