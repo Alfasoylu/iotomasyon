@@ -25,6 +25,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/admin/xml-sync",  label: "XML Senkron",   permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/trendyol",  label: "Trendyol API",  permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/marketplace/trendyol", label: "Trendyol Paneli", permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ },
+  { href: "/marketplace/profit",   label: "Pazar Kârlılığı", permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ },
 ];
 
 export default async function AppLayout({ children }: { children: ReactNode }) {

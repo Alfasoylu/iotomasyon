@@ -68,6 +68,9 @@ export default async function MarketplacePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/marketplace/profit">
+            <Button variant="secondary">📊 Kârlılık</Button>
+          </Link>
           <Link href="/marketplace/monitoring">
             <Button variant="secondary">⚠ İzleme</Button>
           </Link>
