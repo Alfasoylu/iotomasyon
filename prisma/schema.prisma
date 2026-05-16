@@ -634,6 +634,17 @@ model MarketplaceListing {
   @@index([responsibleId])
 }
 
+// Phase 14 — Trendyol API Integration (singleton config row)
+model TrendyolConfig {
+  id          String    @id @default("singleton")
+  supplierId  String    @default("")
+  apiKey      String    @default("")
+  apiSecret   String    @default("")
+  isEnabled   Boolean   @default(false)
+  lastSyncAt  DateTime?
+  updatedAt   DateTime  @updatedAt
+}
+
 model OutreachRecipient {
   id         String           @id @default(cuid())
   campaignId String
