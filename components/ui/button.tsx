@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "danger" | "ghost";
+  size?: "sm" | "md" | "lg";
 };
 
 const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
@@ -15,13 +16,19 @@ const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
   ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
 };
 
+const sizes: Record<NonNullable<ButtonProps["size"]>, string> = {
+  sm: "h-8 px-3 text-xs rounded-lg",
+  md: "h-11 px-4 text-sm rounded-xl",
+  lg: "h-12 px-5 text-sm rounded-xl",
+};
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className = "", variant = "primary", type = "button", ...props }, ref) => {
+  ({ className = "", variant = "primary", size = "md", type = "button", ...props }, ref) => {
     return (
       <button
         ref={ref}
         type={type}
-        className={`inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold transition ${variants[variant]} ${className}`}
+        className={`inline-flex items-center justify-center font-semibold transition ${sizes[size]} ${variants[variant]} ${className}`}
         {...props}
       />
     );

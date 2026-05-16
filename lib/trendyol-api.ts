@@ -1,14 +1,23 @@
 /**
- * Phase 14 — Trendyol Seller API Client (READ ONLY)
+ * Phase 14 — Trendyol Seller API Client
+ * Phase 16 — Extended with Q&A and Claim write operations
  *
- * Base URL: https://api.trendyol.com/sapigw/suppliers/{supplierId}/
+ * Base URLs:
+ *   Orders/Claims: https://apigw.trendyol.com/integration/order/sellers/{supplierId}/
+ *   Q&A:           https://apigw.trendyol.com/integration/qna/sellers/{supplierId}/
+ *   Claim reasons: https://apigw.trendyol.com/integration/order/claim-issue-reasons
+ *
  * Auth: Basic base64(apiKey:apiSecret)
  *
  * All functions return typed results or throw on error.
  */
 
-// New Trendyol integration gateway (apigw) — replaced legacy api.trendyol.com/sapigw
-const BASE_URL = "https://apigw.trendyol.com/integration/order/sellers";
+// Trendyol integration gateways
+const ORDER_BASE_URL = "https://apigw.trendyol.com/integration/order/sellers";
+const QNA_BASE_URL   = "https://apigw.trendyol.com/integration/qna/sellers";
+
+// Legacy alias kept for read functions that already reference BASE_URL
+const BASE_URL = ORDER_BASE_URL;
 
 export interface TrendyolConfig {
   supplierId: string;
@@ -52,6 +61,58 @@ async function trendyolFetch<T>(
     console.log("[trendyol-api] raw response keys:", Object.keys(json ?? {}));
   }
   return json as T;
+}
+
+/** POST helper — sends JSON body, returns parsed response or throws. */
+async function trendyolPost<T>(
+  cfg: TrendyolConfig,
+  baseUrl: string,
+  path: string,
+  body: unknown,
+): Promise<T> {
+  const url = `${baseUrl}/${cfg.supplierId}/${path}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: authHeader(cfg),
+      "Content-Type": "application/json",
+      "User-Agent": `iotomasyon-crm/1.0 (${cfg.supplierId})`,
+    },
+    body: JSON.stringify(body),
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new TrendyolApiError(res.status, text);
+  }
+  const text = await res.text();
+  return (text ? JSON.parse(text) : {}) as T;
+}
+
+/** PUT helper — sends JSON body, returns parsed response or throws. */
+async function trendyolPut<T>(
+  cfg: TrendyolConfig,
+  baseUrl: string,
+  path: string,
+  body: unknown,
+): Promise<T> {
+  const url = `${baseUrl}/${cfg.supplierId}/${path}`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: authHeader(cfg),
+      "Content-Type": "application/json",
+      "User-Agent": `iotomasyon-crm/1.0 (${cfg.supplierId})`,
+    },
+    body: JSON.stringify(body),
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new TrendyolApiError(res.status, text);
+  }
+  const text = await res.text();
+  return (text ? JSON.parse(text) : {}) as T;
 }
 
 export class TrendyolApiError extends Error {
@@ -282,4 +343,166 @@ export async function testTrendyolConnection(cfg: TrendyolConfig): Promise<{ ok:
     }
     return { ok: false, message: `Ağ hatası: ${err instanceof Error ? err.message : "Bilinmeyen hata"}` };
   }
+}
+
+// ─── Q&A types (Phase 16) ─────────────────────────────────────────────────────
+
+export type TrendyolQuestionStatus =
+  | "WAITING_FOR_ANSWER"
+  | "ANSWERED"
+  | "REJECTED"
+  | "REPORTED";
+
+export interface TrendyolQuestionCategory {
+  id: number;
+  name: string;
+}
+
+export interface TrendyolQuestion {
+  id: string;
+  text: string;
+  createdDate: number;   // epoch ms
+  status: TrendyolQuestionStatus;
+  productName: string;
+  barcode: string | null;
+  productCode: number | null;
+  answers: Array<{
+    id: string;
+    text: string;
+    createdDate: number;
+    createdBy: string | null;
+  }>;
+  categoryName: string | null;
+}
+
+export interface TrendyolQuestionsResponse {
+  content: TrendyolQuestion[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+// ─── Claim issue reason types (Phase 16) ──────────────────────────────────────
+
+export interface TrendyolClaimIssueReason {
+  id: number;
+  name: string;       // Turkish label
+  code: string | null;
+}
+
+// ─── Q&A API functions (Phase 16) ────────────────────────────────────────────
+
+export async function fetchTrendyolQuestions(
+  cfg: TrendyolConfig,
+  opts: {
+    page?: number;
+    size?: number;
+    status?: TrendyolQuestionStatus;
+    startDate?: number;
+    endDate?: number;
+  } = {},
+): Promise<TrendyolQuestionsResponse> {
+  const params: Record<string, string | number> = {
+    page: opts.page ?? 0,
+    size: opts.size ?? 50,
+  };
+  if (opts.status)    params.status    = opts.status;
+  if (opts.startDate) params.startDate = opts.startDate;
+  if (opts.endDate)   params.endDate   = opts.endDate;
+
+  const url = new URL(`${QNA_BASE_URL}/${cfg.supplierId}/questions`);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: authHeader(cfg),
+      "Content-Type": "application/json",
+      "User-Agent": `iotomasyon-crm/1.0 (${cfg.supplierId})`,
+    },
+    next: { revalidate: 0 },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new TrendyolApiError(res.status, text);
+  }
+  return res.json() as Promise<TrendyolQuestionsResponse>;
+}
+
+/**
+ * Answer a customer question on Trendyol.
+ * POST /integration/qna/sellers/{supplierId}/questions/{questionId}/answers
+ * Body: { text: string }  (10–2000 chars)
+ */
+export async function answerTrendyolQuestion(
+  cfg: TrendyolConfig,
+  questionId: string,
+  text: string,
+): Promise<void> {
+  await trendyolPost<unknown>(cfg, QNA_BASE_URL, `questions/${questionId}/answers`, { text });
+}
+
+// ─── Claim write API functions (Phase 16) ─────────────────────────────────────
+
+/**
+ * Fetch available claim issue reasons (no supplierId in path).
+ * GET https://apigw.trendyol.com/integration/order/claim-issue-reasons
+ */
+export async function fetchClaimIssueReasons(
+  cfg: TrendyolConfig,
+): Promise<TrendyolClaimIssueReason[]> {
+  const url = "https://apigw.trendyol.com/integration/order/claim-issue-reasons";
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: authHeader(cfg),
+      "Content-Type": "application/json",
+      "User-Agent": `iotomasyon-crm/1.0 (${cfg.supplierId})`,
+    },
+    next: { revalidate: 300 }, // cache for 5 min — rarely changes
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new TrendyolApiError(res.status, text);
+  }
+  return res.json() as Promise<TrendyolClaimIssueReason[]>;
+}
+
+/**
+ * Approve claim items.
+ * PUT /integration/order/sellers/{supplierId}/claims/{claimId}/items/approve
+ * Body: { claimLineItemIdList: string[] }
+ */
+export async function approveTrendyolClaim(
+  cfg: TrendyolConfig,
+  claimId: string,
+  claimLineItemIds: string[],
+): Promise<void> {
+  await trendyolPut<unknown>(
+    cfg,
+    ORDER_BASE_URL,
+    `claims/${claimId}/items/approve`,
+    { claimLineItemIdList: claimLineItemIds },
+  );
+}
+
+/**
+ * Create a claim issue (reject / dispute).
+ * POST /integration/order/sellers/{supplierId}/claims/{claimId}/issue
+ * Body: { claimIssueReasonId: number, claimItemIdList: string, description: string }
+ *
+ * Note: claimItemIdList is a comma-separated string per Trendyol docs.
+ */
+export async function createTrendyolClaimIssue(
+  cfg: TrendyolConfig,
+  claimId: string,
+  payload: {
+    claimIssueReasonId: number;
+    claimItemIdList: string;   // comma-separated claim item IDs
+    description: string;
+  },
+): Promise<void> {
+  await trendyolPost<unknown>(cfg, ORDER_BASE_URL, `claims/${claimId}/issue`, payload);
 }

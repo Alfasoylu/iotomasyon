@@ -99,6 +99,14 @@ export const PERMISSIONS = {
   MARKETPLACE_ORDERS_READ:      "marketplaceOrders.read",
   MARKETPLACE_RETURNS_READ:     "marketplaceReturns.read",
 
+  // Marketplace Operations (Phase 16)
+  MARKETPLACE_QUESTIONS_READ:   "marketplaceQuestions.read",
+  MARKETPLACE_QUESTIONS_ANSWER: "marketplaceQuestions.answer",
+  MARKETPLACE_RETURNS_ACTION:   "marketplaceReturns.action",
+  MARKETPLACE_MAPPINGS_READ:    "marketplaceMappings.read",
+  MARKETPLACE_MAPPINGS_WRITE:   "marketplaceMappings.write",
+  EXCHANGE_RATES_MANAGE:        "exchangeRates.manage",
+
   // Profitability
   PROFITABILITY_READ:           "profitability.read",
   PROFITABILITY_CONFIGURE:      "profitability.configure",

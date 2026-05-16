@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 10 aktif
+          Faz 16 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Kârlılık motoru, yatırım skoru, sermaye dağılımı.
+            Sorular, İade Merkezi, Ürün Eşleştirme, Döviz Kurları.
           </p>
         </div>
       </aside>

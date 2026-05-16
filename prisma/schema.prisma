@@ -268,7 +268,10 @@ model User {
   campaignsCreated         OutreachCampaign[] @relation("CreatedCampaigns")
   customersOwned           Customer[]         @relation("OwnedCustomers")
   capitalConfigs           CapitalConfig[]
-  marketplaceListings      MarketplaceListing[]     @relation("ListingResponsible")
+  marketplaceListings      MarketplaceListing[]           @relation("ListingResponsible")
+  marketplaceMappings      MarketplaceProductMapping[]    @relation("MappingCreatedBy")
+  questionActionLogs       MarketplaceQuestionActionLog[] @relation("QuestionActionUser")
+  returnActionLogs         MarketplaceReturnActionLog[]   @relation("ReturnActionUser")
 }
 
 model ProductCategory {
@@ -335,6 +338,8 @@ model Product {
   installerSalesPotential  Int?
   // Phase 11 — XML Sync override protection
   xmlLocked                Boolean  @default(false)
+  // Phase 16 — USD cost for import-priced products (do NOT remove unitCostTry)
+  unitCostUsd              Decimal?
   createdById     String?
   createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
   productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -347,6 +352,7 @@ model Product {
   campaigns            OutreachCampaign[]
   attributeAssignments ProductAttributeAssignment[]
   marketplaceListings  MarketplaceListing[]
+  marketplaceMappings  MarketplaceProductMapping[]
 
   @@index([name])
   @@index([barcode])
@@ -632,6 +638,88 @@ model MarketplaceListing {
   @@index([platform])
   @@index([status])
   @@index([responsibleId])
+}
+
+// Phase 16 — Marketplace Product Mapping Engine
+// Maps one or more marketplace identities to a single internal product.
+// Multiple rows can point to the same productId (many-to-one design).
+// Uniqueness enforced per (platform, platformBarcode) to prevent split-brain mappings.
+model MarketplaceProductMapping {
+  id                String              @id @default(cuid())
+  platform          MarketplacePlatform
+  platformProductId String?
+  platformListingId String?
+  platformBarcode   String?
+  platformSku       String?
+  platformTitle     String?
+  productId         String
+  confidence        String              @default("MANUAL") // MANUAL | BARCODE | SKU | LISTING
+  isManual          Boolean             @default(true)
+  createdById       String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  product           Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdBy         User?               @relation("MappingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([platform])
+  @@index([productId])
+  @@index([platform, platformBarcode])
+  @@index([platform, platformSku])
+  @@index([platform, platformListingId])
+}
+
+// Phase 16 — Audit log for customer question actions (answer sent to Trendyol)
+model MarketplaceQuestionActionLog {
+  id             String   @id @default(cuid())
+  platform       String   @default("TRENDYOL")
+  questionId     String
+  actionType     String   @default("ANSWERED")
+  answerText     String?
+  userId         String?
+  responseStatus String   // SUCCESS | ERROR
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  user           User?    @relation("QuestionActionUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([questionId])
+  @@index([platform])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Phase 16 — Audit log for return claim actions (approve / issue created)
+model MarketplaceReturnActionLog {
+  id             String   @id @default(cuid())
+  platform       String   @default("TRENDYOL")
+  claimId        String
+  claimItemId    String?
+  actionType     String   // APPROVED | ISSUE_CREATED
+  reasonCode     String?
+  note           String?
+  userId         String?
+  responseStatus String   // SUCCESS | ERROR
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  user           User?    @relation("ReturnActionUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([claimId])
+  @@index([platform])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Phase 16 — Historical monthly USD/TRY exchange rates for profit calculation
+model MonthlyExchangeRate {
+  id         String   @id @default(cuid())
+  year       Int
+  month      Int      // 1–12
+  usdTryRate Decimal
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([year, month])
+  @@index([year, month])
 }
 
 // Phase 14 — Trendyol API Integration (singleton config row)

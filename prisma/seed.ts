@@ -112,6 +112,14 @@ const PERMISSIONS = [
   { key: "marketplaceOrders.read",      name: "Sipariş Görüntüleme",             category: "marketplace" },
   { key: "marketplaceReturns.read",     name: "İade Görüntüleme",               category: "marketplace" },
 
+  // Marketplace Operations (Phase 16)
+  { key: "marketplaceQuestions.read",   name: "Müşteri Soruları Görüntüleme",    category: "marketplace" },
+  { key: "marketplaceQuestions.answer", name: "Müşteri Soruları Yanıtlama",      category: "marketplace" },
+  { key: "marketplaceReturns.action",   name: "İade İşlem Yetkisi",              category: "marketplace" },
+  { key: "marketplaceMappings.read",    name: "Ürün Eşleştirme Görüntüleme",    category: "marketplace" },
+  { key: "marketplaceMappings.write",   name: "Ürün Eşleştirme Yazma",          category: "marketplace" },
+  { key: "exchangeRates.manage",        name: "Döviz Kuru Yönetimi",            category: "finance" },
+
   // Profitability
   { key: "profitability.read",          name: "Karlılık Görüntüleme",            category: "profitability" },
   { key: "profitability.configure",     name: "Karlılık Yapılandırma",           category: "profitability" },
@@ -179,6 +187,11 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
     "marketplaceAnalytics.read",
     "marketplaceOrders.read",
     "marketplaceReturns.read",
+    // Phase 16 additions
+    "marketplaceQuestions.read",
+    "marketplaceQuestions.answer",
+    "marketplaceReturns.action",
+    "marketplaceMappings.read",
     "products.read",
     "tasks.read",
     "tasks.create",
