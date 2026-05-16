@@ -43,6 +43,7 @@ Implemented modules:
 - attribute system
 - customer CRM — Phase 6 complete: customerType enum, monthlySalesPotential, platformNotes
 - inventory intelligence — Phase 7 complete: barcode, imageUrl, supplier, stockSource/Confidence, lastStockSyncAt, lastStockCountBy, reorderLeadTime, shippingCost, marketplaceCommission
+- profitability engine — Phase 8 complete: per-channel (retail/wholesale/marketplace) net profit, margin %, ROI %, losing product detection
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -98,8 +99,7 @@ What this means:
 - the system already supports operational CRM relationships between products, categories, and customers
 
 What it does not mean:
-- profitability-ready product costing exists (Phase 8 — not yet implemented)
-- governance-grade product data quality exists
+- governance-grade product data quality exists (Phase 23)
 
 ---
 
@@ -149,13 +149,13 @@ Current meaning:
 
 ## Intelligence State
 
-NOT IMPLEMENTED
+PARTIAL
 
 Current meaning:
-- no profitability engine
-- no sales potential engine
-- no executive KPI dashboard
-- no recommendation-grade owner intelligence system
+- profitability engine — DONE (Phase 8): per-channel net profit, margin %, ROI %, losing product identification
+- sales potential engine — NOT IMPLEMENTED
+- executive KPI dashboard — NOT IMPLEMENTED
+- recommendation-grade owner intelligence system — NOT IMPLEMENTED
 
 ---
 

@@ -254,14 +254,22 @@ Verified outcome:
 ---
 
 ## Phase 8 — Profitability Engine
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- cost intelligence
-- profitability metrics
-- marketplace profitability logic
-- landed cost history
-- return reserve logic
+Completed:
+- 8 new Product fields migrated to production: `unitCostTry`, `sellingPriceTry`, `wholesalePriceTry`, `marketplacePriceTry`, `packagingCost`, `vatRate`, `paymentFeeRate`, `returnReserveRate`
+- `lib/profitability.ts`: pure calculation engine — KDV-inclusive price model, per-channel breakdown (perakende / toptan / pazar yeri)
+- Per-channel metrics: revenue, VAT extraction, unit cost, shipping, commission, payment fee, return reserve, net profit, margin %, ROI %
+- Marketplace channel: commission + payment fee + return reserve deducted
+- Retail/wholesale channels: no commission, no payment fee, no return reserve
+- Product form: new "Fiyatlandırma ve kârlılık" section (8 fields)
+- Product detail: "Kârlılık analizi" card with ProfitCard per channel (color-coded green/red)
+- Header badges: "Kârlı" (green) / "Kaybettiriyor" (red) based on any losing channel
+
+Verified outcome:
+- Browser test: form fills → save → detail page shows ₺617,50 perakende / ₺243,33 toptan / ₺344,09 pazar yeri net kâr
+- "Kârlı" badge correct
+- System can identify losing products
 
 ---
 
@@ -450,7 +458,8 @@ Missing:
 
 # Technical Debt
 
-- product cost model incomplete (Phase 8 profitability engine not yet implemented)
+- no marketplace schema (Phase 12+)
+- no XML ingestion architecture (Phase 11)
 - no marketplace schema
 - no XML ingestion architecture
 - no image pipeline

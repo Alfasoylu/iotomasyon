@@ -117,3 +117,20 @@
 - Updated product detail page to display all new inventory intelligence fields
 - Added product image preview card to detail page
 - Updated Zod validation schema and `normalizeProductData()` for all new fields
+
+### Phase 8 — Profitability Engine
+- Added `unitCostTry DECIMAL` column to `Product` table (TRY unit cost)
+- Added `sellingPriceTry DECIMAL` column to `Product` table (retail price)
+- Added `wholesalePriceTry DECIMAL` column to `Product` table
+- Added `marketplacePriceTry DECIMAL` column to `Product` table
+- Added `packagingCost DECIMAL` column to `Product` table
+- Added `vatRate DECIMAL` column to `Product` table (VAT %)
+- Added `paymentFeeRate DECIMAL` column to `Product` table (payment processing %)
+- Added `returnReserveRate DECIMAL` column to `Product` table (return/defect reserve %)
+- Applied migration to production Supabase PostgreSQL
+- Created `lib/profitability.ts`: pure calculation engine, KDV-inclusive model
+- Per-channel profitability: perakende (retail), toptan (wholesale), pazar yeri (marketplace)
+- Metrics per channel: net profit, margin %, ROI %, cost breakdown
+- Added "Fiyatlandırma ve kârlılık" section to product create/edit form
+- Added "Kârlılık analizi" card to product detail page with per-channel ProfitCard
+- Added "Kârlı" / "Kaybettiriyor" badge to product detail header

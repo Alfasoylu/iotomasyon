@@ -26,8 +26,10 @@ Current reality:
 - Turkish location layer exists
 - RBAC complete and production-active (Phase 5 ✓)
 - customer intelligence fields live: customerType, monthlySalesPotential, platformNotes (Phase 6 ✓)
-- inventory intelligence complete: barcode, imageUrl, supplier, stockSource/Confidence, lastStockSyncAt, lastStockCountBy, reorderLeadTime, shippingCost, marketplaceCommission (Phase 7 ✓)
-- financial intelligence systems do not exist yet
+- inventory intelligence complete (Phase 7 ✓)
+- profitability engine complete: per-channel net profit, margin %, ROI %, losing product detection (Phase 8 ✓)
+- sales potential engine does not exist yet
+- capital allocation engine does not exist yet
 
 This means the product is operationally useful for internal CRM and quote workflows and is ready for multi-user rollout.
 Not yet ready for:
@@ -56,25 +58,21 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 8: Profitability Engine
+### Priority 1 — Phase 9: Sales Potential Engine
 
 Why:
-The system must know whether products make money before it can make recommendations.
+Profitability is now calculable. The next step is demand estimation — how much can each product sell per channel — to generate a BUY / DO NOT BUY investment signal.
 
 Deliverables:
-- unit cost model
-- shipping and packaging cost logic
-- marketplace service fee model
-- payment fee model
-- VAT impact model
-- defect/return reserve model
-- landed cost history
-- margin and ROI calculations
+- per-product demand fields: online monthly potential, wholesale monthly potential, security/installer potential, custom channels
+- derived calculations: projected monthly revenue, projected monthly profit, turnover speed
+- investment score (composite of margin + demand + velocity)
+- BUY / DO NOT BUY decision output on product detail page
 
 Acceptance:
-- products can show meaningful profitability metrics
-- losing products can be identified
-- profitability is consistent enough to support later planning phases
+- product investment scoring is operational
+- admin can rank products by profit × demand
+- BUY / DO NOT BUY signal is visible on product detail
 
 ### Priority 2 — Phase 11: XML Inventory Sync
 
@@ -157,7 +155,8 @@ Phase dependencies:
 - Phase 5 ✓ complete — multi-user rollout is now safe.
 - Phase 6 ✓ complete — customer intelligence fields are production-active.
 - Phase 7 ✓ complete — inventory intelligence fields are production-active.
-- Phase 8 depends on Phase 7 because profitability depends on inventory cost structure.
+- Phase 8 ✓ complete — per-channel profitability engine is production-active.
+- Phase 9 depends on Phase 8 because investment scoring without profitability is weak.
 - Phase 9 depends on Phase 8 because investment scoring without profitability is weak.
 - Phase 10 depends on Phase 8 and Phase 9 because capital allocation without cost and demand quality is dangerous.
 - Phase 11 should arrive before deep marketplace intelligence because external stock feeds affect listing accuracy.
