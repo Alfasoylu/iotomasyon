@@ -29,7 +29,7 @@ Current reality:
 - inventory intelligence complete (Phase 7 ✓)
 - profitability engine complete: per-channel net profit, margin %, ROI %, losing product detection (Phase 8 ✓)
 - sales potential engine does not exist yet
-- capital allocation engine does not exist yet
+- capital allocation engine does not exist yet (Phase 10)
 
 This means the product is operationally useful for internal CRM and quote workflows and is ready for multi-user rollout.
 Not yet ready for:
@@ -58,21 +58,21 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 9: Sales Potential Engine
+### Priority 1 — Phase 10: Capital Allocation Engine (ADMIN ONLY)
 
 Why:
-Profitability is now calculable. The next step is demand estimation — how much can each product sell per channel — to generate a BUY / DO NOT BUY investment signal.
+Profitability and demand scoring are both live. Capital allocation is the next decision layer — it tells the owner which products to buy with available capital, in what quantities, and with what expected ROI.
 
 Deliverables:
-- per-product demand fields: online monthly potential, wholesale monthly potential, security/installer potential, custom channels
-- derived calculations: projected monthly revenue, projected monthly profit, turnover speed
-- investment score (composite of margin + demand + velocity)
-- BUY / DO NOT BUY decision output on product detail page
+- Admin-only capital configuration page: total capital, locked capital, reserve %, desired turnover period
+- Engine: rank products by ROI × velocity × risk, allocate available capital across top-ranked products
+- Output: recommended products, suggested quantities, capital per SKU, expected ROI
+- Safety rules: never allocate 100% of capital, keep reserve, admin approval required before any purchase action
 
 Acceptance:
-- product investment scoring is operational
-- admin can rank products by profit × demand
-- BUY / DO NOT BUY signal is visible on product detail
+- admin can input available capital and get a ranked purchase suggestion list
+- system never suggests allocating full capital (reserve enforced)
+- suggestions are explainable (based on score + cost + demand)
 
 ### Priority 2 — Phase 11: XML Inventory Sync
 
@@ -156,7 +156,8 @@ Phase dependencies:
 - Phase 6 ✓ complete — customer intelligence fields are production-active.
 - Phase 7 ✓ complete — inventory intelligence fields are production-active.
 - Phase 8 ✓ complete — per-channel profitability engine is production-active.
-- Phase 9 depends on Phase 8 because investment scoring without profitability is weak.
+- Phase 9 ✓ complete — investment score and BUY/WAIT/DO_NOT_BUY signal are production-active.
+- Phase 10 depends on Phase 8 and Phase 9 because capital allocation without cost and demand quality is dangerous.
 - Phase 9 depends on Phase 8 because investment scoring without profitability is weak.
 - Phase 10 depends on Phase 8 and Phase 9 because capital allocation without cost and demand quality is dangerous.
 - Phase 11 should arrive before deep marketplace intelligence because external stock feeds affect listing accuracy.

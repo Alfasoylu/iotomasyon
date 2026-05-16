@@ -134,3 +134,13 @@
 - Added "Fiyatlandırma ve kârlılık" section to product create/edit form
 - Added "Kârlılık analizi" card to product detail page with per-channel ProfitCard
 - Added "Kârlı" / "Kaybettiriyor" badge to product detail header
+
+### Phase 9 — Sales Potential Engine
+- Added `onlineSalesPotential INTEGER` column to `Product` table
+- Added `wholesaleSalesPotential INTEGER` column to `Product` table
+- Added `installerSalesPotential INTEGER` column to `Product` table
+- Applied migration to production Supabase PostgreSQL
+- Created `lib/sales-potential.ts`: demand-based monthly revenue/profit projection, turnover speed, investment score (0–100), BUY/WAIT/DO_NOT_BUY/UNKNOWN signal
+- Added "Satış potansiyeli" section to product create/edit form (3 channel inputs)
+- Added "Yatırım skoru" card to product detail page: monthly ciro, kâr, adet, devir süresi, per-channel breakdown
+- Added SATIN AL / BEKLE / ALMA / Veri yok badge to product detail header

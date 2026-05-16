@@ -44,6 +44,7 @@ Implemented modules:
 - customer CRM — Phase 6 complete: customerType enum, monthlySalesPotential, platformNotes
 - inventory intelligence — Phase 7 complete: barcode, imageUrl, supplier, stockSource/Confidence, lastStockSyncAt, lastStockCountBy, reorderLeadTime, shippingCost, marketplaceCommission
 - profitability engine — Phase 8 complete: per-channel (retail/wholesale/marketplace) net profit, margin %, ROI %, losing product detection
+- sales potential engine — Phase 9 complete: per-channel demand estimates, projected monthly revenue/profit, investment score 0–100, BUY/WAIT/DO_NOT_BUY signal
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -153,7 +154,7 @@ PARTIAL
 
 Current meaning:
 - profitability engine — DONE (Phase 8): per-channel net profit, margin %, ROI %, losing product identification
-- sales potential engine — NOT IMPLEMENTED
+- sales potential engine — DONE (Phase 9): investment score, BUY/WAIT/DO_NOT_BUY signal
 - executive KPI dashboard — NOT IMPLEMENTED
 - recommendation-grade owner intelligence system — NOT IMPLEMENTED
 

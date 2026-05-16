@@ -274,14 +274,19 @@ Verified outcome:
 ---
 
 ## Phase 9 — Sales Potential Engine
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- demand channel potential
-- projected revenue
-- projected profit
-- investment score
-- BUY / DO NOT BUY decision output
+Completed:
+- 3 new Product fields migrated to production: `onlineSalesPotential`, `wholesaleSalesPotential`, `installerSalesPotential` (INT, monthly unit estimates)
+- `lib/sales-potential.ts`: projected monthly revenue + profit per channel, turnover speed (months), investment score (0–100), BUY signal logic
+- BUY signal rules: SATIN AL / BEKLE / ALMA / Veri yok based on profitability + demand + stock level
+- Product form: "Satış potansiyeli" section (3 channel inputs)
+- Product detail: "Yatırım skoru" card — monthly ciro, kâr, adet, devir süresi, per-channel breakdown
+- Header badge: SATIN AL / BEKLE / ALMA signal
+
+Verified outcome:
+- Browser test: 50+20+10 adet/ay → skor 100/100, SATIN AL badge, 3 kanal kartı doğru
+- System can rank products by investment score
 
 ---
 
