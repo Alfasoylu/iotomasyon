@@ -302,6 +302,10 @@ model Product {
   vatRate                  Decimal?
   paymentFeeRate           Decimal?
   returnReserveRate        Decimal?
+  // Phase 9 — Sales Potential Engine
+  onlineSalesPotential     Int?
+  wholesaleSalesPotential  Int?
+  installerSalesPotential  Int?
   createdById     String?
   createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
   productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)

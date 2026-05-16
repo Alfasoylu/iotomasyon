@@ -36,4 +36,8 @@ export type ProductFormValues = {
   vatRate: string;
   paymentFeeRate: string;
   returnReserveRate: string;
+  // Phase 9 — Sales Potential Engine
+  onlineSalesPotential: string;
+  wholesaleSalesPotential: string;
+  installerSalesPotential: string;
 };

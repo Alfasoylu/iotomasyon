@@ -103,6 +103,10 @@ export default async function EditProductPage({
             importUnitCostUsd: product.importUnitCostUsd != null ? String(product.importUnitCostUsd) : "",
             inventoryCountDate: product.inventoryCountDate ? product.inventoryCountDate.toISOString().split("T")[0] : "",
             inventoryCountStock: product.inventoryCountStock != null ? String(product.inventoryCountStock) : "",
+            // Phase 9
+            onlineSalesPotential: product.onlineSalesPotential != null ? String(product.onlineSalesPotential) : "",
+            wholesaleSalesPotential: product.wholesaleSalesPotential != null ? String(product.wholesaleSalesPotential) : "",
+            installerSalesPotential: product.installerSalesPotential != null ? String(product.installerSalesPotential) : "",
             // Phase 8
             unitCostTry: product.unitCostTry != null ? String(product.unitCostTry) : "",
             sellingPriceTry: product.sellingPriceTry != null ? String(product.sellingPriceTry) : "",

@@ -38,6 +38,10 @@ export const productSchema = z.object({
   vatRate: z.string().trim(),
   paymentFeeRate: z.string().trim(),
   returnReserveRate: z.string().trim(),
+  // Phase 9 — Sales Potential Engine
+  onlineSalesPotential: z.string().trim(),
+  wholesaleSalesPotential: z.string().trim(),
+  installerSalesPotential: z.string().trim(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

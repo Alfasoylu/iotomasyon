@@ -193,6 +193,10 @@ function normalizeProductData(input: ProductInput) {
     vatRate: emptyToNull(input.vatRate),
     paymentFeeRate: emptyToNull(input.paymentFeeRate),
     returnReserveRate: emptyToNull(input.returnReserveRate),
+    // Phase 9 — Sales Potential Engine
+    onlineSalesPotential: positiveIntOrNull(input.onlineSalesPotential),
+    wholesaleSalesPotential: positiveIntOrNull(input.wholesaleSalesPotential),
+    installerSalesPotential: positiveIntOrNull(input.installerSalesPotential),
   };
 }
 

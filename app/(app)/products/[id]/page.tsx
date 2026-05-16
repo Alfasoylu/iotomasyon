@@ -19,6 +19,11 @@ import {
   formatPct,
   type ChannelResult,
 } from "@/lib/profitability";
+import {
+  calculateSalesPotential,
+  BUY_SIGNAL_LABELS,
+  BUY_SIGNAL_TONES,
+} from "@/lib/sales-potential";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +95,27 @@ export default async function ProductDetailPage({
   const hasProfit = hasProfitabilityData(profitability);
   const isLosing = isLosingProduct(profitability);
 
+  const salesPotential = calculateSalesPotential({
+    unitCostTry: product.unitCostTry != null ? Number(product.unitCostTry) : null,
+    sellingPriceTry: product.sellingPriceTry != null ? Number(product.sellingPriceTry) : null,
+    wholesalePriceTry: product.wholesalePriceTry != null ? Number(product.wholesalePriceTry) : null,
+    marketplacePriceTry: product.marketplacePriceTry != null ? Number(product.marketplacePriceTry) : null,
+    shippingCost: product.shippingCost != null ? Number(product.shippingCost) : null,
+    shippingCostOverride: product.shippingCostOverride != null ? Number(product.shippingCostOverride) : null,
+    marketplaceCommission: product.marketplaceCommission != null ? Number(product.marketplaceCommission) : null,
+    marketplaceCommissionOverride: product.marketplaceCommissionOverride != null ? Number(product.marketplaceCommissionOverride) : null,
+    packagingCost: product.packagingCost != null ? Number(product.packagingCost) : null,
+    vatRate: product.vatRate != null ? Number(product.vatRate) : null,
+    paymentFeeRate: product.paymentFeeRate != null ? Number(product.paymentFeeRate) : null,
+    returnReserveRate: product.returnReserveRate != null ? Number(product.returnReserveRate) : null,
+    onlineSalesPotential: product.onlineSalesPotential,
+    wholesaleSalesPotential: product.wholesaleSalesPotential,
+    installerSalesPotential: product.installerSalesPotential,
+    stockQuantity: product.stockQuantity,
+    minimumStock: product.minimumStock,
+  });
+  const hasSalesPotential = salesPotential.totalMonthlyUnits > 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -101,6 +127,11 @@ export default async function ProductDetailPage({
             {isLowStock ? <Badge tone="warning">Düşük stok</Badge> : null}
             {hasProfit && isLosing ? <Badge tone="danger">Kaybettiriyor</Badge> : null}
             {hasProfit && !isLosing ? <Badge tone="success">Kârlı</Badge> : null}
+            {salesPotential.buySignal !== "UNKNOWN" ? (
+              <Badge tone={BUY_SIGNAL_TONES[salesPotential.buySignal]}>
+                {BUY_SIGNAL_LABELS[salesPotential.buySignal]}
+              </Badge>
+            ) : null}
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
             {product.name}
@@ -244,6 +275,75 @@ export default async function ProductDetailPage({
         </Card>
       ) : null}
 
+      {hasSalesPotential ? (
+        <Card className="p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-950">Yatırım skoru</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Aylık satış tahminine göre hesaplanır. Stok devir hızı ve kârlılık dikkate alınır.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-3xl font-bold tabular-nums text-slate-950">
+                  {salesPotential.investmentScore}
+                  <span className="text-base font-normal text-slate-400">/100</span>
+                </p>
+              </div>
+              <Badge tone={BUY_SIGNAL_TONES[salesPotential.buySignal]}>
+                {BUY_SIGNAL_LABELS[salesPotential.buySignal]}
+              </Badge>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatBox label="Tahmini aylık ciro" value={formatCurrency(salesPotential.projectedMonthlyRevenue)} />
+            <StatBox label="Tahmini aylık kâr" value={formatCurrency(salesPotential.projectedMonthlyProfit)} positive={salesPotential.projectedMonthlyProfit > 0} />
+            <StatBox label="Toplam aylık adet" value={`${salesPotential.totalMonthlyUnits} adet`} />
+            <StatBox
+              label="Stok devir süresi"
+              value={salesPotential.turnoverMonths != null
+                ? `${salesPotential.turnoverMonths.toFixed(1)} ay`
+                : "—"}
+            />
+          </div>
+          {(salesPotential.onlineMonthlyRevenue > 0 || salesPotential.wholesaleMonthlyRevenue > 0 || salesPotential.installerMonthlyRevenue > 0) ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-3 text-xs text-slate-500">
+              {salesPotential.onlineMonthlyRevenue > 0 ? (
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                  <p className="font-semibold uppercase tracking-widest text-slate-400">Online</p>
+                  <p className="mt-1 text-sm font-medium text-slate-700">{product.onlineSalesPotential} adet/ay</p>
+                  <p className="text-slate-500">{formatCurrency(salesPotential.onlineMonthlyRevenue)} ciro</p>
+                  <p className={salesPotential.onlineMonthlyProfit >= 0 ? "text-emerald-600" : "text-red-600"}>
+                    {formatCurrency(salesPotential.onlineMonthlyProfit)} kâr
+                  </p>
+                </div>
+              ) : null}
+              {salesPotential.wholesaleMonthlyRevenue > 0 ? (
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                  <p className="font-semibold uppercase tracking-widest text-slate-400">Toptan</p>
+                  <p className="mt-1 text-sm font-medium text-slate-700">{product.wholesaleSalesPotential} adet/ay</p>
+                  <p className="text-slate-500">{formatCurrency(salesPotential.wholesaleMonthlyRevenue)} ciro</p>
+                  <p className={salesPotential.wholesaleMonthlyProfit >= 0 ? "text-emerald-600" : "text-red-600"}>
+                    {formatCurrency(salesPotential.wholesaleMonthlyProfit)} kâr
+                  </p>
+                </div>
+              ) : null}
+              {salesPotential.installerMonthlyRevenue > 0 ? (
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                  <p className="font-semibold uppercase tracking-widest text-slate-400">Montör/Kurumsal</p>
+                  <p className="mt-1 text-sm font-medium text-slate-700">{product.installerSalesPotential} adet/ay</p>
+                  <p className="text-slate-500">{formatCurrency(salesPotential.installerMonthlyRevenue)} ciro</p>
+                  <p className={salesPotential.installerMonthlyProfit >= 0 ? "text-emerald-600" : "text-red-600"}>
+                    {formatCurrency(salesPotential.installerMonthlyProfit)} kâr
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </Card>
+      ) : null}
+
       {(directInterests.length > 0 || attributeInterests.length > 0 || categoryInterests.length > 0) ? (
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-slate-700">
@@ -355,6 +455,19 @@ function Info({ label, value, mono }: { label: string; value: string | null | un
     <div>
       <dt className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</dt>
       <dd className={`mt-2 text-sm font-medium text-slate-900 ${mono ? "font-mono" : ""}`}>{value || "-"}</dd>
+    </div>
+  );
+}
+
+function StatBox({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
+  const valueColor =
+    positive === true ? "text-emerald-700" :
+    positive === false ? "text-red-600" :
+    "text-slate-900";
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className={`mt-1 text-sm font-bold tabular-nums ${valueColor}`}>{value}</p>
     </div>
   );
 }

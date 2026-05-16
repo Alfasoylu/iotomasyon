@@ -73,6 +73,10 @@ const emptyValues: ProductFormValues = {
   vatRate: "",
   paymentFeeRate: "",
   returnReserveRate: "",
+  // Phase 9
+  onlineSalesPotential: "",
+  wholesaleSalesPotential: "",
+  installerSalesPotential: "",
 };
 
 export function ProductForm({
@@ -302,6 +306,24 @@ export function ProductForm({
         <p className="text-xs text-slate-400 leading-6">
           Kârlılık hesaplaması: fiyat − KDV − kargo − ambalaj − komisyon − ödeme ücreti − iade karşılığı = net kâr.
           Pazar yeri kanalında komisyon alanı kullanılır. Perakende ve toptan kanalda komisyon sıfır kabul edilir.
+        </p>
+      </Section>
+
+      {/* ── Satış potansiyeli ── */}
+      <Section title="Satış potansiyeli">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Field label="Online/pazar yeri (adet/ay)" error={form.formState.errors.onlineSalesPotential?.message}>
+            <Input type="number" min={0} {...form.register("onlineSalesPotential")} placeholder="0" />
+          </Field>
+          <Field label="Toptan (adet/ay)" error={form.formState.errors.wholesaleSalesPotential?.message}>
+            <Input type="number" min={0} {...form.register("wholesaleSalesPotential")} placeholder="0" />
+          </Field>
+          <Field label="Montör/kurumsal (adet/ay)" error={form.formState.errors.installerSalesPotential?.message}>
+            <Input type="number" min={0} {...form.register("installerSalesPotential")} placeholder="0" />
+          </Field>
+        </div>
+        <p className="text-xs text-slate-400 leading-6">
+          Aylık satış tahmini kanal bazında girilir. Bu değerler yatırım skoru ve SATIN AL / ALMA sinyali için kullanılır.
         </p>
       </Section>
 
