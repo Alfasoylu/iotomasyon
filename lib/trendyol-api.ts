@@ -7,7 +7,8 @@
  * All functions return typed results or throw on error.
  */
 
-const BASE_URL = "https://api.trendyol.com/sapigw/suppliers";
+// New Trendyol integration gateway (apigw) — replaced legacy api.trendyol.com/sapigw
+const BASE_URL = "https://apigw.trendyol.com/integration/order/sellers";
 
 export interface TrendyolConfig {
   supplierId: string;
@@ -189,13 +190,21 @@ export interface TrendyolReturnsResponse {
 
 // ─── Public API functions ─────────────────────────────────────────────────────
 
+/** Returns epoch-ms for N days ago */
+function daysAgo(n: number): number {
+  return Date.now() - n * 24 * 60 * 60 * 1000;
+}
+
 export async function fetchTrendyolOrders(
   cfg: TrendyolConfig,
-  opts: { page?: number; size?: number; status?: string } = {},
+  opts: { page?: number; size?: number; status?: string; startDate?: number; endDate?: number } = {},
 ): Promise<TrendyolOrdersResponse> {
   const params: Record<string, string | number> = {
     page: opts.page ?? 0,
     size: opts.size ?? 50,
+    // Trendyol requires date range — default: last 30 days
+    startDate: opts.startDate ?? daysAgo(30),
+    endDate: opts.endDate ?? Date.now(),
   };
   if (opts.status) params.status = opts.status;
   return trendyolFetch<TrendyolOrdersResponse>(cfg, "orders", params);
@@ -203,11 +212,13 @@ export async function fetchTrendyolOrders(
 
 export async function fetchTrendyolReturns(
   cfg: TrendyolConfig,
-  opts: { page?: number; size?: number } = {},
+  opts: { page?: number; size?: number; startDate?: number; endDate?: number } = {},
 ): Promise<TrendyolReturnsResponse> {
   return trendyolFetch<TrendyolReturnsResponse>(cfg, "claims", {
     page: opts.page ?? 0,
     size: opts.size ?? 50,
+    startDate: opts.startDate ?? daysAgo(30),
+    endDate: opts.endDate ?? Date.now(),
   });
 }
 
