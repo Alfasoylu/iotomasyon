@@ -35,12 +35,13 @@ Current reality:
 - marketplace monitoring complete (Phase 13 ✓): /marketplace/monitoring, gap/problem/stale alerts, auto task creation
 - Trendyol API integration complete (Phase 14 ✓): /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config, save+test server actions
 - marketplace profit dashboard complete (Phase 15 ✓): /marketplace/profit, platform breakdown, winners/losers/missing-data/high-stock alerts
+- marketplace operations expansion complete (Phase 16 ✓): Q&A module (fetch + inline answer with audit log), Return Action Center (approve/reject claims with issue reasons), Product Mapping registry, Monthly Exchange Rate management, 4 DB tables, 6 new permissions
 
-This means the product is operationally useful for internal CRM, quote workflows, and marketplace read intelligence. Ready for multi-user rollout.
+This means the product is operationally useful for internal CRM, quote workflows, and active Trendyol marketplace operations. Ready for multi-user rollout.
 Not yet ready for:
 - owner-grade executive KPI dashboard (Phase 22)
 - procurement intelligence (Phases 19–21)
-- marketplace write-side operations (Phase 17, DEFERRED)
+- marketplace sync/write architecture (Phase 17, DEFERRED)
 
 ---
 

@@ -49,6 +49,7 @@ Implemented modules:
 - marketplace monitoring (Phase 13: /marketplace/monitoring, gap/problem/stale alerts)
 - Trendyol API integration (Phase 14: /admin/trendyol config, /marketplace/trendyol live dashboard)
 - marketplace profit dashboard (Phase 15: /marketplace/profit, winners/losers/missing-data/high-stock alerts)
+- marketplace operations expansion (Phase 16: Q&A module, Return Action Center, Product Mapping registry, Exchange Rate management)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -436,12 +437,35 @@ Verified outcome:
 
 ---
 
-## Phase 16 — Marketplace Expansion
-Status: NOT STARTED
+## Phase 16 — Marketplace Operations Expansion
+Status: DONE
 
-Missing:
-- non-Trendyol marketplace connectors
-- multi-channel visibility layer
+Completed:
+- DB schema: `Product.unitCostUsd` (nullable Decimal), `MarketplaceProductMapping`, `MarketplaceQuestionActionLog`, `MarketplaceReturnActionLog`, `MonthlyExchangeRate` — all migrated to production Supabase
+- 6 new permissions seeded: `marketplaceQuestions.read`, `marketplaceQuestions.answer`, `marketplaceReturns.action`, `marketplaceMappings.read`, `marketplaceMappings.write`, `exchangeRates.manage`
+- MARKETPLACE_OPERATOR role: 4 new permissions assigned as defaults
+- `lib/trendyol-api.ts` extended: QNA base URL, `trendyolPost`/`trendyolPut` write helpers, `fetchTrendyolQuestions()`, `answerTrendyolQuestion()`, `fetchClaimIssueReasons()`, `approveTrendyolClaim()`, `createTrendyolClaimIssue()`
+- `lib/actions/trendyol-question-actions.ts`: `answerTrendyolQuestionAction` with `MarketplaceQuestionActionLog` audit trail
+- `lib/actions/trendyol-return-actions.ts`: `approveTrendyolClaimAction` + `createTrendyolClaimIssueAction` with `MarketplaceReturnActionLog` audit trail
+- `lib/actions/marketplace-mapping-actions.ts`: create/update/delete for `MarketplaceProductMapping`
+- `lib/actions/exchange-rate-actions.ts`: upsert/delete + `getExchangeRateForDate()` lookup helper
+- `/marketplace/trendyol/questions`: live Q&A list with status filter tabs (WAITING/ANSWERED/REJECTED/REPORTED) + inline answer form (`AnswerQuestionForm` client component)
+- `/marketplace/trendyol/returns`: Return Action Center — actionable vs. completed splits, approve/reject panel (`ClaimActionPanel` client component with claim issue reasons from live API)
+- `/admin/exchange-rates`: monthly USD/TRY rate management table + add/update form (`ExchangeRateForm`)
+- `/admin/marketplace-mappings`: product mapping registry — create/delete mappings, list with product links (`MappingForm`, `DeleteMappingButton`)
+- Sidebar: 4 new nav entries added (`Müşteri Soruları`, `İade Merkezi`, `Döviz Kurları`, `Ürün Eşleştirme`)
+- `Button` component: added `size` prop (sm/md/lg) — backwards compatible
+- tsc clean, npm run build clean
+
+Verified outcome:
+- Migration applied to production Supabase: all 5 schema changes confirmed ✓
+- 6 permissions seeded: marketplaceQuestions.read/answer, marketplaceReturns.action, marketplaceMappings.read/write, exchangeRates.manage ✓
+- tsc --noEmit: no errors ✓
+- npm run build: clean, /marketplace/trendyol/questions and /marketplace/trendyol/returns in output ✓
+- Vercel deployment triggered: c3fb5bd ✓
+
+Browser verification (post-deploy):
+- Pending Vercel deploy completion
 
 ---
 

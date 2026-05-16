@@ -50,6 +50,7 @@ Implemented modules:
 - marketplace monitoring dashboard — Phase 13 complete: /marketplace/monitoring, gap/problem/stale alert sections, auto task creation
 - Trendyol API integration — Phase 14 complete: /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config with save+test actions (live-verified: 437 orders, 155 returns, "Bağlantı başarılı." ✓)
 - marketplace profit dashboard — Phase 15 complete: /marketplace/profit, winners/losers/missing-data/high-stock signal, platform breakdown grid
+- marketplace operations expansion — Phase 16 complete: /marketplace/trendyol/questions (Q&A + inline answer), /marketplace/trendyol/returns (approve/reject claims), /admin/exchange-rates, /admin/marketplace-mappings; 4 new DB tables, 6 new permissions, full audit trail
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -137,6 +138,7 @@ Current meaning:
 - marketplace monitoring — DONE (Phase 13): gap/problem/stale alerts, auto task creation
 - Trendyol read dashboard — DONE (Phase 14): /admin/trendyol config, /marketplace/trendyol live orders+returns, save+test actions — live-verified with real credentials (437 orders, 155 returns) ✓
 - marketplace profit dashboard — DONE (Phase 15): /marketplace/profit, winners/losers/missing-data/high-stock alerts
+- marketplace operations expansion — DONE (Phase 16): Q&A module, Return Action Center, Product Mapping registry, Exchange Rate management, full Trendyol write-side actions with audit trail
 - marketplace sync architecture — NOT IMPLEMENTED (Phase 17, DEFERRED)
 
 ---

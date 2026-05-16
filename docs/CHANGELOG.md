@@ -208,6 +208,33 @@
 - Added "Pazar Kârlılığı" sidebar entry (MARKETPLACE_LISTINGS_READ permission)
 - Added "📊 Kârlılık" button to `/marketplace` page header
 
+### Phase 16 — Marketplace Operations Expansion
+- Added `Product.unitCostUsd DECIMAL` column (nullable, USD unit cost for import-priced products)
+- Created `MarketplaceProductMapping` table: many platform identities (barcode/SKU/listingId) → one internal Product; 5 composite indexes; FK → Product (CASCADE), FK → User (SET NULL)
+- Created `MarketplaceQuestionActionLog` table: audit trail for all Q&A answers sent to Trendyol; indexes on questionId, platform, userId, createdAt
+- Created `MarketplaceReturnActionLog` table: audit trail for all claim approve/reject/issue actions; indexes on claimId, platform, userId, createdAt
+- Created `MonthlyExchangeRate` table: historical USD/TRY rates, unique(year, month), for per-order import cost conversion
+- Applied Prisma migration `20260517020000_phase16_marketplace_ops` to production Supabase
+- Added 6 new permissions: `marketplaceQuestions.read`, `marketplaceQuestions.answer`, `marketplaceReturns.action`, `marketplaceMappings.read`, `marketplaceMappings.write`, `exchangeRates.manage`
+- MARKETPLACE_OPERATOR role defaults: added `marketplaceQuestions.read`, `marketplaceQuestions.answer`, `marketplaceReturns.action`, `marketplaceMappings.read`
+- Extended `lib/trendyol-api.ts` with: QNA gateway (`https://apigw.trendyol.com/integration/qna/sellers/{id}/`), `trendyolPost`/`trendyolPut` write helpers, `TrendyolQuestion`/`TrendyolQuestionsResponse` types, `fetchTrendyolQuestions()`, `answerTrendyolQuestion()`, `fetchClaimIssueReasons()`, `approveTrendyolClaim()`, `createTrendyolClaimIssue()`
+- Created `lib/actions/trendyol-question-actions.ts`: `answerTrendyolQuestionAction` — validates, sends to Trendyol, writes audit log on success and failure
+- Created `lib/actions/trendyol-return-actions.ts`: `approveTrendyolClaimAction` + `createTrendyolClaimIssueAction` — both write `MarketplaceReturnActionLog` entries
+- Created `lib/actions/marketplace-mapping-actions.ts`: `createMarketplaceMappingAction`, `updateMarketplaceMappingAction`, `deleteMarketplaceMappingAction`
+- Created `lib/actions/exchange-rate-actions.ts`: `upsertExchangeRateAction`, `deleteExchangeRateAction`, `getExchangeRateForDate(epochMs)` utility
+- Created `/marketplace/trendyol/questions` page: live Q&A list from Trendyol, status filter tabs (WAITING_FOR_ANSWER/ANSWERED/REJECTED/REPORTED), inline answer form, existing answer display, permission: `marketplaceQuestions.read`
+- Created `/marketplace/trendyol/returns` page: Return Action Center, splits actionable vs. completed claims, fetches live claim issue reasons, `ClaimActionPanel` for approve + reject/issue workflow, permission: `marketplaceReturns.read`
+- Created `/admin/exchange-rates` page: monthly USD/TRY rate table with add/update form, usage info card, permission: `exchangeRates.manage`
+- Created `/admin/marketplace-mappings` page: mapping registry with platform filter, product links, delete with confirmation, add form, permission: `marketplaceMappings.read`
+- Created `components/trendyol/answer-question-form.tsx`: inline expandable answer textarea (10–2000 chars, char counter, pending state)
+- Created `components/trendyol/claim-action-panel.tsx`: claim line item selector, approve mode + reject/issue mode with reason dropdown and description field
+- Created `components/marketplace/exchange-rate-form.tsx`: year/month/rate/note form with reload-on-save
+- Created `components/marketplace/mapping-form.tsx`: platform/product/barcode/SKU/listingId/title form + delete button with confirm gate
+- Extended `Button` component with `size` prop (sm/md/lg) — no breaking changes to existing usage
+- Added 4 sidebar entries: `Müşteri Soruları`, `İade Merkezi`, `Döviz Kurları`, `Ürün Eşleştirme`
+- Updated sidebar Phase note: "Faz 16 aktif"
+- tsc --noEmit clean, npm run build clean
+
 ### Phase 12 — Marketplace Listing Registry
 - Created `MarketplacePlatform` enum: TRENDYOL, HEPSIBURADA, N11, PTTAVM, KOCTAS, TEKNOSA, TEMU, CUSTOM
 - Created `ListingStatus` enum: ACTIVE, INACTIVE, SUSPENDED, UNKNOWN
