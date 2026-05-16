@@ -27,7 +27,7 @@ export async function loginAction(values: LoginInput): Promise<ActionResult<keyo
   await createUserSession({
     userId: user.id,
     email: user.email,
-    role: user.role,
+    role: user.role as string,
   });
 
   return {
