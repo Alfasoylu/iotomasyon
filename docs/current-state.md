@@ -47,6 +47,7 @@ Implemented modules:
 - sales potential engine — Phase 9 complete: per-channel demand estimates, projected monthly revenue/profit, investment score 0–100, BUY/WAIT/DO_NOT_BUY signal
 - capital allocation engine — Phase 10 complete: admin-only /admin/capital, ranked purchase suggestions, reserve safety, persistent config
 - XML inventory sync — Phase 11 complete: /admin/xml-sync, XmlSyncSource/XmlSyncLog, manual trigger, daily Vercel cron, xmlLocked override protection
+- marketplace listing registry — Phase 12 complete: /marketplace, MarketplaceListing table, 8 platforms, 4 statuses, create/edit/delete, product + responsible links
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -127,14 +128,14 @@ Current quote limitations:
 
 ## Marketplace State
 
-NOT IMPLEMENTED
+PARTIAL
 
 Current meaning:
-- no marketplace registry
-- no marketplace monitoring
-- no Trendyol read dashboard
-- no marketplace profitability layer
-- no marketplace sync architecture
+- marketplace listing registry — DONE (Phase 12): /marketplace, create/edit/delete listings, 8 platforms, 4 statuses, product + responsible links
+- marketplace monitoring — NOT IMPLEMENTED (Phase 13)
+- Trendyol read dashboard — NOT IMPLEMENTED (Phase 14)
+- marketplace profitability layer — NOT IMPLEMENTED (Phase 15)
+- marketplace sync architecture — NOT IMPLEMENTED (Phase 17, DEFERRED)
 
 ---
 
@@ -164,9 +165,8 @@ Current meaning:
 
 ## Known Technical Debt
 
-- product cost model incomplete (Phase 8 profitability engine not yet implemented)
-- no marketplace schema
-- no XML ingestion architecture
+- no marketplace monitoring (Phase 13 not yet implemented)
+- no Trendyol API integration (Phase 14 not yet implemented)
 - no image pipeline
 - no audit-grade event history
 - no audit-grade event history for financial, permission, stock, marketplace, or quote changes

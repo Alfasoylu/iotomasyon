@@ -337,14 +337,26 @@ Verified outcome:
 ---
 
 ## Phase 12 — Marketplace Listing Registry
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- marketplace listing schema
-- listing relation model
-- listing ownership fields
-- listing status registry
-- listing notes and audit support
+Completed:
+- `MarketplacePlatform` enum added: TRENDYOL, HEPSIBURADA, N11, PTTAVM, KOCTAS, TEKNOSA, TEMU, CUSTOM
+- `ListingStatus` enum added: ACTIVE, INACTIVE, SUSPENDED, UNKNOWN
+- `MarketplaceListing` table migrated to production: id, productId (FK → Product CASCADE), platform, platformListingId, listingUrl, listingBarcode, listingSku, listingTitle, status, notes, responsibleId (FK → User SET NULL), lastCheckedAt, createdAt, updatedAt
+- `lib/actions/marketplace-listing-actions.ts`: createListingAction, updateListingAction, deleteListingAction (all with Zod validation and permission guard)
+- `/marketplace` listing registry page: platform summary cards grid (count + active count), full listings table grouped by platform
+- `/marketplace/new` create listing page with optional `?productId=` pre-fill query param
+- `/marketplace/[id]` listing detail page with Row-based field display
+- `/marketplace/[id]/edit` edit + delete form
+- `components/marketplace/listing-form.tsx`: platform/status dropdowns, create/edit/delete modes
+- Sidebar: "Pazar Yerleri" link (MARKETPLACE_LISTINGS_READ permission)
+- Product and User models: `marketplaceListings[]` relation added to schema
+
+Verified outcome:
+- Browser test: `/marketplace` empty state → `/marketplace/new` form → created Trendyol listing for ANUNNAKIPOINTER product → redirected to `/marketplace/[id]` detail page ✓
+- Detail page shows platform, status badge, listing ID, title, product link, dates ✓
+- Edit page pre-filled with all saved values ✓
+- List page: "Toplam 1 listeleme kayıtlı", TRENDYOL summary card (1 listeleme, 1 aktif), row in table ✓
 
 ---
 
@@ -485,10 +497,8 @@ Missing:
 
 # Technical Debt
 
-- no marketplace schema (Phase 12+)
-- no XML ingestion architecture (Phase 11)
-- no marketplace schema
-- no XML ingestion architecture
+- no marketplace monitoring (Phase 13+)
+- no Trendyol API integration (Phase 14)
 - no image pipeline
 - no audit-grade event history
 - no procurement engine
@@ -622,7 +632,7 @@ Needed next:
 # Last Updated
 
 Date:
-2026-05-16
+2026-05-17
 
 Alignment source:
 `ROADMAP.md`

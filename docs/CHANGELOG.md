@@ -169,3 +169,17 @@
 - Created `/admin/capital` page: capital config form, 5-column summary, purchase suggestion table with safety warning
 - Added "Sermaye" link to sidebar (EXECUTIVE_READ permission)
 - Reserve safety enforced: reserve % of available capital never allocated
+
+### Phase 12 — Marketplace Listing Registry
+- Created `MarketplacePlatform` enum: TRENDYOL, HEPSIBURADA, N11, PTTAVM, KOCTAS, TEKNOSA, TEMU, CUSTOM
+- Created `ListingStatus` enum: ACTIVE, INACTIVE, SUSPENDED, UNKNOWN
+- Created `MarketplaceListing` table: productId (FK → Product CASCADE), platform, platformListingId, listingUrl, listingBarcode, listingSku, listingTitle, status, notes, responsibleId (FK → User SET NULL), lastCheckedAt
+- Applied migration to production Supabase PostgreSQL
+- Created `lib/actions/marketplace-listing-actions.ts`: createListingAction, updateListingAction, deleteListingAction (Zod-validated, permission-guarded)
+- Created `/marketplace` listing registry page: platform summary cards + full listings table
+- Created `/marketplace/new` create listing page with optional `?productId=` pre-fill
+- Created `/marketplace/[id]` listing detail page
+- Created `/marketplace/[id]/edit` edit + delete form
+- Created `components/marketplace/listing-form.tsx`: platform/status dropdowns, create/edit/delete modes
+- Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
+- Added `marketplaceListings[]` relation to Product and User Prisma models

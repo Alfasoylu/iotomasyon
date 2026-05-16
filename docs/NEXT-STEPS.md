@@ -31,11 +31,12 @@ Current reality:
 - sales potential engine does not exist yet
 - capital allocation engine complete (Phase 10 ✓)
 - XML inventory sync complete (Phase 11 ✓)
+- marketplace listing registry complete (Phase 12 ✓): /marketplace, 8 platforms, create/edit/delete, product + responsible links
 
 This means the product is operationally useful for internal CRM and quote workflows and is ready for multi-user rollout.
 Not yet ready for:
 - owner-grade financial intelligence
-- marketplace intelligence
+- marketplace monitoring and intelligence
 - procurement intelligence
 - capital allocation intelligence
 
@@ -161,9 +162,9 @@ Phase dependencies:
 - Phase 9 ✓ complete — investment score and BUY/WAIT/DO_NOT_BUY signal are production-active.
 - Phase 10 ✓ complete — admin capital allocation page with ranked purchase suggestions and reserve safety.
 - Phase 11 ✓ complete — XML inventory sync is production-active.
+- Phase 12 ✓ complete — Marketplace listing registry is production-active.
 - Phase 11 provides real stock feed data that improves allocation accuracy.
-- Phase 11 should arrive before deep marketplace intelligence because external stock feeds affect listing accuracy.
-- Phase 12 and Phase 13 should exist before any marketplace automation because visibility must come before control.
+- Phase 13 should exist before any marketplace automation because monitoring visibility must come before control.
 - Phase 14 must remain read-only until listing registry and monitoring are stable.
 - Phase 15 depends on Phase 14 because marketplace profitability requires marketplace read data.
 - Phase 19 depends on Phase 7, Phase 8, Phase 9, and Phase 20 because procurement logic needs inventory, profitability, demand, and supplier inputs.
