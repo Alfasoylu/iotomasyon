@@ -242,6 +242,7 @@ model User {
   categoryInterestsCreated CategoryInterest[] @relation("CreatedCategoryInterests")
   campaignsCreated         OutreachCampaign[] @relation("CreatedCampaigns")
   customersOwned           Customer[]         @relation("OwnedCustomers")
+  capitalConfigs           CapitalConfig[]
 }
 
 model ProductCategory {
@@ -536,6 +537,17 @@ model OutreachCampaign {
   @@index([productId])
   @@index([categoryId])
   @@index([createdAt])
+}
+
+// Phase 10 — Capital Allocation Engine (admin-only)
+model CapitalConfig {
+  id                    String   @id @default(cuid())
+  totalCapitalTry       Decimal
+  reservePct            Decimal  @default(20)
+  desiredTurnoverMonths Decimal  @default(3)
+  updatedAt             DateTime @updatedAt
+  updatedById           String?
+  updatedBy             User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
 }
 
 model OutreachRecipient {

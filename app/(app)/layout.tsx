@@ -19,7 +19,8 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/search",     label: "Arama",       permission: PERMISSIONS.SEARCH_READ },
   { href: "/campaigns",  label: "Kampanyalar", permission: PERMISSIONS.CAMPAIGNS_READ },
   { href: "/activity",   label: "Aktiviteler", permission: PERMISSIONS.ACTIVITY_READ },
-  { href: "/admin/users", label: "Kullanıcılar", permission: PERMISSIONS.USERS_READ },
+  { href: "/admin/users",    label: "Kullanıcılar",  permission: PERMISSIONS.USERS_READ },
+  { href: "/admin/capital",  label: "Sermaye",       permission: PERMISSIONS.EXECUTIVE_READ },
 ];
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
