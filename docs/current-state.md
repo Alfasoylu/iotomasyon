@@ -48,7 +48,7 @@ Implemented modules:
 - XML inventory sync — Phase 11 complete: /admin/xml-sync, XmlSyncSource/XmlSyncLog, manual trigger, daily Vercel cron, xmlLocked override protection
 - marketplace listing registry — Phase 12 complete: /marketplace, MarketplaceListing table, 8 platforms, 4 statuses, create/edit/delete, product + responsible links
 - marketplace monitoring dashboard — Phase 13 complete: /marketplace/monitoring, gap/problem/stale alert sections, auto task creation
-- Trendyol API integration — Phase 14 complete: /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config with save+test actions
+- Trendyol API integration — Phase 14 complete: /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config with save+test actions (live-verified: 437 orders, 155 returns, "Bağlantı başarılı." ✓)
 - marketplace profit dashboard — Phase 15 complete: /marketplace/profit, winners/losers/missing-data/high-stock signal, platform breakdown grid
 - product/customer interest engine
 - category/customer relationship engine
@@ -135,7 +135,7 @@ PARTIAL
 Current meaning:
 - marketplace listing registry — DONE (Phase 12): /marketplace, create/edit/delete listings, 8 platforms, 4 statuses, product + responsible links
 - marketplace monitoring — DONE (Phase 13): gap/problem/stale alerts, auto task creation
-- Trendyol read dashboard — DONE (Phase 14): /admin/trendyol config, /marketplace/trendyol live orders+returns, save+test actions
+- Trendyol read dashboard — DONE (Phase 14): /admin/trendyol config, /marketplace/trendyol live orders+returns, save+test actions — live-verified with real credentials (437 orders, 155 returns) ✓
 - marketplace profit dashboard — DONE (Phase 15): /marketplace/profit, winners/losers/missing-data/high-stock alerts
 - marketplace sync architecture — NOT IMPLEMENTED (Phase 17, DEFERRED)
 

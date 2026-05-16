@@ -403,9 +403,13 @@ Completed:
 - `/marketplace/trendyol`: live orders + returns dashboard (MARKETPLACE_LISTINGS_READ) — not-configured state, API error state, 4 summary cards, orders table (20 rows), returns table (10 rows), Turkish status maps
 - Sidebar: "Trendyol API" (EXECUTIVE_READ), "Trendyol Paneli" (MARKETPLACE_LISTINGS_READ)
 
-Verified outcome:
-- Browser test: `/admin/trendyol` loads → fill supplierId/apiKey/apiSecret → "Kaydet" → "✓ Yapılandırma kaydedildi." ✓
-- `/marketplace/trendyol` renders "Trendyol API yapılandırılmamış veya pasif." not-configured state with "⚙ API Ayarlarına git" button ✓
+Verified outcome (live credentials, 2026-05-17):
+- `/admin/trendyol` config page: supplierId 209161 saved, "Entegrasyon aktif" badge green ✓
+- "Bağlantıyı test et" → "✓ Bağlantı başarılı." (live API ping confirmed) ✓
+- `/marketplace/trendyol` orders table: 437 totalElements, 20 rows rendered with dates, customer names, amounts, "Teslim edildi" status badges ✓
+- `/marketplace/trendyol` returns table: 155 totalElements, 10 rows with correct claimDate dates, "Kabul edildi"/"İptal" status badges, product names, return reasons (e.g. "Kusurlu ürün gönderildi", "Yanlış sipariş verdim") ✓
+- API URL fix: migrated from legacy `api.trendyol.com/sapigw/suppliers` to `apigw.trendyol.com/integration/order/sellers` ✓
+- Return type fix: TrendyolReturn interface rewritten to match live getClaims structure (items[].claimItems[].claimItemStatus.name, claimDate, items[].orderLine.productName) ✓
 - Both sidebar entries visible and functional ✓
 
 ---

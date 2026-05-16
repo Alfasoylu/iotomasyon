@@ -189,6 +189,12 @@
 - Created `/admin/trendyol` settings page: status badge (aktif/pasif), supplierId display, last updated timestamp, TrendyolConfigForm, how-to-find guide card (EXECUTIVE_READ)
 - Created `/marketplace/trendyol` live dashboard (MARKETPLACE_LISTINGS_READ): not-configured state, API error state (red card), data state with 4 summary cards + orders table (20 rows) + returns table (10 rows), Turkish status maps (`STATUS_TR`, `RETURN_STATUS_TR`), `StatusBadge` component, `fmtDate()` and `fmtCurrency()` helpers
 - Added "Trendyol API" sidebar entry (EXECUTIVE_READ) and "Trendyol Paneli" sidebar entry (MARKETPLACE_LISTINGS_READ)
+- Fixed Trendyol API base URL: migrated from deprecated `api.trendyol.com/sapigw/suppliers` to `apigw.trendyol.com/integration/order/sellers`
+- Fixed `TrendyolReturn` interface to match live getClaims API: added `TrendyolClaimItem`, `TrendyolClaimItemStatus`, `TrendyolClaimItemReason`, `TrendyolClaimOrderLine`, `TrendyolClaimLineItem` interfaces; `items[]` replaces `lines[]`; `claimDate` replaces `createdDate`; status derived from `items[0].claimItems[0].claimItemStatus.name`
+- Fixed returns table rendering: `ret.claimDate` for date, `ret.items[].orderLine.productName` for products, `ret.items[0].claimItems[0].customerClaimItemReason.name` for return reason
+- Extended `RETURN_STATUS_TR` map: Accepted, InAnalysis, Resolved, Cancelled, Created entries added
+- Added defensive null-safety in `fetchDashboardData`: `Array.isArray()` checks for `content` field before rendering
+- Live-verified with Satıcı ID 209161: 437 orders, 155 returns, connection test "Bağlantı başarılı." ✓
 
 ### Phase 15 — Marketplace Profit Dashboard
 - No new DB schema — all profitability computed from existing Product pricing fields via `calculateProfitability()`
