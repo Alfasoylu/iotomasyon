@@ -24,11 +24,13 @@ Current reality:
 - relationship engine exists
 - task and outreach foundations exist
 - Turkish location layer exists
-- RBAC foundation exists
-- intelligence systems do not exist yet
+- RBAC complete and production-active (Phase 5 ✓)
+- customer intelligence fields live: customerType, monthlySalesPotential, platformNotes (Phase 6 ✓)
+- inventory intelligence does not exist yet
+- financial intelligence systems do not exist yet
 
-This means the product is operationally useful for internal CRM and quote workflows, but not yet ready for:
-- permission-complete multi-user rollout
+This means the product is operationally useful for internal CRM and quote workflows and is ready for multi-user rollout.
+Not yet ready for:
 - owner-grade financial intelligence
 - marketplace intelligence
 - procurement intelligence
@@ -41,7 +43,7 @@ This means the product is operationally useful for internal CRM and quote workfl
 ### Priority 0 — Safety and Data Governance Baseline
 
 Why:
-Phase 5+ implementation should not proceed without minimum migration and data-governance safety rules.
+Schema-heavy phases should not proceed without minimum migration and data-governance safety rules.
 
 Includes:
 - migration safety checklist
@@ -52,47 +54,9 @@ Includes:
 
 Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
-- it means establishing minimum safety rules before Phase 5+ implementation
+- it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 5: RBAC Hardening and Rollout Verification
-
-Why:
-Safe multi-user rollout is impossible without verified permissions.
-
-Deliverables:
-- restricted-user smoke testing
-- permission matrix verification against implemented routes/actions
-- financial permission boundary verification
-- admin user management QA
-- documentation alignment across schema/current-state/progress docs
-
-Acceptance:
-- admin can create and disable user accounts
-- admin can assign roles or explicit permissions
-- blocked users cannot access restricted routes
-- server-side permission checks enforce access rules
-- sidebar visibility reflects permission state
-- documented permission model matches implemented foundation
-
-### Priority 2 — Phase 6: Customer Intelligence Expansion
-
-Why:
-CRM data exists, but it is not yet rich enough for real sales segmentation or fast opportunity targeting.
-
-Deliverables:
-- customer type model
-- customer type filtering
-- monthly sales potential field
-- preferred product fields or relation
-- category opportunity context
-- platform notes
-
-Acceptance:
-- sales can filter customers by type
-- product and category pages surface relevant customer opportunities
-- customer records can store practical sales intelligence beyond basic CRM data
-
-### Priority 3 — Phase 7: Inventory Intelligence Core
+### Priority 1 — Phase 7: Inventory Intelligence Core
 
 Why:
 Profitability, procurement, and capital decisions depend on trustworthy stock and cost memory.
@@ -112,7 +76,7 @@ Acceptance:
 - stock data can support later decision engines
 - product records support manual and external stock memory without ambiguity
 
-### Priority 4 — Phase 8: Profitability Engine
+### Priority 2 — Phase 8: Profitability Engine
 
 Why:
 The system must know whether products make money before it can make recommendations.
@@ -132,7 +96,7 @@ Acceptance:
 - losing products can be identified
 - profitability is consistent enough to support later planning phases
 
-### Priority 5 — Phase 11: XML Inventory Sync
+### Priority 3 — Phase 11: XML Inventory Sync
 
 Why:
 Inventory intelligence should connect to real external inventory signals before marketplace analytics grows.
@@ -150,7 +114,7 @@ Acceptance:
 - sync operations are observable
 - external updates do not blindly overwrite trusted manual data
 
-### Priority 6 — Phase 12–15: Marketplace Read Intelligence
+### Priority 4 — Phase 12–15: Marketplace Read Intelligence
 
 Why:
 Read-side marketplace visibility should exist before any write-side marketplace operations are considered.
@@ -167,7 +131,7 @@ Acceptance:
 - marketplace orders/returns/commissions can be read
 - channel visibility exists without write-side risk
 
-### Priority 7 — Phase 9–10: Decision Intelligence
+### Priority 5 — Phase 9–10: Decision Intelligence
 
 Why:
 Demand scoring and capital allocation should only be built after inventory and profitability data become reliable.
@@ -184,7 +148,7 @@ Acceptance:
 - capital suggestions are explainable
 - no automated capital deployment occurs without admin approval
 
-### Priority 8 — Phase 19+: Procurement / Executive Intelligence
+### Priority 6 — Phase 19+: Procurement / Executive Intelligence
 
 Why:
 These phases are high-value but depend on reliable data from earlier phases.
@@ -210,7 +174,8 @@ Acceptance:
 
 Phase dependencies:
 
-- Phase 5 blocks safe internal multi-user rollout.
+- Phase 5 ✓ complete — multi-user rollout is now safe.
+- Phase 6 ✓ complete — customer intelligence fields are production-active.
 - Phase 7 blocks trustworthy profitability work because cost and stock memory are incomplete.
 - Phase 8 depends on Phase 7 because profitability depends on inventory cost structure.
 - Phase 9 depends on Phase 8 because investment scoring without profitability is weak.

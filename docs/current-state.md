@@ -36,12 +36,12 @@ It is not yet:
 Implemented modules:
 - authentication (single internal auth)
 - protected app shell
-- RBAC foundation
+- RBAC — complete (Phase 5): 5 roles, 62 permissions, per-user overrides, dangerous permission gate
 - admin user management
 - product management
 - category management
 - attribute system
-- customer CRM
+- customer CRM — Phase 6 complete: customerType enum, monthlySalesPotential, platformNotes
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -68,16 +68,17 @@ Clarification:
 Current auth state:
 - single internal auth
 - internal login/logout flow exists
-- RBAC foundation exists
-- protected routes exist
-- app shell protection exists
+- RBAC complete and production-active (Phase 5)
+- protected routes exist and are permission-enforced server-side
+- app shell protection exists with permission-aware sidebar
+- per-user permission overrides supported
 
-Current limitation:
-- RBAC is not yet roadmap-complete
-
-Meaning:
-- server-side permission enforcement and permission-aware navigation exist
-- broader restricted-user rollout still needs acceptance validation
+RBAC capabilities:
+- 5 roles: ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM
+- 62 permissions across 12 categories
+- 6-step permission resolution: dangerous gate → ADMIN bypass → explicit deny → explicit grant → role default → deny
+- dangerous permissions (migrations.approve, destructiveActions.approve) require explicit per-user grant
+- zero-access users are redirected to /no-access
 
 ---
 
@@ -160,8 +161,7 @@ Current meaning:
 
 ## Known Technical Debt
 
-- RBAC foundation exists but is not yet rollout-complete
-- product cost model incomplete
+- product cost model incomplete (Phase 7+)
 - no marketplace schema
 - no XML ingestion architecture
 - no image pipeline

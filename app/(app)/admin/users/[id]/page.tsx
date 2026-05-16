@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { UserPermissionGrid, type PermissionRow } from "@/components/admin/user-permission-grid";
+import { UserPasswordForm } from "@/components/admin/user-password-form";
+import { UserProfileForm } from "@/components/admin/user-profile-form";
 import { UserRoleForm } from "@/components/admin/user-role-form";
 import { getCurrentSession, requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -25,9 +27,12 @@ export default async function AdminUserDetailPage({
   ]);
 
   await requirePermission(PERMISSIONS.USERS_READ);
-  const canManagePerms = currentSession
-    ? await checkPermission(currentSession, PERMISSIONS.PERMISSIONS_MANAGE)
-    : false;
+  const [canManagePerms, canManageUsers] = currentSession
+    ? await Promise.all([
+        checkPermission(currentSession, PERMISSIONS.PERMISSIONS_MANAGE),
+        checkPermission(currentSession, PERMISSIONS.USERS_UPDATE),
+      ])
+    : [false, false];
 
   // Try to load user with Phase 5 permission overrides.
   // Falls back to basic user data if Phase 5 tables haven't been migrated yet.
@@ -121,6 +126,34 @@ export default async function AdminUserDetailPage({
           <Badge tone="default">{ROLE_LABELS[targetUser.role as UserRole] ?? targetUser.role}</Badge>
         </div>
       </div>
+
+      <Card className="p-6">
+        <h2 className="mb-4 text-base font-semibold text-slate-900">Ad ve e-posta</h2>
+        {!canManageUsers && (
+          <p className="mb-4 text-sm text-slate-500">
+            Düzenlemek için users.update yetkisi gereklidir.
+          </p>
+        )}
+        <UserProfileForm
+          userId={targetUser.id}
+          currentName={targetUser.name}
+          currentEmail={targetUser.email}
+          canEdit={canManageUsers}
+        />
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="mb-4 text-base font-semibold text-slate-900">Şifre</h2>
+        {!canManageUsers && (
+          <p className="mb-4 text-sm text-slate-500">
+            Değiştirmek için users.update yetkisi gereklidir.
+          </p>
+        )}
+        <UserPasswordForm
+          userId={targetUser.id}
+          canEdit={canManageUsers}
+        />
+      </Card>
 
       <Card className="p-6">
         <h2 className="mb-4 text-base font-semibold text-slate-900">Rol ve hesap durumu</h2>

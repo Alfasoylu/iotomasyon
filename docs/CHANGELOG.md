@@ -72,3 +72,25 @@
 - Created `docs/CHANGELOG.md` as factual history reference
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
+
+### Phase 5 — RBAC (Role Based Access Control)
+- Expanded `UserRole` enum: ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM
+- Created `Role`, `Permission`, `RolePermission`, `UserPermission` tables and applied migration to production
+- Seeded 5 system roles, 62 permissions across 12 categories
+- Implemented `resolvePermission()` 6-step engine: dangerous gate → ADMIN bypass → explicit deny → explicit grant → role default → deny
+- Implemented `DANGEROUS_PERMISSIONS` gate for `migrations.approve` and `destructiveActions.approve`
+- Seeded SALES role with 15 default permissions, OPERATIONS with 12, MARKETPLACE_OPERATOR with 11
+- Implemented per-user permission override UI with Varsayılan → Verildi → Engellendi → Varsayılan cycle
+- Added permission-aware sidebar with parallel `checkPermission` calls and zero-access `/no-access` redirect
+- Enforced `requirePermission()` on all protected routes and `checkPermission()` in all server actions
+- Added graceful degradation throughout — app remains operational if Phase 5 tables are absent
+- Added 22 automated unit tests for permission engine (`__tests__/resolve-permission.test.ts`)
+- Added `isSchemaMismatchError()` helper for pre-migration environment handling
+
+### Phase 6 — Customer Intelligence Expansion
+- Added `CustomerType` enum: RETAILER, WHOLESALER, DISTRIBUTOR, CONTRACTOR, END_USER, OTHER
+- Added `monthlySalesPotential DECIMAL(15,2)` column to `Customer` table
+- Added `platformNotes TEXT` column to `Customer` table
+- Migrated `customerType` column from untyped TEXT to `CustomerType` enum in production
+- Exposed `customerType`, `monthlySalesPotential`, and `platformNotes` in customer create/edit forms
+- Updated CSV import action to use explicit `SELECT` avoiding Phase 6 columns before migration

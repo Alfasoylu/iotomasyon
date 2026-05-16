@@ -34,12 +34,12 @@ Current reality:
 Implemented modules:
 - authentication (single internal auth)
 - protected app shell
-- RBAC foundation
+- RBAC (Phase 5 complete — role-based + per-user overrides)
 - admin user management
 - product management
 - category management
 - attribute system
-- customer CRM
+- customer CRM (Phase 6: customerType, monthlySalesPotential, platformNotes)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -186,31 +186,47 @@ Verified outcome:
 ---
 
 ## Phase 5 — Role Based Access Control (RBAC)
-Status: PARTIAL
+Status: DONE
 
 Completed:
-- expanded role model in schema
-- permission matrix foundation in code
-- permission-aware sidebar visibility
-- server-side permission enforcement foundation
-- admin user management routes
+- UserRole enum expanded: ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM
+- Role, Permission, RolePermission, UserPermission tables created and migrated to production
+- 62 permissions seeded across 12 categories (users, customers, products, categories, attributes, quotes, tasks, campaigns, search, activity, inventory, executive, dangerous)
+- DANGEROUS_PERMISSIONS gate: migrations.approve, destructiveActions.approve — never inheritable via role
+- `resolvePermission()` 6-step engine: dangerous gate → ADMIN bypass → explicit deny → explicit grant → role default → deny
+- SALES role defaults seeded: 15 permissions (customers, quotes, tasks, products, categories, attributes, search, activity)
+- OPERATIONS role defaults seeded: 12 permissions
+- MARKETPLACE_OPERATOR role defaults seeded: 11 permissions
+- Per-user override UI: Varsayılan → Verildi → Engellendi → Varsayılan cycle
+- Permission-aware sidebar with parallel permission checks and zero-access → /no-access redirect
+- Server-side `requirePermission()` and `checkPermission()` enforced on all routes and server actions
+- Admin user management page with permission grid grouped by category
+- Graceful degradation: app works before Phase 5 migrations applied (try-catch fallback)
+- 22 automated unit tests passing (`__tests__/resolve-permission.test.ts`)
+- Browser-verified: role change, override cycle, zero-access guard, SALES defaults
 
-Missing:
-- broader restricted-user rollout verification
-- permission governance documentation hardening
-- full organization-wide acceptance validation
+Verified outcome:
+- RBAC is production-active and organization-ready
+- Permission governance is documented and code-aligned
+- Multi-user rollout is safe
 
 ---
 
 ## Phase 6 — Customer Intelligence Expansion
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- customer type tagging model and workflows
-- monthly sales potential
-- preferred product intelligence
-- platform notes
-- fast pitch-oriented customer intelligence views
+Completed:
+- CustomerType enum: RETAILER, WHOLESALER, DISTRIBUTOR, CONTRACTOR, END_USER, OTHER
+- `monthlySalesPotential DECIMAL(15,2)` added to Customer table
+- `platformNotes TEXT` added to Customer table
+- customerType field migrated from TEXT to enum in production
+- Customer create/edit forms expose all three fields
+- CSV import action uses explicit SELECT to avoid Phase 6 column errors before migration
+- Graceful degradation via `isSchemaMismatchError()` for pre-migration environments
+
+Verified outcome:
+- Customer records can carry sales intelligence fields
+- Schema is production-active on Supabase PostgreSQL
 
 ---
 
@@ -423,7 +439,7 @@ Missing:
 
 # Technical Debt
 
-- RBAC foundation exists but full governance and rollout verification are incomplete
+- product cost model incomplete (Phase 7+)
 - product cost model incomplete
 - no marketplace schema
 - no XML ingestion architecture

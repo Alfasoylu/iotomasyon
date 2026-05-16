@@ -4,14 +4,45 @@
 
 This document defines the authorization model for IOTOMASYON.
 
-It exists to prevent ad-hoc permission decisions during RBAC implementation.
+Phase 5 Status: **COMPLETE and PRODUCTION-ACTIVE** (deployed 2026-05-16)
 
-This document defines the target permission architecture and the intended direction of the current Phase 5 foundation.
+What is live:
+- 5 roles seeded: ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM
+- 62 permissions seeded across 12 categories
+- `resolvePermission()` 6-step engine enforced server-side on all routes and actions
+- Per-user override UI with Varsayılan → Verildi → Engellendi cycle
+- Zero-access redirect to /no-access
+- 22 automated unit tests passing
 
-Important:
-- Current production auth is single internal auth.
-- RBAC foundation is implemented.
-- This document still defines the broader intended model and remaining direction.
+What is deferred to future phases:
+- inventory.*, xml.*, marketplaceListings.*, marketplace.*, profitability.*, procurement.*, suppliers.*, executive.* permissions exist as seed data but no routes require them yet (those modules don't exist)
+
+---
+
+# Permission Resolution Engine
+
+## `resolvePermission()` — 6-Step Algorithm
+
+Step 1 — DANGEROUS gate:
+- If the permission is in DANGEROUS_PERMISSIONS (`migrations.approve`, `destructiveActions.approve`):
+  - Check for explicit deny override → return false
+  - Check for explicit grant override → return true
+  - Otherwise → return false (no role or ADMIN bypass applies)
+
+Step 2 — ADMIN bypass:
+- If `user.role === "ADMIN"` → return true (all non-dangerous permissions)
+
+Step 3 — Explicit deny:
+- If user has a UserPermission with `granted = false` → return false
+
+Step 4 — Explicit grant:
+- If user has a UserPermission with `granted = true` → return true
+
+Step 5 — Role default:
+- If the permission key is in the role's RolePermission set → return true
+
+Step 6 — Deny by default:
+- return false
 
 ---
 
@@ -101,18 +132,20 @@ Can:
 Purpose:
 Sales representatives.
 
-Default access:
+Default access (15 permissions — seeded):
 - customers.read
 - customers.create
 - customers.update
 - quotes.read
 - quotes.create
 - quotes.update
+- quotes.send
 - tasks.read
 - tasks.create
 - tasks.update
 - products.read
 - categories.read
+- attributes.read
 - search.read
 - activity.read
 
@@ -424,17 +457,15 @@ requires:
 
 # Implementation Constraints
 
-Phase 5 must NOT:
-- implement fake UI-only permissions
-- trust client-side role checks alone
-- expose hidden APIs to unauthorized users
-- assume User.role enum is sufficient
-
-Phase 5 must:
-- support granular permissions
-- support custom roles
-- support admin overrides
-- be migration-safe
+Phase 5 delivered (production-verified):
+- No UI-only permissions — all enforced server-side via `requirePermission()` / `checkPermission()`
+- No client-side role check trust — session resolved on every request
+- No hidden API exposure — server actions check permissions before any DB operation
+- User.role participates in RBAC but is not sufficient alone — Role/Permission tables are the authority
+- Granular permissions: 62 seeded across 12 categories
+- Custom role: CUSTOM — admin assigns permissions per-user
+- Admin overrides: ADMIN bypasses all non-dangerous permissions
+- Migration-safe: graceful degradation if Phase 5 tables absent
 
 ---
 

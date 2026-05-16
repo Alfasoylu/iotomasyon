@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CUSTOMER_STATUS_OPTIONS, CUSTOMER_TYPE_OPTIONS } from "@/types/customers";
+import { CUSTOMER_STATUS_OPTIONS } from "@/types/customers";
 
 const optionalEmail = z
   .string()

@@ -106,6 +106,68 @@ export async function toggleUserActiveAction(
   }
 }
 
+export async function updateUserProfileAction(
+  targetUserId: string,
+  values: { name: string; email: string },
+): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.USERS_UPDATE))) return PERM_DENIED;
+
+  const name = values.name.trim();
+  const email = values.email.trim().toLowerCase();
+
+  if (!name || name.length < 2) {
+    return { ok: false, message: "Ad en az 2 karakter olmalıdır." };
+  }
+  if (!email || !email.includes("@")) {
+    return { ok: false, message: "Geçerli bir e-posta adresi girin." };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: targetUserId },
+      data: { name, email },
+    });
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${targetUserId}`);
+    return { ok: true };
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code: string }).code === "P2002"
+    ) {
+      return { ok: false, message: "Bu e-posta adresi zaten başka bir kullanıcıya ait." };
+    }
+    return { ok: false, message: "Kullanıcı bilgileri güncellenemedi." };
+  }
+}
+
+export async function updateUserPasswordAction(
+  targetUserId: string,
+  newPassword: string,
+): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.USERS_UPDATE))) return PERM_DENIED;
+
+  if (!newPassword || newPassword.length < 8) {
+    return { ok: false, message: "Şifre en az 8 karakter olmalıdır." };
+  }
+
+  try {
+    const passwordHash = await hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: targetUserId },
+      data: { passwordHash },
+    });
+    revalidatePath(`/admin/users/${targetUserId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Şifre güncellenemedi." };
+  }
+}
+
 export async function createUserAction(values: {
   email: string;
   name: string;

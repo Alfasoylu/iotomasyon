@@ -217,10 +217,12 @@ Important fields:
 - `whatsapp`
 - `email`
 - `company`
-- `status`
+- `status` (`CustomerStatus` enum)
 - `country`
 - `customerNotes`
-- `customerType`
+- `customerType` (`CustomerType` enum — Phase 6: RETAILER, WHOLESALER, DISTRIBUTOR, CONTRACTOR, END_USER, OTHER)
+- `monthlySalesPotential` (`DECIMAL(15,2)` — Phase 6)
+- `platformNotes` (`TEXT` — Phase 6)
 - `city`
 - `district`
 - `address`
@@ -451,14 +453,15 @@ Important fields:
 
 ## Current Enums
 
-- `UserRole`
+- `UserRole` (ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM — Phase 5 expanded)
+- `CustomerType` (RETAILER, WHOLESALER, DISTRIBUTOR, CONTRACTOR, END_USER, OTHER — Phase 6)
+- `CustomerStatus`
 - `InterestStatus`
 - `InterestPriority`
-- `TaskStatus`
-- `CustomerStatus`
 - `InterestStage`
-- `NoteType`
+- `TaskStatus`
 - `TaskPriority`
+- `NoteType`
 - `QuoteStatus`
 - `QuoteCurrencyMode`
 - `OutreachStatus`
@@ -496,10 +499,10 @@ Important fields:
 
 ## Technical Constraints
 
-- Current schema includes RBAC foundation models.
-- Current `User.role` field still exists and participates in the internal auth foundation.
-- Current `User.role` field does NOT represent a complete RBAC permission governance system by itself.
-- Role and permission tables must not be interpreted as roadmap-complete authorization architecture.
+- Phase 5 RBAC schema is production-active: Role, Permission, RolePermission, UserPermission tables exist and are seeded.
+- `User.role` participates in both the internal auth model and the RBAC engine (ADMIN bypass, role-default lookup).
+- RBAC is roadmap-complete for Phase 5 scope. Future phases may add more permission categories.
+- Phase 6 Customer Intelligence fields are production-active: CustomerType enum, monthlySalesPotential, platformNotes.
 - Product cost data is partial and is not yet a profitability engine.
 - Quote schema supports quote workflow v1, not quote professionalization v2.
 - Current activity-related models are operational timeline models, not audit-grade event history.
