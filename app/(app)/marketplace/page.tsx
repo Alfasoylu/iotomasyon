@@ -67,9 +67,14 @@ export default async function MarketplacePage() {
             Ürünlerin hangi pazar yerlerinde listelendiğini takip edin. Toplam {listings.length} listeleme kayıtlı.
           </p>
         </div>
-        <Link href="/marketplace/new">
-          <Button>+ Yeni listeleme</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/marketplace/monitoring">
+            <Button variant="secondary">⚠ İzleme</Button>
+          </Link>
+          <Link href="/marketplace/new">
+            <Button>+ Yeni listeleme</Button>
+          </Link>
+        </div>
       </div>
 
       {listings.length === 0 ? (

@@ -95,3 +95,34 @@ export async function deleteListingAction(listingId: string): Promise<ActionResu
     return { ok: false, message: "Listeleme silinemedi." };
   }
 }
+
+// Phase 13 — Marketplace Monitoring: create a FollowUpTask for a monitoring alert
+export async function createListingMonitoringTaskAction(values: {
+  productId: string;
+  title: string;
+  description: string;
+  assignedToId?: string;
+}): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.MARKETPLACE_LISTINGS_WRITE))) return PERM_DENIED;
+
+  try {
+    await prisma.followUpTask.create({
+      data: {
+        productId: values.productId,
+        title: values.title,
+        description: values.description,
+        status: "OPEN",
+        priority: "HIGH",
+        assignedToId: values.assignedToId ?? null,
+        createdById: user.id,
+      },
+    });
+    revalidatePath("/marketplace/monitoring");
+    revalidatePath("/tasks");
+    revalidatePath("/dashboard");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Görev oluşturulamadı." };
+  }
+}
