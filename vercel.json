@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/xml-sync",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }

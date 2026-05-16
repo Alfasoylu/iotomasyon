@@ -56,7 +56,7 @@ export default async function XmlSyncPage() {
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">XML Envanter Senkronizasyonu</h1>
         <p className="mt-2 text-sm leading-7 text-slate-600">
           XML kaynaklarını yapılandırın, senkronizasyon geçmişini görüntüleyin ve manuel senkronizasyon başlatın.
-          Otomatik senkronizasyon her 30 dakikada bir çalışır.
+          Otomatik senkronizasyon günde bir kez çalışır (02:00 UTC). Manuel tetikleme her zaman mümkündür.
         </p>
       </div>
 

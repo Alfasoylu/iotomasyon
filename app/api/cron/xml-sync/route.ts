@@ -1,7 +1,7 @@
 /**
  * Phase 11 — XML Inventory Sync Cron Endpoint
  *
- * Called by Vercel Cron (vercel.json) every 30 minutes.
+ * Called by Vercel Cron (vercel.json) daily at 02:00 UTC (Hobby plan limit: once/day).
  * Iterates all enabled XmlSyncSource rows and runs sync for each.
  *
  * Security: Vercel sets `Authorization: Bearer <CRON_SECRET>` on cron calls.
