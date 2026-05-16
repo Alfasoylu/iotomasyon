@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { updateUserProfileAction } from "@/lib/actions/user-management-actions";
 
 interface UserProfileFormProps {
@@ -26,7 +25,8 @@ export function UserProfileForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const isDirty = name.trim() !== currentName || email.trim().toLowerCase() !== currentEmail;
+  const isDirty =
+    name.trim() !== currentName || email.trim().toLowerCase() !== currentEmail;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,7 +34,6 @@ export function UserProfileForm({
     setPending(true);
     setError(null);
     setSuccess(false);
-
     startTransition(async () => {
       const result = await updateUserProfileAction(userId, { name, email });
       if (result.ok) {
@@ -48,19 +47,12 @@ export function UserProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
-      )}
-      {success && (
-        <p className="rounded-lg bg-green-50 px-4 py-2 text-sm text-green-700">
-          Bilgiler güncellendi.
-        </p>
-      )}
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">Ad Soyad</label>
+    <form onSubmit={handleSubmit}>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Ad Soyad
+          </label>
           <input
             type="text"
             value={name}
@@ -68,27 +60,47 @@ export function UserProfileForm({
             disabled={!canEdit || pending}
             required
             minLength={2}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-400 focus:outline-none disabled:opacity-50"
+            placeholder="Ad Soyad"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
           />
         </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">E-posta</label>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+            E-posta adresi
+          </label>
           <input
             type="email"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setSuccess(false); }}
             disabled={!canEdit || pending}
             required
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:border-slate-400 focus:outline-none disabled:opacity-50"
+            placeholder="ornek@sirket.com"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
           />
         </div>
       </div>
 
       {canEdit && (
-        <div className="flex justify-end">
-          <Button type="submit" disabled={pending || !isDirty}>
-            {pending ? "Kaydediliyor..." : "Kaydet"}
-          </Button>
+        <div className="mt-5 flex items-center justify-between">
+          <div className="min-h-[20px]">
+            {error && (
+              <p className="flex items-center gap-1.5 text-sm text-red-600">
+                <span className="text-base leading-none">⚠</span> {error}
+              </p>
+            )}
+            {success && (
+              <p className="flex items-center gap-1.5 text-sm text-emerald-600">
+                <span className="text-base leading-none">✓</span> Kaydedildi.
+              </p>
+            )}
+          </div>
+          <button
+            type="submit"
+            disabled={pending || !isDirty}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {pending ? "Kaydediliyor…" : "Kaydet"}
+          </button>
         </div>
       )}
     </form>
