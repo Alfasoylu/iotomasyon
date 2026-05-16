@@ -14,8 +14,17 @@ What is live:
 - Zero-access redirect to /no-access
 - 22 automated unit tests passing
 
-What is deferred to future phases:
-- inventory.*, xml.*, marketplaceListings.*, marketplace.*, profitability.*, procurement.*, suppliers.*, executive.* permissions exist as seed data but no routes require them yet (those modules don't exist)
+Modules now active (permission-guarded routes exist):
+- inventory.* — product inventory fields active since Phase 7
+- xml.* — /admin/xml-sync active since Phase 11 (EXECUTIVE_READ gate)
+- marketplaceListings.* — /marketplace and /marketplace/monitoring active since Phase 12–13
+- marketplaceAnalytics.read, marketplaceOrders.read, marketplaceReturns.read — /marketplace/trendyol and /marketplace/profit active since Phase 14–15
+- executive.read — /admin/capital, /admin/xml-sync, /admin/trendyol gated since Phase 10
+
+Still deferred (no routes implemented yet):
+- procurement.*, suppliers.* — Phases 19–21
+- profitability.read, profitability.configure — profitability display currently uses executive.read gate; dedicated permission not yet wired
+- marketplace write controls (marketplace.stockPush, marketplace.pricePush, marketplace.listingUpdate) — Phase 17 DEFERRED
 
 ---
 

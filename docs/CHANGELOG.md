@@ -88,7 +88,7 @@
 - Added `isSchemaMismatchError()` helper for pre-migration environment handling
 
 ### Phase 6 — Customer Intelligence Expansion
-- Added `CustomerType` enum: RETAILER, WHOLESALER, DISTRIBUTOR, CONTRACTOR, END_USER, OTHER
+- Added `CustomerType` enum: TOPTAN, PERAKENDE, SITE_YONETICISI, GUVENLIK_SIRKETI, MAGAZA, ONLINE_SATICI, CUSTOM
 - Added `monthlySalesPotential DECIMAL(15,2)` column to `Customer` table
 - Added `platformNotes TEXT` column to `Customer` table
 - Migrated `customerType` column from untyped TEXT to `CustomerType` enum in production
@@ -189,6 +189,18 @@
 - Created `/admin/trendyol` settings page: status badge (aktif/pasif), supplierId display, last updated timestamp, TrendyolConfigForm, how-to-find guide card (EXECUTIVE_READ)
 - Created `/marketplace/trendyol` live dashboard (MARKETPLACE_LISTINGS_READ): not-configured state, API error state (red card), data state with 4 summary cards + orders table (20 rows) + returns table (10 rows), Turkish status maps (`STATUS_TR`, `RETURN_STATUS_TR`), `StatusBadge` component, `fmtDate()` and `fmtCurrency()` helpers
 - Added "Trendyol API" sidebar entry (EXECUTIVE_READ) and "Trendyol Paneli" sidebar entry (MARKETPLACE_LISTINGS_READ)
+
+### Phase 15 — Marketplace Profit Dashboard
+- No new DB schema — all profitability computed from existing Product pricing fields via `calculateProfitability()`
+- Created `/marketplace/profit` page: 4 summary cards (total listings, profitable, losing, missing-data count)
+- Platform breakdown grid: per-platform listing counts with active/losing/missing-data subcounts
+- Winners table: top 20 ACTIVE listings ranked by marketplace margin % DESC, with product SKU and profitability metrics
+- Losers table: all ACTIVE listings with net marketplace profit < 0, with edit links for correction
+- Missing-data alert: listings where `unitCostTry` or `marketplacePriceTry` is null — product edit link provided
+- High-stock/low-demand signal: products with stockQuantity > 5 and onlineSalesPotential === 0
+- Added `toNum()` helper for Prisma.Decimal → number conversion
+- Added "Pazar Kârlılığı" sidebar entry (MARKETPLACE_LISTINGS_READ permission)
+- Added "📊 Kârlılık" button to `/marketplace` page header
 
 ### Phase 12 — Marketplace Listing Registry
 - Created `MarketplacePlatform` enum: TRENDYOL, HEPSIBURADA, N11, PTTAVM, KOCTAS, TEKNOSA, TEMU, CUSTOM

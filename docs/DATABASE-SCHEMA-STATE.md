@@ -170,6 +170,18 @@ Important fields:
 - `shippingCostOverride` (Phase 7)
 - `marketplaceCommission` (Phase 7)
 - `marketplaceCommissionOverride` (Phase 7)
+- `unitCostTry` (`DECIMAL` — Phase 8)
+- `sellingPriceTry` (`DECIMAL` — Phase 8, VAT-inclusive retail price)
+- `wholesalePriceTry` (`DECIMAL` — Phase 8, VAT-inclusive)
+- `marketplacePriceTry` (`DECIMAL` — Phase 8, VAT-inclusive)
+- `packagingCost` (`DECIMAL` — Phase 8)
+- `vatRate` (`DECIMAL` — Phase 8, percentage, e.g. 20)
+- `paymentFeeRate` (`DECIMAL` — Phase 8, e.g. 2.5)
+- `returnReserveRate` (`DECIMAL` — Phase 8, e.g. 3)
+- `onlineSalesPotential` (`INT` — Phase 9, monthly unit estimate)
+- `wholesaleSalesPotential` (`INT` — Phase 9)
+- `installerSalesPotential` (`INT` — Phase 9)
+- `xmlLocked` (`BOOLEAN DEFAULT false` — Phase 11, manual override protection)
 - `importDate`
 - `importQuantity`
 - `importUnitCostUsd`
@@ -233,7 +245,7 @@ Important fields:
 - `status` (`CustomerStatus` enum)
 - `country`
 - `customerNotes`
-- `customerType` (`CustomerType` enum — Phase 6: RETAILER, WHOLESALER, DISTRIBUTOR, CONTRACTOR, END_USER, OTHER)
+- `customerType` (`CustomerType` enum — Phase 6: TOPTAN, PERAKENDE, SITE_YONETICISI, GUVENLIK_SIRKETI, MAGAZA, ONLINE_SATICI, CUSTOM)
 - `monthlySalesPotential` (`DECIMAL(15,2)` — Phase 6)
 - `platformNotes` (`TEXT` — Phase 6)
 - `city`
@@ -462,6 +474,115 @@ Important fields:
 - `wonAmount`
 - `createdAt`
 
+### CapitalConfig
+
+Purpose:
+- admin-level capital allocation configuration (singleton per user)
+- stores total capital, reserve percentage, desired turnover months
+
+Key relationships:
+- `userId` -> `User`
+
+Important fields:
+- `id`
+- `userId`
+- `totalCapitalTry` (`DECIMAL`)
+- `reservePct` (default 20)
+- `desiredTurnoverMonths` (default 3)
+- `createdAt`
+- `updatedAt`
+
+Phase: 10
+
+### XmlSyncSource
+
+Purpose:
+- external XML inventory feed source configuration
+
+Key relationships:
+- `XmlSyncSource` -> `XmlSyncLog`
+
+Important fields:
+- `id`
+- `name`
+- `url`
+- `isEnabled` (`BOOLEAN`)
+- `authHeader` (nullable — optional Basic/Bearer auth)
+- `lastSyncAt`
+- `lastStatus` (`XmlSyncStatus` enum, nullable)
+- `createdAt`
+- `updatedAt`
+
+Phase: 11
+
+### XmlSyncLog
+
+Purpose:
+- per-sync execution record for audit and monitoring
+
+Key relationships:
+- `sourceId` -> `XmlSyncSource` (CASCADE delete)
+
+Important fields:
+- `id`
+- `sourceId`
+- `startedAt`
+- `completedAt`
+- `status` (`XmlSyncStatus` enum)
+- `recordsFound`
+- `recordsUpdated`
+- `recordsSkipped`
+- `errorMessage`
+
+Phase: 11
+
+### MarketplaceListing
+
+Purpose:
+- registry of product listings across marketplace platforms
+
+Key relationships:
+- `productId` -> `Product` (CASCADE delete)
+- optional `responsibleId` -> `User` (SET NULL on delete)
+
+Important fields:
+- `id`
+- `productId`
+- `platform` (`MarketplacePlatform` enum)
+- `platformListingId` (nullable — external ID)
+- `listingUrl` (nullable)
+- `listingBarcode` (nullable)
+- `listingSku` (nullable)
+- `listingTitle` (nullable)
+- `status` (`ListingStatus` enum, default UNKNOWN)
+- `notes` (nullable)
+- `responsibleId` (nullable)
+- `lastCheckedAt` (nullable)
+- `createdAt`
+- `updatedAt`
+
+Phase: 12
+
+### TrendyolConfig
+
+Purpose:
+- singleton Trendyol API credentials and configuration
+- one record per installation (id always 1)
+
+Key relationships:
+- none (no FK)
+
+Important fields:
+- `id` (singleton — always 1)
+- `supplierId`
+- `apiKey`
+- `apiSecret`
+- `isEnabled` (`BOOLEAN`)
+- `lastSyncAt` (nullable)
+- `updatedAt`
+
+Phase: 14
+
 ---
 
 ## Current Enums
@@ -470,6 +591,9 @@ Important fields:
 - `CustomerType` (TOPTAN, PERAKENDE, SITE_YONETICISI, GUVENLIK_SIRKETI, MAGAZA, ONLINE_SATICI, CUSTOM — Phase 6)
 - `StockSource` (MANUAL, XML, API, IMPORT — Phase 7)
 - `StockConfidence` (HIGH, MEDIUM, LOW — Phase 7)
+- `XmlSyncStatus` (RUNNING, SUCCESS, PARTIAL, ERROR — Phase 11)
+- `MarketplacePlatform` (TRENDYOL, HEPSIBURADA, N11, PTTAVM, KOCTAS, TEKNOSA, TEMU, CUSTOM — Phase 12)
+- `ListingStatus` (ACTIVE, INACTIVE, SUSPENDED, UNKNOWN — Phase 12)
 - `CustomerStatus`
 - `InterestStatus`
 - `InterestPriority`
@@ -509,6 +633,10 @@ Important fields:
 - `Quote` -> `QuoteItem`
 - `Quote` -> `OutreachRecipient`
 - `OutreachCampaign` -> `OutreachRecipient`
+- `User` -> `CapitalConfig` (Phase 10)
+- `XmlSyncSource` -> `XmlSyncLog` (Phase 11)
+- `Product` -> `MarketplaceListing` (Phase 12)
+- `User` -> `MarketplaceListing` as responsible (Phase 12)
 
 ---
 
@@ -519,23 +647,28 @@ Important fields:
 - RBAC is roadmap-complete for Phase 5 scope. Future phases may add more permission categories.
 - Phase 6 Customer Intelligence fields are production-active: CustomerType enum, monthlySalesPotential, platformNotes.
 - Phase 7 Inventory Intelligence fields added: barcode, imageUrl, supplier, stockSource, stockConfidence, lastStockSyncAt, lastStockCountById, reorderLeadTime, shippingCost, shippingCostOverride, marketplaceCommission, marketplaceCommissionOverride.
-- Product cost data now includes shipping and commission fields but is not yet a profitability calculation engine (Phase 8).
+- Phase 8 Profitability Engine fields added to Product: unitCostTry, sellingPriceTry, wholesalePriceTry, marketplacePriceTry, packagingCost, vatRate, paymentFeeRate, returnReserveRate. `lib/profitability.ts` computes per-channel (perakende/toptan/pazar yeri) net profit, margin %, ROI %.
+- Phase 9 Sales Potential fields added to Product: onlineSalesPotential, wholesaleSalesPotential, installerSalesPotential. `lib/sales-potential.ts` computes investment score 0–100 and BUY/WAIT/DO_NOT_BUY signal.
+- Phase 10 CapitalConfig table added: admin-only, per-user, stores totalCapitalTry, reservePct, desiredTurnoverMonths. `lib/capital-allocation.ts` computes deployable capital and ranked purchase suggestions.
+- Phase 11 XmlSyncSource and XmlSyncLog tables added. Product.xmlLocked field added. `lib/xml-sync.ts` parser and Vercel daily cron endpoint active.
+- Phase 12 MarketplaceListing table added. 8 platforms (MarketplacePlatform enum), 4 statuses (ListingStatus enum). Product and User models have `marketplaceListings[]` relation.
+- Phase 13 adds no new schema — monitoring alerts computed from MarketplaceListing data server-side.
+- Phase 14 TrendyolConfig singleton table added. `lib/trendyol-api.ts` provides Basic-auth fetch for orders and returns (read-only).
+- Phase 15 adds no new schema — marketplace profit dashboard computed from existing Product pricing fields via `calculateProfitability()`.
 - Quote schema supports quote workflow v1, not quote professionalization v2.
 - Current activity-related models are operational timeline models, not audit-grade event history.
-- Current schema is relationship-aware for CRM and quoting, and inventory-traceable at product level.
+- Current schema is relationship-aware for CRM, quoting, inventory, profitability, sales potential, capital allocation, XML sync, marketplace listings, and Trendyol API.
 
 ---
 
 ## Known Schema Gaps
 
-- no marketplace schema
-- no structured supplier model (supplier exists as plain text field on Product)
-- no profitability calculation schema (inputs exist, engine does not — Phase 8)
-- no XML ingestion schema
-- no executive KPI schema
-- no procurement decision schema
-- no import cost calculator schema
+- no structured supplier model (supplier exists as plain text field on Product; Phase 20 defines a proper Supplier table)
+- no executive KPI schema (Phase 22)
+- no procurement decision schema (Phases 19–21)
+- no import cost calculator schema (Phase 21)
 - no audit-grade event history schema
+- no image pipeline / media storage schema
 
 ---
 

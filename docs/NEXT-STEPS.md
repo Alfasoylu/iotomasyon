@@ -28,19 +28,19 @@ Current reality:
 - customer intelligence fields live: customerType, monthlySalesPotential, platformNotes (Phase 6 ✓)
 - inventory intelligence complete (Phase 7 ✓)
 - profitability engine complete: per-channel net profit, margin %, ROI %, losing product detection (Phase 8 ✓)
-- sales potential engine does not exist yet
+- sales potential engine complete (Phase 9 ✓): investment score 0–100, BUY/WAIT/DO_NOT_BUY signal
 - capital allocation engine complete (Phase 10 ✓)
 - XML inventory sync complete (Phase 11 ✓)
 - marketplace listing registry complete (Phase 12 ✓): /marketplace, 8 platforms, create/edit/delete, product + responsible links
 - marketplace monitoring complete (Phase 13 ✓): /marketplace/monitoring, gap/problem/stale alerts, auto task creation
 - Trendyol API integration complete (Phase 14 ✓): /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config, save+test server actions
+- marketplace profit dashboard complete (Phase 15 ✓): /marketplace/profit, platform breakdown, winners/losers/missing-data/high-stock alerts
 
-This means the product is operationally useful for internal CRM and quote workflows and is ready for multi-user rollout.
+This means the product is operationally useful for internal CRM, quote workflows, and marketplace read intelligence. Ready for multi-user rollout.
 Not yet ready for:
-- owner-grade financial intelligence
-- marketplace monitoring and intelligence
-- procurement intelligence
-- capital allocation intelligence
+- owner-grade executive KPI dashboard (Phase 22)
+- procurement intelligence (Phases 19–21)
+- marketplace write-side operations (Phase 17, DEFERRED)
 
 ---
 
@@ -62,76 +62,24 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 12–15: Marketplace Read Intelligence
+### Priority 1 — Phase 18: Quote Professionalization 2.0
 
 Why:
-Read-side marketplace visibility should exist before any write-side marketplace operations are considered.
+Phases 12–15 (marketplace read intelligence) are now complete. The next high-value operational gap is quote workflow speed and professionalism.
 
 Deliverables:
-- listing registry
-- listing monitoring
-- Trendyol read-only integration
-- marketplace profitability dashboard
+- reusable quote templates
+- saved layouts
+- quick product insertion system
+- custom pricing rules
+- sub-60-second quote workflow target
 
 Acceptance:
-- the system knows where products are live
-- broken or missing listings can be identified
-- marketplace orders/returns/commissions can be read
-- channel visibility exists without write-side risk
+- quote creation speed is significantly reduced
+- templates can be saved and reused
+- pricing rules apply without manual recalculation
 
-### Priority 2 — Phase 18: Quote Professionalization 2.0
-
-Why:
-Inventory intelligence should connect to real external inventory signals before marketplace analytics grows.
-
-Deliverables:
-- XML source configuration
-- scheduled sync architecture
-- sync logs
-- failed sync alerts
-- manual override protection
-- price update preview before applying
-
-Acceptance:
-- XML source can be configured safely
-- sync operations are observable
-- external updates do not blindly overwrite trusted manual data
-
-### Priority 3 — Phase 12–15: Marketplace Read Intelligence
-
-Why:
-Read-side marketplace visibility should exist before any write-side marketplace operations are considered.
-
-Deliverables:
-- listing registry
-- listing monitoring
-- Trendyol read-only integration
-- marketplace profitability dashboard
-
-Acceptance:
-- the system knows where products are live
-- broken or missing listings can be identified
-- marketplace orders/returns/commissions can be read
-- channel visibility exists without write-side risk
-
-### Priority 4 — Phase 9–10: Decision Intelligence
-
-Why:
-Demand scoring and capital allocation should only be built after inventory and profitability data become reliable.
-
-Deliverables:
-- sales potential engine
-- projected revenue and profit model
-- investment score
-- capital reserve rules
-- allocation engine with admin approval
-
-Acceptance:
-- product investment scoring becomes defensible
-- capital suggestions are explainable
-- no automated capital deployment occurs without admin approval
-
-### Priority 5 — Phase 19+: Procurement / Executive Intelligence
+### Priority 2 — Phase 19+: Procurement / Executive Intelligence
 
 Why:
 These phases are high-value but depend on reliable data from earlier phases.
@@ -167,8 +115,8 @@ Phase dependencies:
 - Phase 12 ✓ complete — Marketplace listing registry is production-active.
 - Phase 13 ✓ complete — Marketplace monitoring dashboard is production-active.
 - Phase 14 ✓ complete — Trendyol API integration (read-only) is production-active.
+- Phase 15 ✓ complete — Marketplace profit dashboard is production-active.
 - Phase 11 provides real stock feed data that improves allocation accuracy.
-- Phase 15 depends on Phase 14 because marketplace profitability requires marketplace read data.
 - Phase 19 depends on Phase 7, Phase 8, Phase 9, and Phase 20 because procurement logic needs inventory, profitability, demand, and supplier inputs.
 - Phase 22 depends on multiple earlier phases because executive KPIs are only useful if underlying systems are trustworthy.
 - Phase 23 and Phase 24 should not be ignored because data quality and production safety can invalidate later intelligence work.

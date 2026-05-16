@@ -40,6 +40,15 @@ Implemented modules:
 - category management
 - attribute system
 - customer CRM (Phase 6: customerType, monthlySalesPotential, platformNotes)
+- inventory intelligence (Phase 7: barcode, stockSource/Confidence, shippingCost, marketplaceCommission, etc.)
+- profitability engine (Phase 8: per-channel net profit, margin %, ROI %, losing product detection)
+- sales potential engine (Phase 9: investment score 0–100, BUY/WAIT/DO_NOT_BUY signal)
+- capital allocation engine (Phase 10: admin-only /admin/capital, ranked purchase suggestions)
+- XML inventory sync (Phase 11: /admin/xml-sync, XmlSyncSource/Log, daily cron, manual trigger)
+- marketplace listing registry (Phase 12: /marketplace, 8 platforms, create/edit/delete)
+- marketplace monitoring (Phase 13: /marketplace/monitoring, gap/problem/stale alerts)
+- Trendyol API integration (Phase 14: /admin/trendyol config, /marketplace/trendyol live dashboard)
+- marketplace profit dashboard (Phase 15: /marketplace/profit, winners/losers/missing-data/high-stock alerts)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -61,9 +70,10 @@ Current architecture position:
 Operating system transition status:
 - operational CRM foundation exists
 - sales workflow foundation exists
-- owner-grade intelligence system does not exist yet
-- marketplace intelligence system does not exist yet
-- procurement intelligence system does not exist yet
+- profitability and investment intelligence exists (Phases 8–10)
+- marketplace read intelligence exists (Phases 12–15)
+- owner-grade KPI dashboard does not exist yet (Phase 22)
+- procurement intelligence system does not exist yet (Phases 19–21)
 
 ---
 
@@ -216,7 +226,7 @@ Verified outcome:
 Status: DONE
 
 Completed:
-- CustomerType enum: RETAILER, WHOLESALER, DISTRIBUTOR, CONTRACTOR, END_USER, OTHER
+- CustomerType enum: TOPTAN, PERAKENDE, SITE_YONETICISI, GUVENLIK_SIRKETI, MAGAZA, ONLINE_SATICI, CUSTOM
 - `monthlySalesPotential DECIMAL(15,2)` added to Customer table
 - `platformNotes TEXT` added to Customer table
 - customerType field migrated from TEXT to enum in production
@@ -401,14 +411,24 @@ Verified outcome:
 ---
 
 ## Phase 15 — Marketplace Profit Dashboard
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- per-platform profitability layer
-- return-rate metrics
-- winner/loser rankings
-- low-margin alerts
-- high-stock low-sales visibility
+Completed:
+- `/marketplace/profit` page — no new DB schema, computed from existing Product pricing fields via `calculateProfitability()`
+- 4 summary cards: total listings, profitable count, losing count, missing-data count
+- Platform breakdown grid: per-platform active/losing/missing-data counts
+- Winners table: top 20 listings ranked by marketplace margin % DESC
+- Losers table: all listings with net marketplace profit < 0
+- Missing-data alert: listings where unitCostTry or marketplacePriceTry is null, with edit links
+- High-stock/low-demand signal: products with stockQuantity > 5 and onlineSalesPotential === 0
+- `toNum()` helper for Prisma.Decimal → number conversion
+- Sidebar entry: "Pazar Kârlılığı" (MARKETPLACE_LISTINGS_READ)
+- "📊 Kârlılık" button added to `/marketplace` page header
+
+Verified outcome:
+- Browser test: `/marketplace/profit` renders with summary cards, platform breakdown, winners/losers tables ✓
+- Missing-data and high-stock alerts visible ✓
+- Sidebar link "Pazar Kârlılığı" navigates correctly ✓
 
 ---
 
@@ -513,7 +533,6 @@ Missing:
 
 # Technical Debt
 
-- no marketplace monitoring (Phase 13+)
 - no image pipeline
 - no audit-grade event history
 - no procurement engine
@@ -544,11 +563,12 @@ Impact:
 Status: OPEN
 
 Problem:
-- roadmap includes deep multi-channel operations
-- current implementation has no marketplace foundation yet
+- roadmap includes deep multi-channel write operations and marketplace control tower
+- read-side foundation exists (Phases 12–15): listing registry, monitoring, Trendyol integration, profit dashboard
+- write-side marketplace sync not yet implemented
 
 Impact:
-- future implementation risk is high
+- write-side multi-channel operations remain high-risk and explicitly deferred (Phase 17)
 
 ## Image Storage Scaling
 Status: OPEN
@@ -609,20 +629,20 @@ Partially usable:
 - basic sales follow-up workflows
 
 Not yet strategically strong:
-- profitability decisions
 - procurement decisions
-- marketplace decisions
-- capital allocation decisions
+- executive KPI decisions (Phase 22 not implemented)
 
 ## Not Owner-Intelligence Ready
 
-Missing for owner-intelligence readiness:
-- profitability engine
-- executive KPI dashboard
-- capital allocation engine
-- procurement intelligence
-- marketplace performance intelligence
-- supplier intelligence
+Implemented (owner-intelligence partial):
+- profitability engine (Phase 8) ✓
+- capital allocation engine (Phase 10) ✓
+- marketplace performance intelligence (Phase 15) ✓
+
+Still missing for full owner-intelligence readiness:
+- executive KPI dashboard (Phase 22)
+- procurement intelligence (Phases 19–21)
+- supplier intelligence (Phase 20)
 
 ---
 
@@ -647,7 +667,7 @@ Needed next:
 # Last Updated
 
 Date:
-2026-05-17 (Phase 14 done)
+2026-05-17 (Phase 15 done, documentation audit applied)
 
 Alignment source:
 `ROADMAP.md`

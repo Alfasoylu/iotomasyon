@@ -12,10 +12,9 @@ Today, it is best described as:
 - a relationship-aware operational panel
 
 It is not yet:
-- a marketplace operating system
-- a procurement intelligence system
-- an owner-intelligence dashboard
-- a capital allocation engine
+- a marketplace operating system (write-side sync deferred)
+- a procurement intelligence system (Phases 19–21)
+- a full owner-intelligence dashboard (Phase 22 KPI dashboard missing)
 
 ---
 
@@ -50,6 +49,7 @@ Implemented modules:
 - marketplace listing registry — Phase 12 complete: /marketplace, MarketplaceListing table, 8 platforms, 4 statuses, create/edit/delete, product + responsible links
 - marketplace monitoring dashboard — Phase 13 complete: /marketplace/monitoring, gap/problem/stale alert sections, auto task creation
 - Trendyol API integration — Phase 14 complete: /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config with save+test actions
+- marketplace profit dashboard — Phase 15 complete: /marketplace/profit, winners/losers/missing-data/high-stock signal, platform breakdown grid
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -136,7 +136,7 @@ Current meaning:
 - marketplace listing registry — DONE (Phase 12): /marketplace, create/edit/delete listings, 8 platforms, 4 statuses, product + responsible links
 - marketplace monitoring — DONE (Phase 13): gap/problem/stale alerts, auto task creation
 - Trendyol read dashboard — DONE (Phase 14): /admin/trendyol config, /marketplace/trendyol live orders+returns, save+test actions
-- marketplace profitability layer — NOT IMPLEMENTED (Phase 15)
+- marketplace profit dashboard — DONE (Phase 15): /marketplace/profit, winners/losers/missing-data/high-stock alerts
 - marketplace sync architecture — NOT IMPLEMENTED (Phase 17, DEFERRED)
 
 ---
@@ -146,10 +146,13 @@ Current meaning:
 NOT IMPLEMENTED
 
 Current meaning:
-- no procurement engine
-- no supplier intelligence
-- no capital allocation engine
-- no pre-purchase import cost calculator
+- no procurement engine (Phase 19)
+- no supplier intelligence (Phase 20)
+- no pre-purchase import cost calculator (Phase 21)
+
+Note:
+- capital allocation engine EXISTS (Phase 10) — admin-only ranked purchase suggestions based on investment score
+- capital allocation is not the same as full procurement intelligence (no supplier model, no reorder signals)
 
 ---
 
@@ -160,8 +163,10 @@ PARTIAL
 Current meaning:
 - profitability engine — DONE (Phase 8): per-channel net profit, margin %, ROI %, losing product identification
 - sales potential engine — DONE (Phase 9): investment score, BUY/WAIT/DO_NOT_BUY signal
-- executive KPI dashboard — NOT IMPLEMENTED
-- recommendation-grade owner intelligence system — NOT IMPLEMENTED
+- capital allocation engine — DONE (Phase 10): admin-only ranked purchase suggestions, reserve safety
+- marketplace profit dashboard — DONE (Phase 15): platform-level winner/loser/missing-data visibility
+- executive KPI dashboard — NOT IMPLEMENTED (Phase 22)
+- recommendation-grade owner intelligence system — NOT IMPLEMENTED (requires Phase 22 + procurement layers)
 
 ---
 
@@ -199,19 +204,20 @@ Strategically usable today:
 - relationship-aware product/customer tracking
 
 Not strategically mature:
-- pricing intelligence
-- profitability intelligence
-- procurement decisions
-- marketplace decisions
+- procurement decisions (no supplier model, no reorder signals)
+- executive KPI dashboard (Phase 22 not implemented)
 
 ### Owner Intelligence Readiness
 
-Not owner-intelligence ready.
+Partially owner-intelligence ready.
 
-Missing:
-- profitability engine
-- executive KPI dashboard
-- capital allocation engine
-- procurement intelligence
-- marketplace performance intelligence
-- supplier intelligence
+Implemented:
+- profitability engine (Phase 8) ✓
+- sales potential engine / investment scoring (Phase 9) ✓
+- capital allocation engine (Phase 10) ✓
+- marketplace performance visibility (Phase 15) ✓
+
+Still missing for full owner-intelligence readiness:
+- executive KPI dashboard (Phase 22)
+- procurement intelligence (Phases 19–21)
+- supplier intelligence (Phase 20)
