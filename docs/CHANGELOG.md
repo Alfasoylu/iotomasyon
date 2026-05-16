@@ -94,3 +94,26 @@
 - Migrated `customerType` column from untyped TEXT to `CustomerType` enum in production
 - Exposed `customerType`, `monthlySalesPotential`, and `platformNotes` in customer create/edit forms
 - Updated CSV import action to use explicit `SELECT` avoiding Phase 6 columns before migration
+
+### Phase 7 — Inventory Intelligence Core
+- Added `StockSource` enum: MANUAL, XML, API, IMPORT
+- Added `StockConfidence` enum: HIGH, MEDIUM, LOW
+- Added `barcode TEXT UNIQUE` column to `Product` table
+- Added `imageUrl TEXT` column to `Product` table
+- Added `supplier TEXT` column to `Product` table
+- Added `stockSource StockSource` column to `Product` table
+- Added `stockConfidence StockConfidence` column to `Product` table
+- Added `lastStockSyncAt TIMESTAMP` column to `Product` table
+- Added `lastStockCountById TEXT` FK column to `Product` table (→ `User` via named relation `StockCountedBy`)
+- Added `reorderLeadTime INTEGER` column to `Product` table
+- Added `shippingCost DECIMAL` column to `Product` table
+- Added `shippingCostOverride DECIMAL` column to `Product` table
+- Added `marketplaceCommission DECIMAL` column to `Product` table
+- Added `marketplaceCommissionOverride DECIMAL` column to `Product` table
+- Applied migration to production Supabase PostgreSQL
+- Reorganized product create/edit form into 4 sections: Temel bilgiler, Stok ve konum, Maliyet girdileri, İthalat ve envanter
+- Added StockSource and StockConfidence dropdowns to product form
+- Added user dropdown for last manual stock count user
+- Updated product detail page to display all new inventory intelligence fields
+- Added product image preview card to detail page
+- Updated Zod validation schema and `normalizeProductData()` for all new fields

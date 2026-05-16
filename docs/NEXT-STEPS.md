@@ -26,7 +26,7 @@ Current reality:
 - Turkish location layer exists
 - RBAC complete and production-active (Phase 5 ✓)
 - customer intelligence fields live: customerType, monthlySalesPotential, platformNotes (Phase 6 ✓)
-- inventory intelligence does not exist yet
+- inventory intelligence complete: barcode, imageUrl, supplier, stockSource/Confidence, lastStockSyncAt, lastStockCountBy, reorderLeadTime, shippingCost, marketplaceCommission (Phase 7 ✓)
 - financial intelligence systems do not exist yet
 
 This means the product is operationally useful for internal CRM and quote workflows and is ready for multi-user rollout.
@@ -56,27 +56,7 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 7: Inventory Intelligence Core
-
-Why:
-Profitability, procurement, and capital decisions depend on trustworthy stock and cost memory.
-
-Deliverables:
-- stock source
-- stock confidence level
-- last stock sync date
-- last manual stock count user
-- minimum stock threshold
-- reorder lead time
-- shelf/location code
-- cost traceability inputs
-
-Acceptance:
-- product inventory records become operationally trustworthy
-- stock data can support later decision engines
-- product records support manual and external stock memory without ambiguity
-
-### Priority 2 — Phase 8: Profitability Engine
+### Priority 1 — Phase 8: Profitability Engine
 
 Why:
 The system must know whether products make money before it can make recommendations.
@@ -96,7 +76,7 @@ Acceptance:
 - losing products can be identified
 - profitability is consistent enough to support later planning phases
 
-### Priority 3 — Phase 11: XML Inventory Sync
+### Priority 2 — Phase 11: XML Inventory Sync
 
 Why:
 Inventory intelligence should connect to real external inventory signals before marketplace analytics grows.
@@ -114,7 +94,7 @@ Acceptance:
 - sync operations are observable
 - external updates do not blindly overwrite trusted manual data
 
-### Priority 4 — Phase 12–15: Marketplace Read Intelligence
+### Priority 3 — Phase 12–15: Marketplace Read Intelligence
 
 Why:
 Read-side marketplace visibility should exist before any write-side marketplace operations are considered.
@@ -131,7 +111,7 @@ Acceptance:
 - marketplace orders/returns/commissions can be read
 - channel visibility exists without write-side risk
 
-### Priority 5 — Phase 9–10: Decision Intelligence
+### Priority 4 — Phase 9–10: Decision Intelligence
 
 Why:
 Demand scoring and capital allocation should only be built after inventory and profitability data become reliable.
@@ -148,7 +128,7 @@ Acceptance:
 - capital suggestions are explainable
 - no automated capital deployment occurs without admin approval
 
-### Priority 6 — Phase 19+: Procurement / Executive Intelligence
+### Priority 5 — Phase 19+: Procurement / Executive Intelligence
 
 Why:
 These phases are high-value but depend on reliable data from earlier phases.
@@ -176,7 +156,7 @@ Phase dependencies:
 
 - Phase 5 ✓ complete — multi-user rollout is now safe.
 - Phase 6 ✓ complete — customer intelligence fields are production-active.
-- Phase 7 blocks trustworthy profitability work because cost and stock memory are incomplete.
+- Phase 7 ✓ complete — inventory intelligence fields are production-active.
 - Phase 8 depends on Phase 7 because profitability depends on inventory cost structure.
 - Phase 9 depends on Phase 8 because investment scoring without profitability is weak.
 - Phase 10 depends on Phase 8 and Phase 9 because capital allocation without cost and demand quality is dangerous.

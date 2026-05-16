@@ -42,6 +42,7 @@ Implemented modules:
 - category management
 - attribute system
 - customer CRM — Phase 6 complete: customerType enum, monthlySalesPotential, platformNotes
+- inventory intelligence — Phase 7 complete: barcode, imageUrl, supplier, stockSource/Confidence, lastStockSyncAt, lastStockCountBy, reorderLeadTime, shippingCost, marketplaceCommission
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -97,8 +98,7 @@ What this means:
 - the system already supports operational CRM relationships between products, categories, and customers
 
 What it does not mean:
-- inventory intelligence exists
-- profitability-ready product costing exists
+- profitability-ready product costing exists (Phase 8 — not yet implemented)
 - governance-grade product data quality exists
 
 ---
@@ -161,7 +161,7 @@ Current meaning:
 
 ## Known Technical Debt
 
-- product cost model incomplete (Phase 7+)
+- product cost model incomplete (Phase 8 profitability engine not yet implemented)
 - no marketplace schema
 - no XML ingestion architecture
 - no image pipeline

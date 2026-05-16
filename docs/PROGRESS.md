@@ -231,14 +231,25 @@ Verified outcome:
 ---
 
 ## Phase 7 — Inventory Intelligence Core
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- inventory memory fields from roadmap
-- stock source tracking
-- stock confidence level
-- lead time intelligence
-- financially traceable stock layer
+Completed:
+- `StockSource` enum added: MANUAL, XML, API, IMPORT
+- `StockConfidence` enum added: HIGH, MEDIUM, LOW
+- 13 new fields added to `Product` table and migrated to production: `barcode` (unique), `imageUrl`, `supplier`, `stockSource`, `stockConfidence`, `lastStockSyncAt`, `lastStockCountById` (FK → User via `@relation("StockCountedBy")`), `reorderLeadTime`, `shippingCost`, `shippingCostOverride`, `marketplaceCommission`, `marketplaceCommissionOverride`
+- Product create/edit form reorganized into 4 sections: Temel bilgiler, Stok ve konum, Maliyet girdileri, İthalat ve envanter
+- StockSource and StockConfidence dropdowns added to product form
+- User dropdown for "Son manuel sayımı yapan" added to product form
+- Product detail page updated to display all new fields
+- Product image preview card added to detail page
+- Barcode displayed in monospace font on detail page
+- Zod validation schema updated for all new fields
+- `normalizeProductData()` updated: enum casting, empty-string-to-null, decimal/int normalization
+
+Verified outcome:
+- Product records carry full inventory intelligence memory
+- Stock source, confidence, lead time, shipping cost, and commission inputs are production-active
+- Round-trip browser test confirmed: form renders → save succeeds → detail page displays saved values
 
 ---
 
@@ -439,8 +450,7 @@ Missing:
 
 # Technical Debt
 
-- product cost model incomplete (Phase 7+)
-- product cost model incomplete
+- product cost model incomplete (Phase 8 profitability engine not yet implemented)
 - no marketplace schema
 - no XML ingestion architecture
 - no image pipeline
