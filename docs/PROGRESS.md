@@ -361,14 +361,23 @@ Verified outcome:
 ---
 
 ## Phase 13 — Marketplace Monitoring
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- listing monitoring frequency
-- broken URL detection
-- stale listing logic
-- listing gap alerts
-- auto task generation for listing issues
+Completed:
+- `/marketplace/monitoring` dashboard page — no new DB schema, all computed server-side
+- **Listeleme boşluğu** alert: active products with zero marketplace listings across all platforms
+- **Sorunlu listelemeler** alert: listings with SUSPENDED or UNKNOWN status
+- **Hiç kontrol edilmemiş** alert: ACTIVE listings where `lastCheckedAt` is null
+- Summary cards: per-category alert counts at page top
+- `CreateMonitoringTaskButton` client component: creates HIGH-priority `FollowUpTask` linked to the product per alert row
+- `createListingMonitoringTaskAction` server action in `marketplace-listing-actions.ts`
+- "⚠ İzleme" nav button added to `/marketplace` page header
+- "← Listeleme Kaydı" back link on monitoring page
+
+Verified outcome:
+- Browser test: `/marketplace/monitoring` loads with 2 uyarı (1 gap: UV82, 1 stale: ANUNNAKIPOINTER Trendyol) ✓
+- Problem listings section: "✓ Sorunlu listeleme yok." ✓
+- "Görev oluştur" click → "✓ Görev oluşturuldu" feedback ✓
 
 ---
 
@@ -632,7 +641,7 @@ Needed next:
 # Last Updated
 
 Date:
-2026-05-17
+2026-05-17 (Phase 13 done)
 
 Alignment source:
 `ROADMAP.md`

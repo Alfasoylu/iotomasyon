@@ -170,6 +170,16 @@
 - Added "Sermaye" link to sidebar (EXECUTIVE_READ permission)
 - Reserve safety enforced: reserve % of available capital never allocated
 
+### Phase 13 — Marketplace Monitoring Dashboard
+- Created `/marketplace/monitoring` page: three server-side alert sections (no new schema)
+- Gap alert: active products with zero marketplace listings (with "+ Listeleme ekle" link)
+- Problem alert: listings with SUSPENDED or UNKNOWN status
+- Stale alert: ACTIVE listings with null `lastCheckedAt`
+- Summary cards: per-category alert counts + total alert headline
+- Created `components/marketplace/create-monitoring-task-button.tsx`: client component creates HIGH-priority `FollowUpTask` per alert row
+- Added `createListingMonitoringTaskAction` to `marketplace-listing-actions.ts`
+- Added "⚠ İzleme" button to `/marketplace` page header
+
 ### Phase 12 — Marketplace Listing Registry
 - Created `MarketplacePlatform` enum: TRENDYOL, HEPSIBURADA, N11, PTTAVM, KOCTAS, TEKNOSA, TEMU, CUSTOM
 - Created `ListingStatus` enum: ACTIVE, INACTIVE, SUSPENDED, UNKNOWN

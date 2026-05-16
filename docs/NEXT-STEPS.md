@@ -32,6 +32,7 @@ Current reality:
 - capital allocation engine complete (Phase 10 ✓)
 - XML inventory sync complete (Phase 11 ✓)
 - marketplace listing registry complete (Phase 12 ✓): /marketplace, 8 platforms, create/edit/delete, product + responsible links
+- marketplace monitoring complete (Phase 13 ✓): /marketplace/monitoring, gap/problem/stale alerts, auto task creation
 
 This means the product is operationally useful for internal CRM and quote workflows and is ready for multi-user rollout.
 Not yet ready for:
@@ -163,9 +164,9 @@ Phase dependencies:
 - Phase 10 ✓ complete — admin capital allocation page with ranked purchase suggestions and reserve safety.
 - Phase 11 ✓ complete — XML inventory sync is production-active.
 - Phase 12 ✓ complete — Marketplace listing registry is production-active.
+- Phase 13 ✓ complete — Marketplace monitoring dashboard is production-active.
 - Phase 11 provides real stock feed data that improves allocation accuracy.
-- Phase 13 should exist before any marketplace automation because monitoring visibility must come before control.
-- Phase 14 must remain read-only until listing registry and monitoring are stable.
+- Phase 14 must remain read-only — Trendyol API credentials stored server-side only, no write operations.
 - Phase 15 depends on Phase 14 because marketplace profitability requires marketplace read data.
 - Phase 19 depends on Phase 7, Phase 8, Phase 9, and Phase 20 because procurement logic needs inventory, profitability, demand, and supplier inputs.
 - Phase 22 depends on multiple earlier phases because executive KPIs are only useful if underlying systems are trustworthy.
