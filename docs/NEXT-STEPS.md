@@ -36,8 +36,9 @@ Current reality:
 - Trendyol API integration complete (Phase 14 ✓): /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config, save+test server actions
 - marketplace profit dashboard complete (Phase 15 ✓): /marketplace/profit, platform breakdown, winners/losers/missing-data/high-stock alerts
 - marketplace operations expansion complete (Phase 16 ✓): Q&A module (fetch + inline answer with audit log), Return Action Center (approve/reject claims with issue reasons), Product Mapping registry, Monthly Exchange Rate management, 4 DB tables, 6 new permissions
+- quote professionalization 2.0 complete (Phase 18 ✓): reusable quote templates (QuoteTemplate + QuoteTemplateItem), /quotes/templates management page, template loading into quote form, product auto price-fill from sellingPriceTry, 2 new permissions (quoteTemplates.read/write)
 
-This means the product is operationally useful for internal CRM, quote workflows, and active Trendyol marketplace operations. Ready for multi-user rollout.
+This means the product is operationally useful for internal CRM, quote workflows (with templates), and active Trendyol marketplace operations. Ready for multi-user rollout.
 Not yet ready for:
 - owner-grade executive KPI dashboard (Phase 22)
 - procurement intelligence (Phases 19–21)
@@ -63,24 +64,24 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 18: Quote Professionalization 2.0
+### Priority 1 — Phase 19: Procurement Intelligence
 
 Why:
-Phases 12–15 (marketplace read intelligence) are now complete. The next high-value operational gap is quote workflow speed and professionalism.
+Phase 18 (quote professionalization) is complete. The next high-value gap is procurement decision support — giving the owner actionable signals on when and what to buy based on stock levels, investment scores, lead times, and supplier data.
 
 Deliverables:
-- reusable quote templates
-- saved layouts
-- quick product insertion system
-- custom pricing rules
-- sub-60-second quote workflow target
+- procurement signal engine: reorder urgency per product (low stock + high demand + lead time)
+- supplier-aware reorder recommendations
+- expected cash conversion time per purchase
+- actionable purchasing assistant output page (/admin/procurement or similar)
 
 Acceptance:
-- quote creation speed is significantly reduced
-- templates can be saved and reused
-- pricing rules apply without manual recalculation
+- procurement page renders ranked purchase candidates with urgency signals
+- reorder urgency accounts for stockQuantity, reorderLeadTime, investmentScore, demand estimates
+- page is admin/EXECUTIVE_READ only
+- tsc clean, Vercel deploy READY, browser-tested
 
-### Priority 2 — Phase 19+: Procurement / Executive Intelligence
+### Priority 2 — Phase 20+: Supplier Intelligence / Executive KPI
 
 Why:
 These phases are high-value but depend on reliable data from earlier phases.
@@ -117,6 +118,8 @@ Phase dependencies:
 - Phase 13 ✓ complete — Marketplace monitoring dashboard is production-active.
 - Phase 14 ✓ complete — Trendyol API integration (read-only) is production-active.
 - Phase 15 ✓ complete — Marketplace profit dashboard is production-active.
+- Phase 16 ✓ complete — Marketplace Operations Expansion is production-active.
+- Phase 18 ✓ complete — Quote Professionalization 2.0 is production-active.
 - Phase 11 provides real stock feed data that improves allocation accuracy.
 - Phase 19 depends on Phase 7, Phase 8, Phase 9, and Phase 20 because procurement logic needs inventory, profitability, demand, and supplier inputs.
 - Phase 22 depends on multiple earlier phases because executive KPIs are only useful if underlying systems are trustworthy.

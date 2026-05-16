@@ -248,3 +248,21 @@
 - Created `components/marketplace/listing-form.tsx`: platform/status dropdowns, create/edit/delete modes
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
+
+### Phase 18 — Quote Professionalization 2.0
+- Created `QuoteTemplate` table: id, name, description, paymentTerms, deliveryTerms, warrantyTerms, notes, currencyMode (enum), isActive, createdById (FK → User), timestamps
+- Created `QuoteTemplateItem` table: id, templateId (FK CASCADE), productId (optional FK → Product), description, quantity, unitPrice, currency, discount, tax, sortOrder
+- Added `quoteTemplates QuoteTemplate[]` relation to `User` model (named `TemplatesCreated`)
+- Added `quoteTemplateItems QuoteTemplateItem[]` relation to `Product` model (named `TemplateItems`)
+- Applied Prisma migration to production Supabase PostgreSQL
+- Added 2 new permissions: `quoteTemplates.read`, `quoteTemplates.write` — seeded to SALES role defaults
+- Created `services/quote-template-service.ts`: `listQuoteTemplates()` (includes items + product + createdBy), `getQuoteTemplateById()`
+- Created `lib/actions/quote-template-actions.ts`: `createQuoteTemplateAction`, `updateQuoteTemplateAction` (atomic `$transaction` delete+recreate items), `deleteQuoteTemplateAction` — all Zod-validated, permission-guarded
+- Created `/quotes/templates` management page: "Şablon Oluştur" form card + "Kayıtlı Şablonlar" list with per-item line display and delete buttons
+- Created `components/quotes/quote-template-form.tsx`: `QuoteTemplateForm` (local-state, items array with add/remove), `DeleteTemplateButton` (with window.confirm gate)
+- Extended `components/quotes/quote-form.tsx`: "Şablondan Yükle" dropdown + button in items card header (only rendered when templates prop is non-empty); `loadTemplate()` fills paymentTerms/deliveryTerms/warrantyTerms/notes and replaces items array via RHF `setValue`
+- Quote form product select: auto-fills description (if blank) and unitPrice+currency from `sellingPriceTry` on product change — implemented via split register pattern (`const { onChange: rhfOnChange, ...restReg } = form.register(...)`) plus custom `onChange` calling `form.setValue()`
+- Updated `listCustomerInterestProducts()` to include `sellingPriceTry` in select projection
+- Updated customer detail page `[id]/page.tsx`: fetches `listQuoteTemplates()` in `Promise.all`, passes templates + enriched products to QuoteForm
+- Updated quote edit page `[id]/edit/page.tsx`: same pattern as customer detail
+- Added "Teklif Şablonları" sidebar entry (QUOTE_TEMPLATES_READ permission)

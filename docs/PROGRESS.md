@@ -464,8 +464,13 @@ Verified outcome:
 - npm run build: clean, /marketplace/trendyol/questions and /marketplace/trendyol/returns in output ✓
 - Vercel deployment triggered: c3fb5bd ✓
 
-Browser verification (post-deploy):
-- Pending Vercel deploy completion
+Browser verification (post-deploy, 2026-05-17):
+- /marketplace/trendyol/questions: live Q&A list renders with status filter tabs ✓
+- Inline answer form submits and logs to MarketplaceQuestionActionLog ✓
+- /marketplace/trendyol/returns: Return Action Center loads actionable/completed split ✓
+- ClaimActionPanel: claim issue reasons fetched from live Trendyol API ✓
+- /admin/exchange-rates: monthly rate upsert (₺38.75 for May 2026) → "Mayıs 2026 · 38.7500" in list ✓
+- /admin/marketplace-mappings: create/list mappings form loads ✓
 
 ---
 
@@ -478,14 +483,28 @@ Reason:
 ---
 
 ## Phase 18 — Quote Professionalization 2.0
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- reusable quote templates
-- saved layouts
-- quick product insertion system
-- custom pricing rules
-- sub-60-second quote workflow target
+Completed:
+- `QuoteTemplate` model migrated to production: id, name, description, paymentTerms, deliveryTerms, warrantyTerms, notes, currencyMode, isActive, createdById, createdAt, updatedAt
+- `QuoteTemplateItem` model migrated to production: id, templateId, productId (optional FK → Product), description, quantity, unitPrice, currency, discount, tax, sortOrder
+- 2 new permissions seeded: `quoteTemplates.read`, `quoteTemplates.write` — added to SALES role defaults
+- `services/quote-template-service.ts`: `listQuoteTemplates()`, `getQuoteTemplateById()` with items + product + createdBy includes
+- `lib/actions/quote-template-actions.ts`: `createQuoteTemplateAction`, `updateQuoteTemplateAction` (transaction-based item replace), `deleteQuoteTemplateAction` — all Zod-validated + permission-guarded
+- `/quotes/templates` management page: "Şablon Oluştur" form + "Kayıtlı Şablonlar" list with item detail display and delete button
+- `components/quotes/quote-template-form.tsx`: `QuoteTemplateForm` (full local-state form with items array), `DeleteTemplateButton`
+- `components/quotes/quote-form.tsx` extended: "Şablondan Yükle" dropdown + button (only when templates exist), `loadTemplate()` fills paymentTerms/deliveryTerms/warrantyTerms/notes + replaces items
+- Quote form product select: auto-fill description (if blank) + auto-fill unitPrice/currency from `sellingPriceTry` on product change (split register pattern for RHF + custom onChange)
+- `listCustomerInterestProducts()` updated to include `sellingPriceTry` in select
+- Customer detail + quote edit pages: fetch templates in parallel, pass to QuoteForm
+- Sidebar: "Teklif Şablonları" nav entry (QUOTE_TEMPLATES_READ permission)
+
+Verified outcome (browser test 2026-05-17):
+- /quotes/templates: form → create "Test Şablonu" with 1 item (₺250) → appeared in "Kayıtlı Şablonlar" with "· 1× Test Kalemi Açıklaması 250,00 TRY" ✓
+- Customer Teklifler tab: "Şablondan Yükle" dropdown shows "Test Şablonu" → load fills item + totals (₺300 = ₺250 + %20 KDV) ✓
+- Product auto-fill: selecting BAOFENG UV-82 TELSİZ auto-filled unitPrice to 1299, totals updated to ₺1,558.80 ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit 1f8c1e9) ✓
 
 ---
 
@@ -695,7 +714,7 @@ Needed next:
 # Last Updated
 
 Date:
-2026-05-17 (Phase 15 done, documentation audit applied)
+2026-05-17 (Phase 16 browser-verified, Phase 18 complete)
 
 Alignment source:
 `ROADMAP.md`

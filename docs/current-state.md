@@ -51,6 +51,7 @@ Implemented modules:
 - Trendyol API integration — Phase 14 complete: /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config with save+test actions (live-verified: 437 orders, 155 returns, "Bağlantı başarılı." ✓)
 - marketplace profit dashboard — Phase 15 complete: /marketplace/profit, winners/losers/missing-data/high-stock signal, platform breakdown grid
 - marketplace operations expansion — Phase 16 complete: /marketplace/trendyol/questions (Q&A + inline answer), /marketplace/trendyol/returns (approve/reject claims), /admin/exchange-rates, /admin/marketplace-mappings; 4 new DB tables, 6 new permissions, full audit trail
+- quote professionalization 2.0 — Phase 18 complete: reusable quote templates (QuoteTemplate + QuoteTemplateItem), template management page, template loading into quote form, product auto price-fill from sellingPriceTry, 2 new permissions
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -121,8 +122,12 @@ Current quote state:
 - PDF export exists
 - WhatsApp sharing exists
 
+Phase 18 additions:
+- reusable quote templates: create and manage named templates with line items, payment/delivery/warranty terms
+- template loading into quote form (fills all fields from saved template)
+- product auto price-fill: selecting a product auto-fills unitPrice from sellingPriceTry + auto-fills description if blank
+
 Current quote limitations:
-- no reusable quote templates
 - no quote workflow v2 speed system
 - no advanced pricing-rule engine
 - no owner-grade commercial intelligence layer
