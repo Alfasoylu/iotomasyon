@@ -46,7 +46,12 @@ async function trendyolFetch<T>(
     throw new TrendyolApiError(res.status, text);
   }
 
-  return res.json() as Promise<T>;
+  const json = await res.json();
+  // Debug: log raw response shape so we can catch structure mismatches
+  if (process.env.NODE_ENV !== "production" || process.env.TRENDYOL_DEBUG) {
+    console.log("[trendyol-api] raw response keys:", Object.keys(json ?? {}));
+  }
+  return json as T;
 }
 
 export class TrendyolApiError extends Error {

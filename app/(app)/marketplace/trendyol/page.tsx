@@ -81,14 +81,19 @@ async function fetchDashboardData(supplierId: string, apiKey: string, apiSecret:
       fetchTrendyolOrders(cfg, { size: 20 }),
       fetchTrendyolReturns(cfg, { size: 10 }),
     ]);
+    // Defensive: log raw structure in case API response format differs
+    console.log("[trendyol-dashboard] orders keys:", Object.keys(ordersResp ?? {}));
+    console.log("[trendyol-dashboard] returns keys:", Object.keys(returnsResp ?? {}));
     return {
-      orders: ordersResp.content,
-      orderTotal: ordersResp.totalElements,
-      returns: returnsResp.content,
-      returnTotal: returnsResp.totalElements,
+      // Null-safe: API may return different field names or structure
+      orders: Array.isArray((ordersResp as any)?.content) ? (ordersResp as any).content : [],
+      orderTotal: (ordersResp as any)?.totalElements ?? 0,
+      returns: Array.isArray((returnsResp as any)?.content) ? (returnsResp as any).content : [],
+      returnTotal: (returnsResp as any)?.totalElements ?? 0,
       error: null,
     };
   } catch (err) {
+    console.error("[trendyol-dashboard] fetchDashboardData error:", err);
     const msg =
       err instanceof TrendyolApiError
         ? `Trendyol API hatası (${err.status}): ${err.status === 401 ? "Kimlik doğrulama başarısız." : err.status === 403 ? "Erişim reddedildi." : err.status === 404 ? "Satıcı bulunamadı." : err.body.slice(0, 120)}`
@@ -216,7 +221,7 @@ export default async function TrendyolDashboardPage() {
                             <StatusBadge status={order.status} map={STATUS_TR} />
                           </td>
                           <td className="py-3 px-4 text-xs text-slate-500 max-w-[200px] truncate">
-                            {order.lines.map((l) => l.productName).join(", ")}
+                            {(order.lines ?? []).map((l) => l.productName).join(", ")}
                           </td>
                         </tr>
                       ))}
@@ -261,7 +266,7 @@ export default async function TrendyolDashboardPage() {
                             <StatusBadge status={ret.status} map={RETURN_STATUS_TR} />
                           </td>
                           <td className="py-3 px-4 text-xs text-slate-500 max-w-[200px] truncate">
-                            {ret.lines.map((l) => l.productName).join(", ")}
+                            {(ret.lines ?? []).map((l) => l.productName).join(", ")}
                           </td>
                         </tr>
                       ))}
