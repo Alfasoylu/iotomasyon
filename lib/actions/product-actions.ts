@@ -197,6 +197,8 @@ function normalizeProductData(input: ProductInput) {
     onlineSalesPotential: positiveIntOrNull(input.onlineSalesPotential),
     wholesaleSalesPotential: positiveIntOrNull(input.wholesaleSalesPotential),
     installerSalesPotential: positiveIntOrNull(input.installerSalesPotential),
+    // Phase 11 — XML Sync override protection
+    xmlLocked: input.xmlLocked,
   };
 }
 

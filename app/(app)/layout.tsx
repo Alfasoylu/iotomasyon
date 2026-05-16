@@ -21,6 +21,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/activity",   label: "Aktiviteler", permission: PERMISSIONS.ACTIVITY_READ },
   { href: "/admin/users",    label: "Kullanıcılar",  permission: PERMISSIONS.USERS_READ },
   { href: "/admin/capital",  label: "Sermaye",       permission: PERMISSIONS.EXECUTIVE_READ },
+  { href: "/admin/xml-sync", label: "XML Senkron",   permission: PERMISSIONS.EXECUTIVE_READ },
 ];
 
 export default async function AppLayout({ children }: { children: ReactNode }) {

@@ -77,6 +77,8 @@ const emptyValues: ProductFormValues = {
   onlineSalesPotential: "",
   wholesaleSalesPotential: "",
   installerSalesPotential: "",
+  // Phase 11
+  xmlLocked: false,
 };
 
 export function ProductForm({
@@ -324,6 +326,19 @@ export function ProductForm({
         </div>
         <p className="text-xs text-slate-400 leading-6">
           Aylık satış tahmini kanal bazında girilir. Bu değerler yatırım skoru ve SATIN AL / ALMA sinyali için kullanılır.
+        </p>
+      </Section>
+
+      {/* ── XML Senkronizasyon ── */}
+      <Section title="XML senkronizasyon">
+        <label className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <input type="checkbox" className="h-4 w-4" {...form.register("xmlLocked")} />
+          <span>
+            <span className="font-semibold">XML kilidi aktif</span> — XML senkronizasyonu bu ürünün stoğunu ve fiyatını güncelleyemez
+          </span>
+        </label>
+        <p className="text-xs text-slate-400 leading-6">
+          Bu seçenek işaretlendiğinde, otomatik XML senkronizasyonu bu ürünü atlar. Manuel girilen değerler korunur.
         </p>
       </Section>
 

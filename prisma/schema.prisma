@@ -110,6 +110,13 @@ enum StockSource {
   IMPORT
 }
 
+enum XmlSyncStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  ERROR
+}
+
 enum StockConfidence {
   HIGH
   MEDIUM
@@ -307,6 +314,8 @@ model Product {
   onlineSalesPotential     Int?
   wholesaleSalesPotential  Int?
   installerSalesPotential  Int?
+  // Phase 11 — XML Sync override protection
+  xmlLocked                Boolean  @default(false)
   createdById     String?
   createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
   productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -537,6 +546,36 @@ model OutreachCampaign {
   @@index([productId])
   @@index([categoryId])
   @@index([createdAt])
+}
+
+// Phase 11 — XML Inventory Sync
+model XmlSyncSource {
+  id          String       @id @default(cuid())
+  name        String
+  url         String
+  isEnabled   Boolean      @default(true)
+  authHeader  String?
+  lastSyncAt  DateTime?
+  lastStatus  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  logs        XmlSyncLog[]
+}
+
+model XmlSyncLog {
+  id             String        @id @default(cuid())
+  sourceId       String
+  startedAt      DateTime      @default(now())
+  completedAt    DateTime?
+  status         XmlSyncStatus @default(RUNNING)
+  recordsFound   Int           @default(0)
+  recordsUpdated Int           @default(0)
+  recordsSkipped Int           @default(0)
+  errorMessage   String?
+  source         XmlSyncSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId])
+  @@index([startedAt])
 }
 
 // Phase 10 — Capital Allocation Engine (admin-only)

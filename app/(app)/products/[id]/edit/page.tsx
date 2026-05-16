@@ -116,6 +116,8 @@ export default async function EditProductPage({
             vatRate: product.vatRate != null ? String(product.vatRate) : "",
             paymentFeeRate: product.paymentFeeRate != null ? String(product.paymentFeeRate) : "",
             returnReserveRate: product.returnReserveRate != null ? String(product.returnReserveRate) : "",
+            // Phase 11
+            xmlLocked: product.xmlLocked ?? false,
           }}
         />
       </Card>

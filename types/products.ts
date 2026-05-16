@@ -40,4 +40,6 @@ export type ProductFormValues = {
   onlineSalesPotential: string;
   wholesaleSalesPotential: string;
   installerSalesPotential: string;
+  // Phase 11 — XML Sync override protection
+  xmlLocked: boolean;
 };

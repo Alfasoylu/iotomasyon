@@ -42,6 +42,8 @@ export const productSchema = z.object({
   onlineSalesPotential: z.string().trim(),
   wholesaleSalesPotential: z.string().trim(),
   installerSalesPotential: z.string().trim(),
+  // Phase 11 — XML Sync override protection
+  xmlLocked: z.boolean(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;
