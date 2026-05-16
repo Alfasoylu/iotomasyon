@@ -145,6 +145,23 @@
 - Added "Yatırım skoru" card to product detail page: monthly ciro, kâr, adet, devir süresi, per-channel breakdown
 - Added SATIN AL / BEKLE / ALMA / Veri yok badge to product detail header
 
+### Phase 11 — XML Inventory Sync
+- Created `XmlSyncStatus` enum: RUNNING, SUCCESS, PARTIAL, ERROR
+- Created `XmlSyncSource` table: id, name, url, isEnabled, authHeader, lastSyncAt, lastStatus
+- Created `XmlSyncLog` table: sourceId (FK CASCADE), startedAt, completedAt, status, recordsFound, recordsUpdated, recordsSkipped, errorMessage
+- Added `xmlLocked BOOLEAN DEFAULT false` to `Product` table
+- Applied all migrations to production Supabase PostgreSQL
+- Created `lib/xml-sync.ts`: regex-based feed parser supporting element-based and attribute-based XML, multi-alias field detection
+- Created `lib/actions/xml-sync-actions.ts`: save/delete source, manual sync trigger, `runSync()` shared engine, `finalizeLog()` helper
+- Created `app/api/cron/xml-sync/route.ts`: Vercel cron endpoint iterating all enabled sources (daily 02:00 UTC)
+- Created `/admin/xml-sync` page: source cards with status badges, edit form, sync log table, add-source form, override protection info card
+- Created `components/xml-sync/xml-sync-form.tsx`: source CRUD + manual trigger client component
+- Added "XML senkronizasyon" section to product edit form with xmlLocked checkbox (amber warning style)
+- Added "XML Senkron" link to sidebar (EXECUTIVE_READ permission)
+- Created `vercel.json` with `0 2 * * *` cron schedule (Hobby plan compatible)
+- Override rules: xmlLocked=true skips product entirely; stockSource=MANUAL skips stock update, price still updated
+- Sync log persists per-run: found/updated/skipped counts + error message
+
 ### Phase 10 — Capital Allocation Engine (ADMIN ONLY)
 - Created `CapitalConfig` table: totalCapitalTry, reservePct, desiredTurnoverMonths
 - Applied migration to production Supabase PostgreSQL

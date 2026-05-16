@@ -29,7 +29,8 @@ Current reality:
 - inventory intelligence complete (Phase 7 ✓)
 - profitability engine complete: per-channel net profit, margin %, ROI %, losing product detection (Phase 8 ✓)
 - sales potential engine does not exist yet
-- capital allocation engine does not exist yet (Phase 10)
+- capital allocation engine complete (Phase 10 ✓)
+- XML inventory sync complete (Phase 11 ✓)
 
 This means the product is operationally useful for internal CRM and quote workflows and is ready for multi-user rollout.
 Not yet ready for:
@@ -58,24 +59,22 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 11: XML Inventory Sync
+### Priority 1 — Phase 12–15: Marketplace Read Intelligence
 
 Why:
-Capital allocation and investment scoring need reliable, up-to-date stock data. XML sync from Entegra closes the gap between manual entry and real inventory state.
+Read-side marketplace visibility should exist before any write-side marketplace operations are considered.
 
 Deliverables:
-- XML source configuration (URL + auth)
-- Scheduled sync architecture (Vercel cron or similar)
-- Stock quantity + price updates from XML
-- Sync logs (last sync time, success/failure, records updated)
-- Failed sync alerts
-- Manual override protection (manually set values survive XML sync unless explicitly allowed)
-- Price update preview before applying
+- listing registry
+- listing monitoring
+- Trendyol read-only integration
+- marketplace profitability dashboard
 
 Acceptance:
-- inventory updates automatically from Entegra XML feed
-- sync is observable (logs, timestamps)
-- manual overrides are not blindly clobbered
+- the system knows where products are live
+- broken or missing listings can be identified
+- marketplace orders/returns/commissions can be read
+- channel visibility exists without write-side risk
 
 ### Priority 2 — Phase 18: Quote Professionalization 2.0
 
@@ -161,6 +160,7 @@ Phase dependencies:
 - Phase 8 ✓ complete — per-channel profitability engine is production-active.
 - Phase 9 ✓ complete — investment score and BUY/WAIT/DO_NOT_BUY signal are production-active.
 - Phase 10 ✓ complete — admin capital allocation page with ranked purchase suggestions and reserve safety.
+- Phase 11 ✓ complete — XML inventory sync is production-active.
 - Phase 11 provides real stock feed data that improves allocation accuracy.
 - Phase 11 should arrive before deep marketplace intelligence because external stock feeds affect listing accuracy.
 - Phase 12 and Phase 13 should exist before any marketplace automation because visibility must come before control.

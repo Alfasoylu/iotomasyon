@@ -167,7 +167,7 @@ export default async function XmlSyncPage() {
         <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
           <li>Üründe <strong>XML kilidi</strong> aktifse senkronizasyon o ürünü tamamen atlar.</li>
           <li>Stok kaynağı <strong>Manuel giriş</strong> olan ürünlerin stoğu güncellenmez — sadece fiyat güncellenir.</li>
-          <li>Otomatik senkronizasyon her 30 dakikada bir çalışır (Vercel Cron).</li>
+          <li>Otomatik senkronizasyon günde bir kez 02:00 UTC'de çalışır (Vercel Cron).</li>
         </ul>
       </Card>
     </div>

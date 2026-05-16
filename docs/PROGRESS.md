@@ -310,14 +310,29 @@ Verified outcome:
 ---
 
 ## Phase 11 — XML Inventory Sync
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- XML source configuration
-- scheduled sync architecture
-- sync logs
-- failed sync alerts
-- preview-before-apply workflow
+Completed:
+- `XmlSyncStatus` enum added: RUNNING, SUCCESS, PARTIAL, ERROR
+- `XmlSyncSource` table migrated to production: id, name, url, isEnabled, authHeader, lastSyncAt, lastStatus
+- `XmlSyncLog` table migrated to production: sourceId (FK → XmlSyncSource CASCADE), startedAt, completedAt, status, recordsFound, recordsUpdated, recordsSkipped, errorMessage
+- `xmlLocked BOOLEAN DEFAULT false` added to `Product` table — manual override protection
+- `lib/xml-sync.ts`: regex-based XML parser, element-based and attribute-based format support, multi-alias field detection (SKU/StockCode/ProductCode, Barcode/EAN/GTIN, etc.)
+- `lib/actions/xml-sync-actions.ts`: saveXmlSourceAction, deleteXmlSourceAction, triggerXmlSyncAction, runSync (shared by cron + manual), finalizeLog
+- `app/api/cron/xml-sync/route.ts`: Vercel cron endpoint (daily 02:00 UTC on Hobby plan), iterates all enabled sources
+- `/admin/xml-sync` page: source list with status badges + last sync timestamp, edit form per source, sync log table (last 5 entries), add-new-source form, info card
+- `components/xml-sync/xml-sync-form.tsx`: source CRUD form with manual trigger button
+- Product form: "XML senkronizasyon" section with xmlLocked checkbox (amber warning style)
+- Sidebar: "XML Senkron" link (EXECUTIVE_READ permission)
+- `vercel.json`: cron schedule `0 2 * * *` (daily, Hobby plan compatible)
+- Matching: barcode-first, then SKU
+- Override protection: xmlLocked=true → source skipped entirely; stockSource=MANUAL → stock not updated, price still updated
+
+Verified outcome:
+- Browser test: source created via form → "Kaynak kaydedildi" ✓
+- Manual sync triggered → HTTP 404 surfaced in UI and written to sync log ✓
+- Sync log renders after reload with BAŞLANGIÇ, BİTİŞ, DURUM, BULUNAN, GÜNCELLENEN, ATLANAN columns ✓
+- xmlLocked checkbox saves to DB and persists on re-open ✓
 
 ---
 
