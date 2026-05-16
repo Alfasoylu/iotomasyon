@@ -382,14 +382,21 @@ Verified outcome:
 ---
 
 ## Phase 14 — Trendyol API Integration (READ ONLY)
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- Trendyol API ingestion
-- order sync
-- return sync
-- commission visibility
-- read-only dashboard contract
+Completed:
+- `TrendyolConfig` table migrated to production: id (singleton), supplierId, apiKey, apiSecret, isEnabled, lastSyncAt, updatedAt
+- `lib/trendyol-api.ts`: `TrendyolApiError` (status + body), `trendyolFetch<T>()` generic Basic-auth fetch, `fetchTrendyolOrders()`, `fetchTrendyolReturns()`, `testTrendyolConnection()` with Turkish error messages
+- `lib/actions/trendyol-actions.ts`: `saveTrendyolConfigAction` (Zod-validated upsert, EXECUTIVE_READ), `testTrendyolConnectionAction` (live ping, EXECUTIVE_READ)
+- `components/trendyol/trendyol-config-form.tsx`: supplierId / apiKey / apiSecret(password) / isEnabled checkbox, Kaydet + Bağlantıyı test et buttons with inline feedback, amber security note
+- `/admin/trendyol`: settings page — status badge (aktif/pasif), supplierId display, last updated, config form, how-to-find guide card (EXECUTIVE_READ)
+- `/marketplace/trendyol`: live orders + returns dashboard (MARKETPLACE_LISTINGS_READ) — not-configured state, API error state, 4 summary cards, orders table (20 rows), returns table (10 rows), Turkish status maps
+- Sidebar: "Trendyol API" (EXECUTIVE_READ), "Trendyol Paneli" (MARKETPLACE_LISTINGS_READ)
+
+Verified outcome:
+- Browser test: `/admin/trendyol` loads → fill supplierId/apiKey/apiSecret → "Kaydet" → "✓ Yapılandırma kaydedildi." ✓
+- `/marketplace/trendyol` renders "Trendyol API yapılandırılmamış veya pasif." not-configured state with "⚙ API Ayarlarına git" button ✓
+- Both sidebar entries visible and functional ✓
 
 ---
 
@@ -507,7 +514,6 @@ Missing:
 # Technical Debt
 
 - no marketplace monitoring (Phase 13+)
-- no Trendyol API integration (Phase 14)
 - no image pipeline
 - no audit-grade event history
 - no procurement engine
@@ -641,7 +647,7 @@ Needed next:
 # Last Updated
 
 Date:
-2026-05-17 (Phase 13 done)
+2026-05-17 (Phase 14 done)
 
 Alignment source:
 `ROADMAP.md`

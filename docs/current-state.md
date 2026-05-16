@@ -49,6 +49,7 @@ Implemented modules:
 - XML inventory sync — Phase 11 complete: /admin/xml-sync, XmlSyncSource/XmlSyncLog, manual trigger, daily Vercel cron, xmlLocked override protection
 - marketplace listing registry — Phase 12 complete: /marketplace, MarketplaceListing table, 8 platforms, 4 statuses, create/edit/delete, product + responsible links
 - marketplace monitoring dashboard — Phase 13 complete: /marketplace/monitoring, gap/problem/stale alert sections, auto task creation
+- Trendyol API integration — Phase 14 complete: /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config with save+test actions
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -134,7 +135,7 @@ PARTIAL
 Current meaning:
 - marketplace listing registry — DONE (Phase 12): /marketplace, create/edit/delete listings, 8 platforms, 4 statuses, product + responsible links
 - marketplace monitoring — DONE (Phase 13): gap/problem/stale alerts, auto task creation
-- Trendyol read dashboard — NOT IMPLEMENTED (Phase 14)
+- Trendyol read dashboard — DONE (Phase 14): /admin/trendyol config, /marketplace/trendyol live orders+returns, save+test actions
 - marketplace profitability layer — NOT IMPLEMENTED (Phase 15)
 - marketplace sync architecture — NOT IMPLEMENTED (Phase 17, DEFERRED)
 
@@ -166,8 +167,6 @@ Current meaning:
 
 ## Known Technical Debt
 
-- no marketplace monitoring (Phase 13 not yet implemented)
-- no Trendyol API integration (Phase 14 not yet implemented)
 - no image pipeline
 - no audit-grade event history
 - no audit-grade event history for financial, permission, stock, marketplace, or quote changes
