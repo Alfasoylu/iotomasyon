@@ -161,28 +161,69 @@ export interface TrendyolOrdersResponse {
 }
 
 // ─── Return / Claim types ─────────────────────────────────────────────────────
+// Verified against live getClaims API (apigw.trendyol.com/integration/order/sellers)
 
-export interface TrendyolReturnLine {
-  barcode: string | null;
-  quantity: number;
-  returnReason: string | null;
-  productName: string;
-  price: number;
+export interface TrendyolClaimItemStatus {
+  name: string; // "Accepted" | "Rejected" | "InAnalysis" | "Refunded" | "WaitingForArrival" | ...
+}
+
+export interface TrendyolClaimItemReason {
+  id: number;
+  name: string;       // Turkish reason string, e.g. "Kusurlu ürün gönderildi"
+  externalReasonId: number;
+  code: string;
+}
+
+export interface TrendyolClaimItem {
+  id: string;
   orderLineItemId: number;
+  customerClaimItemReason: TrendyolClaimItemReason | null;
+  trendyolClaimItemReason: TrendyolClaimItemReason | null;
+  claimItemStatus: TrendyolClaimItemStatus;
+  autoApproveDate: number | null;
+  note: string | null;
+  customerNote: string | null;
+  resolved: boolean;
+  autoAccepted: boolean | null;
+  acceptedBySeller: boolean | null;
+  acceptDetail: string | null;
+}
+
+export interface TrendyolClaimOrderLine {
+  id: number;
+  productName: string;
+  barcode: string | null;
+  merchantSku: string | null;
+  productColor: string | null;
+  productSize: string | null;
+  price: number;
+  vatBaseAmount: number;
+  vatRate: number;
+  salesCampaignId: number;
+  productCategory: string | null;
+}
+
+export interface TrendyolClaimLineItem {
+  orderLine: TrendyolClaimOrderLine;
+  claimItems: TrendyolClaimItem[];
 }
 
 export interface TrendyolReturn {
-  id: number;
+  id: string;
   claimId: string;
   orderNumber: string;
-  status: string;
-  createdDate: number;
+  orderDate: number;         // epoch ms — date of original order
+  claimDate: number;         // epoch ms — date claim was opened
   lastModifiedDate: number;
-  lines: TrendyolReturnLine[];
   customerFirstName: string;
   customerLastName: string;
-  claimType: string;
-  reason: string | null;
+  cargoTrackingNumber: number | null;
+  cargoProviderName: string | null;
+  cargoSenderNumber: string | null;
+  cargoTrackingLink: string | null;
+  orderShipmentPackageId: number | null;
+  orderOutboundPackageId: number | null;
+  items: TrendyolClaimLineItem[];
 }
 
 export interface TrendyolReturnsResponse {

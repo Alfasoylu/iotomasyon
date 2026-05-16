@@ -44,12 +44,18 @@ const STATUS_TR: Record<string, string> = {
   Returned: "İade",
 };
 
+// Verified claim item status values from live API
 const RETURN_STATUS_TR: Record<string, string> = {
   WaitingForArrival: "Kargo bekleniyor",
   Arrived: "Ulaştı",
   Rejected: "Reddedildi",
   Refunded: "İade edildi",
   PendingApproval: "Onay bekleniyor",
+  Accepted: "Kabul edildi",
+  InAnalysis: "İnceleniyor",
+  Resolved: "Çözüldü",
+  Cancelled: "İptal",
+  Created: "Oluşturuldu",
 };
 
 function StatusBadge({ status, map }: { status: string; map: Record<string, string> }) {
@@ -254,22 +260,31 @@ export default async function TrendyolDashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.returns.map((ret) => (
-                        <tr key={ret.claimId} className="border-b border-slate-50 hover:bg-slate-50/50">
-                          <td className="py-3 px-4 font-mono text-xs text-slate-600">{ret.claimId}</td>
-                          <td className="py-3 px-4 font-mono text-xs text-slate-500">{ret.orderNumber ?? "—"}</td>
-                          <td className="py-3 px-4 text-xs text-slate-500">{fmtDate(ret.createdDate)}</td>
-                          <td className="py-3 px-4 text-xs text-slate-600">
-                            {ret.customerFirstName} {ret.customerLastName}
-                          </td>
-                          <td className="py-3 px-4">
-                            <StatusBadge status={ret.status} map={RETURN_STATUS_TR} />
-                          </td>
-                          <td className="py-3 px-4 text-xs text-slate-500 max-w-[200px] truncate">
-                            {(ret.lines ?? []).map((l) => l.productName).join(", ")}
-                          </td>
-                        </tr>
-                      ))}
+                      {data.returns.map((ret) => {
+                        // Derive status from first claimItem's status
+                        const firstStatus = ret.items?.[0]?.claimItems?.[0]?.claimItemStatus?.name ?? "";
+                        // Derive reason from customerClaimItemReason
+                        const firstReason = ret.items?.[0]?.claimItems?.[0]?.customerClaimItemReason?.name ?? "";
+                        // Product names from items[].orderLine
+                        const productNames = (ret.items ?? []).map((i) => i.orderLine?.productName ?? "").filter(Boolean);
+                        return (
+                          <tr key={ret.claimId} className="border-b border-slate-50 hover:bg-slate-50/50">
+                            <td className="py-3 px-4 font-mono text-xs text-slate-600">{ret.claimId}</td>
+                            <td className="py-3 px-4 font-mono text-xs text-slate-500">{ret.orderNumber ?? "—"}</td>
+                            <td className="py-3 px-4 text-xs text-slate-500">{fmtDate(ret.claimDate)}</td>
+                            <td className="py-3 px-4 text-xs text-slate-600">
+                              {ret.customerFirstName} {ret.customerLastName}
+                            </td>
+                            <td className="py-3 px-4">
+                              {firstStatus ? <StatusBadge status={firstStatus} map={RETURN_STATUS_TR} /> : <span className="text-slate-300 text-xs">—</span>}
+                            </td>
+                            <td className="py-3 px-4 text-xs text-slate-500 max-w-[240px]">
+                              <div className="truncate">{productNames.join(", ") || "—"}</div>
+                              {firstReason && <div className="text-xs text-slate-400 mt-0.5 truncate">{firstReason}</div>}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
