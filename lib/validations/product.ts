@@ -29,6 +29,15 @@ export const productSchema = z.object({
   importUnitCostUsd: z.string().trim(),
   inventoryCountDate: z.string().trim(),
   inventoryCountStock: z.string().trim(),
+  // Phase 8 — Profitability Engine
+  unitCostTry: z.string().trim(),
+  sellingPriceTry: z.string().trim(),
+  wholesalePriceTry: z.string().trim(),
+  marketplacePriceTry: z.string().trim(),
+  packagingCost: z.string().trim(),
+  vatRate: z.string().trim(),
+  paymentFeeRate: z.string().trim(),
+  returnReserveRate: z.string().trim(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

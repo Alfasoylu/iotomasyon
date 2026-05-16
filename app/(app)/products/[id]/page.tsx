@@ -11,6 +11,14 @@ import { getProductIntelligence } from "@/services/category-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
+import {
+  calculateProfitability,
+  hasProfitabilityData,
+  isLosingProduct,
+  formatCurrency,
+  formatPct,
+  type ChannelResult,
+} from "@/lib/profitability";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +73,23 @@ export default async function ProductDetailPage({
   const isLowStock = product.stockQuantity <= product.minimumStock;
   const { directInterests, attributeInterests, categoryInterests } = intelligenceResult;
 
+  const profitability = calculateProfitability({
+    unitCostTry: product.unitCostTry != null ? Number(product.unitCostTry) : null,
+    sellingPriceTry: product.sellingPriceTry != null ? Number(product.sellingPriceTry) : null,
+    wholesalePriceTry: product.wholesalePriceTry != null ? Number(product.wholesalePriceTry) : null,
+    marketplacePriceTry: product.marketplacePriceTry != null ? Number(product.marketplacePriceTry) : null,
+    shippingCost: product.shippingCost != null ? Number(product.shippingCost) : null,
+    shippingCostOverride: product.shippingCostOverride != null ? Number(product.shippingCostOverride) : null,
+    marketplaceCommission: product.marketplaceCommission != null ? Number(product.marketplaceCommission) : null,
+    marketplaceCommissionOverride: product.marketplaceCommissionOverride != null ? Number(product.marketplaceCommissionOverride) : null,
+    packagingCost: product.packagingCost != null ? Number(product.packagingCost) : null,
+    vatRate: product.vatRate != null ? Number(product.vatRate) : null,
+    paymentFeeRate: product.paymentFeeRate != null ? Number(product.paymentFeeRate) : null,
+    returnReserveRate: product.returnReserveRate != null ? Number(product.returnReserveRate) : null,
+  });
+  const hasProfit = hasProfitabilityData(profitability);
+  const isLosing = isLosingProduct(profitability);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -74,6 +99,8 @@ export default async function ProductDetailPage({
               {product.isActive ? "Aktif" : "Pasif"}
             </Badge>
             {isLowStock ? <Badge tone="warning">Düşük stok</Badge> : null}
+            {hasProfit && isLosing ? <Badge tone="danger">Kaybettiriyor</Badge> : null}
+            {hasProfit && !isLosing ? <Badge tone="success">Kârlı</Badge> : null}
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
             {product.name}
@@ -197,6 +224,26 @@ export default async function ProductDetailPage({
         </Card>
       </div>
 
+      {hasProfit ? (
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-slate-950">Kârlılık analizi</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            KDV dahil fiyat varsayımı. Maliyet: birim + kargo + ambalaj. Pazar yeri kanalında komisyon uygulanır.
+          </p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            {profitability.retail ? (
+              <ProfitCard title="Perakende" result={profitability.retail} />
+            ) : null}
+            {profitability.wholesale ? (
+              <ProfitCard title="Toptan" result={profitability.wholesale} />
+            ) : null}
+            {profitability.marketplace ? (
+              <ProfitCard title="Pazar yeri" result={profitability.marketplace} />
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
+
       {(directInterests.length > 0 || attributeInterests.length > 0 || categoryInterests.length > 0) ? (
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-slate-700">
@@ -308,6 +355,66 @@ function Info({ label, value, mono }: { label: string; value: string | null | un
     <div>
       <dt className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</dt>
       <dd className={`mt-2 text-sm font-medium text-slate-900 ${mono ? "font-mono" : ""}`}>{value || "-"}</dd>
+    </div>
+  );
+}
+
+function ProfitCard({ title, result }: { title: string; result: ChannelResult }) {
+  const profitColor = result.profitable ? "text-emerald-700" : "text-red-600";
+  const bgColor = result.profitable
+    ? "border-emerald-100 bg-emerald-50/40"
+    : "border-red-100 bg-red-50/40";
+
+  return (
+    <div className={`rounded-2xl border p-4 ${bgColor}`}>
+      <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">{title}</p>
+      <p className={`mt-2 text-2xl font-bold tabular-nums ${profitColor}`}>
+        {formatCurrency(result.netProfit)}
+      </p>
+      <p className={`text-sm font-medium ${profitColor}`}>
+        Marj: {formatPct(result.margin)}
+        {result.roi != null ? ` · ROI: ${formatPct(result.roi)}` : ""}
+      </p>
+      <div className="mt-3 space-y-1 text-xs text-slate-500">
+        <div className="flex justify-between">
+          <span>Satış fiyatı</span>
+          <span className="font-medium text-slate-700">{formatCurrency(result.revenue)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>KDV</span>
+          <span>−{formatCurrency(result.vatAmt)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Birim maliyet</span>
+          <span>−{formatCurrency(result.unitCost)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Kargo + ambalaj</span>
+          <span>−{formatCurrency(result.shippingCost)}</span>
+        </div>
+        {result.commissionAmt > 0 ? (
+          <div className="flex justify-between">
+            <span>Komisyon</span>
+            <span>−{formatCurrency(result.commissionAmt)}</span>
+          </div>
+        ) : null}
+        {result.paymentAmt > 0 ? (
+          <div className="flex justify-between">
+            <span>Ödeme ücreti</span>
+            <span>−{formatCurrency(result.paymentAmt)}</span>
+          </div>
+        ) : null}
+        {result.returnAmt > 0 ? (
+          <div className="flex justify-between">
+            <span>İade karşılığı</span>
+            <span>−{formatCurrency(result.returnAmt)}</span>
+          </div>
+        ) : null}
+        <div className="mt-2 flex justify-between border-t border-slate-200 pt-2">
+          <span className="font-semibold text-slate-600">Net kâr</span>
+          <span className={`font-bold ${profitColor}`}>{formatCurrency(result.netProfit)}</span>
+        </div>
+      </div>
     </div>
   );
 }

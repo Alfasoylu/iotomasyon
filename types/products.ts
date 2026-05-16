@@ -27,4 +27,13 @@ export type ProductFormValues = {
   importUnitCostUsd: string;
   inventoryCountDate: string;
   inventoryCountStock: string;
+  // Phase 8 — Profitability Engine
+  unitCostTry: string;
+  sellingPriceTry: string;
+  wholesalePriceTry: string;
+  marketplacePriceTry: string;
+  packagingCost: string;
+  vatRate: string;
+  paymentFeeRate: string;
+  returnReserveRate: string;
 };

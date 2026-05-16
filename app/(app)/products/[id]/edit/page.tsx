@@ -103,6 +103,15 @@ export default async function EditProductPage({
             importUnitCostUsd: product.importUnitCostUsd != null ? String(product.importUnitCostUsd) : "",
             inventoryCountDate: product.inventoryCountDate ? product.inventoryCountDate.toISOString().split("T")[0] : "",
             inventoryCountStock: product.inventoryCountStock != null ? String(product.inventoryCountStock) : "",
+            // Phase 8
+            unitCostTry: product.unitCostTry != null ? String(product.unitCostTry) : "",
+            sellingPriceTry: product.sellingPriceTry != null ? String(product.sellingPriceTry) : "",
+            wholesalePriceTry: product.wholesalePriceTry != null ? String(product.wholesalePriceTry) : "",
+            marketplacePriceTry: product.marketplacePriceTry != null ? String(product.marketplacePriceTry) : "",
+            packagingCost: product.packagingCost != null ? String(product.packagingCost) : "",
+            vatRate: product.vatRate != null ? String(product.vatRate) : "",
+            paymentFeeRate: product.paymentFeeRate != null ? String(product.paymentFeeRate) : "",
+            returnReserveRate: product.returnReserveRate != null ? String(product.returnReserveRate) : "",
           }}
         />
       </Card>

@@ -64,6 +64,15 @@ const emptyValues: ProductFormValues = {
   importUnitCostUsd: "",
   inventoryCountDate: "",
   inventoryCountStock: "",
+  // Phase 8
+  unitCostTry: "",
+  sellingPriceTry: "",
+  wholesalePriceTry: "",
+  marketplacePriceTry: "",
+  packagingCost: "",
+  vatRate: "",
+  paymentFeeRate: "",
+  returnReserveRate: "",
 };
 
 export function ProductForm({
@@ -260,6 +269,40 @@ export function ProductForm({
             <Input type="number" min={0} {...form.register("inventoryCountStock")} placeholder="0" />
           </Field>
         </div>
+      </Section>
+
+      {/* ── Fiyatlandırma ve kârlılık ── */}
+      <Section title="Fiyatlandırma ve kârlılık">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Birim maliyet (₺)" error={form.formState.errors.unitCostTry?.message}>
+            <Input {...form.register("unitCostTry")} placeholder="0.00" />
+          </Field>
+          <Field label="Ambalaj maliyeti (₺)" error={form.formState.errors.packagingCost?.message}>
+            <Input {...form.register("packagingCost")} placeholder="0.00" />
+          </Field>
+          <Field label="Perakende satış fiyatı (₺)" error={form.formState.errors.sellingPriceTry?.message}>
+            <Input {...form.register("sellingPriceTry")} placeholder="0.00" />
+          </Field>
+          <Field label="Toptan satış fiyatı (₺)" error={form.formState.errors.wholesalePriceTry?.message}>
+            <Input {...form.register("wholesalePriceTry")} placeholder="0.00" />
+          </Field>
+          <Field label="Pazar yeri satış fiyatı (₺)" error={form.formState.errors.marketplacePriceTry?.message}>
+            <Input {...form.register("marketplacePriceTry")} placeholder="0.00" />
+          </Field>
+          <Field label="KDV oranı (%)" error={form.formState.errors.vatRate?.message}>
+            <Input {...form.register("vatRate")} placeholder="20" />
+          </Field>
+          <Field label="Ödeme işlem ücreti (%)" error={form.formState.errors.paymentFeeRate?.message}>
+            <Input {...form.register("paymentFeeRate")} placeholder="2.5" />
+          </Field>
+          <Field label="İade/kusur karşılığı (%)" error={form.formState.errors.returnReserveRate?.message}>
+            <Input {...form.register("returnReserveRate")} placeholder="3" />
+          </Field>
+        </div>
+        <p className="text-xs text-slate-400 leading-6">
+          Kârlılık hesaplaması: fiyat − KDV − kargo − ambalaj − komisyon − ödeme ücreti − iade karşılığı = net kâr.
+          Pazar yeri kanalında komisyon alanı kullanılır. Perakende ve toptan kanalda komisyon sıfır kabul edilir.
+        </p>
       </Section>
 
       {/* ── Özellikler ── */}

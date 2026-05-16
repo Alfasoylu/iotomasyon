@@ -184,6 +184,15 @@ function normalizeProductData(input: ProductInput) {
     importUnitCostUsd: emptyToNull(input.importUnitCostUsd),
     inventoryCountDate: emptyToNull(input.inventoryCountDate) ? new Date(input.inventoryCountDate) : null,
     inventoryCountStock: positiveIntOrNull(input.inventoryCountStock),
+    // Phase 8 — Profitability Engine
+    unitCostTry: emptyToNull(input.unitCostTry),
+    sellingPriceTry: emptyToNull(input.sellingPriceTry),
+    wholesalePriceTry: emptyToNull(input.wholesalePriceTry),
+    marketplacePriceTry: emptyToNull(input.marketplacePriceTry),
+    packagingCost: emptyToNull(input.packagingCost),
+    vatRate: emptyToNull(input.vatRate),
+    paymentFeeRate: emptyToNull(input.paymentFeeRate),
+    returnReserveRate: emptyToNull(input.returnReserveRate),
   };
 }
 

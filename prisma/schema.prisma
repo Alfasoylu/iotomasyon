@@ -293,6 +293,15 @@ model Product {
   importUnitCostUsd   Decimal?
   inventoryCountDate  DateTime?
   inventoryCountStock Int?
+  // Phase 8 — Profitability Engine
+  unitCostTry              Decimal?
+  sellingPriceTry          Decimal?
+  wholesalePriceTry        Decimal?
+  marketplacePriceTry      Decimal?
+  packagingCost            Decimal?
+  vatRate                  Decimal?
+  paymentFeeRate           Decimal?
+  returnReserveRate        Decimal?
   createdById     String?
   createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
   productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
