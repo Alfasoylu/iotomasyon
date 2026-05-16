@@ -103,6 +103,19 @@ enum CustomerType {
   CUSTOM
 }
 
+enum StockSource {
+  MANUAL
+  XML
+  API
+  IMPORT
+}
+
+enum StockConfidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
 model ProductAttribute {
   id                String                       @id @default(cuid())
   name              String                       @unique
@@ -219,6 +232,7 @@ model User {
   userPermissions          UserPermission[]
   // existing relations unchanged
   productsCreated          Product[]          @relation("CreatedProducts")
+  stockCountedProducts     Product[]          @relation("StockCountedBy")
   notesCreated             Note[]
   interestsCreated         ProductInterest[]  @relation("CreatedInterests")
   interestsOwned           ProductInterest[]  @relation("AssignedInterests")
@@ -251,16 +265,29 @@ model ProductCategory {
 model Product {
   id              String           @id @default(cuid())
   sku             String           @unique
+  barcode         String?          @unique
   name            String
+  imageUrl        String?
   category        String?
   categoryId      String?
   brand           String?
   model           String?
+  supplier        String?
   stockQuantity   Int              @default(0)
   minimumStock    Int              @default(0)
+  reorderLeadTime Int?
+  stockSource         StockSource?
+  stockConfidence     StockConfidence?
+  lastStockSyncAt     DateTime?
+  lastStockCountById  String?
+  lastStockCountBy    User?            @relation("StockCountedBy", fields: [lastStockCountById], references: [id], onDelete: SetNull)
   location            String?
   description         String?
   isActive            Boolean          @default(true)
+  shippingCost             Decimal?
+  shippingCostOverride     Decimal?
+  marketplaceCommission    Decimal?
+  marketplaceCommissionOverride Decimal?
   importDate          DateTime?
   importQuantity      Int?
   importUnitCostUsd   Decimal?
@@ -279,8 +306,13 @@ model Product {
   attributeAssignments ProductAttributeAssignment[]
 
   @@index([name])
+  @@index([barcode])
   @@index([category])
   @@index([categoryId])
+  @@index([supplier])
+  @@index([stockSource])
+  @@index([stockConfidence])
+  @@index([lastStockCountById])
   @@index([stockQuantity, minimumStock])
 }
 

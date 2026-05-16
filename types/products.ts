@@ -1,15 +1,27 @@
 export type ProductFormValues = {
   sku: string;
+  barcode: string;
   name: string;
+  imageUrl: string;
   category: string;
   categoryId: string;
   brand: string;
   model: string;
+  supplier: string;
   stockQuantity: number;
   minimumStock: number;
+  reorderLeadTime: string;
+  stockSource: string;
+  stockConfidence: string;
+  lastStockSyncAt: string;
+  lastStockCountById: string;
   location: string;
   description: string;
   isActive: boolean;
+  shippingCost: string;
+  shippingCostOverride: string;
+  marketplaceCommission: string;
+  marketplaceCommissionOverride: string;
   importDate: string;
   importQuantity: string;
   importUnitCostUsd: string;

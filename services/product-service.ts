@@ -71,6 +71,9 @@ export async function getProductById(id: string) {
           createdBy: {
             select: { id: true, name: true, email: true },
           },
+          lastStockCountBy: {
+            select: { id: true, name: true },
+          },
           productCategory: {
             select: { id: true, name: true, slug: true },
           },

@@ -132,11 +132,12 @@ Important fields:
 
 Purpose:
 - core product record
-- product-side anchor for CRM relationships, quotes, campaigns, and future inventory intelligence
+- product-side anchor for CRM relationships, quotes, campaigns, and inventory intelligence
 
 Key relationships:
 - optional `categoryId` -> `ProductCategory`
 - optional `createdById` -> `User`
+- optional `lastStockCountById` -> `User`
 - `Product` -> `ProductInterest`
 - `Product` -> `Note`
 - `Product` -> `FollowUpTask`
@@ -147,16 +148,28 @@ Key relationships:
 Important fields:
 - `id`
 - `sku`
+- `barcode` (unique — Phase 7)
 - `name`
+- `imageUrl` (Phase 7)
 - `category`
 - `categoryId`
 - `brand`
 - `model`
+- `supplier` (Phase 7)
 - `stockQuantity`
 - `minimumStock`
+- `reorderLeadTime` (days — Phase 7)
+- `stockSource` (`StockSource` enum — Phase 7)
+- `stockConfidence` (`StockConfidence` enum — Phase 7)
+- `lastStockSyncAt` (Phase 7)
+- `lastStockCountById` (Phase 7)
 - `location`
 - `description`
 - `isActive`
+- `shippingCost` (Phase 7)
+- `shippingCostOverride` (Phase 7)
+- `marketplaceCommission` (Phase 7)
+- `marketplaceCommissionOverride` (Phase 7)
 - `importDate`
 - `importQuantity`
 - `importUnitCostUsd`
@@ -454,7 +467,9 @@ Important fields:
 ## Current Enums
 
 - `UserRole` (ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM — Phase 5 expanded)
-- `CustomerType` (RETAILER, WHOLESALER, DISTRIBUTOR, CONTRACTOR, END_USER, OTHER — Phase 6)
+- `CustomerType` (TOPTAN, PERAKENDE, SITE_YONETICISI, GUVENLIK_SIRKETI, MAGAZA, ONLINE_SATICI, CUSTOM — Phase 6)
+- `StockSource` (MANUAL, XML, API, IMPORT — Phase 7)
+- `StockConfidence` (HIGH, MEDIUM, LOW — Phase 7)
 - `CustomerStatus`
 - `InterestStatus`
 - `InterestPriority`
@@ -503,18 +518,19 @@ Important fields:
 - `User.role` participates in both the internal auth model and the RBAC engine (ADMIN bypass, role-default lookup).
 - RBAC is roadmap-complete for Phase 5 scope. Future phases may add more permission categories.
 - Phase 6 Customer Intelligence fields are production-active: CustomerType enum, monthlySalesPotential, platformNotes.
-- Product cost data is partial and is not yet a profitability engine.
+- Phase 7 Inventory Intelligence fields added: barcode, imageUrl, supplier, stockSource, stockConfidence, lastStockSyncAt, lastStockCountById, reorderLeadTime, shippingCost, shippingCostOverride, marketplaceCommission, marketplaceCommissionOverride.
+- Product cost data now includes shipping and commission fields but is not yet a profitability calculation engine (Phase 8).
 - Quote schema supports quote workflow v1, not quote professionalization v2.
 - Current activity-related models are operational timeline models, not audit-grade event history.
-- Current schema is relationship-aware for CRM and quoting, but not intelligence-complete.
+- Current schema is relationship-aware for CRM and quoting, and inventory-traceable at product level.
 
 ---
 
 ## Known Schema Gaps
 
 - no marketplace schema
-- no supplier schema
-- no profitability schema
+- no structured supplier model (supplier exists as plain text field on Product)
+- no profitability calculation schema (inputs exist, engine does not — Phase 8)
 - no XML ingestion schema
 - no executive KPI schema
 - no procurement decision schema

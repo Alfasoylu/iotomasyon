@@ -14,6 +14,19 @@ import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 
 export const dynamic = "force-dynamic";
 
+const STOCK_SOURCE_LABELS: Record<string, string> = {
+  MANUAL: "Manuel giriş",
+  XML: "XML senkronizasyon",
+  API: "API entegrasyonu",
+  IMPORT: "İthalat",
+};
+
+const STOCK_CONFIDENCE_LABELS: Record<string, string> = {
+  HIGH: "Yüksek",
+  MEDIUM: "Orta",
+  LOW: "Düşük",
+};
+
 export default async function ProductDetailPage({
   params,
 }: {
@@ -87,6 +100,17 @@ export default async function ProductDetailPage({
         </div>
       </div>
 
+      {product.imageUrl && (
+        <Card className="overflow-hidden p-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="h-64 w-full object-contain bg-slate-50 p-4"
+          />
+        </Card>
+      )}
+
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-slate-950">Ürün bilgileri</h2>
@@ -94,9 +118,38 @@ export default async function ProductDetailPage({
             <Info label="Kategori" value={product.productCategory?.name ?? product.category} />
             <Info label="Marka" value={product.brand} />
             <Info label="Model" value={product.model} />
+            <Info label="Tedarikçi" value={product.supplier} />
+            {product.barcode ? <Info label="Barkod" value={product.barcode} mono /> : null}
             <Info label="Konum" value={product.location} />
             <Info label="Stok" value={`${product.stockQuantity}`} />
             <Info label="Minimum stok" value={`${product.minimumStock}`} />
+            {(product.reorderLeadTime) != null ? (
+              <Info label="Temin süresi" value={`${product.reorderLeadTime} gün`} />
+            ) : null}
+            {product.stockSource ? (
+              <Info label="Stok kaynağı" value={STOCK_SOURCE_LABELS[product.stockSource] ?? product.stockSource} />
+            ) : null}
+            {product.stockConfidence ? (
+              <Info label="Stok güvenilirliği" value={STOCK_CONFIDENCE_LABELS[product.stockConfidence] ?? product.stockConfidence} />
+            ) : null}
+            {product.lastStockSyncAt ? (
+              <Info label="Son senkronizasyon" value={formatDateTime(product.lastStockSyncAt)} />
+            ) : null}
+            {product.lastStockCountBy ? (
+              <Info label="Son sayımı yapan" value={product.lastStockCountBy.name} />
+            ) : null}
+            {product.shippingCost != null ? (
+              <Info label="Kargo maliyeti" value={`₺${Number(product.shippingCost).toFixed(2)}`} />
+            ) : null}
+            {product.shippingCostOverride != null ? (
+              <Info label="Kargo (override)" value={`₺${Number(product.shippingCostOverride).toFixed(2)}`} />
+            ) : null}
+            {product.marketplaceCommission != null ? (
+              <Info label="Pazar komisyonu" value={`%${Number(product.marketplaceCommission).toFixed(1)}`} />
+            ) : null}
+            {product.marketplaceCommissionOverride != null ? (
+              <Info label="Komisyon (override)" value={`%${Number(product.marketplaceCommissionOverride).toFixed(1)}`} />
+            ) : null}
             {product.importDate ? (
               <Info label="İthalat tarihi" value={formatDateTime(product.importDate)} />
             ) : null}
@@ -250,11 +303,11 @@ export default async function ProductDetailPage({
   );
 }
 
-function Info({ label, value }: { label: string; value: string | null | undefined }) {
+function Info({ label, value, mono }: { label: string; value: string | null | undefined; mono?: boolean }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</dt>
-      <dd className="mt-2 text-sm font-medium text-slate-900">{value || "-"}</dd>
+      <dd className={`mt-2 text-sm font-medium text-slate-900 ${mono ? "font-mono" : ""}`}>{value || "-"}</dd>
     </div>
   );
 }

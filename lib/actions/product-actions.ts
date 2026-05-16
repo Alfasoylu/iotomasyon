@@ -153,18 +153,32 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
 }
 
 function normalizeProductData(input: ProductInput) {
+  const stockSource = emptyToNull(input.stockSource) as "MANUAL" | "XML" | "API" | "IMPORT" | null;
+  const stockConfidence = emptyToNull(input.stockConfidence) as "HIGH" | "MEDIUM" | "LOW" | null;
   return {
     sku: input.sku.trim().toUpperCase(),
+    barcode: emptyToNull(input.barcode),
     name: input.name.trim(),
+    imageUrl: emptyToNull(input.imageUrl),
     category: emptyToNull(input.category),
     categoryId: emptyToNull(input.categoryId),
     brand: emptyToNull(input.brand),
     model: emptyToNull(input.model),
+    supplier: emptyToNull(input.supplier),
     stockQuantity: input.stockQuantity,
     minimumStock: input.minimumStock,
+    reorderLeadTime: positiveIntOrNull(input.reorderLeadTime),
+    stockSource,
+    stockConfidence,
+    lastStockSyncAt: emptyToNull(input.lastStockSyncAt) ? new Date(input.lastStockSyncAt) : null,
+    lastStockCountById: emptyToNull(input.lastStockCountById),
     location: emptyToNull(input.location),
     description: emptyToNull(input.description),
     isActive: input.isActive,
+    shippingCost: emptyToNull(input.shippingCost),
+    shippingCostOverride: emptyToNull(input.shippingCostOverride),
+    marketplaceCommission: emptyToNull(input.marketplaceCommission),
+    marketplaceCommissionOverride: emptyToNull(input.marketplaceCommissionOverride),
     importDate: emptyToNull(input.importDate) ? new Date(input.importDate) : null,
     importQuantity: positiveIntOrNull(input.importQuantity),
     importUnitCostUsd: emptyToNull(input.importUnitCostUsd),

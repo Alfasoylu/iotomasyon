@@ -7,6 +7,7 @@ import { listCategoriesForSelect } from "@/services/category-service";
 import { listAttributes } from "@/services/attribute-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +18,15 @@ export default async function EditProductPage({
 }) {
   await requirePermission(PERMISSIONS.PRODUCTS_UPDATE);
   const { id } = await params;
-  const [{ databaseAvailable, product }, { categories }, allAttributes] = await Promise.all([
+  const [{ databaseAvailable, product }, { categories }, allAttributes, users] = await Promise.all([
     getProductById(id),
     listCategoriesForSelect(),
     listAttributes(),
+    prisma.user.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   if (!databaseAvailable) {
@@ -56,7 +62,7 @@ export default async function EditProductPage({
           Ürün düzenle
         </h1>
         <p className="mt-2 text-sm leading-7 text-slate-600">
-          SKU, stok ve lokasyon alanlarını güncelleyin.
+          Ürün bilgilerini, stok zekasını ve maliyet girdilerini güncelleyin.
         </p>
       </div>
 
@@ -67,18 +73,31 @@ export default async function EditProductPage({
           categories={categories}
           allAttributes={allAttributes}
           initialAttributeIds={product.attributeAssignments.map((a) => a.attributeId)}
+          users={users}
           initialValues={{
             sku: product.sku,
+            barcode: product.barcode ?? "",
             name: product.name,
+            imageUrl: product.imageUrl ?? "",
             category: product.category ?? "",
             categoryId: product.categoryId ?? "",
             brand: product.brand ?? "",
             model: product.model ?? "",
+            supplier: product.supplier ?? "",
             stockQuantity: product.stockQuantity,
             minimumStock: product.minimumStock,
+            reorderLeadTime: product.reorderLeadTime != null ? String(product.reorderLeadTime) : "",
+            stockSource: product.stockSource ?? "",
+            stockConfidence: product.stockConfidence ?? "",
+            lastStockSyncAt: product.lastStockSyncAt ? product.lastStockSyncAt.toISOString().split("T")[0] : "",
+            lastStockCountById: product.lastStockCountById ?? "",
             location: product.location ?? "",
             description: product.description ?? "",
             isActive: product.isActive,
+            shippingCost: product.shippingCost != null ? String(product.shippingCost) : "",
+            shippingCostOverride: product.shippingCostOverride != null ? String(product.shippingCostOverride) : "",
+            marketplaceCommission: product.marketplaceCommission != null ? String(product.marketplaceCommission) : "",
+            marketplaceCommissionOverride: product.marketplaceCommissionOverride != null ? String(product.marketplaceCommissionOverride) : "",
             importDate: product.importDate ? product.importDate.toISOString().split("T")[0] : "",
             importQuantity: product.importQuantity != null ? String(product.importQuantity) : "",
             importUnitCostUsd: product.importUnitCostUsd != null ? String(product.importUnitCostUsd) : "",
