@@ -228,6 +228,12 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "İthalat & Analiz",
   },
+  {
+    href: "/admin/trendyol-report",
+    label: "Trendyol Raporu",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "İthalat & Analiz",
+  },
 
   // ── Yönetim ───────────────────────────────────────────────────────────────
   {

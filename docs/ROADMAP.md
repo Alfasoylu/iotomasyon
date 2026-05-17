@@ -1447,6 +1447,39 @@ return records. Success message reports both counts.
 
 ---
 
+# Phase 63 — Trendyol Aylık Satış Raporu
+
+Goal:
+The executive has per-product import decisions and a daily sync running, but
+no month-over-month trend view. "How did our Trendyol business perform last
+month vs. the month before?" is unanswered. This page surfaces monthly
+aggregates from existing TrendyolSalesRecord + TrendyolReturnRecord data.
+
+Context:
+All data is already in DB. No new sync, no schema change needed.
+TrendyolSalesRecord: orderDate, totalPriceTry, quantity, status, productId.
+TrendyolReturnRecord: claimDate, unitPriceTry, productId.
+
+What to build:
+- New page: /admin/trendyol-report (EXECUTIVE_READ gated)
+- Add "Trendyol Raporu" sidebar link (EXECUTIVE_READ)
+- Monthly table: last 12 months grouped by orderDate year-month
+  Columns: Ay | Sipariş | Adet | Ciro (Brüt) | İade | İade Oranı | Net Ciro | Eşleşme Oranı
+  - Non-cancelled orders only for sales rows
+  - Return count from TrendyolReturnRecord.claimDate
+  - Eşleşme oranı = matched (productId != null) / total orders %
+- KPI summary cards for current month (last 30 days):
+  - Sipariş adedi, Brüt ciro, İade adedi, Net ciro
+- Top 10 products by net revenue (matched only, current month)
+- Schema change: NONE
+- Permission: EXECUTIVE_READ (existing)
+
+Exit:
+/admin/trendyol-report shows last-12-months breakdown table + current-month
+KPI cards + top-10 product table. All from existing DB data, no API calls.
+
+---
+
 # Phase Exit Rules
 
 A phase is complete only if:
