@@ -54,9 +54,18 @@ export async function GET(req: NextRequest) {
   });
   const barcodeMap = new Map<string, string>();
   const skuMap = new Map<string, string>();
+  // Phase 61: normalized maps (strip non-alphanumeric, lowercase)
+  const normalizedBarcodeMap = new Map<string, string>();
+  const normalizedSkuMap = new Map<string, string>();
   for (const p of products) {
-    if (p.barcode) barcodeMap.set(p.barcode.toLowerCase(), p.id);
-    if (p.sku) skuMap.set(p.sku.toLowerCase(), p.id);
+    if (p.barcode) {
+      barcodeMap.set(p.barcode.toLowerCase(), p.id);
+      normalizedBarcodeMap.set(normalizeKey(p.barcode), p.id);
+    }
+    if (p.sku) {
+      skuMap.set(p.sku.toLowerCase(), p.id);
+      normalizedSkuMap.set(normalizeKey(p.sku), p.id);
+    }
   }
 
   // 14-day window — catches recent orders + status changes
@@ -64,8 +73,8 @@ export async function GET(req: NextRequest) {
   const startDate = endDate - 14 * 24 * 60 * 60 * 1000;
 
   const [ordersResult, returnsResult] = await Promise.allSettled([
-    syncOrders(cfg, barcodeMap, skuMap, startDate, endDate),
-    syncReturns(cfg, barcodeMap, skuMap, startDate, endDate),
+    syncOrders(cfg, barcodeMap, skuMap, normalizedBarcodeMap, normalizedSkuMap, startDate, endDate),
+    syncReturns(cfg, barcodeMap, skuMap, normalizedBarcodeMap, normalizedSkuMap, startDate, endDate),
   ]);
 
   return NextResponse.json({
@@ -82,12 +91,43 @@ export async function GET(req: NextRequest) {
   });
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Phase 61: strip non-alphanumeric and lowercase for fuzzy barcode/SKU matching */
+function normalizeKey(s: string): string {
+  return s.replace(/[^a-z0-9]/gi, "").toLowerCase();
+}
+
+/** Resolve productId using exact then normalized barcode/SKU fallbacks */
+function resolveProductId(
+  barcodeKey: string | undefined,
+  skuKey: string | undefined,
+  barcodeMap: Map<string, string>,
+  skuMap: Map<string, string>,
+  normalizedBarcodeMap: Map<string, string>,
+  normalizedSkuMap: Map<string, string>,
+): string | null {
+  if (barcodeKey) {
+    if (barcodeMap.has(barcodeKey)) return barcodeMap.get(barcodeKey)!;
+    const nb = normalizeKey(barcodeKey);
+    if (nb && normalizedBarcodeMap.has(nb)) return normalizedBarcodeMap.get(nb)!;
+  }
+  if (skuKey) {
+    if (skuMap.has(skuKey)) return skuMap.get(skuKey)!;
+    const ns = normalizeKey(skuKey);
+    if (ns && normalizedSkuMap.has(ns)) return normalizedSkuMap.get(ns)!;
+  }
+  return null;
+}
+
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 async function syncOrders(
   cfg: { supplierId: string; apiKey: string; apiSecret: string },
   barcodeMap: Map<string, string>,
   skuMap: Map<string, string>,
+  normalizedBarcodeMap: Map<string, string>,
+  normalizedSkuMap: Map<string, string>,
   startDate: number,
   endDate: number,
 ) {
@@ -112,14 +152,8 @@ async function syncOrders(
 
         const barcodeKey = line.barcode?.toLowerCase();
         const skuKey = line.merchantSku?.toLowerCase();
-        let productId: string | null = null;
-        if (barcodeKey && barcodeMap.has(barcodeKey)) {
-          productId = barcodeMap.get(barcodeKey)!;
-          matched++;
-        } else if (skuKey && skuMap.has(skuKey)) {
-          productId = skuMap.get(skuKey)!;
-          matched++;
-        }
+        const productId = resolveProductId(barcodeKey, skuKey, barcodeMap, skuMap, normalizedBarcodeMap, normalizedSkuMap);
+        if (productId) matched++;
 
         const lineIdBig = BigInt(line.id);
         const rawPrice =
@@ -166,6 +200,8 @@ async function syncReturns(
   cfg: { supplierId: string; apiKey: string; apiSecret: string },
   barcodeMap: Map<string, string>,
   skuMap: Map<string, string>,
+  normalizedBarcodeMap: Map<string, string>,
+  normalizedSkuMap: Map<string, string>,
   startDate: number,
   endDate: number,
 ) {
@@ -197,14 +233,8 @@ async function syncReturns(
 
         const barcodeKey = orderLine.barcode?.toLowerCase();
         const skuKey = orderLine.merchantSku?.toLowerCase();
-        let productId: string | null = null;
-        if (barcodeKey && barcodeMap.has(barcodeKey)) {
-          productId = barcodeMap.get(barcodeKey)!;
-          matched++;
-        } else if (skuKey && skuMap.has(skuKey)) {
-          productId = skuMap.get(skuKey)!;
-          matched++;
-        }
+        const productId = resolveProductId(barcodeKey, skuKey, barcodeMap, skuMap, normalizedBarcodeMap, normalizedSkuMap);
+        if (productId) matched++;
 
         const firstItem = claimItems[0];
         const status = firstItem?.claimItemStatus?.name ?? "Unknown";

@@ -2,6 +2,7 @@
  * Phase 16 — Marketplace Product Mapping Management
  * Phase 37 — Unmatched Barcodes Inbox
  * Phase 41 — Bulk Backfill Engine (BulkBackfillButton in header)
+ * Phase 61 — Normalized Barcode Re-Match (RematchNormalizedButton in header)
  *
  * Manage many-to-one mappings: multiple platform identities → one internal product.
  * Supports Trendyol and all other MarketplacePlatform values.
@@ -23,6 +24,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MappingForm, DeleteMappingButton } from "@/components/marketplace/mapping-form";
 import { BulkBackfillButton } from "@/components/marketplace/bulk-backfill-button";
+import { RematchNormalizedButton } from "@/components/marketplace/rematch-normalized-button";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +122,7 @@ export default async function MarketplaceMappingsPage({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <BulkBackfillButton />
+          <RematchNormalizedButton />
           <Link href="/admin">
             <Button variant="secondary">← Admin Panel</Button>
           </Link>

@@ -188,6 +188,87 @@ export async function bulkBackfillAllMappingsAction(): Promise<ActionResult> {
   }
 }
 
+/**
+ * Phase 61 — Retroactive Normalized Barcode Re-Match.
+ * Scans all null-productId TrendyolSalesRecord rows and tries to match
+ * them against Product.barcode / Product.sku using normalized comparison
+ * (strip non-alphanumeric, lowercase). Does NOT require a manual mapping entry.
+ *
+ * Safe to run repeatedly — only updates rows where productId IS NULL.
+ */
+export async function rematchNormalizedBarcodesAction(): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.MARKETPLACE_MAPPINGS_WRITE))) return PERM_DENIED;
+
+  function normalize(s: string): string {
+    return s.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  }
+
+  try {
+    // Build normalized product maps
+    const products = await prisma.product.findMany({
+      select: { id: true, sku: true, barcode: true },
+    });
+    const normBarcodeMap = new Map<string, string>();
+    const normSkuMap = new Map<string, string>();
+    for (const p of products) {
+      if (p.barcode) {
+        const nb = normalize(p.barcode);
+        if (nb && !normBarcodeMap.has(nb)) normBarcodeMap.set(nb, p.id);
+      }
+      if (p.sku) {
+        const ns = normalize(p.sku);
+        if (ns && !normSkuMap.has(ns)) normSkuMap.set(ns, p.id);
+      }
+    }
+
+    // Fetch all unmatched records
+    const unmatched = await prisma.trendyolSalesRecord.findMany({
+      where: { productId: null },
+      select: { id: true, barcode: true, merchantSku: true },
+    });
+
+    // Match and collect updates
+    const updates: { id: string; productId: string }[] = [];
+    for (const rec of unmatched) {
+      let productId: string | null = null;
+      if (rec.barcode) {
+        const nb = normalize(rec.barcode);
+        if (nb && normBarcodeMap.has(nb)) productId = normBarcodeMap.get(nb)!;
+      }
+      if (!productId && rec.merchantSku) {
+        const ns = normalize(rec.merchantSku);
+        if (ns && normSkuMap.has(ns)) productId = normSkuMap.get(ns)!;
+      }
+      if (productId) updates.push({ id: rec.id, productId });
+    }
+
+    // Bulk update in batches of 100
+    let matched = 0;
+    for (let i = 0; i < updates.length; i += 100) {
+      const batch = updates.slice(i, i + 100);
+      await Promise.all(
+        batch.map((u) =>
+          prisma.trendyolSalesRecord.update({
+            where: { id: u.id },
+            data: { productId: u.productId },
+          }),
+        ),
+      );
+      matched += batch.length;
+    }
+
+    const remaining = unmatched.length - matched;
+    return {
+      ok: true,
+      message: `${matched} sipariş kaydı eşleştirildi. ${remaining} kayıt hâlâ eşleşmemiş.`,
+    };
+  } catch (err) {
+    console.error("[marketplace-mapping-actions] rematchNormalized:", err);
+    return { ok: false, message: "Yeniden eşleştirme sırasında hata oluştu." };
+  }
+}
+
 export async function deleteMarketplaceMappingAction(id: string): Promise<ActionResult> {
   const user = await requireUser();
   if (!(await checkPermission(user, PERMISSIONS.MARKETPLACE_MAPPINGS_WRITE))) return PERM_DENIED;

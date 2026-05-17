@@ -1382,6 +1382,38 @@ understands data provenance of each decision.
 
 ---
 
+# Phase 61 — Normalized Trendyol Barcode Matching
+
+Goal:
+188 TrendyolSalesRecord rows remain unmatched (productId = null) because the cron
+does exact case-insensitive barcode/SKU match. Many real matches exist but fail
+because of formatting differences: dashes, spaces, leading zeros in Trendyol
+barcodes vs clean alphanumeric in product DB.
+
+Context:
+Unmatched orders can't contribute to Phase 59/60 velocity data or import decisions.
+The cron already has a barcode → productId map; we need to add a normalized fallback.
+
+Required:
+- Add normalizeBarcode(s): strip non-alphanumeric, lowercase
+- In cron syncOrders + syncReturns: after exact match fails, try normalizedBarcodeMap
+- Build normalizedBarcodeMap alongside barcodeMap in cron handler
+- Add retroactive re-match server action: for all null-productId TrendyolSalesRecord,
+  try normalized barcode → productId; bulk update matched rows
+- Add "Barkodları Yeniden Eşleştir" button to /admin/marketplace-mappings page
+  that runs the retroactive action and reports how many rows were matched
+- Schema change: NONE
+
+Permission gates:
+- MARKETPLACE_MAPPINGS_WRITE (existing) for the retroactive action
+
+Exit:
+/admin/marketplace-mappings shows the retroactive re-match action. Running it
+reduces the unmatched count. Cron now also matches on normalized barcodes going
+forward.
+
+---
+
 # Phase Exit Rules
 
 A phase is complete only if:
