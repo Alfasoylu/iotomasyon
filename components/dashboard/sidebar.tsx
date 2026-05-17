@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 33 aktif
+          Faz 34 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Pazar Yeri Fiyatlandırması: XML/manuel fiyat, kargo dilimi, komisyon, net kalan.
+            Pazar Yeri Kâr Paneli: platform XML fiyatları, etkin fiyat kaynağı rozeti.
           </p>
         </div>
       </aside>

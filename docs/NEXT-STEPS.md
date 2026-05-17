@@ -129,6 +129,18 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 6 — Marketplace Profit Page XML Price Integration (Phase 34, 2026-05-17)
+
+Delivered:
+- /marketplace/profit updated to use calcMarketplacePricingRow() per listing
+- Per-platform XML price fields: xmlTrendyolPrice/xmlHbPrice/xmlAmazonPrice/xmlPazaramaPrice/xmlIdefixPrice
+- Effective price resolution: manual override > XML price > none (consistent with product detail card)
+- PriceBadge (Manuel/XML/Veri yok) shown alongside price in winners/losers tables
+- PolicyBadge extended to handle "price_tier" shipping source
+- usdTryRate fetched from latest MonthlyExchangeRate
+- PLATFORM_XML_FIELD map for clean platform → XML field routing
+- Browser-verified 2026-05-17 ✓
+
 ### ✓ Priority 5 — Marketplace Pricing Normalization (Phase 33, 2026-05-17)
 
 Delivered:

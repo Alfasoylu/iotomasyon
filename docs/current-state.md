@@ -70,6 +70,7 @@ Implemented modules:
 - import economics normalization — Phase 31 complete: SEA_FREIGHT_PER_KG fixed (2→1), rmbUsdRate on MonthlyExchangeRate, sourceCostRmb + importPaymentFeePct on Product, RMB-first formula in import decision engine, exchange rate form updated with RMB/USD field, product form amber RMB section
 - import governance — Phase 32 complete: ImportDecisionSnapshot model (freeze all inputs+outputs at decision time), Supplier import defaults (air/sea freight USD/kg, payment fee %), three-tier freight resolution, ImportSnapshotButton, Karar Geçmişi history table on product detail, "Kaydet" column on import decisions cockpit
 - marketplace pricing normalization — Phase 33 complete: lib/marketplace-pricing.ts canonical engine, calcMarketplacePricingRow() (effectivePrice/shipping/commission/paymentFee/returnReserve/netRevenue), calcShippingFromPriceTiers() roadmap tiers, price resolution (manual>XML>none), shipping resolution (policy>tier), Pazar Yeri Fiyatlandirmasi card on product detail (5 platforms with XML/effective/source/shipping/commission/netKalan/netMarj), source badges, footer formula note
+- marketplace profit page XML price integration — Phase 34 complete: /marketplace/profit uses calcMarketplacePricingRow() per listing, per-platform XML prices (Trendyol/HB/Amazon/Pazarama/Idefix), PriceBadge source badge on effective price column, consistent with product detail Pazar Yeri Fiyatlandirmasi card, usdTryRate from MonthlyExchangeRate
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
