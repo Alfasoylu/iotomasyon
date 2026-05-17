@@ -703,37 +703,49 @@ Tamamlananlar:
 
 ---
 
-### ⏳ PENDING DEPLOY — Priority 66 — Cockpit Stok Kapsamı Kolonu (Phase 66, 2026-05-17)
+### ✓ DONE — Priority 67 — Admin Dashboard Trendyol MoM Karşılaştırma (Phase 67, 2026-05-17)
+
+**Neden:**
+Admin dashboard'ında Trendyol'un bu ayki ve geçen ayki performansı karşılaştırmalı gösterilmiyordu. Delta arrow'larla "bu ay daha iyi mi?" sorusu tek bakışta yanıtlanabilmeli.
+
+Tamamlananlar:
+- `services/dashboard-service.ts`: `getAdminEnhancedData()` — `trendyolThisMonth` + `trendyolLastMonth` paralel sorgular; `cancelledFilter`; `aggregateTrendyol()`; `trendyolMoM` return değeri
+- `app/(app)/dashboard/_components/admin-workspace.tsx`: "Trendyol Aylık Karşılaştırma" bölümü — 3 kart (Sipariş / Ciro / Eşleşme %); inline `DeltaBadge` (↑ emerald / ↓ red / → slate)
+- Schema değişikliği: YOK
+- tsc clean ✓; commit 8ed85e7 ✓; READY dpl_3gPeDmEfFq6DcbYaE1eWohps9SWi
+
+---
+
+### ✓ DONE — Priority 66 — Cockpit Stok Kapsamı Kolonu (Phase 66, 2026-05-17)
 
 **Neden:**
 Import cockpit stok adedi gösteriyordu ama "bu stok kaç gün yeter?" sorusu cevaplanmıyordu. Kapsama kolonu acil sipariş vermesi gereken ürünleri kırmızıyla hemen belirginleştirir.
 
 Tamamlananlar:
 - `app/(app)/admin/import-cockpit/page.tsx`: daysOfCoverage hesabı + Kapsama kolonu; no schema change; no new DB query
-- tsc clean ✓; commit 1be7075 ✓; PENDING DEPLOY
+- tsc clean ✓; commit 1be7075 ✓; READY dpl_3gPeDmEfFq6DcbYaE1eWohps9SWi
 
 ---
 
-### ⏳ PENDING DEPLOY — Priority 65 — Ürün Listesi T30G Satış Hızı (Phase 65, 2026-05-17)
+### ✓ DONE — Priority 65 — Ürün Listesi T30G Satış Hızı (Phase 65, 2026-05-17)
 
 **Neden:**
 Admin ürün listesinde hangi ürünün satıldığını görmek için her ürünün detay sayfasına girmek gerekiyordu. T30G kolonu bu sinyali liste ekranında sunarak hızlı tarama sağlar.
 
 Tamamlananlar:
 - `app/(app)/products/page.tsx`: parallel fetch TrendyolSalesRecord 30g; velocity30d map; T30G kolonu (emerald/amber/slate/dash); colSpan 7→8; no schema change
-- tsc clean ✓; commit bbb39b1 ✓; PENDING DEPLOY (günlük limit)
+- tsc clean ✓; commit bbb39b1 ✓; READY dpl_3gPeDmEfFq6DcbYaE1eWohps9SWi
 
 ---
 
-### ⏳ PENDING DEPLOY — Priority 64 — Trendyol Aylık Satış Trendi Kartı (Phase 64, 2026-05-17)
+### ✓ DONE — Priority 64 — Trendyol Aylık Satış Trendi Kartı (Phase 64, 2026-05-17)
 
 **Neden:**
 Ürün detay sayfası 4 KPI tile (Son 30G Satış/Ciro, Toplam Satış, Gerçekleşen Marj) gösteriyordu ama aylık trend yoktu. Hangi ürünün büyüyüp büyümediği tek bakışta anlaşılmıyordu.
 
 Tamamlananlar:
 - `app/(app)/products/[id]/page.tsx`: 6 aylık JS-side aggregation; trend badge (↑/↓/→); Ay/Adet(delta)/Ciro/Ort.Fiyat tablosu; totals footer; no schema change
-- tsc --noEmit temiz ✓; commit 7fdc124 ✓
-- Deploy: Vercel 100/day limit — limit sıfırlandığında tetiklenecek
+- tsc --noEmit temiz ✓; commit 7fdc124 ✓; READY dpl_3gPeDmEfFq6DcbYaE1eWohps9SWi
 
 ---
 

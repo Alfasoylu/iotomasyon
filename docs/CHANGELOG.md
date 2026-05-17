@@ -9,6 +9,28 @@
 
 ## 2026-05
 
+### Phase 67 — Admin Dashboard Trendyol MoM Karşılaştırma (2026-05-17)
+
+**Amaç:**
+Admin dashboardunda Trendyol'un bu ay ve geçen ay performansını (sipariş adedi, ciro, eşleşme oranı) delta arrow'larla karşılaştırmak. Tek bakışta "bu ay daha iyi mi daha kötü mü?" sorusunu yanıtlar.
+
+Değişiklikler:
+- `services/dashboard-service.ts`:
+  - `getAdminEnhancedData()` Promise.all'a 2 yeni sorgu eklendi: `trendyolThisMonth` + `trendyolLastMonth`
+  - `cancelledFilter` shared nesnesi (iptal/cancel case-insensitive)
+  - `aggregateTrendyol()` yardımcı fonksiyon: orders, revenue, matchRate hesabı
+  - `trendyolMoM: { thisMonth, lastMonth }` dönüş değerine eklendi
+  - `databaseAvailable: false` fallback'i `emptyMoM` ile güncellendi
+- `app/(app)/dashboard/_components/admin-workspace.tsx`:
+  - "Trendyol Aylık Karşılaştırma" bölümü eklendi (3 kart: Sipariş Adedi / Ciro / Eşleşme Oranı)
+  - `DeltaBadge` inline bileşen: ↑ emerald / ↓ red / → slate, yüzde delta ile
+  - Geçen ay değerleri alt satırda gri olarak gösteriliyor
+- Schema değişikliği: YOK
+
+Durum: tsc clean ✓, commit 8ed85e7 ✓, READY dpl_3gPeDmEfFq6DcbYaE1eWohps9SWi
+
+---
+
 ### Phase 66 — Import Cockpit Stok Kapsamı Kolonu (2026-05-17)
 
 **Amaç:**
@@ -21,7 +43,7 @@ Değişiklikler:
   - Yeni "Kapsama" sütunu (Stok ile Kaynak arasına): red ≤30g / amber 31-90g / slate >90g; "—" veri yoksa
 - Schema değişikliği: YOK; yeni DB sorgusu YOK
 
-Durum: tsc clean ✓, commit 1be7075 ✓, PENDING DEPLOY
+Durum: tsc clean ✓, commit 1be7075 ✓, READY dpl_3gPeDmEfFq6DcbYaE1eWohps9SWi
 
 ---
 
@@ -39,7 +61,7 @@ Değişiklikler:
   - `colSpan` 7 → 8 güncellendi
 - Schema değişikliği: YOK
 
-Durum: tsc clean ✓, commit bbb39b1 ✓, PENDING DEPLOY (günlük limit)
+Durum: tsc clean ✓, commit bbb39b1 ✓, READY dpl_3gPeDmEfFq6DcbYaE1eWohps9SWi
 
 ---
 
@@ -60,10 +82,7 @@ Değişiklikler:
     - Kart yalnızca veri varsa render edilir
 - Schema değişikliği: YOK
 
-Durum:
-- tsc --noEmit temiz ✓
-- commit 7fdc124 push edildi ✓
-- Vercel deploy: Günlük 100 limit aşıldığı için deploy atlandı — limit sıfırlandığında otomatik tetiklenecek
+Durum: tsc clean ✓, commit 7fdc124 ✓, READY dpl_3gPeDmEfFq6DcbYaE1eWohps9SWi
 
 ---
 
