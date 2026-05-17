@@ -268,6 +268,17 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 24 — Production Safety Center
+- No new DB schema — reads `_prisma_migrations` via `prisma.$queryRaw` with graceful error fallback
+- Created `app/(app)/admin/safety/page.tsx` (EXECUTIVE_READ-gated): summary cards (applied/failed migration counts, last migration), 8-item pre-deployment checklist, 9-row dangerous operations table, full Migrasyon Geçmişi list
+- `CheckItem` sub-component: green ✓ or amber ! based on runtime data (first item detects real failed migrations)
+- `DangerRow` sub-component: CRITICAL/HIGH/MEDIUM risk pill + monospace operation + Turkish approval requirement
+- Created `docs/MIGRATION-SAFETY.md`: pre-migration checklist, Supabase backup guide, rollback rules per operation type, seed/demo separation rules, production write approval protocol, 25-row migration history reference
+- Added "Üretim Güvenliği" nav entry to `app/(app)/layout.tsx` (EXECUTIVE_READ permission, after Veri Hijyeni)
+- Updated sidebar info card: "Faz 24 aktif — Üretim Güvenliği: migrasyon geçmişi ve tehlikeli işlem onay kuralları."
+- tsc --noEmit clean, Vercel deploy READY (commit fe56d98)
+- Browser-verified 2026-05-17: 15 applied migrations, 3 failed detected (amber "!"), all 9 danger rows render, Migrasyon Geçmişi shows real timestamps, sidebar Üretim Güvenliği active ✓
+
 ### Phase 23 — Data Hygiene Governance
 - No new DB schema — single `prisma.product.findMany` on active products (12 select fields + supplierLinks relation)
 - Created `app/(app)/admin/data-hygiene/page.tsx` (EXECUTIVE_READ-gated): 4 inline sub-components (IssueCount, Section, EmptyState, ProductTable)

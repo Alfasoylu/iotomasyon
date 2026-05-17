@@ -55,6 +55,7 @@ Implemented modules:
 - import cost calculator (Phase 21: /admin/import-calculator, landed cost formula, channel margin analysis)
 - executive KPI dashboard (Phase 22: /admin/executive, stock value, capital health, procurement urgency, top-5 profitability)
 - data hygiene governance (Phase 23: /admin/data-hygiene, 8 completeness checks, real-time product issue counts)
+- production safety center (Phase 24: /admin/safety, migration history from _prisma_migrations, dangerous operation registry, safety checklist)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -691,14 +692,30 @@ Verified outcome (browser test 2026-05-17):
 ---
 
 ## Phase 24 — Backup / Rollback / Migration Safety
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- migration safety checklist
-- backup discipline
-- rollback notes
-- production write approval rules
-- dangerous operation warnings
+Completed:
+- `docs/MIGRATION-SAFETY.md`: pre-migration checklist (8 gates), Supabase backup checklist, rollback rules per operation type (ADD COLUMN/ADD TABLE/ADD UNIQUE/CASCADE/enum), seed/demo data separation rules, production write approval protocol, migration history reference (25 rows)
+- `app/(app)/admin/safety/page.tsx`: EXECUTIVE_READ-gated server page — reads `_prisma_migrations` via `prisma.$queryRaw` (graceful error fallback); shows:
+  - Summary cards: applied migration count (15), failed count (3 — amber warning on real production data), last migration name + timestamp
+  - `CheckItem` sub-component: green ✓ or amber ! with label + detail per item
+  - 8-item safety checklist: no failed migrations, NOT NULL discipline, unique constraint validation, seed-only discipline, CASCADE approval, PITR confirmation, rollback SQL documented, dangerous permission gate
+  - `DangerRow` sub-component: CRITICAL/HIGH/MEDIUM pill with monospace operation and approval text
+  - 9-row Tehlikeli İşlem Onay Kuralları table: DROP TABLE/COLUMN/INDEX, TRUNCATE, DELETE/UPDATE without WHERE, ALTER NOT NULL, CASCADE FK, enum removal
+  - Migrasyon Geçmişi table: all rows from `_prisma_migrations` with "✓ Uygulandı" or "Hata" status and finished_at timestamp
+  - Footer links: Yönetici Paneli ←, Veri Hijyeni →, Supabase Yedekleme ↗
+- `app/(app)/layout.tsx`: added "Üretim Güvenliği" nav entry (EXECUTIVE_READ) after "Veri Hijyeni"
+- `components/dashboard/sidebar.tsx`: updated info card to "Faz 24 aktif — Üretim Güvenliği"
+
+Verified outcome (browser test 2026-05-17):
+- /admin/safety: "YÖNETİM / ÜRETİM GÜVENLİĞİ" heading → "Migrasyon ve Güvenlik Merkezi" ✓
+- Summary: 15 Uygulanan Migrasyon, 3 Başarısız (red card — real production data), last migration `20260516010000_phase6_customer_intelligence` ✓
+- Checklist: amber "!" on first item (3 failed migrations detected), 7 remaining green ✓ checks ✓
+- Tehlikeli İşlem table: all 9 rows render with CRITICAL/HIGH/MEDIUM pills ✓
+- Migrasyon Geçmişi: `20260514013000_phase1_postgres_baseline` → "✓ Uygulandı" → 14.05.2026 00:38:38 ✓
+- Sidebar: "Üretim Güvenliği" entry active (dark) in nav, "Veri Hijyeni" visible above ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit fe56d98) ✓
 
 ---
 
