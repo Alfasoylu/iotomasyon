@@ -9,6 +9,32 @@
 
 ## 2026-05
 
+### Phase 54 Faz A+B — Rol Bazlı Dashboard Workspace (2026-05-17)
+
+**Amaç:**
+Tüm roller aynı `/dashboard` URL'ini görüyordu; SALES rolü gelir, trendyol ciro ve ithalat alanlarını görebiliyordu. Rol bazlı workspace mimarisi: aynı URL, server-side rol dallanması, her rol için ayrı veri ve bileşen.
+
+Değişiklikler (Faz A — Yapı):
+- `app/(app)/dashboard/_components/shared/stat-card.tsx`: `StatCard` + `LinkedStatCard` + `TONE_CLASSES` + `StatTone` type'ları paylaşılan bileşen olarak çıkarıldı
+- `app/(app)/dashboard/_components/admin-workspace.tsx`: Mevcut admin dashboard içeriği bağımsız bileşene taşındı
+- `app/(app)/dashboard/page.tsx`: ~40 satır rol router'a dönüştürüldü; `user.role === "SALES"` → `SalesWorkspace`; diğer roller → `AdminWorkspace`
+- `services/dashboard-service.ts`: `DashboardStats`, `OperationalAlerts`, `DueTodayFollowups` tip dışa aktarımları eklendi
+
+Değişiklikler (Faz B — Sales Workspace):
+- `services/dashboard-service.ts`: `getSalesPipelineData(userId)` eklendi — aktif ilgi (assignedToId), bugünkü görevler, son 7 günde aktif müşteriler, açık/geciken görev sayıları; **hiçbir finansal alan döndürülmez**
+- `app/(app)/dashboard/_components/sales-workspace.tsx`: `SalesWorkspace` bileşeni — 4 KPI kartı (aktif fırsat, bugün takip, açık görev, geciken görev), aktif pipeline listesi, bugün yapılacaklar, son müşteri aktivitesi; DOM'da trendyol ciro, ithalat, sermaye kartı yok
+- `services/dashboard-service.ts`: `SalesPipelineData` tip dışa aktarımı eklendi
+
+Güvenlik:
+- `getSalesPipelineData()` `quotedPrice` alanını kasıtlı olarak dışarıda bırakır
+- Service fonksiyon ve bileşen katmanı birlikte no-financial-data kuralını uygular
+- Admin view görsel olarak değişmedi (Faz A browser-verified: CRM panosu, Gelir, Satış Hunisi, Operasyon, Trendyol & Stok bölümleri ✓)
+
+Kabul kriterleri:
+- Admin `/dashboard` açtığında: CRM panosu + Gelir + Satış Hunisi + Operasyon + Trendyol & Stok görünür ✓
+- SALES rolü `/dashboard` açtığında: trendyol revenue, ithalat, sermaye kartı DOM'da bulunmaz; kendi pipeline'ı görünür
+- READY: dpl_AiLn79jzds4B1oJauke3LuM4jQB9
+
 ### Phase 57 — Ürün Formu Rol Görünürlüğü (2026-05-17)
 
 **Amaç:**
