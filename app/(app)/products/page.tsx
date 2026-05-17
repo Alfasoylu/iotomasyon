@@ -1,5 +1,9 @@
 /**
- * Phase 25 — Product Operations UX
+ * Phase 74 — Durum Filtresi (kârlılık bazlı)
+ * Adds profit-status filter pills: Tümü / LOSS / LOW / GOOD / EXCELLENT / Veri Yok
+ * Computed server-side from calcProfit() results, URL param `durum`.
+ *
+ * Phase 25 — Product Operations UX (original)
  *
  * Changes from original:
  * - Thumbnail column (first product image or imageUrl, 48×48)
@@ -135,10 +139,11 @@ export default async function ProductsPage({
 }) {
   await requirePermission(PERMISSIONS.PRODUCTS_READ);
   const params = await searchParams;
-  const query  = typeof params.q      === "string" ? params.q      : "";
-  const status = typeof params.status === "string" ? params.status : "all";
-  const stock  = typeof params.stock  === "string" ? params.stock  : "all";
-  const sort   = typeof params.sort   === "string" ? params.sort   : "updated_desc";
+  const query       = typeof params.q      === "string" ? params.q      : "";
+  const status      = typeof params.status === "string" ? params.status : "all";
+  const stock       = typeof params.stock  === "string" ? params.stock  : "all";
+  const sort        = typeof params.sort   === "string" ? params.sort   : "updated_desc";
+  const durumFilter = typeof params.durum  === "string" ? params.durum  : "all";
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
@@ -172,6 +177,56 @@ export default async function ProductsPage({
   });
   const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : 45;
   const rmbUsdRate = latestRate?.rmbUsdRate ? Number(latestRate.rmbUsdRate) : 7.0;
+
+  // Phase 74 — pre-compute profit + health for all products, then filter by durumFilter
+  type RowData = {
+    product: (typeof products)[0];
+    trendyolPriceTry: number | null;
+    profit: ProfitResult;
+    healthCues: HealthCue[];
+    isLowStock: boolean;
+  };
+
+  type ProductItem = (typeof products)[number];
+  const allRows: RowData[] = products.map((product: ProductItem) => {
+    const trendyolMp = product.marketplacePrices?.find((p: { marketplace: string }) => p.marketplace === "TRENDYOL");
+    const trendyolPriceTry = trendyolMp
+      ? Number(trendyolMp.priceTry)
+      : product.xmlData?.xmlTrendyolPrice != null
+        ? Number(product.xmlData.xmlTrendyolPrice) * usdTryRate
+        : null;
+    const profit = calcProfit({ ...product, trendyolPriceTry }, usdTryRate, rmbUsdRate);
+    const healthCues = getHealthCues({ ...product, trendyolPriceTry });
+    const isLowStock = product.stockQuantity <= product.minimumStock;
+    return { product, trendyolPriceTry, profit, healthCues, isLowStock };
+  });
+
+  const filteredRows = durumFilter === "all"
+    ? allRows
+    : durumFilter === "no_profit"
+      ? allRows.filter((r) => r.profit === null)
+      : allRows.filter((r) => r.profit?.status === durumFilter);
+
+  // Counts per durum for filter pills
+  const durumCounts = {
+    all: allRows.length,
+    LOSS:      allRows.filter((r) => r.profit?.status === "LOSS").length,
+    LOW:       allRows.filter((r) => r.profit?.status === "LOW").length,
+    GOOD:      allRows.filter((r) => r.profit?.status === "GOOD").length,
+    EXCELLENT: allRows.filter((r) => r.profit?.status === "EXCELLENT").length,
+    no_profit: allRows.filter((r) => r.profit === null).length,
+  };
+
+  function durumHref(d: string) {
+    const p = new URLSearchParams();
+    if (query)  p.set("q",      query);
+    if (status !== "all") p.set("status", status);
+    if (stock  !== "all") p.set("stock",  stock);
+    if (sort   !== "updated_desc") p.set("sort", sort);
+    if (d !== "all") p.set("durum", d);
+    const qs = p.toString();
+    return `/products${qs ? "?" + qs : ""}`;
+  }
 
   return (
     <div className="space-y-6">
@@ -208,6 +263,42 @@ export default async function ProductsPage({
         </Card>
       ) : null}
 
+      {/* Phase 74 — Kârlılık durum filtresi */}
+      <div className="flex flex-wrap gap-2">
+        {([
+          { key: "all",      label: "Tümü",     cls: "bg-white border-slate-200 text-slate-700 hover:border-slate-400" },
+          { key: "EXCELLENT",label: "Mükemmel", cls: "bg-white border-emerald-200 text-emerald-700 hover:border-emerald-400" },
+          { key: "GOOD",     label: "İyi",      cls: "bg-white border-emerald-100 text-emerald-600 hover:border-emerald-300" },
+          { key: "LOW",      label: "Düşük",    cls: "bg-white border-amber-200 text-amber-700 hover:border-amber-400" },
+          { key: "LOSS",     label: "Zarar",    cls: "bg-white border-red-200 text-red-700 hover:border-red-400" },
+          { key: "no_profit",label: "Veri Yok", cls: "bg-white border-slate-100 text-slate-400 hover:border-slate-300" },
+        ] as const).map(({ key, label, cls }) => {
+          const isActive = durumFilter === key;
+          const count = durumCounts[key];
+          return (
+            <Link
+              key={key}
+              href={durumHref(key)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                isActive
+                  ? key === "EXCELLENT" ? "bg-emerald-700 border-emerald-700 text-white"
+                  : key === "GOOD"      ? "bg-emerald-600 border-emerald-600 text-white"
+                  : key === "LOW"       ? "bg-amber-600 border-amber-600 text-white"
+                  : key === "LOSS"      ? "bg-red-600 border-red-600 text-white"
+                  : key === "no_profit" ? "bg-slate-500 border-slate-500 text-white"
+                  : "bg-slate-900 border-slate-900 text-white"
+                  : cls
+              }`}
+            >
+              {label}
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${isActive ? "bg-white/20" : "bg-slate-100 text-slate-500"}`}>
+                {count}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+
       <Card className="overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-100">
@@ -228,7 +319,7 @@ export default async function ProductsPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 bg-white text-sm">
-              {products.length === 0 ? (
+              {filteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="px-4 py-12 text-center text-slate-400">
                     {query.length >= 2
@@ -237,21 +328,9 @@ export default async function ProductsPage({
                   </td>
                 </tr>
               ) : (
-                products.map((product) => {
+                filteredRows.map(({ product, trendyolPriceTry, profit, healthCues, isLowStock }) => {
                   const thumbnailUrl =
                     product.images[0]?.url ?? product.imageUrl ?? null;
-                  const trendyolMp = product.marketplacePrices?.find(p => p.marketplace === "TRENDYOL");
-                  const trendyolPriceTry = trendyolMp
-                    ? Number(trendyolMp.priceTry)
-                    : product.xmlData?.xmlTrendyolPrice != null
-                      ? Number(product.xmlData.xmlTrendyolPrice) * usdTryRate
-                      : null;
-                  const profit = calcProfit({ ...product, trendyolPriceTry }, usdTryRate, rmbUsdRate);
-                  const healthCues = getHealthCues({
-                    ...product,
-                    trendyolPriceTry,
-                  });
-                  const isLowStock = product.stockQuantity <= product.minimumStock;
 
                   return (
                     <tr key={product.id} className="hover:bg-slate-50/60 transition">
@@ -409,9 +488,9 @@ export default async function ProductsPage({
           </table>
         </div>
 
-        {products.length > 0 && (
+        {filteredRows.length > 0 && (
           <div className="border-t border-slate-100 px-4 py-3 text-right text-xs text-slate-400">
-            {products.length} ürün gösteriliyor
+            {filteredRows.length} ürün gösteriliyor{durumFilter !== "all" && ` (${allRows.length} toplam)`}
           </div>
         )}
       </Card>
