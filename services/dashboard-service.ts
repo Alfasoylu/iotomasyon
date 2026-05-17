@@ -367,8 +367,110 @@ export async function getSalesPipelineData(userId: string) {
   }
 }
 
+// ─── Phase 54 Faz C — Operations Dashboard Data ───────────────────────────────
+// SECURITY RULE: This function MUST NEVER return financial fields (revenue,
+// cost, margin, trendyolRevenue, unitCostTry, etc.). Only operational signals.
+export async function getOperationsDashboardData() {
+  try {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const [
+      openTasksCount,
+      overdueTasksCount,
+      dueTodayTasks,
+      criticalStockCount,
+      lowStockCount,
+      unmatchedOrdersCount,
+      recentOrderQty7d,
+    ] = await Promise.all([
+      // Open tasks (all, not per-user — operations sees the team)
+      prisma.followUpTask.count({ where: { status: "OPEN" } }),
+      // Overdue tasks
+      prisma.followUpTask.count({
+        where: { status: "OPEN", dueDate: { lt: now } },
+      }),
+      // Today's tasks (all assignees)
+      prisma.followUpTask.findMany({
+        where: {
+          status: "OPEN",
+          dueDate: { gte: todayStart, lt: todayEnd },
+        },
+        select: {
+          id: true,
+          title: true,
+          priority: true,
+          dueDate: true,
+          customer: { select: { id: true, name: true } },
+          assignedTo: { select: { id: true, name: true } },
+        },
+        orderBy: { dueDate: "asc" },
+        take: 10,
+      }),
+      // Critical stock (qty ≤ 0)
+      prisma.product.count({ where: { stockQuantity: { lte: 0 } } }),
+      // Low stock (qty > 0 but ≤ minimumStock) — column comparison requires raw SQL
+      prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) as count FROM "Product"
+        WHERE "stockQuantity" > 0 AND "minimumStock" > 0 AND "stockQuantity" <= "minimumStock"
+      `.then((r) => Number(r[0].count)),
+      // Unmatched Trendyol orders
+      prisma.trendyolSalesRecord.count({ where: { productId: null } }),
+      // Recent 7-day Trendyol order qty (non-cancelled)
+      prisma.trendyolSalesRecord
+        .findMany({
+          where: {
+            orderDate: {
+              gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+            },
+          },
+          select: { status: true, quantity: true },
+        })
+        .then((rows) =>
+          rows
+            .filter((r) => !_isCancelledStatus(r.status))
+            .reduce((s, r) => s + r.quantity, 0),
+        ),
+    ]);
+
+    return {
+      databaseAvailable: true as const,
+      openTasksCount,
+      overdueTasksCount,
+      dueTodayTasks,
+      criticalStockCount,
+      lowStockCount,
+      unmatchedOrdersCount,
+      recentOrderQty7d,
+    };
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return {
+        databaseAvailable: false as const,
+        openTasksCount: 0,
+        overdueTasksCount: 0,
+        dueTodayTasks: [] as {
+          id: string;
+          title: string;
+          priority: string;
+          dueDate: Date | null;
+          customer: { id: string; name: string } | null;
+          assignedTo: { id: string; name: string } | null;
+        }[],
+        criticalStockCount: 0,
+        lowStockCount: 0,
+        unmatchedOrdersCount: 0,
+        recentOrderQty7d: 0,
+      };
+    }
+    throw error;
+  }
+}
+
 // ─── Exported return types (for workspace components) ────────────────────────
 export type DashboardStats = Awaited<ReturnType<typeof getDashboardStats>>;
 export type OperationalAlerts = Awaited<ReturnType<typeof getOperationalAlerts>>;
 export type DueTodayFollowups = Awaited<ReturnType<typeof getDueTodayFollowups>>;
 export type SalesPipelineData = Awaited<ReturnType<typeof getSalesPipelineData>>;
+export type OperationsDashboardData = Awaited<ReturnType<typeof getOperationsDashboardData>>;
