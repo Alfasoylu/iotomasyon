@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { ProductForm } from "@/components/products/product-form";
+import { ProductImageManager } from "@/components/products/product-image-manager";
 import { Card } from "@/components/ui/card";
 import { getProductById } from "@/services/product-service";
 import { listCategoriesForSelect } from "@/services/category-service";
@@ -86,6 +87,7 @@ export default async function EditProductPage({
           allAttributes={allAttributes}
           initialAttributeIds={product.attributeAssignments.map((a) => a.attributeId)}
           users={users}
+          xmlDescription={product.xmlData?.xmlDescription ?? null}
           initialValues={{
             sku: product.sku,
             barcode: product.barcode ?? "",
@@ -136,6 +138,32 @@ export default async function EditProductPage({
             shippingMethodPref: product.shippingMethodPref ?? "",
           }}
         />
+      </Card>
+
+      {/* Phase 27: Product Media Studio */}
+      <Card className="overflow-hidden">
+        <div className="border-b border-slate-200 px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Faz 27 — Medya Stüdyosu
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-slate-950">Ürün Görselleri</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            URL girerek veya dosya yükleyerek görsel ekleyin. Birincil görsel ürün listesinde ve detay sayfasında kullanılır.
+          </p>
+        </div>
+        <div className="p-6">
+          <ProductImageManager
+            productId={product.id}
+            initialImages={product.images.map((img) => ({
+              id: img.id,
+              url: img.url,
+              sortOrder: img.sortOrder,
+              source: img.source,
+              altText: img.altText,
+            }))}
+            canUpload={!!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)}
+          />
+        </div>
       </Card>
 
       {/* Phase 20: Supplier product links */}

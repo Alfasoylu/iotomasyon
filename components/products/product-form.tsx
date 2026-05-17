@@ -13,7 +13,7 @@ import { productSchema } from "@/lib/validations/product";
 import { AttributePicker } from "@/components/attributes/attribute-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/products/rich-text-editor";
 import type { AttributeOption } from "@/services/attribute-service";
 import type { ProductFormValues } from "@/types/products";
 
@@ -93,6 +93,7 @@ export function ProductForm({
   allAttributes = [],
   initialAttributeIds = [],
   users = [],
+  xmlDescription,
 }: {
   mode: "create" | "edit";
   productId?: string;
@@ -101,6 +102,8 @@ export function ProductForm({
   allAttributes?: AttributeOption[];
   initialAttributeIds?: string[];
   users?: UserOption[];
+  /** Phase 27: XML feed description — shown read-only with a "Editöre taşı" button */
+  xmlDescription?: string | null;
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
@@ -184,12 +187,37 @@ export function ProductForm({
               <Input {...form.register("category")} placeholder="Kategori adı" />
             )}
           </Field>
-          <Field label="Görsel URL" error={form.formState.errors.imageUrl?.message} className="md:col-span-2">
-            <Input {...form.register("imageUrl")} placeholder="https://..." />
+          <Field label="Görsel URL (birincil)" error={form.formState.errors.imageUrl?.message} className="md:col-span-2">
+            <Input {...form.register("imageUrl")} placeholder="https://... — çoklu görsel yönetimi için sayfanın altındaki Medya Stüdyosu'nu kullanın" />
           </Field>
-          <Field label="Açıklama" error={form.formState.errors.description?.message} className="md:col-span-2">
-            <Textarea {...form.register("description")} />
+          <Field label="Açıklama (yayınlanan)" error={form.formState.errors.description?.message} className="md:col-span-2">
+            <RichTextEditor
+              value={form.watch("description") ?? ""}
+              onChange={(html) => form.setValue("description", html, { shouldDirty: true })}
+              placeholder="Ürün açıklaması — zengin metin desteklenir"
+            />
           </Field>
+          {/* Phase 27: XML description governance — show XML source text with opt-in copy */}
+          {xmlDescription && (
+            <div className="md:col-span-2 rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">
+                  XML Kaynak Açıklaması
+                </p>
+                <button
+                  type="button"
+                  onClick={() => form.setValue("description", xmlDescription ?? "", { shouldDirty: true })}
+                  className="rounded-lg border border-blue-300 bg-white px-3 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                >
+                  ↓ Editöre taşı
+                </button>
+              </div>
+              <p className="text-xs text-blue-800 leading-6 line-clamp-4">{xmlDescription}</p>
+              <p className="text-[10px] text-blue-500">
+                XML senkronizasyonu yayınlanan açıklamanın üzerine yazmaz — "Editöre taşı" ile açıklamayı manuel olarak kopyalayabilirsiniz.
+              </p>
+            </div>
+          )}
         </div>
         <label className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           <input type="checkbox" className="h-4 w-4" {...form.register("isActive")} />
