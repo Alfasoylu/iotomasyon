@@ -25,6 +25,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/admin/executive",    label: "Yönetici Paneli",   permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/capital",      label: "Sermaye",           permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/procurement",  label: "Tedarik Asistanı",  permission: PERMISSIONS.EXECUTIVE_READ },
+  { href: "/admin/stock-health", label: "Stok Sağlığı",      permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/suppliers",          label: "Tedarikçiler",          permission: PERMISSIONS.SUPPLIERS_READ },
   { href: "/admin/import-calculator",  label: "İthalat Hesaplayıcı",  permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/import-decisions",    label: "İthalat Kararları",    permission: PERMISSIONS.EXECUTIVE_READ },
