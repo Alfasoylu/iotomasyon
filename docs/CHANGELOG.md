@@ -9,6 +9,33 @@
 
 ## 2026-05
 
+### Bugfix — Maliyet/Kâr Hesaplama Akışı (2026-05-18)
+
+**Amaç:**
+SKU 2251930284620 üzerinde tespit edilen 4 UI bug'ı düzeltildi: "Maliyet yok" ve "Fiyat yok" health badge'leri RMB/XML verisi varken yanlış gösteriliyordu; kâr analizi hiçbir yerde görünmüyordu; rmbUsdRate DB null olduğunda import decision MISSING_DATA dönüyordu.
+
+Değişiklikler:
+- `services/product-service.ts`: `xmlData: { select: { xmlTrendyolPrice: true } }` join eklendi — XML Trendyol fiyatı liste sayfasına aktarılıyor
+- `app/(app)/products/page.tsx`:
+  - `getHealthCues()` tip genişletildi: `sourceCostRmb`, `importUnitCostUsd`, `marketplacePriceTry`, `xmlTrendyolPrice`
+  - "Maliyet yok": `!unitCostTry && !sourceCostRmb && !importUnitCostUsd` koşuluna güncellendi
+  - "Fiyat yok": `!sellingPriceTry && !marketplacePriceTry && !xmlTrendyolPrice` koşuluna güncellendi
+  - Call site: `xmlTrendyolPrice: product.xmlData?.xmlTrendyolPrice ?? null` ile besleniyor
+- `app/(app)/products/[id]/page.tsx`:
+  - `rmbUsdRate`: `?? 7.0` default değer eklendi (DB null → import engine artık çalışıyor)
+  - `sellingPriceTry` fallback: `xmlTrendyolPrice * usdTryRate` eklendi
+  - "Trendyol Kâr Analizi" kartı eklendi: sourceCostRmb + weightKg + xmlTrendyolPrice olan ürünlerde gösterilir; kargo 8 USD/kg, komisyon %20, sabit kesinti ₺150 (>₺250 sipariş); 8 metrik grid (RMB alış, Ağırlık+Kargo, Gümrük, Toplam Maliyet, Trendyol Satış, Net Kalan, Net Kâr+Marj, ROI); renk kodlu: emerald pozitif, amber düşük, red negatif
+- `components/products/product-form.tsx`: Fiyatlandırma bölümü başlığı "Manuel fiyatlandırma ve TL maliyet (opsiyonel)" olarak yeniden etiketlendi; açıklama paragrafı eklendi
+- Schema değişikliği: YOK
+
+Doğrulanan değerler (SKU 2251930284620, usdTryRate=46, rmbUsdRate=7):
+- RMB alış: ¥10.00 = ₺65.71 | Kargo: ₺18.40 | Gümrük: ₺25.23 | Toplam maliyet: ₺109.35
+- Trendyol satış: ₺383.33 (XML $8.333) | Net kalan: ₺156.67 | Net kâr: ₺47.32 | Marj: %12.3 | ROI: %43.3
+
+Durum: tsc 0 yeni hata ✓, commit 46da9ee ✓, READY dpl_2gbAExUU9G2ZgUVD799v9rowUqVj, browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 70 — Trendyol Rapor Ay Drill-Down (2026-05-17)
 
 **Amaç:**

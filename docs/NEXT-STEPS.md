@@ -703,6 +703,27 @@ Tamamlananlar:
 
 ---
 
+### ✓ DONE — Bugfix: Maliyet/Kâr Hesaplama Akışı (2026-05-18)
+
+**Neden:**
+SKU 2251930284620 için 4 UI sorunu tespit edildi: (1) "Maliyet yok" badge'i RMB maliyet girilmesine rağmen gösteriliyordu, (2) "Fiyat yok" badge'i XML Trendyol fiyatı varken gösteriliyordu, (3) Trendyol kâr analizi hiçbir yerde görünmüyordu, (4) rmbUsdRate DB'de null olduğunda import decision MISSING_DATA dönüyordu.
+
+**Kök nedenler:**
+- `getHealthCues()` yalnızca TRY alanlarını (`unitCostTry`, `sellingPriceTry`) kontrol ediyordu; RMB/USD alternatifler ve XML fiyat göz ardı ediliyordu
+- `product-service.ts` `xmlData` join yapmıyordu; XML Trendyol fiyatı liste sayfasına akmıyordu
+- `[id]/page.tsx` rmbUsdRate null olduğunda 7.0 default kullanmıyordu
+- `sellingPriceTry` null olduğunda `xmlTrendyolPrice * usdTryRate` fallback yoktu
+
+Tamamlananlar:
+- `services/product-service.ts`: `xmlData: { select: { xmlTrendyolPrice: true } }` join eklendi
+- `app/(app)/products/page.tsx`: `getHealthCues()` — "Maliyet yok" koşulu `sourceCostRmb` + `importUnitCostUsd` da kontrol ediyor; "Fiyat yok" koşulu `marketplacePriceTry` + `xmlTrendyolPrice` da kontrol ediyor
+- `app/(app)/products/[id]/page.tsx`: rmbUsdRate için `?? 7.0` default; `xmlTrendyolPrice * usdTryRate` sellingPriceTry fallback eklendi; "Trendyol Kâr Analizi" kartı eklendi (8 metrik: RMB alış, ağırlık+kargo, gümrük, toplam maliyet, satış, net kalan, net kâr/marj, ROI — renk kodlu)
+- `components/products/product-form.tsx`: TL maliyet bölümü "Manuel fiyatlandırma ve TL maliyet (opsiyonel)" olarak yeniden etiketlendi
+- SKU 2251930284620 doğrulanan değerler: Satış ₺383.33 · Net Kalan ₺156.67 · Maliyet ₺109.35 · Net Kâr ₺47.32 · Marj %12.3 · ROI %43.3
+- tsc: 0 yeni hata ✓; commit 46da9ee ✓; READY dpl_2gbAExUU9G2ZgUVD799v9rowUqVj, browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ DONE — Priority 70 — Trendyol Rapor Ay Drill-Down (Phase 70, 2026-05-18)
 
 **Neden:**
