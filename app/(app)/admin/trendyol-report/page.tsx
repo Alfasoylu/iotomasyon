@@ -51,8 +51,16 @@ type MonthData = {
   returnValue: number;
 };
 
-export default async function TrendyolReportPage() {
+export default async function TrendyolReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requirePermission(PERMISSIONS.EXECUTIVE_READ);
+
+  const params = await searchParams;
+  // Phase 70 — month drill-down (e.g. ?month=2026-05)
+  const selectedMonth = typeof params.month === "string" ? params.month : null;
 
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
@@ -133,9 +141,15 @@ export default async function TrendyolReportPage() {
   const kpiMatchedOrders = recentSales.filter((r) => r.productId).length;
   const kpiMatchPct = kpiOrders > 0 ? (kpiMatchedOrders / kpiOrders) * 100 : 0;
 
-  // ── Top 10 products last 30 days (matched only) ───────────────────────────
+  // Phase 70 — Drill-down: filter to selected month if set
+  const drillSales = selectedMonth
+    ? salesRecords.filter((r) => !isCancelled(r.status) && toMonthKey(r.orderDate) === selectedMonth)
+    : recentSales;
+  const drillLabel = selectedMonth ? monthLabel(selectedMonth) : "Son 30 Gün";
+
+  // ── Top 10 products (drill period, matched only) ───────────────────────────
   const productRevMap = new Map<string, number>();
-  for (const r of recentSales) {
+  for (const r of drillSales) {
     if (!r.productId) continue;
     productRevMap.set(r.productId, (productRevMap.get(r.productId) ?? 0) + Number(r.totalPriceTry));
   }
@@ -248,12 +262,22 @@ export default async function TrendyolReportPage() {
                     d.totalOrders > 0 ? (d.returnCount / d.totalOrders) * 100 : 0;
                   const matchRate =
                     d.totalOrders > 0 ? (d.matchedOrders / d.totalOrders) * 100 : 0;
+                  const isSelected = key === selectedMonth;
                   return (
                     <tr
                       key={key}
-                      className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}
+                      className={isSelected
+                        ? "bg-slate-900 text-white"
+                        : i % 2 === 0 ? "bg-white hover:bg-slate-50/80 cursor-pointer" : "bg-slate-50/50 hover:bg-slate-100/60 cursor-pointer"}
                     >
-                      <td className="px-4 py-3 font-medium text-slate-700">{monthLabel(key)}</td>
+                      <td className="px-4 py-3 font-medium">
+                        <Link
+                          href={isSelected ? "/admin/trendyol-report" : `/admin/trendyol-report?month=${key}`}
+                          className={`hover:underline ${isSelected ? "text-white" : "text-slate-700"}`}
+                        >
+                          {monthLabel(key)} {isSelected && <span className="ml-1 text-[10px] text-slate-300">▲ seçili</span>}
+                        </Link>
+                      </td>
                       <td className="px-4 py-3 text-right tabular-nums text-slate-600">
                         {d.totalOrders}
                       </td>
@@ -331,13 +355,23 @@ export default async function TrendyolReportPage() {
       {/* Top 10 products */}
       {topRows.length > 0 && (
         <Card className="overflow-hidden">
-          <div className="border-b border-slate-100 px-6 py-4">
-            <h2 className="text-sm font-semibold text-slate-800">
-              Son 30 Gün — En Çok Ciro Yapan Ürünler
-              <span className="ml-2 text-xs font-normal text-slate-400">
-                (eşleşmiş, iptal hariç)
-              </span>
-            </h2>
+          <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-800">
+                {drillLabel} — En Çok Ciro Yapan Ürünler
+                <span className="ml-2 text-xs font-normal text-slate-400">
+                  (eşleşmiş, iptal hariç)
+                </span>
+              </h2>
+              {selectedMonth && (
+                <Link
+                  href="/admin/trendyol-report"
+                  className="mt-1 inline-flex items-center text-xs text-slate-400 hover:text-slate-700"
+                >
+                  ← Son 30 güne dön
+                </Link>
+              )}
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -383,7 +417,7 @@ export default async function TrendyolReportPage() {
       {topRows.length === 0 && (
         <Card className="p-8 text-center">
           <p className="text-sm text-slate-400">
-            Son 30 günde eşleşmiş sipariş kaydı yok. Ürün eşleştirme sayfasını ziyaret edin.
+            {drillLabel} döneminde eşleşmiş sipariş kaydı yok. Ürün eşleştirme sayfasını ziyaret edin.
           </p>
           <Link href="/admin/marketplace-mappings" className="mt-3 inline-block text-xs text-blue-600 underline">
             Ürün Eşleştirme →
