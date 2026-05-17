@@ -1,5 +1,9 @@
 /**
- * Phase 40 — Capital Allocation + Real Sales Velocity
+ * Phase 73 — Kilitli Sermaye Dağılımı (Capital Breakdown)
+ * Adds top-20 products by locked capital after suggestions table.
+ * No schema change, no new DB query — computed from existing productsWithScore.
+ *
+ * Phase 40 — Capital Allocation + Real Sales Velocity (original)
  *
  * Applies the same Phase 39 real-velocity upgrade to capital allocation:
  * 30-day Trendyol sales qty overrides manual onlineSalesPotential when
@@ -141,6 +145,26 @@ export default async function CapitalPage() {
       velocitySource: actualQty !== null ? "actual" : "estimated",
     };
   });
+
+  // Phase 73 — Kilitli sermaye dağılımı: top 20 ürün × stok değeri
+  type BreakdownRow = { id: string; name: string; sku: string | null; stockQuantity: number; unitCostTry: number; stockValue: number };
+  type ScoreItem = { id: string; name: string; sku: string | null; unitCostTry: number | null; stockQuantity: number };
+  const capitalBreakdown: BreakdownRow[] = (productsWithScore as ScoreItem[])
+    .filter((p: ScoreItem) => p.unitCostTry != null && p.unitCostTry > 0 && p.stockQuantity > 0)
+    .map((p: ScoreItem) => ({
+      id: p.id,
+      name: p.name,
+      sku: p.sku,
+      stockQuantity: p.stockQuantity,
+      unitCostTry: p.unitCostTry as number,
+      stockValue: p.stockQuantity * (p.unitCostTry as number),
+    }))
+    .sort((a: BreakdownRow, b: BreakdownRow) => b.stockValue - a.stockValue)
+    .slice(0, 20);
+
+  const totalLockedValue = (productsWithScore as ScoreItem[])
+    .filter((p: ScoreItem) => p.unitCostTry != null && p.unitCostTry > 0)
+    .reduce((sum: number, p: ScoreItem) => sum + p.stockQuantity * (p.unitCostTry as number), 0);
 
   const totalCapital = config ? Number(config.totalCapitalTry) : 0;
   const reservePct = config ? Number(config.reservePct) : 20;
@@ -308,6 +332,72 @@ export default async function CapitalPage() {
               {allocation.skippedCount} ürün maliyet veya talep verisi eksik olduğu için hesaplamaya dahil edilmedi.
             </p>
           ) : null}
+
+          {/* Phase 73 — Kilitli sermaye dağılımı */}
+          {capitalBreakdown.length > 0 && (
+            <Card className="overflow-hidden p-0">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-950">Kilitli sermaye dağılımı</h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Hangi ürünler sermayeni bağlıyor? En yüksek stok değeri × maliyet (iniş maliyeti) — ilk 20 ürün.
+                  </p>
+                </div>
+                <Badge>{capitalBreakdown.length} ürün</Badge>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                      <th className="px-6 py-3 text-left">Ürün</th>
+                      <th className="px-4 py-3 text-right">Stok</th>
+                      <th className="px-4 py-3 text-right">Birim maliyet</th>
+                      <th className="px-4 py-3 text-right">Stok değeri</th>
+                      <th className="px-4 py-3 text-right">Toplam içindeki pay</th>
+                      <th className="px-6 py-3 text-left w-48">Dağılım</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {capitalBreakdown.map((p: BreakdownRow, i: number) => {
+                      const pct = totalLockedValue > 0 ? (p.stockValue / totalLockedValue) * 100 : 0;
+                      const barWidth = Math.min(100, pct * 4); // scale for visual
+                      return (
+                        <tr key={p.id} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+                          <td className="px-6 py-3 max-w-[240px]">
+                            <p className="font-medium text-slate-900 line-clamp-1">{p.name}</p>
+                            <p className="font-mono text-xs text-slate-400">{p.sku ?? "—"}</p>
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-slate-700">{p.stockQuantity}</td>
+                          <td className="px-4 py-3 text-right tabular-nums text-slate-600">{fmt(p.unitCostTry)}</td>
+                          <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">{fmt(p.stockValue)}</td>
+                          <td className="px-4 py-3 text-right tabular-nums">
+                            <span className={pct >= 10 ? "font-bold text-amber-700" : "text-slate-600"}>
+                              %{pct.toFixed(1)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3">
+                            <div className="h-2 w-full max-w-[160px] rounded-full bg-slate-100">
+                              <div
+                                className={`h-2 rounded-full ${pct >= 10 ? "bg-amber-400" : "bg-slate-400"}`}
+                                style={{ width: `${Math.max(2, barWidth)}%` }}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-200 bg-slate-50">
+                      <td colSpan={3} className="px-6 py-3 text-sm font-semibold text-slate-700">Toplam kilitli sermaye</td>
+                      <td className="px-4 py-3 text-right font-bold text-slate-900">{fmt(totalLockedValue)}</td>
+                      <td colSpan={2} className="px-4 py-3 text-xs text-slate-400">iniş maliyeti × stok adeti (maliyet verisi olan tüm ürünler)</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </Card>
+          )}
         </>
       ) : (
         <Card className="p-6 text-center text-slate-500 text-sm">
