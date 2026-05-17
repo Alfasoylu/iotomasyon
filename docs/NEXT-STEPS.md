@@ -91,30 +91,27 @@ Delivered:
 - MARKETPLACE_POLICIES_MANAGE permission + sidebar link added
 - Browser-verified 2026-05-17 ✓
 
-### Priority 3 - Import Economics Normalization
+### ✓ Priority 3 — Import Economics Normalization (Phase 31, 2026-05-17)
 
-Why:
-The import decision cockpit exists, but it still does not implement the owner's real RMB-first landed-cost formula.
+Delivered:
+- SEA_FREIGHT_PER_KG corrected: 2 → 1 USD/kg (workbook-correct value)
+- MonthlyExchangeRate: rmbUsdRate Decimal(12,4) optional column added
+- Product: sourceCostRmb Decimal(15,2) + importPaymentFeePct Decimal(5,2) optional columns added
+- Migration: 20260517150000_phase31_import_economics_rmb applied to production
+- RMB-first canonical formula: `(sourceCostRmb / rmbUsdRate) * (1 + paymentFeePct/100) + freight * weightKg) * (1 + customsRatePct/100)`
+  falls back to sourcePriceUsd when RMB fields absent
+- Exchange rate form: RMB/USD input field (5-column grid)
+- Exchange rates page: RMB/USD column in table, updated heading and help text
+- Exchange rate actions: rmbUsdRate in upsert schema; getLatestRmbUsdRate() utility
+- Product form: amber "RMB kaynaklı ithalat" section with sourceCostRmb + importPaymentFeePct + formula hint
+- product-actions: maps new fields to DB
+- import-decisions cockpit: fetches + passes RMB fields to calculateImportDecision
+- product detail page: RMB fields wired to calculateImportDecision
+- Browser-verified 2026-05-17 ✓
 
-Includes:
-- source purchase currency
-- source purchase cost
-- RMB/USD monthly rate support
-- payment commission input
-- route/profile freight defaults
-- override precedence:
-  - product
-  - profile
-  - global default
-- default AIR = 8 USD/kg
-- default SEA = 1 USD/kg
-- transparent landed-cost breakdown in UI
-- shared landed-cost engine across calculator, cockpit, procurement, capital, and executive views
-
-Acceptance:
-- the owner formula can be represented exactly in-system
-- default AIR/SEA freight works without manual entry
-- the same landed-cost truth is reused across modules
+Remaining (not blocking Priority 4):
+- shared landed-cost truth not yet propagated to procurement/capital/executive views (deferred to Priority 4)
+- route/profile freight override hierarchy (deferred)
 
 ### Priority 4 - Holding-Grade Import Governance
 

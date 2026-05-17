@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 30 aktif
+          Faz 31 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Pazar Marj Politikaları: platform başına kargo/komisyon standardı, etkin değer kaynağı görünürlüğü.
+            İthalat Ekonomisi: RMB-öncelikli maliyet formülü, RMB/USD kur desteği, ödeme komisyonu girişi.
           </p>
         </div>
       </aside>

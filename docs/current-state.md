@@ -67,6 +67,7 @@ Implemented modules:
 - product governance and private intelligence — Phase 28 complete: Product.privateNote (isOwner()-gated, ADMIN_EMAIL only), PrivateNoteEditor with amber UI, supplier summary card on detail page, description max 10000, normalizeProductData explicitly omits privateNote
 - order ledger and return claims — Phase 29 complete: TrendyolReturnRecord schema + migration, syncTrendyolReturnsAction (365-day sweep), /orders page with 5 tabs (Tümü/Teslim/İptal/İadeler/Eşleşmemiş), newest-first, unmatched inbox, Siparişler sidebar link
 - marketplace margin policy normalization — Phase 30 complete: MarketplacePlatformPolicy table, per-platform standard shipping/commission/VAT/fees, resolveMarginPolicy() three-tier resolver, /admin/marketplace-policies admin UI with per-platform inline edit, /marketplace/profit updated with source labels (Ürün Geçersiz Kılma/Ürün Değeri/Platform Standardı/Sistem Varsayılanı)
+- import economics normalization — Phase 31 complete: SEA_FREIGHT_PER_KG fixed (2→1), rmbUsdRate on MonthlyExchangeRate, sourceCostRmb + importPaymentFeePct on Product, RMB-first formula in import decision engine, exchange rate form updated with RMB/USD field, product form amber RMB section
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -216,9 +217,9 @@ Current meaning:
 - no production-ready product sales snapshot layer for 30-day revenue ranking
 - no owner-only private product intelligence layer
 - no fully governed XML-versus-curated product field overwrite policy in active UI
-- no RMB-first import finance model
-- no RMB/USD exchange-rate layer
-- no payment commission layer in the import decision engine
+- RMB-first import finance model — implemented (Phase 31) ✓
+- RMB/USD exchange-rate layer — implemented (Phase 31) ✓
+- payment commission layer in import decision engine — implemented (Phase 31) ✓
 - no route/profile-aware freight default hierarchy
 - no import decision snapshot governance
 - procurement engine now implemented (Phases 19–22)
