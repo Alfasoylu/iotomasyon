@@ -81,6 +81,21 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 74 — Ürün Listesi Kârlılık Durum Filtresi (2026-05-18)
+
+**Neden:** Ürün listesi Net Kâr/Marj/ROI/Durum sütunlarını gösteriyordu ama "sadece zararlı ürünleri göster" veya "sadece veri eksik ürünleri göster" filtrelemesi yoktu.
+
+Teslim edilenler:
+- `app/(app)/products/page.tsx`: `durumFilter` URL param; `allRows: RowData[]` pre-computation (profit + healthCues); `filteredRows` by durumFilter; `durumCounts` per category
+- Filter pills: Tümü / Mükemmel / İyi / Düşük / Zarar / Veri Yok — her biri sayı badge'i ile
+- Aktif pill renk kodlu (Mükemmel=emerald, Düşük=amber, Zarar=red, Veri Yok=slate)
+- `durumHref()`: mevcut q/status/stock/sort parametrelerini koruyarak durum param ekler
+- Footer: "X gösteriliyor (Y toplam)" filter aktifken
+- Schema değişikliği: YOK; Yeni DB sorgusu: YOK
+- tsc 0 yeni hata ✓; commit a248b81 ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 73 — Kilitli Sermaye Dağılım Analizi (2026-05-18)
 
 **Neden:** `/admin/capital` sayfası toplam ₺519k stok değerini gösteriyordu ama hangi ürünlerin sermayeyi bağladığı görünmüyordu. "Kilitli sermaye dağılımı" bölümü bu soruyu doğrudan yanıtlıyor.
