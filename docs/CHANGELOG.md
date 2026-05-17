@@ -9,6 +9,19 @@
 
 ## 2026-05
 
+### Phase 53 — Sidebar Gruplandırma + Rol Bazlı Bölüm Görünürlüğü (2026-05-17)
+
+**Amaç:**
+49 öğeli düz navigasyon listesi okunaksız hale gelmişti; roller arası ayrım da görsel olarak belli değildi. Satıcılar (SALES rolü) ithalat/finans bölümlerini görmemeli, depo personeli (OPERATIONS, EXECUTIVE_READ'siz) fiyat/marj sayfalarına erişmemeli.
+
+- Sidebar: düz 49 öğeli liste → 5 bölüm (CRM, Ürünler & Stok, Pazar Yeri, İthalat & Analiz, Yönetim)
+- Bölümler chevron ile daraltılabilir; aktif bölüm her zaman açık kalır
+- `NavItem` tipine isteğe bağlı `section` alanı eklendi; sunucu tarafı izin filtresi bu alanı korur
+- `layout.tsx`: `ALL_NAV` açık bölüm atamaları ve satır içi rol yorumlarıyla yeniden düzenlendi
+- "İthalat & Analiz" bölümü tamamen `EXECUTIVE_READ` ile korunuyor → SALES/OPERATIONS rolleri bu bölümü hiç görmez
+- Kenar çubuğu genişliği 72 (288px) → 64 (256px) mobil uyum için daraltıldı
+- tsc clean; browser-verified (5 bölüm başlığı, daraltma çalışıyor 36→30 link); 2026-05-17 ✓
+
 ### Phase 52 — Ürün Finans Alanı Konsolidasyonu (Priority 0A, 2026-05-17)
 
 **Amaç:**
