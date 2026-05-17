@@ -263,3 +263,8 @@ export async function getDueTodayFollowups() {
     throw error;
   }
 }
+
+// ─── Exported return types (for workspace components) ────────────────────────
+export type DashboardStats = Awaited<ReturnType<typeof getDashboardStats>>;
+export type OperationalAlerts = Awaited<ReturnType<typeof getOperationalAlerts>>;
+export type DueTodayFollowups = Awaited<ReturnType<typeof getDueTodayFollowups>>;
