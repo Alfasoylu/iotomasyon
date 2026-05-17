@@ -614,14 +614,9 @@ app/(app)/dashboard/
 
 `OperationsDashboardData` yeniden kullanıldı (DRY); `WarehouseWorkspace` bileşeni oluşturuldu; `user.role === "WAREHOUSE"` → `WarehouseWorkspace` dalı eklendi. WAREHOUSE rolü: stok uyarıları + görev KPIs + hızlı aksiyon kartları, finansal alan DOM'da yok. ✓ Vercel READY dpl_FZUREkAgckL52vByKEobiDVMJFc8
 
-#### Faz F — Marketplace Workspace (schema değişikliği YOK)
+#### ✓ Faz F — Marketplace Workspace — DONE 2026-05-17
 
-**Ne yapılacak:**
-- `getMarketplaceDashboardData()`: aktif listeleme sayısı, son 7 günde Trendyol sipariş adedi, eşleşmemiş sipariş uyarısı
-- `MarketplaceWorkspace` component
-- Bağımlılık: Phase 14 (Trendyol read intelligence) tamamlanmış olmalı
-
-**Kabul kriteri (Faz F):** MARKETPLACE_OPERATOR: Trendyol sipariş özetini görür, import/cost kartı görmez.
+`getMarketplaceDashboardData()` oluşturuldu: aktif listeler (`status=ACTIVE`), eşleşmemiş sipariş uyarısı, son 7 gün iade sayısı, son 7 gün non-cancelled sipariş adedi, açık görev. `MarketplaceWorkspace` bileşeni: "Pazar Yeri" badge başlığı, 5 KPI tile (aktif listeleme, 7d sipariş, eşleşmemiş [warning tone], 7d iade [warning tone], açık görev), 4 hızlı aksiyon kartı (Müşteri Soruları, İade Merkezi, Trendyol Paneli, Ürün Eşleştirme). `user.role === "MARKETPLACE_OPERATOR"` → `MarketplaceWorkspace` dalı eklendi. Finansal alan DOM'da yok. ✓ Vercel READY dpl_6j2QbVahxSmYdVz6FUDwqkWYSHXX
 
 ---
 

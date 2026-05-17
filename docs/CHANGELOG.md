@@ -9,6 +9,28 @@
 
 ## 2026-05
 
+### Phase 54 Faz F — Marketplace Workspace (2026-05-17)
+
+**Amaç:**
+MARKETPLACE_OPERATOR rolü admin dashboard'ını görüyordu — gelir, ithalat zekası, sermaye kartları dahil. Pazar yeri operatörü için doğru bilgi: aktif listeleme durumu, sipariş ve iade sinyalleri, müşteri soruları, eşleşmemiş sipariş uyarısı. Finansal bağlam görünmemeli.
+
+Değişiklikler:
+- `services/dashboard-service.ts`: `getMarketplaceDashboardData()` eklendi — aktif listeleme sayısı (`status="ACTIVE"`), eşleşmemiş sipariş sayısı, son 7 gün iade sayısı, son 7 gün non-cancelled sipariş adedi, açık görev sayısı; **hiçbir finansal alan döndürülmez**; `MarketplaceDashboardData` tipi dışa aktarıldı
+- `app/(app)/dashboard/_components/marketplace-workspace.tsx`: `MarketplaceWorkspace` bileşeni — "Pazar Yeri" badge başlığı; Trendyol Paneli + Müşteri Soruları header butonları; Listeleme & Sipariş bölümü (Aktif Listeleme, Son 7 Gün Sipariş, Eşleşmemiş Sipariş [warning]); İade & Görevler bölümü (Son 7 Gün İade [warning], Açık Görev); 4 hızlı aksiyon kartı (Müşteri Soruları, İade Merkezi, Trendyol Paneli, Ürün Eşleştirme)
+- `app/(app)/dashboard/page.tsx`: `user.role === "MARKETPLACE_OPERATOR"` dalı eklendi; "ADMIN, MARKETPLACE_OPERATOR" yorumu güncellendi → "ADMIN, CUSTOM"
+- Düzeltme: `isActive: true` → `status: "ACTIVE"` (`ListingStatus` enum); Badge `tone="info"` → `tone` kaldırıldı (geçerli değer değil)
+
+Güvenlik: `getMarketplaceDashboardData()` `trendyolRevenue`, `cost`, `margin`, `importUnitCostUsd` ve benzeri finansal alanları hiçbir zaman döndürmez — service fonksiyonu düzeyinde zorunlu kural.
+
+Kabul kriteri:
+- MARKETPLACE_OPERATOR `/dashboard` açtığında: gelir, ithalat, sermaye kartı DOM'da bulunmaz ✓
+- Aktif listeleme, sipariş/iade sinyalleri görünür ✓
+- Admin dashboard değişmedi ✓
+- tsc --noEmit temiz ✓
+- READY: dpl_6j2QbVahxSmYdVz6FUDwqkWYSHXX
+
+---
+
 ### Phase 55 — Warehouse Mode (2026-05-17)
 
 **Amaç:**
