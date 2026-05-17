@@ -1,5 +1,10 @@
 /**
- * Phase 50 — İthalat Karar Cockpiti v2 (Priority 22)
+ * Phase 72 — İthalat Karar Cockpiti v2 (Phase 50 + Phase 72 güncelleme)
+ *
+ * Phase 72 eklentisi: MarketplacePrice tablosu fiyat çözümleme hiyerarşisine eklendi.
+ * Öncelik sırası: Trendyol gerçekleşen → MarketplacePrice TRENDYOL → XML → Manuel
+ *
+ * Önceki Phase 50 notu:
  *
  * Upgrades the Phase 11C import-decisions page with REAL Trendyol data:
  *   - Trendyol gerçekleşen ortalama satış fiyatı (son 90 gün, Delivered)
@@ -91,7 +96,7 @@ export default async function ImportCockpitPage({
   const ago30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   // ── Paralel veri çekimi ───────────────────────────────────────────────────
-  const [latestRate, trendyolPolicy, products, sales90Raw, sales30Raw, returnsRaw] = await Promise.all([
+  const [latestRate, trendyolPolicy, products, sales90Raw, sales30Raw, returnsRaw, mpPricesRaw] = await Promise.all([
     prisma.monthlyExchangeRate.findFirst({
       orderBy: [{ year: "desc" }, { month: "desc" }],
     }),
@@ -155,6 +160,11 @@ export default async function ImportCockpitPage({
       where: { productId: { not: null } },
       _count: { id: true },
     }),
+    // Phase 72 — MarketplacePrice canonical TRENDYOL fiyatları
+    prisma.marketplacePrice.findMany({
+      where: { marketplace: "TRENDYOL" },
+      select: { productId: true, priceTry: true },
+    }),
   ]);
 
   const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
@@ -195,6 +205,12 @@ export default async function ImportCockpitPage({
     returnsMap.set(r.productId, r._count.id);
   }
 
+  // Phase 72 — MarketplacePrice TRENDYOL canonical fiyatlar (zaten TRY)
+  const mpTrendyolMap = new Map<string, number>(); // productId → priceTry
+  for (const mp of mpPricesRaw) {
+    mpTrendyolMap.set(mp.productId, Number(mp.priceTry));
+  }
+
   // ── Satır hesapları ───────────────────────────────────────────────────────
   type Row = {
     id: string;
@@ -210,7 +226,7 @@ export default async function ImportCockpitPage({
     returnRate: number | null; // 0‥1
     // Kullanılan satış fiyatı
     resolvedPriceTry: number | null;
-    priceSource: "trendyol" | "xml" | "manual" | "none";
+    priceSource: "trendyol" | "mp" | "xml" | "manual" | "none";
     // Hesaplama
     landedCostTry: number | null;
     netRevenueTry: number | null;
@@ -244,7 +260,9 @@ export default async function ImportCockpitPage({
         : null;
 
     // ── Satış fiyatı çözümü ────────────────────────────────────────────────
-    // Öncelik: Trendyol gerçekleşen ort. → XML Trendyol fiyatı → Manuel ürün fiyatı
+    // Öncelik: Trendyol gerçekleşen ort. → MarketplacePrice TRENDYOL → XML → Manuel
+    const mpPriceTry = mpTrendyolMap.get(p.id) ?? null;
+
     const xmlTrendyolPriceTry =
       p.xmlData?.xmlTrendyolPrice != null
         ? Number(p.xmlData.xmlTrendyolPrice) * usdTryRate
@@ -257,15 +275,17 @@ export default async function ImportCockpitPage({
           ? Number(p.sellingPriceTry)
           : null;
 
-    const resolvedPriceTry = trendyolAvgPriceTry ?? xmlTrendyolPriceTry ?? manualPriceTry;
-    const priceSource: "trendyol" | "xml" | "manual" | "none" =
+    const resolvedPriceTry = trendyolAvgPriceTry ?? mpPriceTry ?? xmlTrendyolPriceTry ?? manualPriceTry;
+    const priceSource: "trendyol" | "mp" | "xml" | "manual" | "none" =
       trendyolAvgPriceTry != null
         ? "trendyol"
-        : xmlTrendyolPriceTry != null
-          ? "xml"
-          : manualPriceTry != null
-            ? "manual"
-            : "none";
+        : mpPriceTry != null
+          ? "mp"
+          : xmlTrendyolPriceTry != null
+            ? "xml"
+            : manualPriceTry != null
+              ? "manual"
+              : "none";
 
     // ── İthal maliyet hesabı (mevcut engine) ──────────────────────────────
     const sourcePriceUsd =
@@ -415,13 +435,13 @@ export default async function ImportCockpitPage({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Faz 50 — İthalat Karar Cockpiti v2
+            Faz 72 — İthalat Karar Cockpiti v2
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             İthalat Karar Cockpiti
           </h1>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Trendyol gerçek satış fiyatı + satış hızı + iade oranı + ithal maliyet → ithalat sinyali.
+            Trendyol gerçek satış fiyatı + MarketplacePrice + satış hızı + iade oranı + ithal maliyet → ithalat sinyali.
             Kur: <span className="font-semibold">1 USD = ₺{usdTryRate.toFixed(2)}</span>
             {latestRate ? ` (${latestRate.month}/${latestRate.year})` : " (varsayılan)"}
           </p>
@@ -644,6 +664,10 @@ export default async function ImportCockpitPage({
                         <span className="inline-flex rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700 border border-orange-200">
                           Trendyol
                         </span>
+                      ) : row.priceSource === "mp" ? (
+                        <span className="inline-flex rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 border border-violet-200">
+                          MP Fiyat
+                        </span>
                       ) : row.priceSource === "xml" ? (
                         <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-600 border border-blue-200">
                           XML Fiyat
@@ -671,7 +695,7 @@ export default async function ImportCockpitPage({
         <p className="font-semibold text-slate-700">Hesaplama Mantığı</p>
         <p>
           <span className="font-medium text-slate-600">Satış fiyatı:</span>{" "}
-          Trendyol gerçekleşen ort. (son 90 gün, Teslim Edildi) → XML Trendyol fiyatı → manuel fiyat
+          Trendyol gerçekleşen ort. (son 90 gün, Teslim Edildi) → MarketplacePrice TRENDYOL (MP Fiyat) → XML Trendyol fiyatı → manuel fiyat
         </p>
         <p>
           <span className="font-medium text-slate-600">Kargo:</span>{" "}
