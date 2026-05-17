@@ -59,9 +59,13 @@ Implemented modules:
 - executive KPI dashboard — Phase 22 complete: /admin/executive, stock value TRY, capital health, procurement urgency pills, top-5 profitability table, quick-links to all intelligence tools
 - data hygiene governance — Phase 23 complete: /admin/data-hygiene, 8 completeness checks (cost, retail price, marketplace price, stock-with-no-cost, xml-no-price, category, barcode, supplier), real-time issue counts, Düzenle links
 - production safety center — Phase 24 complete: /admin/safety, migration history from _prisma_migrations, 8-item safety checklist, dangerous operation registry (9 rows, CRITICAL/HIGH/MEDIUM), docs/MIGRATION-SAFETY.md
-- import decision system — Phase 11C complete: /admin/import-decisions, air/sea freight economics engine (landed cost, profit ratio, annual ROI, ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA), product detail import card, product form import inputs (weightKg/customsRatePct/shippingMethodPref)
+- import decision system — Phase 11C partial: /admin/import-decisions, air/sea freight economics engine (landed cost, profit ratio, annual ROI, ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA), product detail import card, product form import inputs (weightKg/customsRatePct/shippingMethodPref)
+- import-economics reference model documented in `docs/import-economics-model.md`
 - product operations UX — Phase 25 complete: live search (debounce, ≥2 chars, no submit button), compact filter pills (Durum/Stok), sort by stock/price/margin/name, thumbnail column, health cues per row (Düşük stok/Görsel yok/Maliyet yok/Fiyat yok/XML bayat)
 - product performance ranking — Phase 26 complete: TrendyolSalesRecord schema + migration, 90-day windowed Trendyol order sync (barcode/SKU matching), /admin/product-performance with top-20 ranking tables and performance signal cards, per-product KPI card on product detail page
+- product media and content studio — Phase 27 complete: ProductImageManager (multi-image grid, URL-add, delete, set-primary), RichTextEditor (Tiptap H2/H3/bold/italic/lists), Supabase Storage upload action, XML description governance (opt-in copy, never overwrite)
+- product governance and private intelligence — Phase 28 complete: Product.privateNote (isOwner()-gated, ADMIN_EMAIL only), PrivateNoteEditor with amber UI, supplier summary card on detail page, description max 10000, normalizeProductData explicitly omits privateNote
+- order ledger and return claims — Phase 29 complete: TrendyolReturnRecord schema + migration, syncTrendyolReturnsAction (365-day sweep), /orders page with 5 tabs (Tümü/Teslim/İptal/İadeler/Eşleşmemiş), newest-first, unmatched inbox, Siparişler sidebar link
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -162,6 +166,14 @@ Current meaning:
 - marketplace operations expansion — DONE (Phase 16): Q&A module, Return Action Center, Product Mapping registry, Exchange Rate management, full Trendyol write-side actions with audit trail
 - marketplace sync architecture — NOT IMPLEMENTED (Phase 17, DEFERRED)
 
+Current marketplace gaps:
+- live Trendyol orders/returns visibility exists, but a full persisted order ledger is not yet the trusted default operator view
+- return records are not yet presented as a fully linked order-history layer
+- unmatched marketplace records still need a stronger operator inbox and backfill workflow
+- marketplace margin policy still needs explicit normalization against the owner workbook logic
+- marketplace-specific XML/manual/effective price governance is not yet normalized
+- per-marketplace shipping/commission/net remaining revenue truth is not yet centralized
+
 ---
 
 ## Procurement State
@@ -172,6 +184,7 @@ Current meaning:
 - procurement engine — DONE (Phase 19): /admin/procurement, reorder urgency engine, ranked purchase table, financial summary
 - supplier intelligence — DONE (Phase 20): /admin/suppliers, Supplier + SupplierProduct, product edit supplier link section
 - import cost calculator — DONE (Phase 21): /admin/import-calculator, landed cost (product+freight+customs), per-unit TRY, break-even, channel margin analysis
+- import economics normalization — NOT COMPLETE: RMB-first input, payment commission, route/profile freight defaults, and shared landed-cost governance are still missing
 
 Note:
 - capital allocation engine EXISTS (Phase 10) — admin-only ranked purchase suggestions based on investment score
@@ -190,6 +203,7 @@ Current meaning:
 - marketplace profit dashboard — DONE (Phase 15): platform-level winner/loser/missing-data visibility
 - executive KPI dashboard — DONE (Phase 22): /admin/executive, single-page owner intelligence overview
 - recommendation-grade owner intelligence system — DONE (Phase 22 complete, all procurement layers in place)
+- import decision intelligence exists, but it is not yet holding-grade or fully governance-safe
 
 ---
 
@@ -201,6 +215,11 @@ Current meaning:
 - no production-ready product sales snapshot layer for 30-day revenue ranking
 - no owner-only private product intelligence layer
 - no fully governed XML-versus-curated product field overwrite policy in active UI
+- no RMB-first import finance model
+- no RMB/USD exchange-rate layer
+- no payment commission layer in the import decision engine
+- no route/profile-aware freight default hierarchy
+- no import decision snapshot governance
 - procurement engine now implemented (Phases 19–22)
 
 ---

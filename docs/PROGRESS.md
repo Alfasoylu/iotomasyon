@@ -731,7 +731,7 @@ Verified outcome (browser test 2026-05-17):
 ---
 
 ## Phase 11C — Import Decision System
-Status: DONE
+Status: PARTIAL
 
 Completed:
 - Migration `20260517060000_phase11c_import_decision`: added `weightKg DECIMAL(10,3)`, `customsRatePct DECIMAL(5,2)`, `shippingMethodPref TEXT` to Product table — all nullable, applied to production Supabase
@@ -771,6 +771,60 @@ Verified outcome (browser test 2026-05-17):
 - tsc --noEmit: clean ✓
 - npm run build: clean ✓
 - Vercel deploy: READY (commit d811f75) ✓
+
+---
+
+## Phase 30 — Import Economics Normalization
+Status: NOT STARTED
+
+Required next:
+- source purchase currency per product
+- source purchase cost per product
+- RMB/USD monthly rate support
+- payment commission layer in the import decision engine
+- route/profile freight defaults
+- product override > profile override > global default precedence
+- default AIR = 8 USD/kg when no override exists
+- default SEA = 1 USD/kg when no override exists
+- transparent step-by-step landed cost breakdown
+- shared landed-cost engine across calculator, cockpit, procurement, capital, and executive dashboard
+
+Reality check:
+- current engine still expects `sourcePriceUsd`
+- current engine does not yet support the owner formula `((RMB / rate) * (1 + paymentFee) + freight) * (1 + customs)`
+- current engine is operationally useful as a prototype, not yet trustworthy as the final source of import-cost truth
+
+---
+
+## Phase 31 — Holding-Grade Import Governance
+Status: NOT STARTED
+
+Required next:
+- entity-aware import defaults
+- route/profile versioning by validity period
+- decision snapshots by month and assumption set
+- approval workflow before purchase commitment
+- supplier-specific import policy inputs
+- audit visibility for effective values used in each import recommendation
+
+---
+
+## Phase 32 — Marketplace Pricing Normalization
+Status: NOT STARTED
+
+Required next:
+- XML marketplace price to marketplace mapping normalization
+- separate xmlPrice, manualPrice, and activePrice governance
+- per-marketplace shipping default rules
+- per-marketplace shipping overrides
+- per-marketplace commission defaults and overrides
+- per-marketplace net remaining revenue calculation
+- one canonical marketplace pricing service used across UI, import, and reporting
+
+Reality check:
+- current marketplace price handling is spread across product, XML snapshot, and profitability layers
+- no canonical `ProductMarketplacePricing`-style truth exists yet
+- marketplace-specific active/effective price governance is not complete
 
 ---
 
@@ -883,6 +937,14 @@ Current gap:
 - no full persisted Trendyol return ledger linked back to order rows
 - no canonical auto-backfill workflow for marketplace product mappings
 - no marketplace margin policy formally validated against the owner workbook logic
+- no RMB-first import finance model
+- no RMB/USD exchange-rate layer
+- no payment commission layer in the import decision engine
+- no route/profile-aware freight default hierarchy
+- no import decision snapshot governance
+- no canonical marketplace pricing service for XML/manual/effective marketplace values
+- no per-marketplace shipping default engine with override governance
+- no per-marketplace commission/effective net revenue truth layer
 
 ---
 

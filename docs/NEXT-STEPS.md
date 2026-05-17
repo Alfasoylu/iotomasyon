@@ -95,6 +95,68 @@ Acceptance:
 - margin calculations are explainable
 - owner can trust marketplace margin ranking without checking Excel
 
+### Priority 3 - Import Economics Normalization
+
+Why:
+The import decision cockpit exists, but it still does not implement the owner's real RMB-first landed-cost formula.
+
+Includes:
+- source purchase currency
+- source purchase cost
+- RMB/USD monthly rate support
+- payment commission input
+- route/profile freight defaults
+- override precedence:
+  - product
+  - profile
+  - global default
+- default AIR = 8 USD/kg
+- default SEA = 1 USD/kg
+- transparent landed-cost breakdown in UI
+- shared landed-cost engine across calculator, cockpit, procurement, capital, and executive views
+
+Acceptance:
+- the owner formula can be represented exactly in-system
+- default AIR/SEA freight works without manual entry
+- the same landed-cost truth is reused across modules
+
+### Priority 4 - Holding-Grade Import Governance
+
+Why:
+Active use is not enough; the system must become governable at multi-entity and historical-decision level.
+
+Includes:
+- entity-aware import defaults
+- route/profile versioning
+- monthly decision snapshots
+- approval workflow
+- supplier-specific import policy inputs
+- effective-value audit visibility
+
+Acceptance:
+- import decisions remain explainable after rates and defaults change
+- the system can support holding-style governance, not just one-off product calculations
+
+### Priority 5 - Marketplace Pricing Normalization
+
+Why:
+Marketplace-specific price, shipping, commission, and net remaining revenue are still too fragmented to be trusted as one operational truth.
+
+Includes:
+- XML marketplace price mapping
+- separate XML/manual/effective marketplace price handling
+- per-marketplace shipping defaults
+- per-marketplace shipping overrides
+- per-marketplace commission defaults
+- per-marketplace commission overrides
+- per-marketplace net remaining revenue table on product detail
+- one shared marketplace pricing service
+
+Acceptance:
+- each marketplace row shows source and active values clearly
+- manual overrides survive XML sync
+- net remaining revenue is consistent everywhere it appears
+
 ### ✓ Phase 25: Product Operations UX — DONE (2026-05-17)
 
 Delivered:
@@ -153,6 +215,9 @@ Phase dependencies:
 
 - Marketplace Data Reliability Closure depends on stable Trendyol pagination, durable persistence, and trustworthy order/return identifiers.
 - Marketplace Margin Policy Normalization depends on trusted order data plus a clear effective shipping/commission rule.
+- Import Economics Normalization depends on a canonical formula, RMB/USD rate support, and shared finance ownership across modules.
+- Holding-Grade Import Governance depends on Import Economics Normalization first.
+- Marketplace Pricing Normalization depends on both Marketplace Margin Policy Normalization and Import Economics Normalization.
 - Phase 25 depends on stable product list/query performance and trusted primary-image behavior.
 - Phase 26 depends on a sales snapshot / aggregation layer; product ranking should not fake 30-day revenue logic from incomplete data.
 - Phase 27 depends on a safe media/storage strategy and an editor choice that does not break current product forms.

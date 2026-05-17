@@ -156,6 +156,8 @@ Risk:
 
 Completion signal:
 - Trendyol data can be read without any write-side operations
+- orders are persisted locally with trusted newest-first visibility
+- returns are persisted locally and can be linked back to order rows
 
 ### Phase 15
 
@@ -170,6 +172,8 @@ Risk:
 
 Completion signal:
 - per-platform profitability becomes visible
+- standard vs. override marketplace cost policy is explicit
+- realized margin can be ranked without workbook fallback
 
 ### Phase 9
 
@@ -226,6 +230,7 @@ Risk:
 
 Completion signal:
 - procurement assistant outputs become actionable
+- import recommendations can explain AIR/SEA choice and capital-at-risk with trusted landed-cost inputs
 
 ### Phase 20
 
@@ -240,6 +245,7 @@ Risk:
 
 Completion signal:
 - suppliers can be compared by reliability and commercial value
+- supplier-specific import defaults can feed the landed-cost engine
 
 ### Phase 21
 
@@ -254,6 +260,8 @@ Risk:
 
 Completion signal:
 - admin can evaluate landed cost before buying
+- RMB-first import formula is implemented exactly
+- payment commission and freight profile defaults are visible and auditable
 
 ### Phase 22
 
@@ -268,6 +276,7 @@ Risk:
 
 Completion signal:
 - admin can understand business health quickly from one screen
+- executive KPIs reflect the same landed-cost truth as procurement and import decisions
 
 ### Phase 23
 
@@ -310,6 +319,120 @@ Risk:
 
 Completion signal:
 - additional marketplaces become visible without destabilizing architecture
+- explicit marketplace product mapping becomes persistent and backfillable
+- unmatched records can be resolved without repetitive manual rematching
+
+### Phase 25
+
+Why now:
+- the owner needs a better daily product operations surface before asking the system to absorb even more intelligence layers
+
+Dependency:
+- stable product list foundation
+- trusted product identity and primary-image behavior
+
+Risk:
+- if product triage remains clumsy, the owner keeps falling back to manual scanning habits
+
+Completion signal:
+- product list supports fast search, stock-only filtering, and operational sorting without clutter
+
+### Phase 26
+
+Why now:
+- once product operations are smoother, the next bottleneck is ranking products by recent commercial performance
+
+Dependency:
+- Phase 25
+- trustworthy sales snapshot / aggregation inputs
+
+Risk:
+- fake 30-day ranking logic will create false confidence and bad buying decisions
+
+Completion signal:
+- products can be ranked by recent sales, revenue, and trusted realized margin
+
+### Phase 27
+
+Why now:
+- after list operations and ranking improve, the owner needs native control over product media and product content
+
+Dependency:
+- Phase 25
+- safe media/storage strategy
+
+Risk:
+- rich content work without storage and deletion rules will create broken product pages and asset sprawl
+
+Completion signal:
+- multi-image and rich description workflows are manageable inside IOTOMASYON without external workarounds
+
+### Phase 28
+
+Why now:
+- once products are easier to search, rank, and edit, the system must protect private sourcing intelligence and curated product truth
+
+Dependency:
+- Phase 5
+- Phase 25
+- Phase 27
+- clear XML field-governance rules
+
+Risk:
+- without governance, imports overwrite curated content and sensitive sourcing notes leak to the wrong users
+
+Completion signal:
+- private notes, supplier context, edit permissions, and XML overwrite boundaries are operationally trustworthy
+
+### Phase 30
+
+Why now:
+- the current import decision cockpit is useful but not yet aligned with the owner's real landed-cost formula
+
+Dependency:
+- Phase 19
+- Phase 20
+- Phase 21
+
+Risk:
+- if RMB-first math is wrong or incomplete, procurement, capital, and import recommendations all become misleading
+
+Completion signal:
+- the owner formula is represented exactly
+- default freight fallback works correctly
+- import-cost logic becomes reusable across modules
+
+### Phase 31
+
+Why now:
+- once the formula is correct, governance and auditability become the next bottleneck
+
+Dependency:
+- Phase 30
+
+Risk:
+- without snapshots and approval controls, import decisions drift as rates and defaults change
+
+Completion signal:
+- import decisions are historically explainable and governable at holding level
+
+### Phase 32
+
+Why now:
+- once import and marketplace margin logic are normalized, marketplace-specific effective pricing needs its own canonical truth layer
+
+Dependency:
+- Phase 15
+- Phase 30
+
+Risk:
+- if XML prices, manual overrides, shipping, and commission stay fragmented, marketplace revenue numbers cannot be trusted
+
+Completion signal:
+- XML and manual marketplace prices are governed separately
+- active marketplace price is derived consistently
+- per-marketplace net remaining revenue is visible and trustworthy
+- one canonical marketplace pricing engine is reused across modules
 
 ### Phase 17
 
@@ -336,7 +459,16 @@ Avoid these mistakes:
 - building capital recommendations before approval controls
 - building write-side marketplace controls before read intelligence stabilizes
 - adding image uploads without storage strategy
+- building product revenue rankings before trustworthy sales snapshots exist
+- letting XML overwrite curated product content after manual editing begins
+- mixing private supplier intelligence with shared product notes
 - pretending roadmap phases are implemented because the names exist
+- treating live Trendyol API windows as a complete order archive
+- building marketplace margin ranking before order/return persistence and effective-cost policy are trustworthy
+- forcing operators to rematch the same marketplace barcode/SKU repeatedly instead of using persistent mapping
+- treating the import cockpit as complete before RMB/USD, payment commission, and freight-profile logic are implemented
+- allowing procurement and executive dashboards to diverge from the canonical landed-cost engine
+- allowing marketplace price, shipping, commission, and net revenue logic to diverge across multiple files or screens
 
 ---
 

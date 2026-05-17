@@ -540,7 +540,14 @@ Safe first marketplace integration.
 
 Required:
 - order sync
+- full paginated order backfill
+- newest-first order visibility
+- persistent order ledger
 - return sync
+- full paginated return/claim backfill
+- persistent return ledger
+- incremental sync without historical data loss
+- order/return matching by stable identifiers
 - return reasons
 - commission visibility
 - order profitability
@@ -553,6 +560,17 @@ READ ONLY means:
 - no price push
 - no listing update
 - no order status update
+
+Order ledger rules:
+- API data must be persisted locally
+- API disappearance must not delete historical marketplace data
+- if API sends updates later, existing records must be updated
+- default order sorting must be latest first
+
+Return linkage rules:
+- returned or cancelled orders must be visible directly in the orders flow
+- orders with linked claims should show return/cancel state clearly
+- partial return state should be supported when possible
 
 Exit criteria:
 Trendyol intelligence dashboard active
@@ -575,6 +593,9 @@ Metrics:
 - product-level return rate
 - platform-level return rate
 - net profit after returns
+- effective commission
+- effective shipping cost
+- realized product margin from persisted order data
 - top 50 winners
 - top 50 losers
 - products with sales but low margin
@@ -585,6 +606,20 @@ Views:
 - per platform
 - top winners
 - top losers
+
+Margin policy:
+- standard marketplace commission must exist
+- commission override must remain possible
+- standard shipping cost must exist
+- shipping override must remain possible
+- the effective value used in calculations must be obvious
+- marketplace margin formula should be validated against the owner workbook logic before being treated as final truth
+
+Ranking requirements:
+- sort by last 30 days sales quantity
+- sort by last 30 days revenue
+- sort by total revenue
+- sort by trusted realized margin
 
 Exit criteria:
 owner sees best channels instantly
@@ -599,6 +634,18 @@ Platforms:
 - Temu
 - IdeaSoft
 - other APIs
+
+Registry and matching requirements:
+- marketplace-to-product matching must be persistent
+- once a barcode/SKU mapping is approved, future records should auto-match to the same product
+- historical unmatched records should be backfilled when a new mapping is created
+- unmatched marketplace items must be easy to review and resolve
+- mapping safety must prefer explicit registry matches over weak guesswork
+
+Operational views:
+- unmatched marketplace items inbox
+- mapping audit visibility
+- order matching confidence visibility
 
 Exit criteria:
 multi-channel visibility
@@ -659,12 +706,19 @@ Signals:
 - supplier reliability
 - reorder urgency
 - expected cash conversion time
+- import decision snapshot quality
+- shipping profile quality
+- payment commission impact
+- RMB-origin import economics
 
 Outputs:
 - reorder now
 - wait
 - stop buying
 - test small quantity
+- AIR / SEA rationale
+- missing-data diagnosis
+- capital-at-risk visibility
 
 Exit:
 procurement assistant operational
@@ -687,6 +741,9 @@ Required:
 - purchase history
 - average landed cost
 - reliability score
+- supplier-specific purchase currency
+- supplier-specific payment commission defaults
+- supplier-specific freight profile defaults
 
 Exit:
 admin can compare suppliers by profit, speed and reliability.
@@ -708,6 +765,11 @@ Inputs:
 - shipping cost
 - customs multiplier
 - other expenses
+- payment commission
+- source purchase currency
+- route/profile-specific freight defaults
+- RMB/USD monthly rate
+- USD/TRY monthly rate
 
 Outputs:
 - landed unit cost
@@ -715,6 +777,32 @@ Outputs:
 - estimated margin
 - estimated ROI
 - buy / do not buy signal
+- transparent step-by-step landed cost breakdown
+- AIR vs SEA scenario comparison
+- effective value trace:
+  - default
+  - profile override
+  - product override
+
+Cost formula requirements:
+- RMB-based imports must support:
+  - `(rmb_cost / rmb_usd_rate)`
+  - `payment commission uplift`
+  - `freight by kg and method`
+  - `customs multiplier`
+- default freight values when no override exists:
+  - AIR = 8 USD/kg
+  - SEA = 1 USD/kg
+- defaults must remain overridable by product / route / profile
+
+Governance requirements:
+- one canonical landed cost engine must be shared across:
+  - import calculator
+  - import decision cockpit
+  - procurement assistant
+  - capital allocation
+  - executive dashboard
+- historical decision snapshots must preserve the month, rates, freight assumptions, and effective values used
 
 Exit:
 admin can evaluate imports before ordering.
@@ -740,9 +828,105 @@ Widgets:
 - procurement recommendations
 - open sales tasks
 - quote conversion rate
+- import method distribution
+- landed cost trend visibility
+- capital locked by import scenario
+- missing import-data alerts
 
 Exit:
 admin can understand business health in under 60 seconds.
+
+---
+
+# Phase 30 — Import Economics Normalization
+
+Goal:
+Make import economics trustworthy enough for active daily use.
+
+Required:
+- source purchase currency per product
+- source purchase cost per product
+- RMB/USD monthly exchange rate support
+- USD/TRY monthly exchange rate support
+- payment commission input
+- route/profile freight defaults
+- product-level freight overrides
+- AIR default = 8 USD/kg when no override exists
+- SEA default = 1 USD/kg when no override exists
+- transparent formula breakdown in UI
+- one canonical landed cost engine shared across import-related modules
+
+Exit:
+the owner can trust the landed-cost math without checking external spreadsheets.
+
+---
+
+# Phase 31 — Holding-Grade Import Governance
+
+Goal:
+Turn the import decision system into a multi-entity, auditable financial control surface.
+
+Required:
+- company/entity-aware import defaults
+- route profiles with validity periods
+- scenario versioning by month
+- decision snapshot history
+- approval workflow before purchase commitment
+- supplier-specific import policies
+- audit visibility for effective values used in each decision
+- shared import-economics truth across procurement, capital, and executive reporting
+
+Exit:
+import decisions remain explainable, auditable, and governable at holding level.
+
+---
+
+# Phase 32 — Marketplace Pricing Normalization
+
+Goal:
+Normalize marketplace-specific price, shipping, commission, and net remaining revenue logic.
+
+Required:
+- XML marketplace prices must map cleanly to the correct marketplace
+- XML price and manual price must remain separate truths
+- active/effective price must be derived from XML + override rules
+- per-marketplace shipping defaults must be calculated automatically
+- per-marketplace shipping override must be supported
+- per-marketplace commission defaults must be supported
+- per-marketplace commission override must be supported
+- per-marketplace net remaining revenue must be visible
+- one canonical marketplace pricing engine must be shared across UI, import, and reporting
+
+Shipping defaults:
+- if active marketplace price < 5 USD: shipping fee = 1.2 USD
+- if active marketplace price is between 5 and 7.5 USD: shipping fee = 2 USD
+- if active marketplace price > 7.5 USD: shipping fee = 3.3 USD
+- if weight < 2 kg and active marketplace price < 5 USD: shipping remains 1.2 USD
+
+Commission defaults:
+- default commission rate = 20%
+- commission amount = active marketplace price × commission rate
+
+Net remaining revenue:
+- net remaining revenue = active marketplace price - shipping fee - commission amount
+
+Product detail requirements:
+- marketplace name
+- XML price
+- active/effective price
+- shipping fee
+- commission rate
+- commission amount
+- net remaining revenue
+- manual override visibility
+
+Governance rules:
+- manual marketplace overrides must not be overwritten by XML sync
+- XML is source data, not final product truth
+- marketplace pricing logic must not be duplicated across multiple services/files
+
+Exit:
+marketplace-specific net revenue is explainable, overridable, and trustworthy without spreadsheet fallback.
 
 ---
 
@@ -781,6 +965,91 @@ Required:
 
 Exit:
 production changes become safer.
+
+---
+
+# Phase 25 - Product Operations UX
+
+Goal:
+Turn the product list into a fast daily operations surface.
+
+Required:
+- product list thumbnails
+- dynamic contains-search that starts after the second character
+- no submit-button dependency for product filtering
+- stock-only filter
+- compact sort/filter drawer so many sort modes do not clutter the page
+- sorting by:
+  - last updated
+  - stock quantity
+  - selling price
+  - profit margin when margin data is trustworthy
+- low-stock and data-missing visual signals
+- stable list UX without layout breakage
+
+Exit:
+owner and staff can find, scan, and triage products quickly without relying on manual page refresh patterns.
+
+---
+
+# Phase 26 - Product Performance Ranking
+
+Goal:
+Rank products by real commercial performance, not only static catalog fields.
+
+Required:
+- last 30 days sales quantity ranking
+- last 30 days revenue ranking
+- total revenue ranking
+- realized margin visibility on product detail
+- margin-based product sorting
+- sales snapshot / aggregation layer that makes these rankings trustworthy
+- product performance filters that distinguish low-stock, high-revenue, and low-margin items
+
+Exit:
+the product list can be used as a commercial leaderboard, not just a catalog table.
+
+---
+
+# Phase 27 - Product Media and Content Studio
+
+Goal:
+Make product content editable inside IOTOMASYON without external workarounds.
+
+Required:
+- multi-image product management
+- delete existing images
+- add image by URL with enter-to-append workflow
+- repeatable URL entry without page refresh friction
+- local computer upload support
+- primary image visibility in list and detail views
+- e-commerce style rich text description editor
+- XML description vs manual description separation
+- formatting controls suitable for marketplace/product content authoring
+
+Exit:
+the owner can manage product images and descriptions fully inside IOTOMASYON.
+
+---
+
+# Phase 28 - Product Governance and Private Intelligence
+
+Goal:
+Protect curated product knowledge while supporting controlled collaboration.
+
+Required:
+- owner-only product private notes
+- supplier contact / source notes per product
+- website link notes that are hidden from other users
+- product edit activation limited by approved user groups / permissions
+- XML import rules that only overwrite allowed fields such as stock and price
+- multiple supplier workflow polish
+- preferred supplier selection
+- supplier-specific commercial inputs such as MOQ, lead time, and cost context
+- clear source governance between XML data and manually curated product truth
+
+Exit:
+product knowledge becomes private where needed, collaborative where allowed, and protected from unwanted source overwrites.
 
 ---
 
