@@ -703,6 +703,20 @@ Tamamlananlar:
 
 ---
 
+### ✓ DONE — Priority 62 — TrendyolReturnRecord Normalized Re-Match (Phase 62, 2026-05-17)
+
+**Neden:**
+Phase 61 normalizeKey() mantığını yalnızca TrendyolSalesRecord'a uyguladı. TrendyolReturnRecord da aynı null-productId sorununa sahipti; iade kayıtları kâr analizine ve eşleşme istatistiklerine dahil edilemiyordu.
+
+Tamamlananlar:
+- `lib/actions/marketplace-mapping-actions.ts`: `resolveMatch()` DRY yardımcısı; `trendyolReturnRecord.findMany({ where: { productId: null } })` paralel çekildi; iade kayıtları normalize eşleştirmeden geçirildi; 100'lük batch bulk-update; başarı mesajı X sipariş + Y iade rapor eder
+- Schema değişikliği: YOK; Yeni UI: YOK
+- tsc --noEmit temiz ✓
+- Browser-verified: sayfa yükleniyor, buton görünür ✓
+- READY: dpl_FF8MmKYk3BhQMgqaAnhbioSCYgc8
+
+---
+
 ### ✓ DONE — Priority 61 — Normalized Barcode Re-Match (Phase 61, 2026-05-17)
 
 **Neden:**

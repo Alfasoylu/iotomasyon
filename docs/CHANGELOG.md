@@ -9,6 +9,26 @@
 
 ## 2026-05
 
+### Phase 62 — TrendyolReturnRecord Normalized Re-Match (2026-05-17)
+
+**Amaç:**
+Phase 61 normalizeKey() mantığını yalnızca TrendyolSalesRecord için uyguladı. TrendyolReturnRecord da aynı barcode format uyuşmazlığı sorununa sahipti — null-productId iade kayıtları return analizi ve eşleşme oranından düşüyordu.
+
+Değişiklikler:
+- `lib/actions/marketplace-mapping-actions.ts`:
+  - `resolveMatch()` yardımcı fonksiyonu eklendi (barcode+SKU normalize çözümlemesini DRY yapar)
+  - `prisma.trendyolReturnRecord.findMany({ where: { productId: null } })` — TrendyolSalesRecord ile paralel çekilir
+  - İade kayıtları için aynı normalize eşleştirme ve 100'lük batch bulk-update
+  - Başarı mesajı: `"${matchedSales} sipariş, ${matchedReturns} iade eşleştirildi. ${remaining} sipariş + ${remainingReturns} iade hâlâ eşleşmemiş."`
+- Schema değişikliği: YOK
+- Yeni UI: YOK (mevcut RematchNormalizedButton güncellenen mesajı gösterir)
+
+Kabul kriteri:
+- Sayfa yükleniyor, buton çalışıyor ✓
+- Vercel READY: dpl_FF8MmKYk3BhQMgqaAnhbioSCYgc8 ✓
+
+---
+
 ### Phase 61 — Normalized Barcode Re-Match (2026-05-17)
 
 **Amaç:**
