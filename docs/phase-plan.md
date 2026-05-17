@@ -510,16 +510,58 @@ Why now:
 
 Dependency:
 - Phase 57 (field visibility — confirms role resolution in server components)
-- Phase 55 (WAREHOUSE role must exist to build its dashboard variant)
+- Phase 55 (WAREHOUSE role must exist to build its dashboard variant, Faz E)
 
 Risk:
 - Dashboard role detection must be purely server-side; client-side role checks are not acceptable
 - Role-specific dashboard must not leak admin-only data to non-admin roles
+- Service functions must never fetch financial fields for non-admin workspaces — rendering guard alone is insufficient
+
+Implementation execution order (A-F):
+
+Faz A — Temel Refactor (no schema):
+- Extract StatCard + LinkedStatCard from inline → app/(app)/dashboard/_components/shared/
+- Create AdminWorkspace wrapper component
+- page.tsx becomes ~40-line role router (switch on currentUser.role)
+- tsc --noEmit must pass; admin view must be visually identical
+- Files: page.tsx, _components/admin-workspace.tsx, _components/shared/stat-card.tsx, _components/shared/linked-stat-card.tsx
+
+Faz B — Sales Workspace (no schema):
+- Add getSalesPipelineData(userId) to services/dashboard-service.ts
+  - Queries: active ProductInterest count, due-today tasks for userId only, recent customer activity
+  - RULE: must never return cost, margin, trendyolRevenue, or any financial field
+- Create _components/sales-workspace.tsx
+- Files: services/dashboard-service.ts, _components/sales-workspace.tsx
+
+Faz C — Operations Workspace (no schema):
+- Add getOperationsDashboardData() to services/dashboard-service.ts
+  - Queries: open task count, critical stock alerts, overdue items, unmatched order count
+  - No financial data
+- Create _components/operations-workspace.tsx
+- Files: services/dashboard-service.ts, _components/operations-workspace.tsx
+
+Faz D — Admin Enhancement (no schema):
+- Add import intelligence signals to AdminWorkspace (RMB rate indicator, last import decision, pending procurement)
+- Add team performance tiles (SALES pipeline velocity, OPERATIONS task completion rate)
+- Existing tiles must not regress
+
+Faz E — Warehouse Workspace (SCHEMA CHANGE: UserRole enum migration):
+- Blocked on Phase 55 completion (WAREHOUSE enum value + migration applied)
+- Add getWarehouseDashboardData(): critical stock alerts, pending counts, picking queue — no cost fields
+- Create _components/warehouse-workspace.tsx (mobile-first, large touch targets)
+- Migration risk: additive enum value, existing OPERATIONS users unaffected
+
+Faz F — Marketplace Workspace (no schema):
+- Blocked on Phase 14 (Trendyol read intelligence)
+- Add getMarketplaceDashboardData(): active listings, 7-day order count, unmatched order alert
+- Create _components/marketplace-workspace.tsx
 
 Completion signal:
 - Sales dashboard shows pipeline, follow-up tasks, and customer activity — no cost/import tiles
 - Warehouse dashboard shows stock alerts and counting queue — no financial tiles
 - Admin dashboard unchanged from current state
+- tsc --noEmit passes at each faz boundary
+- Financial data absent from DOM (not just CSS-hidden) for non-admin roles
 
 ---
 

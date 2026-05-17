@@ -1081,6 +1081,25 @@ Context:
 The current /dashboard is a single shared page. Admin sees operational KPIs and intelligence tiles.
 Other roles see the same page but many tiles are meaningless or confusing for them.
 
+Architecture decision:
+Single URL /dashboard — server-side role-branch rendering.
+No separate URLs per role, no redirect flash, no client-side role checks.
+page.tsx becomes a ~40-line role router that delegates to workspace components.
+
+Implementation phases:
+
+Faz A (no schema): Refactor — extract StatCard/LinkedStatCard to shared/, create AdminWorkspace wrapper, page.tsx becomes role router.
+
+Faz B (no schema): Sales Workspace — getSalesPipelineData(userId) service function + SalesWorkspace component. CRITICAL: service function must never return cost/margin fields — not rendered, not fetched.
+
+Faz C (no schema): Operations Workspace — getOperationsDashboardData() + OperationsWorkspace. No financial data.
+
+Faz D (no schema): Admin Enhancement — import intelligence signals + team performance tiles in AdminWorkspace.
+
+Faz E (SCHEMA CHANGE — UserRole enum migration): WAREHOUSE role must exist before this phase. getWarehouseDashboardData() + WarehouseWorkspace, mobile-first layout.
+
+Faz F (no schema): Marketplace Workspace — getMarketplaceDashboardData() + MarketplaceWorkspace. Depends on Phase 14.
+
 Required:
 - Admin dashboard: existing intelligence tiles (Trendyol & Stok section, procurement alerts, executive links)
 - Operations dashboard: open task count by category, stock alerts, today's overdue items, team task board
@@ -1088,9 +1107,11 @@ Required:
 - Warehouse dashboard: pending stock counts, critical/low stock alerts, picking queue
 - Dashboard routing: detect user role server-side and render appropriate widget set
 - No separate /dashboard URLs per role — one URL, role-aware content
+- Service functions must never fetch financial fields for non-admin workspaces
 
 Exit:
 Every role sees a dashboard that makes their next action obvious within 5 seconds.
+Financial data is absent from the DOM — not just hidden — for non-admin roles.
 
 ---
 
