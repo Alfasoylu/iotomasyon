@@ -281,28 +281,30 @@ export function ProductForm({
       {/* Hidden fields: preserve existing DB values without showing duplicate inputs */}
       <input type="hidden" {...form.register("shippingCost")} />
       <input type="hidden" {...form.register("marketplaceCommission")} />
-      <Section title="Pazar yeri maliyet geçersiz kılmaları">
+      <Section title="Pazar yeri maliyet geçersiz kılmaları — ürün bazlı (Tier 1)">
         <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-700 leading-5">
-          Standart platform oranları (komisyon, kargo, KDV, ödeme ücreti) için{" "}
-          <a href="/admin/marketplace-policies" className="underline font-medium">Pazar Yeri Politikaları</a>{" "}
-          sayfasını kullanın. Aşağıdaki alanlar yalnızca <strong>bu ürün için</strong> platfom politikasını geçersiz kılar.
+          <strong>4 katmanlı çözümleme:</strong> ürün geçersiz kılması (bu sayfa) → platform politikası (
+          <a href="/admin/marketplace-policies" className="underline font-medium">Pazar Yeri Politikaları</a>
+          ) → sistem varsayılanı. Aşağıdaki alanlar yalnızca <strong>bu ürüne özel</strong> istisnalar içindir — çoğu
+          ürün için boş bırakın ve platform politikasının devreye girmesine izin verin.
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Kargo maliyet geçersiz kılması (₺)" error={form.formState.errors.shippingCostOverride?.message}>
-            <Input {...form.register("shippingCostOverride")} placeholder="Boş = platform politikasını kullan" />
+          <Field label="Kargo geçersiz kılması (₺) — bu ürüne özel" error={form.formState.errors.shippingCostOverride?.message}>
+            <Input {...form.register("shippingCostOverride")} placeholder="Boş = platform politikası / kademeli kargo" />
           </Field>
-          <Field label="Komisyon geçersiz kılması (%)" error={form.formState.errors.marketplaceCommissionOverride?.message}>
+          <Field label="Komisyon geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.marketplaceCommissionOverride?.message}>
             <Input {...form.register("marketplaceCommissionOverride")} placeholder="Boş = platform politikasını kullan" />
           </Field>
-          <Field label="Ödeme işlem ücreti geçersiz kılması (%)" error={form.formState.errors.paymentFeeRate?.message}>
+          <Field label="Ödeme işlem ücreti geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.paymentFeeRate?.message}>
             <Input {...form.register("paymentFeeRate")} placeholder="Boş = platform politikasını kullan" />
           </Field>
-          <Field label="İade/kusur karşılığı geçersiz kılması (%)" error={form.formState.errors.returnReserveRate?.message}>
+          <Field label="İade/kusur karşılığı geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.returnReserveRate?.message}>
             <Input {...form.register("returnReserveRate")} placeholder="Boş = platform politikasını kullan" />
           </Field>
         </div>
         <p className="text-xs text-slate-400 leading-6">
-          Değer girilmezse platform politikası → sistem varsayılanı sırasıyla uygulanır.
+          Boş bırakılan alanlar için çözümleme sırası: ürün geçersiz kılması → platform kademeli kargo → platform sabit
+          kargo/komisyon → sistem varsayılanı.
         </p>
       </Section>
 
@@ -314,9 +316,6 @@ export function ProductForm({
           </Field>
           <Field label="İthalatta gelen adet" error={form.formState.errors.importQuantity?.message}>
             <Input type="number" min={0} {...form.register("importQuantity")} placeholder="0" />
-          </Field>
-          <Field label="İthalat birim maliyeti (USD)" error={form.formState.errors.importUnitCostUsd?.message}>
-            <Input {...form.register("importUnitCostUsd")} placeholder="0.00" />
           </Field>
           <Field label="Depo sayım tarihi" error={form.formState.errors.inventoryCountDate?.message}>
             <Input type="date" {...form.register("inventoryCountDate")} />
@@ -343,7 +342,7 @@ export function ProductForm({
             <Input {...form.register("wholesalePriceTry")} placeholder="0.00" />
           </Field>
           <Field
-            label="Pazar yeri genel fiyatı (₺) — temel kârlılık"
+            label="Pazar yeri fiyatı — genel fallback (₺)"
             error={form.formState.errors.marketplacePriceTry?.message}
           >
             <Input {...form.register("marketplacePriceTry")} placeholder="0.00" />
@@ -353,9 +352,10 @@ export function ProductForm({
           </Field>
         </div>
         <p className="text-xs text-slate-400 leading-6">
-          <strong>Pazar yeri genel fiyatı</strong> temel kârlılık hesabı içindir.
-          Platform bazlı hassas fiyatlar XML beslemesinden ve listeleme düzeyindeki manuel geçersiz kılmalardan gelir —
-          &quot;Pazar Yeri Fiyatlandırması&quot; kartında ürün detayında görülür.
+          <strong>Platform bazlı gerçek fiyatlar</strong> XML beslemesinden (`xmlTrendyolPrice` vb.) gelir ve listeleme
+          düzeyinde manuel geçersiz kılınabilir — ürün detayındaki &quot;Pazar Yeri Fiyatlandırması&quot; kartında görülür.
+          <strong> Pazar yeri fiyatı genel fallback</strong>, yalnızca platform/XML fiyatı yoksa kârlılık
+          hesaplamalarında devreye girer.
         </p>
       </Section>
 
@@ -394,25 +394,48 @@ export function ProductForm({
             </select>
           </Field>
         </div>
-        {/* Phase 31 — RMB-first import economics */}
-        <div className="grid gap-4 md:grid-cols-2 mt-4 rounded-xl border border-amber-100 bg-amber-50/40 p-4">
-          <div>
-            <p className="text-xs font-semibold text-amber-700 mb-3">RMB kaynaklı ithalat (opsiyonel)</p>
-            <Field label="Kaynak maliyet (RMB/CNY)" error={form.formState.errors.sourceCostRmb?.message}>
-              <Input {...form.register("sourceCostRmb")} placeholder="ör. 85.00" />
-            </Field>
+
+        {/* Kaynak maliyet — RMB birincil, USD fallback */}
+        <div className="mt-4 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Kaynak maliyet</p>
+
+          {/* RMB — birincil */}
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Birincil</span>
+              <p className="text-xs font-medium text-emerald-800">RMB / CNY kaynaklı (önerilen)</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Kaynak maliyet (RMB/CNY)" error={form.formState.errors.sourceCostRmb?.message}>
+                <Input {...form.register("sourceCostRmb")} placeholder="ör. 85.00" />
+              </Field>
+              <Field label="Ödeme komisyonu (%)" error={form.formState.errors.importPaymentFeePct?.message}>
+                <Input {...form.register("importPaymentFeePct")} placeholder="ör. 3.0" />
+              </Field>
+            </div>
+            <p className="mt-2 text-[10px] text-emerald-700">
+              Formül: <code className="font-mono">(RMB ÷ RMB/USD kuru) × (1 + komisyon%) + kargo × ağırlık) × (1 + gümrük%)</code>
+            </p>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-amber-700 mb-3">&nbsp;</p>
-            <Field label="Ödeme komisyonu (%)" error={form.formState.errors.importPaymentFeePct?.message}>
-              <Input {...form.register("importPaymentFeePct")} placeholder="ör. 3.0" />
-            </Field>
+
+          {/* USD — fallback */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Yedek</span>
+              <p className="text-xs font-medium text-slate-600">USD birim maliyet — RMB girilmemişse kullanılır</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="İthalat birim maliyeti (USD)" error={form.formState.errors.importUnitCostUsd?.message}>
+                <Input {...form.register("importUnitCostUsd")} placeholder="0.00" />
+              </Field>
+            </div>
           </div>
         </div>
+
         <p className="text-xs text-slate-400 leading-6">
-          İthalat karar motoru: hava/deniz kargo maliyeti, gümrük ve kârlılık hesabı yaparak en uygun yöntemi önerir.
-          RMB maliyet girilirse formül: <code className="font-mono">(RMB ÷ RMB/USD) × (1 + komisyon%) + kargo × ağırlık) × (1 + gümrük%)</code>.
-          RMB yoksa &quot;İthalat ve envanter&quot; bölümündeki USD maliyeti kullanılır.
+          İthalat karar motoru hava / deniz kargo maliyeti, gümrük ve kârlılığı hesaplar.
+          RMB maliyet girildiğinde aylık RMB/USD kuru (&quot;Döviz Kurları&quot; sayfası) otomatik uygulanır.
+          RMB yoksa USD yedek maliyet devreye girer.
         </p>
       </Section>
 
