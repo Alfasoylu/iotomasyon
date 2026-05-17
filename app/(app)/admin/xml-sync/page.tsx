@@ -13,6 +13,10 @@ import { XmlSyncForm, NewXmlSourceForm } from "@/components/xml-sync/xml-sync-fo
 
 export const dynamic = "force-dynamic";
 
+// Allow Server Actions on this page up to 300 seconds (Vercel Pro limit).
+// Without this, the default 10s Hobby limit causes large syncs to time out.
+export const maxDuration = 300;
+
 const STATUS_LABELS: Record<string, string> = {
   RUNNING: "Çalışıyor",
   SUCCESS: "Başarılı",

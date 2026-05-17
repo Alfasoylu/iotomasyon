@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { parseXmlFeed } from "@/lib/xml-sync";
+import { parseXmlFeed, type XmlProductRecord } from "@/lib/xml-sync";
 import type { ActionResult } from "@/types/actions";
 
 const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
@@ -84,29 +84,35 @@ export async function triggerXmlSyncAction(sourceId: string): Promise<ActionResu
   return runSync(source.id, source.url, source.authHeader);
 }
 
-// ── Core sync logic ──────────────────────────────────────────────────────────
+// ── Core sync logic (Phase 11A — Optimized batched version) ──────────────────
 //
-// Phase 11A behaviour:
-//   1. Parse all 21+ fields from the Entegra feed
-//   2. Match existing products by SKU (no barcode in this feed)
-//   3. For matched products:
-//      - If xmlLocked → skip entirely
-//      - Update stock/price only when not manually overridden
-//      - Upsert XmlProductData (full raw snapshot)
-//      - Upsert ProductImage rows (resim1-5, sortOrder 0-4)
-//      - Populate Product.imageUrl if currently empty
-//   4. For unmatched SKUs → create a new Product (xmlImported=true) + XmlProductData + images
-//   5. Mark XmlProductData.missingFromLatestFeed=true for any row NOT seen in this run
-//   6. Log recordsCreated in XmlSyncLog
+// Behaviour:
+//   1. Fix any stuck RUNNING logs (from previous timeout)
+//   2. Parse all records from the Entegra feed
+//   3. findMany ALL existing products by SKU list (1 query)
+//   4. createManyAndReturn new products (1 query)
+//   5. $transaction batch update existing product stock/imageUrl
+//   6. $transaction batch upsert XmlProductData (chunked)
+//   7. deleteMany + createMany for ProductImage (2 queries per chunk)
+//   8. Finalize log
 //
-// Prices are stored raw (USD) in XmlProductData — not pushed to Product price fields.
-// Product.sellingPriceTry etc. remain the business truth.
+// This reduces DB roundtrips from O(N*6) to O(N/100 * 3 + 10).
 
 export async function runSync(
   sourceId: string,
   url: string,
   authHeader: string | null,
 ): Promise<ActionResult> {
+  // Fix any stuck RUNNING logs from previous timeouts
+  await prisma.xmlSyncLog.updateMany({
+    where: { sourceId, status: "RUNNING" },
+    data: {
+      status: "ERROR",
+      completedAt: new Date(),
+      errorMessage: "Önceki çalışma yarıda kesildi (zaman aşımı).",
+    },
+  });
+
   const log = await prisma.xmlSyncLog.create({
     data: { sourceId, status: "RUNNING" },
   });
@@ -132,110 +138,137 @@ export async function runSync(
       return { ok: false, message: msg };
     }
 
-    // ── 2. Mark ALL previously-seen XmlProductData for this source as missing ──
-    //    We will un-mark (set false) each record we actually encounter below.
+    const now = new Date();
+
+    // ── 2. Mark ALL previously-seen XmlProductData as missing ─────────────────
     await prisma.xmlProductData.updateMany({
       where: { sourceId },
       data: { missingFromLatestFeed: true },
     });
 
-    // ── 3. Build a set of SKUs seen in this run for quick lookup ──────────────
-    const seenSkus = new Set(records.map((r) => r.sku));
+    // ── 3. Fetch all existing products matching feed SKUs (ONE query) ──────────
+    const allSkus = records.map((r) => r.sku);
+    const existingProducts = await prisma.product.findMany({
+      where: { sku: { in: allSkus } },
+      select: { id: true, sku: true, xmlLocked: true, stockSource: true, imageUrl: true },
+    });
+    const existingBySku = new Map(existingProducts.map((p) => [p.sku, p]));
 
+    const newRecords = records.filter((r) => !existingBySku.has(r.sku));
+    const existingRecords = records.filter((r) => existingBySku.has(r.sku));
+
+    // ── 4. Create new products in batch (ONE query) ────────────────────────────
     let created = 0;
+    const newProductIds = new Map<string, string>(); // sku → id
+
+    if (newRecords.length > 0) {
+      const createdProducts = await prisma.product.createManyAndReturn({
+        data: newRecords.map((rec) => ({
+          sku: rec.sku,
+          name: rec.name ?? rec.sku,
+          brand: rec.brand ?? null,
+          description: rec.description ?? null,
+          imageUrl: rec.resim1 ?? null,
+          stockQuantity: rec.stock ?? 0,
+          stockSource: rec.stock !== undefined ? "XML" : null,
+          lastStockSyncAt: rec.stock !== undefined ? now : null,
+          isActive: true,
+          xmlImported: true,
+        })),
+        skipDuplicates: true,
+        select: { id: true, sku: true },
+      });
+      created = createdProducts.length;
+      for (const p of createdProducts) newProductIds.set(p.sku, p.id);
+    }
+
+    // ── 5. Update existing products (non-locked) in batches ────────────────────
     let updated = 0;
     let skipped = 0;
 
-    for (const rec of records) {
-      try {
-        // ── 3a. Find existing product by SKU ─────────────────────────────────
-        const product = await prisma.product.findUnique({
-          where: { sku: rec.sku },
-          select: { id: true, xmlLocked: true, stockSource: true, imageUrl: true },
-        });
+    type StockUpdate = { id: string; data: Record<string, unknown> };
+    const stockUpdates: StockUpdate[] = [];
 
-        if (product) {
-          // ── Existing product ──────────────────────────────────────────────
-
-          if (product.xmlLocked) {
-            skipped++;
-            // Still update XmlProductData snapshot & images, but don't touch Product fields
-            await upsertXmlData(product.id, sourceId, rec);
-            await upsertImages(product.id, rec);
-            // un-mark missing
-            await prisma.xmlProductData.updateMany({
-              where: { productId: product.id, sourceId },
-              data: { missingFromLatestFeed: false, lastSeenAt: new Date() },
-            });
-            continue;
-          }
-
-          // Stock update (honour MANUAL override)
-          const stockData: Record<string, unknown> = {};
-          if (product.stockSource !== "MANUAL" && rec.stock !== undefined) {
-            stockData.stockQuantity = rec.stock;
-            stockData.lastStockSyncAt = new Date();
-            stockData.stockSource = "XML";
-          }
-
-          // Populate imageUrl from resim1 if currently empty
-          if (!product.imageUrl && rec.resim1) {
-            stockData.imageUrl = rec.resim1;
-          }
-
-          if (Object.keys(stockData).length > 0) {
-            await prisma.product.update({ where: { id: product.id }, data: stockData });
-          }
-
-          // Upsert XML snapshot
-          await upsertXmlData(product.id, sourceId, rec);
-          // Upsert images
-          await upsertImages(product.id, rec);
-
-          // un-mark missing
-          await prisma.xmlProductData.updateMany({
-            where: { productId: product.id, sourceId },
-            data: { missingFromLatestFeed: false, lastSeenAt: new Date() },
-          });
-
-          updated++;
-        } else {
-          // ── New product — create from XML ─────────────────────────────────
-          const newProduct = await prisma.product.create({
-            data: {
-              sku: rec.sku,
-              name: rec.name ?? rec.sku,        // fallback to sku if name absent
-              brand: rec.brand ?? null,
-              description: rec.description ?? null,
-              imageUrl: rec.resim1 ?? null,
-              stockQuantity: rec.stock ?? 0,
-              stockSource: rec.stock !== undefined ? "XML" : null,
-              lastStockSyncAt: rec.stock !== undefined ? new Date() : null,
-              isActive: true,
-              xmlImported: true,
-              // productKind defaults to MAIN_STOCK
-            },
-          });
-
-          // Upsert XML snapshot
-          await upsertXmlData(newProduct.id, sourceId, rec);
-          // Upsert images
-          await upsertImages(newProduct.id, rec);
-
-          created++;
-        }
-      } catch (recErr) {
-        // Don't abort the entire sync for a single bad record
-        console.error(`[xml-sync] SKU ${rec.sku} error:`, recErr);
+    for (const rec of existingRecords) {
+      const p = existingBySku.get(rec.sku)!;
+      if (p.xmlLocked) {
         skipped++;
+        continue;
       }
+      const data: Record<string, unknown> = {};
+      if (p.stockSource !== "MANUAL" && rec.stock !== undefined) {
+        data.stockQuantity = rec.stock;
+        data.lastStockSyncAt = now;
+        data.stockSource = "XML";
+      }
+      if (!p.imageUrl && rec.resim1) data.imageUrl = rec.resim1;
+      if (Object.keys(data).length > 0) {
+        stockUpdates.push({ id: p.id, data });
+      }
+      updated++;
     }
 
-    // ── 4. Finalize ───────────────────────────────────────────────────────────
-    // Note: records that remained missingFromLatestFeed=true are those that
-    // appeared in a previous sync but not in this one — already marked above.
-    // We deliberately do NOT delete them.
+    // Run stock updates in batches of 50
+    for (const batch of chunks(stockUpdates, 50)) {
+      await prisma.$transaction(
+        batch.map(({ id, data }) => prisma.product.update({ where: { id }, data })),
+      );
+    }
 
+    // ── 6. Build unified productId map ─────────────────────────────────────────
+    const productIdBySku = new Map<string, string>();
+    for (const p of existingProducts) productIdBySku.set(p.sku, p.id);
+    for (const [sku, id] of newProductIds) productIdBySku.set(sku, id);
+
+    // ── 7. Batch upsert XmlProductData (chunked transactions) ─────────────────
+    type XmlItem = { productId: string; rec: XmlProductRecord };
+    const xmlItems: XmlItem[] = [];
+    for (const rec of records) {
+      const productId = productIdBySku.get(rec.sku);
+      if (productId) xmlItems.push({ productId, rec });
+    }
+
+    for (const batch of chunks(xmlItems, 100)) {
+      await prisma.$transaction(
+        batch.map(({ productId, rec }) => {
+          const data = buildXmlDataPayload(sourceId, rec, now);
+          return prisma.xmlProductData.upsert({
+            where: { productId },
+            create: { productId, ...data },
+            update: data,
+          });
+        }),
+      );
+    }
+
+    // ── 8. Batch upsert ProductImages ──────────────────────────────────────────
+    // Strategy: delete all existing XML images for affected products, then createMany.
+    // Simpler and faster than per-image compare.
+    const affectedIds = [...productIdBySku.values()];
+
+    for (const batch of chunks(affectedIds, 200)) {
+      await prisma.productImage.deleteMany({
+        where: { productId: { in: batch }, source: "XML" },
+      });
+    }
+
+    const imageRows: Array<{ productId: string; url: string; sortOrder: number; source: string }> =
+      [];
+    for (const rec of records) {
+      const productId = productIdBySku.get(rec.sku);
+      if (!productId) continue;
+      if (rec.resim1) imageRows.push({ productId, url: rec.resim1, sortOrder: 0, source: "XML" });
+      if (rec.resim2) imageRows.push({ productId, url: rec.resim2, sortOrder: 1, source: "XML" });
+      if (rec.resim3) imageRows.push({ productId, url: rec.resim3, sortOrder: 2, source: "XML" });
+      if (rec.resim4) imageRows.push({ productId, url: rec.resim4, sortOrder: 3, source: "XML" });
+      if (rec.resim5) imageRows.push({ productId, url: rec.resim5, sortOrder: 4, source: "XML" });
+    }
+
+    for (const batch of chunks(imageRows, 500)) {
+      await prisma.productImage.createMany({ data: batch, skipDuplicates: true });
+    }
+
+    // ── 9. Finalize ────────────────────────────────────────────────────────────
     const status = created + updated > 0 ? "SUCCESS" : "PARTIAL";
     await finalizeLog(log.id, sourceId, status, records.length, created, updated, skipped, null);
 
@@ -255,13 +288,16 @@ export async function runSync(
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Upsert the XmlProductData snapshot for a product. */
-async function upsertXmlData(
-  productId: string,
-  sourceId: string,
-  rec: Awaited<ReturnType<typeof parseXmlFeed>>[number],
-) {
-  const data = {
+/** Split an array into chunks of `size`. */
+function chunks<T>(arr: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) result.push(arr.slice(i, i + size));
+  return result;
+}
+
+/** Build the XmlProductData payload from a parsed record. */
+function buildXmlDataPayload(sourceId: string, rec: XmlProductRecord, now: Date) {
+  return {
     sourceId,
     xmlSku: rec.sku,
     xmlName: rec.name ?? null,
@@ -288,59 +324,10 @@ async function upsertXmlData(
     xmlImage3: rec.resim3 ?? null,
     xmlImage4: rec.resim4 ?? null,
     xmlImage5: rec.resim5 ?? null,
-    lastSeenAt: new Date(),
+    lastSeenAt: now,
     missingFromLatestFeed: false,
-    updatedAt: new Date(),
+    updatedAt: now,
   };
-
-  await prisma.xmlProductData.upsert({
-    where: { productId },
-    create: { productId, ...data },
-    update: data,
-  });
-}
-
-/** Upsert ProductImage rows for resim1-5 (sortOrder 0-4). */
-async function upsertImages(
-  productId: string,
-  rec: Awaited<ReturnType<typeof parseXmlFeed>>[number],
-) {
-  const images: { url: string; sortOrder: number }[] = [];
-  if (rec.resim1) images.push({ url: rec.resim1, sortOrder: 0 });
-  if (rec.resim2) images.push({ url: rec.resim2, sortOrder: 1 });
-  if (rec.resim3) images.push({ url: rec.resim3, sortOrder: 2 });
-  if (rec.resim4) images.push({ url: rec.resim4, sortOrder: 3 });
-  if (rec.resim5) images.push({ url: rec.resim5, sortOrder: 4 });
-
-  if (images.length === 0) return;
-
-  // Fetch existing XML images for this product
-  const existing = await prisma.productImage.findMany({
-    where: { productId, source: "XML" },
-    select: { id: true, sortOrder: true, url: true },
-  });
-
-  for (const img of images) {
-    const existingRow = existing.find((e) => e.sortOrder === img.sortOrder);
-    if (existingRow) {
-      if (existingRow.url !== img.url) {
-        await prisma.productImage.update({
-          where: { id: existingRow.id },
-          data: { url: img.url, updatedAt: new Date() },
-        });
-      }
-      // same URL — no write needed
-    } else {
-      await prisma.productImage.create({
-        data: {
-          productId,
-          url: img.url,
-          sortOrder: img.sortOrder,
-          source: "XML",
-        },
-      });
-    }
-  }
 }
 
 async function finalizeLog(
