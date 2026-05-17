@@ -56,10 +56,12 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
     windows.push([t, Math.min(t + WINDOW_MS, now)]);
   }
 
+  // Snapshot existing record count so we can report how many are truly new
+  const countBefore = await prisma.trendyolSalesRecord.count();
+
   let totalOrders = 0;
   let totalLines = 0;
   let matched = 0;
-  let newRecords = 0;
 
   for (const [startDate, endDate] of windows) {
     let page = 0;
@@ -112,39 +114,31 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
             0;
           const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
 
-          const existing = await prisma.trendyolSalesRecord.findUnique({
+          // Single upsert: on conflict update mutable fields only (price data is immutable).
+          const record = await prisma.trendyolSalesRecord.upsert({
             where: { orderId_lineId: { orderId: String(order.id), lineId: lineIdBig } },
+            create: {
+              orderId: String(order.id),
+              lineId: lineIdBig,
+              productId,
+              orderDate: new Date(order.orderDate),
+              status: line.orderLineItemStatusName,
+              merchantSku: line.merchantSku ?? null,
+              barcode: line.barcode ?? null,
+              productName: line.productName,
+              quantity: line.quantity,
+              unitPriceTry: unitPrice,
+              totalPriceTry: unitPrice * line.quantity,
+            },
+            update: {
+              productId,
+              status: line.orderLineItemStatusName,
+              syncedAt: new Date(),
+            },
             select: { id: true },
           });
 
-          if (existing) {
-            // Update product link and status only (price data is immutable)
-            await prisma.trendyolSalesRecord.update({
-              where: { id: existing.id },
-              data: {
-                productId,
-                status: line.orderLineItemStatusName,
-                syncedAt: new Date(),
-              },
-            });
-          } else {
-            await prisma.trendyolSalesRecord.create({
-              data: {
-                orderId: String(order.id),
-                lineId: lineIdBig,
-                productId,
-                orderDate: new Date(order.orderDate),
-                status: line.orderLineItemStatusName,
-                merchantSku: line.merchantSku ?? null,
-                barcode: line.barcode ?? null,
-                productName: line.productName,
-                quantity: line.quantity,
-                unitPriceTry: unitPrice,
-                totalPriceTry: unitPrice * line.quantity,
-              },
-            });
-            newRecords++;
-          }
+          void record; // upsert result unused — newRecords computed from count delta below
         }
       }
 
@@ -153,6 +147,9 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
       page++;
     }
   }
+
+  const countAfter = await prisma.trendyolSalesRecord.count();
+  const newRecords = countAfter - countBefore;
 
   return { success: true, totalOrders, totalLines, matched, newRecords };
 }

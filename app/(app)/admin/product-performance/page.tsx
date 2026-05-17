@@ -19,6 +19,7 @@ import { prisma } from "@/lib/prisma";
 import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300; // sync action sweeps 4×90-day windows — needs up to 5 min
 
 // Statuses considered "cancelled" — excluded from revenue/qty aggregation
 const CANCELLED_STATUSES = new Set([
