@@ -14,6 +14,16 @@ enum UserRole {
   CUSTOM
 }
 
+// Phase 42 — Stock Adjustment Log
+enum StockAdjustmentType {
+  RESTOCK    // Supplier delivery / stock giriş
+  CORRECTION // Manual count correction / sayım düzeltme
+  DAMAGE     // Damaged/defective / hasar/fire
+  RETURN     // Customer return / müşteri iadesi
+  SALE       // Manual sale record / manuel satış kaydı
+  OTHER      // Diğer
+}
+
 enum InterestStatus {
   NEW
   WAITING_STOCK
@@ -281,6 +291,7 @@ model User {
   quoteTemplates           QuoteTemplate[]                @relation("TemplatesCreated")
   marketplacePolicies      MarketplacePlatformPolicy[]    @relation("PolicyUpdatedBy")
   importDecisionSnapshots  ImportDecisionSnapshot[]       @relation("SnapshotCreatedBy")
+  stockAdjustments         StockAdjustmentLog[]           @relation("AdjustmentCreatedBy")
 }
 
 model ProductCategory {
@@ -391,6 +402,8 @@ model Product {
   trendyolReturnRecords TrendyolReturnRecord[]
   // Phase 32 — Import decision snapshots
   importDecisionSnapshots ImportDecisionSnapshot[]
+  // Phase 42 — Stock adjustment log
+  stockAdjustments        StockAdjustmentLog[]
 
   @@index([name])
   @@index([barcode])
@@ -1074,4 +1087,28 @@ model ImportDecisionSnapshot {
   @@index([productId])
   @@index([supplierId])
   @@index([createdAt])
+}
+
+// ─── Phase 42 — Stock Adjustment Log ─────────────────────────────────────────
+// Records every manual stock movement for audit and traceability.
+// quantityChange: positive = stock increase, negative = decrease.
+// previousQty and newQty are frozen at write time so history stays correct
+// even if the product stockQuantity is later corrected again.
+
+model StockAdjustmentLog {
+  id             String              @id @default(cuid())
+  productId      String
+  product        Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  adjustmentType StockAdjustmentType
+  quantityChange Int                 // positive = in, negative = out
+  previousQty    Int
+  newQty         Int
+  notes          String?
+  createdById    String?
+  createdBy      User?               @relation("AdjustmentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime            @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+  @@index([adjustmentType])
 }

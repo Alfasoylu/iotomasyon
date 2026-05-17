@@ -33,6 +33,8 @@ import {
 } from "@/lib/import-decision";
 import { ImportSnapshotButton } from "@/components/products/import-snapshot-button";
 import { getProductImportSnapshotsAction } from "@/lib/actions/import-snapshot-actions";
+import { StockAdjustmentCard } from "@/components/products/stock-adjustment-card";
+import { getProductStockAdjustments } from "@/lib/actions/stock-adjustment-actions";
 import {
   calcMarketplacePricingRow,
   priceSourceLabel,
@@ -68,7 +70,7 @@ export default async function ProductDetailPage({
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const user = await requireUser();
 
-  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks, importSnapshots, platformPolicies] = await Promise.all([
+  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks, importSnapshots, platformPolicies, stockAdjustments] = await Promise.all([
     getProductById(id),
     getProductIntelligence(id),
     prisma.monthlyExchangeRate.findFirst({
@@ -86,6 +88,7 @@ export default async function ProductDetailPage({
     }),
     getProductImportSnapshotsAction(id),
     prisma.marketplacePlatformPolicy.findMany(),
+    getProductStockAdjustments(id),
   ]);
 
   if (!databaseAvailable) {
@@ -1039,6 +1042,16 @@ export default async function ProductDetailPage({
           </div>
         </Card>
       )}
+
+      {/* Phase 42 — Stock Adjustment Log */}
+      <StockAdjustmentCard
+        productId={product.id}
+        currentStock={product.stockQuantity}
+        initialAdjustments={stockAdjustments.map((a) => ({
+          ...a,
+          createdAt: new Date(a.createdAt),
+        }))}
+      />
     </div>
   );
 }
