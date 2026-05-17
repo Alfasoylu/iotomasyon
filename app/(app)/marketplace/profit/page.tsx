@@ -1,9 +1,14 @@
 /**
  * Phase 15 — Marketplace Profit Dashboard
  * Phase 30 — Marketplace Margin Policy Normalization
+ * Phase 34 — Per-platform XML Price Integration
  *
  * Per-listing marketplace channel profitability computed from effective
  * shipping/commission using the three-tier policy resolver.
+ *
+ * Phase 34 change: effective price now resolved via calcMarketplacePricingRow()
+ * which picks up per-platform XML prices (xmlTrendyolPrice, xmlHbPrice, etc.)
+ * when no manual override (marketplacePriceTry) is set.
  *
  * Shows:
  *  - Summary: active listings, profitable, unprofitable, missing data counts
@@ -19,11 +24,16 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { calculateProfitability } from "@/lib/profitability";
 import {
-  resolveMarginPolicy,
   policySourceLabel,
   policySourceColor,
   type PolicySource,
 } from "@/lib/marketplace-policy";
+import {
+  calcMarketplacePricingRow,
+  priceSourceLabel,
+  priceSourceColor,
+  type PriceSource,
+} from "@/lib/marketplace-pricing";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Prisma, MarketplacePlatform } from "@prisma/client";
@@ -64,6 +74,15 @@ const PLATFORM_LABELS: Record<string, string> = {
   CUSTOM:      "Diğer",
 };
 
+/** Maps marketplace platform key → XmlProductData USD price field */
+const PLATFORM_XML_FIELD: Record<string, string> = {
+  TRENDYOL:    "xmlTrendyolPrice",
+  HEPSIBURADA: "xmlHbPrice",
+  AMAZON:      "xmlAmazonPrice",
+  PAZARAMA:    "xmlPazaramaPrice",
+  IDEFIX:      "xmlIdefixPrice",
+};
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -75,6 +94,7 @@ interface ListingRow {
   productName: string;
   platform: string;
   marketplacePrice: number;
+  priceSource: PriceSource;
   netProfit: number | null;
   margin: number | null;
   roi: number | null;
@@ -83,7 +103,7 @@ interface ListingRow {
   stockQuantity: number;
   salesPotential: number;
   shippingTry: number;
-  shippingSource: PolicySource;
+  shippingSource: PolicySource | "price_tier";
   commissionPct: number;
   commissionSource: PolicySource;
 }
@@ -100,10 +120,20 @@ function PlatformChip({ platform }: { platform: string }) {
   );
 }
 
-function PolicyBadge({ source }: { source: PolicySource }) {
+function PolicyBadge({ source }: { source: PolicySource | "price_tier" }) {
+  const label = source === "price_tier" ? "Fiyat Dilimi" : policySourceLabel(source as PolicySource);
+  const color = source === "price_tier" ? "bg-orange-50 text-orange-600" : policySourceColor(source as PolicySource);
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${policySourceColor(source)}`}>
-      {policySourceLabel(source)}
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${color}`}>
+      {label}
+    </span>
+  );
+}
+
+function PriceBadge({ source }: { source: PriceSource }) {
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${priceSourceColor(source)}`}>
+      {priceSourceLabel(source)}
     </span>
   );
 }
@@ -148,7 +178,7 @@ function ProfitTable({
             <tr className={`border-b border-slate-100 ${headBg}`}>
               <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform</th>
               <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Fiyat</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Etkin Fiyat</th>
               <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Net Kâr</th>
               <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Marj</th>
               <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">ROI</th>
@@ -178,8 +208,13 @@ function ProfitTable({
                     {r.productName}
                   </p>
                 </td>
-                <td className="py-3 px-4 text-right text-xs text-slate-600">
-                  {r.marketplacePrice > 0 ? fmt(r.marketplacePrice) : <span className="text-slate-300">—</span>}
+                <td className="py-3 px-4 text-right">
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="text-xs text-slate-700">
+                      {r.marketplacePrice > 0 ? fmt(r.marketplacePrice) : <span className="text-slate-300">—</span>}
+                    </span>
+                    <PriceBadge source={r.priceSource} />
+                  </div>
                 </td>
                 <td className={`py-3 px-4 text-right text-xs font-semibold ${r.netProfit != null ? (r.netProfit >= 0 ? "text-emerald-600" : "text-red-600") : "text-slate-300"}`}>
                   {r.netProfit != null ? fmt(r.netProfit) : "—"}
@@ -225,7 +260,7 @@ function ProfitTable({
 export default async function MarketplaceProfitPage() {
   await requirePermission(PERMISSIONS.MARKETPLACE_LISTINGS_READ);
 
-  const [listings, allPolicies] = await Promise.all([
+  const [listings, allPolicies, latestRate] = await Promise.all([
     prisma.marketplaceListing.findMany({
       where: { status: "ACTIVE" },
       include: {
@@ -246,13 +281,25 @@ export default async function MarketplaceProfitPage() {
             paymentFeeRate: true,
             returnReserveRate: true,
             onlineSalesPotential: true,
+            xmlData: {
+              select: {
+                xmlTrendyolPrice:  true,
+                xmlHbPrice:        true,
+                xmlAmazonPrice:    true,
+                xmlPazaramaPrice:  true,
+                xmlIdefixPrice:    true,
+              },
+            },
           },
         },
       },
       orderBy: { createdAt: "desc" },
     }),
     prisma.marketplacePlatformPolicy.findMany(),
+    prisma.monthlyExchangeRate.findFirst({ orderBy: { month: "desc" } }),
   ]);
+
+  const usdTryRate = latestRate ? toNum(latestRate.usdTryRate) : 32;
 
   // Build platform policy lookup map
   const policyByPlatform = Object.fromEntries(
@@ -268,13 +315,25 @@ export default async function MarketplaceProfitPage() {
     ]),
   );
 
-  // Compute profitability per listing using effective policy
+  // Compute profitability per listing using canonical Phase 34 pricing engine
   const rows: ListingRow[] = listings.map((l) => {
     const p = l.product;
     const platformPolicy = policyByPlatform[l.platform as MarketplacePlatform] ?? null;
 
-    const policy = resolveMarginPolicy(
-      {
+    // Resolve per-platform XML price (USD) from XmlProductData
+    const xmlField = PLATFORM_XML_FIELD[l.platform];
+    const xmlData = p.xmlData as Record<string, Prisma.Decimal | null> | null;
+    const xmlPriceUsd = (xmlField && xmlData && xmlData[xmlField] != null)
+      ? toNum(xmlData[xmlField])
+      : null;
+
+    // Use canonical pricing engine: manual override > XML > none
+    const pricing = calcMarketplacePricingRow({
+      platform:        l.platform,
+      platformLabel:   PLATFORM_LABELS[l.platform] ?? l.platform,
+      xmlPriceUsd:     xmlPriceUsd && xmlPriceUsd > 0 ? xmlPriceUsd : null,
+      manualOverrideTry: p.marketplacePriceTry ? toNum(p.marketplacePriceTry) : null,
+      product: {
         shippingCost:                  toNum(p.shippingCost),
         shippingCostOverride:          p.shippingCostOverride ? toNum(p.shippingCostOverride) : null,
         marketplaceCommission:         toNum(p.marketplaceCommission),
@@ -284,23 +343,26 @@ export default async function MarketplaceProfitPage() {
         returnReserveRate:             p.returnReserveRate ? toNum(p.returnReserveRate) : null,
       },
       platformPolicy,
-    );
+      usdTryRate,
+    });
+
+    const effectivePrice = pricing.effectivePriceTry ?? 0;
 
     const profit = calculateProfitability({
       unitCostTry:                    toNum(p.unitCostTry),
-      marketplacePriceTry:            toNum(p.marketplacePriceTry),
-      shippingCost:                   policy.shippingTry,
-      shippingCostOverride:           null, // already resolved above
-      marketplaceCommission:          policy.commissionPct,
-      marketplaceCommissionOverride:  null, // already resolved above
+      marketplacePriceTry:            effectivePrice,
+      shippingCost:                   pricing.shippingTry,
+      shippingCostOverride:           null, // already resolved
+      marketplaceCommission:          pricing.commissionPct,
+      marketplaceCommissionOverride:  null, // already resolved
       packagingCost:                  toNum(p.packagingCost),
-      vatRate:                        policy.vatPct,
-      paymentFeeRate:                 policy.paymentFeePct,
-      returnReserveRate:              policy.returnReservePct,
+      vatRate:                        0,    // absorbed into commissionPct by resolver
+      paymentFeeRate:                 0,
+      returnReserveRate:              0,
     });
 
     const ch = profit.marketplace;
-    const hasData = ch != null;
+    const hasData = pricing.hasData && toNum(p.unitCostTry) > 0;
 
     return {
       id:               l.id,
@@ -308,7 +370,8 @@ export default async function MarketplaceProfitPage() {
       productSku:       p.sku,
       productName:      p.name,
       platform:         l.platform,
-      marketplacePrice: toNum(p.marketplacePriceTry),
+      marketplacePrice: effectivePrice,
+      priceSource:      pricing.priceSource,
       netProfit:        hasData ? ch!.netProfit : null,
       margin:           hasData ? ch!.margin : null,
       roi:              hasData ? (ch!.roi ?? null) : null,
@@ -316,10 +379,10 @@ export default async function MarketplaceProfitPage() {
       hasData,
       stockQuantity:    p.stockQuantity ?? 0,
       salesPotential:   p.onlineSalesPotential ?? 0,
-      shippingTry:      policy.shippingTry,
-      shippingSource:   policy.shippingSource,
-      commissionPct:    policy.commissionPct,
-      commissionSource: policy.commissionSource,
+      shippingTry:      pricing.shippingTry,
+      shippingSource:   pricing.shippingSource,
+      commissionPct:    pricing.commissionPct,
+      commissionSource: pricing.commissionSource,
     };
   });
 
