@@ -74,6 +74,7 @@ Implemented modules:
 - marketplace profit page XML price integration (Phase 34: /marketplace/profit uses calcMarketplacePricingRow() per listing, PLATFORM_XML_FIELD map, PriceBadge on effective price column, PolicyBadge extended for price_tier, usdTryRate from MonthlyExchangeRate)
 - unmatched barcodes inbox (Phase 37: /admin/marketplace-mappings top-30 unmatched barcodes by revenue, Eslestir button pre-fills form via ?barcode= param, MappingForm defaultBarcode/defaultPlatformTitle props, no schema change)
 - executive dashboard marketplace revenue (Phase 36: /admin/executive new Trendyol 90-day sales section, isCancelledStatus() filter, ciro/eşleşen ürün/eşleşmemiş tiles, top 5 revenue table, Gerçekleşen Marj link, no schema change)
+- bulk mapping backfill engine (Phase 41: bulkBackfillAllMappingsAction, BulkBackfillButton in header, per-mapping backfill count in success message, no schema change)
 - capital allocation real velocity (Phase 40: /admin/capital investment scores now use actual 30-day TrendyolSalesRecord velocity, velocitySource per suggestion, Gerçek/Tahmin Hız badge column, Gerçek Satış Verisi Aktif banner, no schema change)
 - procurement real velocity (Phase 39: /admin/procurement actual 30-day TrendyolSalesRecord demand override, velocitySource badge per row, T30G Satış column, no schema change)
 - return rate analysis (Phase 38: /marketplace/return-analysis, per-product returnRate = claimCount/soldQty×100, highRisk ≥5%/normal/noSales sections, top 10 reasons table, MARKETPLACE_RETURNS_READ gated, no schema change)

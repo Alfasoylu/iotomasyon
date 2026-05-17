@@ -511,6 +511,19 @@
 - tsc clean, Vercel deploy READY (commit 0819706)
 - Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
 
+### Phase 41 — Bulk Mapping Backfill Engine
+- Updated `lib/actions/marketplace-mapping-actions.ts`:
+  - `backfillMappingProductId()` now returns `{ sales: number; returns: number }` counts instead of `void`
+  - `createMarketplaceMappingAction`: surfaces backfill count in success message (e.g. "Kaydedildi. 45 sipariş, 3 iade bağlandı.")
+  - `updateMarketplaceMappingAction`: same surfacing ("Güncellendi. N sipariş, M iade bağlandı.")
+  - `bulkBackfillAllMappingsAction()`: new exported action — MARKETPLACE_MAPPINGS_WRITE gated; iterates all MarketplaceProductMapping entries; runs `backfillMappingProductId` for each; returns aggregate counts
+- Created `components/marketplace/bulk-backfill-button.tsx`: client component with "Tüm Eşleştirmeleri Uygula" button; shows pending state; success message with counts; auto-reloads page after 1.5s to refresh unmatched inbox
+- Updated `components/marketplace/mapping-form.tsx`: success message now shows `result.message ?? "Kaydedildi."` (no longer hardcoded)
+- Updated `app/(app)/admin/marketplace-mappings/page.tsx`: `BulkBackfillButton` added to header alongside ← Admin Panel button
+- No schema change — reads existing MarketplaceProductMapping, writes TrendyolSalesRecord + TrendyolReturnRecord productId
+- tsc clean, Vercel deploy READY (commit 546b0a7)
+- Browser-verified 2026-05-17: "Tüm Eşleştirmeleri Uygula" butonu header'da görünüyor, unmatched barcodes inbox ve Eşleştir butonları render ✓
+
 ### Phase 40 — Capital Allocation + Real Sales Velocity
 - Updated `app/(app)/admin/capital/page.tsx`:
   - Fetches `TrendyolSalesRecord` (last 30 days, non-cancelled, matched) in parallel with product list and CapitalConfig

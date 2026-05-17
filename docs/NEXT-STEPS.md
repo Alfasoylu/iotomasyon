@@ -129,6 +129,17 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 13 — Bulk Mapping Backfill Engine (Phase 41, 2026-05-17)
+
+Delivered:
+- bulkBackfillAllMappingsAction(): iterates all MarketplaceProductMapping entries, runs backfill for each, returns aggregate sales+returns count
+- backfillMappingProductId() now returns { sales, returns } counts
+- Per-mapping create/update now surfaces backfill count in success message
+- BulkBackfillButton client component: "Tüm Eşleştirmeleri Uygula" with count display + auto-reload
+- MappingForm: shows dynamic success message from server action
+- No schema change — writes TrendyolSalesRecord + TrendyolReturnRecord productId
+- Browser-verified 2026-05-17: button renders in header, page loads correctly ✓
+
 ### ✓ Priority 12 — Capital Allocation + Real Sales Velocity (Phase 40, 2026-05-17)
 
 Delivered:
