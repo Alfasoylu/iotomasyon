@@ -70,7 +70,7 @@ export default async function ProductDetailPage({
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const user = await requireUser();
 
-  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks, importSnapshots, platformPolicies, stockAdjustments] = await Promise.all([
+  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks, importSnapshots, platformPolicies, stockAdjustments, xmlStockChangeLogs] = await Promise.all([
     getProductById(id),
     getProductIntelligence(id),
     prisma.monthlyExchangeRate.findFirst({
@@ -89,6 +89,13 @@ export default async function ProductDetailPage({
     getProductImportSnapshotsAction(id),
     prisma.marketplacePlatformPolicy.findMany(),
     getProductStockAdjustments(id),
+    // Phase 68 — XML stock movement history (last 30 entries)
+    prisma.xmlStockChangeLog.findMany({
+      where: { productId: id },
+      orderBy: { syncedAt: "desc" },
+      take: 30,
+      select: { id: true, previousQty: true, newQty: true, delta: true, syncedAt: true },
+    }),
   ]);
 
   if (!databaseAvailable) {
@@ -1189,6 +1196,50 @@ export default async function ProductDetailPage({
           </div>
           <div className="bg-amber-50/30 px-6 py-4">
             <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{product.privateNote}</p>
+          </div>
+        </Card>
+      )}
+
+      {/* Phase 68 — XML Stock Movement History */}
+      {xmlStockChangeLogs.length > 0 && (
+        <Card className="overflow-hidden p-0">
+          <div className="border-b border-slate-100 px-6 py-4">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+              XML Stok Değişim Geçmişi
+            </p>
+            <p className="mt-1 text-xs text-slate-400">Son {xmlStockChangeLogs.length} XML senkronizasyon değişimi</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.2em] text-slate-400">
+                <tr>
+                  <th className="px-4 py-3">Tarih</th>
+                  <th className="px-4 py-3 text-right">Önceki</th>
+                  <th className="px-4 py-3 text-right">Yeni</th>
+                  <th className="px-4 py-3 text-right">Değişim</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 bg-white text-sm">
+                {xmlStockChangeLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-slate-50/60 transition">
+                    <td className="px-4 py-2 text-xs text-slate-500">
+                      {formatDateTime(log.syncedAt)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-xs text-slate-500">
+                      {log.previousQty}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-xs font-semibold text-slate-800">
+                      {log.newQty}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-xs font-bold">
+                      <span className={log.delta > 0 ? "text-emerald-600" : log.delta < 0 ? "text-red-500" : "text-slate-400"}>
+                        {log.delta > 0 ? `+${log.delta}` : log.delta}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Card>
       )}
