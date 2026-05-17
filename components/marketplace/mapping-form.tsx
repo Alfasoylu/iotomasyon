@@ -150,7 +150,7 @@ export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitl
         </Button>
         {result && (
           <span className={`text-xs font-medium ${result.ok ? "text-emerald-600" : "text-red-600"}`}>
-            {result.ok ? "Kaydedildi." : result.message}
+            {result.ok ? (result.message ?? "Kaydedildi.") : result.message}
           </span>
         )}
       </div>

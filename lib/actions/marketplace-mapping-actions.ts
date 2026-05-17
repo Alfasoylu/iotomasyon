@@ -13,13 +13,16 @@ import { MarketplacePlatform } from "@prisma/client";
  * TrendyolSalesRecord / TrendyolReturnRecord rows whose barcode or
  * merchantSku matches this mapping's platformBarcode / platformSku.
  * Only updates rows that currently have no productId (unmatched inbox).
+ *
+ * Phase 41: now returns { sales, returns } counts so callers can surface
+ * how many records were newly linked.
  */
 async function backfillMappingProductId(
   productId: string,
   platformBarcode: string | null,
   platformSku: string | null,
-): Promise<void> {
-  if (!platformBarcode && !platformSku) return;
+): Promise<{ sales: number; returns: number }> {
+  if (!platformBarcode && !platformSku) return { sales: 0, returns: 0 };
 
   // Build OR conditions for matching
   const barcodeOr = platformBarcode
@@ -29,7 +32,7 @@ async function backfillMappingProductId(
     ? [{ barcode: platformSku }, { merchantSku: platformSku }]
     : [];
   const orConditions = [...barcodeOr, ...skuOr];
-  if (orConditions.length === 0) return;
+  if (orConditions.length === 0) return { sales: 0, returns: 0 };
 
   const matchWhere = { productId: null, OR: orConditions };
 
@@ -50,6 +53,7 @@ async function backfillMappingProductId(
       `[backfill] Mapping(${productId}): sales=${salesResult.count} returns=${returnsResult.count} rows linked`,
     );
   }
+  return { sales: salesResult.count, returns: returnsResult.count };
 }
 
 const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
@@ -98,8 +102,12 @@ export async function createMarketplaceMappingAction(
       },
     });
     // Retroactively link previously-unmatched sales/return records
-    await backfillMappingProductId(parsed.data.productId, barcode, sku);
-    return { ok: true };
+    const backfill = await backfillMappingProductId(parsed.data.productId, barcode, sku);
+    const backfillMsg =
+      backfill.sales > 0 || backfill.returns > 0
+        ? ` ${backfill.sales} sipariş, ${backfill.returns} iade bağlandı.`
+        : "";
+    return { ok: true, message: `Kaydedildi.${backfillMsg}` };
   } catch (err) {
     console.error("[marketplace-mapping-actions] create:", err);
     return { ok: false, message: "Eşleştirme oluşturulamadı." };
@@ -133,10 +141,50 @@ export async function updateMarketplaceMappingAction(
       },
     });
     // Retroactively link previously-unmatched sales/return records
-    await backfillMappingProductId(parsed.data.productId, barcode, sku);
-    return { ok: true };
+    const backfill = await backfillMappingProductId(parsed.data.productId, barcode, sku);
+    const backfillMsg =
+      backfill.sales > 0 || backfill.returns > 0
+        ? ` ${backfill.sales} sipariş, ${backfill.returns} iade bağlandı.`
+        : "";
+    return { ok: true, message: `Güncellendi.${backfillMsg}` };
   } catch {
     return { ok: false, message: "Eşleştirme güncellenemedi." };
+  }
+}
+
+/**
+ * Phase 41 — Bulk Backfill Engine.
+ * Iterates ALL existing MarketplaceProductMapping entries and runs
+ * backfillMappingProductId for each one. This is a one-shot operation
+ * that links historical unmatched TrendyolSalesRecord / TrendyolReturnRecord
+ * rows to their products using every approved mapping on record.
+ *
+ * Requires MARKETPLACE_MAPPINGS_WRITE permission (same as create/update).
+ */
+export async function bulkBackfillAllMappingsAction(): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.MARKETPLACE_MAPPINGS_WRITE))) return PERM_DENIED;
+
+  try {
+    const mappings = await prisma.marketplaceProductMapping.findMany({
+      select: { productId: true, platformBarcode: true, platformSku: true },
+    });
+
+    let totalSales = 0;
+    let totalReturns = 0;
+    for (const m of mappings) {
+      const counts = await backfillMappingProductId(m.productId, m.platformBarcode, m.platformSku);
+      totalSales += counts.sales;
+      totalReturns += counts.returns;
+    }
+
+    return {
+      ok: true,
+      message: `${mappings.length} eşleştirme işlendi. ${totalSales} sipariş, ${totalReturns} iade kaydı bağlandı.`,
+    };
+  } catch (err) {
+    console.error("[marketplace-mapping-actions] bulkBackfill:", err);
+    return { ok: false, message: "Toplu backfill sırasında hata oluştu." };
   }
 }
 

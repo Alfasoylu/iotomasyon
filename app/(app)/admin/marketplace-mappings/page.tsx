@@ -1,6 +1,7 @@
 /**
  * Phase 16 — Marketplace Product Mapping Management
  * Phase 37 — Unmatched Barcodes Inbox
+ * Phase 41 — Bulk Backfill Engine (BulkBackfillButton in header)
  *
  * Manage many-to-one mappings: multiple platform identities → one internal product.
  * Supports Trendyol and all other MarketplacePlatform values.
@@ -8,6 +9,10 @@
  * Phase 37 adds an "Eşleşmemiş Barkodlar" inbox above the add form, showing top
  * unmatched Trendyol barcodes sorted by revenue. Clicking "Eşleştir →" pre-fills
  * the barcode field via ?barcode= search param.
+ *
+ * Phase 41 adds "Tüm Eşleştirmeleri Uygula" button that runs backfill for all
+ * existing mappings against all unmatched TrendyolSalesRecord / TrendyolReturnRecord
+ * rows. Per-mapping save also now surfaces backfill count in success message.
  */
 
 import Link from "next/link";
@@ -17,6 +22,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MappingForm, DeleteMappingButton } from "@/components/marketplace/mapping-form";
+import { BulkBackfillButton } from "@/components/marketplace/bulk-backfill-button";
 
 export const dynamic = "force-dynamic";
 
@@ -112,9 +118,12 @@ export default async function MarketplaceMappingsPage({
             Platform kimliklerini (barkod, SKU, listeleme ID) iç ürünlere bağlayın.
           </p>
         </div>
-        <Link href="/admin">
-          <Button variant="secondary">← Admin Panel</Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <BulkBackfillButton />
+          <Link href="/admin">
+            <Button variant="secondary">← Admin Panel</Button>
+          </Link>
+        </div>
       </div>
 
       {/* ── Phase 37: Unmatched Barcodes Inbox ── */}
