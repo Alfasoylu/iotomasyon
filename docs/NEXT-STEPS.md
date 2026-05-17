@@ -129,6 +129,18 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 20 — Trendyol Daily Sync Cron (Phase 48, 2026-05-17)
+
+Delivered:
+- `app/api/cron/trendyol-sync/route.ts`: Vercel cron, daily 06:00 UTC, CRON_SECRET Bearer auth
+- 14-day sliding window covers recent orders + status changes without hitting Vercel 5-min limit
+- `syncOrders`: paginated TrendyolSalesRecord upsert (barcode/SKU match, discountedPrice fallback)
+- `syncReturns`: paginated TrendyolReturnRecord upsert (claimItemStatus, reason code/name)
+- Parallel execution via `Promise.allSettled` — one side failing doesn't block the other
+- `vercel.json` updated with `0 6 * * *` cron schedule for trendyol-sync
+- No schema change
+- Deployment READY, tsc clean; cron endpoint verified (deployment live + tsc pass) ✓
+
 ### ✓ Priority 19 — Operational Intelligence Dashboard (Phase 47, 2026-05-17)
 
 Delivered:

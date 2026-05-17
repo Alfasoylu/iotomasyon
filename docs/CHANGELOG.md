@@ -73,6 +73,13 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
+### Phase 48 — Trendyol Daily Sync Cron (2026-05-17)
+- Added `app/api/cron/trendyol-sync/route.ts`: Vercel cron route called daily at 06:00 UTC, CRON_SECRET Bearer auth, 14-day sliding window, parallel `syncOrders` + `syncReturns` via `Promise.allSettled`
+- `syncOrders`: paginates `fetchTrendyolOrders` (page/size=50), upserts `TrendyolSalesRecord` (barcode/SKU product match, discountedPrice fallback, status update)
+- `syncReturns`: paginates `fetchTrendyolReturns` (page/size=50), upserts `TrendyolReturnRecord` (claimItemStatus, customerClaimItemReason/trendyolClaimItemReason, barcode/SKU match)
+- `vercel.json` updated: added `{ "path": "/api/cron/trendyol-sync", "schedule": "0 6 * * *" }` cron entry
+- No schema change; deployment READY, tsc clean
+
 ### Phase 47 — Operational Intelligence Dashboard (2026-05-17)
 - Added `getOperationalAlerts()` to `services/dashboard-service.ts`: parallel-fetches criticalStockCount (stockQuantity ≤ 0), pending deduction rows (non-cancelled, matched, stockDeducted=false), unmatchedOrdersCount (productId=null), 7-day order qty, 30-day Trendyol revenue
 - `/dashboard` new "Trendyol & Stok" section with 5 `LinkedStatCard` tiles: Kritik Stok → /admin/stock-health, Bekleyen Stok Düşümü → /orders, Son 7 Gün Sipariş → /orders, Eşleşmemiş Sipariş → /admin/marketplace-mappings, Trendyol Ciro (30 Gün) → /marketplace/realized-margin

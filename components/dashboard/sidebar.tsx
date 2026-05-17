@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 47 aktif
+          Faz 48 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Operasyonel Pano: dashboard'a Trendyol & Stok sinyalleri eklendi — kritik stok, bekleyen düşüm, son 7 gün sipariş, eşleşmemiş, 30 gün ciro.
+            Trendyol Günlük Cron: vercel.json cron + /api/cron/trendyol-sync eklendi — 14 günlük pencere, sipariş + iade upsert, günde 1 otomatik senkron.
           </p>
         </div>
       </aside>
