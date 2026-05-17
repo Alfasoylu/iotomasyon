@@ -54,11 +54,17 @@ export default async function ProductDetailPage({
 }) {
   await requirePermission(PERMISSIONS.PRODUCTS_READ);
   const { id } = await params;
-  const [{ databaseAvailable, product }, intelligenceResult, latestRate] = await Promise.all([
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords] = await Promise.all([
     getProductById(id),
     getProductIntelligence(id),
     prisma.monthlyExchangeRate.findFirst({
       orderBy: [{ year: "desc" }, { month: "desc" }],
+    }),
+    prisma.trendyolSalesRecord.findMany({
+      where: { productId: id },
+      select: { orderDate: true, status: true, quantity: true, totalPriceTry: true, unitPriceTry: true },
     }),
   ]);
 
@@ -162,6 +168,24 @@ export default async function ProductDetailPage({
       (product.wholesaleSalesPotential ?? 0) +
       (product.installerSalesPotential ?? 0) || null,
   });
+
+  // Phase 26 — Realized sales aggregation from TrendyolSalesRecord
+  const isCancelledStatus = (s: string) => {
+    const low = s.toLowerCase();
+    return low.includes("iptal") || low.includes("cancel");
+  };
+  const activeRecords = salesRecords.filter((r) => !isCancelledStatus(r.status));
+  const records30d = activeRecords.filter((r) => r.orderDate >= thirtyDaysAgo);
+  const totalQtyAll = activeRecords.reduce((s, r) => s + r.quantity, 0);
+  const totalRevAll = activeRecords.reduce((s, r) => s + Number(r.totalPriceTry), 0);
+  const totalQty30d = records30d.reduce((s, r) => s + r.quantity, 0);
+  const totalRev30d = records30d.reduce((s, r) => s + Number(r.totalPriceTry), 0);
+  const avgUnitPrice = totalQtyAll > 0 ? totalRevAll / totalQtyAll : null;
+  const unitCostNum = product.unitCostTry ? Number(product.unitCostTry) : null;
+  const realizedMargin =
+    avgUnitPrice && unitCostNum && avgUnitPrice > 0
+      ? ((avgUnitPrice - unitCostNum) / avgUnitPrice) * 100
+      : null;
 
   return (
     <div className="space-y-6">
@@ -517,6 +541,69 @@ export default async function ProductDetailPage({
             <p className="mt-2 text-xs">
               Ürünü düzenleyerek ağırlık, gümrük oranı, satış fiyatı ve aylık talep bilgilerini girin.
             </p>
+          </div>
+        )}
+      </Card>
+
+      {/* Phase 26 — Realized Sales Card */}
+      <Card className="p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-950">Trendyol Satış Performansı</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Senkronize edilmiş Trendyol sipariş verisi (iptal siparişler hariç).
+            </p>
+          </div>
+          <Link
+            href="/admin/product-performance"
+            className="text-xs text-slate-400 hover:text-slate-700 transition"
+          >
+            Tüm Sıralama →
+          </Link>
+        </div>
+
+        {salesRecords.length === 0 ? (
+          <p className="mt-4 text-sm text-slate-400">
+            Bu ürün için henüz senkronize satış verisi yok.{" "}
+            <Link href="/admin/product-performance" className="underline hover:text-slate-600">
+              Satış Performansı
+            </Link>{" "}
+            sayfasından senkronize edin.
+          </p>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Son 30G Satış</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{totalQty30d}</p>
+              <p className="text-xs text-slate-400">adet</p>
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Son 30G Ciro</p>
+              <p className="mt-1 text-lg font-bold text-slate-900">
+                ₺{totalRev30d.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}
+              </p>
+              <p className="text-xs text-slate-400">TRY</p>
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Toplam Satış</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{totalQtyAll}</p>
+              <p className="text-xs text-slate-400">adet (tüm zamanlar)</p>
+            </div>
+            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Gerçekleşen Marj</p>
+              {realizedMargin !== null ? (
+                <>
+                  <p className={`mt-1 text-2xl font-bold ${realizedMargin >= 25 ? "text-emerald-600" : realizedMargin >= 10 ? "text-amber-600" : "text-red-600"}`}>
+                    %{realizedMargin.toFixed(1)}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    ort. ₺{avgUnitPrice?.toFixed(2)} / birim
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-sm text-slate-300">Maliyet eksik</p>
+              )}
+            </div>
           </div>
         )}
       </Card>

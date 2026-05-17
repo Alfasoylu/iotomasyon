@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 11C aktif
+          Faz 26 aktif
           <p className="mt-2 font-medium text-slate-900">
-            İthalat Kararları: hava/deniz kargo ekonomisi, satın alma önerisi.
+            Satış Performansı: Trendyol sipariş senkronizasyonu, ürün bazlı ciro ve marj sıralaması.
           </p>
         </div>
       </aside>

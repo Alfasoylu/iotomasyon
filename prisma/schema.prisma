@@ -378,6 +378,8 @@ model Product {
   xmlData              XmlProductData?
   // Phase 20 — supplier links
   supplierLinks        SupplierProduct[]
+  // Phase 26 — Trendyol sales records
+  trendyolSalesRecords TrendyolSalesRecord[]
 
   @@index([name])
   @@index([barcode])
@@ -929,4 +931,32 @@ model SupplierProduct {
   @@index([supplierId])
   @@index([productId])
   @@index([isPreferred])
+}
+
+// ─── Phase 26 — Product Performance Ranking ───────────────────────────────────
+// One row per Trendyol order line. Synced via /admin/product-performance.
+// productId is nullable: unmatched lines kept for audit but excluded from rankings.
+
+model TrendyolSalesRecord {
+  id           String   @id @default(cuid())
+  orderId      String   // Trendyol order numeric ID (as string)
+  lineId       Int      // order line ID (int)
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  orderDate      DateTime
+  status         String   // e.g. "Delivered", "Cancelled", "Picking"
+  merchantSku    String?
+  barcode        String?
+  productName    String
+  quantity       Int
+  unitPriceTry   Decimal  @db.Decimal(15,2)  // discountedPrice per unit
+  totalPriceTry  Decimal  @db.Decimal(15,2)  // quantity × discountedPrice
+  syncedAt       DateTime @default(now())
+
+  @@unique([orderId, lineId])
+  @@index([productId])
+  @@index([orderDate])
+  @@index([merchantSku])
+  @@index([barcode])
 }
