@@ -682,6 +682,27 @@ Tamamlananlar:
 
 ---
 
+### ✓ DONE — Priority 60 — Trendyol Velocity → Import Decision Input (Phase 60, 2026-05-17)
+
+**Neden:**
+Phase 59 Trendyol satış hızını yalnızca display ekledi. Gerçek Trendyol order geçmişi olan ama manual satış tahmini girilmemiş ürünler hâlâ MISSING_DATA gösteriyordu. `calculateImportDecision()` yalnızca manual tahmin alıyordu.
+
+**Bağımlılık:** Phase 59 (velocityByProduct map zaten mevcut), Phase 11C (import engine)
+
+Tamamlananlar:
+- `app/(app)/admin/import-decisions/page.tsx`:
+  - `manualMonthlyUnits` (online+wholesale+installer sum) ve `trendyolMonthly` (velocityByProduct) ayrıştırıldı
+  - `effectiveMonthlyUnits = Math.max(manualMonthlyUnits, trendyolMonthly) || null`
+  - `monthlyUnitsSource: "trendyol" | "manual" | "combined" | "none"` kaynağı izler
+  - `calculateImportDecision()` artık `effectiveMonthlyUnits` kullanıyor
+  - "Talep/ay" hücresi: kaynak badge (emerald=Trendyol / blue=İkisi de / slate=Manuel / "—"=none)
+- Schema değişikliği: YOK
+- tsc --noEmit temiz ✓
+- Browser-verified: Trendyol emerald badge + İkisi de mavi badge görünür; ALWAYS_STOCK + BUY_SMALL kararlar aktif ✓
+- READY: dpl_8zd2WpGzqG6QVdrWPhi2mvEqgR3R
+
+---
+
 ## Anti-Scope Rules
 
 DO NOT start:

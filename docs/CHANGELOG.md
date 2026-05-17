@@ -9,6 +9,28 @@
 
 ## 2026-05
 
+### Phase 60 — Trendyol Velocity → Import Decision Input (2026-05-17)
+
+**Amaç:**
+Phase 59 Trendyol satış hızını yalnızca display olarak eklemişti. Bu fazda gerçek Trendyol satış verisi import karar motoruna input olarak beslendi; manual tahmin girilmemiş ama Trendyol satış geçmişi olan ürünler artık MISSING_DATA yerine gerçek skor alıyor.
+
+Değişiklikler:
+- `app/(app)/admin/import-decisions/page.tsx`:
+  - `manualMonthlyUnits` / `trendyolMonthly` ayrımı yapıldı
+  - `effectiveMonthlyUnits = Math.max(manualMonthlyUnits, trendyolMonthly) || null` — her ikisi sıfırsa `null`
+  - `monthlyUnitsSource: "trendyol" | "manual" | "combined" | "none"` hesaplandı
+  - `calculateImportDecision()` artık `effectiveMonthlyUnits` alıyor (önceden sadece manual)
+  - "Talep/ay" hücresi: kaynak badge gösteriyor (emerald=Trendyol, blue=İkisi de, slate=Manuel, "—"=none)
+- Schema değişikliği: YOK
+
+Kabul kriteri:
+- "Trendyol" emerald badge'ler Talep/ay sütununda görünür ✓
+- "İkisi de" mavi badge'ler (manual+trendyol her ikisi de > 0) görünür ✓
+- ALWAYS_STOCK ve BUY_SMALL kararlar aktif (Trendyol velocity ile skorlanan ürünler) ✓
+- Vercel READY: dpl_8zd2WpGzqG6QVdrWPhi2mvEqgR3R ✓
+
+---
+
 ### Phase 59 — Trendyol Satış Hızı (2026-05-17)
 
 **Amaç:**
