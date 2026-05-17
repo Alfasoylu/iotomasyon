@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ProductForm } from "@/components/products/product-form";
 import { ProductImageManager } from "@/components/products/product-image-manager";
+import { PrivateNoteEditor } from "@/components/products/private-note-editor";
 import { Card } from "@/components/ui/card";
 import { getProductById } from "@/services/product-service";
 import { listCategoriesForSelect } from "@/services/category-service";
@@ -21,7 +22,7 @@ export default async function EditProductPage({
   await requirePermission(PERMISSIONS.PRODUCTS_UPDATE);
   const { id } = await params;
   const user = await requireUser();
-  const [{ databaseAvailable, product }, { categories }, allAttributes, users, allSuppliers, supplierLinks, canWriteSuppliers] = await Promise.all([
+  const [{ databaseAvailable, product }, { categories }, allAttributes, users, allSuppliers, supplierLinks, canWriteSuppliers, canViewPrivate] = await Promise.all([
     getProductById(id),
     listCategoriesForSelect(),
     listAttributes(),
@@ -40,6 +41,7 @@ export default async function EditProductPage({
       include: { supplier: { select: { name: true } } },
     }),
     checkPermission(user, PERMISSIONS.SUPPLIERS_WRITE),
+    checkPermission(user, PERMISSIONS.EXECUTIVE_READ),
   ]);
 
   if (!databaseAvailable) {
@@ -194,6 +196,27 @@ export default async function EditProductPage({
           />
         </div>
       </Card>
+
+      {/* Phase 28: Owner-only private note */}
+      {canViewPrivate && (
+        <Card className="overflow-hidden border-amber-200">
+          <div className="border-b border-amber-200 bg-amber-50 px-6 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">
+              Faz 28 — Özel Zeka
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-950">Özel Not</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Sadece sahip/yönetici görebilir. Tedarikçi bilgisi, fiyat stratejisi, özel satın alma notları.
+            </p>
+          </div>
+          <div className="p-6">
+            <PrivateNoteEditor
+              productId={product.id}
+              initialNote={product.privateNote ?? null}
+            />
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

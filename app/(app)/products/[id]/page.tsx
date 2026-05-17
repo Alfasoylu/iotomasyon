@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
 import { getProductById } from "@/services/product-service";
 import { getProductIntelligence } from "@/services/category-service";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, checkPermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 import {
@@ -55,8 +55,9 @@ export default async function ProductDetailPage({
   await requirePermission(PERMISSIONS.PRODUCTS_READ);
   const { id } = await params;
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const user = await requireUser();
 
-  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords] = await Promise.all([
+  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks] = await Promise.all([
     getProductById(id),
     getProductIntelligence(id),
     prisma.monthlyExchangeRate.findFirst({
@@ -65,6 +66,12 @@ export default async function ProductDetailPage({
     prisma.trendyolSalesRecord.findMany({
       where: { productId: id },
       select: { orderDate: true, status: true, quantity: true, totalPriceTry: true, unitPriceTry: true },
+    }),
+    checkPermission(user, PERMISSIONS.EXECUTIVE_READ),
+    prisma.supplierProduct.findMany({
+      where: { productId: id },
+      include: { supplier: { select: { name: true } } },
+      orderBy: [{ isPreferred: "desc" }, { createdAt: "asc" }],
     }),
   ]);
 
@@ -761,6 +768,66 @@ export default async function ProductDetailPage({
             <Link href={`/products/${product.mainProduct.id}`} className="text-sm font-medium text-slate-700 hover:text-slate-900 underline">
               Ana ürün: {product.mainProduct.name} ({product.mainProduct.sku})
             </Link>
+          </div>
+        </Card>
+      )}
+
+      {/* Phase 28 — Preferred supplier summary (always visible when suppliers exist) */}
+      {supplierLinks.length > 0 && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-950">Tedarikçi Kaynağı</h2>
+            <Link href={`/products/${product.id}/edit`} className="text-xs text-slate-400 hover:text-slate-700 transition">
+              Düzenle →
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-slate-500">Bu ürünü sağlayan tedarikçiler.</p>
+          <div className="mt-4 space-y-2">
+            {supplierLinks.map((sl) => (
+              <div key={sl.supplierId} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  {sl.isPreferred && (
+                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                      ★ Tercihli
+                    </span>
+                  )}
+                  <span className="text-sm font-medium text-slate-900">{sl.supplier.name}</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-slate-500">
+                  {sl.unitCostUsd != null && (
+                    <span className="font-mono">${Number(sl.unitCostUsd).toFixed(2)}</span>
+                  )}
+                  {sl.leadDays != null && (
+                    <span>{sl.leadDays} gün</span>
+                  )}
+                  {sl.moq != null && (
+                    <span>MOQ: {sl.moq}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Phase 28 — Owner-only private note (EXECUTIVE_READ gated) */}
+      {canViewPrivate && product.privateNote && (
+        <Card className="overflow-hidden border-amber-200">
+          <div className="border-b border-amber-200 bg-amber-50 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+                  🔒 Özel Not
+                </span>
+                <span className="text-xs text-amber-700">Sadece yetkili kullanıcılar görebilir</span>
+              </div>
+              <Link href={`/products/${product.id}/edit`} className="text-xs text-amber-600 hover:text-amber-800 transition">
+                Düzenle →
+              </Link>
+            </div>
+          </div>
+          <div className="bg-amber-50/30 px-6 py-4">
+            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{product.privateNote}</p>
           </div>
         </Card>
       )}

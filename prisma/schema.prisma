@@ -380,6 +380,8 @@ model Product {
   supplierLinks        SupplierProduct[]
   // Phase 26 — Trendyol sales records
   trendyolSalesRecords TrendyolSalesRecord[]
+  // Phase 28 — Owner-only private intelligence (EXECUTIVE_READ only)
+  privateNote          String?
 
   @@index([name])
   @@index([barcode])

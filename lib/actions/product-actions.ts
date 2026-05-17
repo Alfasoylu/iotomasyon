@@ -203,6 +203,8 @@ function normalizeProductData(input: ProductInput) {
     weightKg: emptyToNull(input.weightKg),
     customsRatePct: emptyToNull(input.customsRatePct),
     shippingMethodPref: emptyToNull(input.shippingMethodPref),
+    // Phase 28: privateNote is intentionally omitted here.
+    // It is saved exclusively via updatePrivateNoteAction (EXECUTIVE_READ required).
   };
 }
 
@@ -214,6 +216,32 @@ function positiveIntOrNull(value: string | undefined): number | null {
 
 function emptyToNull(value: string | undefined) {
   return value && value.trim().length > 0 ? value.trim() : null;
+}
+
+// Phase 28 — Separate privileged action for owner-only private note.
+// This is intentionally separate from updateProductAction so that
+// non-EXECUTIVE_READ users who call updateProductAction cannot touch it.
+export async function updatePrivateNoteAction(
+  productId: string,
+  privateNote: string,
+): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkPermission(user, PERMISSIONS.PRODUCTS_UPDATE))) return PERM_DENIED;
+
+  try {
+    await prisma.product.update({
+      where: { id: productId },
+      data: { privateNote: privateNote.trim() || null },
+    });
+
+    revalidatePath(`/products/${productId}`);
+    revalidatePath(`/products/${productId}/edit`);
+
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Özel not kaydedilemedi." };
+  }
 }
 
 function isUniqueSkuError(error: unknown) {

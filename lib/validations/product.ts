@@ -18,7 +18,7 @@ export const productSchema = z.object({
   lastStockSyncAt: z.string().trim(),
   lastStockCountById: z.string().trim(),
   location: z.string().trim().max(120),
-  description: z.string().trim().max(2000),
+  description: z.string().trim().max(10000),
   isActive: z.boolean(),
   shippingCost: z.string().trim(),
   shippingCostOverride: z.string().trim(),
