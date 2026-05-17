@@ -9,6 +9,34 @@
 
 ## 2026-05
 
+### Phase 63 — Trendyol Aylık Satış Raporu (2026-05-17)
+
+**Amaç:**
+Yönetici takımın Trendyol satış performansını tek ekranda izleyebilmesi için son 12 aylık sipariş, ciro, iade ve eşleşme oranı raporu oluşturuldu. Mevcut TrendyolSalesRecord + TrendyolReturnRecord tablolarından schema değişikliği olmadan türetildi.
+
+Değişiklikler:
+- `app/(app)/admin/trendyol-report/page.tsx` (YENİ):
+  - EXECUTIVE_READ permission gate; `force-dynamic` export
+  - Parallel fetch: son 12 ay TrendyolSalesRecord + TrendyolReturnRecord
+  - JS-side monthly aggregation: `toMonthKey()` + `isCancelled()` filtresi
+  - `MonthData` tip: totalOrders, totalUnits, grossRevenue, matchedOrders, returnCount, returnValue
+  - 12 ay aylık özet tablosu: Ay / Sipariş / Adet / Brüt Ciro / İade / İade Oranı (renk kodlu: kırmızı>%15, amber>%8, yeşil diğer) / Net Ciro / Eşleşme % (yeşil≥%70, amber≥%40, kırmızı<%40)
+  - Toplam footer satırı
+  - Son 30 gün 6 KPI kartı: Sipariş, Adet, Brüt Ciro, İade, Net Ciro, Eşleşme %
+  - Top-10 eşleşmiş ürün ciro tablosu (ürün linkleri dahil)
+  - Boş durum fallback → /admin/marketplace-mappings linki
+- `app/(app)/layout.tsx`: "Trendyol Raporu" nav item eklendi (İthalat & Analiz, EXECUTIVE_READ)
+- Schema değişikliği: YOK
+
+Kabul kriteri:
+- KPI kartları render oluyor: 659 sipariş, ₺612.218 brüt ciro ✓
+- Aylık tablo: May/Nis/Şub 2026 satırları, iade oranı renk kodlaması ✓
+- Top-10 ürün tablosu product linki dahil görünüyor ✓
+- Sidebar "Trendyol Raporu" linki aktif ✓
+- Vercel READY: dpl_5DHWKsJJ6L5N61Ti8iNZopndpriH ✓
+
+---
+
 ### Phase 62 — TrendyolReturnRecord Normalized Re-Match (2026-05-17)
 
 **Amaç:**

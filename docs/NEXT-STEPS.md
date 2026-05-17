@@ -703,6 +703,23 @@ Tamamlananlar:
 
 ---
 
+### ✓ DONE — Priority 63 — Trendyol Aylık Satış Raporu (Phase 63, 2026-05-17)
+
+**Neden:**
+Yönetim takımı Trendyol satış performansını aylık granülaritede izleyemiyordu. Sipariş + iade verileri vardı ama yönetici ekrana özetleyen bir rapor sayfası yoktu.
+
+**Bağımlılık:** Phase 29 (TrendyolSalesRecord + TrendyolReturnRecord), Phase 63 için schema değişikliği yok
+
+Tamamlananlar:
+- `app/(app)/admin/trendyol-report/page.tsx` (YENİ): EXECUTIVE_READ gated; parallel fetch son 12 ay; JS-side monthly aggregation; 12-ay aylık tablo (İade Oranı + Eşleşme % renk kodlu); totals footer; 6 KPI kartı (son 30 gün); top-10 eşleşmiş ürün tablosu; boş durum fallback
+- `app/(app)/layout.tsx`: "Trendyol Raporu" sidebar linki eklendi (İthalat & Analiz, EXECUTIVE_READ)
+- Schema değişikliği: YOK
+- tsc --noEmit temiz ✓
+- Browser-verified: KPI kartlar (659 sipariş, ₺612.218 brüt ciro), 3-aylık tablo, top-10 ürünler ✓
+- READY: dpl_5DHWKsJJ6L5N61Ti8iNZopndpriH
+
+---
+
 ### ✓ DONE — Priority 62 — TrendyolReturnRecord Normalized Re-Match (Phase 62, 2026-05-17)
 
 **Neden:**
