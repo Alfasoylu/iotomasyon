@@ -825,7 +825,7 @@ export default async function ProductDetailPage({
         </Card>
       )}
 
-      {/* Phase 28 — Owner-only private note (EXECUTIVE_READ gated) */}
+      {/* Phase 28 — Owner-only private note (isOwner gated — ADMIN_EMAIL only) */}
       {canViewPrivate && product.privateNote && (
         <Card className="overflow-hidden border-amber-200">
           <div className="border-b border-amber-200 bg-amber-50 px-6 py-4">
@@ -834,7 +834,7 @@ export default async function ProductDetailPage({
                 <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
                   🔒 Özel Not
                 </span>
-                <span className="text-xs text-amber-700">Sadece yetkili kullanıcılar görebilir</span>
+                <span className="text-xs text-amber-700">Sadece sahip görebilir</span>
               </div>
               <Link href={`/products/${product.id}/edit`} className="text-xs text-amber-600 hover:text-amber-800 transition">
                 Düzenle →

@@ -279,6 +279,30 @@
 - tsc --noEmit clean, Vercel deploy READY (commit ceac815)
 - Browser-verified 2026-05-17: edit page loads after migration ✓; amber private note card visible with 🔒 badge ✓; note saved to DB via action ("Browser test notu: UV-82 için Çin'den ithalat planı — 2026-05-17 Phase 28 doğrulama.") confirmed via Supabase SQL ✓; detail page shows saved note under "🔒 Özel Not" ✓; "Tedarikçi Kaynağı" supplier card visible ✓
 
+### Phase 25–28 Closure Fixes (commit 4bf6bd4)
+
+**Issue 1 — Owner-only privateNote gating (stricter than Phase 28 original)**
+- Changed `updatePrivateNoteAction` gate from `checkPermission(EXECUTIVE_READ)` to `isOwner(user)` — only the ADMIN_EMAIL account can write private notes; other ADMIN-role users are excluded
+- Added `isOwner()` helper to `lib/auth.ts`: `user.email.toLowerCase() === getAdminEmail().toLowerCase()`
+- Updated `app/(app)/products/[id]/page.tsx` and `edit/page.tsx`: `canViewPrivate` now uses `Promise.resolve(isOwner(user))` (was `checkPermission(EXECUTIVE_READ)`)
+- Text correction: "Sadece yetkili kullanıcılar görebilir" → "Sadece sahip görebilir" (accurately reflects isOwner semantics)
+
+**Issue 2 — Performance-based sorts on /products**
+- Added 3 new sort options to `components/products/product-filters.tsx`: `sales_30d_qty` (30G Satış Adedi ↓), `sales_30d_rev` (30G Ciro ↓), `sales_all_rev` (Toplam Ciro ↓)
+- Added `SALES_SORTS` set and in-memory aggregation block to `services/product-service.ts`: fetches `TrendyolSalesRecord` for visible products only, excludes cancelled orders ("iptal"/"cancel"), aggregates qty30d/rev30d/revAll per productId, sorts in JS
+- Total sort options: 10 (was 7)
+
+**Issue 3 — Rich-text description rendering on detail page**
+- `app/(app)/products/[id]/page.tsx`: added `trimStart().startsWith("<")` heuristic to detect Tiptap HTML output; renders via `dangerouslySetInnerHTML` with Tailwind 4 arbitrary-variant prose styles (`[&_h2]:`, `[&_ul]:`, `[&_strong]:`, etc.) — no `@tailwindcss/typography` dependency needed
+- Plain-text descriptions continue to render as before
+
+**Issue 4 — XML overwrite policy documentation**
+- Added explicit `// XML Overwrite Policy` comment block to `lib/actions/xml-sync-actions.ts` documenting SOURCE-MANAGED (stock, imageUrl fallback-fill), CURATED (name/brand/description/prices/privateNote — never overwritten), XML-ONLY STORAGE (XmlProductData), and NEW-product bootstrap behaviour
+- Added inline comments at the existing-product update step
+
+- tsc --noEmit clean, ESLint clean, Vercel deploy READY (commit 4bf6bd4)
+- Browser-verified 2026-05-17: /products loads (651 ürün) ✓; all 10 sort options render ✓; sales_30d_qty sort changes product order (no crash) ✓; HTML description renders H2/bold/bullet-list on BAOFENG UV-82 detail page ✓; owner private note visible with "Sadece sahip görebilir" text ✓; edit page loads correctly ✓
+
 ### Phase 27 — Product Media and Content Studio
 - Installed Tiptap (`@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extension-link`) for rich text description authoring
 - Created `components/products/rich-text-editor.tsx`: Tiptap-based WYSIWYG editor; SSR-safe with `mounted` guard (renders placeholder before hydration); toolbar with H2, H3, Bold, Italic, Bullet list, Ordered list; outputs HTML to react-hook-form via `onChange`; syncs external value changes (e.g. "XML'den al") via `lastPushedValue` ref to prevent infinite update loops

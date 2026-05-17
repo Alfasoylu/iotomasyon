@@ -33,6 +33,7 @@ Current reality:
 - advanced product operations UX requested by the owner is not implemented yet
 - sales-ranked product list behavior is not implemented yet
 - owner-only product notes are implemented (Phase 28 — EXECUTIVE_READ gated privateNote)
+- Trendyol live visibility exists, but marketplace order/return history governance is not complete yet
 
 Implemented modules:
 - authentication (single internal auth)
@@ -62,7 +63,8 @@ Implemented modules:
 - product operations UX (Phase 25: live search, thumbnails, compact filter pills, sort by stock/price/margin, health cues per row)
 - product performance ranking (Phase 26: Trendyol order sync, 90-day windowed fetch, barcode/SKU matching, 30d sales/revenue ranking, realized margin, performance signal cards, per-product KPI tile)
 - product media and content studio (Phase 27: multi-image manager, Tiptap rich text editor, Supabase Storage upload, XML description governance)
-- product governance and private intelligence (Phase 28: EXECUTIVE_READ-gated privateNote, PrivateNoteEditor, supplier summary on detail page, description max 10000)
+- product governance and private intelligence (Phase 28: isOwner()-gated privateNote [ADMIN_EMAIL only], PrivateNoteEditor, supplier summary on detail page, description max 10000)
+- phase 25–28 closure fixes: performance-based sorts (30d qty/rev, all-time rev) on /products, HTML description rendering on detail page, XML overwrite policy documentation, owner-only text correction
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -88,6 +90,7 @@ Operating system transition status:
 - marketplace read intelligence exists (Phases 12–15)
 - owner-grade KPI dashboard exists (Phase 22 complete)
 - procurement intelligence system exists (Phases 19–21 complete)
+- marketplace read-side visibility exists, but order ledger / return ledger / mapping governance are still incomplete
 
 ---
 
@@ -875,6 +878,10 @@ Current gap:
 - no production-ready product sales snapshot layer for 30-day ranking
 - no owner-only private product intelligence layer
 - no fully governed XML-versus-curated product field overwrite policy in active UI
+- no full persisted Trendyol order ledger with trusted newest-first history view
+- no full persisted Trendyol return ledger linked back to order rows
+- no canonical auto-backfill workflow for marketplace product mappings
+- no marketplace margin policy formally validated against the owner workbook logic
 
 ---
 
