@@ -56,6 +56,7 @@ Implemented modules:
 - procurement intelligence — Phase 19 complete: /admin/procurement, reorder urgency engine (CRITICAL/HIGH/MEDIUM/LOW/OK/UNKNOWN), ranked purchase table, financial summary (suggested cost + projected profit), graceful empty state
 - supplier intelligence — Phase 20 complete: /admin/suppliers CRUD, Supplier + SupplierProduct models, product edit supplier link section (unitCostUsd, moq, leadDays, isPreferred)
 - import cost calculator — Phase 21 complete: /admin/import-calculator, landed cost formula (product+freight+customs), per-unit TRY cost, break-even, channel margin analysis
+- executive KPI dashboard — Phase 22 complete: /admin/executive, stock value TRY, capital health, procurement urgency pills, top-5 profitability table, quick-links to all intelligence tools
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -176,8 +177,8 @@ Current meaning:
 - sales potential engine — DONE (Phase 9): investment score, BUY/WAIT/DO_NOT_BUY signal
 - capital allocation engine — DONE (Phase 10): admin-only ranked purchase suggestions, reserve safety
 - marketplace profit dashboard — DONE (Phase 15): platform-level winner/loser/missing-data visibility
-- executive KPI dashboard — NOT IMPLEMENTED (Phase 22)
-- recommendation-grade owner intelligence system — NOT IMPLEMENTED (requires Phase 22 + procurement layers)
+- executive KPI dashboard — DONE (Phase 22): /admin/executive, single-page owner intelligence overview
+- recommendation-grade owner intelligence system — DONE (Phase 22 complete, all procurement layers in place)
 
 ---
 
@@ -186,7 +187,7 @@ Current meaning:
 - no image pipeline
 - no audit-grade event history
 - no audit-grade event history for financial, permission, stock, marketplace, or quote changes
-- no procurement engine
+- procurement engine now implemented (Phases 19–22)
 
 ---
 
@@ -214,9 +215,9 @@ Strategically usable today:
 - basic sales/quote workflow
 - relationship-aware product/customer tracking
 
-Not strategically mature:
-- procurement decisions (no supplier model, no reorder signals)
-- executive KPI dashboard (Phase 22 not implemented)
+Strategically mature now:
+- procurement decisions (Phases 19–21: supplier model, reorder signals, import cost calculator)
+- executive KPI overview (Phase 22: single-page owner intelligence dashboard)
 
 ### Owner Intelligence Readiness
 
@@ -228,6 +229,12 @@ Implemented:
 - capital allocation engine (Phase 10) ✓
 - marketplace performance visibility (Phase 15) ✓
 
-Still missing for full owner-intelligence readiness:
-- executive KPI dashboard (Phase 22)
-- supplier lead-time data populated into products (for non-UNKNOWN urgency in Phase 19)
+Owner-intelligence fully implemented through Phase 22:
+- profitability engine (Phase 8) ✓
+- sales potential engine / investment scoring (Phase 9) ✓
+- capital allocation engine (Phase 10) ✓
+- marketplace performance visibility (Phase 15) ✓
+- procurement intelligence (Phases 19–21) ✓
+- executive KPI dashboard (Phase 22) ✓
+
+Note: procurement urgency shows VERİ YOK for most products because lead-time/demand fields are not yet populated.

@@ -268,6 +268,21 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 22 — Executive KPI Dashboard
+- No new DB schema — reads from Product, CapitalConfig, MonthlyExchangeRate, MarketplaceListing via 4 parallel `Promise.all` queries
+- Created `app/(app)/admin/executive/page.tsx` (EXECUTIVE_READ-gated): 472-line server component, no client components
+  - `KpiCard` sub-component: label, value, sub caption, tone (default/success/danger/warning) with color-coded border
+  - `UrgencyPill` sub-component: label, count, tone — renders procurement urgency distribution as pill row
+- **Row 1 KPIs**: Toplam Stok Değeri (TRY) = Σ unitCostTry × stockQuantity for products with cost; Sıfır Stoklu Ürünler; Minimum Altı Stok (stock < minStockLevel where minStockLevel > 0); Aktif Pazar Yeri Listesi (status=ACTIVE count)
+- **Row 2 KPIs**: USD/TRY Kuru from latest MonthlyExchangeRate with year/month label; Toplam Sermaye from CapitalConfig.totalCapitalTry; Tahmini Serbest Sermaye = totalCapital − stockValue − reserveAmount (reservePct × totalCapital, default 20%)
+- **Tedarik Aciliyeti section**: runs `calculateProcurement()` per active product; KRİTİK/YÜKSEK/ORTA/DÜŞÜK/YETERLİ/VERİ YOK pill row; "Toplam Önerilen Alım Maliyeti" for CRITICAL+HIGH only; "Tedarik Asistanı →" link
+- **Kârlılık section**: runs `calculateProfitability()` per product; sorts by marketplace margin % DESC; shows top-5 table with product name/SKU, pazar yeri marjı %, perakende marjı %; losing product count shown in Badge (tone="danger"); color-coded margin cells; "Pazar Kârlılığı →" link
+- Footer quick-links: Sermaye Dağılımı →, Tedarik Asistanı →, İthalat Hesaplayıcısı →, Pazar Kârlılığı →, Döviz Kurları →
+- Added "Yönetici Paneli" nav entry to `app/(app)/layout.tsx` (EXECUTIVE_READ permission, before "Sermaye")
+- Updated sidebar info card in `components/dashboard/sidebar.tsx`: "Faz 22 aktif — Yönetici Paneli: stok değeri, kârlılık, tedarik aciliyeti."
+- tsc --noEmit clean, Vercel deploy READY (commit ef5b8a3)
+- Browser-verified 2026-05-17: all KPI sections render with real data; top-5 BAOFENG UV-82 %16.0 pazar yeri, %38.3 perakende; VERİ YOK 651 procurement; serbest sermaye ₺3.999.100 ✓
+
 ### Phase 21 — Import Cost Calculator
 - Created `app/(app)/admin/import-calculator/page.tsx` (EXECUTIVE_READ-gated): fetches active suppliers (id/name), products (id/name/sku/sellingPriceTry/marketplacePriceTry/wholesalePriceTry), all SupplierProduct rows (supplierId/productId/unitCostUsd/moq/leadDays), latest MonthlyExchangeRate (usdTryRate); converts all Decimal fields to number before passing props
 - Created `components/suppliers/import-calculator-form.tsx`: fully client-side, no new DB schema

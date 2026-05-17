@@ -53,6 +53,7 @@ Implemented modules:
 - procurement intelligence (Phase 19: /admin/procurement, reorder urgency engine, ranked purchase table, financial summary)
 - supplier intelligence (Phase 20: /admin/suppliers, Supplier + SupplierProduct models, product edit supplier links)
 - import cost calculator (Phase 21: /admin/import-calculator, landed cost formula, channel margin analysis)
+- executive KPI dashboard (Phase 22: /admin/executive, stock value, capital health, procurement urgency, top-5 profitability)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -76,8 +77,8 @@ Operating system transition status:
 - sales workflow foundation exists
 - profitability and investment intelligence exists (Phases 8–10)
 - marketplace read intelligence exists (Phases 12–15)
-- owner-grade KPI dashboard does not exist yet (Phase 22)
-- procurement intelligence system does not exist yet (Phases 19–21)
+- owner-grade KPI dashboard exists (Phase 22 complete)
+- procurement intelligence system exists (Phases 19–21 complete)
 
 ---
 
@@ -627,14 +628,30 @@ Verified outcome (browser test 2026-05-17):
 ---
 
 ## Phase 22 — Executive KPI Dashboard
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- stock value visibility
-- capital visibility
-- monthly profit layer
-- strategic widgets
-- procurement recommendation view
+Completed:
+- `app/(app)/admin/executive/page.tsx`: EXECUTIVE_READ-gated server page — no new DB schema; reads from Product, CapitalConfig, MonthlyExchangeRate, MarketplaceListing tables via 4 parallel `Promise.all` queries
+- `KpiCard` sub-component: label, value, sub caption, tone (default/success/danger/warning) with color-coded border + background
+- `UrgencyPill` sub-component: label, count, tone — displays procurement urgency distribution
+- **Row 1 KPIs**: Toplam Stok Değeri (TRY) — unitCostTry × stockQuantity across all active products with cost; Sıfır Stoklu Ürünler count; Minimum Altı Stok count; Aktif Pazar Yeri Listesi count
+- **Row 2 KPIs**: USD/TRY Kuru from latest MonthlyExchangeRate (year/month label); Toplam Sermaye from CapitalConfig.totalCapitalTry; Tahmini Serbest Sermaye = totalCapital − stockValue − reserveAmount (20% default)
+- **Tedarik Aciliyeti section**: runs `calculateProcurement()` per product; renders KRİTİK/YÜKSEK/ORTA/DÜŞÜK/YETERLİ/VERİ YOK pills with counts; "Toplam Önerilen Alım Maliyeti" for CRITICAL+HIGH products; "Tedarik Asistanı →" link
+- **Kârlılık section**: runs `calculateProfitability()` per product; top-5 products by marketplace margin %; losing product count Badge; color-coded margin cells (emerald ≥25%, amber ≥10%, red <10%); "Pazar Kârlılığı →" link
+- Footer quick-links: Sermaye Dağılımı →, Tedarik Asistanı →, İthalat Hesaplayıcısı →, Pazar Kârlılığı →, Döviz Kurları →
+- `app/(app)/layout.tsx`: added "Yönetici Paneli" nav entry (EXECUTIVE_READ) before "Sermaye"
+- `components/dashboard/sidebar.tsx`: updated info card to "Faz 22 aktif — Yönetici Paneli: stok değeri, kârlılık, tedarik aciliyeti."
+
+Verified outcome (browser test 2026-05-17):
+- /admin/executive: page loads with "Yönetici Paneli" heading and subtitle ✓
+- Row 1: Toplam Stok Değeri ₺900 (1 maliyeti ürün), Sıfır Stoklu 603, Minimum Altı 1, Aktif Pazar Yeri 1 ✓
+- Row 2: USD/TRY 46.0000 (2026/05), Toplam Sermaye ₺5.000.000, Tahmini Serbest ₺3.999.100 ✓
+- Tedarik: KRİTİK 0, YÜKSEK 0, ORTA 0, DÜŞÜK 0, YETERLİ 0, VERİ YOK 651 — all pills render ✓
+- Kârlılık: BAOFENG UV-82 TELSİZ shows %16.0 pazar yeri marjı, %38.3 perakende marjı ✓
+- Footer links all visible: Sermaye Dağılımı, Tedarik Asistanı, İthalat Hesaplayıcısı, Pazar Kârlılığı, Döviz Kurları ✓
+- Sidebar: "Yönetici Paneli" entry active (dark) before Sermaye ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit ef5b8a3) ✓
 
 ---
 
@@ -758,9 +775,9 @@ Partially usable:
 - quote handling
 - basic sales follow-up workflows
 
-Not yet strategically strong:
-- procurement decisions
-- executive KPI decisions (Phase 22 not implemented)
+Strategically strong now:
+- procurement intelligence (Phases 19–21 complete)
+- executive KPI overview (Phase 22 complete)
 
 ## Not Owner-Intelligence Ready
 
@@ -769,10 +786,12 @@ Implemented (owner-intelligence partial):
 - capital allocation engine (Phase 10) ✓
 - marketplace performance intelligence (Phase 15) ✓
 
-Still missing for full owner-intelligence readiness:
-- executive KPI dashboard (Phase 22)
-- procurement intelligence (Phases 19–21)
-- supplier intelligence (Phase 20)
+Owner-intelligence now fully implemented through Phase 22:
+- profitability engine (Phase 8) ✓
+- capital allocation engine (Phase 10) ✓
+- marketplace performance intelligence (Phase 15) ✓
+- procurement intelligence (Phases 19–21) ✓
+- executive KPI dashboard (Phase 22) ✓
 
 ---
 

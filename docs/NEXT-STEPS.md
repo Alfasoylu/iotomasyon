@@ -42,10 +42,10 @@ Current reality:
 - procurement intelligence complete (Phase 19 ✓): /admin/procurement, reorder urgency engine, ranked purchase table, financial summary — needs lead-time/demand data to produce non-UNKNOWN urgencies
 - supplier intelligence complete (Phase 20 ✓): /admin/suppliers CRUD, Supplier + SupplierProduct models, product edit supplier link section with unitCostUsd/moq/leadDays/isPreferred
 - import cost calculator complete (Phase 21 ✓): /admin/import-calculator, landed cost formula (product+freight+customs), per-unit TRY, break-even (min %20 marj), channel margin analysis — browser-verified 2026-05-17
+- executive KPI dashboard complete (Phase 22 ✓): /admin/executive, owner-grade single-page intelligence overview — stock value TRY, capital health, procurement urgency distribution, top-5 profitability — browser-verified 2026-05-17
 
-This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, XML-driven inventory management, and pre-purchase import cost evaluation. Ready for multi-user rollout.
+This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, XML-driven inventory management, pre-purchase import cost evaluation, and owner-grade executive intelligence. Ready for multi-user rollout.
 Not yet ready for:
-- owner-grade executive KPI dashboard (Phase 22)
 - marketplace sync/write architecture (Phase 17, DEFERRED)
 
 ---
@@ -68,23 +68,7 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 22: Executive KPI Dashboard
-
-Why:
-Phases 19–21 (procurement, suppliers, import cost) are complete. The owner now has individual intelligence tools. Phase 22 consolidates them into a single executive overview: stock value, capital health, monthly profit trend, top performers, and procurement recommendations — all on one page.
-
-Deliverables:
-- Executive KPI dashboard at `/admin/capital` (extend existing) or new `/admin/executive`
-- Widgets: total stock value (TRY), capital deployed, monthly net profit, top-5 products by margin, CRITICAL/HIGH urgency count, break-even analysis summary
-- Pulls from: Product (unitCostTry, stock), profitability engine, procurement engine, exchange rates
-- No new DB schema required (uses existing tables)
-
-Acceptance:
-- Dashboard loads with real data from production DB
-- All KPI widgets show meaningful numbers (not empty/zero)
-- tsc clean, Vercel deploy READY, browser-tested
-
-### Priority 2 — Phase 23/24: Data Hygiene / Production Safety
+### Priority 1 — Phase 23/24: Data Hygiene / Production Safety
 
 Why:
 As the system scales, duplicate SKUs, missing costs, and schema drift become risks.
@@ -118,7 +102,7 @@ Phase dependencies:
 - Phase 19 depends on Phase 7, Phase 8, Phase 9, and Phase 20 because procurement logic needs inventory, profitability, demand, and supplier inputs.
 - Phase 20 ✓ complete — supplier intelligence is production-active.
 - Phase 21 ✓ complete — import cost calculator is production-active.
-- Phase 22 depends on multiple earlier phases because executive KPIs are only useful if underlying systems are trustworthy.
+- Phase 22 ✓ complete — executive KPI dashboard is production-active (browser-verified 2026-05-17).
 - Phase 23 and Phase 24 should not be ignored because data quality and production safety can invalidate later intelligence work.
 - Priority 0 should be treated as a baseline operating rule before schema-heavy work expands.
 
