@@ -21,6 +21,7 @@ export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
   const [year, setYear] = useState(defaultYear ?? currentYear);
   const [month, setMonth] = useState(defaultMonth ?? currentMonth);
   const [rate, setRate] = useState("");
+  const [rmbRate, setRmbRate] = useState("");
   const [note, setNote] = useState("");
   const [result, setResult] = useState<{ ok: boolean; message?: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -28,14 +29,26 @@ export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
   function handleSubmit() {
     const rateNum = parseFloat(rate.replace(",", "."));
     if (!rateNum || rateNum <= 0) {
-      setResult({ ok: false, message: "Geçerli bir kur değeri girin." });
+      setResult({ ok: false, message: "Geçerli bir USD/TRY kur değeri girin." });
+      return;
+    }
+    const rmbRateNum = rmbRate.trim() ? parseFloat(rmbRate.replace(",", ".")) : null;
+    if (rmbRate.trim() && (!rmbRateNum || rmbRateNum <= 0)) {
+      setResult({ ok: false, message: "Geçerli bir RMB/USD kur değeri girin." });
       return;
     }
     startTransition(async () => {
-      const res = await upsertExchangeRateAction({ year, month, usdTryRate: rateNum, note: note || "" });
+      const res = await upsertExchangeRateAction({
+        year,
+        month,
+        usdTryRate: rateNum,
+        rmbUsdRate: rmbRateNum,
+        note: note || "",
+      });
       setResult(res);
       if (res.ok) {
         setRate("");
+        setRmbRate("");
         setNote("");
         // Reload to show updated list
         window.location.reload();
@@ -45,7 +58,7 @@ export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div>
           <label className="text-xs font-medium text-slate-600 block mb-1">Yıl</label>
           <input
@@ -78,6 +91,17 @@ export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
             placeholder="ör. 38.50"
             value={rate}
             onChange={(e) => setRate(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-slate-600 block mb-1">RMB/USD Kuru <span className="text-slate-400">(isteğe bağlı)</span></label>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            placeholder="ör. 7.25"
+            value={rmbRate}
+            onChange={(e) => setRmbRate(e.target.value)}
           />
         </div>
         <div>

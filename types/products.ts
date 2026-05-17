@@ -46,4 +46,7 @@ export type ProductFormValues = {
   weightKg: string;
   customsRatePct: string;
   shippingMethodPref: string;
+  // Phase 31 — RMB-first import economics
+  sourceCostRmb: string;
+  importPaymentFeePct: string;
 };

@@ -36,10 +36,10 @@ export default async function ExchangeRatesPage() {
             Yönetim / Döviz Kurları
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Aylık USD/TRY Kurları
+            Aylık Döviz Kurları
           </h1>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            İthalat maliyetini TRY'ye çevirmek için kullanılan aylık ortalama kurları yönetin.
+            İthalat maliyeti hesaplamasında kullanılan aylık USD/TRY ve RMB/USD kurlarını yönetin.
           </p>
         </div>
         <Link href="/admin">
@@ -69,6 +69,7 @@ export default async function ExchangeRatesPage() {
                 <tr className="border-b border-slate-100 bg-slate-50/50">
                   <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Dönem</th>
                   <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">USD/TRY</th>
+                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">RMB/USD</th>
                   <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Not</th>
                   <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Güncellendi</th>
                 </tr>
@@ -81,6 +82,9 @@ export default async function ExchangeRatesPage() {
                     </td>
                     <td className="py-3 px-4 text-right font-mono font-semibold text-slate-800">
                       {Number(r.usdTryRate).toFixed(4)}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-slate-600">
+                      {r.rmbUsdRate != null ? Number(r.rmbUsdRate).toFixed(4) : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="py-3 px-4 text-xs text-slate-500">
                       {r.note ?? "—"}
@@ -99,8 +103,8 @@ export default async function ExchangeRatesPage() {
       <Card className="p-4 border-blue-100 bg-blue-50">
         <p className="text-xs font-semibold text-blue-700">Nasıl kullanılır?</p>
         <ul className="mt-2 text-xs text-blue-600 space-y-1 list-disc list-inside">
-          <li>Her ay için ortalama TCMB USD/TRY kurunu girin (TCMB veya Dövizz.net&apos;ten alınabilir).</li>
-          <li>Ürünlere <code className="font-mono">unitCostUsd</code> girildiğinde, sipariş anının aylık kuru kullanılarak TRY maliyet hesaplanır.</li>
+          <li><strong>USD/TRY:</strong> Her ay için TCMB ortalama kurunu girin. İthalat maliyetini TRY&apos;ye çevirmek için kullanılır.</li>
+          <li><strong>RMB/USD:</strong> Çin&apos;den RMB cinsinden alım yapılan aylar için girin (ör. 7.25 = 1 USD = 7.25 RMB). İthalat karar motorunda RMB-öncelikli formül için gereklidir.</li>
           <li>Kur bulunamazsa sistem fallback olarak en son girilen kuru kullanır.</li>
         </ul>
       </Card>

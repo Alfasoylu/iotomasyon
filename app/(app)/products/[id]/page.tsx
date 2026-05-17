@@ -142,6 +142,8 @@ export default async function ProductDetailPage({
 
   // Phase 11C — Import decision
   const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
+  // Phase 31 — RMB/USD rate from latest exchange rate entry
+  const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : null;
   const importDecision = calculateImportDecision({
     sourcePriceUsd:
       product.importUnitCostUsd != null
@@ -149,6 +151,10 @@ export default async function ProductDetailPage({
         : product.unitCostUsd != null
           ? Number(product.unitCostUsd)
           : null,
+    // Phase 31 — RMB-first path
+    sourceCostRmb: product.sourceCostRmb != null ? Number(product.sourceCostRmb) : null,
+    rmbUsdRate,
+    importPaymentFeePct: product.importPaymentFeePct != null ? Number(product.importPaymentFeePct) : null,
     weightKg: product.weightKg != null ? Number(product.weightKg) : null,
     customsRatePct: product.customsRatePct != null ? Number(product.customsRatePct) : null,
     shippingMethodPref: product.shippingMethodPref ?? null,

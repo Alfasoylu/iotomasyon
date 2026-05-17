@@ -138,6 +138,9 @@ export default async function EditProductPage({
             weightKg: product.weightKg != null ? String(product.weightKg) : "",
             customsRatePct: product.customsRatePct != null ? String(product.customsRatePct) : "",
             shippingMethodPref: product.shippingMethodPref ?? "",
+            // Phase 31
+            sourceCostRmb: product.sourceCostRmb != null ? String(product.sourceCostRmb) : "",
+            importPaymentFeePct: product.importPaymentFeePct != null ? String(product.importPaymentFeePct) : "",
           }}
         />
       </Card>

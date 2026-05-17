@@ -203,6 +203,9 @@ function normalizeProductData(input: ProductInput) {
     weightKg: emptyToNull(input.weightKg),
     customsRatePct: emptyToNull(input.customsRatePct),
     shippingMethodPref: emptyToNull(input.shippingMethodPref),
+    // Phase 31 — RMB-first import economics
+    sourceCostRmb: emptyToNull(input.sourceCostRmb),
+    importPaymentFeePct: emptyToNull(input.importPaymentFeePct),
     // Phase 28: privateNote is intentionally omitted here.
     // It is saved exclusively via updatePrivateNoteAction (EXECUTIVE_READ required).
   };

@@ -26,7 +26,7 @@
 export const AIR_FREIGHT_PER_KG = 8;
 
 /** Sea freight cost per kg in USD (source: workbook Envanter sheet) */
-export const SEA_FREIGHT_PER_KG = 2;
+export const SEA_FREIGHT_PER_KG = 1;
 
 /** Air inventory cycle in days — capital lock period for air shipments */
 export const AIR_CYCLE_DAYS = 120;
@@ -72,8 +72,14 @@ export const RECOMMENDATION_TONES: Record<ImportRecommendation, string> = {
 };
 
 export interface ImportDecisionInput {
-  /** USD source purchase price per unit (importUnitCostUsd or unitCostUsd) */
+  /** USD source purchase price per unit (importUnitCostUsd or unitCostUsd) — used when RMB fields absent */
   sourcePriceUsd: number | null;
+  /** RMB/CNY source purchase cost — takes precedence over sourcePriceUsd when rmbUsdRate present */
+  sourceCostRmb: number | null;
+  /** RMB per 1 USD rate (e.g. 7.25) — required to activate RMB-first path */
+  rmbUsdRate: number | null;
+  /** Payment/wire commission percentage applied to RMB cost (e.g. 3.0 = 3%) */
+  importPaymentFeePct: number | null;
   /** Product weight in kilograms */
   weightKg: number | null;
   /** Turkish customs duty rate as a percentage (e.g. 20 = 20%) */
@@ -170,7 +176,16 @@ export function calculateImportDecision(
 ): ImportDecisionResult {
   const missingFields: string[] = [];
 
-  if (input.sourcePriceUsd == null || input.sourcePriceUsd <= 0) missingFields.push("Kaynak fiyat (USD)");
+  // RMB-first: use RMB cost if available, else fall back to USD cost
+  const hasRmbPath =
+    input.sourceCostRmb != null &&
+    input.sourceCostRmb > 0 &&
+    input.rmbUsdRate != null &&
+    input.rmbUsdRate > 0;
+
+  const hasUsdPath = input.sourcePriceUsd != null && input.sourcePriceUsd > 0;
+
+  if (!hasRmbPath && !hasUsdPath) missingFields.push("Kaynak fiyat (RMB veya USD)");
   if (input.weightKg == null || input.weightKg <= 0) missingFields.push("Ağırlık (kg)");
   if (input.customsRatePct == null) missingFields.push("Gümrük oranı (%)");
   if (input.sellingPriceTry == null || input.sellingPriceTry <= 0) missingFields.push("Satış fiyatı (₺)");
@@ -190,8 +205,19 @@ export function calculateImportDecision(
     };
   }
 
-  // All required fields are present — safe to assert non-null
-  const sourcePriceUsd = input.sourcePriceUsd!;
+  // ── Resolve effective source price in USD ──────────────────────────────────
+  // Canonical formula (RMB path):
+  //   source_usd = (sourceCostRmb / rmbUsdRate) * (1 + paymentFeePct/100)
+  // USD path: sourcePriceUsd used directly (no payment fee)
+  let sourcePriceUsd: number;
+  if (hasRmbPath) {
+    const paymentFeePct = input.importPaymentFeePct ?? 0;
+    sourcePriceUsd =
+      (input.sourceCostRmb! / input.rmbUsdRate!) * (1 + paymentFeePct / 100);
+  } else {
+    sourcePriceUsd = input.sourcePriceUsd!;
+  }
+
   const weightKg = input.weightKg!;
   const customsRatePct = input.customsRatePct!;
   const sellingPriceTry = input.sellingPriceTry!;

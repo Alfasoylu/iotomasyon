@@ -48,6 +48,9 @@ export const productSchema = z.object({
   weightKg: z.string().trim(),
   customsRatePct: z.string().trim(),
   shippingMethodPref: z.string().trim(),
+  // Phase 31 — RMB-first import economics
+  sourceCostRmb: z.string().trim(),
+  importPaymentFeePct: z.string().trim(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

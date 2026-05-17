@@ -76,12 +76,17 @@ export default async function ImportDecisionsPage({
         onlineSalesPotential: true,
         wholesaleSalesPotential: true,
         installerSalesPotential: true,
+        // Phase 31 — RMB-first import economics
+        sourceCostRmb: true,
+        importPaymentFeePct: true,
       },
       orderBy: { name: "asc" },
     }),
   ]);
 
   const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
+  // Latest RMB/USD rate from exchange rate table
+  const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : null;
 
   // Compute decisions for all products
   const rows = products.map((p) => {
@@ -122,6 +127,10 @@ export default async function ImportDecisionsPage({
 
     const decision = calculateImportDecision({
       sourcePriceUsd,
+      // Phase 31 — RMB-first path
+      sourceCostRmb: p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null,
+      rmbUsdRate,
+      importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
       weightKg: p.weightKg != null ? Number(p.weightKg) : null,
       customsRatePct: p.customsRatePct != null ? Number(p.customsRatePct) : null,
       shippingMethodPref: p.shippingMethodPref,

@@ -11,7 +11,8 @@ const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as c
 const rateSchema = z.object({
   year: z.number().int().min(2020).max(2100),
   month: z.number().int().min(1).max(12),
-  usdTryRate: z.number().positive("Döviz kuru pozitif olmalıdır."),
+  usdTryRate: z.number().positive("USD/TRY kuru pozitif olmalıdır."),
+  rmbUsdRate: z.number().positive("RMB/USD kuru pozitif olmalıdır.").nullable().optional(),
   note: z.string().trim().max(300).optional().or(z.literal("")),
 });
 
@@ -31,12 +32,16 @@ export async function upsertExchangeRateAction(
       where: { year_month: { year: parsed.data.year, month: parsed.data.month } },
     });
 
+    const noteValue = parsed.data.note && parsed.data.note.trim() !== "" ? parsed.data.note.trim() : null;
+    const rmbUsdRateValue = parsed.data.rmbUsdRate ?? null;
+
     if (existing) {
       await prisma.monthlyExchangeRate.update({
         where: { id: existing.id },
         data: {
           usdTryRate: parsed.data.usdTryRate,
-          note: parsed.data.note && parsed.data.note.trim() !== "" ? parsed.data.note.trim() : null,
+          rmbUsdRate: rmbUsdRateValue,
+          note: noteValue,
           updatedAt: new Date(),
         },
       });
@@ -47,7 +52,8 @@ export async function upsertExchangeRateAction(
           year: parsed.data.year,
           month: parsed.data.month,
           usdTryRate: parsed.data.usdTryRate,
-          note: parsed.data.note && parsed.data.note.trim() !== "" ? parsed.data.note.trim() : null,
+          rmbUsdRate: rmbUsdRateValue,
+          note: noteValue,
         },
       });
     }
@@ -81,4 +87,14 @@ export async function getExchangeRateForDate(epochMs: number): Promise<number | 
   });
   if (!row) return null;
   return Number(row.usdTryRate);
+}
+
+/** Utility: get the most recent RMB/USD rate, or null if none entered. */
+export async function getLatestRmbUsdRate(): Promise<number | null> {
+  const row = await prisma.monthlyExchangeRate.findFirst({
+    where: { rmbUsdRate: { not: null } },
+    orderBy: [{ year: "desc" }, { month: "desc" }],
+  });
+  if (!row || row.rmbUsdRate == null) return null;
+  return Number(row.rmbUsdRate);
 }

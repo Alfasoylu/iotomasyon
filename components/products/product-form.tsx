@@ -83,6 +83,9 @@ const emptyValues: ProductFormValues = {
   weightKg: "",
   customsRatePct: "",
   shippingMethodPref: "",
+  // Phase 31
+  sourceCostRmb: "",
+  importPaymentFeePct: "",
 };
 
 export function ProductForm({
@@ -378,10 +381,25 @@ export function ProductForm({
             </select>
           </Field>
         </div>
+        {/* Phase 31 — RMB-first import economics */}
+        <div className="grid gap-4 md:grid-cols-2 mt-4 rounded-xl border border-amber-100 bg-amber-50/40 p-4">
+          <div>
+            <p className="text-xs font-semibold text-amber-700 mb-3">RMB kaynaklı ithalat (opsiyonel)</p>
+            <Field label="Kaynak maliyet (RMB/CNY)" error={form.formState.errors.sourceCostRmb?.message}>
+              <Input {...form.register("sourceCostRmb")} placeholder="ör. 85.00" />
+            </Field>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-amber-700 mb-3">&nbsp;</p>
+            <Field label="Ödeme komisyonu (%)" error={form.formState.errors.importPaymentFeePct?.message}>
+              <Input {...form.register("importPaymentFeePct")} placeholder="ör. 3.0" />
+            </Field>
+          </div>
+        </div>
         <p className="text-xs text-slate-400 leading-6">
           İthalat karar motoru: hava/deniz kargo maliyeti, gümrük ve kârlılık hesabı yaparak en uygun yöntemi önerir.
-          Ağırlık ve gümrük oranı girilmeden karar üretilemez.
-          İthalat birim maliyeti (USD) için yukarıdaki "İthalat ve envanter" bölümünü kullanın.
+          RMB maliyet girilirse formül: <code className="font-mono">(RMB ÷ RMB/USD) × (1 + komisyon%) + kargo × ağırlık) × (1 + gümrük%)</code>.
+          RMB yoksa "İthalat ve envanter" bölümündeki USD maliyeti kullanılır.
         </p>
       </Section>
 
