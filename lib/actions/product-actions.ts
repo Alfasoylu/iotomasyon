@@ -88,11 +88,18 @@ export async function updateProductAction(
     };
   }
 
+  // Phase 57: non-admin users cannot write financial/import fields.
+  // Server-side enforcement — UI may also hide these fields, but we guard here regardless.
+  const canWriteFinancials = await checkPermission(user, PERMISSIONS.EXECUTIVE_READ);
+  const productData = canWriteFinancials
+    ? normalizeProductData(parsed.data)
+    : normalizeProductDataNonFinancial(parsed.data);
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.product.update({
         where: { id: productId },
-        data: normalizeProductData(parsed.data),
+        data: productData,
       });
       await tx.productAttributeAssignment.deleteMany({ where: { productId } });
       for (const attributeId of attributeIds) {
@@ -208,6 +215,49 @@ function normalizeProductData(input: ProductInput) {
     importPaymentFeePct: emptyToNull(input.importPaymentFeePct),
     // Phase 28: privateNote is intentionally omitted here.
     // It is saved exclusively via updatePrivateNoteAction (EXECUTIVE_READ required).
+  };
+}
+
+/**
+ * Phase 57: Non-financial subset — safe to write for any PRODUCTS_UPDATE user.
+ * Financial, cost, and import fields are intentionally omitted so existing DB
+ * values are preserved unchanged when a non-admin user saves a product.
+ */
+function normalizeProductDataNonFinancial(input: ProductInput) {
+  const stockSource = emptyToNull(input.stockSource) as "MANUAL" | "XML" | "API" | "IMPORT" | null;
+  const stockConfidence = emptyToNull(input.stockConfidence) as "HIGH" | "MEDIUM" | "LOW" | null;
+  return {
+    sku: input.sku.trim().toUpperCase(),
+    barcode: emptyToNull(input.barcode),
+    name: input.name.trim(),
+    imageUrl: emptyToNull(input.imageUrl),
+    category: emptyToNull(input.category),
+    categoryId: emptyToNull(input.categoryId),
+    brand: emptyToNull(input.brand),
+    model: emptyToNull(input.model),
+    supplier: emptyToNull(input.supplier),
+    stockQuantity: input.stockQuantity,
+    minimumStock: input.minimumStock,
+    reorderLeadTime: positiveIntOrNull(input.reorderLeadTime),
+    stockSource,
+    stockConfidence,
+    lastStockSyncAt: emptyToNull(input.lastStockSyncAt) ? new Date(input.lastStockSyncAt) : null,
+    lastStockCountById: emptyToNull(input.lastStockCountById),
+    location: emptyToNull(input.location),
+    description: emptyToNull(input.description),
+    isActive: input.isActive,
+    importDate: emptyToNull(input.importDate) ? new Date(input.importDate) : null,
+    importQuantity: positiveIntOrNull(input.importQuantity),
+    inventoryCountDate: emptyToNull(input.inventoryCountDate) ? new Date(input.inventoryCountDate) : null,
+    inventoryCountStock: positiveIntOrNull(input.inventoryCountStock),
+    xmlLocked: input.xmlLocked,
+    // shippingCost / marketplaceCommission hidden passthrough fields are also omitted
+    // Financial fields intentionally excluded:
+    // unitCostTry, sellingPriceTry, wholesalePriceTry, marketplacePriceTry, packagingCost,
+    // vatRate, paymentFeeRate, returnReserveRate, shippingCostOverride,
+    // marketplaceCommissionOverride, importUnitCostUsd, sourceCostRmb, importPaymentFeePct,
+    // weightKg, customsRatePct, shippingMethodPref,
+    // onlineSalesPotential, wholesaleSalesPotential, installerSalesPotential
   };
 }
 

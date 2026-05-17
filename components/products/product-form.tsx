@@ -97,6 +97,7 @@ export function ProductForm({
   initialAttributeIds = [],
   users = [],
   xmlDescription,
+  showFinancialFields = true,
 }: {
   mode: "create" | "edit";
   productId?: string;
@@ -107,6 +108,12 @@ export function ProductForm({
   users?: UserOption[];
   /** Phase 27: XML feed description — shown read-only with a "Editöre taşı" button */
   xmlDescription?: string | null;
+  /**
+   * Phase 57: When false, all financial/cost/import fields are hidden from the DOM.
+   * Only EXECUTIVE_READ users should receive true.
+   * Default: true (backwards-compatible — existing admin-only callers unchanged).
+   */
+  showFinancialFields?: boolean;
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
@@ -281,32 +288,34 @@ export function ProductForm({
       {/* Hidden fields: preserve existing DB values without showing duplicate inputs */}
       <input type="hidden" {...form.register("shippingCost")} />
       <input type="hidden" {...form.register("marketplaceCommission")} />
-      <Section title="Pazar yeri maliyet geçersiz kılmaları — ürün bazlı (Tier 1)">
-        <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-700 leading-5">
-          <strong>4 katmanlı çözümleme:</strong> ürün geçersiz kılması (bu sayfa) → platform politikası (
-          <a href="/admin/marketplace-policies" className="underline font-medium">Pazar Yeri Politikaları</a>
-          ) → sistem varsayılanı. Aşağıdaki alanlar yalnızca <strong>bu ürüne özel</strong> istisnalar içindir — çoğu
-          ürün için boş bırakın ve platform politikasının devreye girmesine izin verin.
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Kargo geçersiz kılması (₺) — bu ürüne özel" error={form.formState.errors.shippingCostOverride?.message}>
-            <Input {...form.register("shippingCostOverride")} placeholder="Boş = platform politikası / kademeli kargo" />
-          </Field>
-          <Field label="Komisyon geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.marketplaceCommissionOverride?.message}>
-            <Input {...form.register("marketplaceCommissionOverride")} placeholder="Boş = platform politikasını kullan" />
-          </Field>
-          <Field label="Ödeme işlem ücreti geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.paymentFeeRate?.message}>
-            <Input {...form.register("paymentFeeRate")} placeholder="Boş = platform politikasını kullan" />
-          </Field>
-          <Field label="İade/kusur karşılığı geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.returnReserveRate?.message}>
-            <Input {...form.register("returnReserveRate")} placeholder="Boş = platform politikasını kullan" />
-          </Field>
-        </div>
-        <p className="text-xs text-slate-400 leading-6">
-          Boş bırakılan alanlar için çözümleme sırası: ürün geçersiz kılması → platform kademeli kargo → platform sabit
-          kargo/komisyon → sistem varsayılanı.
-        </p>
-      </Section>
+      {showFinancialFields && (
+        <Section title="Pazar yeri maliyet geçersiz kılmaları — ürün bazlı (Tier 1)">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-700 leading-5">
+            <strong>4 katmanlı çözümleme:</strong> ürün geçersiz kılması (bu sayfa) → platform politikası (
+            <a href="/admin/marketplace-policies" className="underline font-medium">Pazar Yeri Politikaları</a>
+            ) → sistem varsayılanı. Aşağıdaki alanlar yalnızca <strong>bu ürüne özel</strong> istisnalar içindir — çoğu
+            ürün için boş bırakın ve platform politikasının devreye girmesine izin verin.
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Kargo geçersiz kılması (₺) — bu ürüne özel" error={form.formState.errors.shippingCostOverride?.message}>
+              <Input {...form.register("shippingCostOverride")} placeholder="Boş = platform politikası / kademeli kargo" />
+            </Field>
+            <Field label="Komisyon geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.marketplaceCommissionOverride?.message}>
+              <Input {...form.register("marketplaceCommissionOverride")} placeholder="Boş = platform politikasını kullan" />
+            </Field>
+            <Field label="Ödeme işlem ücreti geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.paymentFeeRate?.message}>
+              <Input {...form.register("paymentFeeRate")} placeholder="Boş = platform politikasını kullan" />
+            </Field>
+            <Field label="İade/kusur karşılığı geçersiz kılması (%) — bu ürüne özel" error={form.formState.errors.returnReserveRate?.message}>
+              <Input {...form.register("returnReserveRate")} placeholder="Boş = platform politikasını kullan" />
+            </Field>
+          </div>
+          <p className="text-xs text-slate-400 leading-6">
+            Boş bırakılan alanlar için çözümleme sırası: ürün geçersiz kılması → platform kademeli kargo → platform sabit
+            kargo/komisyon → sistem varsayılanı.
+          </p>
+        </Section>
+      )}
 
       {/* ── İthalat ve envanter ── */}
       <Section title="İthalat ve envanter">
@@ -327,58 +336,62 @@ export function ProductForm({
       </Section>
 
       {/* ── Fiyatlandırma ve kârlılık ── */}
-      <Section title="Fiyatlandırma ve kârlılık">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Birim maliyet (₺)" error={form.formState.errors.unitCostTry?.message}>
-            <Input {...form.register("unitCostTry")} placeholder="0.00" />
-          </Field>
-          <Field label="Ambalaj maliyeti (₺)" error={form.formState.errors.packagingCost?.message}>
-            <Input {...form.register("packagingCost")} placeholder="0.00" />
-          </Field>
-          <Field label="Perakende satış fiyatı (₺)" error={form.formState.errors.sellingPriceTry?.message}>
-            <Input {...form.register("sellingPriceTry")} placeholder="0.00" />
-          </Field>
-          <Field label="Toptan satış fiyatı (₺)" error={form.formState.errors.wholesalePriceTry?.message}>
-            <Input {...form.register("wholesalePriceTry")} placeholder="0.00" />
-          </Field>
-          <Field
-            label="Pazar yeri fiyatı — genel fallback (₺)"
-            error={form.formState.errors.marketplacePriceTry?.message}
-          >
-            <Input {...form.register("marketplacePriceTry")} placeholder="0.00" />
-          </Field>
-          <Field label="KDV oranı (%)" error={form.formState.errors.vatRate?.message}>
-            <Input {...form.register("vatRate")} placeholder="20" />
-          </Field>
-        </div>
-        <p className="text-xs text-slate-400 leading-6">
-          <strong>Platform bazlı gerçek fiyatlar</strong> XML beslemesinden (`xmlTrendyolPrice` vb.) gelir ve listeleme
-          düzeyinde manuel geçersiz kılınabilir — ürün detayındaki &quot;Pazar Yeri Fiyatlandırması&quot; kartında görülür.
-          <strong> Pazar yeri fiyatı genel fallback</strong>, yalnızca platform/XML fiyatı yoksa kârlılık
-          hesaplamalarında devreye girer.
-        </p>
-      </Section>
+      {showFinancialFields && (
+        <Section title="Fiyatlandırma ve kârlılık">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Birim maliyet (₺)" error={form.formState.errors.unitCostTry?.message}>
+              <Input {...form.register("unitCostTry")} placeholder="0.00" />
+            </Field>
+            <Field label="Ambalaj maliyeti (₺)" error={form.formState.errors.packagingCost?.message}>
+              <Input {...form.register("packagingCost")} placeholder="0.00" />
+            </Field>
+            <Field label="Perakende satış fiyatı (₺)" error={form.formState.errors.sellingPriceTry?.message}>
+              <Input {...form.register("sellingPriceTry")} placeholder="0.00" />
+            </Field>
+            <Field label="Toptan satış fiyatı (₺)" error={form.formState.errors.wholesalePriceTry?.message}>
+              <Input {...form.register("wholesalePriceTry")} placeholder="0.00" />
+            </Field>
+            <Field
+              label="Pazar yeri fiyatı — genel fallback (₺)"
+              error={form.formState.errors.marketplacePriceTry?.message}
+            >
+              <Input {...form.register("marketplacePriceTry")} placeholder="0.00" />
+            </Field>
+            <Field label="KDV oranı (%)" error={form.formState.errors.vatRate?.message}>
+              <Input {...form.register("vatRate")} placeholder="20" />
+            </Field>
+          </div>
+          <p className="text-xs text-slate-400 leading-6">
+            <strong>Platform bazlı gerçek fiyatlar</strong> XML beslemesinden (`xmlTrendyolPrice` vb.) gelir ve listeleme
+            düzeyinde manuel geçersiz kılınabilir — ürün detayındaki &quot;Pazar Yeri Fiyatlandırması&quot; kartında görülür.
+            <strong> Pazar yeri fiyatı genel fallback</strong>, yalnızca platform/XML fiyatı yoksa kârlılık
+            hesaplamalarında devreye girer.
+          </p>
+        </Section>
+      )}
 
       {/* ── Satış potansiyeli ── */}
-      <Section title="Satış potansiyeli">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Field label="Online/pazar yeri (adet/ay)" error={form.formState.errors.onlineSalesPotential?.message}>
-            <Input type="number" min={0} {...form.register("onlineSalesPotential")} placeholder="0" />
-          </Field>
-          <Field label="Toptan (adet/ay)" error={form.formState.errors.wholesaleSalesPotential?.message}>
-            <Input type="number" min={0} {...form.register("wholesaleSalesPotential")} placeholder="0" />
-          </Field>
-          <Field label="Montör/kurumsal (adet/ay)" error={form.formState.errors.installerSalesPotential?.message}>
-            <Input type="number" min={0} {...form.register("installerSalesPotential")} placeholder="0" />
-          </Field>
-        </div>
-        <p className="text-xs text-slate-400 leading-6">
-          Aylık satış tahmini kanal bazında girilir. Bu değerler yatırım skoru ve SATIN AL / ALMA sinyali için kullanılır.
-        </p>
-      </Section>
+      {showFinancialFields && (
+        <Section title="Satış potansiyeli">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Field label="Online/pazar yeri (adet/ay)" error={form.formState.errors.onlineSalesPotential?.message}>
+              <Input type="number" min={0} {...form.register("onlineSalesPotential")} placeholder="0" />
+            </Field>
+            <Field label="Toptan (adet/ay)" error={form.formState.errors.wholesaleSalesPotential?.message}>
+              <Input type="number" min={0} {...form.register("wholesaleSalesPotential")} placeholder="0" />
+            </Field>
+            <Field label="Montör/kurumsal (adet/ay)" error={form.formState.errors.installerSalesPotential?.message}>
+              <Input type="number" min={0} {...form.register("installerSalesPotential")} placeholder="0" />
+            </Field>
+          </div>
+          <p className="text-xs text-slate-400 leading-6">
+            Aylık satış tahmini kanal bazında girilir. Bu değerler yatırım skoru ve SATIN AL / ALMA sinyali için kullanılır.
+          </p>
+        </Section>
+      )}
 
       {/* ── İthalat Kararı Girdileri ── */}
-      <Section title="İthalat kararı girdileri">
+      {showFinancialFields && <Section title="İthalat kararı girdileri">
         <div className="grid gap-4 md:grid-cols-3">
           <Field label="Ağırlık (kg)" error={form.formState.errors.weightKg?.message}>
             <Input {...form.register("weightKg")} placeholder="1.5" />
@@ -437,7 +450,7 @@ export function ProductForm({
           RMB maliyet girildiğinde aylık RMB/USD kuru (&quot;Döviz Kurları&quot; sayfası) otomatik uygulanır.
           RMB yoksa USD yedek maliyet devreye girer.
         </p>
-      </Section>
+      </Section>}
 
       {/* ── XML Senkronizasyon ── */}
       <Section title="XML senkronizasyon">

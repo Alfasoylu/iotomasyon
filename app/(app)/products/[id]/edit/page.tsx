@@ -22,7 +22,7 @@ export default async function EditProductPage({
   await requirePermission(PERMISSIONS.PRODUCTS_UPDATE);
   const { id } = await params;
   const user = await requireUser();
-  const [{ databaseAvailable, product }, { categories }, allAttributes, users, allSuppliers, supplierLinks, canWriteSuppliers, canViewPrivate] = await Promise.all([
+  const [{ databaseAvailable, product }, { categories }, allAttributes, users, allSuppliers, supplierLinks, canWriteSuppliers, canViewPrivate, showFinancialFields] = await Promise.all([
     getProductById(id),
     listCategoriesForSelect(),
     listAttributes(),
@@ -42,6 +42,8 @@ export default async function EditProductPage({
     }),
     checkPermission(user, PERMISSIONS.SUPPLIERS_WRITE),
     Promise.resolve(isOwner(user)),
+    // Phase 57: Only EXECUTIVE_READ users see financial/cost/import fields in the form.
+    checkPermission(user, PERMISSIONS.EXECUTIVE_READ),
   ]);
 
   if (!databaseAvailable) {
@@ -90,6 +92,7 @@ export default async function EditProductPage({
           initialAttributeIds={product.attributeAssignments.map((a) => a.attributeId)}
           users={users}
           xmlDescription={product.xmlData?.xmlDescription ?? null}
+          showFinancialFields={showFinancialFields}
           initialValues={{
             sku: product.sku,
             barcode: product.barcode ?? "",

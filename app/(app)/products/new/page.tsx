@@ -2,16 +2,18 @@ import { Card } from "@/components/ui/card";
 import { ProductForm } from "@/components/products/product-form";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { listAttributes } from "@/services/attribute-service";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
-  await requirePermission(PERMISSIONS.PRODUCTS_CREATE);
-  const [{ categories }, allAttributes] = await Promise.all([
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_CREATE);
+  // Phase 57: Only EXECUTIVE_READ users see financial/cost/import fields.
+  const [{ categories }, allAttributes, showFinancialFields] = await Promise.all([
     listCategoriesForSelect(),
     listAttributes(),
+    checkPermission(user, PERMISSIONS.EXECUTIVE_READ),
   ]);
 
   return (
@@ -29,7 +31,12 @@ export default async function NewProductPage() {
       </div>
 
       <Card className="p-6">
-        <ProductForm mode="create" categories={categories} allAttributes={allAttributes} />
+        <ProductForm
+          mode="create"
+          categories={categories}
+          allAttributes={allAttributes}
+          showFinancialFields={showFinancialFields}
+        />
       </Card>
     </div>
   );
