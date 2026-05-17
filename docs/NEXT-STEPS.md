@@ -703,6 +703,25 @@ Tamamlananlar:
 
 ---
 
+### ✓ DONE — Priority 61 — Normalized Barcode Re-Match (Phase 61, 2026-05-17)
+
+**Neden:**
+Trendyol barkod formatı (tire, boşluk, büyük harf) ile iç ürün barkodları arasındaki format uyuşmazlığı yüzünden 131 barkod / ₺936k ciro eşleşmeden kalıyordu. Tam string karşılaştırması başarısız olduğunda normalize edilmiş fallback gerekiyordu.
+
+**Bağımlılık:** Phase 29 (TrendyolSalesRecord + productId), Phase 41 (backfill engine), Phase 16 (MarketplaceProductMapping)
+
+Tamamlananlar:
+- `app/api/cron/trendyol-sync/route.ts`: `normalizeKey()` helper, `resolveProductId()` helper (exact then normalized fallback), `normalizedBarcodeMap` + `normalizedSkuMap`; `syncOrders()` ve `syncReturns()` yeni map'leri kullanır
+- `lib/actions/marketplace-mapping-actions.ts`: `rematchNormalizedBarcodesAction()` — tüm null-productId TrendyolSalesRecord satırlarını tarar, normalize match, 100'lük batch bulk-update
+- `components/marketplace/rematch-normalized-button.tsx`: Yeni client component — "Barkodları Normalize Et & Eşleştir" butonu
+- `app/(app)/admin/marketplace-mappings/page.tsx`: `RematchNormalizedButton` header'a eklendi
+- Schema değişikliği: YOK
+- tsc --noEmit temiz ✓
+- Browser-verified: "Barkodları Normalize Et & Eşleştir" butonu görünür, unmatched inbox 131 barkod / ₺936.283 gösteriyor ✓
+- READY: dpl_FM1WF6drTKPn96N8kupT8Gr6tmVU
+
+---
+
 ## Anti-Scope Rules
 
 DO NOT start:
