@@ -81,6 +81,34 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Sermaye Sayfası Stok Değeri Fix (2026-05-18)
+
+**Neden:** `/admin/capital` sayfasında stok değeri 0 görünüyordu — `unitCostTry` null olan ürünler lockedCapital hesabına dahil edilmiyordu.
+
+**Kök neden:** `capital-allocation.ts` `unitCostTry` null ise ürünü 0 maliyet ile hesaplıyordu; RMB kaynaklı ürünler için iniş maliyeti hesabı yoktu.
+
+Teslim edilenler:
+- `app/(app)/admin/capital/page.tsx`: `computeLandedCost()` yardımcı fonksiyonu (unitCostTry önce, yoksa RMB formülü)
+- `sourceCostRmb`, `weightKg`, `customsRatePct`, `importPaymentFeePct` product select'e eklendi
+- 4. paralel sorgu: `MonthlyExchangeRate` (usdTryRate + rmbUsdRate, fallback: 38, 7.25)
+- `effectiveCostTry = computeLandedCost(p)` → `capital-allocation.ts`'e `unitCostTry` override olarak iletildi
+- `SummaryCard` opsiyonel `subtitle` prop eklendi; "Stok değeri (kilitli)" + "iniş maliyeti × stok adeti" alt başlık
+- Suggestions tablosuna "Stok değeri" kolonu eklendi
+- commit 2c74a94 ✓
+
+### ✓ Envanter Excel Import (2026-05-18)
+
+**Neden:** Çalışan excel dosyasındaki (docs/urunler.xlsx) ürünlerin RMB alış, ağırlık ve gümrük oranı verilerini DB'ye aktarmak için tek seferlik import yapılması istendi.
+
+Teslim edilenler:
+- `docs/urunler.xlsx` Envanter sayfası okundu; Ürün Kodu / Ürün Adı / Alış Rmb / Ağırlık / Vergi Oranı kolonları çekildi
+- SKU öncelikli, ardından ürün adı ile eşleşme — 22 SKU + 1 ad eşleşmesi = 23 ürün güncellendi
+- `sourceCostRmb`, `weightKg`, `customsRatePct` alanları DB'ye yazıldı
+- Post-import bug fix: `customsRatePct` decimal fraction olarak saklanmıştı (0.3, 0.6, 0.7); `WHERE <= 1 SET *= 100` SQL düzeltmesiyle 18 satır 30/40/50/60/70% değerlerine getirildi
+- Kalıcı veri değişikliği — kod dosyası değil
+
+---
+
 ### ✓ Phase 71 — PRODUCT PROFIT ENGINE REFACTOR (2026-05-18)
 
 Neden:
