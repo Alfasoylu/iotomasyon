@@ -984,6 +984,7 @@ model TrendyolSalesRecord {
   unitPriceTry   Decimal  @db.Decimal(15,2)  // discountedPrice per unit
   totalPriceTry  Decimal  @db.Decimal(15,2)  // quantity × discountedPrice
   syncedAt       DateTime @default(now())
+  stockDeducted  Boolean  @default(false)    // Phase 43: true once quantity deducted from Product.stockQuantity
 
   @@unique([orderId, lineId])
   @@index([productId])
