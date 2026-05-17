@@ -34,6 +34,7 @@ Current reality:
 - sales-ranked product list behavior is not implemented yet
 - owner-only product notes are implemented (Phase 28 — EXECUTIVE_READ gated privateNote)
 - Trendyol live visibility exists, but marketplace order/return history governance is not complete yet
+- product finance field UI consolidation is complete (Priority 0A): override fields consolidated, policy info box added, legacy fields preserved — deeper schema consolidation remains a future consideration
 
 Implemented modules:
 - authentication (single internal auth)
@@ -74,6 +75,7 @@ Implemented modules:
 - marketplace profit page XML price integration (Phase 34: /marketplace/profit uses calcMarketplacePricingRow() per listing, PLATFORM_XML_FIELD map, PriceBadge on effective price column, PolicyBadge extended for price_tier, usdTryRate from MonthlyExchangeRate)
 - unmatched barcodes inbox (Phase 37: /admin/marketplace-mappings top-30 unmatched barcodes by revenue, Eslestir button pre-fills form via ?barcode= param, MappingForm defaultBarcode/defaultPlatformTitle props, no schema change)
 - executive dashboard marketplace revenue (Phase 36: /admin/executive new Trendyol 90-day sales section, isCancelledStatus() filter, ciro/eşleşen ürün/eşleşmemiş tiles, top 5 revenue table, Gerçekleşen Marj link, no schema change)
+- product finance field consolidation — UI restructure (Priority 0A: product-form "Pazar Yeri Maliyet Geçersiz Kılmaları" section, blue policy info box, override field consolidation with "Boş = platform politikasını kullan" placeholders, legacy shippingCost/marketplaceCommission preserved as hidden inputs, marketplacePriceTry relabeled with role explanation, stok amber Entegra warning, no schema change, browser round-trip verified 2026-05-17)
 - trendyol daily sync cron (Phase 48: app/api/cron/trendyol-sync route, Vercel cron 06:00 UTC, CRON_SECRET auth, 14-day sliding window, parallel syncOrders [TrendyolSalesRecord upsert, barcode/SKU match, discountedPrice fallback] + syncReturns [TrendyolReturnRecord upsert, claimItemStatus, reason code/name], vercel.json updated, no schema change)
 - operational intelligence dashboard (Phase 47: /dashboard enhanced with Trendyol & Stok section, getOperationalAlerts() DB-only query, 5 LinkedStatCard tiles [Kritik Stok/Bekleyen Stok Düşümü/Son 7 Gün Sipariş/Eşleşmemiş Sipariş/Trendyol Ciro 30 Gün], deep-links to relevant pages, badge Faz 47, no schema change)
 - trendyol catalog view (Phase 46: /admin/trendyol-catalog EXECUTIVE_READ, fetchTrendyolCatalog() GET products endpoint up to 200 products, cross-reference with internal Product.barcode + MarketplaceProductMapping, delta comparison, matched/unmatched sections, oversell risk + surplus banners, Eşleştir deep-links, Trendyol Katalog nav link, no schema change)

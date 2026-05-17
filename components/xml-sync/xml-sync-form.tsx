@@ -72,9 +72,6 @@ export function XmlSyncForm({ source }: { source?: Source }) {
     });
   }
 
-  const inputCls =
-    "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100";
-
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">

@@ -13,6 +13,10 @@ Execution rules:
 Additional principle:
 - roadmap order is strategic
 - implementation order must respect dependencies, not just numbering
+- no new finance, import, or marketplace pricing layer should be built on top of unresolved field-sprawl
+
+Precondition for later finance phases:
+- operator-facing product finance fields must be consolidated before continuing deeper work on marketplace margin policy, import economics, holding governance, or marketplace pricing normalization
 
 ---
 
@@ -388,14 +392,17 @@ Completion signal:
 
 Why now:
 - the current import decision cockpit is useful but not yet aligned with the owner's real landed-cost formula
+- field consolidation must happen first so RMB-first import inputs are not buried under overlapping legacy cost fields
 
 Dependency:
+- product finance field consolidation
 - Phase 19
 - Phase 20
 - Phase 21
 
 Risk:
 - if RMB-first math is wrong or incomplete, procurement, capital, and import recommendations all become misleading
+- if overlapping cost fields remain operator-visible, the owner will continue reconciling multiple truths manually
 
 Completion signal:
 - the owner formula is represented exactly
@@ -408,6 +415,7 @@ Why now:
 - once the formula is correct, governance and auditability become the next bottleneck
 
 Dependency:
+- product finance field consolidation
 - Phase 30
 
 Risk:
@@ -422,11 +430,13 @@ Why now:
 - once import and marketplace margin logic are normalized, marketplace-specific effective pricing needs its own canonical truth layer
 
 Dependency:
+- product finance field consolidation
 - Phase 15
 - Phase 30
 
 Risk:
 - if XML prices, manual overrides, shipping, and commission stay fragmented, marketplace revenue numbers cannot be trusted
+- if generic product-level marketplace fields remain the daily workflow, per-marketplace normalization will stay confusing even if the backend logic is correct
 
 Completion signal:
 - XML and manual marketplace prices are governed separately

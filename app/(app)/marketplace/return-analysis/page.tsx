@@ -25,6 +25,114 @@ function isCancelledStatus(s: string | null) {
   return lower.includes("iptal") || lower.includes("cancel");
 }
 
+interface ProductReturn {
+  productId: string;
+  name: string;
+  sku: string | null;
+  claimCount: number;
+  soldQty: number;
+  returnRate: number | null;
+}
+
+function rateColor(rate: number | null) {
+  if (rate == null) return "text-slate-400";
+  if (rate >= 10) return "font-semibold text-red-700";
+  if (rate >= 5) return "font-semibold text-amber-700";
+  return "text-emerald-700";
+}
+
+function KpiCard({
+  label,
+  value,
+  sub,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: "neutral" | "red" | "amber" | "green" | "dark";
+}) {
+  const bg =
+    tone === "dark"
+      ? "border-slate-900 bg-slate-900"
+      : tone === "red"
+        ? "border-red-200 bg-red-50"
+        : tone === "amber"
+          ? "border-amber-200 bg-amber-50"
+          : tone === "green"
+            ? "border-emerald-200 bg-emerald-50"
+            : "border-slate-200 bg-white";
+  const labelColor =
+    tone === "dark"
+      ? "text-slate-400"
+      : tone === "red"
+        ? "text-red-700"
+        : tone === "amber"
+          ? "text-amber-700"
+          : tone === "green"
+            ? "text-emerald-700"
+            : "text-slate-500";
+  const valueColor =
+    tone === "dark"
+      ? "text-white"
+      : tone === "red"
+        ? "text-red-900"
+        : tone === "amber"
+          ? "text-amber-900"
+          : tone === "green"
+            ? "text-emerald-900"
+            : "text-slate-900";
+  return (
+    <div className={`rounded-2xl border p-4 ${bg}`}>
+      <p className={`text-xs font-semibold uppercase tracking-widest ${labelColor}`}>{label}</p>
+      <p className={`mt-2 text-xl font-bold tabular-nums ${valueColor}`}>{value}</p>
+      {sub && <p className={`mt-0.5 text-xs ${labelColor}`}>{sub}</p>}
+    </div>
+  );
+}
+
+function ProductTable({ rows, emptyLabel }: { rows: ProductReturn[]; emptyLabel: string }) {
+  if (rows.length === 0) {
+    return (
+      <div className="px-6 py-6 text-center text-sm text-slate-400">{emptyLabel}</div>
+    );
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+            <th className="px-6 py-3 text-left">Ürün</th>
+            <th className="px-4 py-3 text-right">İade Talebi</th>
+            <th className="px-4 py-3 text-right">Satış Adedi</th>
+            <th className="px-4 py-3 text-right">İade Oranı</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map((p, i) => (
+            <tr key={p.productId} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+              <td className="px-6 py-3">
+                <Link
+                  href={`/products/${p.productId}`}
+                  className="font-medium text-slate-900 underline decoration-dotted hover:text-slate-600"
+                >
+                  {p.name}
+                </Link>
+                {p.sku && <p className="font-mono text-xs text-slate-400">{p.sku}</p>}
+              </td>
+              <td className="px-4 py-3 text-right tabular-nums text-slate-700">{p.claimCount}</td>
+              <td className="px-4 py-3 text-right tabular-nums text-slate-500">{p.soldQty || "—"}</td>
+              <td className={`px-4 py-3 text-right tabular-nums ${rateColor(p.returnRate)}`}>
+                {p.returnRate != null ? fmtPct(p.returnRate) : "Satış kaydı yok"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default async function ReturnAnalysisPage() {
   await requirePermission(PERMISSIONS.MARKETPLACE_RETURNS_READ);
 
@@ -54,14 +162,6 @@ export default async function ReturnAnalysisPage() {
   }
 
   // ── Aggregate return claims per product ───────────────────────────────────
-  interface ProductReturn {
-    productId: string;
-    name: string;
-    sku: string | null;
-    claimCount: number;
-    soldQty: number;
-    returnRate: number | null; // null if soldQty = 0
-  }
   const returnByProduct = new Map<
     string,
     { name: string; sku: string | null; claimCount: number }
@@ -116,112 +216,6 @@ export default async function ReturnAnalysisPage() {
   const highRiskRows = productRows.filter((p) => p.returnRate != null && p.returnRate >= 5);
   const normalRows = productRows.filter((p) => p.returnRate != null && p.returnRate < 5);
   const noSalesRows = productRows.filter((p) => p.returnRate == null);
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  function rateColor(rate: number | null) {
-    if (rate == null) return "text-slate-400";
-    if (rate >= 10) return "font-semibold text-red-700";
-    if (rate >= 5) return "font-semibold text-amber-700";
-    return "text-emerald-700";
-  }
-
-  function KpiCard({
-    label,
-    value,
-    sub,
-    tone = "neutral",
-  }: {
-    label: string;
-    value: string;
-    sub?: string;
-    tone?: "neutral" | "red" | "amber" | "green" | "dark";
-  }) {
-    const bg =
-      tone === "dark"
-        ? "border-slate-900 bg-slate-900"
-        : tone === "red"
-          ? "border-red-200 bg-red-50"
-          : tone === "amber"
-            ? "border-amber-200 bg-amber-50"
-            : tone === "green"
-              ? "border-emerald-200 bg-emerald-50"
-              : "border-slate-200 bg-white";
-    const labelColor =
-      tone === "dark"
-        ? "text-slate-400"
-        : tone === "red"
-          ? "text-red-700"
-          : tone === "amber"
-            ? "text-amber-700"
-            : tone === "green"
-              ? "text-emerald-700"
-              : "text-slate-500";
-    const valueColor =
-      tone === "dark"
-        ? "text-white"
-        : tone === "red"
-          ? "text-red-900"
-          : tone === "amber"
-            ? "text-amber-900"
-            : tone === "green"
-              ? "text-emerald-900"
-              : "text-slate-900";
-    return (
-      <div className={`rounded-2xl border p-4 ${bg}`}>
-        <p className={`text-xs font-semibold uppercase tracking-widest ${labelColor}`}>{label}</p>
-        <p className={`mt-2 text-xl font-bold tabular-nums ${valueColor}`}>{value}</p>
-        {sub && <p className={`mt-0.5 text-xs ${labelColor}`}>{sub}</p>}
-      </div>
-    );
-  }
-
-  function ProductTable({
-    rows,
-    emptyLabel,
-  }: {
-    rows: ProductReturn[];
-    emptyLabel: string;
-  }) {
-    if (rows.length === 0) {
-      return (
-        <div className="px-6 py-6 text-center text-sm text-slate-400">{emptyLabel}</div>
-      );
-    }
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
-              <th className="px-6 py-3 text-left">Ürün</th>
-              <th className="px-4 py-3 text-right">İade Talebi</th>
-              <th className="px-4 py-3 text-right">Satış Adedi</th>
-              <th className="px-4 py-3 text-right">İade Oranı</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.map((p, i) => (
-              <tr key={p.productId} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                <td className="px-6 py-3">
-                  <Link
-                    href={`/products/${p.productId}`}
-                    className="font-medium text-slate-900 underline decoration-dotted hover:text-slate-600"
-                  >
-                    {p.name}
-                  </Link>
-                  {p.sku && <p className="font-mono text-xs text-slate-400">{p.sku}</p>}
-                </td>
-                <td className="px-4 py-3 text-right tabular-nums text-slate-700">{p.claimCount}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-slate-500">{p.soldQty || "—"}</td>
-                <td className={`px-4 py-3 text-right tabular-nums ${rateColor(p.returnRate)}`}>
-                  {p.returnRate != null ? fmtPct(p.returnRate) : "Satış kaydı yok"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">

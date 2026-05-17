@@ -73,6 +73,7 @@ Implemented modules:
 - marketplace profit page XML price integration — Phase 34 complete: /marketplace/profit uses calcMarketplacePricingRow() per listing, per-platform XML prices (Trendyol/HB/Amazon/Pazarama/Idefix), PriceBadge source badge on effective price column, consistent with product detail Pazar Yeri Fiyatlandirmasi card, usdTryRate from MonthlyExchangeRate
 - unmatched barcodes inbox — Phase 37 complete: /admin/marketplace-mappings adds Eşleşmemiş Barkodlar card (112 barcodes, ₺852K missing ciro), top 30 by revenue, Eşleştir → button pre-fills MappingForm via ?barcode= URL param, no schema change
 - executive dashboard marketplace revenue — Phase 36 complete: /admin/executive adds Trendyol 90-day Gerçekleşen Satış Özeti card (ciro, eşleşen ürün, eşleşmemiş kayıt tiles + top 5 revenue table), no schema change, isCancelledStatus() filter, Gerçekleşen Marj link
+- product finance field consolidation — Priority 0A complete (UI-only): product-form "PAZAR YERİ MALİYET GEÇERSİZ KILMALARI" section with blue policy info box, consolidated override fields (shippingCostOverride/marketplaceCommissionOverride/paymentFeeRate/returnReserveRate) with "Boş = platform politikasını kullan" placeholders, legacy DB fields preserved as hidden inputs, marketplacePriceTry relabeled with role explanation, stok section Entegra ERP amber note; no schema change, browser round-trip 2026-05-17 ✓
 - trendyol daily sync cron — Phase 48 complete: /api/cron/trendyol-sync Vercel cron (daily 06:00 UTC), CRON_SECRET Bearer auth, 14-day sliding window, syncOrders (paginates fetchTrendyolOrders, upserts TrendyolSalesRecord with barcode/SKU match + discountedPrice fallback) + syncReturns (paginates fetchTrendyolReturns, upserts TrendyolReturnRecord with claimItemStatus + reason code/name) run in parallel via Promise.allSettled, vercel.json updated, no schema change
 - operational intelligence dashboard — Phase 47 complete: /dashboard enhanced with "Trendyol & Stok" section showing criticalStockCount, pendingDeductionCount, 7-day order qty, unmatched orders count, 30-day Trendyol revenue; all tiles clickable deep-links; LinkedStatCard component; DB-only (no live API), no schema change
 - trendyol catalog view — Phase 46 complete: /admin/trendyol-catalog fetches up to 200 Trendyol catalog products (live API), cross-references with internal Product.barcode + MarketplaceProductMapping barcodes/SKUs, shows delta (internal qty vs Trendyol qty), oversell risk warning, surplus push suggestion, unmatched products with Eşleştir deep-links, Trendyol Katalog nav link
@@ -186,6 +187,7 @@ Current meaning:
 - marketplace sync architecture — NOT IMPLEMENTED (Phase 17, DEFERRED)
 
 Current marketplace gaps:
+- operator-facing product finance field consolidation is still incomplete; generic product-level marketplace price, shipping, commission, and override fields still compete with newer per-marketplace layers
 - live Trendyol orders/returns visibility exists, but a full persisted order ledger is not yet the trusted default operator view
 - return records are not yet presented as a fully linked order-history layer
 - unmatched marketplace records still need a stronger operator inbox and backfill workflow
@@ -228,6 +230,7 @@ Current meaning:
 
 ## Known Technical Debt
 
+- product finance field sprawl remains unresolved across import cost, TRY cost, marketplace price, shipping, commission, and override inputs
 - no image pipeline
 - no audit-grade event history
 - no audit-grade event history for financial, permission, stock, marketplace, or quote changes

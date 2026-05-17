@@ -195,6 +195,7 @@ export function ProductForm({
           </Field>
           <Field label="Açıklama (yayınlanan)" error={form.formState.errors.description?.message} className="md:col-span-2">
             <RichTextEditor
+              // eslint-disable-next-line react-hooks/incompatible-library
               value={form.watch("description") ?? ""}
               onChange={(html) => form.setValue("description", html, { shouldDirty: true })}
               placeholder="Ürün açıklaması — zengin metin desteklenir"
@@ -217,7 +218,7 @@ export function ProductForm({
               </div>
               <p className="text-xs text-blue-800 leading-6 line-clamp-4">{xmlDescription}</p>
               <p className="text-[10px] text-blue-500">
-                XML senkronizasyonu yayınlanan açıklamanın üzerine yazmaz — "Editöre taşı" ile açıklamayı manuel olarak kopyalayabilirsiniz.
+                XML senkronizasyonu yayınlanan açıklamanın üzerine yazmaz — &quot;Editöre taşı&quot; ile açıklamayı manuel olarak kopyalayabilirsiniz.
               </p>
             </div>
           )}
@@ -230,6 +231,9 @@ export function ProductForm({
 
       {/* ── Stok ve konum ── */}
       <Section title="Stok ve konum">
+        <div className="rounded-xl border border-amber-100 bg-amber-50/60 px-4 py-3 text-xs text-amber-700 leading-5">
+          Güncel stok Entegra ERP üzerinden XML senkronizasyonu ile güncellenir. Manuel düzenleme yalnızca XML kilidi aktif ürünlerde veya XML dışı stok girişlerinde yapılmalıdır.
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Güncel stok" error={form.formState.errors.stockQuantity?.message}>
             <Input type="number" min={0} {...form.register("stockQuantity", { valueAsNumber: true })} />
@@ -273,22 +277,33 @@ export function ProductForm({
         </div>
       </Section>
 
-      {/* ── Maliyet girdileri ── */}
-      <Section title="Maliyet girdileri">
+      {/* ── Pazar yeri maliyet geçersiz kılmaları ── */}
+      {/* Hidden fields: preserve existing DB values without showing duplicate inputs */}
+      <input type="hidden" {...form.register("shippingCost")} />
+      <input type="hidden" {...form.register("marketplaceCommission")} />
+      <Section title="Pazar yeri maliyet geçersiz kılmaları">
+        <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-700 leading-5">
+          Standart platform oranları (komisyon, kargo, KDV, ödeme ücreti) için{" "}
+          <a href="/admin/marketplace-policies" className="underline font-medium">Pazar Yeri Politikaları</a>{" "}
+          sayfasını kullanın. Aşağıdaki alanlar yalnızca <strong>bu ürün için</strong> platfom politikasını geçersiz kılar.
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Standart kargo maliyeti (₺)" error={form.formState.errors.shippingCost?.message}>
-            <Input {...form.register("shippingCost")} placeholder="0.00" />
+          <Field label="Kargo maliyet geçersiz kılması (₺)" error={form.formState.errors.shippingCostOverride?.message}>
+            <Input {...form.register("shippingCostOverride")} placeholder="Boş = platform politikasını kullan" />
           </Field>
-          <Field label="Kargo maliyeti (manuel override)" error={form.formState.errors.shippingCostOverride?.message}>
-            <Input {...form.register("shippingCostOverride")} placeholder="0.00" />
+          <Field label="Komisyon geçersiz kılması (%)" error={form.formState.errors.marketplaceCommissionOverride?.message}>
+            <Input {...form.register("marketplaceCommissionOverride")} placeholder="Boş = platform politikasını kullan" />
           </Field>
-          <Field label="Standart pazar komisyonu (%)" error={form.formState.errors.marketplaceCommission?.message}>
-            <Input {...form.register("marketplaceCommission")} placeholder="20" />
+          <Field label="Ödeme işlem ücreti geçersiz kılması (%)" error={form.formState.errors.paymentFeeRate?.message}>
+            <Input {...form.register("paymentFeeRate")} placeholder="Boş = platform politikasını kullan" />
           </Field>
-          <Field label="Komisyon (manuel override %)" error={form.formState.errors.marketplaceCommissionOverride?.message}>
-            <Input {...form.register("marketplaceCommissionOverride")} placeholder="20" />
+          <Field label="İade/kusur karşılığı geçersiz kılması (%)" error={form.formState.errors.returnReserveRate?.message}>
+            <Input {...form.register("returnReserveRate")} placeholder="Boş = platform politikasını kullan" />
           </Field>
         </div>
+        <p className="text-xs text-slate-400 leading-6">
+          Değer girilmezse platform politikası → sistem varsayılanı sırasıyla uygulanır.
+        </p>
       </Section>
 
       {/* ── İthalat ve envanter ── */}
@@ -327,22 +342,20 @@ export function ProductForm({
           <Field label="Toptan satış fiyatı (₺)" error={form.formState.errors.wholesalePriceTry?.message}>
             <Input {...form.register("wholesalePriceTry")} placeholder="0.00" />
           </Field>
-          <Field label="Pazar yeri satış fiyatı (₺)" error={form.formState.errors.marketplacePriceTry?.message}>
+          <Field
+            label="Pazar yeri genel fiyatı (₺) — temel kârlılık"
+            error={form.formState.errors.marketplacePriceTry?.message}
+          >
             <Input {...form.register("marketplacePriceTry")} placeholder="0.00" />
           </Field>
           <Field label="KDV oranı (%)" error={form.formState.errors.vatRate?.message}>
             <Input {...form.register("vatRate")} placeholder="20" />
           </Field>
-          <Field label="Ödeme işlem ücreti (%)" error={form.formState.errors.paymentFeeRate?.message}>
-            <Input {...form.register("paymentFeeRate")} placeholder="2.5" />
-          </Field>
-          <Field label="İade/kusur karşılığı (%)" error={form.formState.errors.returnReserveRate?.message}>
-            <Input {...form.register("returnReserveRate")} placeholder="3" />
-          </Field>
         </div>
         <p className="text-xs text-slate-400 leading-6">
-          Kârlılık hesaplaması: fiyat − KDV − kargo − ambalaj − komisyon − ödeme ücreti − iade karşılığı = net kâr.
-          Pazar yeri kanalında komisyon alanı kullanılır. Perakende ve toptan kanalda komisyon sıfır kabul edilir.
+          <strong>Pazar yeri genel fiyatı</strong> temel kârlılık hesabı içindir.
+          Platform bazlı hassas fiyatlar XML beslemesinden ve listeleme düzeyindeki manuel geçersiz kılmalardan gelir —
+          &quot;Pazar Yeri Fiyatlandırması&quot; kartında ürün detayında görülür.
         </p>
       </Section>
 
@@ -399,7 +412,7 @@ export function ProductForm({
         <p className="text-xs text-slate-400 leading-6">
           İthalat karar motoru: hava/deniz kargo maliyeti, gümrük ve kârlılık hesabı yaparak en uygun yöntemi önerir.
           RMB maliyet girilirse formül: <code className="font-mono">(RMB ÷ RMB/USD) × (1 + komisyon%) + kargo × ağırlık) × (1 + gümrük%)</code>.
-          RMB yoksa "İthalat ve envanter" bölümündeki USD maliyeti kullanılır.
+          RMB yoksa &quot;İthalat ve envanter&quot; bölümündeki USD maliyeti kullanılır.
         </p>
       </Section>
 

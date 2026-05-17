@@ -44,6 +44,7 @@ export function CategoryForm({
     defaultValues: initialValues ?? emptyValues,
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const nameValue = form.watch("name");
 
   function autoSlug() {

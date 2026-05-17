@@ -59,6 +59,8 @@ This means the product is already useful for:
 - import buy/skip decisions replacing the old workbook
 
 Not yet complete:
+- product finance field sprawl still exists across import cost, TRY cost, marketplace price, shipping, commission, and override inputs
+- operator-facing product finance truth is still too crowded for safe daily use
 - XML sync'te stok değişim loglaması (hangi ürünün stoğu ne kadar değişti per sync)
 - Trendyol sipariş verilerinde eşleşme oranı hâlâ düşük (188 eşleşmemiş ürün)
 - İthalat kar analizi Trendyol gerçek satış fiyatlarıyla tam entegre değil
@@ -83,6 +85,41 @@ Includes:
 Clarification:
 - this does not mean fully redoing Phase 23 and Phase 24
 - it means keeping those rules active while the next product-heavy phases are built
+
+### Priority 0A - Product Finance Field Consolidation
+
+Why:
+Too many overlapping product-level fields now exist for:
+- import cost
+- TRY cost
+- marketplace selling price
+- shipping
+- commission
+- overrides
+
+If this remains unresolved, later marketplace and import phases will stack new logic onto ambiguous truth sources.
+
+Includes:
+- identify authoritative operator-facing product finance fields
+- hide, relabel, or de-emphasize legacy/fallback fields
+- stop treating generic `marketplacePriceTry` as the canonical marketplace pricing truth
+- stop treating generic `shippingCostOverride` / `marketplaceCommissionOverride` as the long-term primary marketplace override workflow
+- keep `sourceCostRmb`, `importPaymentFeePct`, `weightKg`, `customsRatePct`, and shipping method inputs as the primary import-economics surface
+- keep XML marketplace prices, manual marketplace overrides, and active/effective marketplace values separated
+- reduce clutter on product edit/detail pages before later phases continue
+
+Acceptance:
+- primary truth fields are obvious on product edit
+- fallback/legacy fields are hidden or clearly labeled
+- product finance UI no longer forces the owner to reconcile duplicate truths manually
+- later marketplace/import phases can build on a stable operator-facing model
+
+Important:
+Priority 0A must complete before any additional work on:
+- marketplace margin normalization follow-up
+- import economics follow-up
+- holding-grade import governance follow-up
+- marketplace pricing normalization follow-up
 
 ### ✓ Priority 1 — Marketplace Data Reliability Closure (Phase 29, 2026-05-17)
 

@@ -130,6 +130,21 @@ Marketplace write operations are forbidden until read-only dashboards are stable
 Procurement suggestions must never allocate all available capital automatically.
 Admin approval is required.
 
+## Rule 8
+Do not multiply financial truth sources.
+
+This includes:
+- import cost
+- marketplace selling price
+- shipping cost
+- commission
+- active/effective override values
+
+Required:
+- one operator-facing primary truth per concept
+- legacy or fallback fields must be hidden or clearly labeled
+- XML source values, manual overrides, and active/effective values must remain separate
+
 ---
 
 # Completed Phases
@@ -844,6 +859,8 @@ Goal:
 Make import economics trustworthy enough for active daily use.
 
 Required:
+- product-finance field consolidation must happen first
+- operator-facing import inputs must be reduced to primary truth fields
 - source purchase currency per product
 - source purchase cost per product
 - RMB/USD monthly exchange rate support
@@ -887,6 +904,8 @@ Goal:
 Normalize marketplace-specific price, shipping, commission, and net remaining revenue logic.
 
 Required:
+- product-finance field consolidation must happen first
+- generic product-level marketplace price / shipping / commission clutter must not remain the canonical operator workflow
 - XML marketplace prices must map cleanly to the correct marketplace
 - XML price and manual price must remain separate truths
 - active/effective price must be derived from XML + override rules

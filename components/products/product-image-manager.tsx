@@ -203,7 +203,7 @@ export function ProductImageManager({ productId, initialImages, canUpload }: Pro
             Ekle
           </button>
         </div>
-        <p className="text-xs text-slate-400">Enter tuşuna basarak veya "Ekle" butonuyla birden fazla URL ekleyebilirsiniz.</p>
+        <p className="text-xs text-slate-400">Enter tuşuna basarak veya &quot;Ekle&quot; butonuyla birden fazla URL ekleyebilirsiniz.</p>
       </div>
 
       {/* Local file upload */}
@@ -262,6 +262,7 @@ function ImageCard({
       {/* Image */}
       <div className="relative aspect-square w-full bg-slate-100">
         {!imgError ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image.url}
             alt={image.altText ?? "Ürün görseli"}

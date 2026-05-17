@@ -92,9 +92,13 @@ async function fetchDashboardData(supplierId: string, apiKey: string, apiSecret:
     console.log("[trendyol-dashboard] returns keys:", Object.keys(returnsResp ?? {}));
     return {
       // Null-safe: API may return different field names or structure
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       orders: Array.isArray((ordersResp as any)?.content) ? (ordersResp as any).content : [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       orderTotal: (ordersResp as any)?.totalElements ?? 0,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       returns: Array.isArray((returnsResp as any)?.content) ? (returnsResp as any).content : [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       returnTotal: (returnsResp as any)?.totalElements ?? 0,
       error: null,
     };

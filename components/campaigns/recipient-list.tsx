@@ -51,8 +51,7 @@ function waLink(phone: string | null, message: string): string | null {
 }
 
 // OPENED removed — dead status, never set in application code
-const STATUS_ORDER = ["PENDING", "SENT", "REPLIED", "QUOTED", "WON", "LOST"] as const;
-type Status = (typeof STATUS_ORDER)[number];
+type Status = "PENDING" | "SENT" | "REPLIED" | "QUOTED" | "WON" | "LOST";
 
 const STATUS_LABEL: Record<Status, string> = {
   PENDING: "Bekliyor",

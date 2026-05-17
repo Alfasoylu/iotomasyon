@@ -22,14 +22,6 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function fmtDate(epochMs: number | null | undefined) {
-  if (!epochMs) return "—";
-  return new Intl.DateTimeFormat("tr-TR", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  }).format(new Date(epochMs));
-}
-
 const CLAIM_STATUS_TR: Record<string, string> = {
   WaitingForArrival: "Kargo bekleniyor",
   Arrived: "Ulaştı",

@@ -153,6 +153,7 @@ function RankTable({
 export default async function ProductPerformancePage() {
   await requirePermission(PERMISSIONS.EXECUTIVE_READ);
 
+  // eslint-disable-next-line react-hooks/purity
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   // Load all records with product link (including cancelled for count, then filter)

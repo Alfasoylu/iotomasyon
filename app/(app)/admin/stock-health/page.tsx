@@ -46,6 +46,7 @@ const ADJ_COLOR: Record<StockAdjustmentType, string> = {
 export default async function StockHealthPage() {
   await requirePermission(PERMISSIONS.EXECUTIVE_READ);
 
+  // eslint-disable-next-line react-hooks/purity
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const [products, salesRecords, recentAdjustments] = await Promise.all([

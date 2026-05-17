@@ -66,7 +66,6 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
   for (const [startDate, endDate] of windows) {
     let page = 0;
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       let resp;
       try {

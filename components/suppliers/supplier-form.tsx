@@ -84,7 +84,7 @@ export function SupplierForm({ supplierId, initialValues, onSuccess }: SupplierF
       });
       setResult(res);
       if (res.ok) {
-        onSuccess ? onSuccess() : window.location.reload();
+        if (onSuccess) { onSuccess(); } else { window.location.reload(); }
       }
     });
   }
@@ -97,7 +97,7 @@ export function SupplierForm({ supplierId, initialValues, onSuccess }: SupplierF
       const res = await deleteSupplierAction(id);
       setResult(res);
       if (res.ok) {
-        onSuccess ? onSuccess() : window.location.reload();
+        if (onSuccess) { onSuccess(); } else { window.location.reload(); }
       }
     });
   }

@@ -5,8 +5,6 @@ import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
   calculateImportDecision,
-  AIR_FREIGHT_PER_KG,
-  SEA_FREIGHT_PER_KG,
   DEFAULT_USD_TRY_RATE,
   effectiveFreightPerKg,
 } from "@/lib/import-decision";
@@ -143,7 +141,7 @@ export async function createImportDecisionSnapshotAction(
   const effectiveAirFreight = effectiveFreightPerKg("AIR", supplierAirFreight);
   const effectiveSeaFreight = effectiveFreightPerKg("SEA", supplierSeaFreight);
 
-  const snapshot = await prisma.importDecisionSnapshot.create({
+  await prisma.importDecisionSnapshot.create({
     data: {
       productId,
       supplierId: preferredSupplierId,

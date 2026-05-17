@@ -26,6 +26,7 @@ type Props = {
 export function RichTextEditor({ value, onChange, placeholder, disabled }: Props) {
   // Guard against SSR hydration mismatch — Tiptap is DOM-only
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   // Track the last value we pushed into the editor to avoid loops

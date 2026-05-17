@@ -73,6 +73,20 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
+### Priority 0A — Product Finance Field Consolidation (UI-only) (2026-05-17)
+- `components/products/product-form.tsx`: renamed "Maliyet girdileri" section → "PAZAR YERİ MALİYET GEÇERSİZ KILMALARI"
+- Added blue info box linking to /admin/marketplace-policies: explains overrides are product-level only; platform-wide defaults live in Pazar Yeri Politikaları
+- Consolidated override fields: `shippingCostOverride` (KARGO MALİYET GEÇERSİZ KILMASI ₺), `marketplaceCommissionOverride` (KOMİSYON GEÇERSİZ KILMASI %), `paymentFeeRate` (ÖDEME İŞLEM ÜCRETİ GEÇERSİZ KILMASI %), `returnReserveRate` (İADE/KUSUR KARŞILIĞI GEÇERSİZ KILMASI %) — all with "Boş = platform politikasını kullan" placeholders
+- Added note: "Değer girilmezse platform politikası → sistem varsayılanı sırasıyla uygulanır."
+- Moved `paymentFeeRate` + `returnReserveRate` OUT of the Fiyatlandırma section INTO the new override section
+- Added hidden inputs to preserve legacy `shippingCost` + `marketplaceCommission` DB values without showing them in the UI
+- Renamed `marketplacePriceTry` label → "PAZAR YERİ GENEL FİYATI (₺) — TEMEL KÂRLILIK" with explanatory note clarifying its role vs. per-platform canonical pricing
+- Added amber warning in stok section: "Güncel stok Entegra ERP üzerinden XML senkronizasyonu ile güncellenir..."
+- No schema change — UI-only restructure
+- ESLint fixes: removed dead `STATUS_ORDER` const in `recipient-list.tsx` (replaced with inline union type); added `eslint-disable-next-line` for `form.watch()` in `category-form.tsx` (React Compiler incompatible-library)
+- All quality gates: prisma validate ✓, prisma generate ✓, tsc --noEmit ✓, eslint 0 warnings ✓, npm run build ✓
+- Browser round-trip verified 2026-05-17: form section visible with blue info box, override fields with correct placeholders, shippingCostOverride save→detail shows "Ürün Geçersiz Kılma" badge at ₺25, 4-tier resolution working, clear→save→redirect clean ✓
+
 ### Phase 48 — Trendyol Daily Sync Cron (2026-05-17)
 - Added `app/api/cron/trendyol-sync/route.ts`: Vercel cron route called daily at 06:00 UTC, CRON_SECRET Bearer auth, 14-day sliding window, parallel `syncOrders` + `syncReturns` via `Promise.allSettled`
 - `syncOrders`: paginates `fetchTrendyolOrders` (page/size=50), upserts `TrendyolSalesRecord` (barcode/SKU product match, discountedPrice fallback, status update)

@@ -244,7 +244,7 @@ export default async function OrdersPage({
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Senkronizasyon</p>
           <p className="text-xs text-slate-500">
-            Son 365 günün sipariş ve iade kayıtlarını Trendyol'dan çeker. Mevcut kayıtlar güncellenir, yeniler eklenir.
+            Son 365 günün sipariş ve iade kayıtlarını Trendyol&apos;dan çeker. Mevcut kayıtlar güncellenir, yeniler eklenir.
           </p>
         </div>
         <OrdersSyncButton />

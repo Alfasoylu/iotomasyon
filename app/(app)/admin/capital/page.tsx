@@ -183,7 +183,7 @@ export default async function CapitalPage() {
             <p className="mt-1 text-sm text-amber-800">
               Aşağıdaki miktarlar yatırım skoru ve aylık talep tahminine dayanır.
               Satın alma yapılmadan önce yönetici onayı zorunludur.
-              Sermayenin %{reservePct.toFixed(0)}'i ({fmt(allocation.reserveAmount)}) her zaman rezervde tutulur.
+              Sermayenin %{reservePct.toFixed(0)}&apos;i ({fmt(allocation.reserveAmount)}) her zaman rezervde tutulur.
             </p>
           </Card>
 

@@ -49,7 +49,7 @@ export function SupplierProductSection({
   const [result, setResult] = useState<{ ok: boolean; message?: string } | null>(null);
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [startDeleting] = [useTransition()[1]];
+  // delete transition reserved for future use
 
   const availableSuppliers = suppliers.filter(
     (s) => !links.some((l) => l.supplierId === s.id),

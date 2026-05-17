@@ -25,7 +25,7 @@ export default async function TrendyolAdminPage() {
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Yönetim / Trendyol</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Trendyol API Yapılandırması</h1>
         <p className="mt-2 text-sm leading-7 text-slate-600">
-          Trendyol Satıcı API'ye bağlanmak için kimlik bilgilerinizi girin. Yalnızca okuma işlemleri gerçekleştirilir.
+          Trendyol Satıcı API&apos;ye bağlanmak için kimlik bilgilerinizi girin. Yalnızca okuma işlemleri gerçekleştirilir.
         </p>
       </div>
 
@@ -57,11 +57,11 @@ export default async function TrendyolAdminPage() {
       <Card className="p-6 space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Nasıl bulunur?</p>
         <ol className="space-y-1.5 text-sm text-slate-600 list-decimal list-inside">
-          <li>Trendyol Satıcı Paneli'ne giriş yapın (satici.trendyol.com)</li>
+          <li>Trendyol Satıcı Paneli&apos;ne giriş yapın (satici.trendyol.com)</li>
           <li>Sağ üst köşede profil → <strong>Hesap Bilgileri</strong> seçin</li>
           <li><strong>API Bilgileri</strong> sekmesine gidin</li>
           <li>API Kullanıcı Adı → API Anahtarı, API Şifresi → Gizli Anahtar</li>
-          <li>Satıcı ID, panel URL'sindeki sayısal değerdir</li>
+          <li>Satıcı ID, panel URL&apos;sindeki sayısal değerdir</li>
         </ol>
       </Card>
     </div>
