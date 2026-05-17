@@ -78,7 +78,20 @@ export default async function OrdersPage({
   const sp   = await searchParams;
   const tab  = (sp.tab as Tab | undefined) ?? "all";
   const page = Math.max(1, parseInt(sp.page ?? "1", 10));
+  const q    = typeof sp.q === "string" ? sp.q.trim() : "";
   const PAGE_SIZE = 100;
+
+  // Phase 69 — Search filter for sales records
+  const searchFilter: Prisma.TrendyolSalesRecordWhereInput = q.length >= 2
+    ? {
+        OR: [
+          { productName: { contains: q, mode: "insensitive" } },
+          { barcode: { contains: q, mode: "insensitive" } },
+          { merchantSku: { contains: q, mode: "insensitive" } },
+          { orderId: { contains: q, mode: "insensitive" } },
+        ],
+      }
+    : {};
 
   // ── Counts for tab badges ────────────────────────────────────────────────────
   const [
@@ -88,20 +101,29 @@ export default async function OrdersPage({
     totalUnmatched,
     totalReturns,
   ] = await Promise.all([
-    prisma.trendyolSalesRecord.count(),
+    prisma.trendyolSalesRecord.count({ where: searchFilter }),
     prisma.trendyolSalesRecord.count({
-      where: { status: { contains: "Delivered", mode: "insensitive" } },
+      where: { AND: [searchFilter, { status: { contains: "Delivered", mode: "insensitive" } }] },
     }),
     prisma.trendyolSalesRecord.count({
       where: {
-        OR: [
-          { status: { contains: "Cancel", mode: "insensitive" } },
-          { status: { contains: "İptal", mode: "insensitive" } },
+        AND: [
+          searchFilter,
+          {
+            OR: [
+              { status: { contains: "Cancel", mode: "insensitive" } },
+              { status: { contains: "İptal", mode: "insensitive" } },
+            ],
+          },
         ],
       },
     }),
-    prisma.trendyolSalesRecord.count({ where: { productId: null } }),
-    prisma.trendyolReturnRecord.count(),
+    prisma.trendyolSalesRecord.count({ where: { AND: [searchFilter, { productId: null }] } }),
+    prisma.trendyolReturnRecord.count(
+      q.length >= 2
+        ? { where: { productName: { contains: q, mode: "insensitive" } } }
+        : undefined
+    ),
   ]);
 
   // ── Query based on active tab ────────────────────────────────────────────────
@@ -124,7 +146,9 @@ export default async function OrdersPage({
   let totalCount = 0;
 
   if (isReturnsTab) {
-    const where = {};
+    const where: Prisma.TrendyolReturnRecordWhereInput = q.length >= 2
+      ? { productName: { contains: q, mode: "insensitive" } }
+      : {};
     totalCount = totalReturns;
     const returns = await prisma.trendyolReturnRecord.findMany({
       where,
@@ -149,25 +173,35 @@ export default async function OrdersPage({
       returnReason: r.reasonName,
     }));
   } else {
-    let salesWhere: Prisma.TrendyolSalesRecordWhereInput = {};
+    let salesWhere: Prisma.TrendyolSalesRecordWhereInput = searchFilter;
     if (tab === "delivered") {
       salesWhere = {
-        OR: [
-          { status: { contains: "Delivered", mode: "insensitive" } },
-          { status: { contains: "Teslim", mode: "insensitive" } },
+        AND: [
+          searchFilter,
+          {
+            OR: [
+              { status: { contains: "Delivered", mode: "insensitive" } },
+              { status: { contains: "Teslim", mode: "insensitive" } },
+            ],
+          },
         ],
       };
       totalCount = totalDelivered;
     } else if (tab === "cancelled") {
       salesWhere = {
-        OR: [
-          { status: { contains: "Cancel", mode: "insensitive" } },
-          { status: { contains: "İptal", mode: "insensitive" } },
+        AND: [
+          searchFilter,
+          {
+            OR: [
+              { status: { contains: "Cancel", mode: "insensitive" } },
+              { status: { contains: "İptal", mode: "insensitive" } },
+            ],
+          },
         ],
       };
       totalCount = totalCancelled;
     } else if (tab === "unmatched") {
-      salesWhere = { productId: null };
+      salesWhere = { AND: [searchFilter, { productId: null }] };
       totalCount = totalUnmatched;
     } else {
       totalCount = totalOrders;
@@ -199,7 +233,7 @@ export default async function OrdersPage({
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   function tabHref(t: Tab) {
-    return `/orders?tab=${t}`;
+    return q ? `/orders?tab=${t}&q=${encodeURIComponent(q)}` : `/orders?tab=${t}`;
   }
 
   const tabCounts: Record<Tab, number> = {
@@ -246,7 +280,32 @@ export default async function OrdersPage({
         <OrdersSyncButton />
       </Card>
 
-      {/* Phase 43 — Stock deduction card */}
+      {/* Phase 69 — Search bar */}
+      <form method="GET" action="/orders" className="flex gap-2">
+        {tab !== "all" && <input type="hidden" name="tab" value={tab} />}
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="Ürün adı, barkod, SKU veya sipariş no..."
+          className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-400 transition"
+        />
+        <button
+          type="submit"
+          className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+        >
+          Ara
+        </button>
+        {q && (
+          <a
+            href={`/orders?tab=${tab}`}
+            className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-400 hover:bg-slate-50 transition"
+          >
+            ✕ Temizle
+          </a>
+        )}
+      </form>
+
       {/* Tab bar */}
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-0">
         {(Object.entries(TAB_LABELS) as [Tab, string][]).map(([t, label]) => (
