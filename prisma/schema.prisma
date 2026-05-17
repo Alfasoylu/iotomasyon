@@ -372,6 +372,8 @@ model Product {
   images               ProductImage[]
   // Phase 11A — XML source data
   xmlData              XmlProductData?
+  // Phase 20 — supplier links
+  supplierLinks        SupplierProduct[]
 
   @@index([name])
   @@index([barcode])
@@ -878,4 +880,49 @@ model XmlProductData {
   @@index([xmlSku])
   @@index([lastSeenAt])
   @@index([missingFromLatestFeed])
+}
+
+// ─── Phase 20 — Supplier Intelligence ────────────────────────────────────────
+
+model Supplier {
+  id              String    @id @default(cuid())
+  name            String
+  contactName     String?
+  phone           String?
+  email           String?
+  countryOfOrigin String?   // e.g. "CN", "TR", "DE"
+  paymentTerms    String?   // free text: "NET 30", "Peşin", etc.
+  defaultLeadDays Int?      // default lead time in days for this supplier
+  notes           String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  products SupplierProduct[]
+
+  @@index([name])
+  @@index([isActive])
+}
+
+// One row per (supplier, product) pair.
+// leadDays / unitCostUsd override the supplier-level defaults for this specific product.
+model SupplierProduct {
+  id           String   @id @default(cuid())
+  supplierId   String
+  productId    String
+  unitCostUsd  Decimal?  // supplier price for this product in USD
+  moq          Int?      // minimum order quantity
+  leadDays     Int?      // lead time override for this product (days)
+  isPreferred  Boolean  @default(false)  // preferred supplier for this product
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, productId])
+  @@index([supplierId])
+  @@index([productId])
+  @@index([isPreferred])
 }

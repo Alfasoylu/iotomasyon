@@ -5,9 +5,10 @@ import { Card } from "@/components/ui/card";
 import { getProductById } from "@/services/product-service";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { listAttributes } from "@/services/attribute-service";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, checkPermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { SupplierProductSection } from "@/components/suppliers/supplier-product-section";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,8 @@ export default async function EditProductPage({
 }) {
   await requirePermission(PERMISSIONS.PRODUCTS_UPDATE);
   const { id } = await params;
-  const [{ databaseAvailable, product }, { categories }, allAttributes, users] = await Promise.all([
+  const user = await requireUser();
+  const [{ databaseAvailable, product }, { categories }, allAttributes, users, allSuppliers, supplierLinks, canWriteSuppliers] = await Promise.all([
     getProductById(id),
     listCategoriesForSelect(),
     listAttributes(),
@@ -27,6 +29,16 @@ export default async function EditProductPage({
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    prisma.supplier.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.supplierProduct.findMany({
+      where: { productId: id },
+      include: { supplier: { select: { name: true } } },
+    }),
+    checkPermission(user, PERMISSIONS.SUPPLIERS_WRITE),
   ]);
 
   if (!databaseAvailable) {
@@ -120,6 +132,35 @@ export default async function EditProductPage({
             xmlLocked: product.xmlLocked ?? false,
           }}
         />
+      </Card>
+
+      {/* Phase 20: Supplier product links */}
+      <Card className="overflow-hidden">
+        <div className="border-b border-slate-200 px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Faz 20 — Tedarikçi Zekası
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-slate-950">Tedarikçi Bağlantıları</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Bu ürünü tedarik eden tedarikçileri, maliyetleri ve koşulları yönetin.
+          </p>
+        </div>
+        <div className="p-6">
+          <SupplierProductSection
+            productId={product.id}
+            suppliers={allSuppliers}
+            existingLinks={supplierLinks.map((sl) => ({
+              supplierId: sl.supplierId,
+              supplierName: sl.supplier.name,
+              unitCostUsd: sl.unitCostUsd != null ? Number(sl.unitCostUsd) : null,
+              moq: sl.moq,
+              leadDays: sl.leadDays,
+              isPreferred: sl.isPreferred,
+              notes: sl.notes,
+            }))}
+            canWrite={canWriteSuppliers}
+          />
+        </div>
       </Card>
     </div>
   );
