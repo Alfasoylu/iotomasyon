@@ -8,14 +8,16 @@ import { formatDateTime } from "@/lib/utils";
 import {
   getDashboardStats,
   getDueTodayFollowups,
+  getOperationalAlerts,
 } from "@/services/dashboard-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [stats, dueToday] = await Promise.all([
+  const [stats, dueToday, alerts] = await Promise.all([
     getDashboardStats(),
     getDueTodayFollowups(),
+    getOperationalAlerts(),
   ]);
 
   return (
@@ -23,7 +25,7 @@ export default async function DashboardPage() {
       <section className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Badge tone="success">Faz 8</Badge>
+            <Badge tone="success">Faz 47</Badge>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
               CRM panosu
             </h1>
@@ -95,6 +97,44 @@ export default async function DashboardPage() {
           <StatCard label="Geciken görev" value={stats.overdueTasks} tone="danger" />
           <StatCard label="Teklif gönderildi" value={stats.quotesSent} />
           <StatCard label="Toplam ürün" value={stats.productCount} />
+        </div>
+      </section>
+
+      {/* Trendyol & Stock Operational Signals — Phase 47 */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          Trendyol &amp; Stok
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <LinkedStatCard
+            label="Kritik Stok"
+            value={alerts.criticalStockCount}
+            tone={alerts.criticalStockCount > 0 ? "danger" : "default"}
+            href="/admin/stock-health"
+          />
+          <LinkedStatCard
+            label="Bekleyen Stok Düşümü"
+            value={alerts.pendingDeductionCount}
+            tone={alerts.pendingDeductionCount > 0 ? "warning" : "default"}
+            href="/orders"
+          />
+          <LinkedStatCard
+            label="Son 7 Gün Sipariş (Adet)"
+            value={alerts.recentOrderQty7d}
+            href="/orders"
+          />
+          <LinkedStatCard
+            label="Eşleşmemiş Sipariş"
+            value={alerts.unmatchedOrdersCount}
+            tone={alerts.unmatchedOrdersCount > 100 ? "warning" : "default"}
+            href="/admin/marketplace-mappings"
+          />
+          <LinkedStatCard
+            label="Trendyol Ciro (30 Gün)"
+            value={formatCurrencyAmount(alerts.trendyolRevenue30d, "TRY")}
+            tone="success"
+            href="/marketplace/realized-margin"
+          />
         </div>
       </section>
 
@@ -189,4 +229,26 @@ function StatCard({
       <p className="mt-5 text-3xl font-semibold text-slate-950">{value}</p>
     </Card>
   );
+}
+
+function LinkedStatCard({
+  label,
+  value,
+  tone = "default",
+  href,
+}: {
+  label: string;
+  value: number | string;
+  tone?: "default" | "success" | "warning" | "danger";
+  href?: string;
+}) {
+  const card = (
+    <Card
+      className={`p-5 transition ${TONE_CLASSES[tone]} ${href ? "cursor-pointer hover:shadow-md" : ""}`}
+    >
+      <p className="text-sm uppercase tracking-[0.25em] text-slate-500">{label}</p>
+      <p className="mt-5 text-3xl font-semibold text-slate-950">{value}</p>
+    </Card>
+  );
+  return href ? <Link href={href}>{card}</Link> : card;
 }

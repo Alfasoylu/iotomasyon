@@ -159,6 +159,82 @@ export async function getDashboardStats() {
   }
 }
 
+// ─── Phase 47 — Operational Alerts ────────────────────────────────────────────
+// Fast DB-only signals for the dashboard operational section.
+function _isCancelledStatus(s: string | null): boolean {
+  if (!s) return false;
+  const l = s.toLowerCase();
+  return l.includes("iptal") || l.includes("cancel");
+}
+
+export async function getOperationalAlerts() {
+  try {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [
+      criticalStockCount,
+      pendingRows,
+      unmatchedOrdersCount,
+      recentRows,
+      revenueRows,
+    ] = await Promise.all([
+      prisma.product.count({ where: { stockQuantity: { lte: 0 } } }),
+      // Pending stock deductions (matched, not yet deducted, not cancelled)
+      prisma.trendyolSalesRecord.findMany({
+        where: { stockDeducted: false, productId: { not: null } },
+        select: { status: true },
+      }),
+      // Unmatched Trendyol order lines (no internal product linked)
+      prisma.trendyolSalesRecord.count({ where: { productId: null } }),
+      // Recent 7-day order lines
+      prisma.trendyolSalesRecord.findMany({
+        where: { orderDate: { gte: sevenDaysAgo } },
+        select: { status: true, quantity: true },
+      }),
+      // 30-day revenue (for financial summary)
+      prisma.trendyolSalesRecord.findMany({
+        where: { orderDate: { gte: thirtyDaysAgo } },
+        select: { status: true, totalPriceTry: true },
+      }),
+    ]);
+
+    const pendingDeductionCount = pendingRows.filter(
+      (r) => !_isCancelledStatus(r.status),
+    ).length;
+
+    const recentOrderQty7d = recentRows
+      .filter((r) => !_isCancelledStatus(r.status))
+      .reduce((s, r) => s + r.quantity, 0);
+
+    const trendyolRevenue30d = revenueRows
+      .filter((r) => !_isCancelledStatus(r.status))
+      .reduce((s, r) => s + Number(r.totalPriceTry), 0);
+
+    return {
+      databaseAvailable: true as const,
+      criticalStockCount,
+      pendingDeductionCount,
+      unmatchedOrdersCount,
+      recentOrderQty7d,
+      trendyolRevenue30d,
+    };
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return {
+        databaseAvailable: false as const,
+        criticalStockCount: 0,
+        pendingDeductionCount: 0,
+        unmatchedOrdersCount: 0,
+        recentOrderQty7d: 0,
+        trendyolRevenue30d: 0,
+      };
+    }
+    throw error;
+  }
+}
+
 export async function getDueTodayFollowups() {
   try {
     const now = new Date();
