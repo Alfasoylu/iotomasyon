@@ -65,6 +65,7 @@ Implemented modules:
 - product media and content studio (Phase 27: multi-image manager, Tiptap rich text editor, Supabase Storage upload, XML description governance)
 - product governance and private intelligence (Phase 28: isOwner()-gated privateNote [ADMIN_EMAIL only], PrivateNoteEditor, supplier summary on detail page, description max 10000)
 - phase 25–28 closure fixes: performance-based sorts (30d qty/rev, all-time rev) on /products, HTML description rendering on detail page, XML overwrite policy documentation, owner-only text correction
+- order ledger and return claims (Phase 29: TrendyolReturnRecord, syncTrendyolReturnsAction, /orders page with 5 tabs [Tümü/Teslim/İptal/İadeler/Eşleşmemiş], newest-first, local archive, unmatched inbox with mapping link)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1

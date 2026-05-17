@@ -279,6 +279,16 @@
 - tsc --noEmit clean, Vercel deploy READY (commit ceac815)
 - Browser-verified 2026-05-17: edit page loads after migration ✓; amber private note card visible with 🔒 badge ✓; note saved to DB via action ("Browser test notu: UV-82 için Çin'den ithalat planı — 2026-05-17 Phase 28 doğrulama.") confirmed via Supabase SQL ✓; detail page shows saved note under "🔒 Özel Not" ✓; "Tedarikçi Kaynağı" supplier card visible ✓
 
+### Phase 29 — Order Ledger and Return Claims Sync (commit 3e615fd)
+- Migration `20260517130000_phase29_return_records`: new `TrendyolReturnRecord` table — claimId, orderLineId (unique together), productId (nullable FK → Product SET NULL), orderNumber, orderDate, claimDate, status, reasonName, reasonCode, productName, barcode, merchantSku, unitPriceTry, syncedAt; 4 indexes; applied to production Supabase
+- Created `lib/actions/returns-sync-actions.ts`: `syncTrendyolReturnsAction` — EXECUTIVE_READ-gated; sweeps 4 × 90-day windows (365 days total); barcode-first then SKU product matching; upserts TrendyolReturnRecord per (claimId, orderLineId); surfaces page-0 error to UI
+- Created `components/orders/orders-sync-button.tsx`: combined sync client component — triggers both `syncTrendyolSalesAction` + `syncTrendyolReturnsAction` in parallel; reports orders and returns line counts + new record counts
+- Created `app/(app)/orders/page.tsx`: local order ledger page — 5 tabs (Tümü/Teslim Edildi/İptal Beklemede/İadeler/Eşleşmemiş) with live counts; 100-row pages sorted newest-first; product column links matched rows, shows "Eşleşmemiş" amber badge for unmatched; unmatched tab shows amber hint with link to /admin/marketplace-mappings; İadeler tab renders TrendyolReturnRecord rows with reason column; pagination links
+- Updated `app/(app)/layout.tsx`: added "Siparişler" nav item (EXECUTIVE_READ) before "Satış Performansı"
+- Updated `components/dashboard/sidebar.tsx`: info card updated to "Faz 29 aktif"
+- tsc --noEmit clean, Vercel deploy READY (commit 3e615fd)
+- Browser-verified 2026-05-17: /orders loads (1.105 sipariş, sayfa 1/12) ✓; "Siparişler" sidebar link active ✓; all 5 tabs render with correct counts ✓; matched product row links to /products/[id] ✓; unmatched rows show amber "Eşleşmemiş" badge ✓; Eşleşmemiş tab amber hint + Ürün Eşleştirme link ✓; İadeler tab shows correct empty state (no returns synced yet) ✓; Teslim Edildi count 952 ✓
+
 ### Phase 25–28 Closure Fixes (commit 4bf6bd4)
 
 **Issue 1 — Owner-only privateNote gating (stricter than Phase 28 original)**

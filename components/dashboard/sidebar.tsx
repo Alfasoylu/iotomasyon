@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 26 aktif
+          Faz 29 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Satış Performansı: Trendyol sipariş senkronizasyonu, ürün bazlı ciro ve marj sıralaması.
+            Sipariş Defteri: Trendyol sipariş ve iade geçmişi, yerel arşiv, eşleşmemiş kayıt takibi.
           </p>
         </div>
       </aside>
