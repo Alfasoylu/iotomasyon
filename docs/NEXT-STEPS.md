@@ -129,25 +129,20 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
-### Priority 5 - Marketplace Pricing Normalization
+### ✓ Priority 5 — Marketplace Pricing Normalization (Phase 33, 2026-05-17)
 
-Why:
-Marketplace-specific price, shipping, commission, and net remaining revenue are still too fragmented to be trusted as one operational truth.
-
-Includes:
-- XML marketplace price mapping
-- separate XML/manual/effective marketplace price handling
-- per-marketplace shipping defaults
-- per-marketplace shipping overrides
-- per-marketplace commission defaults
-- per-marketplace commission overrides
-- per-marketplace net remaining revenue table on product detail
-- one shared marketplace pricing service
-
-Acceptance:
-- each marketplace row shows source and active values clearly
-- manual overrides survive XML sync
-- net remaining revenue is consistent everywhere it appears
+Delivered:
+- lib/marketplace-pricing.ts: canonical per-marketplace pricing engine (pure computation, no DB)
+- calcMarketplacePricingRow(): resolves effectivePriceTry, shippingTry, commissionTry, paymentFeeTry, returnReserveTry, netRevenueTry, netMarginPct
+- calcShippingFromPriceTiers(): roadmap price tiers (<5 USD→1.2, 5–7.5→2.0, >7.5→3.3 USD × usdTryRate)
+- Price resolution: manual override (marketplacePriceTry) > XML price > none
+- Shipping resolution: product/platform policy override > price-tier default
+- priceSourceLabel/priceSourceColor, shippingSourceLabel helpers
+- Product detail page: "Pazar Yeri Fiyatlandırması" card — 5 platforms (Trendyol/Hepsiburada/Amazon/Pazarama/Idefix)
+- Per-row: XML Fiyat | Etkin Fiyat | Kaynak badge | Kargo ₺ + source badge | Komisyon % + source badge | Net Kalan ₺ (color-coded) | Net Marj %
+- Footer: shipping tier reference at current USD/TRY rate
+- Fetches MarketplacePlatformPolicy from DB for override resolution
+- Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
 
 ### ✓ Phase 25: Product Operations UX — DONE (2026-05-17)
 

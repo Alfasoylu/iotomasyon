@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 32 aktif
+          Faz 33 aktif
           <p className="mt-2 font-medium text-slate-900">
-            İthalat Yönetişimi: Karar anlık görüntüsü, tedarikçi kargo varsayılanları, üç katmanlı kargo çözümü.
+            Pazar Yeri Fiyatlandırması: XML/manuel fiyat, kargo dilimi, komisyon, net kalan.
           </p>
         </div>
       </aside>
