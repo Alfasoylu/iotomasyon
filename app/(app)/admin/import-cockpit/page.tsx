@@ -221,6 +221,8 @@ export default async function ImportCockpitPage({
     monthlyProfitTry: number | null;
     // Sinyal
     signal: Signal;
+    // Phase 66 — Stok kapsamı (gün)
+    daysOfCoverage: number | null;
   };
 
   const rows: Row[] = products.map((p) => {
@@ -347,6 +349,14 @@ export default async function ImportCockpitPage({
 
     const signal = computeSignal(marginPct, monthlyProfitTry);
 
+    // Phase 66 — Days of coverage = stockQty / (effectiveMonthlyUnits / 30)
+    const dailyVelocity =
+      effectiveMonthlyUnits != null && effectiveMonthlyUnits > 0
+        ? effectiveMonthlyUnits / 30
+        : null;
+    const daysOfCoverage =
+      dailyVelocity != null ? Math.round(p.stockQuantity / dailyVelocity) : null;
+
     return {
       id: p.id,
       name: p.name,
@@ -367,6 +377,7 @@ export default async function ImportCockpitPage({
       effectiveMonthlyUnits,
       monthlyProfitTry,
       signal,
+      daysOfCoverage,
     };
   });
 
@@ -508,6 +519,7 @@ export default async function ImportCockpitPage({
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Marj</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Aylık Kâr</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Stok</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Kapsama</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Kaynak</th>
                 </tr>
               </thead>
@@ -607,6 +619,23 @@ export default async function ImportCockpitPage({
                     {/* Stok */}
                     <td className="px-4 py-3 text-right text-xs text-slate-500">
                       {row.stockQuantity}
+                    </td>
+
+                    {/* Phase 66 — Stok kapsamı */}
+                    <td className="px-4 py-3 text-right text-xs">
+                      {row.daysOfCoverage != null ? (
+                        <span className={
+                          row.daysOfCoverage > 90
+                            ? "text-slate-400"
+                            : row.daysOfCoverage > 30
+                            ? "text-amber-600 font-semibold"
+                            : "text-red-600 font-bold"
+                        }>
+                          {row.daysOfCoverage}g
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
                     </td>
 
                     {/* Kaynak etiketi */}
