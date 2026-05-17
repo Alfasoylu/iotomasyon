@@ -131,10 +131,25 @@ export default async function ImportDecisionsPage({
           ? Number(p.unitCostUsd)
           : null;
 
-    const monthlyUnits =
+    const manualMonthlyUnits =
       (p.onlineSalesPotential ?? 0) +
       (p.wholesaleSalesPotential ?? 0) +
       (p.installerSalesPotential ?? 0);
+
+    // Phase 60: incorporate Trendyol real velocity as demand signal
+    const trendyolMonthly = velocityByProduct.get(p.id)?.monthlyVelocity ?? 0;
+    const effectiveMonthlyUnits = Math.max(manualMonthlyUnits, trendyolMonthly) || null;
+
+    // Source tracking for display
+    type UnitsSource = "trendyol" | "manual" | "combined" | "none";
+    const monthlyUnitsSource: UnitsSource =
+      manualMonthlyUnits > 0 && trendyolMonthly > 0
+        ? "combined"
+        : trendyolMonthly > 0
+          ? "trendyol"
+          : manualMonthlyUnits > 0
+            ? "manual"
+            : "none";
 
     // Use marketplace price for the import profitability calculation
     const sellingPriceTry =
@@ -171,14 +186,14 @@ export default async function ImportDecisionsPage({
       commissionPct,
       domesticShippingTry,
       usdTryRate,
-      monthlyUnits: monthlyUnits > 0 ? monthlyUnits : null,
+      monthlyUnits: effectiveMonthlyUnits,
       airFreightPerKgOverride: null,
       seaFreightPerKgOverride: null,
     });
 
     const trendyolVelocity = velocityByProduct.get(p.id) ?? null;
 
-    return { product: p, decision, monthlyUnits, trendyolVelocity };
+    return { product: p, decision, monthlyUnits: manualMonthlyUnits, trendyolVelocity, monthlyUnitsSource };
   });
 
   // Summary counts
@@ -357,7 +372,7 @@ export default async function ImportDecisionsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {sorted.map(({ product: p, decision: d, monthlyUnits, trendyolVelocity }) => (
+                {sorted.map(({ product: p, decision: d, monthlyUnits, trendyolVelocity, monthlyUnitsSource }) => (
                   <tr key={p.id} className="hover:bg-slate-50/50">
                     <td className="px-4 py-3">
                       <Link
@@ -424,8 +439,29 @@ export default async function ImportDecisionsPage({
                         <span className="text-xs text-slate-300">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-600">
-                      {monthlyUnits > 0 ? monthlyUnits : "—"}
+                    <td className="px-4 py-3 text-right">
+                      {monthlyUnitsSource === "none" ? (
+                        <span className="text-xs text-slate-300">—</span>
+                      ) : (
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-sm text-slate-700">
+                            {Math.max(monthlyUnits, trendyolVelocity?.monthlyVelocity ?? 0)}
+                          </span>
+                          <span className={`text-[10px] font-medium ${
+                            monthlyUnitsSource === "trendyol"
+                              ? "text-emerald-600"
+                              : monthlyUnitsSource === "combined"
+                                ? "text-blue-600"
+                                : "text-slate-400"
+                          }`}>
+                            {monthlyUnitsSource === "trendyol"
+                              ? "Trendyol"
+                              : monthlyUnitsSource === "combined"
+                                ? "İkisi de"
+                                : "Manuel"}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right text-slate-600">
                       {p.stockQuantity}

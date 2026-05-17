@@ -1342,6 +1342,46 @@ products, making the real sales velocity visible next to the import decision sig
 
 ---
 
+# Phase 60 — Trendyol Velocity as Import Decision Input
+
+Goal:
+Phase 59 surfaces Trendyol 90-day velocity as a display column. Phase 60 feeds that
+real-world demand signal into the import decision score. Products with Trendyol
+order history but no manual sales estimate currently show MISSING_DATA. This phase
+makes them scoreable.
+
+Context:
+calculateImportDecision() requires monthlyUnits to compute annualProfitUsd /
+requiredCapitalUsd. Currently only manual estimates (onlineSalesPotential +
+wholesaleSalesPotential + installerSalesPotential) supply this input. Trendyol
+monthlyVelocity (qty90d / 3) is a better signal — actual paid orders vs. optimistic
+staff estimates.
+
+Required:
+- Compute effectiveMonthlyUnits per row:
+    trendyolMonthly = velocityByProduct.get(p.id)?.monthlyVelocity ?? 0
+    effectiveMonthlyUnits = Math.max(manualMonthlyUnits, trendyolMonthly) || null
+- Pass effectiveMonthlyUnits to calculateImportDecision() instead of manualMonthlyUnits
+- Track monthlyUnitsSource: "trendyol" | "manual" | "combined" | "none"
+    - "trendyol": trendyol > 0 && manual === 0
+    - "manual": manual > 0 && trendyol === 0
+    - "combined": both > 0 (using max)
+    - "none": both 0
+- Show source badge in "Talep/ay" column: emerald for trendyol, slate for manual, blue for combined
+- No change to calculateImportDecision() function itself
+- Schema change: NONE
+
+Permission gates:
+- EXECUTIVE_READ only (existing gate)
+
+Exit:
+Products with Trendyol sales history but no manual estimate get real
+ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY decisions instead of MISSING_DATA.
+"Talep/ay" column shows source badge (Trendyol/Manuel/İkisi de) so owner
+understands data provenance of each decision.
+
+---
+
 # Phase Exit Rules
 
 A phase is complete only if:
