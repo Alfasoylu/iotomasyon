@@ -460,3 +460,65 @@
 - Updated customer detail page `[id]/page.tsx`: fetches `listQuoteTemplates()` in `Promise.all`, passes templates + enriched products to QuoteForm
 - Updated quote edit page `[id]/edit/page.tsx`: same pattern as customer detail
 - Added "Teklif Şablonları" sidebar entry (QUOTE_TEMPLATES_READ permission)
+
+### Phase 30 — Marketplace Margin Policy Normalization
+- Created `MarketplacePlatformPolicy` table: platform (PK), standardShippingTry, standardCommissionPct, paymentFeePct, returnReservePct, vatPct — all Decimal optional; applied migration `20260517100000_phase30_marketplace_policies` to production Supabase
+- Created `lib/marketplace-policy.ts`: `resolveMarginPolicy()` three-tier resolver (product override > product value > platform standard > system default); `PolicySource` type enum; `policySourceLabel()` / `policySourceColor()` helpers; `ProductPolicyInput` / `PlatformPolicyInput` interfaces
+- Created `lib/actions/marketplace-policy-actions.ts`: `upsertPlatformPolicyAction` (MARKETPLACE_POLICIES_MANAGE gated, upsert per platform key); `getPlatformPoliciesAction`
+- Created `app/(app)/admin/marketplace-policies/page.tsx` (MARKETPLACE_POLICIES_MANAGE-gated): 8 platform cards with inline save, Yapılandırıldı/Varsayılan badge, resolution order explanation card, policy coverage notice
+- Updated `/marketplace/profit` page: uses `resolveMarginPolicy()` for shipping/commission per listing; winners/losers tables show Kargo + Komisyon columns with `PolicyBadge` source labels (Ürün Geçersiz Kılma/Ürün Değeri/Platform Standardı/Sistem Varsayılanı)
+- Added `MARKETPLACE_POLICIES_MANAGE` permission; added "Pazar Marj Politikaları" sidebar link
+- tsc clean, Vercel deploy READY (commit 4517916)
+- Browser-verified 2026-05-17 ✓
+
+### Phase 31 — Import Economics Normalization (RMB-First Formula)
+- Corrected `SEA_FREIGHT_PER_KG` constant: 2 → 1 USD/kg (workbook-correct value)
+- Added `rmbUsdRate Decimal(12,4)` optional column to `MonthlyExchangeRate` table
+- Added `sourceCostRmb Decimal(15,2)` + `importPaymentFeePct Decimal(5,2)` optional columns to `Product` table
+- Applied migration `20260517150000_phase31_import_economics_rmb` to production Supabase
+- Updated `lib/import-decision.ts`: RMB-first formula `(sourceCostRmb / rmbUsdRate) * (1 + paymentFeePct/100) + freight * weightKg) * (1 + customsRatePct/100)` — falls back to `sourcePriceUsd` when RMB fields absent; `getLatestRmbUsdRate()` utility added to exchange rate actions
+- Updated exchange rate admin form: 5-column grid with RMB/USD input field; exchange rates page table gains RMB/USD column
+- Updated product form: amber "RMB kaynaklı ithalat" section with `sourceCostRmb` + `importPaymentFeePct` inputs + formula hint
+- Updated import-decisions cockpit + product detail İthalat Kararı card to fetch and pass RMB fields to engine
+- tsc clean, Vercel deploy READY (commit b049218)
+- Browser-verified 2026-05-17 ✓
+
+### Phase 32 — Holding-Grade Import Governance
+- Added optional Decimal fields to `Supplier`: `defaultAirFreightUsdPerKg`, `defaultSeaFreightUsdPerKg`, `defaultPaymentFeePct`
+- Created `ImportDecisionSnapshot` model: productId FK, snapshotDate, notes, all import engine inputs (weightKg, customsRatePct, sourcePriceUsd, sourceCostRmb, rmbUsdRate, usdTryRate, airFreightPerKg, seaFreightPerKg, paymentFeePct), all computed outputs (airLandedCostTry, seaLandedCostTry, profitRatioAir, profitRatioSea, recommendedMethod, decision, score), createdById FK
+- Applied migration `20260517160000_phase32_import_governance` to production Supabase
+- Exported `effectiveFreightPerKg()` helper from `lib/import-decision.ts`: product override → supplier default → global constant (AIR=8, SEA=1 USD/kg)
+- Created `lib/actions/import-snapshot-actions.ts`: `createImportDecisionSnapshotAction` (EXECUTIVE_READ, resolves all inputs, calls engine, saves snapshot); `getProductImportSnapshotsAction` (last 10 with createdBy + supplier names)
+- Created `components/products/import-snapshot-button.tsx`: emerald client component with useTransition, "Kararı Kaydet" button, 3-second success flash
+- Updated Import Decisions cockpit: "Kaydet" column with snapshot button per row
+- Updated product detail page: snapshot button in İthalat Kararı card header + "Karar Geçmişi" history table (Tarih/Karar/Skor/Yöntem/İniş USD/Kâr Oranı/Kur/Kaydeden)
+- Updated supplier form + list: import defaults section (air/sea freight USD/kg, payment fee %)
+- tsc clean, Vercel deploy READY (commit 92bb255)
+- Browser-verified 2026-05-17: "Kararı Kaydet" button triggers, "Karar kaydedildi." success shown, Karar Geçmişi table row appears on reload ✓
+
+### Phase 33 — Marketplace Pricing Normalization (Canonical Engine)
+- Created `lib/marketplace-pricing.ts`: canonical per-marketplace pricing engine (pure computation, no DB)
+  - `calcMarketplacePricingRow()`: resolves effectivePriceTry, shippingTry, commissionTry, paymentFeeTry, returnReserveTry, netRevenueTry, netMarginPct per platform
+  - `calcShippingFromPriceTiers()`: roadmap price-tier defaults (<5 USD→1.2, 5–7.5→2.0, >7.5→3.3 USD × usdTryRate)
+  - Price resolution: manual override (marketplacePriceTry) > XML price (per-platform) > none
+  - Shipping resolution: product/platform policy override > price-tier default
+  - `priceSourceLabel/priceSourceColor`, `shippingSourceLabel` badge helpers
+- Updated product detail `app/(app)/products/[id]/page.tsx`: "Pazar Yeri Fiyatlandırması" card using canonical engine
+  - 5 platforms: Trendyol, Hepsiburada, Amazon, Pazarama, Idefix
+  - Per-row: XML Fiyat | Etkin Fiyat | Kaynak badge | Kargo ₺ + source badge | Komisyon % + source badge | Net Kalan ₺ | Net Marj %
+  - Footer: shipping tier reference at current usdTryRate
+  - Fetches MarketplacePlatformPolicy from DB for override resolution
+- tsc clean, Vercel deploy READY (commit 0819706)
+- Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
+
+### Phase 34 — Marketplace Profit Page XML Price Integration
+- Updated `app/(app)/marketplace/profit/page.tsx` to use `calcMarketplacePricingRow()` per listing
+  - `PLATFORM_XML_FIELD` map: TRENDYOL→xmlTrendyolPrice, HEPSIBURADA→xmlHbPrice, AMAZON→xmlAmazonPrice, PAZARAMA→xmlPazaramaPrice, IDEFIX→xmlIdefixPrice
+  - Effective price = manual override (marketplacePriceTry) > per-platform XML price > none
+  - `usdTryRate` fetched from latest `MonthlyExchangeRate`
+  - `PriceBadge` component (Manuel/XML/Veri yok) shown alongside price in winners/losers tables
+  - `PolicyBadge` extended to handle "price_tier" shipping source
+  - Column renamed "Fiyat" → "Etkin Fiyat"
+  - Consistent with product detail Pazar Yeri Fiyatlandırması card
+- tsc clean, Vercel deploy READY (commit f975093)
+- Browser-verified 2026-05-17: profit page renders correctly, per-platform XML prices feed effective price ✓
