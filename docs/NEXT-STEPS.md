@@ -703,6 +703,17 @@ Tamamlananlar:
 
 ---
 
+### ⏳ PENDING DEPLOY — Priority 65 — Ürün Listesi T30G Satış Hızı (Phase 65, 2026-05-17)
+
+**Neden:**
+Admin ürün listesinde hangi ürünün satıldığını görmek için her ürünün detay sayfasına girmek gerekiyordu. T30G kolonu bu sinyali liste ekranında sunarak hızlı tarama sağlar.
+
+Tamamlananlar:
+- `app/(app)/products/page.tsx`: parallel fetch TrendyolSalesRecord 30g; velocity30d map; T30G kolonu (emerald/amber/slate/dash); colSpan 7→8; no schema change
+- tsc clean ✓; commit bbb39b1 ✓; PENDING DEPLOY (günlük limit)
+
+---
+
 ### ⏳ PENDING DEPLOY — Priority 64 — Trendyol Aylık Satış Trendi Kartı (Phase 64, 2026-05-17)
 
 **Neden:**

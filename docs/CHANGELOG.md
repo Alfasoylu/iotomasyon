@@ -9,6 +9,24 @@
 
 ## 2026-05
 
+### Phase 65 — Ürün Listesi T30G Satış Hızı Kolonu (2026-05-17)
+
+**Amaç:**
+Admin ürün listesinde hangi ürünün son 30 günde Trendyol'da ne kadar sattığını tek bakışta göremiyordu. Yeni T30G kolonu bu sinyali doğrudan tabloya ekler.
+
+Değişiklikler:
+- `app/(app)/products/page.tsx`:
+  - `prisma` import eklendi
+  - `listProducts()` ile paralel `trendyolSalesRecord.findMany` — son 30 gün, matched (productId not null), non-cancelled (iptal/cancel case-insensitive)
+  - `velocity30d: Map<productId, qty>` build edildi
+  - Yeni "T30G" sütunu (Stok ile Sağlık arasında): emerald font ≥10 adet, amber ≥3, slate <3, "—" eşleşme yoksa
+  - `colSpan` 7 → 8 güncellendi
+- Schema değişikliği: YOK
+
+Durum: tsc clean ✓, commit bbb39b1 ✓, PENDING DEPLOY (günlük limit)
+
+---
+
 ### Phase 64 — Trendyol Aylık Satış Trendi Kartı (2026-05-17)
 
 **Amaç:**
