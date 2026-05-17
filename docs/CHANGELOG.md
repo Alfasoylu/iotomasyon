@@ -268,6 +268,19 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 27 — Product Media and Content Studio
+- Installed Tiptap (`@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extension-link`) for rich text description authoring
+- Created `components/products/rich-text-editor.tsx`: Tiptap-based WYSIWYG editor; SSR-safe with `mounted` guard (renders placeholder before hydration); toolbar with H2, H3, Bold, Italic, Bullet list, Ordered list; outputs HTML to react-hook-form via `onChange`; syncs external value changes (e.g. "XML'den al") via `lastPushedValue` ref to prevent infinite update loops
+- Created `lib/actions/product-image-actions.ts`: `addProductImageByUrlAction` (URL validation, sortOrder = existing count), `deleteProductImageAction` (compact sortOrders after delete), `setPrimaryImageAction` (moves target to sortOrder 0, shifts others), `uploadProductImageAction` (Supabase Storage REST API — no SDK; validates MIME type and 5 MB limit; creates ProductImage row)
+- Created `components/products/product-image-manager.tsx`: client component — multi-image grid sorted by sortOrder; "Birincil" ring on primary image; source badges (MANUEL emerald / XML blue); URL input with Enter-to-add and "Ekle" button (input clears on success); optimistic UI updates; file upload via `<input type="file">` forwarded to upload action; `canUpload` boolean prop controls whether upload UI or amber config-missing notice renders
+- Updated `components/products/product-form.tsx`: description `<Textarea>` replaced with `<RichTextEditor>` (controlled via `form.watch` + `form.setValue`); `imageUrl` field label updated to "Görsel URL (birincil)" with hint about Medya Stüdyosu; optional `xmlDescription` prop — renders blue card with XML source text (line-clamp-4) and "Editöre taşı" button that calls `form.setValue("description", xmlDescription)`
+- Updated `app/(app)/products/[id]/edit/page.tsx`: added `ProductImageManager` card (Faz 27 — Medya Stüdyosu) between main form and supplier card; `xmlDescription` wired from `product.xmlData?.xmlDescription`; `canUpload` evaluated server-side (`!!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)`)
+- Updated `.env.example`: added `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` with instructions for creating `product-images` public bucket in Supabase Storage
+- XML sync governance: existing `xml-sync-actions.ts` already never overwrites `Product.description` on existing products — no code change needed
+- No new DB schema — uses existing `ProductImage` model (Phase 11A)
+- tsc --noEmit clean, Vercel deploy READY (commit ab1a8ef)
+- Browser-verified 2026-05-17: Medya Stüdyosu card renders ✓; URL-add flow: image card appeared, input cleared, "✓ Görsel eklendi" ✓; page reload: image persisted in DB ✓; RichTextEditor toolbar (H2/H3/Kalın/İtalik/Listeler) ✓; editor loaded existing description ✓; XML description card correctly hidden when xmlDescription null ✓
+
 ### Phase 26 — Product Performance Ranking
 - Migration `20260517070000_phase26_sales_records`: new `TrendyolSalesRecord` model — `orderId`, `lineId` (unique together), `productId` (nullable FK → Product SET NULL), `orderDate`, `status`, `merchantSku`, `barcode`, `productName`, `quantity`, `unitPriceTry`, `totalPriceTry`, `syncedAt`; 4 additional indexes (productId, orderDate, merchantSku, barcode); applied to production Supabase (27 migrations total)
 - Created `lib/actions/sales-sync-actions.ts`: `syncTrendyolSalesAction` — EXECUTIVE_READ-gated; loads TrendyolConfig; builds barcode/SKU product lookup maps; sweeps 4 × 90-day windows (365 days total, Trendyol API limit); per-line barcode-first then SKU matching; upsert with explicit findUnique + create/update for newRecords count; page-0 error surfaced to UI

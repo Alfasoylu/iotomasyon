@@ -811,17 +811,28 @@ Browser verified:
 ---
 
 ## Phase 27 - Product Media and Content Studio
-Status: NOT STARTED
+Status: DONE
 
-Planned scope:
-- multi-image management
-- URL-based image append flow
-- local upload flow
-- rich product description editor
-- XML description vs manual description governance
+Delivered (2026-05-17):
+- ProductImageManager client component: multi-image grid — URL-add (Enter or Ekle, clears input), delete, set-primary (sortOrder 0 = Birincil badge), source badges (MANUEL/XML), image error fallback to 📦
+- product-image-actions.ts: addProductImageByUrlAction, deleteProductImageAction, setPrimaryImageAction, uploadProductImageAction (Supabase Storage REST API, no SDK)
+- RichTextEditor (Tiptap): SSR-safe with mounted guard, toolbar with H2/H3/Bold/Italic/BulletList/OrderedList, outputs HTML, syncs external value changes via ref loop prevention
+- product-form.tsx: description textarea replaced with RichTextEditor; xmlDescription prop shows blue XML source card with "Editöre taşı" button for governed opt-in copy
+- Product edit page: Medya Stüdyosu card (Phase 27) + Tedarikçi card (Phase 20) in order; canUpload flag evaluated server-side (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)
+- .env.example: SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY documented with bucket setup instructions
+- XML sync already governs description (existing products never overwritten by XML sync) — no migration needed
+- No new DB schema — uses existing ProductImage model (Phase 11A)
 
-Current gap:
-- product media and long-form content authoring still rely on basic single-field patterns
+Browser verified (2026-05-17):
+- /products/[id]/edit: Medya Stüdyosu card renders with empty state "Henüz görsel eklenmemiş" ✓
+- URL-add flow: entered URL → Enter → "MANUEL Birincil" card appeared, input cleared, "✓ Görsel eklendi" feedback ✓
+- Page reload: image persisted in DB (ProductImage row confirmed) ✓
+- RichTextEditor: toolbar rendered with Başlık 2/3, Kalın, İtalik, Madde/Numaralı liste ✓
+- Editor loaded existing description content `<p>Baofeng UV-82 Telsiz</p>` ✓
+- XML description card: correctly hidden when xmlDescription is null in feed ✓
+- Supabase Storage notice shown when env vars not configured ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit ab1a8ef) ✓
 
 ---
 
@@ -979,7 +990,7 @@ Needed next:
 # Last Updated
 
 Date:
-2026-05-17 (Phase 16 browser-verified, Phase 18 complete)
+2026-05-17 (Phase 27 browser-verified)
 
 Alignment source:
 `ROADMAP.md`

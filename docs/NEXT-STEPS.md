@@ -83,28 +83,15 @@ Delivered 2026-05-17:
 - Cancelled order filtering (isCancelled helper)
 - Browser-verified ✓
 
-### Priority 1 - Phase 27: Product Media and Content Studio
+### ✓ DONE - Phase 27: Product Media and Content Studio
+Delivered 2026-05-17:
+- ProductImageManager: multi-image grid, URL-add (Enter clears input), delete, set-primary (sortOrder 0)
+- RichTextEditor (Tiptap): H2/H3, Bold, Italic, Bullet/Ordered lists, SSR-safe, HTML output
+- XML description governance: XML source card with "Editöre taşı" opt-in button; XML sync never overwrites existing description
+- Supabase Storage upload action (REST API, no SDK) — ready when SUPABASE_URL/KEY env vars are added
+- Browser-verified: URL add → DB persist → reload confirmed ✓
 
-Why:
-Product images and descriptions should be manageable inside IOTOMASYON without external hacks.
-
-Deliverables:
-- delete existing images
-- add image by URL and clear the input after enter
-- repeatable URL append flow
-- local image upload
-- multi-image product management
-- primary image control
-- e-commerce style rich text description editor
-- XML description vs manual description governance
-- separation between imported source text and published curated product text
-
-Acceptance:
-- product media/content can be maintained fully inside the app
-- no visual breakage in edit/detail flows
-- XML imports stop competing with manual content entry
-
-### Priority 2 - Phase 28: Product Governance and Private Intelligence
+### Priority 1 - Phase 28: Product Governance and Private Intelligence
 
 Why:
 Curated product truth should be protected while private sourcing knowledge stays private.
