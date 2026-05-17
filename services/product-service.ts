@@ -65,6 +65,7 @@ export async function listProducts(filters: ProductFilters) {
         images: { take: 1, orderBy: { sortOrder: "asc" } },
         productCategory: { select: { id: true, name: true } },
         xmlData: { select: { xmlTrendyolPrice: true } },
+        marketplacePrices: { select: { marketplace: true, priceTry: true, source: true } },
       },
     });
 
@@ -186,6 +187,8 @@ export async function getProductById(id: string) {
             orderBy: { sortOrder: "asc" as const },
           },
           xmlData: true,
+          // Phase 71 — Canonical marketplace prices
+          marketplacePrices: { select: { marketplace: true, priceTry: true, rawExternalValue: true, source: true } },
           mainProduct: {
             select: { id: true, sku: true, name: true },
           },

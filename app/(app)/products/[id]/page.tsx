@@ -632,12 +632,13 @@ export default async function ProductDetailPage({
 
       {/* Trendyol Kâr Analizi Kartı */}
       {(() => {
-        const trendyolPriceTry = (() => {
-          if (product.marketplacePriceTry != null) return Number(product.marketplacePriceTry);
-          if (product.sellingPriceTry != null) return Number(product.sellingPriceTry);
-          if (product.xmlData?.xmlTrendyolPrice != null) return Number(product.xmlData.xmlTrendyolPrice) * usdTryRate;
-          return null;
-        })();
+        const trendyolMpPrice = product.marketplacePrices?.find(p => p.marketplace === "TRENDYOL");
+        const trendyolPriceTry =
+          trendyolMpPrice != null
+            ? Number(trendyolMpPrice.priceTry)
+            : product.xmlData?.xmlTrendyolPrice != null
+              ? Number(product.xmlData.xmlTrendyolPrice) * usdTryRate
+              : null;
 
         const hasTrendyolKarData =
           product.sourceCostRmb != null &&
@@ -689,9 +690,11 @@ export default async function ProductDetailPage({
                 <div className="text-xs text-slate-500">Trendyol Satış Fiyatı</div>
                 <div className="mt-1 text-lg font-bold text-slate-900">₺{trendyolPriceTry!.toFixed(2)}</div>
                 <div className="text-xs text-slate-400">
-                  {product.xmlData?.xmlTrendyolPrice != null && !product.marketplacePriceTry && !product.sellingPriceTry
-                    ? `XML: $${Number(product.xmlData.xmlTrendyolPrice).toFixed(3)}`
-                    : "Manuel"}
+                  {trendyolMpPrice
+                    ? `${trendyolMpPrice.source === "MANUAL" ? "Manuel" : "XML"}: ₺${Number(trendyolMpPrice.priceTry).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : product.xmlData?.xmlTrendyolPrice != null
+                      ? `XML: $${Number(product.xmlData.xmlTrendyolPrice).toFixed(3)}`
+                      : "Manuel"}
                 </div>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">

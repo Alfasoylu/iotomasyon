@@ -34,9 +34,10 @@ function getHealthCues(product: {
   unitCostTry: unknown;
   sourceCostRmb: unknown;
   importUnitCostUsd: unknown;
+  weightKg: unknown;
   sellingPriceTry: unknown;
   marketplacePriceTry: unknown;
-  xmlTrendyolPrice: unknown;
+  trendyolPriceTry: number | null;  // from MarketplacePrice
   xmlImported: boolean;
   lastStockSyncAt: Date | null;
 }): HealthCue[] {
@@ -54,12 +55,17 @@ function getHealthCues(product: {
 
   // Missing cost
   if (!product.unitCostTry && !product.sourceCostRmb && !product.importUnitCostUsd) {
-    cues.push({ label: "Maliyet yok", tone: "danger" });
+    cues.push({ label: "Maliyet eksik", tone: "danger" });
   }
 
-  // Missing price
-  if (!product.sellingPriceTry && !product.marketplacePriceTry && !product.xmlTrendyolPrice) {
-    cues.push({ label: "Fiyat yok", tone: "default" });
+  // Missing weight (has RMB cost but no weight = can't calculate import cost)
+  if (!product.weightKg && product.sourceCostRmb) {
+    cues.push({ label: "Ağırlık eksik", tone: "warning" });
+  }
+
+  // Missing Trendyol price
+  if (!product.trendyolPriceTry && !product.sellingPriceTry && !product.marketplacePriceTry) {
+    cues.push({ label: "Trendyol fiyat yok", tone: "default" });
   }
 
   // Stale XML (imported but not synced in 7+ days)
@@ -71,6 +77,55 @@ function getHealthCues(product: {
   }
 
   return cues;
+}
+
+type ProfitResult = {
+  priceTry: number;
+  netProfit: number;
+  marginPct: number;
+  roi: number;
+  status: "LOSS" | "LOW" | "GOOD" | "EXCELLENT";
+} | null;
+
+const TRENDYOL_COMMISSION = 0.20;
+const TRENDYOL_FIXED_DEDUCTION = 150; // TRY, for orders > 250 TRY
+const CARGO_USD_PER_KG = 10;
+const DEFAULT_CUSTOMS_PCT = 0.30;
+
+function calcProfit(product: {
+  sourceCostRmb: unknown;
+  weightKg: unknown;
+  customsRatePct: unknown;
+  importPaymentFeePct: unknown;
+  trendyolPriceTry: number | null;
+}, usdTryRate: number, rmbUsdRate: number): ProfitResult {
+  const priceTry = product.trendyolPriceTry;
+  const rmb = product.sourceCostRmb != null ? Number(product.sourceCostRmb) : null;
+  const kg = product.weightKg != null ? Number(product.weightKg) : null;
+  if (!priceTry || !rmb || rmb <= 0 || !kg || kg <= 0) return null;
+
+  const customsPct = product.customsRatePct != null ? Number(product.customsRatePct) : DEFAULT_CUSTOMS_PCT * 100;
+  const payFeePct = product.importPaymentFeePct != null ? Number(product.importPaymentFeePct) : 0;
+
+  const supplierTry = (rmb / rmbUsdRate) * usdTryRate * (1 + payFeePct / 100);
+  const cargoTry = kg * CARGO_USD_PER_KG * usdTryRate;
+  const customsTry = (supplierTry + cargoTry) * (customsPct / 100);
+  const totalCost = supplierTry + cargoTry + customsTry;
+
+  const commission = priceTry * TRENDYOL_COMMISSION;
+  const fixed = priceTry > 250 ? TRENDYOL_FIXED_DEDUCTION : 0;
+  const netRevenue = priceTry - commission - fixed;
+  const netProfit = netRevenue - totalCost;
+  const marginPct = (netProfit / priceTry) * 100;
+  const roi = (netProfit / totalCost) * 100;
+
+  let status: "LOSS" | "LOW" | "GOOD" | "EXCELLENT";
+  if (netProfit < 0) status = "LOSS";
+  else if (marginPct < 15) status = "LOW";
+  else if (marginPct < 30) status = "GOOD";
+  else status = "EXCELLENT";
+
+  return { priceTry, netProfit, marginPct, roi, status };
 }
 
 export default async function ProductsPage({
@@ -109,6 +164,14 @@ export default async function ProductsPage({
       velocity30d.set(r.productId, (velocity30d.get(r.productId) ?? 0) + r.quantity);
     }
   }
+
+  // Phase 71 — exchange rates for profit calculation
+  const latestRate = await prisma.monthlyExchangeRate.findFirst({
+    orderBy: [{ year: "desc" }, { month: "desc" }],
+    select: { usdTryRate: true, rmbUsdRate: true },
+  });
+  const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : 45;
+  const rmbUsdRate = latestRate?.rmbUsdRate ? Number(latestRate.rmbUsdRate) : 7.0;
 
   return (
     <div className="space-y-6">
@@ -153,9 +216,13 @@ export default async function ProductsPage({
                 <th className="w-14 px-3 py-3" aria-label="Görsel" />
                 <th className="px-4 py-3">Ürün</th>
                 <th className="px-4 py-3">Kategori</th>
-                <th className="px-4 py-3 text-right">Fiyat</th>
+                <th className="px-4 py-3 text-right">T.Fiyat</th>
                 <th className="px-4 py-3 text-right">Stok</th>
                 <th className="px-4 py-3 text-right">T30G</th>
+                <th className="px-4 py-3 text-right">Net Kâr</th>
+                <th className="px-4 py-3 text-right">Marj</th>
+                <th className="px-4 py-3 text-right">ROI</th>
+                <th className="px-4 py-3 text-center">Durum</th>
                 <th className="px-4 py-3">Sağlık</th>
                 <th className="px-4 py-3 text-right">Aksiyon</th>
               </tr>
@@ -163,7 +230,7 @@ export default async function ProductsPage({
             <tbody className="divide-y divide-slate-50 bg-white text-sm">
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={12} className="px-4 py-12 text-center text-slate-400">
                     {query.length >= 2
                       ? `"${query}" için ürün bulunamadı.`
                       : "Bu filtrelerle eşleşen ürün bulunamadı."}
@@ -173,9 +240,16 @@ export default async function ProductsPage({
                 products.map((product) => {
                   const thumbnailUrl =
                     product.images[0]?.url ?? product.imageUrl ?? null;
+                  const trendyolMp = product.marketplacePrices?.find(p => p.marketplace === "TRENDYOL");
+                  const trendyolPriceTry = trendyolMp
+                    ? Number(trendyolMp.priceTry)
+                    : product.xmlData?.xmlTrendyolPrice != null
+                      ? Number(product.xmlData.xmlTrendyolPrice) * usdTryRate
+                      : null;
+                  const profit = calcProfit({ ...product, trendyolPriceTry }, usdTryRate, rmbUsdRate);
                   const healthCues = getHealthCues({
                     ...product,
-                    xmlTrendyolPrice: product.xmlData?.xmlTrendyolPrice ?? null,
+                    trendyolPriceTry,
                   });
                   const isLowStock = product.stockQuantity <= product.minimumStock;
 
@@ -224,11 +298,11 @@ export default async function ProductsPage({
                         )}
                       </td>
 
-                      {/* Price */}
+                      {/* Trendyol Price */}
                       <td className="px-4 py-3 text-right">
-                        {product.sellingPriceTry != null ? (
+                        {trendyolPriceTry != null ? (
                           <span className="font-mono text-sm font-medium text-slate-700">
-                            ₺{Number(product.sellingPriceTry).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₺{trendyolPriceTry.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         ) : (
                           <span className="text-slate-300 text-xs">—</span>
@@ -258,6 +332,41 @@ export default async function ProductsPage({
                             </span>
                           );
                         })()}
+                      </td>
+
+                      {/* Net Kâr */}
+                      <td className="px-4 py-3 text-right">
+                        {profit ? (
+                          <span className={`font-mono text-sm font-semibold ${profit.netProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            ₺{profit.netProfit.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </span>
+                        ) : <span className="text-xs text-slate-300">—</span>}
+                      </td>
+
+                      {/* Marj */}
+                      <td className="px-4 py-3 text-right">
+                        {profit ? (
+                          <span className={`font-mono text-sm font-semibold ${profit.marginPct >= 15 ? "text-emerald-600" : profit.marginPct >= 0 ? "text-amber-600" : "text-red-600"}`}>
+                            %{profit.marginPct.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                          </span>
+                        ) : <span className="text-xs text-slate-300">—</span>}
+                      </td>
+
+                      {/* ROI */}
+                      <td className="px-4 py-3 text-right">
+                        {profit ? (
+                          <span className={`font-mono text-sm ${profit.roi >= 30 ? "text-emerald-600" : profit.roi >= 0 ? "text-amber-600" : "text-red-600"}`}>
+                            %{profit.roi.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </span>
+                        ) : <span className="text-xs text-slate-300">—</span>}
+                      </td>
+
+                      {/* Durum */}
+                      <td className="px-4 py-3 text-center">
+                        {profit ? (() => {
+                          const durum = { LOSS: { label: "Zarar", cls: "bg-red-100 text-red-700" }, LOW: { label: "Düşük", cls: "bg-amber-100 text-amber-700" }, GOOD: { label: "İyi", cls: "bg-emerald-100 text-emerald-700" }, EXCELLENT: { label: "Mükemmel", cls: "bg-emerald-200 text-emerald-900 font-semibold" } }[profit.status];
+                          return <span className={`inline-block rounded px-2 py-0.5 text-xs ${durum.cls}`}>{durum.label}</span>;
+                        })() : <span className="text-xs text-slate-300">—</span>}
                       </td>
 
                       {/* Health cues */}

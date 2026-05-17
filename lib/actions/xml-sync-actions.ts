@@ -167,6 +167,13 @@ export async function runSync(
 
     const now = new Date();
 
+    // Fetch latest exchange rate for USD→TRY conversion
+    const latestRate = await prisma.monthlyExchangeRate.findFirst({
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+      select: { usdTryRate: true },
+    });
+    const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : 45;
+
     // ── 2. Mark ALL previously-seen XmlProductData as missing ─────────────────
     await prisma.xmlProductData.updateMany({
       where: { sourceId },
@@ -298,6 +305,53 @@ export async function runSync(
             where: { productId },
             create: { productId, ...data },
             update: data,
+          });
+        }),
+      );
+    }
+
+    // ── 7b. Batch upsert MarketplacePrice (Phase 71) ──────────────────────────
+    // Maps XML USD prices → TRY using the current exchange rate.
+    // Each marketplace × product pair is unique (@@unique constraint).
+    type MpItem = { productId: string; marketplace: "TRENDYOL" | "HEPSIBURADA" | "AMAZON" | "PAZARAMA" | "IDEFIX"; usdPrice: number };
+    const mpItems: MpItem[] = [];
+
+    for (const rec of records) {
+      const productId = productIdBySku.get(rec.sku);
+      if (!productId) continue;
+      const pairs: Array<[MpItem["marketplace"], number | undefined]> = [
+        ["TRENDYOL",    rec.trendyolPrice],
+        ["HEPSIBURADA", rec.hbPrice],
+        ["AMAZON",      rec.amazonPrice],
+        ["PAZARAMA",    rec.pazaramaPrice],
+        ["IDEFIX",      rec.idefixPrice],
+      ];
+      for (const [marketplace, usdPrice] of pairs) {
+        if (usdPrice && usdPrice > 0) {
+          mpItems.push({ productId, marketplace, usdPrice });
+        }
+      }
+    }
+
+    for (const batch of chunks(mpItems, 20)) {
+      await Promise.all(
+        batch.map(({ productId, marketplace, usdPrice }) => {
+          const priceTry = Math.round(usdPrice * usdTryRate * 100) / 100;
+          return prisma.marketplacePrice.upsert({
+            where: { productId_marketplace: { productId, marketplace } },
+            create: {
+              productId,
+              marketplace,
+              priceTry,
+              currency: "TRY",
+              source: "XML",
+              rawExternalValue: usdPrice,
+            },
+            update: {
+              priceTry,
+              rawExternalValue: usdPrice,
+              source: "XML",
+            },
           });
         }),
       );

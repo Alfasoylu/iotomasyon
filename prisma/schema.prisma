@@ -158,6 +158,41 @@ enum ProductKind {
   LISTING_PACKAGE // marketplace listing / variant / bundle product
 }
 
+// Phase 71 — Canonical marketplace price registry
+enum PriceMarketplace {
+  TRENDYOL
+  HEPSIBURADA
+  AMAZON
+  N11
+  PAZARAMA
+  IDEFIX
+  WEBSITE
+  OTHER
+}
+
+enum PriceSource {
+  XML
+  API
+  MANUAL
+}
+
+model MarketplacePrice {
+  id               String           @id @default(cuid())
+  productId        String
+  product          Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  marketplace      PriceMarketplace
+  priceTry         Decimal          @db.Decimal(15,2)
+  currency         String           @default("TRY")
+  source           PriceSource      @default(XML)
+  rawExternalValue Decimal?         @db.Decimal(15,4)
+  updatedAt        DateTime         @updatedAt
+  createdAt        DateTime         @default(now())
+
+  @@unique([productId, marketplace])
+  @@index([productId])
+  @@index([marketplace])
+}
+
 model ProductAttribute {
   id                String                       @id @default(cuid())
   name              String                       @unique
@@ -407,6 +442,8 @@ model Product {
   stockAdjustments        StockAdjustmentLog[]
   // Phase 49 — XML stock change log (Entegra ERP sync deltas)
   xmlStockChangeLogs      XmlStockChangeLog[]
+  // Phase 71 — Canonical marketplace prices
+  marketplacePrices    MarketplacePrice[]
 
   @@index([name])
   @@index([barcode])
