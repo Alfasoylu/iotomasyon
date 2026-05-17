@@ -605,14 +605,14 @@ app/(app)/dashboard/
 
 **Kabul kriteri (Faz C):** OPERATIONS rolü: stok uyarılarını ve açık görevleri görür, maliyet/kâr kartı görmez. ✓ Vercel READY dpl_ESQS1sQTWPXrs4iCPhUeEG7QtpCY
 
-#### Faz D — Admin Enhancement (schema değişikliği YOK)
+#### ✓ Faz D — Admin Enhancement (schema değişikliği YOK) — DONE 2026-05-17
 
 **Ne yapılacak:**
 - Admin workspace'e ek import intelligence sinyalleri ekle (RMB kuru, son ithalat kararı, bekleyen procurement önerileri)
 - Ekip performans kartları: SALES pipeline velocity, OPERATIONS görev tamamlama oranı
 - Mevcut tiles korunur
 
-**Kabul kriteri (Faz D):** Admin dashboard mevcut içeriğini kaybetmez, ek import/ekip kartları eklenir.
+**Kabul kriteri (Faz D):** Admin dashboard mevcut içeriğini kaybetmez, ek import/ekip kartları eklenir. ✓ Vercel READY dpl_8Vm7CYfK9aWkN9KA6L9xXusiqbFw
 
 #### Faz E — Warehouse Workspace (SCHEMA DEĞİŞİKLİĞİ — UserRole enum migration)
 
