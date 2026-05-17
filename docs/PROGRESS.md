@@ -50,6 +50,8 @@ Implemented modules:
 - Trendyol API integration (Phase 14: /admin/trendyol config, /marketplace/trendyol live dashboard)
 - marketplace profit dashboard (Phase 15: /marketplace/profit, winners/losers/missing-data/high-stock alerts)
 - marketplace operations expansion (Phase 16: Q&A module, Return Action Center, Product Mapping registry, Exchange Rate management)
+- procurement intelligence (Phase 19: /admin/procurement, reorder urgency engine, ranked purchase table, financial summary)
+- supplier intelligence (Phase 20: /admin/suppliers, Supplier + SupplierProduct models, product edit supplier links)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -570,13 +572,29 @@ Verified outcome:
 ---
 
 ## Phase 20 — Supplier Intelligence
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- supplier model
-- supplier contact tracking
-- supplier-product relations
-- reliability scoring
+Completed:
+- `Supplier` model migrated to production: id, name, contactName, phone, email, countryOfOrigin, paymentTerms, defaultLeadDays, notes, isActive, createdAt, updatedAt; indexed on name, isActive
+- `SupplierProduct` join table migrated to production: id, supplierId (FK → Supplier CASCADE), productId (FK → Product CASCADE), unitCostUsd (Decimal?), moq (Int?), leadDays (Int?), isPreferred (Boolean), notes; @@unique([supplierId, productId]); indexed on supplierId, productId, isPreferred
+- `lib/actions/supplier-actions.ts`: `saveSupplierAction` (create/update), `deleteSupplierAction`, `upsertSupplierProductAction` (upsert by unique key), `deleteSupplierProductAction` — all SUPPLIERS_WRITE permission-guarded
+- `app/(app)/admin/suppliers/page.tsx`: SUPPLIERS_READ-gated admin page — "Yeni Tedarikçi" card + "Tedarikçi Ekle" form, "Kayıtlı Tedarikçiler" list with product count, lead time, country columns
+- `components/suppliers/supplier-form.tsx`: full create/edit form with name, contactName, phone, email, countryOfOrigin, paymentTerms, defaultLeadDays, notes, isActive
+- `components/suppliers/supplier-list-client.tsx`: expand-row inline edit — click row to expand edit form, collapse on save/delete
+- `components/suppliers/supplier-product-section.tsx`: product edit page supplier section — existing links table + "Tedarikçi Bağla" form with supplier dropdown, unitCostUsd, moq, leadDays, isPreferred, notes + "Kaldır" per row
+- `app/(app)/products/[id]/edit/page.tsx`: added SupplierProductSection card below main product form; fetches allSuppliers + supplierLinks + canWriteSuppliers in parallel
+- `app/(app)/layout.tsx`: added "Tedarikçiler" nav entry (SUPPLIERS_READ permission) after "Tedarik Asistanı"
+- `components/dashboard/sidebar.tsx`: updated info card to "Faz 20 aktif — Tedarikçi Zekası"
+- permissions.ts already had SUPPLIERS_READ / SUPPLIERS_WRITE; seed.ts already had suppliers.read / suppliers.write
+
+Verified outcome (browser test 2026-05-17):
+- /admin/suppliers: page loads with add-supplier form and empty list ✓
+- Create "Entegra Elektronik A.Ş." with contactName "Satış Departmanı", 7 gün tedarik → "Kaydedildi.", "Kayıtlı Tedarikçiler (1)" list appears ✓
+- Product edit page BAOFENG UV-82: "Tedarikçi Bağlantıları" section at bottom, "Entegra Elektronik A.Ş." in dropdown ✓
+- Link added: $14.50, 5 adet min. sipariş → table shows "Entegra Elektronik A.Ş. · $14.50 · 5 adet", "Kaldır" button ✓
+- Entegra removed from dropdown after linking (no duplicate links possible) ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit 6dde711) ✓
 - landed cost comparison
 
 ---

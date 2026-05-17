@@ -40,11 +40,11 @@ Current reality:
 - quote professionalization 2.0 complete (Phase 18 ✓): reusable quote templates (QuoteTemplate + QuoteTemplateItem), /quotes/templates management page, template loading into quote form, product auto price-fill from sellingPriceTry, 2 new permissions (quoteTemplates.read/write)
 - XML product foundation complete (Phase 11A ✓): 649 Entegra products auto-imported, ProductImage (2534 images), XmlProductData snapshot with full USD price grid, multi-image gallery + XML data card on product detail, batched sync in 24s
 - procurement intelligence complete (Phase 19 ✓): /admin/procurement, reorder urgency engine, ranked purchase table, financial summary — needs lead-time/demand data to produce non-UNKNOWN urgencies
+- supplier intelligence complete (Phase 20 ✓): /admin/suppliers CRUD, Supplier + SupplierProduct models, product edit supplier link section with unitCostUsd/moq/leadDays/isPreferred
 
 This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, and XML-driven inventory management. Ready for multi-user rollout.
 Not yet ready for:
 - owner-grade executive KPI dashboard (Phase 22)
-- supplier intelligence (Phase 20)
 - import cost calculator (Phase 21)
 - marketplace sync/write architecture (Phase 17, DEFERRED)
 
@@ -68,22 +68,22 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 20: Supplier Intelligence
+### Priority 1 — Phase 21: Import Cost Calculator
 
 Why:
-Phase 19 (procurement intelligence) is complete. The procurement engine shows all products as UNKNOWN urgency because lead-time and demand data is sparse. Phase 20 adds the supplier model, supplier-product relations, and reliability scoring that feeds Phase 19 and Phase 21 with realistic data.
+Phase 20 (supplier intelligence) is complete. Suppliers and their per-product USD costs are now recorded. Phase 21 uses this data to build a pre-purchase import cost calculator — total landed cost (product cost + shipping + customs + exchange rate) before a buy decision is made.
 
 Deliverables:
-- `Supplier` table: name, contactName, phone, email, countryOfOrigin, paymentTerms, leadTimeDays, reliabilityScore
-- `SupplierProduct` join table: supplierId, productId, unitCostUsd, moq (minimum order qty), leadTimeDays override
-- Supplier CRUD page at `/admin/suppliers`
-- Product edit form: supplier dropdown + supplier-specific cost/leadTime override fields
-- Procurement page: supplier column in ranked table, supplier-aware suggested order qty
+- Import cost calculator page at `/admin/import-calculator`
+- Inputs: supplier, product, quantity, freight cost (USD), customs rate (%), current exchange rate
+- Output: total landed cost (TRY), per-unit landed cost, margin % at current sellingPriceTry, break-even price
+- Uses existing `unitCostUsd` from SupplierProduct + `MonthlyExchangeRate` for conversion
+- No new DB schema required (uses existing Supplier, SupplierProduct, MonthlyExchangeRate, Product)
 
 Acceptance:
-- Supplier can be created and linked to products
-- Procurement page shows supplier name in ranked table when available
-- Products with supplier lead time show non-UNKNOWN urgency when stock is low
+- Calculator page loads and accepts all inputs
+- Landed cost calculation is correct (cost × qty × rate + freight × rate + customs)
+- Per-unit and margin output matches manual calculation
 - tsc clean, Vercel deploy READY, browser-tested
 
 ### Priority 2 — Phase 21+: Import Cost Calculator / Executive KPI
@@ -127,6 +127,7 @@ Phase dependencies:
 - Phase 18 ✓ complete — Quote Professionalization 2.0 is production-active.
 - Phase 11 provides real stock feed data that improves allocation accuracy.
 - Phase 19 depends on Phase 7, Phase 8, Phase 9, and Phase 20 because procurement logic needs inventory, profitability, demand, and supplier inputs.
+- Phase 20 ✓ complete — supplier intelligence is production-active.
 - Phase 22 depends on multiple earlier phases because executive KPIs are only useful if underlying systems are trustworthy.
 - Phase 23 and Phase 24 should not be ignored because data quality and production safety can invalidate later intelligence work.
 - Priority 0 should be treated as a baseline operating rule before schema-heavy work expands.

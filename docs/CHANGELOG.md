@@ -268,6 +268,21 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 20 — Supplier Intelligence
+- Created `Supplier` model: id, name, contactName, phone, email, countryOfOrigin, paymentTerms, defaultLeadDays, notes, isActive, timestamps; indexes on name, isActive
+- Created `SupplierProduct` join model: id, supplierId (FK → Supplier CASCADE), productId (FK → Product CASCADE), unitCostUsd (Decimal?), moq (Int?), leadDays (Int?), isPreferred (Boolean), notes; @@unique([supplierId, productId])
+- Applied Prisma migration `20260517040000_phase20_supplier_intelligence` to production Supabase
+- Created `lib/actions/supplier-actions.ts`: `saveSupplierAction` (create/update, SUPPLIERS_WRITE), `deleteSupplierAction` (SUPPLIERS_WRITE), `upsertSupplierProductAction` (upsert by unique supplierId_productId, SUPPLIERS_WRITE), `deleteSupplierProductAction` (SUPPLIERS_WRITE)
+- Created `app/(app)/admin/suppliers/page.tsx` (SUPPLIERS_READ-gated): "Tedarikçi Ekle" card with SupplierForm, "Kayıtlı Tedarikçiler" list with SupplierListClient; shows product count, lead time, country per row
+- Created `components/suppliers/supplier-form.tsx`: full create/edit form — name, contactName, phone, email, countryOfOrigin, paymentTerms, defaultLeadDays, notes, isActive checkbox; Güncelle + Sil actions when editing
+- Created `components/suppliers/supplier-list-client.tsx`: expand-row inline edit — click row to expand SupplierForm, collapse on success/page-reload
+- Created `components/suppliers/supplier-product-section.tsx`: product edit page supplier section — existing links table (Tedarikçi, Birim Maliyet USD, Min. Sipariş, Tedarik Süresi, Tercihli, Not, Kaldır), "Tedarikçi Bağla" form with supplier dropdown (filtered to unlinked only) + unitCostUsd/moq/leadDays/isPreferred/notes
+- Extended `app/(app)/products/[id]/edit/page.tsx`: added SupplierProductSection card below main product form; fetches allSuppliers + supplierLinks (with supplier name) + canWriteSuppliers in parallel
+- Added "Tedarikçiler" sidebar nav entry (SUPPLIERS_READ permission), positioned after "Tedarik Asistanı"
+- Updated sidebar info card: "Faz 20 aktif — Tedarikçi Zekası: tedarikçi yönetimi, ürün bağlantıları."
+- permissions.ts and seed.ts already had suppliers.read / suppliers.write
+- tsc --noEmit clean, Vercel deploy READY (commit 6dde711)
+
 ### Phase 19 — Procurement Intelligence Engine
 - Created `lib/procurement.ts`: pure calculation module, no new DB schema
   - `ReorderUrgency` enum: CRITICAL / HIGH / MEDIUM / LOW / OK / UNKNOWN
