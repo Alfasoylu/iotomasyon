@@ -514,22 +514,14 @@ Analiz tamamlandı. Aşağıdaki sıra dependency-first execution planına göre
 
 ---
 
-### Priority 57 — Ürün Formu Rol Görünürlüğü (Phase 57)
-
-**Neden önce:**
-OPERATIONS rolüne sahip kullanıcılar `products.update` ile ürün formunu açtığında tüm finansal/ithalat alanlarını görüyor. Bu, "ADMIN dışı kimse maliyet görmez" kuralını UI seviyesinde ihlal ediyor. WAREHOUSE rolü eklenmeden önce çözülmeli.
-
-**Bağımlılık:** Stabil ürün formu (Priority 0A ✓), Phase 5 RBAC ✓
-
-**Ne yapılacak:**
-- Product page server component: kullanıcı rolünü çözümle, `fieldVisibility` prop oluştur
-- product-form.tsx: financialFields ve importFields bölümlerini `showFinancialFields` prop'una göre koşullu render et
-- Product detail page: Pazar Yeri Fiyatlandırması / İthalat Kararı / Tedarikçi kartları role göre gizle
-- Server action: non-admin kullanıcılar finansal field gönderirse yok say (server-side validation)
-- Schema değişikliği YOK — sadece UI ve server component mantığı
-
-**Kabul kriteri:**
-OPERATIONS kullanıcısı ürün formunu açtığında unitCostTry, sourceCostRmb, import bölümleri DOM'da yok.
+### ✓ DONE - Priority 57 — Ürün Formu Rol Görünürlüğü (Phase 57)
+Teslim edildi 2026-05-17:
+- `showFinancialFields` prop ProductForm'a eklendi (varsayılan true — admin backward-compat)
+- EXECUTIVE_READ olmayan kullanıcılar için 4 section render edilmez: "Fiyatlandırma ve kârlılık", "Pazar yeri maliyet geçersiz kılmaları", "Satış potansiyeli", "İthalat kararı girdileri"
+- `updateProductAction`: EXECUTIVE_READ kontrolü → `normalizeProductDataNonFinancial()` — finansal field'lar Prisma update'e dahil edilmez
+- edit/page.tsx ve new/page.tsx: `checkPermission(EXECUTIVE_READ)` → `showFinancialFields` → ProductForm
+- Tamper koruması: sunucu tarafı zorunluluk, UI gizleme ikincil güvence
+- Vercel READY: dpl_3ge5Xx4gFjBy6fnUQVAUjMYjCb17, browser-verified 2026-05-17
 
 ---
 

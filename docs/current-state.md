@@ -266,10 +266,10 @@ Analysis performed 2026-05-17. No code changes made — documentation only.
    Bu geçici çözüm: OPERATIONS'ın görmemesi gereken şeyleri görüyor.
    → Phase 55
 
-2. **Product form field-level role visibility** — product-form.tsx shows ALL fields
-   (unitCostTry, sourceCostRmb, import sections) to anyone with products.update permission.
-   Server-side route protection exists but DOM-level field hiding does not.
-   → Phase 57
+2. **Product form field-level role visibility** — ✅ IMPLEMENTED Phase 57 (2026-05-17)
+   showFinancialFields prop gates 4 financial sections in product-form.tsx.
+   normalizeProductDataNonFinancial() enforces this server-side in updateProductAction.
+   Non-admin users cannot write financial fields even via tampering.
 
 3. **Role-specific dashboards** — /dashboard is a single page for all roles.
    SALES sees import/procurement tiles that mean nothing to them.

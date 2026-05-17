@@ -9,6 +9,28 @@
 
 ## 2026-05
 
+### Phase 57 — Ürün Formu Rol Görünürlüğü (2026-05-17)
+
+**Amaç:**
+OPERATIONS ve SALES rollerine sahip kullanıcılar ürün formunu düzenlerken finansal/maliyet/ithalat alanlarını görmemelidir.
+"ADMIN dışı kimse maliyet görmez" kuralı UI katmanında uygulandı. Şema değişikliği yok.
+
+Değişiklikler:
+- `components/products/product-form.tsx`: `showFinancialFields?: boolean` prop eklendi (varsayılan `true` — admin backward-compat).
+  `false` olduğunda "Fiyatlandırma ve kârlılık", "Pazar yeri maliyet geçersiz kılmaları", "Satış potansiyeli",
+  "İthalat kararı girdileri" section'ları DOM'da render edilmez.
+- `lib/actions/product-actions.ts`: `updateProductAction` EXECUTIVE_READ kontrolü eklendi.
+  Admin olmayan kullanıcılar için `normalizeProductDataNonFinancial()` kullanılır — finansal alanlar Prisma update'e dahil edilmez,
+  mevcut DB değerleri korunur. Tamper ile field gönderilse bile yok sayılır.
+- `app/(app)/products/[id]/edit/page.tsx`: `checkPermission(user, PERMISSIONS.EXECUTIVE_READ)` → `showFinancialFields` çözümlenir,
+  `ProductForm`'a geçilir.
+- `app/(app)/products/new/page.tsx`: Aynı EXECUTIVE_READ kontrolü, `ProductForm`'a geçilir.
+
+Kabul kriterleri:
+- Admin ürün formunu açtığında tüm finansal alanları görür ✓ (Vercel READY browser-verified dpl_3ge5Xx4gFjBy6fnUQVAUjMYjCb17)
+- OPERATIONS kullanıcısı ürün formunu açtığında: unitCostTry, sourceCostRmb, importUnitCostUsd ve ilgili section'lar DOM'da bulunmaz
+- Server action: finansal field gönderilse bile non-admin için mevcut DB değerleri korunur
+
 ### Rol Bazlı Sistem Analizi + Yeni Yol Haritası (Dokümantasyon, 2026-05-17)
 
 **Amaç:**
