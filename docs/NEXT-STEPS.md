@@ -129,6 +129,21 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 7 — Realized Margin Analysis (Phase 35, 2026-05-17)
+
+Delivered:
+- /marketplace/realized-margin: compares actual Trendyol order margins vs expected (last 90 days)
+- Aggregates TrendyolSalesRecord per product (non-cancelled), avgRealizedPriceTry, total qty + revenue
+- calcMarketplacePricingRow() fed actual realized price as manual override → realistic commission/shipping deductions
+- realizedMarginPct = (avgRealizedPrice − commission − shipping − paymentFee − returnReserve − unitCost) / avgRealizedPrice × 100
+- deltaPct = realizedMarginPct − expectedMarginPct (negative = worse than expected)
+- Sections: Zarar Eden / Beklenenden Düşük Marj (delta < −5%) / Kârlı Satışlar / Maliyet Verisi Eksik
+- Summary cards: Satılan Ürün Çeşidi, Toplam Ciro (90G), Ort. Gerçekleşen Marj, Beklenenden Kötü count
+- Hesaplama Notu footer: formula transparency
+- Trendyol platform policy applied; usdTryRate from MonthlyExchangeRate
+- EXECUTIVE_READ permission gated; "Gerçekleşen Marj" sidebar link added
+- Browser-verified 2026-05-17: ₺117.222,79 ciro, %32.5 avg margin, sections all render ✓
+
 ### ✓ Priority 6 — Marketplace Profit Page XML Price Integration (Phase 34, 2026-05-17)
 
 Delivered:

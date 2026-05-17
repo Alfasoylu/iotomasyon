@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 34 aktif
+          Faz 35 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Pazar Yeri Kâr Paneli: platform XML fiyatları, etkin fiyat kaynağı rozeti.
+            Gerçekleşen Marj Analizi: 90 gün Trendyol sipariş geçmişi, beklenen vs gerçekleşen karşılaştırma.
           </p>
         </div>
       </aside>

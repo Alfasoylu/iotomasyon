@@ -511,6 +511,21 @@
 - tsc clean, Vercel deploy READY (commit 0819706)
 - Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
 
+### Phase 35 — Realized Margin Analysis
+- Created `app/(app)/marketplace/realized-margin/page.tsx` (EXECUTIVE_READ gated, `force-dynamic`)
+  - Aggregates last 90 days `TrendyolSalesRecord` (non-cancelled) per product
+  - Computes `avgRealizedPriceTry`, `totalQty`, `totalRevenueTry` per product
+  - `calcMarketplacePricingRow()` fed actual realized price as manual override → realistic deductions (commission, shipping, paymentFee, returnReserve)
+  - `realizedMarginPct = (realized − commission − shipping − paymentFee − returnReserve − unitCost) / realized × 100`
+  - `deltaPct = realizedMarginPct − expectedMarginPct` (negative = worse than expected)
+  - Sections: Zarar Eden (margin < 0) / Beklenenden Düşük Marj (delta < −5%) / Kârlı Satışlar / Maliyet Verisi Eksik
+  - Summary cards: Satılan Ürün Çeşidi, Toplam Ciro (90G), Ort. Gerçekleşen Marj, Beklenenden Kötü count
+  - Hesaplama Notu footer with full formula transparency
+  - Trendyol platform policy resolved and applied; `usdTryRate` from latest `MonthlyExchangeRate`
+- Added "Gerçekleşen Marj" nav entry to `app/(app)/layout.tsx` (EXECUTIVE_READ, after Pazar Kârlılığı)
+- tsc clean, Vercel deploy READY (commit 4e015eb)
+- Browser-verified 2026-05-17: ₺117.222,79 ciro, %32.5 avg margin, Beklenenden Düşük (1 ürün), Kârlı section, Maliyet Eksik (13 ürün) all render ✓
+
 ### Phase 34 — Marketplace Profit Page XML Price Integration
 - Updated `app/(app)/marketplace/profit/page.tsx` to use `calcMarketplacePricingRow()` per listing
   - `PLATFORM_XML_FIELD` map: TRENDYOL→xmlTrendyolPrice, HEPSIBURADA→xmlHbPrice, AMAZON→xmlAmazonPrice, PAZARAMA→xmlPazaramaPrice, IDEFIX→xmlIdefixPrice
