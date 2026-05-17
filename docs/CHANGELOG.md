@@ -9,6 +9,28 @@
 
 ## 2026-05
 
+### Rol Bazlı Sistem Analizi + Yeni Yol Haritası (Dokümantasyon, 2026-05-17)
+
+**Amaç:**
+Sistemdeki kullanıcı rolleri analiz edildi (ADMIN, OPERATIONS, SALES, MARKETPLACE_OPERATOR).
+Eksiklikler, yetki riskleri ve tasarım ihtiyaçları tespit edilerek docs dosyalarına yansıtıldı.
+Kod/şema/migration değişikliği yapılmadı.
+
+Güncellenen dosyalar:
+- `docs/PERMISSION-MODEL.md` — WAREHOUSE rol tanımı (NOT YET IMPLEMENTED), yeni permission key'leri (warehouse.*, import.*, productFinance.read, salesOpportunities.*), ithalat gizliliği HARD RULE bölümü, rol uyum matrisi, UI katmanı açığı not edildi
+- `docs/ROADMAP.md` — Phase 54-58 eklendi: Rol Bazlı Dashboard, Warehouse Mode, Satış Fırsat Motoru, Owner-Only Import Intelligence (Ürün Formu), Operasyon Koordinasyon Katmanı
+- `docs/phase-plan.md` — Phase 54-58 için execution sırası, dependency rationale, risk notları eklendi
+- `docs/NEXT-STEPS.md` — Rol coverage gap özeti eklendi; Priority 57→55→54→56→58 stack'i bağımlılık sırasıyla tanımlandı
+- `docs/current-state.md` — "Role Coverage Gaps" bölümü eklendi: uygulanan vs uygulanmayan 6 gap net yazıldı
+
+Tespit edilen en kritik açıklar:
+1. WAREHOUSE rolü UserRole enum'unda yok (Phase 55)
+2. Ürün formu tüm finansal alanları `products.update`'e sahip herkese gösteriyor (Phase 57)
+3. Rol bazlı dashboard yok (Phase 54)
+4. Satış fırsat motoru yok (Phase 56)
+5. Operasyon koordinasyon UI yok (Phase 58)
+6. executive.read çok geniş — ileride bölünmesi gerekecek
+
 ### Phase 53 — Sidebar Gruplandırma + Rol Bazlı Bölüm Görünürlüğü (2026-05-17)
 
 **Amaç:**

@@ -245,6 +245,52 @@ Current meaning:
 
 ---
 
+## Role Coverage Gaps (identified 2026-05-17)
+
+Analysis performed 2026-05-17. No code changes made — documentation only.
+
+### What is implemented (role-wise)
+
+- 5 roles: ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM — live in production
+- 62 permissions — seeded and enforced server-side
+- Sidebar navigation grouped by section with role-based filtering (Phase 53) ✓
+- ADMIN: full financial/import intelligence via EXECUTIVE_READ gate ✓
+- SALES: CRM, quotes, tasks, product search — no financial access ✓
+- OPERATIONS: inventory read/write/count, tasks, product update — but sees all form fields
+- MARKETPLACE_OPERATOR: listings, orders, returns, Q&A — no financial access ✓
+
+### What is NOT yet implemented
+
+1. **WAREHOUSE role** — does not exist in UserRole enum.
+   Depo çalışanları şu an OPERATIONS rolü kullanmak zorunda.
+   Bu geçici çözüm: OPERATIONS'ın görmemesi gereken şeyleri görüyor.
+   → Phase 55
+
+2. **Product form field-level role visibility** — product-form.tsx shows ALL fields
+   (unitCostTry, sourceCostRmb, import sections) to anyone with products.update permission.
+   Server-side route protection exists but DOM-level field hiding does not.
+   → Phase 57
+
+3. **Role-specific dashboards** — /dashboard is a single page for all roles.
+   SALES sees import/procurement tiles that mean nothing to them.
+   WAREHOUSE sees operational intelligence they can't act on.
+   → Phase 54
+
+4. **Sales Opportunity Engine** — data model ready (ProductInterest, CategoryInterest),
+   but no screen shows "which customers should I pitch this new product to?"
+   → Phase 56
+
+5. **Operations task coordination** — tasks.assign permission exists in code,
+   but no UI for cross-user task assignment or team task board.
+   → Phase 58
+
+6. **executive.read is too broad** — all import intelligence, capital, financial data,
+   XML tools, admin panels share a single permission key. Future work should split into
+   import.read / productFinance.read / admin.tools for finer delegation control.
+   → Planned for Phase 57 groundwork
+
+---
+
 ## Production Readiness
 
 ### Operational Readiness

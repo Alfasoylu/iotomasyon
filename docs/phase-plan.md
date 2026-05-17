@@ -458,6 +458,112 @@ Risk:
 Completion signal:
 - only start after approval; not a default next step
 
+### Phase 57 — Owner-Only Import Intelligence (Product Form Role Visibility)
+
+Why now:
+- OPERATIONS users with products.update currently see all financial/import fields in the product form
+- The gap between "route protection works" and "field-level visibility works" is growing as more roles are added
+- This must be fixed before WAREHOUSE role is added (Phase 55) to avoid propagating the same gap
+
+Dependency:
+- Phase 5 (RBAC — role resolution on every request)
+- Stable product form (Priority 0A complete)
+
+Risk:
+- Without this, every new user with products.update sees cost/margin/import data regardless of role
+- Server actions already restrict routes, but rendered DOM can still leak field labels to curious users
+
+Completion signal:
+- Non-admin users see a product form with only the fields relevant to their role
+- No financial field appears in the DOM for SALES or WAREHOUSE users
+
+---
+
+### Phase 55 — Warehouse Mode
+
+Why now:
+- WAREHOUSE role currently does not exist in the UserRole enum — requires a Prisma migration
+- This should come AFTER Phase 57 (field visibility) so the new role inherits the correct field gates
+- Warehouse staff currently share OPERATIONS permissions and see a desktop-only interface
+
+Dependency:
+- Phase 57 (product form role visibility)
+- Phase 5 (RBAC)
+- Prisma migration discipline (new enum value = new migration)
+
+Risk:
+- Adding WAREHOUSE enum value to a live schema requires care — existing OPERATIONS users must not be disrupted
+- Mobile layout issues will surface during QA if not tested on real device
+
+Completion signal:
+- WAREHOUSE UserRole enum value exists in schema and is assignable from admin user management
+- /warehouse product search renders on mobile with large images, no cost fields
+- Stock count workflow creates StockAdjustmentLog entry correctly
+
+---
+
+### Phase 54 — Role-Based Workspace Dashboards
+
+Why now:
+- After field visibility (57) and warehouse mode (55) are resolved, dashboards become the natural next step
+- Currently all roles land on the same /dashboard — this is fine for admin but creates a confusing entry point for sales reps and warehouse staff
+
+Dependency:
+- Phase 57 (field visibility — confirms role resolution in server components)
+- Phase 55 (WAREHOUSE role must exist to build its dashboard variant)
+
+Risk:
+- Dashboard role detection must be purely server-side; client-side role checks are not acceptable
+- Role-specific dashboard must not leak admin-only data to non-admin roles
+
+Completion signal:
+- Sales dashboard shows pipeline, follow-up tasks, and customer activity — no cost/import tiles
+- Warehouse dashboard shows stock alerts and counting queue — no financial tiles
+- Admin dashboard unchanged from current state
+
+---
+
+### Phase 56 — Sales Opportunity Engine
+
+Why now:
+- The data model already supports this (ProductInterest, CategoryInterest, CustomerAttributeInterest)
+- Sales reps currently have no automated way to find "which customers might want this new product"
+- This is a high-leverage feature for sales productivity that doesn't require new schema tables
+
+Dependency:
+- Phase 54 (Sales dashboard exists as a rendering target)
+- Phase 57 (product detail page structure is role-aware)
+- Stable ProductInterest + CategoryInterest data (Phase 4/6)
+
+Risk:
+- Opportunity matching must never expose financial fields (cost, margin) to SALES role
+- Product image/name/category are safe; price context for quoting can come from sellingPriceTry only
+
+Completion signal:
+- Product detail page shows matched customers (by category/attribute/direct interest)
+- Sales dashboard shows daily opportunity suggestions
+- Outreach from opportunity works (creates OutreachCampaign)
+
+---
+
+### Phase 58 — Operations Control Layer
+
+Why now:
+- tasks.assign permission exists but has no UI — this is a quick win for operations coordination
+- Operations coordinator has no way to see team task status across SALES and WAREHOUSE
+
+Dependency:
+- Phase 54 (Operations dashboard)
+- Phase 55 (WAREHOUSE role — so tasks can be assigned to warehouse users)
+
+Risk:
+- Task categorization (SALES/WAREHOUSE/GENERAL) requires a new field on FollowUpTask (schema change)
+- FollowUpTask schema change needs a migration — plan carefully
+
+Completion signal:
+- Operations user can assign a task to a specific SALES or WAREHOUSE user
+- Operations task board shows all open tasks by assignee with due date and overdue highlight
+
 ---
 
 ## Dangerous Execution Paths

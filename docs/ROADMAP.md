@@ -1072,6 +1072,223 @@ product knowledge becomes private where needed, collaborative where allowed, and
 
 ---
 
+# Phase 54 — Role-Based Workspace Dashboards
+
+Goal:
+Each user role gets a tailored dashboard that makes their daily starting point obvious.
+
+Context:
+The current /dashboard is a single shared page. Admin sees operational KPIs and intelligence tiles.
+Other roles see the same page but many tiles are meaningless or confusing for them.
+
+Required:
+- Admin dashboard: existing intelligence tiles (Trendyol & Stok section, procurement alerts, executive links)
+- Operations dashboard: open task count by category, stock alerts, today's overdue items, team task board
+- Sales dashboard: my open pipeline (ProductInterest), follow-up tasks due today, recent customer activity
+- Warehouse dashboard: pending stock counts, critical/low stock alerts, picking queue
+- Dashboard routing: detect user role server-side and render appropriate widget set
+- No separate /dashboard URLs per role — one URL, role-aware content
+
+Exit:
+Every role sees a dashboard that makes their next action obvious within 5 seconds.
+
+---
+
+# Phase 55 — Warehouse Mode
+
+Goal:
+Give warehouse staff a dedicated mobile-first interface for product finding, counting, and picking.
+
+Context:
+Currently no WAREHOUSE role exists. Warehouse staff must use OPERATIONS permissions and navigate
+a desktop-oriented product list. They cannot quickly find products by barcode/image, cannot
+enter stock counts efficiently, and the layout does not work on mobile devices.
+
+Required:
+
+New UserRole enum value:
+- WAREHOUSE must be added to the UserRole enum in Prisma schema + migration
+- Default permissions: products.read, inventory.read, inventory.count, tasks.read, tasks.update,
+  warehouse.read, warehouse.pick, warehouse.locate
+
+Warehouse product search screen (/warehouse or /products/warehouse):
+- Prominent barcode/SKU/name search input (autofocus)
+- Results show: large product image, name, barcode, SKU, shelf/location, stock quantity
+- No cost fields at any point — not even layout placeholders
+- Mobile-optimized: touch-friendly, large tap targets, readable on 375px screen
+
+Stock counting (/warehouse/count):
+- Find product → enter counted quantity → save with timestamp
+- Creates StockAdjustmentLog CORRECTION entry
+- Simple confirm screen before saving
+
+Picking workflow (future):
+- View list of products needed for an order
+- Check off each item as found
+- Confirm picking complete
+
+Permission gates:
+- Route /warehouse/* requires warehouse.read (or OPERATIONS as fallback until WAREHOUSE role exists)
+- Stock count save action requires inventory.count
+- No financial field exposed at any point server-side or client-side
+
+Constraints:
+- No product cost visible in any warehouse screen
+- No import intelligence visible
+- No customer data visible (except order reference for picking)
+- Only ADMIN can see Product.unitCostTry and related financial fields
+
+Exit:
+Warehouse staff can find any product by barcode/name, see its image and location,
+and enter a stock count — all from a mobile browser.
+
+---
+
+# Phase 56 — Sales Opportunity Engine
+
+Goal:
+When a new product is imported or stock arrives, immediately show which customers are most likely
+to buy it. Give sales reps a daily action board of recommended outreach.
+
+Context:
+The data model already supports this: ProductInterest, CategoryInterest, CustomerAttributeInterest
+all exist. But there is no screen that surfaces "this product just arrived → these customers
+expressed interest in this category → here is your outreach list."
+
+Required:
+
+New product → customer matching logic:
+- When a product is saved (or arrives via XML), find customers by:
+  - Direct ProductInterest links (same product)
+  - CategoryInterest links (same or parent category)
+  - CustomerAttributeInterest + ProductAttributeAssignment overlap
+- Return ranked customer list with interest stage, last contact date, sales rep
+
+Opportunity surface on product detail page:
+- "Kimler Alabilir?" section on /products/[id]
+- Shows matched customers with interest stage and suggested action
+- Visible to SALES role (no financial context shown — just customer + reason match)
+
+Sales rep daily board:
+- New section on Sales dashboard: "Önerilen Fırsatlar"
+- Top 10 customer × product opportunity suggestions
+- Filter by "yeni stok", "kategori ilgisi", "ürün ilgisi"
+
+Outreach from opportunity:
+- Quick-launch campaign from opportunity match
+- Pre-fill OutreachCampaign from product + customer list
+
+Permission gates:
+- salesOpportunities.read: view opportunity suggestions (SALES default)
+- salesOpportunities.write: trigger outreach from opportunity (SALES default)
+- Financial fields remain hidden — opportunity surface shows product name/image/category only
+
+Exit:
+A sales rep can open the dashboard, see today's top 5 recommended customer-product
+opportunities, and launch a WhatsApp/quote action in under 2 minutes.
+
+---
+
+# Phase 57 — Owner-Only Import Intelligence (Product Form Role Visibility)
+
+Goal:
+The product edit form and detail page must show different field groups based on the user's role.
+Financial and import fields must be invisible to non-admin users at the UI layer.
+
+Context:
+Currently `components/products/product-form.tsx` renders ALL fields (cost, import, financial)
+to any user with `products.update`. The server-side route protection prevents non-authorized
+roles from accessing the edit form, but if OPERATIONS users get `products.update`, they
+see all financial fields. This is a UI-layer gap.
+
+Required:
+
+Server-side field visibility prop:
+- AppLayout or product page server component resolves role and passes `fieldVisibility` prop
+- fieldVisibility: { showFinancialFields: boolean, showImportFields: boolean, showPrivateNote: boolean }
+
+product-form.tsx conditional sections:
+- "Profitability / Cost" section: hidden unless showFinancialFields
+- "İthalat kararı girdileri" section: hidden unless showImportFields
+- "Override" section (Tier 1 marketplace overrides): hidden unless showFinancialFields
+- privateNote section: hidden unless showPrivateNote (already isOwner() gated)
+- Sections visible to ALL roles: name, sku, barcode, imageUrl, description, category, brand, model
+
+product detail page conditional cards:
+- Pazar Yeri Fiyatlandırması card: hidden unless showFinancialFields
+- İthalat Kararı card: hidden unless showImportFields
+- Tedarikçi / Supplier card: hidden unless showImportFields
+- Karar Geçmişi: hidden unless showImportFields
+
+Server action validation:
+- product-actions.ts must validate that non-admin users cannot submit financial field values
+- Even if someone crafts a form POST, the action must strip/reject cost fields for non-admin
+
+Visibility matrix:
+
+| Field group               | ADMIN | OPERATIONS | WAREHOUSE | SALES |
+|---------------------------|-------|------------|-----------|-------|
+| Name/SKU/barcode/image    | ✅    | ✅         | ✅        | ✅    |
+| sellingPriceTry           | ✅    | ✅         | ❌        | ✅    |
+| stockQuantity/location    | ✅    | ✅         | ✅        | ❌    |
+| unitCostTry               | ✅    | ❌         | ❌        | ❌    |
+| sourceCostRmb / importUSD | ✅    | ❌         | ❌        | ❌    |
+| Import decision section   | ✅    | ❌         | ❌        | ❌    |
+| Profitability section     | ✅    | ❌         | ❌        | ❌    |
+| Marketplace pricing card  | ✅    | ❌         | ❌        | ❌    |
+| privateNote               | OWNER | ❌         | ❌        | ❌    |
+
+Exit:
+Non-admin users see a product form that shows only what they need to do their job.
+No financial or import field is rendered in the DOM for non-admin roles.
+
+---
+
+# Phase 58 — Operations Control Layer
+
+Goal:
+Give the OPERATIONS role the tools to coordinate daily work across SALES and WAREHOUSE teams.
+Operations should be able to assign tasks, see task status by assignee, and get operational
+alerts without seeing financial intelligence.
+
+Context:
+The `tasks.assign` permission exists in code (PERMISSIONS.TASKS_ASSIGN) but there is no UI
+for cross-user task assignment. Operations coordinators currently have no centralized view of
+which tasks are pending per team member or which tasks are overdue.
+
+Required:
+
+Task assignment UI:
+- Task create/edit form: "Ata" field — assignee dropdown populated with active users
+- tasks.assign permission gate on the assignee field (already exists, needs UI)
+- Assignee visible in task list
+
+Operations task board:
+- New page /operations/tasks (or widget on Operations dashboard)
+- Group tasks by assignee
+- Show status (OPEN/DONE/CANCELLED), due date, overdue highlight
+- Filter: "Depo görevleri" vs "Satış görevleri" (tag or category field on task)
+- Requires tasks.read + tasks.assign
+
+Task categorization:
+- Optional taskCategory field on FollowUpTask: SALES / WAREHOUSE / GENERAL
+- Allows Operations to distinguish which team should handle which task
+
+SLA / due date visibility:
+- Tasks overdue by >1 day shown in red in operations view
+- Count of overdue tasks surfaced in Operations dashboard tile
+
+Permission gates:
+- /operations/tasks: tasks.read + tasks.assign
+- Assigning a task to another user: tasks.assign
+- Financial data: NOT accessible from this module
+
+Exit:
+Operations coordinator can open one screen, see all open tasks by team, identify overdue
+items, and assign new tasks to specific people — in under 60 seconds.
+
+---
+
 # Phase Exit Rules
 
 A phase is complete only if:

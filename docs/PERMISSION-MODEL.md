@@ -224,6 +224,41 @@ these remain blocked:
 
 ---
 
+## Warehouse
+
+Purpose:
+Warehouse staff — visual product finding, stock counting, order picking.
+Mobile-first. No financial intelligence.
+
+Default access (proposed — Phase 55, NOT YET IMPLEMENTED):
+- products.read (name, image, barcode, SKU, location, stock qty only)
+- inventory.read
+- inventory.count
+- warehouse.read
+- warehouse.pick
+- warehouse.locate
+- tasks.read
+- tasks.update
+
+Cannot access by default:
+- ANY financial field (cost, margin, ROI, profit, landed cost)
+- Customer data
+- Quotes
+- Import intelligence
+- Marketplace analytics
+- User management
+
+Note:
+WAREHOUSE role does NOT exist in the current UserRole enum.
+It must be added as a new enum value with a Prisma migration before it can be assigned to users.
+Current warehouse-type users should use OPERATIONS role with manually restricted permissions until Phase 55 is implemented.
+
+Important distinction from OPERATIONS:
+- OPERATIONS: coordinator role — task assignment, stock visibility, sipariş/iade coordination, can see operational metrics
+- WAREHOUSE: executor role — picking, counting, image-guided product finding, mobile-first
+
+---
+
 ## Custom Role
 
 Purpose:
@@ -374,6 +409,43 @@ Admin manually assigns permissions.
 
 ---
 
+## Warehouse Operations (Future — Phase 55)
+Status: NOT YET IMPLEMENTED. Keys documented here for planning purposes only.
+These keys do not exist in `lib/permissions.ts` or the DB seed yet.
+
+- warehouse.read      — view warehouse-relevant product fields (image, barcode, location, stock qty)
+- warehouse.pick      — access order picking/preparation workflow
+- warehouse.locate    — view shelf/location codes
+- warehouse.adjust    — create stock adjustment records (currently covered by products.update)
+
+---
+
+## Import Intelligence (Future — Phase 57)
+Status: NOT YET IMPLEMENTED. Currently ALL import intelligence is bundled under executive.read.
+These keys document the intended future split for finer-grained access control.
+
+- import.read         — view import decision cockpit, import calculator, import snapshots
+- import.manage       — create/approve/save import decision snapshots
+
+---
+
+## Product Finance Visibility (Future — Phase 57)
+Status: NOT YET IMPLEMENTED. Currently product form shows all fields to anyone with products.update.
+These keys document intended future field-level access control.
+
+- productFinance.read — view cost/pricing/ROI fields on product form and detail page
+                        (unitCostTry, sourceCostRmb, importUnitCostUsd, profitability breakdowns)
+
+---
+
+## Sales Opportunity Engine (Future — Phase 56)
+Status: NOT YET IMPLEMENTED.
+
+- salesOpportunities.read  — view sales opportunity suggestions (new product → interested customers)
+- salesOpportunities.write — create/manage sales opportunity actions and outreach triggers
+
+---
+
 ## Dangerous Operations
 - migrations.approve
 - destructiveActions.approve
@@ -489,3 +561,81 @@ OR:
 - fix implementation
 
 Do not allow silent drift.
+
+---
+
+# Import Intelligence Secrecy Rule (HARD RULE)
+
+This rule is IMMUTABLE. It defines what is considered owner-private strategic intelligence.
+
+## Fields and pages visible ONLY to ADMIN / OWNER:
+
+Financial fields on product record:
+- unitCostTry (birim maliyet)
+- sourceCostRmb (kaynak maliyet RMB)
+- importUnitCostUsd (ithalat birim maliyeti USD)
+- importPaymentFeePct (ödeme komisyonu %)
+- wholesalePriceTry (toptan fiyat — contains margin signal)
+- packagingCost, vatRate, paymentFeeRate, returnReserveRate
+- privateNote (ADMIN_EMAIL gated via isOwner() — already implemented Phase 28)
+
+Import intelligence pages:
+- /admin/import-cockpit
+- /admin/import-decisions
+- /admin/import-calculator
+- /admin/procurement
+- /admin/capital
+- /admin/executive
+
+Derived metrics admin-only:
+- Net profit per unit / margin % / ROI %
+- Landed cost
+- Capital allocation suggestions
+- Supplier costs and commercial terms
+- Import decision snapshots
+
+## What non-admin users CAN see on product:
+- name, sku, barcode, imageUrl, description, brand, model, category
+- stockQuantity (OPERATIONS, WAREHOUSE)
+- location (OPERATIONS, WAREHOUSE)
+- sellingPriceTry (SALES — for quoting only)
+- minimumStock (OPERATIONS)
+
+## Current implementation gap:
+The product edit form (`components/products/product-form.tsx`) currently renders ALL financial
+and import fields to any user with `products.update` permission. Field-level visibility
+by role is NOT YET IMPLEMENTED in the UI layer.
+
+Server-side actions DO check permissions on routes, but form fields themselves are not
+conditionally hidden based on role. This is a UI-layer gap documented for Phase 57.
+
+Until Phase 57 is implemented, only users trusted with `products.update` (ADMIN, OPERATIONS)
+can access the product edit form. SALES and WAREHOUSE roles do not have `products.update`
+by default, which provides partial protection today.
+
+---
+
+# Role Coverage Analysis (2026-05-17)
+
+## Gap Summary
+
+| Gap | Impact | Phase to Fix |
+|-----|--------|-------------|
+| No WAREHOUSE role in UserRole enum | Warehouse staff uses OPERATIONS, sees things they shouldn't | Phase 55 |
+| Product form shows ALL fields to anyone with products.update | Financial fields visible to OPERATIONS | Phase 57 |
+| No role-specific dashboards | All roles see same /dashboard | Phase 54 |
+| No Sales Opportunity Engine | Sales reps can't find customers to pitch new products | Phase 56 |
+| No Operations coordination tools | Can't assign/track tasks across SALES+WAREHOUSE | Phase 58 |
+| executive.read is too broad | One permission gates all of import/capital/finance | Phase 57 |
+| No mobile warehouse interface | Warehouse must use desktop-oriented screens | Phase 55 |
+| tasks.assign permission exists in code but no assignment UI | Ops can't delegate to individuals | Phase 58 |
+
+## Role Compliance Score (today)
+
+| Role | Core workflow supported | Financial data gated | Role-specific UX | Score |
+|------|------------------------|---------------------|-----------------|-------|
+| ADMIN | ✅ Full | ✅ Yes (EXECUTIVE_READ) | ⚠️ Shared dashboard | 90% |
+| OPERATIONS | ✅ Inventory/tasks | ⚠️ Partial (sees form fields) | ❌ No dedicated screen | 60% |
+| WAREHOUSE | ❌ No role exists | ❌ Uses OPERATIONS | ❌ No visual-first screen | 20% |
+| SALES | ✅ CRM/quotes | ✅ No cost access | ❌ No opportunity engine | 65% |
+| MARKETPLACE_OPERATOR | ✅ Listings/orders/returns | ✅ No financial access | ⚠️ Shared nav | 75% |

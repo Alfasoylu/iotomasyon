@@ -66,6 +66,17 @@ Not yet complete:
 - İthalat kar analizi Trendyol gerçek satış fiyatlarıyla tam entegre değil
 - Ürün bazında "bu ithalat karlı mı?" sorusunu tek sayfada yanıtlayan bir cockpit yok
 
+## Role Coverage Gaps (identified 2026-05-17)
+
+These are structural gaps in the current system, not single-feature bugs:
+
+1. **WAREHOUSE rolü yok** — UserRole enum'unda WAREHOUSE yoktur. Depo çalışanları şu an OPERATIONS rolüyle çalışıyor. Bu geçici bir çözüm.
+2. **Ürün formu rol körü** — `products.update` iznine sahip herkes (şu an: OPERATIONS) tüm finansal/ithalat alanlarını görür. Sahaya özel alan görünürlüğü uygulanmadı.
+3. **Rol bazlı dashboard yok** — Tüm roller aynı /dashboard sayfasını görüyor. SALES ve WAREHOUSE için anlamsız kartlar gösteriliyor.
+4. **Satış fırsat motoru yok** — "Bu ürünü hangi müşteriye satarım?" sorusunu yanıtlayan bir akış yok. Veri modeli (ProductInterest, CategoryInterest) hazır, UI yok.
+5. **Operasyon koordinasyon yok** — `tasks.assign` permission var ama UI yok. Operations koordinatörü ekibine görev atayamıyor ve görev panosunu göremez.
+6. **executive.read çok geniş** — İthalat zekası, sermaye, finans, XML sync, yönetici paneli hepsi tek permission altında. İleride `import.read` / `productFinance.read` gibi alt izinlere ayrılması gerekecek.
+
 ---
 
 ## Immediate Priority Stack
@@ -494,6 +505,109 @@ Phase dependencies:
 - Phase 27 depends on a safe media/storage strategy and an editor choice that does not break current product forms.
 - Phase 28 depends on Phase 5 RBAC foundations plus clear XML field-governance rules.
 - Phase 17 remains deferred even if product UX improves; write-side marketplace control still requires separate architecture review.
+
+---
+
+## Role-Based UX Priority Stack (2026-05-17)
+
+Analiz tamamlandı. Aşağıdaki sıra dependency-first execution planına göre sıralanmıştır.
+
+---
+
+### Priority 57 — Ürün Formu Rol Görünürlüğü (Phase 57)
+
+**Neden önce:**
+OPERATIONS rolüne sahip kullanıcılar `products.update` ile ürün formunu açtığında tüm finansal/ithalat alanlarını görüyor. Bu, "ADMIN dışı kimse maliyet görmez" kuralını UI seviyesinde ihlal ediyor. WAREHOUSE rolü eklenmeden önce çözülmeli.
+
+**Bağımlılık:** Stabil ürün formu (Priority 0A ✓), Phase 5 RBAC ✓
+
+**Ne yapılacak:**
+- Product page server component: kullanıcı rolünü çözümle, `fieldVisibility` prop oluştur
+- product-form.tsx: financialFields ve importFields bölümlerini `showFinancialFields` prop'una göre koşullu render et
+- Product detail page: Pazar Yeri Fiyatlandırması / İthalat Kararı / Tedarikçi kartları role göre gizle
+- Server action: non-admin kullanıcılar finansal field gönderirse yok say (server-side validation)
+- Schema değişikliği YOK — sadece UI ve server component mantığı
+
+**Kabul kriteri:**
+OPERATIONS kullanıcısı ürün formunu açtığında unitCostTry, sourceCostRmb, import bölümleri DOM'da yok.
+
+---
+
+### Priority 55 — Warehouse Mode + WAREHOUSE Rolü (Phase 55)
+
+**Neden:**
+Depo çalışanları şu an OPERATIONS rolüyle çalışıyor — bu yanlış. Ayrı rol olmadan mobil depo arayüzü yapılamaz.
+
+**Bağımlılık:** Priority 57 (field visibility) ✓ olmalı
+
+**Ne yapılacak:**
+- Prisma: `UserRole` enum'a `WAREHOUSE` değeri ekle — migration gerekir
+- Seed: WAREHOUSE rolü için default permissions (inventory.read, inventory.count, products.read, tasks.read/update)
+- `/warehouse` sayfası: barkod/SKU/ad araması, büyük görsel, raf/lokasyon, stok adedi — maliyet görünmez
+- `/warehouse/count`: ürün bul → sayım gir → StockAdjustmentLog CORRECTION kaydet
+- Mobile layout: 375px ekranda tam işlevsel, büyük dokunma alanları
+- Schema değişikliği: UserRole enum + seed + migration
+
+**Kabul kriteri:**
+WAREHOUSE kullanıcısı mobil cihazdan ürünü barkoduyla bulabilir, stok sayımı girebilir — hiçbir maliyet alanı görmez.
+
+---
+
+### Priority 54 — Rol Bazlı Dashboard (Phase 54)
+
+**Neden:**
+/dashboard şu an tüm roller için aynı içeriği gösteriyor. SALES için ithalat kartları anlamsız, WAREHOUSE için sipariş analizi anlamsız.
+
+**Bağımlılık:** Priority 55 (WAREHOUSE rolü var olmalı)
+
+**Ne yapılacak:**
+- /dashboard server component: kullanıcı rolünü çözümle
+- ADMIN: mevcut layout + tüm kartlar (değişiklik yok)
+- OPERATIONS: açık görevler + stok uyarıları + ekip görev özeti
+- SALES: pipeline özeti + bugün takip edilecekler + müşteri aktivitesi
+- WAREHOUSE: kritik stok uyarıları + bekleyen sayımlar + picking kuyruğu
+- Schema değişikliği YOK — mevcut verilerden rol bazlı widget seti
+
+**Kabul kriteri:**
+SALES kullanıcısı dashboard'ı açtığında ithalat / sermaye / kâr kartı görmez; kendi pipeline'ını görür.
+
+---
+
+### Priority 56 — Satış Fırsat Motoru (Phase 56)
+
+**Neden:**
+Yeni ürün ithalat edildiğinde satış temsilcisi "bunu kime satarım?" sorusunu sisteme soramıyor. Veri modeli hazır (ProductInterest, CategoryInterest, CustomerAttributeInterest) ama sunan UI yok.
+
+**Bağımlılık:** Priority 54 (Sales dashboard), Priority 57 (ürün detay sayfası role-aware)
+
+**Ne yapılacak:**
+- Ürün detay sayfası: "Kimler Alabilir?" bölümü — kategori/özellik/direkt ilgi üzerinden müşteri listesi
+- Gösterilen bilgi: müşteri adı, ilgi aşaması, son temas tarihi, satış temsilcisi — maliyet yok
+- Sales dashboard widget: "Önerilen Fırsatlar" — bugünkü top 5 müşteri × ürün eşleşmesi
+- Outreach trigger: fırsattan OutreachCampaign oluştur
+- Schema değişikliği: muhtemelen YOK (ProductInterest + CategoryInterest zaten var)
+
+**Kabul kriteri:**
+Satış temsilcisi, yeni gelen bir ürünün detay sayfasından o ürünle ilgili müşteri listesini görebilir ve WhatsApp kampanyası başlatabilir.
+
+---
+
+### Priority 58 — Operasyon Koordinasyon Katmanı (Phase 58)
+
+**Neden:**
+`tasks.assign` permission var ama UI yok. Operations koordinatörü ekibine görev atayamıyor, görev durumunu ekip bazında göremez.
+
+**Bağımlılık:** Priority 54 (Operations dashboard), Priority 55 (WAREHOUSE rol mevcut — göreve atanabilir)
+
+**Ne yapılacak:**
+- Görev form: "Ata" alanı — aktif kullanıcı dropdown (tasks.assign permission gate)
+- Görev listesi: atanan kişi görünür
+- /tasks veya Operations dashboard widget: görevleri kullanıcıya göre grupla, gecikmiş görevleri kırmızı göster
+- İsteğe bağlı: FollowUpTask'a taskCategory (SALES/WAREHOUSE/GENERAL) alanı — schema migration gerekir
+- Schema değişikliği: taskCategory alanı OPSIYONEL (yalnızca eklenmesi durumunda migration)
+
+**Kabul kriteri:**
+Operations kullanıcısı WAREHOUSE veya SALES kullanıcısına görev atayabilir ve ekibinin açık görevlerini tek ekranda görebilir.
 
 ---
 
