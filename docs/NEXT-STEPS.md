@@ -703,6 +703,18 @@ Tamamlananlar:
 
 ---
 
+### ⏳ PENDING DEPLOY — Priority 64 — Trendyol Aylık Satış Trendi Kartı (Phase 64, 2026-05-17)
+
+**Neden:**
+Ürün detay sayfası 4 KPI tile (Son 30G Satış/Ciro, Toplam Satış, Gerçekleşen Marj) gösteriyordu ama aylık trend yoktu. Hangi ürünün büyüyüp büyümediği tek bakışta anlaşılmıyordu.
+
+Tamamlananlar:
+- `app/(app)/products/[id]/page.tsx`: 6 aylık JS-side aggregation; trend badge (↑/↓/→); Ay/Adet(delta)/Ciro/Ort.Fiyat tablosu; totals footer; no schema change
+- tsc --noEmit temiz ✓; commit 7fdc124 ✓
+- Deploy: Vercel 100/day limit — limit sıfırlandığında tetiklenecek
+
+---
+
 ### ✓ DONE — Priority 63 — Trendyol Aylık Satış Raporu (Phase 63, 2026-05-17)
 
 **Neden:**

@@ -9,6 +9,30 @@
 
 ## 2026-05
 
+### Phase 64 — Trendyol Aylık Satış Trendi Kartı (2026-05-17)
+
+**Amaç:**
+Ürün detay sayfasında o ürünün Trendyol'daki aylık satış eğilimini görmek — büyüyor mu, küçülüyor mu? Mevcut TrendyolSalesRecord verisi schema değişikliği olmadan kullanıldı.
+
+Değişiklikler:
+- `app/(app)/products/[id]/page.tsx`:
+  - `toMonthKey()` + `monthTrendMap` — mevcut `activeRecords` üzerinden aylık aggregation
+  - `trendDir: "up" | "down" | "flat" | "none"` — son ay vs önceki ay qty karşılaştırması
+  - `trendMonthLabel()` — "Oca 2026" formatı
+  - Yeni "Trendyol Aylık Satış Trendi" kartı (Phase 26 Realized Sales kartının altında):
+    - Trend badge: ↑ Artış (emerald) / ↓ Düşüş (red) / → Sabit (slate)
+    - Tablo: Ay / Adet (+/- delta vs önceki ay) / Ciro / Ort. Fiyat; Son satır badge'i
+    - Totals footer row
+    - Kart yalnızca veri varsa render edilir
+- Schema değişikliği: YOK
+
+Durum:
+- tsc --noEmit temiz ✓
+- commit 7fdc124 push edildi ✓
+- Vercel deploy: Günlük 100 limit aşıldığı için deploy atlandı — limit sıfırlandığında otomatik tetiklenecek
+
+---
+
 ### Phase 63 — Trendyol Aylık Satış Raporu (2026-05-17)
 
 **Amaç:**
