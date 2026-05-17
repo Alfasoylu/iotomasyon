@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 39 aktif
+          Faz 40 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Tedarik Asistanı: 6 üründe gerçek Trendyol satış hızı, Gerçek/Tahmin/Veri Yok kaynak rozeti.
+            Sermaye Dağılımı: 6 üründe gerçek Trendyol satış hızı yatırım skoruna yansıyor, Gerçek/Tahmin rozeti, Gerçek Satış Verisi Aktif banner.
           </p>
         </div>
       </aside>

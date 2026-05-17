@@ -511,6 +511,22 @@
 - tsc clean, Vercel deploy READY (commit 0819706)
 - Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
 
+### Phase 40 — Capital Allocation + Real Sales Velocity
+- Updated `app/(app)/admin/capital/page.tsx`:
+  - Fetches `TrendyolSalesRecord` (last 30 days, non-cancelled, matched) in parallel with product list and CapitalConfig
+  - Builds `actualSales30d Map<productId, qty>` using `isCancelledStatus()` filter (same pattern as Phase 39)
+  - `effectiveOnlinePotential`: `actualQty` overrides manual `onlineSalesPotential` when available
+  - `velocitySource` tracked per product: `"actual"` (Trendyol data) / `"estimated"` (manual)
+  - Passes `effectiveOnlinePotential` to `calculateSalesPotential()` for investment score computation
+  - New **"Hız"** column in purchase suggestions table: **Gerçek** (emerald) / **Tahmin** (slate) badge per row
+  - Header description: shows `N üründe gerçek Trendyol satış hızı kullanılıyor.` (emerald) when data present
+  - **Gerçek Satış Verisi Aktif** emerald banner with explanation text when actual data available
+  - Fixed tfoot `colSpan` 6 → 7 for new Hız column
+  - Removed unused `calculateProfitability` import
+  - No schema change — reads existing Phase 26 `TrendyolSalesRecord` table
+- tsc clean, Vercel deploy READY (commit 9c45e28)
+- Browser-verified 2026-05-17: "6 üründe gerçek Trendyol satış hızı kullanılıyor." in header ✓, Gerçek Satış Verisi Aktif banner ✓, "Hız" column with Tahmin badge in BAOFENG UV-82 row ✓, all capital summary cards and config form intact ✓
+
 ### Phase 39 — Procurement Intelligence + Real Sales Velocity
 - Updated `app/(app)/admin/procurement/page.tsx`:
   - Fetches `TrendyolSalesRecord` (last 30 days, non-cancelled, matched) in parallel with product list

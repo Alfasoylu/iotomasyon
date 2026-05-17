@@ -129,6 +129,20 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 12 — Capital Allocation + Real Sales Velocity (Phase 40, 2026-05-17)
+
+Delivered:
+- /admin/capital investment scores now driven by actual 30-day Trendyol sales velocity when available
+- Fetches TrendyolSalesRecord (last 30 days, non-cancelled, matched) in parallel with CapitalConfig + products
+- actualSales30d Map<productId, qty> built using isCancelledStatus() filter
+- effectiveOnlinePotential: actualQty overrides manual onlineSalesPotential when present
+- velocitySource tracked per product: "actual" / "estimated"
+- New "Hız" column in suggestions table: Gerçek (emerald) / Tahmin (slate) badge
+- "Gerçek Satış Verisi Aktif" emerald banner with explanation text
+- Header notice: "N üründe gerçek Trendyol satış hızı kullanılıyor."
+- No schema change — reads existing Phase 26 TrendyolSalesRecord table
+- Browser-verified 2026-05-17: 6 üründe gerçek hız, Gerçek Satış Verisi Aktif banner, Hız column, all summary cards and tfoot intact ✓
+
 ### ✓ Priority 11 — Procurement Intelligence + Real Sales Velocity (Phase 39, 2026-05-17)
 
 Delivered:
