@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 22 aktif
+          Faz 23 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Yönetici Paneli: stok değeri, kârlılık, tedarik aciliyeti.
+            Veri Hijyeni: eksik maliyet, fiyat ve barkod raporları.
           </p>
         </div>
       </aside>
