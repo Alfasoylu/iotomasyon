@@ -411,7 +411,8 @@ export async function fetchTrendyolQuestions(
   if (opts.startDate) params.startDate = opts.startDate;
   if (opts.endDate)   params.endDate   = opts.endDate;
 
-  const url = new URL(`${QNA_BASE_URL}/${cfg.supplierId}/questions`);
+  // Correct Trendyol endpoint is /questions/filter (not /questions)
+  const url = new URL(`${QNA_BASE_URL}/${cfg.supplierId}/questions/filter`);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
 
   const res = await fetch(url.toString(), {
