@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 31 aktif
+          Faz 32 aktif
           <p className="mt-2 font-medium text-slate-900">
-            İthalat Ekonomisi: RMB-öncelikli maliyet formülü, RMB/USD kur desteği, ödeme komisyonu girişi.
+            İthalat Yönetişimi: Karar anlık görüntüsü, tedarikçi kargo varsayılanları, üç katmanlı kargo çözümü.
           </p>
         </div>
       </aside>

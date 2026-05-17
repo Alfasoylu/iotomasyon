@@ -68,6 +68,7 @@ Implemented modules:
 - order ledger and return claims — Phase 29 complete: TrendyolReturnRecord schema + migration, syncTrendyolReturnsAction (365-day sweep), /orders page with 5 tabs (Tümü/Teslim/İptal/İadeler/Eşleşmemiş), newest-first, unmatched inbox, Siparişler sidebar link
 - marketplace margin policy normalization — Phase 30 complete: MarketplacePlatformPolicy table, per-platform standard shipping/commission/VAT/fees, resolveMarginPolicy() three-tier resolver, /admin/marketplace-policies admin UI with per-platform inline edit, /marketplace/profit updated with source labels (Ürün Geçersiz Kılma/Ürün Değeri/Platform Standardı/Sistem Varsayılanı)
 - import economics normalization — Phase 31 complete: SEA_FREIGHT_PER_KG fixed (2→1), rmbUsdRate on MonthlyExchangeRate, sourceCostRmb + importPaymentFeePct on Product, RMB-first formula in import decision engine, exchange rate form updated with RMB/USD field, product form amber RMB section
+- import governance — Phase 32 complete: ImportDecisionSnapshot model (freeze all inputs+outputs at decision time), Supplier import defaults (air/sea freight USD/kg, payment fee %), three-tier freight resolution, ImportSnapshotButton, Karar Geçmişi history table on product detail, "Kaydet" column on import decisions cockpit
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1

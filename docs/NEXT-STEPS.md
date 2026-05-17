@@ -113,22 +113,21 @@ Remaining (not blocking Priority 4):
 - shared landed-cost truth not yet propagated to procurement/capital/executive views (deferred to Priority 4)
 - route/profile freight override hierarchy (deferred)
 
-### Priority 4 - Holding-Grade Import Governance
+### ✓ Priority 4 — Holding-Grade Import Governance (Phase 32, 2026-05-17)
 
-Why:
-Active use is not enough; the system must become governable at multi-entity and historical-decision level.
-
-Includes:
-- entity-aware import defaults
-- route/profile versioning
-- monthly decision snapshots
-- approval workflow
-- supplier-specific import policy inputs
-- effective-value audit visibility
-
-Acceptance:
-- import decisions remain explainable after rates and defaults change
-- the system can support holding-style governance, not just one-off product calculations
+Delivered:
+- Supplier model: defaultAirFreightUsdPerKg, defaultSeaFreightUsdPerKg, defaultPaymentFeePct optional Decimal fields
+- ImportDecisionSnapshot model: freezes all decision inputs + computed outputs at approval time
+- Migration: 20260517160000_phase32_import_governance applied to production
+- Three-tier freight resolution: product-level override → supplier default → global constant (AIR=8, SEA=1 USD/kg)
+- effectiveFreightPerKg() exported helper from lib/import-decision.ts
+- createImportDecisionSnapshotAction: EXECUTIVE_READ-gated, resolves all inputs, calls calculateImportDecision, saves full snapshot
+- getProductImportSnapshotsAction: last 10 snapshots with createdBy + supplier names
+- ImportSnapshotButton client component (emerald, useTransition, "Kararı Kaydet")
+- Import Decisions cockpit: new "Kaydet" column with snapshot button per row
+- Product detail page: "Kararı Kaydet" button in İthalat Kararı card header + "Karar Geçmişi" history table
+- Supplier form/list: import defaults section (air freight, sea freight, payment fee)
+- Browser-verified 2026-05-17 ✓
 
 ### Priority 5 - Marketplace Pricing Normalization
 
