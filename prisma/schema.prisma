@@ -404,6 +404,8 @@ model Product {
   importDecisionSnapshots ImportDecisionSnapshot[]
   // Phase 42 — Stock adjustment log
   stockAdjustments        StockAdjustmentLog[]
+  // Phase 49 — XML stock change log (Entegra ERP sync deltas)
+  xmlStockChangeLogs      XmlStockChangeLog[]
 
   @@index([name])
   @@index([barcode])
@@ -1112,4 +1114,26 @@ model StockAdjustmentLog {
   @@index([productId])
   @@index([createdAt])
   @@index([adjustmentType])
+}
+
+// ─── Phase 49 — XML Stok Değişim Logu ────────────────────────────────────────
+// Records every stock quantity change made by XML sync (Entegra ERP).
+// Allows operators to audit which products' stock changed in each sync run.
+// delta = newQty - previousQty (positive = restock/increase, negative = depletion)
+
+model XmlStockChangeLog {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  syncLogId   String
+  sourceId    String
+  previousQty Int
+  newQty      Int
+  delta       Int
+  syncedAt    DateTime @default(now())
+
+  @@index([productId])
+  @@index([syncLogId])
+  @@index([sourceId])
+  @@index([syncedAt])
 }

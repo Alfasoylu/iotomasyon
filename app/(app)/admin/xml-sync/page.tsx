@@ -39,18 +39,52 @@ function fmt(d: Date | null) {
   }).format(new Date(d));
 }
 
+function DeltaBadge({ delta }: { delta: number }) {
+  if (delta > 0) {
+    return (
+      <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700">
+        ↑ +{delta}
+      </span>
+    );
+  }
+  if (delta < 0) {
+    return (
+      <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700">
+        ↓ {delta}
+      </span>
+    );
+  }
+  return <span className="text-slate-300 text-xs">—</span>;
+}
+
 export default async function XmlSyncPage() {
   await requirePermission(PERMISSIONS.EXECUTIVE_READ);
 
-  const sources = await prisma.xmlSyncSource.findMany({
-    orderBy: { createdAt: "asc" },
-    include: {
-      logs: {
-        orderBy: { startedAt: "desc" },
-        take: 5,
+  const [sources, recentChanges] = await Promise.all([
+    prisma.xmlSyncSource.findMany({
+      orderBy: { createdAt: "asc" },
+      include: {
+        logs: {
+          orderBy: { startedAt: "desc" },
+          take: 5,
+        },
       },
-    },
-  });
+    }),
+    prisma.xmlStockChangeLog.findMany({
+      orderBy: { syncedAt: "desc" },
+      take: 100,
+      include: {
+        product: { select: { id: true, name: true, sku: true } },
+      },
+    }),
+  ]);
+
+  // Group changes by syncLogId to show latest sync's changes
+  const latestSyncLogId = recentChanges[0]?.syncLogId ?? null;
+  const latestSyncChanges = latestSyncLogId
+    ? recentChanges.filter((c) => c.syncLogId === latestSyncLogId)
+    : [];
+  const latestSyncAt = recentChanges[0]?.syncedAt ?? null;
 
   return (
     <div className="space-y-8">
@@ -166,6 +200,67 @@ export default async function XmlSyncPage() {
         </div>
         <NewXmlSourceForm />
       </Card>
+
+      {/* Son Değişimler — Phase 49 */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900">Son Senkronizasyon Değişimleri</h2>
+          {latestSyncAt && (
+            <span className="text-xs text-slate-400">{fmt(latestSyncAt)}</span>
+          )}
+        </div>
+
+        {latestSyncChanges.length === 0 ? (
+          <Card className="p-6 text-center">
+            <p className="text-sm text-slate-400">
+              {recentChanges.length === 0
+                ? "Henüz stok değişim kaydı yok. Senkronizasyon çalıştıktan sonra burada görünecek."
+                : "Son senkronizasyonda stok değişimi yapılmadı."}
+            </p>
+          </Card>
+        ) : (
+          <Card className="overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                {latestSyncChanges.length} ürün değişti
+              </span>
+              <span className="text-xs text-slate-400">
+                Artış: {latestSyncChanges.filter((c) => c.delta > 0).length} · Azalış: {latestSyncChanges.filter((c) => c.delta < 0).length}
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-slate-700 border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/50">
+                    <th className="py-2 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
+                    <th className="py-2 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">SKU</th>
+                    <th className="py-2 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Önceki</th>
+                    <th className="py-2 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Yeni</th>
+                    <th className="py-2 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Değişim</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {latestSyncChanges.map((change) => (
+                    <tr key={change.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                      <td className="py-2 px-4 text-xs text-slate-700 max-w-[200px] truncate">
+                        <a href={`/products/${change.product.id}`} className="hover:underline hover:text-slate-900">
+                          {change.product.name}
+                        </a>
+                      </td>
+                      <td className="py-2 px-4 font-mono text-xs text-slate-500">{change.product.sku}</td>
+                      <td className="py-2 px-4 text-xs text-right text-slate-500">{change.previousQty}</td>
+                      <td className="py-2 px-4 text-xs text-right font-medium text-slate-800">{change.newQty}</td>
+                      <td className="py-2 px-4 text-right">
+                        <DeltaBadge delta={change.delta} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+      </div>
 
       {/* Info */}
       <Card className="border-blue-200 bg-blue-50 p-6">

@@ -177,7 +177,7 @@ export async function runSync(
     const allSkus = records.map((r) => r.sku);
     const existingProducts = await prisma.product.findMany({
       where: { sku: { in: allSkus } },
-      select: { id: true, sku: true, xmlLocked: true, stockSource: true, imageUrl: true },
+      select: { id: true, sku: true, xmlLocked: true, stockSource: true, imageUrl: true, stockQuantity: true },
     });
     const existingBySku = new Map(existingProducts.map((p) => [p.sku, p]));
 
@@ -219,6 +219,9 @@ export async function runSync(
     type StockUpdate = { id: string; data: Record<string, unknown> };
     const stockUpdates: StockUpdate[] = [];
 
+    // Capture stock changes for XmlStockChangeLog
+    const stockChanges: Array<{ productId: string; previousQty: number; newQty: number; delta: number }> = [];
+
     for (const rec of existingRecords) {
       const p = existingBySku.get(rec.sku)!;
       if (p.xmlLocked) {
@@ -231,6 +234,15 @@ export async function runSync(
         data.stockQuantity = rec.stock;
         data.lastStockSyncAt = now;
         data.stockSource = "XML";
+        // Track stock change delta (log only when value actually changes)
+        if (p.stockQuantity !== rec.stock) {
+          stockChanges.push({
+            productId: p.id,
+            previousQty: p.stockQuantity,
+            newQty: rec.stock,
+            delta: rec.stock - p.stockQuantity,
+          });
+        }
       }
       // FALLBACK-FILL: imageUrl set only when the product has no image yet
       if (!p.imageUrl && rec.resim1) data.imageUrl = rec.resim1;
@@ -245,6 +257,23 @@ export async function runSync(
       await Promise.all(
         batch.map(({ id, data }) => prisma.product.update({ where: { id }, data })),
       );
+    }
+
+    // Write stock change logs (batch insert, chunked)
+    if (stockChanges.length > 0) {
+      for (const batch of chunks(stockChanges, 200)) {
+        await prisma.xmlStockChangeLog.createMany({
+          data: batch.map(({ productId, previousQty, newQty, delta }) => ({
+            productId,
+            syncLogId: log.id,
+            sourceId,
+            previousQty,
+            newQty,
+            delta,
+            syncedAt: now,
+          })),
+        });
+      }
     }
 
     // ── 6. Build unified productId map ─────────────────────────────────────────
@@ -310,7 +339,7 @@ export async function runSync(
 
     return {
       ok: true,
-      message: `${created} yeni ürün oluşturuldu, ${updated} ürün güncellendi, ${skipped} atlandı.`,
+      message: `${created} yeni ürün oluşturuldu, ${updated} ürün güncellendi, ${skipped} atlandı. ${stockChanges.length} ürünün stoğu değişti.`,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Bilinmeyen hata";
