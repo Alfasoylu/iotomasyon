@@ -10,12 +10,18 @@
 ## 2026-05
 
 ### Phase 51 — USD Kademeli Kargo + Cockpit Politika Düzeltmeleri (2026-05-17)
+
+**Amaç:**
+İthalat Cockpiti'nde komisyon ve kargo için hardcoded `0` kullanılıyordu — bu, her ürünün sanki kargo ve komisyon yokmuş gibi hesaplanmasına yol açıyordu. Trendyol satışlarında gerçek kargo maliyeti USD bazlı ve satış fiyatına göre kademeli olduğundan (ucuz ürünler az kargo, pahalı ürünler daha fazla), düz sabit bir TRY kargo değeri de yetersizdi. Ayrıca Trendyol'da henüz satışı olmayan ürünlerin XML kaynaklı fiyatları (xmlTrendyolPrice) hesaplamalarda hiç kullanılmıyordu.
+
+Bu phase üç şeyi düzeltti: (1) Kargo ve komisyonu `resolveMarginPolicy()` üzerinden çözümle, (2) Platform politikasına USD eşikli kargo kademesi ekle, (3) XML fiyatını cockpit fiyat hiyerarşisine bağla.
+
 - `MarketplacePlatformPolicy.shippingTiersJson String?` schema sütunu eklendi
 - `resolveMarginPolicy()`: `context.sellingPriceUsd` ile USD eşikli kargo kademesi çözümlemesi
 - `parseShippingTiers()` / `resolveTieredShipping()` saf yardımcı fonksiyonlar
-- Platform politika formu: kademeli kargo tablosu UI, varsayılan Trendyol kademeleri butonu
+- Platform politika formu: kademeli kargo tablosu UI, varsayılan Trendyol kademeleri butonu (`<$5 → $1.2`, `$5–7.5 → $2.0`, `>$7.5 → $3.3`)
 - `import-cockpit`: komisyon + kargo artık `resolveMarginPolicy()` ile çözümleniyor (hardcoded `0` kaldırıldı)
-- `import-cockpit`: `xmlTrendyolPrice` — Trendyol gerçekleşen sonrası, manuel öncesi fiyat kaynağı olarak wired edildi
+- `import-cockpit`: `xmlTrendyolPrice` — Trendyol gerçekleşen sonrası, manuel öncesi fiyat kaynağı olarak bağlandı
 - "XML Fiyat" badge (mavi) kaynak etiket sistemi eklendi
 
 ### Foundation
@@ -82,7 +88,11 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
-### Priority 0A — Product Finance Field Consolidation (UI-only) (2026-05-17)
+### Priority 0A — Ürün Finans Alan Konsolidasyonu (UI-only) (2026-05-17)
+
+**Amaç:**
+Ürün formunda kargo maliyeti, komisyon, ödeme ücreti ve iade rezervi için birden fazla çakışan alan vardı. Hangisinin öncelikli olduğu belirsizdi; platform politikası da ürün formuyla çelişiyordu. Bu kural netleştirilmeden marketplace marj normalizasyonu ve import kararı sayfaları güvenilmez veriye dayanıyordu. Bu phase UI'yi yeniden düzenledi: override alanlarını tek bölümde topladı, varsayılan değerlerin nereden geldiğini açıkladı ve platform politikası sayfasına bağlantı ekledi.
+
 - `components/products/product-form.tsx`: renamed "Maliyet girdileri" section → "PAZAR YERİ MALİYET GEÇERSİZ KILMALARI"
 - Added blue info box linking to /admin/marketplace-policies: explains overrides are product-level only; platform-wide defaults live in Pazar Yeri Politikaları
 - Consolidated override fields: `shippingCostOverride` (KARGO MALİYET GEÇERSİZ KILMASI ₺), `marketplaceCommissionOverride` (KOMİSYON GEÇERSİZ KILMASI %), `paymentFeeRate` (ÖDEME İŞLEM ÜCRETİ GEÇERSİZ KILMASI %), `returnReserveRate` (İADE/KUSUR KARŞILIĞI GEÇERSİZ KILMASI %) — all with "Boş = platform politikasını kullan" placeholders
@@ -97,6 +107,12 @@
 - Browser round-trip verified 2026-05-17: form section visible with blue info box, override fields with correct placeholders, shippingCostOverride save→detail shows "Ürün Geçersiz Kılma" badge at ₺25, 4-tier resolution working, clear→save→redirect clean ✓
 
 ### Phase 50 — İthalat Karar Cockpiti v2 (Priority 22, 2026-05-17)
+
+**Amaç:**
+Firma ithalatçı — temel iş kararı şu: "Bu ürünü çinden getireyim mi, getirirsem kazanır mıyım?" Bu soruyu yanıtlamak için daha önce tahminlere dayalı v1 cockpit vardı. Ancak Trendyol'dan gelen gerçek satış fiyatı, satış hızı ve iade oranı sistemde zaten mevcuttu — cockpit bu veriyi kullanmıyordu.
+
+Phase 50, v1'in yerini alacak yeni cockpit'i oluşturdu: Trendyol gerçekleşen ortalama satış fiyatı + 30 günlük satış hızı + iade oranı → ithal maliyet ile karşılaştırılıyor → AL / BEKLE / ALMA sinyali üretiliyor. Eşleşmemiş ürünler için manuel tahmine düşüyor ve bunu açıkça gösteriyor.
+
 - New page: `/admin/import-cockpit` (no schema change, reads existing tables)
 - Trendyol 90-day realized avg sale price via `groupBy` on TrendyolSalesRecord (Delivered orders only)
 - Trendyol 30-day velocity (units sold) via `groupBy` on TrendyolSalesRecord
@@ -114,7 +130,11 @@
 - Sidebar: "İthalat Cockpiti v2" added; v1 renamed "İthalat Kararları v1"
 - tsc clean, Vercel READY (dpl_71WA3rEYVH6XPiQaeEdBgC3vHsSt), browser-verified 2026-05-17 ✓
 
-### Priority 23 — Wrong-Direction Page Cleanup (2026-05-17)
+### Priority 23 — Yanlış Yöndeki Sayfaların Temizlenmesi (2026-05-17)
+
+**Amaç:**
+Trendyol API'ye stok ve fiyat push eden Phase 45 kodu hatalı yönde oluşturulmuştu — mimari kural gereği Trendyol READ-ONLY, stok yönetimi Entegra ERP üzerinden XML sync ile yapılır. Bu kod canlıda kalırsa operatörlerin yanlışlıkla Trendyol'a veri yazma riski doğuyor. Ayrıca /orders sayfasındaki stok düşüm butonu da aynı yanlış mimariye dayanıyordu. Bu phase zararlı kodu devre dışı bıraktı ve kullanıcıya neden çalışmadığını açıkladı.
+
 - Removed "Trendyol Stok Senkronu" sidebar nav link from `layout.tsx`
 - `/admin/trendyol-stock-sync/page.tsx` replaced with locked amber warning card: explains Trendyol is read-only, links to XML Sync + Stock Health pages
 - `pushTrendyolStockAction()` disabled: returns immediate error message; no DB or API calls
@@ -123,6 +143,10 @@
 - tsc clean, eslint 0 warnings, build ✓
 
 ### Phase 49 — XML Stok Değişim Logu (2026-05-17)
+
+**Amaç:**
+Entegra ERP'den gelen XML sync günlük stok güncellemesi yapıyordu ama "hangi ürünün stoğu ne kadar değişti?" sorusu yanıtsız kalıyordu. Operatör senkronizasyon logunu görüyor ama değişim detayı göremiyordu. Bu phase her sync'te stok değişen ürünlerin önceki/yeni miktarını kaydederek denetlenebilir bir stok geçmişi oluşturdu.
+
 - Added `XmlStockChangeLog` Prisma model: productId, syncLogId, sourceId, previousQty, newQty, delta, syncedAt
 - Migration: `20260517490000_phase49_xml_stock_change_log` applied to production
 - `runSync` in `lib/actions/xml-sync-actions.ts`: fetches `stockQuantity` for existing products; compares previousQty vs newQty per product; batch-inserts `XmlStockChangeLog` records for all products whose stock actually changed (excludes no-change and MANUAL-source products)
@@ -132,6 +156,10 @@
 - tsc clean, eslint 0 warnings, build ✓, migration applied ✓
 
 ### Phase 48 — Trendyol Daily Sync Cron (2026-05-17)
+
+**Amaç:**
+Trendyol sipariş ve iade verisi manuel tetiklemeyle çekiliyordu — bu, güncel veri için her gün birinin sayfaya gidip butona basması anlamına geliyordu. Import cockpit, stok sağlığı ve gerçekleşen marj gibi sayfaların anlamlı veri gösterebilmesi için Trendyol verisinin günlük otomatik güncellenmesi gerekiyordu. Bu phase veriyi 06:00 UTC'de otomatik çeken cron'u oluşturdu.
+
 - Added `app/api/cron/trendyol-sync/route.ts`: Vercel cron route called daily at 06:00 UTC, CRON_SECRET Bearer auth, 14-day sliding window, parallel `syncOrders` + `syncReturns` via `Promise.allSettled`
 - `syncOrders`: paginates `fetchTrendyolOrders` (page/size=50), upserts `TrendyolSalesRecord` (barcode/SKU product match, discountedPrice fallback, status update)
 - `syncReturns`: paginates `fetchTrendyolReturns` (page/size=50), upserts `TrendyolReturnRecord` (claimItemStatus, customerClaimItemReason/trendyolClaimItemReason, barcode/SKU match)
@@ -139,6 +167,10 @@
 - No schema change; deployment READY, tsc clean
 
 ### Phase 47 — Operational Intelligence Dashboard (2026-05-17)
+
+**Amaç:**
+Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok, eşleşmemiş sipariş ve Trendyol cirosu gibi operasyonel sinyaller dağınık sayfalarda gizliydi. Operatör sabah açtığında neye öncelik vereceğini göremiyordu. Bu phase panoya "Trendyol & Stok" bölümü ekleyerek en önemli operasyonel uyarıları tek ekranda ve ilgili sayfaya doğrudan bağlantıyla sundu.
+
 - Added `getOperationalAlerts()` to `services/dashboard-service.ts`: parallel-fetches criticalStockCount (stockQuantity ≤ 0), pending deduction rows (non-cancelled, matched, stockDeducted=false), unmatchedOrdersCount (productId=null), 7-day order qty, 30-day Trendyol revenue
 - `/dashboard` new "Trendyol & Stok" section with 5 `LinkedStatCard` tiles: Kritik Stok → /admin/stock-health, Bekleyen Stok Düşümü → /orders, Son 7 Gün Sipariş → /orders, Eşleşmemiş Sipariş → /admin/marketplace-mappings, Trendyol Ciro (30 Gün) → /marketplace/realized-margin
 - `LinkedStatCard` component: clickable Card with hover shadow, renders as `<Link>` when `href` provided

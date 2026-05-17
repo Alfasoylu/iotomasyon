@@ -200,6 +200,9 @@ Delivered:
 
 ### ✓ Priority 24 — USD Kademeli Kargo + Cockpit Politika Düzeltmeleri (Phase 51, 2026-05-17)
 
+Neden:
+Phase 50 cockpit'i Trendyol gerçek verisiyle çalışır hale getirdi ama komisyon ve kargo için hardcoded `0` bıraktı — bu tüm marj hesaplamalarını yanlış yapıyordu. Ayrıca Trendyol kargo maliyeti tek sabit değil, ürün fiyatına göre kademeli (düşük fiyatlı ürünlerde az kargo, yüksekte daha fazla). XML'den çekilen Trendyol fiyatları da cockpit'e bağlı değildi; eşleşmemiş ürünler için değerli bir kaynak olarak kullanılabilirdi.
+
 Delivered:
 - `MarketplacePlatformPolicy.shippingTiersJson String?` — JSON kargo kademesi sütunu (additive, `db push` ile uygulandı)
 - `lib/marketplace-policy.ts`: `ShippingTier` tipi, `parseShippingTiers()`, `resolveTieredShipping()` yardımcıları

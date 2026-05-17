@@ -74,8 +74,11 @@ Implemented modules:
 - unmatched barcodes inbox — Phase 37 complete: /admin/marketplace-mappings adds Eşleşmemiş Barkodlar card (112 barcodes, ₺852K missing ciro), top 30 by revenue, Eşleştir → button pre-fills MappingForm via ?barcode= URL param, no schema change
 - executive dashboard marketplace revenue — Phase 36 complete: /admin/executive adds Trendyol 90-day Gerçekleşen Satış Özeti card (ciro, eşleşen ürün, eşleşmemiş kayıt tiles + top 5 revenue table), no schema change, isCancelledStatus() filter, Gerçekleşen Marj link
 - product finance field consolidation — Priority 0A complete (UI-only): product-form "PAZAR YERİ MALİYET GEÇERSİZ KILMALARI" section with blue policy info box, consolidated override fields (shippingCostOverride/marketplaceCommissionOverride/paymentFeeRate/returnReserveRate) with "Boş = platform politikasını kullan" placeholders, legacy DB fields preserved as hidden inputs, marketplacePriceTry relabeled with role explanation, stok section Entegra ERP amber note; no schema change, browser round-trip 2026-05-17 ✓
+- USD tiered shipping + cockpit fixes — Phase 51 complete: shippingTiersJson on MarketplacePlatformPolicy (USD-based tier table, editable via platform policy form with "load Trendyol defaults" button); resolveMarginPolicy() extended with sellingPriceUsd context for tier resolution; import-cockpit now uses resolveMarginPolicy() for commission + shipping (no more hardcoded 0); xmlTrendyolPrice wired as price fallback (Trendyol realized → XML → manual); "XML Fiyat" badge added
+- import cockpit v2 — Phase 50 complete: /admin/import-cockpit, Trendyol 90-day realized avg price + 30-day velocity + return rate → net profit/unit + margin% + monthly profit estimate → AL/BEKLE/ALMA signal; unmatched products fall back to manual estimates with warning banner; price source badges; tab filter bar with live counts
+- xml stock change log — Phase 49 complete: XmlStockChangeLog model + migration, runSync captures previousQty vs newQty and batch-inserts change records; /admin/xml-sync "Son Değişimler" section with delta badges
 - trendyol daily sync cron — Phase 48 complete: /api/cron/trendyol-sync Vercel cron (daily 06:00 UTC), CRON_SECRET Bearer auth, 14-day sliding window, syncOrders (paginates fetchTrendyolOrders, upserts TrendyolSalesRecord with barcode/SKU match + discountedPrice fallback) + syncReturns (paginates fetchTrendyolReturns, upserts TrendyolReturnRecord with claimItemStatus + reason code/name) run in parallel via Promise.allSettled, vercel.json updated, no schema change
-- operational intelligence dashboard — Phase 47 complete: /dashboard enhanced with "Trendyol & Stok" section showing criticalStockCount, pendingDeductionCount, 7-day order qty, unmatched orders count, 30-day Trendyol revenue; all tiles clickable deep-links; LinkedStatCard component; DB-only (no live API), no schema change
+- operational intelligence dashboard — Phase 47 complete: /dashboard enhanced with "Trendyol & Stok" section showing criticalStockCount, 7-day order qty, unmatched orders count, 30-day Trendyol revenue; all tiles clickable deep-links; LinkedStatCard component; DB-only (no live API), no schema change
 - trendyol catalog view — Phase 46 complete: /admin/trendyol-catalog fetches up to 200 Trendyol catalog products (live API), cross-references with internal Product.barcode + MarketplaceProductMapping barcodes/SKUs, shows delta (internal qty vs Trendyol qty), oversell risk warning, surplus push suggestion, unmatched products with Eşleştir deep-links, Trendyol Katalog nav link
 - trendyol stock sync — Phase 45 complete: /admin/trendyol-stock-sync pushes internal stockQuantity + sellingPriceTry to Trendyol via PUT price-and-inventory for all TRENDYOL-mapped products with barcodes; batches of 100; batchId tracking; skips no-barcode and no-price products
 - stock health dashboard — Phase 44 complete: /admin/stock-health classifies all products into Critical (zero stock) / Low (<30 days coverage) / Healthy based on 30-day Trendyol velocity; KPI cards; coverage-day badges; recent adjustments table; no schema change
@@ -187,13 +190,9 @@ Current meaning:
 - marketplace sync architecture — NOT IMPLEMENTED (Phase 17, DEFERRED)
 
 Current marketplace gaps:
-- operator-facing product finance field consolidation is still incomplete; generic product-level marketplace price, shipping, commission, and override fields still compete with newer per-marketplace layers
-- live Trendyol orders/returns visibility exists, but a full persisted order ledger is not yet the trusted default operator view
-- return records are not yet presented as a fully linked order-history layer
-- unmatched marketplace records still need a stronger operator inbox and backfill workflow
-- marketplace margin policy still needs explicit normalization against the owner workbook logic
-- marketplace-specific XML/manual/effective price governance is not yet normalized
-- per-marketplace shipping/commission/net remaining revenue truth is not yet centralized
+- Trendyol eşleşme oranı hâlâ düşük: ~188 eşleşmemiş barcode → XML ve sipariş verileri bu ürünler için kullanılamıyor
+- marketplace margin policy'de USD kademeli kargo vardı, ancak Trendyol platformu için varsayılan kademeler henüz kaydedilmedi (admin'den manuel girilmesi gerekiyor)
+- per-marketplace XML/manual/effective fiyat hiyerarşisi ürün detay sayfasında normalize edildi (Phase 33) ama tüm cockpit sayfaları bunu tutarlı kullanmıyor henüz
 
 ---
 
