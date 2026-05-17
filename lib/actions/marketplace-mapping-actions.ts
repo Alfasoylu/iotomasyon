@@ -7,6 +7,51 @@ import { PERMISSIONS } from "@/lib/permissions";
 import type { ActionResult } from "@/types/actions";
 import { MarketplacePlatform } from "@prisma/client";
 
+/**
+ * Phase 1 – Historical backfill.
+ * When a new mapping is created or updated, retroactively link any
+ * TrendyolSalesRecord / TrendyolReturnRecord rows whose barcode or
+ * merchantSku matches this mapping's platformBarcode / platformSku.
+ * Only updates rows that currently have no productId (unmatched inbox).
+ */
+async function backfillMappingProductId(
+  productId: string,
+  platformBarcode: string | null,
+  platformSku: string | null,
+): Promise<void> {
+  if (!platformBarcode && !platformSku) return;
+
+  // Build OR conditions for matching
+  const barcodeOr = platformBarcode
+    ? [{ barcode: platformBarcode }, { merchantSku: platformBarcode }]
+    : [];
+  const skuOr = platformSku
+    ? [{ barcode: platformSku }, { merchantSku: platformSku }]
+    : [];
+  const orConditions = [...barcodeOr, ...skuOr];
+  if (orConditions.length === 0) return;
+
+  const matchWhere = { productId: null, OR: orConditions };
+
+  // Run both updates in parallel
+  const [salesResult, returnsResult] = await Promise.all([
+    prisma.trendyolSalesRecord.updateMany({
+      where: matchWhere,
+      data: { productId },
+    }),
+    prisma.trendyolReturnRecord.updateMany({
+      where: matchWhere,
+      data: { productId },
+    }),
+  ]);
+
+  if (salesResult.count > 0 || returnsResult.count > 0) {
+    console.log(
+      `[backfill] Mapping(${productId}): sales=${salesResult.count} returns=${returnsResult.count} rows linked`,
+    );
+  }
+}
+
 const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
 
 const mappingSchema = z.object({
@@ -35,6 +80,8 @@ export async function createMarketplaceMappingAction(
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Geçersiz form verisi." };
 
   try {
+    const barcode = nullify(parsed.data.platformBarcode);
+    const sku = nullify(parsed.data.platformSku);
     await prisma.marketplaceProductMapping.create({
       data: {
         id: crypto.randomUUID(),
@@ -42,14 +89,16 @@ export async function createMarketplaceMappingAction(
         productId: parsed.data.productId,
         platformProductId: nullify(parsed.data.platformProductId),
         platformListingId: nullify(parsed.data.platformListingId),
-        platformBarcode: nullify(parsed.data.platformBarcode),
-        platformSku: nullify(parsed.data.platformSku),
+        platformBarcode: barcode,
+        platformSku: sku,
         platformTitle: nullify(parsed.data.platformTitle),
         confidence: "MANUAL",
         isManual: true,
         createdById: user.id,
       },
     });
+    // Retroactively link previously-unmatched sales/return records
+    await backfillMappingProductId(parsed.data.productId, barcode, sku);
     return { ok: true };
   } catch (err) {
     console.error("[marketplace-mapping-actions] create:", err);
@@ -68,6 +117,8 @@ export async function updateMarketplaceMappingAction(
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Geçersiz form verisi." };
 
   try {
+    const barcode = nullify(parsed.data.platformBarcode);
+    const sku = nullify(parsed.data.platformSku);
     await prisma.marketplaceProductMapping.update({
       where: { id },
       data: {
@@ -75,12 +126,14 @@ export async function updateMarketplaceMappingAction(
         productId: parsed.data.productId,
         platformProductId: nullify(parsed.data.platformProductId),
         platformListingId: nullify(parsed.data.platformListingId),
-        platformBarcode: nullify(parsed.data.platformBarcode),
-        platformSku: nullify(parsed.data.platformSku),
+        platformBarcode: barcode,
+        platformSku: sku,
         platformTitle: nullify(parsed.data.platformTitle),
         updatedAt: new Date(),
       },
     });
+    // Retroactively link previously-unmatched sales/return records
+    await backfillMappingProductId(parsed.data.productId, barcode, sku);
     return { ok: true };
   } catch {
     return { ok: false, message: "Eşleştirme güncellenemedi." };
