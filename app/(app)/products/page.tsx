@@ -19,6 +19,7 @@ import { ProductFilters } from "@/components/products/product-filters";
 import { listProducts } from "@/services/product-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,30 @@ export default async function ProductsPage({
   const stock  = typeof params.stock  === "string" ? params.stock  : "all";
   const sort   = typeof params.sort   === "string" ? params.sort   : "updated_desc";
 
-  const { databaseAvailable, products } = await listProducts({ q: query, status, stock, sort });
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [{ databaseAvailable, products }, trendyolSales30d] = await Promise.all([
+    listProducts({ q: query, status, stock, sort }),
+    prisma.trendyolSalesRecord.findMany({
+      where: {
+        orderDate: { gte: thirtyDaysAgo },
+        productId: { not: null },
+        NOT: [
+          { status: { contains: "iptal", mode: "insensitive" } },
+          { status: { contains: "cancel", mode: "insensitive" } },
+        ],
+      },
+      select: { productId: true, quantity: true },
+    }),
+  ]);
+
+  // Phase 65 — Build productId → qty30d velocity map
+  const velocity30d = new Map<string, number>();
+  for (const r of trendyolSales30d) {
+    if (r.productId) {
+      velocity30d.set(r.productId, (velocity30d.get(r.productId) ?? 0) + r.quantity);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -127,6 +151,7 @@ export default async function ProductsPage({
                 <th className="px-4 py-3">Kategori</th>
                 <th className="px-4 py-3 text-right">Fiyat</th>
                 <th className="px-4 py-3 text-right">Stok</th>
+                <th className="px-4 py-3 text-right">T30G</th>
                 <th className="px-4 py-3">Sağlık</th>
                 <th className="px-4 py-3 text-right">Aksiyon</th>
               </tr>
@@ -134,7 +159,7 @@ export default async function ProductsPage({
             <tbody className="divide-y divide-slate-50 bg-white text-sm">
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
                     {query.length >= 2
                       ? `"${query}" için ürün bulunamadı.`
                       : "Bu filtrelerle eşleşen ürün bulunamadı."}
@@ -213,6 +238,19 @@ export default async function ProductsPage({
                             / {product.minimumStock}
                           </span>
                         )}
+                      </td>
+
+                      {/* Phase 65 — Trendyol 30-day velocity */}
+                      <td className="px-4 py-3 text-right">
+                        {(() => {
+                          const qty = velocity30d.get(product.id);
+                          if (!qty) return <span className="text-xs text-slate-300">—</span>;
+                          return (
+                            <span className={`font-mono text-sm font-semibold ${qty >= 10 ? "text-emerald-600" : qty >= 3 ? "text-amber-600" : "text-slate-600"}`}>
+                              {qty}
+                            </span>
+                          );
+                        })()}
                       </td>
 
                       {/* Health cues */}
