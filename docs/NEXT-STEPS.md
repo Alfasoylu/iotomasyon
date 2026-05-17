@@ -76,24 +76,20 @@ Remaining open items (not required for Priority 1 completion):
 - Historical backfill when a new mapping is approved (retroactively update TrendyolSalesRecord.productId)
 - This is low-priority; the matching inbox + manual mapping page covers the workflow
 
-### Priority 2 - Marketplace Margin Policy Normalization
+### ✓ Priority 2 — Marketplace Margin Policy Normalization (Phase 30, 2026-05-17)
 
-Why:
-Marketplace profitability should follow one trusted business rule, not scattered defaults and manual mental math.
-
-Includes:
-- standard shipping cost policy
-- shipping override policy
-- standard commission policy
-- commission override policy
-- effective value visibility
-- validation against the owner workbook margin logic
-- product and marketplace views that rank by trusted realized margin
-
-Acceptance:
-- the system shows which shipping/commission value is standard, override, and effective
-- margin calculations are explainable
-- owner can trust marketplace margin ranking without checking Excel
+Delivered:
+- MarketplacePlatformPolicy model + migration (applied to production)
+- Per-platform: standard shipping (TRY), commission %, payment fee %, return reserve %, VAT %
+- upsertPlatformPolicyAction: MARKETPLACE_POLICIES_MANAGE gated, upsert per platform
+- /admin/marketplace-policies: all 8 platforms, inline save per card, Yapılandırıldı/Varsayılan badge
+- Resolution order explanation card in admin UI
+- lib/marketplace-policy.ts: resolveMarginPolicy() — product override > product value > platform standard > system default
+- policySourceLabel/policySourceColor: Turkish labels and badge colors per source
+- /marketplace/profit rewritten: uses resolveMarginPolicy(), winners/losers tables show Kargo + Komisyon columns with PolicyBadge source labels
+- Policy coverage notice on profit page when no platforms configured
+- MARKETPLACE_POLICIES_MANAGE permission + sidebar link added
+- Browser-verified 2026-05-17 ✓
 
 ### Priority 3 - Import Economics Normalization
 

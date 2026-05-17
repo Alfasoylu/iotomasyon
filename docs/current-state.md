@@ -66,6 +66,7 @@ Implemented modules:
 - product media and content studio — Phase 27 complete: ProductImageManager (multi-image grid, URL-add, delete, set-primary), RichTextEditor (Tiptap H2/H3/bold/italic/lists), Supabase Storage upload action, XML description governance (opt-in copy, never overwrite)
 - product governance and private intelligence — Phase 28 complete: Product.privateNote (isOwner()-gated, ADMIN_EMAIL only), PrivateNoteEditor with amber UI, supplier summary card on detail page, description max 10000, normalizeProductData explicitly omits privateNote
 - order ledger and return claims — Phase 29 complete: TrendyolReturnRecord schema + migration, syncTrendyolReturnsAction (365-day sweep), /orders page with 5 tabs (Tümü/Teslim/İptal/İadeler/Eşleşmemiş), newest-first, unmatched inbox, Siparişler sidebar link
+- marketplace margin policy normalization — Phase 30 complete: MarketplacePlatformPolicy table, per-platform standard shipping/commission/VAT/fees, resolveMarginPolicy() three-tier resolver, /admin/marketplace-policies admin UI with per-platform inline edit, /marketplace/profit updated with source labels (Ürün Geçersiz Kılma/Ürün Değeri/Platform Standardı/Sistem Varsayılanı)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1

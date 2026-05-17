@@ -66,6 +66,8 @@ Implemented modules:
 - product governance and private intelligence (Phase 28: isOwner()-gated privateNote [ADMIN_EMAIL only], PrivateNoteEditor, supplier summary on detail page, description max 10000)
 - phase 25–28 closure fixes: performance-based sorts (30d qty/rev, all-time rev) on /products, HTML description rendering on detail page, XML overwrite policy documentation, owner-only text correction
 - order ledger and return claims (Phase 29: TrendyolReturnRecord, syncTrendyolReturnsAction, /orders page with 5 tabs [Tümü/Teslim/İptal/İadeler/Eşleşmemiş], newest-first, local archive, unmatched inbox with mapping link)
+- historical backfill on marketplace mapping (Phase 1 closure: createMarketplaceMappingAction + updateMarketplaceMappingAction call backfillMappingProductId() to retroactively link TrendyolSalesRecord/TrendyolReturnRecord rows when a barcode/SKU mapping is approved)
+- marketplace margin policy normalization (Phase 30: MarketplacePlatformPolicy table, upsertPlatformPolicyAction, /admin/marketplace-policies per-platform config, resolveMarginPolicy() three-tier resolver [product override > product value > platform standard > system default], /marketplace/profit updated with source badges [Ürün Geçersiz Kılma/Ürün Değeri/Platform Standardı/Sistem Varsayılanı], MARKETPLACE_POLICIES_MANAGE permission)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
