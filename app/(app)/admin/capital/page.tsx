@@ -37,7 +37,7 @@ export default async function CapitalPage() {
   const since30 = new Date();
   since30.setDate(since30.getDate() - 30);
 
-  const [config, products, salesRecords30d] = await Promise.all([
+  const [config, products, salesRecords30d, latestRate] = await Promise.all([
     prisma.capitalConfig.findFirst(),
     prisma.product.findMany({
       where: { isActive: true },
@@ -49,6 +49,7 @@ export default async function CapitalPage() {
         shippingCost: true, shippingCostOverride: true,
         marketplaceCommission: true, marketplaceCommissionOverride: true,
         packagingCost: true, vatRate: true, paymentFeeRate: true, returnReserveRate: true,
+        sourceCostRmb: true, weightKg: true, customsRatePct: true, importPaymentFeePct: true,
       },
     }),
     prisma.trendyolSalesRecord.findMany({
@@ -57,6 +58,10 @@ export default async function CapitalPage() {
         orderDate: { gte: since30 },
       },
       select: { productId: true, quantity: true, status: true },
+    }),
+    prisma.monthlyExchangeRate.findFirst({
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+      select: { usdTryRate: true, rmbUsdRate: true },
     }),
   ]);
 
@@ -69,13 +74,39 @@ export default async function CapitalPage() {
 
   const actualDataCount = actualSales30d.size;
 
+  // Exchange rates for landed cost computation
+  const usdTryRate = latestRate?.usdTryRate != null ? Number(latestRate.usdTryRate) : 38;
+  const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : 7.25;
+
+  const CARGO_USD_PER_KG = 10; // air freight assumption
+  function computeLandedCost(p: {
+    unitCostTry: unknown;
+    sourceCostRmb: unknown;
+    weightKg: unknown;
+    customsRatePct: unknown;
+    importPaymentFeePct: unknown;
+  }): number | null {
+    const tryVal = p.unitCostTry != null ? Number(p.unitCostTry) : null;
+    if (tryVal != null && tryVal > 0) return tryVal;
+    const rmb = p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null;
+    if (!rmb || rmb <= 0) return null;
+    const kg = p.weightKg != null ? Number(p.weightKg) : 0;
+    const payFeePct = p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : 0;
+    const customsPct = p.customsRatePct != null ? Number(p.customsRatePct) : 30;
+    const supplierTry = (rmb / rmbUsdRate) * usdTryRate * (1 + payFeePct / 100);
+    const cargoTry = kg * CARGO_USD_PER_KG * usdTryRate;
+    const customsTry = (supplierTry + cargoTry) * (customsPct / 100);
+    return supplierTry + cargoTry + customsTry;
+  }
+
   // Compute investment scores for all products (actual velocity overrides manual)
   const productsWithScore = products.map((p) => {
     const actualQty = actualSales30d.get(p.id) ?? null;
     const effectiveOnlinePotential = actualQty !== null ? actualQty : p.onlineSalesPotential;
+    const effectiveCostTry = computeLandedCost(p);
 
     const sp = calculateSalesPotential({
-      unitCostTry: p.unitCostTry != null ? Number(p.unitCostTry) : null,
+      unitCostTry: effectiveCostTry,
       sellingPriceTry: p.sellingPriceTry != null ? Number(p.sellingPriceTry) : null,
       wholesalePriceTry: p.wholesalePriceTry != null ? Number(p.wholesalePriceTry) : null,
       marketplacePriceTry: p.marketplacePriceTry != null ? Number(p.marketplacePriceTry) : null,
@@ -97,7 +128,7 @@ export default async function CapitalPage() {
       id: p.id,
       name: p.name,
       sku: p.sku,
-      unitCostTry: p.unitCostTry != null ? Number(p.unitCostTry) : null,
+      unitCostTry: effectiveCostTry,
       stockQuantity: p.stockQuantity,
       minimumStock: p.minimumStock,
       onlineSalesPotential: effectiveOnlinePotential,
@@ -169,7 +200,7 @@ export default async function CapitalPage() {
           {/* Capital summary */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <SummaryCard label="Toplam sermaye" value={fmt(allocation.totalCapital)} />
-            <SummaryCard label="Kilitli stok değeri" value={fmt(allocation.lockedCapital)} />
+            <SummaryCard label="Stok değeri (kilitli)" value={fmt(allocation.lockedCapital)} subtitle="iniş maliyeti × stok adeti" />
             <SummaryCard label="Serbest sermaye" value={fmt(allocation.availableCapital)} />
             <SummaryCard label={`Rezerv (${fmtPct(reservePct)})`} value={fmt(allocation.reserveAmount)} />
             <SummaryCard label="Kullanılabilir" value={fmt(allocation.deployableCapital)} highlight />
@@ -204,6 +235,7 @@ export default async function CapitalPage() {
                       <th className="px-4 py-3 text-right">Mevcut stok</th>
                       <th className="px-4 py-3 text-right">Hedef stok</th>
                       <th className="px-4 py-3 text-right">Öneri adet</th>
+                      <th className="px-4 py-3 text-right">Stok değeri</th>
                       <th className="px-4 py-3 text-right">Birim maliyet</th>
                       <th className="px-4 py-3 text-right">Tahsis</th>
                       <th className="px-4 py-3 text-right">Tahmini aylık ROI</th>
@@ -232,6 +264,9 @@ export default async function CapitalPage() {
                           <span className="font-bold tabular-nums text-slate-900">{s.allocatedQty}</span>
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums text-slate-600">
+                          {fmt(s.currentStockValue)}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums text-slate-600">
                           {s.product.unitCostTry != null ? fmt(s.product.unitCostTry) : "—"}
                         </td>
                         <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
@@ -249,12 +284,12 @@ export default async function CapitalPage() {
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-slate-200 bg-slate-50">
-                      <td colSpan={7} className="px-6 py-3 text-sm font-semibold text-slate-700">Toplam tahsis</td>
+                      <td colSpan={8} className="px-6 py-3 text-sm font-semibold text-slate-700">Toplam tahsis</td>
                       <td className="px-4 py-3 text-right font-bold text-slate-900">{fmt(allocation.allocatedTotal)}</td>
                       <td />
                     </tr>
                     <tr className="bg-slate-50">
-                      <td colSpan={7} className="px-6 py-2 text-xs text-slate-500">Tahsis sonrası kalan kullanılabilir sermaye</td>
+                      <td colSpan={8} className="px-6 py-2 text-xs text-slate-500">Tahsis sonrası kalan kullanılabilir sermaye</td>
                       <td className="px-4 py-2 text-right text-xs font-semibold text-emerald-700">{fmt(allocation.remainingAfterAllocation)}</td>
                       <td />
                     </tr>
@@ -283,11 +318,14 @@ export default async function CapitalPage() {
   );
 }
 
-function SummaryCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function SummaryCard({ label, value, highlight, subtitle }: { label: string; value: string; highlight?: boolean; subtitle?: string }) {
   return (
     <div className={`rounded-2xl border p-4 ${highlight ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white"}`}>
       <p className={`text-xs font-semibold uppercase tracking-widest ${highlight ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
       <p className={`mt-2 text-lg font-bold tabular-nums ${highlight ? "text-white" : "text-slate-900"}`}>{value}</p>
+      {subtitle && (
+        <p className={`mt-1 text-xs ${highlight ? "text-slate-400" : "text-slate-400"}`}>{subtitle}</p>
+      )}
     </div>
   );
 }
