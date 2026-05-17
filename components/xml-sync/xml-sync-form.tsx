@@ -15,6 +15,7 @@ type Source = {
   id: string;
   name: string;
   url: string;
+  secondaryUrl: string | null;
   isEnabled: boolean;
   authHeader: string | null;
   lastSyncAt: Date | null;
@@ -25,6 +26,7 @@ export function XmlSyncForm({ source }: { source?: Source }) {
   const router = useRouter();
   const [name, setName] = useState(source?.name ?? "");
   const [url, setUrl] = useState(source?.url ?? "");
+  const [secondaryUrl, setSecondaryUrl] = useState(source?.secondaryUrl ?? "");
   const [authHeader, setAuthHeader] = useState(source?.authHeader ?? "");
   const [isEnabled, setIsEnabled] = useState(source?.isEnabled ?? true);
   const [pending, setPending] = useState(false);
@@ -34,7 +36,7 @@ export function XmlSyncForm({ source }: { source?: Source }) {
     setPending(true);
     setMessage(null);
     startTransition(async () => {
-      const result = await saveXmlSourceAction(source?.id ?? null, name, url, isEnabled, authHeader);
+      const result = await saveXmlSourceAction(source?.id ?? null, name, url, secondaryUrl, isEnabled, authHeader);
       setPending(false);
       if (result.ok) {
         setMessage({ ok: true, text: "Kaynak kaydedildi." });
@@ -83,9 +85,25 @@ export function XmlSyncForm({ source }: { source?: Source }) {
         </div>
         <div className="space-y-1.5">
           <label className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
-            XML URL
+            Birincil XML URL
           </label>
           <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." />
+        </div>
+        <div className="space-y-1.5 md:col-span-2">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+            İkincil XML URL{" "}
+            <span className="text-slate-300 font-normal normal-case">(opsiyonel — aynı tedarikçi, eksik ürünler için)</span>
+          </label>
+          <Input
+            value={secondaryUrl}
+            onChange={(e) => setSecondaryUrl(e.target.value)}
+            placeholder="https://... (boş bırakılabilir)"
+          />
+          {secondaryUrl && (
+            <p className="text-xs text-slate-400 mt-1">
+              İki feed aynı anda çekilir ve SKU bazında birleştirilir. Çakışan SKU&apos;larda birincil feed önceliklidir; ikincil feed yalnızca eksik alanları ve ürünleri tamamlar.
+            </p>
+          )}
         </div>
         <div className="space-y-1.5 md:col-span-2">
           <label className="block text-xs font-semibold uppercase tracking-wide text-slate-400">

@@ -133,6 +133,7 @@ export default async function XmlSyncPage() {
                   id: source.id,
                   name: source.name,
                   url: source.url,
+                  secondaryUrl: source.secondaryUrl ?? null,
                   isEnabled: source.isEnabled,
                   authHeader: source.authHeader,
                   lastSyncAt: source.lastSyncAt,

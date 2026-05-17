@@ -708,16 +708,17 @@ model OutreachCampaign {
 
 // Phase 11 — XML Inventory Sync
 model XmlSyncSource {
-  id          String       @id @default(cuid())
-  name        String
-  url         String
-  isEnabled   Boolean      @default(true)
-  authHeader  String?
-  lastSyncAt  DateTime?
-  lastStatus  String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  logs        XmlSyncLog[]
+  id             String       @id @default(cuid())
+  name           String
+  url            String
+  secondaryUrl   String?      // Phase 75: optional supplementary feed (same supplier, different subset)
+  isEnabled      Boolean      @default(true)
+  authHeader     String?
+  lastSyncAt     DateTime?
+  lastStatus     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  logs           XmlSyncLog[]
 }
 
 model XmlSyncLog {

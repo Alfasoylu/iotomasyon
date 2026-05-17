@@ -16,6 +16,7 @@ export async function saveXmlSourceAction(
   sourceId: string | null,
   name: string,
   url: string,
+  secondaryUrl: string,
   isEnabled: boolean,
   authHeader: string,
 ): Promise<ActionResult> {
@@ -27,6 +28,8 @@ export async function saveXmlSourceAction(
   if (!name) return { ok: false, message: "Kaynak adı boş olamaz." };
   if (!url) return { ok: false, message: "URL boş olamaz." };
 
+  const secondaryUrlTrimmed = secondaryUrl.trim() || null;
+
   try {
     if (sourceId) {
       await prisma.xmlSyncSource.update({
@@ -34,6 +37,7 @@ export async function saveXmlSourceAction(
         data: {
           name,
           url,
+          secondaryUrl: secondaryUrlTrimmed,
           isEnabled,
           authHeader: authHeader.trim() || null,
           updatedAt: new Date(),
@@ -44,6 +48,7 @@ export async function saveXmlSourceAction(
         data: {
           name,
           url,
+          secondaryUrl: secondaryUrlTrimmed,
           isEnabled,
           authHeader: authHeader.trim() || null,
           updatedAt: new Date(),
@@ -81,7 +86,7 @@ export async function triggerXmlSyncAction(sourceId: string): Promise<ActionResu
   const source = await prisma.xmlSyncSource.findUnique({ where: { id: sourceId } });
   if (!source) return { ok: false, message: "Kaynak bulunamadı." };
 
-  return runSync(source.id, source.url, source.authHeader);
+  return runSync(source.id, source.url, source.secondaryUrl ?? null, source.authHeader);
 }
 
 // ── XML Overwrite Policy (Phase 11 / Phase 28) ───────────────────────────────
@@ -128,6 +133,7 @@ export async function triggerXmlSyncAction(sourceId: string): Promise<ActionResu
 export async function runSync(
   sourceId: string,
   url: string,
+  secondaryUrl: string | null,
   authHeader: string | null,
 ): Promise<ActionResult> {
   // Fix any stuck RUNNING logs from previous timeouts
@@ -145,19 +151,48 @@ export async function runSync(
   });
 
   try {
-    // ── 1. Fetch XML ──────────────────────────────────────────────────────────
+    // ── 1. Fetch XML (primary + optional secondary in parallel) ───────────────
     const headers: Record<string, string> = { Accept: "application/xml, text/xml, */*" };
     if (authHeader) headers["Authorization"] = authHeader;
 
-    const res = await fetch(url, { headers, cache: "no-store" });
-    if (!res.ok) {
-      const msg = `HTTP ${res.status} ${res.statusText}`;
-      await finalizeLog(log.id, sourceId, "ERROR", 0, 0, 0, 0, msg);
-      return { ok: false, message: msg };
-    }
+    let records: XmlProductRecord[];
 
-    const xmlText = await res.text();
-    const records = parseXmlFeed(xmlText);
+    if (secondaryUrl) {
+      // Phase 75: Fetch both feeds in parallel, then merge by SKU
+      const [primaryRes, secondaryRes] = await Promise.all([
+        fetch(url, { headers, cache: "no-store" }),
+        fetch(secondaryUrl, { headers, cache: "no-store" }),
+      ]);
+
+      if (!primaryRes.ok) {
+        const msg = `Birincil XML HTTP ${primaryRes.status} ${primaryRes.statusText}`;
+        await finalizeLog(log.id, sourceId, "ERROR", 0, 0, 0, 0, msg);
+        return { ok: false, message: msg };
+      }
+      if (!secondaryRes.ok) {
+        const msg = `İkincil XML HTTP ${secondaryRes.status} ${secondaryRes.statusText}`;
+        await finalizeLog(log.id, sourceId, "ERROR", 0, 0, 0, 0, msg);
+        return { ok: false, message: msg };
+      }
+
+      const [primaryText, secondaryText] = await Promise.all([
+        primaryRes.text(),
+        secondaryRes.text(),
+      ]);
+
+      const primaryRecords = parseXmlFeed(primaryText);
+      const secondaryRecords = parseXmlFeed(secondaryText);
+      records = mergeXmlRecords(primaryRecords, secondaryRecords);
+    } else {
+      const res = await fetch(url, { headers, cache: "no-store" });
+      if (!res.ok) {
+        const msg = `HTTP ${res.status} ${res.statusText}`;
+        await finalizeLog(log.id, sourceId, "ERROR", 0, 0, 0, 0, msg);
+        return { ok: false, message: msg };
+      }
+      const xmlText = await res.text();
+      records = parseXmlFeed(xmlText);
+    }
 
     if (records.length === 0) {
       const msg = "XML ayrıştırıldı ancak ürün kaydı bulunamadı.";
@@ -400,6 +435,99 @@ export async function runSync(
     await finalizeLog(log.id, sourceId, "ERROR", 0, 0, 0, 0, msg);
     return { ok: false, message: msg };
   }
+}
+
+// ── Phase 75: Multi-feed merge helpers ───────────────────────────────────────
+//
+// Merge strategy when two XML feeds come from the same supplier (Entegra):
+//
+//   1. Primary feed records are the authoritative base.
+//   2. Secondary feed adds SKUs missing from the primary.
+//   3. For overlapping SKUs, primary fields take priority; secondary fills null gaps.
+//   4. Stock exception: if both feeds carry stock and secondary has a more recent
+//      date_change, the secondary's stock value is used (fresher data wins).
+//
+// This covers the real-world case where the supplier creates a second feed to expose
+// products not present in the original feed, without changing any shared products.
+
+function mergeXmlRecords(
+  primary: XmlProductRecord[],
+  secondary: XmlProductRecord[],
+): XmlProductRecord[] {
+  const merged = new Map<string, XmlProductRecord>();
+
+  // Index primary records first
+  for (const r of primary) merged.set(r.sku, r);
+
+  // Merge secondary records
+  for (const r of secondary) {
+    const existing = merged.get(r.sku);
+    if (!existing) {
+      // SKU only in secondary feed → include as-is
+      merged.set(r.sku, r);
+    } else {
+      // Overlapping SKU → merge field-by-field
+      merged.set(r.sku, mergeXmlRecord(existing, r));
+    }
+  }
+
+  return [...merged.values()];
+}
+
+/** Merge two records for the same SKU. Primary fields win; secondary fills nulls.
+ *  Exception: stock uses the more recently updated feed (by date_change). */
+function mergeXmlRecord(primary: XmlProductRecord, secondary: XmlProductRecord): XmlProductRecord {
+  // Choose stock from the feed with the fresher date_change
+  let stock = primary.stock;
+  let dateChange = primary.dateChange;
+
+  const primaryDate = primary.dateChange ?? "";
+  const secondaryDate = secondary.dateChange ?? "";
+
+  if (secondary.stock !== undefined) {
+    if (primary.stock === undefined) {
+      // Primary has no stock at all — use secondary
+      stock = secondary.stock;
+      dateChange = secondary.dateChange ?? primaryDate;
+    } else if (secondaryDate > primaryDate) {
+      // Secondary is more recently updated — trust its stock value
+      stock = secondary.stock;
+      dateChange = secondary.dateChange ?? primaryDate;
+    }
+  }
+
+  function pick<T>(a: T | undefined, b: T | undefined): T | undefined {
+    return a !== undefined ? a : b;
+  }
+
+  return {
+    sku: primary.sku,
+    name:          pick(primary.name,          secondary.name),
+    brand:         pick(primary.brand,         secondary.brand),
+    description:   pick(primary.description,   secondary.description),
+    stock,
+    urunTipi:      pick(primary.urunTipi,      secondary.urunTipi),
+    currencyType:  pick(primary.currencyType,  secondary.currencyType),
+    kdv:           pick(primary.kdv,           secondary.kdv),
+    dateChange,
+    dateAdd:       pick(primary.dateAdd,       secondary.dateAdd),
+    anaUrunKodu:   pick(primary.anaUrunKodu,   secondary.anaUrunKodu),
+    price4:        pick(primary.price4,        secondary.price4),
+    trendyolPrice: pick(primary.trendyolPrice, secondary.trendyolPrice),
+    hbPrice:       pick(primary.hbPrice,       secondary.hbPrice),
+    amazonPrice:   pick(primary.amazonPrice,   secondary.amazonPrice),
+    pazaramaPrice: pick(primary.pazaramaPrice, secondary.pazaramaPrice),
+    idefixPrice:   pick(primary.idefixPrice,   secondary.idefixPrice),
+    bayiPrice:     pick(primary.bayiPrice,     secondary.bayiPrice),
+    koctasPrice:   pick(primary.koctasPrice,   secondary.koctasPrice),
+    teknosaPrice:  pick(primary.teknosaPrice,  secondary.teknosaPrice),
+    temuPrice:     pick(primary.temuPrice,     secondary.temuPrice),
+    resim1:        pick(primary.resim1,        secondary.resim1),
+    resim2:        pick(primary.resim2,        secondary.resim2),
+    resim3:        pick(primary.resim3,        secondary.resim3),
+    resim4:        pick(primary.resim4,        secondary.resim4),
+    resim5:        pick(primary.resim5,        secondary.resim5),
+  };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

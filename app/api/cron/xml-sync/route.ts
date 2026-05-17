@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   const results: Array<{ sourceId: string; name: string; ok: boolean; message?: string }> = [];
 
   for (const source of sources) {
-    const result = await runSync(source.id, source.url, source.authHeader);
+    const result = await runSync(source.id, source.url, source.secondaryUrl ?? null, source.authHeader);
     results.push({ sourceId: source.id, name: source.name, ok: result.ok, message: result.message });
   }
 
