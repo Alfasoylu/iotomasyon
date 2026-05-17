@@ -129,6 +129,19 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 9 — Unmatched Barcodes Inbox on Mapping Page (Phase 37, 2026-05-17)
+
+Delivered:
+- /admin/marketplace-mappings: new "Eşleşmemiş Barkodlar" inbox card (above add form)
+- Queries TrendyolSalesRecord where productId IS NULL, groups by barcode in memory (no schema change)
+- Shows top 30 unmatched barcodes by total revenue; header shows total count (112) + total missing ciro (₺852K)
+- Table: platform barcode, Trendyol product name, merchantSku, record count, total revenue
+- "Eşleştir →" amber button navigates to ?barcode=XXX&title=YYY#add-form
+- URL search params pre-fill MappingForm.defaultBarcode + defaultPlatformTitle props
+- Active row highlighted with amber ring when barcode matches current param
+- MappingForm updated: defaultBarcode + defaultPlatformTitle optional props (useState init)
+- Browser-verified 2026-05-17: 112 barkod, ₺852.073 missing ciro, top 30 table renders ✓
+
 ### ✓ Priority 8 — Executive Dashboard Marketplace Revenue Integration (Phase 36, 2026-05-17)
 
 Delivered:

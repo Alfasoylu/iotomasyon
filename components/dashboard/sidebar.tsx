@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 36 aktif
+          Faz 37 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Yönetici Paneli: Trendyol 90G ciro özeti, top 5 ürün, gerçekleşen marj bağlantısı.
+            Eşleştirme Asistanı: 112 eşleşmemiş barkod (₺852K ciro), hızlı eşleştirme akışı.
           </p>
         </div>
       </aside>

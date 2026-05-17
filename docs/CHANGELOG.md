@@ -511,6 +511,24 @@
 - tsc clean, Vercel deploy READY (commit 0819706)
 - Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
 
+### Phase 37 — Unmatched Barcodes Inbox on Mapping Page
+- Updated `app/(app)/admin/marketplace-mappings/page.tsx`:
+  - Now accepts `searchParams: Promise<{ barcode?: string; title?: string }>` for URL-based form pre-fill
+  - Fetches all `TrendyolSalesRecord` where `productId IS NULL`, groups by barcode in memory
+  - Top 30 barcodes sorted by total revenue shown above add-mapping form
+  - Card header: total unmatched count + total ciro missing from profitability analysis
+  - "(İlk 30 barkod gösteriliyor.)" note when > 30 unique unmatched barcodes
+  - Table columns: Platform Barkod, Trendyol Ürün Adı, SKU, Kayıt count, Toplam Ciro
+  - "Eşleştir →" amber button links to `?barcode=XXX&title=YYY#add-form`
+  - Active row highlighted with amber ring when its barcode matches current `?barcode` param
+  - `#add-form` anchor on wrapping div for scroll-on-click
+  - Pre-fill hint shown in form header when `defaultBarcode` is set
+- Updated `components/marketplace/mapping-form.tsx`:
+  - `MappingForm` now accepts `defaultBarcode?: string` and `defaultPlatformTitle?: string`
+  - Props used as `useState` initial values for `platformBarcode` and `platformTitle`
+- tsc clean, Vercel deploy READY (commit 0b70508)
+- Browser-verified 2026-05-17: 112 barkod, ₺852.073 missing ciro, top 30 table renders, Eşleştir buttons visible ✓
+
 ### Phase 36 — Executive Dashboard Marketplace Revenue Integration
 - Updated `app/(app)/admin/executive/page.tsx`: added "Trendyol / Son 90 Gün — Gerçekleşen Satış Özeti" card
   - `since90` window: `new Date()` minus 90 days; fetches `TrendyolSalesRecord` (no schema change)
