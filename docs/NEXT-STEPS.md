@@ -45,8 +45,9 @@ Current reality:
 - executive KPI dashboard complete (Phase 22 ✓): /admin/executive, owner-grade single-page intelligence overview — stock value TRY, capital health, procurement urgency distribution, top-5 profitability — browser-verified 2026-05-17
 - data hygiene governance complete (Phase 23 ✓): /admin/data-hygiene, 8 completeness checks, 4596 total issues and 47 maliyetsiz stoklu detected in production — browser-verified 2026-05-17
 - production safety center complete (Phase 24 ✓): /admin/safety, migration history, dangerous operation registry, MIGRATION-SAFETY.md — browser-verified 2026-05-17
+- import decision system complete (Phase 11C ✓): /admin/import-decisions, air/sea freight economics engine replacing Excel workbook (Top.ürünler), ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA per product — browser-verified 2026-05-17
 
-This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, XML-driven inventory management, pre-purchase import cost evaluation, and owner-grade executive intelligence. Ready for multi-user rollout.
+This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, XML-driven inventory management, pre-purchase import cost evaluation, owner-grade executive intelligence, and import buy/skip decisions replacing the Excel workbook. Ready for multi-user rollout.
 Not yet ready for:
 - marketplace sync/write architecture (Phase 17, DEFERRED)
 
@@ -106,6 +107,7 @@ Phase dependencies:
 - Phase 22 ✓ complete — executive KPI dashboard is production-active (browser-verified 2026-05-17).
 - Phase 23 ✓ complete — data hygiene governance page is production-active (browser-verified 2026-05-17).
 - Phase 24 ✓ complete — production safety center is production-active (browser-verified 2026-05-17).
+- Phase 11C ✓ complete — import decision system is production-active (browser-verified 2026-05-17).
 - Priority 0 should be treated as a baseline operating rule before schema-heavy work expands.
 
 ---

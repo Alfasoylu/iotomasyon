@@ -59,6 +59,7 @@ Implemented modules:
 - executive KPI dashboard — Phase 22 complete: /admin/executive, stock value TRY, capital health, procurement urgency pills, top-5 profitability table, quick-links to all intelligence tools
 - data hygiene governance — Phase 23 complete: /admin/data-hygiene, 8 completeness checks (cost, retail price, marketplace price, stock-with-no-cost, xml-no-price, category, barcode, supplier), real-time issue counts, Düzenle links
 - production safety center — Phase 24 complete: /admin/safety, migration history from _prisma_migrations, 8-item safety checklist, dangerous operation registry (9 rows, CRITICAL/HIGH/MEDIUM), docs/MIGRATION-SAFETY.md
+- import decision system — Phase 11C complete: /admin/import-decisions, air/sea freight economics engine (landed cost, profit ratio, annual ROI, ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA), product detail import card, product form import inputs (weightKg/customsRatePct/shippingMethodPref)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1

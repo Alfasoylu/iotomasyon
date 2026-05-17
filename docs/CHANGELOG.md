@@ -268,6 +268,18 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 11C — Import Decision System
+- Migration `20260517060000_phase11c_import_decision`: `weightKg DECIMAL(10,3)`, `customsRatePct DECIMAL(5,2)`, `shippingMethodPref TEXT` added to Product — all nullable, applied to production Supabase
+- Created `lib/import-decision.ts`: USD-first import economics engine replicating Top.ürünler workbook logic — air (8$/kg, 120-day cycle) and sea (2$/kg, 210-day cycle) scenarios, profit ratio, annual ROI compounding, sea wins if ROI ratio ≥ 1.1, ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA decision, score for ranking
+- Created `app/(app)/admin/import-decisions/page.tsx` (EXECUTIVE_READ-gated): decision cockpit with summary tiles (4 recommendation types, each a clickable filter), Hava yolu / Deniz yolu filter bar, product table (landed cost, profit ratio, monthly/annual profit, required capital, demand, stock), formula footnote card
+- Extended product detail `app/(app)/products/[id]/page.tsx`: "İthalat Kararı" card with air vs sea panel comparison, recommendation badge, missing data list
+- Extended product form `components/products/product-form.tsx`: "İTHALAT KARARI GİRDİLERİ" section — Ağırlık (kg), Gümrük Oranı (%), Tercih Edilen Kargo Yöntemi (AIR/SEA/system)
+- Extended `types/products.ts`, `lib/validations/product.ts`, `lib/actions/product-actions.ts`, `app/(app)/products/[id]/edit/page.tsx` with 3 new fields
+- Added "İthalat Kararları" nav entry to `app/(app)/layout.tsx` (EXECUTIVE_READ, after İthalat Hesaplayıcı)
+- Updated sidebar info card: "Faz 11C aktif — İthalat Kararları: hava/deniz kargo ekonomisi, satın alma önerisi."
+- tsc --noEmit clean, npm run build clean, Vercel deploy READY (commit d811f75)
+- Browser-verified 2026-05-17: /admin/import-decisions loads, 651 VERİ EKSİK, kur ₺46.00, filter bar works; product detail card renders with missing field list; product edit form shows new section ✓
+
 ### Phase 24 — Production Safety Center
 - No new DB schema — reads `_prisma_migrations` via `prisma.$queryRaw` with graceful error fallback
 - Created `app/(app)/admin/safety/page.tsx` (EXECUTIVE_READ-gated): summary cards (applied/failed migration counts, last migration), 8-item pre-deployment checklist, 9-row dangerous operations table, full Migrasyon Geçmişi list

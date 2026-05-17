@@ -719,6 +719,50 @@ Verified outcome (browser test 2026-05-17):
 
 ---
 
+## Phase 11C — Import Decision System
+Status: DONE
+
+Completed:
+- Migration `20260517060000_phase11c_import_decision`: added `weightKg DECIMAL(10,3)`, `customsRatePct DECIMAL(5,2)`, `shippingMethodPref TEXT` to Product table — all nullable, applied to production Supabase
+- `lib/import-decision.ts`: full USD-first import economics engine
+  - Constants: AIR_FREIGHT_PER_KG=8$/kg, SEA_FREIGHT_PER_KG=2$/kg, AIR_CYCLE_DAYS=120, SEA_CYCLE_DAYS=210, AIR_CAPITAL_MONTHS=4, SEA_CAPITAL_MONTHS=7, SEA_WIN_THRESHOLD=1.1, ALWAYS_STOCK_THRESHOLD=2.0, BUY_SMALL_THRESHOLD=1.4
+  - `calculateImportDecision()`: validates required inputs, computes air + sea `ShippingScenario` objects (landedCostUsd, netRevenueUsd, profitRatio, monthlyProfitUsd, annualProfitUsd, requiredCapitalUsd, annualRoiMultiplier, inventoryDays)
+  - Formula (from Top.ürünler workbook): landed = (source_usd + freight/kg × weight) × (1 + customs%/100), profit_ratio = net_revenue_usd / landed_cost, annual_roi = ratio^(365/cycleDays), sea_wins if sea_roi/air_roi ≥ 1.1
+  - Decision: ALWAYS_STOCK if annual/capital > 2.0, BUY_SMALL if > 1.4, DO_NOT_BUY otherwise, MISSING_DATA if any required field is null
+  - Owner shipping preference (`shippingMethodPref`) overrides system recommendation
+  - `RECOMMENDATION_LABELS`, `RECOMMENDATION_TONES` for Turkish UI
+- `app/(app)/admin/import-decisions/page.tsx`: EXECUTIVE_READ-gated server cockpit
+  - Fetches `MonthlyExchangeRate` (latest, for live USD/TRY rate) and all active products with 15 fields in `Promise.all`
+  - Summary tiles: HEP STOKTA OLMALI, AZ AL, ALMA, VERİ EKSİK — each clickable as filter
+  - Filter bar: Tümü / Hava yolu / Deniz yolu / Filtreyi temizle — URL-based server-side filtering
+  - Product table columns: Ürün name+SKU → detail link, Karar badge + missing field list, Skor, Yöntem (AIR/SEA with ✈/🚢), İniş Maliyeti, Kâr Oranı (colored), Aylık Kâr, Yıllık Kâr, Gerekli Sermaye, Talep/ay, Stok
+  - Formula footnote card explaining the calculation source (Top.ürünler workbook)
+  - `SummaryCard` component: tone-colored clickable filter tiles with active state
+- Product detail `app/(app)/products/[id]/page.tsx`:
+  - Added `prisma.monthlyExchangeRate.findFirst()` in parallel `Promise.all`
+  - Computes `importDecision` from product fields and live USD/TRY rate
+  - "İthalat Kararı" card: shows recommendation badge, air + sea scenario panels (side-by-side, highlighted on effective method), missing field list when VERİ EKSİK, formula footnote
+- Product form `components/products/product-form.tsx`: new "İTHALAT KARARI GİRDİLERİ" section with Ağırlık (kg), Gümrük Oranı (%), Tercih Edilen Kargo Yöntemi (dropdown: Sistem / AIR / SEA)
+- `types/products.ts`, `lib/validations/product.ts`, `lib/actions/product-actions.ts`: all extended with `weightKg`, `customsRatePct`, `shippingMethodPref`
+- `app/(app)/products/[id]/edit/page.tsx`: initialValues extended with 3 new fields
+- `app/(app)/layout.tsx`: added "İthalat Kararları" nav entry (EXECUTIVE_READ) after "İthalat Hesaplayıcı"
+- `components/dashboard/sidebar.tsx`: updated info card to "Faz 11C aktif — İthalat Kararları: hava/deniz kargo ekonomisi, satın alma önerisi."
+
+Verified outcome (browser test 2026-05-17):
+- /admin/import-decisions: loads with "İthalat Kararları" heading, kur ₺46.00 (5/2026), summary tiles 0/0/0/651 VERİ EKSİK ✓
+- Product table: 651 products all VERİ EKSİK (expected — no weight/customs data yet), missing field list per row ✓
+- Filter bar: Tümü / Hava yolu / Deniz yolu buttons render, count shown ✓
+- Product detail /products/cmp5ivh5p000004i2locmyr4m: "İthalat Kararı" card renders, VERİ EKSİK badge, missing fields listed (Ağırlık kg, Gümrük oranı %) ✓
+- Product edit form: "İTHALAT KARARI GİRDİLERİ" section renders with all 3 fields, shipping method dropdown present ✓
+- Sidebar: "İthalat Kararları" nav entry visible, "Faz 11C aktif" info card ✓
+- prisma validate: clean ✓
+- prisma generate: clean ✓
+- tsc --noEmit: clean ✓
+- npm run build: clean ✓
+- Vercel deploy: READY (commit d811f75) ✓
+
+---
+
 # Technical Debt
 
 - no image pipeline
