@@ -9,6 +9,30 @@
 
 ## 2026-05
 
+### Phase 55 — Warehouse Mode (2026-05-17)
+
+**Amaç:**
+Depo çalışanları (WAREHOUSE rolü) stok durumunu görmek ve sayım girişi yapmak için admin arayüzüne ihtiyaç duyuyordu. Finans verisi görmemeli, sadece stok durumu ve günlük görevlere erişmeli. Mobil öncelikli, barkod/SKU araması ve hızlı sayım akışı gerekiyordu.
+
+Değişiklikler:
+- `prisma/schema.prisma`: `UserRole` enum'una `WAREHOUSE` eklendi; `prisma db push` ile production DB'ye uygulandı
+- `prisma/seed.ts`: `PrismaPg` adapter pattern eklendi (Prisma v7 uyumu); `WAREHOUSE` rolü 9 izinle seed edildi (`products.read`, `inventory.read`, `inventory.write`, `inventory.count`, `categories.read`, `attributes.read`, `tasks.read`, `tasks.update`, `search.read`)
+- `lib/actions/inventory-count-actions.ts`: `createInventoryCountAction` — `INVENTORY_COUNT` izni gerektirir; mutlak yeni adet → delta = newQty − previousQty → `StockAdjustmentLog.CORRECTION` kaydı; delta=0 ise idempotent skip
+- `app/(app)/warehouse/page.tsx`: Mobil-öncelikli arama sayfası — barkod/SKU/ürün adı ile arama (min 2 karakter); ürün kartları: görsel, ad, SKU, konum, stok adedi (kırmızı=kritik, sarı=düşük, yeşil=ok); **hiçbir maliyet/fiyat/marj alanı yok**
+- `app/(app)/warehouse/count/page.tsx`: Stok sayım giriş sayfası — URL params'tan productId/productName/sku; büyük sayı inputu (text-3xl); `createInventoryCountAction` çağrısı; ✅ başarı ekranı + 1.8s sonra /warehouse yönlendirmesi
+- `app/(app)/dashboard/_components/warehouse-workspace.tsx`: `WarehouseWorkspace` bileşeni — `OperationsDashboardData` yeniden kullanır; "Depo" badge başlığı; Kritik Stok / Düşük Stok / 7d Sipariş KPI kartları; Görev KPI kartları; Ürün Ara + Stok Sayımı hızlı aksiyon kartları; bugün yapılacaklar listesi
+- `app/(app)/dashboard/page.tsx`: `user.role === "WAREHOUSE"` dalı eklendi (Faz E) — `getOperationsDashboardData()` → `WarehouseWorkspace`
+- `app/(app)/layout.tsx`: `/warehouse` (`INVENTORY_READ`) ve `/warehouse/count` (`INVENTORY_COUNT`) sidebar nav öğeleri eklendi
+
+Güvenlik: `/warehouse` ve `WarehouseWorkspace` hiçbir zaman maliyet, gelir, marj veya finansal bağlam döndürmez — service fonksiyonu düzeyinde uygulanan kural.
+
+Kabul kriteri:
+- `/warehouse` yükleniyor, arama çalışıyor (20 "kablo" sonucu doğrulandı) ✓
+- Sayım formu: productId/productName/sku URL'den okunuyor ✓  
+- Sayım gönder → `createInventoryCountAction` → başarı → /warehouse yönlendirmesi ✓
+- Admin dashboard değişmedi ✓
+- READY: dpl_FZUREkAgckL52vByKEobiDVMJFc8
+
 ### Phase 54 Faz C — Operations Workspace (2026-05-17)
 
 **Amaç:**

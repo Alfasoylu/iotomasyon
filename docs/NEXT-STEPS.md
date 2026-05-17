@@ -70,7 +70,7 @@ Not yet complete:
 
 These are structural gaps in the current system, not single-feature bugs:
 
-1. **WAREHOUSE rolü yok** — UserRole enum'unda WAREHOUSE yoktur. Depo çalışanları şu an OPERATIONS rolüyle çalışıyor. Bu geçici bir çözüm.
+1. ~~**WAREHOUSE rolü yok**~~ — ✓ **ÇÖZÜLDÜ (Phase 55, 2026-05-17)**: WAREHOUSE enum, /warehouse, /warehouse/count, WarehouseWorkspace, createInventoryCountAction tamamlandı.
 2. **Ürün formu rol körü** — `products.update` iznine sahip herkes (şu an: OPERATIONS) tüm finansal/ithalat alanlarını görür. Sahaya özel alan görünürlüğü uygulanmadı.
 3. **Rol bazlı dashboard yok** — Tüm roller aynı /dashboard sayfasını görüyor. SALES ve WAREHOUSE için anlamsız kartlar gösteriliyor.
 4. **Satış fırsat motoru yok** — "Bu ürünü hangi müşteriye satarım?" sorusunu yanıtlayan bir akış yok. Veri modeli (ProductInterest, CategoryInterest) hazır, UI yok.
@@ -525,23 +525,19 @@ Teslim edildi 2026-05-17:
 
 ---
 
-### Priority 55 — Warehouse Mode + WAREHOUSE Rolü (Phase 55)
+### ✓ DONE — Priority 55 — Warehouse Mode + WAREHOUSE Rolü (Phase 55, 2026-05-17)
 
-**Neden:**
-Depo çalışanları şu an OPERATIONS rolüyle çalışıyor — bu yanlış. Ayrı rol olmadan mobil depo arayüzü yapılamaz.
-
-**Bağımlılık:** Priority 57 (field visibility) ✓ olmalı
-
-**Ne yapılacak:**
-- Prisma: `UserRole` enum'a `WAREHOUSE` değeri ekle — migration gerekir
-- Seed: WAREHOUSE rolü için default permissions (inventory.read, inventory.count, products.read, tasks.read/update)
-- `/warehouse` sayfası: barkod/SKU/ad araması, büyük görsel, raf/lokasyon, stok adedi — maliyet görünmez
-- `/warehouse/count`: ürün bul → sayım gir → StockAdjustmentLog CORRECTION kaydet
-- Mobile layout: 375px ekranda tam işlevsel, büyük dokunma alanları
-- Schema değişikliği: UserRole enum + seed + migration
-
-**Kabul kriteri:**
-WAREHOUSE kullanıcısı mobil cihazdan ürünü barkoduyla bulabilir, stok sayımı girebilir — hiçbir maliyet alanı görmez.
+Teslim edildi:
+- `UserRole` enum'a `WAREHOUSE` eklendi; `prisma db push` production'a uygulandı
+- Seed: WAREHOUSE rolü 9 izinle (inventory.read, inventory.write, inventory.count, products.read, categories.read, attributes.read, tasks.read, tasks.update, search.read)
+- `lib/actions/inventory-count-actions.ts`: `createInventoryCountAction` — mutlak adet → delta → `StockAdjustmentLog.CORRECTION`; `INVENTORY_COUNT` izni zorunlu
+- `/warehouse`: barkod/SKU/ad araması (min 2 karakter), ürün kartları (stok renk kodlu, maliyet YOK)
+- `/warehouse/count`: URL params'tan productId/productName/sku, büyük sayı inputu, başarı → 1.8s sonra /warehouse
+- `WarehouseWorkspace`: `OperationsDashboardData` yeniden kullanır, Depo badge, stok+görev KPIs, hızlı aksiyon kartları
+- `/dashboard` Faz E: `user.role === "WAREHOUSE"` → WarehouseWorkspace
+- Sidebar: `/warehouse` (INVENTORY_READ) + `/warehouse/count` (INVENTORY_COUNT)
+- Form→save→redirect round-trip verified ✓
+- Vercel READY: dpl_FZUREkAgckL52vByKEobiDVMJFc8, browser-verified 2026-05-17
 
 ---
 
@@ -614,16 +610,9 @@ app/(app)/dashboard/
 
 **Kabul kriteri (Faz D):** Admin dashboard mevcut içeriğini kaybetmez, ek import/ekip kartları eklenir. ✓ Vercel READY dpl_8Vm7CYfK9aWkN9KA6L9xXusiqbFw
 
-#### Faz E — Warehouse Workspace (SCHEMA DEĞİŞİKLİĞİ — UserRole enum migration)
+#### ✓ Faz E — Warehouse Workspace — DONE 2026-05-17
 
-**Bağımlılık:** Priority 55 tamamlanmış olmalı (WAREHOUSE enum + migration)
-
-**Ne yapılacak:**
-- `getWarehouseDashboardData()`: kritik stok uyarıları, bekleyen sayımlar, picking kuyruğu — maliyet yok
-- `WarehouseWorkspace` component: büyük dokunma alanları, mobil-first layout
-- Migration riski: `UserRole` enum değişikliği production'da var olan kullanıcıları etkilemez (yeni değer eklenir, eski değerler korunur)
-
-**Kabul kriteri (Faz E):** WAREHOUSE rolü: stok uyarıları ve sayım kuyruğunu görür, hiçbir finansal alan DOM'da bulunmaz.
+`OperationsDashboardData` yeniden kullanıldı (DRY); `WarehouseWorkspace` bileşeni oluşturuldu; `user.role === "WAREHOUSE"` → `WarehouseWorkspace` dalı eklendi. WAREHOUSE rolü: stok uyarıları + görev KPIs + hızlı aksiyon kartları, finansal alan DOM'da yok. ✓ Vercel READY dpl_FZUREkAgckL52vByKEobiDVMJFc8
 
 #### Faz F — Marketplace Workspace (schema değişikliği YOK)
 
