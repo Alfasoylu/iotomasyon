@@ -268,6 +268,21 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 21 — Import Cost Calculator
+- Created `app/(app)/admin/import-calculator/page.tsx` (EXECUTIVE_READ-gated): fetches active suppliers (id/name), products (id/name/sku/sellingPriceTry/marketplacePriceTry/wholesalePriceTry), all SupplierProduct rows (supplierId/productId/unitCostUsd/moq/leadDays), latest MonthlyExchangeRate (usdTryRate); converts all Decimal fields to number before passing props
+- Created `components/suppliers/import-calculator-form.tsx`: fully client-side, no new DB schema
+  - SupplierOption, ProductOption, SupplierProductOption, CalcResult interfaces
+  - 7 controlled inputs: Tedarikçi select (optional), Ürün select (optional), Sipariş Adedi, Birim Maliyet USD, Toplam Nakliye USD, Gümrük Vergisi %, USD/TRY Kuru
+  - Auto-fills unitCostUsd from matching SupplierProduct on supplier+product change; pre-fills rate from latestRate prop
+  - `calculate()`: productTotalUsd = qty×unitCostUsd; customsUsd = productTotal×(customs/100); totalLandedUsd = productTotal+freight+customs; unitLandedTry = (totalLanded/qty)×rate; breakEvenTry = unitLandedTry×1.2
+  - Maliyet Dökümü output: 7 rows (ürün, nakliye, gümrük, toplam USD bold, birim USD, birim TRY bold, başa baş amber)
+  - Kanal Bazlı Marj Analizi: Perakende/Pazar Yeri/Toptan with MarginRow sub-component; color-coded (emerald ≥25%, amber ≥10%, red <10%); "Fiyat girilmemiş" when prices absent
+  - Amber advisory banner
+- "Hesaplama Mantığı" info card on page with 4 formula cells
+- Added "İthalat Hesaplayıcı" sidebar nav entry (EXECUTIVE_READ permission) to `app/(app)/layout.tsx`
+- tsc --noEmit clean, Vercel deploy READY (commit 1117ed7)
+- Browser-verified 2026-05-17: qty=10, cost=$14.50, freight=$50, customs=5%, rate=46 → total $202.25, unit TRY ₺930,35, break-even ₺1.116,42 — all correct ✓
+
 ### Phase 20 — Supplier Intelligence
 - Created `Supplier` model: id, name, contactName, phone, email, countryOfOrigin, paymentTerms, defaultLeadDays, notes, isActive, timestamps; indexes on name, isActive
 - Created `SupplierProduct` join model: id, supplierId (FK → Supplier CASCADE), productId (FK → Product CASCADE), unitCostUsd (Decimal?), moq (Int?), leadDays (Int?), isPreferred (Boolean), notes; @@unique([supplierId, productId])

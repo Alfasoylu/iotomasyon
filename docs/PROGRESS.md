@@ -52,6 +52,7 @@ Implemented modules:
 - marketplace operations expansion (Phase 16: Q&A module, Return Action Center, Product Mapping registry, Exchange Rate management)
 - procurement intelligence (Phase 19: /admin/procurement, reorder urgency engine, ranked purchase table, financial summary)
 - supplier intelligence (Phase 20: /admin/suppliers, Supplier + SupplierProduct models, product edit supplier links)
+- import cost calculator (Phase 21: /admin/import-calculator, landed cost formula, channel margin analysis)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -595,18 +596,33 @@ Verified outcome (browser test 2026-05-17):
 - Entegra removed from dropdown after linking (no duplicate links possible) ✓
 - tsc --noEmit: clean ✓
 - Vercel deploy: READY (commit 6dde711) ✓
-- landed cost comparison
-
 ---
 
 ## Phase 21 — Import Cost Calculator
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- pre-purchase landed cost calculator
-- shipping/customs input model
-- estimated margin / ROI output
-- buy / do not buy signal
+Completed:
+- `app/(app)/admin/import-calculator/page.tsx`: EXECUTIVE_READ-gated server page — fetches active suppliers, products (with 3 price fields), all supplierProducts, latest MonthlyExchangeRate; passes all as props to ImportCalculatorForm
+- `components/suppliers/import-calculator-form.tsx`: fully client-side calculator, no new DB schema
+  - 7 inputs: Tedarikçi (optional), Ürün (optional), Sipariş Adedi, Birim Maliyet USD, Toplam Nakliye USD, Gümrük Vergisi %, USD/TRY Kuru
+  - Auto-fills unitCostUsd from SupplierProduct when supplier + product both selected
+  - Pre-fills exchangeRate from latest MonthlyExchangeRate ("Son kayıtlı kur: X" hint shown)
+  - `calculate()` formula: productTotal = qty × unitCostUsd; customs = productTotal × customsRate%; totalLanded = productTotal + freight + customs; unitLandedTry = (totalLanded / qty) × rate; breakEven = unitLandedTry × 1.20
+  - "Maliyet Dökümü" output card: 7 rows — ürün maliyeti, nakliye, gümrük, toplam USD (bold), birim USD, birim TRY (bold), başa baş (amber)
+  - "Kanal Bazlı Marj Analizi" card: Perakende / Pazar Yeri / Toptan rows; color-coded margin % (emerald ≥25%, amber ≥10%, red <10%); "Fiyat girilmemiş" when product not selected
+  - Amber advisory banner at bottom
+- `app/(app)/layout.tsx`: added "İthalat Hesaplayıcı" sidebar nav entry (EXECUTIVE_READ permission)
+- "Hesaplama Mantığı" info card on page with 4 formula cells (blue)
+
+Verified outcome (browser test 2026-05-17):
+- /admin/import-calculator: page loads, heading "İthalat Maliyet Hesaplayıcısı", formula card, all inputs visible ✓
+- Inputs filled: qty=10, unitCostUsd=14.5, freight=50, customs=5, rate=46 → Hesapla clicked ✓
+- Maliyet Dökümü: Ürün $145.00 (10 × $14.50), Nakliye $50.00, Gümrük $7.25 (%5), Toplam $202.25, Birim USD $20.23, Birim TRY ₺930,35, Başa Baş ₺1.116,42 ✓
+- Math verified manually: 10×14.5=145; 145×0.05=7.25; 145+50+7.25=202.25; 202.25/10=20.225; 20.225×46=930.35; 930.35×1.2=1116.42 ✓
+- Kanal Bazlı Marj: "Fiyat girilmemiş" for all channels (no product selected — correct) ✓
+- Amber uyarı banner visible ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit 1117ed7) ✓
 
 ---
 

@@ -41,11 +41,11 @@ Current reality:
 - XML product foundation complete (Phase 11A ✓): 649 Entegra products auto-imported, ProductImage (2534 images), XmlProductData snapshot with full USD price grid, multi-image gallery + XML data card on product detail, batched sync in 24s
 - procurement intelligence complete (Phase 19 ✓): /admin/procurement, reorder urgency engine, ranked purchase table, financial summary — needs lead-time/demand data to produce non-UNKNOWN urgencies
 - supplier intelligence complete (Phase 20 ✓): /admin/suppliers CRUD, Supplier + SupplierProduct models, product edit supplier link section with unitCostUsd/moq/leadDays/isPreferred
+- import cost calculator complete (Phase 21 ✓): /admin/import-calculator, landed cost formula (product+freight+customs), per-unit TRY, break-even (min %20 marj), channel margin analysis — browser-verified 2026-05-17
 
-This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, and XML-driven inventory management. Ready for multi-user rollout.
+This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, XML-driven inventory management, and pre-purchase import cost evaluation. Ready for multi-user rollout.
 Not yet ready for:
 - owner-grade executive KPI dashboard (Phase 22)
-- import cost calculator (Phase 21)
 - marketplace sync/write architecture (Phase 17, DEFERRED)
 
 ---
@@ -68,43 +68,32 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 21: Import Cost Calculator
+### Priority 1 — Phase 22: Executive KPI Dashboard
 
 Why:
-Phase 20 (supplier intelligence) is complete. Suppliers and their per-product USD costs are now recorded. Phase 21 uses this data to build a pre-purchase import cost calculator — total landed cost (product cost + shipping + customs + exchange rate) before a buy decision is made.
+Phases 19–21 (procurement, suppliers, import cost) are complete. The owner now has individual intelligence tools. Phase 22 consolidates them into a single executive overview: stock value, capital health, monthly profit trend, top performers, and procurement recommendations — all on one page.
 
 Deliverables:
-- Import cost calculator page at `/admin/import-calculator`
-- Inputs: supplier, product, quantity, freight cost (USD), customs rate (%), current exchange rate
-- Output: total landed cost (TRY), per-unit landed cost, margin % at current sellingPriceTry, break-even price
-- Uses existing `unitCostUsd` from SupplierProduct + `MonthlyExchangeRate` for conversion
-- No new DB schema required (uses existing Supplier, SupplierProduct, MonthlyExchangeRate, Product)
+- Executive KPI dashboard at `/admin/capital` (extend existing) or new `/admin/executive`
+- Widgets: total stock value (TRY), capital deployed, monthly net profit, top-5 products by margin, CRITICAL/HIGH urgency count, break-even analysis summary
+- Pulls from: Product (unitCostTry, stock), profitability engine, procurement engine, exchange rates
+- No new DB schema required (uses existing tables)
 
 Acceptance:
-- Calculator page loads and accepts all inputs
-- Landed cost calculation is correct (cost × qty × rate + freight × rate + customs)
-- Per-unit and margin output matches manual calculation
+- Dashboard loads with real data from production DB
+- All KPI widgets show meaningful numbers (not empty/zero)
 - tsc clean, Vercel deploy READY, browser-tested
 
-### Priority 2 — Phase 21+: Import Cost Calculator / Executive KPI
+### Priority 2 — Phase 23/24: Data Hygiene / Production Safety
 
 Why:
-These phases are high-value but depend on reliable data from earlier phases.
+As the system scales, duplicate SKUs, missing costs, and schema drift become risks.
 
 Deliverables:
-- procurement assistant logic
-- supplier intelligence
-- import cost calculator
-- executive KPI dashboard
-- data hygiene/governance
-- migration safety rules
-
-Acceptance:
-- procurement signals are based on real inputs
-- supplier comparison is meaningful
-- admin can evaluate imports before buying
-- executive dashboard reflects business health quickly
-- production data safety controls are documented and enforced
+- duplicate SKU/barcode detection reports
+- missing cost/category/link governance views
+- migration safety documentation
+- production data safety controls
 
 ---
 
@@ -128,6 +117,7 @@ Phase dependencies:
 - Phase 11 provides real stock feed data that improves allocation accuracy.
 - Phase 19 depends on Phase 7, Phase 8, Phase 9, and Phase 20 because procurement logic needs inventory, profitability, demand, and supplier inputs.
 - Phase 20 ✓ complete — supplier intelligence is production-active.
+- Phase 21 ✓ complete — import cost calculator is production-active.
 - Phase 22 depends on multiple earlier phases because executive KPIs are only useful if underlying systems are trustworthy.
 - Phase 23 and Phase 24 should not be ignored because data quality and production safety can invalidate later intelligence work.
 - Priority 0 should be treated as a baseline operating rule before schema-heavy work expands.

@@ -55,6 +55,7 @@ Implemented modules:
 - quote professionalization 2.0 — Phase 18 complete: reusable quote templates (QuoteTemplate + QuoteTemplateItem), template management page, template loading into quote form, product auto price-fill from sellingPriceTry, 2 new permissions
 - procurement intelligence — Phase 19 complete: /admin/procurement, reorder urgency engine (CRITICAL/HIGH/MEDIUM/LOW/OK/UNKNOWN), ranked purchase table, financial summary (suggested cost + projected profit), graceful empty state
 - supplier intelligence — Phase 20 complete: /admin/suppliers CRUD, Supplier + SupplierProduct models, product edit supplier link section (unitCostUsd, moq, leadDays, isPreferred)
+- import cost calculator — Phase 21 complete: /admin/import-calculator, landed cost formula (product+freight+customs), per-unit TRY cost, break-even, channel margin analysis
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -158,7 +159,7 @@ PARTIAL
 Current meaning:
 - procurement engine — DONE (Phase 19): /admin/procurement, reorder urgency engine, ranked purchase table, financial summary
 - supplier intelligence — DONE (Phase 20): /admin/suppliers, Supplier + SupplierProduct, product edit supplier link section
-- pre-purchase import cost calculator — NOT IMPLEMENTED (Phase 21)
+- import cost calculator — DONE (Phase 21): /admin/import-calculator, landed cost (product+freight+customs), per-unit TRY, break-even, channel margin analysis
 
 Note:
 - capital allocation engine EXISTS (Phase 10) — admin-only ranked purchase suggestions based on investment score
@@ -229,5 +230,4 @@ Implemented:
 
 Still missing for full owner-intelligence readiness:
 - executive KPI dashboard (Phase 22)
-- import cost calculator (Phase 21)
 - supplier lead-time data populated into products (for non-UNKNOWN urgency in Phase 19)
