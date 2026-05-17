@@ -940,7 +940,7 @@ model SupplierProduct {
 model TrendyolSalesRecord {
   id           String   @id @default(cuid())
   orderId      String   // Trendyol order numeric ID (as string)
-  lineId       Int      // order line ID (int)
+  lineId       BigInt   // order line ID — Trendyol uses int64, exceeds PostgreSQL INT range
   productId    String?
   product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 

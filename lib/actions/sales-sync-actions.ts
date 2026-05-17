@@ -101,8 +101,11 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
             matched++;
           }
 
+          // Trendyol line IDs are int64 — use BigInt to avoid PostgreSQL INT overflow
+          const lineIdBig = BigInt(line.id);
+
           const existing = await prisma.trendyolSalesRecord.findUnique({
-            where: { orderId_lineId: { orderId: String(order.id), lineId: line.id } },
+            where: { orderId_lineId: { orderId: String(order.id), lineId: lineIdBig } },
             select: { id: true },
           });
 
@@ -120,7 +123,7 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
             await prisma.trendyolSalesRecord.create({
               data: {
                 orderId: String(order.id),
-                lineId: line.id,
+                lineId: lineIdBig,
                 productId,
                 orderDate: new Date(order.orderDate),
                 status: line.orderLineItemStatusName,
