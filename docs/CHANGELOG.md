@@ -9,6 +9,31 @@
 
 ## 2026-05
 
+### Phase 59 — Trendyol Satış Hızı (2026-05-17)
+
+**Amaç:**
+Import Decisions cockpit'te ürün bazında Trendyol satış hızı yoktu. Hangi ürünün gerçekten satıldığını bilmeden stok kararı vermek güçtü.
+
+Değişiklikler:
+- `app/(app)/admin/import-decisions/page.tsx`:
+  - 90-günlük pencere hesabı (`ninetyDaysAgo`) eklendi
+  - `prisma.trendyolSalesRecord.findMany` son 90 gün, iptal olmayanlar, `productId` eşleşenler — mevcut sorgularla `Promise.all` içinde paralel çalışır
+  - `velocityByProduct` map: `productId → { qty90d, monthlyVelocity }` (monthlyVelocity = qty90d / 3)
+  - İptal varyant filtresi: "cancel" veya "iptal" içeren status'lar çift filtreden geçer
+  - "Trendyol 90g" kolon başlığı eklendi (Gerekli Sermaye ile Talep/ay arasına)
+  - Eşleşen ürünler: emerald yeşil `{qty90d} adet` + `~{monthlyVelocity}/ay` ikili display
+  - Eşleşmeyen ürünler: `—` slate-300
+- Schema değişikliği: YOK (TrendyolSalesRecord ve productId ilişkisi zaten mevcuttu)
+
+Kabul kriteri:
+- `/admin/import-decisions` sayfasında "Trendyol 90g" kolon başlığı görünür ✓
+- TrendyolSalesRecord ile productId eşleşen ürünlerde emerald yeşil veri gösterilir (2 adet / ~1/ay doğrulandı) ✓
+- Eşleşmeyen ürünlerde "—" görünür ✓
+- Import karar mantığı (score, recommendation) etkilenmez ✓
+- Vercel READY: dpl_9t2yUijYB6a3946XhXFvbnAsq72y ✓
+
+---
+
 ### Phase 58 — Operasyon Koordinasyon Katmanı (2026-05-17)
 
 **Amaç:**

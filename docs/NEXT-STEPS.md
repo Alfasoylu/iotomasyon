@@ -659,6 +659,29 @@ Tamamlananlar:
 
 ---
 
+### ✓ DONE — Priority 59 — Trendyol Satış Hızı (Phase 59, 2026-05-17)
+
+**Neden:**
+Import Decisions cockpit'te satın alma kararı verirken ürünün Trendyol'daki gerçek satış hızını görmek gerekiyordu. "Talep/ay" alanı sadece manuel girilen potansiyeli yansıtıyordu; gerçek satış geçmişi tabloda yoktu.
+
+**Bağımlılık:** TrendyolSalesRecord (Phase 29), productId ilişkisi (Phase 29 marketplace matching), import-decisions cockpit (Phase 11C)
+
+Tamamlananlar:
+- `app/(app)/admin/import-decisions/page.tsx`:
+  - 90 günlük pencere (`ninetyDaysAgo`) hesabı eklendi
+  - `prisma.trendyolSalesRecord.findMany` — son 90 gün, iptal olmayanlar (`status: { not: "Cancelled" }`), `productId` eşleşenler — mevcut `Promise.all` içinde paralel
+  - `velocityByProduct` map: `productId → { qty90d, monthlyVelocity }` (monthlyVelocity = Math.round(qty90d / 3))
+  - İptal filtresi ikili: `status: { not: "Cancelled" }` DB-level + "cancel"/"iptal" string içeren status'lar app-level
+  - "Trendyol 90g" tablo başlığı eklendi (Gerekli Sermaye — Talep/ay arasına)
+  - Eşleşen ürün hücresi: emerald yeşil `{qty90d} adet` + `~{monthlyVelocity}/ay` ikili satır
+  - Eşleşmeyen ürün hücresi: `—` slate-300
+- Schema değişikliği: YOK
+- tsc --noEmit temiz ✓
+- Browser-verified: "Trendyol 90g" kolon başlığı görünür, eşleşen ürün için "2 adet / ~1/ay" gösterildi ✓
+- READY: dpl_9t2yUijYB6a3946XhXFvbnAsq72y
+
+---
+
 ## Anti-Scope Rules
 
 DO NOT start:
