@@ -21,6 +21,7 @@ import {
   DEFAULT_USD_TRY_RATE,
   type ImportRecommendation,
 } from "@/lib/import-decision";
+import { ImportSnapshotButton } from "@/components/products/import-snapshot-button";
 
 export const dynamic = "force-dynamic";
 
@@ -139,6 +140,8 @@ export default async function ImportDecisionsPage({
       domesticShippingTry,
       usdTryRate,
       monthlyUnits: monthlyUnits > 0 ? monthlyUnits : null,
+      airFreightPerKgOverride: null,
+      seaFreightPerKgOverride: null,
     });
 
     return { product: p, decision, monthlyUnits };
@@ -311,6 +314,9 @@ export default async function ImportDecisionsPage({
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Stok
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Kaydet
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -372,6 +378,9 @@ export default async function ImportDecisionsPage({
                     </td>
                     <td className="px-4 py-3 text-right text-slate-600">
                       {p.stockQuantity}
+                    </td>
+                    <td className="px-4 py-3">
+                      <ImportSnapshotButton productId={p.id} />
                     </td>
                   </tr>
                 ))}

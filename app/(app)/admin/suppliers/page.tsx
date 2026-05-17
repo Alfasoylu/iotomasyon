@@ -84,6 +84,9 @@ export default async function SuppliersPage() {
               defaultLeadDays: s.defaultLeadDays,
               notes: s.notes,
               isActive: s.isActive,
+              defaultAirFreightUsdPerKg: s.defaultAirFreightUsdPerKg != null ? String(s.defaultAirFreightUsdPerKg) : "",
+              defaultSeaFreightUsdPerKg: s.defaultSeaFreightUsdPerKg != null ? String(s.defaultSeaFreightUsdPerKg) : "",
+              defaultPaymentFeePct: s.defaultPaymentFeePct != null ? String(s.defaultPaymentFeePct) : "",
               productCount: s._count.products,
             }))}
           />

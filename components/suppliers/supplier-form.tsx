@@ -14,6 +14,10 @@ interface SupplierValues {
   defaultLeadDays: string;
   notes: string;
   isActive: boolean;
+  // Phase 32 — supplier-level import defaults
+  defaultAirFreightUsdPerKg: string;
+  defaultSeaFreightUsdPerKg: string;
+  defaultPaymentFeePct: string;
 }
 
 interface SupplierFormProps {
@@ -35,6 +39,9 @@ const EMPTY: SupplierValues = {
   defaultLeadDays: "",
   notes: "",
   isActive: true,
+  defaultAirFreightUsdPerKg: "",
+  defaultSeaFreightUsdPerKg: "",
+  defaultPaymentFeePct: "",
 };
 
 export function SupplierForm({ supplierId, initialValues, onSuccess }: SupplierFormProps) {
@@ -50,6 +57,9 @@ export function SupplierForm({ supplierId, initialValues, onSuccess }: SupplierF
   const [defaultLeadDays, setDefaultLeadDays] = useState(init.defaultLeadDays);
   const [notes, setNotes] = useState(init.notes);
   const [isActive, setIsActive] = useState(init.isActive);
+  const [defaultAirFreight, setDefaultAirFreight] = useState(init.defaultAirFreightUsdPerKg);
+  const [defaultSeaFreight, setDefaultSeaFreight] = useState(init.defaultSeaFreightUsdPerKg);
+  const [defaultPaymentFee, setDefaultPaymentFee] = useState(init.defaultPaymentFeePct);
 
   const [result, setResult] = useState<{ ok: boolean; message?: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -68,6 +78,9 @@ export function SupplierForm({ supplierId, initialValues, onSuccess }: SupplierF
         defaultLeadDays,
         notes,
         isActive,
+        defaultAirFreightUsdPerKg: defaultAirFreight,
+        defaultSeaFreightUsdPerKg: defaultSeaFreight,
+        defaultPaymentFeePct: defaultPaymentFee,
       });
       setResult(res);
       if (res.ok) {
@@ -178,6 +191,50 @@ export function SupplierForm({ supplierId, initialValues, onSuccess }: SupplierF
             min={1}
           />
         </div>
+      </div>
+
+      {/* Phase 32 — Import defaults */}
+      <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4 space-y-3">
+        <p className="text-xs font-semibold text-blue-700">İthalat varsayılanları (opsiyonel)</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label className={labelClass}>Hava kargo (USD/kg)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              className={fieldClass}
+              value={defaultAirFreight}
+              onChange={(e) => setDefaultAirFreight(e.target.value)}
+              placeholder={`varsayılan: 8`}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Deniz kargo (USD/kg)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              className={fieldClass}
+              value={defaultSeaFreight}
+              onChange={(e) => setDefaultSeaFreight(e.target.value)}
+              placeholder={`varsayılan: 1`}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Ödeme komisyonu (%)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              className={fieldClass}
+              value={defaultPaymentFee}
+              onChange={(e) => setDefaultPaymentFee(e.target.value)}
+              placeholder="ör. 3.0"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-blue-500">
+          Boş bırakılırsa sistem varsayılanları kullanılır (hava: 8, deniz: 1 USD/kg).
+          Ürün düzeyindeki girişler bu değerleri geçersiz kılar.
+        </p>
       </div>
 
       {/* Notes */}

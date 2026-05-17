@@ -280,6 +280,7 @@ model User {
   returnActionLogs         MarketplaceReturnActionLog[]   @relation("ReturnActionUser")
   quoteTemplates           QuoteTemplate[]                @relation("TemplatesCreated")
   marketplacePolicies      MarketplacePlatformPolicy[]    @relation("PolicyUpdatedBy")
+  importDecisionSnapshots  ImportDecisionSnapshot[]       @relation("SnapshotCreatedBy")
 }
 
 model ProductCategory {
@@ -388,6 +389,8 @@ model Product {
   privateNote          String?
   // Phase 29 — Trendyol return/claim records
   trendyolReturnRecords TrendyolReturnRecord[]
+  // Phase 32 — Import decision snapshots
+  importDecisionSnapshots ImportDecisionSnapshot[]
 
   @@index([name])
   @@index([barcode])
@@ -911,10 +914,15 @@ model Supplier {
   defaultLeadDays Int?      // default lead time in days for this supplier
   notes           String?
   isActive        Boolean   @default(true)
+  // Phase 32 — Supplier-level import defaults
+  defaultAirFreightUsdPerKg Decimal? @db.Decimal(8,4)  // override AIR freight rate for this supplier
+  defaultSeaFreightUsdPerKg Decimal? @db.Decimal(8,4)  // override SEA freight rate for this supplier
+  defaultPaymentFeePct      Decimal? @db.Decimal(5,2)  // override payment commission % for this supplier
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  products SupplierProduct[]
+  products          SupplierProduct[]
+  decisionSnapshots ImportDecisionSnapshot[]
 
   @@index([name])
   @@index([isActive])
@@ -1024,4 +1032,46 @@ model MarketplacePlatformPolicy {
   updatedBy             User?               @relation("PolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@index([platform])
+}
+
+// ─── Phase 32 — Holding-Grade Import Governance ───────────────────────────────
+// Snapshots freeze the full set of import decision inputs + computed outputs
+// at the moment an operator approves a buy decision.
+// After rates or defaults change, historical decisions remain explainable.
+
+model ImportDecisionSnapshot {
+  id                  String   @id @default(cuid())
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplierId          String?
+  supplier            Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  // Rate context
+  rateYear            Int?
+  rateMonth           Int?
+  usdTryRate          Decimal  @db.Decimal(12,4)
+  rmbUsdRate          Decimal? @db.Decimal(12,4)
+  // Frozen inputs
+  sourceCostRmb       Decimal? @db.Decimal(15,2)
+  sourcePriceUsd      Decimal? @db.Decimal(12,4)
+  importPaymentFeePct Decimal? @db.Decimal(5,2)
+  weightKg            Decimal? @db.Decimal(8,3)
+  customsRatePct      Decimal? @db.Decimal(5,2)
+  shippingMethodPref  String?
+  airFreightPerKg     Decimal  @db.Decimal(8,4)
+  seaFreightPerKg     Decimal  @db.Decimal(8,4)
+  // Computed outputs
+  effectiveSourceUsd  Decimal  @db.Decimal(12,4)  // resolved USD cost (after RMB conversion + payment fee)
+  effectiveMethod     String   // AIR or SEA
+  landedCostUsd       Decimal  @db.Decimal(12,4)
+  profitRatio         Decimal  @db.Decimal(8,4)
+  decision            String   // ALWAYS_STOCK / BUY_SMALL / DO_NOT_BUY / MISSING_DATA
+  score               Decimal  @db.Decimal(8,4)
+  notes               String?
+  createdById         String?
+  createdBy           User?    @relation("SnapshotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt           DateTime @default(now())
+
+  @@index([productId])
+  @@index([supplierId])
+  @@index([createdAt])
 }

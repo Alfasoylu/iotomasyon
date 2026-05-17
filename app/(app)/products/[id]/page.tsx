@@ -31,6 +31,8 @@ import {
   RECOMMENDATION_TONES,
   DEFAULT_USD_TRY_RATE,
 } from "@/lib/import-decision";
+import { ImportSnapshotButton } from "@/components/products/import-snapshot-button";
+import { getProductImportSnapshotsAction } from "@/lib/actions/import-snapshot-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +60,7 @@ export default async function ProductDetailPage({
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const user = await requireUser();
 
-  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks] = await Promise.all([
+  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks, importSnapshots] = await Promise.all([
     getProductById(id),
     getProductIntelligence(id),
     prisma.monthlyExchangeRate.findFirst({
@@ -74,6 +76,7 @@ export default async function ProductDetailPage({
       include: { supplier: { select: { name: true } } },
       orderBy: [{ isPreferred: "desc" }, { createdAt: "asc" }],
     }),
+    getProductImportSnapshotsAction(id),
   ]);
 
   if (!databaseAvailable) {
@@ -181,6 +184,8 @@ export default async function ProductDetailPage({
       (product.onlineSalesPotential ?? 0) +
       (product.wholesaleSalesPotential ?? 0) +
       (product.installerSalesPotential ?? 0) || null,
+    airFreightPerKgOverride: null,
+    seaFreightPerKgOverride: null,
   });
 
   // Phase 26 — Realized sales aggregation from TrendyolSalesRecord
@@ -470,9 +475,12 @@ export default async function ProductDetailPage({
               Hava/deniz kargo ekonomisi. Kur: 1 USD = ₺{usdTryRate.toFixed(2)}
             </p>
           </div>
-          <Badge tone={RECOMMENDATION_TONES[importDecision.decision] as "success" | "warning" | "danger" | "default"}>
-            {RECOMMENDATION_LABELS[importDecision.decision]}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <ImportSnapshotButton productId={product.id} />
+            <Badge tone={RECOMMENDATION_TONES[importDecision.decision] as "success" | "warning" | "danger" | "default"}>
+              {RECOMMENDATION_LABELS[importDecision.decision]}
+            </Badge>
+          </div>
         </div>
 
         {importDecision.hasData ? (
@@ -572,6 +580,59 @@ export default async function ProductDetailPage({
           </div>
         )}
       </Card>
+
+      {/* Phase 32 — Import Decision Snapshot History */}
+      {importSnapshots.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-slate-950">Karar Geçmişi</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Son {importSnapshots.length} kaydedilmiş ithalat kararı.
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wide">
+                  <th className="pb-2 pr-4 text-left font-semibold">Tarih</th>
+                  <th className="pb-2 pr-4 text-left font-semibold">Karar</th>
+                  <th className="pb-2 pr-4 text-right font-semibold">Skor</th>
+                  <th className="pb-2 pr-4 text-left font-semibold">Yöntem</th>
+                  <th className="pb-2 pr-4 text-right font-semibold">İniş USD</th>
+                  <th className="pb-2 pr-4 text-right font-semibold">Kâr Oranı</th>
+                  <th className="pb-2 pr-4 text-right font-semibold">Kur</th>
+                  <th className="pb-2 text-left font-semibold">Kaydeden</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {importSnapshots.map((s) => (
+                  <tr key={s.id} className="text-slate-600">
+                    <td className="py-2 pr-4 font-mono text-slate-400">
+                      {new Date(s.createdAt).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-medium ${
+                        s.decision === "ALWAYS_STOCK" ? "bg-emerald-50 text-emerald-700" :
+                        s.decision === "BUY_SMALL" ? "bg-amber-50 text-amber-700" :
+                        s.decision === "DO_NOT_BUY" ? "bg-red-50 text-red-600" :
+                        "bg-slate-100 text-slate-500"
+                      }`}>
+                        {RECOMMENDATION_LABELS[s.decision as keyof typeof RECOMMENDATION_LABELS] ?? s.decision}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-4 text-right font-mono">{Number(s.score).toFixed(3)}</td>
+                    <td className="py-2 pr-4">
+                      {s.effectiveMethod === "AIR" ? "✈ Hava" : "🚢 Deniz"}
+                    </td>
+                    <td className="py-2 pr-4 text-right font-mono">${Number(s.landedCostUsd).toFixed(2)}</td>
+                    <td className="py-2 pr-4 text-right font-mono">{Number(s.profitRatio).toFixed(3)}×</td>
+                    <td className="py-2 pr-4 text-right font-mono">₺{Number(s.usdTryRate).toFixed(2)}</td>
+                    <td className="py-2 text-slate-400">{s.createdBy?.name ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
       {/* Phase 26 — Realized Sales Card */}
       <Card className="p-6">

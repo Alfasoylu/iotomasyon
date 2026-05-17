@@ -15,6 +15,10 @@ interface SupplierRow {
   notes: string | null;
   isActive: boolean;
   productCount: number;
+  // Phase 32
+  defaultAirFreightUsdPerKg: string;
+  defaultSeaFreightUsdPerKg: string;
+  defaultPaymentFeePct: string;
 }
 
 interface SupplierListClientProps {
@@ -89,6 +93,9 @@ export function SupplierListClient({ suppliers }: SupplierListClientProps) {
                   defaultLeadDays: s.defaultLeadDays != null ? String(s.defaultLeadDays) : "",
                   notes: s.notes ?? "",
                   isActive: s.isActive,
+                  defaultAirFreightUsdPerKg: s.defaultAirFreightUsdPerKg,
+                  defaultSeaFreightUsdPerKg: s.defaultSeaFreightUsdPerKg,
+                  defaultPaymentFeePct: s.defaultPaymentFeePct,
                 }}
               />
             </div>

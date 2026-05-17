@@ -22,6 +22,10 @@ export async function saveSupplierAction(
     defaultLeadDays: string;
     notes: string;
     isActive: boolean;
+    // Phase 32 — supplier-level import defaults
+    defaultAirFreightUsdPerKg: string;
+    defaultSeaFreightUsdPerKg: string;
+    defaultPaymentFeePct: string;
   },
 ): Promise<ActionResult> {
   const user = await requireUser();
@@ -34,6 +38,11 @@ export async function saveSupplierAction(
     ? parseInt(formData.defaultLeadDays, 10)
     : null;
 
+  const parseDecimal = (v: string) => {
+    const n = parseFloat(v.replace(",", "."));
+    return isFinite(n) && n > 0 ? n : null;
+  };
+
   const data = {
     name,
     contactName: formData.contactName.trim() || null,
@@ -44,6 +53,10 @@ export async function saveSupplierAction(
     defaultLeadDays: defaultLeadDays && defaultLeadDays > 0 ? defaultLeadDays : null,
     notes: formData.notes.trim() || null,
     isActive: formData.isActive,
+    // Phase 32 — supplier-level import defaults
+    defaultAirFreightUsdPerKg: parseDecimal(formData.defaultAirFreightUsdPerKg),
+    defaultSeaFreightUsdPerKg: parseDecimal(formData.defaultSeaFreightUsdPerKg),
+    defaultPaymentFeePct: parseDecimal(formData.defaultPaymentFeePct),
     updatedAt: new Date(),
   };
 

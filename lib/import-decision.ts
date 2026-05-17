@@ -96,6 +96,10 @@ export interface ImportDecisionInput {
   usdTryRate: number;
   /** Total monthly demand in units (online + wholesale + installer) */
   monthlyUnits: number | null;
+  /** Per-kg AIR freight override (supplier or product level) — overrides AIR_FREIGHT_PER_KG constant */
+  airFreightPerKgOverride: number | null;
+  /** Per-kg SEA freight override (supplier or product level) — overrides SEA_FREIGHT_PER_KG constant */
+  seaFreightPerKgOverride: number | null;
 }
 
 export interface ShippingScenario {
@@ -123,6 +127,8 @@ export interface ImportDecisionResult {
   hasData: boolean;
   /** Missing field names when hasData is false */
   missingFields: string[];
+  /** Resolved USD cost per unit (after RMB→USD conversion + payment fee, or raw USD) */
+  effectiveSourceUsd: number | null;
   air: ShippingScenario | null;
   sea: ShippingScenario | null;
   /** Which method is better based on annual ROI comparison */
@@ -137,6 +143,15 @@ export interface ImportDecisionResult {
 
 // ── Engine ─────────────────────────────────────────────────────────────────────
 
+/** Resolve the effective freight rate: override (supplier/product level) > constant default */
+export function effectiveFreightPerKg(
+  method: "AIR" | "SEA",
+  override: number | null | undefined,
+): number {
+  if (override != null && override > 0) return override;
+  return method === "AIR" ? AIR_FREIGHT_PER_KG : SEA_FREIGHT_PER_KG;
+}
+
 function calcScenario(
   method: "AIR" | "SEA",
   sourcePriceUsd: number,
@@ -144,8 +159,9 @@ function calcScenario(
   customsRatePct: number,
   netRevenueUsd: number,
   monthlyUnits: number,
+  freightOverride: number | null,
 ): ShippingScenario {
-  const freightPerKg = method === "AIR" ? AIR_FREIGHT_PER_KG : SEA_FREIGHT_PER_KG;
+  const freightPerKg = effectiveFreightPerKg(method, freightOverride);
   const cycleDays = method === "AIR" ? AIR_CYCLE_DAYS : SEA_CYCLE_DAYS;
   const capitalMonths = method === "AIR" ? AIR_CAPITAL_MONTHS : SEA_CAPITAL_MONTHS;
 
@@ -195,6 +211,7 @@ export function calculateImportDecision(
     return {
       hasData: false,
       missingFields,
+      effectiveSourceUsd: null,
       air: null,
       sea: null,
       recommendedMethod: null,
@@ -230,8 +247,8 @@ export function calculateImportDecision(
     (sellingPriceTry * (1 - commissionPct / 100) - domesticShippingTry) /
     input.usdTryRate;
 
-  const air = calcScenario("AIR", sourcePriceUsd, weightKg, customsRatePct, netRevenueUsd, monthlyUnits);
-  const sea = calcScenario("SEA", sourcePriceUsd, weightKg, customsRatePct, netRevenueUsd, monthlyUnits);
+  const air = calcScenario("AIR", sourcePriceUsd, weightKg, customsRatePct, netRevenueUsd, monthlyUnits, input.airFreightPerKgOverride ?? null);
+  const sea = calcScenario("SEA", sourcePriceUsd, weightKg, customsRatePct, netRevenueUsd, monthlyUnits, input.seaFreightPerKgOverride ?? null);
 
   // Sea wins if its annual ROI is >= 10% better than air
   const recommendedMethod: "AIR" | "SEA" =
@@ -270,6 +287,7 @@ export function calculateImportDecision(
   return {
     hasData: true,
     missingFields: [],
+    effectiveSourceUsd: sourcePriceUsd,
     air,
     sea,
     recommendedMethod,
