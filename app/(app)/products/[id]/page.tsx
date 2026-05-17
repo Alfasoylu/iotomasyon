@@ -33,6 +33,14 @@ import {
 } from "@/lib/import-decision";
 import { ImportSnapshotButton } from "@/components/products/import-snapshot-button";
 import { getProductImportSnapshotsAction } from "@/lib/actions/import-snapshot-actions";
+import {
+  calcMarketplacePricingRow,
+  priceSourceLabel,
+  priceSourceColor,
+  shippingSourceLabel,
+  policySourceLabel,
+  policySourceColor,
+} from "@/lib/marketplace-pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +68,7 @@ export default async function ProductDetailPage({
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const user = await requireUser();
 
-  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks, importSnapshots] = await Promise.all([
+  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks, importSnapshots, platformPolicies] = await Promise.all([
     getProductById(id),
     getProductIntelligence(id),
     prisma.monthlyExchangeRate.findFirst({
@@ -77,6 +85,7 @@ export default async function ProductDetailPage({
       orderBy: [{ isPreferred: "desc" }, { createdAt: "asc" }],
     }),
     getProductImportSnapshotsAction(id),
+    prisma.marketplacePlatformPolicy.findMany(),
   ]);
 
   if (!databaseAvailable) {
@@ -396,6 +405,123 @@ export default async function ProductDetailPage({
           </div>
         </Card>
       ) : null}
+
+      {/* Phase 33 — Marketplace Pricing Normalization */}
+      {(() => {
+        if (!product.xmlData && !product.marketplacePriceTry) return null;
+        const policyMap = Object.fromEntries(
+          platformPolicies.map((p) => [p.platform, {
+            standardShippingTry: p.standardShippingTry != null ? Number(p.standardShippingTry) : null,
+            standardCommissionPct: p.standardCommissionPct != null ? Number(p.standardCommissionPct) : null,
+            paymentFeePct: p.paymentFeePct != null ? Number(p.paymentFeePct) : null,
+            returnReservePct: p.returnReservePct != null ? Number(p.returnReservePct) : null,
+            vatPct: p.vatPct != null ? Number(p.vatPct) : null,
+          }])
+        );
+        const productPolicy = {
+          shippingCost: product.shippingCost != null ? Number(product.shippingCost) : null,
+          shippingCostOverride: product.shippingCostOverride != null ? Number(product.shippingCostOverride) : null,
+          marketplaceCommission: product.marketplaceCommission != null ? Number(product.marketplaceCommission) : null,
+          marketplaceCommissionOverride: product.marketplaceCommissionOverride != null ? Number(product.marketplaceCommissionOverride) : null,
+          vatRate: product.vatRate != null ? Number(product.vatRate) : null,
+          paymentFeeRate: product.paymentFeeRate != null ? Number(product.paymentFeeRate) : null,
+          returnReserveRate: product.returnReserveRate != null ? Number(product.returnReserveRate) : null,
+        };
+        const manualPriceTry = product.marketplacePriceTry != null ? Number(product.marketplacePriceTry) : null;
+        const platforms = [
+          { key: "TRENDYOL",    label: "Trendyol",     xmlPriceUsd: product.xmlData?.xmlTrendyolPrice != null ? Number(product.xmlData.xmlTrendyolPrice) : null },
+          { key: "HEPSIBURADA", label: "Hepsiburada",  xmlPriceUsd: product.xmlData?.xmlHbPrice != null ? Number(product.xmlData.xmlHbPrice) : null },
+          { key: "AMAZON",      label: "Amazon",        xmlPriceUsd: product.xmlData?.xmlAmazonPrice != null ? Number(product.xmlData.xmlAmazonPrice) : null },
+          { key: "PAZARAMA",    label: "Pazarama",      xmlPriceUsd: product.xmlData?.xmlPazaramaPrice != null ? Number(product.xmlData.xmlPazaramaPrice) : null },
+          { key: "IDEFIX",      label: "Idefix",        xmlPriceUsd: product.xmlData?.xmlIdefixPrice != null ? Number(product.xmlData.xmlIdefixPrice) : null },
+        ];
+        const rows = platforms
+          .map((p) => calcMarketplacePricingRow({
+            platform: p.key,
+            platformLabel: p.label,
+            xmlPriceUsd: p.xmlPriceUsd,
+            manualOverrideTry: manualPriceTry,
+            product: productPolicy,
+            platformPolicy: policyMap[p.key] ?? null,
+            usdTryRate,
+          }))
+          .filter((r) => r.priceSource !== "none");
+        if (rows.length === 0) return null;
+        return (
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold text-slate-950">Pazar Yeri Fiyatlandırması</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Etkin fiyat, kargo, komisyon ve net kalan gelir. Kur: 1 USD = ₺{usdTryRate.toFixed(2)}
+            </p>
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wide text-left">
+                    <th className="pb-2 pr-4 font-semibold">Platform</th>
+                    <th className="pb-2 pr-4 font-semibold">XML Fiyat</th>
+                    <th className="pb-2 pr-4 font-semibold">Etkin Fiyat</th>
+                    <th className="pb-2 pr-4 font-semibold">Kaynak</th>
+                    <th className="pb-2 pr-4 font-semibold text-right">Kargo ₺</th>
+                    <th className="pb-2 pr-4 font-semibold text-right">Komisyon %</th>
+                    <th className="pb-2 pr-4 font-semibold text-right">Net Kalan ₺</th>
+                    <th className="pb-2 font-semibold text-right">Net Marj %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {rows.map((r) => (
+                    <tr key={r.platform} className="text-slate-600">
+                      <td className="py-2 pr-4 font-medium text-slate-800">{r.platformLabel}</td>
+                      <td className="py-2 pr-4 font-mono">
+                        {r.xmlPriceTry != null ? `₺${r.xmlPriceTry.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                      </td>
+                      <td className="py-2 pr-4 font-mono font-semibold">
+                        {r.effectivePriceTry != null ? `₺${r.effectivePriceTry.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-medium ${priceSourceColor(r.priceSource)}`}>
+                          {priceSourceLabel(r.priceSource)}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 text-right font-mono">
+                        {r.hasData ? `₺${r.shippingTry.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                        {r.hasData && (
+                          <span className={`ml-1 inline-flex rounded px-1 text-xs font-medium ${policySourceColor(r.shippingSource === "price_tier" ? "system_default" : r.shippingSource as "product_override" | "product_value" | "platform_standard" | "system_default")}`}>
+                            {shippingSourceLabel(r.shippingSource)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-4 text-right font-mono">
+                        {r.commissionPct.toFixed(1)}%
+                        <span className={`ml-1 inline-flex rounded px-1 text-xs font-medium ${policySourceColor(r.commissionSource)}`}>
+                          {policySourceLabel(r.commissionSource)}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 text-right font-mono">
+                        {r.netRevenueTry != null ? (
+                          <span className={r.netRevenueTry >= 0 ? "text-emerald-700" : "text-red-600"}>
+                            ₺{r.netRevenueTry.toFixed(2)}
+                          </span>
+                        ) : <span className="text-slate-300">—</span>}
+                      </td>
+                      <td className="py-2 text-right font-mono">
+                        {r.netMarginPct != null ? (
+                          <span className={r.netMarginPct >= 15 ? "text-emerald-700" : r.netMarginPct >= 5 ? "text-amber-600" : "text-red-600"}>
+                            %{r.netMarginPct.toFixed(1)}
+                          </span>
+                        ) : <span className="text-slate-300">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">
+              Net kalan = Etkin fiyat − Kargo − Komisyon − Ödeme komisyonu − İade rezervi
+              · Kargo yok ise fiyat dilimine göre hesaplanır (&lt;5$→₺{(1.2 * usdTryRate).toFixed(0)}, 5–7.5$→₺{(2 * usdTryRate).toFixed(0)}, &gt;7.5$→₺{(3.3 * usdTryRate).toFixed(0)})
+            </p>
+          </Card>
+        );
+      })()}
 
       {hasSalesPotential ? (
         <Card className="p-6">
