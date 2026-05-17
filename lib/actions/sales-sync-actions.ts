@@ -104,6 +104,14 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
           // Trendyol line IDs are int64 — use BigInt to avoid PostgreSQL INT overflow
           const lineIdBig = BigInt(line.id);
 
+          // discountedPrice may be null/undefined at runtime despite the TypeScript type
+          // (e.g. returns, gift orders, partial refunds). Fall back to price → 0.
+          const rawPrice =
+            (line.discountedPrice as number | null | undefined) ??
+            (line.price           as number | null | undefined) ??
+            0;
+          const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+
           const existing = await prisma.trendyolSalesRecord.findUnique({
             where: { orderId_lineId: { orderId: String(order.id), lineId: lineIdBig } },
             select: { id: true },
@@ -131,8 +139,8 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
                 barcode: line.barcode ?? null,
                 productName: line.productName,
                 quantity: line.quantity,
-                unitPriceTry: line.discountedPrice,
-                totalPriceTry: line.discountedPrice * line.quantity,
+                unitPriceTry: unitPrice,
+                totalPriceTry: unitPrice * line.quantity,
               },
             });
             newRecords++;
