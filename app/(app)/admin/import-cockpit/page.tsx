@@ -1,0 +1,628 @@
+/**
+ * Phase 50 — İthalat Karar Cockpiti v2 (Priority 22)
+ *
+ * Upgrades the Phase 11C import-decisions page with REAL Trendyol data:
+ *   - Trendyol gerçekleşen ortalama satış fiyatı (son 90 gün, Delivered)
+ *   - Trendyol satış hızı (son 30 gün, Delivered)
+ *   - İade oranı (TrendyolReturnRecord / toplam satış)
+ *   - Bunlarla hesaplanan net kâr/adet + marj % + aylık kâr tahmini
+ *   - "AL / BEKLE / ALMA" sinyali gerçek veriden
+ *   - Eşleşmemiş ürünler için uyarı (Trendyol verisi yok → manuel tahmin gösterilir)
+ *
+ * Sinyal eşikleri:
+ *   AL     → marj ≥ 25% VE aylık kâr > 0
+ *   BEKLE  → marj ≥ 15% VE aylık kâr > 0
+ *   ALMA   → diğer (zarar veya yetersiz marj)
+ *
+ * Şema değişikliği yok — TrendyolSalesRecord + TrendyolReturnRecord + Product okunur.
+ */
+
+import Link from "next/link";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
+import { Card } from "@/components/ui/card";
+import {
+  calculateImportDecision,
+  DEFAULT_USD_TRY_RATE,
+} from "@/lib/import-decision";
+
+export const dynamic = "force-dynamic";
+
+// ── Sinyal tipi ──────────────────────────────────────────────────────────────
+type Signal = "AL" | "BEKLE" | "ALMA" | "VERİ_EKSİK";
+
+function computeSignal(marginPct: number | null, monthlyProfitTry: number | null): Signal {
+  if (marginPct === null || monthlyProfitTry === null) return "VERİ_EKSİK";
+  if (monthlyProfitTry <= 0 || marginPct < 0) return "ALMA";
+  if (marginPct >= 25) return "AL";
+  if (marginPct >= 15) return "BEKLE";
+  return "ALMA";
+}
+
+const SIGNAL_STYLE: Record<Signal, string> = {
+  AL:        "bg-emerald-100 text-emerald-800 border border-emerald-200",
+  BEKLE:     "bg-amber-100 text-amber-800 border border-amber-200",
+  ALMA:      "bg-red-100 text-red-700 border border-red-200",
+  VERİ_EKSİK: "bg-slate-100 text-slate-500 border border-slate-200",
+};
+
+const SIGNAL_LABEL: Record<Signal, string> = {
+  AL:        "✓ AL",
+  BEKLE:     "⏸ BEKLE",
+  ALMA:      "✗ ALMA",
+  VERİ_EKSİK: "— Veri Eksik",
+};
+
+// ── Format yardımcıları ──────────────────────────────────────────────────────
+function fmtTry(n: number) {
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency", currency: "TRY", maximumFractionDigits: 0,
+  }).format(n);
+}
+
+function fmtPct(n: number) {
+  return `%${n.toFixed(1)}`;
+}
+
+type Tab = "all" | "AL" | "BEKLE" | "ALMA" | "VERİ_EKSİK";
+
+const TAB_LABELS: Record<Tab, string> = {
+  all:       "Tümü",
+  AL:        "AL",
+  BEKLE:     "BEKLE",
+  ALMA:      "ALMA",
+  VERİ_EKSİK: "Veri Eksik",
+};
+
+export default async function ImportCockpitPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  await requirePermission(PERMISSIONS.EXECUTIVE_READ);
+
+  const sp = await searchParams;
+  const tab = (sp.tab as Tab | undefined) ?? "all";
+
+  const now = new Date();
+  const ago90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+  const ago30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // ── Paralel veri çekimi ───────────────────────────────────────────────────
+  const [latestRate, products, sales90Raw, sales30Raw, returnsRaw] = await Promise.all([
+    prisma.monthlyExchangeRate.findFirst({
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+    }),
+    prisma.product.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        stockQuantity: true,
+        importUnitCostUsd: true,
+        unitCostUsd: true,
+        weightKg: true,
+        customsRatePct: true,
+        shippingMethodPref: true,
+        sellingPriceTry: true,
+        marketplacePriceTry: true,
+        shippingCost: true,
+        shippingCostOverride: true,
+        marketplaceCommission: true,
+        marketplaceCommissionOverride: true,
+        onlineSalesPotential: true,
+        wholesaleSalesPotential: true,
+        installerSalesPotential: true,
+        sourceCostRmb: true,
+        importPaymentFeePct: true,
+      },
+      orderBy: { name: "asc" },
+    }),
+    // Trendyol ortalama satış fiyatı + toplam satış hacmi — son 90 gün
+    prisma.trendyolSalesRecord.groupBy({
+      by: ["productId"],
+      where: {
+        productId: { not: null },
+        orderDate: { gte: ago90 },
+        status: { contains: "Delivered", mode: "insensitive" },
+      },
+      _avg: { unitPriceTry: true },
+      _sum: { quantity: true },
+      _count: { id: true },
+    }),
+    // Trendyol 30 günlük satış hızı
+    prisma.trendyolSalesRecord.groupBy({
+      by: ["productId"],
+      where: {
+        productId: { not: null },
+        orderDate: { gte: ago30 },
+        status: { contains: "Delivered", mode: "insensitive" },
+      },
+      _sum: { quantity: true },
+    }),
+    // İade sayısı (tüm zamanlar)
+    prisma.trendyolReturnRecord.groupBy({
+      by: ["productId"],
+      where: { productId: { not: null } },
+      _count: { id: true },
+    }),
+  ]);
+
+  const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
+  const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : null;
+
+  // ── Lookup map'leri ───────────────────────────────────────────────────────
+  const sales90Map = new Map<string, { avgPrice: number; totalQty: number; orderCount: number }>();
+  for (const r of sales90Raw) {
+    if (!r.productId) continue;
+    sales90Map.set(r.productId, {
+      avgPrice: r._avg.unitPriceTry != null ? Number(r._avg.unitPriceTry) : 0,
+      totalQty: r._sum.quantity ?? 0,
+      orderCount: r._count.id,
+    });
+  }
+
+  const sales30Map = new Map<string, number>(); // productId → units sold in last 30 days
+  for (const r of sales30Raw) {
+    if (!r.productId) continue;
+    sales30Map.set(r.productId, r._sum.quantity ?? 0);
+  }
+
+  const returnsMap = new Map<string, number>(); // productId → total return count
+  for (const r of returnsRaw) {
+    if (!r.productId) continue;
+    returnsMap.set(r.productId, r._count.id);
+  }
+
+  // ── Satır hesapları ───────────────────────────────────────────────────────
+  type Row = {
+    id: string;
+    name: string;
+    sku: string | null;
+    stockQuantity: number;
+    // Trendyol verisi
+    hasTrendyolData: boolean;
+    trendyolAvgPriceTry: number | null;
+    trendyolUnits90d: number | null;
+    trendyolUnits30d: number | null;
+    returnCount: number;
+    returnRate: number | null; // 0‥1
+    // Kullanılan satış fiyatı
+    resolvedPriceTry: number | null;
+    priceSource: "trendyol" | "manual" | "none";
+    // Hesaplama
+    landedCostTry: number | null;
+    netRevenueTry: number | null;
+    netProfitTry: number | null;
+    marginPct: number | null;
+    // Aylık kâr
+    effectiveMonthlyUnits: number | null;
+    monthlyProfitTry: number | null;
+    // Sinyal
+    signal: Signal;
+  };
+
+  const rows: Row[] = products.map((p) => {
+    // ── Trendyol verileri ──────────────────────────────────────────────────
+    const s90 = sales90Map.get(p.id);
+    const units30d = sales30Map.get(p.id) ?? null;
+    const returnCount = returnsMap.get(p.id) ?? 0;
+    const hasTrendyolData = s90 != null && s90.avgPrice > 0;
+
+    const trendyolAvgPriceTry = hasTrendyolData ? s90!.avgPrice : null;
+    const trendyolUnits90d = s90?.totalQty ?? null;
+    const trendyolUnits30d = units30d;
+
+    // İade oranı: returns / (sales90d + returns) — muhafazakâr hesap
+    const totalSales90 = s90?.totalQty ?? 0;
+    const returnRate =
+      (totalSales90 + returnCount) > 0
+        ? returnCount / (totalSales90 + returnCount)
+        : null;
+
+    // ── Satış fiyatı çözümü ────────────────────────────────────────────────
+    const manualPriceTry =
+      p.marketplacePriceTry != null
+        ? Number(p.marketplacePriceTry)
+        : p.sellingPriceTry != null
+          ? Number(p.sellingPriceTry)
+          : null;
+
+    const resolvedPriceTry = trendyolAvgPriceTry ?? manualPriceTry;
+    const priceSource: "trendyol" | "manual" | "none" =
+      trendyolAvgPriceTry != null ? "trendyol" : manualPriceTry != null ? "manual" : "none";
+
+    // ── İthal maliyet hesabı (mevcut engine) ──────────────────────────────
+    const sourcePriceUsd =
+      p.importUnitCostUsd != null
+        ? Number(p.importUnitCostUsd)
+        : p.unitCostUsd != null
+          ? Number(p.unitCostUsd)
+          : null;
+
+    const commissionPct =
+      p.marketplaceCommissionOverride != null
+        ? Number(p.marketplaceCommissionOverride)
+        : p.marketplaceCommission != null
+          ? Number(p.marketplaceCommission)
+          : 0;
+
+    const domesticShippingTry =
+      p.shippingCostOverride != null
+        ? Number(p.shippingCostOverride)
+        : p.shippingCost != null
+          ? Number(p.shippingCost)
+          : 0;
+
+    // İniş maliyeti — engine ile hesapla (Trendyol verisi yoksa fallback sayı ile)
+    const decisionResult = calculateImportDecision({
+      sourcePriceUsd,
+      sourceCostRmb: p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null,
+      rmbUsdRate,
+      importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
+      weightKg: p.weightKg != null ? Number(p.weightKg) : null,
+      customsRatePct: p.customsRatePct != null ? Number(p.customsRatePct) : null,
+      shippingMethodPref: p.shippingMethodPref,
+      sellingPriceTry: resolvedPriceTry, // gerçek veya manuel
+      commissionPct,
+      domesticShippingTry,
+      usdTryRate,
+      monthlyUnits: 1, // skor için kukla — gerçek hesap aşağıda
+      airFreightPerKgOverride: null,
+      seaFreightPerKgOverride: null,
+    });
+
+    const landedCostUsd = decisionResult.effectiveScenario?.landedCostUsd ?? null;
+    const landedCostTry = landedCostUsd != null ? landedCostUsd * usdTryRate : null;
+
+    // ── Net kâr / marj ─────────────────────────────────────────────────────
+    let netRevenueTry: number | null = null;
+    let netProfitTry: number | null = null;
+    let marginPct: number | null = null;
+
+    if (resolvedPriceTry != null && landedCostTry != null) {
+      netRevenueTry = resolvedPriceTry * (1 - commissionPct / 100) - domesticShippingTry;
+      netProfitTry = netRevenueTry - landedCostTry;
+      marginPct = resolvedPriceTry > 0 ? (netProfitTry / resolvedPriceTry) * 100 : null;
+    }
+
+    // ── Aylık kâr tahmini ──────────────────────────────────────────────────
+    // Trendyol verisi varsa: 30d satış hızı * (1 − iade oranı)
+    // Manuel: onlineSalesPotential + wholesaleSalesPotential + installerSalesPotential
+    const manualMonthlyUnits =
+      (p.onlineSalesPotential ?? 0) +
+      (p.wholesaleSalesPotential ?? 0) +
+      (p.installerSalesPotential ?? 0);
+
+    let effectiveMonthlyUnits: number | null = null;
+    if (trendyolUnits30d != null && trendyolUnits30d > 0) {
+      const rr = returnRate ?? 0;
+      effectiveMonthlyUnits = trendyolUnits30d * (1 - rr);
+    } else if (manualMonthlyUnits > 0) {
+      effectiveMonthlyUnits = manualMonthlyUnits;
+    }
+
+    const monthlyProfitTry =
+      netProfitTry != null && effectiveMonthlyUnits != null
+        ? netProfitTry * effectiveMonthlyUnits
+        : null;
+
+    const signal = computeSignal(marginPct, monthlyProfitTry);
+
+    return {
+      id: p.id,
+      name: p.name,
+      sku: p.sku,
+      stockQuantity: p.stockQuantity,
+      hasTrendyolData,
+      trendyolAvgPriceTry,
+      trendyolUnits90d,
+      trendyolUnits30d,
+      returnCount,
+      returnRate,
+      resolvedPriceTry,
+      priceSource,
+      landedCostTry,
+      netRevenueTry,
+      netProfitTry,
+      marginPct,
+      effectiveMonthlyUnits,
+      monthlyProfitTry,
+      signal,
+    };
+  });
+
+  // ── Sayımlar ─────────────────────────────────────────────────────────────
+  const counts: Record<Tab, number> = {
+    all:       rows.length,
+    AL:        rows.filter((r) => r.signal === "AL").length,
+    BEKLE:     rows.filter((r) => r.signal === "BEKLE").length,
+    ALMA:      rows.filter((r) => r.signal === "ALMA").length,
+    VERİ_EKSİK: rows.filter((r) => r.signal === "VERİ_EKSİK").length,
+  };
+  const unmatchedCount = rows.filter((r) => !r.hasTrendyolData).length;
+
+  // ── Tab filtresi ──────────────────────────────────────────────────────────
+  const filtered =
+    tab === "all"
+      ? rows
+      : rows.filter((r) => r.signal === (tab as Signal));
+
+  // Sırala: AL → BEKLE → ALMA → VERİ_EKSİK, içinde aylık kâr büyükten küçüğe
+  const signalOrder: Record<Signal, number> = { AL: 0, BEKLE: 1, ALMA: 2, VERİ_EKSİK: 3 };
+  const sorted = [...filtered].sort((a, b) => {
+    const diff = signalOrder[a.signal] - signalOrder[b.signal];
+    if (diff !== 0) return diff;
+    return (b.monthlyProfitTry ?? -Infinity) - (a.monthlyProfitTry ?? -Infinity);
+  });
+
+  function tabHref(t: Tab) {
+    return t === "all" ? "/admin/import-cockpit" : `/admin/import-cockpit?tab=${t}`;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Başlık */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Faz 50 — İthalat Karar Cockpiti v2
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+            İthalat Karar Cockpiti
+          </h1>
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            Trendyol gerçek satış fiyatı + satış hızı + iade oranı + ithal maliyet → ithalat sinyali.
+            Kur: <span className="font-semibold">1 USD = ₺{usdTryRate.toFixed(2)}</span>
+            {latestRate ? ` (${latestRate.month}/${latestRate.year})` : " (varsayılan)"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/import-decisions"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+          >
+            v1 Görünüm →
+          </Link>
+        </div>
+      </div>
+
+      {/* Eşleşmemiş ürünler uyarısı */}
+      {unmatchedCount > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <strong>{unmatchedCount} ürünün</strong> Trendyol satış verisi yok — bu ürünler için
+          manuel tahminler kullanılır. Eşleştirmek için{" "}
+          <Link href="/admin/marketplace-mappings" className="font-medium underline">
+            Ürün Eşleştirme
+          </Link>{" "}
+          sayfasını kullanın, ardından sipariş senkronizasyonunu çalıştırın.
+        </div>
+      )}
+
+      {/* Özet kartlar */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {(["AL", "BEKLE", "ALMA", "VERİ_EKSİK"] as const).map((s) => (
+          <Link
+            key={s}
+            href={tabHref(s)}
+            className={`rounded-2xl p-4 transition border ${
+              tab === s
+                ? SIGNAL_STYLE[s].replace("border ", "").replace("bg-", "bg-").includes("emerald")
+                  ? "bg-emerald-700 text-white border-emerald-700"
+                  : s === "BEKLE"
+                    ? "bg-amber-600 text-white border-amber-600"
+                    : s === "ALMA"
+                      ? "bg-red-700 text-white border-red-700"
+                      : "bg-slate-700 text-white border-slate-700"
+                : "bg-white border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <p className={`text-3xl font-bold ${tab === s ? "text-white" : {
+              AL: "text-emerald-700", BEKLE: "text-amber-700", ALMA: "text-red-700", VERİ_EKSİK: "text-slate-500",
+            }[s]}`}>
+              {counts[s]}
+            </p>
+            <p className={`mt-1 text-xs font-semibold ${tab === s ? "text-white/80" : "text-slate-600"}`}>
+              {SIGNAL_LABEL[s]}
+            </p>
+          </Link>
+        ))}
+      </div>
+
+      {/* Tab çubuğu */}
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-0">
+        {(Object.entries(TAB_LABELS) as [Tab, string][]).map(([t, label]) => (
+          <Link
+            key={t}
+            href={tabHref(t)}
+            className={`inline-flex items-center gap-1.5 rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-medium transition ${
+              tab === t
+                ? "border-slate-900 text-slate-900"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {label}
+            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+              {counts[t].toLocaleString("tr-TR")}
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      {/* Tablo */}
+      {sorted.length === 0 ? (
+        <Card className="p-8 text-center text-sm text-slate-500">
+          Bu filtre için ürün bulunamadı.
+        </Card>
+      ) : (
+        <Card className="overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead className="border-b border-slate-100 bg-slate-50/80">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Sinyal</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Ort. Fiyat (90g)</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Hız (30g)</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">İade %</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">İthal Maliyet</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Net Kâr/Adet</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Marj</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Aylık Kâr</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Stok</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Kaynak</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {sorted.map((row) => (
+                  <tr key={row.id} className="hover:bg-slate-50/50">
+                    {/* Ürün */}
+                    <td className="px-4 py-3 max-w-[200px]">
+                      <Link
+                        href={`/products/${row.id}`}
+                        className="font-medium text-slate-900 hover:text-slate-600 line-clamp-1"
+                      >
+                        {row.name}
+                      </Link>
+                      {row.sku && (
+                        <p className="mt-0.5 font-mono text-[10px] text-slate-400">{row.sku}</p>
+                      )}
+                    </td>
+
+                    {/* Sinyal */}
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${SIGNAL_STYLE[row.signal]}`}>
+                        {SIGNAL_LABEL[row.signal]}
+                      </span>
+                    </td>
+
+                    {/* Ort. Fiyat */}
+                    <td className="px-4 py-3 text-right font-mono text-xs text-slate-700">
+                      {row.trendyolAvgPriceTry != null
+                        ? fmtTry(row.trendyolAvgPriceTry)
+                        : row.resolvedPriceTry != null
+                          ? <span className="text-slate-400">{fmtTry(row.resolvedPriceTry)}</span>
+                          : <span className="text-slate-300">—</span>}
+                    </td>
+
+                    {/* Satış hızı 30d */}
+                    <td className="px-4 py-3 text-right text-xs text-slate-700">
+                      {row.trendyolUnits30d != null ? (
+                        <span>
+                          {row.trendyolUnits30d} <span className="text-slate-400">adet</span>
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+
+                    {/* İade oranı */}
+                    <td className="px-4 py-3 text-right text-xs">
+                      {row.returnRate != null ? (
+                        <span className={row.returnRate > 0.15 ? "text-red-600 font-semibold" : "text-slate-600"}>
+                          {fmtPct(row.returnRate * 100)}
+                          <span className="ml-1 text-slate-400 font-normal">({row.returnCount})</span>
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+
+                    {/* İthal maliyet TRY */}
+                    <td className="px-4 py-3 text-right font-mono text-xs text-slate-700">
+                      {row.landedCostTry != null ? fmtTry(row.landedCostTry) : <span className="text-slate-300">—</span>}
+                    </td>
+
+                    {/* Net kâr / adet */}
+                    <td className="px-4 py-3 text-right font-mono text-xs">
+                      {row.netProfitTry != null ? (
+                        <span className={row.netProfitTry >= 0 ? "text-emerald-700" : "text-red-600"}>
+                          {fmtTry(row.netProfitTry)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+
+                    {/* Marj */}
+                    <td className="px-4 py-3 text-right text-xs font-semibold">
+                      {row.marginPct != null ? (
+                        <span className={row.marginPct >= 25 ? "text-emerald-700" : row.marginPct >= 15 ? "text-amber-700" : "text-red-600"}>
+                          {fmtPct(row.marginPct)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+
+                    {/* Aylık kâr */}
+                    <td className="px-4 py-3 text-right font-mono text-xs">
+                      {row.monthlyProfitTry != null ? (
+                        <span className={row.monthlyProfitTry >= 0 ? "text-emerald-700 font-semibold" : "text-red-600"}>
+                          {fmtTry(row.monthlyProfitTry)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+
+                    {/* Stok */}
+                    <td className="px-4 py-3 text-right text-xs text-slate-500">
+                      {row.stockQuantity}
+                    </td>
+
+                    {/* Kaynak etiketi */}
+                    <td className="px-4 py-3">
+                      {row.priceSource === "trendyol" ? (
+                        <span className="inline-flex rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700 border border-orange-200">
+                          Trendyol
+                        </span>
+                      ) : row.priceSource === "manual" ? (
+                        <span className="inline-flex rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-500 border border-slate-200">
+                          Manuel
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-500 border border-red-100">
+                          Fiyat yok
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Formül açıklaması */}
+      <Card className="p-5 text-xs leading-6 text-slate-500 space-y-1">
+        <p className="font-semibold text-slate-700">Hesaplama Mantığı</p>
+        <p>
+          <span className="font-medium text-slate-600">Satış fiyatı:</span>{" "}
+          Trendyol gerçekleşen ort. (son 90 gün, Teslim Edildi) · yoksa manuel fiyat
+        </p>
+        <p>
+          <span className="font-medium text-slate-600">İthal maliyet (TRY):</span>{" "}
+          İniş maliyeti (USD) × kur · hava/deniz seçimi mevcut motora göre
+        </p>
+        <p>
+          <span className="font-medium text-slate-600">Net kâr/adet:</span>{" "}
+          Satış fiyatı × (1 − komisyon%) − kargo − ithal maliyet TRY
+        </p>
+        <p>
+          <span className="font-medium text-slate-600">Aylık kâr:</span>{" "}
+          Net kâr × satış hızı (30g) × (1 − iade oranı) · yoksa manuel tahmin
+        </p>
+        <p>
+          <span className="font-medium text-slate-600">Sinyal:</span>{" "}
+          <span className="text-emerald-700 font-medium">AL</span> marj ≥ %25 ·{" "}
+          <span className="text-amber-700 font-medium">BEKLE</span> marj ≥ %15 ·{" "}
+          <span className="text-red-600 font-medium">ALMA</span> diğer
+        </p>
+      </Card>
+    </div>
+  );
+}
