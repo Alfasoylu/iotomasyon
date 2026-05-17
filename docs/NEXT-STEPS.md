@@ -703,6 +703,28 @@ Tamamlananlar:
 
 ---
 
+### ⏳ PENDING DEPLOY — Priority 69 — Siparişler Sayfası Arama (Phase 69, 2026-05-17)
+
+**Neden:**
+/orders sayfasında belirli bir ürünün siparişlerini bulmak için tüm listeye göz atmak gerekiyordu. Arama çubuğu bu problemi çözüyor.
+
+Tamamlananlar:
+- `app/(app)/orders/page.tsx`: q param; searchFilter (productName/barcode/merchantSku/orderId OR); tab counts search-aware; returns tab productName filter; salesWhere AND [searchFilter, tabFilter]; tabHref q koruyor; arama formu UI
+- tsc clean ✓; commit 6986a2e ✓; PENDING DEPLOY (günlük limit)
+
+---
+
+### ⏳ PENDING DEPLOY — Priority 68 — Ürün XML Stok Değişim Geçmişi (Phase 68, 2026-05-17)
+
+**Neden:**
+/admin/xml-sync global stok değişim logunu gösteriyordu ama ürün bazlı bakış yoktu. Ürün detay sayfasına kendi XML geçmişi eklendi.
+
+Tamamlananlar:
+- `app/(app)/products/[id]/page.tsx`: xmlStockChangeLogs Promise.all; "XML Stok Değişim Geçmişi" kartı; StockAdjustmentCard öncesi; no schema change
+- tsc clean ✓; commit 24fb968 ✓; PENDING DEPLOY (günlük limit)
+
+---
+
 ### ✓ DONE — Priority 67 — Admin Dashboard Trendyol MoM Karşılaştırma (Phase 67, 2026-05-17)
 
 **Neden:**

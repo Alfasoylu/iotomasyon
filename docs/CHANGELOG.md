@@ -9,6 +9,43 @@
 
 ## 2026-05
 
+### Phase 69 — Siparişler Sayfası Arama (2026-05-17)
+
+**Amaç:**
+/orders sayfası 5 sekme ve sayfalama sunuyordu ama ürün bazında sipariş bulmak için tüm listeye bakılması gerekiyordu. Arama çubuğu bu süreyi saniyelere indiriyor.
+
+Değişiklikler:
+- `app/(app)/orders/page.tsx`:
+  - `q` search param eklendi
+  - `searchFilter: Prisma.TrendyolSalesRecordWhereInput` — `q ≥ 2 char` ise OR on `productName` / `barcode` / `merchantSku` / `orderId`
+  - Tab sayaçları (`totalOrders`, `totalDelivered`, `totalCancelled`, `totalUnmatched`) artık `searchFilter` ile filtreleniyor
+  - Returns tab query da `q` ile `productName` filtreliyor
+  - `salesWhere` `searchFilter` ile birleştiriliyor (`AND`)
+  - `tabHref()` q parametresini koruyor
+  - Arama formu UI: `<form method="GET">` + input + Ara butonu + ✕ Temizle linki
+- Schema değişikliği: YOK
+
+Durum: tsc clean ✓, commit 6986a2e ✓, PENDING DEPLOY
+
+---
+
+### Phase 68 — Ürün XML Stok Değişim Geçmişi (2026-05-17)
+
+**Amaç:**
+Phase 49 XML stok değişim loglarını global /admin/xml-sync sayfasına ekledi ama ürün bazında bakılamıyordu. Ürün detay sayfasında kendi stok geçmişi görünmeli.
+
+Değişiklikler:
+- `app/(app)/products/[id]/page.tsx`:
+  - `xmlStockChangeLogs` Promise.all'a eklendi: `prisma.xmlStockChangeLog.findMany({ where: { productId }, orderBy: { syncedAt: "desc" }, take: 30 })`
+  - "XML Stok Değişim Geçmişi" kartı StockAdjustmentCard öncesine eklendi
+  - Tablo: Tarih / Önceki Qty / Yeni Qty / Delta (emerald + / red - / slate 0)
+  - Kart yalnızca log varsa render edilir
+- Schema değişikliği: YOK
+
+Durum: tsc clean ✓, commit 24fb968 ✓, PENDING DEPLOY
+
+---
+
 ### Phase 67 — Admin Dashboard Trendyol MoM Karşılaştırma (2026-05-17)
 
 **Amaç:**
