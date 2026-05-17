@@ -9,6 +9,18 @@
 
 ## 2026-05
 
+### Phase 52 — Ürün Finans Alanı Konsolidasyonu (Priority 0A, 2026-05-17)
+
+**Amaç:**
+Ürün düzenleme formunda birden fazla çakışan "kaynak maliyet" alanı vardı: `importUnitCostUsd` "İthalat ve envanter" bölümünde, `sourceCostRmb` ise "İthalat kararı girdileri" bölümünde "opsiyonel" olarak gösteriliyordu — bu da RMB'nin tercih edilen birincil kaynak olduğunu gizliyordu. `marketplacePriceTry` "temel kârlılık" olarak etiketleniyordu; oysa gerçek platform fiyatları XML beslemesinden geliyor ve bu alan yalnızca XML yoksa devreye giren bir fallback. Override bölümünde ise 4-katmanlı çözümleme hiyerarşisi hiç açıklanmıyordu.
+
+- `importUnitCostUsd` "İthalat ve envanter" bölümünden kaldırılıp "İthalat kararı girdileri" içine taşındı
+- Yeni kaynak maliyet alt-bölümü: Birincil (RMB, emerald) / Yedek (USD, slate) görsel hiyerarşisi
+- `marketplacePriceTry` etiketi "Pazar yeri fiyatı — genel fallback (₺)" olarak değiştirildi
+- Footer notu: platform bazlı XML fiyatlarının birincil kaynak olduğunu, fallback'in yalnızca XML yoksa devreye girdiğini açıklıyor
+- Override bölümü başlığı "Tier 1" eki ile güncellendi; 4-katmanlı çözümleme (ürün → platform → sistem) açıklandı
+- Schema değişikliği yok; tsc clean; browser-verified 2026-05-17 ✓
+
 ### Phase 51 — USD Kademeli Kargo + Cockpit Politika Düzeltmeleri (2026-05-17)
 
 **Amaç:**

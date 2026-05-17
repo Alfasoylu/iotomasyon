@@ -86,40 +86,21 @@ Clarification:
 - this does not mean fully redoing Phase 23 and Phase 24
 - it means keeping those rules active while the next product-heavy phases are built
 
-### Priority 0A - Product Finance Field Consolidation
+### ✓ Priority 0A — Product Finance Field Consolidation (Phase 52, 2026-05-17)
 
-Why:
-Too many overlapping product-level fields now exist for:
-- import cost
-- TRY cost
-- marketplace selling price
-- shipping
-- commission
-- overrides
+Neden:
+Ürün düzeyinde çok sayıda üst üste binen alan vardı: ithalat maliyeti (RMB + USD), pazar yeri satış fiyatı
+(genel `marketplacePriceTry` vs. platform bazlı XML fiyatları), kargo/komisyon (ürün geçersiz kılması vs. platform
+politikası). Bu ambiguity çözülmezse sonraki fazlar belirsiz truth kaynaklarına yeni mantık katmanları ekler.
 
-If this remains unresolved, later marketplace and import phases will stack new logic onto ambiguous truth sources.
-
-Includes:
-- identify authoritative operator-facing product finance fields
-- hide, relabel, or de-emphasize legacy/fallback fields
-- stop treating generic `marketplacePriceTry` as the canonical marketplace pricing truth
-- stop treating generic `shippingCostOverride` / `marketplaceCommissionOverride` as the long-term primary marketplace override workflow
-- keep `sourceCostRmb`, `importPaymentFeePct`, `weightKg`, `customsRatePct`, and shipping method inputs as the primary import-economics surface
-- keep XML marketplace prices, manual marketplace overrides, and active/effective marketplace values separated
-- reduce clutter on product edit/detail pages before later phases continue
-
-Acceptance:
-- primary truth fields are obvious on product edit
-- fallback/legacy fields are hidden or clearly labeled
-- product finance UI no longer forces the owner to reconcile duplicate truths manually
-- later marketplace/import phases can build on a stable operator-facing model
-
-Important:
-Priority 0A must complete before any additional work on:
-- marketplace margin normalization follow-up
-- import economics follow-up
-- holding-grade import governance follow-up
-- marketplace pricing normalization follow-up
+Delivered (Phase 52 — product-form.tsx UI refactor, no schema change):
+- `importUnitCostUsd` "İthalat ve envanter" bölümünden alınıp "İthalat kararı girdileri" bölümüne taşındı
+- Kaynak maliyet bölümü Birincil (RMB, emerald) / Yedek (USD, slate) görsel hiyerarşisiyle yeniden düzenlendi
+- `marketplacePriceTry` etiketi "Pazar yeri fiyatı — genel fallback (₺)" olarak değiştirildi (artık canonical değil)
+- Footer notu: "Platform bazlı gerçek fiyatlar XML beslemesinden gelir; fallback yalnızca XML yoksa devreye girer"
+- Override bölümü başlığı "Tier 1" eki + 4-katmanlı çözümleme açıklaması (ürün → platform → sistem) ile güncellendi
+- Tüm 4 override field placeholder'ı netleştirildi
+- tsc clean, Vercel READY (dpl_AofZouL4KKtPLPsejAsWXV5ZWR7Q), browser-verified 2026-05-17 ✓
 
 ### ✓ Priority 1 — Marketplace Data Reliability Closure (Phase 29, 2026-05-17)
 
