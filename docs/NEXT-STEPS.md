@@ -129,6 +129,16 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 11 — Procurement Intelligence + Real Sales Velocity (Phase 39, 2026-05-17)
+
+Delivered:
+- /admin/procurement: 30-day TrendyolSalesRecord actual sales qty now drives demand calculation when available
+- velocitySource per row: "actual" (Trendyol data) / "estimated" (manual) / "none"
+- Gerçek/Tahmin/Veri Yok badge column (Hız Kaynağı) + T30G Satış column
+- Gerçek Satış Verisi Aktif emerald banner when actual data present
+- No schema change — reads existing Phase 26 TrendyolSalesRecord table
+- Browser-verified 2026-05-17: 6 üründe gerçek Trendyol hızı, 645 manuel/yok, aciliyet listesi + kolonlar render ✓
+
 ### ✓ Priority 10 — Return Rate Analysis (Phase 38, 2026-05-17)
 
 Delivered:

@@ -511,6 +511,21 @@
 - tsc clean, Vercel deploy READY (commit 0819706)
 - Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
 
+### Phase 39 — Procurement Intelligence + Real Sales Velocity
+- Updated `app/(app)/admin/procurement/page.tsx`:
+  - Fetches `TrendyolSalesRecord` (last 30 days, non-cancelled, matched) in parallel with product list
+  - Builds `actualSales30d Map<productId, qty>` from non-cancelled matched records (same `isCancelledStatus()` helper)
+  - `velocitySource` per row: `"actual"` (real Trendyol data) / `"estimated"` (manual `onlineSalesPotential`) / `"none"`
+  - When `actualQty` exists for a product, overrides `onlineSalesPotential` in `calculateProcurement()` call
+  - New "Hız Kaynağı" column: **Gerçek** (emerald) / **Tahmin** (slate) / **Veri Yok** (amber) badge per row
+  - New "T30G Satış" column: actual Trendyol 30-day qty when available, else —
+  - Header description: shows `N üründe gerçek Trendyol satış hızı kullanılıyor.` (emerald) when actual data present
+  - **Gerçek Satış Verisi Aktif** emerald banner: N products with real data, M remaining with manual/none
+  - OK (adequately stocked) product rows: `Gerçek (N T30G)` emerald badge when actual data available
+  - No schema change — reads existing Phase 26 `TrendyolSalesRecord` table
+- tsc clean, Vercel deploy READY (commit 29c56e7)
+- Browser-verified 2026-05-17: 6 üründe gerçek Trendyol satış hızı, 645 ürün manuel/yok, 1 ürün aciliyet listesinde, tüm kolonlar render ✓
+
 ### Phase 38 — Return Rate Analysis
 - Created `app/(app)/marketplace/return-analysis/page.tsx` (MARKETPLACE_RETURNS_READ gated, `force-dynamic`)
   - Fetches matched `TrendyolReturnRecord` (productId not null), matched `TrendyolSalesRecord` (productId not null), and unmatched return count in parallel
