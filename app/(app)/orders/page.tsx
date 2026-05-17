@@ -14,8 +14,6 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { Card } from "@/components/ui/card";
 import { OrdersSyncButton } from "@/components/orders/orders-sync-button";
-import { TrendyolStockDeductionButton } from "@/components/orders/trendyol-stock-deduction-button";
-import { getPendingDeductionCount } from "@/lib/actions/trendyol-stock-deduction-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -89,7 +87,6 @@ export default async function OrdersPage({
     totalCancelled,
     totalUnmatched,
     totalReturns,
-    pendingDeductionCount,
   ] = await Promise.all([
     prisma.trendyolSalesRecord.count(),
     prisma.trendyolSalesRecord.count({
@@ -105,7 +102,6 @@ export default async function OrdersPage({
     }),
     prisma.trendyolSalesRecord.count({ where: { productId: null } }),
     prisma.trendyolReturnRecord.count(),
-    getPendingDeductionCount(),
   ]);
 
   // ── Query based on active tab ────────────────────────────────────────────────
@@ -251,19 +247,6 @@ export default async function OrdersPage({
       </Card>
 
       {/* Phase 43 — Stock deduction card */}
-      {pendingDeductionCount > 0 && (
-        <Card className="p-4 flex flex-wrap items-center gap-4 border-amber-200 bg-amber-50">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1">Stok Düşümü</p>
-            <p className="text-xs text-amber-700">
-              Eşleşmiş teslim edilmiş siparişlerden stok otomatik düşürülmemiş. Aşağıdaki butona basarak
-              tüm bekleyen satırları toplu olarak stok hareketlerine işleyin.
-            </p>
-          </div>
-          <TrendyolStockDeductionButton pendingCount={pendingDeductionCount} />
-        </Card>
-      )}
-
       {/* Tab bar */}
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-0">
         {(Object.entries(TAB_LABELS) as [Tab, string][]).map(([t, label]) => (
