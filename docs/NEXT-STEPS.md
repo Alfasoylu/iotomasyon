@@ -16,6 +16,28 @@ What should be built next, in what order?
 
 ---
 
+## Architecture Constraints (Immutable)
+
+These constraints define what this system IS and IS NOT. Do not build against them.
+
+**Stock source of truth: Entegra (via XML sync)**
+- Entegra is the ERP. Stok hareketleri Entegra'da gerçekleşiyor.
+- XML sync (`/api/cron/xml-sync`, `/admin/xml-sync`) Entegra'dan günlük stok güncellemesi çekiyor.
+- Uygulamanın stok sayılarını kendi başına düşmesi / artırması YAPILMAZ.
+- `StockAdjustmentLog` ve "Stoktan Düş" özellikleri artık kullanılmıyor (Entegra bunu yapıyor).
+
+**Trendyol: Sadece READ-ONLY veri kaynağı**
+- Trendyol API'den: sipariş, iade, soru, katalog verisi çekiliyor.
+- Trendyol API'ye: hiçbir şey yazılmıyor (stok push, fiyat push YAPILMAZ).
+- Phase 45 (`/admin/trendyol-stock-sync`) hatalı yönde oluşturuldu — bu sayfanın push işlevi kullanılmaz.
+
+**Ana hedef: İthalatta doğru ürünü bulmak**
+- Trendyol satış fiyatları + gerçek satış hacmi + ithal maliyet hesabı → hangi ürünü ithal et
+- Kar analizi, iade oranı, satış hızı: ithalat kararı için veri sağlar
+- Yeni pazaryeri yazma mimarisi bu projede YOK
+
+---
+
 ## Current Reality
 
 Current reality:
@@ -25,22 +47,22 @@ Current reality:
 - task and outreach foundations exist
 - Turkish location layer exists
 - RBAC is production-active
-- inventory, profitability, XML import, marketplace read intelligence, supplier intelligence, import calculator, executive dashboard, and import decision engine all exist in some form
+- inventory, profitability, XML import (Entegra), Trendyol read intelligence, supplier intelligence, import calculator, executive dashboard, and import decision engine all exist in some form
 
 This means the product is already useful for:
 - internal CRM operations
 - quote workflows
-- XML-driven inventory intake
-- Trendyol read-side operations
+- XML-driven inventory intake from Entegra
+- Trendyol read-side operations (orders, returns, Q&A, catalog)
 - pre-purchase import evaluation
 - owner-grade executive review
 - import buy/skip decisions replacing the old workbook
 
-Not yet ready for:
-- marketplace sync/write architecture
-- trustworthy marketplace order/return history that can replace manual Trendyol checking
-- canonical mapping governance for unmatched marketplace records
-- workbook-validated marketplace margin policy
+Not yet complete:
+- XML sync'te stok değişim loglaması (hangi ürünün stoğu ne kadar değişti per sync)
+- Trendyol sipariş verilerinde eşleşme oranı hâlâ düşük (188 eşleşmemiş ürün)
+- İthalat kar analizi Trendyol gerçek satış fiyatlarıyla tam entegre değil
+- Ürün bazında "bu ithalat karlı mı?" sorusunu tek sayfada yanıtlayan bir cockpit yok
 
 ---
 
@@ -128,6 +150,45 @@ Delivered:
 - Product detail page: "Kararı Kaydet" button in İthalat Kararı card header + "Karar Geçmişi" history table
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
+
+### Priority 21 — XML Stok Değişim Logu (Phase 49 — SONRAKI)
+
+Neden:
+Entegra stok yönetiminin kaynağıdır. Her XML sync çalıştığında hangi ürünlerin stoğunun değiştiğini (önceki değer → yeni değer) kayıt altına almak gerekiyor.
+Bu log: stok hareketlerini izlemeye, anomalileri tespit etmeye ve audit trail tutmaya yarıyor.
+
+Kapsam:
+- XML sync sırasında (her ürün upsert'inde) önceki stockQuantity vs yeni stockQuantity karşılaştır
+- Değişen ürünler için `XmlStockChangeLog` kaydı yaz (productId, previousQty, newQty, delta, syncedAt, sourceUrl)
+- `/admin/xml-sync` sayfasına "Son Değişimler" bölümü: son sync'te neyin değiştiği, delta badge'leri
+- Schema değişikliği gerekiyor: `XmlStockChangeLog` modeli
+- StockAdjustmentLog ile karıştırılmaz — bu Entegra kaynaklı otomatik log, manuel düzeltme değil
+
+### Priority 22 — İthalat Karar Cockpiti v2 (Phase 50)
+
+Neden:
+Ana hedef: Trendyol'dan gerçek satış fiyatı + satış hızı + iade oranı + ithal maliyet = "Bu ürünü ithal etmeli miyim?" sorusu tek sayfada cevaplandırılıyor.
+
+Kapsam:
+- Ürün bazında: Trendyol gerçekleşen ortalama satış fiyatı (son 90 gün) + ithal maliyet (mevcut hesap) + net kâr (TRY) + marj %
+- Trendyol satış hızı (30d) → aylık tahmini kâr
+- İade oranı (TrendyolReturnRecord) → etkili kâr düzeltmesi
+- "Al / Bekleme / Alma" sinyali bu gerçek verilerle üret
+- Eşleşmemiş ürünlerin bu hesabın dışında kalması sorunu için uyarı
+
+### Priority 23 — Gereksiz Sayfaların Temizlenmesi
+
+Neden:
+Audit sonucu: Phase 45 Trendyol Stock Push (`/admin/trendyol-stock-sync`) iş bağlamıyla çelişiyor.
+Trendyol'a stok yazılmıyor, bu sayfa yanlış yönde.
+
+Kapsam:
+- `/admin/trendyol-stock-sync` sayfasını kaldır veya "Bu özellik devre dışı" uyarısıyla kilitle
+- `pushTrendyolStockAction` action'ını devre dışı bırak
+- `/orders` sayfasındaki "Stoktan Düş" butonunu kaldır veya gizle (Entegra yapıyor)
+- Sidebar'dan "Trendyol Stok Senkronu" linkini kaldır
+- `TrendyolSalesRecord.stockDeducted` alanı schema'da kalabilir (silmek migration gerektirir) ama kullanılmaz
+- No schema change gerekebilir (sadece UI temizliği)
 
 ### ✓ Priority 20 — Trendyol Daily Sync Cron (Phase 48, 2026-05-17)
 
