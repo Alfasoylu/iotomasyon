@@ -268,6 +268,14 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 25 — Product Operations UX
+- No new DB schema — leverages existing Product, ProductImage, ProductCategory relations
+- `services/product-service.ts`: added `sort` field to `ProductFilters` type; `buildOrderBy()` switch handles `stock_desc/asc`, `price_desc/asc`, `name_asc`, `margin_desc`; added case-insensitive OR search on SKU/name/brand/model/barcode (Prisma `mode: "insensitive"`); `has_stock` filter (`stockQuantity > 0`); `images` (take:1, sorted by sortOrder) and `productCategory` (id+name) included in `findMany`; margin sort done in JS post-fetch (computed field, not DB-sortable)
+- `components/products/product-filters.tsx`: complete rewrite — live search with 300ms debounce (`useEffect` + `useRef<ReturnType<typeof setTimeout>>`), fires at ≥2 chars or on clear, no submit button; compact pill buttons for Durum (Tümü/Aktif/Pasif) and Stok (Tümü/Stokta var/Düşük stok); sort dropdown with 7 options; "Filtreyi temizle" when filters active; `total` prop renders product count
+- `app/(app)/products/page.tsx`: complete rewrite — `getHealthCues()` function checks 5 conditions: Düşük stok (warning, stock ≤ minimumStock), Görsel yok (default, no imageUrl and no images), Maliyet yok (danger, no unitCostTry), Fiyat yok (default, no sellingPriceTry), XML bayat (default, xmlImported but not synced in 7+ days); 7-column table: thumbnail 48×48 lazy image (object-contain, rounded, bg-slate-50) or 📦 emoji fallback + Ürün (name/SKU monospace/brand·model) + Kategori (productCategory.name fallback to category string) + Fiyat (₺ toLocaleString tr-TR 2 decimal) + Stok (amber if low, /minimumStock caption if >0) + Sağlık (Badge per cue, ✓ emerald if clean) + Aksiyon (Düzenle + Detay links)
+- tsc --noEmit clean, npm run build clean, Vercel deploy READY (commit d2ec454)
+- Browser-verified 2026-05-17: /products loads 651 ürün; thumbnail column renders product images from XML-imported products; live search input present without submit button; Durum + Stok filter pills; sort dropdown "Son güncellenen" default; health cues (Maliyet yok, Fiyat yok, Düşük stok) visible per row; Düzenle + Detay links functional ✓
+
 ### Phase 11C — Import Decision System
 - Migration `20260517060000_phase11c_import_decision`: `weightKg DECIMAL(10,3)`, `customsRatePct DECIMAL(5,2)`, `shippingMethodPref TEXT` added to Product — all nullable, applied to production Supabase
 - Created `lib/import-decision.ts`: USD-first import economics engine replicating Top.ürünler workbook logic — air (8$/kg, 120-day cycle) and sea (2$/kg, 210-day cycle) scenarios, profit ratio, annual ROI compounding, sea wins if ROI ratio ≥ 1.1, ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA decision, score for ranking

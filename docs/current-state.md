@@ -60,6 +60,7 @@ Implemented modules:
 - data hygiene governance — Phase 23 complete: /admin/data-hygiene, 8 completeness checks (cost, retail price, marketplace price, stock-with-no-cost, xml-no-price, category, barcode, supplier), real-time issue counts, Düzenle links
 - production safety center — Phase 24 complete: /admin/safety, migration history from _prisma_migrations, 8-item safety checklist, dangerous operation registry (9 rows, CRITICAL/HIGH/MEDIUM), docs/MIGRATION-SAFETY.md
 - import decision system — Phase 11C complete: /admin/import-decisions, air/sea freight economics engine (landed cost, profit ratio, annual ROI, ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA), product detail import card, product form import inputs (weightKg/customsRatePct/shippingMethodPref)
+- product operations UX — Phase 25 complete: live search (debounce, ≥2 chars, no submit button), compact filter pills (Durum/Stok), sort by stock/price/margin/name, thumbnail column, health cues per row (Düşük stok/Görsel yok/Maliyet yok/Fiyat yok/XML bayat)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -113,8 +114,14 @@ Current data/product state:
 
 What this means:
 - the system already supports operational CRM relationships between products, categories, and customers
+- the system can already hold import, XML, marketplace, and supplier context around products
 
 What it does not mean:
+- advanced product list sorting/ranking by recent sales and revenue is not implemented yet
+- owner-only product private notes are not implemented yet
+- rich product description authoring is not implemented yet
+- product media workflow is not yet a full multi-image studio
+- XML imports should not yet be assumed to govern curated product truth beyond approved sync fields
 - governance-grade product data quality exists (Phase 23)
 
 ---
@@ -190,6 +197,9 @@ Current meaning:
 - no image pipeline
 - no audit-grade event history
 - no audit-grade event history for financial, permission, stock, marketplace, or quote changes
+- no production-ready product sales snapshot layer for 30-day revenue ranking
+- no owner-only private product intelligence layer
+- no fully governed XML-versus-curated product field overwrite policy in active UI
 - procurement engine now implemented (Phases 19–22)
 
 ---

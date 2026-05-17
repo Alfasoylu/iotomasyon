@@ -24,38 +24,30 @@ Current reality:
 - relationship engine exists
 - task and outreach foundations exist
 - Turkish location layer exists
-- RBAC complete and production-active (Phase 5 ✓)
-- customer intelligence fields live: customerType, monthlySalesPotential, platformNotes (Phase 6 ✓)
-- inventory intelligence complete (Phase 7 ✓)
-- profitability engine complete: per-channel net profit, margin %, ROI %, losing product detection (Phase 8 ✓)
-- sales potential engine complete (Phase 9 ✓): investment score 0–100, BUY/WAIT/DO_NOT_BUY signal
-- capital allocation engine complete (Phase 10 ✓)
-- XML inventory sync complete (Phase 11 ✓)
-- XML product foundation complete (Phase 11A ✓): 649 Entegra products auto-imported, ProductImage (2534 images), XmlProductData snapshot with full USD price grid, multi-image gallery + XML data card on product detail, batched sync (24s, Promise.all, maxDuration=300)
-- marketplace listing registry complete (Phase 12 ✓): /marketplace, 8 platforms, create/edit/delete, product + responsible links
-- marketplace monitoring complete (Phase 13 ✓): /marketplace/monitoring, gap/problem/stale alerts, auto task creation
-- Trendyol API integration complete (Phase 14 ✓): /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config, save+test server actions
-- marketplace profit dashboard complete (Phase 15 ✓): /marketplace/profit, platform breakdown, winners/losers/missing-data/high-stock alerts
-- marketplace operations expansion complete (Phase 16 ✓): Q&A module (fetch + inline answer with audit log), Return Action Center (approve/reject claims with issue reasons), Product Mapping registry, Monthly Exchange Rate management, 4 DB tables, 6 new permissions
-- quote professionalization 2.0 complete (Phase 18 ✓): reusable quote templates (QuoteTemplate + QuoteTemplateItem), /quotes/templates management page, template loading into quote form, product auto price-fill from sellingPriceTry, 2 new permissions (quoteTemplates.read/write)
-- XML product foundation complete (Phase 11A ✓): 649 Entegra products auto-imported, ProductImage (2534 images), XmlProductData snapshot with full USD price grid, multi-image gallery + XML data card on product detail, batched sync in 24s
-- procurement intelligence complete (Phase 19 ✓): /admin/procurement, reorder urgency engine, ranked purchase table, financial summary — needs lead-time/demand data to produce non-UNKNOWN urgencies
-- supplier intelligence complete (Phase 20 ✓): /admin/suppliers CRUD, Supplier + SupplierProduct models, product edit supplier link section with unitCostUsd/moq/leadDays/isPreferred
-- import cost calculator complete (Phase 21 ✓): /admin/import-calculator, landed cost formula (product+freight+customs), per-unit TRY, break-even (min %20 marj), channel margin analysis — browser-verified 2026-05-17
-- executive KPI dashboard complete (Phase 22 ✓): /admin/executive, owner-grade single-page intelligence overview — stock value TRY, capital health, procurement urgency distribution, top-5 profitability — browser-verified 2026-05-17
-- data hygiene governance complete (Phase 23 ✓): /admin/data-hygiene, 8 completeness checks, 4596 total issues and 47 maliyetsiz stoklu detected in production — browser-verified 2026-05-17
-- production safety center complete (Phase 24 ✓): /admin/safety, migration history, dangerous operation registry, MIGRATION-SAFETY.md — browser-verified 2026-05-17
-- import decision system complete (Phase 11C ✓): /admin/import-decisions, air/sea freight economics engine replacing Excel workbook (Top.ürünler), ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA per product — browser-verified 2026-05-17
+- RBAC is production-active
+- inventory, profitability, XML import, marketplace read intelligence, supplier intelligence, import calculator, executive dashboard, and import decision engine all exist in some form
 
-This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, XML-driven inventory management, pre-purchase import cost evaluation, owner-grade executive intelligence, and import buy/skip decisions replacing the Excel workbook. Ready for multi-user rollout.
+This means the product is already useful for:
+- internal CRM operations
+- quote workflows
+- XML-driven inventory intake
+- Trendyol read-side operations
+- pre-purchase import evaluation
+- owner-grade executive review
+- import buy/skip decisions replacing the old workbook
+
 Not yet ready for:
-- marketplace sync/write architecture (Phase 17, DEFERRED)
+- marketplace sync/write architecture
+- advanced product operations UX that can replace manual catalog triage habits
+- sales-ranked product list behavior driven by recent performance data
+- rich product media/content authoring inside the native product workflow
+- owner-only product intelligence with stricter curated-field protection
 
 ---
 
 ## Immediate Priority Stack
 
-### Priority 0 — Safety and Data Governance Baseline
+### Priority 0 - Safety and Data Governance Baseline
 
 Why:
 Schema-heavy phases should not proceed without minimum migration and data-governance safety rules.
@@ -68,18 +60,82 @@ Includes:
 - no destructive production operations without explicit approval
 
 Clarification:
-- this does not mean fully implementing Phase 23 and Phase 24 now
-- it means maintaining minimum safety rules as Phase 7+ implementation proceeds
+- this does not mean fully redoing Phase 23 and Phase 24
+- it means keeping those rules active while the next product-heavy phases are built
 
-### Priority 1 — Phase 25+: Next Roadmap Phases
+### ✓ Phase 25: Product Operations UX — DONE (2026-05-17)
+
+Delivered:
+- thumbnail column 48×48 with lazy loading and 📦 fallback
+- live search debounced 300ms, fires at ≥2 chars, no submit button, case-insensitive on SKU/name/brand/model/barcode
+- compact filter pills: Durum (Tümü/Aktif/Pasif) + Stok (Tümü/Stokta var/Düşük stok)
+- sort dropdown: son güncellenen, stok ↓↑, fiyat ↓↑, marj ↓, isim A–Z
+- health cues per row: Düşük stok, Görsel yok, Maliyet yok, Fiyat yok, XML bayat
+- product count shown, "Filtreyi temizle" when filters active
+- browser-verified 2026-05-17: 651 ürün, all features confirmed ✓
+
+### Priority 1 - Phase 26: Product Performance Ranking
 
 Why:
-Phases 23 and 24 (Data Hygiene + Production Safety) are complete. The system now has a complete governance baseline. Next priorities from ROADMAP.md should be evaluated against current operational needs.
+The owner wants to rank products by recent sales and revenue, not only by static catalog fields.
 
-Candidates:
-- Marketplace write sync (Phase 17 — previously deferred, now unblocked)
-- Quote workflow v2 speed system
-- Additional intelligence layers as data quality improves
+Deliverables:
+- last 30 days sales quantity ranking
+- last 30 days revenue ranking
+- total revenue ranking
+- realized margin visibility on product detail
+- margin-based ranking once sales snapshots are trustworthy
+- product performance filters for:
+  - high revenue / low stock
+  - low margin / high sales
+  - high stock / weak sales
+
+Acceptance:
+- product ranking reflects recent commercial reality
+- rankings are explainable and based on explicit aggregation rules
+- the owner no longer needs off-system product revenue sorting
+
+### Priority 2 - Phase 27: Product Media and Content Studio
+
+Why:
+Product images and descriptions should be manageable inside IOTOMASYON without external hacks.
+
+Deliverables:
+- delete existing images
+- add image by URL and clear the input after enter
+- repeatable URL append flow
+- local image upload
+- multi-image product management
+- primary image control
+- e-commerce style rich text description editor
+- XML description vs manual description governance
+- separation between imported source text and published curated product text
+
+Acceptance:
+- product media/content can be maintained fully inside the app
+- no visual breakage in edit/detail flows
+- XML imports stop competing with manual content entry
+
+### Priority 4 - Phase 28: Product Governance and Private Intelligence
+
+Why:
+Curated product truth should be protected while private sourcing knowledge stays private.
+
+Deliverables:
+- owner-only product private note field
+- product edit activation limited to approved permission groups
+- XML import only updates allowed fields such as stock/price
+- preferred supplier and sourcing context visibility
+- supplier workflow polish on top of the existing multi-supplier foundation
+- clear source governance between:
+  - XML data
+  - curated product truth
+  - private owner intelligence
+
+Acceptance:
+- private sourcing notes are invisible to other users
+- curated product fields stop being unintentionally overwritten by source imports
+- supplier and permission rules become operationally trustworthy
 
 ---
 
@@ -87,28 +143,11 @@ Candidates:
 
 Phase dependencies:
 
-- Phase 5 ✓ complete — multi-user rollout is now safe.
-- Phase 6 ✓ complete — customer intelligence fields are production-active.
-- Phase 7 ✓ complete — inventory intelligence fields are production-active.
-- Phase 8 ✓ complete — per-channel profitability engine is production-active.
-- Phase 9 ✓ complete — investment score and BUY/WAIT/DO_NOT_BUY signal are production-active.
-- Phase 10 ✓ complete — admin capital allocation page with ranked purchase suggestions and reserve safety.
-- Phase 11 ✓ complete — XML inventory sync is production-active.
-- Phase 12 ✓ complete — Marketplace listing registry is production-active.
-- Phase 13 ✓ complete — Marketplace monitoring dashboard is production-active.
-- Phase 14 ✓ complete — Trendyol API integration (read-only) is production-active.
-- Phase 15 ✓ complete — Marketplace profit dashboard is production-active.
-- Phase 16 ✓ complete — Marketplace Operations Expansion is production-active.
-- Phase 18 ✓ complete — Quote Professionalization 2.0 is production-active.
-- Phase 11 provides real stock feed data that improves allocation accuracy.
-- Phase 19 depends on Phase 7, Phase 8, Phase 9, and Phase 20 because procurement logic needs inventory, profitability, demand, and supplier inputs.
-- Phase 20 ✓ complete — supplier intelligence is production-active.
-- Phase 21 ✓ complete — import cost calculator is production-active.
-- Phase 22 ✓ complete — executive KPI dashboard is production-active (browser-verified 2026-05-17).
-- Phase 23 ✓ complete — data hygiene governance page is production-active (browser-verified 2026-05-17).
-- Phase 24 ✓ complete — production safety center is production-active (browser-verified 2026-05-17).
-- Phase 11C ✓ complete — import decision system is production-active (browser-verified 2026-05-17).
-- Priority 0 should be treated as a baseline operating rule before schema-heavy work expands.
+- Phase 25 depends on stable product list/query performance and trusted primary-image behavior.
+- Phase 26 depends on a sales snapshot / aggregation layer; product ranking should not fake 30-day revenue logic from incomplete data.
+- Phase 27 depends on a safe media/storage strategy and an editor choice that does not break current product forms.
+- Phase 28 depends on Phase 5 RBAC foundations plus clear XML field-governance rules.
+- Phase 17 remains deferred even if product UX improves; write-side marketplace control still requires separate architecture review.
 
 ---
 
@@ -122,6 +161,9 @@ DO NOT start:
 - capital automation without admin approval
 - profitability features before cost structure is trustworthy
 - procurement intelligence before inventory and profitability foundations are ready
+- revenue-based product ranking before sales snapshots are trustworthy
+- rich media workflow without a clear storage/delete strategy
+- XML overwriting curated product content after the owner has edited it manually
 
 ---
 

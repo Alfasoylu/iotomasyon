@@ -30,6 +30,10 @@ Current reality:
 - task and outreach foundations are implemented
 - category and relationship structure is implemented
 - intelligence layers defined in `ROADMAP.md` are mostly not implemented yet
+- advanced product operations UX requested by the owner is not implemented yet
+- sales-ranked product list behavior is not implemented yet
+- owner-only product notes are not implemented yet
+- rich media and description authoring for products is not implemented yet
 
 Implemented modules:
 - authentication (single internal auth)
@@ -56,6 +60,7 @@ Implemented modules:
 - executive KPI dashboard (Phase 22: /admin/executive, stock value, capital health, procurement urgency, top-5 profitability)
 - data hygiene governance (Phase 23: /admin/data-hygiene, 8 completeness checks, real-time product issue counts)
 - production safety center (Phase 24: /admin/safety, migration history from _prisma_migrations, dangerous operation registry, safety checklist)
+- product operations UX (Phase 25: live search, thumbnails, compact filter pills, sort by stock/price/margin, health cues per row)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -763,11 +768,79 @@ Verified outcome (browser test 2026-05-17):
 
 ---
 
+## Phase 25 — Product Operations UX
+Status: DONE
+
+Completed:
+- `services/product-service.ts`: added `sort` to `ProductFilters`; `buildOrderBy()` for stock/price/name sorts; case-insensitive search on SKU/name/brand/model/barcode; `has_stock` filter; `images` (take:1) + `productCategory` included in query; margin sort done in JS post-fetch
+- `components/products/product-filters.tsx`: complete rewrite — live search with 300ms debounce (`useEffect` + `useRef`), fires at ≥2 chars or on clear; compact filter pills for Durum (Tümü/Aktif/Pasif) and Stok (Tümü/Stokta var/Düşük stok); sort dropdown with 7 options (son güncellenen, stok ↓↑, fiyat ↓↑, marj ↓, isim A–Z); "Filtreyi temizle" button; product count badge
+- `app/(app)/products/page.tsx`: complete rewrite — `getHealthCues()` per product (Düşük stok/warning, Görsel yok/default, Maliyet yok/danger, Fiyat yok/default, XML bayat/default); 7-column table: thumbnail 48×48 (lazy, object-contain, 📦 fallback) + ürün (name/SKU/brand·model) + kategori + fiyat (₺ formatted) + stok (amber if low, /minimumStock caption) + sağlık badges + aksiyon (Düzenle + Detay links)
+
+Verified outcome (browser test 2026-05-17):
+- /products: "Ürün kataloğu" heading, 651 ürün count in filter bar and footer ✓
+- Search input visible: "SKU, ad, marka veya barkod ara (en az 2 karakter)", no submit button ✓
+- Filter pills: DURUM Tümü/Aktif/Pasif + STOK Tümü/Stokta var/Düşük stok all render ✓
+- Sort dropdown: "Son güncellenen" default + all 7 options ✓
+- Thumbnail column: product images render for XML-imported products ✓
+- Health cues per row: "Maliyet yok", "Fiyat yok", "Düşük stok" badges visible ✓
+- Düzenle + Detay action links per row ✓
+- tsc --noEmit: clean ✓
+- npm run build: clean ✓
+- Vercel deploy: READY (commit d2ec454) ✓
+
+---
+
+## Phase 26 - Product Performance Ranking
+Status: NOT STARTED
+
+Planned scope:
+- last 30 days sales quantity ranking
+- last 30 days revenue ranking
+- total revenue ranking
+- realized margin visibility
+- margin-based ranking once canonical sales snapshots exist
+
+Current gap:
+- product ranking does not yet use recent commercial performance data
+
+---
+
+## Phase 27 - Product Media and Content Studio
+Status: NOT STARTED
+
+Planned scope:
+- multi-image management
+- URL-based image append flow
+- local upload flow
+- rich product description editor
+- XML description vs manual description governance
+
+Current gap:
+- product media and long-form content authoring still rely on basic single-field patterns
+
+---
+
+## Phase 28 - Product Governance and Private Intelligence
+Status: NOT STARTED
+
+Planned scope:
+- owner-only product private notes
+- tighter product edit activation by approved permission groups
+- XML overwrite boundaries for curated product fields
+- supplier workflow polish, preferred supplier behavior, and per-product sourcing context
+
+Current gap:
+- product collaboration and private sourcing knowledge are not yet governed at the depth the owner requested
+
+---
+
 # Technical Debt
 
 - no image pipeline
 - no audit-grade event history
-- no procurement engine
+- no production-ready product sales snapshot layer for 30-day ranking
+- no owner-only private product intelligence layer
+- no fully governed XML-versus-curated product field overwrite policy in active UI
 
 ---
 
