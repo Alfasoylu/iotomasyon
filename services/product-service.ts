@@ -81,6 +81,14 @@ export async function getProductById(id: string) {
             include: { attribute: { select: { id: true, name: true } } },
             orderBy: { createdAt: "asc" as const },
           },
+          // Phase 11A — XML data & images
+          images: {
+            orderBy: { sortOrder: "asc" as const },
+          },
+          xmlData: true,
+          mainProduct: {
+            select: { id: true, sku: true, name: true },
+          },
         },
       }),
     };

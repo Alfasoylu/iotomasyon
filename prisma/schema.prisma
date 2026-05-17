@@ -141,6 +141,12 @@ enum StockConfidence {
   LOW
 }
 
+// Phase 11A — Product classification
+enum ProductKind {
+  MAIN_STOCK      // physical inventory product
+  LISTING_PACKAGE // marketplace listing / variant / bundle product
+}
+
 model ProductAttribute {
   id                String                       @id @default(cuid())
   name              String                       @unique
@@ -339,6 +345,13 @@ model Product {
   installerSalesPotential  Int?
   // Phase 11 — XML Sync override protection
   xmlLocked                Boolean  @default(false)
+  // Phase 11A — XML import tracking
+  xmlImported              Boolean  @default(false)
+  // Phase 11A — Product classification
+  productKind              ProductKind @default(MAIN_STOCK)
+  mainProductId            String?     // for LISTING_PACKAGE → main stock product
+  mainProduct              Product?    @relation("ProductHierarchy", fields: [mainProductId], references: [id], onDelete: SetNull)
+  variantProducts          Product[]   @relation("ProductHierarchy")
   // Phase 16 — USD cost for import-priced products (do NOT remove unitCostTry)
   unitCostUsd              Decimal?
   createdById     String?
@@ -355,6 +368,10 @@ model Product {
   marketplaceListings  MarketplaceListing[]
   marketplaceMappings  MarketplaceProductMapping[]
   quoteTemplateItems   QuoteTemplateItem[]            @relation("TemplateItems")
+  // Phase 11A — multi-image support
+  images               ProductImage[]
+  // Phase 11A — XML source data
+  xmlData              XmlProductData?
 
   @@index([name])
   @@index([barcode])
@@ -365,6 +382,8 @@ model Product {
   @@index([stockConfidence])
   @@index([lastStockCountById])
   @@index([stockQuantity, minimumStock])
+  @@index([mainProductId])
+  @@index([productKind])
 }
 
 model Customer {
@@ -636,6 +655,7 @@ model XmlSyncLog {
   completedAt    DateTime?
   status         XmlSyncStatus @default(RUNNING)
   recordsFound   Int           @default(0)
+  recordsCreated Int           @default(0)  // Phase 11A: new products created from XML
   recordsUpdated Int           @default(0)
   recordsSkipped Int           @default(0)
   errorMessage   String?
@@ -793,4 +813,69 @@ model OutreachRecipient {
   @@index([campaignId])
   @@index([customerId])
   @@index([quoteId])
+}
+
+// Phase 11A — Product multi-image support
+// sortOrder 0 = primary image (maps to resim1), 1-4 = resim2-5
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  sortOrder Int     @default(0)  // 0=primary
+  source    String  @default("XML")  // XML | MANUAL
+  altText   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@index([productId])
+}
+
+// Phase 11A — XML source data snapshot per product (one row per product)
+// Stores raw XML feed values without polluting the Product master record.
+// These are informational; IOTOMASYON product fields are the business truth.
+model XmlProductData {
+  id                     String    @id @default(cuid())
+  productId              String    @unique  // one row per product
+  sourceId               String?            // which XmlSyncSource produced this
+  xmlSku                 String             // urun_kodu
+  xmlName                String?            // urun_ismi
+  xmlBrand               String?            // marka
+  xmlUrunTipi            String?            // urun_tipi (informational, not business truth)
+  xmlCurrencyType        String?            // CurrencyType (USD/TRY)
+  xmlKdv                 Decimal?           // KDV rate
+  xmlDateChange          String?            // date_change raw string
+  xmlDateAdd             String?            // date_add raw string
+  xmlAnaUrunKodu         String?            // ana_urun_kodu (parent product code)
+  // USD-denominated marketplace prices from XML
+  xmlPrice4              Decimal?           // base price (price4)
+  xmlTrendyolPrice       Decimal?           // trendyol_salePrice
+  xmlHbPrice             Decimal?           // hb_price
+  xmlAmazonPrice         Decimal?           // amazon_price
+  xmlPazaramaPrice       Decimal?           // pazarama_salePrice
+  xmlIdefixPrice         Decimal?           // idefix_sale_price
+  xmlBayiPrice           Decimal?           // bayi (dealer)
+  xmlKoctasPrice         Decimal?           // koctas
+  xmlTeknosaPrice        Decimal?           // teknosa_sale_price
+  xmlTemuPrice           Decimal?           // temu_sale_price
+  // Textual content
+  xmlDescription         String?            // aciklama
+  // Image URLs (preserved for reference even if ProductImage table is used)
+  xmlImage1              String?
+  xmlImage2              String?
+  xmlImage3              String?
+  xmlImage4              String?
+  xmlImage5              String?
+  // Sync tracking
+  firstSeenAt            DateTime  @default(now())
+  lastSeenAt             DateTime  @default(now())
+  missingFromLatestFeed  Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  product                Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([xmlSku])
+  @@index([lastSeenAt])
+  @@index([missingFromLatestFeed])
 }

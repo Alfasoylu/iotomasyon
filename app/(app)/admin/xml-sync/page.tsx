@@ -116,6 +116,7 @@ export default async function XmlSyncPage() {
                           <th className="py-2 pr-4 text-left text-slate-400 font-semibold uppercase tracking-wide">Bitiş</th>
                           <th className="py-2 pr-4 text-left text-slate-400 font-semibold uppercase tracking-wide">Durum</th>
                           <th className="py-2 pr-4 text-right text-slate-400 font-semibold uppercase tracking-wide">Bulunan</th>
+                          <th className="py-2 pr-4 text-right text-slate-400 font-semibold uppercase tracking-wide">Oluşturulan</th>
                           <th className="py-2 pr-4 text-right text-slate-400 font-semibold uppercase tracking-wide">Güncellenen</th>
                           <th className="py-2 text-right text-slate-400 font-semibold uppercase tracking-wide">Atlanan</th>
                         </tr>
@@ -131,6 +132,7 @@ export default async function XmlSyncPage() {
                               </span>
                             </td>
                             <td className="py-2 pr-4 text-right">{log.recordsFound}</td>
+                            <td className="py-2 pr-4 text-right text-blue-600 font-medium">{log.recordsCreated}</td>
                             <td className="py-2 pr-4 text-right text-emerald-600 font-medium">{log.recordsUpdated}</td>
                             <td className="py-2 text-right text-slate-400">{log.recordsSkipped}</td>
                           </tr>
@@ -163,11 +165,15 @@ export default async function XmlSyncPage() {
 
       {/* Info */}
       <Card className="border-blue-200 bg-blue-50 p-6">
-        <p className="text-sm font-semibold text-blue-800 mb-2">Manuel override koruması</p>
+        <p className="text-sm font-semibold text-blue-800 mb-2">Senkronizasyon davranışı (Phase 11A)</p>
         <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
-          <li>Üründe <strong>XML kilidi</strong> aktifse senkronizasyon o ürünü tamamen atlar.</li>
-          <li>Stok kaynağı <strong>Manuel giriş</strong> olan ürünlerin stoğu güncellenmez — sadece fiyat güncellenir.</li>
-          <li>Otomatik senkronizasyon günde bir kez 02:00 UTC'de çalışır (Vercel Cron).</li>
+          <li>Feed&apos;de bulunan ancak veritabanında olmayan SKU&apos;lar için <strong>yeni ürün oluşturulur</strong> (xmlImported=true).</li>
+          <li>Üründe <strong>XML kilidi</strong> aktifse ürün alanları atlanır; ancak XML anlık görüntüsü yine güncellenir.</li>
+          <li>Stok kaynağı <strong>Manuel giriş</strong> olan ürünlerin stoğu güncellenmez.</li>
+          <li>Her ürünün <strong>resim1–resim5</strong> görselleri ProductImage tablosunda saklanır.</li>
+          <li>Önceki feed&apos;de görülen ancak güncel feed&apos;de olmayan ürünler <strong>eksik</strong> olarak işaretlenir (silinmez).</li>
+          <li>Ham XML fiyatları (USD) XmlProductData tablosunda saklanır; ürün fiyat alanlarına yazılmaz.</li>
+          <li>Otomatik senkronizasyon günde bir kez 02:00 UTC&apos;de çalışır (Vercel Cron).</li>
         </ul>
       </Card>
     </div>

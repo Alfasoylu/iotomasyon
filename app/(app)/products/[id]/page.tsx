@@ -132,6 +132,8 @@ export default async function ProductDetailPage({
                 {BUY_SIGNAL_LABELS[salesPotential.buySignal]}
               </Badge>
             ) : null}
+            {product.xmlImported ? <Badge tone="default">XML İthalatı</Badge> : null}
+            {product.productKind === "LISTING_PACKAGE" ? <Badge tone="default">Listeleme Paketi</Badge> : null}
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
             {product.name}
@@ -158,7 +160,23 @@ export default async function ProductDetailPage({
         </div>
       </div>
 
-      {product.imageUrl && (
+      {/* Phase 11A — Image gallery (multi-image from XML, falls back to single imageUrl) */}
+      {product.images && product.images.length > 0 ? (
+        <Card className="overflow-hidden p-4">
+          <div className="flex gap-3 overflow-x-auto">
+            {product.images.map((img, idx) => (
+              <a key={img.id} href={img.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.url}
+                  alt={img.altText ?? `${product.name} — resim ${idx + 1}`}
+                  className={`rounded-lg object-contain bg-slate-50 ${idx === 0 ? "h-64 w-64" : "h-24 w-24 border border-slate-200"}`}
+                />
+              </a>
+            ))}
+          </div>
+        </Card>
+      ) : product.imageUrl ? (
         <Card className="overflow-hidden p-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -167,7 +185,7 @@ export default async function ProductDetailPage({
             className="h-64 w-full object-contain bg-slate-50 p-4"
           />
         </Card>
-      )}
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
@@ -446,6 +464,60 @@ export default async function ProductDetailPage({
           ) : null}
         </div>
       ) : null}
+
+      {/* Phase 11A — XML source data section */}
+      {product.xmlData && (
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-slate-950">XML Kaynak Verisi</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Entegra feed&apos;inden son alınan ham değerler. Bunlar bilgilendirme amaçlıdır;
+            ürün alanları iş verisidir.
+          </p>
+          <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Info label="XML SKU" value={product.xmlData.xmlSku} mono />
+            <Info label="XML Adı" value={product.xmlData.xmlName} />
+            <Info label="XML Marka" value={product.xmlData.xmlBrand} />
+            <Info label="Para Birimi" value={product.xmlData.xmlCurrencyType} />
+            <Info label="KDV" value={product.xmlData.xmlKdv != null ? `%${Number(product.xmlData.xmlKdv)}` : null} />
+            <Info label="Ürün Tipi" value={product.xmlData.xmlUrunTipi} />
+            <Info label="Ana Ürün Kodu" value={product.xmlData.xmlAnaUrunKodu} mono />
+            <Info label="İlk Görülme" value={product.xmlData.firstSeenAt ? formatDateTime(product.xmlData.firstSeenAt) : null} />
+            <Info label="Son Görülme" value={product.xmlData.lastSeenAt ? formatDateTime(product.xmlData.lastSeenAt) : null} />
+            {product.xmlData.missingFromLatestFeed && (
+              <div className="sm:col-span-2 lg:col-span-3">
+                <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                  Son feed&apos;de bu ürün bulunamadı
+                </span>
+              </div>
+            )}
+          </dl>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {product.xmlData.xmlPrice4 != null && <Info label="Fiyat (price4/USD)" value={`$${Number(product.xmlData.xmlPrice4).toFixed(4)}`} />}
+            {product.xmlData.xmlTrendyolPrice != null && <Info label="Trendyol Fiyatı" value={`$${Number(product.xmlData.xmlTrendyolPrice).toFixed(4)}`} />}
+            {product.xmlData.xmlHbPrice != null && <Info label="HB Fiyatı" value={`$${Number(product.xmlData.xmlHbPrice).toFixed(4)}`} />}
+            {product.xmlData.xmlAmazonPrice != null && <Info label="Amazon Fiyatı" value={`$${Number(product.xmlData.xmlAmazonPrice).toFixed(4)}`} />}
+            {product.xmlData.xmlPazaramaPrice != null && <Info label="Pazarama Fiyatı" value={`$${Number(product.xmlData.xmlPazaramaPrice).toFixed(4)}`} />}
+            {product.xmlData.xmlIdefixPrice != null && <Info label="Idefix Fiyatı" value={`$${Number(product.xmlData.xmlIdefixPrice).toFixed(4)}`} />}
+            {product.xmlData.xmlBayiPrice != null && <Info label="Bayi Fiyatı" value={`$${Number(product.xmlData.xmlBayiPrice).toFixed(4)}`} />}
+            {product.xmlData.xmlKoctasPrice != null && <Info label="Koçtaş Fiyatı" value={`$${Number(product.xmlData.xmlKoctasPrice).toFixed(4)}`} />}
+            {product.xmlData.xmlTeknosaPrice != null && <Info label="Teknosa Fiyatı" value={`$${Number(product.xmlData.xmlTeknosaPrice).toFixed(4)}`} />}
+            {product.xmlData.xmlTemuPrice != null && <Info label="Temu Fiyatı" value={`$${Number(product.xmlData.xmlTemuPrice).toFixed(4)}`} />}
+          </div>
+        </Card>
+      )}
+
+      {/* Phase 11A — Classification: parent product link */}
+      {product.mainProduct && (
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold text-slate-950">Ürün Hiyerarşisi</h2>
+          <p className="mt-2 text-sm text-slate-500">Bu ürün bir listeleme paketidir.</p>
+          <div className="mt-3">
+            <Link href={`/products/${product.mainProduct.id}`} className="text-sm font-medium text-slate-700 hover:text-slate-900 underline">
+              Ana ürün: {product.mainProduct.name} ({product.mainProduct.sku})
+            </Link>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
