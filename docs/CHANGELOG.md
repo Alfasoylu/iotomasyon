@@ -73,6 +73,16 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
+### Phase 45 — Trendyol Stock Sync (2026-05-17)
+- Added `updateTrendyolInventory()` to `lib/trendyol-api.ts` — PUT `/integration/product/sellers/{id}/products/price-and-inventory` with batches of 100, returns `batchRequestId`
+- `getTrendyolStockPushPreviewAction()`: EXECUTIVE_READ gated; reads all TRENDYOL MarketplaceProductMapping entries joined with Product; skips rows without platformBarcode or sellingPriceTry; returns preview rows
+- `pushTrendyolStockAction()`: EXECUTIVE_READ gated; splits into batches of 100; pushes stockQuantity + sellingPriceTry (as both salePrice and listPrice); returns array of batchIds
+- `TrendyolStockPushButton` client component: shows product count, transitions to "Gönderiliyor…" then "✓ Tamamlandı"; displays batchIds on success with async note
+- `/admin/trendyol-stock-sync` page: KPI cards (Gönderilecek / Sıfır Stok / Düşük Stok / Atlanan), push action card, preview table (product link / SKU / barcode / stock / price)
+- "Trendyol Stok Senkronu" nav link added (EXECUTIVE_READ)
+- No schema change — reads MarketplaceProductMapping + Product
+- tsc clean, browser-verified 2026-05-17: 2 matched products shown, push button renders, nav link active ✓
+
 ### Phase 44 — Stock Health Dashboard (2026-05-17)
 - New page `/admin/stock-health` (EXECUTIVE_READ gated)
 - Parallel-fetches all products, 30-day `TrendyolSalesRecord`, last 15 `StockAdjustmentLog` entries

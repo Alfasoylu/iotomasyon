@@ -129,6 +129,17 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 17 — Trendyol Stock Sync (Phase 45, 2026-05-17)
+
+Delivered:
+- `updateTrendyolInventory()` in trendyol-api.ts: PUT price-and-inventory endpoint, PRODUCT_BASE_URL, batches of 100
+- `getTrendyolStockPushPreviewAction()`: read-only preview — all TRENDYOL mappings with platformBarcode + sellingPriceTry joined with product data
+- `pushTrendyolStockAction()`: EXECUTIVE_READ gated, groups into batches of 100, returns batchIds array
+- `TrendyolStockPushButton`: client component with transition states + batchId display
+- `/admin/trendyol-stock-sync`: preview page, KPI cards, push action card, product table
+- "Trendyol Stok Senkronu" nav link added
+- Browser-verified 2026-05-17: 2 matched products, push button renders, KPI cards show correctly ✓
+
 ### ✓ Priority 16 — Stock Health Dashboard (Phase 44, 2026-05-17)
 
 Delivered:

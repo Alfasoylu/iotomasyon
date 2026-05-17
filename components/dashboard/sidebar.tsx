@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 44 aktif
+          Faz 45 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Stok Sağlığı Paneli: Critical/Low/Healthy sınıflandırması, 30 günlük Trendyol hızı, kapsam-gün rozetleri, son 15 stok hareketi.
+            Trendyol Stok Senkronu: eşleşmiş ürünlerin iç stok miktarları PUT price-and-inventory ile Trendyol'a gönderilir, batch ID takibi.
           </p>
         </div>
       </aside>
