@@ -32,8 +32,7 @@ Current reality:
 - intelligence layers defined in `ROADMAP.md` are mostly not implemented yet
 - advanced product operations UX requested by the owner is not implemented yet
 - sales-ranked product list behavior is not implemented yet
-- owner-only product notes are not implemented yet
-- rich media and description authoring for products is not implemented yet
+- owner-only product notes are implemented (Phase 28 — EXECUTIVE_READ gated privateNote)
 
 Implemented modules:
 - authentication (single internal auth)
@@ -62,6 +61,8 @@ Implemented modules:
 - production safety center (Phase 24: /admin/safety, migration history from _prisma_migrations, dangerous operation registry, safety checklist)
 - product operations UX (Phase 25: live search, thumbnails, compact filter pills, sort by stock/price/margin, health cues per row)
 - product performance ranking (Phase 26: Trendyol order sync, 90-day windowed fetch, barcode/SKU matching, 30d sales/revenue ranking, realized margin, performance signal cards, per-product KPI tile)
+- product media and content studio (Phase 27: multi-image manager, Tiptap rich text editor, Supabase Storage upload, XML description governance)
+- product governance and private intelligence (Phase 28: EXECUTIVE_READ-gated privateNote, PrivateNoteEditor, supplier summary on detail page, description max 10000)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -837,10 +838,27 @@ Browser verified (2026-05-17):
 ---
 
 ## Phase 28 - Product Governance and Private Intelligence
-Status: NOT STARTED
+Status: DONE
 
-Planned scope:
-- owner-only product private notes
+Delivered (2026-05-17):
+- Product.privateNote TEXT column — safe additive migration (20260517120000_phase28_private_note), applied to production DB
+- updatePrivateNoteAction: separate server action gated by EXECUTIVE_READ + PRODUCTS_UPDATE; never touched by the main product update flow
+- PrivateNoteEditor client component: standalone textarea with char counter (0/5000), amber badge "🔒 Sadece sahip görebilir", "Notu kaydet" button with pending/saved/error states
+- Product edit page: canViewPrivate flag (EXECUTIVE_READ check server-side), amber-accented "Faz 28 — Özel Zeka" card rendered only when authorized
+- Product detail page: "Tedarikçi Kaynağı" card (always visible when supplier links exist, shows ★ Tercihli badge + cost/lead days/MOQ); "🔒 Özel Not" read-only card (EXECUTIVE_READ gated, only when privateNote is non-null)
+- description validation max increased from 2000 → 10000 to accommodate Tiptap HTML output
+- XML sync field governance: normalizeProductData explicitly omits privateNote — XML import can never overwrite owner intelligence
+
+Browser verified (2026-05-17):
+- Edit page loads after migration applied ✓
+- PrivateNoteEditor visible (amber card with 🔒 badge, textarea, "Notu kaydet" button) ✓
+- Note saved to DB via updatePrivateNoteAction: "Browser test notu: UV-82 için Çin'den ithalat planı — 2026-05-17 Phase 28 doğrulama." confirmed in Supabase ✓
+- Detail page shows note under "🔒 Özel Not" card ✓
+- Detail page shows "Tedarikçi Kaynağı" supplier summary card ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit ceac815) ✓
+
+Planned scope (partially deferred to future iteration):
 - tighter product edit activation by approved permission groups
 - XML overwrite boundaries for curated product fields
 - supplier workflow polish, preferred supplier behavior, and per-product sourcing context
@@ -990,7 +1008,7 @@ Needed next:
 # Last Updated
 
 Date:
-2026-05-17 (Phase 27 browser-verified)
+2026-05-17 (Phase 28 browser-verified)
 
 Alignment source:
 `ROADMAP.md`

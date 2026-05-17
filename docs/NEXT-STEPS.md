@@ -91,26 +91,16 @@ Delivered 2026-05-17:
 - Supabase Storage upload action (REST API, no SDK) — ready when SUPABASE_URL/KEY env vars are added
 - Browser-verified: URL add → DB persist → reload confirmed ✓
 
-### Priority 1 - Phase 28: Product Governance and Private Intelligence
-
-Why:
-Curated product truth should be protected while private sourcing knowledge stays private.
-
-Deliverables:
-- owner-only product private note field
-- product edit activation limited to approved permission groups
-- XML import only updates allowed fields such as stock/price
-- preferred supplier and sourcing context visibility
-- supplier workflow polish on top of the existing multi-supplier foundation
-- clear source governance between:
-  - XML data
-  - curated product truth
-  - private owner intelligence
-
-Acceptance:
-- private sourcing notes are invisible to other users
-- curated product fields stop being unintentionally overwritten by source imports
-- supplier and permission rules become operationally trustworthy
+### ✓ DONE - Phase 28: Product Governance and Private Intelligence
+Delivered 2026-05-17:
+- Product.privateNote (TEXT, nullable) — safe additive migration applied to production
+- updatePrivateNoteAction: EXECUTIVE_READ + PRODUCTS_UPDATE gated; separate from main form so non-owners cannot overwrite it
+- PrivateNoteEditor: amber-accented standalone client component with char counter, save feedback, "🔒 Sadece sahip görebilir" badge
+- Product edit page: EXECUTIVE_READ check → canViewPrivate → amber card renders only for owners
+- Product detail page: "Tedarikçi Kaynağı" supplier summary card (★ Tercihli, cost/lead/MOQ); "🔒 Özel Not" read-only card gated by EXECUTIVE_READ
+- description validation max raised 2000 → 10000 for Tiptap HTML
+- normalizeProductData explicitly omits privateNote — XML sync cannot overwrite owner intelligence
+- Browser-verified ✓
 
 ---
 

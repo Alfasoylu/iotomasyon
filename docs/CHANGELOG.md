@@ -268,6 +268,17 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 28 — Product Governance and Private Intelligence
+- Migration `20260517120000_phase28_private_note`: adds `privateNote TEXT` to `Product` table — nullable, additive, non-destructive; applied to production Supabase
+- Created `lib/actions/product-actions.ts` → `updatePrivateNoteAction`: requires EXECUTIVE_READ + PRODUCTS_UPDATE; saves `product.privateNote` with `trim() || null`; revalidates edit + detail paths; intentionally separate from `updateProductAction` so non-owners cannot accidentally overwrite private intelligence
+- Created `components/products/private-note-editor.tsx`: standalone client component using `useTransition`; amber-accented with `🔒 Sadece sahip görebilir` badge; textarea (5000 char limit with live counter); "Notu kaydet" button with pending/saved(3s)/error feedback
+- Updated `app/(app)/products/[id]/edit/page.tsx`: added `checkPermission(user, PERMISSIONS.EXECUTIVE_READ)` to parallel data fetch → `canViewPrivate`; added amber-bordered "Faz 28 — Özel Zeka" card with `PrivateNoteEditor` (only renders when `canViewPrivate=true`)
+- Updated `app/(app)/products/[id]/page.tsx`: added `checkPermission(user, PERMISSIONS.EXECUTIVE_READ)` + `supplierProduct.findMany` to parallel fetch; "Tedarikçi Kaynağı" card — renders when `supplierLinks.length > 0`, shows ★ Tercihli badge for `isPreferred`, unit cost/lead days/MOQ inline; "🔒 Özel Not" read-only card — renders only when `canViewPrivate && product.privateNote`; both at bottom of detail page
+- Updated `lib/validations/product.ts`: `description` max raised from 2000 → 10000 (Tiptap HTML output regularly exceeds 2000 chars with formatted content)
+- `normalizeProductData` in product-actions.ts explicitly omits `privateNote` with inline comment — XML import and normal product updates can never overwrite owner intelligence
+- tsc --noEmit clean, Vercel deploy READY (commit ceac815)
+- Browser-verified 2026-05-17: edit page loads after migration ✓; amber private note card visible with 🔒 badge ✓; note saved to DB via action ("Browser test notu: UV-82 için Çin'den ithalat planı — 2026-05-17 Phase 28 doğrulama.") confirmed via Supabase SQL ✓; detail page shows saved note under "🔒 Özel Not" ✓; "Tedarikçi Kaynağı" supplier card visible ✓
+
 ### Phase 27 — Product Media and Content Studio
 - Installed Tiptap (`@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extension-link`) for rich text description authoring
 - Created `components/products/rich-text-editor.tsx`: Tiptap-based WYSIWYG editor; SSR-safe with `mounted` guard (renders placeholder before hydration); toolbar with H2, H3, Bold, Italic, Bullet list, Ordered list; outputs HTML to react-hook-form via `onChange`; syncs external value changes (e.g. "XML'den al") via `lastPushedValue` ref to prevent infinite update loops
