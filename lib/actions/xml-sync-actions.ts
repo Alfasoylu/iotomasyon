@@ -208,11 +208,10 @@ export async function runSync(
       updated++;
     }
 
-    // Run stock updates in batches of 20 with extended timeout
+    // Run stock updates in parallel batches (independent updates — no transaction needed)
     for (const batch of chunks(stockUpdates, 20)) {
-      await prisma.$transaction(
+      await Promise.all(
         batch.map(({ id, data }) => prisma.product.update({ where: { id }, data })),
-        { timeout: 30_000 },
       );
     }
 
@@ -229,8 +228,9 @@ export async function runSync(
       if (productId) xmlItems.push({ productId, rec });
     }
 
-    for (const batch of chunks(xmlItems, 50)) {
-      await prisma.$transaction(
+    // XmlProductData upserts: parallel batches (each upsert is independent by productId)
+    for (const batch of chunks(xmlItems, 20)) {
+      await Promise.all(
         batch.map(({ productId, rec }) => {
           const data = buildXmlDataPayload(sourceId, rec, now);
           return prisma.xmlProductData.upsert({
@@ -239,7 +239,6 @@ export async function runSync(
             update: data,
           });
         }),
-        { timeout: 30_000 },
       );
     }
 
