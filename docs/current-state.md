@@ -46,12 +46,14 @@ Implemented modules:
 - sales potential engine — Phase 9 complete: per-channel demand estimates, projected monthly revenue/profit, investment score 0–100, BUY/WAIT/DO_NOT_BUY signal
 - capital allocation engine — Phase 10 complete: admin-only /admin/capital, ranked purchase suggestions, reserve safety, persistent config
 - XML inventory sync — Phase 11 complete: /admin/xml-sync, XmlSyncSource/XmlSyncLog, manual trigger, daily Vercel cron, xmlLocked override protection
+- XML product foundation — Phase 11A complete: 649 Entegra products auto-imported, ProductImage (2534 images), XmlProductData (649 rows with all 21 USD price fields), multi-image gallery + XML data card on product detail, batched sync in 24s (Promise.all, maxDuration=300), flat Entegra format auto-detected
 - marketplace listing registry — Phase 12 complete: /marketplace, MarketplaceListing table, 8 platforms, 4 statuses, create/edit/delete, product + responsible links
 - marketplace monitoring dashboard — Phase 13 complete: /marketplace/monitoring, gap/problem/stale alert sections, auto task creation
 - Trendyol API integration — Phase 14 complete: /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config with save+test actions (live-verified: 437 orders, 155 returns, "Bağlantı başarılı." ✓)
 - marketplace profit dashboard — Phase 15 complete: /marketplace/profit, winners/losers/missing-data/high-stock signal, platform breakdown grid
 - marketplace operations expansion — Phase 16 complete: /marketplace/trendyol/questions (Q&A + inline answer), /marketplace/trendyol/returns (approve/reject claims), /admin/exchange-rates, /admin/marketplace-mappings; 4 new DB tables, 6 new permissions, full audit trail
 - quote professionalization 2.0 — Phase 18 complete: reusable quote templates (QuoteTemplate + QuoteTemplateItem), template management page, template loading into quote form, product auto price-fill from sellingPriceTry, 2 new permissions
+- procurement intelligence — Phase 19 complete: /admin/procurement, reorder urgency engine (CRITICAL/HIGH/MEDIUM/LOW/OK/UNKNOWN), ranked purchase table, financial summary (suggested cost + projected profit), graceful empty state
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1

@@ -162,6 +162,25 @@
 - Override rules: xmlLocked=true skips product entirely; stockSource=MANUAL skips stock update, price still updated
 - Sync log persists per-run: found/updated/skipped counts + error message
 
+### Phase 11A — XML Product Foundation
+- Added `ProductKind` enum (MAIN_STOCK / LISTING_PACKAGE) and self-referential `Product.mainProductId` hierarchy
+- Added `ProductImage` model: multi-image support per product (resim1–5, sortOrder 0–4, source XML|MANUAL)
+- Added `XmlProductData` model: one row per product, stores all 21 Entegra XML feed fields as raw snapshot (USD prices, marketplace prices, KDV, dates, parent code, images)
+- Added `XmlSyncLog.recordsCreated` column for tracking new products created per sync run
+- Applied migration `20260517030000_phase11a_xml_product_foundation` to production Supabase
+- Rewrote `lib/xml-sync.ts`: auto-detect Format A (wrapped `<Urun>`) vs Format B (flat Entegra, no wrapper — products delimited by `<urun_kodu>`); fixed 0-record bug on real iotomasyon.xml feed
+- Rewrote `lib/actions/xml-sync-actions.ts` with batched DB operations:
+  - `findMany` for all SKUs at once, `createManyAndReturn` for batch product creation
+  - `Promise.all(batch of 20)` for XmlProductData upserts and stock updates (eliminates transaction timeout)
+  - `deleteMany` + `createMany` for ProductImage (2 queries total per sync)
+  - Creates new products with `xmlImported=true` for unmatched SKUs; respects xmlLocked and MANUAL stock override
+  - Fixes stuck RUNNING logs from previous timeouts at start of each sync run
+- Added `maxDuration = 300` to `/admin/xml-sync` page (Vercel Server Action timeout for 660-product syncs)
+- Added "Oluşturulan" column to XML sync admin log table
+- Product detail page: multi-image gallery, "XML Kaynak Verisi" data card with full USD price grid, "XML İthalatı" badge, parent product link section
+- Extended `getProductById` to include `images`, `xmlData`, `mainProduct`
+- Browser-verified: 649 products synced in 24 seconds, 2534 images stored, all XmlProductData rows populated
+
 ### Phase 10 — Capital Allocation Engine (ADMIN ONLY)
 - Created `CapitalConfig` table: totalCapitalTry, reservePct, desiredTurnoverMonths
 - Applied migration to production Supabase PostgreSQL
@@ -248,6 +267,22 @@
 - Created `components/marketplace/listing-form.tsx`: platform/status dropdowns, create/edit/delete modes
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
+
+### Phase 19 — Procurement Intelligence Engine
+- Created `lib/procurement.ts`: pure calculation module, no new DB schema
+  - `ReorderUrgency` enum: CRITICAL / HIGH / MEDIUM / LOW / OK / UNKNOWN
+  - `calculateProcurement()`: daysRemaining, urgencyRank, suggestedOrderQty, suggestedCost, projectedMonthlyProfit
+  - Urgency thresholds: stock=0→CRITICAL, ≤leadTime×1.5→HIGH, ≤leadTime×3→MEDIUM, ≤leadTime×6→LOW, else OK
+  - `suggestedOrderQty` covers `targetCoverageMo` (default 3 months) after transit consumption
+  - Turkish labels, tone classes, `urgencyRank()` sort helper
+- Created `app/(app)/admin/procurement/page.tsx` (EXECUTIVE_READ-gated):
+  - Fetches all active products with 20 pricing/demand/stock/lead-time fields
+  - Summary cards: CRITICAL / YÜKSEK / ORTA / DÜŞÜK / VERİ YOK urgency counts
+  - Financial summary: total suggested cost, projected monthly profit (CRITICAL+HIGH only)
+  - Ranked purchase table: SKU, name, stock, urgency badge, days left, suggested qty, cost, projected profit
+  - Graceful empty state when no urgent products
+  - Amber advisory banner ("Bu liste öneridir — satın alma kararı veriniz")
+- Browser-verified: page loads, summary cards render, graceful empty state for UNKNOWN products
 
 ### Phase 18 — Quote Professionalization 2.0
 - Created `QuoteTemplate` table: id, name, description, paymentTerms, deliveryTerms, warrantyTerms, notes, currencyMode (enum), isActive, createdById (FK → User), timestamps

@@ -347,6 +347,43 @@ Verified outcome:
 
 ---
 
+## Phase 11A — XML Product Foundation
+Status: DONE
+
+Completed:
+- `ProductKind` enum added: MAIN_STOCK / LISTING_PACKAGE
+- `Product` table: `xmlImported BOOLEAN DEFAULT false`, `productKind`, `mainProductId` (self-referential FK)
+- `ProductImage` model: id, productId (FK CASCADE), url, sortOrder (0=primary), source (XML|MANUAL), altText
+- `XmlProductData` model: productId @unique, sourceId, all 21 Entegra XML fields (xmlSku, xmlName, xmlBrand, xmlPrice4, xmlTrendyolPrice, xmlHbPrice, xmlAmazonPrice, xmlPazaramaPrice, xmlIdefixPrice, xmlBayiPrice, xmlKoctasPrice, xmlTeknosaPrice, xmlTemuPrice, xmlCurrencyType, xmlKdv, xmlUrunTipi, xmlDateChange, xmlDateAdd, xmlAnaUrunKodu, xmlDescription, xmlImage1–5, lastSeenAt, missingFromLatestFeed)
+- `XmlSyncLog.recordsCreated Int @default(0)` added
+- Migration applied to production Supabase: `20260517030000_phase11a_xml_product_foundation`
+- `lib/xml-sync.ts` rewritten: auto-detects Format A (wrapped `<Urun>`) vs Format B (flat Entegra, delimited by `<urun_kodu>`); `parseProductBlock()` shared helper; CDATA-aware `getTag()`, `parsePositiveDecimal`, `parseNonNegInt` helpers; `sanitizeAnaUrunKodu` strips `[parent_product_code]` literal
+- `lib/actions/xml-sync-actions.ts` rewritten for Phase 11A behaviour:
+  - Fix stuck RUNNING logs from previous timeouts at start of each `runSync()`
+  - `findMany` all existing products by SKU list (1 query, not 660 individual)
+  - `createManyAndReturn` for new products (1 query, not 660 individual)
+  - `Promise.all` in batches of 20 for XmlProductData upserts (parallel, no transaction timeout)
+  - `Promise.all` in batches of 20 for stock/imageUrl updates on existing products
+  - `deleteMany` + `createMany` for ProductImage (2 queries total)
+  - Creates new `Product` rows with `xmlImported=true` for unmatched SKUs
+  - Respects `xmlLocked` (skips product field updates, still upserts XML snapshot + images)
+  - Respects `stockSource=MANUAL` (skips stock update)
+  - Marks `missingFromLatestFeed=true` for products absent from current feed
+- `app/(app)/admin/xml-sync/page.tsx`: added `maxDuration = 300` (Vercel Pro Server Action timeout); added "Oluşturulan" column to sync log table
+- `app/(app)/products/[id]/page.tsx`: multi-image gallery (primary 64×64 + thumbnail strip), "XML Kaynak Verisi" card (all 21 fields + USD price grid + missingFromLatestFeed badge), "XML İthalatı" classification badge, parent product link section
+- `services/product-service.ts`: `getProductById` includes `images`, `xmlData`, `mainProduct`
+
+Verified outcome:
+- Migration applied: ✓
+- XML parser local test: 660 products from `iotomasyon.xml` flat-format feed ✓
+- Browser sync triggered → SUCCESS: 649 recordsFound, 649 recordsUpdated, 0 errors, 24 seconds ✓
+- DB state: 651 total products (649 xmlImported), 649 XmlProductData rows, 2534 ProductImage rows ✓
+- Product detail page `AH-TDA7492P`: "XML İthalatı" badge, "XML Kaynak Verisi" card with USD prices, stockSource "XML senkronizasyon", lastSyncAt 17 May 2026 01:03 ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit aa2dc8f) ✓
+
+---
+
 ## Phase 12 — Marketplace Listing Registry
 Status: DONE
 
@@ -509,14 +546,26 @@ Verified outcome (browser test 2026-05-17):
 ---
 
 ## Phase 19 — Procurement Intelligence
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- procurement signal engine
-- supplier-aware reorder logic
-- reorder urgency
-- expected cash conversion time
-- actionable purchasing assistant outputs
+Completed:
+- `lib/procurement.ts`: pure calculation module — `ReorderUrgency` enum (CRITICAL/HIGH/MEDIUM/LOW/OK/UNKNOWN), `calculateProcurement()` returns daysRemaining, urgencyRank, suggestedOrderQty, suggestedCost, projectedMonthlyProfit; thresholds: stock=0→CRITICAL, ≤lead×1.5→HIGH, ≤lead×3→MEDIUM, ≤lead×6→LOW, else OK; `URGENCY_LABELS` (TR), `URGENCY_TONES`, `urgencyRank()` helpers
+- `app/(app)/admin/procurement/page.tsx` (EXECUTIVE_READ-gated):
+  - Fetches all active products with 20 pricing/demand/stock/lead-time fields
+  - Runs `calculateProcurement()` per product, sorts by urgency rank ASC → investment score DESC
+  - Summary cards: CRITICAL / YÜKSEK / ORTA / DÜŞÜK / VERİ YOK counts
+  - Financial summary: total suggested cost + projected monthly profit (CRITICAL+HIGH)
+  - Ranked table with 10 columns (SKU, name, stock, urgency, days left, suggested qty, cost, projected profit)
+  - OK section below fold; amber warning banner "Bu liste öneridir — satın alma kararı veriniz"
+  - "← Sermaye" back button to capital allocation page
+
+Verified outcome:
+- Page loads at `/admin/procurement` ✓
+- Summary cards render correctly: KRİTİK 0, YÜKSEK 0, ORTA 0, DÜŞÜK 0, VERİ YOK 651 ✓
+- Empty ranked table shows "Şu anda acil tedarik gerektiren ürün yok." graceful state ✓
+- All 651 products in UNKNOWN because lead-time/demand fields not yet populated — expected ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit a94c106) ✓
 
 ---
 

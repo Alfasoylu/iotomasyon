@@ -31,17 +31,21 @@ Current reality:
 - sales potential engine complete (Phase 9 ✓): investment score 0–100, BUY/WAIT/DO_NOT_BUY signal
 - capital allocation engine complete (Phase 10 ✓)
 - XML inventory sync complete (Phase 11 ✓)
+- XML product foundation complete (Phase 11A ✓): 649 Entegra products auto-imported, ProductImage (2534 images), XmlProductData snapshot with full USD price grid, multi-image gallery + XML data card on product detail, batched sync (24s, Promise.all, maxDuration=300)
 - marketplace listing registry complete (Phase 12 ✓): /marketplace, 8 platforms, create/edit/delete, product + responsible links
 - marketplace monitoring complete (Phase 13 ✓): /marketplace/monitoring, gap/problem/stale alerts, auto task creation
 - Trendyol API integration complete (Phase 14 ✓): /admin/trendyol config page, /marketplace/trendyol live orders+returns dashboard, singleton config, save+test server actions
 - marketplace profit dashboard complete (Phase 15 ✓): /marketplace/profit, platform breakdown, winners/losers/missing-data/high-stock alerts
 - marketplace operations expansion complete (Phase 16 ✓): Q&A module (fetch + inline answer with audit log), Return Action Center (approve/reject claims with issue reasons), Product Mapping registry, Monthly Exchange Rate management, 4 DB tables, 6 new permissions
 - quote professionalization 2.0 complete (Phase 18 ✓): reusable quote templates (QuoteTemplate + QuoteTemplateItem), /quotes/templates management page, template loading into quote form, product auto price-fill from sellingPriceTry, 2 new permissions (quoteTemplates.read/write)
+- XML product foundation complete (Phase 11A ✓): 649 Entegra products auto-imported, ProductImage (2534 images), XmlProductData snapshot with full USD price grid, multi-image gallery + XML data card on product detail, batched sync in 24s
+- procurement intelligence complete (Phase 19 ✓): /admin/procurement, reorder urgency engine, ranked purchase table, financial summary — needs lead-time/demand data to produce non-UNKNOWN urgencies
 
-This means the product is operationally useful for internal CRM, quote workflows (with templates), and active Trendyol marketplace operations. Ready for multi-user rollout.
+This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, and XML-driven inventory management. Ready for multi-user rollout.
 Not yet ready for:
 - owner-grade executive KPI dashboard (Phase 22)
-- procurement intelligence (Phases 19–21)
+- supplier intelligence (Phase 20)
+- import cost calculator (Phase 21)
 - marketplace sync/write architecture (Phase 17, DEFERRED)
 
 ---
@@ -64,24 +68,25 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 19: Procurement Intelligence
+### Priority 1 — Phase 20: Supplier Intelligence
 
 Why:
-Phase 18 (quote professionalization) is complete. The next high-value gap is procurement decision support — giving the owner actionable signals on when and what to buy based on stock levels, investment scores, lead times, and supplier data.
+Phase 19 (procurement intelligence) is complete. The procurement engine shows all products as UNKNOWN urgency because lead-time and demand data is sparse. Phase 20 adds the supplier model, supplier-product relations, and reliability scoring that feeds Phase 19 and Phase 21 with realistic data.
 
 Deliverables:
-- procurement signal engine: reorder urgency per product (low stock + high demand + lead time)
-- supplier-aware reorder recommendations
-- expected cash conversion time per purchase
-- actionable purchasing assistant output page (/admin/procurement or similar)
+- `Supplier` table: name, contactName, phone, email, countryOfOrigin, paymentTerms, leadTimeDays, reliabilityScore
+- `SupplierProduct` join table: supplierId, productId, unitCostUsd, moq (minimum order qty), leadTimeDays override
+- Supplier CRUD page at `/admin/suppliers`
+- Product edit form: supplier dropdown + supplier-specific cost/leadTime override fields
+- Procurement page: supplier column in ranked table, supplier-aware suggested order qty
 
 Acceptance:
-- procurement page renders ranked purchase candidates with urgency signals
-- reorder urgency accounts for stockQuantity, reorderLeadTime, investmentScore, demand estimates
-- page is admin/EXECUTIVE_READ only
+- Supplier can be created and linked to products
+- Procurement page shows supplier name in ranked table when available
+- Products with supplier lead time show non-UNKNOWN urgency when stock is low
 - tsc clean, Vercel deploy READY, browser-tested
 
-### Priority 2 — Phase 20+: Supplier Intelligence / Executive KPI
+### Priority 2 — Phase 21+: Import Cost Calculator / Executive KPI
 
 Why:
 These phases are high-value but depend on reliable data from earlier phases.
