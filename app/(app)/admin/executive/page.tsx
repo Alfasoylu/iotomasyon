@@ -122,8 +122,12 @@ function UrgencyPill({
 export default async function ExecutivePage() {
   await requirePermission(PERMISSIONS.EXECUTIVE_READ);
 
+  // ── 90-day window ────────────────────────────────────────────────────────
+  const since90 = new Date();
+  since90.setDate(since90.getDate() - 90);
+
   // ── Fetch all data in parallel ────────────────────────────────────────────
-  const [products, capitalConfig, latestRate, listingCount] = await Promise.all([
+  const [products, capitalConfig, latestRate, listingCount, salesRecords90d] = await Promise.all([
     prisma.product.findMany({
       where: { isActive: true },
       select: {
@@ -156,6 +160,16 @@ export default async function ExecutivePage() {
       select: { usdTryRate: true, month: true, year: true },
     }),
     prisma.marketplaceListing.count({ where: { status: "ACTIVE" } }),
+    prisma.trendyolSalesRecord.findMany({
+      where: { orderDate: { gte: since90 } },
+      select: {
+        productId: true,
+        status: true,
+        quantity: true,
+        totalPriceTry: true,
+        product: { select: { name: true, sku: true } },
+      },
+    }),
   ]);
 
   // ── Convert Decimal fields to number ─────────────────────────────────────
@@ -250,6 +264,39 @@ export default async function ExecutivePage() {
       ? Math.max(0, totalCapital - totalStockValueTry - (reserveAmt ?? 0))
       : null;
 
+  // ── Trendyol 90-day Sales ─────────────────────────────────────────────────
+  function isCancelledStatus(s: string | null) {
+    if (!s) return false;
+    const lower = s.toLowerCase();
+    return lower.includes("iptal") || lower.includes("cancel");
+  }
+
+  const activeSales90d = salesRecords90d.filter((r) => !isCancelledStatus(r.status));
+  const totalRevenue90d = activeSales90d.reduce((sum, r) => sum + Number(r.totalPriceTry), 0);
+  const unmatchedCount90d = activeSales90d.filter((r) => !r.productId).length;
+
+  const revenueByProduct = new Map<
+    string,
+    { name: string; sku: string | null; revenue: number }
+  >();
+  for (const r of activeSales90d) {
+    if (!r.productId || !r.product) continue;
+    const cur = revenueByProduct.get(r.productId);
+    if (cur) {
+      cur.revenue += Number(r.totalPriceTry);
+    } else {
+      revenueByProduct.set(r.productId, {
+        name: r.product.name,
+        sku: r.product.sku ?? null,
+        revenue: Number(r.totalPriceTry),
+      });
+    }
+  }
+  const top5Revenue90d = [...revenueByProduct.values()]
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+  const distinctProducts90d = revenueByProduct.size;
+
   // ── Exchange Rate ─────────────────────────────────────────────────────────
   const rate = latestRate ? Number(latestRate.usdTryRate) : null;
   const rateLabel =
@@ -328,7 +375,87 @@ export default async function ExecutivePage() {
         />
       </div>
 
-      {/* ── Section 3: Procurement Urgency ── */}
+      {/* ── Section 3: Trendyol 90-day Revenue ── */}
+      <Card className="overflow-hidden">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              Trendyol / Son 90 Gün
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-slate-900">
+              Gerçekleşen Satış Özeti
+            </h2>
+          </div>
+          <Link
+            href="/marketplace/realized-margin"
+            className="text-sm font-medium text-slate-500 hover:text-slate-900"
+          >
+            Gerçekleşen Marj →
+          </Link>
+        </div>
+
+        <div className="grid gap-4 p-6 sm:grid-cols-3">
+          <KpiCard
+            label="Toplam Ciro (90G)"
+            value={totalRevenue90d > 0 ? fmt(totalRevenue90d) : "Veri yok"}
+            sub={`${activeSales90d.length} satır (iptal hariç)`}
+            tone={totalRevenue90d > 0 ? "dark" : "neutral"}
+          />
+          <KpiCard
+            label="Eşleşen Ürün Çeşidi"
+            value={String(distinctProducts90d)}
+            sub="productId bağlı kayıtlar"
+            tone="neutral"
+          />
+          <KpiCard
+            label="Eşleşmemiş Kayıt"
+            value={String(unmatchedCount90d)}
+            sub="ürün bağlantısı eksik"
+            tone={unmatchedCount90d > 50 ? "amber" : unmatchedCount90d === 0 ? "green" : "neutral"}
+          />
+        </div>
+
+        {top5Revenue90d.length > 0 && (
+          <div className="border-t border-slate-100">
+            <p className="px-6 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              En Yüksek Ciro — Top 5 (90G)
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-3 text-left">Ürün</th>
+                    <th className="px-4 py-3 text-right">Ciro (90G)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {top5Revenue90d.map((p, i) => (
+                    <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+                      <td className="px-6 py-3">
+                        <p className="font-medium text-slate-900">{p.name}</p>
+                        {p.sku && (
+                          <p className="font-mono text-xs text-slate-400">{p.sku}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-emerald-700">
+                        {fmt(p.revenue)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {top5Revenue90d.length === 0 && (
+          <div className="border-t border-slate-100 px-6 py-6 text-center text-sm text-slate-400">
+            90 günlük Trendyol satış verisi bulunamadı. Ürün Performansı sayfasından senkronize edin.
+          </div>
+        )}
+      </Card>
+
+      {/* ── Section 4: Procurement Urgency ── */}
       <Card className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -362,7 +489,7 @@ export default async function ExecutivePage() {
         </div>
       </Card>
 
-      {/* ── Section 4: Profitability Top 5 ── */}
+      {/* ── Section 5: Profitability Top 5 ── */}
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
           <div>
@@ -459,6 +586,9 @@ export default async function ExecutivePage() {
         </Link>
         <Link href="/marketplace/profit" className="hover:text-slate-700">
           Pazar Kârlılığı →
+        </Link>
+        <Link href="/marketplace/realized-margin" className="hover:text-slate-700">
+          Gerçekleşen Marj →
         </Link>
         <Link href="/admin/exchange-rates" className="hover:text-slate-700">
           Döviz Kurları →
