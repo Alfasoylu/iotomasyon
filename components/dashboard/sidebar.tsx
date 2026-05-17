@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 37 aktif
+          Faz 38 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Eşleştirme Asistanı: 112 eşleşmemiş barkod (₺852K ciro), hızlı eşleştirme akışı.
+            İade Analizi: ürün bazlı iade oranı hesaplama, yüksek risk tespiti, top 10 neden analizi.
           </p>
         </div>
       </aside>

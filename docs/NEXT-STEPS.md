@@ -129,6 +129,19 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 10 — Return Rate Analysis (Phase 38, 2026-05-17)
+
+Delivered:
+- /marketplace/return-analysis: per-product return rate from TrendyolReturnRecord vs TrendyolSalesRecord
+- returnRate = claimCount / soldQty × 100 (null when soldQty = 0 — "Satış kaydı yok")
+- Sections: Yüksek İade Riski (≥%5, red border), Düşük İade Oranı (<5%), Satış Verisi Eksik
+- Summary KPI cards: Eşleşen İade Talebi, İadesi Olan Ürün, Yüksek İade Riski count, Eşleşmemiş İade Talebi
+- Top 10 return reasons table with count + % of all matched returns
+- Back-links to Gerçekleşen Marj and İade Merkezi
+- "İade Analizi" sidebar nav entry (MARKETPLACE_RETURNS_READ)
+- No schema change — reads existing Phase 26 + Phase 29 tables
+- Browser-verified 2026-05-17: page renders cleanly, KPI cards visible, İade Analizi sidebar nav active, empty state correct (return records not yet synced to products) ✓
+
 ### ✓ Priority 9 — Unmatched Barcodes Inbox on Mapping Page (Phase 37, 2026-05-17)
 
 Delivered:

@@ -511,6 +511,23 @@
 - tsc clean, Vercel deploy READY (commit 0819706)
 - Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
 
+### Phase 38 — Return Rate Analysis
+- Created `app/(app)/marketplace/return-analysis/page.tsx` (MARKETPLACE_RETURNS_READ gated, `force-dynamic`)
+  - Fetches matched `TrendyolReturnRecord` (productId not null), matched `TrendyolSalesRecord` (productId not null), and unmatched return count in parallel
+  - Aggregates sold qty per product from non-cancelled sales records (`isCancelledStatus()` filter)
+  - Aggregates return claim count per product; `returnRate = claimCount / soldQty × 100` (null when soldQty = 0)
+  - `highRiskRows`: returnRate ≥ 5% (red border section "Yüksek İade Riski")
+  - `normalRows`: returnRate < 5% (neutral section "Düşük İade Oranı")
+  - `noSalesRows`: returnRate null — has returns but no matched sales records (amber note)
+  - Summary KPI cards: Eşleşen İade Talebi, İadesi Olan Ürün, Yüksek İade Riski (≥%5), Eşleşmemiş İade Talebi
+  - Top 10 return reasons table with count + % of total
+  - Back-links: ← Gerçekleşen Marj, İade Merkezi →
+  - Empty state when totalMatchedClaims === 0 (with link to İade Merkezi to sync)
+  - No schema change — reads existing Phase 26 (TrendyolSalesRecord) + Phase 29 (TrendyolReturnRecord) tables
+- Added "İade Analizi" nav entry to `app/(app)/layout.tsx` (MARKETPLACE_RETURNS_READ)
+- tsc clean, Vercel deploy READY (commit bc9f219)
+- Browser-verified 2026-05-17: page renders cleanly, all KPI cards visible, İade Analizi sidebar nav active, empty state correct (no return records matched yet) ✓
+
 ### Phase 37 — Unmatched Barcodes Inbox on Mapping Page
 - Updated `app/(app)/admin/marketplace-mappings/page.tsx`:
   - Now accepts `searchParams: Promise<{ barcode?: string; title?: string }>` for URL-based form pre-fill

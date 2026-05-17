@@ -74,6 +74,7 @@ Implemented modules:
 - marketplace profit page XML price integration (Phase 34: /marketplace/profit uses calcMarketplacePricingRow() per listing, PLATFORM_XML_FIELD map, PriceBadge on effective price column, PolicyBadge extended for price_tier, usdTryRate from MonthlyExchangeRate)
 - unmatched barcodes inbox (Phase 37: /admin/marketplace-mappings top-30 unmatched barcodes by revenue, Eslestir button pre-fills form via ?barcode= param, MappingForm defaultBarcode/defaultPlatformTitle props, no schema change)
 - executive dashboard marketplace revenue (Phase 36: /admin/executive new Trendyol 90-day sales section, isCancelledStatus() filter, ciro/eşleşen ürün/eşleşmemiş tiles, top 5 revenue table, Gerçekleşen Marj link, no schema change)
+- return rate analysis (Phase 38: /marketplace/return-analysis, per-product returnRate = claimCount/soldQty×100, highRisk ≥5%/normal/noSales sections, top 10 reasons table, MARKETPLACE_RETURNS_READ gated, no schema change)
 - realized margin analysis (Phase 35: /marketplace/realized-margin, 90-day TrendyolSalesRecord aggregation, calcMarketplacePricingRow() with realized price for deduction estimates, deltaPct = realized − expected, Zarar Eden/Beklenenden Düşük/Kârlı/Maliyet Eksik sections, summary cards, EXECUTIVE_READ gated)
 - product/customer interest engine
 - category/customer relationship engine
