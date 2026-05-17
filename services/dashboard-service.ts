@@ -276,6 +276,7 @@ export async function getSalesPipelineData(userId: string) {
 
     const [
       activeInterests,
+      topOpportunities,
       dueTodayTasks,
       recentCustomers,
       openTasksCount,
@@ -290,13 +291,35 @@ export async function getSalesPipelineData(userId: string) {
         select: {
           id: true,
           status: true,
+          stage: true,
+          priority: true,
+          lastContactedAt: true,
           followUpAt: true,
           customer: { select: { id: true, name: true } },
           product: { select: { id: true, name: true, sku: true, imageUrl: true } },
-          // NOTE: quotedPrice is intentionally omitted — sales reps don't need it in the dashboard
+          // NOTE: quotedPrice is intentionally omitted — sales reps don't see financial data in dashboard
         },
-        orderBy: { followUpAt: "asc" },
+        orderBy: [{ priority: "desc" }, { followUpAt: "asc" }],
         take: 10,
+      }),
+      // Top urgent/high priority opportunities — team-wide signal for sales rep awareness
+      prisma.productInterest.findMany({
+        where: {
+          status: { in: ["NEW", "WAITING_STOCK", "CONTACTED"] },
+          priority: { in: ["HIGH", "URGENT"] },
+        },
+        select: {
+          id: true,
+          status: true,
+          stage: true,
+          priority: true,
+          lastContactedAt: true,
+          customer: { select: { id: true, name: true } },
+          product: { select: { id: true, name: true, sku: true } },
+          assignedTo: { select: { id: true, name: true } },
+        },
+        orderBy: [{ priority: "desc" }, { updatedAt: "asc" }],
+        take: 5,
       }),
       // Follow-up tasks due today, assigned to this user
       prisma.followUpTask.findMany({
@@ -347,6 +370,7 @@ export async function getSalesPipelineData(userId: string) {
     return {
       databaseAvailable: true as const,
       activeInterests,
+      topOpportunities,
       dueTodayTasks,
       recentCustomers,
       openTasksCount,
@@ -357,6 +381,7 @@ export async function getSalesPipelineData(userId: string) {
       return {
         databaseAvailable: false as const,
         activeInterests: [],
+        topOpportunities: [],
         dueTodayTasks: [],
         recentCustomers: [],
         openTasksCount: 0,

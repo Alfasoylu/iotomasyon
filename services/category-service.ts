@@ -117,10 +117,17 @@ export async function getProductIntelligence(productId: string) {
         id: true,
         categoryId: true,
         interests: {
-          include: {
+          select: {
+            id: true,
+            stage: true,
+            status: true,
+            priority: true,
+            lastContactedAt: true,
+            followUpAt: true,
             customer: { select: { id: true, name: true, company: true, phone: true, customerType: true } },
+            assignedTo: { select: { id: true, name: true } },
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { updatedAt: "desc" },
         },
       },
     });

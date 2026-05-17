@@ -35,9 +35,28 @@ const CUSTOMER_STATUS_TONES: Record<string, string> = {
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
-  HIGH: "🔴 Yüksek",
-  MEDIUM: "🟡 Orta",
+  URGENT: "🔴 Acil",
+  HIGH: "🟠 Yüksek",
+  NORMAL: "🟡 Normal",
   LOW: "🟢 Düşük",
+};
+
+const STAGE_LABELS: Record<string, string> = {
+  INTERESTED: "İlgileniyor",
+  PRICE_SENT: "Fiyat Gönderildi",
+  NEGOTIATING: "Müzakerede",
+  WAITING: "Bekliyor",
+  ORDERED: "Sipariş Verdi",
+  CANCELLED: "İptal",
+};
+
+const STAGE_COLORS: Record<string, string> = {
+  INTERESTED: "bg-blue-50 text-blue-700",
+  PRICE_SENT: "bg-amber-50 text-amber-700",
+  NEGOTIATING: "bg-violet-50 text-violet-700",
+  WAITING: "bg-slate-100 text-slate-600",
+  ORDERED: "bg-emerald-50 text-emerald-700",
+  CANCELLED: "bg-red-50 text-red-600",
 };
 
 export function SalesWorkspace({ data }: { data: SalesPipelineData }) {
@@ -116,17 +135,36 @@ export function SalesWorkspace({ data }: { data: SalesPipelineData }) {
                 <li key={interest.id} className="py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-slate-900">
-                        {interest.customer.name}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {interest.customer.name}
+                        </p>
+                        {(interest.priority === "URGENT" || interest.priority === "HIGH") && (
+                          <span className="flex-shrink-0 text-[10px]">
+                            {interest.priority === "URGENT" ? "🔴" : "🟠"}
+                          </span>
+                        )}
+                      </div>
                       <p className="mt-0.5 truncate text-xs text-slate-500">
                         {interest.product.name}
                       </p>
-                      {interest.followUpAt && (
-                        <p className="mt-1 text-xs text-slate-400">
-                          Takip: {formatDateTime(interest.followUpAt)}
-                        </p>
-                      )}
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        {interest.stage && (
+                          <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${STAGE_COLORS[interest.stage] ?? "bg-slate-100 text-slate-600"}`}>
+                            {STAGE_LABELS[interest.stage] ?? interest.stage}
+                          </span>
+                        )}
+                        {interest.lastContactedAt && (
+                          <span className="text-[10px] text-slate-400">
+                            Son temas: {formatDateTime(interest.lastContactedAt)}
+                          </span>
+                        )}
+                        {interest.followUpAt && !interest.lastContactedAt && (
+                          <span className="text-[10px] text-slate-400">
+                            Takip: {formatDateTime(interest.followUpAt)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span
                       className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_TONES[interest.status] ?? "bg-slate-100 text-slate-600"}`}
@@ -184,6 +222,48 @@ export function SalesWorkspace({ data }: { data: SalesPipelineData }) {
           </div>
         </Card>
       </section>
+
+      {/* Önerilen Fırsatlar — high/urgent priority team-wide */}
+      {data.topOpportunities.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Önerilen Fırsatlar
+          </h2>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {data.topOpportunities.map((opp) => (
+              <Link
+                key={opp.id}
+                href={`/customers/${opp.customer.id}`}
+                className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:shadow-md transition"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{opp.customer.name}</p>
+                  <span className="flex-shrink-0 text-xs font-medium">
+                    {PRIORITY_LABELS[opp.priority] ?? opp.priority}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 truncate">{opp.product.name}</p>
+                <div className="flex items-center gap-2">
+                  {opp.stage && (
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${STAGE_COLORS[opp.stage] ?? "bg-slate-100 text-slate-600"}`}>
+                      {STAGE_LABELS[opp.stage] ?? opp.stage}
+                    </span>
+                  )}
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_TONES[opp.status] ?? "bg-slate-100 text-slate-600"}`}>
+                    {STATUS_LABELS[opp.status] ?? opp.status}
+                  </span>
+                </div>
+                {opp.assignedTo && (
+                  <p className="text-[10px] text-slate-400">Temsilci: {opp.assignedTo.name}</p>
+                )}
+                {opp.lastContactedAt && (
+                  <p className="text-[10px] text-slate-400">Son temas: {formatDateTime(opp.lastContactedAt)}</p>
+                )}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Recent customer activity */}
       {data.recentCustomers.length > 0 && (

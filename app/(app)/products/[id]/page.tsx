@@ -861,6 +861,40 @@ export default async function ProductDetailPage({
                       {interest.customer.company ? (
                         <p className="text-xs text-slate-500">{interest.customer.company}</p>
                       ) : null}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {interest.stage ? (
+                          <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                            interest.stage === "INTERESTED" ? "bg-blue-50 text-blue-700" :
+                            interest.stage === "PRICE_SENT" ? "bg-amber-50 text-amber-700" :
+                            interest.stage === "NEGOTIATING" ? "bg-violet-50 text-violet-700" :
+                            interest.stage === "WAITING" ? "bg-slate-100 text-slate-600" :
+                            interest.stage === "ORDERED" ? "bg-emerald-50 text-emerald-700" :
+                            "bg-red-50 text-red-600"
+                          }`}>
+                            {interest.stage === "INTERESTED" ? "İlgileniyor" :
+                             interest.stage === "PRICE_SENT" ? "Fiyat Gönderildi" :
+                             interest.stage === "NEGOTIATING" ? "Müzakerede" :
+                             interest.stage === "WAITING" ? "Bekliyor" :
+                             interest.stage === "ORDERED" ? "Sipariş Verdi" :
+                             "İptal"}
+                          </span>
+                        ) : null}
+                        {(interest.priority === "HIGH" || interest.priority === "URGENT") ? (
+                          <span className="text-[10px] text-red-500 font-medium">
+                            {interest.priority === "URGENT" ? "🔴 Acil" : "🟠 Yüksek öncelik"}
+                          </span>
+                        ) : null}
+                      </div>
+                      {interest.lastContactedAt ? (
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          Son temas: {formatDateTime(interest.lastContactedAt)}
+                        </p>
+                      ) : null}
+                      {interest.assignedTo ? (
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                          Temsilci: {interest.assignedTo.name}
+                        </p>
+                      ) : null}
                     </div>
                   </Link>
                 ))}
