@@ -84,6 +84,33 @@ export async function triggerXmlSyncAction(sourceId: string): Promise<ActionResu
   return runSync(source.id, source.url, source.authHeader);
 }
 
+// ── XML Overwrite Policy (Phase 11 / Phase 28) ───────────────────────────────
+//
+// IOTOMASYON is the source of truth. XML (Entegra feed) is an ingestion source only.
+//
+// Field boundary:
+//
+//   SOURCE-MANAGED (XML may auto-update these on existing products):
+//     - stockQuantity   — only when stockSource != "MANUAL"
+//     - lastStockSyncAt — set to sync timestamp
+//     - stockSource     — set to "XML"
+//     - imageUrl        — FALLBACK ONLY: set only when Product.imageUrl IS NULL
+//
+//   CURATED — NEVER overwritten by XML sync on existing products:
+//     - name, brand, model, category, categoryId
+//     - description    (use Tiptap editor → saved to Product.description)
+//     - sellingPriceTry, unitCostTry, wholesalePriceTry, marketplacePriceTry
+//     - all other financial/cost fields
+//     - privateNote    (owner-only; separate action)
+//     - xmlLocked      (when true, skip entire product from sync)
+//
+//   XML-ONLY STORAGE (raw feed values; informational only; never promoted to Product):
+//     - XmlProductData.xmlName, xmlBrand, xmlDescription, xmlPriceN, etc.
+//     - ProductImage rows with source="XML" (refreshed every sync)
+//
+// For NEW products (SKU not found): all available XML fields are used to bootstrap
+// the record — this is correct because there is no curated data yet to protect.
+
 // ── Core sync logic (Phase 11A — Optimized batched version) ──────────────────
 //
 // Behaviour:
@@ -183,6 +210,9 @@ export async function runSync(
     }
 
     // ── 5. Update existing products (non-locked) in batches ────────────────────
+    // Per the XML Overwrite Policy above:
+    //   - Only SOURCE-MANAGED fields are written here.
+    //   - CURATED fields (name, brand, description, prices, etc.) are never touched.
     let updated = 0;
     let skipped = 0;
 
@@ -196,11 +226,13 @@ export async function runSync(
         continue;
       }
       const data: Record<string, unknown> = {};
+      // SOURCE-MANAGED: stock sync (skipped for MANUAL-managed products)
       if (p.stockSource !== "MANUAL" && rec.stock !== undefined) {
         data.stockQuantity = rec.stock;
         data.lastStockSyncAt = now;
         data.stockSource = "XML";
       }
+      // FALLBACK-FILL: imageUrl set only when the product has no image yet
       if (!p.imageUrl && rec.resim1) data.imageUrl = rec.resim1;
       if (Object.keys(data).length > 0) {
         stockUpdates.push({ id: p.id, data });

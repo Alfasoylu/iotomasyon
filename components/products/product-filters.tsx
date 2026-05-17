@@ -6,13 +6,16 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
 const SORT_OPTIONS = [
-  { value: "updated_desc", label: "Son güncellenen" },
-  { value: "stock_desc",   label: "Stok ↓" },
-  { value: "stock_asc",    label: "Stok ↑" },
-  { value: "price_desc",   label: "Fiyat ↓" },
-  { value: "price_asc",    label: "Fiyat ↑" },
-  { value: "margin_desc",  label: "Marj ↓" },
-  { value: "name_asc",     label: "İsim A–Z" },
+  { value: "updated_desc",   label: "Son güncellenen" },
+  { value: "stock_desc",     label: "Stok ↓" },
+  { value: "stock_asc",      label: "Stok ↑" },
+  { value: "price_desc",     label: "Fiyat ↓" },
+  { value: "price_asc",      label: "Fiyat ↑" },
+  { value: "margin_desc",    label: "Marj ↓" },
+  { value: "name_asc",       label: "İsim A–Z" },
+  { value: "sales_30d_qty",  label: "30G Satış Adedi ↓" },
+  { value: "sales_30d_rev",  label: "30G Ciro ↓" },
+  { value: "sales_all_rev",  label: "Toplam Ciro ↓" },
 ];
 
 export function ProductFilters({

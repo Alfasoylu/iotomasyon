@@ -14,6 +14,9 @@ export type ProductFilters = {
 
 type SortOption = Prisma.ProductOrderByWithRelationInput[];
 
+// Sort values that require a secondary aggregation query against TrendyolSalesRecord.
+const SALES_SORTS = new Set(["sales_30d_qty", "sales_30d_rev", "sales_all_rev"]);
+
 function buildOrderBy(sort?: string): SortOption {
   switch (sort) {
     case "stock_desc": return [{ stockQuantity: "desc" }, { name: "asc" }];
@@ -21,7 +24,12 @@ function buildOrderBy(sort?: string): SortOption {
     case "price_desc": return [{ sellingPriceTry: { sort: "desc", nulls: "last" } }, { name: "asc" }];
     case "price_asc": return [{ sellingPriceTry: { sort: "asc", nulls: "last" } }, { name: "asc" }];
     case "name_asc": return [{ name: "asc" }];
-    case "margin_desc": return [{ updatedAt: "desc" }, { name: "asc" }]; // margin sorted in JS
+    // margin_desc and all sales sorts are computed in JS; DB orders by name as stable base
+    case "margin_desc":
+    case "sales_30d_qty":
+    case "sales_30d_rev":
+    case "sales_all_rev":
+      return [{ name: "asc" }];
     default: return [{ updatedAt: "desc" }, { name: "asc" }];
   }
 }
@@ -79,6 +87,61 @@ export async function listProducts(filters: ProductFilters) {
             : -Infinity;
         return marginB - marginA;
       });
+    }
+
+    // Phase 26 — Sales-based sorts: aggregate TrendyolSalesRecord then sort in JS.
+    // Only runs when one of the three sales sort values is selected.
+    if (SALES_SORTS.has(filters.sort ?? "")) {
+      const productIds = filtered.map((p) => p.id);
+
+      if (productIds.length > 0) {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+        // Fetch sales records for the visible product set only (not the whole table).
+        const salesRecords = await prisma.trendyolSalesRecord.findMany({
+          where: { productId: { in: productIds } },
+          select: {
+            productId: true,
+            orderDate: true,
+            quantity: true,
+            totalPriceTry: true,
+            status: true,
+          },
+        });
+
+        // Aggregate per product, excluding cancelled orders (mirrors Phase 26 logic).
+        type SalesAgg = { qty30d: number; rev30d: number; revAll: number };
+        const agg = new Map<string, SalesAgg>();
+
+        for (const r of salesRecords) {
+          if (!r.productId) continue;
+          const s = r.status.toLowerCase();
+          if (s.includes("iptal") || s.includes("cancel")) continue;
+
+          if (!agg.has(r.productId)) {
+            agg.set(r.productId, { qty30d: 0, rev30d: 0, revAll: 0 });
+          }
+          const entry = agg.get(r.productId)!;
+          const rev = Number(r.totalPriceTry);
+          entry.revAll += rev;
+          if (r.orderDate >= thirtyDaysAgo) {
+            entry.qty30d += r.quantity;
+            entry.rev30d += rev;
+          }
+        }
+
+        const empty: SalesAgg = { qty30d: 0, rev30d: 0, revAll: 0 };
+        filtered = [...filtered].sort((a, b) => {
+          const aggA = agg.get(a.id) ?? empty;
+          const aggB = agg.get(b.id) ?? empty;
+          switch (filters.sort) {
+            case "sales_30d_qty": return aggB.qty30d - aggA.qty30d;
+            case "sales_30d_rev": return aggB.rev30d - aggA.rev30d;
+            case "sales_all_rev": return aggB.revAll - aggA.revAll;
+            default: return 0;
+          }
+        });
+      }
     }
 
     return {

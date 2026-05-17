@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkPermission, isOwner } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { productSchema, type ProductInput } from "@/lib/validations/product";
 import type { ActionResult } from "@/types/actions";
@@ -220,13 +220,14 @@ function emptyToNull(value: string | undefined) {
 
 // Phase 28 — Separate privileged action for owner-only private note.
 // This is intentionally separate from updateProductAction so that
-// non-EXECUTIVE_READ users who call updateProductAction cannot touch it.
+// non-owner users who call updateProductAction cannot touch it.
+// Gate: isOwner() (stricter than EXECUTIVE_READ — only the ADMIN_EMAIL account).
 export async function updatePrivateNoteAction(
   productId: string,
   privateNote: string,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!isOwner(user)) return PERM_DENIED;
   if (!(await checkPermission(user, PERMISSIONS.PRODUCTS_UPDATE))) return PERM_DENIED;
 
   try {

@@ -177,3 +177,19 @@ export async function checkPermission(
 ): Promise<boolean> {
   return resolvePermission(user, permission);
 }
+
+// ── isOwner ───────────────────────────────────────────────────────────────────
+// Returns true only for the single business owner account (ADMIN_EMAIL env var).
+// Used to gate truly owner-only data (e.g. privateNote) — stricter than EXECUTIVE_READ,
+// which any executive-role user could have.
+//
+// This is a single-owner business; ADMIN_EMAIL uniquely identifies the owner.
+
+export function isOwner(user: ResolvedUser): boolean {
+  try {
+    return user.email.toLowerCase() === getAdminEmail().toLowerCase();
+  } catch {
+    // getAdminEmail() throws if env var missing — fail closed (deny access).
+    return false;
+  }
+}

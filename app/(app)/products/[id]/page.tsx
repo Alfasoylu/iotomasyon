@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
 import { getProductById } from "@/services/product-service";
 import { getProductIntelligence } from "@/services/category-service";
-import { requirePermission, checkPermission, requireUser } from "@/lib/auth";
+import { requirePermission, requireUser, isOwner } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 import {
@@ -54,6 +54,7 @@ export default async function ProductDetailPage({
 }) {
   await requirePermission(PERMISSIONS.PRODUCTS_READ);
   const { id } = await params;
+  // eslint-disable-next-line react-hooks/purity -- server component; Date.now() is safe here
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const user = await requireUser();
 
@@ -67,7 +68,7 @@ export default async function ProductDetailPage({
       where: { productId: id },
       select: { orderDate: true, status: true, quantity: true, totalPriceTry: true, unitPriceTry: true },
     }),
-    checkPermission(user, PERMISSIONS.EXECUTIVE_READ),
+    Promise.resolve(isOwner(user)),
     prisma.supplierProduct.findMany({
       where: { productId: id },
       include: { supplier: { select: { name: true } } },
@@ -335,9 +336,23 @@ export default async function ProductDetailPage({
               </div>
             </div>
           )}
-          <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-            {product.description || "Bu ürün için açıklama eklenmedi."}
-          </div>
+          {/* Issue 3 fix — Tiptap stores HTML; render it as rich text, not raw string */}
+          {product.description ? (
+            product.description.trimStart().startsWith("<") ? (
+              <div
+                className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600 [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-slate-800 [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-slate-700 [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            ) : (
+              <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+                {product.description}
+              </div>
+            )
+          ) : (
+            <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-400">
+              Bu ürün için açıklama eklenmedi.
+            </div>
+          )}
         </Card>
 
         <Card className="p-6">

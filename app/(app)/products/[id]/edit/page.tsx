@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { getProductById } from "@/services/product-service";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { listAttributes } from "@/services/attribute-service";
-import { requirePermission, checkPermission, requireUser } from "@/lib/auth";
+import { requirePermission, checkPermission, requireUser, isOwner } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { SupplierProductSection } from "@/components/suppliers/supplier-product-section";
@@ -41,7 +41,7 @@ export default async function EditProductPage({
       include: { supplier: { select: { name: true } } },
     }),
     checkPermission(user, PERMISSIONS.SUPPLIERS_WRITE),
-    checkPermission(user, PERMISSIONS.EXECUTIVE_READ),
+    Promise.resolve(isOwner(user)),
   ]);
 
   if (!databaseAvailable) {
