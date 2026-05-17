@@ -61,6 +61,7 @@ Implemented modules:
 - data hygiene governance (Phase 23: /admin/data-hygiene, 8 completeness checks, real-time product issue counts)
 - production safety center (Phase 24: /admin/safety, migration history from _prisma_migrations, dangerous operation registry, safety checklist)
 - product operations UX (Phase 25: live search, thumbnails, compact filter pills, sort by stock/price/margin, health cues per row)
+- product performance ranking (Phase 26: Trendyol order sync, 90-day windowed fetch, barcode/SKU matching, 30d sales/revenue ranking, realized margin, performance signal cards, per-product KPI tile)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -791,17 +792,21 @@ Verified outcome (browser test 2026-05-17):
 ---
 
 ## Phase 26 - Product Performance Ranking
-Status: NOT STARTED
+Status: DONE
 
-Planned scope:
-- last 30 days sales quantity ranking
-- last 30 days revenue ranking
-- total revenue ranking
-- realized margin visibility
-- margin-based ranking once canonical sales snapshots exist
+Delivered:
+- TrendyolSalesRecord model + migration (orderId/lineId unique index, FK to Product)
+- syncTrendyolSalesAction: 90-day windowed pagination (4 windows × 90 days = 365 days), barcode/SKU product matching, upsert dedup, page-0 error surfacing
+- SalesSyncButton client component with idle/loading/success/error states
+- /admin/product-performance page: sync card with record/matched counts, top-20 ranking tables (30d qty, 30d revenue, all-time revenue), performance signal cards (high-revenue/zero-stock, low-margin/high-sales, high-stock/weak-sales)
+- Product detail page (/products/[id]): "Trendyol Satış Performansı" card with 4 KPI tiles (son 30G satış, son 30G ciro, toplam satış, gerçekleşen marj), color-coded margin badge
+- Cancelled order filtering (isCancelled helper — "iptal"/"cancel" substring check)
+- Sidebar: "Satış Performansı" nav item under EXECUTIVE_READ permission
 
-Current gap:
-- product ranking does not yet use recent commercial performance data
+Browser verified:
+- /admin/product-performance renders heading, sync card, 3 ranking tables — all loading correctly
+- Sync button triggerable; surfacing error/success messages with order/line/match counts
+- Per-product KPI card visible on product detail pages
 
 ---
 

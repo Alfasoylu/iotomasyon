@@ -268,6 +268,17 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 26 — Product Performance Ranking
+- Migration `20260517070000_phase26_sales_records`: new `TrendyolSalesRecord` model — `orderId`, `lineId` (unique together), `productId` (nullable FK → Product SET NULL), `orderDate`, `status`, `merchantSku`, `barcode`, `productName`, `quantity`, `unitPriceTry`, `totalPriceTry`, `syncedAt`; 4 additional indexes (productId, orderDate, merchantSku, barcode); applied to production Supabase (27 migrations total)
+- Created `lib/actions/sales-sync-actions.ts`: `syncTrendyolSalesAction` — EXECUTIVE_READ-gated; loads TrendyolConfig; builds barcode/SKU product lookup maps; sweeps 4 × 90-day windows (365 days total, Trendyol API limit); per-line barcode-first then SKU matching; upsert with explicit findUnique + create/update for newRecords count; page-0 error surfaced to UI
+- Created `components/products/sales-sync-button.tsx`: client component — idle/loading/success/error states; displays "✓ X sipariş, Y satır senkronize edildi — Z ürün eşleşti, N yeni kayıt eklendi" on success
+- Created `app/(app)/admin/product-performance/page.tsx` (EXECUTIVE_READ-gated): sync card (Trendyol Satış Senkronizasyonu) with record/matched counts and sync button; in-memory aggregation of sales records by productId; top-20 RankTable sub-component for 3 dimensions (30d qty, 30d revenue, all-time revenue); 3 performance signal cards — Yüksek Ciro/Sıfır Stok (red), Düşük Marj/Yüksek Satış (amber, margin <15% AND qty30d ≥5), Yüksek Stok/Zayıf Satış (slate, stock >10 AND qty30d=0); cancelled order filtering via isCancelled helper
+- Extended `app/(app)/products/[id]/page.tsx`: "Trendyol Satış Performansı" card — 4 KPI tiles (son 30G satış adedi, son 30G ciro, toplam satış, gerçekleşen marj); color-coded margin Badge (emerald ≥25%, amber ≥10%, red <10%); empty state with link to /admin/product-performance
+- Added "Satış Performansı" nav entry to `app/(app)/layout.tsx` (EXECUTIVE_READ, after İthalat Kararları)
+- Updated sidebar info card: "Faz 26 aktif — Satış Performansı: Trendyol sipariş senkronizasyonu, ürün bazlı ciro ve marj sıralaması."
+- tsc --noEmit clean, npm run build clean, Vercel deploy READY (commits 7cd451d + c774443 sync fix)
+- Browser-verified 2026-05-17: /admin/product-performance loads; sync card renders with Toplam kayıt/Eşleşen counts; 3 ranking table sections visible; sync button triggers and returns order/line/match counts ✓
+
 ### Phase 25 — Product Operations UX
 - No new DB schema — leverages existing Product, ProductImage, ProductCategory relations
 - `services/product-service.ts`: added `sort` field to `ProductFilters` type; `buildOrderBy()` switch handles `stock_desc/asc`, `price_desc/asc`, `name_asc`, `margin_desc`; added case-insensitive OR search on SKU/name/brand/model/barcode (Prisma `mode: "insensitive"`); `has_stock` filter (`stockQuantity > 0`); `images` (take:1, sorted by sortOrder) and `productCategory` (id+name) included in `findMany`; margin sort done in JS post-fetch (computed field, not DB-sortable)

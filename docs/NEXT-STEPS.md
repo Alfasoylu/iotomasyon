@@ -74,28 +74,16 @@ Delivered:
 - product count shown, "Filtreyi temizle" when filters active
 - browser-verified 2026-05-17: 651 ürün, all features confirmed ✓
 
-### Priority 1 - Phase 26: Product Performance Ranking
+### ✓ DONE - Phase 26: Product Performance Ranking
+Delivered 2026-05-17:
+- TrendyolSalesRecord model + migration (orderId/lineId unique, FK to Product SET NULL)
+- syncTrendyolSalesAction: 4×90-day windows, barcode/SKU matching, upsert dedup, page-0 error surfacing
+- /admin/product-performance: sync card, top-20 tables (30d qty, 30d revenue, all-time revenue), 3 signal cards
+- Per-product KPI card on /products/[id]: 4 tiles + color-coded realized margin badge
+- Cancelled order filtering (isCancelled helper)
+- Browser-verified ✓
 
-Why:
-The owner wants to rank products by recent sales and revenue, not only by static catalog fields.
-
-Deliverables:
-- last 30 days sales quantity ranking
-- last 30 days revenue ranking
-- total revenue ranking
-- realized margin visibility on product detail
-- margin-based ranking once sales snapshots are trustworthy
-- product performance filters for:
-  - high revenue / low stock
-  - low margin / high sales
-  - high stock / weak sales
-
-Acceptance:
-- product ranking reflects recent commercial reality
-- rankings are explainable and based on explicit aggregation rules
-- the owner no longer needs off-system product revenue sorting
-
-### Priority 2 - Phase 27: Product Media and Content Studio
+### Priority 1 - Phase 27: Product Media and Content Studio
 
 Why:
 Product images and descriptions should be manageable inside IOTOMASYON without external hacks.
@@ -116,7 +104,7 @@ Acceptance:
 - no visual breakage in edit/detail flows
 - XML imports stop competing with manual content entry
 
-### Priority 4 - Phase 28: Product Governance and Private Intelligence
+### Priority 2 - Phase 28: Product Governance and Private Intelligence
 
 Why:
 Curated product truth should be protected while private sourcing knowledge stays private.

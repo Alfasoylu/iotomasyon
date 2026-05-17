@@ -61,6 +61,7 @@ Implemented modules:
 - production safety center — Phase 24 complete: /admin/safety, migration history from _prisma_migrations, 8-item safety checklist, dangerous operation registry (9 rows, CRITICAL/HIGH/MEDIUM), docs/MIGRATION-SAFETY.md
 - import decision system — Phase 11C complete: /admin/import-decisions, air/sea freight economics engine (landed cost, profit ratio, annual ROI, ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY/MISSING_DATA), product detail import card, product form import inputs (weightKg/customsRatePct/shippingMethodPref)
 - product operations UX — Phase 25 complete: live search (debounce, ≥2 chars, no submit button), compact filter pills (Durum/Stok), sort by stock/price/margin/name, thumbnail column, health cues per row (Düşük stok/Görsel yok/Maliyet yok/Fiyat yok/XML bayat)
+- product performance ranking — Phase 26 complete: TrendyolSalesRecord schema + migration, 90-day windowed Trendyol order sync (barcode/SKU matching), /admin/product-performance with top-20 ranking tables and performance signal cards, per-product KPI card on product detail page
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
