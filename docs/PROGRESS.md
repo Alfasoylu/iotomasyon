@@ -35,6 +35,8 @@ Current reality:
 - owner-only product notes are implemented (Phase 28 — EXECUTIVE_READ gated privateNote)
 - Trendyol live visibility exists, but marketplace order/return history governance is not complete yet
 - product finance field UI consolidation is complete (Priority 0A): override fields consolidated, policy info box added, legacy fields preserved — deeper schema consolidation remains a future consideration
+- marketplace margin policy now supports USD-tiered shipping (Phase 51): shippingTiersJson per platform, resolveMarginPolicy() resolves tiers by selling price USD context
+- import cockpit (Phase 51 fix): commission and shipping now resolved via resolveMarginPolicy() instead of hardcoded 0; xmlTrendyolPrice wired as price fallback
 
 Implemented modules:
 - authentication (single internal auth)

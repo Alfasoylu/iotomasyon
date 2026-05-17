@@ -9,6 +9,15 @@
 
 ## 2026-05
 
+### Phase 51 — USD Kademeli Kargo + Cockpit Politika Düzeltmeleri (2026-05-17)
+- `MarketplacePlatformPolicy.shippingTiersJson String?` schema sütunu eklendi
+- `resolveMarginPolicy()`: `context.sellingPriceUsd` ile USD eşikli kargo kademesi çözümlemesi
+- `parseShippingTiers()` / `resolveTieredShipping()` saf yardımcı fonksiyonlar
+- Platform politika formu: kademeli kargo tablosu UI, varsayılan Trendyol kademeleri butonu
+- `import-cockpit`: komisyon + kargo artık `resolveMarginPolicy()` ile çözümleniyor (hardcoded `0` kaldırıldı)
+- `import-cockpit`: `xmlTrendyolPrice` — Trendyol gerçekleşen sonrası, manuel öncesi fiyat kaynağı olarak wired edildi
+- "XML Fiyat" badge (mavi) kaynak etiket sistemi eklendi
+
 ### Foundation
 - Established Next.js App Router application structure
 - Added TypeScript, Tailwind, and ESLint baseline

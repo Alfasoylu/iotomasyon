@@ -198,6 +198,25 @@ Delivered:
 - `/admin/xml-sync`: "Son Senkronizasyon Değişimleri" section — groups latest 100 changes by syncLogId, shows product links, ↑ emerald / ↓ red delta badges, empty state for no-change syncs
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 24 — USD Kademeli Kargo + Cockpit Politika Düzeltmeleri (Phase 51, 2026-05-17)
+
+Delivered:
+- `MarketplacePlatformPolicy.shippingTiersJson String?` — JSON kargo kademesi sütunu (additive, `db push` ile uygulandı)
+- `lib/marketplace-policy.ts`: `ShippingTier` tipi, `parseShippingTiers()`, `resolveTieredShipping()` yardımcıları
+- `resolveMarginPolicy()` — yeni `context: { sellingPriceUsd?, usdTryRate? }` parametresi; ürün değeri sonrası USD kademeli kargo deneniyor, ardından platform sabit kargo, ardından sistem varsayılanı
+- `DEFAULT_TRENDYOL_TIERS` sabiti: `<$5 → $1.2`, `$5–$7.5 → $2.0`, `>$7.5 → $3.3` (USD)
+- `marketplace-policy-actions.ts`: `shippingTiersJson` upsert + server-side JSON doğrulaması (son kademe catch-all zorunluluğu)
+- `platform-policy-form.tsx`: kademeli kargo tablosu UI (satır ekle/kaldır, son satır sonsuz), "Trendyol Varsayılanlarını Yükle" butonu
+- `marketplace-policies/page.tsx`: `shippingTiersJson` forma iletiliyor
+- `import-cockpit/page.tsx`:
+  - Trendyol `MarketplacePlatformPolicy` paralel çekiliyor
+  - `xmlData.xmlTrendyolPrice` ürün seçimine eklendi
+  - Fiyat önceliği: Trendyol gerçekleşen → XML Trendyol → Manuel
+  - Komisyon ve kargo: `resolveMarginPolicy()` ile çözümleniyor (artık `0` fallback yok)
+  - "XML Fiyat" badge (mavi) kaynak etiketleri arasına eklendi
+  - Formül açıklama kartı güncellendi
+- tsc clean, Vercel READY (dpl_86pYyepfQR5grZuaDzaerAfqnHQz), browser-verified 2026-05-17 ✓
+
 ### ✓ Priority 22 — İthalat Karar Cockpiti v2 (Phase 50, 2026-05-17)
 
 Delivered:
