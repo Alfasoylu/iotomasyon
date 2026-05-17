@@ -210,19 +210,15 @@ Kapsam:
 - "Al / Bekleme / Alma" sinyali bu gerçek verilerle üret
 - Eşleşmemiş ürünlerin bu hesabın dışında kalması sorunu için uyarı
 
-### Priority 23 — Gereksiz Sayfaların Temizlenmesi
+### ✓ Priority 23 — Gereksiz Sayfaların Temizlenmesi (2026-05-17)
 
-Neden:
-Audit sonucu: Phase 45 Trendyol Stock Push (`/admin/trendyol-stock-sync`) iş bağlamıyla çelişiyor.
-Trendyol'a stok yazılmıyor, bu sayfa yanlış yönde.
-
-Kapsam:
-- `/admin/trendyol-stock-sync` sayfasını kaldır veya "Bu özellik devre dışı" uyarısıyla kilitle
-- `pushTrendyolStockAction` action'ını devre dışı bırak
-- `/orders` sayfasındaki "Stoktan Düş" butonunu kaldır veya gizle (Entegra yapıyor)
-- Sidebar'dan "Trendyol Stok Senkronu" linkini kaldır
-- `TrendyolSalesRecord.stockDeducted` alanı schema'da kalabilir (silmek migration gerektirir) ama kullanılmaz
-- No schema change gerekebilir (sadece UI temizliği)
+Delivered:
+- Sidebar: "Trendyol Stok Senkronu" linki kaldırıldı
+- `/admin/trendyol-stock-sync`: push sayfası devre dışı bırakıldı — amber uyarı kartıyla kilitleniyor
+- `pushTrendyolStockAction()`: hemen hata döndürüyor (DB/API çağrısı yok)
+- `/orders`: TrendyolStockDeductionButton ve getPendingDeductionCount kaldırıldı
+- Schema değişikliği yok; TrendyolSalesRecord.stockDeducted korundu
+- tsc clean, build ✓, browser-verified 2026-05-17 ✓
 
 ### ✓ Priority 20 — Trendyol Daily Sync Cron (Phase 48, 2026-05-17)
 

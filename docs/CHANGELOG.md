@@ -87,6 +87,14 @@
 - All quality gates: prisma validate ✓, prisma generate ✓, tsc --noEmit ✓, eslint 0 warnings ✓, npm run build ✓
 - Browser round-trip verified 2026-05-17: form section visible with blue info box, override fields with correct placeholders, shippingCostOverride save→detail shows "Ürün Geçersiz Kılma" badge at ₺25, 4-tier resolution working, clear→save→redirect clean ✓
 
+### Priority 23 — Wrong-Direction Page Cleanup (2026-05-17)
+- Removed "Trendyol Stok Senkronu" sidebar nav link from `layout.tsx`
+- `/admin/trendyol-stock-sync/page.tsx` replaced with locked amber warning card: explains Trendyol is read-only, links to XML Sync + Stock Health pages
+- `pushTrendyolStockAction()` disabled: returns immediate error message; no DB or API calls
+- `/orders/page.tsx`: removed `TrendyolStockDeductionButton` and `getPendingDeductionCount` import/usage; removed amber "Stok Düşümü" card (Entegra ERP manages stock via XML sync)
+- No schema change; `TrendyolSalesRecord.stockDeducted` field preserved (removing requires migration with no benefit)
+- tsc clean, eslint 0 warnings, build ✓
+
 ### Phase 49 — XML Stok Değişim Logu (2026-05-17)
 - Added `XmlStockChangeLog` Prisma model: productId, syncLogId, sourceId, previousQty, newQty, delta, syncedAt
 - Migration: `20260517490000_phase49_xml_stock_change_log` applied to production
