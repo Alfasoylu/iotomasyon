@@ -87,6 +87,24 @@
 - All quality gates: prisma validate ✓, prisma generate ✓, tsc --noEmit ✓, eslint 0 warnings ✓, npm run build ✓
 - Browser round-trip verified 2026-05-17: form section visible with blue info box, override fields with correct placeholders, shippingCostOverride save→detail shows "Ürün Geçersiz Kılma" badge at ₺25, 4-tier resolution working, clear→save→redirect clean ✓
 
+### Phase 50 — İthalat Karar Cockpiti v2 (Priority 22, 2026-05-17)
+- New page: `/admin/import-cockpit` (no schema change, reads existing tables)
+- Trendyol 90-day realized avg sale price via `groupBy` on TrendyolSalesRecord (Delivered orders only)
+- Trendyol 30-day velocity (units sold) via `groupBy` on TrendyolSalesRecord
+- Return rate = TrendyolReturnRecord count / (sales90d + returns) per product
+- Import landed cost (TRY) via existing `calculateImportDecision` engine × exchange rate
+- Net profit/unit (TRY) = (price × (1−commission%) − shipping) − landedCostTry
+- Margin % = netProfitTry / resolvedPriceTry × 100
+- Effective monthly units = 30d velocity × (1 − returnRate); falls back to manual estimates
+- Monthly profit estimate = netProfitTry × effectiveMonthlyUnits
+- Signal: ✓ AL (marj ≥ %25) / ⏸ BEKLE (marj ≥ %15) / ✗ ALMA / — Veri Eksik
+- Price source badge: Trendyol / Manuel / Fiyat yok
+- Unmatched warning banner with link to marketplace mappings
+- Tab bar: Tümü | AL | BEKLE | ALMA | Veri Eksik with live counts
+- "v1 Görünüm →" link to existing /admin/import-decisions
+- Sidebar: "İthalat Cockpiti v2" added; v1 renamed "İthalat Kararları v1"
+- tsc clean, Vercel READY (dpl_71WA3rEYVH6XPiQaeEdBgC3vHsSt), browser-verified 2026-05-17 ✓
+
 ### Priority 23 — Wrong-Direction Page Cleanup (2026-05-17)
 - Removed "Trendyol Stok Senkronu" sidebar nav link from `layout.tsx`
 - `/admin/trendyol-stock-sync/page.tsx` replaced with locked amber warning card: explains Trendyol is read-only, links to XML Sync + Stock Health pages

@@ -198,17 +198,25 @@ Delivered:
 - `/admin/xml-sync`: "Son Senkronizasyon Değişimleri" section — groups latest 100 changes by syncLogId, shows product links, ↑ emerald / ↓ red delta badges, empty state for no-change syncs
 - Browser-verified 2026-05-17 ✓
 
-### Priority 22 — İthalat Karar Cockpiti v2 (Phase 50)
+### ✓ Priority 22 — İthalat Karar Cockpiti v2 (Phase 50, 2026-05-17)
 
-Neden:
-Ana hedef: Trendyol'dan gerçek satış fiyatı + satış hızı + iade oranı + ithal maliyet = "Bu ürünü ithal etmeli miyim?" sorusu tek sayfada cevaplandırılıyor.
-
-Kapsam:
-- Ürün bazında: Trendyol gerçekleşen ortalama satış fiyatı (son 90 gün) + ithal maliyet (mevcut hesap) + net kâr (TRY) + marj %
-- Trendyol satış hızı (30d) → aylık tahmini kâr
-- İade oranı (TrendyolReturnRecord) → etkili kâr düzeltmesi
-- "Al / Bekleme / Alma" sinyali bu gerçek verilerle üret
-- Eşleşmemiş ürünlerin bu hesabın dışında kalması sorunu için uyarı
+Delivered:
+- `/admin/import-cockpit`: new page, no schema change
+- Trendyol 90-day avg sale price (Delivered only) via `groupBy` on TrendyolSalesRecord
+- Trendyol 30-day velocity via `groupBy` on TrendyolSalesRecord
+- Return rate: TrendyolReturnRecord count / (sales90d + returns) per product
+- Import landed cost (TRY) via existing `calculateImportDecision` engine × exchange rate
+- Net profit/unit (TRY) = netRevenueTry − landedCostTry
+- Margin % = netProfitTry / resolvedPriceTry × 100
+- Effective monthly units = 30d velocity × (1 − returnRate); falls back to manual estimates
+- Monthly profit estimate = netProfitTry × effectiveMonthlyUnits
+- Signal: AL (marj ≥ %25) / BEKLE (marj ≥ %15) / ALMA / Veri Eksik
+- Unmatched warning banner: N products with no Trendyol data → link to marketplace mappings
+- Price source badge: Trendyol (orange) / Manuel (slate) / Fiyat yok (red)
+- Tab bar: Tümü | AL | BEKLE | ALMA | Veri Eksik with counts
+- "v1 Görünüm →" link to existing /admin/import-decisions
+- Sidebar: "İthalat Cockpiti v2" added; v1 renamed "İthalat Kararları v1"
+- tsc clean, Vercel READY (dpl_71WA3rEYVH6XPiQaeEdBgC3vHsSt), browser-verified 2026-05-17 ✓
 
 ### ✓ Priority 23 — Gereksiz Sayfaların Temizlenmesi (2026-05-17)
 
