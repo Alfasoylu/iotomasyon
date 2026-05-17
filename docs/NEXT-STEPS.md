@@ -637,22 +637,25 @@ Tamamlananlar:
 
 ---
 
-### Priority 58 — Operasyon Koordinasyon Katmanı (Phase 58)
+### ✓ DONE — Priority 58 — Operasyon Koordinasyon Katmanı (Phase 58, 2026-05-17)
 
 **Neden:**
 `tasks.assign` permission var ama UI yok. Operations koordinatörü ekibine görev atayamıyor, görev durumunu ekip bazında göremez.
 
 **Bağımlılık:** Priority 54 (Operations dashboard), Priority 55 (WAREHOUSE rol mevcut — göreve atanabilir)
 
-**Ne yapılacak:**
-- Görev form: "Ata" alanı — aktif kullanıcı dropdown (tasks.assign permission gate)
-- Görev listesi: atanan kişi görünür
-- /tasks veya Operations dashboard widget: görevleri kullanıcıya göre grupla, gecikmiş görevleri kırmızı göster
-- İsteğe bağlı: FollowUpTask'a taskCategory (SALES/WAREHOUSE/GENERAL) alanı — schema migration gerekir
-- Schema değişikliği: taskCategory alanı OPSIYONEL (yalnızca eklenmesi durumunda migration)
-
-**Kabul kriteri:**
-Operations kullanıcısı WAREHOUSE veya SALES kullanıcısına görev atayabilir ve ekibinin açık görevlerini tek ekranda görebilir.
+Tamamlananlar:
+- `lib/validations/customer-crm.ts`: `customerTaskSchema` — `assignedToId?: string` eklendi
+- `lib/actions/customer-crm-actions.ts`: `createCustomerTaskAction` — `tasks.assign` permission gate (başkasına atama için); `assignedToId` DB'ye kaydedilir
+- `components/customers/customer-task-form.tsx`: `canAssign` ve `users` props eklendi; `canAssign=true` iken aynı satırda "Ata" dropdown gösterir (Atanmamış + aktif kullanıcılar)
+- `app/(app)/customers/[id]/page.tsx`: `requirePermission` sonucu `currentUser` alındı; `checkPermission(TASKS_ASSIGN)` ile `canAssign`; `canAssign=true` ise `listUsersWithTasks()` çağrılır
+- `services/task-service.ts`: `userId` filtresi `createdById` → `assignedToId` (ekip koordinasyonu için doğru filtre)
+- `app/(app)/tasks/page.tsx`: Task kartları `assignedTo.name` gösterir (`→ {name}` format); filtre etiketi "Tüm atananlar"
+- `services/dashboard-service.ts`: `getOperationsDashboardData()` — `teamTaskBreakdown` eklendi (açık görevler assignedToId'ye göre gruplanır, open+overdue count per kullanıcı)
+- `app/(app)/dashboard/_components/operations-workspace.tsx`: "Ekip Görev Dağılımı" bölümü — her kullanıcı için açık+gecikmiş görev sayısı + `/tasks?userId=` deeplink
+- Schema değişikliği: YOK (assignedToId zaten mevcut)
+- Round-trip verified: görev oluştur (fatih aydın'a ata) → customer detail'de görünür → /tasks'da `→ fatih aydın` gösterir ✓
+- READY: dpl_3A5DU9KfNffMJZEFUa465TdMr4kQ
 
 ---
 

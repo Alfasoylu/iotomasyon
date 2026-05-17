@@ -9,6 +9,33 @@
 
 ## 2026-05
 
+### Phase 58 — Operasyon Koordinasyon Katmanı (2026-05-17)
+
+**Amaç:**
+`tasks.assign` permission var ama UI yoktu. Operations koordinatörü ekip üyelerine görev atayamıyor, ekibinin açık görev yükünü tek ekranda göremiyordu.
+
+Değişiklikler:
+- `lib/validations/customer-crm.ts`: `customerTaskSchema` — `assignedToId?: string` eklendi
+- `lib/actions/customer-crm-actions.ts`: `createCustomerTaskAction` — kullanıcı kendi dışına atama yaparken `tasks.assign` permission kontrol edilir; `assignedToId` DB'ye kaydedilir
+- `components/customers/customer-task-form.tsx`: `canAssign` + `users` props eklendi; admin/ops kullanıcıları görev oluştururken aynı satırda "Ata" dropdown görür
+- `app/(app)/customers/[id]/page.tsx`: `requirePermission` sonucu kullanılarak `checkPermission(TASKS_ASSIGN)` değerlendirilir; izin varsa `listUsersWithTasks()` çağrılıp form'a aktarılır
+- `services/task-service.ts`: `userId` filtresi `createdById` → `assignedToId` (ekip görev panosu için doğru filtre)
+- `app/(app)/tasks/page.tsx`: Görev kartlarında atanan kişi gösterilir (`→ fatih aydın` format); filtre etiketi "Tüm atananlar"
+- `services/dashboard-service.ts`: `getOperationsDashboardData()` — `teamTaskBreakdown` eklendi (tüm atanmış açık görevler kullanıcıya göre gruplandırılır, open+overdue count)
+- `app/(app)/dashboard/_components/operations-workspace.tsx`: "Ekip Görev Dağılımı" bölümü — her ekip üyesi için açık ve gecikmiş görev sayısı, `/tasks?userId=` deeplink
+- Schema değişikliği: YOK
+
+Kabul kriteri:
+- Görev formu: `tasks.assign` izni olan kullanıcı "Ata" dropdown görür ✓
+- Görev DB'ye `assignedToId` ile kaydedilir ✓
+- `/tasks` sayfası: atanan kişi `→ {name}` olarak görünür, filtre `assignedToId` üzerinden çalışır ✓
+- Operations dashboard: "Ekip Görev Dağılımı" ekip üyelerini ve görev yükünü gösterir ✓
+- Round-trip: form oluştur → customer detail'de görünür → /tasks'da assignee gösterilir ✓
+- tsc --noEmit temiz ✓
+- READY: dpl_3A5DU9KfNffMJZEFUa465TdMr4kQ
+
+---
+
 ### Phase 56 — Satış Fırsat Motoru (2026-05-17)
 
 **Amaç:**
