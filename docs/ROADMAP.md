@@ -1414,6 +1414,39 @@ forward.
 
 ---
 
+# Phase 62 — TrendyolReturnRecord Normalized Re-Match
+
+Goal:
+Phase 61 added normalized barcode matching for TrendyolSalesRecord but
+TrendyolReturnRecord has the same issue — unmatched rows (productId = null)
+where the return barcode doesn't exactly match Product.barcode due to dashes,
+spaces, or casing. Extend rematchNormalizedBarcodesAction() to also cover
+returns and report the combined counts.
+
+Context:
+TrendyolReturnRecord.barcode and .merchantSku exist in the same form as
+TrendyolSalesRecord. The same normalizeKey() function and product maps can
+be reused — this is a pure extension with no schema change and no new UI.
+
+What to build:
+- Extend rematchNormalizedBarcodesAction() in lib/actions/marketplace-mapping-actions.ts:
+  - After matching TrendyolSalesRecord rows, also fetch all null-productId
+    TrendyolReturnRecord rows
+  - Apply same normalized barcode+SKU matching logic
+  - Bulk update in batches of 100
+  - Include return count in success message: "X sipariş, Y iade eşleştirildi."
+- Schema change: NONE
+- New UI: NONE (same RematchNormalizedButton, updated success message)
+
+Permission gates:
+- MARKETPLACE_MAPPINGS_WRITE (existing)
+
+Exit:
+Clicking "Barkodları Normalize Et & Eşleştir" now matches both sales and
+return records. Success message reports both counts.
+
+---
+
 # Phase Exit Rules
 
 A phase is complete only if:

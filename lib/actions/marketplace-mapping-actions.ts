@@ -222,31 +222,51 @@ export async function rematchNormalizedBarcodesAction(): Promise<ActionResult> {
       }
     }
 
-    // Fetch all unmatched records
-    const unmatched = await prisma.trendyolSalesRecord.findMany({
-      where: { productId: null },
-      select: { id: true, barcode: true, merchantSku: true },
-    });
-
-    // Match and collect updates
-    const updates: { id: string; productId: string }[] = [];
-    for (const rec of unmatched) {
-      let productId: string | null = null;
-      if (rec.barcode) {
-        const nb = normalize(rec.barcode);
-        if (nb && normBarcodeMap.has(nb)) productId = normBarcodeMap.get(nb)!;
+    // Helper: resolve productId via normalized maps
+    function resolveMatch(
+      barcode: string | null,
+      merchantSku: string | null,
+    ): string | null {
+      if (barcode) {
+        const nb = normalize(barcode);
+        if (nb && normBarcodeMap.has(nb)) return normBarcodeMap.get(nb)!;
       }
-      if (!productId && rec.merchantSku) {
-        const ns = normalize(rec.merchantSku);
-        if (ns && normSkuMap.has(ns)) productId = normSkuMap.get(ns)!;
+      if (merchantSku) {
+        const ns = normalize(merchantSku);
+        if (ns && normSkuMap.has(ns)) return normSkuMap.get(ns)!;
       }
-      if (productId) updates.push({ id: rec.id, productId });
+      return null;
     }
 
-    // Bulk update in batches of 100
-    let matched = 0;
-    for (let i = 0; i < updates.length; i += 100) {
-      const batch = updates.slice(i, i + 100);
+    // Fetch all unmatched sales + return records in parallel
+    const [unmatchedSales, unmatchedReturns] = await Promise.all([
+      prisma.trendyolSalesRecord.findMany({
+        where: { productId: null },
+        select: { id: true, barcode: true, merchantSku: true },
+      }),
+      prisma.trendyolReturnRecord.findMany({
+        where: { productId: null },
+        select: { id: true, barcode: true, merchantSku: true },
+      }),
+    ]);
+
+    // Build update lists
+    const salesUpdates: { id: string; productId: string }[] = [];
+    for (const rec of unmatchedSales) {
+      const productId = resolveMatch(rec.barcode, rec.merchantSku);
+      if (productId) salesUpdates.push({ id: rec.id, productId });
+    }
+
+    const returnUpdates: { id: string; productId: string }[] = [];
+    for (const rec of unmatchedReturns) {
+      const productId = resolveMatch(rec.barcode, rec.merchantSku);
+      if (productId) returnUpdates.push({ id: rec.id, productId });
+    }
+
+    // Bulk update sales in batches of 100
+    let matchedSales = 0;
+    for (let i = 0; i < salesUpdates.length; i += 100) {
+      const batch = salesUpdates.slice(i, i + 100);
       await Promise.all(
         batch.map((u) =>
           prisma.trendyolSalesRecord.update({
@@ -255,13 +275,31 @@ export async function rematchNormalizedBarcodesAction(): Promise<ActionResult> {
           }),
         ),
       );
-      matched += batch.length;
+      matchedSales += batch.length;
     }
 
-    const remaining = unmatched.length - matched;
+    // Bulk update returns in batches of 100
+    let matchedReturns = 0;
+    for (let i = 0; i < returnUpdates.length; i += 100) {
+      const batch = returnUpdates.slice(i, i + 100);
+      await Promise.all(
+        batch.map((u) =>
+          prisma.trendyolReturnRecord.update({
+            where: { id: u.id },
+            data: { productId: u.productId },
+          }),
+        ),
+      );
+      matchedReturns += batch.length;
+    }
+
+    const remainingSales = unmatchedSales.length - matchedSales;
+    const remainingReturns = unmatchedReturns.length - matchedReturns;
     return {
       ok: true,
-      message: `${matched} sipariş kaydı eşleştirildi. ${remaining} kayıt hâlâ eşleşmemiş.`,
+      message:
+        `${matchedSales} sipariş, ${matchedReturns} iade eşleştirildi. ` +
+        `${remainingSales} sipariş + ${remainingReturns} iade hâlâ eşleşmemiş.`,
     };
   } catch (err) {
     console.error("[marketplace-mapping-actions] rematchNormalized:", err);
