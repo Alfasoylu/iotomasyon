@@ -9,45 +9,81 @@ export type ProductFilters = {
   q?: string;
   status?: string;
   stock?: string;
+  sort?: string;
 };
+
+type SortOption = Prisma.ProductOrderByWithRelationInput[];
+
+function buildOrderBy(sort?: string): SortOption {
+  switch (sort) {
+    case "stock_desc": return [{ stockQuantity: "desc" }, { name: "asc" }];
+    case "stock_asc": return [{ stockQuantity: "asc" }, { name: "asc" }];
+    case "price_desc": return [{ sellingPriceTry: { sort: "desc", nulls: "last" } }, { name: "asc" }];
+    case "price_asc": return [{ sellingPriceTry: { sort: "asc", nulls: "last" } }, { name: "asc" }];
+    case "name_asc": return [{ name: "asc" }];
+    case "margin_desc": return [{ updatedAt: "desc" }, { name: "asc" }]; // margin sorted in JS
+    default: return [{ updatedAt: "desc" }, { name: "asc" }];
+  }
+}
 
 export async function listProducts(filters: ProductFilters) {
   const where: Prisma.ProductWhereInput = {};
 
-  if (filters.q) {
+  if (filters.q && filters.q.length >= 2) {
     where.OR = [
-      { sku: { contains: filters.q } },
-      { name: { contains: filters.q } },
-      { brand: { contains: filters.q } },
-      { model: { contains: filters.q } },
-      { location: { contains: filters.q } },
+      { sku: { contains: filters.q, mode: "insensitive" } },
+      { name: { contains: filters.q, mode: "insensitive" } },
+      { brand: { contains: filters.q, mode: "insensitive" } },
+      { model: { contains: filters.q, mode: "insensitive" } },
+      { barcode: { contains: filters.q, mode: "insensitive" } },
     ];
   }
 
   if (filters.status === "active") {
     where.isActive = true;
+  } else if (filters.status === "inactive") {
+    where.isActive = false;
   }
 
-  if (filters.status === "inactive") {
-    where.isActive = false;
+  if (filters.stock === "has_stock") {
+    where.stockQuantity = { gt: 0 };
   }
 
   try {
     const products = await prisma.product.findMany({
       where,
-      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+      orderBy: buildOrderBy(filters.sort),
+      include: {
+        images: { take: 1, orderBy: { sortOrder: "asc" } },
+        productCategory: { select: { id: true, name: true } },
+      },
     });
 
+    let filtered = products;
+
+    // low-stock filter applied in JS (comparison between two fields)
     if (filters.stock === "low") {
-      return {
-        databaseAvailable: true as const,
-        products: products.filter((product) => product.stockQuantity <= product.minimumStock),
-      };
+      filtered = products.filter((p) => p.stockQuantity <= p.minimumStock);
+    }
+
+    // margin sort applied in JS (computed field)
+    if (filters.sort === "margin_desc") {
+      filtered = [...filtered].sort((a, b) => {
+        const marginA =
+          a.sellingPriceTry != null && a.unitCostTry != null
+            ? (Number(a.sellingPriceTry) - Number(a.unitCostTry)) / Number(a.sellingPriceTry)
+            : -Infinity;
+        const marginB =
+          b.sellingPriceTry != null && b.unitCostTry != null
+            ? (Number(b.sellingPriceTry) - Number(b.unitCostTry)) / Number(b.sellingPriceTry)
+            : -Infinity;
+        return marginB - marginA;
+      });
     }
 
     return {
       databaseAvailable: true as const,
-      products,
+      products: filtered,
     };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
