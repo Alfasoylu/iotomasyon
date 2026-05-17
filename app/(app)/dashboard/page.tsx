@@ -3,11 +3,13 @@ import {
   getAdminEnhancedData,
   getDashboardStats,
   getDueTodayFollowups,
+  getMarketplaceDashboardData,
   getOperationalAlerts,
   getOperationsDashboardData,
   getSalesPipelineData,
 } from "@/services/dashboard-service";
 import { AdminWorkspace } from "./_components/admin-workspace";
+import { MarketplaceWorkspace } from "./_components/marketplace-workspace";
 import { OperationsWorkspace } from "./_components/operations-workspace";
 import { SalesWorkspace } from "./_components/sales-workspace";
 import { WarehouseWorkspace } from "./_components/warehouse-workspace";
@@ -29,8 +31,8 @@ export const dynamic = "force-dynamic";
  * Faz E (2026-05-17): WarehouseWorkspace wired — stock + task signals, no financial data.
  *   WAREHOUSE enum migration done (Phase 55). getOperationsDashboardData() reused.
  *
- * Future Faz:
- *   Faz F: MarketplaceWorkspace — requires Phase 14 read intelligence
+ * Faz F (2026-05-17): MarketplaceWorkspace wired — listing/order/return/task signals.
+ *   getMarketplaceDashboardData() NEVER returns financial fields.
  */
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -53,7 +55,13 @@ export default async function DashboardPage() {
     return <WarehouseWorkspace data={warehouseData} />;
   }
 
-  // ADMIN, MARKETPLACE_OPERATOR, CUSTOM — full admin view with enhanced signals.
+  // MARKETPLACE_OPERATOR role: listing/order/return signals only (never financial data)
+  if (user.role === "MARKETPLACE_OPERATOR") {
+    const marketplaceData = await getMarketplaceDashboardData();
+    return <MarketplaceWorkspace data={marketplaceData} />;
+  }
+
+  // ADMIN, CUSTOM — full admin view with enhanced signals.
   const [stats, dueToday, alerts, enhanced] = await Promise.all([
     getDashboardStats(),
     getDueTodayFollowups(),

@@ -569,6 +569,65 @@ export async function getAdminEnhancedData() {
   }
 }
 
+// ─── Phase 54 Faz F — Marketplace Dashboard Data ─────────────────────────────
+// SECURITY RULE: This function MUST NEVER return financial fields (revenue,
+// cost, margin, unitCostTry, etc.). Only marketplace operational signals.
+export async function getMarketplaceDashboardData() {
+  try {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      activeListingsCount,
+      unmatchedOrdersCount,
+      recentReturnCount7d,
+      recentOrders7d,
+      openTasksCount,
+    ] = await Promise.all([
+      // Active marketplace listings across all platforms
+      prisma.marketplaceListing.count({ where: { status: "ACTIVE" } }),
+      // Trendyol orders with no product match (need mapping)
+      prisma.trendyolSalesRecord.count({ where: { productId: null } }),
+      // Return claims opened in the last 7 days
+      prisma.trendyolReturnRecord.count({
+        where: { claimDate: { gte: sevenDaysAgo } },
+      }),
+      // Trendyol order records in the last 7 days (non-cancelled)
+      prisma.trendyolSalesRecord.findMany({
+        where: { orderDate: { gte: sevenDaysAgo } },
+        select: { status: true, quantity: true },
+      }).then((rows) =>
+        rows
+          .filter((r) => !_isCancelledStatus(r.status))
+          .reduce((s, r) => s + r.quantity, 0),
+      ),
+      // Open tasks (marketplace team sees all open tasks)
+      prisma.followUpTask.count({ where: { status: "OPEN" } }),
+    ]);
+
+    return {
+      databaseAvailable: true as const,
+      activeListingsCount,
+      unmatchedOrdersCount,
+      recentReturnCount7d,
+      recentOrders7d,
+      openTasksCount,
+    };
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return {
+        databaseAvailable: false as const,
+        activeListingsCount: 0,
+        unmatchedOrdersCount: 0,
+        recentReturnCount7d: 0,
+        recentOrders7d: 0,
+        openTasksCount: 0,
+      };
+    }
+    throw error;
+  }
+}
+
 // ─── Exported return types (for workspace components) ────────────────────────
 export type DashboardStats = Awaited<ReturnType<typeof getDashboardStats>>;
 export type OperationalAlerts = Awaited<ReturnType<typeof getOperationalAlerts>>;
@@ -576,3 +635,4 @@ export type DueTodayFollowups = Awaited<ReturnType<typeof getDueTodayFollowups>>
 export type SalesPipelineData = Awaited<ReturnType<typeof getSalesPipelineData>>;
 export type OperationsDashboardData = Awaited<ReturnType<typeof getOperationsDashboardData>>;
 export type AdminEnhancedData = Awaited<ReturnType<typeof getAdminEnhancedData>>;
+export type MarketplaceDashboardData = Awaited<ReturnType<typeof getMarketplaceDashboardData>>;
