@@ -3,7 +3,7 @@
 /**
  * Phase 26 — Trendyol Sales Sync
  *
- * Fetches all order pages from Trendyol API (last 365 days),
+ * Fetches all order pages from Trendyol API in 90-day windows (last 365 days),
  * matches each line to an internal Product by barcode or merchantSku,
  * and upserts into TrendyolSalesRecord for performance ranking.
  */
@@ -44,87 +44,103 @@ export async function syncTrendyolSalesAction(): Promise<SalesSyncResult> {
     if (p.sku) skuMap.set(p.sku.toLowerCase(), p.id);
   }
 
-  // Fetch all order pages — last 365 days
-  const startDate = Date.now() - 365 * 24 * 60 * 60 * 1000;
-  const endDate = Date.now();
+  // Trendyol orders API caps date range at ~90 days.
+  // Sweep in 90-day windows from 365 days ago up to today.
+  const WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
+  const TOTAL_MS  = 365 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
 
-  let page = 0;
+  // Build list of [windowStart, windowEnd] pairs (oldest first)
+  const windows: Array<[number, number]> = [];
+  for (let t = now - TOTAL_MS; t < now; t += WINDOW_MS) {
+    windows.push([t, Math.min(t + WINDOW_MS, now)]);
+  }
+
   let totalOrders = 0;
   let totalLines = 0;
   let matched = 0;
   let newRecords = 0;
 
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    let resp;
-    try {
-      resp = await fetchTrendyolOrders(cfg, { page, size: 50, startDate, endDate });
-    } catch {
-      // If a page fails (e.g. network error), stop pagination but don't discard synced data
-      break;
-    }
+  for (const [startDate, endDate] of windows) {
+    let page = 0;
 
-    const orders = Array.isArray(resp.content) ? resp.content : [];
-    if (orders.length === 0) break;
-
-    totalOrders += orders.length;
-
-    for (const order of orders) {
-      const lines = Array.isArray(order.lines) ? order.lines : [];
-      for (const line of lines) {
-        totalLines++;
-
-        const barcodeKey = line.barcode?.toLowerCase();
-        const skuKey = line.merchantSku?.toLowerCase();
-
-        let productId: string | null = null;
-        if (barcodeKey && barcodeMap.has(barcodeKey)) {
-          productId = barcodeMap.get(barcodeKey)!;
-          matched++;
-        } else if (skuKey && skuMap.has(skuKey)) {
-          productId = skuMap.get(skuKey)!;
-          matched++;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      let resp;
+      try {
+        resp = await fetchTrendyolOrders(cfg, { page, size: 50, startDate, endDate });
+      } catch (err) {
+        // Page 0 of first window: surface the error so the user can see it
+        if (page === 0 && totalOrders === 0) {
+          const msg = err instanceof Error ? err.message : "Trendyol API hatası";
+          return { success: false, error: msg };
         }
+        // Later pages: stop this window's pagination, keep synced data so far
+        break;
+      }
 
-        const existing = await prisma.trendyolSalesRecord.findUnique({
-          where: { orderId_lineId: { orderId: String(order.id), lineId: line.id } },
-          select: { id: true },
-        });
+      const orders = Array.isArray(resp.content) ? resp.content : [];
+      if (orders.length === 0) break;
 
-        if (existing) {
-          // Update product link and status only (price data is immutable)
-          await prisma.trendyolSalesRecord.update({
-            where: { id: existing.id },
-            data: {
-              productId,
-              status: line.orderLineItemStatusName,
-              syncedAt: new Date(),
-            },
+      totalOrders += orders.length;
+
+      for (const order of orders) {
+        const lines = Array.isArray(order.lines) ? order.lines : [];
+        for (const line of lines) {
+          totalLines++;
+
+          const barcodeKey = line.barcode?.toLowerCase();
+          const skuKey = line.merchantSku?.toLowerCase();
+
+          let productId: string | null = null;
+          if (barcodeKey && barcodeMap.has(barcodeKey)) {
+            productId = barcodeMap.get(barcodeKey)!;
+            matched++;
+          } else if (skuKey && skuMap.has(skuKey)) {
+            productId = skuMap.get(skuKey)!;
+            matched++;
+          }
+
+          const existing = await prisma.trendyolSalesRecord.findUnique({
+            where: { orderId_lineId: { orderId: String(order.id), lineId: line.id } },
+            select: { id: true },
           });
-        } else {
-          await prisma.trendyolSalesRecord.create({
-            data: {
-              orderId: String(order.id),
-              lineId: line.id,
-              productId,
-              orderDate: new Date(order.orderDate),
-              status: line.orderLineItemStatusName,
-              merchantSku: line.merchantSku ?? null,
-              barcode: line.barcode ?? null,
-              productName: line.productName,
-              quantity: line.quantity,
-              unitPriceTry: line.discountedPrice,
-              totalPriceTry: line.discountedPrice * line.quantity,
-            },
-          });
-          newRecords++;
+
+          if (existing) {
+            // Update product link and status only (price data is immutable)
+            await prisma.trendyolSalesRecord.update({
+              where: { id: existing.id },
+              data: {
+                productId,
+                status: line.orderLineItemStatusName,
+                syncedAt: new Date(),
+              },
+            });
+          } else {
+            await prisma.trendyolSalesRecord.create({
+              data: {
+                orderId: String(order.id),
+                lineId: line.id,
+                productId,
+                orderDate: new Date(order.orderDate),
+                status: line.orderLineItemStatusName,
+                merchantSku: line.merchantSku ?? null,
+                barcode: line.barcode ?? null,
+                productName: line.productName,
+                quantity: line.quantity,
+                unitPriceTry: line.discountedPrice,
+                totalPriceTry: line.discountedPrice * line.quantity,
+              },
+            });
+            newRecords++;
+          }
         }
       }
-    }
 
-    // Stop when we've fetched all pages
-    if (page >= (resp.totalPages ?? 1) - 1 || orders.length < 50) break;
-    page++;
+      // Stop when we've fetched all pages in this window
+      if (page >= (resp.totalPages ?? 1) - 1 || orders.length < 50) break;
+      page++;
+    }
   }
 
   return { success: true, totalOrders, totalLines, matched, newRecords };
