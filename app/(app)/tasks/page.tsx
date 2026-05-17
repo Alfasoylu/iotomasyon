@@ -134,7 +134,7 @@ export default async function TasksPage({
             defaultValue={userId}
             className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
           >
-            <option value="all">Tüm kullanıcılar</option>
+            <option value="all">Tüm atananlar</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.name}
@@ -217,6 +217,11 @@ export default async function TasksPage({
                       <span>
                         Oluşturan: {task.createdBy?.name ?? "Sistem"}
                       </span>
+                      {task.assignedTo && (
+                        <span className="font-medium text-slate-500">
+                          → {task.assignedTo.name}
+                        </span>
+                      )}
                     </div>
                   </div>
 

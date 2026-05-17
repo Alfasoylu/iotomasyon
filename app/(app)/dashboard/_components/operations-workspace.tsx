@@ -100,6 +100,37 @@ export function OperationsWorkspace({
         </div>
       </section>
 
+      {/* Team task breakdown */}
+      {data.teamTaskBreakdown.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Ekip Görev Dağılımı
+          </h2>
+          <Card className="divide-y divide-slate-100">
+            {data.teamTaskBreakdown.map((member) => (
+              <div key={member.id} className="flex items-center justify-between gap-4 px-6 py-4">
+                <a
+                  href={`/tasks?userId=${member.id}`}
+                  className="text-sm font-medium text-slate-900 hover:text-slate-600"
+                >
+                  {member.name}
+                </a>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">
+                    {member.open} açık
+                  </span>
+                  {member.overdue > 0 && (
+                    <span className="rounded-full bg-red-100 px-2.5 py-1 font-semibold text-red-700">
+                      {member.overdue} gecikmiş
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </Card>
+        </section>
+      )}
+
       {/* Today's tasks */}
       <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <Card className="p-6">

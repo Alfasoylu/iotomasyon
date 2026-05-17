@@ -36,7 +36,7 @@ export async function listTasks(filters: TaskFilters) {
   }
 
   if (filters.userId && filters.userId !== "all") {
-    where.createdById = filters.userId;
+    where.assignedToId = filters.userId;
   }
 
   const page = Math.max(1, filters.page ?? 1);

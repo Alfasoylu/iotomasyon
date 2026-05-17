@@ -37,6 +37,7 @@ export const customerTaskSchema = z.object({
   description: z.string().trim().max(2000),
   dueDate: z.string().trim(),
   priority: z.enum(TASK_PRIORITY_OPTIONS),
+  assignedToId: z.string().optional(),
 });
 
 export type CustomerTaskInput = z.infer<typeof customerTaskSchema>;

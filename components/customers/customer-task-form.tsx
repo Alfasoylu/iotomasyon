@@ -12,7 +12,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { type CustomerTaskFormValues } from "@/types/customers";
 
-export function CustomerTaskForm({ customerId }: { customerId: string }) {
+type UserOption = { id: string; name: string };
+
+export function CustomerTaskForm({
+  customerId,
+  users = [],
+  canAssign = false,
+}: {
+  customerId: string;
+  users?: UserOption[];
+  canAssign?: boolean;
+}) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
   const [pending, setPending] = useState(false);
@@ -24,6 +34,7 @@ export function CustomerTaskForm({ customerId }: { customerId: string }) {
       description: "",
       dueDate: "",
       priority: "MEDIUM",
+      assignedToId: "",
     },
   });
 
@@ -45,6 +56,7 @@ export function CustomerTaskForm({ customerId }: { customerId: string }) {
         description: "",
         dueDate: "",
         priority: "MEDIUM",
+        assignedToId: "",
       });
       router.refresh();
     });
@@ -57,15 +69,31 @@ export function CustomerTaskForm({ customerId }: { customerId: string }) {
         <Input type="date" {...form.register("dueDate")} />
       </div>
 
-      <select
-        {...form.register("priority")}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-      >
-        <option value="LOW">Düşük</option>
-        <option value="MEDIUM">Orta</option>
-        <option value="HIGH">Yüksek</option>
-        <option value="URGENT">Acil</option>
-      </select>
+      <div className={`grid gap-4 ${canAssign && users.length > 0 ? "md:grid-cols-2" : ""}`}>
+        <select
+          {...form.register("priority")}
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+        >
+          <option value="LOW">Düşük</option>
+          <option value="MEDIUM">Orta</option>
+          <option value="HIGH">Yüksek</option>
+          <option value="URGENT">Acil</option>
+        </select>
+
+        {canAssign && users.length > 0 && (
+          <select
+            {...form.register("assignedToId")}
+            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+          >
+            <option value="">Atanmamış</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
 
       <Textarea {...form.register("description")} className="min-h-24" placeholder="Görev açıklaması" />
 

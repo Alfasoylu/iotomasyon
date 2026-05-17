@@ -138,6 +138,15 @@ export async function createCustomerTaskAction(
     };
   }
 
+  // tasks.assign is required to assign a task to someone other than yourself
+  if (
+    parsed.data.assignedToId &&
+    parsed.data.assignedToId !== user.id &&
+    !(await checkPermission(user, PERMISSIONS.TASKS_ASSIGN))
+  ) {
+    return { ok: false, message: "Başkasına görev atama yetkiniz yok." };
+  }
+
   try {
     await prisma.followUpTask.create({
       data: {
@@ -148,6 +157,7 @@ export async function createCustomerTaskAction(
         priority: parsed.data.priority,
         status: "OPEN",
         createdById: user.id,
+        assignedToId: parsed.data.assignedToId || null,
       },
     });
 

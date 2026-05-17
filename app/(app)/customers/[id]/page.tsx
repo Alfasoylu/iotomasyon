@@ -39,7 +39,8 @@ import { listAttributes } from "@/services/attribute-service";
 import { listCategoriesForSelect } from "@/services/category-service";
 import { getCustomerById, listCustomerInterestProducts } from "@/services/customer-service";
 import { listQuoteTemplates } from "@/services/quote-template-service";
-import { requirePermission } from "@/lib/auth";
+import { listUsersWithTasks } from "@/services/task-service";
+import { requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
@@ -49,15 +50,17 @@ export default async function CustomerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requirePermission(PERMISSIONS.CUSTOMERS_READ);
+  const currentUser = await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates] =
+  const canAssign = await checkPermission(currentUser, PERMISSIONS.TASKS_ASSIGN);
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers] =
     await Promise.all([
       getCustomerById(id),
       listCustomerInterestProducts(),
       listCategoriesForSelect(),
       listAttributes(),
       listQuoteTemplates(),
+      canAssign ? listUsersWithTasks() : Promise.resolve([]),
     ]);
 
   if (!databaseAvailable) {
@@ -488,7 +491,11 @@ export default async function CustomerDetailPage({
                   </p>
 
                   <div className="mt-6">
-                    <CustomerTaskForm customerId={customer.id} />
+                    <CustomerTaskForm
+                      customerId={customer.id}
+                      users={taskUsers}
+                      canAssign={canAssign}
+                    />
                   </div>
 
                   <div className="mt-8 space-y-4">

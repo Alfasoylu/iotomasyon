@@ -405,6 +405,7 @@ export async function getOperationsDashboardData() {
       openTasksCount,
       overdueTasksCount,
       dueTodayTasks,
+      teamTaskBreakdown,
       criticalStockCount,
       lowStockCount,
       unmatchedOrdersCount,
@@ -432,6 +433,30 @@ export async function getOperationsDashboardData() {
         },
         orderBy: { dueDate: "asc" },
         take: 10,
+      }),
+      // Team task breakdown: open tasks grouped by assigned user
+      prisma.followUpTask.findMany({
+        where: { status: "OPEN", assignedToId: { not: null } },
+        select: {
+          id: true,
+          priority: true,
+          dueDate: true,
+          assignedTo: { select: { id: true, name: true } },
+        },
+        orderBy: { dueDate: "asc" },
+      }).then((tasks) => {
+        const byUser = new Map<string, { id: string; name: string; open: number; overdue: number }>();
+        for (const t of tasks) {
+          if (!t.assignedTo) continue;
+          const key = t.assignedTo.id;
+          if (!byUser.has(key)) {
+            byUser.set(key, { id: key, name: t.assignedTo.name, open: 0, overdue: 0 });
+          }
+          const entry = byUser.get(key)!;
+          entry.open++;
+          if (t.dueDate && t.dueDate < now) entry.overdue++;
+        }
+        return Array.from(byUser.values()).sort((a, b) => b.open - a.open);
       }),
       // Critical stock (qty ≤ 0)
       prisma.product.count({ where: { stockQuantity: { lte: 0 } } }),
@@ -464,6 +489,7 @@ export async function getOperationsDashboardData() {
       openTasksCount,
       overdueTasksCount,
       dueTodayTasks,
+      teamTaskBreakdown,
       criticalStockCount,
       lowStockCount,
       unmatchedOrdersCount,
@@ -483,6 +509,7 @@ export async function getOperationsDashboardData() {
           customer: { id: string; name: string } | null;
           assignedTo: { id: string; name: string } | null;
         }[],
+        teamTaskBreakdown: [] as { id: string; name: string; open: number; overdue: number }[],
         criticalStockCount: 0,
         lowStockCount: 0,
         unmatchedOrdersCount: 0,

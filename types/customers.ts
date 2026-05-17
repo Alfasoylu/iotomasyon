@@ -117,4 +117,5 @@ export type CustomerTaskFormValues = {
   description: string;
   dueDate: string;
   priority: TaskPriority;
+  assignedToId?: string;
 };
