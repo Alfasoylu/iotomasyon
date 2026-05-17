@@ -337,7 +337,10 @@ export function ProductForm({
 
       {/* ── Fiyatlandırma ve kârlılık ── */}
       {showFinancialFields && (
-        <Section title="Fiyatlandırma ve kârlılık">
+        <Section title="Manuel fiyatlandırma ve TL maliyet (opsiyonel)">
+          <p className="mt-1 text-xs text-slate-500">
+            Ana hesaplama RMB alış + ağırlık üzerinden otomatik yapılır. Bu alanlar manuel veya legacy ürünler için opsiyoneldir.
+          </p>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Birim maliyet (₺)" error={form.formState.errors.unitCostTry?.message}>
               <Input {...form.register("unitCostTry")} placeholder="0.00" />

@@ -64,6 +64,7 @@ export async function listProducts(filters: ProductFilters) {
       include: {
         images: { take: 1, orderBy: { sortOrder: "asc" } },
         productCategory: { select: { id: true, name: true } },
+        xmlData: { select: { xmlTrendyolPrice: true } },
       },
     });
 

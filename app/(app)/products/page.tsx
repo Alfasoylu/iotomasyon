@@ -32,7 +32,11 @@ function getHealthCues(product: {
   imageUrl: string | null;
   images: { id: string }[];
   unitCostTry: unknown;
+  sourceCostRmb: unknown;
+  importUnitCostUsd: unknown;
   sellingPriceTry: unknown;
+  marketplacePriceTry: unknown;
+  xmlTrendyolPrice: unknown;
   xmlImported: boolean;
   lastStockSyncAt: Date | null;
 }): HealthCue[] {
@@ -49,12 +53,12 @@ function getHealthCues(product: {
   }
 
   // Missing cost
-  if (!product.unitCostTry) {
+  if (!product.unitCostTry && !product.sourceCostRmb && !product.importUnitCostUsd) {
     cues.push({ label: "Maliyet yok", tone: "danger" });
   }
 
   // Missing price
-  if (!product.sellingPriceTry) {
+  if (!product.sellingPriceTry && !product.marketplacePriceTry && !product.xmlTrendyolPrice) {
     cues.push({ label: "Fiyat yok", tone: "default" });
   }
 
@@ -169,7 +173,10 @@ export default async function ProductsPage({
                 products.map((product) => {
                   const thumbnailUrl =
                     product.images[0]?.url ?? product.imageUrl ?? null;
-                  const healthCues = getHealthCues(product);
+                  const healthCues = getHealthCues({
+                    ...product,
+                    xmlTrendyolPrice: product.xmlData?.xmlTrendyolPrice ?? null,
+                  });
                   const isLowStock = product.stockQuantity <= product.minimumStock;
 
                   return (
