@@ -279,6 +279,7 @@ model User {
   questionActionLogs       MarketplaceQuestionActionLog[] @relation("QuestionActionUser")
   returnActionLogs         MarketplaceReturnActionLog[]   @relation("ReturnActionUser")
   quoteTemplates           QuoteTemplate[]                @relation("TemplatesCreated")
+  marketplacePolicies      MarketplacePlatformPolicy[]    @relation("PolicyUpdatedBy")
 }
 
 model ProductCategory {
@@ -995,4 +996,27 @@ model TrendyolReturnRecord {
   @@index([claimDate])
   @@index([orderNumber])
   @@index([status])
+}
+// Phase 30 — Marketplace Margin Policy Normalization
+// Stores per-platform standard shipping cost and commission rate.
+// Resolution order (highest priority first):
+//   1. product.shippingCostOverride  / product.marketplaceCommissionOverride
+//   2. product.shippingCost          / product.marketplaceCommission  (product-level)
+//   3. MarketplacePlatformPolicy     (platform-level standard)
+//   4. system default (shipping=0, commission=20%)
+
+model MarketplacePlatformPolicy {
+  id                    String              @id @default(cuid())
+  platform              MarketplacePlatform @unique
+  standardShippingTry   Decimal             @default(0)  @db.Decimal(10,2)
+  standardCommissionPct Decimal             @default(20) @db.Decimal(5,2)
+  paymentFeePct         Decimal             @default(0)  @db.Decimal(5,2)
+  returnReservePct      Decimal             @default(0)  @db.Decimal(5,2)
+  vatPct                Decimal             @default(20) @db.Decimal(5,2)
+  notes                 String?
+  updatedAt             DateTime            @updatedAt
+  updatedById           String?
+  updatedBy             User?               @relation("PolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([platform])
 }

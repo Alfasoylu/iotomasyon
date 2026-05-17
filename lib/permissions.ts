@@ -110,6 +110,9 @@ export const PERMISSIONS = {
   MARKETPLACE_MAPPINGS_WRITE:   "marketplaceMappings.write",
   EXCHANGE_RATES_MANAGE:        "exchangeRates.manage",
 
+  // Marketplace Margin Policy (Phase 30)
+  MARKETPLACE_POLICIES_MANAGE:  "marketplacePolicies.manage",
+
   // Profitability
   PROFITABILITY_READ:           "profitability.read",
   PROFITABILITY_CONFIGURE:      "profitability.configure",

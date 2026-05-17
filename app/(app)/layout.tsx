@@ -36,8 +36,9 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/marketplace/trendyol/questions", label: "Müşteri Soruları",  permission: PERMISSIONS.MARKETPLACE_QUESTIONS_READ },
   { href: "/marketplace/trendyol/returns",   label: "İade Merkezi",      permission: PERMISSIONS.MARKETPLACE_RETURNS_READ },
   { href: "/marketplace/profit",             label: "Pazar Kârlılığı",   permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ },
-  { href: "/admin/exchange-rates",           label: "Döviz Kurları",     permission: PERMISSIONS.EXCHANGE_RATES_MANAGE },
-  { href: "/admin/marketplace-mappings",     label: "Ürün Eşleştirme",   permission: PERMISSIONS.MARKETPLACE_MAPPINGS_READ },
+  { href: "/admin/exchange-rates",           label: "Döviz Kurları",           permission: PERMISSIONS.EXCHANGE_RATES_MANAGE },
+  { href: "/admin/marketplace-mappings",     label: "Ürün Eşleştirme",         permission: PERMISSIONS.MARKETPLACE_MAPPINGS_READ },
+  { href: "/admin/marketplace-policies",     label: "Pazar Marj Politikaları", permission: PERMISSIONS.MARKETPLACE_POLICIES_MANAGE },
   { href: "/admin/data-hygiene",             label: "Veri Hijyeni",       permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/safety",                   label: "Üretim Güvenliği",   permission: PERMISSIONS.EXECUTIVE_READ },
 ];
