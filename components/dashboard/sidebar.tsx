@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 46 aktif
+          Faz 47 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Trendyol Katalog: canlı Trendyol ürün kataloğu iç stokla karşılaştırılır, delta analizi, aşım riski uyarısı.
+            Operasyonel Pano: dashboard'a Trendyol & Stok sinyalleri eklendi — kritik stok, bekleyen düşüm, son 7 gün sipariş, eşleşmemiş, 30 gün ciro.
           </p>
         </div>
       </aside>

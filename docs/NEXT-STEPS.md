@@ -129,6 +129,16 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 19 — Operational Intelligence Dashboard (Phase 47, 2026-05-17)
+
+Delivered:
+- `getOperationalAlerts()` in dashboard-service: criticalStockCount / pendingDeductionCount / unmatchedOrdersCount / recentOrderQty7d / trendyolRevenue30d (all DB-only, no live API calls)
+- `/dashboard` "Trendyol & Stok" section with 5 clickable stat tiles deep-linking into operational pages
+- `LinkedStatCard` component: Card + Link wrapper with hover shadow
+- Dashboard hero badge updated to "Faz 47"
+- No schema change
+- Browser-verified 2026-05-17: section renders, 5 tiles with correct links, Faz 47 badge ✓
+
 ### ✓ Priority 18 — Trendyol Catalog View (Phase 46, 2026-05-17)
 
 Delivered:

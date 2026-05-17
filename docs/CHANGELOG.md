@@ -73,6 +73,14 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
+### Phase 47 — Operational Intelligence Dashboard (2026-05-17)
+- Added `getOperationalAlerts()` to `services/dashboard-service.ts`: parallel-fetches criticalStockCount (stockQuantity ≤ 0), pending deduction rows (non-cancelled, matched, stockDeducted=false), unmatchedOrdersCount (productId=null), 7-day order qty, 30-day Trendyol revenue
+- `/dashboard` new "Trendyol & Stok" section with 5 `LinkedStatCard` tiles: Kritik Stok → /admin/stock-health, Bekleyen Stok Düşümü → /orders, Son 7 Gün Sipariş → /orders, Eşleşmemiş Sipariş → /admin/marketplace-mappings, Trendyol Ciro (30 Gün) → /marketplace/realized-margin
+- `LinkedStatCard` component: clickable Card with hover shadow, renders as `<Link>` when `href` provided
+- Dashboard hero badge updated from "Faz 8" → "Faz 47"
+- No schema change — reads existing Product, TrendyolSalesRecord tables
+- tsc clean, browser-verified 2026-05-17: "Faz 47" badge, Trendyol & Stok section, 5 linked tiles, 651 ürün in ops section ✓
+
 ### Phase 46 — Trendyol Catalog View (2026-05-17)
 - Added `fetchTrendyolCatalog()` to `lib/trendyol-api.ts` — GET `/integration/product/sellers/{id}/products`, `page`/`size`/`approved` params, typed `TrendyolCatalogProduct` + `TrendyolCatalogResponse`
 - `/admin/trendyol-catalog` server page: fetches up to 4 pages (200 products), cross-references with internal barcodes (all Product.barcode values) and MarketplaceProductMapping barcodes/SKUs
