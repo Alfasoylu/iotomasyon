@@ -84,6 +84,20 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Ürünler & Stok",
   },
 
+  // ── Depo (Phase 55 — WAREHOUSE role, INVENTORY_READ gated) ───────────────
+  {
+    href: "/warehouse",
+    label: "Depo",
+    permission: PERMISSIONS.INVENTORY_READ,
+    section: "Ürünler & Stok",
+  },
+  {
+    href: "/warehouse/count",
+    label: "Stok Sayımı",
+    permission: PERMISSIONS.INVENTORY_COUNT,
+    section: "Ürünler & Stok",
+  },
+
   // ── Pazar Yeri ────────────────────────────────────────────────────────────
   {
     href: "/marketplace",

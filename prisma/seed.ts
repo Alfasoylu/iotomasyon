@@ -15,9 +15,14 @@
  *   (or via: npm run db:seed)
  */
 
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? "",
+});
+const prisma = new PrismaClient({ adapter });
 
 // ── System roles ────────────────────────────────────────────────────────────
 // key must match UserRole enum values in schema.prisma exactly.
@@ -26,6 +31,7 @@ const SYSTEM_ROLES = [
   { key: "ADMIN",                name: "Admin",                  isSystem: true },
   { key: "SALES",                name: "Satış",                  isSystem: true },
   { key: "OPERATIONS",           name: "Operasyon",              isSystem: true },
+  { key: "WAREHOUSE",            name: "Depo",                   isSystem: true },
   { key: "MARKETPLACE_OPERATOR", name: "Pazar Yeri Operatörü",   isSystem: true },
   { key: "CUSTOM",               name: "Özel Rol",               isSystem: true },
 ] as const;
@@ -182,6 +188,18 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
     "marketplaceListings.read",
     "categories.read",
     "attributes.read",
+    "search.read",
+  ],
+  WAREHOUSE: [
+    // Warehouse staff can view and count stock — no financial data
+    "products.read",
+    "inventory.read",
+    "inventory.write",
+    "inventory.count",
+    "categories.read",
+    "attributes.read",
+    "tasks.read",
+    "tasks.update",
     "search.read",
   ],
   MARKETPLACE_OPERATOR: [
