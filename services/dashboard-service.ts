@@ -264,7 +264,111 @@ export async function getDueTodayFollowups() {
   }
 }
 
+// ─── Phase 54 Faz B — Sales Pipeline Data ────────────────────────────────────
+// SECURITY RULE: This function MUST NEVER return financial fields (cost, margin,
+// trendyolRevenue, unitCostTry, sourceCostRmb, etc.). Only safe CRM fields.
+export async function getSalesPipelineData(userId: string) {
+  try {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      activeInterests,
+      dueTodayTasks,
+      recentCustomers,
+      openTasksCount,
+      overdueTasksCount,
+    ] = await Promise.all([
+      // Active product interests assigned to this sales rep
+      prisma.productInterest.findMany({
+        where: {
+          assignedToId: userId,
+          status: { in: ["NEW", "WAITING_STOCK", "CONTACTED", "QUOTED"] },
+        },
+        select: {
+          id: true,
+          status: true,
+          followUpAt: true,
+          customer: { select: { id: true, name: true } },
+          product: { select: { id: true, name: true, sku: true, imageUrl: true } },
+          // NOTE: quotedPrice is intentionally omitted — sales reps don't need it in the dashboard
+        },
+        orderBy: { followUpAt: "asc" },
+        take: 10,
+      }),
+      // Follow-up tasks due today, assigned to this user
+      prisma.followUpTask.findMany({
+        where: {
+          assignedToId: userId,
+          status: "OPEN",
+          dueDate: { gte: todayStart, lt: todayEnd },
+        },
+        select: {
+          id: true,
+          title: true,
+          dueDate: true,
+          priority: true,
+          customer: { select: { id: true, name: true } },
+        },
+        orderBy: { dueDate: "asc" },
+        take: 10,
+      }),
+      // Recently active customers (status changed in last 7 days)
+      prisma.customer.findMany({
+        where: {
+          updatedAt: { gte: sevenDaysAgo },
+          status: { in: ["QUOTED", "NEGOTIATING", "WON"] },
+        },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          updatedAt: true,
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 5,
+      }),
+      // Open tasks count for this user
+      prisma.followUpTask.count({
+        where: { assignedToId: userId, status: "OPEN" },
+      }),
+      // Overdue tasks count for this user
+      prisma.followUpTask.count({
+        where: {
+          assignedToId: userId,
+          status: "OPEN",
+          dueDate: { lt: now },
+        },
+      }),
+    ]);
+
+    return {
+      databaseAvailable: true as const,
+      activeInterests,
+      dueTodayTasks,
+      recentCustomers,
+      openTasksCount,
+      overdueTasksCount,
+    };
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return {
+        databaseAvailable: false as const,
+        activeInterests: [],
+        dueTodayTasks: [],
+        recentCustomers: [],
+        openTasksCount: 0,
+        overdueTasksCount: 0,
+      };
+    }
+    throw error;
+  }
+}
+
 // ─── Exported return types (for workspace components) ────────────────────────
 export type DashboardStats = Awaited<ReturnType<typeof getDashboardStats>>;
 export type OperationalAlerts = Awaited<ReturnType<typeof getOperationalAlerts>>;
 export type DueTodayFollowups = Awaited<ReturnType<typeof getDueTodayFollowups>>;
+export type SalesPipelineData = Awaited<ReturnType<typeof getSalesPipelineData>>;
