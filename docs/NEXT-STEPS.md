@@ -129,6 +129,19 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 18 — Trendyol Catalog View (Phase 46, 2026-05-17)
+
+Delivered:
+- `fetchTrendyolCatalog()` in trendyol-api.ts: GET products endpoint, page/size/approved params, TrendyolCatalogProduct + TrendyolCatalogResponse types
+- `/admin/trendyol-catalog` server page: fetches up to 4 pages (200 products), cross-refs with internal Product.barcode + MarketplaceProductMapping barcodes/SKUs
+- KPI cards: Trendyol'da / Aşım Riski / Senkron / Eşleşmemiş
+- Matched table: delta badge (red=oversell risk, amber=internal surplus, green=in sync), sorted by |delta| desc
+- Unmatched table: "Eşleştir →" deep-link pre-filling marketplace-mappings form
+- Oversell risk warning banner + surplus stock push suggestion banner
+- Graceful error display for API failures
+- "Trendyol Katalog" nav link added (EXECUTIVE_READ)
+- Browser-verified 2026-05-17: 200/6176 ürün, 12 eşleşmiş, 188 eşleşmemiş, oversell uyarısı gösteriliyor ✓
+
 ### ✓ Priority 17 — Trendyol Stock Sync (Phase 45, 2026-05-17)
 
 Delivered:

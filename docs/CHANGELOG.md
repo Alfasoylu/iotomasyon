@@ -73,6 +73,18 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
+### Phase 46 — Trendyol Catalog View (2026-05-17)
+- Added `fetchTrendyolCatalog()` to `lib/trendyol-api.ts` — GET `/integration/product/sellers/{id}/products`, `page`/`size`/`approved` params, typed `TrendyolCatalogProduct` + `TrendyolCatalogResponse`
+- `/admin/trendyol-catalog` server page: fetches up to 4 pages (200 products), cross-references with internal barcodes (all Product.barcode values) and MarketplaceProductMapping barcodes/SKUs
+- KPI cards: Trendyol'da (total fetched) / Aşım Riski (Trendyol qty > internal) / Senkron (delta = 0) / Eşleşmemiş (no internal match)
+- Matched table: Trendyol product, barcode, Trendyol qty, internal qty, delta badge (red=Trendyol fazla/amber=iç fazla/green=Senkron); sorted by |delta| descending
+- Unmatched table: title, barcode, Trendyol qty, "Eşleştir →" link pre-filling /admin/marketplace-mappings?barcode=&title=
+- Warning banners: oversell risk alert + surplus stock push suggestion
+- Graceful TrendyolApiError display; shows "(İlk N / total ürün gösteriliyor)" note
+- "Trendyol Katalog" nav link added (EXECUTIVE_READ)
+- No schema change — reads live Trendyol API + Product + MarketplaceProductMapping
+- tsc clean, browser-verified 2026-05-17: 200/6176 ürün fetched, 12 matched, 188 unmatched, oversell warning rendered, nav link active ✓
+
 ### Phase 45 — Trendyol Stock Sync (2026-05-17)
 - Added `updateTrendyolInventory()` to `lib/trendyol-api.ts` — PUT `/integration/product/sellers/{id}/products/price-and-inventory` with batches of 100, returns `batchRequestId`
 - `getTrendyolStockPushPreviewAction()`: EXECUTIVE_READ gated; reads all TRENDYOL MarketplaceProductMapping entries joined with Product; skips rows without platformBarcode or sellingPriceTry; returns preview rows
