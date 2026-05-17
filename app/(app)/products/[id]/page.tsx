@@ -218,6 +218,32 @@ export default async function ProductDetailPage({
       ? ((avgUnitPrice - unitCostNum) / avgUnitPrice) * 100
       : null;
 
+  // Phase 64 — Monthly trend (last 6 months)
+  const toMonthKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const monthTrendMap = new Map<string, { qty: number; rev: number }>();
+  for (const r of activeRecords) {
+    const key = toMonthKey(r.orderDate);
+    const prev = monthTrendMap.get(key) ?? { qty: 0, rev: 0 };
+    monthTrendMap.set(key, { qty: prev.qty + r.quantity, rev: prev.rev + Number(r.totalPriceTry) });
+  }
+  const trendMonths = [...monthTrendMap.entries()]
+    .sort(([a], [b]) => b.localeCompare(a))
+    .slice(0, 6);
+  const trendDir: "up" | "down" | "flat" | "none" =
+    trendMonths.length >= 2
+      ? trendMonths[0][1].qty > trendMonths[1][1].qty
+        ? "up"
+        : trendMonths[0][1].qty < trendMonths[1][1].qty
+        ? "down"
+        : "flat"
+      : "none";
+  const trendMonthLabel = (key: string) => {
+    const [year, month] = key.split("-").map(Number);
+    const names = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+    return `${names[month - 1]} ${year}`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -825,6 +851,96 @@ export default async function ProductDetailPage({
           </div>
         )}
       </Card>
+
+      {/* Phase 64 — Monthly Sales Trend Card */}
+      {trendMonths.length > 0 && (
+        <Card className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-950">Trendyol Aylık Satış Trendi</h2>
+              <p className="mt-1 text-sm text-slate-500">Son 6 aylık sipariş ve ciro dağılımı (iptal hariç).</p>
+            </div>
+            {trendDir !== "none" && (
+              <span
+                className={`mt-1 rounded-full px-3 py-1 text-xs font-semibold ${
+                  trendDir === "up"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : trendDir === "down"
+                    ? "bg-red-50 text-red-600"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {trendDir === "up" ? "↑ Artış" : trendDir === "down" ? "↓ Düşüş" : "→ Sabit"}
+              </span>
+            )}
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400">
+                  <th className="pb-2 text-left font-medium">Ay</th>
+                  <th className="pb-2 text-right font-medium">Adet</th>
+                  <th className="pb-2 text-right font-medium">Ciro</th>
+                  <th className="pb-2 text-right font-medium">Ort. Fiyat</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {trendMonths.map(([key, d], i) => {
+                  const avgPrice = d.qty > 0 ? d.rev / d.qty : null;
+                  const prevQty = i < trendMonths.length - 1 ? trendMonths[i + 1][1].qty : null;
+                  const delta = prevQty !== null ? d.qty - prevQty : null;
+                  return (
+                    <tr key={key} className={i === 0 ? "font-medium" : ""}>
+                      <td className="py-2 text-slate-700">
+                        {trendMonthLabel(key)}
+                        {i === 0 && (
+                          <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400">
+                            Son
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 text-right tabular-nums text-slate-700">
+                        <span className="inline-flex items-center gap-1">
+                          {d.qty}
+                          {delta !== null && delta !== 0 && (
+                            <span
+                              className={`text-[10px] font-semibold ${
+                                delta > 0 ? "text-emerald-600" : "text-red-500"
+                              }`}
+                            >
+                              {delta > 0 ? `+${delta}` : delta}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="py-2 text-right tabular-nums text-slate-700">
+                        ₺{d.rev.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}
+                      </td>
+                      <td className="py-2 text-right tabular-nums text-slate-500">
+                        {avgPrice != null
+                          ? `₺${avgPrice.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}`
+                          : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-slate-200 text-xs font-semibold text-slate-600">
+                  <td className="pt-2">Toplam</td>
+                  <td className="pt-2 text-right tabular-nums">
+                    {trendMonths.reduce((s, [, d]) => s + d.qty, 0)}
+                  </td>
+                  <td className="pt-2 text-right tabular-nums">
+                    ₺{trendMonths.reduce((s, [, d]) => s + d.rev, 0).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}
+                  </td>
+                  <td className="pt-2 text-right">—</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Card>
+      )}
 
       {(directInterests.length > 0 || attributeInterests.length > 0 || categoryInterests.length > 0) ? (
         <div className="flex items-center justify-between">
