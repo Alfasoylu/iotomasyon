@@ -24,7 +24,7 @@ Değişiklikler:
   - Boş durum mesajı `drillLabel` ile dinamik
 - Schema değişikliği: YOK
 
-Durum: tsc clean ✓, commit 34b83e2 ✓, PENDING DEPLOY
+Durum: tsc clean ✓, commit 34b83e2 ✓, READY dpl_7ZWTqV8XZG43kfxH9M363sX9KtQu, browser-verified 2026-05-18 ✓
 
 ---
 
@@ -44,7 +44,7 @@ Değişiklikler:
   - Arama formu UI: `<form method="GET">` + input + Ara butonu + ✕ Temizle linki
 - Schema değişikliği: YOK
 
-Durum: tsc clean ✓, commit 6986a2e ✓, PENDING DEPLOY
+Durum: tsc clean ✓, commit 6986a2e ✓, READY dpl_7ZWTqV8XZG43kfxH9M363sX9KtQu, browser-verified 2026-05-18 ✓
 
 ---
 
@@ -61,7 +61,7 @@ Değişiklikler:
   - Kart yalnızca log varsa render edilir
 - Schema değişikliği: YOK
 
-Durum: tsc clean ✓, commit 24fb968 ✓, PENDING DEPLOY
+Durum: tsc clean ✓, commit 24fb968 ✓, READY dpl_7ZWTqV8XZG43kfxH9M363sX9KtQu, browser-verified 2026-05-18 ✓
 
 ---
 

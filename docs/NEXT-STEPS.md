@@ -703,36 +703,36 @@ Tamamlananlar:
 
 ---
 
-### ⏳ PENDING DEPLOY — Priority 70 — Trendyol Rapor Ay Drill-Down (Phase 70, 2026-05-17)
+### ✓ DONE — Priority 70 — Trendyol Rapor Ay Drill-Down (Phase 70, 2026-05-18)
 
 **Neden:**
 /admin/trendyol-report 12 aylık özet sunuyordu ama bir aya tıklayıp o ayın en çok satanlarını görmek mümkün değildi.
 
 Tamamlananlar:
 - `app/(app)/admin/trendyol-report/page.tsx`: `searchParams` + `selectedMonth`; aylık tablo satırları `?month=YYYY-MM` link; seçili satır koyu highlight; `drillSales` + `drillLabel`; top-10 seçili aya göre; "← Son 30 güne dön" back-link
-- tsc clean ✓; commit 34b83e2 ✓; PENDING DEPLOY (günlük limit)
+- tsc clean ✓; commit 34b83e2 ✓; READY dpl_7ZWTqV8XZG43kfxH9M363sX9KtQu, browser-verified 2026-05-18 ✓
 
 ---
 
-### ⏳ PENDING DEPLOY — Priority 69 — Siparişler Sayfası Arama (Phase 69, 2026-05-17)
+### ✓ DONE — Priority 69 — Siparişler Sayfası Arama (Phase 69, 2026-05-18)
 
 **Neden:**
 /orders sayfasında belirli bir ürünün siparişlerini bulmak için tüm listeye göz atmak gerekiyordu. Arama çubuğu bu problemi çözüyor.
 
 Tamamlananlar:
 - `app/(app)/orders/page.tsx`: q param; searchFilter (productName/barcode/merchantSku/orderId OR); tab counts search-aware; returns tab productName filter; salesWhere AND [searchFilter, tabFilter]; tabHref q koruyor; arama formu UI
-- tsc clean ✓; commit 6986a2e ✓; PENDING DEPLOY (günlük limit)
+- tsc clean ✓; commit 6986a2e ✓; READY dpl_7ZWTqV8XZG43kfxH9M363sX9KtQu, browser-verified 2026-05-18 ✓
 
 ---
 
-### ⏳ PENDING DEPLOY — Priority 68 — Ürün XML Stok Değişim Geçmişi (Phase 68, 2026-05-17)
+### ✓ DONE — Priority 68 — Ürün XML Stok Değişim Geçmişi (Phase 68, 2026-05-18)
 
 **Neden:**
 /admin/xml-sync global stok değişim logunu gösteriyordu ama ürün bazlı bakış yoktu. Ürün detay sayfasına kendi XML geçmişi eklendi.
 
 Tamamlananlar:
-- `app/(app)/products/[id]/page.tsx`: xmlStockChangeLogs Promise.all; "XML Stok Değişim Geçmişi" kartı; StockAdjustmentCard öncesi; no schema change
-- tsc clean ✓; commit 24fb968 ✓; PENDING DEPLOY (günlük limit)
+- `app/(app)/products/[id]/page.tsx`: xmlStockChangeLogs Promise.all; "XML Stok Değişim Geçmişi" kartı; StockAdjustmentCard öncesi; no schema change; kartı yalnızca kayıt varsa render edilir
+- tsc clean ✓; commit 24fb968 ✓; READY dpl_7ZWTqV8XZG43kfxH9M363sX9KtQu, browser-verified 2026-05-18 ✓
 
 ---
 
