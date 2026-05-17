@@ -81,6 +81,21 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 73 — Kilitli Sermaye Dağılım Analizi (2026-05-18)
+
+**Neden:** `/admin/capital` sayfası toplam ₺519k stok değerini gösteriyordu ama hangi ürünlerin sermayeyi bağladığı görünmüyordu. "Kilitli sermaye dağılımı" bölümü bu soruyu doğrudan yanıtlıyor.
+
+Teslim edilenler:
+- `app/(app)/admin/capital/page.tsx`: `capitalBreakdown` hesabı — `productsWithScore` üzerinden `filter → map → sort → slice(0,20)`; `BreakdownRow` ve `ScoreItem` tip tanımları
+- `totalLockedValue`: tüm maliyetli ürünlerin toplam stok değeri
+- UI: öneriler tablosunun altında yeni "Kilitli sermaye dağılımı" Card'ı
+- Sütunlar: Ürün / Stok / Birim maliyet / Stok değeri / % Pay (amber≥%10) / Dağılım (amber bar)
+- tfoot: toplam kilitli değer + açıklama notu
+- Schema değişikliği: YOK; Yeni DB sorgusu: YOK
+- tsc 0 yeni hata ✓; commit 3c93715 ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 72 — İthalat Cockpit MarketplacePrice Entegrasyonu (2026-05-18)
 
 **Neden:** Phase 71 ile `MarketplacePrice` canonical fiyat kaydı oluşturuldu ama import cockpit hâlâ `xmlData.xmlTrendyolPrice` (USD→TRY dönüşümü gerektiren) fallback kullanıyordu. 646 TRENDYOL kayıtlı ürün için daha temiz, zaten TRY cinsinden olan `priceTry` mevcut olmasına rağmen kullanılmıyordu.
