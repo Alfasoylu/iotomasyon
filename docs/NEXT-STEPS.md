@@ -81,6 +81,22 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 72 — İthalat Cockpit MarketplacePrice Entegrasyonu (2026-05-18)
+
+**Neden:** Phase 71 ile `MarketplacePrice` canonical fiyat kaydı oluşturuldu ama import cockpit hâlâ `xmlData.xmlTrendyolPrice` (USD→TRY dönüşümü gerektiren) fallback kullanıyordu. 646 TRENDYOL kayıtlı ürün için daha temiz, zaten TRY cinsinden olan `priceTry` mevcut olmasına rağmen kullanılmıyordu.
+
+Teslim edilenler:
+- `app/(app)/admin/import-cockpit/page.tsx`: fiyat çözümleme Tier 2 olarak `MarketplacePrice TRENDYOL` eklendi
+- Hiyerarşi: Trendyol gerçekleşen avg (90g) → **MP Fiyat** (violet badge) → XML Trendyol → Manuel
+- `prisma.marketplacePrice.findMany({ where: { marketplace: "TRENDYOL" } })` paralel fetch eklendi
+- `mpTrendyolMap`: `productId → priceTry` lookup map
+- `priceSource` tipi `"mp"` eklendi; violet badge "MP Fiyat" kaynak etiket görünümü
+- Hesaplama Mantığı footer güncellendi
+- Schema değişikliği: YOK
+- tsc 0 yeni hata ✓; commit b1880a4 ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Sermaye Sayfası Stok Değeri Fix (2026-05-18)
 
 **Neden:** `/admin/capital` sayfasında stok değeri 0 görünüyordu — `unitCostTry` null olan ürünler lockedCapital hesabına dahil edilmiyordu.
