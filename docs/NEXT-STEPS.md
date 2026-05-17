@@ -188,18 +188,15 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
-### Priority 21 — XML Stok Değişim Logu (Phase 49 — SONRAKI)
+### ✓ Priority 21 — XML Stok Değişim Logu (Phase 49, 2026-05-17)
 
-Neden:
-Entegra stok yönetiminin kaynağıdır. Her XML sync çalıştığında hangi ürünlerin stoğunun değiştiğini (önceki değer → yeni değer) kayıt altına almak gerekiyor.
-Bu log: stok hareketlerini izlemeye, anomalileri tespit etmeye ve audit trail tutmaya yarıyor.
-
-Kapsam:
-- XML sync sırasında (her ürün upsert'inde) önceki stockQuantity vs yeni stockQuantity karşılaştır
-- Değişen ürünler için `XmlStockChangeLog` kaydı yaz (productId, previousQty, newQty, delta, syncedAt, sourceUrl)
-- `/admin/xml-sync` sayfasına "Son Değişimler" bölümü: son sync'te neyin değiştiği, delta badge'leri
-- Schema değişikliği gerekiyor: `XmlStockChangeLog` modeli
-- StockAdjustmentLog ile karıştırılmaz — bu Entegra kaynaklı otomatik log, manuel düzeltme değil
+Delivered:
+- `XmlStockChangeLog` model: productId, syncLogId, sourceId, previousQty, newQty, delta, syncedAt
+- Migration: `20260517490000_phase49_xml_stock_change_log` applied to production
+- `runSync` updated: fetches `stockQuantity` for existing products; compares previousQty vs newQty; batch-inserts `XmlStockChangeLog` for products whose stock actually changed (MANUAL-source and no-change products excluded)
+- Sync result message reports count of changed products
+- `/admin/xml-sync`: "Son Senkronizasyon Değişimleri" section — groups latest 100 changes by syncLogId, shows product links, ↑ emerald / ↓ red delta badges, empty state for no-change syncs
+- Browser-verified 2026-05-17 ✓
 
 ### Priority 22 — İthalat Karar Cockpiti v2 (Phase 50)
 

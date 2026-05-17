@@ -87,6 +87,15 @@
 - All quality gates: prisma validate ✓, prisma generate ✓, tsc --noEmit ✓, eslint 0 warnings ✓, npm run build ✓
 - Browser round-trip verified 2026-05-17: form section visible with blue info box, override fields with correct placeholders, shippingCostOverride save→detail shows "Ürün Geçersiz Kılma" badge at ₺25, 4-tier resolution working, clear→save→redirect clean ✓
 
+### Phase 49 — XML Stok Değişim Logu (2026-05-17)
+- Added `XmlStockChangeLog` Prisma model: productId, syncLogId, sourceId, previousQty, newQty, delta, syncedAt
+- Migration: `20260517490000_phase49_xml_stock_change_log` applied to production
+- `runSync` in `lib/actions/xml-sync-actions.ts`: fetches `stockQuantity` for existing products; compares previousQty vs newQty per product; batch-inserts `XmlStockChangeLog` records for all products whose stock actually changed (excludes no-change and MANUAL-source products)
+- Sync result message now reports count of products whose stock changed
+- `/admin/xml-sync` page: new "Son Senkronizasyon Değişimleri" section — queries latest 100 change logs, groups by `syncLogId` to isolate the most recent sync run, shows product name/SKU/previous qty/new qty with ↑ emerald / ↓ red delta badges; empty state for no-change syncs
+- No UI changes to existing sync form or log table
+- tsc clean, eslint 0 warnings, build ✓, migration applied ✓
+
 ### Phase 48 — Trendyol Daily Sync Cron (2026-05-17)
 - Added `app/api/cron/trendyol-sync/route.ts`: Vercel cron route called daily at 06:00 UTC, CRON_SECRET Bearer auth, 14-day sliding window, parallel `syncOrders` + `syncReturns` via `Promise.allSettled`
 - `syncOrders`: paginates `fetchTrendyolOrders` (page/size=50), upserts `TrendyolSalesRecord` (barcode/SKU product match, discountedPrice fallback, status update)
