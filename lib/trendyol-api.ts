@@ -13,8 +13,9 @@
  */
 
 // Trendyol integration gateways
-const ORDER_BASE_URL = "https://apigw.trendyol.com/integration/order/sellers";
-const QNA_BASE_URL   = "https://apigw.trendyol.com/integration/qna/sellers";
+const ORDER_BASE_URL   = "https://apigw.trendyol.com/integration/order/sellers";
+const QNA_BASE_URL     = "https://apigw.trendyol.com/integration/qna/sellers";
+const PRODUCT_BASE_URL = "https://apigw.trendyol.com/integration/product/sellers";
 
 // Legacy alias kept for read functions that already reference BASE_URL
 const BASE_URL = ORDER_BASE_URL;
@@ -343,6 +344,55 @@ export async function testTrendyolConnection(cfg: TrendyolConfig): Promise<{ ok:
     }
     return { ok: false, message: `Ağ hatası: ${err instanceof Error ? err.message : "Bilinmeyen hata"}` };
   }
+}
+
+// ─── Product / Inventory types (Phase 45) ────────────────────────────────────
+
+/**
+ * One item in a price-and-inventory batch update.
+ * Trendyol requires ALL four fields — quantity-only updates are not supported.
+ * salePrice = actual selling price; listPrice = "before discount" price (set equal if no discount).
+ */
+export interface TrendyolInventoryItem {
+  barcode: string;
+  quantity: number;
+  salePrice: number;
+  listPrice: number;
+}
+
+export interface TrendyolBatchResponse {
+  batchRequestId: string;
+}
+
+// ─── Product / Inventory API functions (Phase 45) ────────────────────────────
+
+/**
+ * Push stock quantities (and prices) to Trendyol.
+ * PUT /integration/product/sellers/{supplierId}/products/price-and-inventory
+ * Returns a batchRequestId — processing is async on Trendyol's side.
+ * Trendyol rate limit: 100 items per request (batch larger payloads yourself).
+ */
+export async function updateTrendyolInventory(
+  cfg: TrendyolConfig,
+  items: TrendyolInventoryItem[],
+): Promise<TrendyolBatchResponse> {
+  const url = `${PRODUCT_BASE_URL}/${cfg.supplierId}/products/price-and-inventory`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: authHeader(cfg),
+      "Content-Type": "application/json",
+      "User-Agent": `iotomasyon-crm/1.0 (${cfg.supplierId})`,
+    },
+    body: JSON.stringify({ items }),
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new TrendyolApiError(res.status, text);
+  }
+  const text = await res.text();
+  return (text ? JSON.parse(text) : { batchRequestId: "" }) as TrendyolBatchResponse;
 }
 
 // ─── Q&A types (Phase 16) ─────────────────────────────────────────────────────
