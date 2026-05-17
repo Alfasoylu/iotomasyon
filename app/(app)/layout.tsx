@@ -36,6 +36,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/admin/exchange-rates",           label: "Döviz Kurları",     permission: PERMISSIONS.EXCHANGE_RATES_MANAGE },
   { href: "/admin/marketplace-mappings",     label: "Ürün Eşleştirme",   permission: PERMISSIONS.MARKETPLACE_MAPPINGS_READ },
   { href: "/admin/data-hygiene",             label: "Veri Hijyeni",       permission: PERMISSIONS.EXECUTIVE_READ },
+  { href: "/admin/safety",                   label: "Üretim Güvenliği",   permission: PERMISSIONS.EXECUTIVE_READ },
 ];
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
