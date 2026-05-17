@@ -382,6 +382,8 @@ model Product {
   trendyolSalesRecords TrendyolSalesRecord[]
   // Phase 28 — Owner-only private intelligence (EXECUTIVE_READ only)
   privateNote          String?
+  // Phase 29 — Trendyol return/claim records
+  trendyolReturnRecords TrendyolReturnRecord[]
 
   @@index([name])
   @@index([barcode])
@@ -961,4 +963,36 @@ model TrendyolSalesRecord {
   @@index([orderDate])
   @@index([merchantSku])
   @@index([barcode])
+}
+
+// ─── Phase 29 — Order Ledger and Return Claims ────────────────────────────────
+// One row per Trendyol claim × order-line pair.
+// claimId+orderLineId is the natural unique key from the Trendyol claims API.
+// productId is nullable: unmatched claims kept for audit.
+
+model TrendyolReturnRecord {
+  id            String   @id @default(cuid())
+  claimId       String   // Trendyol claim ID (string)
+  orderLineId   Int      // Trendyol order line ID within the claim
+  productId     String?
+  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  orderNumber   String   // Trendyol order number (display string)
+  orderDate     DateTime // original order date
+  claimDate     DateTime // when the return claim was opened
+  status        String   // claimItemStatus.name e.g. "Accepted", "WaitingForArrival"
+  reasonName    String?  // Turkish reason from customerClaimItemReason.name
+  reasonCode    String?  // reason code
+
+  productName   String
+  barcode       String?
+  merchantSku   String?
+  unitPriceTry  Decimal  @db.Decimal(15,2) @default(0)
+  syncedAt      DateTime @default(now())
+
+  @@unique([claimId, orderLineId])
+  @@index([productId])
+  @@index([claimDate])
+  @@index([orderNumber])
+  @@index([status])
 }
