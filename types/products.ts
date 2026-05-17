@@ -42,4 +42,8 @@ export type ProductFormValues = {
   installerSalesPotential: string;
   // Phase 11 — XML Sync override protection
   xmlLocked: boolean;
+  // Phase 11C — Import decision inputs
+  weightKg: string;
+  customsRatePct: string;
+  shippingMethodPref: string;
 };

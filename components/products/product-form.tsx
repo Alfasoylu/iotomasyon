@@ -79,6 +79,10 @@ const emptyValues: ProductFormValues = {
   installerSalesPotential: "",
   // Phase 11
   xmlLocked: false,
+  // Phase 11C
+  weightKg: "",
+  customsRatePct: "",
+  shippingMethodPref: "",
 };
 
 export function ProductForm({
@@ -326,6 +330,30 @@ export function ProductForm({
         </div>
         <p className="text-xs text-slate-400 leading-6">
           Aylık satış tahmini kanal bazında girilir. Bu değerler yatırım skoru ve SATIN AL / ALMA sinyali için kullanılır.
+        </p>
+      </Section>
+
+      {/* ── İthalat Kararı Girdileri ── */}
+      <Section title="İthalat kararı girdileri">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Field label="Ağırlık (kg)" error={form.formState.errors.weightKg?.message}>
+            <Input {...form.register("weightKg")} placeholder="1.5" />
+          </Field>
+          <Field label="Gümrük oranı (%)" error={form.formState.errors.customsRatePct?.message}>
+            <Input {...form.register("customsRatePct")} placeholder="20" />
+          </Field>
+          <Field label="Tercih edilen kargo yöntemi" error={form.formState.errors.shippingMethodPref?.message}>
+            <select {...form.register("shippingMethodPref")} className={selectCls}>
+              <option value="">-- Sistem karar versin --</option>
+              <option value="AIR">Hava yolu (AIR)</option>
+              <option value="SEA">Deniz yolu (SEA)</option>
+            </select>
+          </Field>
+        </div>
+        <p className="text-xs text-slate-400 leading-6">
+          İthalat karar motoru: hava/deniz kargo maliyeti, gümrük ve kârlılık hesabı yaparak en uygun yöntemi önerir.
+          Ağırlık ve gümrük oranı girilmeden karar üretilemez.
+          İthalat birim maliyeti (USD) için yukarıdaki "İthalat ve envanter" bölümünü kullanın.
         </p>
       </Section>
 

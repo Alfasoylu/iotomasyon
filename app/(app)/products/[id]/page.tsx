@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { prisma } from "@/lib/prisma";
 import { ProductDeleteButton } from "@/components/products/product-delete-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,12 @@ import {
   BUY_SIGNAL_LABELS,
   BUY_SIGNAL_TONES,
 } from "@/lib/sales-potential";
+import {
+  calculateImportDecision,
+  RECOMMENDATION_LABELS,
+  RECOMMENDATION_TONES,
+  DEFAULT_USD_TRY_RATE,
+} from "@/lib/import-decision";
 
 export const dynamic = "force-dynamic";
 
@@ -47,9 +54,12 @@ export default async function ProductDetailPage({
 }) {
   await requirePermission(PERMISSIONS.PRODUCTS_READ);
   const { id } = await params;
-  const [{ databaseAvailable, product }, intelligenceResult] = await Promise.all([
+  const [{ databaseAvailable, product }, intelligenceResult, latestRate] = await Promise.all([
     getProductById(id),
     getProductIntelligence(id),
+    prisma.monthlyExchangeRate.findFirst({
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+    }),
   ]);
 
   if (!databaseAvailable) {
@@ -115,6 +125,43 @@ export default async function ProductDetailPage({
     minimumStock: product.minimumStock,
   });
   const hasSalesPotential = salesPotential.totalMonthlyUnits > 0;
+
+  // Phase 11C — Import decision
+  const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
+  const importDecision = calculateImportDecision({
+    sourcePriceUsd:
+      product.importUnitCostUsd != null
+        ? Number(product.importUnitCostUsd)
+        : product.unitCostUsd != null
+          ? Number(product.unitCostUsd)
+          : null,
+    weightKg: product.weightKg != null ? Number(product.weightKg) : null,
+    customsRatePct: product.customsRatePct != null ? Number(product.customsRatePct) : null,
+    shippingMethodPref: product.shippingMethodPref ?? null,
+    sellingPriceTry:
+      product.marketplacePriceTry != null
+        ? Number(product.marketplacePriceTry)
+        : product.sellingPriceTry != null
+          ? Number(product.sellingPriceTry)
+          : null,
+    commissionPct:
+      product.marketplaceCommissionOverride != null
+        ? Number(product.marketplaceCommissionOverride)
+        : product.marketplaceCommission != null
+          ? Number(product.marketplaceCommission)
+          : null,
+    domesticShippingTry:
+      product.shippingCostOverride != null
+        ? Number(product.shippingCostOverride)
+        : product.shippingCost != null
+          ? Number(product.shippingCost)
+          : null,
+    usdTryRate,
+    monthlyUnits:
+      (product.onlineSalesPotential ?? 0) +
+      (product.wholesaleSalesPotential ?? 0) +
+      (product.installerSalesPotential ?? 0) || null,
+  });
 
   return (
     <div className="space-y-6">
@@ -361,6 +408,118 @@ export default async function ProductDetailPage({
           ) : null}
         </Card>
       ) : null}
+
+      {/* Phase 11C — Import Decision Card */}
+      <Card className="p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-950">İthalat Kararı</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Hava/deniz kargo ekonomisi. Kur: 1 USD = ₺{usdTryRate.toFixed(2)}
+            </p>
+          </div>
+          <Badge tone={RECOMMENDATION_TONES[importDecision.decision] as "success" | "warning" | "danger" | "default"}>
+            {RECOMMENDATION_LABELS[importDecision.decision]}
+          </Badge>
+        </div>
+
+        {importDecision.hasData ? (
+          <div className="mt-5 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Air scenario */}
+              {importDecision.air ? (
+                <div className={`rounded-xl border p-4 ${importDecision.effectiveMethod === "AIR" ? "border-blue-300 bg-blue-50" : "border-slate-100 bg-slate-50"}`}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">✈ Hava yolu ({120} gün)</p>
+                  <div className="mt-3 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">İniş maliyeti</span>
+                      <span className="font-mono font-medium">${importDecision.air.landedCostUsd.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Kâr oranı</span>
+                      <span className={`font-mono font-medium ${importDecision.air.profitRatio >= 1 ? "text-emerald-700" : "text-red-600"}`}>
+                        {importDecision.air.profitRatio.toFixed(3)}×
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Aylık kâr</span>
+                      <span className="font-mono font-medium">${importDecision.air.monthlyProfitUsd.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Yıllık kâr</span>
+                      <span className="font-mono font-medium">${importDecision.air.annualProfitUsd.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Gerekli sermaye</span>
+                      <span className="font-mono font-medium">${importDecision.air.requiredCapitalUsd.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Yıllık ROI</span>
+                      <span className="font-mono font-medium">{importDecision.air.annualRoiMultiplier.toFixed(3)}×</span>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              {/* Sea scenario */}
+              {importDecision.sea ? (
+                <div className={`rounded-xl border p-4 ${importDecision.effectiveMethod === "SEA" ? "border-teal-300 bg-teal-50" : "border-slate-100 bg-slate-50"}`}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-teal-600">🚢 Deniz yolu ({210} gün)</p>
+                  <div className="mt-3 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">İniş maliyeti</span>
+                      <span className="font-mono font-medium">${importDecision.sea.landedCostUsd.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Kâr oranı</span>
+                      <span className={`font-mono font-medium ${importDecision.sea.profitRatio >= 1 ? "text-emerald-700" : "text-red-600"}`}>
+                        {importDecision.sea.profitRatio.toFixed(3)}×
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Aylık kâr</span>
+                      <span className="font-mono font-medium">${importDecision.sea.monthlyProfitUsd.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Yıllık kâr</span>
+                      <span className="font-mono font-medium">${importDecision.sea.annualProfitUsd.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Gerekli sermaye</span>
+                      <span className="font-mono font-medium">${importDecision.sea.requiredCapitalUsd.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Yıllık ROI</span>
+                      <span className="font-mono font-medium">{importDecision.sea.annualRoiMultiplier.toFixed(3)}×</span>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            <p className="text-xs text-slate-400">
+              Önerilen yöntem:{" "}
+              <span className="font-semibold">
+                {importDecision.recommendedMethod === "AIR" ? "✈ Hava yolu" : "🚢 Deniz yolu"}
+              </span>
+              {importDecision.effectiveMethod !== importDecision.recommendedMethod
+                ? ` (manuel override: ${importDecision.effectiveMethod})`
+                : ""}
+              {" · "}Skor: {importDecision.score.toFixed(3)}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p className="font-medium">Hesaplama için eksik veri:</p>
+            <ul className="mt-1 list-inside list-disc text-xs">
+              {importDecision.missingFields.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs">
+              Ürünü düzenleyerek ağırlık, gümrük oranı, satış fiyatı ve aylık talep bilgilerini girin.
+            </p>
+          </div>
+        )}
+      </Card>
 
       {(directInterests.length > 0 || attributeInterests.length > 0 || categoryInterests.length > 0) ? (
         <div className="flex items-center justify-between">

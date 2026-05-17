@@ -130,6 +130,10 @@ export default async function EditProductPage({
             returnReserveRate: product.returnReserveRate != null ? String(product.returnReserveRate) : "",
             // Phase 11
             xmlLocked: product.xmlLocked ?? false,
+            // Phase 11C
+            weightKg: product.weightKg != null ? String(product.weightKg) : "",
+            customsRatePct: product.customsRatePct != null ? String(product.customsRatePct) : "",
+            shippingMethodPref: product.shippingMethodPref ?? "",
           }}
         />
       </Card>

@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 24 aktif
+          Faz 11C aktif
           <p className="mt-2 font-medium text-slate-900">
-            Üretim Güvenliği: migrasyon geçmişi ve tehlikeli işlem onay kuralları.
+            İthalat Kararları: hava/deniz kargo ekonomisi, satın alma önerisi.
           </p>
         </div>
       </aside>

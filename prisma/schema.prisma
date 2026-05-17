@@ -354,6 +354,10 @@ model Product {
   variantProducts          Product[]   @relation("ProductHierarchy")
   // Phase 16 — USD cost for import-priced products (do NOT remove unitCostTry)
   unitCostUsd              Decimal?
+  // Phase 11C — Import decision inputs
+  weightKg                 Decimal?
+  customsRatePct           Decimal?
+  shippingMethodPref       String?
   createdById     String?
   createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
   productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)

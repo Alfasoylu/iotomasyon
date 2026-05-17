@@ -199,6 +199,10 @@ function normalizeProductData(input: ProductInput) {
     installerSalesPotential: positiveIntOrNull(input.installerSalesPotential),
     // Phase 11 — XML Sync override protection
     xmlLocked: input.xmlLocked,
+    // Phase 11C — Import decision inputs
+    weightKg: emptyToNull(input.weightKg),
+    customsRatePct: emptyToNull(input.customsRatePct),
+    shippingMethodPref: emptyToNull(input.shippingMethodPref),
   };
 }
 

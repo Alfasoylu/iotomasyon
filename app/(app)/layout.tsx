@@ -27,6 +27,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/admin/procurement",  label: "Tedarik Asistanı",  permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/suppliers",          label: "Tedarikçiler",          permission: PERMISSIONS.SUPPLIERS_READ },
   { href: "/admin/import-calculator",  label: "İthalat Hesaplayıcı",  permission: PERMISSIONS.EXECUTIVE_READ },
+  { href: "/admin/import-decisions",   label: "İthalat Kararları",    permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/xml-sync",     label: "XML Senkron",       permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/trendyol",  label: "Trendyol API",  permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/marketplace/trendyol",           label: "Trendyol Paneli",   permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ },

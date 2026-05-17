@@ -44,6 +44,10 @@ export const productSchema = z.object({
   installerSalesPotential: z.string().trim(),
   // Phase 11 — XML Sync override protection
   xmlLocked: z.boolean(),
+  // Phase 11C — Import decision inputs
+  weightKg: z.string().trim(),
+  customsRatePct: z.string().trim(),
+  shippingMethodPref: z.string().trim(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;
