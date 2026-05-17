@@ -72,6 +72,7 @@ Implemented modules:
 - holding-grade import governance (Phase 32: ImportDecisionSnapshot model + migration, Supplier import defaults, effectiveFreightPerKg() three-tier helper, createImportDecisionSnapshotAction, ImportSnapshotButton, Karar Geçmişi history table on product detail, Kaydet column on import decisions cockpit)
 - marketplace pricing normalization (Phase 33: lib/marketplace-pricing.ts canonical engine, calcMarketplacePricingRow(), calcShippingFromPriceTiers() price-tier defaults, price/shipping resolution hierarchy, Pazar Yeri Fiyatlandirması card on product detail [5 platforms, source badges, net remaining, net margin])
 - marketplace profit page XML price integration (Phase 34: /marketplace/profit uses calcMarketplacePricingRow() per listing, PLATFORM_XML_FIELD map, PriceBadge on effective price column, PolicyBadge extended for price_tier, usdTryRate from MonthlyExchangeRate)
+- executive dashboard marketplace revenue (Phase 36: /admin/executive new Trendyol 90-day sales section, isCancelledStatus() filter, ciro/eşleşen ürün/eşleşmemiş tiles, top 5 revenue table, Gerçekleşen Marj link, no schema change)
 - realized margin analysis (Phase 35: /marketplace/realized-margin, 90-day TrendyolSalesRecord aggregation, calcMarketplacePricingRow() with realized price for deduction estimates, deltaPct = realized − expected, Zarar Eden/Beklenenden Düşük/Kârlı/Maliyet Eksik sections, summary cards, EXECUTIVE_READ gated)
 - product/customer interest engine
 - category/customer relationship engine

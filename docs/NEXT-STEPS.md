@@ -129,6 +129,18 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 8 — Executive Dashboard Marketplace Revenue Integration (Phase 36, 2026-05-17)
+
+Delivered:
+- /admin/executive updated: new "Trendyol / Son 90 Gün — Gerçekleşen Satış Özeti" card
+- Fetches 90-day TrendyolSalesRecord (no schema change, existing table)
+- isCancelledStatus() filter (iptal/cancel case-insensitive) applied in memory
+- KPI tiles: Toplam Ciro (₺506.874), Eşleşen Ürün Çeşidi (14), Eşleşmemiş Kayıt (535)
+- Top 5 products by 90-day revenue table (matched records only)
+- Empty state when no data — prompts sync from Satış Performansı
+- "Gerçekleşen Marj →" link in card header + footer
+- Browser-verified 2026-05-17 ✓
+
 ### ✓ Priority 7 — Realized Margin Analysis (Phase 35, 2026-05-17)
 
 Delivered:

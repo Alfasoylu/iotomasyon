@@ -511,6 +511,18 @@
 - tsc clean, Vercel deploy READY (commit 0819706)
 - Browser-verified 2026-05-17: Manuel source badge, Fiyat Dilimi shipping, Sistem Varsayılanı commission, net remaining + margin all render ✓
 
+### Phase 36 — Executive Dashboard Marketplace Revenue Integration
+- Updated `app/(app)/admin/executive/page.tsx`: added "Trendyol / Son 90 Gün — Gerçekleşen Satış Özeti" card
+  - `since90` window: `new Date()` minus 90 days; fetches `TrendyolSalesRecord` (no schema change)
+  - `isCancelledStatus()` filter applied in memory (status contains "iptal" or "cancel", case-insensitive)
+  - Three KPI tiles: Toplam Ciro (90G), Eşleşen Ürün Çeşidi, Eşleşmemiş Kayıt
+  - Top 5 products by 90-day revenue table (matched `productId` records only, product name + SKU)
+  - Empty state renders if no 90-day data, prompts sync from Satış Performansı
+  - "Gerçekleşen Marj →" link in card header + footer quick-links section
+- Card positioned between Section 2 (Exchange Rate + Capital) and Section 4 (Procurement Urgency)
+- tsc clean, Vercel deploy READY (commit 572829a)
+- Browser-verified 2026-05-17: ₺506.874 ciro (565 satır), 14 eşleşen ürün, 535 eşleşmemiş, top 5 with real product names ✓
+
 ### Phase 35 — Realized Margin Analysis
 - Created `app/(app)/marketplace/realized-margin/page.tsx` (EXECUTIVE_READ gated, `force-dynamic`)
   - Aggregates last 90 days `TrendyolSalesRecord` (non-cancelled) per product
