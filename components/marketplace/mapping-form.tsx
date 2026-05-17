@@ -28,15 +28,17 @@ interface Product {
 
 interface Props {
   products: Product[];
+  defaultBarcode?: string;
+  defaultPlatformTitle?: string;
 }
 
-export function MappingForm({ products }: Props) {
+export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitle = "" }: Props) {
   const [platform, setPlatform] = useState<MarketplacePlatform>(MarketplacePlatform.TRENDYOL);
   const [productId, setProductId] = useState("");
-  const [platformBarcode, setPlatformBarcode] = useState("");
+  const [platformBarcode, setPlatformBarcode] = useState(defaultBarcode);
   const [platformSku, setPlatformSku] = useState("");
   const [platformListingId, setPlatformListingId] = useState("");
-  const [platformTitle, setPlatformTitle] = useState("");
+  const [platformTitle, setPlatformTitle] = useState(defaultPlatformTitle);
   const [result, setResult] = useState<{ ok: boolean; message?: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 

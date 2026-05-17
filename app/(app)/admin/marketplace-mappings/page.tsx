@@ -1,8 +1,13 @@
 /**
  * Phase 16 — Marketplace Product Mapping Management
+ * Phase 37 — Unmatched Barcodes Inbox
  *
  * Manage many-to-one mappings: multiple platform identities → one internal product.
  * Supports Trendyol and all other MarketplacePlatform values.
+ *
+ * Phase 37 adds an "Eşleşmemiş Barkodlar" inbox above the add form, showing top
+ * unmatched Trendyol barcodes sorted by revenue. Clicking "Eşleştir →" pre-fills
+ * the barcode field via ?barcode= search param.
  */
 
 import Link from "next/link";
@@ -26,10 +31,26 @@ const PLATFORM_LABELS: Record<string, string> = {
   CUSTOM: "Diğer",
 };
 
-export default async function MarketplaceMappingsPage() {
+function fmt(n: number) {
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+export default async function MarketplaceMappingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ barcode?: string; title?: string }>;
+}) {
   await requirePermission(PERMISSIONS.MARKETPLACE_MAPPINGS_READ);
 
-  const [mappings, products] = await Promise.all([
+  const params = await searchParams;
+  const defaultBarcode = params.barcode ?? "";
+  const defaultPlatformTitle = params.title ?? "";
+
+  const [mappings, products, unmatchedSalesRaw] = await Promise.all([
     prisma.marketplaceProductMapping.findMany({
       include: {
         product: { select: { id: true, name: true, sku: true } },
@@ -41,7 +62,40 @@ export default async function MarketplaceMappingsPage() {
       select: { id: true, name: true, sku: true },
       orderBy: { name: "asc" },
     }),
+    // Phase 37: fetch unmatched sales for inbox
+    prisma.trendyolSalesRecord.findMany({
+      where: { productId: null, barcode: { not: null } },
+      select: { barcode: true, merchantSku: true, productName: true, totalPriceTry: true },
+    }),
   ]);
+
+  // ── Group unmatched by barcode, sort by revenue ───────────────────────────
+  const byBarcode = new Map<
+    string,
+    { productName: string; merchantSku: string | null; revenue: number; count: number }
+  >();
+  for (const r of unmatchedSalesRaw) {
+    if (!r.barcode) continue;
+    const cur = byBarcode.get(r.barcode);
+    if (cur) {
+      cur.revenue += Number(r.totalPriceTry);
+      cur.count++;
+    } else {
+      byBarcode.set(r.barcode, {
+        productName: r.productName,
+        merchantSku: r.merchantSku,
+        revenue: Number(r.totalPriceTry),
+        count: 1,
+      });
+    }
+  }
+  const unmatchedTop = [...byBarcode.entries()]
+    .sort(([, a], [, b]) => b.revenue - a.revenue)
+    .slice(0, 30)
+    .map(([barcode, data]) => ({ barcode, ...data }));
+
+  const totalUnmatched = byBarcode.size;
+  const totalUnmatchedRevenue = [...byBarcode.values()].reduce((s, v) => s + v.revenue, 0);
 
   return (
     <div className="space-y-8">
@@ -63,11 +117,98 @@ export default async function MarketplaceMappingsPage() {
         </Link>
       </div>
 
+      {/* ── Phase 37: Unmatched Barcodes Inbox ── */}
+      {unmatchedTop.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                Trendyol / Eşleşmemiş
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-slate-900">
+                Eşleşmemiş Barkodlar
+                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-sm font-semibold text-amber-800">
+                  {totalUnmatched} barkod
+                </span>
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Bu satışlar hiçbir iç ürünle eşleşmedi.{" "}
+                <span className="font-medium text-amber-700">{fmt(totalUnmatchedRevenue)}</span>{" "}
+                tutarında ciro kârlılık analizine dahil edilemiyor.
+                {totalUnmatched > 30 && (
+                  <span className="ml-1 text-slate-400">(İlk 30 barkod gösteriliyor.)</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                  <th className="px-4 py-3 text-left">Platform Barkod</th>
+                  <th className="px-4 py-3 text-left">Trendyol Ürün Adı</th>
+                  <th className="px-4 py-3 text-left">SKU</th>
+                  <th className="px-4 py-3 text-right">Kayıt</th>
+                  <th className="px-4 py-3 text-right">Toplam Ciro</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {unmatchedTop.map((row, i) => (
+                  <tr
+                    key={row.barcode}
+                    className={`${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"} ${
+                      defaultBarcode === row.barcode ? "ring-2 ring-inset ring-amber-300" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.barcode}</td>
+                    <td className="px-4 py-3 max-w-[260px] truncate text-xs text-slate-600">
+                      {row.productName}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-400">
+                      {row.merchantSku ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-xs text-slate-500">
+                      {row.count}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-xs font-semibold text-slate-700">
+                      {fmt(row.revenue)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/admin/marketplace-mappings?barcode=${encodeURIComponent(row.barcode)}&title=${encodeURIComponent(row.productName)}#add-form`}
+                        className="rounded-md bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200"
+                      >
+                        Eşleştir →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
       {/* Add form */}
+      <div id="add-form">
       <Card className="p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-slate-800">Yeni Eşleştirme Ekle</h2>
-        <MappingForm products={products} />
+        <h2 className="text-sm font-semibold text-slate-800">
+          Yeni Eşleştirme Ekle
+          {defaultBarcode && (
+            <span className="ml-2 font-mono text-xs font-normal text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+              Barkod ön dolduruldu: {defaultBarcode}
+            </span>
+          )}
+        </h2>
+        <MappingForm
+          products={products}
+          defaultBarcode={defaultBarcode}
+          defaultPlatformTitle={defaultPlatformTitle}
+        />
       </Card>
+      </div>
 
       {/* Mappings list */}
       <div className="space-y-3">
