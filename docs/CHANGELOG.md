@@ -9,6 +9,24 @@
 
 ## 2026-05
 
+### Phase 54 Faz C — Operations Workspace (2026-05-17)
+
+**Amaç:**
+OPERATIONS rolü tüm admin dashboard'ını görüyordu — gelir, trendyol ciro, ithalat kartları, satış hunisi dahil. Operations için doğru bilgi: görev durumu, stok uyarıları, sipariş sinyalleri. Finansal veri görünmemeli.
+
+Değişiklikler:
+- `services/dashboard-service.ts`: `getOperationsDashboardData()` eklendi — açık/geciken/bugün görev sayıları, dueTodayTasks (atanan kişiyle birlikte), criticalStockCount, lowStockCount (raw SQL kolon karşılaştırması), unmatchedOrdersCount, recentOrderQty7d; **hiçbir finansal alan döndürülmez**
+- `app/(app)/dashboard/_components/operations-workspace.tsx`: `OperationsWorkspace` bileşeni — 4 KPI kartı (açık görev, geciken, bugün, kritik stok), stok kartları (kritik/düşük), sipariş sinyal kartları derin bağlantılarla, bugün yapılacaklar listesi (atanan kişi adıyla)
+- `app/(app)/dashboard/page.tsx`: `user.role === "OPERATIONS"` dalı eklendi, `OperationsDashboardData` tipi dışa aktarıldı
+- `services/dashboard-service.ts`: `OperationsDashboardData` tip dışa aktarımı eklendi
+
+Güvenlik: `getOperationsDashboardData()` `trendyolRevenue`, `cost`, `margin` alanlarını kasıtlı olarak dışarıda bırakır.
+
+Kabul kriteri:
+- OPERATIONS rolü `/dashboard` açtığında: gelir, trendyol ciro, ithalat, sermaye kartı DOM'da bulunmaz; görev ve stok uyarıları görünür
+- Admin view değişmedi ✓
+- READY: dpl_ESQS1sQTWPXrs4iCPhUeEG7QtpCY
+
 ### Phase 54 Faz A+B — Rol Bazlı Dashboard Workspace (2026-05-17)
 
 **Amaç:**

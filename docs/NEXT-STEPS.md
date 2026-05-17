@@ -596,14 +596,14 @@ app/(app)/dashboard/
 
 **Kabul kriteri (Faz B):** SALES rolü dashboard'ı açtığında: trendyol revenue, ithalat, sermaye kartı DOM'da bulunmaz; kendi pipeline'ı görünür. ✓ Vercel READY dpl_AiLn79jzds4B1oJauke3LuM4jQB9
 
-#### Faz C — Operations Workspace (schema değişikliği YOK)
+#### ✓ Faz C — Operations Workspace (schema değişikliği YOK) — DONE 2026-05-17
 
 **Ne yapılacak:**
 - `getOperationsDashboardData()` servis fonksiyonu: açık görev sayısı, kritik stok uyarıları, bugün geciken görevler, bekleyen eşleşmemiş siparişler
 - `OperationsWorkspace` component: görev özeti, stok uyarıları, ekip görev listesi (atanmış kullanıcıya göre gruplu)
 - **Finansal veri yok:** trendyolRevenue, cost → operasyon datasında yer almaz
 
-**Kabul kriteri (Faz C):** OPERATIONS rolü: stok uyarılarını ve açık görevleri görür, maliyet/kâr kartı görmez.
+**Kabul kriteri (Faz C):** OPERATIONS rolü: stok uyarılarını ve açık görevleri görür, maliyet/kâr kartı görmez. ✓ Vercel READY dpl_ESQS1sQTWPXrs4iCPhUeEG7QtpCY
 
 #### Faz D — Admin Enhancement (schema değişikliği YOK)
 
