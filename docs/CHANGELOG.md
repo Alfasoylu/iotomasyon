@@ -9,6 +9,25 @@
 
 ## 2026-05
 
+### Phase 70 — Trendyol Rapor Ay Drill-Down (2026-05-17)
+
+**Amaç:**
+Trendyol aylık raporu 12 aylık özet tabloya sahipti ama bir aya tıklayıp o ayın en çok satan ürünlerini görmek mümkün değildi. Drill-down bu interaktiviteyi ekliyor.
+
+Değişiklikler:
+- `app/(app)/admin/trendyol-report/page.tsx`:
+  - `searchParams` eklendi, `selectedMonth` (YYYY-MM) parse ediliyor
+  - `drillSales`: selectedMonth varsa o aya, yoksa son 30 güne filtreleniyor
+  - `drillLabel`: "Son 30 Gün" ya da "Oca 2026" gibi
+  - Aylık tablo satırları: Link to `?month=YYYY-MM`; seçili satır `bg-slate-900 text-white`
+  - Top-10 kart başlığı `drillLabel` kullanıyor; "← Son 30 güne dön" back-link
+  - Boş durum mesajı `drillLabel` ile dinamik
+- Schema değişikliği: YOK
+
+Durum: tsc clean ✓, commit 34b83e2 ✓, PENDING DEPLOY
+
+---
+
 ### Phase 69 — Siparişler Sayfası Arama (2026-05-17)
 
 **Amaç:**

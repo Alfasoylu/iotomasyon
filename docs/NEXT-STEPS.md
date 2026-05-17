@@ -703,6 +703,17 @@ Tamamlananlar:
 
 ---
 
+### ⏳ PENDING DEPLOY — Priority 70 — Trendyol Rapor Ay Drill-Down (Phase 70, 2026-05-17)
+
+**Neden:**
+/admin/trendyol-report 12 aylık özet sunuyordu ama bir aya tıklayıp o ayın en çok satanlarını görmek mümkün değildi.
+
+Tamamlananlar:
+- `app/(app)/admin/trendyol-report/page.tsx`: `searchParams` + `selectedMonth`; aylık tablo satırları `?month=YYYY-MM` link; seçili satır koyu highlight; `drillSales` + `drillLabel`; top-10 seçili aya göre; "← Son 30 güne dön" back-link
+- tsc clean ✓; commit 34b83e2 ✓; PENDING DEPLOY (günlük limit)
+
+---
+
 ### ⏳ PENDING DEPLOY — Priority 69 — Siparişler Sayfası Arama (Phase 69, 2026-05-17)
 
 **Neden:**
