@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 42 aktif
+          Faz 43 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Stok Hareketleri: StockAdjustmentLog modeli, createStockAdjustmentAction ($transaction), StockAdjustmentCard (form + geçmiş tablosu, optimistik UI), ürün detay sayfasına entegre.
+            Trendyol Stok Düşümü: stockDeducted bayrağı, applyTrendyolStockDeductionAction ($transaction), TrendyolStockDeductionButton (amber kart, /orders sayfasında).
           </p>
         </div>
       </aside>

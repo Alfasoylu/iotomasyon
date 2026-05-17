@@ -73,6 +73,15 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
+### Phase 43 — Trendyol → Stock Auto-Deduction (2026-05-17)
+- Added `stockDeducted Boolean @default(false)` to `TrendyolSalesRecord`
+- Applied migration `20260517430000_phase43_trendyol_stock_deduction` to production
+- `getPendingDeductionCount()`: counts matched non-cancelled unprocessed order lines
+- `applyTrendyolStockDeductionAction()`: PRODUCTS_UPDATE gated; groups pending records by productId; for each product runs Prisma `$transaction` (read stockQuantity → create StockAdjustmentLog SALE → update product stock → mark records `stockDeducted=true`); returns aggregate count
+- `TrendyolStockDeductionButton` client component: amber "N satır bekliyor" badge, "Stoktan Düş" button, success message, auto-reload
+- Orders page: `pendingDeductionCount` parallel-fetched; amber card rendered when > 0; hidden after deduction
+- Browser-verified 2026-05-17: 183 order lines across 21 products deducted atomically, amber card disappears, 21 StockAdjustmentLog SALE entries created ✓
+
 ### Phase 42 — Stock Adjustment Log (2026-05-17)
 - Added `StockAdjustmentType` enum: RESTOCK / CORRECTION / DAMAGE / RETURN / SALE / OTHER
 - Added `StockAdjustmentLog` model: productId FK, adjustmentType, quantityChange, previousQty, newQty, notes, createdById FK, createdAt

@@ -129,6 +129,16 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 15 — Trendyol Stock Auto-Deduction (Phase 43, 2026-05-17)
+
+Delivered:
+- TrendyolSalesRecord.stockDeducted Boolean flag + migration applied to production
+- getPendingDeductionCount(): fast count of unprocessed matched non-cancelled lines
+- applyTrendyolStockDeductionAction(): PRODUCTS_UPDATE gated, groups by productId, Prisma $transaction per product (stockQuantity update + StockAdjustmentLog SALE + mark deducted=true)
+- TrendyolStockDeductionButton: amber pending badge, "Stoktan Düş" button, success message + auto-reload
+- Orders page: amber card shows when pending > 0, hidden after processing
+- Browser-verified 2026-05-17: 183 order lines → 21 products deducted atomically, 21 StockAdjustmentLog SALE entries ✓
+
 ### ✓ Priority 14 — Stock Adjustment Log (Phase 42, 2026-05-17)
 
 Delivered:
