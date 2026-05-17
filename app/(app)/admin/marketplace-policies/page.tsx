@@ -55,6 +55,7 @@ export default async function MarketplacePoliciesPage() {
         paymentFeePct:         toNum(p.paymentFeePct),
         returnReservePct:      toNum(p.returnReservePct),
         vatPct:                toNum(p.vatPct),
+        shippingTiersJson:     p.shippingTiersJson,
         notes:                 p.notes,
       },
     ]),

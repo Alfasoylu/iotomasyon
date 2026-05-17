@@ -1042,6 +1042,10 @@ model MarketplacePlatformPolicy {
   paymentFeePct         Decimal             @default(0)  @db.Decimal(5,2)
   returnReservePct      Decimal             @default(0)  @db.Decimal(5,2)
   vatPct                Decimal             @default(20) @db.Decimal(5,2)
+  // Phase 51 — USD-tiered shipping: JSON array [{maxPriceUsd?, costUsd}]
+  // Last entry (no maxPriceUsd) is the catch-all fallback.
+  // If null, falls back to standardShippingTry.
+  shippingTiersJson     String?
   notes                 String?
   updatedAt             DateTime            @updatedAt
   updatedById           String?

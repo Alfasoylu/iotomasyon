@@ -1,13 +1,15 @@
 /**
  * Phase 30 — Marketplace Margin Policy Service
+ * Phase 51 — USD-tiered shipping support
  *
  * Resolves effective shipping cost and commission rate for a product+platform
- * pair using a three-tier precedence:
+ * pair using a four-tier precedence:
  *
  *   1. Product override   (shippingCostOverride / marketplaceCommissionOverride)
  *   2. Product generic    (shippingCost / marketplaceCommission)
- *   3. Platform standard  (MarketplacePlatformPolicy row)
- *   4. System default     (shipping=0, commission=20%)
+ *   3. Platform tiered    (shippingTiersJson — USD threshold → TRY cost)
+ *   4. Platform standard  (standardShippingTry — flat rate)
+ *   5. System default     (shipping=0, commission=20%)
  *
  * Pure computation — no DB access. Caller loads platform policy from DB.
  */
@@ -53,16 +55,74 @@ export type PlatformPolicyInput = {
   paymentFeePct?: number | null;
   returnReservePct?: number | null;
   vatPct?: number | null;
+  /** JSON: [{maxPriceUsd?: number, costUsd: number}[]] */
+  shippingTiersJson?: string | null;
 } | null;
+
+/** Single tier entry in shippingTiersJson */
+export type ShippingTier = {
+  /** Upper-bound USD price (exclusive). Omit on the last entry = catch-all. */
+  maxPriceUsd?: number;
+  /** Shipping cost in USD for this tier. */
+  costUsd: number;
+};
+
+/**
+ * Parse shippingTiersJson. Returns an empty array on any parse failure.
+ */
+export function parseShippingTiers(json: string | null | undefined): ShippingTier[] {
+  if (!json) return [];
+  try {
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (t): t is ShippingTier =>
+        typeof t === "object" &&
+        t !== null &&
+        typeof t.costUsd === "number" &&
+        (t.maxPriceUsd === undefined || typeof t.maxPriceUsd === "number"),
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Resolve tiered shipping cost (TRY) for a given USD selling price.
+ * Returns null if no tiers are defined or price context is unavailable.
+ */
+export function resolveTieredShipping(
+  tiers: ShippingTier[],
+  sellingPriceUsd: number,
+  usdTryRate: number,
+): number | null {
+  if (tiers.length === 0) return null;
+  // Walk tiers in order; last tier without maxPriceUsd is the catch-all
+  for (const tier of tiers) {
+    if (tier.maxPriceUsd === undefined || sellingPriceUsd < tier.maxPriceUsd) {
+      return tier.costUsd * usdTryRate;
+    }
+  }
+  return null;
+}
 
 function n(v: number | null | undefined, fallback = 0): number {
   if (v == null || !isFinite(v as number)) return fallback;
   return v as number;
 }
 
+/** Optional context for price-aware shipping resolution */
+export type MarginPolicyContext = {
+  /** Selling price in USD — required for tier lookup */
+  sellingPriceUsd?: number | null;
+  /** USD→TRY rate — required to convert tier costUsd to TRY */
+  usdTryRate?: number;
+};
+
 export function resolveMarginPolicy(
   product: ProductPolicyInput,
   platformPolicy: PlatformPolicyInput,
+  context?: MarginPolicyContext,
 ): EffectiveMarginPolicy {
   // ── Shipping resolution ──────────────────────────────────────────────────
   let shippingTry: number;
@@ -74,12 +134,27 @@ export function resolveMarginPolicy(
   } else if (product.shippingCost != null && product.shippingCost > 0) {
     shippingTry = product.shippingCost;
     shippingSource = "product_value";
-  } else if (platformPolicy?.standardShippingTry != null && platformPolicy.standardShippingTry > 0) {
-    shippingTry = platformPolicy.standardShippingTry;
-    shippingSource = "platform_standard";
   } else {
-    shippingTry = 0;
-    shippingSource = "system_default";
+    // Try tiered shipping from platform policy
+    const tiers = parseShippingTiers(platformPolicy?.shippingTiersJson);
+    const priceUsd = context?.sellingPriceUsd;
+    const rate = context?.usdTryRate ?? 1;
+
+    const tieredCost =
+      tiers.length > 0 && priceUsd != null && priceUsd > 0
+        ? resolveTieredShipping(tiers, priceUsd, rate)
+        : null;
+
+    if (tieredCost != null) {
+      shippingTry = tieredCost;
+      shippingSource = "platform_standard";
+    } else if (platformPolicy?.standardShippingTry != null && platformPolicy.standardShippingTry > 0) {
+      shippingTry = platformPolicy.standardShippingTry;
+      shippingSource = "platform_standard";
+    } else {
+      shippingTry = 0;
+      shippingSource = "system_default";
+    }
   }
 
   // ── Commission resolution ────────────────────────────────────────────────
@@ -150,3 +225,12 @@ export function policySourceColor(source: PolicySource): string {
     case "system_default":    return "bg-amber-100 text-amber-700";
   }
 }
+
+/** Default Trendyol tier JSON string — use as seed when saving a new policy */
+export const DEFAULT_TRENDYOL_TIERS: ShippingTier[] = [
+  { maxPriceUsd: 5.0,  costUsd: 1.2 },
+  { maxPriceUsd: 7.5,  costUsd: 2.0 },
+  { costUsd: 3.3 },
+];
+
+export const DEFAULT_TIERS_JSON = JSON.stringify(DEFAULT_TRENDYOL_TIERS);

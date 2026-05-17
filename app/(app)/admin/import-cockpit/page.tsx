@@ -26,6 +26,7 @@ import {
   calculateImportDecision,
   DEFAULT_USD_TRY_RATE,
 } from "@/lib/import-decision";
+import { resolveMarginPolicy } from "@/lib/marketplace-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -90,10 +91,12 @@ export default async function ImportCockpitPage({
   const ago30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   // ── Paralel veri çekimi ───────────────────────────────────────────────────
-  const [latestRate, products, sales90Raw, sales30Raw, returnsRaw] = await Promise.all([
+  const [latestRate, trendyolPolicy, products, sales90Raw, sales30Raw, returnsRaw] = await Promise.all([
     prisma.monthlyExchangeRate.findFirst({
       orderBy: [{ year: "desc" }, { month: "desc" }],
     }),
+    // Trendyol platform policy — komisyon + kargo kademe
+    prisma.marketplacePlatformPolicy.findUnique({ where: { platform: "TRENDYOL" } }),
     prisma.product.findMany({
       where: { isActive: true },
       select: {
@@ -117,6 +120,10 @@ export default async function ImportCockpitPage({
         installerSalesPotential: true,
         sourceCostRmb: true,
         importPaymentFeePct: true,
+        // XML kaynaklı fiyatlar — Trendyol fiyatı fallback olarak kullanılır
+        xmlData: {
+          select: { xmlTrendyolPrice: true },
+        },
       },
       orderBy: { name: "asc" },
     }),
@@ -152,6 +159,18 @@ export default async function ImportCockpitPage({
 
   const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
   const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : null;
+
+  // Platform policy shape for resolveMarginPolicy
+  const platformPolicyInput = trendyolPolicy
+    ? {
+        standardShippingTry:   trendyolPolicy.standardShippingTry != null ? Number(trendyolPolicy.standardShippingTry) : null,
+        standardCommissionPct: trendyolPolicy.standardCommissionPct != null ? Number(trendyolPolicy.standardCommissionPct) : null,
+        paymentFeePct:         trendyolPolicy.paymentFeePct != null ? Number(trendyolPolicy.paymentFeePct) : null,
+        returnReservePct:      trendyolPolicy.returnReservePct != null ? Number(trendyolPolicy.returnReservePct) : null,
+        vatPct:                trendyolPolicy.vatPct != null ? Number(trendyolPolicy.vatPct) : null,
+        shippingTiersJson:     trendyolPolicy.shippingTiersJson,
+      }
+    : null;
 
   // ── Lookup map'leri ───────────────────────────────────────────────────────
   const sales90Map = new Map<string, { avgPrice: number; totalQty: number; orderCount: number }>();
@@ -191,7 +210,7 @@ export default async function ImportCockpitPage({
     returnRate: number | null; // 0‥1
     // Kullanılan satış fiyatı
     resolvedPriceTry: number | null;
-    priceSource: "trendyol" | "manual" | "none";
+    priceSource: "trendyol" | "xml" | "manual" | "none";
     // Hesaplama
     landedCostTry: number | null;
     netRevenueTry: number | null;
@@ -223,6 +242,12 @@ export default async function ImportCockpitPage({
         : null;
 
     // ── Satış fiyatı çözümü ────────────────────────────────────────────────
+    // Öncelik: Trendyol gerçekleşen ort. → XML Trendyol fiyatı → Manuel ürün fiyatı
+    const xmlTrendyolPriceTry =
+      p.xmlData?.xmlTrendyolPrice != null
+        ? Number(p.xmlData.xmlTrendyolPrice) * usdTryRate
+        : null;
+
     const manualPriceTry =
       p.marketplacePriceTry != null
         ? Number(p.marketplacePriceTry)
@@ -230,9 +255,15 @@ export default async function ImportCockpitPage({
           ? Number(p.sellingPriceTry)
           : null;
 
-    const resolvedPriceTry = trendyolAvgPriceTry ?? manualPriceTry;
-    const priceSource: "trendyol" | "manual" | "none" =
-      trendyolAvgPriceTry != null ? "trendyol" : manualPriceTry != null ? "manual" : "none";
+    const resolvedPriceTry = trendyolAvgPriceTry ?? xmlTrendyolPriceTry ?? manualPriceTry;
+    const priceSource: "trendyol" | "xml" | "manual" | "none" =
+      trendyolAvgPriceTry != null
+        ? "trendyol"
+        : xmlTrendyolPriceTry != null
+          ? "xml"
+          : manualPriceTry != null
+            ? "manual"
+            : "none";
 
     // ── İthal maliyet hesabı (mevcut engine) ──────────────────────────────
     const sourcePriceUsd =
@@ -242,19 +273,24 @@ export default async function ImportCockpitPage({
           ? Number(p.unitCostUsd)
           : null;
 
-    const commissionPct =
-      p.marketplaceCommissionOverride != null
-        ? Number(p.marketplaceCommissionOverride)
-        : p.marketplaceCommission != null
-          ? Number(p.marketplaceCommission)
-          : 0;
+    // Satış fiyatı USD cinsinden — kargo kademesi hesabı için
+    const resolvedPriceUsd =
+      resolvedPriceTry != null ? resolvedPriceTry / usdTryRate : null;
 
-    const domesticShippingTry =
-      p.shippingCostOverride != null
-        ? Number(p.shippingCostOverride)
-        : p.shippingCost != null
-          ? Number(p.shippingCost)
-          : 0;
+    // resolveMarginPolicy ile komisyon ve kargo çözümü
+    const marginPolicy = resolveMarginPolicy(
+      {
+        shippingCost:                  p.shippingCost != null ? Number(p.shippingCost) : null,
+        shippingCostOverride:          p.shippingCostOverride != null ? Number(p.shippingCostOverride) : null,
+        marketplaceCommission:         p.marketplaceCommission != null ? Number(p.marketplaceCommission) : null,
+        marketplaceCommissionOverride: p.marketplaceCommissionOverride != null ? Number(p.marketplaceCommissionOverride) : null,
+      },
+      platformPolicyInput,
+      { sellingPriceUsd: resolvedPriceUsd, usdTryRate },
+    );
+
+    const commissionPct        = marginPolicy.commissionPct;
+    const domesticShippingTry  = marginPolicy.shippingTry;
 
     // İniş maliyeti — engine ile hesapla (Trendyol verisi yoksa fallback sayı ile)
     const decisionResult = calculateImportDecision({
@@ -579,6 +615,10 @@ export default async function ImportCockpitPage({
                         <span className="inline-flex rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700 border border-orange-200">
                           Trendyol
                         </span>
+                      ) : row.priceSource === "xml" ? (
+                        <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-600 border border-blue-200">
+                          XML Fiyat
+                        </span>
                       ) : row.priceSource === "manual" ? (
                         <span className="inline-flex rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-500 border border-slate-200">
                           Manuel
@@ -602,7 +642,11 @@ export default async function ImportCockpitPage({
         <p className="font-semibold text-slate-700">Hesaplama Mantığı</p>
         <p>
           <span className="font-medium text-slate-600">Satış fiyatı:</span>{" "}
-          Trendyol gerçekleşen ort. (son 90 gün, Teslim Edildi) · yoksa manuel fiyat
+          Trendyol gerçekleşen ort. (son 90 gün, Teslim Edildi) → XML Trendyol fiyatı → manuel fiyat
+        </p>
+        <p>
+          <span className="font-medium text-slate-600">Kargo:</span>{" "}
+          Ürün geçersiz kılma → ürün değeri → platform USD kademeli kargo → platform sabit kargo → ₺0
         </p>
         <p>
           <span className="font-medium text-slate-600">İthal maliyet (TRY):</span>{" "}
