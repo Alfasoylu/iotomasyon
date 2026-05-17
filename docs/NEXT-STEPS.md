@@ -129,6 +129,20 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 16 — Stock Health Dashboard (Phase 44, 2026-05-17)
+
+Delivered:
+- `/admin/stock-health` (EXECUTIVE_READ gated), no schema change
+- Parallel fetch: all products (id/name/sku/stockQuantity), 30-day TrendyolSalesRecord, last 15 StockAdjustmentLog
+- Three-tier product classification: Critical (qty ≤ 0), Low (coverage < 30 days), Healthy
+- Coverage formula: `Math.floor(stockQuantity / (sales30d / 30))`, cancelled orders filtered
+- KPI cards: Kritik (red), Düşük (amber), Sağlıklı (emerald)
+- Critical table: product link, SKU, qty (red bold), 30d Trendyol sales
+- Low table sorted by coverage ascending: product link, SKU, qty, 30d sales, coverage badge (≤7g red / ≤14g amber / <30g yellow)
+- Recent adjustments table: product link, ADJ_LABEL type badge (ADJ_COLOR), ±delta, newQty, notes, Turkish date
+- "Stok Sağlığı" sidebar link added (EXECUTIVE_READ)
+- Browser-verified 2026-05-17: KPI cards render (606 Kritik), nav link active, recent adjustments table ✓
+
 ### ✓ Priority 15 — Trendyol Stock Auto-Deduction (Phase 43, 2026-05-17)
 
 Delivered:

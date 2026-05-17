@@ -73,6 +73,18 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
+### Phase 44 — Stock Health Dashboard (2026-05-17)
+- New page `/admin/stock-health` (EXECUTIVE_READ gated)
+- Parallel-fetches all products, 30-day `TrendyolSalesRecord`, last 15 `StockAdjustmentLog` entries
+- Classifies products: Critical (stockQuantity ≤ 0), Low (<30 days coverage = stock / (30d velocity / 30)), Healthy
+- KPI summary cards: Kritik (red), Düşük (amber), Sağlıklı (emerald) with product counts
+- Critical table: product link, SKU, qty, 30d Trendyol sales — red row styling
+- Low table: product link, SKU, qty, 30d sales, coverage-days badge (≤7g red, ≤14g amber, <30g yellow)
+- Recent adjustments table: product link, type badge (ADJ_LABEL/ADJ_COLOR), ±delta, newQty, notes, date
+- "Stok Sağlığı" nav link added to sidebar (EXECUTIVE_READ)
+- No schema change — reads existing Product, TrendyolSalesRecord, StockAdjustmentLog models
+- tsc clean, browser-verified 2026-05-17: KPI cards render, 606 critical products shown, adjustments table ✓
+
 ### Phase 43 — Trendyol → Stock Auto-Deduction (2026-05-17)
 - Added `stockDeducted Boolean @default(false)` to `TrendyolSalesRecord`
 - Applied migration `20260517430000_phase43_trendyol_stock_deduction` to production
