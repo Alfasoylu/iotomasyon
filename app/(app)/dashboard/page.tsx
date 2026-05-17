@@ -105,18 +105,12 @@ export default async function DashboardPage() {
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
           Trendyol &amp; Stok
         </h2>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <LinkedStatCard
             label="Kritik Stok"
             value={alerts.criticalStockCount}
             tone={alerts.criticalStockCount > 0 ? "danger" : "default"}
             href="/admin/stock-health"
-          />
-          <LinkedStatCard
-            label="Bekleyen Stok Düşümü"
-            value={alerts.pendingDeductionCount}
-            tone={alerts.pendingDeductionCount > 0 ? "warning" : "default"}
-            href="/orders"
           />
           <LinkedStatCard
             label="Son 7 Gün Sipariş (Adet)"

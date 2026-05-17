@@ -175,17 +175,11 @@ export async function getOperationalAlerts() {
 
     const [
       criticalStockCount,
-      pendingRows,
       unmatchedOrdersCount,
       recentRows,
       revenueRows,
     ] = await Promise.all([
       prisma.product.count({ where: { stockQuantity: { lte: 0 } } }),
-      // Pending stock deductions (matched, not yet deducted, not cancelled)
-      prisma.trendyolSalesRecord.findMany({
-        where: { stockDeducted: false, productId: { not: null } },
-        select: { status: true },
-      }),
       // Unmatched Trendyol order lines (no internal product linked)
       prisma.trendyolSalesRecord.count({ where: { productId: null } }),
       // Recent 7-day order lines
@@ -200,10 +194,6 @@ export async function getOperationalAlerts() {
       }),
     ]);
 
-    const pendingDeductionCount = pendingRows.filter(
-      (r) => !_isCancelledStatus(r.status),
-    ).length;
-
     const recentOrderQty7d = recentRows
       .filter((r) => !_isCancelledStatus(r.status))
       .reduce((s, r) => s + r.quantity, 0);
@@ -215,7 +205,6 @@ export async function getOperationalAlerts() {
     return {
       databaseAvailable: true as const,
       criticalStockCount,
-      pendingDeductionCount,
       unmatchedOrdersCount,
       recentOrderQty7d,
       trendyolRevenue30d,
@@ -225,7 +214,6 @@ export async function getOperationalAlerts() {
       return {
         databaseAvailable: false as const,
         criticalStockCount: 0,
-        pendingDeductionCount: 0,
         unmatchedOrdersCount: 0,
         recentOrderQty7d: 0,
         trendyolRevenue30d: 0,
