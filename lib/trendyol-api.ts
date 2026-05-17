@@ -395,6 +395,73 @@ export async function updateTrendyolInventory(
   return (text ? JSON.parse(text) : { batchRequestId: "" }) as TrendyolBatchResponse;
 }
 
+// ─── Product Catalog types (Phase 46) ────────────────────────────────────────
+
+export interface TrendyolProductImage {
+  url: string;
+}
+
+export interface TrendyolCatalogProduct {
+  id: string | number;
+  title: string;
+  barcode: string | null;
+  stockCode: string | null;   // merchantSku equivalent
+  stockUnitType: string | null;
+  quantity: number;           // current stock on Trendyol
+  listPrice: number;
+  salePrice: number;
+  productCode: number | null;
+  approved: boolean;
+  rejected: boolean;
+  images: TrendyolProductImage[];
+  categoryName: string | null;
+  brand: string | null;
+}
+
+export interface TrendyolCatalogResponse {
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+  content: TrendyolCatalogProduct[];
+}
+
+// ─── Product Catalog API functions (Phase 46) ────────────────────────────────
+
+/**
+ * Fetch the seller's product catalog from Trendyol.
+ * GET /integration/product/sellers/{supplierId}/products
+ * Returns paginated list of all products the seller has on Trendyol.
+ */
+export async function fetchTrendyolCatalog(
+  cfg: TrendyolConfig,
+  opts: { page?: number; size?: number; approved?: boolean } = {},
+): Promise<TrendyolCatalogResponse> {
+  const params: Record<string, string | number> = {
+    page: opts.page ?? 0,
+    size: opts.size ?? 50,
+  };
+  if (opts.approved !== undefined) params.approved = String(opts.approved);
+
+  const url = new URL(`${PRODUCT_BASE_URL}/${cfg.supplierId}/products`);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: authHeader(cfg),
+      "Content-Type": "application/json",
+      "User-Agent": `iotomasyon-crm/1.0 (${cfg.supplierId})`,
+    },
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new TrendyolApiError(res.status, text);
+  }
+  return res.json() as Promise<TrendyolCatalogResponse>;
+}
+
 // ─── Q&A types (Phase 16) ─────────────────────────────────────────────────────
 
 export type TrendyolQuestionStatus =
