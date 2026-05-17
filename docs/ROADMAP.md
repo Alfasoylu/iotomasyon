@@ -1310,6 +1310,38 @@ items, and assign new tasks to specific people — in under 60 seconds.
 
 ---
 
+# Phase 59 — Trendyol Sales Velocity in Import Decision Cockpit
+
+Goal:
+The import decision cockpit currently uses manually entered sales potential estimates
+(onlineSalesPotential + wholesaleSalesPotential + installerSalesPotential). Real
+Trendyol order data exists in TrendyolSalesRecord but is not surfaced in import decisions.
+This phase connects real market demand signals to the import buy/wait recommendation.
+
+Context:
+The import decision workflow (Phase 11C, enhanced Phase 31) shows ALWAYS_STOCK /
+BUY_SMALL / DO_NOT_BUY signals based on margin and manually estimated monthly units.
+TrendyolSalesRecord has actual order history with quantity, status, and orderDate.
+For products with Trendyol matches (productId is set), a 90-day sales velocity is
+computable without any schema change.
+
+Required:
+- Query TrendyolSalesRecord: last 90 days, non-cancelled, grouped by productId
+- Compute: qty90d (total non-cancelled units), monthlyVelocity (qty90d / 3)
+- Show in import-decisions table: "90g Trendyol" quantity + "~X/ay" velocity badge
+- When Trendyol velocity exists: highlight it as real-data signal vs. estimate
+- No change to the ALWAYS_STOCK/BUY_SMALL/DO_NOT_BUY decision logic — display only
+- Schema change: NONE
+
+Permission gates:
+- EXECUTIVE_READ only (existing gate on import-decisions page)
+
+Exit:
+Owner opens /admin/import-decisions and sees a "Trendyol 90g" column for matched
+products, making the real sales velocity visible next to the import decision signal.
+
+---
+
 # Phase Exit Rules
 
 A phase is complete only if:

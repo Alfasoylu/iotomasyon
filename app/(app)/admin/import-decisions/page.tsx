@@ -51,8 +51,12 @@ export default async function ImportDecisionsPage({
   const filterDecision = sp.decision as ImportRecommendation | undefined;
   const filterMethod = sp.method as "AIR" | "SEA" | undefined;
 
-  // Fetch exchange rate and products in parallel
-  const [latestRate, products] = await Promise.all([
+  // Phase 59: 90-day Trendyol velocity window
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+  // Fetch exchange rate, products, and Trendyol 90d sales in parallel
+  const [latestRate, products, trendyolSales90d] = await Promise.all([
     prisma.monthlyExchangeRate.findFirst({
       orderBy: [{ year: "desc" }, { month: "desc" }],
     }),
@@ -83,7 +87,35 @@ export default async function ImportDecisionsPage({
       },
       orderBy: { name: "asc" },
     }),
+    // Phase 59: query TrendyolSalesRecord for last 90 days, non-cancelled, matched products only
+    prisma.trendyolSalesRecord.findMany({
+      where: {
+        productId: { not: null },
+        orderDate: { gte: ninetyDaysAgo },
+        status: { not: "Cancelled" },
+      },
+      select: { productId: true, quantity: true, status: true },
+    }),
   ]);
+
+  // Phase 59: build productId → { qty90d, monthlyVelocity } map
+  const velocityByProduct = new Map<string, { qty90d: number; monthlyVelocity: number }>();
+  for (const rec of trendyolSales90d) {
+    if (!rec.productId) continue;
+    // Filter out common cancelled status variations
+    const statusLower = rec.status.toLowerCase();
+    if (statusLower.includes("cancel") || statusLower.includes("iptal")) continue;
+    const current = velocityByProduct.get(rec.productId);
+    if (current) {
+      current.qty90d += rec.quantity;
+      current.monthlyVelocity = Math.round(current.qty90d / 3);
+    } else {
+      velocityByProduct.set(rec.productId, {
+        qty90d: rec.quantity,
+        monthlyVelocity: Math.round(rec.quantity / 3),
+      });
+    }
+  }
 
   const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
   // Latest RMB/USD rate from exchange rate table
@@ -144,7 +176,9 @@ export default async function ImportDecisionsPage({
       seaFreightPerKgOverride: null,
     });
 
-    return { product: p, decision, monthlyUnits };
+    const trendyolVelocity = velocityByProduct.get(p.id) ?? null;
+
+    return { product: p, decision, monthlyUnits, trendyolVelocity };
   });
 
   // Summary counts
@@ -309,6 +343,9 @@ export default async function ImportDecisionsPage({
                     Gerekli Sermaye
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Trendyol 90g
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Talep/ay
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -320,7 +357,7 @@ export default async function ImportDecisionsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {sorted.map(({ product: p, decision: d, monthlyUnits }) => (
+                {sorted.map(({ product: p, decision: d, monthlyUnits, trendyolVelocity }) => (
                   <tr key={p.id} className="hover:bg-slate-50/50">
                     <td className="px-4 py-3">
                       <Link
@@ -372,6 +409,20 @@ export default async function ImportDecisionsPage({
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-slate-700">
                       {d.effectiveScenario ? fmtUsd(d.effectiveScenario.requiredCapitalUsd) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {trendyolVelocity ? (
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="font-mono text-xs font-semibold text-emerald-700">
+                            {trendyolVelocity.qty90d} adet
+                          </span>
+                          <span className="text-[10px] text-emerald-600">
+                            ~{trendyolVelocity.monthlyVelocity}/ay
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-300">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right text-slate-600">
                       {monthlyUnits > 0 ? monthlyUnits : "—"}
