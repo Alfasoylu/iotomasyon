@@ -73,6 +73,16 @@
 - Created `docs/current-state.md`
 - Created `docs/phase-plan.md`
 
+### Phase 42 — Stock Adjustment Log (2026-05-17)
+- Added `StockAdjustmentType` enum: RESTOCK / CORRECTION / DAMAGE / RETURN / SALE / OTHER
+- Added `StockAdjustmentLog` model: productId FK, adjustmentType, quantityChange, previousQty, newQty, notes, createdById FK, createdAt
+- Applied migration `20260517420000_phase42_stock_adjustment_log` to production Supabase
+- `createStockAdjustmentAction`: PRODUCTS_UPDATE gated, Prisma `$transaction` (lock product → compute newQty → reject if <0 → update stockQuantity → write log entry)
+- `getProductStockAdjustments`: last 20 entries newest-first, includes createdBy name
+- `StockAdjustmentCard` client component: form (Hareket Türü select, +Giriş/−Çıkış toggle, Adet, Not) + history table (Tür badge, ±Değişim, Önceki, Sonraki, Not, Kaydeden, Tarih), optimistic UI prepend on success, "Güncel: N adet" live badge
+- Product detail page: `StockAdjustmentCard` added at bottom, `getProductStockAdjustments` parallel-fetched
+- Browser-verified 2026-05-17: form renders, save creates row (100→105), success message "Stok hareketi kaydedildi.", optimistic update ✓
+
 ### Phase 5 — RBAC (Role Based Access Control)
 - Expanded `UserRole` enum: ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM
 - Created `Role`, `Permission`, `RolePermission`, `UserPermission` tables and applied migration to production

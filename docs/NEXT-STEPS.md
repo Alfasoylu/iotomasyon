@@ -129,6 +129,18 @@ Delivered:
 - Supplier form/list: import defaults section (air freight, sea freight, payment fee)
 - Browser-verified 2026-05-17 ✓
 
+### ✓ Priority 14 — Stock Adjustment Log (Phase 42, 2026-05-17)
+
+Delivered:
+- StockAdjustmentType enum (RESTOCK/CORRECTION/DAMAGE/RETURN/SALE/OTHER) + StockAdjustmentLog model
+- Migration: 20260517420000_phase42_stock_adjustment_log applied to production
+- createStockAdjustmentAction: PRODUCTS_UPDATE gated, Prisma $transaction (atomic stockQuantity update + log write), negative stock prevention
+- getProductStockAdjustments: last 20 entries, createdBy name
+- StockAdjustmentCard client component: type select, ±direction toggle, qty input, notes; history table with colored badges, ±delta, prev/next qty, timestamp
+- Optimistic UI: row prepends immediately on success, "Güncel: N adet" badge updates
+- Product detail page: StockAdjustmentCard at bottom, parallel-fetched
+- Browser-verified 2026-05-17: form → save → row appears (100→105), success message ✓
+
 ### ✓ Priority 13 — Bulk Mapping Backfill Engine (Phase 41, 2026-05-17)
 
 Delivered:
