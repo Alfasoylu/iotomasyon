@@ -703,6 +703,17 @@ Tamamlananlar:
 
 ---
 
+### ⏳ PENDING DEPLOY — Priority 66 — Cockpit Stok Kapsamı Kolonu (Phase 66, 2026-05-17)
+
+**Neden:**
+Import cockpit stok adedi gösteriyordu ama "bu stok kaç gün yeter?" sorusu cevaplanmıyordu. Kapsama kolonu acil sipariş vermesi gereken ürünleri kırmızıyla hemen belirginleştirir.
+
+Tamamlananlar:
+- `app/(app)/admin/import-cockpit/page.tsx`: daysOfCoverage hesabı + Kapsama kolonu; no schema change; no new DB query
+- tsc clean ✓; commit 1be7075 ✓; PENDING DEPLOY
+
+---
+
 ### ⏳ PENDING DEPLOY — Priority 65 — Ürün Listesi T30G Satış Hızı (Phase 65, 2026-05-17)
 
 **Neden:**

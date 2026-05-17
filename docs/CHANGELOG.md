@@ -9,6 +9,22 @@
 
 ## 2026-05
 
+### Phase 66 — Import Cockpit Stok Kapsamı Kolonu (2026-05-17)
+
+**Amaç:**
+Import cockpit'te "Stok" kolonu adet gösteriyordu ama bu adedi satış hızına bölünce kaç günlük stok kaldığı görünmüyordu. "Kapsama" kolonu bu hesabı yaparak acil satın alma kararlarını netleştirir.
+
+Değişiklikler:
+- `app/(app)/admin/import-cockpit/page.tsx`:
+  - `Row.daysOfCoverage: number | null` tipi eklendi
+  - `daysOfCoverage = Math.round(stockQuantity / (effectiveMonthlyUnits / 30))` — `effectiveMonthlyUnits` null veya sıfırsa null
+  - Yeni "Kapsama" sütunu (Stok ile Kaynak arasına): red ≤30g / amber 31-90g / slate >90g; "—" veri yoksa
+- Schema değişikliği: YOK; yeni DB sorgusu YOK
+
+Durum: tsc clean ✓, commit 1be7075 ✓, PENDING DEPLOY
+
+---
+
 ### Phase 65 — Ürün Listesi T30G Satış Hızı Kolonu (2026-05-17)
 
 **Amaç:**
