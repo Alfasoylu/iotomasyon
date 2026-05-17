@@ -22,6 +22,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   { href: "/activity",   label: "Aktiviteler", permission: PERMISSIONS.ACTIVITY_READ },
   { href: "/marketplace",    label: "Pazar Yerleri", permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ },
   { href: "/admin/users",     label: "Kullanıcılar",  permission: PERMISSIONS.USERS_READ },
+  { href: "/admin/executive",    label: "Yönetici Paneli",   permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/capital",      label: "Sermaye",           permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/procurement",  label: "Tedarik Asistanı",  permission: PERMISSIONS.EXECUTIVE_READ },
   { href: "/admin/suppliers",          label: "Tedarikçiler",          permission: PERMISSIONS.SUPPLIERS_READ },

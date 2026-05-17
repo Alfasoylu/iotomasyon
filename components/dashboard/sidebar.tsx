@@ -56,9 +56,9 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         <div className="rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
-          Faz 20 aktif
+          Faz 22 aktif
           <p className="mt-2 font-medium text-slate-900">
-            Tedarikçi Zekası: tedarikçi yönetimi, ürün bağlantıları.
+            Yönetici Paneli: stok değeri, kârlılık, tedarik aciliyeti.
           </p>
         </div>
       </aside>
