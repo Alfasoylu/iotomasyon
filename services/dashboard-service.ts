@@ -527,6 +527,15 @@ export async function getAdminEnhancedData() {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    const cancelledFilter = {
+      NOT: [
+        { status: { contains: "iptal", mode: "insensitive" as const } },
+        { status: { contains: "cancel", mode: "insensitive" as const } },
+      ],
+    };
 
     const [
       latestRate,
@@ -534,6 +543,8 @@ export async function getAdminEnhancedData() {
       activeInterestsTotal,
       salesPipelineByStatus,
       completedTasksThisMonth,
+      trendyolThisMonth,
+      trendyolLastMonth,
     ] = await Promise.all([
       // Latest exchange rate with RMB
       prisma.monthlyExchangeRate.findFirst({
@@ -562,7 +573,38 @@ export async function getAdminEnhancedData() {
           completedAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
         },
       }),
+      // Phase 67 — This month Trendyol sales
+      prisma.trendyolSalesRecord.findMany({
+        where: { orderDate: { gte: startOfThisMonth }, ...cancelledFilter },
+        select: { productId: true, quantity: true, totalPriceTry: true },
+      }),
+      // Phase 67 — Last month Trendyol sales
+      prisma.trendyolSalesRecord.findMany({
+        where: {
+          orderDate: { gte: startOfLastMonth, lt: startOfThisMonth },
+          ...cancelledFilter,
+        },
+        select: { productId: true, quantity: true, totalPriceTry: true },
+      }),
     ]);
+
+    // Phase 67 — Aggregate MoM Trendyol metrics
+    const aggregateTrendyol = (rows: { productId: string | null; quantity: number; totalPriceTry: unknown }[]) => {
+      let orders = 0;
+      let revenue = 0;
+      let matched = 0;
+      for (const r of rows) {
+        orders += r.quantity;
+        revenue += Number(r.totalPriceTry);
+        if (r.productId) matched += r.quantity;
+      }
+      const matchRate = orders > 0 ? Math.round((matched / orders) * 100) : 0;
+      return { orders, revenue, matchRate };
+    };
+    const trendyolMoM = {
+      thisMonth: aggregateTrendyol(trendyolThisMonth),
+      lastMonth: aggregateTrendyol(trendyolLastMonth),
+    };
 
     // Procurement signals: how many products are below reorder threshold
     const belowReorderCount = await prisma.$queryRaw<[{ count: bigint }]>`
@@ -595,6 +637,7 @@ export async function getAdminEnhancedData() {
       activeInterestsTotal,
       belowReorderCount,
       completedTasksThisMonth,
+      trendyolMoM,
       pipeline: {
         new: pipelineMap["NEW"] ?? 0,
         waitingStock: pipelineMap["WAITING_STOCK"] ?? 0,
@@ -606,6 +649,7 @@ export async function getAdminEnhancedData() {
     };
   } catch (error) {
     if (isDatabaseUnavailableError(error)) {
+      const emptyMoM = { orders: 0, revenue: 0, matchRate: 0 };
       return {
         databaseAvailable: false as const,
         latestRate: null,
@@ -614,6 +658,7 @@ export async function getAdminEnhancedData() {
         activeInterestsTotal: 0,
         belowReorderCount: 0,
         completedTasksThisMonth: 0,
+        trendyolMoM: { thisMonth: emptyMoM, lastMonth: emptyMoM },
         pipeline: { new: 0, waitingStock: 0, contacted: 0, quoted: 0, won: 0, lost: 0 },
       };
     }

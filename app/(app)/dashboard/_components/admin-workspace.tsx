@@ -141,6 +141,68 @@ export async function AdminWorkspace({
         </div>
       </section>
 
+      {/* Phase 67 — Trendyol Month-over-Month Comparison */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          Trendyol Aylık Karşılaştırma
+        </h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {(() => {
+            const tm = enhanced.trendyolMoM.thisMonth;
+            const lm = enhanced.trendyolMoM.lastMonth;
+            const ordersDelta = lm.orders > 0 ? Math.round(((tm.orders - lm.orders) / lm.orders) * 100) : null;
+            const revenueDelta = lm.revenue > 0 ? Math.round(((tm.revenue - lm.revenue) / lm.revenue) * 100) : null;
+            const matchDelta = tm.matchRate - lm.matchRate;
+
+            const DeltaBadge = ({ delta }: { delta: number | null }) => {
+              if (delta === null) return null;
+              const up = delta > 0;
+              const flat = delta === 0;
+              return (
+                <span className={`ml-2 text-xs font-semibold ${flat ? "text-slate-400" : up ? "text-emerald-600" : "text-red-500"}`}>
+                  {flat ? "→" : up ? `↑ ${delta}%` : `↓ ${Math.abs(delta)}%`}
+                </span>
+              );
+            };
+
+            return (
+              <>
+                <Card className="p-5">
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Sipariş Adedi (Bu Ay)</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    {tm.orders.toLocaleString("tr-TR")}
+                    <DeltaBadge delta={ordersDelta} />
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Geçen ay: {lm.orders.toLocaleString("tr-TR")}
+                  </p>
+                </Card>
+                <Card className="p-5">
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Ciro (Bu Ay)</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    {formatCurrencyAmount(tm.revenue, "TRY")}
+                    <DeltaBadge delta={revenueDelta} />
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Geçen ay: {formatCurrencyAmount(lm.revenue, "TRY")}
+                  </p>
+                </Card>
+                <Card className="p-5">
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Ürün Eşleşme Oranı (Bu Ay)</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    %{tm.matchRate}
+                    <DeltaBadge delta={matchDelta !== 0 ? matchDelta : null} />
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Geçen ay: %{lm.matchRate}
+                  </p>
+                </Card>
+              </>
+            );
+          })()}
+        </div>
+      </section>
+
       {!stats.databaseAvailable ? (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
           Veritabanı bağlantısı şu anda kullanılamıyor. Pano yüklendi ancak canlı
