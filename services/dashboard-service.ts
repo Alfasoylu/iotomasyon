@@ -468,9 +468,111 @@ export async function getOperationsDashboardData() {
   }
 }
 
+// ─── Phase 54 Faz D — Admin Enhanced Intelligence Signals ─────────────────────
+// Admin-only: may include financial context (exchange rates, import decisions).
+export async function getAdminEnhancedData() {
+  try {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [
+      latestRate,
+      recentSnapshotCount,
+      activeInterestsTotal,
+      salesPipelineByStatus,
+      completedTasksThisMonth,
+    ] = await Promise.all([
+      // Latest exchange rate with RMB
+      prisma.monthlyExchangeRate.findFirst({
+        where: { rmbUsdRate: { not: null } },
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+        select: { year: true, month: true, usdTryRate: true, rmbUsdRate: true },
+      }),
+      // Import decision snapshots in last 7 days
+      prisma.importDecisionSnapshot.count({
+        where: { createdAt: { gte: sevenDaysAgo } },
+      }),
+      // Total active product interests (across all reps)
+      prisma.productInterest.count({
+        where: { status: { in: ["NEW", "WAITING_STOCK", "CONTACTED", "QUOTED"] } },
+      }),
+      // Sales pipeline breakdown by status
+      prisma.productInterest.groupBy({
+        by: ["status"],
+        where: { status: { in: ["NEW", "WAITING_STOCK", "CONTACTED", "QUOTED", "WON", "LOST"] } },
+        _count: { id: true },
+      }),
+      // Tasks completed this month
+      prisma.followUpTask.count({
+        where: {
+          status: "DONE",
+          completedAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
+        },
+      }),
+    ]);
+
+    // Procurement signals: how many products are below reorder threshold
+    const belowReorderCount = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count FROM "Product"
+      WHERE "isActive" = true AND "reorderLeadTime" IS NOT NULL
+        AND "stockQuantity" <= "minimumStock"
+    `.then((r) => Number(r[0].count)).catch(() => 0);
+
+    // 30-day import decisions count (for trend context)
+    const recentSnapshotCount30d = await prisma.importDecisionSnapshot.count({
+      where: { createdAt: { gte: thirtyDaysAgo } },
+    });
+
+    const pipelineMap = Object.fromEntries(
+      salesPipelineByStatus.map((r) => [r.status, r._count.id]),
+    );
+
+    return {
+      databaseAvailable: true as const,
+      latestRate: latestRate
+        ? {
+            year: latestRate.year,
+            month: latestRate.month,
+            usdTryRate: Number(latestRate.usdTryRate),
+            rmbUsdRate: Number(latestRate.rmbUsdRate ?? 0),
+          }
+        : null,
+      recentSnapshotCount7d: recentSnapshotCount,
+      recentSnapshotCount30d,
+      activeInterestsTotal,
+      belowReorderCount,
+      completedTasksThisMonth,
+      pipeline: {
+        new: pipelineMap["NEW"] ?? 0,
+        waitingStock: pipelineMap["WAITING_STOCK"] ?? 0,
+        contacted: pipelineMap["CONTACTED"] ?? 0,
+        quoted: pipelineMap["QUOTED"] ?? 0,
+        won: pipelineMap["WON"] ?? 0,
+        lost: pipelineMap["LOST"] ?? 0,
+      },
+    };
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return {
+        databaseAvailable: false as const,
+        latestRate: null,
+        recentSnapshotCount7d: 0,
+        recentSnapshotCount30d: 0,
+        activeInterestsTotal: 0,
+        belowReorderCount: 0,
+        completedTasksThisMonth: 0,
+        pipeline: { new: 0, waitingStock: 0, contacted: 0, quoted: 0, won: 0, lost: 0 },
+      };
+    }
+    throw error;
+  }
+}
+
 // ─── Exported return types (for workspace components) ────────────────────────
 export type DashboardStats = Awaited<ReturnType<typeof getDashboardStats>>;
 export type OperationalAlerts = Awaited<ReturnType<typeof getOperationalAlerts>>;
 export type DueTodayFollowups = Awaited<ReturnType<typeof getDueTodayFollowups>>;
 export type SalesPipelineData = Awaited<ReturnType<typeof getSalesPipelineData>>;
 export type OperationsDashboardData = Awaited<ReturnType<typeof getOperationsDashboardData>>;
+export type AdminEnhancedData = Awaited<ReturnType<typeof getAdminEnhancedData>>;

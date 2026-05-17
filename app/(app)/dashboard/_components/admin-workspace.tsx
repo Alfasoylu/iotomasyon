@@ -7,19 +7,27 @@ import { formatCurrencyAmount, formatPercentValue } from "@/lib/quote-utils";
 import { formatDateTime } from "@/lib/utils";
 import { StatCard, LinkedStatCard } from "./shared/stat-card";
 import type {
+  AdminEnhancedData,
   DashboardStats,
   DueTodayFollowups,
   OperationalAlerts,
 } from "@/services/dashboard-service";
 
+const MONTH_NAMES = [
+  "", "Oca", "Şub", "Mar", "Nis", "May", "Haz",
+  "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
+];
+
 export async function AdminWorkspace({
   stats,
   dueToday,
   alerts,
+  enhanced,
 }: {
   stats: DashboardStats;
   dueToday: DueTodayFollowups;
   alerts: OperationalAlerts;
+  enhanced: AdminEnhancedData;
 }) {
   return (
     <div className="space-y-6">
@@ -139,6 +147,76 @@ export async function AdminWorkspace({
           metrikler gösterilemiyor.
         </Card>
       ) : null}
+
+      {/* Import intelligence — Faz D */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          İthalat Zekası
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <LinkedStatCard
+            label="Aktif Fırsat (Tüm Ekip)"
+            value={enhanced.activeInterestsTotal}
+            href="/customers"
+          />
+          <LinkedStatCard
+            label="İthalat Kararı (7 Gün)"
+            value={enhanced.recentSnapshotCount7d}
+            tone={enhanced.recentSnapshotCount7d > 0 ? "success" : "default"}
+            href="/admin/import-cockpit"
+          />
+          <LinkedStatCard
+            label="Yeniden Sipariş Gereken"
+            value={enhanced.belowReorderCount}
+            tone={enhanced.belowReorderCount > 0 ? "warning" : "default"}
+            href="/admin/procurement"
+          />
+          <StatCard
+            label="Bu Ay Tamamlanan Görev"
+            value={enhanced.completedTasksThisMonth}
+            tone={enhanced.completedTasksThisMonth > 0 ? "success" : "default"}
+          />
+        </div>
+      </section>
+
+      {/* Exchange rate context — Faz D */}
+      {enhanced.latestRate && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Döviz Bağlamı
+          </h2>
+          <Card className="p-5">
+            <div className="flex flex-wrap gap-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                  USD/TRY ({MONTH_NAMES[enhanced.latestRate.month]} {enhanced.latestRate.year})
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-slate-900">
+                  {enhanced.latestRate.usdTryRate.toFixed(2)} ₺
+                </p>
+              </div>
+              {enhanced.latestRate.rmbUsdRate > 0 && (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                    RMB/USD ({MONTH_NAMES[enhanced.latestRate.month]} {enhanced.latestRate.year})
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    {enhanced.latestRate.rmbUsdRate.toFixed(4)}
+                  </p>
+                </div>
+              )}
+              <div className="flex items-end">
+                <Link
+                  href="/admin/exchange-rates"
+                  className="text-xs font-medium text-slate-500 hover:text-slate-900"
+                >
+                  Kur geçmişi →
+                </Link>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
 
       <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Card className="p-6">
