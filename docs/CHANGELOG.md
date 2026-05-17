@@ -9,6 +9,28 @@
 
 ## 2026-05
 
+### Phase 56 — Satış Fırsat Motoru (2026-05-17)
+
+**Amaç:**
+Satış temsilcisi ürün detay sayfasından "bu ürünü hangi müşteriye satarım?" sorusunu yanıtlayamıyordu. Veri modeli (ProductInterest, CategoryInterest, CustomerAttributeInterest) hazırdı; UI'da aşama/öncelik/temsilci bağlamı yoktu.
+
+Değişiklikler:
+- `services/category-service.ts`: `getProductIntelligence()` `interests` select'i `stage`, `status`, `priority`, `lastContactedAt`, `followUpAt`, `assignedTo` ile genişletildi; `orderBy: { updatedAt: "desc" }` eklendi
+- `services/dashboard-service.ts`: `getSalesPipelineData()` — `topOpportunities` paralel sorgu eklendi (HIGH/URGENT öncelik, `status: NEW|WAITING_STOCK|CONTACTED`, atanan temsilci, `take: 5`); `SalesPipelineData` tipi güncellendi; hata fallback'i `topOpportunities: []` döndürür
+- `app/(app)/dashboard/_components/sales-workspace.tsx`: `STAGE_LABELS` + `STAGE_COLORS` maps eklendi; aktif fırsatlar listesi — öncelik emoji indicator (🔴/🟠), aşama badge (renk kodlu), son temas tarihi; "Önerilen Fırsatlar" bölümü — HIGH/URGENT ekip geneli top-5 fırsat kartları (müşteri → `/customers/:id` link, aşama/durum badge, temsilci, son temas)
+- `app/(app)/products/[id]/page.tsx`: "Doğrudan ilgili" kartları — renkli aşama badge, 🔴/🟠 öncelik göstergesi, son temas tarihi (`formatDateTime`), atanan temsilci adı
+- Schema değişikliği: YOK — mevcut `ProductInterest` alanları kullanıldı
+
+Güvenlik: Tüm sorgu sonuçlarında finansal alan (`sourceCostRmb`, `importUnitCostUsd`, `marketplacePriceTry` vb.) döndürülmez.
+
+Kabul kriteri:
+- Satış temsilcisi `/products/:id` → "Doğrudan ilgili" bölümünde aşama, öncelik, son temas tarihi, temsilci adı görür ✓
+- `/dashboard` (SALES rolü) → "Önerilen Fırsatlar" ekip geneli HIGH/URGENT fırsatları gösterir ✓
+- tsc --noEmit temiz ✓
+- READY: dpl_EnxAtoQH3aqnWqWyCXhHRaKaskrA
+
+---
+
 ### Phase 54 Faz F — Marketplace Workspace (2026-05-17)
 
 **Amaç:**

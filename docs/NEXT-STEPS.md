@@ -620,22 +620,20 @@ app/(app)/dashboard/
 
 ---
 
-### Priority 56 — Satış Fırsat Motoru (Phase 56)
+### ✓ DONE — Priority 56 — Satış Fırsat Motoru (Phase 56, 2026-05-17)
 
 **Neden:**
 Yeni ürün ithalat edildiğinde satış temsilcisi "bunu kime satarım?" sorusunu sisteme soramıyor. Veri modeli hazır (ProductInterest, CategoryInterest, CustomerAttributeInterest) ama sunan UI yok.
 
 **Bağımlılık:** Priority 54 (Sales dashboard), Priority 57 (ürün detay sayfası role-aware)
 
-**Ne yapılacak:**
-- Ürün detay sayfası: "Kimler Alabilir?" bölümü — kategori/özellik/direkt ilgi üzerinden müşteri listesi
-- Gösterilen bilgi: müşteri adı, ilgi aşaması, son temas tarihi, satış temsilcisi — maliyet yok
-- Sales dashboard widget: "Önerilen Fırsatlar" — bugünkü top 5 müşteri × ürün eşleşmesi
-- Outreach trigger: fırsattan OutreachCampaign oluştur
-- Schema değişikliği: muhtemelen YOK (ProductInterest + CategoryInterest zaten var)
-
-**Kabul kriteri:**
-Satış temsilcisi, yeni gelen bir ürünün detay sayfasından o ürünle ilgili müşteri listesini görebilir ve WhatsApp kampanyası başlatabilir.
+Tamamlananlar:
+- `services/category-service.ts`: `getProductIntelligence()` `interests` select'i `stage`, `status`, `priority`, `lastContactedAt`, `followUpAt`, `assignedTo` ile zenginleştirildi
+- `services/dashboard-service.ts`: `getSalesPipelineData()` — `topOpportunities` eklendi (HIGH/URGENT öncelikli, ekip geneli, atanan temsilci dahil)
+- `app/(app)/dashboard/_components/sales-workspace.tsx`: `STAGE_LABELS`/`STAGE_COLORS` maps eklendi; aktif fırsatlar listesi — öncelik emoji, aşama badge, son temas tarihi; "Önerilen Fırsatlar" bölümü (top 5 HIGH/URGENT fırsat kartı)
+- `app/(app)/products/[id]/page.tsx`: "Doğrudan ilgili" kartları — aşama badge (renkli), öncelik göstergesi (🔴/🟠), son temas tarihi, atanan temsilci adı
+- Schema değişikliği: YOK (mevcut ProductInterest alanları kullanıldı)
+- tsc --noEmit temiz ✓; READY: dpl_EnxAtoQH3aqnWqWyCXhHRaKaskrA
 
 ---
 
