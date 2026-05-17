@@ -9,6 +9,27 @@
 
 ## 2026-05
 
+### Phase 71 — PRODUCT PROFIT ENGINE REFACTOR (2026-05-18)
+
+**Amaç:**
+MarketplacePrice tablosu eklenerek fiyat verisi dağınık XML alanlarından kanonik bir kayıt defterine taşındı. Ürün listesine kâr sütunları eklendi, health cue'lar yeniden düzenlendi, XML sync MarketplacePrice'a yazıyor, ürün detay Trendyol Kâr Analizi kartı MarketplacePrice'ı birincil kaynak olarak kullanıyor.
+
+Değişiklikler:
+- **`prisma/schema.prisma`**: `PriceMarketplace` enum (TRENDYOL/HEPSIBURADA/AMAZON/N11/PAZARAMA/IDEFIX/WEBSITE/OTHER), `PriceSource` enum (XML/API/MANUAL), `MarketplacePrice` model (`@@unique([productId, marketplace])`); Product modeline `marketplacePrices MarketplacePrice[]` ilişkisi eklendi
+- **`lib/actions/xml-sync-actions.ts`**: `runSync()` başında exchange rate çekiliyor; step 7b eklendi — her XML sync sonrası TRENDYOL/HEPSIBURADA/AMAZON/PAZARAMA/IDEFIX için batch upsert (20'lik gruplar, USD×usdTryRate dönüşümü)
+- **`services/product-service.ts`**: `listProducts` + `getProductById` includelerine `marketplacePrices` eklendi
+- **`app/(app)/products/page.tsx`**: `getHealthCues()` yeniden düzenlendi (Maliyet eksik / Ağırlık eksik / Trendyol fiyat yok); `calcProfit()` fonksiyonu eklendi (kargo=10 USD/kg, gümrük=customsRatePct, komisyon=%20, sabit kesinti=₺150 >₺250); Durum tierleri: LOSS/LOW/GOOD/EXCELLENT; tabloya 4 yeni sütun: Net Kâr / Marj% / ROI / Durum
+- **`app/(app)/products/[id]/page.tsx`**: `trendyolPriceTry` hesabı MarketplacePrice'ı birincil, xmlData'yı fallback olarak kullanıyor; kart alt başlığı kaynak etiketini (XML/Manuel) gösteriyor
+- **Migration**: `20260518000000_phase71_marketplace_price_table` (Supabase MCP ile apply_migration)
+- **Backfill**: 1715 satır — TRENDYOL:646 / HEPSIBURADA:584 / AMAZON:221 / PAZARAMA:146 / IDEFIX:118 (usdTryRate=46.0)
+- **Legacy fields preserved**: `unitCostTry`, `sellingPriceTry`, `marketplacePriceTry`, `importUnitCostUsd`, `sourceCostRmb`, `shippingCostOverride` korundu; 51+ dosya bunlara referans veriyor; Phases 3+4 (column drop) ertelendi
+
+SKU 2251930284620 doğrulanan metrikler (MarketplacePrice kaynaklı): Trendyol Satış ₺383.33 (XML) | Net Kâr ₺44.80 | Marj %11.7 | ROI %40.1 | Durum: Düşük
+
+Durum: tsc 0 yeni hata ✓, lint pre-existing ✓, commit 4e40c2a ✓, READY dpl_FYRZSLcUkmHYodP3ScbLUVyBG3AY ✓, browser-verified 2026-05-18 ✓
+
+---
+
 ### Bugfix — Maliyet/Kâr Hesaplama Akışı (2026-05-18)
 
 **Amaç:**

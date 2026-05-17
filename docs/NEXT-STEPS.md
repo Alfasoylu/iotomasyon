@@ -81,6 +81,34 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 71 — PRODUCT PROFIT ENGINE REFACTOR (2026-05-18)
+
+Neden:
+XML sync ürün fiyatlarını (`xmlTrendyolPrice`, `xmlHbPrice` vb.) doğrudan XmlProductData'ya yazıyordu; bu fiyatlar ürün listesi ve kâr hesaplamalarında dağınık biçimde kullanılıyordu. Merkezi bir fiyat kaydı yoktu.
+
+Teslim edilenler:
+- `MarketplacePrice` tablosu: `@@unique([productId, marketplace])`, `PriceMarketplace` enum (TRENDYOL/HEPSIBURADA/AMAZON/N11/PAZARAMA/IDEFIX/WEBSITE/OTHER), `PriceSource` enum (XML/API/MANUAL)
+- `xml-sync-actions.ts` step 7b: her XML sync sonrası 5 platform için batch MarketplacePrice upsert (USD×usdTryRate)
+- `product-service.ts`: `listProducts` + `getProductById` `marketplacePrices` include
+- `products/page.tsx`: yeniden düzenlenmiş health cue'lar (Maliyet eksik / Ağırlık eksik / Trendyol fiyat yok); `calcProfit()` (kargo 10 USD/kg, gümrük, komisyon %20, sabit ₺150); 4 yeni sütun: Net Kâr / Marj% / ROI / Durum (LOSS/LOW/GOOD/EXCELLENT)
+- `products/[id]/page.tsx`: `trendyolPriceTry` → MarketplacePrice birincil, xmlData fallback; kaynak etiketi (XML/Manuel)
+- Backfill: 1715 satır — TRENDYOL:646 / HB:584 / AMZ:221 / PAZ:146 / IDX:118 (usdTryRate=46.0)
+- Migration: `20260518000000_phase71_marketplace_price_table`
+- Legacy fields preserved (Phases 3+4 ertelendi — 51+ dosya referans veriyor)
+
+Doğrulanan metrikler (SKU 2251930284620):
+- Trendyol Satış: ₺383.33 (MarketplacePrice, kaynak: XML) | Net Kâr: ₺44.80 | Marj: %11.7 | ROI: %40.1 | Durum: Düşük
+- Health cue'lar: "Maliyet eksik" 23+ üründe ✓ | "Trendyol fiyat yok" ✓ | "Ağırlık eksik" (kod doğru, veri yok — 4 RMB ürününün hepsinde weightKg var)
+
+tsc 0 yeni hata ✓ | lint pre-existing hatalar ✓ | commit 4e40c2a ✓ | READY dpl_FYRZSLcUkmHYodP3ScbLUVyBG3AY ✓ | browser-verified 2026-05-18 ✓
+
+Ertelenenler (Phases 3+4):
+- `xmlTrendyolPrice`, `xmlHbPrice` vb. XmlProductData alanları kaldırılmadı (51+ dosya referans veriyor)
+- `Product.sellingPriceTry`, `marketplacePriceTry` legacy alanları korundu
+- Faz 3 (legacy read kaldırma) ve Faz 4 (column drop) ayrı migration olarak planlanmalı
+
+---
+
 ### Priority 0 - Safety and Data Governance Baseline
 
 Why:
