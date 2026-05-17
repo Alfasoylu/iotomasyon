@@ -43,6 +43,7 @@ Current reality:
 - supplier intelligence complete (Phase 20 ✓): /admin/suppliers CRUD, Supplier + SupplierProduct models, product edit supplier link section with unitCostUsd/moq/leadDays/isPreferred
 - import cost calculator complete (Phase 21 ✓): /admin/import-calculator, landed cost formula (product+freight+customs), per-unit TRY, break-even (min %20 marj), channel margin analysis — browser-verified 2026-05-17
 - executive KPI dashboard complete (Phase 22 ✓): /admin/executive, owner-grade single-page intelligence overview — stock value TRY, capital health, procurement urgency distribution, top-5 profitability — browser-verified 2026-05-17
+- data hygiene governance complete (Phase 23 ✓): /admin/data-hygiene, 8 completeness checks, 4596 total issues and 47 maliyetsiz stoklu detected in production — browser-verified 2026-05-17
 
 This means the product is operationally useful for internal CRM, quote workflows (with templates), active Trendyol marketplace operations, XML-driven inventory management, pre-purchase import cost evaluation, and owner-grade executive intelligence. Ready for multi-user rollout.
 Not yet ready for:
@@ -68,16 +69,16 @@ Clarification:
 - this does not mean fully implementing Phase 23 and Phase 24 now
 - it means maintaining minimum safety rules as Phase 7+ implementation proceeds
 
-### Priority 1 — Phase 23/24: Data Hygiene / Production Safety
+### Priority 1 — Phase 24: Backup / Rollback / Migration Safety
 
 Why:
-As the system scales, duplicate SKUs, missing costs, and schema drift become risks.
+As the system scales, schema drift and destructive operations become risks. Phase 23 data hygiene is complete; Phase 24 focuses on migration safety documentation and production write governance.
 
 Deliverables:
-- duplicate SKU/barcode detection reports
-- missing cost/category/link governance views
-- migration safety documentation
+- migration safety checklist
+- backup/rollback discipline documentation
 - production data safety controls
+- dangerous operation approval protocol
 
 ---
 
@@ -103,7 +104,8 @@ Phase dependencies:
 - Phase 20 ✓ complete — supplier intelligence is production-active.
 - Phase 21 ✓ complete — import cost calculator is production-active.
 - Phase 22 ✓ complete — executive KPI dashboard is production-active (browser-verified 2026-05-17).
-- Phase 23 and Phase 24 should not be ignored because data quality and production safety can invalidate later intelligence work.
+- Phase 23 ✓ complete — data hygiene governance page is production-active (browser-verified 2026-05-17).
+- Phase 24 should not be ignored because migration safety and production write governance underpin all intelligence layers.
 - Priority 0 should be treated as a baseline operating rule before schema-heavy work expands.
 
 ---

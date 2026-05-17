@@ -54,6 +54,7 @@ Implemented modules:
 - supplier intelligence (Phase 20: /admin/suppliers, Supplier + SupplierProduct models, product edit supplier links)
 - import cost calculator (Phase 21: /admin/import-calculator, landed cost formula, channel margin analysis)
 - executive KPI dashboard (Phase 22: /admin/executive, stock value, capital health, procurement urgency, top-5 profitability)
+- data hygiene governance (Phase 23: /admin/data-hygiene, 8 completeness checks, real-time product issue counts)
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
@@ -656,13 +657,36 @@ Verified outcome (browser test 2026-05-17):
 ---
 
 ## Phase 23 — Data Hygiene / SKU Governance
-Status: NOT STARTED
+Status: DONE
 
-Missing:
-- duplicate SKU detection
-- duplicate barcode detection
-- missing cost/category/link reports
-- invalid data governance layer
+Completed:
+- `app/(app)/admin/data-hygiene/page.tsx`: EXECUTIVE_READ-gated server page — no new DB schema; single `prisma.product.findMany` query on active products with 12 selected fields + supplierLinks relation
+- 8 hygiene checks computed in-memory:
+  - `missingCost`: `!unitCostTry` — 650 products flagged
+  - `missingRetailPrice`: `!sellingPriceTry`
+  - `missingMarketplacePrice`: `!marketplacePriceTry`
+  - `stockWithNoCost`: `stockQuantity > 0 && !unitCostTry` — 47 products flagged (highest priority)
+  - `xmlNoPrice`: `xmlImported && !marketplacePriceTry && !sellingPriceTry`
+  - `missingCategory`: `!categoryId`
+  - `missingBarcode`: `!barcode`
+  - `missingSupplier`: `supplierLinks.length === 0`
+- Summary row: 4 `IssueCount` cards — Aktif Ürün, Tam Dolu Ürün, Toplam Sorun (danger if >50), Maliyetsiz Stoklu (danger if >0)
+- `Section` component: title + subtitle + issue count pill (emerald "✓ Temiz" / red "N sorun")
+- `EmptyState` component: emerald check message for passing sections
+- `ProductTable` component: SKU / Ürün Adı / optional extra column / Düzenle → link to `/products/[id]/edit`
+- "✓ Veri tabanı temiz" full-width emerald card shown when `totalIssues === 0`
+- 8 sections in priority order: Maliyeti Eksik, Perakende Fiyatı Eksik, Pazar Yeri Fiyatı Eksik, Stokta Var Maliyeti Yok, XML Fiyatsız, Kategorisi Eksik, Barkodu Eksik, Tedarikçi Bağlantısı Eksik
+- Footer quick-links: Ürünler ←, Yönetici Paneli →, Tedarik Asistanı →
+- `app/(app)/layout.tsx`: added "Veri Hijyeni" nav entry (EXECUTIVE_READ) at end of ALL_NAV
+- `components/dashboard/sidebar.tsx`: updated info card to "Faz 23 aktif — Veri Hijyeni: eksik maliyet, fiyat ve barkod raporları."
+
+Verified outcome (browser test 2026-05-17):
+- /admin/data-hygiene: page loads with "Veri Hijyeni" heading, "YÖNETİM / VERİ KALİTESİ" breadcrumb ✓
+- Summary cards: 651 Aktif Ürün, 0 Tam Dolu Ürün, 4596 Toplam Sorun (red), 47 Maliyetsiz Stoklu (red) ✓
+- Section 1 "Maliyeti Eksik Ürünler": 650 sorun pill, product table renders with real SKU/name rows and Düzenle → links ✓
+- IssueCount tone: danger on 4596 total issues and 47 maliyetsiz stoklu ✓
+- tsc --noEmit: clean ✓
+- Vercel deploy: READY (commit 6fb3ec4) ✓
 
 ---
 

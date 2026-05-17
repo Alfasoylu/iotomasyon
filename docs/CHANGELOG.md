@@ -268,6 +268,20 @@
 - Added "Pazar Yerleri" link to sidebar (MARKETPLACE_LISTINGS_READ permission)
 - Added `marketplaceListings[]` relation to Product and User Prisma models
 
+### Phase 23 — Data Hygiene Governance
+- No new DB schema — single `prisma.product.findMany` on active products (12 select fields + supplierLinks relation)
+- Created `app/(app)/admin/data-hygiene/page.tsx` (EXECUTIVE_READ-gated): 4 inline sub-components (IssueCount, Section, EmptyState, ProductTable)
+- 8 data completeness checks computed in-memory: missingCost, missingRetailPrice, missingMarketplacePrice, stockWithNoCost (highest priority), xmlNoPrice, missingCategory, missingBarcode, missingSupplier
+- `IssueCount` card: tone-aware colour (ok/warn/danger/default) for summary row — shows 4596 total issues and 47 maliyetsiz stoklu in production
+- `Section` wrapper: title + subtitle + issue count pill (emerald "✓ Temiz" / red "N sorun")
+- `ProductTable`: SKU (monospace) / Ürün Adı / optional extra column / Düzenle → link to `/products/[id]/edit`
+- `EmptyState`: emerald check message when a section has zero issues
+- Green all-clear banner shown only when `totalIssues === 0`
+- Added "Veri Hijyeni" nav entry to `app/(app)/layout.tsx` (EXECUTIVE_READ permission)
+- Updated sidebar info card: "Faz 23 aktif — Veri Hijyeni: eksik maliyet, fiyat ve barkod raporları."
+- tsc --noEmit clean, Vercel deploy READY (commit 6fb3ec4)
+- Browser-verified 2026-05-17: 651 aktif ürün, 0 tam dolu, 4596 toplam sorun, 47 maliyetsiz stoklu; Section 1 renders 650-row product table with real SKU/Düzenle data ✓
+
 ### Phase 22 — Executive KPI Dashboard
 - No new DB schema — reads from Product, CapitalConfig, MonthlyExchangeRate, MarketplaceListing via 4 parallel `Promise.all` queries
 - Created `app/(app)/admin/executive/page.tsx` (EXECUTIVE_READ-gated): 472-line server component, no client components

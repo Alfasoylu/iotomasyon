@@ -57,6 +57,7 @@ Implemented modules:
 - supplier intelligence — Phase 20 complete: /admin/suppliers CRUD, Supplier + SupplierProduct models, product edit supplier link section (unitCostUsd, moq, leadDays, isPreferred)
 - import cost calculator — Phase 21 complete: /admin/import-calculator, landed cost formula (product+freight+customs), per-unit TRY cost, break-even, channel margin analysis
 - executive KPI dashboard — Phase 22 complete: /admin/executive, stock value TRY, capital health, procurement urgency pills, top-5 profitability table, quick-links to all intelligence tools
+- data hygiene governance — Phase 23 complete: /admin/data-hygiene, 8 completeness checks (cost, retail price, marketplace price, stock-with-no-cost, xml-no-price, category, barcode, supplier), real-time issue counts, Düzenle links
 - product/customer interest engine
 - category/customer relationship engine
 - quote workflow v1
