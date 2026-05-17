@@ -177,7 +177,7 @@ export default async function TrendyolQuestionsPage({ searchParams }: Props) {
                         {q.barcode && <span className="text-slate-400 ml-2">({q.barcode})</span>}
                       </p>
                     </div>
-                    <span className="font-mono text-[10px] text-slate-400 shrink-0">#{q.id.slice(-8)}</span>
+                    <span className="font-mono text-[10px] text-slate-400 shrink-0">#{String(q.id).slice(-8)}</span>
                   </div>
 
                   {/* Question text */}
@@ -188,7 +188,7 @@ export default async function TrendyolQuestionsPage({ searchParams }: Props) {
                     <div className="bg-emerald-50 border border-emerald-100 rounded-md p-3 space-y-1">
                       <p className="text-xs font-semibold text-emerald-700">Verilen Cevap:</p>
                       {q.answers.map((a) => (
-                        <div key={a.id}>
+                        <div key={String(a.id)}>
                           <p className="text-xs text-emerald-800 leading-relaxed">{a.text}</p>
                           <p className="text-[10px] text-emerald-400 mt-0.5">{fmtDate(a.createdDate)}</p>
                         </div>
@@ -198,7 +198,7 @@ export default async function TrendyolQuestionsPage({ searchParams }: Props) {
 
                   {/* Answer form — only for waiting questions */}
                   {q.status === "WAITING_FOR_ANSWER" && (
-                    <AnswerQuestionForm questionId={q.id} />
+                    <AnswerQuestionForm questionId={String(q.id)} />
                   )}
                 </Card>
               ))}

@@ -359,7 +359,7 @@ export interface TrendyolQuestionCategory {
 }
 
 export interface TrendyolQuestion {
-  id: string;
+  id: number;  // Trendyol returns int64 — not string
   text: string;
   createdDate: number;   // epoch ms
   status: TrendyolQuestionStatus;
@@ -367,7 +367,7 @@ export interface TrendyolQuestion {
   barcode: string | null;
   productCode: number | null;
   answers: Array<{
-    id: string;
+    id: number;  // also int64
     text: string;
     createdDate: number;
     createdBy: string | null;
