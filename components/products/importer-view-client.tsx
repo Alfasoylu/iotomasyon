@@ -376,6 +376,25 @@ export function ImporterViewClient() {
             )}
           </button>
         ))}
+
+        {/* Phase 81 — Sipariş Oluştur button */}
+        {(() => {
+          const orderItems = enriched.filter((p) => p.recommendedQty > 0);
+          if (orderItems.length === 0) return null;
+          const itemsParam = orderItems
+            .map((p) => `${p.id}:${p.recommendedQty}`)
+            .join(",");
+          const href = `/admin/purchase-orders/new?from=importer&items=${encodeURIComponent(itemsParam)}`;
+          return (
+            <Link
+              href={href}
+              className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition"
+            >
+              📦 Sipariş Oluştur ({orderItems.length})
+            </Link>
+          );
+        })()}
+
         <div className="ml-auto flex flex-wrap gap-1">
           <SortBtn k="roi" label="ROI" />
           <SortBtn k="margin" label="Marj" />

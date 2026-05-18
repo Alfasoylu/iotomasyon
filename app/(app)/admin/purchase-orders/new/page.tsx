@@ -1,8 +1,9 @@
 /**
  * Phase 77 — Yeni Satın Alma Siparişi
  *
- * Pre-fill from capital allocation recommendations via URL params:
- *   ?from=capital  → show allocation suggestions for one-click adding
+ * Pre-fill from capital allocation recommendations or importer view via URL params:
+ *   ?from=capital            → show capital allocation suggestions
+ *   ?from=importer&items=id1:qty1,id2:qty2  → pre-fill from importer view recommendations
  *
  * The form passes data to the CreatePurchaseOrderForm client component.
  */
@@ -29,6 +30,17 @@ export default async function NewPurchaseOrderPage({
 
   const sp = await searchParams;
   const fromCapital = sp.from === "capital";
+  const fromImporter = sp.from === "importer";
+
+  // Parse ?items=id1:qty1,id2:qty2 when coming from importer view
+  const importerItemMap = new Map<string, number>();
+  if (fromImporter && sp.items) {
+    for (const pair of sp.items.split(",")) {
+      const [id, qtyStr] = pair.split(":");
+      const qty = parseInt(qtyStr, 10);
+      if (id && qty > 0) importerItemMap.set(id, qty);
+    }
+  }
 
   // Fetch exchange rates, suppliers, and eligible products
   const [latestRate, suppliers, products] = await Promise.all([
@@ -140,10 +152,21 @@ export default async function NewPurchaseOrderPage({
   });
 
   // Capital allocation suggestions: products that need reorder, sorted by demand
-  const suggestions = productData
+  const capitalSuggestions = productData
     .filter((p) => p.needsReorder && p.unitCostTry != null)
     .sort((a, b) => b.monthlyDemand - a.monthlyDemand)
     .slice(0, 30);
+
+  // Importer view suggestions: pre-fill with exact IDs and recommended quantities
+  const importerSuggestions: ProductData[] = [];
+  if (fromImporter && importerItemMap.size > 0) {
+    for (const [id, qty] of importerItemMap) {
+      const p = productData.find((pd) => pd.id === id);
+      if (p) importerSuggestions.push({ ...p, suggestedQty: qty });
+    }
+  }
+
+  const suggestions = fromImporter ? importerSuggestions : (fromCapital ? capitalSuggestions : []);
 
   return (
     <div className="space-y-6">
@@ -157,10 +180,17 @@ export default async function NewPurchaseOrderPage({
         </p>
       </div>
 
+      {fromImporter && importerSuggestions.length > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          📦 İthalatçı görünümünden <strong>{importerSuggestions.length} ürün</strong> sipariş önerisiyle yüklendi.
+          Aşağıda önerilen adetlerle ön doldurulmuş — değiştirebilirsiniz.
+        </div>
+      )}
+
       <CreatePurchaseOrderForm
         suppliers={suppliers}
         products={productData}
-        suggestions={fromCapital ? suggestions : []}
+        suggestions={suggestions}
         usdTryRate={usdTryRate}
         rmbUsdRate={rmbUsdRate}
       />
