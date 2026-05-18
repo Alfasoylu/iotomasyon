@@ -50,10 +50,11 @@ export type ImporterProduct = {
   customsRatePct: number | null;
   importPaymentFeePct: number | null;
 
-  // Phase 9 — Marketplace monthly sales estimate (units/month).
+  // Phase 9 + Phase 90 — Marketplace monthly sales estimate (units/month).
   // `onlineSalesPotential` is the raw DB value (null = not entered).
-  // `effectiveMonthlyUnits` is what calculations should use — null falls back to 1
-  // (the documented default for products without a recorded monthly sales figure).
+  // `effectiveMonthlyUnits` = max(Trendyol t30g, manuel onlineSalesPotential).
+  // Calculations like stockDays / decisionLabel use this so manuel tahmin
+  // Trendyol satışından büyükse devre dışı kalmaz.
   onlineSalesPotential: number | null;
   effectiveMonthlyUnits: number;
 
@@ -154,6 +155,11 @@ export async function GET(_req: NextRequest) {
       p.xmlData?.xmlBayiPrice != null ? Number(p.xmlData.xmlBayiPrice) : null;
 
     const t30g = velocity.get(p.id) ?? 0;
+    // Phase 90: Demand sinyali stockDays / decisionLabel / healthScore için
+    // max(Trendyol 30g, manuel onlineSalesPotential). T30G sütunu raw değeri
+    // göstermeye devam eder; effectiveT30g ayrı bir hesap.
+    const manualOnline = p.onlineSalesPotential ?? 0;
+    const effectiveT30g = Math.max(t30g, manualOnline);
 
     // Import cost
     const costResult = calcImportCost({
@@ -172,17 +178,17 @@ export async function GET(_req: NextRequest) {
     const profitResult =
       costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;
 
-    // Stock days
-    const stockDays = calcStockDays(p.stockQuantity, t30g);
+    // Stock days — Phase 90: use effectiveT30g (max of Trendyol vs manuel)
+    const stockDays = calcStockDays(p.stockQuantity, effectiveT30g);
 
-    // Health score
+    // Health score — Phase 90: same demand semantic for consistency
     const healthScore = calcHealthScore({
       hasRmb: p.sourceCostRmb != null,
       hasWeight: p.weightKg != null,
       hasTrendyolPrice: trendyolPriceTry != null,
       netProfitUsd: profitResult?.netProfitUsd ?? null,
       marginPct: profitResult?.marginPct ?? null,
-      t30g,
+      t30g: effectiveT30g,
       stockDays,
     });
 
@@ -211,8 +217,10 @@ export async function GET(_req: NextRequest) {
       importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
 
       onlineSalesPotential: p.onlineSalesPotential,
-      // Default 1 unit/month for marketplace channel when not explicitly entered.
-      effectiveMonthlyUnits: p.onlineSalesPotential ?? 1,
+      // Phase 90: demand sinyali = max(Trendyol 30g, manuel onlineSalesPotential).
+      // Sayım yapılmamış manuel için NULL → 0 (sıfır demand). 1-fallback kaldırıldı:
+      // stockDays / Stok Fazla hesabını yapay 1 değeri yanlış kullanırdı.
+      effectiveMonthlyUnits: effectiveT30g,
 
       shippingMethod: costResult?.shippingMethod ?? null,
       productUsd: costResult?.productUsd ?? null,
