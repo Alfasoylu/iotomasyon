@@ -64,6 +64,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     permission: PERMISSIONS.CUSTOMERS_READ,
     section: "CRM",
   },
+  // Phase 87 — Ekip Görev Panosu
+  {
+    href: "/admin/task-board",
+    label: "Görev Panosu",
+    permission: PERMISSIONS.TASKS_ASSIGN,
+    section: "CRM",
+  },
 
   // ── Ürünler & Stok ────────────────────────────────────────────────────────
   {
