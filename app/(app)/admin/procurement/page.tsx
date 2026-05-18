@@ -116,17 +116,21 @@ export default async function ProcurementPage() {
   const rows: ProcurementRow[] = products.map((p) => {
     const actualQty = actualSales30d.get(p.id) ?? null;
 
-    // Determine effective onlineSalesPotential: actual data overrides manual estimate
-    const effectiveOnlinePotential = actualQty !== null ? actualQty : p.onlineSalesPotential;
+    // Pazar yeri kanalı demand: Trendyol 30g VEYA manuel onlineSalesPotential —
+    // büyük olanı al. Manuel tahmin Trendyol'dan büyükse devre dışı kalmıyor.
+    const manualOnline = p.onlineSalesPotential ?? 0;
+    const trendyolOnline = actualQty ?? 0;
+    const maxOnline = Math.max(trendyolOnline, manualOnline);
+    const effectiveOnlinePotential = maxOnline > 0 ? maxOnline : null;
 
     const hasAnyDemand =
-      actualQty !== null ||
-      (p.onlineSalesPotential ?? 0) > 0 ||
+      maxOnline > 0 ||
       (p.wholesaleSalesPotential ?? 0) > 0 ||
       (p.installerSalesPotential ?? 0) > 0;
 
+    // velocitySource: hangi sinyal galip geldi?
     const velocitySource: VelocitySource =
-      actualQty !== null ? "actual" :
+      trendyolOnline > 0 && trendyolOnline >= manualOnline ? "actual" :
       hasAnyDemand ? "estimated" :
       "none";
 

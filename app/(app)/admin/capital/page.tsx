@@ -103,10 +103,15 @@ export default async function CapitalPage() {
     return supplierTry + cargoTry + customsTry;
   }
 
-  // Compute investment scores for all products (actual velocity overrides manual)
+  // Compute investment scores for all products.
+  // Pazar yeri demand: max(Trendyol 30g, manuel onlineSalesPotential) —
+  // manuel tahmin Trendyol satışından büyükse devre dışı kalmaz.
   const productsWithScore = products.map((p) => {
     const actualQty = actualSales30d.get(p.id) ?? null;
-    const effectiveOnlinePotential = actualQty !== null ? actualQty : p.onlineSalesPotential;
+    const manualOnline = p.onlineSalesPotential ?? 0;
+    const trendyolOnline = actualQty ?? 0;
+    const maxOnline = Math.max(trendyolOnline, manualOnline);
+    const effectiveOnlinePotential = maxOnline > 0 ? maxOnline : null;
     const effectiveCostTry = computeLandedCost(p);
 
     const sp = calculateSalesPotential({
@@ -142,7 +147,10 @@ export default async function CapitalPage() {
       wholesalePriceTry: p.wholesalePriceTry != null ? Number(p.wholesalePriceTry) : null,
       sellingPriceTry: p.sellingPriceTry != null ? Number(p.sellingPriceTry) : null,
       investmentScore: sp.investmentScore,
-      velocitySource: actualQty !== null ? "actual" : "estimated",
+      velocitySource:
+        trendyolOnline > 0 && trendyolOnline >= manualOnline
+          ? "actual"
+          : "estimated",
     };
   });
 

@@ -349,20 +349,22 @@ export default async function ImportCockpitPage({
     }
 
     // ── Aylık kâr tahmini ──────────────────────────────────────────────────
-    // Trendyol verisi varsa: 30d satış hızı * (1 − iade oranı)
-    // Manuel: onlineSalesPotential + wholesaleSalesPotential + installerSalesPotential
-    const manualMonthlyUnits =
-      (p.onlineSalesPotential ?? 0) +
-      (p.wholesaleSalesPotential ?? 0) +
-      (p.installerSalesPotential ?? 0);
-
-    let effectiveMonthlyUnits: number | null = null;
-    if (trendyolUnits30d != null && trendyolUnits30d > 0) {
-      const rr = returnRate ?? 0;
-      effectiveMonthlyUnits = trendyolUnits30d * (1 - rr);
-    } else if (manualMonthlyUnits > 0) {
-      effectiveMonthlyUnits = manualMonthlyUnits;
-    }
+    // Pazar yeri kanalı: Trendyol 30g (iade düşümü) VEYA manuel onlineSalesPotential
+    // — büyük olanı al (Math.max). Wholesale + installer manuel'leri toplama eklenir.
+    // Gerekçe: yeni ürünlerde Trendyol satışı düşük olsa bile manuel tahmin daha doğru
+    // bir sipariş adeti çıktısı sağlar; tersi durumda gerçekleşen veri tahminden
+    // büyükse onu yansıt.
+    const trendyolAdjusted =
+      trendyolUnits30d != null && trendyolUnits30d > 0
+        ? trendyolUnits30d * (1 - (returnRate ?? 0))
+        : 0;
+    const manualOnline = p.onlineSalesPotential ?? 0;
+    const effectiveOnline = Math.max(trendyolAdjusted, manualOnline);
+    const manualOtherChannels =
+      (p.wholesaleSalesPotential ?? 0) + (p.installerSalesPotential ?? 0);
+    const effectiveMonthlyUnitsRaw = effectiveOnline + manualOtherChannels;
+    const effectiveMonthlyUnits: number | null =
+      effectiveMonthlyUnitsRaw > 0 ? effectiveMonthlyUnitsRaw : null;
 
     const monthlyProfitTry =
       netProfitTry != null && effectiveMonthlyUnits != null

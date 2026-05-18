@@ -9,6 +9,36 @@
 
 ## 2026-05
 
+### Phase 90 — Sipariş Adet Demand Formülü (max(Trendyol, manuel)) (2026-05-19)
+
+**Amaç:**
+İthalat planlamasında "sipariş adet hesabı" şu ana kadar **Trendyol verisi VARSA SADECE onu** kullanıyordu — manuel girilmiş `onlineSalesPotential` (aylık satış tahmini), gerçek satıştan büyük olsa bile devre dışı kalıyordu. Yeni ürünlerde veya satış geçmişi az olan ürünlerde bu, sipariş adetini olduğundan düşük gösteriyordu. Kullanıcı talebine göre demand sinyali artık **max(Trendyol 30g adjusted, manuel onlineSalesPotential)** olarak hesaplanır.
+
+**Davranış değişikliği:**
+- `actualQty` = Trendyol 30 gün gerçekleşen satış (eşleşmiş, iptal harici)
+- `trendyolAdjusted` (sadece cockpit'te) = `actualQty × (1 − returnRate)`
+- `manualOnline` = `Product.onlineSalesPotential`
+- **Yeni**: `effectiveOnlinePotential = max(trendyolAdjusted, manualOnline)` (0 ise null)
+- Wholesale + installer manuel'leri ayrı kalır — toplam ürün demand'i hala
+  `effectiveOnline + wholesale + installer` olarak işlenir.
+- `velocitySource` etiketi: Trendyol `>=` manuel ise "actual", aksi halde "estimated"
+
+**Etkilenen dosyalar:**
+- `app/(app)/admin/import-cockpit/page.tsx:354-365` — `effectiveMonthlyUnits` formülü Math.max
+- `app/(app)/admin/procurement/page.tsx:116-135` — `effectiveOnlinePotential` Math.max + velocitySource güncelleme
+- `app/(app)/admin/capital/page.tsx:107-147` — aynı pattern (yatırım skoru hesabı için)
+
+**Etkisi (kullanıcının iş sürecine):**
+- İthalat cockpit'te "Sipariş Oluştur (N)" emerald butonu artık manuel tahmin Trendyol satışından büyükse o tahmine göre adet öneriyor.
+- Procurement (yeniden sipariş aciliyet motoru) ve Capital (sermaye tahsisi yatırım skoru) için aynı.
+- Importer view (`/products?view=importer`) zaten Phase 79'da `Math.max(t30g, effectiveMonthlyUnits ?? 1)` ile düzeltilmişti — değişmedi.
+
+**Acceptance:**
+- `tsc --noEmit`: 0 hata
+- Migration yok (sadece hesaplama formülü değişimi)
+
+---
+
 ### Phase 89 — Stock Source-of-Truth Fix (Entegra Authoritative) (2026-05-19)
 
 **Amaç:**
