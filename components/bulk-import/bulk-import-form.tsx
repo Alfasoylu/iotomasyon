@@ -148,7 +148,7 @@ export function BulkImportForm({ totalProducts, missingCost, missingWeight }: Pr
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
               className="sr-only"
               onChange={handleFileChange}
             />

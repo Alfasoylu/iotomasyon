@@ -64,7 +64,7 @@ export function ProductBulkButtons() {
           <input
             ref={fileRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             className="sr-only"
             disabled={loading}
             onChange={handleFile}
