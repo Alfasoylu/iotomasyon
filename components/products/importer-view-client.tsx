@@ -9,11 +9,16 @@
  * Phase 80: edit-pencil button → ImportQuickEdit modal → PATCH /api/products/[id]/import-fields
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   allocateBudget,
   calcDecisionLabel,
+  calcImportCost,
+  calcRevenue,
+  calcProfit,
+  calcStockDays,
+  calcHealthScore,
   type BudgetParams,
   DEFAULT_BUDGET_PARAMS,
   type DecisionLabel,
@@ -101,6 +106,131 @@ function profitColor(p: number | null): string {
   return "text-red-600 font-semibold";
 }
 
+// ── Client-side recalculation after inline edit ─────────────────────────────────
+// Re-runs the same formulas as the API, so computed fields stay fresh after saves.
+
+function recalcProduct(
+  p: ImporterProduct,
+  patch: Partial<Pick<ImporterProduct, "sourceCostRmb" | "weightKg" | "customsRatePct" | "importPaymentFeePct" | "shippingMethodPref">>,
+  rates: { rmbUsdRate: number; usdTryRate: number },
+): ImporterProduct {
+  const m = { ...p, ...patch };
+  const costResult = calcImportCost({
+    sourceCostRmb: m.sourceCostRmb,
+    weightKg: m.weightKg,
+    customsRatePct: m.customsRatePct,
+    importPaymentFeePct: m.importPaymentFeePct,
+    shippingMethodPref: m.shippingMethodPref,
+    rmbUsdRate: rates.rmbUsdRate,
+  });
+  const revenueResult = calcRevenue({ trendyolPriceTry: m.trendyolPriceTry, usdTryRate: rates.usdTryRate });
+  const profitResult = costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;
+  const stockDays = calcStockDays(m.stockQuantity, m.t30g);
+  const healthScore = calcHealthScore({
+    hasRmb: m.sourceCostRmb != null,
+    hasWeight: m.weightKg != null,
+    hasTrendyolPrice: m.trendyolPriceTry != null,
+    netProfitUsd: profitResult?.netProfitUsd ?? null,
+    marginPct: profitResult?.marginPct ?? null,
+    t30g: m.t30g,
+    stockDays,
+  });
+  return {
+    ...m,
+    shippingMethod: costResult?.shippingMethod ?? null,
+    productUsd: costResult?.productUsd ?? null,
+    freightUsd: costResult?.freightUsd ?? null,
+    customsUsd: costResult?.customsUsd ?? null,
+    totalCostUsd: costResult?.totalCostUsd ?? null,
+    netRevenueTry: revenueResult?.netRevenueTry ?? null,
+    netRevenueUsd: revenueResult?.netRevenueUsd ?? null,
+    netProfitUsd: profitResult?.netProfitUsd ?? null,
+    marginPct: profitResult?.marginPct ?? null,
+    annualRoiPct: profitResult?.annualRoiPct ?? null,
+    stockDays,
+    healthScore,
+    hasCost: costResult !== null,
+  };
+}
+
+// ── Inline edit number cell ─────────────────────────────────────────────────────
+// Click → input; Enter/blur → save. Shows current value or placeholder when null.
+
+type InlineEditState = { id: string; field: string; value: string } | null;
+
+function InlineEditNumber({
+  value,
+  productId,
+  field,
+  suffix,
+  placeholder,
+  decimals = 2,
+  editState,
+  setEditState,
+  onSave,
+  isSaving,
+}: {
+  value: number | null;
+  productId: string;
+  field: string;
+  suffix?: string;
+  placeholder?: string;
+  decimals?: number;
+  editState: InlineEditState;
+  setEditState: (v: InlineEditState) => void;
+  onSave: (id: string, field: string, value: number | null) => void;
+  isSaving: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isEditing = editState?.id === productId && editState?.field === field;
+
+  useEffect(() => {
+    if (isEditing) inputRef.current?.select();
+  }, [isEditing]);
+
+  const commit = useCallback(() => {
+    if (!editState || editState.id !== productId || editState.field !== field) return;
+    const raw = editState.value.trim();
+    const n = parseFloat(raw);
+    onSave(productId, field, raw === "" || isNaN(n) ? null : n);
+  }, [editState, productId, field, onSave]);
+
+  if (isSaving) {
+    return <span className="text-[10px] text-slate-400 animate-pulse">…</span>;
+  }
+
+  if (isEditing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        step="any"
+        value={editState.value}
+        onChange={(e) => setEditState({ id: productId, field, value: e.target.value })}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") setEditState(null);
+        }}
+        onBlur={commit}
+        className="w-16 text-right text-xs border border-blue-400 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setEditState({ id: productId, field, value: value != null ? String(value) : "" })}
+      className="group text-left font-mono hover:bg-blue-50 hover:text-blue-700 rounded px-1 transition cursor-pointer w-full"
+      title="Tıkla ve düzenle (Enter = kaydet)"
+    >
+      {value != null
+        ? <span className="text-xs">{value.toFixed(decimals)}{suffix}</span>
+        : <span className="text-[10px] text-red-400 group-hover:text-blue-500">{placeholder ?? "—"}</span>
+      }
+    </button>
+  );
+}
+
 // ── Sort options ────────────────────────────────────────────────────────────────
 
 type SortKey = "roi" | "margin" | "profit" | "t30g" | "order" | "health" | "cost" | "stock_days";
@@ -113,6 +243,7 @@ type FilterKey =
 
 export function ImporterViewClient() {
   const [products, setProducts] = useState<ImporterProduct[]>([]);
+  const [rates, setRates] = useState({ usdTryRate: 45, rmbUsdRate: 7.2 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [params, setParams] = useState<BudgetParams>(DEFAULT_BUDGET_PARAMS);
@@ -121,8 +252,48 @@ export function ImporterViewClient() {
   const [sortAsc, setSortAsc] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [editingProduct, setEditingProduct] = useState<ImporterProduct | null>(null);
+  const [inlineEdit, setInlineEdit] = useState<InlineEditState>(null);
+  const [inlineSaving, setInlineSaving] = useState<string | null>(null); // "id:field" being saved
 
-  // Optimistic update after quick-edit save
+  // Inline field save — calls PATCH then recalculates locally
+  const saveInlineField = useCallback(async (id: string, field: string, value: number | null) => {
+    setInlineEdit(null);
+    const key = `${id}:${field}`;
+    setInlineSaving(key);
+
+    // Map field name to API payload key
+    const fieldMap: Record<string, string> = {
+      rmb: "sourceCostRmb",
+      weight: "weightKg",
+      customs: "customsRatePct",
+      payFee: "importPaymentFeePct",
+    };
+    const apiField = fieldMap[field] ?? field;
+
+    try {
+      const res = await fetch(`/api/products/${id}/import-fields`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [apiField]: value }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // Optimistic update with full recalculation
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? recalcProduct(p, { [apiField as keyof ImporterProduct]: value } as Parameters<typeof recalcProduct>[1], rates)
+            : p
+        )
+      );
+    } catch {
+      // silently ignore — user can retry
+    } finally {
+      setInlineSaving(null);
+    }
+  }, [rates]);
+
+  // Optimistic update after modal quick-edit save
   const handleQuickSave = useCallback((
     id: string,
     updated: {
@@ -135,21 +306,10 @@ export function ImporterViewClient() {
   ) => {
     setProducts((prev) =>
       prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              sourceCostRmb: updated.sourceCostRmb,
-              weightKg: updated.weightKg,
-              customsRatePct: updated.customsRatePct,
-              shippingMethodPref: updated.shippingMethodPref,
-              importPaymentFeePct: updated.importPaymentFeePct,
-              // Mark hasCost based on whether we now have RMB cost
-              hasCost: updated.sourceCostRmb != null && updated.weightKg != null,
-            }
-          : p,
+        p.id === id ? recalcProduct(p, updated, rates) : p
       ),
     );
-  }, []);
+  }, [rates]);
 
   // Fetch data
   useEffect(() => {
@@ -158,8 +318,9 @@ export function ImporterViewClient() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((data: ImporterProduct[]) => {
-        setProducts(data);
+      .then((data: { products: ImporterProduct[]; usdTryRate: number; rmbUsdRate: number }) => {
+        setProducts(data.products);
+        setRates({ usdTryRate: data.usdTryRate, rmbUsdRate: data.rmbUsdRate });
         setLoading(false);
       })
       .catch((e: Error) => {
@@ -423,7 +584,7 @@ export function ImporterViewClient() {
           <SortBtn k="t30g" label="T30G" />
           <SortBtn k="order" label="Sipariş" />
           <SortBtn k="stock_days" label="Stok Gün" />
-          <SortBtn k="health" label="Sağlık" />
+          <SortBtn k="health" label="Skor" />
         </div>
       </div>
 
@@ -441,7 +602,10 @@ export function ImporterViewClient() {
                 <th className="px-3 py-3 text-right whitespace-nowrap">Bayi ($)</th>
                 <th className="px-3 py-3 text-right">Stok</th>
                 <th className="px-3 py-3 text-right">T30G</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">Alış (¥)</th>
+                {/* Editable import input columns */}
+                <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Alış (¥) ✎</th>
+                <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Ağırlık (kg) ✎</th>
+                <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Gümrük % ✎</th>
                 <th className="px-3 py-3 text-right whitespace-nowrap">Freight ($)</th>
                 <th className="px-3 py-3 text-right whitespace-nowrap">Maliyet ($)</th>
                 <th className="px-3 py-3 text-right whitespace-nowrap">Net Kâr ($)</th>
@@ -450,14 +614,16 @@ export function ImporterViewClient() {
                 <th className="px-3 py-3 text-right whitespace-nowrap">Stok Gün</th>
                 <th className="px-3 py-3 text-right whitespace-nowrap">Sipariş (Adet)</th>
                 <th className="px-3 py-3 text-center">Durum</th>
-                <th className="px-3 py-3 text-center whitespace-nowrap">Sağlık</th>
+                <th className="px-3 py-3 text-center whitespace-nowrap cursor-pointer hover:text-white" onClick={() => handleSort("health")} title="Skor'a göre sırala">
+                  Skor {sortKey === "health" ? (sortAsc ? "↑" : "↓") : "↕"}
+                </th>
                 <th className="w-10 px-2 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 bg-white">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={17} className="px-4 py-12 text-center text-slate-400 text-sm">
+                  <td colSpan={19} className="px-4 py-12 text-center text-slate-400 text-sm">
                     Bu filtre için ürün bulunamadı.
                   </td>
                 </tr>
@@ -544,13 +710,52 @@ export function ImporterViewClient() {
                         </span>
                       </td>
 
-                      {/* RMB cost */}
+                      {/* RMB cost — inline editable */}
                       <td className="px-3 py-2 text-right">
-                        {p.sourceCostRmb != null ? (
-                          <span className="font-mono text-xs text-slate-600">{fmtRmb(p.sourceCostRmb)}</span>
-                        ) : (
-                          <span className="text-[10px] text-red-400">Alış yok</span>
-                        )}
+                        <InlineEditNumber
+                          value={p.sourceCostRmb}
+                          productId={p.id}
+                          field="rmb"
+                          suffix="¥"
+                          placeholder="Alış yok"
+                          decimals={2}
+                          editState={inlineEdit}
+                          setEditState={setInlineEdit}
+                          onSave={saveInlineField}
+                          isSaving={inlineSaving === `${p.id}:rmb`}
+                        />
+                      </td>
+
+                      {/* Weight (kg) — inline editable */}
+                      <td className="px-3 py-2 text-right">
+                        <InlineEditNumber
+                          value={p.weightKg}
+                          productId={p.id}
+                          field="weight"
+                          suffix="kg"
+                          placeholder="Ağırlık yok"
+                          decimals={3}
+                          editState={inlineEdit}
+                          setEditState={setInlineEdit}
+                          onSave={saveInlineField}
+                          isSaving={inlineSaving === `${p.id}:weight`}
+                        />
+                      </td>
+
+                      {/* Customs % — inline editable */}
+                      <td className="px-3 py-2 text-right">
+                        <InlineEditNumber
+                          value={p.customsRatePct}
+                          productId={p.id}
+                          field="customs"
+                          suffix="%"
+                          placeholder="30%"
+                          decimals={0}
+                          editState={inlineEdit}
+                          setEditState={setInlineEdit}
+                          onSave={saveInlineField}
+                          isSaving={inlineSaving === `${p.id}:customs`}
+                        />
                       </td>
 
                       {/* Freight USD */}
@@ -649,19 +854,19 @@ export function ImporterViewClient() {
                         </div>
                       </td>
 
-                      {/* Health score */}
+                      {/* Skor (health score) — prominent number + mini bar */}
                       <td className="px-3 py-2 text-center">
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className={`text-xs font-bold ${
+                          <span className={`text-sm font-bold tabular-nums ${
                             p.healthScore >= 70 ? "text-emerald-600" :
                             p.healthScore >= 40 ? "text-amber-500" :
                             "text-red-400"
                           }`}>
                             {p.healthScore}
                           </span>
-                          <div className="w-10 h-1 rounded-full bg-slate-100 overflow-hidden">
+                          <div className="w-10 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                             <div
-                              className={`h-full rounded-full ${
+                              className={`h-full rounded-full transition-all ${
                                 p.healthScore >= 70 ? "bg-emerald-400" :
                                 p.healthScore >= 40 ? "bg-amber-400" :
                                 "bg-red-400"

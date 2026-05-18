@@ -224,5 +224,5 @@ export async function GET(_req: NextRequest) {
     };
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json({ products: result, usdTryRate, rmbUsdRate });
 }
