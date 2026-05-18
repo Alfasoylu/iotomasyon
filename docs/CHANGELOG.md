@@ -9,6 +9,27 @@
 
 ## 2026-05
 
+### Phase 87 — Ekip Görev Panosu (2026-05-18)
+
+**Amaç:**
+`tasks.assign` permission var ama UI yoktu. Operations koordinatörü ekibine görev atayamıyor ve görev panosunu göremiyordu. Role Coverage Gap #5 kapatıldı.
+
+Değişiklikler:
+- **`lib/actions/task-assign-action.ts`** (YENİ): `assignTaskAction` server action — TASKS_ASSIGN gated; `FollowUpTask.assignedToId` günceller; revalidatePath `/admin/task-board` + `/tasks` + `/dashboard`
+- **`app/(app)/admin/task-board/reassign-form.tsx`** (YENİ): `"use client"` — `useTransition` + `useState`; her görev satırında kullanıcı seçim dropdownu + "Ata" butonu; `isDirty` ile buton koşullu gösterim; `router.refresh()` ile senkronizasyon
+- **`app/(app)/admin/task-board/page.tsx`** (YENİ):
+  - `TASKS_ASSIGN` gated — sidebar linki de aynı permission
+  - Açık görevler (veya `?done=1` ile tümü) `assignedToId`'ye göre gruplandı; `UserGroup[]` openCount desc sıralı, "Atanmamış" en sonda
+  - KPI kartları: Açık Görev / Gecikmiş / Atanmamış / Aktif Kullanıcı
+  - Gecikmiş görevler kırmızı badge + ⚠ bitiş tarihi
+  - "Tamamlananları Göster" toggle (`?done=1`); "Liste Görünümü →" `/tasks` linki
+  - Her görev satırında `<ReassignForm>` inline atama
+- **`app/(app)/layout.tsx`**: "Görev Panosu" sidebar linki (CRM bölümü, TASKS_ASSIGN)
+- Schema değişikliği: YOK
+- tsc 0 hata ✓; commit f1ad15e ✓; READY dpl_8jWApfcCLstDjWLXd7qufexAHp2D ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 86 — Satış Fırsatları Motoru (2026-05-18)
 
 **Amaç:**

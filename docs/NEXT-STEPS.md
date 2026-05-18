@@ -74,12 +74,25 @@ These are structural gaps in the current system, not single-feature bugs:
 2. **Ürün formu rol körü** — `products.update` iznine sahip herkes (şu an: OPERATIONS) tüm finansal/ithalat alanlarını görür. Sahaya özel alan görünürlüğü uygulanmadı.
 3. **Rol bazlı dashboard yok** — Tüm roller aynı /dashboard sayfasını görüyor. SALES ve WAREHOUSE için anlamsız kartlar gösteriliyor.
 4. ~~**Satış fırsat motoru yok**~~ — ✓ **ÇÖZÜLDÜ (Phase 86, 2026-05-18)**: `/admin/sales-opportunities` — ürün bazlı müşteri talep özeti, filtreler, expand ile müşteri tablosu, CUSTOMERS_READ gated.
-5. **Operasyon koordinasyon yok** — `tasks.assign` permission var ama UI yok. Operations koordinatörü ekibine görev atayamıyor ve görev panosunu göremez.
+5. ~~**Operasyon koordinasyon yok**~~ — ✓ **ÇÖZÜLDÜ (Phase 87, 2026-05-18)**: `/admin/task-board` — görevler atanana göre gruplandı; ReassignForm inline atama; KPI kartlar; TASKS_ASSIGN gated.
 6. **executive.read çok geniş** — İthalat zekası, sermaye, finans, XML sync, yönetici paneli hepsi tek permission altında. İleride `import.read` / `productFinance.read` gibi alt izinlere ayrılması gerekecek.
 
 ---
 
 ## Immediate Priority Stack
+
+### ✓ Phase 87 — Ekip Görev Panosu (2026-05-18)
+
+**Neden:** Role Coverage Gap #5: `tasks.assign` permission vardı ama koordinatörün ekip görev durumunu göreceği ve görev atayacağı bir UI yoktu.
+
+Teslim edilenler:
+- `lib/actions/task-assign-action.ts`: `assignTaskAction` — TASKS_ASSIGN gated; FollowUpTask.assignedToId güncelleme; revalidatePath 3 sayfa
+- `app/(app)/admin/task-board/reassign-form.tsx`: `"use client"` ReassignForm — isDirty koşullu "Ata" butonu, useTransition, router.refresh()
+- `app/(app)/admin/task-board/page.tsx`: TASKS_ASSIGN gated; görevler assignedToId → UserGroup[] gruplandı; 4 KPI kart; gecikmiş badge; done toggle
+- `app/(app)/layout.tsx`: "Görev Panosu" sidebar linki (CRM, TASKS_ASSIGN)
+- tsc 0 hata ✓; commit f1ad15e ✓; READY dpl_8jWApfcCLstDjWLXd7qufexAHp2D ✓; browser-verified 2026-05-18 ✓
+
+---
 
 ### ✓ Phase 86 — Satış Fırsatları Motoru (2026-05-18)
 
