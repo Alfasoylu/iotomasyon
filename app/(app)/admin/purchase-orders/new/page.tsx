@@ -1,9 +1,10 @@
 /**
- * Phase 77 — Yeni Satın Alma Siparişi
+ * Phase 77 / Phase 81 / Phase 85 — Yeni Satın Alma Siparişi
  *
- * Pre-fill from capital allocation recommendations or importer view via URL params:
+ * Pre-fill from capital allocation recommendations, importer view, or import cockpit via URL params:
  *   ?from=capital            → show capital allocation suggestions
  *   ?from=importer&items=id1:qty1,id2:qty2  → pre-fill from importer view recommendations
+ *   ?from=cockpit&items=id1:qty1,id2:qty2   → pre-fill from import cockpit AL signals
  *
  * The form passes data to the CreatePurchaseOrderForm client component.
  */
@@ -31,10 +32,11 @@ export default async function NewPurchaseOrderPage({
   const sp = await searchParams;
   const fromCapital = sp.from === "capital";
   const fromImporter = sp.from === "importer";
+  const fromCockpit = sp.from === "cockpit";
 
-  // Parse ?items=id1:qty1,id2:qty2 when coming from importer view
+  // Parse ?items=id1:qty1,id2:qty2 when coming from importer view or cockpit
   const importerItemMap = new Map<string, number>();
-  if (fromImporter && sp.items) {
+  if ((fromImporter || fromCockpit) && sp.items) {
     for (const pair of sp.items.split(",")) {
       const [id, qtyStr] = pair.split(":");
       const qty = parseInt(qtyStr, 10);
@@ -157,16 +159,16 @@ export default async function NewPurchaseOrderPage({
     .sort((a, b) => b.monthlyDemand - a.monthlyDemand)
     .slice(0, 30);
 
-  // Importer view suggestions: pre-fill with exact IDs and recommended quantities
+  // Importer view / cockpit suggestions: pre-fill with exact IDs and recommended quantities
   const importerSuggestions: ProductData[] = [];
-  if (fromImporter && importerItemMap.size > 0) {
+  if ((fromImporter || fromCockpit) && importerItemMap.size > 0) {
     for (const [id, qty] of importerItemMap) {
       const p = productData.find((pd) => pd.id === id);
       if (p) importerSuggestions.push({ ...p, suggestedQty: qty });
     }
   }
 
-  const suggestions = fromImporter ? importerSuggestions : (fromCapital ? capitalSuggestions : []);
+  const suggestions = (fromImporter || fromCockpit) ? importerSuggestions : (fromCapital ? capitalSuggestions : []);
 
   return (
     <div className="space-y-6">
@@ -184,6 +186,13 @@ export default async function NewPurchaseOrderPage({
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           📦 İthalatçı görünümünden <strong>{importerSuggestions.length} ürün</strong> sipariş önerisiyle yüklendi.
           Aşağıda önerilen adetlerle ön doldurulmuş — değiştirebilirsiniz.
+        </div>
+      )}
+
+      {fromCockpit && importerSuggestions.length > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          ✓ İthalat Cockpiti&apos;nden <strong>{importerSuggestions.length} AL-sinyalli ürün</strong> 90 günlük stok hedefiyle yüklendi.
+          Adetleri değiştirebilirsiniz.
         </div>
       )}
 

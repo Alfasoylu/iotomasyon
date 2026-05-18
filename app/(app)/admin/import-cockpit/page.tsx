@@ -239,6 +239,8 @@ export default async function ImportCockpitPage({
     signal: Signal;
     // Phase 66 — Stok kapsamı (gün)
     daysOfCoverage: number | null;
+    // Phase 85 — Önerilen sipariş adeti
+    recommendedQty: number | null;
   };
 
   const rows: Row[] = products.map((p) => {
@@ -377,6 +379,13 @@ export default async function ImportCockpitPage({
     const daysOfCoverage =
       dailyVelocity != null ? Math.round(p.stockQuantity / dailyVelocity) : null;
 
+    // Phase 85 — Recommended order qty (target 90-day supply)
+    const TARGET_DAYS = 90;
+    const recommendedQty =
+      dailyVelocity != null && signal !== "ALMA"
+        ? Math.max(0, Math.ceil(dailyVelocity * TARGET_DAYS) - p.stockQuantity)
+        : null;
+
     return {
       id: p.id,
       name: p.name,
@@ -398,6 +407,7 @@ export default async function ImportCockpitPage({
       monthlyProfitTry,
       signal,
       daysOfCoverage,
+      recommendedQty,
     };
   });
 
@@ -429,6 +439,18 @@ export default async function ImportCockpitPage({
     return t === "all" ? "/admin/import-cockpit" : `/admin/import-cockpit?tab=${t}`;
   }
 
+  // Phase 85 — Build purchase order URL for AL products with recommendedQty > 0
+  const orderCandidates = rows.filter(
+    (r) => r.signal === "AL" && r.recommendedQty != null && r.recommendedQty > 0,
+  );
+  const orderItemsParam =
+    orderCandidates.length > 0
+      ? orderCandidates.map((r) => `${r.id}:${r.recommendedQty}`).join(",")
+      : null;
+  const orderHref = orderItemsParam
+    ? `/admin/purchase-orders/new?from=cockpit&items=${encodeURIComponent(orderItemsParam)}`
+    : null;
+
   return (
     <div className="space-y-6">
       {/* Başlık */}
@@ -447,6 +469,14 @@ export default async function ImportCockpitPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {orderHref && (
+            <Link
+              href={orderHref}
+              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 text-xs font-semibold transition whitespace-nowrap"
+            >
+              📦 Sipariş Oluştur ({orderCandidates.length})
+            </Link>
+          )}
           <Link
             href="/admin/import-decisions"
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
