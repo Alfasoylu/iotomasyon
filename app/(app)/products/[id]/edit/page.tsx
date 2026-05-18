@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductForm } from "@/components/products/product-form";
@@ -50,9 +51,12 @@ export default async function EditProductPage({
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Ürünler
-          </p>
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Ürünler
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             Ürün düzenleme geçici olarak kullanılamıyor
           </h1>
@@ -72,9 +76,19 @@ export default async function EditProductPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Ürünler
-        </p>
+        <nav className="flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <Link href="/products" className="hover:text-slate-900 transition">
+            ← Ürünler
+          </Link>
+          <span className="text-slate-300">/</span>
+          <Link
+            href={`/products/${product.id}`}
+            className="max-w-[280px] truncate normal-case tracking-normal text-slate-500 hover:text-slate-900 transition"
+            title={product.name}
+          >
+            {product.name}
+          </Link>
+        </nav>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
           Ürün düzenle
         </h1>

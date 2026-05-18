@@ -134,9 +134,12 @@ export default async function ProductDetailPage({
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Ürünler
-          </p>
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Ürünler
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             Ürün detayı geçici olarak kullanılamıyor
           </h1>
@@ -325,6 +328,12 @@ export default async function ProductDetailPage({
 
   return (
     <div className="space-y-6">
+      <Link
+        href="/products"
+        className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+      >
+        ← Ürünler
+      </Link>
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex items-center gap-3">
