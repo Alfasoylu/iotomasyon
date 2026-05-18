@@ -73,13 +73,24 @@ These are structural gaps in the current system, not single-feature bugs:
 1. ~~**WAREHOUSE rolü yok**~~ — ✓ **ÇÖZÜLDÜ (Phase 55, 2026-05-17)**: WAREHOUSE enum, /warehouse, /warehouse/count, WarehouseWorkspace, createInventoryCountAction tamamlandı.
 2. **Ürün formu rol körü** — `products.update` iznine sahip herkes (şu an: OPERATIONS) tüm finansal/ithalat alanlarını görür. Sahaya özel alan görünürlüğü uygulanmadı.
 3. **Rol bazlı dashboard yok** — Tüm roller aynı /dashboard sayfasını görüyor. SALES ve WAREHOUSE için anlamsız kartlar gösteriliyor.
-4. **Satış fırsat motoru yok** — "Bu ürünü hangi müşteriye satarım?" sorusunu yanıtlayan bir akış yok. Veri modeli (ProductInterest, CategoryInterest) hazır, UI yok.
+4. ~~**Satış fırsat motoru yok**~~ — ✓ **ÇÖZÜLDÜ (Phase 86, 2026-05-18)**: `/admin/sales-opportunities` — ürün bazlı müşteri talep özeti, filtreler, expand ile müşteri tablosu, CUSTOMERS_READ gated.
 5. **Operasyon koordinasyon yok** — `tasks.assign` permission var ama UI yok. Operations koordinatörü ekibine görev atayamıyor ve görev panosunu göremez.
 6. **executive.read çok geniş** — İthalat zekası, sermaye, finans, XML sync, yönetici paneli hepsi tek permission altında. İleride `import.read` / `productFinance.read` gibi alt izinlere ayrılması gerekecek.
 
 ---
 
 ## Immediate Priority Stack
+
+### ✓ Phase 86 — Satış Fırsatları Motoru (2026-05-18)
+
+**Neden:** Role Coverage Gap #4: "Satış fırsat motoru yok — Bu ürünü hangi müşteriye satarım?" sorusunu yanıtlayan akış yoktu. `ProductInterest` veri modeli hazır ama UI eksikti.
+
+Teslim edilenler:
+- `app/(app)/admin/sales-opportunities/page.tsx`: ProductInterest → ürün bazlı gruplandırma; 5 KPI kart; 4 filtre sekmesi (Tümü/Stok Var/Takip/Stok Bekliyor); expand param ile müşteri detay tablosu; gecikmiş takip renk uyarıları; CUSTOMERS_READ gated
+- `app/(app)/layout.tsx`: "Satış Fırsatları" CRM bölümü sidebar linki
+- tsc 0 hata ✓; commit cbf2090 ✓; READY dpl_27nV8A7ySRz1YbCP1pxB27YokdnW ✓; browser-verified 2026-05-18 ✓
+
+---
 
 ### ✓ Phase 85 — İthalat Cockpiti → Satın Alma Siparişi Köprüsü (2026-05-18)
 

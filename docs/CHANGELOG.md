@@ -9,6 +9,26 @@
 
 ## 2026-05
 
+### Phase 86 — Satış Fırsatları Motoru (2026-05-18)
+
+**Amaç:**
+`ProductInterest` veri modeli mevcuttu ama ürün bazlı müşteri talebi özeti gösteren bir UI yoktu. "Bu ürünü hangi müşteriye satarım?" sorusunu yanıtlayan sayfa eklendi.
+
+Değişiklikler:
+- **`app/(app)/admin/sales-opportunities/page.tsx`** (YENİ):
+  - `CUSTOMERS_READ` gated — SALES rolü erişebilir
+  - Aktif (WON/LOST/CANCELLED hariç) `ProductInterest` kayıtları ürüne göre gruplandı
+  - KPI kartları: Aktif Talep / Farklı Ürün / Toplam Talep Adeti / Gecikmiş Takip / Stoklu Fırsat
+  - 4 filtre sekmesi: Tümü / 🔥 Stok Var / ⏰ Takip / 📦 Stok Bekliyor
+  - Her ürün satırı genişletilebilir (`?expand=productId`) — müşteri tablosu: Durum / Öncelik / Talep Adeti / Teklif Fiyatı / Takip Tarihi / Not
+  - Gecikmiş ve bugünkü takip tarihleri renk kodlu uyarı
+  - Her müşteri satırında `Müşteri →` linki
+- **`app/(app)/layout.tsx`**: "Satış Fırsatları" sidebar linki (CRM bölümü, CUSTOMERS_READ)
+- Schema değişikliği: YOK
+- tsc 0 hata ✓; commit cbf2090 ✓; READY dpl_27nV8A7ySRz1YbCP1pxB27YokdnW ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 85 — İthalat Cockpiti → Satın Alma Siparişi Köprüsü (2026-05-18)
 
 **Amaç:**
