@@ -9,6 +9,30 @@
 
 ## 2026-05
 
+### Phase 85 — İthalat Cockpiti → Satın Alma Siparişi Köprüsü (2026-05-18)
+
+**Amaç:**
+İthalat cockpiti AL/BEKLE/ALMA sinyallerini gösteriyordu ama "AL sinyalli ürünleri sipariş et" akışı yoktu. Yeni köprü, AL-sinyalli ürünler için 90 günlük stok hedefi bazında `recommendedQty` hesaplıyor ve cockpit başlığına "📦 Sipariş Oluştur (N)" emerald butonu ekliyor.
+
+Değişiklikler:
+- **`app/(app)/admin/import-cockpit/page.tsx`**:
+  - `Row` tipine `recommendedQty: number | null` eklendi
+  - `TARGET_DAYS = 90`; `recommendedQty = max(0, ceil(dailyVelocity × 90) − stockQty)` — yalnızca ALMA dışı sinyaller
+  - `orderCandidates`: signal="AL" VE recommendedQty > 0 olanlar
+  - `orderHref`: `?from=cockpit&items=id:qty,...` URL oluşturma
+  - "📦 Sipariş Oluştur (N)" emerald Link butonu — header'da "v1 Görünüm →" yanına
+- **`app/(app)/admin/purchase-orders/new/page.tsx`**:
+  - `from=cockpit` kolu eklendi — `fromImporter || fromCockpit` items parsing
+  - `fromCockpit` banner: "✓ İthalat Cockpiti'nden N AL-sinyalli ürün 90 günlük stok hedefiyle yüklendi"
+  - Docstring güncellendi
+- Schema değişikliği: YOK
+
+Browser test: Cockpit sayfası yüklendi ✓; "📦 Sipariş Oluştur (7)" butonu header'da göründü ✓; butona tıklandı → `?from=cockpit&items=id1:25,id2:1,...` (7 ürün) ile purchase-orders/new'e geçildi ✓; "Yeni Satın Alma Siparişi" sayfası yüklendi ✓
+
+Durum: tsc 0 hata ✓ | commit 1fb44c3 ✓ | READY dpl_F8TJx3MjjGG5nSss6jo6uSD1fLbX ✓ | browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 84 — Trendyol Eşleştirme Sayfasında Hızlı Ürün Bağlantısı (2026-05-18)
 
 **Amaç:**

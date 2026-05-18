@@ -81,6 +81,17 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 85 — İthalat Cockpiti → Satın Alma Siparişi Köprüsü (2026-05-18)
+
+**Neden:** İthalat cockpiti AL sinyali gösteriyordu ama "bu ürünü sipariş et" butonu yoktu. 90 günlük stok hedefi bazında recommendedQty hesaplanarak karar→sipariş döngüsü kapatıldı.
+
+Teslim edilenler:
+- `app/(app)/admin/import-cockpit/page.tsx`: `recommendedQty` hesabı (TARGET_DAYS=90); `orderCandidates` + `orderHref` URL; "📦 Sipariş Oluştur (N)" emerald header butonu
+- `app/(app)/admin/purchase-orders/new/page.tsx`: `from=cockpit` kolu; cockpit banner metni
+- tsc 0 hata ✓; commit 1fb44c3 ✓; READY dpl_F8TJx3MjjGG5nSss6jo6uSD1fLbX ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 84 — Trendyol Eşleştirme Sayfasında Hızlı Ürün Bağlantısı (2026-05-18)
 
 **Neden:** Phase 83 sonrası 62 eşleşmemiş grup kaldı. "Ürün Ara →" linki yeni sekme açıyordu; ürünü bağlamak için ayrı ürün detay sayfası gerekiyordu. Sayfa içi modal bu süreci tek adıma indiriyor.
