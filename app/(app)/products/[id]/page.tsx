@@ -71,10 +71,11 @@ export default async function ProductDetailPage({
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const user = await requireUser();
   const { canViewFinance } = await resolveFinanceGate(user);
-  const [canUpdate, canDelete, canCreateCustomer] = await Promise.all([
+  const [canUpdate, canDelete, canCreateCustomer, canInventoryCount] = await Promise.all([
     checkPermission(user, PERMISSIONS.PRODUCTS_UPDATE),
     checkPermission(user, PERMISSIONS.PRODUCTS_DELETE),
     checkPermission(user, PERMISSIONS.CUSTOMERS_CREATE),
+    checkPermission(user, PERMISSIONS.INVENTORY_COUNT),
   ]);
 
   // Finance/import-only datasets are fetched only when the viewer is permitted
@@ -1415,15 +1416,20 @@ export default async function ProductDetailPage({
         </Card>
       )}
 
-      {/* Phase 42 — Stock Adjustment Log */}
-      <StockAdjustmentCard
-        productId={product.id}
-        currentStock={product.stockQuantity}
-        initialAdjustments={stockAdjustments.map((a) => ({
-          ...a,
-          createdAt: new Date(a.createdAt),
-        }))}
-      />
+      {/* Phase 42 + Phase 89 — Physical Count Adjustment Log (INVENTORY_COUNT-gated) */}
+      {canInventoryCount && (
+        <StockAdjustmentCard
+          productId={product.id}
+          entegraStock={product.stockQuantity}
+          physicalCount={product.physicalCountQuantity ?? null}
+          physicalCountAt={product.physicalCountAt}
+          physicalCountByName={product.physicalCountBy?.name ?? null}
+          initialAdjustments={stockAdjustments.map((a) => ({
+            ...a,
+            createdAt: new Date(a.createdAt),
+          }))}
+        />
+      )}
     </div>
   );
 }

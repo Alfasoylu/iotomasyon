@@ -9,6 +9,72 @@
 
 ## 2026-05
 
+### Phase 89 — Stock Source-of-Truth Fix (Entegra Authoritative) (2026-05-19)
+
+**Amaç:**
+Codex P0 audit'inin "kalan riskler" listesinde duran ihlal: `lib/actions/inventory-count-actions.ts` ve `lib/actions/stock-adjustment-actions.ts` `Product.stockQuantity` alanını doğrudan mutate ediyordu — mimari kural ("Entegra source-of-truth via XML sync") ile çelişiyordu. Bu phase ile warehouse sayım ve manuel adjustment akışları ayrı bir `physicalCountQuantity` alanına yönlendirildi.
+
+**Yeni alanlar (additive migration):**
+- `Product.physicalCountQuantity Int?` — Son fiziksel sayım adeti
+- `Product.physicalCountAt DateTime?` — Son sayım zamanı
+- `Product.physicalCountById String?` — Sayan kullanıcı id (User.PhysicalCountBy relation)
+- `Product.physicalCountNote String?` — Sayım notu
+- `User.physicalCounts Product[]` — karşı relation
+- 2 yeni index: `physicalCountAt`, `physicalCountById`
+- Migration: `prisma/migrations/20260519000000_phase89_physical_count/migration.sql` — additive ALTER TABLE, FK + 2 index. Reversible.
+
+**Action davranış değişiklikleri:**
+- `lib/actions/inventory-count-actions.ts` → `createInventoryCountAction`: artık `physicalCountQuantity / At / ById / Note` yazıyor. `stockQuantity`'ye HİÇ DOKUNMAZ. `StockAdjustmentLog(CORRECTION, delta)` audit trail aynen yazılıyor (baseline = mevcut physical count veya Entegra stok).
+- `lib/actions/stock-adjustment-actions.ts` → `createStockAdjustmentAction`: aynı şekilde `physicalCountQuantity += delta`, `stockQuantity` dokunulmaz. **Permission değişti**: `PRODUCTS_UPDATE` → `INVENTORY_COUNT` (WAREHOUSE rolünün de erişebilmesi için).
+- `lib/actions/xml-sync-actions.ts`: değişmedi — `stockQuantity` yazımına devam ediyor (Entegra tek source-of-truth).
+
+**UI değişiklikleri:**
+- `components/products/stock-adjustment-card.tsx`:
+  - Başlık: "Stok Hareketleri" → **"Fiziksel Sayım Hareketleri"**
+  - Açıklama: "...Entegra stoğunu (XML sync) etkilemez — yalnızca depo sayımı ve variance raporu için saklanır."
+  - Header'da 3 chip: `Entegra: N` / `Sayım: M` / `Fark: ±X` (variance derived = stockQuantity - physicalCountQuantity)
+  - Variance renk kodlu: 0 emerald, +N amber (Entegra fazla), -N red (oversell riski)
+  - "Son sayım" bilgisi: tarih + sayan kişi adı
+  - Empty state: "Henüz fiziksel sayım hareketi kaydedilmedi."
+  - Props: `entegraStock` + `physicalCount` + `physicalCountAt` + `physicalCountByName` + `initialAdjustments` (eski `currentStock` prop'u kaldırıldı)
+- `app/(app)/products/[id]/page.tsx`:
+  - `canInventoryCount = checkPermission(user, INVENTORY_COUNT)` ile koşullu render
+  - `getProductById` artık `physicalCountBy` user relation'ı include ediyor
+  - `StockAdjustmentCard` yeni props ile çağrılıyor
+- `app/(app)/warehouse/page.tsx`:
+  - Ürün satırında stok rozeti altına "Entegra" etiketi + (sayım yapılmışsa) "Sayım: M (+X)" variance gösterimi
+  - Renk kodu: 0 emerald (eşit), +X amber (Entegra fazla), -X red (Entegra az)
+  - Query'ye `physicalCountQuantity`, `physicalCountAt` eklendi
+- `app/(app)/warehouse/count/page.tsx`:
+  - Başlık: "Stok Sayımı" → "Fiziksel Sayım"
+  - Info: "Bu sayım Entegra stoğunu değiştirmez. Yalnızca fiziksel sayım kaydı ve Entegra ile fark raporlamak için saklanır."
+  - Submit button: "Sayımı Kaydet" → "Fiziksel Sayımı Kaydet"
+  - Success: "Stok sayımı kaydedildi!" → "Fiziksel sayım kaydedildi!"
+- `app/(app)/admin/stock-health/page.tsx`: query'ye `physicalCountQuantity` eklendi (gelecek variance kolonu için altyapı; bu phase'de UI render değişmedi, sonraki phase için hazır)
+
+**Permission etkisi:**
+- ADMIN: bypass — değişmedi
+- OPERATIONS: `INVENTORY_COUNT` zaten var → değişmedi
+- WAREHOUSE: `INVENTORY_COUNT` zaten var → **artık StockAdjustmentCard'a erişebilir** (önceden PRODUCTS_UPDATE gerekirdi, yoktu)
+- SALES / MARKETPLACE_OPERATOR: `INVENTORY_COUNT` yok → kart artık görünmüyor (önceden P0 sonrası UI'da görünüyordu ama submit fail ediyordu — şimdi tamamen gizli)
+
+**Veri bütünlüğü:**
+- `StockAdjustmentLog` aynen korunuyor (audit trail)
+- `XmlStockChangeLog` aynen korunuyor (Entegra deltaları)
+- Eski Phase 7 alanları (`inventoryCountDate`, `inventoryCountStock`) dokunulmadı
+- Mevcut tüm ürünlerde `physicalCountQuantity = NULL` ile başlar (ilk fiziksel sayımda set olur)
+- Variance UI'da derived olarak hesaplanır — kalıcı bir alan değil
+
+**Acceptance (verification):**
+- `tsc --noEmit` 0 hata
+- `prisma validate` ✓
+- Browser-verify: ADMIN/OPERATIONS/SALES/WAREHOUSE rolleriyle
+  - Sayım girince `physicalCountQuantity` güncelleniyor; `stockQuantity` Entegra'dan ne ise o kalıyor
+  - Sayım ve Entegra farkı UI'da `Fark: ±X` chip olarak görünüyor
+  - SALES rolü kartı görmüyor
+
+---
+
 ### Codex Audit P0 — Finans/İthalat Görünürlük Sertleştirmesi (2026-05-18)
 
 **Amaç:**

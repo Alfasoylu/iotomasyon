@@ -329,6 +329,7 @@ model User {
   importDecisionSnapshots  ImportDecisionSnapshot[]       @relation("SnapshotCreatedBy")
   stockAdjustments         StockAdjustmentLog[]           @relation("AdjustmentCreatedBy")
   purchaseOrders           PurchaseOrder[]                @relation("PurchaseOrderCreatedBy")   // Phase 77
+  physicalCounts           Product[]                      @relation("PhysicalCountBy")          // Phase 89
 }
 
 model ProductCategory {
@@ -411,6 +412,14 @@ model Product {
   // Phase 31 — RMB-first import economics
   sourceCostRmb            Decimal? @db.Decimal(15,2) // Purchase cost in RMB/CNY
   importPaymentFeePct      Decimal? @db.Decimal(5,2)  // Payment commission % (e.g. 3.0)
+  // Phase 89 — Physical count (warehouse-managed, distinct from Entegra stockQuantity).
+  // stockQuantity = source-of-truth from Entegra XML sync; never mutated by warehouse staff.
+  // physicalCountQuantity = last physical count recorded in warehouse; variance = stockQuantity - physicalCountQuantity.
+  physicalCountQuantity    Int?
+  physicalCountAt          DateTime?
+  physicalCountById        String?
+  physicalCountBy          User?    @relation("PhysicalCountBy", fields: [physicalCountById], references: [id], onDelete: SetNull)
+  physicalCountNote        String?
   createdById     String?
   createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
   productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -459,6 +468,8 @@ model Product {
   @@index([stockQuantity, minimumStock])
   @@index([mainProductId])
   @@index([productKind])
+  @@index([physicalCountAt])
+  @@index([physicalCountById])
 }
 
 model Customer {

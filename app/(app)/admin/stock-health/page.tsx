@@ -56,6 +56,8 @@ export default async function StockHealthPage() {
         name: true,
         sku: true,
         stockQuantity: true,
+        // Phase 89 — physical count for variance reporting
+        physicalCountQuantity: true,
       },
       orderBy: { stockQuantity: "asc" },
     }),

@@ -617,6 +617,26 @@ Until Phase 57 is implemented, only users trusted with `products.update` (ADMIN,
 can access the product edit form. SALES and WAREHOUSE roles do not have `products.update`
 by default, which provides partial protection today.
 
+## Stock source-of-truth & physical count (Phase 89 — 2026-05-19)
+
+Mimari kural: `Product.stockQuantity` Entegra (XML sync) tarafından tek başına
+mutate edilir. Warehouse sayım ve manuel stok hareketleri ayrı bir
+`Product.physicalCountQuantity` alanına yazılır.
+
+İlgili izinler:
+- `inventory.count` — `createInventoryCountAction` (warehouse sayım girişi) ve
+  `createStockAdjustmentAction` (RESTOCK / CORRECTION / DAMAGE / RETURN / SALE /
+  OTHER hareketleri) için gerekli. **Phase 89 değişikliği**:
+  `createStockAdjustmentAction` daha önce `products.update` gerektiriyordu;
+  şimdi `inventory.count`. Bu WAREHOUSE rolüne stok hareketi giriş yetkisi açar.
+- `inventory.read` — `/warehouse` ve sayım listelerini görüntüleme.
+- `inventory.sync` — XML sync trigger (admin-only).
+
+`StockAdjustmentCard` (UI) `/products/[id]` sayfasında `inventory.count`
+izni ile koşullu render edilir. Variance derived (kalıcı alan değil):
+`stockQuantity - physicalCountQuantity`. `StockAdjustmentLog` audit trail
+değişmedi (her sayım/adjustment hala kayıt atar).
+
 ## Implemented finance visibility gate (Codex audit P0 — 2026-05-18)
 
 The product **list** and **detail** pages, the **marketplace profit** dashboard,

@@ -242,14 +242,14 @@ Current meaning:
 - no route/profile-aware freight default hierarchy
 - no import decision snapshot governance
 - procurement engine now implemented (Phases 19–22)
-- **Stock source-of-truth ihlali (Codex audit, 2026-05-18 — open)**:
-  `lib/actions/inventory-count-actions.ts` ve `lib/actions/stock-adjustment-actions.ts`
-  `Product.stockQuantity` alanını doğrudan mutate ediyor. Bu, mimari kural
-  "Entegra source-of-truth (via XML sync)" ile çelişiyor. Önerilen güvenli yol:
-  ayrı `physicalCountQuantity` + `xmlStockQuantity` + `variance` + `countedAt`
-  + `countedBy` + `countNote` alanları ekleyip XML sync dışındaki yazımları
-  bunlara yönlendirmek. Destructive olduğundan ayrı bir migration phase'e
-  bırakıldı; P0 audit içinde sadece raporlandı.
+- ~~**Stock source-of-truth ihlali**~~ — ✅ **ÇÖZÜLDÜ (Phase 89, 2026-05-19)**:
+  `Product.physicalCountQuantity / At / ById / Note` alanları eklendi (additive,
+  reversible migration). `inventory-count-actions.ts` ve
+  `stock-adjustment-actions.ts` artık `physicalCountQuantity`'yi yazar;
+  `stockQuantity` yalnızca XML sync (Entegra) tarafından mutate edilir. UI
+  "Entegra: N / Sayım: M / Fark: ±X" derived chip'lerini gösterir.
+  `StockAdjustmentLog` audit trail aynen korundu. Stock-adjustment permission
+  `PRODUCTS_UPDATE` → `INVENTORY_COUNT` (WAREHOUSE rolünün erişimi için).
 
 ---
 

@@ -175,6 +175,10 @@ export async function getProductById(id: string) {
           lastStockCountBy: {
             select: { id: true, name: true },
           },
+          // Phase 89 — physical count user (warehouse-managed)
+          physicalCountBy: {
+            select: { id: true, name: true },
+          },
           productCategory: {
             select: { id: true, name: true, slug: true },
           },

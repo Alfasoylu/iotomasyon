@@ -81,6 +81,24 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 89 — Stock Source-of-Truth Fix (Entegra Authoritative) (2026-05-19)
+
+**Neden:** Codex P0 audit'inin "kalan riskler" listesinde duran P1 ihlal: warehouse sayım + manuel adjustment akışları `Product.stockQuantity`'yi doğrudan mutate ediyordu — mimari kural "Entegra source-of-truth (via XML sync)" ile çelişiyordu.
+
+Teslim edilenler:
+- **Migration `20260519000000_phase89_physical_count`** (additive, reversible): `Product`'a `physicalCountQuantity / At / ById / Note` + FK + 2 index.
+- **`lib/actions/inventory-count-actions.ts`**: `physicalCountQuantity` yazar, `stockQuantity` dokunmaz. `INVENTORY_COUNT` gated.
+- **`lib/actions/stock-adjustment-actions.ts`**: `physicalCountQuantity += delta`, audit trail aynen. Permission `PRODUCTS_UPDATE` → `INVENTORY_COUNT` (WAREHOUSE erişimi).
+- **`lib/actions/xml-sync-actions.ts`**: değişmedi (Entegra tek source).
+- **`components/products/stock-adjustment-card.tsx`**: "Fiziksel Sayım Hareketleri" başlığı + Entegra/Sayım/Fark chip'leri + son sayım meta + non-XML-mutate açıklama.
+- **`app/(app)/products/[id]/page.tsx`**: `canInventoryCount` gate'i ile koşullu render.
+- **`app/(app)/warehouse/page.tsx`**: ürün satırında variance gösterimi.
+- **`app/(app)/warehouse/count/page.tsx`**: başlık + info + button güncellemeleri.
+- **Docs**: PROGRESS / current-state / CHANGELOG / PERMISSION-MODEL / NEXT-STEPS.
+- tsc 0 hata.
+
+---
+
 ### ✓ Codex Audit P0 — Finans/İthalat Görünürlük Sertleştirmesi (2026-05-18)
 
 **Neden:** Codex audit'i `/products` listesi, `/products/[id]`, `/marketplace/profit`,

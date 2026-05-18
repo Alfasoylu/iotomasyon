@@ -2,11 +2,18 @@
 
 /**
  * Phase 42 — Stock Adjustment Log
+ * Phase 89 — Stock Source-of-Truth Fix (Entegra Authoritative)
  *
  * Records manual stock movements in StockAdjustmentLog and updates
- * Product.stockQuantity atomically via a Prisma transaction.
+ * Product.physicalCountQuantity atomically via a Prisma transaction.
  *
- * Requires PRODUCTS_UPDATE permission.
+ * IMPORTANT: As of Phase 89, this action NEVER mutates Product.stockQuantity.
+ * stockQuantity is owned by XML sync (Entegra ERP) exclusively. Manual
+ * adjustments (RESTOCK / CORRECTION / DAMAGE / RETURN / SALE / OTHER) are
+ * applied as deltas to physicalCountQuantity — variance vs Entegra stock is
+ * computed in the UI as `stockQuantity - physicalCountQuantity`.
+ *
+ * Requires INVENTORY_COUNT permission (was: PRODUCTS_UPDATE).
  */
 
 import { z } from "zod";
@@ -33,8 +40,8 @@ export async function createStockAdjustmentAction(
   values: StockAdjustmentFormValues,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.PRODUCTS_UPDATE))) {
-    return { ok: false, message: "Bu işlem için yetkiniz yok." };
+  if (!(await checkPermission(user, PERMISSIONS.INVENTORY_COUNT))) {
+    return { ok: false, message: "Bu işlem için yetkiniz yok (inventory.count gerekli)." };
   }
 
   const parsed = adjustmentSchema.safeParse(values);
@@ -46,27 +53,35 @@ export async function createStockAdjustmentAction(
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Lock and read current qty
       const product = await tx.product.findUniqueOrThrow({
         where: { id: productId },
-        select: { stockQuantity: true },
+        select: {
+          stockQuantity: true,
+          physicalCountQuantity: true,
+        },
       });
 
-      const previousQty = product.stockQuantity;
+      // Baseline: existing physical count if present, else Entegra stock
+      const previousQty = product.physicalCountQuantity ?? product.stockQuantity;
       const newQty = previousQty + quantityChange;
 
-      // Prevent negative stock
+      // Prevent negative physical count
       if (newQty < 0) {
-        throw new Error(`Stok sıfırın altına düşemez. Mevcut: ${previousQty}, değişim: ${quantityChange}`);
+        throw new Error(`Fiziksel sayım sıfırın altına düşemez. Mevcut: ${previousQty}, değişim: ${quantityChange}`);
       }
 
-      // Update product stock
+      // Update physical count + metadata (stockQuantity is NEVER touched in Phase 89)
       await tx.product.update({
         where: { id: productId },
-        data: { stockQuantity: newQty },
+        data: {
+          physicalCountQuantity: newQty,
+          physicalCountAt: new Date(),
+          physicalCountById: user.id,
+          physicalCountNote: notes?.trim() || null,
+        },
       });
 
-      // Write log entry
+      // Write log entry (audit trail unchanged)
       await tx.stockAdjustmentLog.create({
         data: {
           id: crypto.randomUUID(),
@@ -83,7 +98,7 @@ export async function createStockAdjustmentAction(
 
     revalidatePath(`/products/${productId}`);
     revalidatePath(`/products/${productId}/edit`);
-    return { ok: true, message: "Stok hareketi kaydedildi." };
+    return { ok: true, message: "Fiziksel sayım hareketi kaydedildi." };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Stok hareketi kaydedilemedi.";
     return { ok: false, message: msg };

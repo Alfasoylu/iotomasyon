@@ -43,6 +43,9 @@ export default async function WarehousePage({
             location: true,
             imageUrl: true,
             isActive: true,
+            // Phase 89 — physical count for variance display
+            physicalCountQuantity: true,
+            physicalCountAt: true,
           },
           orderBy: { name: "asc" },
           take: 20,
@@ -154,7 +157,7 @@ export default async function WarehousePage({
                     )}
                   </div>
 
-                  {/* Stock badge */}
+                  {/* Stock badge — Entegra source-of-truth + physical count variance */}
                   <div className="flex-shrink-0 text-right">
                     <p
                       className={`text-2xl font-bold ${
@@ -167,7 +170,22 @@ export default async function WarehousePage({
                     >
                       {product.stockQuantity}
                     </p>
-                    <p className="text-xs text-slate-400">adet</p>
+                    <p className="text-[10px] text-slate-400">Entegra</p>
+                    {product.physicalCountQuantity != null && (() => {
+                      const variance = product.stockQuantity - product.physicalCountQuantity;
+                      const tone =
+                        variance === 0 ? "text-emerald-600"
+                        : variance > 0 ? "text-amber-600"
+                        : "text-red-600";
+                      return (
+                        <div className="mt-1 text-[11px] text-slate-500">
+                          <span>Sayım: <span className="font-semibold text-slate-700">{product.physicalCountQuantity}</span></span>
+                          <span className={`ml-1 font-semibold ${tone}`}>
+                            {variance === 0 ? "✓" : variance > 0 ? `(+${variance})` : `(${variance})`}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
