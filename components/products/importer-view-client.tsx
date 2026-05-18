@@ -1,11 +1,12 @@
 "use client";
 
 /**
- * Phase 79 — İthalatçı Görünümü Client Component
+ * Phase 79+80 — İthalatçı Görünümü Client Component
  *
  * Fetches from /api/products/importer-view (admin-only).
  * Runs budget allocation in useMemo.
  * Renders: summary cards + budget params panel + filter bar + data table.
+ * Phase 80: edit-pencil button → ImportQuickEdit modal → PATCH /api/products/[id]/import-fields
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -19,6 +20,7 @@ import {
   type AllocationResult,
 } from "@/lib/importer-cost";
 import type { ImporterProduct } from "@/app/api/products/importer-view/route";
+import { ImportQuickEdit } from "@/components/products/import-quick-edit";
 
 // ── Formatting helpers ──────────────────────────────────────────────────────────
 
@@ -97,6 +99,36 @@ export function ImporterViewClient() {
   const [sortKey, setSortKey] = useState<SortKey>("roi");
   const [sortAsc, setSortAsc] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [editingProduct, setEditingProduct] = useState<ImporterProduct | null>(null);
+
+  // Optimistic update after quick-edit save
+  const handleQuickSave = useCallback((
+    id: string,
+    updated: {
+      sourceCostRmb: number | null;
+      weightKg: number | null;
+      customsRatePct: number | null;
+      shippingMethodPref: string | null;
+      importPaymentFeePct: number | null;
+    },
+  ) => {
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              sourceCostRmb: updated.sourceCostRmb,
+              weightKg: updated.weightKg,
+              customsRatePct: updated.customsRatePct,
+              shippingMethodPref: updated.shippingMethodPref,
+              importPaymentFeePct: updated.importPaymentFeePct,
+              // Mark hasCost based on whether we now have RMB cost
+              hasCost: updated.sourceCostRmb != null && updated.weightKg != null,
+            }
+          : p,
+      ),
+    );
+  }, []);
 
   // Fetch data
   useEffect(() => {
@@ -379,12 +411,13 @@ export function ImporterViewClient() {
                 <th className="px-3 py-3 text-right whitespace-nowrap">Sipariş (Adet)</th>
                 <th className="px-3 py-3 text-center">Durum</th>
                 <th className="px-3 py-3 text-center whitespace-nowrap">Sağlık</th>
+                <th className="w-10 px-2 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 bg-white">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={16} className="px-4 py-12 text-center text-slate-400 text-sm">
+                  <td colSpan={17} className="px-4 py-12 text-center text-slate-400 text-sm">
                     Bu filtre için ürün bulunamadı.
                   </td>
                 </tr>
@@ -583,6 +616,17 @@ export function ImporterViewClient() {
                           </div>
                         </div>
                       </td>
+
+                      {/* Edit button */}
+                      <td className="px-2 py-2 text-center">
+                        <button
+                          onClick={() => setEditingProduct(products.find((q) => q.id === p.id) ?? null)}
+                          className="rounded-lg p-1.5 text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition"
+                          title="İthalat alanlarını düzenle"
+                        >
+                          ✏
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
@@ -591,6 +635,15 @@ export function ImporterViewClient() {
           </table>
         </div>
       </div>
+
+      {/* Quick-edit modal */}
+      {editingProduct && (
+        <ImportQuickEdit
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSave={handleQuickSave}
+        />
+      )}
 
       {/* Footer note */}
       <p className="text-[10px] text-slate-400 text-center">
