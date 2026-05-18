@@ -81,6 +81,17 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 82 — İthalatçı Görünümü Satır-içi Düzenleme + Eksik Veri Chip'leri + Skor (2026-05-18)
+
+**Neden:** 735 ürünün Alış RMB / Ağırlık / Gümrük verileri eksikti. Veri girmek için ürün detay sayfasına gitmek gerekiyordu; bu da imkânsız derece yavaştı. Tabloda satır-içi düzenleme eksik veri girişini hızlandırıyor. Durum sütununda hangi verinin eksik olduğunu görmek doğru önceliklendirmeyi sağlıyor.
+
+Teslim edilenler:
+- `components/products/importer-view-client.tsx`: `InlineEditNumber` bileşeni; `getMissingFields()` Durum chip'leri; `recalcProduct()` client-side hesap; `saveInlineField()` PATCH+recalc; Skor sütunu sort
+- `app/api/products/importer-view/route.ts`: yanıt `{products, usdTryRate, rmbUsdRate}` formatı
+- tsc 0 hata ✓; commit a7c5a32 ✓; READY dpl_4SooZD6dtDdH5ujjZ7sFxbS5rgjj ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 81 — İthalatçı Görünümü → Satın Alma Siparişi Köprüsü (2026-05-18)
 
 **Neden:** İthalatçı görünümü "Sipariş Önerisi (N)" gösteriyordu ama sipariş oluşturmak için ürün listesini manuel kopyalamak gerekiyordu. Tek tıkla geçiş eksikti.
@@ -1005,6 +1016,451 @@ Tamamlananlar:
 - `components/products/product-bulk-buttons.tsx`: Ürünler listesi header'ında inline indir/yükle butonları
 - `xlsx@^0.18.5` eklendi, `docs/CODEX_INSTRUCTIONS.md` stok mimarisi güncellendi
 - tsc clean ✓, commit eeb240f ✓, READY dpl_6Qh1AEHrAKf6GQpm5QumWdNgK6NA ✓
+
+---
+
+### Priority 80 — Canonical Import Opportunity Score Tasarımı (Docs + Engine Spec)
+
+Neden:
+Mevcut sistemde tek bir "ürün skoru" yok. `investmentScore`, `import decision score`,
+`healthScore` ve `import-cockpit` sinyali farklı amaçlara hizmet ediyor. Bu yapı
+"sermayeyi en hızlı büyütecek ithalat ürünleri" için tek ve güvenilir bir sıralama
+üretmiyor.
+
+Kritik tespit:
+- `investmentScore` mevcut stoktaki kilitli sermayeye göre hesaplanıyor; yeni bağlanacak sermayeyi ölçmüyor
+- `import decision score` birim ekonomi ağırlıklı; throughput / hacim etkisini zayıf yansıtıyor
+- `healthScore` veri tamlığı ile ithalat önceliğini karıştırıyor
+- farklı ekranlar farklı talep ve maliyet varsayımlarıyla çalışıyor
+
+Amaç:
+Yeni tekil owner metriğini tanımlamak:
+- adı: `ImportOpportunityScore`
+- amacı: "Bugün bu ürüne 1 TL daha bağlarsam, ne kadar sürede, ne kadar güvenle geri döner?"
+
+Tanımlanacak alt metrikler:
+- incrementalCapitalTry veya Usd
+- paybackDays
+- expectedNetProfit90d
+- expectedCapitalTurn90d
+- demandConfidenceScore
+- stockPenalty
+- returnPenalty
+- leadTimePenalty
+- dataCoverageFlag
+
+Ne yapılacak:
+- `docs/import-economics-model.md` içine canonical skor spesifikasyonu eklenecek
+- mevcut 4 ayrı skorun kullanım amacı dokümante edilecek
+- "operational health" ile "capital growth priority" kesin olarak ayrılacak
+- score bileşenleri için ağırlık tablosu yazılacak
+- hard threshold yerine band yapısı tanımlanacak:
+  - `CORE_IMPORT`
+  - `TEST_IMPORT`
+  - `WATCHLIST`
+  - `DO_NOT_IMPORT`
+- score açıklaması ürün detayında okunabilir olacak şekilde planlanacak
+
+Schema change:
+- NONE
+
+Bağımlılık:
+- yok, docs-first faz
+
+Risk:
+- faz atlanırsa sonraki teknik implementasyonlar yine farklı ekranlarda farklı skorlara bağlanır
+
+Exit:
+- canonical skor formülü ve bileşenleri docs'ta yazılı
+- hangi ekran hangi skoru kullanır / kullanmaz net tanımlı
+- sonraki fazlar için teknik implementasyon sözleşmesi hazır
+
+---
+
+### Priority 81 — Talep Normalizasyonu ve Güven Skoru
+
+Neden:
+Gerçek Trendyol verisi ile manuel kanal tahminleri bugün aynı mantıkla
+kullanılmıyor. Bazı yerlerde `actual online override`, bazı yerlerde
+`max(manual total, trendyol monthly)` var. Bu, aynı ürünün farklı ekranlarda
+farklı öncelik almasına yol açıyor.
+
+Amaç:
+Tek bir `effectiveDemand` çözümleyicisi üretmek.
+
+Ne yapılacak:
+- Yeni saf helper: `resolveEffectiveDemand()`
+- Kanal bazlı çözüm:
+  - online demand: Trendyol 30g gerçekleşen veri varsa önce onu kullan
+  - wholesale demand: manuel tahmin
+  - installer demand: manuel tahmin
+- `demandSource` alanı üret:
+  - `actual_online_plus_manual_b2b`
+  - `manual_only`
+  - `actual_only`
+  - `none`
+- `demandConfidenceScore` üret:
+  - matched order count
+  - kaç günlük veri olduğu
+  - return rate volatility
+  - manual-only ürün cezası
+- sadece `max()` yaklaşımını kaldır; kanal karışmasını önle
+
+Dokunulacak yerler:
+- `lib/sales-potential.ts`
+- `lib/import-decision.ts` çağıran sayfalar
+- `/admin/capital`
+- `/admin/procurement`
+- `/admin/import-decisions`
+- `/admin/import-cockpit`
+
+Schema change:
+- NONE
+
+Bağımlılık:
+- Phase 80 canonical score spec
+
+Risk:
+- yanlış demand merge mantığı devam ederse yüksek görünen ama gerçekte yavaş ürünler
+  sermaye listesinde yukarı çıkabilir
+
+Exit:
+- tüm ekranlar tek demand çözümleyicisini kullanır
+- veri kaynağı badge'leri aynı semantik ile çalışır
+- aynı ürün aynı veri altında ekranlar arasında çelişkili talep sonucu vermez
+
+---
+
+### Priority 82 — Canonical Landed Cost Engine Birleştirmesi
+
+Neden:
+Capital ekranı, import decision engine ve importer view farklı maliyet varsayımları
+kullanabiliyor. Bu, aynı üründe farklı kârlılık ve sıralama üretir.
+
+Amaç:
+Tek landed-cost motoru altında tüm ithalat kararlarını toplamak.
+
+Ne yapılacak:
+- `lib/importer-cost.ts` ve `lib/import-decision.ts` rollerini netleştir
+- tek canonical helper seti oluştur:
+  - source RMB/USD resolve
+  - freight resolve
+  - customs apply
+  - net revenue resolve
+  - unit profit
+  - annualized ROI / payback
+- `capital` ekranındaki local `computeLandedCost()` kaldırılacak
+- supplier freight override, product override, global default sırası standartlaştırılacak
+- cost output shape ekranlar arasında ortaklaştırılacak
+
+Karar:
+- tek maliyet motoru dışında local "quick formula" kalmamalı
+
+Schema change:
+- muhtemelen NONE
+
+Bağımlılık:
+- Phase 31
+- Phase 32
+- Phase 80
+
+Risk:
+- unified engine yapılmazsa owner aynı ürünü iki ekranda iki farklı gerçeklikle görür
+
+Exit:
+- capital / procurement / import-decisions / importer-view aynı landed-cost truth ile çalışır
+- local ad-hoc cost hesapları temizlenmiş olur
+
+---
+
+### Priority 83 — Incremental Capital Ranking Engine
+
+Neden:
+Mevcut `investmentScore` stokta kilitli sermayeye bakıyor. İthalat kararında ise
+esas soru mevcut stok değil, yeni siparişe bağlanacak sermayenin geri dönüşüdür.
+
+Amaç:
+Stok-bazlı skor yerine sipariş-bazlı sermaye verimi motoru üretmek.
+
+Yeni sıralama metrikleri:
+- `incrementalCapitalRequired`
+- `expectedGrossProfitPerCycle`
+- `expectedNetProfit90d`
+- `paybackDays`
+- `capitalVelocity`
+- `coveragePenalty`
+- `confidenceAdjustedScore`
+
+Ne yapılacak:
+- yeni engine: `calculateImportOpportunity()` veya benzeri
+- MOQ ve min order logic ekle
+- lead time boyunca tüketilecek stok dikkate alınsın
+- target coverage gün bazlı olsun
+- outlier guard eklensin:
+  - çok düşük hacim ama aşırı yüksek marj
+  - tek siparişlik yanıltıcı velocity
+  - yüksek iade oranılı ürünler
+- `investmentScore` procurement için ikincil yardımcı metrik olarak kalabilir ama
+  capital ranking primary metric olmamalı
+
+Kullanım hedefleri:
+- `/admin/capital` primary sort
+- `/admin/import-decisions` secondary recommendation explainability
+- importer view budget allocation
+
+Schema change:
+- NONE ile başlanabilir
+- ileride snapshot için ek alan gerekebilir
+
+Bağımlılık:
+- Phase 80
+- Phase 81
+- Phase 82
+
+Exit:
+- capital önerileri artık mevcut stok ROI yerine yeni sipariş ROI/payback mantığıyla sıralanır
+- owner top listede "sermaye büyüten" ürünleri görür
+
+---
+
+### Priority 84 — Karar Yönetişimi, Snapshot v2 ve Ekran Birleştirmesi
+
+Neden:
+Bugün aynı ürün için birden fazla karar yüzeyi var:
+- `/admin/capital`
+- `/admin/procurement`
+- `/admin/import-decisions`
+- `/admin/import-cockpit`
+- importer view
+
+Bu yüzeyler birbirini desteklemeli, çelişmemeli.
+
+Amaç:
+Yeni canonical skoru karar katmanına güvenli biçimde bağlamak.
+
+Ne yapılacak:
+- ekran rol ayrımı netleştir:
+  - procurement: stok aciliyeti
+  - import-decisions: ithalat yöntemi + birim ekonomi
+  - import-cockpit: gerçekleşen pazar performansı
+  - capital: sermaye tahsis sıralaması
+  - importer view: operasyonel çalışma masası
+- `ImportDecisionSnapshot` v2 planı hazırlanacak:
+  - hangi talep kaynağı kullanıldı
+  - confidence score
+  - realized price source
+  - return rate snapshot
+  - lead time / MOQ snapshot
+- explainability alanları UI'da gösterilecek:
+  - neden bu skor çıktı
+  - hangi veri eksik
+  - hangi ceza/bonus uygulandı
+
+Schema change:
+- muhtemelen YES, fakat önce migration planı yazılmalı
+
+Bağımlılık:
+- Phase 80-83
+
+Risk:
+- governance olmadan canonical score bile zaman içinde drift eder ve güven kaybı yaşanır
+
+Exit:
+- her ekranın tek görevi net
+- yeni skor explainable
+- snapshot geçmişi karar audit'ine yeterli
+
+---
+
+### Priority 85 — Owner Import War Room ve Erişim Ayrıştırması
+
+Neden:
+Bugün ithalatla ilgili owner-intelligence birden fazla yüzeye dağılmış durumda:
+- `/admin/import-cockpit`
+- `/admin/import-decisions`
+- `/admin/capital`
+- `/admin/procurement`
+- `/admin/suppliers`
+- importer view
+
+Bu ekranlar tek tek faydalı ama patron gözüyle ana soru hâlâ dağınık:
+"Kısıtlı paramı hangi ürünlere bağlarsam en hızlı büyürüm, hangilerinden uzak dururum?"
+
+Ayrıca ithalat zekâsı ve finansal alanlar sadece görünmez değil, yapısal olarak
+owner-private olmalı. Bu bilgi ekip operasyonundan ayrılmalı.
+
+Amaç:
+- tek bir owner çalışma yüzeyi tanımlamak: `Import War Room`
+- ithalat kararını operasyon ekranlarından ayırmak
+- claude için "hangi ekran ne iş yapar" görev tanımını netleştirmek
+
+Ne yapılacak:
+- owner-facing ana karar yüzeyi tanımlanacak:
+  - Top imports to fund
+  - Capital traps
+  - High-risk imports
+  - Test-import candidates
+  - Supplier concentration risk
+- mevcut ekran rollerini yeniden çerçevele:
+  - `import-cockpit`: pazar gerçekliği / gerçekleşen satış
+  - `import-decisions`: ithalat yöntemi / landed cost / unit economics
+  - `capital`: bütçe tahsisi
+  - `procurement`: stok aciliyeti
+  - `suppliers`: tedarikçi ve ticari şartlar
+  - `war room`: nihai owner sıralaması ve sermaye kararı
+- owner ekranı dışında hiçbir yüzey "nihai ürün seçimi" iddiası taşımamalı
+
+Schema change:
+- NONE for planning
+
+Bağımlılık:
+- Phase 80-84
+
+Risk:
+- bu ayrım yapılmazsa kullanıcılar farklı ekranlardan farklı "doğru ürün" listeleri alır
+
+Exit:
+- owner için tek karar yüzeyi tanımlı
+- her import ekranının görev sınırı dokümante
+- claude paralel çalışırken hangi ekranın neyi optimize ettiği net
+
+---
+
+### Priority 86 — Import Secrecy Split: executive.read Parçalama
+
+Neden:
+`executive.read` şu an çok geniş. Aynı izin altında:
+- ithalat zekâsı
+- kârlılık
+- sermaye dağılımı
+- tedarikçi ticari şartları
+- XML yönetimi
+- yönetici paneli
+toplanmış durumda.
+
+İthalatçı patron açısından bu doğru değil.
+Çünkü:
+- satış ekibi ithalat stratejisini görmemeli
+- warehouse ithalat maliyetini görmemeli
+- operations tedarikçi marjını görmemeli
+- marketplace operator landed cost ve ROI görmemeli
+
+Amaç:
+Tek broad permission yerine owner-private alanları ayırmak.
+
+Önerilen yeni izin aileleri:
+- `import.read`
+- `import.manage`
+- `capital.read`
+- `capital.approve`
+- `suppliers.read`
+- `suppliers.manageCommercialTerms`
+- `productFinance.read`
+- `productFinance.write`
+- `executive.kpiRead`
+- `xml.manage`
+
+Kurallar:
+- `import.read` sadece owner/admin default
+- `capital.read` sadece owner/admin default
+- `suppliers.manageCommercialTerms` sadece owner/admin
+- `productFinance.read` non-admin'e varsayılan verilmez
+- `executive.kpiRead` ithalat sırrı içermeyen üst seviye dashboard için ayrı tutulabilir
+
+Schema change:
+- permission seed / route rewiring gerektirir
+
+Bağımlılık:
+- Phase 85 yönetsel çerçeve
+
+Risk:
+- parçalanmazsa rol sistemi görünürde var olur ama stratejik veriler hâlâ gereğinden geniş kalır
+
+Exit:
+- `executive.read` tek mega-permission olmaktan çıkar
+- ithalat sırları owner/admin dışına default olarak sızmaz
+
+---
+
+### Priority 87 — Financial / Import Surface Audit (Zero-Leak Review)
+
+Neden:
+Kural şu olmalı:
+non-admin kullanıcılar ithalatı "görmemeli", sadece "etkisini" görmeli.
+
+Bu yalnızca route koruması değil:
+- form alanları
+- API cevapları
+- dashboard kartları
+- deeplink'ler
+- tablo kolonları
+- export/import dosyaları
+seviyesinde de geçerli olmalı.
+
+Amaç:
+İthalat ve finans zekâsının rol bazlı sızıntı denetimini yapmak.
+
+Denetlenecek yüzeyler:
+- `/products`
+- `/products/[id]`
+- `/products/[id]/edit`
+- `/dashboard`
+- `/admin/*`
+- `/api/products/importer-view`
+- bulk export/import route'ları
+- quote ve order ekranlarında dolaylı marj sinyalleri
+
+Kontrol listesi:
+- non-admin DOM'da landed cost yok
+- non-admin DOM'da ROI yok
+- non-admin response payload'da sourceCostRmb yok
+- non-admin response payload'da supplier cost yok
+- non-admin ürün formunda ithalat alanları render edilmiyor
+- non-admin dashboard'da ithalat çağrışımı yapan kart yok
+- warehouse ve operations için fiyat/maliyet ayrımı net
+
+Schema change:
+- NONE
+
+Bağımlılık:
+- Phase 86
+
+Exit:
+- sıfır-sızıntı checklist'i yazılmış ve route bazlı uygulanacak görev listesi oluşmuş
+
+---
+
+### Priority 88 — Claude Execution Pack: Patron Gözünden Görev Dağılımı
+
+Neden:
+Claude teknik işi yapıyor ama işi hangi ticari hedef için yaptığını sürekli aynı
+netlikte görmeli:
+- sınırlı sermaye
+- hızlı nakit dönüşü
+- yanlış üründe sermaye kilitlenmesin
+- ithalat sırrı ekip ekranlarına sızmasın
+
+Amaç:
+Claude için md tabanlı net görev çerçevesi oluşturmak.
+
+Hazırlanacak çalışma notları:
+- owner objective
+- hard secrecy rules
+- role exposure rules
+- score engine priorities
+- anti-goals
+- acceptance criteria
+
+Hard rules:
+- en iyi ürünü seçtiren ekran owner-only olacak
+- non-admin import intelligence göremez
+- UI kolaylığı gizlilik kuralının önüne geçemez
+- gerçek satış > tahmin
+- nakit dönüş hızı > sadece yüksek marj
+- tek supplier bağımlılığı bir risk olarak izlenir
+
+Exit:
+- claude'nin geliştireceği her ilgili faz bu ticari çerçeveye bağlanmış olur
 
 ---
 

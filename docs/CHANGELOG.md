@@ -9,6 +9,31 @@
 
 ## 2026-05
 
+### Phase 82 — İthalatçı Görünümü Satır-içi Düzenleme + Eksik Veri Chip'leri + Skor Sıralaması (2026-05-18)
+
+**Amaç:**
+735 ürünün Alış RMB / Ağırlık / Gümrük verileri eksikti. Bu verileri girmek için her ürün sayfasına gitmek gerekiyordu. Tabloda satır-içi düzenleme ile en kalabalık üç alan (Alış RMB, Ağırlık kg, Gümrük %) doğrudan tabloda düzenlenebilir hale getirildi. Durum sütununa hangi verinin eksik olduğunu belirten renkli chip'ler eklendi. Skor sütunu büyük rakam + mini bar ile yeniden tasarlandı ve başlık tıklamasıyla sıralama eklendi.
+
+Değişiklikler:
+- **`components/products/importer-view-client.tsx`**:
+  - `getMissingFields()` fonksiyonu: `sourceCostRmb`, `weightKg`, `hasTrendyolPrice`, `t30g` kontrolleri → `{label, tone}[]` dizi (kırmızı: Alış RMB/Ağırlık/T. Fiyat, amber: Satış Yok)
+  - `InlineEditNumber` bileşeni: tıkla→input, Enter/blur→kaydet, Escape→iptal; `useRef` ile auto-focus; `isSaving` animasyonlu "…" durumu
+  - `InlineEditState` tipi: `{id,field,value}|null`
+  - `recalcProduct()` fonksiyonu: sunucu formüllerini client-side yansıtır (calcImportCost/calcRevenue/calcProfit/calcStockDays/calcHealthScore)
+  - `saveInlineField()`: `PATCH /api/products/[id]/import-fields` → başarı sonrası `recalcProduct()` ile anlık hesap güncellemesi
+  - `rates` state: `{usdTryRate, rmbUsdRate}` — client recalc için saklanır
+  - Tablo: ALIŞ (¥) ✎, AĞIRLIK (KG) ✎, GÜMRÜK % ✎ sütunları (mavi başlık = düzenlenebilir)
+  - Skor sütunu: `text-sm font-bold` numara + `h-1.5` mini bar + `transition-all`; `SKOR ↑/↓` başlığı tıklanabilir
+  - colSpan 17→19
+  - Durum hücresi: decision badge altına `getMissingFields()` chip'leri
+- **`app/api/products/importer-view/route.ts`**: Son satır `NextResponse.json(result)` → `NextResponse.json({ products: result, usdTryRate, rmbUsdRate })` olarak değiştirildi
+
+Browser test: `Maliyet Eksik` filtresinde "Alış yok" hücresine tıklandı → `18.90¥` girildi → Enter → 2 sn sonra `18.90¥` görüntülendi ✓; Ağırlık girildi → `hasCost=true` → ürün filtreden anlık çıktı (735→733) ✓; "Skor" pill tıklandı → `Skor ↓` aktif, 87→73 sıralı ✓
+
+Durum: tsc 0 hata ✓ | commit a7c5a32 ✓ | READY dpl_4SooZD6dtDdH5ujjZ7sFxbS5rgjj ✓ | browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 81 — İthalatçı Görünümü → Satın Alma Siparişi Köprüsü (2026-05-18)
 
 **Amaç:**
