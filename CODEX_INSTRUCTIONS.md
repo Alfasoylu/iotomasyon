@@ -284,6 +284,24 @@ Movement types:
 
 ---
 
+## Entegra ERP — Stock Management Authority
+
+**CRITICAL — DO NOT IGNORE:**
+
+Stock is managed exclusively in **Entegra** (external ERP system owned by Soylu Elektronik).
+
+iotomasyon reads stock data from Entegra via XML feeds (XmlSyncSource) solely to power import decision scoring and reorder alerts.
+
+**Rules:**
+
+- NEVER suggest "auto-update stock on purchase order receipt" — this is Entegra's job, not iotomasyon's.
+- NEVER build stock deduction on sales, stock increment on order receipt, or any stock mutation based on iotomasyon events.
+- XML sync is READ-ONLY. It pulls current stock from Entegra to inform purchase/import decisions. It does not write back.
+- The only legitimate stock mutations in iotomasyon are manual StockAdjustmentLog entries (warehouse counts, damage corrections) — not automated flows.
+- Purchase orders in iotomasyon track the *buy decision and logistics status* only. They do NOT update stockQuantity.
+
+---
+
 ## Notes Rules
 
 Notes may attach to:

@@ -223,6 +223,12 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat & Analiz",
   },
   {
+    href: "/admin/bulk-import",
+    label: "Toplu Veri Girişi",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "İthalat & Analiz",
+  },
+  {
     href: "/admin/product-performance",
     label: "Satış Performansı",
     permission: PERMISSIONS.EXECUTIVE_READ,
