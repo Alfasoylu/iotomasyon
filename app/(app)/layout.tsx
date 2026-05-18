@@ -199,6 +199,12 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat & Analiz",
   },
   {
+    href: "/admin/purchase-orders",
+    label: "Satın Alma Siparişleri",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "İthalat & Analiz",
+  },
+  {
     href: "/admin/suppliers",
     label: "Tedarikçiler",
     permission: PERMISSIONS.SUPPLIERS_READ,

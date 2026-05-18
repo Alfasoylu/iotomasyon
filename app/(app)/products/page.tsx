@@ -89,18 +89,24 @@ type ProfitResult = {
   marginPct: number;
   roi: number;
   status: "LOSS" | "LOW" | "GOOD" | "EXCELLENT";
+  shippingMethod: "AIR" | "SEA"; // Phase 76: which method was used
 } | null;
 
 const TRENDYOL_COMMISSION = 0.20;
 const TRENDYOL_FIXED_DEDUCTION = 150; // TRY, for orders > 250 TRY
-const CARGO_USD_PER_KG = 10;
+// Phase 76: align with lib/import-decision.ts constants ($8 air / $1 sea)
+const AIR_FREIGHT_USD_PER_KG = 8;
+const SEA_FREIGHT_USD_PER_KG = 1;
 const DEFAULT_CUSTOMS_PCT = 0.30;
+// Auto-select SEA for heavy products when no explicit preference set
+const SEA_AUTO_WEIGHT_KG = 5; // ≥5 kg → default to SEA
 
 function calcProfit(product: {
   sourceCostRmb: unknown;
   weightKg: unknown;
   customsRatePct: unknown;
   importPaymentFeePct: unknown;
+  shippingMethodPref: unknown; // Phase 76
   trendyolPriceTry: number | null;
 }, usdTryRate: number, rmbUsdRate: number): ProfitResult {
   const priceTry = product.trendyolPriceTry;
@@ -111,8 +117,19 @@ function calcProfit(product: {
   const customsPct = product.customsRatePct != null ? Number(product.customsRatePct) : DEFAULT_CUSTOMS_PCT * 100;
   const payFeePct = product.importPaymentFeePct != null ? Number(product.importPaymentFeePct) : 0;
 
+  // Phase 76: resolve shipping method
+  // Explicit preference wins; when null → auto: ≥5kg → SEA, else AIR
+  const prefRaw = product.shippingMethodPref != null ? String(product.shippingMethodPref).toUpperCase() : null;
+  const shippingMethod: "AIR" | "SEA" =
+    prefRaw === "SEA" ? "SEA"
+    : prefRaw === "AIR" ? "AIR"
+    : kg >= SEA_AUTO_WEIGHT_KG ? "SEA"
+    : "AIR";
+
+  const freightPerKg = shippingMethod === "SEA" ? SEA_FREIGHT_USD_PER_KG : AIR_FREIGHT_USD_PER_KG;
+
   const supplierTry = (rmb / rmbUsdRate) * usdTryRate * (1 + payFeePct / 100);
-  const cargoTry = kg * CARGO_USD_PER_KG * usdTryRate;
+  const cargoTry = kg * freightPerKg * usdTryRate;
   const customsTry = (supplierTry + cargoTry) * (customsPct / 100);
   const totalCost = supplierTry + cargoTry + customsTry;
 
@@ -129,7 +146,7 @@ function calcProfit(product: {
   else if (marginPct < 30) status = "GOOD";
   else status = "EXCELLENT";
 
-  return { priceTry, netProfit, marginPct, roi, status };
+  return { priceTry, netProfit, marginPct, roi, status, shippingMethod };
 }
 
 export default async function ProductsPage({
@@ -444,7 +461,15 @@ export default async function ProductsPage({
                       <td className="px-4 py-3 text-center">
                         {profit ? (() => {
                           const durum = { LOSS: { label: "Zarar", cls: "bg-red-100 text-red-700" }, LOW: { label: "Düşük", cls: "bg-amber-100 text-amber-700" }, GOOD: { label: "İyi", cls: "bg-emerald-100 text-emerald-700" }, EXCELLENT: { label: "Mükemmel", cls: "bg-emerald-200 text-emerald-900 font-semibold" } }[profit.status];
-                          return <span className={`inline-block rounded px-2 py-0.5 text-xs ${durum.cls}`}>{durum.label}</span>;
+                          return (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className={`inline-block rounded px-2 py-0.5 text-xs ${durum.cls}`}>{durum.label}</span>
+                              {/* Phase 76: kargo modu göstergesi */}
+                              <span className={`text-[10px] font-medium ${profit.shippingMethod === "SEA" ? "text-blue-500" : "text-orange-400"}`}>
+                                {profit.shippingMethod === "SEA" ? "🚢 Deniz" : "✈ Hava"}
+                              </span>
+                            </div>
+                          );
                         })() : <span className="text-xs text-slate-300">—</span>}
                       </td>
 

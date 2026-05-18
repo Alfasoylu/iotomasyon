@@ -245,9 +245,18 @@ export default async function CapitalPage() {
           {/* Suggestions table */}
           {allocation.suggestions.length > 0 ? (
             <Card className="overflow-hidden p-0">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-950">Satın alma önerileri</h2>
-                <Badge>{allocation.suggestions.length} ürün</Badge>
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-semibold text-slate-950">Satın alma önerileri</h2>
+                  <Badge>{allocation.suggestions.length} ürün</Badge>
+                </div>
+                {/* Phase 77: direct link to create purchase order pre-filled from capital */}
+                <a
+                  href="/admin/purchase-orders/new?from=capital"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 transition"
+                >
+                  📦 Satın Alma Siparişi Oluştur
+                </a>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
