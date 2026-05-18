@@ -81,6 +81,19 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 84 — Trendyol Eşleştirme Sayfasında Hızlı Ürün Bağlantısı (2026-05-18)
+
+**Neden:** Phase 83 sonrası 62 eşleşmemiş grup kaldı. "Ürün Ara →" linki yeni sekme açıyordu; ürünü bağlamak için ayrı ürün detay sayfası gerekiyordu. Sayfa içi modal bu süreci tek adıma indiriyor.
+
+Teslim edilenler:
+- `lib/actions/product-search-action.ts`: `searchProductsAction` — ILIKE name/sku/barcode, top-12
+- `lib/actions/trendyol-link-action.ts`: `linkTrendyolGroupAction` — `updateMany` ile grup kayıtlarını seçilen ürüne bağlar
+- `app/(app)/admin/trendyol-matching/link-product-button.tsx`: debounced arama modal + seçim → link + auto-reload
+- `app/(app)/admin/trendyol-matching/page.tsx`: LinkProductButton her satıra eklendi
+- tsc 0 hata ✓; commit 2b12832 ✓; READY dpl_21ZAQyB3WivZUuyYzH2cXQQrffQv ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 83 — Trendyol Satış Eşleştirme Yönetimi (2026-05-18)
 
 **Neden:** 1.175 eşleşmemiş TrendyolSalesRecord T30G satış hızını ve ithalat ROI'sini bozuyordu. 621 kayıt için SKU eşleşmesi mevcuttu ama hiçbir admin arayüzü yoktu.

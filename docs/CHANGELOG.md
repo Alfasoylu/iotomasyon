@@ -9,6 +9,24 @@
 
 ## 2026-05
 
+### Phase 84 — Trendyol Eşleştirme Sayfasında Hızlı Ürün Bağlantısı (2026-05-18)
+
+**Amaç:**
+Phase 83 sonrası 62 eşleşmemiş ürün grubu kaldı. "Ürün Ara →" linki yeni sekme açıyordu ama ürün kataloğunu güncellemek için ürün detay sayfasına gidip SKU/barkod girmek gerekiyordu. Yeni "Bağla →" butonu sayfa içi modal açarak ürün adı/SKU/barkod ile arama yapıp tek tıkla o grubun tüm TrendyolSalesRecord kayıtlarını seçilen ürüne bağlıyor.
+
+Değişiklikler:
+- **`lib/actions/product-search-action.ts`** (YENİ): `searchProductsAction(query)` — ADMIN-only; `name/sku/barcode ILIKE` ile top-12 aktif ürün döndürür
+- **`lib/actions/trendyol-link-action.ts`** (YENİ): `linkTrendyolGroupAction({merchantSku, barcode, productId})` — ADMIN-only; `updateMany` ile o SKU+barcode grubundaki `productId=NULL` kayıtları seçilen ürüne bağlar; bağlanan kayıt sayısını döndürür
+- **`app/(app)/admin/trendyol-matching/link-product-button.tsx`** (YENİ): `"use client"` modal bileşeni; merchantSku ilk kelimesiyle önceden dolu arama input; 300ms debounce; 12 sonuç listesi (ad + SKU + barkod + stok adeti); seçim sonrası "✓ N kayıt bağlandı" + 1.8s sonra `window.location.reload()`; overlay tıklamayla kapatma
+- **`app/(app)/admin/trendyol-matching/page.tsx`**: `LinkProductButton` import; tablo başlığına ek `<th>`; her satıra `<LinkProductButton merchantSku barcode sampleName />` eklendi
+- Schema değişikliği: YOK
+
+Browser test: 62 "Bağla →" butonu görüntülendi ✓; ilk butona tıklandı → modal açıldı, input "231520000-stkpkt" ile önceden dolduruldu ✓; "şarj" yazıldı → 12 ürün sonucu döndü ✓; eşleşmemiş SKU → "Sonuç bulunamadı" ✓
+
+Durum: tsc 0 hata ✓ | commit 2b12832 ✓ | READY dpl_21ZAQyB3WivZUuyYzH2cXQQrffQv ✓ | browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 83 — Trendyol Satış Eşleştirme Yönetimi (2026-05-18)
 
 **Amaç:**
