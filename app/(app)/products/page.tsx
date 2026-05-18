@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProductFilters } from "@/components/products/product-filters";
 import { ProductBulkButtons } from "@/components/products/product-bulk-buttons";
+import { ImporterViewClient } from "@/components/products/importer-view-client";
+import { getCurrentSession } from "@/lib/auth";
 import { listProducts } from "@/services/product-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -156,12 +158,28 @@ export default async function ProductsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requirePermission(PERMISSIONS.PRODUCTS_READ);
+  // getCurrentSession is cached within the request — no extra DB call
+  const session = await getCurrentSession();
+  const isAdmin = session?.role === "ADMIN";
+
   const params = await searchParams;
+  const view        = typeof params.view   === "string" ? params.view   : "standard";
   const query       = typeof params.q      === "string" ? params.q      : "";
   const status      = typeof params.status === "string" ? params.status : "all";
   const stock       = typeof params.stock  === "string" ? params.stock  : "all";
   const sort        = typeof params.sort   === "string" ? params.sort   : "updated_desc";
   const durumFilter = typeof params.durum  === "string" ? params.durum  : "all";
+
+  // Admin-only importer view — redirect non-admins back to standard
+  if (view === "importer" && !isAdmin) {
+    const safeParams = new URLSearchParams();
+    if (query) safeParams.set("q", query);
+    return (
+      <div className="space-y-6">
+        <p className="text-sm text-slate-500">Bu görünüme erişim yetkiniz yok.</p>
+      </div>
+    );
+  }
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
@@ -268,6 +286,40 @@ export default async function ProductsPage({
         </div>
       </div>
 
+      {/* View switcher — Admin only */}
+      {isAdmin && (
+        <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 w-fit">
+          <Link
+            href="/products"
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+              view !== "importer"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            Standart Görünüm
+          </Link>
+          <Link
+            href="/products?view=importer"
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+              view === "importer"
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            📊 İthalatçı Görünümü
+          </Link>
+        </div>
+      )}
+
+      {/* İthalatçı Görünümü — renders when view=importer and user is admin */}
+      {view === "importer" && isAdmin && (
+        <ImporterViewClient />
+      )}
+
+      {/* Standard view — hidden when importer view is active */}
+      {view !== "importer" && (
+        <>
       <Card className="p-5">
         <ProductFilters
           initialQuery={query}
@@ -523,6 +575,8 @@ export default async function ProductsPage({
           </div>
         )}
       </Card>
+        </>
+      )} {/* end standard view */}
     </div>
   );
 }
