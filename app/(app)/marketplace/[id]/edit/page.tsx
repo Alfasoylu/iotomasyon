@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requirePermission } from "@/lib/auth";
@@ -31,7 +32,19 @@ export default async function EditListingPage({ params }: { params: Promise<{ id
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Pazar Yerleri</p>
+        <nav className="flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <Link href="/marketplace" className="hover:text-slate-900 transition">
+            ← Pazar Yerleri
+          </Link>
+          <span className="text-slate-300">/</span>
+          <Link
+            href={`/marketplace/${listing.id}`}
+            className="max-w-[280px] truncate normal-case tracking-normal text-slate-500 hover:text-slate-900 transition"
+            title={listing.listingTitle ?? listing.platform}
+          >
+            {listing.listingTitle ?? listing.platform}
+          </Link>
+        </nav>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Listeleme düzenle</h1>
       </div>
       <Card className="p-6">

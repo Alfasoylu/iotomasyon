@@ -27,9 +27,12 @@ export default async function CategoryDetailPage({
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Kategoriler
-          </p>
+          <Link
+            href="/categories"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Kategoriler
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             Kategori geçici olarak kullanılamıyor
           </h1>
@@ -48,6 +51,13 @@ export default async function CategoryDetailPage({
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/categories"
+              className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+            >
+              ← Kategoriler
+            </Link>
+            {category.parent ? <span className="text-slate-300">/</span> : null}
             {category.parent ? (
               <Link
                 href={`/categories/${category.parent.id}`}
@@ -56,10 +66,6 @@ export default async function CategoryDetailPage({
                 {category.parent.name}
               </Link>
             ) : null}
-            {category.parent ? <span className="text-slate-300">/</span> : null}
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Kategoriler
-            </p>
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
             {category.name}

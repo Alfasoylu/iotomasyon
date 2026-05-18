@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Card } from "@/components/ui/card";
 import { CategoryForm } from "@/components/categories/category-form";
 import { listCategoriesForSelect } from "@/services/category-service";
@@ -13,9 +15,12 @@ export default async function NewCategoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Kategoriler
-        </p>
+        <Link
+          href="/categories"
+          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+        >
+          ← Kategoriler
+        </Link>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
           Yeni kategori
         </h1>

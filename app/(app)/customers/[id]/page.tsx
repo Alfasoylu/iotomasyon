@@ -67,9 +67,12 @@ export default async function CustomerDetailPage({
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Müşteriler
-          </p>
+          <Link
+            href="/customers"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Müşteriler
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             Müşteri detayı geçici olarak kullanılamıyor
           </h1>

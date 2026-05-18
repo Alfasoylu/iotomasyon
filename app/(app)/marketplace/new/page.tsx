@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -30,7 +32,12 @@ export default async function NewListingPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Pazar Yerleri</p>
+        <Link
+          href="/marketplace"
+          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+        >
+          ← Pazar Yerleri
+        </Link>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Yeni listeleme ekle</h1>
         <p className="mt-2 text-sm leading-7 text-slate-600">
           Bir ürünün pazar yerindeki listeleme bilgilerini kayıt altına alın.

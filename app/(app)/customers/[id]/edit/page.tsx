@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CustomerForm } from "@/components/customers/customer-form";
@@ -28,9 +29,12 @@ export default async function EditCustomerPage({
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Müşteriler
-          </p>
+          <Link
+            href="/customers"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Müşteriler
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             Müşteri düzenleme geçici olarak kullanılamıyor
           </h1>
@@ -54,9 +58,19 @@ export default async function EditCustomerPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Müşteriler
-        </p>
+        <nav className="flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <Link href="/customers" className="hover:text-slate-900 transition">
+            ← Müşteriler
+          </Link>
+          <span className="text-slate-300">/</span>
+          <Link
+            href={`/customers/${customer.id}`}
+            className="max-w-[280px] truncate normal-case tracking-normal text-slate-500 hover:text-slate-900 transition"
+            title={customer.name}
+          >
+            {customer.name}
+          </Link>
+        </nav>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
           Müşteri düzenle
         </h1>
