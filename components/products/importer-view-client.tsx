@@ -237,7 +237,7 @@ function InlineEditNumber({
 
 // ── Sort options ────────────────────────────────────────────────────────────────
 
-type SortKey = "roi" | "margin" | "profit" | "t30g" | "order" | "health" | "cost" | "stock_days";
+type SortKey = "roi" | "margin" | "profit" | "t30g" | "order" | "health" | "cost" | "stock_days" | "stock" | "weight";
 
 type FilterKey =
   | "all" | "order" | "missing_cost" | "no_trendyol" | "no_bayi"
@@ -421,6 +421,8 @@ export function ImporterViewClient() {
         case "health":     diff = a.healthScore - b.healthScore; break;
         case "cost":       diff = (a.totalCostUsd ?? -Infinity) - (b.totalCostUsd ?? -Infinity); break;
         case "stock_days": diff = (a.stockDays ?? Infinity) - (b.stockDays ?? Infinity); break;
+        case "stock":      diff = a.stockQuantity - b.stockQuantity; break;
+        case "weight":     diff = (a.weightKg ?? -Infinity) - (b.weightKg ?? -Infinity); break;
       }
       return sortAsc ? diff : -diff;
     });
@@ -597,7 +599,10 @@ export function ImporterViewClient() {
           <SortBtn k="profit" label="Kâr" />
           <SortBtn k="t30g" label="T30G" />
           <SortBtn k="order" label="Sipariş" />
+          <SortBtn k="stock" label="Stok" />
           <SortBtn k="stock_days" label="Stok Gün" />
+          <SortBtn k="weight" label="Ağırlık" />
+          <SortBtn k="cost" label="Maliyet" />
           <SortBtn k="health" label="Skor" />
         </div>
       </div>
