@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProductFilters } from "@/components/products/product-filters";
+import { ProductBulkButtons } from "@/components/products/product-bulk-buttons";
 import { listProducts } from "@/services/product-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -259,9 +260,12 @@ export default async function ProductsPage({
             Ürün kaydı, stok takibi ve ithalat bilgilerini yönetin.
           </p>
         </div>
-        <Link href="/products/new">
-          <Button>Yeni ürün</Button>
-        </Link>
+        <div className="flex flex-wrap items-end gap-3">
+          <ProductBulkButtons />
+          <Link href="/products/new">
+            <Button>Yeni ürün</Button>
+          </Link>
+        </div>
       </div>
 
       <Card className="p-5">
