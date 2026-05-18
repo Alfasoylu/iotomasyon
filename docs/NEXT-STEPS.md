@@ -81,6 +81,20 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 83 — Trendyol Satış Eşleştirme Yönetimi (2026-05-18)
+
+**Neden:** 1.175 eşleşmemiş TrendyolSalesRecord T30G satış hızını ve ithalat ROI'sini bozuyordu. 621 kayıt için SKU eşleşmesi mevcuttu ama hiçbir admin arayüzü yoktu.
+
+Teslim edilenler:
+- `lib/actions/trendyol-rematch-action.ts`: ADMIN-only server action; 2-adım SQL UPDATE (SKU sonra barcode)
+- `app/(app)/admin/trendyol-matching/page.tsx`: stats (toplam/eşleşen+%/eşleşmeyen+grup/düzeltilebilir), unmatched groups tablosu (top 100, cnt30d ile)
+- `app/(app)/admin/trendyol-matching/rematch-button.tsx`: RematchButton client component + auto-reload
+- `app/(app)/layout.tsx`: sidebar "Satış Eşleştirme" girişi eklendi
+- Sonuç: %23 → %64 eşleşme oranı; 621 kayıt SKU eşleşmesiyle düzeltildi; 554 kayıt (62 ürün) hâlâ eşleşmiyor — bunlar için ürün kataloğunda SKU/barkod güncellenmeli
+- tsc 0 hata ✓; commit aaa4ec4 ✓; READY dpl_GmmH2fVJGJsV4xA3QPndyYNVaJjx ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 82 — İthalatçı Görünümü Satır-içi Düzenleme + Eksik Veri Chip'leri + Skor (2026-05-18)
 
 **Neden:** 735 ürünün Alış RMB / Ağırlık / Gümrük verileri eksikti. Veri girmek için ürün detay sayfasına gitmek gerekiyordu; bu da imkânsız derece yavaştı. Tabloda satır-içi düzenleme eksik veri girişini hızlandırıyor. Durum sütununda hangi verinin eksik olduğunu görmek doğru önceliklendirmeyi sağlıyor.

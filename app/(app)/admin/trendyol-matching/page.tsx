@@ -1,9 +1,10 @@
 /**
- * Phase 83 — Trendyol Satış Eşleştirme Yönetimi
+ * Phase 83/84 — Trendyol Satış Eşleştirme Yönetimi
  *
  * Admin page showing unmatched TrendyolSalesRecord rows grouped by
- * (merchantSku, barcode). One-click re-match button fixes ~621 rows
- * by SKU/barcode lookup. Remaining unmatched rows show with product-edit links.
+ * (merchantSku, barcode). One-click re-match button fixes rows by
+ * SKU/barcode lookup. Remaining unmatched rows have an in-page
+ * "Bağla →" button (Phase 84) to manually link to a product.
  *
  * ADMIN-ONLY. No schema change.
  */
@@ -14,6 +15,7 @@ import { getCurrentSession, isOwner } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { RematchButton } from "./rematch-button";
+import { LinkProductButton } from "./link-product-button";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +157,7 @@ export default async function TrendyolMatchingPage() {
                     Son 30G
                   </th>
                   <th className="px-3 py-2"></th>
+                  <th className="px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -212,8 +215,15 @@ export default async function TrendyolMatchingPage() {
                           className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                           target="_blank"
                         >
-                          Ürün Ara →
+                          Ara →
                         </Link>
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <LinkProductButton
+                          merchantSku={g.merchantSku}
+                          barcode={g.barcode}
+                          sampleName={cleanName}
+                        />
                       </td>
                     </tr>
                   );

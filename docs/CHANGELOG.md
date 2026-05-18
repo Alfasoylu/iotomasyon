@@ -9,6 +9,24 @@
 
 ## 2026-05
 
+### Phase 83 — Trendyol Satış Eşleştirme Yönetimi (2026-05-18)
+
+**Amaç:**
+1.528 TrendyolSalesRecord kaydının 1.175'i (%77) `productId=NULL` durumundaydı — eşleşmemiş satış kayıtları T30G satış hızı ve ithalat ROI hesaplamalarını bozuyordu. Trendyol API çağrısı olmadan saf DB güncellemesiyle 621 kaydı otomatik olarak düzelten admin yönetim sayfası oluşturuldu.
+
+Değişiklikler:
+- **`lib/actions/trendyol-rematch-action.ts`** (YENİ): ADMIN-only server action; iki aşamalı SQL UPDATE — önce `LOWER(merchantSku)=LOWER(Product.sku)`, ardından hâlâ eşleşmeyenler için `LOWER(barcode)=LOWER(Product.barcode)`; `fixedBySku`, `fixedByBarcode`, `totalFixed`, `remainingUnmatched` döndürür
+- **`app/(app)/admin/trendyol-matching/page.tsx`** (YENİ): server component; ADMIN redirect guard; stats: toplam kayıt / eşleşen+% / eşleşmeyen+grup sayısı / otomatik düzeltilebilir; `$queryRaw` fixable count; `$queryRaw` unmatched groups (top 100, merchantSku+barcode+sampleName+totalCnt+cnt30d); `RematchButton` bileşeni; "Ürün Ara →" linki (products?q=firstWordOfSku)
+- **`app/(app)/admin/trendyol-matching/rematch-button.tsx`** (YENİ): `"use client"` bileşen; loading/result/error states; başarı sonrası 2s `window.location.reload()`; fixableCount=0 iken buton disabled
+- **`app/(app)/layout.tsx`**: "Satış Eşleştirme" sidebar girişi eklendi (EXECUTIVE_READ, İthalat & Analiz section, Trendyol Raporu'ndan sonra)
+- Schema değişikliği: YOK
+
+Browser test: Sayfa 1.528 / 353 (%23) / 1.175 / 621 gösterdi ✓; "Otomatik Eşleştir (621)" tıklandı → "✓ 621 kayıt eşleştirildi, SKU: 621, Kalan: 554" ✓; Sayfa yenilendi → 974 eşleşen (%64), 554 eşleşmeyen (62 grup), 0 düzeltilebilir ✓
+
+Durum: tsc 0 hata ✓ | commit aaa4ec4 ✓ | READY dpl_GmmH2fVJGJsV4xA3QPndyYNVaJjx ✓ | browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 82 — İthalatçı Görünümü Satır-içi Düzenleme + Eksik Veri Chip'leri + Skor Sıralaması (2026-05-18)
 
 **Amaç:**
