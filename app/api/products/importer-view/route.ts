@@ -50,6 +50,13 @@ export type ImporterProduct = {
   customsRatePct: number | null;
   importPaymentFeePct: number | null;
 
+  // Phase 9 — Marketplace monthly sales estimate (units/month).
+  // `onlineSalesPotential` is the raw DB value (null = not entered).
+  // `effectiveMonthlyUnits` is what calculations should use — null falls back to 1
+  // (the documented default for products without a recorded monthly sales figure).
+  onlineSalesPotential: number | null;
+  effectiveMonthlyUnits: number;
+
   // Computed cost breakdown
   shippingMethod: "AIR" | "SEA" | null;
   productUsd: number | null;
@@ -202,6 +209,10 @@ export async function GET(_req: NextRequest) {
       shippingMethodPref: p.shippingMethodPref,
       customsRatePct: p.customsRatePct != null ? Number(p.customsRatePct) : null,
       importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
+
+      onlineSalesPotential: p.onlineSalesPotential,
+      // Default 1 unit/month for marketplace channel when not explicitly entered.
+      effectiveMonthlyUnits: p.onlineSalesPotential ?? 1,
 
       shippingMethod: costResult?.shippingMethod ?? null,
       productUsd: costResult?.productUsd ?? null,

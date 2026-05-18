@@ -242,6 +242,14 @@ Current meaning:
 - no route/profile-aware freight default hierarchy
 - no import decision snapshot governance
 - procurement engine now implemented (Phases 19–22)
+- **Stock source-of-truth ihlali (Codex audit, 2026-05-18 — open)**:
+  `lib/actions/inventory-count-actions.ts` ve `lib/actions/stock-adjustment-actions.ts`
+  `Product.stockQuantity` alanını doğrudan mutate ediyor. Bu, mimari kural
+  "Entegra source-of-truth (via XML sync)" ile çelişiyor. Önerilen güvenli yol:
+  ayrı `physicalCountQuantity` + `xmlStockQuantity` + `variance` + `countedAt`
+  + `countedBy` + `countNote` alanları ekleyip XML sync dışındaki yazımları
+  bunlara yönlendirmek. Destructive olduğundan ayrı bir migration phase'e
+  bırakıldı; P0 audit içinde sadece raporlandı.
 
 ---
 
@@ -270,6 +278,13 @@ Analysis performed 2026-05-17. No code changes made — documentation only.
    showFinancialFields prop gates 4 financial sections in product-form.tsx.
    normalizeProductDataNonFinancial() enforces this server-side in updateProductAction.
    Non-admin users cannot write financial fields even via tampering.
+
+   **Codex audit P0 (2026-05-18) update** — Product LIST + DETAIL + marketplace
+   profit pages also now enforce EXECUTIVE_READ for finance/import fields.
+   New `lib/finance-visibility.ts` centralizes the gate; `/products/[id]`
+   server-side strips finance fields from the product object for non-finance
+   readers (true data contract, not UI-only hide). `/marketplace/profit`
+   permission upgraded from `marketplaceListings.read` to `executive.read`.
 
 3. **Role-specific dashboards** — /dashboard is a single page for all roles.
    SALES sees import/procurement tiles that mean nothing to them.

@@ -9,8 +9,9 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
 import { getProductById } from "@/services/product-service";
 import { getProductIntelligence } from "@/services/category-service";
-import { requirePermission, requireUser, isOwner } from "@/lib/auth";
+import { requirePermission, requireUser, checkPermission, isOwner } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { resolveFinanceGate } from "@/lib/finance-visibility";
 import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 import {
   calculateProfitability,
@@ -69,27 +70,57 @@ export default async function ProductDetailPage({
   // eslint-disable-next-line react-hooks/purity -- server component; Date.now() is safe here
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const user = await requireUser();
+  const { canViewFinance } = await resolveFinanceGate(user);
+  const [canUpdate, canDelete, canCreateCustomer] = await Promise.all([
+    checkPermission(user, PERMISSIONS.PRODUCTS_UPDATE),
+    checkPermission(user, PERMISSIONS.PRODUCTS_DELETE),
+    checkPermission(user, PERMISSIONS.CUSTOMERS_CREATE),
+  ]);
 
-  const [{ databaseAvailable, product }, intelligenceResult, latestRate, salesRecords, canViewPrivate, supplierLinks, importSnapshots, platformPolicies, stockAdjustments, xmlStockChangeLogs] = await Promise.all([
+  // Finance/import-only datasets are fetched only when the viewer is permitted
+  // to see them. This is the server-side data contract: non-finance viewers
+  // never get cost / profit / supplier rows in their response.
+  const [
+    { databaseAvailable, product },
+    intelligenceResult,
+    latestRate,
+    salesRecords,
+    canViewPrivate,
+    supplierLinks,
+    importSnapshots,
+    platformPolicies,
+    stockAdjustments,
+    xmlStockChangeLogs,
+  ] = await Promise.all([
     getProductById(id),
     getProductIntelligence(id),
-    prisma.monthlyExchangeRate.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    }),
-    prisma.trendyolSalesRecord.findMany({
-      where: { productId: id },
-      select: { orderDate: true, status: true, quantity: true, totalPriceTry: true, unitPriceTry: true },
-    }),
+    canViewFinance
+      ? prisma.monthlyExchangeRate.findFirst({
+          orderBy: [{ year: "desc" }, { month: "desc" }],
+        })
+      : Promise.resolve(null),
+    canViewFinance
+      ? prisma.trendyolSalesRecord.findMany({
+          where: { productId: id },
+          select: { orderDate: true, status: true, quantity: true, totalPriceTry: true, unitPriceTry: true },
+        })
+      : Promise.resolve([] as Array<{ orderDate: Date; status: string; quantity: number; totalPriceTry: unknown; unitPriceTry: unknown }>),
     Promise.resolve(isOwner(user)),
-    prisma.supplierProduct.findMany({
-      where: { productId: id },
-      include: { supplier: { select: { name: true } } },
-      orderBy: [{ isPreferred: "desc" }, { createdAt: "asc" }],
-    }),
-    getProductImportSnapshotsAction(id),
-    prisma.marketplacePlatformPolicy.findMany(),
+    canViewFinance
+      ? prisma.supplierProduct.findMany({
+          where: { productId: id },
+          include: { supplier: { select: { name: true } } },
+          orderBy: [{ isPreferred: "desc" }, { createdAt: "asc" }],
+        })
+      : Promise.resolve([] as never[]),
+    canViewFinance
+      ? getProductImportSnapshotsAction(id)
+      : Promise.resolve([] as never[]),
+    canViewFinance
+      ? prisma.marketplacePlatformPolicy.findMany()
+      : Promise.resolve([] as never[]),
     getProductStockAdjustments(id),
-    // Phase 68 — XML stock movement history (last 30 entries)
+    // Phase 68 — XML stock movement history (operational, visible to all readers)
     prisma.xmlStockChangeLog.findMany({
       where: { productId: id },
       orderBy: { syncedAt: "desc" },
@@ -120,6 +151,44 @@ export default async function ProductDetailPage({
   }
 
   if (!product) notFound();
+
+  // Server-side data contract — non-finance viewers never receive cost / margin /
+  // import / supplier fields on the product object. Even though server-component
+  // output is server-only, this prevents future accidental serialization to
+  // client components and keeps a single audit-friendly redaction point.
+  if (!canViewFinance) {
+    const FINANCE_FIELDS = [
+      "unitCostTry",
+      "unitCostUsd",
+      "sourceCostRmb",
+      "importUnitCostUsd",
+      "importPaymentFeePct",
+      "wholesalePriceTry",
+      "marketplacePriceTry",
+      "marketplaceCommission",
+      "marketplaceCommissionOverride",
+      "shippingCost",
+      "shippingCostOverride",
+      "packagingCost",
+      "vatRate",
+      "paymentFeeRate",
+      "returnReserveRate",
+      "weightKg",
+      "customsRatePct",
+      "shippingMethodPref",
+      "onlineSalesPotential",
+      "wholesaleSalesPotential",
+      "installerSalesPotential",
+      "importDate",
+      "importQuantity",
+      "privateNote",
+    ] as const;
+    for (const f of FINANCE_FIELDS) {
+      (product as Record<string, unknown>)[f] = null;
+    }
+    (product as { xmlData: unknown }).xmlData = null;
+    (product as { marketplacePrices: unknown }).marketplacePrices = [];
+  }
 
   const isLowStock = product.stockQuantity <= product.minimumStock;
   const { directInterests, attributeInterests, categoryInterests } = intelligenceResult;
@@ -262,9 +331,9 @@ export default async function ProductDetailPage({
               {product.isActive ? "Aktif" : "Pasif"}
             </Badge>
             {isLowStock ? <Badge tone="warning">Düşük stok</Badge> : null}
-            {hasProfit && isLosing ? <Badge tone="danger">Kaybettiriyor</Badge> : null}
-            {hasProfit && !isLosing ? <Badge tone="success">Kârlı</Badge> : null}
-            {salesPotential.buySignal !== "UNKNOWN" ? (
+            {canViewFinance && hasProfit && isLosing ? <Badge tone="danger">Kaybettiriyor</Badge> : null}
+            {canViewFinance && hasProfit && !isLosing ? <Badge tone="success">Kârlı</Badge> : null}
+            {canViewFinance && salesPotential.buySignal !== "UNKNOWN" ? (
               <Badge tone={BUY_SIGNAL_TONES[salesPotential.buySignal]}>
                 {BUY_SIGNAL_LABELS[salesPotential.buySignal]}
               </Badge>
@@ -287,13 +356,17 @@ export default async function ProductDetailPage({
         </div>
 
         <div className="flex gap-3">
-          <Link href={`/customers/new?productId=${product.id}`}>
-            <Button variant="secondary">Yeni Müşteri Ekle</Button>
-          </Link>
-          <Link href={`/products/${product.id}/edit`}>
-            <Button>Düzenle</Button>
-          </Link>
-          <ProductDeleteButton productId={product.id} />
+          {canCreateCustomer && (
+            <Link href={`/customers/new?productId=${product.id}`}>
+              <Button variant="secondary">Yeni Müşteri Ekle</Button>
+            </Link>
+          )}
+          {canUpdate && (
+            <Link href={`/products/${product.id}/edit`}>
+              <Button>Düzenle</Button>
+            </Link>
+          )}
+          {canDelete && <ProductDeleteButton productId={product.id} />}
         </div>
       </div>
 
@@ -351,25 +424,25 @@ export default async function ProductDetailPage({
             {product.lastStockCountBy ? (
               <Info label="Son sayımı yapan" value={product.lastStockCountBy.name} />
             ) : null}
-            {product.shippingCost != null ? (
+            {canViewFinance && product.shippingCost != null ? (
               <Info label="Kargo maliyeti" value={`₺${Number(product.shippingCost).toFixed(2)}`} />
             ) : null}
-            {product.shippingCostOverride != null ? (
+            {canViewFinance && product.shippingCostOverride != null ? (
               <Info label="Kargo (override)" value={`₺${Number(product.shippingCostOverride).toFixed(2)}`} />
             ) : null}
-            {product.marketplaceCommission != null ? (
+            {canViewFinance && product.marketplaceCommission != null ? (
               <Info label="Pazar komisyonu" value={`%${Number(product.marketplaceCommission).toFixed(1)}`} />
             ) : null}
-            {product.marketplaceCommissionOverride != null ? (
+            {canViewFinance && product.marketplaceCommissionOverride != null ? (
               <Info label="Komisyon (override)" value={`%${Number(product.marketplaceCommissionOverride).toFixed(1)}`} />
             ) : null}
-            {product.importDate ? (
+            {canViewFinance && product.importDate ? (
               <Info label="İthalat tarihi" value={formatDateTime(product.importDate)} />
             ) : null}
-            {product.importQuantity != null ? (
+            {canViewFinance && product.importQuantity != null ? (
               <Info label="İthalatta gelen adet" value={`${product.importQuantity}`} />
             ) : null}
-            {product.importUnitCostUsd != null ? (
+            {canViewFinance && product.importUnitCostUsd != null ? (
               <Info label="İthalat birim maliyeti (USD)" value={`$${Number(product.importUnitCostUsd).toFixed(2)}`} />
             ) : null}
             {product.inventoryCountDate ? (
@@ -424,7 +497,7 @@ export default async function ProductDetailPage({
         </Card>
       </div>
 
-      {hasProfit ? (
+      {canViewFinance && hasProfit ? (
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-slate-950">Kârlılık analizi</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -444,8 +517,8 @@ export default async function ProductDetailPage({
         </Card>
       ) : null}
 
-      {/* Phase 33 — Marketplace Pricing Normalization */}
-      {(() => {
+      {/* Phase 33 — Marketplace Pricing Normalization (finance only) */}
+      {canViewFinance && (() => {
         if (!product.xmlData && !product.marketplacePriceTry) return null;
         const policyMap = Object.fromEntries(
           platformPolicies.map((p) => [p.platform, {
@@ -561,7 +634,7 @@ export default async function ProductDetailPage({
         );
       })()}
 
-      {hasSalesPotential ? (
+      {canViewFinance && hasSalesPotential ? (
         <Card className="p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -630,8 +703,8 @@ export default async function ProductDetailPage({
         </Card>
       ) : null}
 
-      {/* Trendyol Kâr Analizi Kartı */}
-      {(() => {
+      {/* Trendyol Kâr Analizi Kartı — finance only */}
+      {canViewFinance && (() => {
         const trendyolMpPrice = product.marketplacePrices?.find(p => p.marketplace === "TRENDYOL");
         const trendyolPriceTry =
           trendyolMpPrice != null
@@ -722,7 +795,8 @@ export default async function ProductDetailPage({
         );
       })()}
 
-      {/* Phase 11C — Import Decision Card */}
+      {/* Phase 11C — Import Decision Card — finance only */}
+      {canViewFinance && (
       <Card className="p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -836,9 +910,10 @@ export default async function ProductDetailPage({
           </div>
         )}
       </Card>
+      )}
 
-      {/* Phase 32 — Import Decision Snapshot History */}
-      {importSnapshots.length > 0 && (
+      {/* Phase 32 — Import Decision Snapshot History — finance only */}
+      {canViewFinance && importSnapshots.length > 0 && (
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-slate-950">Karar Geçmişi</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -890,7 +965,8 @@ export default async function ProductDetailPage({
         </Card>
       )}
 
-      {/* Phase 26 — Realized Sales Card */}
+      {/* Phase 26 — Realized Sales Card — finance only (realized margin + avg unit price) */}
+      {canViewFinance && (
       <Card className="p-6">
         <div className="flex items-start justify-between">
           <div>
@@ -952,9 +1028,10 @@ export default async function ProductDetailPage({
           </div>
         )}
       </Card>
+      )}
 
-      {/* Phase 64 — Monthly Sales Trend Card */}
-      {trendMonths.length > 0 && (
+      {/* Phase 64 — Monthly Sales Trend Card — finance only (ciro / avg price) */}
+      {canViewFinance && trendMonths.length > 0 && (
         <Card className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -1180,8 +1257,8 @@ export default async function ProductDetailPage({
         </div>
       ) : null}
 
-      {/* Phase 11A — XML source data section */}
-      {product.xmlData && (
+      {/* Phase 11A — XML source data section — finance only (contains per-channel prices) */}
+      {canViewFinance && product.xmlData && (
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-slate-950">XML Kaynak Verisi</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -1234,8 +1311,8 @@ export default async function ProductDetailPage({
         </Card>
       )}
 
-      {/* Phase 28 — Preferred supplier summary (always visible when suppliers exist) */}
-      {supplierLinks.length > 0 && (
+      {/* Phase 28 — Preferred supplier summary — finance only (supplier cost / lead days) */}
+      {canViewFinance && supplierLinks.length > 0 && (
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-950">Tedarikçi Kaynağı</h2>

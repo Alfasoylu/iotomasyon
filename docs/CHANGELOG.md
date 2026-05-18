@@ -9,6 +9,39 @@
 
 ## 2026-05
 
+### Codex Audit P0 — Finans/İthalat Görünürlük Sertleştirmesi (2026-05-18)
+
+**Amaç:**
+Codex audit'i ürün listesi, ürün detayı, marketplace kâr paneli ve warehouse → ürün detay zincirinin finans/import alanlarını non-finance rollere (SALES, OPERATIONS, WAREHOUSE, MARKETPLACE_OPERATOR) sızdırdığını gösterdi. Server-side data contract uygulandı; UI hide yerine veri-katmanı sızıntısı kapatıldı.
+
+Kapatılan leak'ler:
+
+1. **`/products` (liste)** — Tüm `products.read` kullanıcıları `Net Kâr / Marj / ROI / Durum / T.Fiyat` sütunlarını ve "Maliyet eksik / Ağırlık eksik / Trendyol fiyat yok" sağlık ipuçlarını görüyordu. Finans hesaplaması ve sütunları `canViewFinance` (EXECUTIVE_READ) gate'i altına alındı; non-finance kullanıcı için `latestRate` ve `MarketplacePrice` veri fetch'i de skip edildi.
+
+2. **`/products/[id]` (detay)** — Aşağıdaki tüm kartlar `canViewFinance` gate'i altına alındı: Kârlılık analizi, Pazar Yeri Fiyatlandırması, Yatırım skoru, Trendyol Kâr Analizi, İthalat Kararı, Karar Geçmişi (snapshots), Trendyol Satış Performansı (realized margin), Aylık Satış Trendi (ciro), Tedarikçi Kaynağı, XML Kaynak Verisi (per-platform USD fiyatlar). `kargo maliyeti / pazar komisyonu / importDate / importUnitCostUsd` Info satırları da gate'lendi. Header rozetleri (Kârlı/Kaybettiriyor/BuySignal) yine `canViewFinance` koşullu. Düzenle / Yeni Müşteri / Sil butonları ilgili `products.update / customers.create / products.delete` izinleri ile koşullu.
+
+3. **Server-side data contract** — `/products/[id]` non-finance kullanıcı için `product` objesinden 23 finans/import alanı (`unitCostTry`, `sourceCostRmb`, `importUnitCostUsd`, `weightKg`, `customsRatePct`, `shippingMethodPref`, `wholesalePriceTry`, `marketplacePriceTry`, `*SalesPotential`, vb.) ve `xmlData` ile `marketplacePrices` ilişkilerini null/empty olarak strip ediliyor. Aynı zamanda `salesRecords`, `supplierLinks`, `importSnapshots`, `platformPolicies` veri fetch'leri non-finance kullanıcı için skip edildi.
+
+4. **`/marketplace/profit`** — Önce `MARKETPLACE_LISTINGS_READ` gerektiriyordu (marketplace operator açabiliyordu). Şimdi `EXECUTIVE_READ` gerektiriyor. Sidebar linki ve `/marketplace` sayfasındaki "📊 Kârlılık" butonu da `EXECUTIVE_READ` koşullu.
+
+5. **`/marketplace` listings** — "📊 Kârlılık" butonu sadece `EXECUTIVE_READ` rolünde; "+ Yeni listeleme" butonu sadece `MARKETPLACE_LISTINGS_WRITE` rolünde.
+
+6. **Warehouse → product detail zinciri** — `/warehouse` linkleri `/products/[id]`'ye gitmeye devam ediyor, fakat finans kartları artık warehouse kullanıcısına render edilmiyor. Warehouse kullanıcı yalnızca operasyonel alanları (kategori, marka, model, barkod, stok, lokasyon, açıklama, görsel galerisi, XML stok değişim geçmişi, stok hareketi logları, ilgi-grup kartları) görüyor.
+
+7. **WAREHOUSE role drift** — `lib/user-roles.ts` `UserRole` tipi ve `ALL_USER_ROLES` array'i WAREHOUSE içermediği için `updateUserRoleAction` valide aşamasında "Geçersiz rol" döndürerek WAREHOUSE atamayı engelliyordu. Eklendi. `app/(app)/admin/users/page.tsx` `ROLE_LABELS/ROLE_TONE` ve `app/(app)/admin/users/[id]/page.tsx` `ROLE_COLOR` map'lerine WAREHOUSE eklendi. Prisma enum ve seed zaten WAREHOUSE içeriyordu — drift yalnızca TS tarafındaydı.
+
+8. **Trendyol read-only policy** — `/admin/trendyol-catalog` sayfasındaki 3 adet `/admin/trendyol-stock-sync` deep-link kaldırıldı (hedef rota zaten önceki temizlikte silinmişti). Bunun yerine "Trendyol read-only; stok düzeltmesi Trendyol panelinden veya Entegra üzerinden yapılır" açıklaması var. `lib/trendyol-api.ts` → `updateTrendyolInventory` runtime-throw yapacak şekilde deprecate edildi; gelecek yanlışlıkla call durumunda HTTP push silinmiş olarak fail eder.
+
+9. **Finance gate helper** — `lib/finance-visibility.ts` (YENİ): tek `resolveFinanceGate(user)` API'si EXECUTIVE_READ gate'ini merkezileştirir. Phase 57'de `productFinance.read / import.read / profitability.read` ayrımı eklendiğinde yalnızca bu dosya değişecek.
+
+Bilinen kalan riskler (P0 dışı):
+- `lib/actions/inventory-count-actions.ts` ve `lib/actions/stock-adjustment-actions.ts` `Product.stockQuantity` alanını doğrudan mutate ediyor. Bu, "Entegra source-of-truth" mimari kuralı ile çelişiyor. Önerilen güvenli patch: ayrı `physicalCountQuantity`, `xmlStockQuantity`, `variance`, `countedAt`, `countedBy` alanları ekleyip `Product.stockQuantity` yazımını XML sync'e bırakmak — destructive olmadığından ayrı bir migration phase'ine bırakıldı.
+- `lib/actions/product-actions.ts` `normalizeProductData` hâlâ `stockQuantity` alanını update girdisinden alıp Prisma update'e veriyor (admin tarafından kullanıldığında). Aynı sorunun ürün edit formundan ortaya çıkması mümkün — gelecek phase'de `stockQuantity` yazımının yalnızca XML sync ve inventory count yolu üzerinden yapılması önerilir.
+
+tsc / lint / prisma validate sonuçları acceptance test bölümünde.
+
+---
+
 ### Phase 87 — Ekip Görev Panosu (2026-05-18)
 
 **Amaç:**

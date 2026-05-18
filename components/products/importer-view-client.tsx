@@ -302,12 +302,19 @@ export function ImporterViewClient() {
       customsRatePct: number | null;
       shippingMethodPref: string | null;
       importPaymentFeePct: number | null;
+      onlineSalesPotential: number | null;
     },
   ) => {
     setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id ? recalcProduct(p, updated, rates) : p
-      ),
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const next = recalcProduct(p, updated, rates);
+        return {
+          ...next,
+          onlineSalesPotential: updated.onlineSalesPotential,
+          effectiveMonthlyUnits: updated.onlineSalesPotential ?? 1,
+        };
+      }),
     );
   }, [rates]);
 
@@ -329,14 +336,18 @@ export function ImporterViewClient() {
       });
   }, []);
 
-  // Budget allocation (runs when products or params change)
+  // Budget allocation (runs when products or params change).
+  // Demand signal: actual Trendyol t30g if available; otherwise fall back to the
+  // manually-entered monthly sales (defaulting to 1 unit/month for products with
+  // no recorded estimate). This keeps brand-new or non-Trendyol products from
+  // being silently dropped out of the allocation set.
   const allocationMap = useMemo(() => {
     if (products.length === 0) return new Map();
     return allocateBudget(
       products.map((p) => ({
         id: p.id,
         stockQuantity: p.stockQuantity,
-        t30g: p.t30g,
+        t30g: Math.max(p.t30g, p.effectiveMonthlyUnits ?? 1),
         totalCostUsd: p.totalCostUsd,
         netProfitUsd: p.netProfitUsd,
         annualRoiPct: p.annualRoiPct,

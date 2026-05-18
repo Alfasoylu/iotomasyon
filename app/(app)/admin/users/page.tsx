@@ -13,6 +13,7 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN:                "Admin",
   SALES:                "Satış",
   OPERATIONS:           "Operasyon",
+  WAREHOUSE:            "Depo",
   MARKETPLACE_OPERATOR: "Mağaza Operatörü",
   CUSTOM:               "Özel",
 };
@@ -21,6 +22,7 @@ const ROLE_TONE: Record<string, "default" | "success" | "warning" | "danger"> = 
   ADMIN:                "danger",
   SALES:                "success",
   OPERATIONS:           "warning",
+  WAREHOUSE:            "default",
   MARKETPLACE_OPERATOR: "default",
   CUSTOM:               "default",
 };

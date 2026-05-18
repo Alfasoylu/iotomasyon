@@ -8,13 +8,15 @@
  * not touched (partial update).
  *
  * Body (all optional):
- *   sourceCostRmb       number | null
- *   weightKg            number | null
- *   customsRatePct      number | null
- *   shippingMethodPref  "AIR" | "SEA" | null
- *   importPaymentFeePct number | null
+ *   sourceCostRmb         number | null
+ *   weightKg              number | null
+ *   customsRatePct        number | null
+ *   shippingMethodPref    "AIR" | "SEA" | null
+ *   importPaymentFeePct   number | null
+ *   onlineSalesPotential  integer | null   — marketplace monthly sales (units/month)
  *
- * Returns: { id, sku, sourceCostRmb, weightKg, customsRatePct, shippingMethodPref, importPaymentFeePct }
+ * Returns: { id, sku, sourceCostRmb, weightKg, customsRatePct, shippingMethodPref,
+ *            importPaymentFeePct, onlineSalesPotential }
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -30,6 +32,18 @@ function parseDecimalField(val: unknown): number | null | undefined {
   if (val === null || val === "") return null; // explicit null → clear
   const n = Number(val);
   if (!isFinite(n) || n < 0) return undefined; // invalid → ignore
+  return n;
+}
+
+function parseIntField(val: unknown): number | null | undefined {
+  if (val === undefined) return undefined;
+  if (val === null || val === "") return null;
+  const n = Number(val);
+  if (!isFinite(n) || n < 0 || !Number.isInteger(n)) {
+    // Try rounding — modal input may pass floats
+    if (isFinite(n) && n >= 0) return Math.round(n);
+    return undefined;
+  }
   return n;
 }
 
@@ -71,6 +85,9 @@ export async function PATCH(
   const importPaymentFeePct = parseDecimalField(body.importPaymentFeePct);
   if (importPaymentFeePct !== undefined) data.importPaymentFeePct = importPaymentFeePct;
 
+  const onlineSalesPotential = parseIntField(body.onlineSalesPotential);
+  if (onlineSalesPotential !== undefined) data.onlineSalesPotential = onlineSalesPotential;
+
   if ("shippingMethodPref" in body) {
     const s = body.shippingMethodPref;
     if (s === null || s === "") {
@@ -98,6 +115,7 @@ export async function PATCH(
         customsRatePct: true,
         shippingMethodPref: true,
         importPaymentFeePct: true,
+        onlineSalesPotential: true,
       },
     });
 
@@ -109,6 +127,7 @@ export async function PATCH(
       customsRatePct: updated.customsRatePct != null ? Number(updated.customsRatePct) : null,
       shippingMethodPref: updated.shippingMethodPref,
       importPaymentFeePct: updated.importPaymentFeePct != null ? Number(updated.importPaymentFeePct) : null,
+      onlineSalesPotential: updated.onlineSalesPotential,
     });
   } catch (err) {
     if (

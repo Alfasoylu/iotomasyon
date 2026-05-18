@@ -7,7 +7,7 @@ This document defines the authorization model for IOTOMASYON.
 Phase 5 Status: **COMPLETE and PRODUCTION-ACTIVE** (deployed 2026-05-16)
 
 What is live:
-- 5 roles seeded: ADMIN, SALES, OPERATIONS, MARKETPLACE_OPERATOR, CUSTOM
+- 6 roles seeded: ADMIN, SALES, OPERATIONS, WAREHOUSE, MARKETPLACE_OPERATOR, CUSTOM
 - 62 permissions seeded across 12 categories
 - `resolvePermission()` 6-step engine enforced server-side on all routes and actions
 - Per-user override UI with Varsayılan → Verildi → Engellendi cycle
@@ -230,15 +230,16 @@ Purpose:
 Warehouse staff — visual product finding, stock counting, order picking.
 Mobile-first. No financial intelligence.
 
-Default access (proposed — Phase 55, NOT YET IMPLEMENTED):
+Default access (Phase 55, implemented — seeded in `prisma/seed.ts`):
 - products.read (name, image, barcode, SKU, location, stock qty only)
 - inventory.read
+- inventory.write
 - inventory.count
-- warehouse.read
-- warehouse.pick
-- warehouse.locate
+- categories.read
+- attributes.read
 - tasks.read
 - tasks.update
+- search.read
 
 Cannot access by default:
 - ANY financial field (cost, margin, ROI, profit, landed cost)
@@ -249,9 +250,12 @@ Cannot access by default:
 - User management
 
 Note:
-WAREHOUSE role does NOT exist in the current UserRole enum.
-It must be added as a new enum value with a Prisma migration before it can be assigned to users.
-Current warehouse-type users should use OPERATIONS role with manually restricted permissions until Phase 55 is implemented.
+WAREHOUSE enum value exists in `prisma/schema.prisma` (since Phase 55) and is
+seeded with 9 permissions. As of Codex audit P0 (2026-05-18), `lib/user-roles.ts`
+TS type + `ALL_USER_ROLES` array + admin user-management UI label/tone/color
+maps were also updated so WAREHOUSE can be assigned via `updateUserRoleAction`
+without "Geçersiz rol" rejection. Earlier docs noting "WAREHOUSE role does NOT
+exist" are obsolete.
 
 Important distinction from OPERATIONS:
 - OPERATIONS: coordinator role — task assignment, stock visibility, sipariş/iade coordination, can see operational metrics
@@ -612,6 +616,28 @@ conditionally hidden based on role. This is a UI-layer gap documented for Phase 
 Until Phase 57 is implemented, only users trusted with `products.update` (ADMIN, OPERATIONS)
 can access the product edit form. SALES and WAREHOUSE roles do not have `products.update`
 by default, which provides partial protection today.
+
+## Implemented finance visibility gate (Codex audit P0 — 2026-05-18)
+
+The product **list** and **detail** pages, the **marketplace profit** dashboard,
+and the warehouse → product detail navigation chain enforce `executive.read`
+for restricted financial / import data. This is enforced server-side via
+`lib/finance-visibility.ts` (`resolveFinanceGate(user) → { canViewFinance }`).
+
+For `/products/[id]`, non-finance viewers get a redacted product object —
+finance fields (`unitCostTry`, `sourceCostRmb`, `importUnitCostUsd`,
+`wholesalePriceTry`, `marketplacePriceTry`, `weightKg`, `customsRatePct`,
+`shippingMethodPref`, `marketplaceCommission*`, `shippingCost*`, `vatRate`,
+`paymentFeeRate`, `returnReserveRate`, `packagingCost`, `*SalesPotential`,
+`importDate`, `importQuantity`, `privateNote`) and `xmlData` + `marketplacePrices`
+relations are stripped before any rendering. `salesRecords`, `supplierLinks`,
+`importSnapshots`, and `platformPolicies` are not fetched at all when the
+viewer lacks `executive.read`.
+
+`/marketplace/profit` permission was upgraded from `marketplaceListings.read`
+to `executive.read`. The sidebar entry and the "📊 Kârlılık" call-to-action
+on `/marketplace` are gated the same way. `MARKETPLACE_OPERATOR` users no
+longer see profit / margin / ROI per listing.
 
 ---
 
