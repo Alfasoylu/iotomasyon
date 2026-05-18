@@ -955,6 +955,34 @@ Tamamlananlar:
 
 ---
 
+### ✓ Phase 79 — İthalatçı Görünümü (2026-05-18)
+
+**Neden:** Admin, ürün listesinden tek bakışta "hangi ürünü ne kadar alayım?" sorusunu yanıtlayamıyordu. Tüm ithalat ekonomisi (RMB maliyet → kargo → gümrük → Trendyol komisyon → kâr → ROI → stok günleri) ayrı sayfalarda dağınık hesaplanıyordu.
+
+Tamamlananlar:
+- `lib/importer-cost.ts`: Saf hesaplama kütüphanesi. Tüm ithalat ekonomisi formülleri tek yerden. AIR/SEA karar mantığı, marj, ROI, sağlık skoru, bütçe dağılımı
+- `app/api/products/importer-view/route.ts`: ADMIN-only endpoint. T30G velocity, exchange rate, cost/profit tümü server-side hesaplanıp `ImporterProduct[]` döner
+- `components/products/importer-view-client.tsx`: Fetch + useMemo bütçe dağılımı. 6 özet kart, parametreler paneli, filtre+sort, 16-sütun tablo
+- `app/(app)/products/page.tsx`: `?view=importer` param, admin-only toggle, koşullu render
+- Prisma generate: `marketplacePrices` ProductInclude'a eklendi (Phase 71'den beri stale client)
+- Schema değişikliği: YOK
+- tsc 0 hata ✓, commit 59433f9 ✓, READY dpl_AHpCzDDTJL5kEJr9tN1y5oSBbbu1 ✓, browser-verified 2026-05-18 ✓
+
+---
+
+### ✓ Phase 78 — Toplu İthalat Verisi Girişi — XLSX (2026-05-18)
+
+**Neden:** Ürün başına RMB maliyet, ağırlık, gümrük oranı alanlarını tek tek doldurmak yerine Excel şablonu indir-doldur-yükle akışı daha hızlı. CSV'nin Türkçe karakter bozulma sorunu SheetJS xlsx formatına geçişle çözüldü.
+
+Tamamlananlar:
+- `app/api/products/bulk-export/route.ts`: SheetJS `.xlsx` üretimi, koyu mavi başlık, sarı eksik hücre vurgusu
+- `app/api/products/bulk-import/route.ts`: SheetJS ile `.xlsx`/`.csv` parse, toplu Prisma update, boş=koru
+- `components/products/product-bulk-buttons.tsx`: Ürünler listesi header'ında inline indir/yükle butonları
+- `xlsx@^0.18.5` eklendi, `docs/CODEX_INSTRUCTIONS.md` stok mimarisi güncellendi
+- tsc clean ✓, commit eeb240f ✓, READY dpl_6Qh1AEHrAKf6GQpm5QumWdNgK6NA ✓
+
+---
+
 ## Anti-Scope Rules
 
 DO NOT start:

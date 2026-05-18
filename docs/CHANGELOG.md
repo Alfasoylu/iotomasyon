@@ -57,6 +57,44 @@ Durum: tsc 0 yeni hata ✓, commit 46da9ee ✓, READY dpl_2gbAExUU9G2ZgUVD799v9r
 
 ---
 
+### Phase 79 — İthalatçı Görünümü (2026-05-18)
+
+**Amaç:**
+Ürünler listesine admin-only "İthalatçı Görünümü" eklendi. Tüm ithalat ekonomisi (alış maliyeti, kargo, gümrük, kâr, ROI, stok günleri) tek tabloda hesaplanıp gösteriliyor. Bütçe dağılımı ve sipariş önerisi client-side çalışıyor — parametreler gerçek zamanlı değiştirilebilir.
+
+Değişiklikler:
+- **`lib/importer-cost.ts`** (YENİ): Saf hesaplama kütüphanesi — `calcImportCost()`, `calcRevenue()`, `calcProfit()`, `calcStockDays()`, `calcDecisionLabel()`, `calcHealthScore()`, `allocateBudget()`. Sabitler: AIR=8$/kg, SEA=1$/kg, SEA_AUTO≥5kg, AIR_CYCLE=120g, SEA_CYCLE=210g, komisyon=%20, sabit kesinti=₺150
+- **`app/api/products/importer-view/route.ts`** (YENİ): ADMIN-only API endpoint — rol kontrolü (ADMIN || isOwner), MonthlyExchangeRate çekme, T30G velocity (son 30g, iptal filtreli), tüm hesaplamalar server-side. `ImporterProduct[]` döner. Hassas alanlar (maliyet, kâr) non-admin'e asla gönderilmez
+- **`components/products/importer-view-client.tsx`** (YENİ): `/api/products/importer-view` fetch, `allocateBudget()` useMemo, 6 özet kart (stok maliyeti/aylık kâr/önerilen bütçe/ilk10 kâr/veri eksik/zarar eden), bütçe parametreleri paneli, filtre sekmesi (Sipariş Önerisi/Yüksek ROI/Zarar/Maliyet Eksik/T.Fiyat Yok/Düşük Stok), sort butonları, 16 sütunlu tablo
+- **`app/(app)/products/page.tsx`** (GÜNCELLENDİ): `?view=importer` param; admin-only view switcher toggle; `ImporterViewClient` koşullu render
+- **Prisma client**: `npx prisma generate` — `marketplacePrices` ilişkisi `ProductInclude`'a eklendi (Phase 71'den beri stale)
+- Schema değişikliği: YOK
+
+Doğrulanan değerler (browser):
+- 762 ürün / Sipariş Önerisi: 2 / Yüksek ROI: 19 / Zarar: 3 / Maliyet Eksik: 735
+- Stok maliyeti: $12,445 | Aylık kâr: $274 | Önerilen bütçe: $1,062
+
+Durum: tsc 0 hata ✓, commit 59433f9 ✓, READY dpl_AHpCzDDTJL5kEJr9tN1y5oSBbbu1 ✓, browser-verified 2026-05-18 ✓
+
+---
+
+### Phase 78 — Toplu İthalat Verisi Girişi — XLSX (2026-05-18)
+
+**Amaç:**
+Ürün başına ithalat alanlarını (sourceCostRmb, weightKg, customsRatePct, shippingMethodPref, importPaymentFeePct) toplu düzenlemek için Excel şablonu indir-doldur-yükle akışı. CSV'nin Türkçe karakter sorununu çözmek için xlsx formatına geçildi.
+
+Değişiklikler:
+- **`app/api/products/bulk-export/route.ts`**: SheetJS ile `.xlsx` üretimi — koyu mavi kalın başlık, eksik hücre sarı vurgusu, kolon genişlikleri, dondurulmuş satır
+- **`app/api/products/bulk-import/route.ts`**: SheetJS ile `.xlsx` ve `.csv` parse; toplu Prisma update; boş hücre → mevcut değer korunur
+- **`components/products/product-bulk-buttons.tsx`** (YENİ): Ürünler listesi header'ına inline ⬇/⬆ butonları; sonuç özeti (X güncellendi, Y atlandı)
+- **`app/(app)/products/page.tsx`**: `ProductBulkButtons` header'a eklendi
+- **`package.json`**: `xlsx@^0.18.5` eklendi
+- **`docs/CODEX_INSTRUCTIONS.md`**: Entegra ERP stok mimarisi belgelendi
+
+Durum: tsc clean ✓, commit eeb240f ✓, READY dpl_6Qh1AEHrAKf6GQpm5QumWdNgK6NA ✓, browser-verified ✓
+
+---
+
 ### Phase 70 — Trendyol Rapor Ay Drill-Down (2026-05-17)
 
 **Amaç:**
