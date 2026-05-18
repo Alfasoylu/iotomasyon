@@ -57,6 +57,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     permission: PERMISSIONS.CAMPAIGNS_READ,
     section: "CRM",
   },
+  // Phase 86 — Satış Fırsat Motoru
+  {
+    href: "/admin/sales-opportunities",
+    label: "Satış Fırsatları",
+    permission: PERMISSIONS.CUSTOMERS_READ,
+    section: "CRM",
+  },
 
   // ── Ürünler & Stok ────────────────────────────────────────────────────────
   {
