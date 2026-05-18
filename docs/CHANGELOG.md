@@ -9,6 +9,23 @@
 
 ## 2026-05
 
+### Phase 81 — İthalatçı Görünümü → Satın Alma Siparişi Köprüsü (2026-05-18)
+
+**Amaç:**
+İthalatçı görünümü "Sipariş Önerisi (N)" bilgisini gösteriyordu ama sipariş oluşturmak için ürün listesi bilgisini manuel kopyalamak gerekiyordu. URL tabanlı köprü ile tek tıkla sipariş formuna önerilen adetlerle geçiş sağlandı.
+
+Değişiklikler:
+- **`components/products/importer-view-client.tsx`**: Filtre çubuğuna "📦 Sipariş Oluştur (N)" emerald Link butonu eklendi; `recommendedQty > 0` olan ürünler `items=id1:qty1,id2:qty2` formatında URL param olarak encode edildi; IIFE pattern ile computed
+- **`app/(app)/admin/purchase-orders/new/page.tsx`**: `from=importer` branch; `importerItemMap` Map<string,number> URL param parse; `importerSuggestions` ProductData array (suggestedQty override); `suggestions = fromImporter ? importerSuggestions : ...`; emerald info banner "İthalatçı görünümünden N ürün sipariş önerisiyle yüklendi"
+- Schema değişikliği: YOK
+- Yeni API endpoint: YOK
+
+Browser test: `/products?view=importer` → "📦 Sipariş Oluştur (2)" buton tıklandı → `/admin/purchase-orders/new?from=importer&items=...` → banner "İthalatçı görünümünden 2 ürün sipariş önerisiyle yüklendi" ✓
+
+Durum: tsc 0 hata ✓ | commit 34837bc ✓ | READY dpl_CKkYeSr2f25L7rsGEBNaEsUccyqU ✓ | browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 71 — PRODUCT PROFIT ENGINE REFACTOR (2026-05-18)
 
 **Amaç:**

@@ -81,6 +81,18 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 81 — İthalatçı Görünümü → Satın Alma Siparişi Köprüsü (2026-05-18)
+
+**Neden:** İthalatçı görünümü "Sipariş Önerisi (N)" gösteriyordu ama sipariş oluşturmak için ürün listesini manuel kopyalamak gerekiyordu. Tek tıkla geçiş eksikti.
+
+Teslim edilenler:
+- `components/products/importer-view-client.tsx`: "📦 Sipariş Oluştur (N)" emerald Link butonu (recommendedQty>0 ürünler items param olarak)
+- `app/(app)/admin/purchase-orders/new/page.tsx`: `from=importer` + `items=id:qty` URL parse; `importerSuggestions` pre-fill; emerald info banner
+- Schema değişikliği: YOK; Yeni endpoint: YOK
+- tsc 0 hata ✓; commit 34837bc ✓; READY dpl_CKkYeSr2f25L7rsGEBNaEsUccyqU ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 80 — İthalatçı Görünümü Hızlı Düzenleme Modali (2026-05-18)
 
 **Neden:** 735 ürünün maliyet verisi eksikti. İthalatçı görünümü bu ürünleri tespit ediyordu ama düzenleme için her seferinde ürün detay sayfasına gitmek gerekiyordu. Tabloda inline quick-edit modal en hızlı veri giriş yöntemi.

@@ -58,6 +58,27 @@ const DECISION_STYLES: Record<DecisionLabel, string> = {
   "Veri Eksik":         "bg-slate-100 text-slate-400 border border-slate-100",
 };
 
+// ── Missing field chips ─────────────────────────────────────────────────────────
+// Returns a list of human-readable labels for every missing input field.
+// Shown as small red/amber chips below the decision badge.
+
+type MissingField = { label: string; tone: "red" | "amber" };
+
+function getMissingFields(p: {
+  sourceCostRmb: number | null;
+  weightKg: number | null;
+  hasTrendyolPrice: boolean;
+  t30g: number;
+  netProfitUsd?: number | null;
+}): MissingField[] {
+  const missing: MissingField[] = [];
+  if (!p.sourceCostRmb) missing.push({ label: "Alış RMB", tone: "red" });
+  if (!p.weightKg) missing.push({ label: "Ağırlık", tone: "red" });
+  if (!p.hasTrendyolPrice) missing.push({ label: "T. Fiyat", tone: "red" });
+  if (p.t30g === 0) missing.push({ label: "Satış Yok", tone: "amber" });
+  return missing;
+}
+
 function roiColor(roi: number | null): string {
   if (roi == null) return "text-slate-400";
   if (roi >= 100) return "text-emerald-600 font-semibold";
@@ -606,11 +627,26 @@ export function ImporterViewClient() {
                         )}
                       </td>
 
-                      {/* Decision label */}
+                      {/* Decision label + missing field detail */}
                       <td className="px-3 py-2 text-center">
-                        <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${DECISION_STYLES[p.decisionLabel]}`}>
-                          {p.decisionLabel}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${DECISION_STYLES[p.decisionLabel]}`}>
+                            {p.decisionLabel}
+                          </span>
+                          {/* Show which fields are missing — always, not only when "Veri Eksik" */}
+                          {getMissingFields(p).map((f) => (
+                            <span
+                              key={f.label}
+                              className={`inline-block rounded px-1.5 py-0 text-[9px] font-medium leading-4 ${
+                                f.tone === "red"
+                                  ? "bg-red-50 text-red-500 border border-red-100"
+                                  : "bg-amber-50 text-amber-600 border border-amber-100"
+                              }`}
+                            >
+                              {f.label}
+                            </span>
+                          ))}
+                        </div>
                       </td>
 
                       {/* Health score */}
