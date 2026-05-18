@@ -57,6 +57,28 @@ Durum: tsc 0 yeni hata ✓, commit 46da9ee ✓, READY dpl_2gbAExUU9G2ZgUVD799v9r
 
 ---
 
+### Phase 80 — İthalatçı Görünümü Hızlı Düzenleme Modali (2026-05-18)
+
+**Amaç:**
+İthalatçı görünümü tablosunda her ürün satırına ✏ düzenleme butonu eklendi. 735 maliyet-eksik ürünün verilerini teker teker hızlıca doldurmak için modal tabanlı quick-edit akışı.
+
+Değişiklikler:
+- **`app/api/products/[id]/import-fields/route.ts`** (YENİ): ADMIN-only PATCH endpoint — `sourceCostRmb`, `weightKg`, `customsRatePct`, `shippingMethodPref`, `importPaymentFeePct` kısmi güncelleme; `parseDecimalField()` undefined (atla) / null (temizle) / number (set); `shippingMethodPref` AIR/SEA/null doğrulaması; P2025 hata yönetimi
+- **`components/products/import-quick-edit.tsx`** (YENİ): Backdrop+panel modal — 5 input (kaynak maliyet, ağırlık, gümrük oranı, ödeme komisyonu) + 3 butonlu kargo tercihi toggle (Otomatik/Hava/Deniz); mevcut değerler hint bölümü; "Kaydediliyor…" yükleme durumu; hata görüntüleme
+- **`components/products/importer-view-client.tsx`** (GÜNCELLENDİ): `editingProduct` state, `handleQuickSave` useCallback (optimistik güncelleme — `hasCost` dahil); tablo header'ına ✏ sütunu (w-10); her satıra edit butonu; `ImportQuickEdit` modal koşullu render; colSpan 16→17
+
+Schema değişikliği: YOK
+
+Doğrulanan değerler (browser):
+- 762 ✏ butonu render edildi ✓
+- PAM8610 ürününde modal açıldı, mevcut değerler (¥5.2, 0.01kg) doğru gösteriliyor ✓
+- Gümrük=%20, ödeme=%3 girildi, "Kaydediliyor…" durumu gösterildi, modal kapandı ✓
+- Optimistik güncelleme çalıştı, tam re-fetch yok ✓
+
+Durum: tsc 0 hata ✓, commit 72d74b0 ✓, READY dpl_DxRQD6HVXLRbWXsR1s7JkWixmGy9 ✓, browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 79 — İthalatçı Görünümü (2026-05-18)
 
 **Amaç:**

@@ -81,6 +81,19 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 80 — İthalatçı Görünümü Hızlı Düzenleme Modali (2026-05-18)
+
+**Neden:** 735 ürünün maliyet verisi eksikti. İthalatçı görünümü bu ürünleri tespit ediyordu ama düzenleme için her seferinde ürün detay sayfasına gitmek gerekiyordu. Tabloda inline quick-edit modal en hızlı veri giriş yöntemi.
+
+Teslim edilenler:
+- `app/api/products/[id]/import-fields/route.ts`: ADMIN-only PATCH, 5 alan kısmi güncelleme, `parseDecimalField()` (undefined/null/number), shippingMethodPref doğrulaması
+- `components/products/import-quick-edit.tsx`: Modal UI — 5 input + kargo toggle + mevcut değerler hint + yükleme durumu
+- `components/products/importer-view-client.tsx`: ✏ buton sütunu (762 buton), `handleQuickSave` optimistik güncelleme, colSpan 16→17
+- Schema değişikliği: YOK
+- tsc 0 hata ✓; commit 72d74b0 ✓; READY dpl_DxRQD6HVXLRbWXsR1s7JkWixmGy9 ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 74 — Ürün Listesi Kârlılık Durum Filtresi (2026-05-18)
 
 **Neden:** Ürün listesi Net Kâr/Marj/ROI/Durum sütunlarını gösteriyordu ama "sadece zararlı ürünleri göster" veya "sadece veri eksik ürünleri göster" filtrelemesi yoktu.
