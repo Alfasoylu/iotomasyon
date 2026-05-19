@@ -51,6 +51,10 @@ export const productSchema = z.object({
   // Phase 31 — RMB-first import economics
   sourceCostRmb: z.string().trim(),
   importPaymentFeePct: z.string().trim(),
+  // GTİP kodları (3 adet; bazı ürünler farklı GTİP'lerle ithal edilebilir)
+  gtip1: z.string().trim(),
+  gtip2: z.string().trim(),
+  gtip3: z.string().trim(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

@@ -213,6 +213,10 @@ function normalizeProductData(input: ProductInput) {
     // Phase 31 — RMB-first import economics
     sourceCostRmb: emptyToNull(input.sourceCostRmb),
     importPaymentFeePct: emptyToNull(input.importPaymentFeePct),
+    // GTİP kodları (3 adet)
+    gtip1: emptyToNull(input.gtip1),
+    gtip2: emptyToNull(input.gtip2),
+    gtip3: emptyToNull(input.gtip3),
     // Phase 28: privateNote is intentionally omitted here.
     // It is saved exclusively via updatePrivateNoteAction (EXECUTIVE_READ required).
   };
@@ -251,6 +255,10 @@ function normalizeProductDataNonFinancial(input: ProductInput) {
     inventoryCountDate: emptyToNull(input.inventoryCountDate) ? new Date(input.inventoryCountDate) : null,
     inventoryCountStock: positiveIntOrNull(input.inventoryCountStock),
     xmlLocked: input.xmlLocked,
+    // GTİP kodları operasyonel (finansal değil) — non-finance kullanıcılar da düzenleyebilir
+    gtip1: emptyToNull(input.gtip1),
+    gtip2: emptyToNull(input.gtip2),
+    gtip3: emptyToNull(input.gtip3),
     // shippingCost / marketplaceCommission hidden passthrough fields are also omitted
     // Financial fields intentionally excluded:
     // unitCostTry, sellingPriceTry, wholesalePriceTry, marketplacePriceTry, packagingCost,

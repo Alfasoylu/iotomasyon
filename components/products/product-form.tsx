@@ -86,6 +86,10 @@ const emptyValues: ProductFormValues = {
   // Phase 31
   sourceCostRmb: "",
   importPaymentFeePct: "",
+  // GTİP kodları (3 adet)
+  gtip1: "",
+  gtip2: "",
+  gtip3: "",
 };
 
 export function ProductForm({
@@ -234,6 +238,41 @@ export function ProductForm({
           <input type="checkbox" className="h-4 w-4" {...form.register("isActive")} />
           Aktif ürün olarak listelensin
         </label>
+
+        {/* ── GTİP Kodları (Gümrük Tarife İstatistik Pozisyonu) ── */}
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+          <div className="flex items-baseline justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+              GTİP Kodları
+            </p>
+            <p className="text-[10px] text-slate-400">
+              Bazı ürünler birden fazla GTİP'le ithal edilebilir — 3 koda kadar girilebilir
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <Field label="GTİP 1" error={form.formState.errors.gtip1?.message}>
+              <Input
+                {...form.register("gtip1")}
+                placeholder="örn. 8525.81.00.00"
+                className="font-mono"
+              />
+            </Field>
+            <Field label="GTİP 2" error={form.formState.errors.gtip2?.message}>
+              <Input
+                {...form.register("gtip2")}
+                placeholder="opsiyonel ek kod"
+                className="font-mono"
+              />
+            </Field>
+            <Field label="GTİP 3" error={form.formState.errors.gtip3?.message}>
+              <Input
+                {...form.register("gtip3")}
+                placeholder="opsiyonel ek kod"
+                className="font-mono"
+              />
+            </Field>
+          </div>
+        </div>
       </Section>
 
       {/* ── Stok ve konum ── */}

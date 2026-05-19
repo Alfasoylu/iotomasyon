@@ -158,6 +158,10 @@ export default async function EditProductPage({
             // Phase 31
             sourceCostRmb: product.sourceCostRmb != null ? String(product.sourceCostRmb) : "",
             importPaymentFeePct: product.importPaymentFeePct != null ? String(product.importPaymentFeePct) : "",
+            // GTİP kodları
+            gtip1: product.gtip1 ?? "",
+            gtip2: product.gtip2 ?? "",
+            gtip3: product.gtip3 ?? "",
           }}
         />
       </Card>
