@@ -1,76 +1,79 @@
 /**
- * Hugging Face CLIP Image Embedding Client (Phase 91)
+ * CLIP Image Embedding Client (Phase 91)
  *
- * Görsel ürün araması için 512-boyutlu CLIP embedding üretir.
- * Provider: Hugging Face Inference API (free tier).
- * Model: openai/clip-vit-base-patch32 (image-feature-extraction pipeline).
+ * Görsel ürün araması için 512-boyutlu normalize edilmiş CLIP embedding
+ * üretir. iotomasyon/clip-embed Hugging Face Space'inde host edilen
+ * FastAPI servisini kullanır (CPU Basic / Free tier).
  *
- * Env: HF_TOKEN (Hugging Face Settings → Access Tokens → Read-level).
+ * Neden self-hosted Space?
+ *   HF Inference Providers'ın yeni router'ı `openai/clip-vit-base-patch32`
+ *   modelini "Model not supported by provider hf-inference" ile reddediyor;
+ *   yani HF Free Tier'da artık model çağrılamıyor. Bunun yerine kendi CPU
+ *   Space'imizde aynı modeli host ediyoruz — ücretsiz, sınırsız çağrı, tek
+ *   maliyet cold-start gecikmesi (~10-30s).
  *
- * Cold start (free tier): ilk sorgu 20-30s; sonraki 1-3s. Çağıran taraf
- * bu süreyi UI'da kullanıcıya açıkça gösterir.
+ * Env:
+ *   CLIP_SPACE_URL   — örn. https://iotomasyon-clip-embed.hf.space
+ *                      (sonunda / olmaz; /embed endpoint'ine POST yapılır)
+ *   HF_TOKEN         — Opsiyonel. Space PUBLIC ise gerekmez. Space PRIVATE
+ *                      ise Authorization: Bearer ${HF_TOKEN} ile gönderilir.
+ *
+ * Cold start: ilk request 10-30s (model lazy-load). Sonraki 1-3s.
  */
 
-// Yeni Inference Providers router'ı clip-vit-base-patch32'yi henüz
-// `hf-inference` provider'da barındırmıyor ("Model not supported by provider
-// hf-inference"). Eski api-inference endpoint'i hala bu modeli sunuyor;
-// onu primary yapıyoruz. Router primary olarak desteklenirse fallback diye
-// otomatik geçiş yaparız (404/400'de).
-const HF_ENDPOINT =
-  "https://api-inference.huggingface.co/models/openai/clip-vit-base-patch32";
-
-const FALLBACK_ENDPOINT =
-  "https://router.huggingface.co/hf-inference/models/openai/clip-vit-base-patch32/pipeline/image-feature-extraction";
+const SPACE_PATH = "/embed";
 
 export class HfEmbedError extends Error {
   constructor(
     public readonly status: number,
     public readonly body: string,
   ) {
-    super(`HF embed failed: ${status} ${body.slice(0, 200)}`);
+    super(`CLIP embed failed: ${status} ${body.slice(0, 200)}`);
     this.name = "HfEmbedError";
   }
 }
 
 /**
- * Tek görseli HF Inference üzerinden 512-dim CLIP embedding'ine çevirir.
- * `imageBuffer`: jpeg/png/webp binary. `contentType`: MIME tip.
- *
- * Cold-start durumunda HF API 503 "loading" döndürebilir; bu durumda
- * x-wait-for-model header ile yeniden dener.
+ * Tek görseli CLIP Space üzerinden 512-dim normalize edilmiş embedding'e
+ * çevirir. Cold-start için 60s'lik bir AbortController timeout uygular.
  */
 export async function embedImage(
   imageBuffer: Buffer | Uint8Array,
   contentType: string = "image/jpeg",
 ): Promise<number[]> {
-  const token = process.env.HF_TOKEN;
-  if (!token) throw new HfEmbedError(0, "HF_TOKEN env yok");
+  const base = process.env.CLIP_SPACE_URL?.replace(/\/$/, "");
+  if (!base) throw new HfEmbedError(0, "CLIP_SPACE_URL env yok");
 
   const body = imageBuffer instanceof Buffer ? imageBuffer : Buffer.from(imageBuffer);
+  const formData = new FormData();
+  formData.append(
+    "image",
+    new Blob([new Uint8Array(body)], { type: contentType }),
+    "image.jpg",
+  );
 
-  // İlk deneme: yeni Inference Providers router endpoint'i
-  let res = await fetch(HF_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": contentType,
-      "x-wait-for-model": "true",
-    },
-    body,
-  });
+  const headers: Record<string, string> = {};
+  if (process.env.HF_TOKEN) {
+    headers.Authorization = `Bearer ${process.env.HF_TOKEN}`;
+  }
 
-  // 404/400 fallback: diğer endpoint'i dene (model+provider eşleşmesi
-  // bir tarafta yoksa diğeri çoğunlukla destekler)
-  if (res.status === 404 || res.status === 400) {
-    res = await fetch(FALLBACK_ENDPOINT, {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 55_000);
+  let res: Response;
+  try {
+    res = await fetch(`${base}${SPACE_PATH}`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": contentType,
-        "x-wait-for-model": "true",
-      },
-      body,
+      headers,
+      body: formData,
+      signal: controller.signal,
     });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new HfEmbedError(504, "CLIP Space cevap vermedi (55s timeout — cold start?)");
+    }
+    throw new HfEmbedError(0, err instanceof Error ? err.message : "fetch failed");
+  } finally {
+    clearTimeout(timer);
   }
 
   if (!res.ok) {
@@ -78,27 +81,19 @@ export async function embedImage(
     throw new HfEmbedError(res.status, text);
   }
 
-  const data = await res.json();
-  // Yanıt şekli olası varyantlar:
-  //   [0.1, 0.2, ...]                 (düz array, 512 float)
-  //   [[0.1, 0.2, ...]]               (batch boyutu 1 ile sarılı)
-  //   { embedding: [...] }            (bazı pipeline'lar)
-  const arr = Array.isArray(data)
-    ? Array.isArray(data[0]) ? data[0] : data
-    : data?.embedding ?? null;
-
-  if (!Array.isArray(arr) || arr.length !== 512) {
+  const data = (await res.json()) as { embedding?: number[]; dim?: number };
+  const vec = data?.embedding;
+  if (!Array.isArray(vec) || vec.length !== 512) {
     throw new HfEmbedError(
       res.status,
-      `Beklenmeyen yanıt boyutu: ${Array.isArray(arr) ? arr.length : typeof arr}`,
+      `Beklenmeyen yanıt: dim=${vec?.length ?? "n/a"}`,
     );
   }
-  return arr as number[];
+  return vec;
 }
 
 /**
  * pgvector için string formatına çevirir: '[0.1,0.2,...]'.
- * SQL'e $queryRaw ile cast: 'literal::vector'.
  */
 export function toVectorLiteral(embedding: number[]): string {
   return `[${embedding.join(",")}]`;
