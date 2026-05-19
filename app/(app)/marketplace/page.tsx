@@ -39,6 +39,33 @@ const STATUS_COLORS: Record<string, string> = {
   UNKNOWN: "bg-amber-100 text-amber-700",
 };
 
+// 14 kanal display adları (MarketplaceSalesRecord.channel için)
+const CHANNEL_NAMES: Record<string, string> = {
+  TRENDYOL: "Trendyol",
+  HEPSIBURADA: "Hepsiburada",
+  N11: "N11",
+  IDEASOFT: "Ideasoft",
+  GG: "GittiGidiyor",
+  PAZARAMA: "Pazarama",
+  EPTT: "EPTT",
+  MIRAKL_KOCTAS: "Koçtaş",
+  IDEFIX: "İdefix",
+  AMAZON: "Amazon",
+  CICEKSEPETI: "Çiçeksepeti",
+  TEMU: "Temu",
+  MIRAKL_TEKNOSA: "Teknosa",
+  SHOPPHP: "ShopPHP",
+  MANUAL: "Manuel",
+};
+
+function fmtTry(n: number): string {
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
 export default async function MarketplacePage() {
   await requirePermission(PERMISSIONS.MARKETPLACE_LISTINGS_READ);
   const user = await requireUser();
@@ -47,6 +74,48 @@ export default async function MarketplacePage() {
     checkPermission(user, PERMISSIONS.MARKETPLACE_LISTINGS_WRITE),
   ]);
 
+  // ── Bu ay kanal performansı (MarketplaceSalesRecord + TrendyolSalesRecord union) ──
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  type ChannelStats = { channel: string; orders: number; revenueTry: number; quantity: number };
+  const channelStatsRaw = await prisma.$queryRaw<
+    Array<{ channel: string; orders: bigint; revenue: number; qty: bigint }>
+  >`
+    SELECT
+      channel,
+      COUNT(DISTINCT "orderNumber")::bigint AS orders,
+      COALESCE(SUM("totalAmountTry"), 0)::numeric AS revenue,
+      SUM(quantity)::bigint AS qty
+    FROM (
+      SELECT channel, "orderNumber", "totalAmountTry", quantity, status, "orderDate"
+        FROM "MarketplaceSalesRecord"
+      UNION ALL
+      SELECT 'TRENDYOL' AS channel, "orderId" AS "orderNumber", "totalPriceTry" AS "totalAmountTry",
+        quantity, status, "orderDate"
+        FROM "TrendyolSalesRecord"
+      UNION ALL
+      SELECT 'HEPSIBURADA' AS channel, "orderId" AS "orderNumber", "totalPriceTry" AS "totalAmountTry",
+        quantity, status, "orderDate"
+        FROM "HepsiburadaSalesRecord"
+    ) c
+    WHERE "orderDate" >= ${startOfMonth}
+      AND (status IS NULL OR (status NOT ILIKE '%iptal%' AND status NOT ILIKE '%iade%' AND status NOT ILIKE '%cancel%'))
+    GROUP BY channel
+    ORDER BY revenue DESC NULLS LAST
+  `;
+
+  const channelStats: ChannelStats[] = channelStatsRaw.map((r) => ({
+    channel: r.channel,
+    orders: Number(r.orders),
+    revenueTry: Number(r.revenue),
+    quantity: Number(r.qty),
+  }));
+
+  const totalOrdersThisMonth = channelStats.reduce((s, c) => s + c.orders, 0);
+  const totalRevenueThisMonth = channelStats.reduce((s, c) => s + c.revenueTry, 0);
+
+  // ── Listings (eski davranış) ──
   const listings = await prisma.marketplaceListing.findMany({
     orderBy: [{ platform: "asc" }, { createdAt: "desc" }],
     include: {
@@ -68,9 +137,9 @@ export default async function MarketplacePage() {
     <div className="space-y-8">
       <PageHeader
         icon={ShoppingCart}
-        breadcrumb={[{ label: "Pazaryerleri" }, { label: "Listeleme Kaydı" }]}
-        title="Listeleme Kaydı"
-        subtitle={`Ürünlerin hangi pazaryerinde listelendiği. Toplam ${listings.length} kayıt.`}
+        breadcrumb={[{ label: "Pazaryerleri" }]}
+        title="Pazaryerleri Genel Bakış"
+        subtitle={`14 kanaldaki bu ay satış performansı + listeleme kaydı. Toplam ${listings.length} listeleme aktif.`}
         actions={
           <>
             {canSeeProfit && (
@@ -90,6 +159,98 @@ export default async function MarketplacePage() {
         }
       />
 
+      {/* ── Bu Ay Kanal Performansı ─────────────────────────────────────── */}
+      {channelStats.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Bu Ay Kanal Performansı
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {totalOrdersThisMonth.toLocaleString("tr-TR")} sipariş · {fmtTry(totalRevenueThisMonth)} ciro · {channelStats.length} aktif kanal
+              </p>
+            </div>
+          </div>
+
+          <Card className="overflow-hidden p-0">
+            <table className="min-w-full divide-y divide-slate-100 text-sm">
+              <thead className="bg-slate-50 text-left text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                <tr>
+                  <th className="px-5 py-3 font-semibold">Kanal</th>
+                  <th className="px-5 py-3 text-right font-semibold">Sipariş</th>
+                  <th className="px-5 py-3 text-right font-semibold">Adet</th>
+                  <th className="px-5 py-3 text-right font-semibold">Ciro</th>
+                  <th className="px-5 py-3 text-right font-semibold">Pay</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 bg-white">
+                {channelStats.map((c) => {
+                  const pct = totalRevenueThisMonth > 0 ? (c.revenueTry / totalRevenueThisMonth) * 100 : 0;
+                  const channelHref =
+                    c.channel === "TRENDYOL" ? "/marketplace/trendyol" :
+                    c.channel === "HEPSIBURADA" ? "/admin/hepsiburada" :
+                    "/marketplace/profit";
+                  return (
+                    <tr key={c.channel} className="hover:bg-slate-50/50">
+                      <td className="px-5 py-3">
+                        <Link
+                          href={channelHref}
+                          className="text-sm font-medium text-slate-900 hover:text-slate-600 hover:underline"
+                        >
+                          {CHANNEL_NAMES[c.channel] ?? c.channel}
+                        </Link>
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-sm text-slate-700 tabular-nums">
+                        {c.orders.toLocaleString("tr-TR")}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-sm text-slate-500 tabular-nums">
+                        {c.quantity.toLocaleString("tr-TR")}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-sm font-semibold text-slate-900 tabular-nums">
+                        {fmtTry(c.revenueTry)}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <div className="h-1.5 w-16 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-500"
+                              style={{ width: `${Math.min(100, pct).toFixed(1)}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-[11px] text-slate-600 tabular-nums w-10 text-right">
+                            %{pct.toFixed(0)}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot className="bg-slate-50 text-sm font-semibold">
+                <tr>
+                  <td className="px-5 py-2.5 text-slate-700">Toplam</td>
+                  <td className="px-5 py-2.5 text-right font-mono tabular-nums">
+                    {totalOrdersThisMonth.toLocaleString("tr-TR")}
+                  </td>
+                  <td className="px-5 py-2.5 text-right font-mono tabular-nums text-slate-500">
+                    {channelStats.reduce((s, c) => s + c.quantity, 0).toLocaleString("tr-TR")}
+                  </td>
+                  <td className="px-5 py-2.5 text-right font-mono tabular-nums">
+                    {fmtTry(totalRevenueThisMonth)}
+                  </td>
+                  <td className="px-5 py-2.5 text-right text-xs text-slate-400">%100</td>
+                </tr>
+              </tfoot>
+            </table>
+          </Card>
+          <p className="mt-2 text-[10px] text-slate-400">
+            Veri kaynağı: MarketplaceSalesRecord + TrendyolSalesRecord + HepsiburadaSalesRecord birleşik. İptal/iade hariç. Tarih ≥ {startOfMonth.toLocaleDateString("tr-TR")}.
+          </p>
+        </section>
+      )}
+
+      {/* ── Listeleme Kaydı (eski davranış) ─────────────────────────────── */}
       {listings.length === 0 ? (
         <Card className="p-12 text-center space-y-3">
           <p className="text-slate-500 text-sm">Henüz pazar yeri listlemesi eklenmemiş.</p>
