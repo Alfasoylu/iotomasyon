@@ -393,6 +393,81 @@ export default async function TrendyolCatalogPage() {
             </Card>
           )}
 
+          {/* Eksik Listeme — stoğumuzda var ama Trendyol'da yok */}
+          {missingListings.length > 0 && (
+            <Card className="overflow-hidden p-0 border-amber-200">
+              <div className="border-b border-amber-100 px-6 py-4 flex items-center gap-3 bg-amber-50/40">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+                <h2 className="text-base font-semibold text-amber-900">
+                  Eksik Listeme — Stoğumuzda Var, Trendyol&apos;da Yok
+                </h2>
+                <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                  {missingListings.length} ürün
+                </span>
+              </div>
+              <div className="px-6 py-3 text-xs text-amber-700 bg-amber-50/40 border-b border-amber-100">
+                Bu ürünler aktif stoğumuzda olduğu hâlde Trendyol katalogunda
+                bulunamadı (barkod veya SKU eşleşmesi yok). Daha önce satılmış
+                olanlar listeden düşmüş olabilir — bu yüzden lifetime satışına
+                göre sıralandı.
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                      <th className="px-6 py-3 text-left">Ürün</th>
+                      <th className="px-4 py-3 text-left">SKU</th>
+                      <th className="px-4 py-3 text-left">Barkod</th>
+                      <th className="px-4 py-3 text-left">Marka</th>
+                      <th className="px-4 py-3 text-right">Stok</th>
+                      <th className="px-4 py-3 text-right" title="Tüm zamanlar Trendyol satış adedi">
+                        Lifetime Satış
+                      </th>
+                      <th className="px-4 py-3 text-left">Notlar</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {missingListings.slice(0, 500).map((r) => (
+                      <tr
+                        key={r.productId}
+                        className={r.lifetimeSold > 0 ? "bg-red-50/40 hover:bg-red-50" : "hover:bg-slate-50"}
+                      >
+                        <td className="px-6 py-3 max-w-[260px] truncate">
+                          <Link href={`/products/${r.productId}`} className="font-medium text-slate-900 hover:underline">
+                            {r.productName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.sku}</td>
+                        <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.barcode ?? "—"}</td>
+                        <td className="px-4 py-3 text-xs text-slate-500">{r.brand ?? "—"}</td>
+                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{r.stockQuantity}</td>
+                        <td className={`px-4 py-3 text-right tabular-nums text-sm ${r.lifetimeSold > 0 ? "font-bold text-red-700" : "text-slate-400"}`}>
+                          {r.lifetimeSold > 0 ? r.lifetimeSold : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          {r.lifetimeSold > 0 ? (
+                            <span className="rounded bg-red-100 px-1.5 py-0.5 text-red-700 font-medium">
+                              ⚠ Daha önce satılmış
+                            </span>
+                          ) : (
+                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-500">
+                              Listemeden eksik
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {missingListings.length > 500 && (
+                <div className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500 bg-slate-50/30">
+                  İlk 500 ürün gösteriliyor (toplam {missingListings.length}).
+                </div>
+              )}
+            </Card>
+          )}
+
           {/* Empty state */}
           {trendyolProducts.length === 0 && (
             <Card className="p-8 text-center text-sm text-slate-400">
