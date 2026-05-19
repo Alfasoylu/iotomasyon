@@ -101,8 +101,42 @@ export default async function QuotesPage({
         </form>
       </Card>
 
-      {/* Table */}
-      <Card className="overflow-hidden">
+      {/* Mobile card list (md altı) */}
+      {quotes.length > 0 && (
+        <div className="md:hidden space-y-2">
+          {quotes.map((quote) => (
+            <Link
+              key={quote.id}
+              href={`/quotes/${quote.id}`}
+              className="block rounded-2xl border border-slate-200 bg-white p-4 transition active:bg-slate-50"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-mono text-sm font-semibold text-slate-900">
+                    {quote.quoteNumber}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-600 truncate">
+                    {quote.customer.name}
+                  </p>
+                </div>
+                <Badge tone={getQuoteStatusTone(quote.status)}>
+                  {formatQuoteStatus(quote.status)}
+                </Badge>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                <span>{formatDateTime(quote.createdAt)}</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {Number(quote.total).toLocaleString("tr-TR", { minimumFractionDigits: 2 })}{" "}
+                  {formatQuoteCurrencyMode(quote.currencyMode ?? "TRY")}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop tablo (md+) */}
+      <Card className="hidden md:block overflow-hidden">
         {quotes.length === 0 ? (
           <div className="p-10 text-center text-sm text-slate-500">
             Teklif bulunamadı.

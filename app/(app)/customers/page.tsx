@@ -109,7 +109,65 @@ export default async function CustomersPage({
         </Card>
       ) : null}
 
-      <Card className="overflow-hidden">
+      {/* Mobile card list (md altı) */}
+      {databaseAvailable && customers.length > 0 && (
+        <div className="md:hidden space-y-2">
+          {customers.map((customer) => (
+            <Link
+              key={customer.id}
+              href={`/customers/${customer.id}`}
+              className="block rounded-2xl border border-slate-200 bg-white p-4 transition active:bg-slate-50"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-slate-900 truncate">
+                    {customer.name}
+                  </p>
+                  {customer.company && (
+                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                      {customer.company}
+                    </p>
+                  )}
+                </div>
+                <Badge tone={getCustomerStatusTone(customer.status)}>
+                  {formatCustomerStatus(customer.status)}
+                </Badge>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                {customer.phone && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400">Tel</p>
+                    <p className="mt-0.5 font-medium">{customer.phone}</p>
+                  </div>
+                )}
+                {customer.city && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400">Şehir</p>
+                    <p className="mt-0.5 font-medium">{customer.city}</p>
+                  </div>
+                )}
+                {customer.customerType && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400">Tip</p>
+                    <p className="mt-0.5 font-medium">
+                      {CUSTOMER_TYPE_LABELS[customer.customerType]}
+                    </p>
+                  </div>
+                )}
+                {customer.owner?.name && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-400">Sorumlu</p>
+                    <p className="mt-0.5 font-medium truncate">{customer.owner.name}</p>
+                  </div>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop tablo (md+) */}
+      <Card className="hidden md:block overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.25em] text-slate-500">
