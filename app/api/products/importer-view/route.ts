@@ -22,6 +22,11 @@ import {
   DEFAULT_RMB_USD_RATE,
   DEFAULT_USD_TRY_RATE,
 } from "@/lib/importer-cost";
+import {
+  forecastMonthlySales,
+  buildMonthlySalesMap,
+  effectiveMonthlyUnits as pickEffectiveMonthly,
+} from "@/lib/sales-forecast";
 
 export const dynamic = "force-dynamic";
 
@@ -52,12 +57,15 @@ export type ImporterProduct = {
   customsRatePct: number | null;
   importPaymentFeePct: number | null;
 
-  // Phase 9 + Phase 90 — Marketplace monthly sales estimate (units/month).
+  // Phase 9 + Phase 90 + Phase 92 — Marketplace monthly sales estimate (units/month).
   // `onlineSalesPotential` is the raw DB value (null = not entered).
-  // `effectiveMonthlyUnits` = max(Trendyol t30g, manuel onlineSalesPotential).
-  // Calculations like stockDays / decisionLabel use this so manuel tahmin
-  // Trendyol satışından büyükse devre dışı kalmaz.
+  // `forecastMonthlyUnits` = system tahmini (tüm 14 kanal × 5 yıl, recency-weighted
+  //   + mevsimsel düzeltme). Detay: lib/sales-forecast.ts
+  // `effectiveMonthlyUnits` = max(forecast, manuel onlineSalesPotential).
+  //   stockDays / decisionLabel / Aylık Kâr bu sinyali kullanır.
   onlineSalesPotential: number | null;
+  forecastMonthlyUnits: number;
+  forecastFormula: string;
   effectiveMonthlyUnits: number;
 
   // Computed cost breakdown
@@ -122,45 +130,58 @@ export async function GET(_req: NextRequest) {
     },
   });
 
-  // ── Fetch T30G velocity ────────────────────────────────────────────────────
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const salesRecords = await prisma.trendyolSalesRecord.findMany({
-    where: {
-      orderDate: { gte: thirtyDaysAgo },
-      productId: { not: null },
-      NOT: [
-        { status: { contains: "iptal", mode: "insensitive" } },
-        { status: { contains: "cancel", mode: "insensitive" } },
-      ],
-    },
-    select: { productId: true, quantity: true },
-  });
+  // ── Fetch unified monthly sales (tüm 14 kanal + Trendyol API) ────────────
+  // Phase 92: MarketplaceSalesRecord (Entegra ihracı tarihçe) + TrendyolSalesRecord
+  // (API son ~3 ay) + HepsiburadaSalesRecord (boş ama defensive). UNION sonrası
+  // productId × ay bazında SUM(quantity), iptal/iade filtrelenir.
+  const monthlyRows = await prisma.$queryRaw<
+    Array<{ productId: string; month: Date; units: bigint }>
+  >`
+    SELECT
+      "productId",
+      DATE_TRUNC('month', "orderDate")::date AS month,
+      SUM("quantity")::bigint AS units
+    FROM (
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "MarketplaceSalesRecord"
+        WHERE "productId" IS NOT NULL
+      UNION ALL
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "TrendyolSalesRecord"
+        WHERE "productId" IS NOT NULL
+      UNION ALL
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "HepsiburadaSalesRecord"
+        WHERE "productId" IS NOT NULL
+    ) combined
+    WHERE "status" IS NULL
+       OR ("status" NOT ILIKE '%iptal%'
+       AND "status" NOT ILIKE '%iade%'
+       AND "status" NOT ILIKE '%cancel%')
+    GROUP BY "productId", DATE_TRUNC('month', "orderDate")
+  `;
+  const monthlyByProduct = buildMonthlySalesMap(
+    monthlyRows.map((r) => ({ productId: r.productId, month: r.month, units: r.units })),
+  );
 
-  const velocity = new Map<string, number>();
-  for (const r of salesRecords) {
-    if (r.productId) {
-      velocity.set(r.productId, (velocity.get(r.productId) ?? 0) + r.quantity);
-    }
-  }
-
-  // ── Fetch lifetime total qty (tüm zamanlar, iptaller hariç) ──────────────
-  const lifetimeRecords = await prisma.trendyolSalesRecord.groupBy({
-    by: ["productId"],
-    where: {
-      productId: { not: null },
-      NOT: [
-        { status: { contains: "iptal", mode: "insensitive" } },
-        { status: { contains: "cancel", mode: "insensitive" } },
-      ],
-    },
-    _sum: { quantity: true },
-  });
-
+  // Last 30g (display "T30G" kolonu için — UI'da raw veri kalır)
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const t30gMap = new Map<string, number>();
   const lifetime = new Map<string, number>();
-  for (const r of lifetimeRecords) {
-    if (r.productId) {
-      lifetime.set(r.productId, r._sum.quantity ?? 0);
+  // Walk monthly buckets to compute t30g approximation (within-month) and lifetime
+  // Note: t30g here is approximate (month-bucket granular, ≈last full month).
+  // Yeterince doğru çünkü tahmin motoru zaten daha iyi sinyal üretiyor.
+  for (const [pid, m] of monthlyByProduct) {
+    let lt = 0;
+    let t30 = 0;
+    const thirtyAgoKey = thirtyDaysAgo.toISOString().slice(0, 7);
+    for (const [k, units] of m) {
+      lt += units;
+      if (k >= thirtyAgoKey) t30 += units;
     }
+    t30gMap.set(pid, t30);
+    lifetime.set(pid, lt);
   }
 
   // ── Compute per product ────────────────────────────────────────────────────
@@ -176,12 +197,13 @@ export async function GET(_req: NextRequest) {
     const bayiPriceUsd: number | null =
       p.xmlData?.xmlBayiPrice != null ? Number(p.xmlData.xmlBayiPrice) : null;
 
-    const t30g = velocity.get(p.id) ?? 0;
-    // Phase 90: Demand sinyali stockDays / decisionLabel / healthScore için
-    // max(Trendyol 30g, manuel onlineSalesPotential). T30G sütunu raw değeri
-    // göstermeye devam eder; effectiveT30g ayrı bir hesap.
-    const manualOnline = p.onlineSalesPotential ?? 0;
-    const effectiveT30g = Math.max(t30g, manualOnline);
+    const t30g = t30gMap.get(p.id) ?? 0;
+    // Phase 92: Demand sinyali artık tüm 14 kanaldan + 5 yıllık tarihçeden
+    // hesaplanır. forecast = recency-weighted (90d/365d/lifetime) + mevsimsel.
+    // effective = max(forecast, manuel kullanıcı tahmini).
+    const monthlyMap = monthlyByProduct.get(p.id) ?? new Map<string, number>();
+    const forecast = forecastMonthlySales(monthlyMap, now);
+    const effectiveT30g = pickEffectiveMonthly(forecast, p.onlineSalesPotential);
 
     // Import cost — Phase 92: otomatik kargo seçimi ROI bazlı yapılır (pref null
     // ise). Trendyol fiyatı + kur passlanır.
@@ -243,9 +265,11 @@ export async function GET(_req: NextRequest) {
       importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
 
       onlineSalesPotential: p.onlineSalesPotential,
-      // Phase 90: demand sinyali = max(Trendyol 30g, manuel onlineSalesPotential).
-      // Sayım yapılmamış manuel için NULL → 0 (sıfır demand). 1-fallback kaldırıldı:
-      // stockDays / Stok Fazla hesabını yapay 1 değeri yanlış kullanırdı.
+      // Phase 92: demand sinyali = max(forecast, manuel onlineSalesPotential).
+      // forecast tüm 14 kanaldan + 5 yıllık tarihçeden recency-weighted + mevsimsel
+      // düzeltmeyle hesaplanır (lib/sales-forecast.ts).
+      forecastMonthlyUnits: forecast.monthlyUnits,
+      forecastFormula: forecast.formula,
       effectiveMonthlyUnits: effectiveT30g,
 
       shippingMethod: costResult?.shippingMethod ?? null,

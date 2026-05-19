@@ -26,6 +26,11 @@ import {
   DEFAULT_USD_TRY_RATE,
   DEFAULT_RMB_USD_RATE,
 } from "@/lib/importer-cost";
+import {
+  forecastMonthlySales,
+  buildMonthlySalesMap,
+  effectiveMonthlyUnits as pickEffectiveMonthly,
+} from "@/lib/sales-forecast";
 
 export const dynamic = "force-dynamic";
 
@@ -110,61 +115,86 @@ export default async function SermayeSaglikPage() {
     },
   });
 
-  // Son 30g (current period)
-  const now = Date.now();
-  const since30 = new Date(now - 30 * 24 * 60 * 60 * 1000);
-  const since60 = new Date(now - 60 * 24 * 60 * 60 * 1000);
+  // Phase 92: Unified monthly buckets (tüm 14 kanal + Trendyol API)
+  const nowDate = new Date();
+  const since30 = new Date(nowDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const since60 = new Date(nowDate.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-  const sales30 = await prisma.trendyolSalesRecord.groupBy({
-    by: ["productId"],
-    where: {
-      productId: { not: null },
-      orderDate: { gte: since30 },
-      NOT: [
-        { status: { contains: "iptal", mode: "insensitive" } },
-        { status: { contains: "cancel", mode: "insensitive" } },
-      ],
-    },
-    _sum: { quantity: true },
-  });
+  const monthlyRows = await prisma.$queryRaw<
+    Array<{ productId: string; month: Date; units: bigint }>
+  >`
+    SELECT
+      "productId",
+      DATE_TRUNC('month', "orderDate")::date AS month,
+      SUM("quantity")::bigint AS units
+    FROM (
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "MarketplaceSalesRecord" WHERE "productId" IS NOT NULL
+      UNION ALL
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "TrendyolSalesRecord" WHERE "productId" IS NOT NULL
+      UNION ALL
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "HepsiburadaSalesRecord" WHERE "productId" IS NOT NULL
+    ) combined
+    WHERE "status" IS NULL
+       OR ("status" NOT ILIKE '%iptal%'
+       AND "status" NOT ILIKE '%iade%'
+       AND "status" NOT ILIKE '%cancel%')
+    GROUP BY "productId", DATE_TRUNC('month', "orderDate")
+  `;
+  const monthlyByProduct = buildMonthlySalesMap(
+    monthlyRows.map((r) => ({ productId: r.productId, month: r.month, units: r.units })),
+  );
+
+  // Son 30g + önceki 30g + lifetime — daily-precision için TrendyolSalesRecord
+  // + MarketplaceSalesRecord union'ından tarihe göre sayım
+  const dailyRows = await prisma.$queryRaw<
+    Array<{ productId: string; units: bigint; period: string }>
+  >`
+    SELECT
+      "productId",
+      SUM("quantity")::bigint AS units,
+      CASE
+        WHEN "orderDate" >= ${since30} THEN 'curr'
+        WHEN "orderDate" >= ${since60} AND "orderDate" < ${since30} THEN 'prev'
+        ELSE 'older'
+      END AS period
+    FROM (
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "MarketplaceSalesRecord" WHERE "productId" IS NOT NULL
+      UNION ALL
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "TrendyolSalesRecord" WHERE "productId" IS NOT NULL
+      UNION ALL
+      SELECT "productId", "orderDate", "quantity", "status"
+        FROM "HepsiburadaSalesRecord" WHERE "productId" IS NOT NULL
+    ) combined
+    WHERE ("status" IS NULL OR ("status" NOT ILIKE '%iptal%' AND "status" NOT ILIKE '%iade%' AND "status" NOT ILIKE '%cancel%'))
+      AND "orderDate" >= ${since60}
+    GROUP BY "productId", period
+  `;
   const t30Map = new Map<string, number>();
-  for (const r of sales30) if (r.productId) t30Map.set(r.productId, r._sum.quantity ?? 0);
-
-  // Önceki 30g (30-60 gün arası — karşılaştırma için)
-  const salesPrev30 = await prisma.trendyolSalesRecord.groupBy({
-    by: ["productId"],
-    where: {
-      productId: { not: null },
-      orderDate: { gte: since60, lt: since30 },
-      NOT: [
-        { status: { contains: "iptal", mode: "insensitive" } },
-        { status: { contains: "cancel", mode: "insensitive" } },
-      ],
-    },
-    _sum: { quantity: true },
-  });
   const tPrev30Map = new Map<string, number>();
-  for (const r of salesPrev30) if (r.productId) tPrev30Map.set(r.productId, r._sum.quantity ?? 0);
+  for (const r of dailyRows) {
+    if (r.period === "curr") t30Map.set(r.productId, Number(r.units));
+    else if (r.period === "prev") tPrev30Map.set(r.productId, Number(r.units));
+  }
 
-  const lifetimeRows = await prisma.trendyolSalesRecord.groupBy({
-    by: ["productId"],
-    where: {
-      productId: { not: null },
-      NOT: [
-        { status: { contains: "iptal", mode: "insensitive" } },
-        { status: { contains: "cancel", mode: "insensitive" } },
-      ],
-    },
-    _sum: { quantity: true },
-  });
   const lifetimeMap = new Map<string, number>();
-  for (const r of lifetimeRows) if (r.productId) lifetimeMap.set(r.productId, r._sum.quantity ?? 0);
+  for (const [pid, m] of monthlyByProduct) {
+    let lt = 0;
+    for (const v of m.values()) lt += v;
+    lifetimeMap.set(pid, lt);
+  }
 
   const enriched: ProductLite[] = products.map((p) => {
     const t30g = t30Map.get(p.id) ?? 0;
     const prevT30g = tPrev30Map.get(p.id) ?? 0;
-    const manualOnline = p.onlineSalesPotential ?? 0;
-    const effectiveMonthlyUnits = Math.max(t30g, manualOnline);
+    // Phase 92: forecast tüm 14 kanaldan + 5 yıllık tarihçeden
+    const monthlyMap = monthlyByProduct.get(p.id) ?? new Map<string, number>();
+    const forecast = forecastMonthlySales(monthlyMap, nowDate);
+    const effectiveMonthlyUnits = pickEffectiveMonthly(forecast, p.onlineSalesPotential);
 
     const trendyolPriceTry =
       p.marketplacePrices[0]?.priceTry != null
