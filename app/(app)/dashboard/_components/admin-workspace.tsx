@@ -16,8 +16,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { KpiCard, type KpiTone } from "@/components/layout/kpi-card";
 import { SectionCard } from "@/components/layout/section-card";
+import { SmartRecsCard } from "@/components/dashboard/smart-recs-card";
 import { formatCurrencyAmount, formatPercentValue } from "@/lib/quote-utils";
 import { formatDateTime } from "@/lib/utils";
+import type { SmartRec } from "@/lib/smart-recommendations";
 import type {
   AdminEnhancedData,
   CapitalSnapshot,
@@ -49,6 +51,7 @@ export async function AdminWorkspace({
   alerts,
   enhanced,
   capital,
+  smartRecs,
 }: {
   user: { name: string };
   stats: DashboardStats;
@@ -56,6 +59,7 @@ export async function AdminWorkspace({
   alerts: OperationalAlerts;
   enhanced: AdminEnhancedData;
   capital: CapitalSnapshot;
+  smartRecs: SmartRec[];
 }) {
   const now = new Date();
   const greeting = computeGreeting(now);
@@ -175,7 +179,10 @@ export async function AdminWorkspace({
         </Link>
       )}
 
-      {/* ── 3) DB durumu uyarısı ──────────────────────────────────────── */}
+      {/* ── 3) Akıllı Öneriler kartı ──────────────────────────────────── */}
+      {smartRecs.length > 0 && <SmartRecsCard recs={smartRecs} />}
+
+      {/* ── 4) DB durumu uyarısı ──────────────────────────────────────── */}
       {!stats.databaseAvailable && (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
           Veritabanı bağlantısı şu anda kullanılamıyor. Pano yüklendi ancak canlı

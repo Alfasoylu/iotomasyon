@@ -353,6 +353,12 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "Sistem",
   },
+  {
+    href: "/yardim/glosari",
+    label: "Glosari & Terimler",
+    iconKey: "book",
+    section: "Sistem",
+  },
 ];
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
