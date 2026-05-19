@@ -9,6 +9,20 @@
 
 ## 2026-05
 
+### Phase 88 — Satış Fırsatları İnline Durum Güncellemesi (2026-05-18)
+
+**Amaç:**
+Phase 86'da oluşturulan satış fırsatları sayfası read-only'di. Genişletilmiş müşteri satırlarında Durum ve Öncelik değiştirmek için müşteri detay sayfasına gitmek gerekiyordu. İnline güncelleme bu adımı kaldırıyor.
+
+Değişiklikler:
+- **`lib/actions/update-interest-action.ts`** (YENİ): `updateInterestAction` server action — CUSTOMERS_UPDATE gated; `ProductInterest.status` ve `priority` (ve opsiyonel `followUpAt`) güncelleme; revalidatePath `/admin/sales-opportunities` + `/dashboard`
+- **`app/(app)/admin/sales-opportunities/update-interest-form.tsx`** (YENİ): `"use client"` — `useTransition`; Durum (7 seçenek) + Öncelik (4 seçenek) `<select>` kutuları; `onChange` anında `updateInterestAction` çağırır; `router.refresh()` ile tablo güncellenir; ayrı kaydet butonu yok
+- **`app/(app)/admin/sales-opportunities/page.tsx`** (DEĞİŞTİ): statik Durum/Öncelik badge sütunları → tek "Durum / Öncelik" sütununda `<UpdateInterestForm>` ile değiştirildi
+- Schema değişikliği: YOK
+- tsc 0 hata ✓; commit cd6c72d ✓; READY dpl_ERpfaSBeqxZdAbBgvKLHpMBx892P ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### Phase 87 — Ekip Görev Panosu (2026-05-18)
 
 **Amaç:**

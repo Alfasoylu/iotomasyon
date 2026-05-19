@@ -615,6 +615,84 @@ by default, which provides partial protection today.
 
 ---
 
+# Owner / Importer Review Addendum (2026-05-18)
+
+This addendum overrides any ambiguity:
+
+IOTOMASYON is being used to help the owner choose the right products to import
+under limited capital.
+
+That means import intelligence is not generic admin data.
+It is owner-private strategic intelligence.
+
+## Hard business rule
+
+Non-owner staff may help operate inventory, marketplace listings, counts, and
+data hygiene.
+
+They must not be able to infer:
+- which product has the best capital growth profile
+- which supplier terms are strategically superior
+- what landed cost bands the owner is targeting
+- which products are capital traps vs core import candidates
+
+## Therefore
+
+The following must be treated as owner-private by default:
+- import score / opportunity score
+- payback days
+- capital velocity
+- expected 90-day import profit
+- supplier commercial terms
+- owner import ranking pages
+- snapshot history explaining why the owner would fund product A over B
+
+## Approved visibility model
+
+- `ADMIN / OWNER`
+  - full import intelligence
+  - supplier commercial terms
+  - capital allocation ranking
+  - import snapshots and explainability
+
+- `OPERATIONS`
+  - stock quantities
+  - minimum stock
+  - lead time only if needed operationally
+  - never landed cost, ROI, import score, supplier deal quality
+
+- `WAREHOUSE`
+  - locate, count, pick
+  - zero import or finance visibility
+
+- `SALES`
+  - customer/sales workflow only
+  - no import intelligence
+
+- `MARKETPLACE_OPERATOR`
+  - listing/order/return operations only
+  - no landed cost or capital ranking
+
+## Permission architecture target
+
+`executive.read` is now considered too broad for long-term safety.
+
+Target split:
+- `import.read`
+- `import.manage`
+- `capital.read`
+- `capital.approve`
+- `productFinance.read`
+- `productFinance.write`
+- `suppliers.read`
+- `suppliers.manageCommercialTerms`
+- `executive.kpiRead`
+
+Until this split is implemented, every new import-related surface must be
+documented as `ADMIN / OWNER only`.
+
+---
+
 # Role Coverage Analysis (2026-05-17)
 
 ## Gap Summary

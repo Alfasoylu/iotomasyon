@@ -81,6 +81,18 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 88 — Satış Fırsatları İnline Durum Güncellemesi (2026-05-18)
+
+**Neden:** Phase 86'daki satış fırsatları sayfası read-only'di. Durum/öncelik değiştirmek için müşteri detayına gitmek gerekiyordu — bu da CRM iş akışını kesiyor. İnline güncelleme döngüyü kapatıyor.
+
+Teslim edilenler:
+- `lib/actions/update-interest-action.ts`: `updateInterestAction` — CUSTOMERS_UPDATE gated; status/priority/followUpAt patch; revalidatePath x2
+- `app/(app)/admin/sales-opportunities/update-interest-form.tsx`: `"use client"` — onChange tetikli anlık güncelleme, useTransition, router.refresh()
+- `app/(app)/admin/sales-opportunities/page.tsx`: "Durum / Öncelik" birleşik sütun → UpdateInterestForm
+- tsc 0 hata ✓; commit cd6c72d ✓; READY dpl_ERpfaSBeqxZdAbBgvKLHpMBx892P ✓; browser-verified 2026-05-18 ✓
+
+---
+
 ### ✓ Phase 87 — Ekip Görev Panosu (2026-05-18)
 
 **Neden:** Role Coverage Gap #5: `tasks.assign` permission vardı ama koordinatörün ekip görev durumunu göreceği ve görev atayacağı bir UI yoktu.

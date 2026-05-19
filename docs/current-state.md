@@ -242,6 +242,25 @@ Current meaning:
 - no route/profile-aware freight default hierarchy
 - no import decision snapshot governance
 - procurement engine now implemented (Phases 19–22)
+- no canonical owner-grade import opportunity score
+- demand truth is not fully normalized across capital / procurement / import decisions / import cockpit
+- landed-cost truth still risks divergence across pages and helper modules
+- current investment score remains stock-bound, not incremental-capital-bound
+- `executive.read` remains too broad for owner-private import secrecy
+- import intelligence exists, but the owner-facing "single war room" is not yet defined
+- role-based non-admin zero-leak audit for import/finance surfaces is not yet complete
+
+### Planned Remediation (documentation defined, not yet implemented)
+
+- Phase 80: canonical `ImportOpportunityScore` specification
+- Phase 81: shared effective-demand and demand-confidence resolver
+- Phase 82: landed-cost truth consolidation under one helper layer
+- Phase 83: incremental capital ranking engine for `/admin/capital` and related views
+- Phase 84: decision governance, explainability, and snapshot v2
+- Phase 85: owner import war room definition
+- Phase 86: split `executive.read` into owner-private import/finance permissions
+- Phase 87: zero-leak audit across routes, forms, APIs, dashboards, and exports
+- Phase 88: Claude execution pack for owner/importer objective alignment
 
 ---
 

@@ -630,6 +630,73 @@ Avoid these mistakes:
 
 ---
 
+## Planned Execution — Import Score Consolidation
+
+Goal:
+- turn the current multi-score import tooling into a single owner-grade
+  capital-growth decision system
+
+Why this must be phased:
+- the data exists, but the semantics do not yet align
+- replacing score logic directly in UI pages without a spec would create more drift
+- cost truth, demand truth, and ranking truth must be unified in that order
+
+### Phase 80 — Spec First
+
+Do first:
+- write canonical `ImportOpportunityScore` spec
+- define sub-metrics and explainability contract
+- define which existing score remains for which purpose
+
+Do not do yet:
+- schema change
+- UI rewrites
+- page-level formula edits
+
+Completion signal:
+- engineers can implement the new score without debating semantics screen by screen
+
+### Phase 81 — Demand First, Not Ranking First
+
+Do next:
+- centralize `effectiveDemand`
+- normalize actual-online plus manual-B2B handling
+- propagate a shared demand provenance and confidence output
+
+Reason:
+- ranking built on inconsistent demand truth will be wrong even if the formula is good
+
+### Phase 82 — Cost Truth Before Capital Truth
+
+Do next:
+- remove ad-hoc landed-cost helpers from pages
+- route all screens through a single canonical cost engine
+
+Reason:
+- capital ranking on inconsistent cost inputs is structurally untrustworthy
+
+### Phase 83 — Replace Primary Ranking
+
+Do next:
+- build incremental-capital ranking engine
+- switch `/admin/capital` primary sort from stock-bound investment score to
+  new-order capital efficiency
+
+Reason:
+- this is the point where the owner actually sees different buy priorities
+
+### Phase 84 — Governance and Drift Control
+
+Do last:
+- extend snapshot model if needed
+- add score explainability surfaces
+- make screen responsibilities explicit and non-overlapping
+
+Reason:
+- once the score affects spend decisions, auditability matters as much as arithmetic
+
+---
+
 ## AI Execution Rules
 
 Codex / AI rules:

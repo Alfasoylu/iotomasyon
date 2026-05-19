@@ -1455,6 +1455,130 @@ no month-over-month trend view. "How did our Trendyol business perform last
 month vs. the month before?" is unanswered. This page surfaces monthly
 aggregates from existing TrendyolSalesRecord + TrendyolReturnRecord data.
 
+---
+
+## Planned Import Scoring Hardening (Post-Phase 79)
+
+The system now has enough data to calculate import profitability, but it does
+not yet have a single owner-grade capital allocation score.
+
+Current state:
+- `investmentScore` is useful for stock ROI visibility
+- `import decision score` is useful for air/sea import economics
+- `healthScore` is useful for importer workflow hygiene
+- `import-cockpit` signal is useful for marketplace reality checks
+
+These are not the same decision.
+
+The missing architecture is a canonical owner metric that answers:
+"Which products should receive the next tranche of import capital if the goal is
+to grow cash fastest with acceptable confidence and stock risk?"
+
+### Phase 80 — Canonical Import Opportunity Score
+
+Purpose:
+- define the single score used for capital growth ranking
+
+Must include:
+- incremental capital required
+- expected profit over a fixed horizon
+- payback speed
+- real demand confidence
+- return-rate penalty
+- stock coverage penalty
+- lead-time penalty
+
+Must not include:
+- generic data-completeness points as if they were profit
+- current-stock distortion that hides strong out-of-stock products
+
+### Phase 81 — Demand Normalization Layer
+
+Purpose:
+- unify manual demand and real Trendyol velocity into one channel-aware
+  demand resolver
+
+Rules:
+- online demand should prefer realized marketplace velocity when matched data exists
+- B2B channels remain separate and manual until real sources exist
+- every downstream screen must consume the same effective demand output
+
+### Phase 82 — Landed-Cost Truth Consolidation
+
+Purpose:
+- remove local cost formulas from pages and enforce one canonical landed-cost engine
+
+Rules:
+- capital allocation, procurement, importer view, import decisions, and executive
+  reporting must resolve cost from the same helper set
+- freight override hierarchy must stay governable and documented
+
+### Phase 83 — Incremental Capital Ranking
+
+Purpose:
+- replace stock-locked ROI ranking with new-order capital efficiency ranking
+
+Rules:
+- ranking should optimize capital velocity, not just unit margin
+- MOQ, lead time, return rate, and target stock coverage must influence ranking
+- very low-volume products must not dominate purely because of attractive unit margin
+
+### Phase 84 — Decision Governance and Snapshot v2
+
+Purpose:
+- make the new score explainable, auditable, and stable across screens
+
+Rules:
+- each screen should have one clear job
+- snapshot history must record demand source, confidence, price source, return rate,
+  and key assumptions
+- the owner must be able to explain why a product ranked above another at the time
+  of decision
+
+### Phase 85 — Owner Import War Room
+
+Purpose:
+- define the single owner-facing command surface for import capital decisions
+
+Rules:
+- all other import screens become supporting analytical surfaces
+- only the war room expresses the final ranked answer to
+  "which products deserve fresh import capital now?"
+- this page is owner-private by default
+
+### Phase 86 — Import Secrecy Permission Split
+
+Purpose:
+- stop using one broad `executive.read` permission for all strategic intelligence
+
+Rules:
+- import strategy, capital ranking, supplier commercial terms, and product finance
+  must become separable permission domains
+- non-admin roles must not infer owner strategy through UI or API payloads
+
+### Phase 87 — Zero-Leak Financial Surface Audit
+
+Purpose:
+- verify that non-admin roles cannot access import/finance truth through
+  forms, dashboards, API responses, exports, or indirect UI clues
+
+Rules:
+- "hidden in UI" is not enough
+- absence from DOM and absence from response payload are both required
+
+### Phase 88 — Claude Owner-Mode Execution Pack
+
+Purpose:
+- keep implementation work aligned with the owner/importer objective:
+  limited capital, fast cash rotation, protected strategy
+
+Rules:
+- every future import-intelligence task must explicitly state:
+  - owner objective
+  - secrecy rule
+  - role exposure rule
+  - acceptance criteria
+
 Context:
 All data is already in DB. No new sync, no schema change needed.
 TrendyolSalesRecord: orderDate, totalPriceTry, quantity, status, productId.
