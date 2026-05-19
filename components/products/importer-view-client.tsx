@@ -380,17 +380,26 @@ export function ImporterViewClient() {
   }, [products, allocationMap, params.targetStockDays]);
 
   // Summary stats
+  // Phase 90: Aylık talep sinyali = effectiveMonthlyUnits = max(Trendyol t30g, manuel onlineSalesPotential).
+  // sipariş hesaplayıcı (allocateBudget) ile aynı semantik; özet kartı da aynı kaynağı kullanmalı.
   const summary = useMemo(() => {
     const withCost = enriched.filter((p) => p.totalCostUsd != null);
     const totalStockCostUsd = withCost.reduce((s, p) => s + (p.totalCostUsd ?? 0) * p.stockQuantity, 0);
-    const totalPotentialProfit = enriched.reduce((s, p) => s + Math.max(0, (p.netProfitUsd ?? 0) * p.t30g), 0);
+    const totalPotentialProfit = enriched.reduce(
+      (s, p) => s + Math.max(0, (p.netProfitUsd ?? 0) * p.effectiveMonthlyUnits),
+      0,
+    );
     const orderedItems = enriched.filter((p) => p.recommendedQty > 0);
     const recommendedBudget = orderedItems.reduce((s, p) => s + p.budgetCost, 0);
     const top10Profit = enriched
-      .filter((p) => (p.netProfitUsd ?? 0) > 0 && p.t30g > 0)
-      .sort((a, b) => (b.netProfitUsd ?? 0) * b.t30g - (a.netProfitUsd ?? 0) * a.t30g)
+      .filter((p) => (p.netProfitUsd ?? 0) > 0 && p.effectiveMonthlyUnits > 0)
+      .sort(
+        (a, b) =>
+          (b.netProfitUsd ?? 0) * b.effectiveMonthlyUnits -
+          (a.netProfitUsd ?? 0) * a.effectiveMonthlyUnits,
+      )
       .slice(0, 10)
-      .reduce((s, p) => s + (p.netProfitUsd ?? 0) * p.t30g, 0);
+      .reduce((s, p) => s + (p.netProfitUsd ?? 0) * p.effectiveMonthlyUnits, 0);
     const missingData = enriched.filter((p) => !p.hasCost || !p.hasTrendyolPrice).length;
     const losing = enriched.filter((p) => p.hasCost && p.hasTrendyolPrice && (p.netProfitUsd ?? 0) <= 0).length;
     return { totalStockCostUsd, totalPotentialProfit, recommendedBudget, top10Profit, missingData, losing };
@@ -470,9 +479,9 @@ export function ImporterViewClient() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
           { label: "Stok Maliyeti", value: fmtUsd(summary.totalStockCostUsd, 0), sub: "toplam envanter", color: "slate" },
-          { label: "Aylık Potansiyel Kâr", value: fmtUsd(summary.totalPotentialProfit, 0), sub: "T30G bazlı", color: "emerald" },
+          { label: "Aylık Potansiyel Kâr", value: fmtUsd(summary.totalPotentialProfit, 0), sub: "max(T30G, manuel aylık)", color: "emerald" },
           { label: "Önerilen Bütçe", value: fmtUsd(summary.recommendedBudget, 0), sub: "sipariş için", color: "blue" },
-          { label: "İlk 10 Ürün Kârı", value: fmtUsd(summary.top10Profit, 0), sub: "aylık", color: "teal" },
+          { label: "İlk 10 Ürün Kârı", value: fmtUsd(summary.top10Profit, 0), sub: "aylık · max(T30G, manuel)", color: "teal" },
           { label: "Veri Eksik", value: String(summary.missingData), sub: "ürün", color: summary.missingData > 0 ? "amber" : "slate" },
           { label: "Zarar Eden", value: String(summary.losing), sub: "ürün", color: summary.losing > 0 ? "red" : "slate" },
         ].map(({ label, value, sub, color }) => (
@@ -926,8 +935,9 @@ export function ImporterViewClient() {
 
       {/* Footer note */}
       <p className="text-[10px] text-slate-400 text-center">
-        Kur: Veritabanındaki en son aylık kur kullanılır · Komisyon: %20 + 250₺ üzeri siparişte 150₺
-        · AIR döngüsü: 120g · SEA döngüsü: 210g · ≥{5}kg → Otomatik Deniz
+        Kur: Veritabanındaki en son aylık kur · Komisyon %20 · Kargo dilimi (Pazaryeri kanonik): &lt;$5→$1.2, $5–7.5→$2, &gt;$7.5→$3.3
+        · Aylık talep: max(T30G, manuel onlineSalesPotential)
+        · AIR döngüsü 120g · SEA döngüsü 210g · ≥{5}kg → Otomatik Deniz
       </p>
     </div>
   );

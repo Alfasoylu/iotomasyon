@@ -1,5 +1,9 @@
 /**
- * Phase 11C — Import Decision Engine
+ * Phase 11C — Import Decision Engine (kargo dilimi fallback dahil)
+ *
+ * NOT: AIR vs SEA senaryo karşılaştırması bu motorun spesifik amacı. Tek
+ * bir senaryo için cost+revenue+profit hesaplamak istiyorsanız
+ * `lib/pricing-engine.ts:computeProductEconomics()` daha sade.
  *
  * Replicates the Excel workbook (Top.ürünler sheet) business logic in TypeScript.
  *
@@ -19,6 +23,8 @@
  *                     BUY_SMALL if > 1.4,
  *                     DO_NOT_BUY otherwise
  */
+
+import { calcShippingFromPriceTiers } from "./marketplace-pricing";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -240,7 +246,14 @@ export function calculateImportDecision(
   const sellingPriceTry = input.sellingPriceTry!;
   const monthlyUnits = input.monthlyUnits!;
   const commissionPct = input.commissionPct ?? 0;
-  const domesticShippingTry = input.domesticShippingTry ?? 0;
+  // Kargo fallback: caller explicit değer verirse onu, yoksa Pazaryeri kanonik
+  // formülü (calcShippingFromPriceTiers) kullan. Eski davranış: null → 0 →
+  // kargo kesintisi tamamen atlanıyordu. Bu, <$5–7.5 dilimindeki ürünlerde
+  // netRevenue'ı şişiriyordu (Phase XX bug fix).
+  const domesticShippingTry =
+    input.domesticShippingTry != null
+      ? input.domesticShippingTry
+      : calcShippingFromPriceTiers(sellingPriceTry, input.usdTryRate);
 
   // Net revenue in USD
   const netRevenueUsd =
