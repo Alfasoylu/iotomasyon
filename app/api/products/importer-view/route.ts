@@ -42,6 +42,8 @@ export type ImporterProduct = {
   stockQuantity: number;
   minimumStock: number;
   t30g: number;
+  /** Trendyol'da bu ürünün tüm zamanlardaki toplam satış adedi (iptaller hariç) */
+  lifetimeTotalQty: number;
 
   // Import inputs
   sourceCostRmb: number | null;
@@ -141,6 +143,26 @@ export async function GET(_req: NextRequest) {
     }
   }
 
+  // ── Fetch lifetime total qty (tüm zamanlar, iptaller hariç) ──────────────
+  const lifetimeRecords = await prisma.trendyolSalesRecord.groupBy({
+    by: ["productId"],
+    where: {
+      productId: { not: null },
+      NOT: [
+        { status: { contains: "iptal", mode: "insensitive" } },
+        { status: { contains: "cancel", mode: "insensitive" } },
+      ],
+    },
+    _sum: { quantity: true },
+  });
+
+  const lifetime = new Map<string, number>();
+  for (const r of lifetimeRecords) {
+    if (r.productId) {
+      lifetime.set(r.productId, r._sum.quantity ?? 0);
+    }
+  }
+
   // ── Compute per product ────────────────────────────────────────────────────
   const result: ImporterProduct[] = products.map((p) => {
     // Resolve Trendyol price TRY
@@ -209,6 +231,7 @@ export async function GET(_req: NextRequest) {
       stockQuantity: p.stockQuantity,
       minimumStock: p.minimumStock,
       t30g,
+      lifetimeTotalQty: lifetime.get(p.id) ?? 0,
 
       sourceCostRmb: p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null,
       weightKg: p.weightKg != null ? Number(p.weightKg) : null,

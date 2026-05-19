@@ -111,7 +111,7 @@ function profitColor(p: number | null): string {
 
 function recalcProduct(
   p: ImporterProduct,
-  patch: Partial<Pick<ImporterProduct, "sourceCostRmb" | "weightKg" | "customsRatePct" | "importPaymentFeePct" | "shippingMethodPref">>,
+  patch: Partial<Pick<ImporterProduct, "sourceCostRmb" | "weightKg" | "customsRatePct" | "importPaymentFeePct" | "shippingMethodPref" | "onlineSalesPotential">>,
   rates: { rmbUsdRate: number; usdTryRate: number },
 ): ImporterProduct {
   const m = { ...p, ...patch };
@@ -237,7 +237,10 @@ function InlineEditNumber({
 
 // ── Sort options ────────────────────────────────────────────────────────────────
 
-type SortKey = "roi" | "margin" | "profit" | "t30g" | "order" | "health" | "cost" | "stock_days" | "stock" | "weight";
+type SortKey =
+  | "roi" | "margin" | "profit" | "t30g" | "order" | "health"
+  | "cost" | "stock_days" | "stock" | "weight"
+  | "lifetime" | "monthly_profit" | "price";
 
 type FilterKey =
   | "all" | "order" | "missing_cost" | "no_trendyol" | "no_bayi"
@@ -271,6 +274,7 @@ export function ImporterViewClient() {
       weight: "weightKg",
       customs: "customsRatePct",
       payFee: "importPaymentFeePct",
+      monthly: "onlineSalesPotential",
     };
     const apiField = fieldMap[field] ?? field;
 
@@ -298,6 +302,7 @@ export function ImporterViewClient() {
   }, [rates]);
 
   // Optimistic update after modal quick-edit save
+  // NOT: onlineSalesPotential modal'dan çıkarıldı — tabloda inline edit
   const handleQuickSave = useCallback((
     id: string,
     updated: {
@@ -306,19 +311,10 @@ export function ImporterViewClient() {
       customsRatePct: number | null;
       shippingMethodPref: string | null;
       importPaymentFeePct: number | null;
-      onlineSalesPotential: number | null;
     },
   ) => {
     setProducts((prev) =>
-      prev.map((p) => {
-        if (p.id !== id) return p;
-        const next = recalcProduct(p, updated, rates);
-        return {
-          ...next,
-          onlineSalesPotential: updated.onlineSalesPotential,
-          effectiveMonthlyUnits: updated.onlineSalesPotential ?? 1,
-        };
-      }),
+      prev.map((p) => (p.id !== id ? p : recalcProduct(p, updated, rates))),
     );
   }, [rates]);
 
@@ -432,6 +428,14 @@ export function ImporterViewClient() {
         case "stock_days": diff = (a.stockDays ?? Infinity) - (b.stockDays ?? Infinity); break;
         case "stock":      diff = a.stockQuantity - b.stockQuantity; break;
         case "weight":     diff = (a.weightKg ?? -Infinity) - (b.weightKg ?? -Infinity); break;
+        case "lifetime":   diff = a.lifetimeTotalQty - b.lifetimeTotalQty; break;
+        case "monthly_profit": {
+          const ap = (a.netProfitUsd ?? 0) * a.effectiveMonthlyUnits;
+          const bp = (b.netProfitUsd ?? 0) * b.effectiveMonthlyUnits;
+          diff = ap - bp;
+          break;
+        }
+        case "price":      diff = (a.trendyolPriceTry ?? -Infinity) - (b.trendyolPriceTry ?? -Infinity); break;
       }
       return sortAsc ? diff : -diff;
     });
@@ -606,11 +610,14 @@ export function ImporterViewClient() {
           <SortBtn k="roi" label="ROI" />
           <SortBtn k="margin" label="Marj" />
           <SortBtn k="profit" label="Kâr" />
+          <SortBtn k="monthly_profit" label="Aylık Kâr" />
           <SortBtn k="t30g" label="T30G" />
+          <SortBtn k="lifetime" label="Toplam Satış" />
           <SortBtn k="order" label="Sipariş" />
           <SortBtn k="stock" label="Stok" />
           <SortBtn k="stock_days" label="Stok Gün" />
           <SortBtn k="weight" label="Ağırlık" />
+          <SortBtn k="price" label="T. Fiyat" />
           <SortBtn k="cost" label="Maliyet" />
           <SortBtn k="health" label="Skor" />
         </div>
@@ -629,7 +636,26 @@ export function ImporterViewClient() {
                 <th className="px-3 py-3 text-right whitespace-nowrap">T. Fiyat (₺)</th>
                 <th className="px-3 py-3 text-right whitespace-nowrap">Bayi ($)</th>
                 <th className="px-3 py-3 text-right">Stok</th>
-                <th className="px-3 py-3 text-right">T30G</th>
+                <th
+                  className="px-3 py-3 text-right whitespace-nowrap cursor-pointer hover:text-white"
+                  onClick={() => handleSort("lifetime")}
+                  title="Tüm zamanlar Trendyol toplam satış adedi (iptaller hariç)"
+                >
+                  Toplam {sortKey === "lifetime" ? (sortAsc ? "↑" : "↓") : "↕"}
+                </th>
+                <th
+                  className="px-3 py-3 text-right cursor-pointer hover:text-white"
+                  onClick={() => handleSort("t30g")}
+                  title="Son 30 gün Trendyol satış adedi"
+                >
+                  T30G {sortKey === "t30g" ? (sortAsc ? "↑" : "↓") : "↕"}
+                </th>
+                <th
+                  className="px-3 py-3 text-right whitespace-nowrap text-blue-300"
+                  title="Pazaryeri Aylık Satış Potansiyeli (manuel tahmin) — tıkla → düzenle"
+                >
+                  Aylık Pot. ✎
+                </th>
                 {/* Editable import input columns */}
                 <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Alış (¥) ✎</th>
                 <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Ağırlık (kg) ✎</th>
@@ -640,7 +666,20 @@ export function ImporterViewClient() {
                 <th className="px-3 py-3 text-right">Marj %</th>
                 <th className="px-3 py-3 text-right">ROI %</th>
                 <th className="px-3 py-3 text-right whitespace-nowrap">Stok Gün</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">Sipariş (Adet)</th>
+                <th
+                  className="px-3 py-3 text-right whitespace-nowrap cursor-pointer hover:text-white"
+                  onClick={() => handleSort("order")}
+                  title="Sipariş adedi'ne göre sırala"
+                >
+                  Sipariş (Adet) {sortKey === "order" ? (sortAsc ? "↑" : "↓") : "↕"}
+                </th>
+                <th
+                  className="px-3 py-3 text-right whitespace-nowrap cursor-pointer hover:text-white"
+                  onClick={() => handleSort("monthly_profit")}
+                  title="Net Kâr × Aylık Satış (= effectiveMonthlyUnits × netProfitUsd)"
+                >
+                  Aylık Kâr ($) {sortKey === "monthly_profit" ? (sortAsc ? "↑" : "↓") : "↕"}
+                </th>
                 <th className="px-3 py-3 text-center">Durum</th>
                 <th className="px-3 py-3 text-center whitespace-nowrap cursor-pointer hover:text-white" onClick={() => handleSort("health")} title="Skor'a göre sırala">
                   Skor {sortKey === "health" ? (sortAsc ? "↑" : "↓") : "↕"}
@@ -651,7 +690,7 @@ export function ImporterViewClient() {
             <tbody className="divide-y divide-slate-50 bg-white">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={19} className="px-4 py-12 text-center text-slate-400 text-sm">
+                  <td colSpan={22} className="px-4 py-12 text-center text-slate-400 text-sm">
                     Bu filtre için ürün bulunamadı.
                   </td>
                 </tr>
@@ -731,11 +770,36 @@ export function ImporterViewClient() {
                         </span>
                       </td>
 
+                      {/* Lifetime total satış (Trendyol) */}
+                      <td className="px-3 py-2 text-right">
+                        <span
+                          className={`font-mono text-xs ${p.lifetimeTotalQty > 0 ? "text-slate-700 font-semibold" : "text-slate-300"}`}
+                          title="Trendyol'da tüm zamanlardaki toplam satış adedi (iptaller hariç)"
+                        >
+                          {p.lifetimeTotalQty > 0 ? p.lifetimeTotalQty : "—"}
+                        </span>
+                      </td>
+
                       {/* T30G */}
                       <td className="px-3 py-2 text-right">
                         <span className={`font-mono text-xs ${p.t30g > 0 ? "text-emerald-600 font-semibold" : "text-slate-300"}`}>
                           {p.t30g > 0 ? p.t30g : "—"}
                         </span>
+                      </td>
+
+                      {/* Pazaryeri Aylık Satış Potansiyeli — inline editable */}
+                      <td className="px-3 py-2 text-right">
+                        <InlineEditNumber
+                          value={p.onlineSalesPotential}
+                          productId={p.id}
+                          field="monthly"
+                          placeholder="—"
+                          decimals={0}
+                          editState={inlineEdit}
+                          setEditState={setInlineEdit}
+                          onSave={saveInlineField}
+                          isSaving={inlineSaving === `${p.id}:monthly`}
+                        />
                       </td>
 
                       {/* RMB cost — inline editable */}
@@ -858,6 +922,24 @@ export function ImporterViewClient() {
                         ) : (
                           <span className="text-[10px] text-slate-300">—</span>
                         )}
+                      </td>
+
+                      {/* Aylık Kâr ($) = effectiveMonthlyUnits × netProfitUsd */}
+                      <td className="px-3 py-2 text-right">
+                        {(() => {
+                          const m = (p.netProfitUsd ?? 0) * p.effectiveMonthlyUnits;
+                          if (p.netProfitUsd == null || p.effectiveMonthlyUnits === 0) {
+                            return <span className="text-[10px] text-slate-300">—</span>;
+                          }
+                          return (
+                            <span
+                              className={`font-mono text-xs font-semibold ${m > 0 ? "text-emerald-700" : m < 0 ? "text-red-500" : "text-slate-500"}`}
+                              title={`Net kâr ${fmtUsd(p.netProfitUsd)} × ${p.effectiveMonthlyUnits} aylık satış`}
+                            >
+                              {fmtUsd(m, 0)}
+                            </span>
+                          );
+                        })()}
                       </td>
 
                       {/* Decision label + missing field detail */}
