@@ -459,6 +459,8 @@ model Product {
   // Hepsiburada (paralel mimari — read-only)
   hepsiburadaSalesRecords   HepsiburadaSalesRecord[]   @relation("HbSalesProduct")
   hepsiburadaReturnRecords  HepsiburadaReturnRecord[]  @relation("HbReturnsProduct")
+  // Phase 92 — Generic marketplace sales (Entegra ihracı)
+  marketplaceSalesRecords   MarketplaceSalesRecord[]   @relation("MarketplaceSalesProduct")
   // Phase 32 — Import decision snapshots
   importDecisionSnapshots ImportDecisionSnapshot[]
   // Phase 42 — Stock adjustment log
@@ -517,6 +519,7 @@ model Customer {
   quotes               Quote[]
   outreachRecipients   OutreachRecipient[]
   attributeInterests   CustomerAttributeInterest[]
+  marketplaceSalesRecords MarketplaceSalesRecord[] @relation("MarketplaceSalesCustomer")
 
   @@index([name])
   @@index([phone])
@@ -524,6 +527,7 @@ model Customer {
   @@index([status])
   @@index([ownedById])
   @@index([source])
+  @@index([taxNumber])
 }
 
 model CategoryInterest {
@@ -1164,6 +1168,66 @@ model HepsiburadaReturnRecord {
   @@index([orderNumber])
   @@index([status])
 }
+
+// ─── Phase 92 — Generic Marketplace Sales Record ───────────────────────────────
+// Tüm pazaryeri kanalları için tek tablo (channel discriminator). Entegra
+// ihracı + diğer kanallar (N11, Ideasoft, GG, Pazarama, EPTT, mirakl_koctas,
+// idefix, Amazon, ciceksepeti, Temu, mirakl_teknosa, Shopphp, Manual) burada.
+// Trendyol API'sinden gelen kayıtlar TrendyolSalesRecord'da kalır; Excel'den
+// yüklenirken existing Trendyol orderId'leri atlanır (no double count).
+
+model MarketplaceSalesRecord {
+  id              String   @id @default(cuid())
+  channel         String   // TRENDYOL | HEPSIBURADA | N11 | IDEASOFT | GG | PAZARAMA | EPTT | MIRAKL_KOCTAS | IDEFIX | AMAZON | CICEKSEPETI | TEMU | MIRAKL_TEKNOSA | SHOPPHP | MANUAL
+  orderNumber     String   // "Sipariş Numarası" (composite veya tek)
+  platformRef     String?  // "Platform Ref. No"
+  externalLineId  String?  // Entegra ID kolonu (line-item identifier)
+
+  orderDate       DateTime
+  status          String?  // "Durum Adı" — Yeni Siparis / Onaylandı / İade-İptal vb.
+
+  productName     String?
+  productCode     String?
+  modelNumber     String?
+  storeStockName  String?
+  productId       String?
+  product         Product? @relation("MarketplaceSalesProduct", fields: [productId], references: [id], onDelete: SetNull)
+
+  quantity        Int      @default(1)
+  grossAmountTry  Decimal? @db.Decimal(15,2)  // "Toplam"
+  vatAmountTry    Decimal? @db.Decimal(15,2)  // "Vergi"
+  totalAmountTry  Decimal? @db.Decimal(15,2)  // "Genel Toplam"
+  commissionTry   Decimal? @db.Decimal(15,2)  // "Komisyon Tutarı"
+  commissionPct   Decimal? @db.Decimal(5,2)   // "Komisyon Oranı"
+  platformPaymentTry Decimal? @db.Decimal(15,2) // "PazaryerindenGelenOdemeTutar"
+
+  customerCode    String?  // "Müşteri Kodu"
+  customerFirma   String?  // "Firma"
+  customerInvoiceName String? // "Fatura Adı"
+  customerVergiNo String?  // "Vergi No"
+  customerTcKimlik String? // "TC Kimlik"
+  customerVergiDairesi String? // "Vergi Dairesi"
+  customerCity    String?  // "Fatura Şehir"
+
+  cargoCompany    String?
+  cargoTrackingNo String?
+  desiTotal       Decimal? @db.Decimal(8,2)
+
+  customerId      String?
+  customer        Customer? @relation("MarketplaceSalesCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+
+  importedAt      DateTime @default(now())
+
+  @@unique([channel, orderNumber, externalLineId])
+  @@index([channel])
+  @@index([orderDate])
+  @@index([productId])
+  @@index([customerId])
+  @@index([customerVergiNo])
+  @@index([customerCity])
+  @@index([status])
+}
+
 // Phase 30 — Marketplace Margin Policy Normalization
 // Stores per-platform standard shipping cost and commission rate.
 // Resolution order (highest priority first):
