@@ -1,22 +1,32 @@
 /**
- * Phase 91 — Image Embedding Backfill
+ * Phase 91 — Image Embedding Backfill (self-hosted CLIP Space)
  *
- * Tüm ProductImage kayıtlarını Hugging Face CLIP üzerinden embed eder ve
- * pgvector kolonuna yazar. Tek seferlik (re-run idempotent: NULL olanları
- * tekrar dener).
+ * Tüm ProductImage kayıtlarını iotomasyon/clip-embed Hugging Face
+ * Space'inde host edilen CLIP modeli üzerinden embed eder ve pgvector
+ * kolonuna yazar. Tek seferlik (re-run idempotent: NULL olanları tekrar
+ * dener).
  *
  * Çalıştırma:
- *   HF_TOKEN=hf_xxx DATABASE_URL=postgres://... DIRECT_URL=postgres://... \
+ *   CLIP_SPACE_URL=https://iotomasyon-clip-embed.hf.space \
+ *   DATABASE_URL=postgres://... DIRECT_URL=postgres://... \
  *     npx tsx scripts/backfill-image-embeddings.ts [--limit=N]
  *
- * Free tier HF rate-limit: ~1000 req/gün. 1283 ProductImage için ~1.3 gün.
- * Script her görselden sonra 200ms bekler (5 req/s yumuşak limit).
+ * Space CPU Basic free tier — rate-limit yok ama eş zamanlılık 1. Script
+ * her görselden sonra 200ms bekler.
  */
 
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+
 import { embedImage, toVectorLiteral, HfEmbedError } from "@/lib/hf-clip";
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("DATABASE_URL or DIRECT_URL env required");
+  process.exit(1);
+}
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
 const ARGS = Object.fromEntries(
   process.argv.slice(2).map((arg) => {
@@ -42,12 +52,12 @@ async function fetchImageBuffer(url: string): Promise<{ buffer: Buffer; contentT
 
 async function main() {
   console.log("[backfill] Phase 91 image embedding backfill");
-  console.log(`[backfill] HF_TOKEN: ${process.env.HF_TOKEN ? "✓" : "MISSING"}`);
+  console.log(`[backfill] CLIP_SPACE_URL: ${process.env.CLIP_SPACE_URL ?? "MISSING"}`);
   console.log(`[backfill] LIMIT: ${LIMIT === Number.MAX_SAFE_INTEGER ? "all" : LIMIT}`);
   console.log(`[backfill] SLEEP_MS: ${SLEEP_MS}`);
 
-  if (!process.env.HF_TOKEN) {
-    console.error("HF_TOKEN env required");
+  if (!process.env.CLIP_SPACE_URL) {
+    console.error("CLIP_SPACE_URL env required");
     process.exit(1);
   }
 
