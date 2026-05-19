@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import {
   getAdminEnhancedData,
+  getCapitalSnapshot,
   getDashboardStats,
   getDueTodayFollowups,
   getMarketplaceDashboardData,
@@ -61,13 +62,23 @@ export default async function DashboardPage() {
     return <MarketplaceWorkspace data={marketplaceData} />;
   }
 
-  // ADMIN, CUSTOM — full admin view with enhanced signals.
-  const [stats, dueToday, alerts, enhanced] = await Promise.all([
+  // ADMIN, CUSTOM — full admin view with enhanced signals + capital snapshot.
+  const [stats, dueToday, alerts, enhanced, capital] = await Promise.all([
     getDashboardStats(),
     getDueTodayFollowups(),
     getOperationalAlerts(),
     getAdminEnhancedData(),
+    getCapitalSnapshot(),
   ]);
 
-  return <AdminWorkspace stats={stats} dueToday={dueToday} alerts={alerts} enhanced={enhanced} />;
+  return (
+    <AdminWorkspace
+      user={{ name: user.name }}
+      stats={stats}
+      dueToday={dueToday}
+      alerts={alerts}
+      enhanced={enhanced}
+      capital={capital}
+    />
+  );
 }

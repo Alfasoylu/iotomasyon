@@ -2,6 +2,207 @@ import "server-only";
 
 import { isDatabaseUnavailableError } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
+import {
+  calcImportCost,
+  calcRevenue,
+  calcProfit,
+  DEFAULT_USD_TRY_RATE,
+  DEFAULT_RMB_USD_RATE,
+} from "@/lib/importer-cost";
+
+// ── Capital health snapshot (dashboard manşet) ──────────────────────────────
+// Sermaye Sağlığı sayfasındaki ana KPI'ları + skoru özetler.
+// Hesap mantığı /admin/sermaye-saglik/page.tsx ile aynı.
+
+export interface CapitalSnapshot {
+  databaseAvailable: boolean;
+  healthScore: number;          // 0-100
+  scoreLabel: string;
+  scoreTone: "success" | "info" | "warning" | "danger";
+  totalLockedUsd: number;
+  monthlyExpectedUsd: number;
+  annualRoiPct: number;
+  deadStockUsd: number;
+  deadStockCount: number;
+  urgentReorderCount: number;
+  liquidationCount: number;
+  starProductCount: number;
+}
+
+export async function getCapitalSnapshot(): Promise<CapitalSnapshot> {
+  try {
+    const latestRate = await prisma.monthlyExchangeRate.findFirst({
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+      select: { usdTryRate: true, rmbUsdRate: true },
+    });
+    const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
+    const rmbUsdRate = latestRate?.rmbUsdRate ? Number(latestRate.rmbUsdRate) : DEFAULT_RMB_USD_RATE;
+
+    const products = await prisma.product.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        stockQuantity: true,
+        sourceCostRmb: true,
+        weightKg: true,
+        customsRatePct: true,
+        importPaymentFeePct: true,
+        shippingMethodPref: true,
+        unitCostUsd: true,
+        unitCostTry: true,
+        onlineSalesPotential: true,
+        xmlData: { select: { xmlTrendyolPrice: true } },
+        marketplacePrices: {
+          where: { marketplace: "TRENDYOL" },
+          select: { priceTry: true },
+          take: 1,
+        },
+      },
+    });
+
+    const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const sales30 = await prisma.trendyolSalesRecord.groupBy({
+      by: ["productId"],
+      where: {
+        productId: { not: null },
+        orderDate: { gte: since30 },
+        NOT: [
+          { status: { contains: "iptal", mode: "insensitive" } },
+          { status: { contains: "cancel", mode: "insensitive" } },
+        ],
+      },
+      _sum: { quantity: true },
+    });
+    const t30Map = new Map<string, number>();
+    for (const r of sales30) if (r.productId) t30Map.set(r.productId, r._sum.quantity ?? 0);
+
+    const lifetimeRows = await prisma.trendyolSalesRecord.groupBy({
+      by: ["productId"],
+      where: {
+        productId: { not: null },
+        NOT: [
+          { status: { contains: "iptal", mode: "insensitive" } },
+          { status: { contains: "cancel", mode: "insensitive" } },
+        ],
+      },
+      _sum: { quantity: true },
+    });
+    const lifetimeMap = new Map<string, number>();
+    for (const r of lifetimeRows) if (r.productId) lifetimeMap.set(r.productId, r._sum.quantity ?? 0);
+
+    let totalLockedUsd = 0;
+    let monthlyExpectedUsd = 0;
+    let deadStockUsd = 0;
+    let deadStockCount = 0;
+    let urgentReorderCount = 0;
+    let liquidationCount = 0;
+    let starProductCount = 0;
+
+    for (const p of products) {
+      const t30g = t30Map.get(p.id) ?? 0;
+      const manualOnline = p.onlineSalesPotential ?? 0;
+      const effectiveMonthlyUnits = Math.max(t30g, manualOnline);
+      const lifetimeSold = lifetimeMap.get(p.id) ?? 0;
+
+      const trendyolPriceTry =
+        p.marketplacePrices[0]?.priceTry != null
+          ? Number(p.marketplacePrices[0].priceTry)
+          : p.xmlData?.xmlTrendyolPrice != null
+            ? Number(p.xmlData.xmlTrendyolPrice) * usdTryRate
+            : null;
+
+      const costResult = calcImportCost({
+        sourceCostRmb: p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null,
+        weightKg: p.weightKg != null ? Number(p.weightKg) : null,
+        customsRatePct: p.customsRatePct != null ? Number(p.customsRatePct) : null,
+        importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
+        shippingMethodPref: p.shippingMethodPref,
+        rmbUsdRate,
+        trendyolPriceTry,
+        usdTryRate,
+      });
+      let unitCostUsd: number | null = null;
+      if (costResult) unitCostUsd = costResult.totalCostUsd;
+      else if (p.unitCostUsd != null) unitCostUsd = Number(p.unitCostUsd);
+      else if (p.unitCostTry != null) unitCostUsd = Number(p.unitCostTry) / usdTryRate;
+      const totalCostUsd = unitCostUsd != null ? unitCostUsd * p.stockQuantity : 0;
+
+      const revenueResult = calcRevenue({ trendyolPriceTry, usdTryRate });
+      const profitResult = costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;
+      const netProfitUsd = profitResult?.netProfitUsd ?? null;
+      const monthlyProfitUsd = netProfitUsd != null ? netProfitUsd * effectiveMonthlyUnits : 0;
+
+      totalLockedUsd += totalCostUsd;
+      if (monthlyProfitUsd > 0) monthlyExpectedUsd += monthlyProfitUsd;
+      if (lifetimeSold === 0 && p.stockQuantity > 0) {
+        deadStockCount++;
+        deadStockUsd += totalCostUsd;
+      }
+
+      const stockDays = effectiveMonthlyUnits > 0
+        ? Math.round((p.stockQuantity / effectiveMonthlyUnits) * 30)
+        : null;
+      if (stockDays != null && stockDays > 0 && stockDays < 14 && effectiveMonthlyUnits > 0) {
+        urgentReorderCount++;
+      }
+      if (p.stockQuantity > 0 && totalCostUsd > 0 && t30g === 0 && lifetimeSold > 0) {
+        liquidationCount++;
+      }
+      if (monthlyProfitUsd > 0) starProductCount++;
+    }
+
+    const annualRoiPct = totalLockedUsd > 0 ? (monthlyExpectedUsd * 12 / totalLockedUsd) * 100 : 0;
+    const deadRatio = totalLockedUsd > 0 ? deadStockUsd / totalLockedUsd : 0;
+
+    const roiScore = Math.min(50, Math.max(0, (annualRoiPct / 60) * 50));
+    const deadScore = Math.max(0, (1 - Math.min(1, deadRatio * 2)) * 25);
+    const urgentScore = Math.max(0, 10 - urgentReorderCount * 1);
+    const liquidationScore = Math.max(0, 15 - liquidationCount * 0.5);
+    const healthScore = Math.round(roiScore + deadScore + urgentScore + liquidationScore);
+
+    const scoreTone: "success" | "info" | "warning" | "danger" =
+      healthScore >= 75 ? "success" :
+      healthScore >= 55 ? "info" :
+      healthScore >= 35 ? "warning" : "danger";
+    const scoreLabel =
+      healthScore >= 75 ? "Mükemmel" :
+      healthScore >= 55 ? "İyi" :
+      healthScore >= 35 ? "Dikkat" : "Kritik";
+
+    return {
+      databaseAvailable: true,
+      healthScore,
+      scoreLabel,
+      scoreTone,
+      totalLockedUsd,
+      monthlyExpectedUsd,
+      annualRoiPct,
+      deadStockUsd,
+      deadStockCount,
+      urgentReorderCount,
+      liquidationCount,
+      starProductCount,
+    };
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return {
+        databaseAvailable: false,
+        healthScore: 0,
+        scoreLabel: "—",
+        scoreTone: "warning",
+        totalLockedUsd: 0,
+        monthlyExpectedUsd: 0,
+        annualRoiPct: 0,
+        deadStockUsd: 0,
+        deadStockCount: 0,
+        urgentReorderCount: 0,
+        liquidationCount: 0,
+        starProductCount: 0,
+      };
+    }
+    throw error;
+  }
+}
 
 export async function getDashboardStats() {
   try {
