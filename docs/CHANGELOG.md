@@ -9,26 +9,36 @@
 
 ## 2026-05
 
-### Phase 91 — Görselle Ürün Arama (HF CLIP + pgvector) (2026-05-19)
+### Phase 91 — Görselle Ürün Arama (Self-hosted CLIP Space + pgvector) (2026-05-19)
 
 **Amaç:**
-Depo personeli telefonla bir ürün fotoğrafı çekip "bu hangi ürün, stok kodu ne?" diye soruyordu — mevcut metin araması (ad/SKU/barkod) bu kullanım için yetersizdi. Görsel benzerliği yakalayan public arama akışı eklendi. Maliyet kısıtı: tamamen ücretsiz (HF Inference free tier, 1000 req/gün).
+Depo personeli telefonla bir ürün fotoğrafı çekip "bu hangi ürün, stok kodu ne?" diye soruyordu — mevcut metin araması (ad/SKU/barkod) bu kullanım için yetersizdi. Görsel benzerliği yakalayan public arama akışı eklendi. Maliyet kısıtı: tamamen ücretsiz.
 
-**Mimari:**
+**Mimari karar zinciri (ürettikçe öğrendiklerimiz):**
+1. İlk plan: Hugging Face **Inference API** (free tier, 1000 req/gün) ile `openai/clip-vit-base-patch32`.
+2. Token + permission kurulumundan sonra HF 400 döndürdü: *"Model not supported by provider hf-inference"* — yeni Inference Providers router'ı CLIP modellerini deprecate etti.
+3. Çözüm: **Self-hosted Docker Space** (`iotomasyon/clip-embed`, CPU Basic Free) — aynı modeli kendi container'ımızda FastAPI ile sunuyoruz. Rate-limit yok, ücret yok.
+
+**Mimari (final):**
 - pgvector extension v0.8.0 (Supabase üzerinde migration ile etkinleştirildi)
 - `ProductImage.embedding` vector(512) + HNSW index (`vector_cosine_ops`)
-- Hugging Face Inference API → `openai/clip-vit-base-patch32` image-feature-extraction pipeline (512-dim CLIP embedding)
-- Query path: image binary → HF embed → pgvector cosine "<=>" → top 20 ürün
+- HF Docker Space `huggingface.co/spaces/iotomasyon/clip-embed`:
+  - FastAPI servisi, `openai/clip-vit-base-patch32` (transformers + torch CPU)
+  - `POST /embed` (multipart image) → `{ embedding: [512 floats], dim: 512 }`
+  - Cold-start: ilk istek 10-30s (model lazy-load), warm 1-3s
+- Query path: image binary → Space `/embed` → pgvector cosine `<=>` → top 20 ürün
 
 **Yeni dosyalar:**
-- `prisma/migrations/20260520000000_phase91_image_embeddings/migration.sql` — `CREATE EXTENSION vector` + `ADD COLUMN embedding` + HNSW idx (prod DB'ye Supabase MCP `apply_migration` ile uygulandı)
-- `lib/hf-clip.ts` — HF Inference client (router + api-inference fallback, `x-wait-for-model` ile cold-start tolere eder)
-- `scripts/backfill-image-embeddings.ts` — tüm ProductImage'ları tek seferlik embed eder; idempotent (`WHERE embedding IS NULL`); 200ms throttle, 503/429'da 30s backoff
+- `prisma/migrations/20260520000000_phase91_image_embeddings/migration.sql` — `CREATE EXTENSION vector` + `ADD COLUMN embedding` + HNSW idx (prod DB'ye Supabase MCP ile uygulandı)
+- `infra/clip-space/` — Space repo kaynağı (Dockerfile + app.py FastAPI + requirements + README frontmatter); HF Space ayrı git repo'da, dosyalar referans için repo'da
+- `lib/hf-clip.ts` — Space istemcisi: multipart POST, `AbortController` 55s timeout (cold-start tolere eder), HF_TOKEN opsiyonel (private Space için)
+- `scripts/backfill-image-embeddings.ts` — tüm ProductImage'ları tek seferlik embed eder; PrismaPg adapter; idempotent (`WHERE embedding IS NULL`); 200ms throttle
 - `app/api/public/image-search/route.ts` — POST multipart, runtime nodejs, maxDuration 60, 10 req/dk/IP rate-limit, jpeg/png/webp whitelist (max 4MB)
 - `components/public/depo-search.tsx` (refactor) — 📷 buton, mobile arka kamera (`capture="environment"`), amber cold-start banner, similarity rozet
 
 **Yeni env var:**
-- `HF_TOKEN` (Hugging Face Read-level token, Vercel prod env'e eklendi)
+- `CLIP_SPACE_URL=https://iotomasyon-clip-embed.hf.space` (Vercel prod env'e eklendi)
+- `HF_TOKEN` (Vercel'da kalmaya devam — Space PRIVATE olursa gerekecek; PUBLIC iken sessizce yok sayılır)
 
 **UI davranışı:**
 - iotomasyon.com kök Depo Arama ekranında metin input'unun sağında 📷 butonu
@@ -38,20 +48,21 @@ Depo personeli telefonla bir ürün fotoğrafı çekip "bu hangi ürün, stok ko
 - Fiyat/maliyet/marj asla dönmez (Codex P0 data contract aynen korunur)
 
 **Veri akışı:**
-1. Browser → POST multipart image
-2. Server: HF embed (cold-start 20-30s, warm 1-3s)
+1. Browser → POST multipart image to `/api/public/image-search`
+2. Vercel function → POST to `${CLIP_SPACE_URL}/embed` (Space FastAPI)
 3. Postgres: `pi.embedding <=> $1::vector` cosine distance, DISTINCT ON productId, ORDER BY distance ASC LIMIT 200, JS sort + slice(0, 20)
 4. Response: `{ products: [...{id,name,sku,barcode,stockQuantity,minimumStock,imageUrl,similarity}] }`
 
 **Acceptance:**
 - `tsc --noEmit`: 0 hata
-- Migration prod DB'de READY (vector ext v0.8.0 installed)
-- Backfill çalıştıktan sonra: `SELECT COUNT(*) FROM "ProductImage" WHERE embedding IS NOT NULL` ≈ 1283
+- pgvector migration prod DB'de READY (vector ext v0.8.0 installed)
+- HF Space `iotomasyon/clip-embed` Running, FastAPI `/` health 200 + `/embed` 200 (512-dim, 5.2s cold-start, 1-3s warm)
+- iotomasyon.com `/api/public/image-search` end-to-end 200 OK (2.9s warm)
 
-**Bilinen kısıtlar:**
-- HF free tier 1000 req/gün — günde 10-30 sorgu için bol bol yeter
-- Cold-start ilk sorguda 20-30s — UI'da şeffaf gösteriliyor
-- Backfill 1283 ProductImage için ~5 saat (200ms throttle, free tier rate-limit)
+**Bilinen kısıtlar / notlar:**
+- Space CPU Basic Free tier 48h idle'dan sonra uyuyabilir; bir istek tekrar uyandırır
+- Backfill 5158 ProductImage için ~2-2.5 saat (~1 görsel/sn ortalama; CPU Space + 200ms throttle)
+- Stale CDN URL'leri (xmlbankasi.com bazı görselleri 404) skip edilir, log'lanır
 
 ---
 
