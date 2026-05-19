@@ -364,35 +364,26 @@ export interface TrendyolBatchResponse {
   batchRequestId: string;
 }
 
-// ─── Product / Inventory API functions (Phase 45) ────────────────────────────
+// ─── Product / Inventory API functions (Phase 45 — DEPRECATED) ───────────────
 
 /**
- * Push stock quantities (and prices) to Trendyol.
- * PUT /integration/product/sellers/{supplierId}/products/price-and-inventory
- * Returns a batchRequestId — processing is async on Trendyol's side.
- * Trendyol rate limit: 100 items per request (batch larger payloads yourself).
+ * DEPRECATED — Trendyol write-side stock/price push is disabled by policy.
+ *
+ * Trendyol is a READ-ONLY data source for IOTOMASYON. Stock truth lives in
+ * Entegra (XML sync); push to Trendyol is performed manually in the Trendyol
+ * panel or via Entegra. See docs/NEXT-STEPS.md → "Architecture Constraints".
+ *
+ * This function now throws at runtime instead of silently calling the API,
+ * to make the policy enforceable even if a future caller is added by mistake.
  */
 export async function updateTrendyolInventory(
-  cfg: TrendyolConfig,
-  items: TrendyolInventoryItem[],
+  _cfg: TrendyolConfig,
+  _items: TrendyolInventoryItem[],
 ): Promise<TrendyolBatchResponse> {
-  const url = `${PRODUCT_BASE_URL}/${cfg.supplierId}/products/price-and-inventory`;
-  const res = await fetch(url, {
-    method: "PUT",
-    headers: {
-      Authorization: authHeader(cfg),
-      "Content-Type": "application/json",
-      "User-Agent": `iotomasyon-crm/1.0 (${cfg.supplierId})`,
-    },
-    body: JSON.stringify({ items }),
-    next: { revalidate: 0 },
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new TrendyolApiError(res.status, text);
-  }
-  const text = await res.text();
-  return (text ? JSON.parse(text) : { batchRequestId: "" }) as TrendyolBatchResponse;
+  throw new Error(
+    "Trendyol stok/fiyat push devre dışıdır. Trendyol read-only kaynaktır — " +
+      "stok güncellemesi Trendyol panelinden veya Entegra üzerinden yapılır.",
+  );
 }
 
 // ─── Product Catalog types (Phase 46) ────────────────────────────────────────

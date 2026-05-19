@@ -9,6 +9,192 @@
 
 ## 2026-05
 
+### Phase 91 — Görselle Ürün Arama (Self-hosted CLIP Space + pgvector) (2026-05-19)
+
+**Amaç:**
+Depo personeli telefonla bir ürün fotoğrafı çekip "bu hangi ürün, stok kodu ne?" diye soruyordu — mevcut metin araması (ad/SKU/barkod) bu kullanım için yetersizdi. Görsel benzerliği yakalayan public arama akışı eklendi. Maliyet kısıtı: tamamen ücretsiz.
+
+**Mimari karar zinciri (ürettikçe öğrendiklerimiz):**
+1. İlk plan: Hugging Face **Inference API** (free tier, 1000 req/gün) ile `openai/clip-vit-base-patch32`.
+2. Token + permission kurulumundan sonra HF 400 döndürdü: *"Model not supported by provider hf-inference"* — yeni Inference Providers router'ı CLIP modellerini deprecate etti.
+3. Çözüm: **Self-hosted Docker Space** (`iotomasyon/clip-embed`, CPU Basic Free) — aynı modeli kendi container'ımızda FastAPI ile sunuyoruz. Rate-limit yok, ücret yok.
+
+**Mimari (final):**
+- pgvector extension v0.8.0 (Supabase üzerinde migration ile etkinleştirildi)
+- `ProductImage.embedding` vector(512) + HNSW index (`vector_cosine_ops`)
+- HF Docker Space `huggingface.co/spaces/iotomasyon/clip-embed`:
+  - FastAPI servisi, `openai/clip-vit-base-patch32` (transformers + torch CPU)
+  - `POST /embed` (multipart image) → `{ embedding: [512 floats], dim: 512 }`
+  - Cold-start: ilk istek 10-30s (model lazy-load), warm 1-3s
+- Query path: image binary → Space `/embed` → pgvector cosine `<=>` → top 20 ürün
+
+**Yeni dosyalar:**
+- `prisma/migrations/20260520000000_phase91_image_embeddings/migration.sql` — `CREATE EXTENSION vector` + `ADD COLUMN embedding` + HNSW idx (prod DB'ye Supabase MCP ile uygulandı)
+- `infra/clip-space/` — Space repo kaynağı (Dockerfile + app.py FastAPI + requirements + README frontmatter); HF Space ayrı git repo'da, dosyalar referans için repo'da
+- `lib/hf-clip.ts` — Space istemcisi: multipart POST, `AbortController` 55s timeout (cold-start tolere eder), HF_TOKEN opsiyonel (private Space için)
+- `scripts/backfill-image-embeddings.ts` — tüm ProductImage'ları tek seferlik embed eder; PrismaPg adapter; idempotent (`WHERE embedding IS NULL`); 200ms throttle
+- `app/api/public/image-search/route.ts` — POST multipart, runtime nodejs, maxDuration 60, 10 req/dk/IP rate-limit, jpeg/png/webp whitelist (max 4MB)
+- `components/public/depo-search.tsx` (refactor) — 📷 buton, mobile arka kamera (`capture="environment"`), amber cold-start banner, similarity rozet
+
+**Yeni env var:**
+- `CLIP_SPACE_URL=https://iotomasyon-clip-embed.hf.space` (Vercel prod env'e eklendi)
+- `HF_TOKEN` (Vercel'da kalmaya devam — Space PRIVATE olursa gerekecek; PUBLIC iken sessizce yok sayılır)
+
+**UI davranışı:**
+- iotomasyon.com kök Depo Arama ekranında metin input'unun sağında 📷 butonu
+- Tıklayınca: mobile arka kamera / desktop file picker
+- Yüklenen görsel için amber banner: "İlk arama 20-30 saniye sürebilir (model uyanıyor)."
+- Her kartta `%XX` benzerlik rozeti; "✕ Kaldır" ile metin aramasına dön
+- Fiyat/maliyet/marj asla dönmez (Codex P0 data contract aynen korunur)
+
+**Veri akışı:**
+1. Browser → POST multipart image to `/api/public/image-search`
+2. Vercel function → POST to `${CLIP_SPACE_URL}/embed` (Space FastAPI)
+3. Postgres: `pi.embedding <=> $1::vector` cosine distance, DISTINCT ON productId, ORDER BY distance ASC LIMIT 200, JS sort + slice(0, 20)
+4. Response: `{ products: [...{id,name,sku,barcode,stockQuantity,minimumStock,imageUrl,similarity}] }`
+
+**Acceptance:**
+- `tsc --noEmit`: 0 hata
+- pgvector migration prod DB'de READY (vector ext v0.8.0 installed)
+- HF Space `iotomasyon/clip-embed` Running, FastAPI `/` health 200 + `/embed` 200 (512-dim, 5.2s cold-start, 1-3s warm)
+- iotomasyon.com `/api/public/image-search` end-to-end 200 OK (2.9s warm)
+
+**Bilinen kısıtlar / notlar:**
+- Space CPU Basic Free tier 48h idle'dan sonra uyuyabilir; bir istek tekrar uyandırır
+- Backfill 5158 ProductImage için ~2-2.5 saat (~1 görsel/sn ortalama; CPU Space + 200ms throttle)
+- Stale CDN URL'leri (xmlbankasi.com bazı görselleri 404) skip edilir, log'lanır
+
+---
+
+### Phase 90 — Sipariş Adet Demand Formülü (max(Trendyol, manuel)) (2026-05-19)
+
+**Amaç:**
+İthalat planlamasında "sipariş adet hesabı" şu ana kadar **Trendyol verisi VARSA SADECE onu** kullanıyordu — manuel girilmiş `onlineSalesPotential` (aylık satış tahmini), gerçek satıştan büyük olsa bile devre dışı kalıyordu. Yeni ürünlerde veya satış geçmişi az olan ürünlerde bu, sipariş adetini olduğundan düşük gösteriyordu. Kullanıcı talebine göre demand sinyali artık **max(Trendyol 30g adjusted, manuel onlineSalesPotential)** olarak hesaplanır.
+
+**Davranış değişikliği:**
+- `actualQty` = Trendyol 30 gün gerçekleşen satış (eşleşmiş, iptal harici)
+- `trendyolAdjusted` (sadece cockpit'te) = `actualQty × (1 − returnRate)`
+- `manualOnline` = `Product.onlineSalesPotential`
+- **Yeni**: `effectiveOnlinePotential = max(trendyolAdjusted, manualOnline)` (0 ise null)
+- Wholesale + installer manuel'leri ayrı kalır — toplam ürün demand'i hala
+  `effectiveOnline + wholesale + installer` olarak işlenir.
+- `velocitySource` etiketi: Trendyol `>=` manuel ise "actual", aksi halde "estimated"
+
+**Etkilenen dosyalar:**
+- `app/(app)/admin/import-cockpit/page.tsx:354-365` — `effectiveMonthlyUnits` formülü Math.max
+- `app/(app)/admin/procurement/page.tsx:116-135` — `effectiveOnlinePotential` Math.max + velocitySource güncelleme
+- `app/(app)/admin/capital/page.tsx:107-147` — aynı pattern (yatırım skoru hesabı için)
+
+**Etkisi (kullanıcının iş sürecine):**
+- İthalat cockpit'te "Sipariş Oluştur (N)" emerald butonu artık manuel tahmin Trendyol satışından büyükse o tahmine göre adet öneriyor.
+- Procurement (yeniden sipariş aciliyet motoru) ve Capital (sermaye tahsisi yatırım skoru) için aynı.
+- Importer view (`/products?view=importer`) zaten Phase 79'da `Math.max(t30g, effectiveMonthlyUnits ?? 1)` ile düzeltilmişti — değişmedi.
+
+**Acceptance:**
+- `tsc --noEmit`: 0 hata
+- Migration yok (sadece hesaplama formülü değişimi)
+
+---
+
+### Phase 89 — Stock Source-of-Truth Fix (Entegra Authoritative) (2026-05-19)
+
+**Amaç:**
+Codex P0 audit'inin "kalan riskler" listesinde duran ihlal: `lib/actions/inventory-count-actions.ts` ve `lib/actions/stock-adjustment-actions.ts` `Product.stockQuantity` alanını doğrudan mutate ediyordu — mimari kural ("Entegra source-of-truth via XML sync") ile çelişiyordu. Bu phase ile warehouse sayım ve manuel adjustment akışları ayrı bir `physicalCountQuantity` alanına yönlendirildi.
+
+**Yeni alanlar (additive migration):**
+- `Product.physicalCountQuantity Int?` — Son fiziksel sayım adeti
+- `Product.physicalCountAt DateTime?` — Son sayım zamanı
+- `Product.physicalCountById String?` — Sayan kullanıcı id (User.PhysicalCountBy relation)
+- `Product.physicalCountNote String?` — Sayım notu
+- `User.physicalCounts Product[]` — karşı relation
+- 2 yeni index: `physicalCountAt`, `physicalCountById`
+- Migration: `prisma/migrations/20260519000000_phase89_physical_count/migration.sql` — additive ALTER TABLE, FK + 2 index. Reversible.
+
+**Action davranış değişiklikleri:**
+- `lib/actions/inventory-count-actions.ts` → `createInventoryCountAction`: artık `physicalCountQuantity / At / ById / Note` yazıyor. `stockQuantity`'ye HİÇ DOKUNMAZ. `StockAdjustmentLog(CORRECTION, delta)` audit trail aynen yazılıyor (baseline = mevcut physical count veya Entegra stok).
+- `lib/actions/stock-adjustment-actions.ts` → `createStockAdjustmentAction`: aynı şekilde `physicalCountQuantity += delta`, `stockQuantity` dokunulmaz. **Permission değişti**: `PRODUCTS_UPDATE` → `INVENTORY_COUNT` (WAREHOUSE rolünün de erişebilmesi için).
+- `lib/actions/xml-sync-actions.ts`: değişmedi — `stockQuantity` yazımına devam ediyor (Entegra tek source-of-truth).
+
+**UI değişiklikleri:**
+- `components/products/stock-adjustment-card.tsx`:
+  - Başlık: "Stok Hareketleri" → **"Fiziksel Sayım Hareketleri"**
+  - Açıklama: "...Entegra stoğunu (XML sync) etkilemez — yalnızca depo sayımı ve variance raporu için saklanır."
+  - Header'da 3 chip: `Entegra: N` / `Sayım: M` / `Fark: ±X` (variance derived = stockQuantity - physicalCountQuantity)
+  - Variance renk kodlu: 0 emerald, +N amber (Entegra fazla), -N red (oversell riski)
+  - "Son sayım" bilgisi: tarih + sayan kişi adı
+  - Empty state: "Henüz fiziksel sayım hareketi kaydedilmedi."
+  - Props: `entegraStock` + `physicalCount` + `physicalCountAt` + `physicalCountByName` + `initialAdjustments` (eski `currentStock` prop'u kaldırıldı)
+- `app/(app)/products/[id]/page.tsx`:
+  - `canInventoryCount = checkPermission(user, INVENTORY_COUNT)` ile koşullu render
+  - `getProductById` artık `physicalCountBy` user relation'ı include ediyor
+  - `StockAdjustmentCard` yeni props ile çağrılıyor
+- `app/(app)/warehouse/page.tsx`:
+  - Ürün satırında stok rozeti altına "Entegra" etiketi + (sayım yapılmışsa) "Sayım: M (+X)" variance gösterimi
+  - Renk kodu: 0 emerald (eşit), +X amber (Entegra fazla), -X red (Entegra az)
+  - Query'ye `physicalCountQuantity`, `physicalCountAt` eklendi
+- `app/(app)/warehouse/count/page.tsx`:
+  - Başlık: "Stok Sayımı" → "Fiziksel Sayım"
+  - Info: "Bu sayım Entegra stoğunu değiştirmez. Yalnızca fiziksel sayım kaydı ve Entegra ile fark raporlamak için saklanır."
+  - Submit button: "Sayımı Kaydet" → "Fiziksel Sayımı Kaydet"
+  - Success: "Stok sayımı kaydedildi!" → "Fiziksel sayım kaydedildi!"
+- `app/(app)/admin/stock-health/page.tsx`: query'ye `physicalCountQuantity` eklendi (gelecek variance kolonu için altyapı; bu phase'de UI render değişmedi, sonraki phase için hazır)
+
+**Permission etkisi:**
+- ADMIN: bypass — değişmedi
+- OPERATIONS: `INVENTORY_COUNT` zaten var → değişmedi
+- WAREHOUSE: `INVENTORY_COUNT` zaten var → **artık StockAdjustmentCard'a erişebilir** (önceden PRODUCTS_UPDATE gerekirdi, yoktu)
+- SALES / MARKETPLACE_OPERATOR: `INVENTORY_COUNT` yok → kart artık görünmüyor (önceden P0 sonrası UI'da görünüyordu ama submit fail ediyordu — şimdi tamamen gizli)
+
+**Veri bütünlüğü:**
+- `StockAdjustmentLog` aynen korunuyor (audit trail)
+- `XmlStockChangeLog` aynen korunuyor (Entegra deltaları)
+- Eski Phase 7 alanları (`inventoryCountDate`, `inventoryCountStock`) dokunulmadı
+- Mevcut tüm ürünlerde `physicalCountQuantity = NULL` ile başlar (ilk fiziksel sayımda set olur)
+- Variance UI'da derived olarak hesaplanır — kalıcı bir alan değil
+
+**Acceptance (verification):**
+- `tsc --noEmit` 0 hata
+- `prisma validate` ✓
+- Browser-verify: ADMIN/OPERATIONS/SALES/WAREHOUSE rolleriyle
+  - Sayım girince `physicalCountQuantity` güncelleniyor; `stockQuantity` Entegra'dan ne ise o kalıyor
+  - Sayım ve Entegra farkı UI'da `Fark: ±X` chip olarak görünüyor
+  - SALES rolü kartı görmüyor
+
+---
+
+### Codex Audit P0 — Finans/İthalat Görünürlük Sertleştirmesi (2026-05-18)
+
+**Amaç:**
+Codex audit'i ürün listesi, ürün detayı, marketplace kâr paneli ve warehouse → ürün detay zincirinin finans/import alanlarını non-finance rollere (SALES, OPERATIONS, WAREHOUSE, MARKETPLACE_OPERATOR) sızdırdığını gösterdi. Server-side data contract uygulandı; UI hide yerine veri-katmanı sızıntısı kapatıldı.
+
+Kapatılan leak'ler:
+
+1. **`/products` (liste)** — Tüm `products.read` kullanıcıları `Net Kâr / Marj / ROI / Durum / T.Fiyat` sütunlarını ve "Maliyet eksik / Ağırlık eksik / Trendyol fiyat yok" sağlık ipuçlarını görüyordu. Finans hesaplaması ve sütunları `canViewFinance` (EXECUTIVE_READ) gate'i altına alındı; non-finance kullanıcı için `latestRate` ve `MarketplacePrice` veri fetch'i de skip edildi.
+
+2. **`/products/[id]` (detay)** — Aşağıdaki tüm kartlar `canViewFinance` gate'i altına alındı: Kârlılık analizi, Pazar Yeri Fiyatlandırması, Yatırım skoru, Trendyol Kâr Analizi, İthalat Kararı, Karar Geçmişi (snapshots), Trendyol Satış Performansı (realized margin), Aylık Satış Trendi (ciro), Tedarikçi Kaynağı, XML Kaynak Verisi (per-platform USD fiyatlar). `kargo maliyeti / pazar komisyonu / importDate / importUnitCostUsd` Info satırları da gate'lendi. Header rozetleri (Kârlı/Kaybettiriyor/BuySignal) yine `canViewFinance` koşullu. Düzenle / Yeni Müşteri / Sil butonları ilgili `products.update / customers.create / products.delete` izinleri ile koşullu.
+
+3. **Server-side data contract** — `/products/[id]` non-finance kullanıcı için `product` objesinden 23 finans/import alanı (`unitCostTry`, `sourceCostRmb`, `importUnitCostUsd`, `weightKg`, `customsRatePct`, `shippingMethodPref`, `wholesalePriceTry`, `marketplacePriceTry`, `*SalesPotential`, vb.) ve `xmlData` ile `marketplacePrices` ilişkilerini null/empty olarak strip ediliyor. Aynı zamanda `salesRecords`, `supplierLinks`, `importSnapshots`, `platformPolicies` veri fetch'leri non-finance kullanıcı için skip edildi.
+
+4. **`/marketplace/profit`** — Önce `MARKETPLACE_LISTINGS_READ` gerektiriyordu (marketplace operator açabiliyordu). Şimdi `EXECUTIVE_READ` gerektiriyor. Sidebar linki ve `/marketplace` sayfasındaki "📊 Kârlılık" butonu da `EXECUTIVE_READ` koşullu.
+
+5. **`/marketplace` listings** — "📊 Kârlılık" butonu sadece `EXECUTIVE_READ` rolünde; "+ Yeni listeleme" butonu sadece `MARKETPLACE_LISTINGS_WRITE` rolünde.
+
+6. **Warehouse → product detail zinciri** — `/warehouse` linkleri `/products/[id]`'ye gitmeye devam ediyor, fakat finans kartları artık warehouse kullanıcısına render edilmiyor. Warehouse kullanıcı yalnızca operasyonel alanları (kategori, marka, model, barkod, stok, lokasyon, açıklama, görsel galerisi, XML stok değişim geçmişi, stok hareketi logları, ilgi-grup kartları) görüyor.
+
+7. **WAREHOUSE role drift** — `lib/user-roles.ts` `UserRole` tipi ve `ALL_USER_ROLES` array'i WAREHOUSE içermediği için `updateUserRoleAction` valide aşamasında "Geçersiz rol" döndürerek WAREHOUSE atamayı engelliyordu. Eklendi. `app/(app)/admin/users/page.tsx` `ROLE_LABELS/ROLE_TONE` ve `app/(app)/admin/users/[id]/page.tsx` `ROLE_COLOR` map'lerine WAREHOUSE eklendi. Prisma enum ve seed zaten WAREHOUSE içeriyordu — drift yalnızca TS tarafındaydı.
+
+8. **Trendyol read-only policy** — `/admin/trendyol-catalog` sayfasındaki 3 adet `/admin/trendyol-stock-sync` deep-link kaldırıldı (hedef rota zaten önceki temizlikte silinmişti). Bunun yerine "Trendyol read-only; stok düzeltmesi Trendyol panelinden veya Entegra üzerinden yapılır" açıklaması var. `lib/trendyol-api.ts` → `updateTrendyolInventory` runtime-throw yapacak şekilde deprecate edildi; gelecek yanlışlıkla call durumunda HTTP push silinmiş olarak fail eder.
+
+9. **Finance gate helper** — `lib/finance-visibility.ts` (YENİ): tek `resolveFinanceGate(user)` API'si EXECUTIVE_READ gate'ini merkezileştirir. Phase 57'de `productFinance.read / import.read / profitability.read` ayrımı eklendiğinde yalnızca bu dosya değişecek.
+
+Bilinen kalan riskler (P0 dışı):
+- `lib/actions/inventory-count-actions.ts` ve `lib/actions/stock-adjustment-actions.ts` `Product.stockQuantity` alanını doğrudan mutate ediyor. Bu, "Entegra source-of-truth" mimari kuralı ile çelişiyor. Önerilen güvenli patch: ayrı `physicalCountQuantity`, `xmlStockQuantity`, `variance`, `countedAt`, `countedBy` alanları ekleyip `Product.stockQuantity` yazımını XML sync'e bırakmak — destructive olmadığından ayrı bir migration phase'ine bırakıldı.
+- `lib/actions/product-actions.ts` `normalizeProductData` hâlâ `stockQuantity` alanını update girdisinden alıp Prisma update'e veriyor (admin tarafından kullanıldığında). Aynı sorunun ürün edit formundan ortaya çıkması mümkün — gelecek phase'de `stockQuantity` yazımının yalnızca XML sync ve inventory count yolu üzerinden yapılması önerilir.
+
+tsc / lint / prisma validate sonuçları acceptance test bölümünde.
+
+---
+
 ### Phase 88 — Satış Fırsatları İnline Durum Güncellemesi (2026-05-18)
 
 **Amaç:**

@@ -2,11 +2,14 @@
 
 /**
  * Phase 42 — Stock Adjustment Card
+ * Phase 89 — Renamed to "Fiziksel Sayım Hareketleri" (Entegra source-of-truth fix)
  *
  * Renders on the product detail page.
- * - Shows the last 20 stock movements in a table (newest first).
+ * - Shows the last 20 physical-count movements in a table (newest first).
  * - Inline form to add a new movement (type, qty, notes).
- * - Uses createStockAdjustmentAction; updates stockQuantity atomically.
+ * - Uses createStockAdjustmentAction; updates Product.physicalCountQuantity.
+ * - Does NOT mutate Product.stockQuantity (Entegra XML sync is the only writer).
+ * - Header shows: "Entegra: N  ·  Sayım: M  ·  Fark: ±X" for clarity.
  */
 
 import { useState, useTransition } from "react";
@@ -48,12 +51,25 @@ interface AdjustmentRow {
 
 interface Props {
   productId: string;
-  currentStock: number;
+  /** Entegra (XML sync) stock — source of truth, never mutated by this card. */
+  entegraStock: number;
+  /** Last recorded physical count, or null if no count has been performed. */
+  physicalCount: number | null;
+  physicalCountAt: Date | null;
+  physicalCountByName: string | null;
   initialAdjustments: AdjustmentRow[];
 }
 
-export function StockAdjustmentCard({ productId, currentStock, initialAdjustments }: Props) {
+export function StockAdjustmentCard({
+  productId,
+  entegraStock,
+  physicalCount,
+  physicalCountAt,
+  physicalCountByName,
+  initialAdjustments,
+}: Props) {
   const [adjustments, setAdjustments] = useState<AdjustmentRow[]>(initialAdjustments);
+  const [latestPhysical, setLatestPhysical] = useState<number | null>(physicalCount);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ ok: boolean; message?: string } | null>(null);
 
@@ -82,40 +98,68 @@ export function StockAdjustmentCard({ productId, currentStock, initialAdjustment
       const res = await createStockAdjustmentAction(values);
       setResult(res);
       if (res.ok) {
-        // Optimistic update: prepend new row
-        const prevQty = adjustments.length > 0 ? adjustments[0].newQty : currentStock;
+        // Optimistic update: baseline is current physical count or Entegra stock
+        const prevQty = latestPhysical ?? entegraStock;
+        const newQty = prevQty + quantityChange;
         const newRow: AdjustmentRow = {
           id: crypto.randomUUID(),
           adjustmentType: adjType,
           quantityChange,
           previousQty: prevQty,
-          newQty: prevQty + quantityChange,
+          newQty,
           notes: notes || null,
           createdAt: new Date(),
           createdBy: null,
         };
         setAdjustments([newRow, ...adjustments]);
+        setLatestPhysical(newQty);
         setQty("");
         setNotes("");
       }
     });
   }
 
-  const latestQty = adjustments.length > 0 ? adjustments[0].newQty : currentStock;
+  const variance = latestPhysical != null ? entegraStock - latestPhysical : null;
+  const varianceTone =
+    variance == null
+      ? "text-slate-400"
+      : variance === 0
+        ? "text-emerald-600"
+        : variance > 0
+          ? "text-amber-600"  // Entegra has more than physical count
+          : "text-red-600";   // Entegra has less than physical count (oversell risk)
 
   return (
     <Card className="overflow-hidden p-0">
-      <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
+      <div className="border-b border-slate-100 px-6 py-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Stok Hareketleri</h2>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Manuel stok giriş / çıkış kaydı. Her kayıt mevcut stoku günceller.
+          <h2 className="text-lg font-semibold text-slate-950">Fiziksel Sayım Hareketleri</h2>
+          <p className="mt-0.5 text-xs text-slate-500 max-w-md">
+            Fiziksel sayım kayıtları. Entegra stoğunu (XML sync) etkilemez —
+            yalnızca depo sayımı ve variance raporu için saklanır.
           </p>
         </div>
-        <span className="rounded-2xl bg-slate-900 px-4 py-1.5 text-sm font-bold tabular-nums text-white">
-          Güncel: {latestQty} adet
-        </span>
+        <div className="flex flex-wrap items-center gap-2 text-xs tabular-nums">
+          <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-medium text-slate-700">
+            Entegra: <span className="font-bold text-slate-900">{entegraStock}</span>
+          </span>
+          <span className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700">
+            Sayım: <span className="font-bold text-slate-900">{latestPhysical ?? "—"}</span>
+          </span>
+          <span className={`rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium ${varianceTone}`}>
+            Fark: <span className="font-bold">
+              {variance == null ? "—" : variance > 0 ? `+${variance}` : variance}
+            </span>
+          </span>
+        </div>
       </div>
+
+      {physicalCountAt && (
+        <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-2 text-[11px] text-slate-500">
+          Son sayım: {new Date(physicalCountAt).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" })}
+          {physicalCountByName ? ` — ${physicalCountByName}` : ""}
+        </div>
+      )}
 
       {/* Add form */}
       <div className="border-b border-slate-100 bg-slate-50 px-6 py-4">
@@ -213,7 +257,7 @@ export function StockAdjustmentCard({ productId, currentStock, initialAdjustment
       {/* History table */}
       {adjustments.length === 0 ? (
         <div className="px-6 py-8 text-center text-sm text-slate-400">
-          Henüz stok hareketi kaydedilmedi.
+          Henüz fiziksel sayım hareketi kaydedilmedi.
         </div>
       ) : (
         <div className="overflow-x-auto">

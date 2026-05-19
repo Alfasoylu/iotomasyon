@@ -81,6 +81,49 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### ✓ Phase 89 — Stock Source-of-Truth Fix (Entegra Authoritative) (2026-05-19)
+
+**Neden:** Codex P0 audit'inin "kalan riskler" listesinde duran P1 ihlal: warehouse sayım + manuel adjustment akışları `Product.stockQuantity`'yi doğrudan mutate ediyordu — mimari kural "Entegra source-of-truth (via XML sync)" ile çelişiyordu.
+
+Teslim edilenler:
+- **Migration `20260519000000_phase89_physical_count`** (additive, reversible): `Product`'a `physicalCountQuantity / At / ById / Note` + FK + 2 index.
+- **`lib/actions/inventory-count-actions.ts`**: `physicalCountQuantity` yazar, `stockQuantity` dokunmaz. `INVENTORY_COUNT` gated.
+- **`lib/actions/stock-adjustment-actions.ts`**: `physicalCountQuantity += delta`, audit trail aynen. Permission `PRODUCTS_UPDATE` → `INVENTORY_COUNT` (WAREHOUSE erişimi).
+- **`lib/actions/xml-sync-actions.ts`**: değişmedi (Entegra tek source).
+- **`components/products/stock-adjustment-card.tsx`**: "Fiziksel Sayım Hareketleri" başlığı + Entegra/Sayım/Fark chip'leri + son sayım meta + non-XML-mutate açıklama.
+- **`app/(app)/products/[id]/page.tsx`**: `canInventoryCount` gate'i ile koşullu render.
+- **`app/(app)/warehouse/page.tsx`**: ürün satırında variance gösterimi.
+- **`app/(app)/warehouse/count/page.tsx`**: başlık + info + button güncellemeleri.
+- **Docs**: PROGRESS / current-state / CHANGELOG / PERMISSION-MODEL / NEXT-STEPS.
+- tsc 0 hata.
+
+---
+
+### ✓ Codex Audit P0 — Finans/İthalat Görünürlük Sertleştirmesi (2026-05-18)
+
+**Neden:** Codex audit'i `/products` listesi, `/products/[id]`, `/marketplace/profit`,
+ve warehouse → ürün detay zincirinin finans/import verisini non-finance rollere
+(SALES, OPERATIONS, WAREHOUSE, MARKETPLACE_OPERATOR) sızdırdığını gösterdi.
+
+Teslim edilenler:
+- `lib/finance-visibility.ts` (YENİ): merkezi `resolveFinanceGate(user) → { canViewFinance }`. Tek noktadan EXECUTIVE_READ kontrolü. Phase 57'de izin ayrımı geldiğinde sadece bu dosya değişecek.
+- `app/(app)/products/page.tsx`: T.Fiyat / Net Kâr / Marj / ROI / Durum sütunları ve durum filtre pillsi `canViewFinance` gate altında. Finans hesaplaması + `MarketplacePrice` fetch'i non-finance kullanıcı için skip ediliyor. "Maliyet eksik / Ağırlık eksik / Trendyol fiyat yok" sağlık ipuçları finans-tinted olarak gate altında. Düzenle linki / "Yeni ürün" / Bulk butonları `products.update/create` izinlerine koşullu.
+- `app/(app)/products/[id]/page.tsx`: Kârlılık / Pazar Yeri Fiyatlandırması / Yatırım Skoru / Trendyol Kâr Analizi / İthalat Kararı / Karar Geçmişi / Trendyol Satış Performansı / Aylık Trend / Tedarikçi Kaynağı / XML Kaynak Verisi kartları + finans Info satırları + finans rozetleri (Kârlı/Kaybettiriyor/BuySignal) hep `canViewFinance` koşullu. **Server-side data contract**: non-finance kullanıcı için product objesinden 23 finans alanı + `xmlData` + `marketplacePrices` strip ediliyor; salesRecords/supplierLinks/importSnapshots/platformPolicies fetch'leri skip ediliyor.
+- `app/(app)/marketplace/profit/page.tsx`: `MARKETPLACE_LISTINGS_READ` → `EXECUTIVE_READ`. Marketplace operator artık net kâr/marj/ROI panelini açamaz.
+- `app/(app)/marketplace/page.tsx`: "📊 Kârlılık" butonu `EXECUTIVE_READ` koşullu; "+ Yeni listeleme" `MARKETPLACE_LISTINGS_WRITE` koşullu.
+- `app/(app)/layout.tsx`: "Pazar Kârlılığı" sidebar linki `EXECUTIVE_READ` izniyle güncellendi.
+- `lib/user-roles.ts`: `UserRole` tipi ve `ALL_USER_ROLES` array'i WAREHOUSE eklendi (Prisma enum ve seed zaten içeriyordu). Bu drift `updateUserRoleAction`'ı WAREHOUSE atamasında "Geçersiz rol" döndürmesine yol açıyordu.
+- `app/(app)/admin/users/page.tsx` + `[id]/page.tsx`: `ROLE_LABELS / ROLE_TONE / ROLE_COLOR` haritalarına WAREHOUSE eklendi.
+- `app/(app)/admin/trendyol-catalog/page.tsx`: 3 adet stale `/admin/trendyol-stock-sync` linki kaldırıldı; "Trendyol read-only" politikası açıklaması.
+- `lib/trendyol-api.ts`: `updateTrendyolInventory` deprecate edildi (artık runtime-throw). Yanlışlıkla call durumunda HTTP push'a değil error'a düşer.
+- Docs: PROGRESS / current-state / PERMISSION-MODEL / NEXT-STEPS / CHANGELOG güncellendi.
+
+Açık kalan riskler:
+- **Stock source-of-truth ihlali**: `lib/actions/inventory-count-actions.ts` ve `lib/actions/stock-adjustment-actions.ts` `Product.stockQuantity` doğrudan mutate ediyor. Bu, "Entegra source-of-truth" mimari kuralı ile çelişiyor. Önerilen güvenli patch: ayrı `physicalCountQuantity` / `xmlStockQuantity` / `variance` / `countedAt` / `countedBy` / `countNote` alanları ekleyip XML sync dışındaki yazımları bunlara yönlendirmek. Destructive olduğundan ayrı bir migration phase'e bırakıldı.
+- **`normalizeProductData`** içindeki `stockQuantity` direct update'i. Sadece ADMIN bu yola erişiyor (form), ama gelecek phase'de stockQuantity yazımının yalnızca XML sync + inventory count yolu ile yapılması önerilir.
+
+---
+
 ### ✓ Phase 88 — Satış Fırsatları İnline Durum Güncellemesi (2026-05-18)
 
 **Neden:** Phase 86'daki satış fırsatları sayfası read-only'di. Durum/öncelik değiştirmek için müşteri detayına gitmek gerekiyordu — bu da CRM iş akışını kesiyor. İnline güncelleme döngüyü kapatıyor.

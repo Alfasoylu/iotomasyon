@@ -9,6 +9,8 @@
  * The form passes data to the CreatePurchaseOrderForm client component.
  */
 
+import Link from "next/link";
+
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -174,7 +176,12 @@ export default async function NewPurchaseOrderPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Tedarik</p>
+        <Link
+          href="/admin/purchase-orders"
+          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+        >
+          ← Satın Alma Siparişleri
+        </Link>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Yeni Satın Alma Siparişi</h1>
         <p className="mt-1 text-sm text-slate-500">
           Kur: <span className="font-semibold">1 USD = ₺{usdTryRate.toFixed(2)}</span>

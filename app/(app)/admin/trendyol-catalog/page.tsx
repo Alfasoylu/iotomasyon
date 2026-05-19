@@ -10,7 +10,10 @@
  *   - Summary KPI cards
  *
  * Read-only. No writes to Trendyol or our DB.
- * Links to /admin/trendyol-stock-sync for push, /admin/marketplace-mappings to add mappings.
+ *
+ * Trendyol policy: READ-ONLY. The previous /admin/trendyol-stock-sync push
+ * page has been removed (see docs/NEXT-STEPS.md "Architecture Constraints").
+ * Links to /admin/marketplace-mappings to add mappings.
  */
 
 import Link from "next/link";
@@ -185,12 +188,6 @@ export default async function TrendyolCatalogPage() {
         </div>
         <div className="flex gap-3">
           <Link
-            href="/admin/trendyol-stock-sync"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
-          >
-            Stok Senkronu →
-          </Link>
-          <Link
             href="/admin/marketplace-mappings"
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
           >
@@ -280,14 +277,14 @@ export default async function TrendyolCatalogPage() {
               </div>
               {surplusCount > 0 && (
                 <div className="border-t border-slate-100 px-6 py-3 text-xs text-amber-700 bg-amber-50/50">
-                  {surplusCount} üründe iç stok Trendyol&apos;dan fazla — stok senkronuna git ve güncelleyin.
-                  <Link href="/admin/trendyol-stock-sync" className="ml-2 underline">Stok Senkronu →</Link>
+                  {surplusCount} üründe iç stok Trendyol&apos;dan fazla. Trendyol IOTOMASYON için read-only kaynaktır;
+                  stok düzeltmesi Trendyol panelinden veya Entegra üzerinden yapılır.
                 </div>
               )}
               {oversellCount > 0 && (
                 <div className="border-t border-slate-100 px-6 py-3 text-xs text-red-700 bg-red-50/50">
                   ⚠ {oversellCount} üründe Trendyol iç stoktan fazla gösteriyor — mükerrer satış riski var.
-                  <Link href="/admin/trendyol-stock-sync" className="ml-2 underline">Hemen Senkron Et →</Link>
+                  Trendyol panelinden veya Entegra üzerinden stok değerini düzeltin (push işlemi sistemden kaldırıldı).
                 </div>
               )}
             </Card>

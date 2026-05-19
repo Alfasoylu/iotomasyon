@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { NewUserForm } from "@/components/admin/new-user-form";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -12,9 +14,13 @@ export default async function NewUserPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Yönetim / Kullanıcılar / Yeni
-        </p>
+        <nav className="flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <span>Yönetim</span>
+          <span className="text-slate-300">/</span>
+          <Link href="/admin/users" className="hover:text-slate-900 transition">
+            ← Kullanıcılar
+          </Link>
+        </nav>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
           Yeni kullanıcı
         </h1>

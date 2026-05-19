@@ -668,7 +668,34 @@ Phase: 14
 - no procurement decision schema (Phases 19–21)
 - no import cost calculator schema (Phase 21)
 - no audit-grade event history schema
-- no image pipeline / media storage schema
+
+---
+
+## Non-Prisma Extensions
+
+These are Postgres-level constructs that Prisma does not model natively.
+They are managed via raw SQL inside migrations and must not be assumed
+absent just because they do not appear in `schema.prisma`.
+
+### pgvector extension
+
+- Postgres extension `vector` v0.8.0 (Supabase)
+- Enabled by `prisma/migrations/20260520000000_phase91_image_embeddings/migration.sql`
+  (`CREATE EXTENSION IF NOT EXISTS vector`)
+- Required by `ProductImage.embedding` column
+
+### ProductImage.embedding
+
+- Column type: `vector(512)`
+- Declared in `prisma/schema.prisma` as `Unsupported("vector(512)")?` —
+  Prisma client cannot read or write it directly; access only via
+  `$queryRaw` and string-literal casts (`'[0.1,...]'::vector`)
+- Index: HNSW on `vector_cosine_ops` (`ProductImage_embedding_hnsw_idx`)
+- Populated by `scripts/backfill-image-embeddings.ts` via the self-hosted
+  CLIP Space (see `docs/CLIP-IMAGE-SEARCH.md`)
+- Used by `POST /api/public/image-search` for cosine nearest-neighbor lookup
+
+Phase: 91
 
 ---
 

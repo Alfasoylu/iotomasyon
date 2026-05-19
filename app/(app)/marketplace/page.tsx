@@ -4,7 +4,7 @@
  */
 
 import Link from "next/link";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
@@ -39,6 +39,11 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default async function MarketplacePage() {
   await requirePermission(PERMISSIONS.MARKETPLACE_LISTINGS_READ);
+  const user = await requireUser();
+  const [canSeeProfit, canWrite] = await Promise.all([
+    checkPermission(user, PERMISSIONS.EXECUTIVE_READ),
+    checkPermission(user, PERMISSIONS.MARKETPLACE_LISTINGS_WRITE),
+  ]);
 
   const listings = await prisma.marketplaceListing.findMany({
     orderBy: [{ platform: "asc" }, { createdAt: "desc" }],
@@ -68,15 +73,19 @@ export default async function MarketplacePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/marketplace/profit">
-            <Button variant="secondary">📊 Kârlılık</Button>
-          </Link>
+          {canSeeProfit && (
+            <Link href="/marketplace/profit">
+              <Button variant="secondary">📊 Kârlılık</Button>
+            </Link>
+          )}
           <Link href="/marketplace/monitoring">
             <Button variant="secondary">⚠ İzleme</Button>
           </Link>
-          <Link href="/marketplace/new">
-            <Button>+ Yeni listeleme</Button>
-          </Link>
+          {canWrite && (
+            <Link href="/marketplace/new">
+              <Button>+ Yeni listeleme</Button>
+            </Link>
+          )}
         </div>
       </div>
 

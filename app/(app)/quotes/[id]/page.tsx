@@ -61,9 +61,12 @@ export default async function QuoteDetailPage({
         <div className="px-6 py-8 xl:px-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                Fiyat Teklifi
-              </p>
+              <Link
+                href="/quotes"
+                className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 hover:text-white transition"
+              >
+                ← Teklifler
+              </Link>
               <div>
                 <div className="flex flex-wrap items-center gap-3">
                   <h1 className="text-3xl font-semibold tracking-tight text-white">

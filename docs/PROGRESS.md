@@ -34,6 +34,8 @@ Current reality:
 - sales-ranked product list behavior is not implemented yet
 - owner-only product notes are implemented (Phase 28 — EXECUTIVE_READ gated privateNote)
 - Trendyol live visibility exists, but marketplace order/return history governance is not complete yet
+- phase 89 stock source-of-truth fix (2026-05-19): `Product.physicalCountQuantity / At / ById / Note` alanları eklendi (additive migration); `createInventoryCountAction` + `createStockAdjustmentAction` artık `physicalCountQuantity`'ye yazıyor, `stockQuantity` yalnızca XML sync (Entegra) tarafından mutate ediliyor; UI: "Entegra: N / Sayım: M / Fark: ±X" derived chip'leri (stock-adjustment-card, /warehouse, /warehouse/count); stock-adjustment permission `PRODUCTS_UPDATE` → `INVENTORY_COUNT` (WAREHOUSE erişimi); StockAdjustmentCard `INVENTORY_COUNT` gated; `StockAdjustmentLog` audit trail korundu; tsc 0 hata
+- codex audit P0 finans/import görünürlük sertleştirmesi (2026-05-18): `/products` liste finans sütunları + `/products/[id]` finans/import kartları + `/marketplace/profit` paneli `EXECUTIVE_READ` gate'i altına alındı; non-finance kullanıcı için product objesi server-side strip ediliyor (`unitCostTry`, `sourceCostRmb`, `importUnitCostUsd`, `xmlData`, `marketplacePrices`, vb.); marketplace profit linki MARKETPLACE_LISTINGS_READ → EXECUTIVE_READ; WAREHOUSE role drift `lib/user-roles.ts` + admin users UI'da düzeltildi; trendyol-stock-sync stale linkleri kaldırıldı; `updateTrendyolInventory` runtime-throw; `lib/finance-visibility.ts` merkezi gate helper
 - Warehouse Mode (Phase 55, 2026-05-17): WAREHOUSE role added to UserRole enum (prisma db push); seed: 9 permissions including inventory.count; /warehouse mobile-first search page (barcode/SKU/name, no financial data); /warehouse/count stock count entry (absolute qty → CORRECTION StockAdjustmentLog delta); createInventoryCountAction server action (INVENTORY_COUNT gated); WarehouseWorkspace dashboard component reusing OperationsDashboardData; sidebar nav INVENTORY_READ + INVENTORY_COUNT gated; form→save→redirect round-trip verified READY dpl_FZUREkAgckL52vByKEobiDVMJFc8
 - dashboard role-based workspaces (Phase 54 Faz A+B+C+D+E+F, 2026-05-17): single /dashboard URL branches on user.role server-side; AdminWorkspace extracted + enhanced (Faz D: exchange rate, import intelligence, pipeline summary, reorder signal); SalesWorkspace (pipeline, today tasks, recent activity — no financial data); OperationsWorkspace (open/overdue/today tasks, critical/low stock, unmatched orders, 7d Trendyol qty — no financial data); WarehouseWorkspace (Faz E: same operational signals, no financial data); MarketplaceWorkspace (Faz F: active listings, 7d orders/returns, unmatched orders, open tasks — no financial data); READY dpl_6j2QbVahxSmYdVz6FUDwqkWYSHXX
 - satış fırsat motoru (Phase 56, 2026-05-17): getProductIntelligence() stage/priority/lastContactedAt/assignedTo ile zenginleştirildi; getSalesPipelineData() topOpportunities (HIGH/URGENT ekip geneli) eklendi; sales-workspace.tsx "Önerilen Fırsatlar" bölümü + aktif fırsatlar aşama/öncelik badge'leri; ürün detay "Doğrudan ilgili" kartları aşama+öncelik+temsilci gösteriyor; schema değişikliği yok; READY dpl_EnxAtoQH3aqnWqWyCXhHRaKaskrA
@@ -993,7 +995,6 @@ Current gap:
 
 # Technical Debt
 
-- no image pipeline
 - no audit-grade event history
 - no production-ready product sales snapshot layer for 30-day ranking
 - no owner-only private product intelligence layer
@@ -1045,14 +1046,15 @@ Impact:
 - write-side multi-channel operations remain high-risk and explicitly deferred (Phase 17)
 
 ## Image Storage Scaling
-Status: OPEN
+Status: CLOSED (Phase 91, 2026-05-19)
 
-Problem:
-- roadmap expects product image workflows
-- no image pipeline or storage strategy is implemented
+Resolution:
+- product images embedded via CLIP (`openai/clip-vit-base-patch32`,
+  512-dim) on a self-hosted Hugging Face Docker Space
+- pgvector extension + `ProductImage.embedding vector(512)` + HNSW index
+- public visual product search at `POST /api/public/image-search`
 
-Impact:
-- media-heavy product operations are not ready
+Full runbook: `docs/CLIP-IMAGE-SEARCH.md`.
 
 ## Capital Recommendation Risk
 Status: OPEN

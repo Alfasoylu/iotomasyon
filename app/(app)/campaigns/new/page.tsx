@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
@@ -28,7 +29,12 @@ export default async function NewCampaignPage({
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Kampanya</p>
+          <Link
+            href="/campaigns"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Kampanyalar
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             Veritabanı geçici olarak kullanılamıyor
           </h1>
@@ -40,9 +46,12 @@ export default async function NewCampaignPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          WhatsApp Kampanyası
-        </p>
+        <Link
+          href="/campaigns"
+          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+        >
+          ← Kampanyalar
+        </Link>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
           Kampanya oluştur
         </h1>

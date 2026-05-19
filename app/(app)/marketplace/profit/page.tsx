@@ -258,7 +258,10 @@ function ProfitTable({
 // ---------------------------------------------------------------------------
 
 export default async function MarketplaceProfitPage() {
-  await requirePermission(PERMISSIONS.MARKETPLACE_LISTINGS_READ);
+  // P0 fix: profitability/margin/ROI dashboard requires EXECUTIVE_READ, not
+  // MARKETPLACE_LISTINGS_READ. Marketplace operators have listings.read but
+  // must NOT see net profit, margin, or ROI per listing.
+  await requirePermission(PERMISSIONS.EXECUTIVE_READ);
 
   const [listings, allPolicies, latestRate] = await Promise.all([
     prisma.marketplaceListing.findMany({

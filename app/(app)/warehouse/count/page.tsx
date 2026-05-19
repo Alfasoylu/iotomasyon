@@ -54,7 +54,7 @@ function CountForm() {
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
         <div className="text-5xl">✅</div>
         <p className="text-lg font-semibold text-emerald-700">
-          Stok sayımı kaydedildi!
+          Fiziksel sayım kaydedildi!
         </p>
         <p className="text-sm text-slate-500">Depo sayfasına dönülüyor…</p>
       </div>
@@ -72,8 +72,12 @@ function CountForm() {
           ← Geri
         </button>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Stok Sayımı
+          Fiziksel Sayım
         </h1>
+        <p className="mt-1 text-xs text-slate-500">
+          Bu sayım Entegra stoğunu değiştirmez. Yalnızca fiziksel sayım kaydı ve
+          Entegra ile fark raporlamak için saklanır.
+        </p>
       </div>
 
       {productId ? (
@@ -132,7 +136,7 @@ function CountForm() {
           disabled={isPending || !productId || !count}
           className="w-full rounded-xl bg-slate-900 px-6 py-4 text-base font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
         >
-          {isPending ? "Kaydediliyor…" : "Sayımı Kaydet"}
+          {isPending ? "Kaydediliyor…" : "Fiziksel Sayımı Kaydet"}
         </button>
       </form>
     </div>

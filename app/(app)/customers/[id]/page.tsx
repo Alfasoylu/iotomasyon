@@ -67,9 +67,12 @@ export default async function CustomerDetailPage({
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Müşteriler
-          </p>
+          <Link
+            href="/customers"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Müşteriler
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             Müşteri detayı geçici olarak kullanılamıyor
           </h1>
@@ -99,6 +102,12 @@ export default async function CustomerDetailPage({
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
       {/* ── Main workspace ─────────────────────────────────────── */}
       <div className="min-w-0 space-y-6">
+        <Link
+          href="/customers"
+          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+        >
+          ← Müşteriler
+        </Link>
         <Card className="p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>

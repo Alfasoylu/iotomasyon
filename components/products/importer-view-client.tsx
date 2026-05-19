@@ -125,14 +125,17 @@ function recalcProduct(
   });
   const revenueResult = calcRevenue({ trendyolPriceTry: m.trendyolPriceTry, usdTryRate: rates.usdTryRate });
   const profitResult = costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;
-  const stockDays = calcStockDays(m.stockQuantity, m.t30g);
+  // Phase 90: demand = max(t30g, manuel onlineSalesPotential)
+  const manualOnline = m.onlineSalesPotential ?? 0;
+  const effectiveT30g = Math.max(m.t30g, manualOnline);
+  const stockDays = calcStockDays(m.stockQuantity, effectiveT30g);
   const healthScore = calcHealthScore({
     hasRmb: m.sourceCostRmb != null,
     hasWeight: m.weightKg != null,
     hasTrendyolPrice: m.trendyolPriceTry != null,
     netProfitUsd: profitResult?.netProfitUsd ?? null,
     marginPct: profitResult?.marginPct ?? null,
-    t30g: m.t30g,
+    t30g: effectiveT30g,
     stockDays,
   });
   return {
@@ -149,6 +152,7 @@ function recalcProduct(
     annualRoiPct: profitResult?.annualRoiPct ?? null,
     stockDays,
     healthScore,
+    effectiveMonthlyUnits: effectiveT30g,
     hasCost: costResult !== null,
   };
 }
@@ -233,7 +237,7 @@ function InlineEditNumber({
 
 // ── Sort options ────────────────────────────────────────────────────────────────
 
-type SortKey = "roi" | "margin" | "profit" | "t30g" | "order" | "health" | "cost" | "stock_days";
+type SortKey = "roi" | "margin" | "profit" | "t30g" | "order" | "health" | "cost" | "stock_days" | "stock" | "weight";
 
 type FilterKey =
   | "all" | "order" | "missing_cost" | "no_trendyol" | "no_bayi"
@@ -302,12 +306,19 @@ export function ImporterViewClient() {
       customsRatePct: number | null;
       shippingMethodPref: string | null;
       importPaymentFeePct: number | null;
+      onlineSalesPotential: number | null;
     },
   ) => {
     setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id ? recalcProduct(p, updated, rates) : p
-      ),
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const next = recalcProduct(p, updated, rates);
+        return {
+          ...next,
+          onlineSalesPotential: updated.onlineSalesPotential,
+          effectiveMonthlyUnits: updated.onlineSalesPotential ?? 1,
+        };
+      }),
     );
   }, [rates]);
 
@@ -329,14 +340,16 @@ export function ImporterViewClient() {
       });
   }, []);
 
-  // Budget allocation (runs when products or params change)
+  // Budget allocation (runs when products or params change).
+  // Phase 90: demand signal = max(Trendyol 30g, manuel onlineSalesPotential).
+  // Manuel tahmin Trendyol satışından büyükse devre dışı kalmaz.
   const allocationMap = useMemo(() => {
     if (products.length === 0) return new Map();
     return allocateBudget(
       products.map((p) => ({
         id: p.id,
         stockQuantity: p.stockQuantity,
-        t30g: p.t30g,
+        t30g: p.effectiveMonthlyUnits,
         totalCostUsd: p.totalCostUsd,
         netProfitUsd: p.netProfitUsd,
         annualRoiPct: p.annualRoiPct,
@@ -347,6 +360,7 @@ export function ImporterViewClient() {
   }, [products, params]);
 
   // Enrich products with allocation results + decision labels
+  // decisionLabel ("Stok Fazla" / "Veri Eksik" vs.) Phase 90: effectiveMonthlyUnits ile hesaplanır
   type EnrichedProduct = ImporterProduct & AllocationResult & { decisionLabel: DecisionLabel };
   const enriched: EnrichedProduct[] = useMemo(() => {
     return products.map((p) => {
@@ -359,7 +373,7 @@ export function ImporterViewClient() {
         stockDays: p.stockDays,
         targetStockDays: params.targetStockDays,
         recommendedQty: alloc.recommendedQty,
-        t30g: p.t30g,
+        t30g: p.effectiveMonthlyUnits,
       });
       return { ...p, ...alloc, decisionLabel };
     });
@@ -407,6 +421,8 @@ export function ImporterViewClient() {
         case "health":     diff = a.healthScore - b.healthScore; break;
         case "cost":       diff = (a.totalCostUsd ?? -Infinity) - (b.totalCostUsd ?? -Infinity); break;
         case "stock_days": diff = (a.stockDays ?? Infinity) - (b.stockDays ?? Infinity); break;
+        case "stock":      diff = a.stockQuantity - b.stockQuantity; break;
+        case "weight":     diff = (a.weightKg ?? -Infinity) - (b.weightKg ?? -Infinity); break;
       }
       return sortAsc ? diff : -diff;
     });
@@ -583,7 +599,10 @@ export function ImporterViewClient() {
           <SortBtn k="profit" label="Kâr" />
           <SortBtn k="t30g" label="T30G" />
           <SortBtn k="order" label="Sipariş" />
+          <SortBtn k="stock" label="Stok" />
           <SortBtn k="stock_days" label="Stok Gün" />
+          <SortBtn k="weight" label="Ağırlık" />
+          <SortBtn k="cost" label="Maliyet" />
           <SortBtn k="health" label="Skor" />
         </div>
       </div>

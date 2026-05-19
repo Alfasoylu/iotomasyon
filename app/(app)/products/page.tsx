@@ -22,11 +22,11 @@ import { Card } from "@/components/ui/card";
 import { ProductFilters } from "@/components/products/product-filters";
 import { ProductBulkButtons } from "@/components/products/product-bulk-buttons";
 import { ImporterViewClient } from "@/components/products/importer-view-client";
-import { getCurrentSession } from "@/lib/auth";
+import { requireUser, requirePermission, checkPermission } from "@/lib/auth";
 import { listProducts } from "@/services/product-service";
-import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { resolveFinanceGate } from "@/lib/finance-visibility";
 
 export const dynamic = "force-dynamic";
 
@@ -47,35 +47,38 @@ function getHealthCues(product: {
   trendyolPriceTry: number | null;  // from MarketplacePrice
   xmlImported: boolean;
   lastStockSyncAt: Date | null;
-}): HealthCue[] {
+}, canViewFinance: boolean): HealthCue[] {
   const cues: HealthCue[] = [];
 
-  // Low stock
+  // Low stock — operational, always visible
   if (product.stockQuantity <= product.minimumStock) {
     cues.push({ label: "Düşük stok", tone: "warning" });
   }
 
-  // Missing image
+  // Missing image — operational, always visible
   if (!product.imageUrl && product.images.length === 0) {
     cues.push({ label: "Görsel yok", tone: "default" });
   }
 
-  // Missing cost
-  if (!product.unitCostTry && !product.sourceCostRmb && !product.importUnitCostUsd) {
-    cues.push({ label: "Maliyet eksik", tone: "danger" });
+  // Finance-tinted cues — only for finance viewers
+  if (canViewFinance) {
+    // Missing cost
+    if (!product.unitCostTry && !product.sourceCostRmb && !product.importUnitCostUsd) {
+      cues.push({ label: "Maliyet eksik", tone: "danger" });
+    }
+
+    // Missing weight (has RMB cost but no weight = can't calculate import cost)
+    if (!product.weightKg && product.sourceCostRmb) {
+      cues.push({ label: "Ağırlık eksik", tone: "warning" });
+    }
+
+    // Missing Trendyol price
+    if (!product.trendyolPriceTry && !product.sellingPriceTry && !product.marketplacePriceTry) {
+      cues.push({ label: "Trendyol fiyat yok", tone: "default" });
+    }
   }
 
-  // Missing weight (has RMB cost but no weight = can't calculate import cost)
-  if (!product.weightKg && product.sourceCostRmb) {
-    cues.push({ label: "Ağırlık eksik", tone: "warning" });
-  }
-
-  // Missing Trendyol price
-  if (!product.trendyolPriceTry && !product.sellingPriceTry && !product.marketplacePriceTry) {
-    cues.push({ label: "Trendyol fiyat yok", tone: "default" });
-  }
-
-  // Stale XML (imported but not synced in 7+ days)
+  // Stale XML (imported but not synced in 7+ days) — operational, always visible
   if (product.xmlImported) {
     const stale =
       !product.lastStockSyncAt ||
@@ -158,9 +161,14 @@ export default async function ProductsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requirePermission(PERMISSIONS.PRODUCTS_READ);
-  // getCurrentSession is cached within the request — no extra DB call
-  const session = await getCurrentSession();
-  const isAdmin = session?.role === "ADMIN";
+  // requireUser is cached within the request — no extra DB call
+  const user = await requireUser();
+  const isAdmin = user.role === "ADMIN";
+  const { canViewFinance } = await resolveFinanceGate(user);
+  const [canCreate, canUpdate] = await Promise.all([
+    checkPermission(user, PERMISSIONS.PRODUCTS_CREATE),
+    checkPermission(user, PERMISSIONS.PRODUCTS_UPDATE),
+  ]);
 
   const params = await searchParams;
   const view        = typeof params.view   === "string" ? params.view   : "standard";
@@ -206,15 +214,22 @@ export default async function ProductsPage({
     }
   }
 
-  // Phase 71 — exchange rates for profit calculation
-  const latestRate = await prisma.monthlyExchangeRate.findFirst({
-    orderBy: [{ year: "desc" }, { month: "desc" }],
-    select: { usdTryRate: true, rmbUsdRate: true },
-  });
+  // Phase 71 — exchange rates for profit calculation.
+  // Only fetched when the viewer can see finance data — otherwise we never
+  // compute profit / margin / ROI on the server, so we never have to risk
+  // leaking them in the rendered output.
+  const latestRate = canViewFinance
+    ? await prisma.monthlyExchangeRate.findFirst({
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+        select: { usdTryRate: true, rmbUsdRate: true },
+      })
+    : null;
   const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : 45;
   const rmbUsdRate = latestRate?.rmbUsdRate ? Number(latestRate.rmbUsdRate) : 7.0;
 
-  // Phase 74 — pre-compute profit + health for all products, then filter by durumFilter
+  // Phase 74 — pre-compute profit + health for all products, then filter by durumFilter.
+  // Finance fields (trendyolPriceTry, profit) are NULL for non-finance viewers —
+  // the table columns are then unconditionally suppressed below.
   type RowData = {
     product: (typeof products)[0];
     trendyolPriceTry: number | null;
@@ -225,33 +240,44 @@ export default async function ProductsPage({
 
   type ProductItem = (typeof products)[number];
   const allRows: RowData[] = products.map((product: ProductItem) => {
-    const trendyolMp = product.marketplacePrices?.find((p: { marketplace: string }) => p.marketplace === "TRENDYOL");
-    const trendyolPriceTry = trendyolMp
-      ? Number(trendyolMp.priceTry)
-      : product.xmlData?.xmlTrendyolPrice != null
-        ? Number(product.xmlData.xmlTrendyolPrice) * usdTryRate
-        : null;
-    const profit = calcProfit({ ...product, trendyolPriceTry }, usdTryRate, rmbUsdRate);
-    const healthCues = getHealthCues({ ...product, trendyolPriceTry });
+    const trendyolMp = canViewFinance
+      ? product.marketplacePrices?.find((p: { marketplace: string }) => p.marketplace === "TRENDYOL")
+      : undefined;
+    const trendyolPriceTry = canViewFinance
+      ? (trendyolMp
+          ? Number(trendyolMp.priceTry)
+          : product.xmlData?.xmlTrendyolPrice != null
+            ? Number(product.xmlData.xmlTrendyolPrice) * usdTryRate
+            : null)
+      : null;
+    const profit = canViewFinance
+      ? calcProfit({ ...product, trendyolPriceTry }, usdTryRate, rmbUsdRate)
+      : null;
+    const healthCues = getHealthCues({ ...product, trendyolPriceTry }, canViewFinance);
     const isLowStock = product.stockQuantity <= product.minimumStock;
     return { product, trendyolPriceTry, profit, healthCues, isLowStock };
   });
 
-  const filteredRows = durumFilter === "all"
+  // Filter pills are only meaningful when finance is visible.
+  const filteredRows = !canViewFinance
     ? allRows
-    : durumFilter === "no_profit"
-      ? allRows.filter((r) => r.profit === null)
-      : allRows.filter((r) => r.profit?.status === durumFilter);
+    : durumFilter === "all"
+      ? allRows
+      : durumFilter === "no_profit"
+        ? allRows.filter((r) => r.profit === null)
+        : allRows.filter((r) => r.profit?.status === durumFilter);
 
-  // Counts per durum for filter pills
-  const durumCounts = {
-    all: allRows.length,
-    LOSS:      allRows.filter((r) => r.profit?.status === "LOSS").length,
-    LOW:       allRows.filter((r) => r.profit?.status === "LOW").length,
-    GOOD:      allRows.filter((r) => r.profit?.status === "GOOD").length,
-    EXCELLENT: allRows.filter((r) => r.profit?.status === "EXCELLENT").length,
-    no_profit: allRows.filter((r) => r.profit === null).length,
-  };
+  // Counts per durum for filter pills (only computed when visible)
+  const durumCounts = canViewFinance
+    ? {
+        all: allRows.length,
+        LOSS:      allRows.filter((r) => r.profit?.status === "LOSS").length,
+        LOW:       allRows.filter((r) => r.profit?.status === "LOW").length,
+        GOOD:      allRows.filter((r) => r.profit?.status === "GOOD").length,
+        EXCELLENT: allRows.filter((r) => r.profit?.status === "EXCELLENT").length,
+        no_profit: allRows.filter((r) => r.profit === null).length,
+      }
+    : { all: allRows.length, LOSS: 0, LOW: 0, GOOD: 0, EXCELLENT: 0, no_profit: 0 };
 
   function durumHref(d: string) {
     const p = new URLSearchParams();
@@ -279,10 +305,12 @@ export default async function ProductsPage({
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-3">
-          <ProductBulkButtons />
-          <Link href="/products/new">
-            <Button>Yeni ürün</Button>
-          </Link>
+          {canUpdate && <ProductBulkButtons />}
+          {canCreate && (
+            <Link href="/products/new">
+              <Button>Yeni ürün</Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -336,7 +364,8 @@ export default async function ProductsPage({
         </Card>
       ) : null}
 
-      {/* Phase 74 — Kârlılık durum filtresi */}
+      {/* Phase 74 — Kârlılık durum filtresi (finance-only) */}
+      {canViewFinance && (
       <div className="flex flex-wrap gap-2">
         {([
           { key: "all",      label: "Tümü",     cls: "bg-white border-slate-200 text-slate-700 hover:border-slate-400" },
@@ -371,6 +400,7 @@ export default async function ProductsPage({
           );
         })}
       </div>
+      )}
 
       <Card className="overflow-hidden p-0">
         <div className="overflow-x-auto">
@@ -380,13 +410,13 @@ export default async function ProductsPage({
                 <th className="w-14 px-3 py-3" aria-label="Görsel" />
                 <th className="px-4 py-3">Ürün</th>
                 <th className="px-4 py-3">Kategori</th>
-                <th className="px-4 py-3 text-right">T.Fiyat</th>
+                {canViewFinance && <th className="px-4 py-3 text-right">T.Fiyat</th>}
                 <th className="px-4 py-3 text-right">Stok</th>
                 <th className="px-4 py-3 text-right">T30G</th>
-                <th className="px-4 py-3 text-right">Net Kâr</th>
-                <th className="px-4 py-3 text-right">Marj</th>
-                <th className="px-4 py-3 text-right">ROI</th>
-                <th className="px-4 py-3 text-center">Durum</th>
+                {canViewFinance && <th className="px-4 py-3 text-right">Net Kâr</th>}
+                {canViewFinance && <th className="px-4 py-3 text-right">Marj</th>}
+                {canViewFinance && <th className="px-4 py-3 text-right">ROI</th>}
+                {canViewFinance && <th className="px-4 py-3 text-center">Durum</th>}
                 <th className="px-4 py-3">Sağlık</th>
                 <th className="px-4 py-3 text-right">Aksiyon</th>
               </tr>
@@ -394,7 +424,7 @@ export default async function ProductsPage({
             <tbody className="divide-y divide-slate-50 bg-white text-sm">
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={canViewFinance ? 12 : 7} className="px-4 py-12 text-center text-slate-400">
                     {query.length >= 2
                       ? `"${query}" için ürün bulunamadı.`
                       : "Bu filtrelerle eşleşen ürün bulunamadı."}
@@ -450,16 +480,18 @@ export default async function ProductsPage({
                         )}
                       </td>
 
-                      {/* Trendyol Price */}
-                      <td className="px-4 py-3 text-right">
-                        {trendyolPriceTry != null ? (
-                          <span className="font-mono text-sm font-medium text-slate-700">
-                            ₺{trendyolPriceTry.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        ) : (
-                          <span className="text-slate-300 text-xs">—</span>
-                        )}
-                      </td>
+                      {/* Trendyol Price — finance only */}
+                      {canViewFinance && (
+                        <td className="px-4 py-3 text-right">
+                          {trendyolPriceTry != null ? (
+                            <span className="font-mono text-sm font-medium text-slate-700">
+                              ₺{trendyolPriceTry.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 text-xs">—</span>
+                          )}
+                        </td>
+                      )}
 
                       {/* Stock */}
                       <td className="px-4 py-3 text-right">
@@ -486,48 +518,53 @@ export default async function ProductsPage({
                         })()}
                       </td>
 
-                      {/* Net Kâr */}
-                      <td className="px-4 py-3 text-right">
-                        {profit ? (
-                          <span className={`font-mono text-sm font-semibold ${profit.netProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                            ₺{profit.netProfit.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                          </span>
-                        ) : <span className="text-xs text-slate-300">—</span>}
-                      </td>
+                      {/* Net Kâr / Marj / ROI / Durum — finance only */}
+                      {canViewFinance && (
+                        <td className="px-4 py-3 text-right">
+                          {profit ? (
+                            <span className={`font-mono text-sm font-semibold ${profit.netProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                              ₺{profit.netProfit.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </span>
+                          ) : <span className="text-xs text-slate-300">—</span>}
+                        </td>
+                      )}
 
-                      {/* Marj */}
-                      <td className="px-4 py-3 text-right">
-                        {profit ? (
-                          <span className={`font-mono text-sm font-semibold ${profit.marginPct >= 15 ? "text-emerald-600" : profit.marginPct >= 0 ? "text-amber-600" : "text-red-600"}`}>
-                            %{profit.marginPct.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                          </span>
-                        ) : <span className="text-xs text-slate-300">—</span>}
-                      </td>
+                      {canViewFinance && (
+                        <td className="px-4 py-3 text-right">
+                          {profit ? (
+                            <span className={`font-mono text-sm font-semibold ${profit.marginPct >= 15 ? "text-emerald-600" : profit.marginPct >= 0 ? "text-amber-600" : "text-red-600"}`}>
+                              %{profit.marginPct.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                            </span>
+                          ) : <span className="text-xs text-slate-300">—</span>}
+                        </td>
+                      )}
 
-                      {/* ROI */}
-                      <td className="px-4 py-3 text-right">
-                        {profit ? (
-                          <span className={`font-mono text-sm ${profit.roi >= 30 ? "text-emerald-600" : profit.roi >= 0 ? "text-amber-600" : "text-red-600"}`}>
-                            %{profit.roi.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                          </span>
-                        ) : <span className="text-xs text-slate-300">—</span>}
-                      </td>
+                      {canViewFinance && (
+                        <td className="px-4 py-3 text-right">
+                          {profit ? (
+                            <span className={`font-mono text-sm ${profit.roi >= 30 ? "text-emerald-600" : profit.roi >= 0 ? "text-amber-600" : "text-red-600"}`}>
+                              %{profit.roi.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </span>
+                          ) : <span className="text-xs text-slate-300">—</span>}
+                        </td>
+                      )}
 
-                      {/* Durum */}
-                      <td className="px-4 py-3 text-center">
-                        {profit ? (() => {
-                          const durum = { LOSS: { label: "Zarar", cls: "bg-red-100 text-red-700" }, LOW: { label: "Düşük", cls: "bg-amber-100 text-amber-700" }, GOOD: { label: "İyi", cls: "bg-emerald-100 text-emerald-700" }, EXCELLENT: { label: "Mükemmel", cls: "bg-emerald-200 text-emerald-900 font-semibold" } }[profit.status];
-                          return (
-                            <div className="flex flex-col items-center gap-0.5">
-                              <span className={`inline-block rounded px-2 py-0.5 text-xs ${durum.cls}`}>{durum.label}</span>
-                              {/* Phase 76: kargo modu göstergesi */}
-                              <span className={`text-[10px] font-medium ${profit.shippingMethod === "SEA" ? "text-blue-500" : "text-orange-400"}`}>
-                                {profit.shippingMethod === "SEA" ? "🚢 Deniz" : "✈ Hava"}
-                              </span>
-                            </div>
-                          );
-                        })() : <span className="text-xs text-slate-300">—</span>}
-                      </td>
+                      {canViewFinance && (
+                        <td className="px-4 py-3 text-center">
+                          {profit ? (() => {
+                            const durum = { LOSS: { label: "Zarar", cls: "bg-red-100 text-red-700" }, LOW: { label: "Düşük", cls: "bg-amber-100 text-amber-700" }, GOOD: { label: "İyi", cls: "bg-emerald-100 text-emerald-700" }, EXCELLENT: { label: "Mükemmel", cls: "bg-emerald-200 text-emerald-900 font-semibold" } }[profit.status];
+                            return (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className={`inline-block rounded px-2 py-0.5 text-xs ${durum.cls}`}>{durum.label}</span>
+                                {/* Phase 76: kargo modu göstergesi */}
+                                <span className={`text-[10px] font-medium ${profit.shippingMethod === "SEA" ? "text-blue-500" : "text-orange-400"}`}>
+                                  {profit.shippingMethod === "SEA" ? "🚢 Deniz" : "✈ Hava"}
+                                </span>
+                              </div>
+                            );
+                          })() : <span className="text-xs text-slate-300">—</span>}
+                        </td>
+                      )}
 
                       {/* Health cues */}
                       <td className="px-4 py-3">
@@ -547,12 +584,14 @@ export default async function ProductsPage({
                       {/* Action */}
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          <Link
-                            href={`/products/${product.id}/edit`}
-                            className="text-xs font-medium text-slate-400 hover:text-slate-700 transition"
-                          >
-                            Düzenle
-                          </Link>
+                          {canUpdate && (
+                            <Link
+                              href={`/products/${product.id}/edit`}
+                              className="text-xs font-medium text-slate-400 hover:text-slate-700 transition"
+                            >
+                              Düzenle
+                            </Link>
+                          )}
                           <Link
                             href={`/products/${product.id}`}
                             className="text-xs font-semibold text-slate-900 hover:text-slate-600 transition"

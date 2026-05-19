@@ -56,7 +56,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Pazar Yerleri</p>
+          <Link
+            href="/marketplace"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Pazar Yerleri
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             {PLATFORM_LABELS[listing.platform] ?? listing.platform}
             {listing.listingTitle && (

@@ -71,7 +71,7 @@ Known missing core systems:
 - product profitability engine
 - return analytics
 - listing coverage monitoring
-- image pipeline
+- image pipeline ✓ (Phase 91 — CLIP + pgvector; see `docs/CLIP-IMAGE-SEARCH.md`)
 - product import intelligence
 - supplier intelligence
 - import cost calculator

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
@@ -33,13 +34,22 @@ export default async function EditCategoryPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Kategoriler
-        </p>
+        <nav className="flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <Link href="/categories" className="hover:text-slate-900 transition">
+            ← Kategoriler
+          </Link>
+          <span className="text-slate-300">/</span>
+          <Link
+            href={`/categories/${id}`}
+            className="max-w-[280px] truncate normal-case tracking-normal text-slate-500 hover:text-slate-900 transition"
+            title={category.name}
+          >
+            {category.name}
+          </Link>
+        </nav>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
           Kategoriyi duzenle
         </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">{category.name}</p>
       </div>
 
       <Card className="p-6">

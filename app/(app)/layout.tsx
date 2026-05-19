@@ -140,7 +140,8 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   {
     href: "/marketplace/profit",
     label: "Pazar Kârlılığı",
-    permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ,
+    // Net profit / margin / ROI per listing — finance-only.
+    permission: PERMISSIONS.EXECUTIVE_READ,
     section: "Pazar Yeri",
   },
   {

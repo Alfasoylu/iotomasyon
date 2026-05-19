@@ -46,9 +46,12 @@ export default async function CampaignDetailPage({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            WhatsApp Kampanyası
-          </p>
+          <Link
+            href="/campaigns"
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Kampanyalar
+          </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
             {contextLink ? contextLink.label : "Kampanya"}
           </h1>

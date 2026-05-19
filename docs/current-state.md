@@ -230,7 +230,6 @@ Current meaning:
 ## Known Technical Debt
 
 - product finance field sprawl remains unresolved across import cost, TRY cost, marketplace price, shipping, commission, and override inputs
-- no image pipeline
 - no audit-grade event history
 - no audit-grade event history for financial, permission, stock, marketplace, or quote changes
 - no production-ready product sales snapshot layer for 30-day revenue ranking
@@ -242,6 +241,14 @@ Current meaning:
 - no route/profile-aware freight default hierarchy
 - no import decision snapshot governance
 - procurement engine now implemented (Phases 19–22)
+- ~~**Stock source-of-truth ihlali**~~ — ✅ **ÇÖZÜLDÜ (Phase 89, 2026-05-19)**:
+  `Product.physicalCountQuantity / At / ById / Note` alanları eklendi (additive,
+  reversible migration). `inventory-count-actions.ts` ve
+  `stock-adjustment-actions.ts` artık `physicalCountQuantity`'yi yazar;
+  `stockQuantity` yalnızca XML sync (Entegra) tarafından mutate edilir. UI
+  "Entegra: N / Sayım: M / Fark: ±X" derived chip'lerini gösterir.
+  `StockAdjustmentLog` audit trail aynen korundu. Stock-adjustment permission
+  `PRODUCTS_UPDATE` → `INVENTORY_COUNT` (WAREHOUSE rolünün erişimi için).
 - no canonical owner-grade import opportunity score
 - demand truth is not fully normalized across capital / procurement / import decisions / import cockpit
 - landed-cost truth still risks divergence across pages and helper modules
@@ -289,6 +296,13 @@ Analysis performed 2026-05-17. No code changes made — documentation only.
    showFinancialFields prop gates 4 financial sections in product-form.tsx.
    normalizeProductDataNonFinancial() enforces this server-side in updateProductAction.
    Non-admin users cannot write financial fields even via tampering.
+
+   **Codex audit P0 (2026-05-18) update** — Product LIST + DETAIL + marketplace
+   profit pages also now enforce EXECUTIVE_READ for finance/import fields.
+   New `lib/finance-visibility.ts` centralizes the gate; `/products/[id]`
+   server-side strips finance fields from the product object for non-finance
+   readers (true data contract, not UI-only hide). `/marketplace/profit`
+   permission upgraded from `marketplaceListings.read` to `executive.read`.
 
 3. **Role-specific dashboards** — /dashboard is a single page for all roles.
    SALES sees import/procurement tiles that mean nothing to them.
