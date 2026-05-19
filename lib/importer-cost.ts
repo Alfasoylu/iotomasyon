@@ -3,6 +3,11 @@ import { calcShippingFromPriceTiers } from "./marketplace-pricing";
 /**
  * lib/importer-cost.ts — Phase 79: İthalatçı Görünümü
  *
+ * NOT: Yeni callers `lib/pricing-engine.ts:computeProductEconomics()` tercih
+ * etmeli — tüm finansal göstergeleri (cost+revenue+profit, TL+USD) tek
+ * pakette döner ve KDV/kargo/komisyon mantığı diğer motorlarla tutarlıdır.
+ * Bu dosya hâlâ kullanılır ama yeni code path'lerde pricing-engine kullanın.
+ *
  * Single source of truth for all import economics calculations.
  * Pure functions — no DB calls, no side effects.
  *
