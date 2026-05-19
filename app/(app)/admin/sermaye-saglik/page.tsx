@@ -2,12 +2,13 @@
  * Sermaye Sağlık Panosu
  *
  * Günde 1 açılır karar verme aracı:
+ *   - Sermaye Sağlık Skoru (0-100 manşet)
  *   - Bağlı sermaye (USD)
- *   - Aylık beklenen nakit akışı
- *   - Yıllık ROI projeksiyonu
+ *   - Aylık beklenen nakit akışı (geçen aya göre delta)
+ *   - Yıllık ROI projeksiyonu (geçen aya göre delta)
  *   - Ölü stok bağlı sermaye
  *   - Kategori bazlı sermaye dağılımı
- *   - 4 aksiyon listesi (yıldız ürün, ölü stok, acil sipariş, eksik listeme)
+ *   - 4 aksiyon listesi (yıldız ürün, ölü stok, acil sipariş, eksik listeme) + CSV indir
  *
  * Veri kaynağı: Product + TrendyolSalesRecord. Yeni schema yok.
  */
@@ -17,6 +18,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
+import { CsvDownloadButton } from "@/components/admin/csv-download-button";
 import {
   calcImportCost,
   calcRevenue,
@@ -39,6 +41,18 @@ function fmtPct(n: number, decimals = 1): string {
   return `%${n.toFixed(decimals)}`;
 }
 
+function fmtDelta(curr: number, prev: number): { text: string; tone: "up" | "down" | "flat" } {
+  if (prev === 0 && curr === 0) return { text: "—", tone: "flat" };
+  if (prev === 0) return { text: "yeni", tone: "up" };
+  const pct = ((curr - prev) / Math.abs(prev)) * 100;
+  if (Math.abs(pct) < 0.5) return { text: "≈ aynı", tone: "flat" };
+  const sign = pct > 0 ? "+" : "";
+  return {
+    text: `${sign}${pct.toFixed(1)}% bu ay`,
+    tone: pct > 0 ? "up" : "down",
+  };
+}
+
 interface ProductLite {
   id: string;
   name: string;
@@ -47,19 +61,20 @@ interface ProductLite {
   stockQuantity: number;
   categoryName: string;
   t30g: number;
+  prevT30g: number;
   effectiveMonthlyUnits: number;
   lifetimeSold: number;
-  unitCostUsd: number | null;   // bir adet maliyeti (RMB→USD+freight+customs ya da unitCostTry/usdTry)
-  totalCostUsd: number | null;  // total bağlı sermaye = unitCost × stock
+  unitCostUsd: number | null;
+  totalCostUsd: number | null;
   netProfitUsd: number | null;
-  monthlyProfitUsd: number;     // effectiveMonthly × netProfit
+  monthlyProfitUsd: number;
+  prevMonthlyProfitUsd: number;
   stockDays: number | null;
 }
 
 export default async function SermayeSaglikPage() {
   await requirePermission(PERMISSIONS.EXECUTIVE_READ);
 
-  // Kur
   const latestRate = await prisma.monthlyExchangeRate.findFirst({
     orderBy: [{ year: "desc" }, { month: "desc" }],
     select: { usdTryRate: true, rmbUsdRate: true },
@@ -67,7 +82,6 @@ export default async function SermayeSaglikPage() {
   const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
   const rmbUsdRate = latestRate?.rmbUsdRate ? Number(latestRate.rmbUsdRate) : DEFAULT_RMB_USD_RATE;
 
-  // Aktif ürünler + kategori adı
   const products = await prisma.product.findMany({
     where: { isActive: true },
     select: {
@@ -96,8 +110,11 @@ export default async function SermayeSaglikPage() {
     },
   });
 
-  // Son 30g satış
-  const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // Son 30g (current period)
+  const now = Date.now();
+  const since30 = new Date(now - 30 * 24 * 60 * 60 * 1000);
+  const since60 = new Date(now - 60 * 24 * 60 * 60 * 1000);
+
   const sales30 = await prisma.trendyolSalesRecord.groupBy({
     by: ["productId"],
     where: {
@@ -113,7 +130,22 @@ export default async function SermayeSaglikPage() {
   const t30Map = new Map<string, number>();
   for (const r of sales30) if (r.productId) t30Map.set(r.productId, r._sum.quantity ?? 0);
 
-  // Lifetime satış
+  // Önceki 30g (30-60 gün arası — karşılaştırma için)
+  const salesPrev30 = await prisma.trendyolSalesRecord.groupBy({
+    by: ["productId"],
+    where: {
+      productId: { not: null },
+      orderDate: { gte: since60, lt: since30 },
+      NOT: [
+        { status: { contains: "iptal", mode: "insensitive" } },
+        { status: { contains: "cancel", mode: "insensitive" } },
+      ],
+    },
+    _sum: { quantity: true },
+  });
+  const tPrev30Map = new Map<string, number>();
+  for (const r of salesPrev30) if (r.productId) tPrev30Map.set(r.productId, r._sum.quantity ?? 0);
+
   const lifetimeRows = await prisma.trendyolSalesRecord.groupBy({
     by: ["productId"],
     where: {
@@ -128,13 +160,12 @@ export default async function SermayeSaglikPage() {
   const lifetimeMap = new Map<string, number>();
   for (const r of lifetimeRows) if (r.productId) lifetimeMap.set(r.productId, r._sum.quantity ?? 0);
 
-  // Enrich
   const enriched: ProductLite[] = products.map((p) => {
     const t30g = t30Map.get(p.id) ?? 0;
+    const prevT30g = tPrev30Map.get(p.id) ?? 0;
     const manualOnline = p.onlineSalesPotential ?? 0;
     const effectiveMonthlyUnits = Math.max(t30g, manualOnline);
 
-    // Maliyet — calcImportCost varsa onu kullan, yoksa unitCostTry/unitCostUsd fallback
     const costResult = calcImportCost({
       sourceCostRmb: p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null,
       weightKg: p.weightKg != null ? Number(p.weightKg) : null,
@@ -150,7 +181,6 @@ export default async function SermayeSaglikPage() {
 
     const totalCostUsd = unitCostUsd != null ? unitCostUsd * p.stockQuantity : null;
 
-    // Trendyol fiyatı
     const trendyolPriceTry =
       p.marketplacePrices[0]?.priceTry != null
         ? Number(p.marketplacePrices[0].priceTry)
@@ -162,6 +192,7 @@ export default async function SermayeSaglikPage() {
     const profitResult = costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;
     const netProfitUsd = profitResult?.netProfitUsd ?? null;
     const monthlyProfitUsd = netProfitUsd != null ? netProfitUsd * effectiveMonthlyUnits : 0;
+    const prevMonthlyProfitUsd = netProfitUsd != null ? netProfitUsd * prevT30g : 0;
 
     const stockDays =
       effectiveMonthlyUnits > 0
@@ -176,12 +207,14 @@ export default async function SermayeSaglikPage() {
       stockQuantity: p.stockQuantity,
       categoryName: p.productCategory?.name ?? "Diğer",
       t30g,
+      prevT30g,
       effectiveMonthlyUnits,
       lifetimeSold: lifetimeMap.get(p.id) ?? 0,
       unitCostUsd,
       totalCostUsd,
       netProfitUsd,
       monthlyProfitUsd,
+      prevMonthlyProfitUsd,
       stockDays,
     };
   });
@@ -189,10 +222,76 @@ export default async function SermayeSaglikPage() {
   // ── Toplam KPI'lar ────────────────────────────────────────────────────────
   const totalLockedUsd = enriched.reduce((s, p) => s + (p.totalCostUsd ?? 0), 0);
   const monthlyExpectedUsd = enriched.reduce((s, p) => s + Math.max(0, p.monthlyProfitUsd), 0);
+  const prevMonthlyExpectedUsd = enriched.reduce((s, p) => s + Math.max(0, p.prevMonthlyProfitUsd), 0);
   const annualRoiPct =
     totalLockedUsd > 0 ? (monthlyExpectedUsd * 12 / totalLockedUsd) * 100 : 0;
+  const prevAnnualRoiPct =
+    totalLockedUsd > 0 ? (prevMonthlyExpectedUsd * 12 / totalLockedUsd) * 100 : 0;
   const deadStock = enriched.filter((p) => p.lifetimeSold === 0 && p.stockQuantity > 0);
   const deadStockUsd = deadStock.reduce((s, p) => s + (p.totalCostUsd ?? 0), 0);
+
+  // ── Aksiyon listeleri ─────────────────────────────────────────────────────
+
+  const stars = enriched
+    .filter((p) => p.monthlyProfitUsd > 0)
+    .sort((a, b) => b.monthlyProfitUsd - a.monthlyProfitUsd)
+    .slice(0, 10);
+
+  const deadTop = deadStock
+    .filter((p) => (p.totalCostUsd ?? 0) > 0)
+    .sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0))
+    .slice(0, 10);
+
+  const urgentReorder = enriched
+    .filter((p) => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14 && p.effectiveMonthlyUnits > 0)
+    .sort((a, b) => (a.stockDays ?? 0) - (b.stockDays ?? 0))
+    .slice(0, 10);
+
+  const liquidation = enriched
+    .filter((p) => p.stockQuantity > 0 && (p.totalCostUsd ?? 0) > 0 && p.t30g === 0 && p.lifetimeSold > 0)
+    .sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0))
+    .slice(0, 10);
+
+  // ── Sermaye Sağlık Skoru (0-100) ──────────────────────────────────────────
+  // Ağırlıklar:
+  //   ROI:           50 pts  →  yıllık ROI %60+ ise tam puan, lineer ölçek
+  //   Ölü stok:      25 pts  →  ölü stok oranı düşük = yüksek puan
+  //   Acil sipariş:  10 pts  →  0 acil sipariş = tam puan, 10+ = 0
+  //   Likidasyon:    15 pts  →  0 likidasyon = tam puan, 30+ = 0
+  const roiScore = Math.min(50, Math.max(0, (annualRoiPct / 60) * 50));
+  const deadRatio = totalLockedUsd > 0 ? deadStockUsd / totalLockedUsd : 0;
+  const deadScore = Math.max(0, (1 - Math.min(1, deadRatio * 2)) * 25);
+  // urgentReorder filtered to top 10 — use full count for score
+  const urgentCount = enriched.filter(
+    (p) => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14 && p.effectiveMonthlyUnits > 0,
+  ).length;
+  const urgentScore = Math.max(0, 10 - urgentCount * 1);
+  const liquidationCount = enriched.filter(
+    (p) => p.stockQuantity > 0 && (p.totalCostUsd ?? 0) > 0 && p.t30g === 0 && p.lifetimeSold > 0,
+  ).length;
+  const liquidationScore = Math.max(0, 15 - liquidationCount * 0.5);
+  const healthScore = Math.round(roiScore + deadScore + urgentScore + liquidationScore);
+
+  const healthTone =
+    healthScore >= 75 ? "emerald" :
+    healthScore >= 55 ? "blue" :
+    healthScore >= 35 ? "amber" : "red";
+  const healthLabel =
+    healthScore >= 75 ? "Mükemmel" :
+    healthScore >= 55 ? "İyi" :
+    healthScore >= 35 ? "Dikkat" : "Kritik";
+  const healthBg = {
+    emerald: "border-emerald-300 bg-emerald-50",
+    blue: "border-blue-300 bg-blue-50",
+    amber: "border-amber-300 bg-amber-50",
+    red: "border-red-300 bg-red-50",
+  }[healthTone];
+  const healthText = {
+    emerald: "text-emerald-700",
+    blue: "text-blue-700",
+    amber: "text-amber-700",
+    red: "text-red-700",
+  }[healthTone];
 
   // ── Kategori dağılımı ─────────────────────────────────────────────────────
   type CatAgg = { name: string; lockedUsd: number; productCount: number; monthlyProfitUsd: number };
@@ -208,31 +307,8 @@ export default async function SermayeSaglikPage() {
   const catBreakdown = Array.from(catMap.values()).sort((a, b) => b.lockedUsd - a.lockedUsd);
   const topCats = catBreakdown.slice(0, 10);
 
-  // ── Aksiyon listeleri ─────────────────────────────────────────────────────
-
-  // Yıldız ürünler: top 10 aylık kâr
-  const stars = enriched
-    .filter((p) => p.monthlyProfitUsd > 0)
-    .sort((a, b) => b.monthlyProfitUsd - a.monthlyProfitUsd)
-    .slice(0, 10);
-
-  // Ölü stok (top 10 bağlı sermaye)
-  const deadTop = deadStock
-    .filter((p) => (p.totalCostUsd ?? 0) > 0)
-    .sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0))
-    .slice(0, 10);
-
-  // Acil sipariş: stockDays varsa + lead time'ı aşıyor veya < 14g
-  const urgentReorder = enriched
-    .filter((p) => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14 && p.effectiveMonthlyUnits > 0)
-    .sort((a, b) => (a.stockDays ?? 0) - (b.stockDays ?? 0))
-    .slice(0, 10);
-
-  // Likidasyon: çok stok + uzun süredir satış yok
-  const liquidation = enriched
-    .filter((p) => p.stockQuantity > 0 && (p.totalCostUsd ?? 0) > 0 && p.t30g === 0 && p.lifetimeSold > 0)
-    .sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0))
-    .slice(0, 10);
+  const monthlyDelta = fmtDelta(monthlyExpectedUsd, prevMonthlyExpectedUsd);
+  const roiDelta = fmtDelta(annualRoiPct, prevAnnualRoiPct);
 
   return (
     <div className="space-y-6">
@@ -248,6 +324,54 @@ export default async function SermayeSaglikPage() {
           kadar nakit beklenir, neyi siparişe vermeli, neyi tasfiye etmeli.
         </p>
       </div>
+
+      {/* Sermaye Sağlık Skoru — manşet */}
+      <Card className={`${healthBg} p-6`}>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-baseline gap-4">
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-[0.25em] ${healthText}`}>
+                Sermaye Sağlık Skoru
+              </p>
+              <div className="mt-1 flex items-baseline gap-3">
+                <span className={`text-6xl font-bold tabular-nums ${healthText}`}>
+                  {healthScore}
+                </span>
+                <span className="text-sm text-slate-500">/ 100</span>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${healthText} bg-white/70`}>
+                  {healthLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs sm:grid-cols-4">
+            <div>
+              <p className="text-slate-500">ROI</p>
+              <p className="font-mono font-semibold text-slate-800">
+                {roiScore.toFixed(0)}/50
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-500">Ölü stok</p>
+              <p className="font-mono font-semibold text-slate-800">
+                {deadScore.toFixed(0)}/25
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-500">Acil sipariş</p>
+              <p className="font-mono font-semibold text-slate-800">
+                {urgentScore.toFixed(0)}/10
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-500">Likidasyon</p>
+              <p className="font-mono font-semibold text-slate-800">
+                {liquidationScore.toFixed(0)}/15
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Üst KPI şeridi */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -269,7 +393,7 @@ export default async function SermayeSaglikPage() {
           <p className="mt-2 text-3xl font-bold tabular-nums text-emerald-700">
             {fmtUsd(monthlyExpectedUsd)}
           </p>
-          <p className="mt-1 text-xs text-emerald-600">net kâr (kargo+komisyon sonrası)</p>
+          <DeltaBadge delta={monthlyDelta} className="mt-1" />
         </Card>
         <Card className="p-5 border-blue-200 bg-blue-50/40">
           <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
@@ -278,9 +402,7 @@ export default async function SermayeSaglikPage() {
           <p className="mt-2 text-3xl font-bold tabular-nums text-blue-700">
             {fmtPct(annualRoiPct)}
           </p>
-          <p className="mt-1 text-xs text-blue-600">
-            mevcut hızda 12 ay
-          </p>
+          <DeltaBadge delta={roiDelta} className="mt-1" />
         </Card>
         <Card className="p-5 border-amber-200 bg-amber-50/40">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
@@ -342,6 +464,25 @@ export default async function SermayeSaglikPage() {
           title="⭐ Yıldız Ürünler"
           subtitle="En çok aylık kâr getiren 10 ürün — sipariş artırın"
           color="emerald"
+          csv={{
+            filename: "yildiz-urunler.csv",
+            columns: [
+              { header: "Ürün", key: "name" },
+              { header: "Marka", key: "brand" },
+              { header: "SKU", key: "sku" },
+              { header: "Aylık Kâr (USD)", key: "monthlyProfitUsd" },
+              { header: "T30G", key: "t30g" },
+              { header: "Stok", key: "stockQuantity" },
+            ],
+            rows: stars.map((p) => ({
+              name: p.name,
+              brand: p.brand ?? "",
+              sku: p.sku,
+              monthlyProfitUsd: p.monthlyProfitUsd.toFixed(2),
+              t30g: p.t30g,
+              stockQuantity: p.stockQuantity,
+            })),
+          }}
           rows={stars.map((p) => ({
             id: p.id,
             primary: p.name,
@@ -357,6 +498,28 @@ export default async function SermayeSaglikPage() {
           title="🟡 Ölü Stok"
           subtitle="Hiç satılmamış + bağlı sermayesi yüksek 10 ürün — tasfiye / indirim"
           color="amber"
+          csv={{
+            filename: "olu-stok.csv",
+            columns: [
+              { header: "Ürün", key: "name" },
+              { header: "Marka", key: "brand" },
+              { header: "SKU", key: "sku" },
+              { header: "Bağlı Sermaye (USD)", key: "totalCostUsd" },
+              { header: "Stok", key: "stockQuantity" },
+              { header: "Lifetime", key: "lifetimeSold" },
+            ],
+            rows: deadStock
+              .filter((p) => (p.totalCostUsd ?? 0) > 0)
+              .sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0))
+              .map((p) => ({
+                name: p.name,
+                brand: p.brand ?? "",
+                sku: p.sku,
+                totalCostUsd: (p.totalCostUsd ?? 0).toFixed(2),
+                stockQuantity: p.stockQuantity,
+                lifetimeSold: p.lifetimeSold,
+              })),
+          }}
           rows={deadTop.map((p) => ({
             id: p.id,
             primary: p.name,
@@ -372,6 +535,30 @@ export default async function SermayeSaglikPage() {
           title="🔴 Acil Sipariş"
           subtitle="14 günden az stoku kalan ürünler — hemen sipariş ver"
           color="red"
+          csv={{
+            filename: "acil-siparis.csv",
+            columns: [
+              { header: "Ürün", key: "name" },
+              { header: "Marka", key: "brand" },
+              { header: "SKU", key: "sku" },
+              { header: "Kalan Gün", key: "stockDays" },
+              { header: "Stok", key: "stockQuantity" },
+              { header: "Aylık Satış", key: "effectiveMonthlyUnits" },
+            ],
+            rows: enriched
+              .filter(
+                (p) => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14 && p.effectiveMonthlyUnits > 0,
+              )
+              .sort((a, b) => (a.stockDays ?? 0) - (b.stockDays ?? 0))
+              .map((p) => ({
+                name: p.name,
+                brand: p.brand ?? "",
+                sku: p.sku,
+                stockDays: p.stockDays ?? 0,
+                stockQuantity: p.stockQuantity,
+                effectiveMonthlyUnits: p.effectiveMonthlyUnits,
+              })),
+          }}
           rows={urgentReorder.map((p) => ({
             id: p.id,
             primary: p.name,
@@ -387,6 +574,28 @@ export default async function SermayeSaglikPage() {
           title="🟠 Likidasyon Adayı"
           subtitle="Daha önce satılmış ama son 30 gündür hiç hareket yok"
           color="orange"
+          csv={{
+            filename: "likidasyon-adaylari.csv",
+            columns: [
+              { header: "Ürün", key: "name" },
+              { header: "Marka", key: "brand" },
+              { header: "SKU", key: "sku" },
+              { header: "Bağlı Sermaye (USD)", key: "totalCostUsd" },
+              { header: "Stok", key: "stockQuantity" },
+              { header: "Lifetime", key: "lifetimeSold" },
+            ],
+            rows: enriched
+              .filter((p) => p.stockQuantity > 0 && (p.totalCostUsd ?? 0) > 0 && p.t30g === 0 && p.lifetimeSold > 0)
+              .sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0))
+              .map((p) => ({
+                name: p.name,
+                brand: p.brand ?? "",
+                sku: p.sku,
+                totalCostUsd: (p.totalCostUsd ?? 0).toFixed(2),
+                stockQuantity: p.stockQuantity,
+                lifetimeSold: p.lifetimeSold,
+              })),
+          }}
           rows={liquidation.map((p) => ({
             id: p.id,
             primary: p.name,
@@ -399,12 +608,34 @@ export default async function SermayeSaglikPage() {
         />
       </div>
 
-      {/* Footer note */}
       <p className="text-xs text-slate-400 text-center">
         Kur: 1 USD = ₺{usdTryRate.toFixed(2)} · 1 USD = {rmbUsdRate.toFixed(2)} RMB ·
-        Kâr hesabı: <code>lib/pricing-engine.ts</code> kanonik formülü (Trendyol kargo dilim + komisyon, KDV dahil).
+        Kâr hesabı: <code>lib/pricing-engine.ts</code> kanonik formülü (Trendyol kargo dilim + komisyon, KDV dahil) ·
+        Karşılaştırma: son 30g vs önceki 30g.
       </p>
     </div>
+  );
+}
+
+// ── Delta rozeti ────────────────────────────────────────────────────────────
+
+function DeltaBadge({
+  delta,
+  className,
+}: {
+  delta: { text: string; tone: "up" | "down" | "flat" };
+  className?: string;
+}) {
+  const toneClass = {
+    up: "text-emerald-600",
+    down: "text-rose-600",
+    flat: "text-slate-400",
+  }[delta.tone];
+  const arrow = delta.tone === "up" ? "▲" : delta.tone === "down" ? "▼" : "·";
+  return (
+    <p className={`text-xs font-medium ${toneClass} ${className ?? ""}`}>
+      {arrow} {delta.text}
+    </p>
   );
 }
 
@@ -419,17 +650,25 @@ interface Row {
   meta?: string;
 }
 
+interface CsvSpec {
+  filename: string;
+  columns: Array<{ header: string; key: string }>;
+  rows: Array<Record<string, string | number>>;
+}
+
 function ActionList({
   title,
   subtitle,
   color,
   rows,
+  csv,
   emptyMsg,
 }: {
   title: string;
   subtitle: string;
   color: "emerald" | "amber" | "red" | "orange";
   rows: Row[];
+  csv: CsvSpec;
   emptyMsg: string;
 }) {
   const colorClasses = {
@@ -447,9 +686,21 @@ function ActionList({
 
   return (
     <Card className={`overflow-hidden p-0 ${colorClasses}`}>
-      <div className="border-b border-white/60 bg-white/60 px-5 py-3">
-        <h3 className={`text-sm font-bold ${headerColors}`}>{title}</h3>
-        <p className="text-xs text-slate-600 mt-0.5">{subtitle}</p>
+      <div className="flex items-start justify-between gap-3 border-b border-white/60 bg-white/60 px-5 py-3">
+        <div className="min-w-0 flex-1">
+          <h3 className={`text-sm font-bold ${headerColors}`}>{title}</h3>
+          <p className="text-xs text-slate-600 mt-0.5">{subtitle}</p>
+          {csv.rows.length > rows.length && (
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              Görüntüde ilk {rows.length} satır · CSV'de {csv.rows.length} satır
+            </p>
+          )}
+        </div>
+        <CsvDownloadButton
+          filename={csv.filename}
+          columns={csv.columns}
+          rows={csv.rows}
+        />
       </div>
       <div className="divide-y divide-white/60 bg-white/50">
         {rows.length === 0 ? (
