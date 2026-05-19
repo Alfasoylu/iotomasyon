@@ -2,6 +2,11 @@
 /**
  * Phase 8 — Profitability Engine
  *
+ * NOT: Yeni callers `lib/pricing-engine.ts:computeProductEconomics()` tercih
+ * etmeli. Bu motor sadece retail/wholesale/marketplace çoklu kanal
+ * karşılaştırması yapan eski callers (ProductForm, sales-potential) için
+ * korunuyor. Tek-kanal pazaryeri hesabı için pricing-engine kullanın.
+ *
  * Pure calculation module. No DB access, no server-only imports.
  * All inputs are numbers (convert Decimal before passing).
  *

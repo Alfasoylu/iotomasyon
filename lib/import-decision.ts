@@ -1,6 +1,10 @@
 /**
  * Phase 11C — Import Decision Engine (kargo dilimi fallback dahil)
  *
+ * NOT: AIR vs SEA senaryo karşılaştırması bu motorun spesifik amacı. Tek
+ * bir senaryo için cost+revenue+profit hesaplamak istiyorsanız
+ * `lib/pricing-engine.ts:computeProductEconomics()` daha sade.
+ *
  * Replicates the Excel workbook (Top.ürünler sheet) business logic in TypeScript.
  *
  * Formula set (dimensionally correct — all USD):
