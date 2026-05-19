@@ -34,7 +34,11 @@ import { calcShippingFromPriceTiers } from "./marketplace-pricing";
  *
  *   annualRoiPct = ((netRevenueUsd / totalCostUsd) ^ (365 / cycleDays) − 1) × 100
  *                  ("sermaye 1 yılda yüzde kaç büyür")
- *                  cycleDays: AIR=120, SEA=210
+ *                  cycleDays: AIR=150, SEA=210
+ *
+ * Otomatik kargo seçimi (shippingMethodPref null + trendyolPriceTry verilirse):
+ *   AIR ve SEA için ayrı ayrı annualRoiPct hesaplanır, daha yüksek olan seçilir.
+ *   Veri eksikse ağırlık fallback: ≥5 kg → SEA.
  */
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -44,8 +48,8 @@ export const DEFAULT_USD_TRY_RATE = 45;
 export const DEFAULT_CUSTOMS_PCT = 30;        // %
 export const AIR_FREIGHT_PER_KG = 8;          // USD/kg
 export const SEA_FREIGHT_PER_KG = 1;          // USD/kg
-export const SEA_AUTO_WEIGHT_KG = 5;          // ≥5 kg → auto SEA
-export const AIR_CYCLE_DAYS = 120;
+export const SEA_AUTO_WEIGHT_KG = 5;          // ≥5 kg → auto SEA (fallback when ROI verisi yoksa)
+export const AIR_CYCLE_DAYS = 150;
 export const SEA_CYCLE_DAYS = 210;
 export const TRENDYOL_COMMISSION_PCT = 20;
 
@@ -101,13 +105,70 @@ export const DEFAULT_BUDGET_PARAMS: BudgetParams = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+/**
+ * Belirli bir kargo metodu için ImportCostResult döndürür (resolution adımı yok).
+ * Internal helper — public API'de calcImportCost kullanın.
+ */
+function buildCostFor(
+  method: ShippingMethod,
+  sourceCostRmb: number,
+  weightKg: number,
+  customsPct: number,
+  payFeePct: number,
+  rmbUsdRate: number,
+): ImportCostResult {
+  const freightPerKg = method === "SEA" ? SEA_FREIGHT_PER_KG : AIR_FREIGHT_PER_KG;
+  const rate = rmbUsdRate > 0 ? rmbUsdRate : DEFAULT_RMB_USD_RATE;
+  const productUsd = (sourceCostRmb / rate) * (1 + payFeePct / 100);
+  const freightUsd = weightKg * freightPerKg;
+  const customsUsd = (productUsd + freightUsd) * (customsPct / 100);
+  const totalCostUsd = productUsd + freightUsd + customsUsd;
+  return { shippingMethod: method, productUsd, freightUsd, customsUsd, totalCostUsd };
+}
+
+/**
+ * Otomatik kargo seçimi:
+ *   - Kullanıcı tercihi varsa (AIR/SEA) → onu döndür.
+ *   - Trendyol fiyatı + kur verilmişse → AIR ve SEA için annualRoiPct hesapla,
+ *     daha yüksek olan kazansın (zarar bile etse en az zarar olanı seçer).
+ *   - Aksi halde ağırlık fallback: ≥5 kg → SEA, < 5 kg → AIR.
+ */
 export function resolveShipping(
   pref: string | null | undefined,
   weightKg: number,
+  options?: {
+    sourceCostRmb?: number | null;
+    customsRatePct?: number | null;
+    importPaymentFeePct?: number | null;
+    rmbUsdRate?: number;
+    trendyolPriceTry?: number | null;
+    usdTryRate?: number;
+  },
 ): ShippingMethod {
   const up = pref?.toUpperCase();
   if (up === "SEA") return "SEA";
   if (up === "AIR") return "AIR";
+
+  // ROI tabanlı seçim (yeterli veri varsa)
+  if (
+    options &&
+    options.sourceCostRmb && options.sourceCostRmb > 0 &&
+    options.trendyolPriceTry && options.trendyolPriceTry > 0 &&
+    options.usdTryRate && options.usdTryRate > 0 &&
+    options.rmbUsdRate && options.rmbUsdRate > 0
+  ) {
+    const customsPct = options.customsRatePct ?? DEFAULT_CUSTOMS_PCT;
+    const payFeePct = options.importPaymentFeePct ?? 0;
+    const airCost = buildCostFor("AIR", options.sourceCostRmb, weightKg, customsPct, payFeePct, options.rmbUsdRate);
+    const seaCost = buildCostFor("SEA", options.sourceCostRmb, weightKg, customsPct, payFeePct, options.rmbUsdRate);
+    const revenue = calcRevenue({ trendyolPriceTry: options.trendyolPriceTry, usdTryRate: options.usdTryRate });
+    if (revenue) {
+      const airRoi = calcProfit(airCost, revenue).annualRoiPct;
+      const seaRoi = calcProfit(seaCost, revenue).annualRoiPct;
+      return seaRoi > airRoi ? "SEA" : "AIR";
+    }
+  }
+
   return weightKg >= SEA_AUTO_WEIGHT_KG ? "SEA" : "AIR";
 }
 
@@ -120,23 +181,27 @@ export function calcImportCost(input: {
   importPaymentFeePct: number | null;
   shippingMethodPref: string | null;
   rmbUsdRate: number;
+  /** Opsiyonel — verilirse otomatik kargo seçimi ROI bazlı yapılır. */
+  trendyolPriceTry?: number | null;
+  /** Opsiyonel — trendyolPriceTry ile birlikte ROI seçimi için gerekli. */
+  usdTryRate?: number;
 }): ImportCostResult | null {
   const { sourceCostRmb, weightKg, customsRatePct, importPaymentFeePct, shippingMethodPref, rmbUsdRate } = input;
   if (!sourceCostRmb || sourceCostRmb <= 0) return null;
   if (!weightKg || weightKg <= 0) return null;
 
-  const shippingMethod = resolveShipping(shippingMethodPref, weightKg);
-  const freightPerKg = shippingMethod === "SEA" ? SEA_FREIGHT_PER_KG : AIR_FREIGHT_PER_KG;
+  const shippingMethod = resolveShipping(shippingMethodPref, weightKg, {
+    sourceCostRmb,
+    customsRatePct,
+    importPaymentFeePct,
+    rmbUsdRate,
+    trendyolPriceTry: input.trendyolPriceTry ?? null,
+    usdTryRate: input.usdTryRate,
+  });
   const customsPct = customsRatePct != null ? customsRatePct : DEFAULT_CUSTOMS_PCT;
   const payFeePct = importPaymentFeePct != null ? importPaymentFeePct : 0;
-  const rate = rmbUsdRate > 0 ? rmbUsdRate : DEFAULT_RMB_USD_RATE;
 
-  const productUsd = (sourceCostRmb / rate) * (1 + payFeePct / 100);
-  const freightUsd = weightKg * freightPerKg;
-  const customsUsd = (productUsd + freightUsd) * (customsPct / 100);
-  const totalCostUsd = productUsd + freightUsd + customsUsd;
-
-  return { shippingMethod, productUsd, freightUsd, customsUsd, totalCostUsd };
+  return buildCostFor(shippingMethod, sourceCostRmb, weightKg, customsPct, payFeePct, rmbUsdRate);
 }
 
 // ── Revenue formula ────────────────────────────────────────────────────────────

@@ -166,6 +166,13 @@ export default async function SermayeSaglikPage() {
     const manualOnline = p.onlineSalesPotential ?? 0;
     const effectiveMonthlyUnits = Math.max(t30g, manualOnline);
 
+    const trendyolPriceTry =
+      p.marketplacePrices[0]?.priceTry != null
+        ? Number(p.marketplacePrices[0].priceTry)
+        : p.xmlData?.xmlTrendyolPrice != null
+          ? Number(p.xmlData.xmlTrendyolPrice) * usdTryRate
+          : null;
+
     const costResult = calcImportCost({
       sourceCostRmb: p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null,
       weightKg: p.weightKg != null ? Number(p.weightKg) : null,
@@ -173,6 +180,8 @@ export default async function SermayeSaglikPage() {
       importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
       shippingMethodPref: p.shippingMethodPref,
       rmbUsdRate,
+      trendyolPriceTry,
+      usdTryRate,
     });
     let unitCostUsd: number | null = null;
     if (costResult) unitCostUsd = costResult.totalCostUsd;
@@ -180,13 +189,6 @@ export default async function SermayeSaglikPage() {
     else if (p.unitCostTry != null) unitCostUsd = Number(p.unitCostTry) / usdTryRate;
 
     const totalCostUsd = unitCostUsd != null ? unitCostUsd * p.stockQuantity : null;
-
-    const trendyolPriceTry =
-      p.marketplacePrices[0]?.priceTry != null
-        ? Number(p.marketplacePrices[0].priceTry)
-        : p.xmlData?.xmlTrendyolPrice != null
-          ? Number(p.xmlData.xmlTrendyolPrice) * usdTryRate
-          : null;
 
     const revenueResult = calcRevenue({ trendyolPriceTry, usdTryRate });
     const profitResult = costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;

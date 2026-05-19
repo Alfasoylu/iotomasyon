@@ -24,7 +24,13 @@
  *   çağırıp sonuçları tek pakete koyar.
  */
 
-import { calcImportCost, calcRevenue, type ShippingMethod } from "./importer-cost";
+import {
+  calcImportCost,
+  calcRevenue,
+  AIR_CYCLE_DAYS,
+  SEA_CYCLE_DAYS,
+  type ShippingMethod,
+} from "./importer-cost";
 import {
   calcMarketplacePricingRow,
   type ProductPolicyInput,
@@ -117,6 +123,11 @@ export function computeProductEconomics(input: PricingInput): PricingResult {
   const warnings: string[] = [];
 
   // ── Cost side ─────────────────────────────────────────────────────────
+  // Otomatik kargo seçimi (pref null) için Trendyol fiyatı + kur passlanır →
+  // ROI bazlı seçim aktif olur (aksi halde ağırlık fallback).
+  const trendyolPriceForRoi =
+    input.marketplacePriceTry ??
+    (input.xmlPriceUsd != null ? input.xmlPriceUsd * input.usdTryRate : null);
   const costResult = calcImportCost({
     sourceCostRmb: input.sourceCostRmb,
     weightKg: input.weightKg,
@@ -124,6 +135,8 @@ export function computeProductEconomics(input: PricingInput): PricingResult {
     importPaymentFeePct: input.importPaymentFeePct,
     shippingMethodPref: input.shippingMethodPref,
     rmbUsdRate: input.rmbUsdRate,
+    trendyolPriceTry: trendyolPriceForRoi,
+    usdTryRate: input.usdTryRate,
   });
 
   if (!costResult) {
@@ -177,8 +190,8 @@ export function computeProductEconomics(input: PricingInput): PricingResult {
     const roiPct = cost.totalCostUsd > 0
       ? (netProfitUsd / cost.totalCostUsd) * 100
       : 0;
-    // Yıllık birleşik ROI: nakit döngüsü AIR=120g / SEA=210g
-    const cycleDays = cost.shippingMethod === "SEA" ? 210 : 120;
+    // Yıllık birleşik ROI: nakit döngüsü AIR=150g / SEA=210g (importer-cost.ts sabitleri)
+    const cycleDays = cost.shippingMethod === "SEA" ? SEA_CYCLE_DAYS : AIR_CYCLE_DAYS;
     const ratio = cost.totalCostUsd > 0
       ? revenue.netRevenueUsd / cost.totalCostUsd
       : 0;

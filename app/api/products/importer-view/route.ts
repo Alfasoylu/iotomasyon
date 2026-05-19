@@ -183,7 +183,8 @@ export async function GET(_req: NextRequest) {
     const manualOnline = p.onlineSalesPotential ?? 0;
     const effectiveT30g = Math.max(t30g, manualOnline);
 
-    // Import cost
+    // Import cost — Phase 92: otomatik kargo seçimi ROI bazlı yapılır (pref null
+    // ise). Trendyol fiyatı + kur passlanır.
     const costResult = calcImportCost({
       sourceCostRmb: p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null,
       weightKg: p.weightKg != null ? Number(p.weightKg) : null,
@@ -191,6 +192,8 @@ export async function GET(_req: NextRequest) {
       importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
       shippingMethodPref: p.shippingMethodPref,
       rmbUsdRate,
+      trendyolPriceTry,
+      usdTryRate,
     });
 
     // Revenue
