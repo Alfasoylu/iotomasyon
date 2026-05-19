@@ -18,7 +18,6 @@ type UpdatedFields = {
   customsRatePct: number | null;
   shippingMethodPref: string | null;
   importPaymentFeePct: number | null;
-  onlineSalesPotential: number | null;
 };
 
 type Props = {
@@ -41,9 +40,7 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
   const [importPaymentFeePct, setImportPaymentFeePct] = useState(
     numStr(product.importPaymentFeePct),
   );
-  const [onlineSalesPotential, setOnlineSalesPotential] = useState(
-    numStr(product.onlineSalesPotential),
-  );
+  // NOT: onlineSalesPotential modal'dan kaldırıldı (tablo satırında inline edit)
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +61,6 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
       customsRatePct: parseNum(customsRatePct),
       importPaymentFeePct: parseNum(importPaymentFeePct),
       shippingMethodPref: shippingMethodPref.trim().toUpperCase() || null,
-      onlineSalesPotential: parseNum(onlineSalesPotential),
     };
 
     try {
@@ -87,7 +83,6 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
         customsRatePct: json.customsRatePct,
         shippingMethodPref: json.shippingMethodPref,
         importPaymentFeePct: json.importPaymentFeePct,
-        onlineSalesPotential: json.onlineSalesPotential,
       });
       onClose();
     } catch (err) {
@@ -164,17 +159,8 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
             />
           </div>
 
-          {/* Row 3 — Monthly sales (marketplace channel) */}
-          <div className="grid grid-cols-2 gap-3">
-            <Field
-              label="Aylık Satış (Pazar Yeri)"
-              placeholder="örn. 1"
-              value={onlineSalesPotential}
-              onChange={setOnlineSalesPotential}
-              hint="Boş = varsayılan 1 adet/ay"
-            />
-            <div />
-          </div>
+          {/* NOT: "Aylık Satış (Pazar Yeri)" alanı tablodaki Aylık Pot. sütununa
+              taşındı (inline editable). Buradan çıkarıldı. */}
 
           {/* Shipping method */}
           <div>
@@ -210,12 +196,6 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
               <span>Gümrük: {product.customsRatePct != null ? `%${product.customsRatePct}` : "—"}</span>
               <span>Ödeme: {product.importPaymentFeePct != null ? `%${product.importPaymentFeePct}` : "—"}</span>
               <span>Kargo: {product.shippingMethodPref ?? "Otomatik"}</span>
-              <span>
-                Aylık satış:{" "}
-                {product.onlineSalesPotential != null
-                  ? `${product.onlineSalesPotential} adet`
-                  : "1 adet (varsayılan)"}
-              </span>
             </div>
           </div>
 
