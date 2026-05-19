@@ -626,10 +626,9 @@ export function ImporterViewClient() {
       <p className="text-xs text-slate-400">{filtered.length} / {enriched.length} ürün gösteriliyor</p>
 
       {/* ── Table ─────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="rounded-xl border border-slate-200 bg-white overflow-auto max-h-[calc(100vh-260px)]">
           <table className="min-w-full divide-y divide-slate-100 text-sm">
-            <thead className="bg-slate-900 text-left text-[10px] uppercase tracking-[0.2em] text-slate-300">
+            <thead className="sticky top-0 z-20 bg-slate-900 text-left text-[10px] uppercase tracking-[0.2em] text-slate-300 [&_th]:bg-slate-900">
               <tr>
                 <th className="w-12 px-2 py-3" />
                 <th className="px-3 py-3 min-w-[200px]">Ürün</th>
@@ -1003,7 +1002,6 @@ export function ImporterViewClient() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {/* Quick-edit modal */}
