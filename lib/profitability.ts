@@ -1,4 +1,5 @@
 /**
+/**
  * Phase 8 — Profitability Engine
  *
  * Pure calculation module. No DB access, no server-only imports.
@@ -9,29 +10,36 @@
  *   wholesale   — direct sale, no marketplace commission, lower price
  *   marketplace — commission + payment fee + return reserve apply
  *
- * VAT treatment:
- *   Prices are assumed VAT-inclusive (Turkish retail standard).
- *   VAT is extracted from the price so we know the actual net revenue.
- *   vatAmt = price * vatRate / (100 + vatRate)
+ * KDV (VAT) yaklaşımı:
+ *   Fiyatlar KDV dahil tutardır (Türk perakende standardı). Trendyol
+ *   komisyonu da KDV dahil tutar üzerinden kesilir. Buna göre kâr/marj
+ *   hesabı da KDV dahil tutar üzerinden yapılır — KDV cash-flow açısından
+ *   "düşülen maliyet" değildir, sadece devlete aktarılan tutardır.
+ *
+ *   `vatAmt` alanı bilgi amaçlı korunur (raporlama için), ama netRevenue ve
+ *   netProfit hesabında KDV çıkarılmaz.
+ *
+ *   netRevenue = price (KDV dahil)
+ *   netProfit  = price − unitCost − shipping − commission − paymentFee − returnReserve
  *
  * Default rates (used when product fields are null):
- *   vatRate          = 20 %
- *   paymentFeeRate   = 0 %  (direct channels have no payment fee by default)
+ *   vatRate           = 20 %   (sadece vatAmt bilgisi için)
+ *   paymentFeeRate    = 0 %    (direct channels have no payment fee by default)
  *   returnReserveRate = 0 %
  *   marketplaceCommission = 20 %
  */
 
 export type ChannelResult = {
-  revenue: number;          // selling price
-  vatAmt: number;           // VAT extracted from price
-  netRevenue: number;       // revenue after VAT
+  revenue: number;          // selling price (KDV dahil)
+  vatAmt: number;           // informational: KDV portion (devlete aktarılan)
+  netRevenue: number;       // = revenue (KDV dahil, kâr hesabında bu kullanılır)
   unitCost: number;         // unit cost TRY
   shippingCost: number;     // shipping + packaging
-  commissionAmt: number;    // marketplace commission
+  commissionAmt: number;    // marketplace commission (KDV dahil tutar üzerinden)
   paymentAmt: number;       // payment processing fee
   returnAmt: number;        // return/defect reserve
   totalCosts: number;       // sum of all costs
-  netProfit: number;        // netRevenue - totalCosts
+  netProfit: number;        // revenue - totalCosts (KDV ekstrelenmez)
   margin: number;           // netProfit / revenue * 100
   roi: number | null;       // netProfit / unitCost * 100 (null if unitCost = 0)
   profitable: boolean;
@@ -75,8 +83,11 @@ function channelResult(
   returnPct: number,
   vatPct: number,
 ): ChannelResult {
+  // vatAmt: bilgi amaçlı (KDV içeriği). Kâr hesabında ÇIKARILMAZ —
+  // Trendyol komisyonu KDV dahil tutar üzerinden kesildiği için
+  // kâr/marj da KDV dahil tutar üzerinden hesaplanır.
   const vatAmt = price * vatPct / (100 + vatPct);
-  const netRevenue = price - vatAmt;
+  const netRevenue = price; // KDV dahil
   const commissionAmt = price * commissionPct / 100;
   const paymentAmt = price * paymentPct / 100;
   const returnAmt = price * returnPct / 100;

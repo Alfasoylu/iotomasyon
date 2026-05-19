@@ -1544,9 +1544,9 @@ function ProfitCard({ title, result }: { title: string; result: ChannelResult })
           <span>Satış fiyatı</span>
           <span className="font-medium text-slate-700">{formatCurrency(result.revenue)}</span>
         </div>
-        <div className="flex justify-between">
-          <span>KDV</span>
-          <span>−{formatCurrency(result.vatAmt)}</span>
+        <div className="flex justify-between text-slate-400" title="KDV cash-flow'dan düşülmez; bilgi amaçlı gösterilir. Trendyol komisyonu KDV dahil tutar üzerinden alındığı için kâr hesabımız da KDV dahil tutara göre yapılır.">
+          <span>İçerdiği KDV (bilgi)</span>
+          <span>{formatCurrency(result.vatAmt)}</span>
         </div>
         <div className="flex justify-between">
           <span>Birim maliyet</span>
