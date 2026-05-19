@@ -9,6 +9,52 @@
 
 ## 2026-05
 
+### Phase 91 — Görselle Ürün Arama (HF CLIP + pgvector) (2026-05-19)
+
+**Amaç:**
+Depo personeli telefonla bir ürün fotoğrafı çekip "bu hangi ürün, stok kodu ne?" diye soruyordu — mevcut metin araması (ad/SKU/barkod) bu kullanım için yetersizdi. Görsel benzerliği yakalayan public arama akışı eklendi. Maliyet kısıtı: tamamen ücretsiz (HF Inference free tier, 1000 req/gün).
+
+**Mimari:**
+- pgvector extension v0.8.0 (Supabase üzerinde migration ile etkinleştirildi)
+- `ProductImage.embedding` vector(512) + HNSW index (`vector_cosine_ops`)
+- Hugging Face Inference API → `openai/clip-vit-base-patch32` image-feature-extraction pipeline (512-dim CLIP embedding)
+- Query path: image binary → HF embed → pgvector cosine "<=>" → top 20 ürün
+
+**Yeni dosyalar:**
+- `prisma/migrations/20260520000000_phase91_image_embeddings/migration.sql` — `CREATE EXTENSION vector` + `ADD COLUMN embedding` + HNSW idx (prod DB'ye Supabase MCP `apply_migration` ile uygulandı)
+- `lib/hf-clip.ts` — HF Inference client (router + api-inference fallback, `x-wait-for-model` ile cold-start tolere eder)
+- `scripts/backfill-image-embeddings.ts` — tüm ProductImage'ları tek seferlik embed eder; idempotent (`WHERE embedding IS NULL`); 200ms throttle, 503/429'da 30s backoff
+- `app/api/public/image-search/route.ts` — POST multipart, runtime nodejs, maxDuration 60, 10 req/dk/IP rate-limit, jpeg/png/webp whitelist (max 4MB)
+- `components/public/depo-search.tsx` (refactor) — 📷 buton, mobile arka kamera (`capture="environment"`), amber cold-start banner, similarity rozet
+
+**Yeni env var:**
+- `HF_TOKEN` (Hugging Face Read-level token, Vercel prod env'e eklendi)
+
+**UI davranışı:**
+- iotomasyon.com kök Depo Arama ekranında metin input'unun sağında 📷 butonu
+- Tıklayınca: mobile arka kamera / desktop file picker
+- Yüklenen görsel için amber banner: "İlk arama 20-30 saniye sürebilir (model uyanıyor)."
+- Her kartta `%XX` benzerlik rozeti; "✕ Kaldır" ile metin aramasına dön
+- Fiyat/maliyet/marj asla dönmez (Codex P0 data contract aynen korunur)
+
+**Veri akışı:**
+1. Browser → POST multipart image
+2. Server: HF embed (cold-start 20-30s, warm 1-3s)
+3. Postgres: `pi.embedding <=> $1::vector` cosine distance, DISTINCT ON productId, ORDER BY distance ASC LIMIT 200, JS sort + slice(0, 20)
+4. Response: `{ products: [...{id,name,sku,barcode,stockQuantity,minimumStock,imageUrl,similarity}] }`
+
+**Acceptance:**
+- `tsc --noEmit`: 0 hata
+- Migration prod DB'de READY (vector ext v0.8.0 installed)
+- Backfill çalıştıktan sonra: `SELECT COUNT(*) FROM "ProductImage" WHERE embedding IS NOT NULL` ≈ 1283
+
+**Bilinen kısıtlar:**
+- HF free tier 1000 req/gün — günde 10-30 sorgu için bol bol yeter
+- Cold-start ilk sorguda 20-30s — UI'da şeffaf gösteriliyor
+- Backfill 1283 ProductImage için ~5 saat (200ms throttle, free tier rate-limit)
+
+---
+
 ### Phase 90 — Sipariş Adet Demand Formülü (max(Trendyol, manuel)) (2026-05-19)
 
 **Amaç:**
