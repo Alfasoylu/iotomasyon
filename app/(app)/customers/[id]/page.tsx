@@ -40,6 +40,7 @@ import { listCategoriesForSelect } from "@/services/category-service";
 import { getCustomerById, listCustomerInterestProducts } from "@/services/customer-service";
 import { listQuoteTemplates } from "@/services/quote-template-service";
 import { listUsersWithTasks } from "@/services/task-service";
+import { prisma } from "@/lib/prisma";
 import { requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -53,7 +54,7 @@ export default async function CustomerDetailPage({
   const currentUser = await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
   const canAssign = await checkPermission(currentUser, PERMISSIONS.TASKS_ASSIGN);
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers] =
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats] =
     await Promise.all([
       getCustomerById(id),
       listCustomerInterestProducts(),
@@ -61,6 +62,7 @@ export default async function CustomerDetailPage({
       listAttributes(),
       listQuoteTemplates(),
       canAssign ? listUsersWithTasks() : Promise.resolve([]),
+      fetchCustomerMarketplaceStats(id),
     ]);
 
   if (!databaseAvailable) {
@@ -588,6 +590,50 @@ export default async function CustomerDetailPage({
             </div>
           </Card>
 
+          {/* Pazaryeri satış geçmişi (yeni — MarketplaceSalesRecord) */}
+          {marketplaceStats && (
+            <Card className="overflow-hidden p-0 border-emerald-200 bg-emerald-50/30">
+              <div className="border-b border-emerald-100 bg-white/60 px-5 py-3.5">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
+                  Pazaryeri Satış Geçmişi
+                </p>
+                <p className="mt-2 text-2xl font-bold tabular-nums text-emerald-700">
+                  {fmtTry(marketplaceStats.totalRevenueTry)}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {marketplaceStats.totalOrders} sipariş · {marketplaceStats.uniqueProducts} farklı ürün
+                </p>
+                {marketplaceStats.lastOrderDate && (
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Son sipariş: {formatDateTime(marketplaceStats.lastOrderDate)}
+                  </p>
+                )}
+              </div>
+              {marketplaceStats.channels.length > 0 && (
+                <div className="divide-y divide-emerald-50">
+                  {marketplaceStats.channels.slice(0, 5).map((c) => (
+                    <div
+                      key={c.channel}
+                      className="flex items-center justify-between px-5 py-2 text-xs"
+                    >
+                      <span className="font-medium text-slate-700">
+                        {CHANNEL_DISPLAY[c.channel] ?? c.channel}
+                      </span>
+                      <span className="font-mono text-slate-600">
+                        {c.orders} · {fmtTry(c.revenueTry)}
+                      </span>
+                    </div>
+                  ))}
+                  {marketplaceStats.channels.length > 5 && (
+                    <p className="px-5 py-2 text-center text-[10px] text-slate-400">
+                      + {marketplaceStats.channels.length - 5} kanal daha
+                    </p>
+                  )}
+                </div>
+              )}
+            </Card>
+          )}
+
           {/* Quick actions */}
           <Card className="p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -693,3 +739,99 @@ function HistoryMetric({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+// ── Pazaryeri satış istatistikleri (sticky rail için) ───────────────────────
+// MarketplaceSalesRecord'tan müşterinin tüm kanal sipariş geçmişini özetler.
+// Sadece bu müşteri için linklenmiş kayıtlar (Customer.id eşleşmesi).
+
+interface CustomerMarketplaceStats {
+  totalOrders: number;
+  totalRevenueTry: number;
+  channels: Array<{ channel: string; orders: number; revenueTry: number }>;
+  lastOrderDate: Date | null;
+  uniqueProducts: number;
+}
+
+async function fetchCustomerMarketplaceStats(
+  customerId: string,
+): Promise<CustomerMarketplaceStats | null> {
+  try {
+    const records = await prisma.marketplaceSalesRecord.findMany({
+      where: {
+        customerId,
+        NOT: [
+          { status: { contains: "iptal", mode: "insensitive" } },
+          { status: { contains: "iade", mode: "insensitive" } },
+        ],
+      },
+      select: {
+        channel: true,
+        orderNumber: true,
+        orderDate: true,
+        productId: true,
+        totalAmountTry: true,
+      },
+    });
+
+    if (records.length === 0) return null;
+
+    const channelMap = new Map<string, { orders: Set<string>; revenue: number }>();
+    const productIds = new Set<string>();
+    let totalRevenue = 0;
+    let lastOrderDate: Date | null = null;
+    const allOrderNumbers = new Set<string>();
+
+    for (const r of records) {
+      allOrderNumbers.add(r.orderNumber);
+      if (r.productId) productIds.add(r.productId);
+      const rev = r.totalAmountTry ? Number(r.totalAmountTry) : 0;
+      totalRevenue += rev;
+      if (!lastOrderDate || r.orderDate > lastOrderDate) lastOrderDate = r.orderDate;
+
+      const c = channelMap.get(r.channel) ?? { orders: new Set(), revenue: 0 };
+      c.orders.add(r.orderNumber);
+      c.revenue += rev;
+      channelMap.set(r.channel, c);
+    }
+
+    const channels = [...channelMap.entries()]
+      .map(([ch, v]) => ({ channel: ch, orders: v.orders.size, revenueTry: v.revenue }))
+      .sort((a, b) => b.orders - a.orders);
+
+    return {
+      totalOrders: allOrderNumbers.size,
+      totalRevenueTry: totalRevenue,
+      channels,
+      lastOrderDate,
+      uniqueProducts: productIds.size,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function fmtTry(n: number): string {
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+const CHANNEL_DISPLAY: Record<string, string> = {
+  TRENDYOL: "Trendyol",
+  HEPSIBURADA: "Hepsiburada",
+  N11: "N11",
+  IDEASOFT: "Ideasoft",
+  GG: "GittiGidiyor",
+  PAZARAMA: "Pazarama",
+  EPTT: "EPTT",
+  MIRAKL_KOCTAS: "Koçtaş",
+  IDEFIX: "İdefix",
+  AMAZON: "Amazon",
+  CICEKSEPETI: "Çiçeksepeti",
+  TEMU: "Temu",
+  MIRAKL_TEKNOSA: "Teknosa",
+  SHOPPHP: "ShopPHP",
+  MANUAL: "Manuel",
+};
