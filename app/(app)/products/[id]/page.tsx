@@ -730,64 +730,119 @@ export default async function ProductDetailPage({
 
         if (!hasTrendyolKarData) return null;
 
+        // ── Maliyet tarafı (TL + USD)
         const rmbTl = (Number(product.sourceCostRmb) / rmbUsdRate) * usdTryRate;
-        const cargoTl = Number(product.weightKg) * 8 * usdTryRate; // AIR_FREIGHT_PER_KG=8
-        const customsTl = (rmbTl + cargoTl) * (Number(product.customsRatePct ?? 30) / 100);
+        const cargoTl = Number(product.weightKg) * 8 * usdTryRate; // AIR_FREIGHT_PER_KG=8 USD/kg
+        const customsRate = Number(product.customsRatePct ?? 30) / 100;
+        const customsTl = (rmbTl + cargoTl) * customsRate;
         const totalMaliyetTl = rmbTl + cargoTl + customsTl;
 
-        const komisyon = trendyolPriceTry! * 0.20;
-        const sabitKesinti = trendyolPriceTry! > 250 ? 150 : 0;
-        const trendyolNetKalan = trendyolPriceTry! - komisyon - sabitKesinti;
+        const rmbUsd = totalMaliyetTl > 0 ? rmbTl / usdTryRate : 0;
+        const cargoUsd = Number(product.weightKg) * 8;
+        const customsUsd = (rmbUsd + cargoUsd) * customsRate;
+        const totalMaliyetUsd = rmbUsd + cargoUsd + customsUsd;
+
+        // ── Kanonik formül: lib/marketplace-pricing.ts (Pazaryeri tablosuyla aynı)
+        const trendyolPolicy = platformPolicies.find((p) => p.platform === "TRENDYOL");
+        const trendyolRow = calcMarketplacePricingRow({
+          platform: "TRENDYOL",
+          platformLabel: "Trendyol",
+          xmlPriceUsd: product.xmlData?.xmlTrendyolPrice != null ? Number(product.xmlData.xmlTrendyolPrice) : null,
+          manualOverrideTry: trendyolMpPrice != null ? Number(trendyolMpPrice.priceTry) : (product.marketplacePriceTry != null ? Number(product.marketplacePriceTry) : null),
+          product: {
+            shippingCost: product.shippingCost != null ? Number(product.shippingCost) : null,
+            shippingCostOverride: product.shippingCostOverride != null ? Number(product.shippingCostOverride) : null,
+            marketplaceCommission: product.marketplaceCommission != null ? Number(product.marketplaceCommission) : null,
+            marketplaceCommissionOverride: product.marketplaceCommissionOverride != null ? Number(product.marketplaceCommissionOverride) : null,
+            vatRate: product.vatRate != null ? Number(product.vatRate) : null,
+            paymentFeeRate: product.paymentFeeRate != null ? Number(product.paymentFeeRate) : null,
+            returnReserveRate: product.returnReserveRate != null ? Number(product.returnReserveRate) : null,
+          },
+          platformPolicy: trendyolPolicy ? {
+            standardShippingTry: trendyolPolicy.standardShippingTry != null ? Number(trendyolPolicy.standardShippingTry) : null,
+            standardCommissionPct: trendyolPolicy.standardCommissionPct != null ? Number(trendyolPolicy.standardCommissionPct) : null,
+            paymentFeePct: trendyolPolicy.paymentFeePct != null ? Number(trendyolPolicy.paymentFeePct) : null,
+            returnReservePct: trendyolPolicy.returnReservePct != null ? Number(trendyolPolicy.returnReservePct) : null,
+            vatPct: trendyolPolicy.vatPct != null ? Number(trendyolPolicy.vatPct) : null,
+          } : null,
+          usdTryRate,
+        });
+
+        const effectivePriceTry = trendyolRow.effectivePriceTry ?? trendyolPriceTry!;
+        const shippingTry = trendyolRow.shippingTry;
+        const commissionTry = trendyolRow.commissionTry;
+        const paymentFeeTry = trendyolRow.paymentFeeTry;
+        const returnReserveTry = trendyolRow.returnReserveTry;
+        const trendyolNetKalan = trendyolRow.netRevenueTry ?? 0;
 
         const netKar = trendyolNetKalan - totalMaliyetTl;
-        const karMarji = trendyolPriceTry! > 0 ? (netKar / trendyolPriceTry!) * 100 : 0;
+        const karMarji = effectivePriceTry > 0 ? (netKar / effectivePriceTry) * 100 : 0;
         const roi = totalMaliyetTl > 0 ? (netKar / totalMaliyetTl) * 100 : 0;
+
+        // USD karşılıkları
+        const toUsd = (tl: number) => usdTryRate > 0 ? tl / usdTryRate : 0;
+        const priceUsd = toUsd(effectivePriceTry);
+        const shippingUsd = toUsd(shippingTry);
+        const commissionUsd = toUsd(commissionTry);
+        const paymentFeeUsd = toUsd(paymentFeeTry);
+        const returnReserveUsd = toUsd(returnReserveTry);
+        const netKalanUsd = toUsd(trendyolNetKalan);
+        const netKarUsd = toUsd(netKar);
 
         return (
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-slate-950">Trendyol Kâr Analizi</h2>
             <p className="mt-1 text-sm text-slate-500">
-              RMB alış + ağırlık + XML Trendyol fiyatı üzerinden hesaplanmıştır.
+              RMB alış + ağırlık + XML/Manuel Trendyol fiyatı üzerinden hesaplanmıştır.
               Kur: 1 USD = ₺{usdTryRate.toFixed(2)} · 1 USD = {rmbUsdRate.toFixed(1)} RMB
             </p>
             <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="text-xs text-slate-500">RMB Alış</div>
                 <div className="mt-1 text-lg font-bold text-slate-900">¥{Number(product.sourceCostRmb).toFixed(2)}</div>
-                <div className="text-xs text-slate-400">= ₺{rmbTl.toFixed(2)}</div>
+                <div className="text-xs text-slate-400">₺{rmbTl.toFixed(2)} · ${rmbUsd.toFixed(2)}</div>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="text-xs text-slate-500">Ağırlık + Kargo</div>
                 <div className="mt-1 text-lg font-bold text-slate-900">{Number(product.weightKg).toFixed(3)} kg</div>
-                <div className="text-xs text-slate-400">= ₺{cargoTl.toFixed(2)}</div>
+                <div className="text-xs text-slate-400">₺{cargoTl.toFixed(2)} · ${cargoUsd.toFixed(2)}</div>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="text-xs text-slate-500">Gümrük (%{Number(product.customsRatePct ?? 30).toFixed(0)})</div>
                 <div className="mt-1 text-lg font-bold text-slate-900">₺{customsTl.toFixed(2)}</div>
+                <div className="text-xs text-slate-400">${customsUsd.toFixed(2)}</div>
               </div>
               <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
                 <div className="text-xs text-amber-700">Toplam İthalat Maliyeti</div>
                 <div className="mt-1 text-lg font-bold text-amber-900">₺{totalMaliyetTl.toFixed(2)}</div>
+                <div className="text-xs text-amber-600">${totalMaliyetUsd.toFixed(2)}</div>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="text-xs text-slate-500">Trendyol Satış Fiyatı</div>
-                <div className="mt-1 text-lg font-bold text-slate-900">₺{trendyolPriceTry!.toFixed(2)}</div>
+                <div className="mt-1 text-lg font-bold text-slate-900">₺{effectivePriceTry.toFixed(2)}</div>
                 <div className="text-xs text-slate-400">
+                  ${priceUsd.toFixed(2)} ·{" "}
                   {trendyolMpPrice
-                    ? `${trendyolMpPrice.source === "MANUAL" ? "Manuel" : "XML"}: ₺${Number(trendyolMpPrice.priceTry).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    ? (trendyolMpPrice.source === "MANUAL" ? "Manuel" : "XML")
                     : product.xmlData?.xmlTrendyolPrice != null
-                      ? `XML: $${Number(product.xmlData.xmlTrendyolPrice).toFixed(3)}`
+                      ? `XML $${Number(product.xmlData.xmlTrendyolPrice).toFixed(3)}`
                       : "Manuel"}
                 </div>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="text-xs text-slate-500">Trendyol Net Kalan</div>
                 <div className="mt-1 text-lg font-bold text-slate-900">₺{trendyolNetKalan.toFixed(2)}</div>
-                <div className="text-xs text-slate-400">-%20 komisyon{sabitKesinti > 0 ? " -₺150 sabit" : ""}</div>
+                <div className="text-xs text-slate-400">${netKalanUsd.toFixed(2)}</div>
+                <div className="mt-1 text-[10px] text-slate-400 leading-tight">
+                  −kargo ₺{shippingTry.toFixed(2)} · −kom %{trendyolRow.commissionPct.toFixed(1)} (₺{commissionTry.toFixed(2)})
+                  {paymentFeeTry > 0 && <> · −fee ₺{paymentFeeTry.toFixed(2)}</>}
+                  {returnReserveTry > 0 && <> · −iade ₺{returnReserveTry.toFixed(2)}</>}
+                </div>
               </div>
               <div className={`rounded-lg border p-3 ${netKar >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
                 <div className={`text-xs ${netKar >= 0 ? "text-emerald-700" : "text-red-700"}`}>Net Kâr</div>
                 <div className={`mt-1 text-lg font-bold ${netKar >= 0 ? "text-emerald-900" : "text-red-900"}`}>₺{netKar.toFixed(2)}</div>
+                <div className={`text-xs font-semibold ${netKar >= 0 ? "text-emerald-700" : "text-red-700"}`}>${netKarUsd.toFixed(2)}</div>
                 <div className={`text-xs ${netKar >= 0 ? "text-emerald-600" : "text-red-600"}`}>
                   Marj: %{karMarji.toFixed(1)}
                 </div>
@@ -795,11 +850,14 @@ export default async function ProductDetailPage({
               <div className={`rounded-lg border p-3 ${roi >= 20 ? "bg-emerald-50 border-emerald-200" : roi >= 0 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200"}`}>
                 <div className={`text-xs ${roi >= 20 ? "text-emerald-700" : roi >= 0 ? "text-amber-700" : "text-red-700"}`}>ROI</div>
                 <div className={`mt-1 text-lg font-bold ${roi >= 20 ? "text-emerald-900" : roi >= 0 ? "text-amber-900" : "text-red-900"}`}>%{roi.toFixed(1)}</div>
-                <div className="text-xs text-slate-400">Sermaye getirisi</div>
+                <div className="text-xs text-slate-400">USD bazlı sermaye getirisi</div>
               </div>
             </div>
             <p className="mt-3 text-xs text-slate-400">
-              Kargo: Hava yolu 8 USD/kg · Trendyol sabit kesinti 250₺ üstü siparişlerde 150₺ · Gümrük oran: DB değeri
+              İthalat kargosu: Hava yolu 8 USD/kg · Trendyol kargo/komisyon: <code>lib/marketplace-pricing.ts</code> kanonik formülü (Pazaryeri tablosu ile birebir tutarlı) · Gümrük oran: DB değeri ·{" "}
+              {paymentFeeUsd > 0 && <>Ödeme fee ${paymentFeeUsd.toFixed(2)} · </>}
+              {returnReserveUsd > 0 && <>İade rezervi ${returnReserveUsd.toFixed(2)} · </>}
+              Kargo ${shippingUsd.toFixed(2)} · Komisyon ${commissionUsd.toFixed(2)}
             </p>
           </Card>
         );

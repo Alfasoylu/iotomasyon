@@ -1,3 +1,5 @@
+import { calcShippingFromPriceTiers } from "./marketplace-pricing";
+
 /**
  * lib/importer-cost.ts — Phase 79: İthalatçı Görünümü
  *
@@ -11,10 +13,16 @@
  *   totalCostUsd = productUsd + freightUsd + customsUsd
  *
  *   commission   = trendyolPriceTry × 0.20
- *   fixedFee     = trendyolPriceTry > 250 ? 150 : 0  (TRY)
- *   netRevenueTry = trendyolPriceTry − commission − fixedFee
+ *   shippingTry  = price-tier (Pazaryeri kanonik formülü):
+ *                    < $5   → $1.2 × usdTryRate
+ *                    $5–7.5 → $2.0 × usdTryRate
+ *                    > $7.5 → $3.3 × usdTryRate
+ *   netRevenueTry = trendyolPriceTry − commission − shippingTry
  *   netRevenueUsd = netRevenueTry / usdTryRate
  *   netProfitUsd  = netRevenueUsd − totalCostUsd
+ *
+ * NOT: Eski sabit fee (`>250₺ → 150₺`) kaldırıldı; yerini `calcShippingFromPriceTiers`
+ * (Pazaryeri Fiyatlandırması ile birebir tutarlı) aldı.
  *
  *   marginPct    = (netProfitUsd / totalCostUsd) × 100
  *                  ("alış fiyatını yüzde kaç büyüttük")
@@ -35,7 +43,6 @@ export const SEA_AUTO_WEIGHT_KG = 5;          // ≥5 kg → auto SEA
 export const AIR_CYCLE_DAYS = 120;
 export const SEA_CYCLE_DAYS = 210;
 export const TRENDYOL_COMMISSION_PCT = 20;
-export const TRENDYOL_FIXED_FEE_TRY = 150;   // for orders > 250 TRY
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -129,6 +136,11 @@ export function calcImportCost(input: {
 
 // ── Revenue formula ────────────────────────────────────────────────────────────
 
+/**
+ * Trendyol net kalan geliri hesaplar.
+ * Kargo formülü Pazaryeri Fiyatlandırması ile birebir aynı
+ * (calcShippingFromPriceTiers — lib/marketplace-pricing.ts).
+ */
 export function calcRevenue(input: {
   trendyolPriceTry: number | null;
   usdTryRate: number;
@@ -138,8 +150,8 @@ export function calcRevenue(input: {
   const rate = usdTryRate > 0 ? usdTryRate : DEFAULT_USD_TRY_RATE;
 
   const commission = trendyolPriceTry * (TRENDYOL_COMMISSION_PCT / 100);
-  const fixedFee = trendyolPriceTry > 250 ? TRENDYOL_FIXED_FEE_TRY : 0;
-  const netRevenueTry = trendyolPriceTry - commission - fixedFee;
+  const shippingTry = calcShippingFromPriceTiers(trendyolPriceTry, rate);
+  const netRevenueTry = trendyolPriceTry - commission - shippingTry;
   const netRevenueUsd = netRevenueTry / rate;
 
   return { netRevenueTry, netRevenueUsd };

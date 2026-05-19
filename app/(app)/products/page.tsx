@@ -27,6 +27,7 @@ import { listProducts } from "@/services/product-service";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { resolveFinanceGate } from "@/lib/finance-visibility";
+import { calcImportCost, calcRevenue } from "@/lib/importer-cost";
 
 export const dynamic = "force-dynamic";
 
@@ -98,53 +99,42 @@ type ProfitResult = {
   shippingMethod: "AIR" | "SEA"; // Phase 76: which method was used
 } | null;
 
-const TRENDYOL_COMMISSION = 0.20;
-const TRENDYOL_FIXED_DEDUCTION = 150; // TRY, for orders > 250 TRY
-// Phase 76: align with lib/import-decision.ts constants ($8 air / $1 sea)
-const AIR_FREIGHT_USD_PER_KG = 8;
-const SEA_FREIGHT_USD_PER_KG = 1;
-const DEFAULT_CUSTOMS_PCT = 0.30;
-// Auto-select SEA for heavy products when no explicit preference set
-const SEA_AUTO_WEIGHT_KG = 5; // ≥5 kg → default to SEA
-
+/**
+ * Standart görünüm kâr hesabı — kanonik motor (`lib/importer-cost.ts`) üzerinden.
+ *
+ * Eski inline formül (komisyon %20 + >250₺ → 150₺ sabit, kargo dilimi yok)
+ * Pazaryeri Fiyatlandırması ile tutarsızdı. Şimdi calcImportCost + calcRevenue
+ * çağrılarıyla aynı motoru kullanır — kargo fiyat dilimi (<$5/$5–7.5/>$7.5) ve
+ * komisyon politikası tek kaynaktan gelir.
+ */
 function calcProfit(product: {
   sourceCostRmb: unknown;
   weightKg: unknown;
   customsRatePct: unknown;
   importPaymentFeePct: unknown;
-  shippingMethodPref: unknown; // Phase 76
+  shippingMethodPref: unknown;
   trendyolPriceTry: number | null;
 }, usdTryRate: number, rmbUsdRate: number): ProfitResult {
   const priceTry = product.trendyolPriceTry;
-  const rmb = product.sourceCostRmb != null ? Number(product.sourceCostRmb) : null;
-  const kg = product.weightKg != null ? Number(product.weightKg) : null;
-  if (!priceTry || !rmb || rmb <= 0 || !kg || kg <= 0) return null;
+  if (!priceTry || priceTry <= 0) return null;
 
-  const customsPct = product.customsRatePct != null ? Number(product.customsRatePct) : DEFAULT_CUSTOMS_PCT * 100;
-  const payFeePct = product.importPaymentFeePct != null ? Number(product.importPaymentFeePct) : 0;
+  const cost = calcImportCost({
+    sourceCostRmb: product.sourceCostRmb != null ? Number(product.sourceCostRmb) : null,
+    weightKg: product.weightKg != null ? Number(product.weightKg) : null,
+    customsRatePct: product.customsRatePct != null ? Number(product.customsRatePct) : null,
+    importPaymentFeePct: product.importPaymentFeePct != null ? Number(product.importPaymentFeePct) : null,
+    shippingMethodPref: product.shippingMethodPref != null ? String(product.shippingMethodPref) : null,
+    rmbUsdRate,
+  });
+  if (!cost) return null;
 
-  // Phase 76: resolve shipping method
-  // Explicit preference wins; when null → auto: ≥5kg → SEA, else AIR
-  const prefRaw = product.shippingMethodPref != null ? String(product.shippingMethodPref).toUpperCase() : null;
-  const shippingMethod: "AIR" | "SEA" =
-    prefRaw === "SEA" ? "SEA"
-    : prefRaw === "AIR" ? "AIR"
-    : kg >= SEA_AUTO_WEIGHT_KG ? "SEA"
-    : "AIR";
+  const revenue = calcRevenue({ trendyolPriceTry: priceTry, usdTryRate });
+  if (!revenue) return null;
 
-  const freightPerKg = shippingMethod === "SEA" ? SEA_FREIGHT_USD_PER_KG : AIR_FREIGHT_USD_PER_KG;
-
-  const supplierTry = (rmb / rmbUsdRate) * usdTryRate * (1 + payFeePct / 100);
-  const cargoTry = kg * freightPerKg * usdTryRate;
-  const customsTry = (supplierTry + cargoTry) * (customsPct / 100);
-  const totalCost = supplierTry + cargoTry + customsTry;
-
-  const commission = priceTry * TRENDYOL_COMMISSION;
-  const fixed = priceTry > 250 ? TRENDYOL_FIXED_DEDUCTION : 0;
-  const netRevenue = priceTry - commission - fixed;
-  const netProfit = netRevenue - totalCost;
+  const totalCostTry = cost.totalCostUsd * usdTryRate;
+  const netProfit = revenue.netRevenueTry - totalCostTry;
   const marginPct = (netProfit / priceTry) * 100;
-  const roi = (netProfit / totalCost) * 100;
+  const roi = (netProfit / totalCostTry) * 100;
 
   let status: "LOSS" | "LOW" | "GOOD" | "EXCELLENT";
   if (netProfit < 0) status = "LOSS";
@@ -152,7 +142,7 @@ function calcProfit(product: {
   else if (marginPct < 30) status = "GOOD";
   else status = "EXCELLENT";
 
-  return { priceTry, netProfit, marginPct, roi, status, shippingMethod };
+  return { priceTry, netProfit, marginPct, roi, status, shippingMethod: cost.shippingMethod };
 }
 
 export default async function ProductsPage({
