@@ -46,6 +46,17 @@ interface UnmatchedRow {
   stockCode: string | null;
 }
 
+interface MissingListingRow {
+  productId: string;
+  productName: string;
+  sku: string;
+  barcode: string | null;
+  brand: string | null;
+  stockQuantity: number;
+  /** Trendyol satış geçmişi var mı? Daha önce satılmışsa muhtemelen listemeden düşmüş. */
+  lifetimeSold: number;
+}
+
 function deltaClass(delta: number) {
   if (delta < 0) return "text-red-600 font-bold"; // Trendyol shows MORE than internal — oversell risk
   if (delta > 0) return "text-amber-600 font-semibold"; // internal has more — opportunity to push
@@ -82,25 +93,30 @@ export default async function TrendyolCatalogPage() {
 
   const cfg = { supplierId: config.supplierId, apiKey: config.apiKey, apiSecret: config.apiSecret };
 
-  // Fetch up to 4 pages (200 products) from Trendyol
+  // Fetch TÜM sayfalar (Trendyol'da binlerce ürün olabilir)
+  // Paralelizasyon: 8'erli batch, her batch arasında bekleme yok.
   let trendyolProducts: TrendyolCatalogProduct[] = [];
   let fetchError: string | null = null;
   let totalElements = 0;
+  let totalPages = 0;
 
   try {
-    const first = await fetchTrendyolCatalog(cfg, { page: 0, size: 50, approved: true });
+    const first = await fetchTrendyolCatalog(cfg, { page: 0, size: 100, approved: true });
     totalElements = first.totalElements;
+    totalPages = first.totalPages;
     trendyolProducts = [...first.content];
 
-    const extraPages = Math.min(first.totalPages - 1, 3); // max 3 more pages (total 4)
-    if (extraPages > 0) {
-      const extraFetches = await Promise.all(
-        Array.from({ length: extraPages }, (_, i) =>
-          fetchTrendyolCatalog(cfg, { page: i + 1, size: 50, approved: true })
-        )
-      );
-      for (const page of extraFetches) {
-        trendyolProducts = [...trendyolProducts, ...page.content];
+    if (totalPages > 1) {
+      const PARALLEL_BATCH = 8;
+      const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 1);
+      for (let i = 0; i < remainingPages.length; i += PARALLEL_BATCH) {
+        const batch = remainingPages.slice(i, i + PARALLEL_BATCH);
+        const results = await Promise.all(
+          batch.map((page) =>
+            fetchTrendyolCatalog(cfg, { page, size: 100, approved: true })
+          )
+        );
+        for (const r of results) trendyolProducts.push(...r.content);
       }
     }
   } catch (err) {
@@ -110,14 +126,20 @@ export default async function TrendyolCatalogPage() {
   }
 
   // Build internal product lookup by barcode and SKU
-  const barcodeMap = new Map<string, { id: string; name: string; sku: string | null; stockQuantity: number }>();
-  const skuMap = new Map<string, { id: string; name: string; sku: string | null; stockQuantity: number }>();
+  type InternalProduct = {
+    id: string; name: string; sku: string; brand: string | null;
+    barcode: string | null; stockQuantity: number;
+  };
+  const barcodeMap = new Map<string, InternalProduct>();
+  const skuMap = new Map<string, InternalProduct>();
+  let internalProducts: InternalProduct[] = [];
 
   if (!fetchError) {
-    const products = await prisma.product.findMany({
-      select: { id: true, name: true, sku: true, barcode: true, stockQuantity: true },
-    });
-    for (const p of products) {
+    internalProducts = (await prisma.product.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, sku: true, brand: true, barcode: true, stockQuantity: true },
+    })) as InternalProduct[];
+    for (const p of internalProducts) {
       if (p.barcode) barcodeMap.set(p.barcode.toLowerCase(), p);
       if (p.sku) skuMap.set(p.sku.toLowerCase(), p);
     }
@@ -166,6 +188,60 @@ export default async function TrendyolCatalogPage() {
   const inSyncCount = matched.filter((r) => r.delta === 0).length;
   const surplusCount = matched.filter((r) => r.delta > 0).length;
 
+  // ── Eksik Listeme: stoğumuzda var ama Trendyol'da yok ──────────────────────
+  // Trendyol katalogunda gördüğümüz tüm barkod + stockCode'lar (lowercase)
+  const trendyolBarcodes = new Set<string>();
+  const trendyolStockCodes = new Set<string>();
+  for (const tp of trendyolProducts) {
+    if (tp.barcode) trendyolBarcodes.add(tp.barcode.toLowerCase());
+    if (tp.stockCode) trendyolStockCodes.add(tp.stockCode.toLowerCase());
+  }
+
+  // Trendyol satış geçmişi olan ürünler (lifetime sold > 0 — daha önce satılmış)
+  let lifetimeMap = new Map<string, number>();
+  if (!fetchError && internalProducts.length > 0) {
+    const lifetime = await prisma.trendyolSalesRecord.groupBy({
+      by: ["productId"],
+      where: {
+        productId: { not: null },
+        NOT: [
+          { status: { contains: "iptal", mode: "insensitive" } },
+          { status: { contains: "cancel", mode: "insensitive" } },
+        ],
+      },
+      _sum: { quantity: true },
+    });
+    lifetimeMap = new Map(
+      lifetime.filter((x) => x.productId).map((x) => [x.productId!, x._sum.quantity ?? 0])
+    );
+  }
+
+  const missingListings: MissingListingRow[] = [];
+  for (const p of internalProducts) {
+    const barLower = p.barcode?.toLowerCase() ?? null;
+    const skuLower = p.sku.toLowerCase();
+    const inTrendyol =
+      (barLower && trendyolBarcodes.has(barLower)) ||
+      trendyolStockCodes.has(skuLower) ||
+      trendyolBarcodes.has(skuLower); // bazen barkod alanına SKU yazılmış
+    if (!inTrendyol) {
+      missingListings.push({
+        productId: p.id,
+        productName: p.name,
+        sku: p.sku,
+        barcode: p.barcode,
+        brand: p.brand,
+        stockQuantity: p.stockQuantity,
+        lifetimeSold: lifetimeMap.get(p.id) ?? 0,
+      });
+    }
+  }
+
+  // Daha önce satılmış olanlar (büyük olasılıkla listemeden düşmüş) en üste
+  missingListings.sort((a, b) => b.lifetimeSold - a.lifetimeSold);
+
+  const missingPreviouslySold = missingListings.filter((m) => m.lifetimeSold > 0).length;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -178,10 +254,10 @@ export default async function TrendyolCatalogPage() {
             Trendyol Katalog
           </h1>
           <p className="mt-2 text-sm leading-7 text-slate-600">
-            Trendyol&apos;daki ürünler ile iç stok karşılaştırması.
-            {totalElements > trendyolProducts.length && (
-              <span className="ml-1 text-amber-600">
-                (İlk {trendyolProducts.length} / {totalElements} ürün gösteriliyor)
+            Trendyol&apos;daki ürünler ile iç stok karşılaştırması.{" "}
+            {totalElements > 0 && (
+              <span className="text-slate-500">
+                ({trendyolProducts.length} / {totalElements} ürün, {totalPages} sayfa çekildi)
               </span>
             )}
           </p>
@@ -207,11 +283,11 @@ export default async function TrendyolCatalogPage() {
       {!fetchError && (
         <>
           {/* KPI cards */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             <Card className="p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Trendyol&apos;da</p>
               <p className="mt-2 text-4xl font-bold text-blue-700 tabular-nums">{trendyolProducts.length}</p>
-              <p className="mt-1 text-xs text-slate-400">ürün</p>
+              <p className="mt-1 text-xs text-slate-400">onaylı ürün</p>
             </Card>
             <Card className="p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-red-500">Aşım Riski</p>
@@ -224,9 +300,19 @@ export default async function TrendyolCatalogPage() {
               <p className="mt-1 text-xs text-slate-400">eşleşmiş ürün</p>
             </Card>
             <Card className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Eşleşmemiş</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Trendyol&apos;da Eşleşmemiş</p>
               <p className="mt-2 text-4xl font-bold text-slate-500 tabular-nums">{unmatched.length}</p>
-              <p className="mt-1 text-xs text-slate-400">iç ürün yok</p>
+              <p className="mt-1 text-xs text-slate-400">iç sistemde yok</p>
+            </Card>
+            <Card className="p-5 border-amber-200 bg-amber-50/40">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Eksik Listeme</p>
+              <p className="mt-2 text-4xl font-bold text-amber-700 tabular-nums">{missingListings.length}</p>
+              <p className="mt-1 text-xs text-amber-600">
+                stoğumuzda var, Trendyol&apos;da yok
+                {missingPreviouslySold > 0 && (
+                  <> · {missingPreviouslySold}&apos;i daha önce satılmış</>
+                )}
+              </p>
             </Card>
           </div>
 
@@ -340,6 +426,81 @@ export default async function TrendyolCatalogPage() {
                   </tbody>
                 </table>
               </div>
+            </Card>
+          )}
+
+          {/* Eksik Listeme — stoğumuzda var ama Trendyol'da yok */}
+          {missingListings.length > 0 && (
+            <Card className="overflow-hidden p-0 border-amber-200">
+              <div className="border-b border-amber-100 px-6 py-4 flex items-center gap-3 bg-amber-50/40">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+                <h2 className="text-base font-semibold text-amber-900">
+                  Eksik Listeme — Stoğumuzda Var, Trendyol&apos;da Yok
+                </h2>
+                <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                  {missingListings.length} ürün
+                </span>
+              </div>
+              <div className="px-6 py-3 text-xs text-amber-700 bg-amber-50/40 border-b border-amber-100">
+                Bu ürünler aktif stoğumuzda olduğu hâlde Trendyol katalogunda
+                bulunamadı (barkod veya SKU eşleşmesi yok). Daha önce satılmış
+                olanlar listeden düşmüş olabilir — bu yüzden lifetime satışına
+                göre sıralandı.
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                      <th className="px-6 py-3 text-left">Ürün</th>
+                      <th className="px-4 py-3 text-left">SKU</th>
+                      <th className="px-4 py-3 text-left">Barkod</th>
+                      <th className="px-4 py-3 text-left">Marka</th>
+                      <th className="px-4 py-3 text-right">Stok</th>
+                      <th className="px-4 py-3 text-right" title="Tüm zamanlar Trendyol satış adedi">
+                        Lifetime Satış
+                      </th>
+                      <th className="px-4 py-3 text-left">Notlar</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {missingListings.slice(0, 500).map((r) => (
+                      <tr
+                        key={r.productId}
+                        className={r.lifetimeSold > 0 ? "bg-red-50/40 hover:bg-red-50" : "hover:bg-slate-50"}
+                      >
+                        <td className="px-6 py-3 max-w-[260px] truncate">
+                          <Link href={`/products/${r.productId}`} className="font-medium text-slate-900 hover:underline">
+                            {r.productName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.sku}</td>
+                        <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.barcode ?? "—"}</td>
+                        <td className="px-4 py-3 text-xs text-slate-500">{r.brand ?? "—"}</td>
+                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{r.stockQuantity}</td>
+                        <td className={`px-4 py-3 text-right tabular-nums text-sm ${r.lifetimeSold > 0 ? "font-bold text-red-700" : "text-slate-400"}`}>
+                          {r.lifetimeSold > 0 ? r.lifetimeSold : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          {r.lifetimeSold > 0 ? (
+                            <span className="rounded bg-red-100 px-1.5 py-0.5 text-red-700 font-medium">
+                              ⚠ Daha önce satılmış
+                            </span>
+                          ) : (
+                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-500">
+                              Listemeden eksik
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {missingListings.length > 500 && (
+                <div className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500 bg-slate-50/30">
+                  İlk 500 ürün gösteriliyor (toplam {missingListings.length}).
+                </div>
+              )}
             </Card>
           )}
 
