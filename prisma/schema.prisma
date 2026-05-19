@@ -415,9 +415,13 @@ model Product {
   // GTİP kodları — 3 adet, çünkü bazı ürünler farklı GTİP'lerle ithal edilebilir
   // (örn. bir kamera seti hem 8525.81 hem 8517.62 dilimine girebilir).
   // Format: "8525.81.00.00" gibi 12 haneli string (ondalık opsiyonel). NULL ise atanmamış.
+  // Açıklama alanları: ilgili GTİP'in TGTC tarifesindeki resmi tanımı (operatör kolaylığı için).
   gtip1                    String?
+  gtip1Desc                String?
   gtip2                    String?
+  gtip2Desc                String?
   gtip3                    String?
+  gtip3Desc                String?
   // Phase 89 — Physical count (warehouse-managed, distinct from Entegra stockQuantity).
   // stockQuantity = source-of-truth from Entegra XML sync; never mutated by warehouse staff.
   // physicalCountQuantity = last physical count recorded in warehouse; variance = stockQuantity - physicalCountQuantity.

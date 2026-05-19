@@ -49,8 +49,11 @@ export type ProductFormValues = {
   // Phase 31 — RMB-first import economics
   sourceCostRmb: string;
   importPaymentFeePct: string;
-  // GTİP kodları (3 adet)
+  // GTİP kodları (3 adet) + açıklamaları
   gtip1: string;
+  gtip1Desc: string;
   gtip2: string;
+  gtip2Desc: string;
   gtip3: string;
+  gtip3Desc: string;
 };

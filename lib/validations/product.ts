@@ -53,8 +53,11 @@ export const productSchema = z.object({
   importPaymentFeePct: z.string().trim(),
   // GTİP kodları (3 adet; bazı ürünler farklı GTİP'lerle ithal edilebilir)
   gtip1: z.string().trim(),
+  gtip1Desc: z.string().trim(),
   gtip2: z.string().trim(),
+  gtip2Desc: z.string().trim(),
   gtip3: z.string().trim(),
+  gtip3Desc: z.string().trim(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;
