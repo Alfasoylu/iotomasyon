@@ -232,8 +232,14 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat & Analiz",
   },
   {
+    href: "/admin/sermaye-saglik",
+    label: "🩺 Sermaye Sağlık Panosu",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "İthalat & Analiz",
+  },
+  {
     href: "/admin/capital",
-    label: "Sermaye",
+    label: "Sermaye Dağılımı",
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "İthalat & Analiz",
   },
