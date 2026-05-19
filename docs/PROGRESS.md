@@ -994,7 +994,6 @@ Current gap:
 
 # Technical Debt
 
-- no image pipeline
 - no audit-grade event history
 - no production-ready product sales snapshot layer for 30-day ranking
 - no owner-only private product intelligence layer
@@ -1046,14 +1045,15 @@ Impact:
 - write-side multi-channel operations remain high-risk and explicitly deferred (Phase 17)
 
 ## Image Storage Scaling
-Status: OPEN
+Status: CLOSED (Phase 91, 2026-05-19)
 
-Problem:
-- roadmap expects product image workflows
-- no image pipeline or storage strategy is implemented
+Resolution:
+- product images embedded via CLIP (`openai/clip-vit-base-patch32`,
+  512-dim) on a self-hosted Hugging Face Docker Space
+- pgvector extension + `ProductImage.embedding vector(512)` + HNSW index
+- public visual product search at `POST /api/public/image-search`
 
-Impact:
-- media-heavy product operations are not ready
+Full runbook: `docs/CLIP-IMAGE-SEARCH.md`.
 
 ## Capital Recommendation Risk
 Status: OPEN

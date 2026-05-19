@@ -230,7 +230,6 @@ Current meaning:
 ## Known Technical Debt
 
 - product finance field sprawl remains unresolved across import cost, TRY cost, marketplace price, shipping, commission, and override inputs
-- no image pipeline
 - no audit-grade event history
 - no audit-grade event history for financial, permission, stock, marketplace, or quote changes
 - no production-ready product sales snapshot layer for 30-day revenue ranking
