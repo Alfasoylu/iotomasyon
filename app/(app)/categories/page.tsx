@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/layout/empty-state";
 import { listCategories } from "@/services/category-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -51,12 +52,16 @@ export default async function CategoriesPage() {
       />
 
       {categories.length === 0 ? (
-        <Card className="p-12 text-center">
-          <p className="text-slate-500">Henüz kategori eklenmedi.</p>
-          <p className="mt-2 text-sm text-slate-400">
-            İlk kategoriyi oluşturmak için &quot;Yeni kategori&quot; butonunu kullanın.
-          </p>
-        </Card>
+        <EmptyState
+          icon={FolderTree}
+          title="Henüz kategori yok"
+          hint="Kategorilerin ilki oluşturulduğunda burada listelenir. Ürünleri organize etmek ve müşteri ilgilerini takip etmek için kullanılır."
+          action={
+            <Link href="/categories/new">
+              <Button>Yeni kategori</Button>
+            </Link>
+          }
+        />
       ) : (
         <div className="space-y-2">
           {rootCategories.map((cat) => {
