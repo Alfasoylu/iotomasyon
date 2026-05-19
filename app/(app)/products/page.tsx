@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageHelp } from "@/components/layout/page-help";
 import { ProductFilters } from "@/components/products/product-filters";
 import { ProductBulkButtons } from "@/components/products/product-bulk-buttons";
 import { ImporterViewClient } from "@/components/products/importer-view-client";
@@ -291,6 +292,7 @@ export default async function ProductsPage({
         subtitle="Ürün kataloğun. Stok, fiyat, pazaryeri durumu, ithalat maliyeti ve kâr-marj bilgisi tek yerde."
         actions={
           <>
+            <PageHelp pageKey="products" />
             {canUpdate && <ProductBulkButtons />}
             {canCreate && (
               <Link href="/products/new">

@@ -21,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { CsvDownloadButton } from "@/components/admin/csv-download-button";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageHelp } from "@/components/layout/page-help";
 import {
   calcImportCost,
   calcRevenue,
@@ -351,6 +352,7 @@ export default async function SermayeSaglikPage() {
         breadcrumb={[{ label: "Günlük Durum" }, { label: "Sermaye Sağlığı" }]}
         title="Sermaye Sağlığı"
         subtitle="Günde bir kez aç, ne yapmalısın kararla — sermayenin nereye bağlı, ne kadar nakit beklenir, neyi siparişe vermeli, neyi tasfiye etmeli."
+        actions={<PageHelp pageKey="admin/sermaye-saglik" />}
       />
 
       {/* Sermaye Sağlık Skoru — manşet */}

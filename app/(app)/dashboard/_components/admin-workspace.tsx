@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { KpiCard, type KpiTone } from "@/components/layout/kpi-card";
 import { SectionCard } from "@/components/layout/section-card";
 import { SmartRecsCard } from "@/components/dashboard/smart-recs-card";
+import { FirstTimeBanner } from "@/components/dashboard/first-time-banner";
 import { formatCurrencyAmount, formatPercentValue } from "@/lib/quote-utils";
 import { formatDateTime } from "@/lib/utils";
 import type { SmartRec } from "@/lib/smart-recommendations";
@@ -81,6 +82,9 @@ export async function AdminWorkspace({
 
   return (
     <div className="space-y-6">
+      {/* ── 0) İlk-defa banner (LocalStorage'da dismiss olunca kaybolur) ── */}
+      <FirstTimeBanner />
+
       {/* ── 1) Hoş geldin satırı ──────────────────────────────────────── */}
       <Card className="border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

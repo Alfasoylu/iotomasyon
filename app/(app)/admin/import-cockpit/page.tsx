@@ -29,6 +29,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageHelp } from "@/components/layout/page-help";
 import {
   calculateImportDecision,
   DEFAULT_USD_TRY_RATE,
@@ -471,6 +472,7 @@ export default async function ImportCockpitPage({
         }
         actions={
           <>
+            <PageHelp pageKey="admin/import-cockpit" />
             {orderHref && (
               <Link
                 href={orderHref}

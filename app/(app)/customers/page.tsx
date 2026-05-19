@@ -3,6 +3,7 @@ import { Users } from "lucide-react";
 
 import { CustomerImportForm } from "@/components/customers/customer-import-form";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageHelp } from "@/components/layout/page-help";
 import { CustomerKanbanBoard } from "@/components/customers/customer-kanban-board";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,9 +49,12 @@ export default async function CustomersPage({
         title="Müşteriler"
         subtitle="Tüm müşteri portföyün. Kanban görünümüyle satış aşamasını takip et, kayıt aç, görev ata."
         actions={
-          <Link href="/customers/new">
-            <Button>Yeni müşteri</Button>
-          </Link>
+          <>
+            <PageHelp pageKey="customers" />
+            <Link href="/customers/new">
+              <Button>Yeni müşteri</Button>
+            </Link>
+          </>
         }
       />
 
