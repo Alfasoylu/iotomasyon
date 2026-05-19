@@ -35,13 +35,13 @@ export const AIR_FREIGHT_PER_KG = 8;
 export const SEA_FREIGHT_PER_KG = 1;
 
 /** Air inventory cycle in days — capital lock period for air shipments */
-export const AIR_CYCLE_DAYS = 120;
+export const AIR_CYCLE_DAYS = 150;
 
 /** Sea inventory cycle in days — capital lock period for sea shipments */
 export const SEA_CYCLE_DAYS = 210;
 
 /** Air capital multiplier (cycle_days / 30, rounded to nearest integer) */
-export const AIR_CAPITAL_MONTHS = 4; // 120 days ≈ 4 months
+export const AIR_CAPITAL_MONTHS = 5; // 150 days = 5 months
 
 /** Sea capital multiplier */
 export const SEA_CAPITAL_MONTHS = 7; // 210 days = 7 months
