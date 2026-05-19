@@ -125,9 +125,11 @@ function recalcProduct(
   });
   const revenueResult = calcRevenue({ trendyolPriceTry: m.trendyolPriceTry, usdTryRate: rates.usdTryRate });
   const profitResult = costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;
-  // Phase 90: demand = max(t30g, manuel onlineSalesPotential)
+  // Phase 92: demand = max(system forecast, manuel onlineSalesPotential).
+  // forecast client-side recalc'da değişmez (DB sorgusu lazım) — server'dan gelen
+  // forecastMonthlyUnits'i baz alır, sadece manual override değişirse onunla karşılaştır.
   const manualOnline = m.onlineSalesPotential ?? 0;
-  const effectiveT30g = Math.max(m.t30g, manualOnline);
+  const effectiveT30g = Math.max(m.forecastMonthlyUnits, manualOnline);
   const stockDays = calcStockDays(m.stockQuantity, effectiveT30g);
   const healthScore = calcHealthScore({
     hasRmb: m.sourceCostRmb != null,
@@ -645,15 +647,21 @@ export function ImporterViewClient() {
                 <th
                   className="px-3 py-3 text-right cursor-pointer hover:text-white"
                   onClick={() => handleSort("t30g")}
-                  title="Son 30 gün Trendyol satış adedi"
+                  title="Son 30 gün satış adedi (tüm 14 kanal)"
                 >
                   T30G {sortKey === "t30g" ? (sortAsc ? "↑" : "↓") : "↕"}
                 </th>
                 <th
-                  className="px-3 py-3 text-right whitespace-nowrap text-blue-300"
-                  title="Pazaryeri Aylık Satış Potansiyeli (manuel tahmin) — tıkla → düzenle"
+                  className="px-3 py-3 text-right whitespace-nowrap text-emerald-300"
+                  title="Sistem tahmini aylık satış: tüm 14 kanal × 5 yıllık tarihçe, recency-weighted + mevsimsel düzeltme (lib/sales-forecast.ts). İthalat kararında max(forecast, manuel) kullanılır."
                 >
-                  Aylık Pot. ✎
+                  Tahmin
+                </th>
+                <th
+                  className="px-3 py-3 text-right whitespace-nowrap text-blue-300"
+                  title="Manuel aylık satış tahmini — tıkla → düzenle. İthalat kararında max(sistem tahmini, manuel) kullanılır."
+                >
+                  Manuel ✎
                 </th>
                 {/* Editable import input columns */}
                 <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Alış (¥) ✎</th>
@@ -689,7 +697,7 @@ export function ImporterViewClient() {
             <tbody className="divide-y divide-slate-50 bg-white">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={22} className="px-4 py-12 text-center text-slate-400 text-sm">
+                  <td colSpan={23} className="px-4 py-12 text-center text-slate-400 text-sm">
                     Bu filtre için ürün bulunamadı.
                   </td>
                 </tr>
@@ -786,7 +794,17 @@ export function ImporterViewClient() {
                         </span>
                       </td>
 
-                      {/* Pazaryeri Aylık Satış Potansiyeli — inline editable */}
+                      {/* Phase 92: Sistem tahmini (forecast) */}
+                      <td className="px-3 py-2 text-right">
+                        <span
+                          className={`font-mono text-xs ${p.forecastMonthlyUnits > 0 ? "text-emerald-700 font-semibold" : "text-slate-300"}`}
+                          title={`Sistem tahmini (formül: ${p.forecastFormula})`}
+                        >
+                          {p.forecastMonthlyUnits > 0 ? p.forecastMonthlyUnits : "—"}
+                        </span>
+                      </td>
+
+                      {/* Manuel Aylık Satış Potansiyeli — inline editable */}
                       <td className="px-3 py-2 text-right">
                         <InlineEditNumber
                           value={p.onlineSalesPotential}
@@ -1016,8 +1034,8 @@ export function ImporterViewClient() {
       {/* Footer note */}
       <p className="text-[10px] text-slate-400 text-center">
         Kur: Veritabanındaki en son aylık kur · Komisyon %20 · Kargo dilimi (Pazaryeri kanonik): &lt;$5→$1.2, $5–7.5→$2, &gt;$7.5→$3.3
-        · Aylık talep: max(T30G, manuel onlineSalesPotential)
-        · AIR döngüsü 120g · SEA döngüsü 210g · ≥{5}kg → Otomatik Deniz
+        · Aylık talep: max(Sistem tahmini, manuel). Tahmin = recency-weighted (90d×0.5 + 365d×0.3 + lifetime×0.2) × mevsimsel. Tüm 14 kanal × 5 yıl.
+        · AIR döngüsü 150g · SEA döngüsü 210g · Kargo seçimi ROI bazlı
       </p>
     </div>
   );
