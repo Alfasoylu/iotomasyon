@@ -412,6 +412,12 @@ model Product {
   // Phase 31 — RMB-first import economics
   sourceCostRmb            Decimal? @db.Decimal(15,2) // Purchase cost in RMB/CNY
   importPaymentFeePct      Decimal? @db.Decimal(5,2)  // Payment commission % (e.g. 3.0)
+  // GTİP kodları — 3 adet, çünkü bazı ürünler farklı GTİP'lerle ithal edilebilir
+  // (örn. bir kamera seti hem 8525.81 hem 8517.62 dilimine girebilir).
+  // Format: "8525.81.00.00" gibi 12 haneli string (ondalık opsiyonel). NULL ise atanmamış.
+  gtip1                    String?
+  gtip2                    String?
+  gtip3                    String?
   // Phase 89 — Physical count (warehouse-managed, distinct from Entegra stockQuantity).
   // stockQuantity = source-of-truth from Entegra XML sync; never mutated by warehouse staff.
   // physicalCountQuantity = last physical count recorded in warehouse; variance = stockQuantity - physicalCountQuantity.

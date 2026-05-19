@@ -416,6 +416,9 @@ export default async function ProductDetailPage({
             <Info label="Model" value={product.model} />
             <Info label="Tedarikçi" value={product.supplier} />
             {product.barcode ? <Info label="Barkod" value={product.barcode} mono /> : null}
+            {product.gtip1 ? <Info label="GTİP 1" value={product.gtip1} mono /> : null}
+            {product.gtip2 ? <Info label="GTİP 2" value={product.gtip2} mono /> : null}
+            {product.gtip3 ? <Info label="GTİP 3" value={product.gtip3} mono /> : null}
             <Info label="Konum" value={product.location} />
             <Info label="Stok" value={`${product.stockQuantity}`} />
             <Info label="Minimum stok" value={`${product.minimumStock}`} />
