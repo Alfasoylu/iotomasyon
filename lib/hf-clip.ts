@@ -11,11 +11,16 @@
  * bu süreyi UI'da kullanıcıya açıkça gösterir.
  */
 
+// Yeni Inference Providers router'ı clip-vit-base-patch32'yi henüz
+// `hf-inference` provider'da barındırmıyor ("Model not supported by provider
+// hf-inference"). Eski api-inference endpoint'i hala bu modeli sunuyor;
+// onu primary yapıyoruz. Router primary olarak desteklenirse fallback diye
+// otomatik geçiş yaparız (404/400'de).
 const HF_ENDPOINT =
-  "https://router.huggingface.co/hf-inference/models/openai/clip-vit-base-patch32/pipeline/image-feature-extraction";
+  "https://api-inference.huggingface.co/models/openai/clip-vit-base-patch32";
 
 const FALLBACK_ENDPOINT =
-  "https://api-inference.huggingface.co/models/openai/clip-vit-base-patch32";
+  "https://router.huggingface.co/hf-inference/models/openai/clip-vit-base-patch32/pipeline/image-feature-extraction";
 
 export class HfEmbedError extends Error {
   constructor(
@@ -54,8 +59,9 @@ export async function embedImage(
     body,
   });
 
-  // 404 fallback: eski api-inference endpoint
-  if (res.status === 404) {
+  // 404/400 fallback: diğer endpoint'i dene (model+provider eşleşmesi
+  // bir tarafta yoksa diğeri çoğunlukla destekler)
+  if (res.status === 404 || res.status === 400) {
     res = await fetch(FALLBACK_ENDPOINT, {
       method: "POST",
       headers: {
