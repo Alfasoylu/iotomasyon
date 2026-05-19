@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
+import { PageHelp } from "@/components/layout/page-help";
 
 export const dynamic = "force-dynamic";
 
@@ -142,6 +143,7 @@ export default async function MarketplacePage() {
         subtitle={`14 kanaldaki bu ay satış performansı + listeleme kaydı. Toplam ${listings.length} listeleme aktif.`}
         actions={
           <>
+            <PageHelp pageKey="marketplace" />
             {canSeeProfit && (
               <Link href="/marketplace/profit">
                 <Button variant="secondary">Kârlılık</Button>
