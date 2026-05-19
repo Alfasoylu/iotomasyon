@@ -23,10 +23,12 @@
  */
 
 import Link from "next/link";
+import { Ship } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   calculateImportDecision,
   DEFAULT_USD_TRY_RATE,
@@ -456,37 +458,36 @@ export default async function ImportCockpitPage({
   return (
     <div className="space-y-6">
       {/* Başlık */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Faz 72 — İthalat Karar Cockpiti v2
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            İthalat Karar Cockpiti
-          </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Trendyol gerçek satış fiyatı + MarketplacePrice + satış hızı + iade oranı + ithal maliyet → ithalat sinyali.
-            Kur: <span className="font-semibold">1 USD = ₺{usdTryRate.toFixed(2)}</span>
+      <PageHeader
+        icon={Ship}
+        breadcrumb={[{ label: "İthalat" }, { label: "Karar Kokpiti" }]}
+        title="İthalat Karar Kokpiti"
+        subtitle="Hangi üründen sipariş vermeli? Trendyol gerçek satış fiyatı + satış hızı + iade oranı + ithalat maliyetinden ithalat sinyali (AL / BEKLE / ALMA)."
+        meta={
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+            Kur: 1 USD = ₺{usdTryRate.toFixed(2)}
             {latestRate ? ` (${latestRate.month}/${latestRate.year})` : " (varsayılan)"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {orderHref && (
+          </span>
+        }
+        actions={
+          <>
+            {orderHref && (
+              <Link
+                href={orderHref}
+                className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 text-xs font-semibold transition whitespace-nowrap"
+              >
+                Sipariş Oluştur ({orderCandidates.length})
+              </Link>
+            )}
             <Link
-              href={orderHref}
-              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 text-xs font-semibold transition whitespace-nowrap"
+              href="/admin/import-decisions"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
             >
-              📦 Sipariş Oluştur ({orderCandidates.length})
+              v1 Görünüm →
             </Link>
-          )}
-          <Link
-            href="/admin/import-decisions"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
-          >
-            v1 Görünüm →
-          </Link>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Eşleşmemiş ürünler uyarısı */}
       {unmatchedCount > 0 && (

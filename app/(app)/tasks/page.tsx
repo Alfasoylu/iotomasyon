@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { CheckSquare } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
 import { CustomerTaskCompleteButton } from "@/components/customers/customer-task-complete-button";
 import {
   formatTaskPriority,
@@ -73,29 +75,24 @@ export default async function TasksPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="overflow-hidden rounded-3xl bg-slate-950">
-        <div className="h-1 bg-orange-500" />
-        <div className="px-6 py-8 xl:px-8">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                Takip Görevleri
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-                Görev Listesi
-              </h1>
-              <p className="mt-2 text-sm text-slate-400">
-                {total.toLocaleString("tr-TR")} görev
-                {overdueCount > 0 && (
-                  <span className="ml-2 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-semibold text-red-400">
-                    {overdueCount} gecikmiş
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={CheckSquare}
+        breadcrumb={[{ label: "Satış" }, { label: "Görevler" }]}
+        title="Görevler"
+        subtitle="Tüm takip görevleri. Vadesi gelen, gecikmiş ve devam eden işler."
+        meta={
+          <>
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+              {total.toLocaleString("tr-TR")} görev
+            </span>
+            {overdueCount > 0 && (
+              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                {overdueCount} gecikmiş
+              </span>
+            )}
+          </>
+        }
+      />
 
       {/* Filters */}
       <Card className="p-4">

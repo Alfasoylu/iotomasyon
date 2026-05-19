@@ -6,11 +6,13 @@
  */
 
 import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   fetchTrendyolOrders,
   fetchTrendyolReturns,
@@ -127,23 +129,22 @@ export default async function TrendyolDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Pazar Yerleri / Trendyol</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Trendyol Paneli</h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Son siparişler ve iadeler — yalnızca görüntüleme.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/admin/trendyol">
-            <Button variant="secondary">⚙ API Ayarları</Button>
-          </Link>
-          <Link href="/marketplace">
-            <Button variant="secondary">← Pazar Yerleri</Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        icon={ShoppingCart}
+        breadcrumb={[
+          { label: "Pazaryerleri", href: "/marketplace" },
+          { label: "Trendyol Paneli" },
+        ]}
+        title="Trendyol Paneli"
+        subtitle="Trendyol'daki son siparişler ve iadeler — yalnızca görüntüleme (push entegrasyonu Entegra'dadır)."
+        actions={
+          <>
+            <Link href="/admin/trendyol">
+              <Button variant="secondary">API Ayarları</Button>
+            </Link>
+          </>
+        }
+      />
 
       {/* Not-configured state */}
       {notConfigured && (

@@ -13,6 +13,7 @@
  */
 
 import Link from "next/link";
+import { BarChart3 } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +21,7 @@ import { calculateProfitability } from "@/lib/profitability";
 import { calculateProcurement } from "@/lib/procurement";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -309,17 +311,12 @@ export default async function ExecutivePage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Yönetim / Yönetici Paneli
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          Yönetici Paneli
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
-          Stok değeri, kârlılık, tedarik aciliyeti ve sermaye durumunun anlık özeti.
-        </p>
-      </div>
+      <PageHeader
+        icon={BarChart3}
+        breadcrumb={[{ label: "Günlük Durum" }, { label: "Yönetici Paneli" }]}
+        title="Yönetici Paneli"
+        subtitle="Stok değeri, kârlılık, tedarik aciliyeti ve sermaye durumunun anlık özeti."
+      />
 
       {/* ── Section 1: Top KPIs ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

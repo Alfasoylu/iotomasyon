@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Users } from "lucide-react";
 
 import { CustomerImportForm } from "@/components/customers/customer-import-form";
+import { PageHeader } from "@/components/layout/page-header";
 import { CustomerKanbanBoard } from "@/components/customers/customer-kanban-board";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,22 +42,17 @@ export default async function CustomersPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Müşteriler
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Müşteri portföyü
-          </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Satış süreci için müşteri kayıtları, durum takibi ve iletişim bilgileri.
-          </p>
-        </div>
-        <Link href="/customers/new">
-          <Button>Yeni müşteri</Button>
-        </Link>
-      </div>
+      <PageHeader
+        icon={Users}
+        breadcrumb={[{ label: "Satış" }, { label: "Müşteriler" }]}
+        title="Müşteriler"
+        subtitle="Tüm müşteri portföyün. Kanban görünümüyle satış aşamasını takip et, kayıt aç, görev ata."
+        actions={
+          <Link href="/customers/new">
+            <Button>Yeni müşteri</Button>
+          </Link>
+        }
+      />
 
       <Card className="p-5">
         <CustomerFilters
