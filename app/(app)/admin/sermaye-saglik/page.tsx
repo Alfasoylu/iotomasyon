@@ -14,11 +14,13 @@
  */
 
 import Link from "next/link";
+import { Heart } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { CsvDownloadButton } from "@/components/admin/csv-download-button";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   calcImportCost,
   calcRevenue,
@@ -344,18 +346,12 @@ export default async function SermayeSaglikPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Yönetim / Pano
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          Sermaye Sağlık Panosu
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
-          USD bazlı tek bakışta günlük durum: ne kadar paranız ürüne bağlı, bu ay ne
-          kadar nakit beklenir, neyi siparişe vermeli, neyi tasfiye etmeli.
-        </p>
-      </div>
+      <PageHeader
+        icon={Heart}
+        breadcrumb={[{ label: "Günlük Durum" }, { label: "Sermaye Sağlığı" }]}
+        title="Sermaye Sağlığı"
+        subtitle="Günde bir kez aç, ne yapmalısın kararla — sermayenin nereye bağlı, ne kadar nakit beklenir, neyi siparişe vermeli, neyi tasfiye etmeli."
+      />
 
       {/* Sermaye Sağlık Skoru — manşet */}
       <Card className={`${healthBg} p-6`}>

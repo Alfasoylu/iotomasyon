@@ -15,10 +15,12 @@
  */
 
 import Link from "next/link";
+import { Package } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
 import { ProductFilters } from "@/components/products/product-filters";
 import { ProductBulkButtons } from "@/components/products/product-bulk-buttons";
 import { ImporterViewClient } from "@/components/products/importer-view-client";
@@ -282,27 +284,22 @@ export default async function ProductsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Ürünler
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Ürün kataloğu
-          </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Ürün kaydı, stok takibi ve ithalat bilgilerini yönetin.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-end gap-3">
-          {canUpdate && <ProductBulkButtons />}
-          {canCreate && (
-            <Link href="/products/new">
-              <Button>Yeni ürün</Button>
-            </Link>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        icon={Package}
+        breadcrumb={[{ label: "Ürünler & Stok" }, { label: "Ürünler" }]}
+        title="Ürünler"
+        subtitle="Ürün kataloğun. Stok, fiyat, pazaryeri durumu, ithalat maliyeti ve kâr-marj bilgisi tek yerde."
+        actions={
+          <>
+            {canUpdate && <ProductBulkButtons />}
+            {canCreate && (
+              <Link href="/products/new">
+                <Button>Yeni ürün</Button>
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {/* View switcher — Admin only */}
       {isAdmin && (

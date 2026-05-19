@@ -7,310 +7,374 @@ import { Sidebar, type NavItem } from "@/components/dashboard/sidebar";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
-// Full navigation definition.
-// `section` groups items visually in the sidebar.
-// `permission` gates visibility — undefined = visible to all authenticated users.
+// ── Navigation definition ──────────────────────────────────────────────────
+// 8 mantıksal grup. Her item için:
+//   • `iconKey` → Lucide icon (sidebar.tsx ICONS map)
+//   • `permission` → görünürlük (undefined = tüm authenticated kullanıcılar)
+//   • `section` → sidebar grup başlığı
+//   • `subGroup` → grup içinde alt-başlık (örn. "Yapılandırma")
 //
-// Role notes (enforced via PERMISSIONS, not duplicated here):
-//   SALES (vendors)            — cannot see EXECUTIVE_READ items (import, capital, analytics…)
-//   OPERATIONS (warehouse)     — cannot see pricing/margin pages (EXECUTIVE_READ gated)
-//   MARKETPLACE_OPERATOR       — sees marketplace section; no import/financial data
-//   ADMIN                      — bypasses all permission checks
-const ALL_NAV: Array<NavItem & { permission?: string }> = [
-  // ── Top-level (no section) ────────────────────────────────────────────────
-  { href: "/dashboard", label: "Pano" },
+// Rol notları (PERMISSIONS'da enforce, burada duplicate değil):
+//   SALES               — EXECUTIVE_READ olmayan satış sayfaları
+//   OPERATIONS/WAREHOUSE — finansal sayfaları görmez
+//   MARKETPLACE_OPERATOR — pazaryeri + iade odaklı
+//   ADMIN               — her şeye erişir
 
-  // ── CRM ───────────────────────────────────────────────────────────────────
+const ALL_NAV: Array<NavItem & { permission?: string }> = [
+  // ── PANO ─────────────────────────────────────────────────────────────────
+  { href: "/dashboard", label: "Pano", iconKey: "home" },
+
+  // ── GÜNLÜK DURUM ─────────────────────────────────────────────────────────
+  // Manşet karar panoları — admin/owner için günlük açılan ekranlar.
+  {
+    href: "/admin/sermaye-saglik",
+    label: "Sermaye Sağlığı",
+    iconKey: "heart",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Günlük Durum",
+  },
+  {
+    href: "/admin/executive",
+    label: "Yönetici Paneli",
+    iconKey: "chart",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Günlük Durum",
+  },
+  {
+    href: "/admin/safety",
+    label: "Üretim Güvenliği",
+    iconKey: "shield",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Günlük Durum",
+  },
+  {
+    href: "/admin/data-hygiene",
+    label: "Veri Hijyeni",
+    iconKey: "sparkles",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Günlük Durum",
+  },
+
+  // ── SATIŞ ────────────────────────────────────────────────────────────────
   {
     href: "/customers",
     label: "Müşteriler",
+    iconKey: "users",
     permission: PERMISSIONS.CUSTOMERS_READ,
-    section: "CRM",
+    section: "Satış",
   },
   {
     href: "/quotes",
     label: "Teklifler",
+    iconKey: "fileText",
     permission: PERMISSIONS.QUOTES_READ,
-    section: "CRM",
+    section: "Satış",
   },
   {
     href: "/quotes/templates",
     label: "Teklif Şablonları",
+    iconKey: "filePlus",
     permission: PERMISSIONS.QUOTE_TEMPLATES_READ,
-    section: "CRM",
+    section: "Satış",
   },
   {
     href: "/tasks",
     label: "Görevler",
+    iconKey: "checkSquare",
     permission: PERMISSIONS.TASKS_READ,
-    section: "CRM",
+    section: "Satış",
+  },
+  {
+    href: "/admin/task-board",
+    label: "Görev Panosu",
+    iconKey: "clipboardList",
+    permission: PERMISSIONS.TASKS_ASSIGN,
+    section: "Satış",
   },
   {
     href: "/activity",
     label: "Aktiviteler",
+    iconKey: "bell",
     permission: PERMISSIONS.ACTIVITY_READ,
-    section: "CRM",
+    section: "Satış",
   },
   {
     href: "/campaigns",
     label: "Kampanyalar",
+    iconKey: "megaphone",
     permission: PERMISSIONS.CAMPAIGNS_READ,
-    section: "CRM",
+    section: "Satış",
   },
-  // Phase 86 — Satış Fırsat Motoru
   {
     href: "/admin/sales-opportunities",
     label: "Satış Fırsatları",
+    iconKey: "target",
     permission: PERMISSIONS.CUSTOMERS_READ,
-    section: "CRM",
-  },
-  // Phase 87 — Ekip Görev Panosu
-  {
-    href: "/admin/task-board",
-    label: "Görev Panosu",
-    permission: PERMISSIONS.TASKS_ASSIGN,
-    section: "CRM",
+    section: "Satış",
   },
 
-  // ── Ürünler & Stok ────────────────────────────────────────────────────────
+  // ── ÜRÜNLER & STOK ──────────────────────────────────────────────────────
   {
     href: "/products",
     label: "Ürünler",
+    iconKey: "package",
     permission: PERMISSIONS.PRODUCTS_READ,
     section: "Ürünler & Stok",
   },
   {
     href: "/categories",
     label: "Kategoriler",
+    iconKey: "folderTree",
     permission: PERMISSIONS.CATEGORIES_READ,
     section: "Ürünler & Stok",
   },
   {
     href: "/search",
-    label: "Arama",
+    label: "Ürün Arama",
+    iconKey: "search",
     permission: PERMISSIONS.SEARCH_READ,
     section: "Ürünler & Stok",
   },
   {
     href: "/admin/stock-health",
     label: "Stok Sağlığı",
+    iconKey: "heart",
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "Ürünler & Stok",
   },
-
-  // ── Depo (Phase 55 — WAREHOUSE role, INVENTORY_READ gated) ───────────────
   {
     href: "/warehouse",
     label: "Depo",
+    iconKey: "warehouse",
     permission: PERMISSIONS.INVENTORY_READ,
     section: "Ürünler & Stok",
   },
   {
     href: "/warehouse/count",
     label: "Stok Sayımı",
+    iconKey: "box",
     permission: PERMISSIONS.INVENTORY_COUNT,
     section: "Ürünler & Stok",
   },
 
-  // ── Pazar Yeri ────────────────────────────────────────────────────────────
-  {
-    href: "/marketplace",
-    label: "Pazar Yerleri",
-    permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ,
-    section: "Pazar Yeri",
-  },
+  // ── PAZARYERLERİ ────────────────────────────────────────────────────────
+  // İşlem ekranları + yapılandırma alt-grubu.
   {
     href: "/marketplace/trendyol",
     label: "Trendyol Paneli",
+    iconKey: "cart",
     permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ,
-    section: "Pazar Yeri",
+    section: "Pazaryerleri",
+  },
+  {
+    href: "/marketplace",
+    label: "Pazaryerleri",
+    iconKey: "cart",
+    permission: PERMISSIONS.MARKETPLACE_LISTINGS_READ,
+    section: "Pazaryerleri",
   },
   {
     href: "/marketplace/trendyol/questions",
     label: "Müşteri Soruları",
+    iconKey: "help",
     permission: PERMISSIONS.MARKETPLACE_QUESTIONS_READ,
-    section: "Pazar Yeri",
+    section: "Pazaryerleri",
   },
   {
     href: "/marketplace/trendyol/returns",
     label: "İade Merkezi",
+    iconKey: "undo",
     permission: PERMISSIONS.MARKETPLACE_RETURNS_READ,
-    section: "Pazar Yeri",
+    section: "Pazaryerleri",
   },
   {
     href: "/marketplace/profit",
-    label: "Pazar Kârlılığı",
-    // Net profit / margin / ROI per listing — finance-only.
+    label: "Kârlılık & Marj",
+    iconKey: "pieChart",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Pazar Yeri",
+    section: "Pazaryerleri",
   },
   {
     href: "/marketplace/return-analysis",
     label: "İade Analizi",
+    iconKey: "trendingDown",
     permission: PERMISSIONS.MARKETPLACE_RETURNS_READ,
-    section: "Pazar Yeri",
+    section: "Pazaryerleri",
   },
   {
     href: "/admin/marketplace-mappings",
     label: "Ürün Eşleştirme",
+    iconKey: "link",
     permission: PERMISSIONS.MARKETPLACE_MAPPINGS_READ,
-    section: "Pazar Yeri",
+    section: "Pazaryerleri",
   },
+  // Alt grup: Yapılandırma
   {
     href: "/admin/marketplace-policies",
     label: "Marj Politikaları",
+    iconKey: "settings",
     permission: PERMISSIONS.MARKETPLACE_POLICIES_MANAGE,
-    section: "Pazar Yeri",
-  },
-  {
-    href: "/admin/trendyol-catalog",
-    label: "Trendyol Katalog",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Pazar Yeri",
-  },
-  {
-    href: "/admin/xml-sync",
-    label: "XML Senkron",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Pazar Yeri",
+    section: "Pazaryerleri",
+    subGroup: "Yapılandırma",
   },
   {
     href: "/admin/trendyol",
     label: "Trendyol API",
+    iconKey: "key",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Pazar Yeri",
+    section: "Pazaryerleri",
+    subGroup: "Yapılandırma",
+  },
+  {
+    href: "/admin/hepsiburada",
+    label: "Hepsiburada API",
+    iconKey: "key",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Pazaryerleri",
+    subGroup: "Yapılandırma",
+  },
+  {
+    href: "/admin/trendyol-catalog",
+    label: "Trendyol Katalog",
+    iconKey: "book",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Pazaryerleri",
+    subGroup: "Yapılandırma",
+  },
+  {
+    href: "/admin/xml-sync",
+    label: "XML Senkron",
+    iconKey: "refresh",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Pazaryerleri",
+    subGroup: "Yapılandırma",
   },
 
-  // ── İthalat & Analiz ─────────────────────────────────────────────────────
-  // Entire section gated behind EXECUTIVE_READ → invisible to SALES / standard OPERATIONS
-  {
-    href: "/orders",
-    label: "Siparişler",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
-  },
+  // ── İTHALAT ─────────────────────────────────────────────────────────────
   {
     href: "/admin/import-cockpit",
-    label: "İthalat Cockpiti",
+    label: "Karar Kokpiti",
+    iconKey: "ship",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "İthalat",
   },
   {
     href: "/admin/import-decisions",
     label: "İthalat Kararları",
+    iconKey: "fileSearch",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "İthalat",
   },
   {
     href: "/admin/import-calculator",
     label: "İthalat Hesaplayıcı",
+    iconKey: "calculator",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "İthalat",
   },
   {
     href: "/admin/procurement",
     label: "Tedarik Asistanı",
+    iconKey: "handshake",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "İthalat",
   },
   {
     href: "/admin/purchase-orders",
     label: "Satın Alma Siparişleri",
+    iconKey: "cart",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "İthalat",
   },
   {
     href: "/admin/suppliers",
     label: "Tedarikçiler",
+    iconKey: "truck",
     permission: PERMISSIONS.SUPPLIERS_READ,
-    section: "İthalat & Analiz",
+    section: "İthalat",
+  },
+
+  // ── FİNANS ──────────────────────────────────────────────────────────────
+  {
+    href: "/admin/capital",
+    label: "Sermaye Dağılımı",
+    iconKey: "dollar",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Finans",
   },
   {
     href: "/admin/exchange-rates",
     label: "Döviz Kurları",
+    iconKey: "trendingUp",
     permission: PERMISSIONS.EXCHANGE_RATES_MANAGE,
-    section: "İthalat & Analiz",
-  },
-  {
-    href: "/admin/sermaye-saglik",
-    label: "🩺 Sermaye Sağlık Panosu",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
-  },
-  {
-    href: "/admin/capital",
-    label: "Sermaye Dağılımı",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "Finans",
   },
   {
     href: "/admin/product-performance",
     label: "Satış Performansı",
+    iconKey: "chart",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
-  },
-  {
-    href: "/marketplace/realized-margin",
-    label: "Gerçekleşen Marj",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "Finans",
   },
   {
     href: "/admin/trendyol-report",
     label: "Trendyol Raporu",
+    iconKey: "fileText",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "Finans",
+  },
+  {
+    href: "/marketplace/realized-margin",
+    label: "Gerçekleşen Marj",
+    iconKey: "ruler",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Finans",
   },
   {
     href: "/admin/trendyol-matching",
     label: "Satış Eşleştirme",
+    iconKey: "crosshair",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat & Analiz",
+    section: "Finans",
   },
 
-  // ── Yönetim ───────────────────────────────────────────────────────────────
+  // ── SİSTEM ──────────────────────────────────────────────────────────────
   {
     href: "/admin/users",
     label: "Kullanıcılar",
+    iconKey: "user",
     permission: PERMISSIONS.USERS_READ,
-    section: "Yönetim",
+    section: "Sistem",
   },
   {
-    href: "/admin/executive",
-    label: "Yönetici Paneli",
+    href: "/orders",
+    label: "Siparişler",
+    iconKey: "archive",
     permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Yönetim",
-  },
-  {
-    href: "/admin/data-hygiene",
-    label: "Veri Hijyeni",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Yönetim",
-  },
-  {
-    href: "/admin/safety",
-    label: "Üretim Güvenliği",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Yönetim",
+    section: "Sistem",
   },
 ];
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
 
-  // Compute which nav items this user is allowed to see — preserving section grouping.
   const navChecks = await Promise.all(
     ALL_NAV.map(async (item) => {
       const allowed =
         !item.permission || (await checkPermission(user, item.permission));
       return allowed
-        ? { href: item.href, label: item.label, section: item.section }
+        ? {
+            href: item.href,
+            label: item.label,
+            section: item.section,
+            subGroup: item.subGroup,
+            iconKey: item.iconKey,
+          }
         : null;
     }),
   );
   const allowedNav = navChecks.filter(Boolean) as NavItem[];
 
-  // Users with zero non-dashboard items have effectively no access.
   const hasAccess = allowedNav.some((item) => item.href !== "/dashboard");
   if (!hasAccess) redirect("/no-access");
 

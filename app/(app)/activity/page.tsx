@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Activity } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
 import { formatNoteType } from "@/lib/customer-utils";
 import { formatDateTime } from "@/lib/utils";
 import { listActivities, listUsersWithActivity } from "@/services/activity-service";
@@ -50,20 +52,17 @@ export default async function ActivityPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="overflow-hidden rounded-3xl bg-slate-950">
-        <div className="h-1 bg-orange-500" />
-        <div className="px-6 py-8 xl:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-            Aktivite Günlüğü
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-            Tüm Kayıtlar
-          </h1>
-          <p className="mt-2 text-sm text-slate-400">
-            {total.toLocaleString("tr-TR")} kayıt — tüm kullanıcıların notları
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Activity}
+        breadcrumb={[{ label: "Satış" }, { label: "Aktiviteler" }]}
+        title="Aktiviteler"
+        subtitle="Tüm kullanıcıların müşteri/teklif notları — zaman akışı."
+        meta={
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+            {total.toLocaleString("tr-TR")} kayıt
+          </span>
+        }
+      />
 
       {/* Filters */}
       <Card className="p-4">

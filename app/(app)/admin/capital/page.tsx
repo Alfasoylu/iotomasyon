@@ -12,6 +12,7 @@
  * No schema change — reads existing TrendyolSalesRecord (Phase 26).
  */
 
+import { DollarSign } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +21,7 @@ import { calculateSalesPotential } from "@/lib/sales-potential";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CapitalConfigForm } from "@/components/capital/capital-config-form";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -184,20 +186,19 @@ export default async function CapitalPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Yönetim</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          Sermaye dağılımı
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
-          Mevcut sermayeyi en kârlı ürünlere göre dağıtmak için öneri motoru. Satın alma yapılmadan önce yönetici onayı zorunludur.
-          {actualDataCount > 0 && (
-            <span className="ml-2 font-medium text-emerald-700">
-              {actualDataCount} üründe gerçek Trendyol satış hızı kullanılıyor.
+      <PageHeader
+        icon={DollarSign}
+        breadcrumb={[{ label: "Finans" }, { label: "Sermaye Dağılımı" }]}
+        title="Sermaye Dağılımı"
+        subtitle="Mevcut sermayeyi en kârlı ürünlere dağıtmak için öneri motoru. Satın alma öncesi yönetici onayı zorunludur."
+        meta={
+          actualDataCount > 0 ? (
+            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+              {actualDataCount} üründe gerçek satış hızı
             </span>
-          )}
-        </p>
-      </div>
+          ) : null
+        }
+      />
 
       {/* Real velocity notice */}
       {actualDataCount > 0 && (

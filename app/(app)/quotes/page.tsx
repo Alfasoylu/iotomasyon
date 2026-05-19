@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { FileText } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   formatQuoteCurrencyMode,
   formatQuoteStatus,
@@ -50,24 +52,17 @@ export default async function QuotesPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="overflow-hidden rounded-3xl bg-slate-950">
-        <div className="h-1 bg-orange-500" />
-        <div className="px-6 py-8 xl:px-8">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                Teklifler
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-                Tüm Teklifler
-              </h1>
-              <p className="mt-2 text-sm text-slate-400">
-                {total.toLocaleString("tr-TR")} teklif
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={FileText}
+        breadcrumb={[{ label: "Satış" }, { label: "Teklifler" }]}
+        title="Teklifler"
+        subtitle="Tüm müşteri teklifleri. Durum filtresiyle aşamayı, müşteri bazlı görünümle takibi yap."
+        meta={
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+            {total.toLocaleString("tr-TR")} teklif
+          </span>
+        }
+      />
 
       {/* Filters */}
       <Card className="p-4">

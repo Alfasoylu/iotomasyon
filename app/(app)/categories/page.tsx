@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { FolderTree } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
 import { listCategories } from "@/services/category-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -36,22 +38,17 @@ export default async function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Katalog
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Kategoriler
-          </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            {categories.length} kategori &mdash; ürün kataloğunu ve müşteri ilgilerini organize edin.
-          </p>
-        </div>
-        <Link href="/categories/new">
-          <Button>Yeni kategori</Button>
-        </Link>
-      </div>
+      <PageHeader
+        icon={FolderTree}
+        breadcrumb={[{ label: "Ürünler & Stok" }, { label: "Kategoriler" }]}
+        title="Kategoriler"
+        subtitle={`${categories.length} kategori. Ürün kataloğunu ve müşteri ilgilerini organize et.`}
+        actions={
+          <Link href="/categories/new">
+            <Button>Yeni kategori</Button>
+          </Link>
+        }
+      />
 
       {categories.length === 0 ? (
         <Card className="p-12 text-center">

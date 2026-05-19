@@ -4,11 +4,13 @@
  */
 
 import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
 import { requirePermission, requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -64,30 +66,29 @@ export default async function MarketplacePage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Pazar Yerleri</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Listeleme Kaydı</h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Ürünlerin hangi pazar yerlerinde listelendiğini takip edin. Toplam {listings.length} listeleme kayıtlı.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {canSeeProfit && (
-            <Link href="/marketplace/profit">
-              <Button variant="secondary">📊 Kârlılık</Button>
+      <PageHeader
+        icon={ShoppingCart}
+        breadcrumb={[{ label: "Pazaryerleri" }, { label: "Listeleme Kaydı" }]}
+        title="Listeleme Kaydı"
+        subtitle={`Ürünlerin hangi pazaryerinde listelendiği. Toplam ${listings.length} kayıt.`}
+        actions={
+          <>
+            {canSeeProfit && (
+              <Link href="/marketplace/profit">
+                <Button variant="secondary">Kârlılık</Button>
+              </Link>
+            )}
+            <Link href="/marketplace/monitoring">
+              <Button variant="secondary">İzleme</Button>
             </Link>
-          )}
-          <Link href="/marketplace/monitoring">
-            <Button variant="secondary">⚠ İzleme</Button>
-          </Link>
-          {canWrite && (
-            <Link href="/marketplace/new">
-              <Button>+ Yeni listeleme</Button>
-            </Link>
-          )}
-        </div>
-      </div>
+            {canWrite && (
+              <Link href="/marketplace/new">
+                <Button>Yeni listeleme</Button>
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {listings.length === 0 ? (
         <Card className="p-12 text-center space-y-3">

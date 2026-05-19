@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Warehouse } from "lucide-react";
 
+import { PageHeader } from "@/components/layout/page-header";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -54,15 +56,12 @@ export default async function WarehousePage({
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Depo
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Barkod, SKU veya ürün adıyla arayın
-        </p>
-      </div>
+      <PageHeader
+        icon={Warehouse}
+        breadcrumb={[{ label: "Ürünler & Stok" }, { label: "Depo" }]}
+        title="Depo"
+        subtitle="Barkod, SKU veya ürün adıyla ürün ara — depo elemanı için mobil-uyumlu sayfa."
+      />
 
       {/* Search form */}
       <form method="GET" action="/warehouse">
