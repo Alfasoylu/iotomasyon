@@ -456,6 +456,9 @@ model Product {
   privateNote          String?
   // Phase 29 — Trendyol return/claim records
   trendyolReturnRecords TrendyolReturnRecord[]
+  // Hepsiburada (paralel mimari — read-only)
+  hepsiburadaSalesRecords   HepsiburadaSalesRecord[]   @relation("HbSalesProduct")
+  hepsiburadaReturnRecords  HepsiburadaReturnRecord[]  @relation("HbReturnsProduct")
   // Phase 32 — Import decision snapshots
   importDecisionSnapshots ImportDecisionSnapshot[]
   // Phase 42 — Stock adjustment log
@@ -893,6 +896,19 @@ model TrendyolConfig {
   updatedAt   DateTime  @updatedAt
 }
 
+// Hepsiburada Marketplace API config (singleton row, paralel mimari Trendyol'a)
+// READ-ONLY: katalog/sipariş/iade çekiyoruz; push işlemi Entegra'nın işi.
+model HepsiburadaConfig {
+  id          String    @id @default("singleton")
+  merchantId  String    @default("")
+  username    String    @default("")
+  password    String    @default("")
+  storeName   String?   // bilgi amaçlı (mağaza adı)
+  isEnabled   Boolean   @default(false)
+  lastSyncAt  DateTime?
+  updatedAt   DateTime  @updatedAt
+}
+
 model OutreachRecipient {
   id         String           @id @default(cuid())
   campaignId String
@@ -1080,6 +1096,61 @@ model TrendyolReturnRecord {
   status        String   // claimItemStatus.name e.g. "Accepted", "WaitingForArrival"
   reasonName    String?  // Turkish reason from customerClaimItemReason.name
   reasonCode    String?  // reason code
+
+  productName   String
+  barcode       String?
+  merchantSku   String?
+  unitPriceTry  Decimal  @db.Decimal(15,2) @default(0)
+  syncedAt      DateTime @default(now())
+
+  @@unique([claimId, orderLineId])
+  @@index([productId])
+  @@index([claimDate])
+  @@index([orderNumber])
+  @@index([status])
+}
+
+// ─── Hepsiburada — Trendyol paralel modelleri (READ-ONLY) ───────────────────
+// productId nullable: eşleşmemiş kayıtlar audit için tutulur.
+
+model HepsiburadaSalesRecord {
+  id             String   @id @default(cuid())
+  orderId        String   // Hepsiburada order number (display)
+  lineId         String   // Hepsiburada line item ID
+  productId      String?
+  product        Product? @relation("HbSalesProduct", fields: [productId], references: [id], onDelete: SetNull)
+
+  orderDate      DateTime
+  status         String   // e.g. "Delivered", "Cancelled"
+  merchantSku    String?
+  barcode        String?
+  hbSku          String?  // Hepsiburada SKU (HBSKU)
+  productName    String
+  quantity       Int
+  unitPriceTry   Decimal  @db.Decimal(15,2)
+  totalPriceTry  Decimal  @db.Decimal(15,2)
+  syncedAt       DateTime @default(now())
+
+  @@unique([orderId, lineId])
+  @@index([productId])
+  @@index([orderDate])
+  @@index([merchantSku])
+  @@index([barcode])
+}
+
+model HepsiburadaReturnRecord {
+  id            String   @id @default(cuid())
+  claimId       String
+  orderLineId   String
+  productId     String?
+  product       Product? @relation("HbReturnsProduct", fields: [productId], references: [id], onDelete: SetNull)
+
+  orderNumber   String
+  orderDate     DateTime
+  claimDate     DateTime
+  status        String
+  reasonName    String?
+  reasonCode    String?
 
   productName   String
   barcode       String?
