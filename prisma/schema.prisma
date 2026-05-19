@@ -913,6 +913,9 @@ model ProductImage {
   sortOrder Int     @default(0)  // 0=primary
   source    String  @default("XML")  // XML | MANUAL
   altText   String?
+  // Phase 91 — CLIP image embedding (512-dim) for similarity search.
+  // Populated by scripts/backfill-image-embeddings.ts via Hugging Face Inference.
+  embedding Unsupported("vector(512)")?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
