@@ -175,7 +175,49 @@ export default async function MarketplacePage() {
             </div>
           </div>
 
-          <Card className="overflow-hidden p-0">
+          {/* Mobile card list (md altı) */}
+          <div className="md:hidden space-y-2">
+            {channelStats.map((c) => {
+              const pct = totalRevenueThisMonth > 0 ? (c.revenueTry / totalRevenueThisMonth) * 100 : 0;
+              const channelHref =
+                c.channel === "TRENDYOL" ? "/marketplace/trendyol" :
+                c.channel === "HEPSIBURADA" ? "/admin/hepsiburada" :
+                "/marketplace/profit";
+              return (
+                <Link
+                  key={c.channel}
+                  href={channelHref}
+                  className="block rounded-2xl border border-slate-200 bg-white p-4 transition active:bg-slate-50"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-semibold text-slate-900">
+                      {CHANNEL_NAMES[c.channel] ?? c.channel}
+                    </p>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-mono text-slate-600">
+                      %{pct.toFixed(0)}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-400">Sipariş</p>
+                      <p className="mt-0.5 font-mono font-semibold text-slate-900">{c.orders.toLocaleString("tr-TR")}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-400">Adet</p>
+                      <p className="mt-0.5 font-mono text-slate-700">{c.quantity.toLocaleString("tr-TR")}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-400">Ciro</p>
+                      <p className="mt-0.5 font-mono font-semibold text-emerald-700">{fmtTry(c.revenueTry)}</p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Desktop tablo (md+) */}
+          <Card className="hidden md:block overflow-hidden p-0">
             <table className="min-w-full divide-y divide-slate-100 text-sm">
               <thead className="bg-slate-50 text-left text-[10px] uppercase tracking-[0.2em] text-slate-500">
                 <tr>
