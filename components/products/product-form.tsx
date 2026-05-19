@@ -86,10 +86,13 @@ const emptyValues: ProductFormValues = {
   // Phase 31
   sourceCostRmb: "",
   importPaymentFeePct: "",
-  // GTİP kodları (3 adet)
+  // GTİP kodları (3 adet) + açıklamaları
   gtip1: "",
+  gtip1Desc: "",
   gtip2: "",
+  gtip2Desc: "",
   gtip3: "",
+  gtip3Desc: "",
 };
 
 export function ProductForm({
@@ -249,28 +252,52 @@ export function ProductForm({
               Bazı ürünler birden fazla GTİP'le ithal edilebilir — 3 koda kadar girilebilir
             </p>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <Field label="GTİP 1" error={form.formState.errors.gtip1?.message}>
-              <Input
-                {...form.register("gtip1")}
-                placeholder="örn. 8525.81.00.00"
-                className="font-mono"
-              />
-            </Field>
-            <Field label="GTİP 2" error={form.formState.errors.gtip2?.message}>
-              <Input
-                {...form.register("gtip2")}
-                placeholder="opsiyonel ek kod"
-                className="font-mono"
-              />
-            </Field>
-            <Field label="GTİP 3" error={form.formState.errors.gtip3?.message}>
-              <Input
-                {...form.register("gtip3")}
-                placeholder="opsiyonel ek kod"
-                className="font-mono"
-              />
-            </Field>
+          <div className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-[200px_1fr]">
+              <Field label="GTİP 1" error={form.formState.errors.gtip1?.message}>
+                <Input
+                  {...form.register("gtip1")}
+                  placeholder="örn. 8525.81.00.00"
+                  className="font-mono"
+                />
+              </Field>
+              <Field label="Açıklama 1" error={form.formState.errors.gtip1Desc?.message}>
+                <Input
+                  {...form.register("gtip1Desc")}
+                  placeholder="TGTC tanımı (otomatik doldurulur)"
+                />
+              </Field>
+            </div>
+            <div className="grid gap-3 md:grid-cols-[200px_1fr]">
+              <Field label="GTİP 2" error={form.formState.errors.gtip2?.message}>
+                <Input
+                  {...form.register("gtip2")}
+                  placeholder="opsiyonel ek kod"
+                  className="font-mono"
+                />
+              </Field>
+              <Field label="Açıklama 2" error={form.formState.errors.gtip2Desc?.message}>
+                <Input
+                  {...form.register("gtip2Desc")}
+                  placeholder="TGTC tanımı"
+                />
+              </Field>
+            </div>
+            <div className="grid gap-3 md:grid-cols-[200px_1fr]">
+              <Field label="GTİP 3" error={form.formState.errors.gtip3?.message}>
+                <Input
+                  {...form.register("gtip3")}
+                  placeholder="opsiyonel ek kod"
+                  className="font-mono"
+                />
+              </Field>
+              <Field label="Açıklama 3" error={form.formState.errors.gtip3Desc?.message}>
+                <Input
+                  {...form.register("gtip3Desc")}
+                  placeholder="TGTC tanımı"
+                />
+              </Field>
+            </div>
           </div>
         </div>
       </Section>
