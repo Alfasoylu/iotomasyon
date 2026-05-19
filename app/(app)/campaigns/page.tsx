@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Megaphone } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/layout/empty-state";
 import { formatDateTime } from "@/lib/utils";
 import { listCampaigns } from "@/services/outreach-service";
 import { requirePermission } from "@/lib/auth";
@@ -54,12 +56,11 @@ export default async function CampaignsPage() {
           Veritabanı geçici olarak kullanılamıyor.
         </Card>
       ) : campaigns.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-sm text-slate-500">Henüz kampanya oluşturulmadı.</p>
-          <p className="mt-2 text-xs text-slate-400">
-            Ürün veya kategori detay sayfasından kampanya başlatabilirsiniz.
-          </p>
-        </Card>
+        <EmptyState
+          icon={Megaphone}
+          title="Henüz kampanya yok"
+          hint="Ürün veya kategori detay sayfasından WhatsApp kampanyası başlatabilirsin. Burada gönderim durumu, açılma ve dönüş istatistiklerini takip edersin."
+        />
       ) : (
         <div className="space-y-3">
           {campaigns.map((c) => {

@@ -501,6 +501,42 @@ export default async function ImportCockpitPage({
         </div>
       )}
 
+      {/* Sinyal mantığı legend */}
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="flex items-center gap-2">
+          <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-xs font-semibold text-slate-700">Sinyal nasıl hesaplanır?</p>
+        </div>
+        <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex items-start gap-2">
+            <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">AL</span>
+            <span className="text-slate-600">
+              <strong className="text-slate-800">marj ≥ %25</strong> ve aylık kâr {">"} 0 — anlık ekonomi iyi
+            </span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">BEKLE</span>
+            <span className="text-slate-600">
+              <strong className="text-slate-800">marj %15–25</strong> ve aylık kâr {">"} 0 — fiyat/maliyet iyileşmeyi bekle
+            </span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="rounded-md bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700">ALMA</span>
+            <span className="text-slate-600">
+              <strong className="text-slate-800">marj {"<"} %15</strong> veya zarar — sipariş verme
+            </span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="rounded-md bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">VERİ EKSİK</span>
+            <span className="text-slate-600">
+              maliyet/fiyat eksik — önce <Link href="/admin/marketplace-mappings" className="underline hover:text-slate-900">eşleştir</Link>
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Özet kartlar */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {(["AL", "BEKLE", "ALMA", "VERİ_EKSİK"] as const).map((s) => (
