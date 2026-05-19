@@ -647,9 +647,10 @@ export function ImporterViewClient() {
                 <th
                   className="px-3 py-3 text-right cursor-pointer hover:text-white"
                   onClick={() => handleSort("t30g")}
-                  title="Son 30 gün satış adedi (tüm 14 kanal)"
+                  title="T30G = Son 30 Gün. Tüm 14 kanaldan satış adedi (iptaller hariç)."
                 >
-                  T30G {sortKey === "t30g" ? (sortAsc ? "↑" : "↓") : "↕"}
+                  <abbr title="Son 30 Gün satışı" className="no-underline cursor-pointer">T30G</abbr>{" "}
+                  {sortKey === "t30g" ? (sortAsc ? "↑" : "↓") : "↕"}
                 </th>
                 <th
                   className="px-3 py-3 text-right whitespace-nowrap text-emerald-300"

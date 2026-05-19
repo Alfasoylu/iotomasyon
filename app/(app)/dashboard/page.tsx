@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import { getSmartRecommendations } from "@/lib/smart-recommendations";
 import {
   getAdminEnhancedData,
   getCapitalSnapshot,
@@ -62,13 +63,14 @@ export default async function DashboardPage() {
     return <MarketplaceWorkspace data={marketplaceData} />;
   }
 
-  // ADMIN, CUSTOM — full admin view with enhanced signals + capital snapshot.
-  const [stats, dueToday, alerts, enhanced, capital] = await Promise.all([
+  // ADMIN, CUSTOM — full admin view with enhanced signals + capital snapshot + smart recs.
+  const [stats, dueToday, alerts, enhanced, capital, smartRecs] = await Promise.all([
     getDashboardStats(),
     getDueTodayFollowups(),
     getOperationalAlerts(),
     getAdminEnhancedData(),
     getCapitalSnapshot(),
+    getSmartRecommendations(),
   ]);
 
   return (
@@ -79,6 +81,7 @@ export default async function DashboardPage() {
       alerts={alerts}
       enhanced={enhanced}
       capital={capital}
+      smartRecs={smartRecs.recs}
     />
   );
 }
