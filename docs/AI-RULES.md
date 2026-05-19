@@ -35,14 +35,24 @@ Never do without explicit approval:
 
 ## Marketplace Rules
 
-Allowed:
-- read-only integrations
+**Mimari kural — değiştirilemez:**
+Pazaryerlerine (Trendyol, Hepsiburada, Amazon, N11, Pazarama, Idefix, vb.)
+ürün/stok/fiyat verisi **iotomasyon CRM üzerinden GÖNDERİLMEZ**.
+Pazaryerlerine veri **Entegra** adlı ayrı yazılım üzerinden gönderilir.
+iotomasyon CRM sadece pazaryerlerinden veri **ÇEKER** (read-only).
 
-Forbidden until explicit approval:
-- stock push
-- price push
-- listing updates
-- order status writes
+Allowed:
+- read-only integrations (sipariş çekme, iade çekme, soru-cevap çekme, katalog
+  okuma, fiyat okuma)
+
+Forbidden — her durumda, açık onayla bile yapmayın (Entegra'nın işi):
+- stock push (stok güncelleme)
+- price push (fiyat güncelleme)
+- listing updates (ürün ekleme/silme/güncelleme)
+- order status writes (sipariş durumu yazma — kargo, iptal vb.)
+
+Eski API endpoint'leri (örn. `/admin/trendyol-stock-sync` push sayfası)
+kaldırılmıştır; tekrar eklenmemelidir.
 
 ## Documentation Rules
 
