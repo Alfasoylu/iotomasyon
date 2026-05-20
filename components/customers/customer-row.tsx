@@ -244,7 +244,13 @@ export function CustomerRow({
               Son temas: <strong className="text-slate-700">{relTime(customer.lastContactedAt)}</strong>
             </span>
             {stats?.nextActionAt && (
-              <span className="flex items-center gap-1 text-slate-600">
+              <span
+                className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 ${
+                  stats.nextActionAt < new Date()
+                    ? "bg-rose-100 text-rose-700 pulse-urgent"
+                    : "text-slate-600"
+                }`}
+              >
                 <Target className="h-3 w-3" />
                 {formatNextAction(stats.nextActionAt, stats.nextActionTitle)}
               </span>
