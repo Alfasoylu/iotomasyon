@@ -14,6 +14,11 @@ export type CustomerFilters = {
   customerType?: string;
   leadListId?: string;
   segment?: string;
+  city?: string;
+  district?: string;
+  industryId?: string;
+  industryGroupId?: string;
+  categoryId?: string;
 };
 
 export type UserOption = {
@@ -121,6 +126,22 @@ export async function listCustomers(filters: CustomerFilters) {
     where.segment = filters.segment as import("@prisma/client").CustomerSegment;
   }
 
+  if (filters.city && filters.city !== "all") {
+    where.city = filters.city;
+  }
+  if (filters.district && filters.district !== "all") {
+    where.district = filters.district;
+  }
+  if (filters.industryId && filters.industryId !== "all") {
+    where.industryId = filters.industryId;
+  } else if (filters.industryGroupId && filters.industryGroupId !== "all") {
+    // Üst grup seçilirse tüm alt sektörleri kapsa
+    where.industry = { parentId: filters.industryGroupId };
+  }
+  if (filters.categoryId && filters.categoryId !== "all") {
+    where.categoryInterests = { some: { categoryId: filters.categoryId } };
+  }
+
   const orderBy = [{ updatedAt: "desc" as const }, { name: "asc" as const }];
 
   try {
@@ -158,7 +179,7 @@ export async function listCustomers(filters: CustomerFilters) {
           },
           orderBy,
         });
-        // Merge with null stubs for Phase 6 + 95b + 98 fields to satisfy TypeScript types.
+        // Merge with null stubs for Phase 6 + 95b + 98 + 99 fields to satisfy TypeScript types.
         const customers = rows.map((r) => ({
           ...r,
           monthlySalesPotential: null as null,
@@ -170,6 +191,9 @@ export async function listCustomers(filters: CustomerFilters) {
           lastCallAttemptAt: null as null,
           shownInQueueCount: 0,
           segment: null as null,
+          industryId: null as null,
+          usedTech: [] as string[],
+          currentSupplier: null as null,
         }));
         return { databaseAvailable: true as const, customers };
       } catch {
