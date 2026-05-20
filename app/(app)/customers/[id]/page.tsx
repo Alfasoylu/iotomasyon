@@ -41,11 +41,13 @@ import { getCustomerById, listCustomerInterestProducts } from "@/services/custom
 import { listQuoteTemplates } from "@/services/quote-template-service";
 import { listUsersWithTasks } from "@/services/task-service";
 import { getCustomerStats } from "@/services/customer-cohort-service";
+import { listCustomerTimeline } from "@/services/customer-timeline-service";
 import { calcLeadScore, daysSinceContact } from "@/lib/customer-lead-score";
 import { displayPhone, telLink, whatsappLink } from "@/lib/customer-contact";
 import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
-import { Phone, MessageCircle, Mail, MapPin, Briefcase, Clock, Target, Plus, NotebookPen } from "lucide-react";
+import { Phone, MessageCircle, Mail, MapPin, Briefcase, Clock, Target, Heart, ShoppingBag, Activity as ActivityIcon } from "lucide-react";
 import { CustomerRowActions } from "@/components/customers/customer-row-actions";
+import { CustomerTimeline } from "@/components/customers/customer-timeline";
 import { prisma } from "@/lib/prisma";
 import { requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -60,7 +62,7 @@ export default async function CustomerDetailPage({
   const currentUser = await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
   const canAssign = await checkPermission(currentUser, PERMISSIONS.TASKS_ASSIGN);
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats, statsMap] =
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats, statsMap, timelineEvents] =
     await Promise.all([
       getCustomerById(id),
       listCustomerInterestProducts(),
@@ -70,6 +72,7 @@ export default async function CustomerDetailPage({
       canAssign ? listUsersWithTasks() : Promise.resolve([]),
       fetchCustomerMarketplaceStats(id),
       getCustomerStats([id]),
+      listCustomerTimeline(id, 100),
     ]);
   const stats = statsMap.get(id) ?? null;
 
@@ -317,6 +320,128 @@ export default async function CustomerDetailPage({
             </div>
           </Card>
         )}
+
+        {/* ── ÇAĞRI SIRASINDA BİLMEM GEREKENLER ─────────────────────── */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100">
+                <Heart className="h-3.5 w-3.5 text-rose-700" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Ne Almak İstiyor?</h3>
+                <p className="text-[10px] text-slate-500">Aktif ilgileri + aradığı özellikler</p>
+              </div>
+            </div>
+            {customer.interests.length === 0 && customer.categoryInterests.length === 0 && customer.attributeInterests.length === 0 ? (
+              <p className="py-4 text-center text-xs text-slate-400">Henüz ilgi alanı kaydedilmedi.</p>
+            ) : (
+              <div className="space-y-3">
+                {customer.interests.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                      ⚡ Ürün İlgileri ({customer.interests.length})
+                    </p>
+                    <ul className="space-y-1">
+                      {customer.interests.slice(0, 4).map((i) => (
+                        <li key={i.id} className="text-xs">
+                          <Link href={`/products/${i.product.id}`} className="font-medium text-slate-800 hover:text-slate-600">
+                            {i.product.name}
+                          </Link>
+                          {i.quantity > 1 && <span className="ml-1 text-slate-400">×{i.quantity}</span>}
+                          {i.stage && (
+                            <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-600">{i.stage}</span>
+                          )}
+                        </li>
+                      ))}
+                      {customer.interests.length > 4 && (
+                        <li className="text-[10px] text-slate-400">+ {customer.interests.length - 4} daha</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+                {customer.categoryInterests.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                      🏷️ Kategori İlgileri
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {customer.categoryInterests.map((ci) => (
+                        <Link
+                          key={ci.id}
+                          href={`/categories/${ci.category.id}`}
+                          className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700 hover:bg-slate-200"
+                        >
+                          {ci.category.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {customer.attributeInterests.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                      🔍 Aradığı Özellikler
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {customer.attributeInterests.map((ai) => (
+                        <span
+                          key={ai.attributeId}
+                          className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
+                        >
+                          ✓ {ai.attribute.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100">
+                <ShoppingBag className="h-3.5 w-3.5 text-blue-700" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Pazaryeri Geçmişi</h3>
+                <p className="text-[10px] text-slate-500">Lifetime sipariş + kanal dağılımı</p>
+              </div>
+            </div>
+            {!marketplaceStats || marketplaceStats.totalOrders === 0 ? (
+              <p className="py-4 text-center text-xs text-slate-400">Pazaryeri satış kaydı yok.</p>
+            ) : (
+              <div>
+                <div className="text-center mb-3">
+                  <p className="text-2xl font-bold tabular-nums text-emerald-700">
+                    {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(marketplaceStats.totalRevenueTry)}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    {marketplaceStats.totalOrders} sipariş · {marketplaceStats.uniqueProducts} farklı ürün
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  {marketplaceStats.channels.slice(0, 5).map((c) => {
+                    const pct = marketplaceStats.totalRevenueTry > 0 ? (c.revenueTry / marketplaceStats.totalRevenueTry) * 100 : 0;
+                    return (
+                      <div key={c.channel} className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-slate-700">{c.channel}</span>
+                        <span className="flex items-center gap-2">
+                          <span className="text-slate-500">{c.orders} sip.</span>
+                          <span className="font-mono font-semibold text-slate-800">
+                            {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(c.revenueTry)}
+                          </span>
+                          <span className="text-[10px] text-slate-400 w-9 text-right">%{pct.toFixed(0)}</span>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
 
         <CustomerWorkspaceTabs
         defaultTabId="overview"
@@ -634,44 +759,22 @@ export default async function CustomerDetailPage({
           },
           {
             id: "timeline",
-            label: "Notlar ve Takipler",
-            hint: "Zaman çizelgesi ve görevler",
+            label: "Notlar ve Görevler",
+            hint: "Yeni not + görev ekle (tam timeline aşağıda)",
             content: (
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <Card className="p-6">
-                  <h2 className="text-lg font-semibold text-slate-950">Not zaman çizelgesi</h2>
+                  <h2 className="text-lg font-semibold text-slate-950">Yeni not ekle</h2>
                   <p className="mt-2 text-sm leading-7 text-slate-600">
-                    Arama, e-posta, toplantı ve teklif notlarını kronolojik olarak kaydedin.
+                    Birleşik zaman çizelgesi (tüm notlar + görevler + teklifler + siparişler) sayfanın altında.
                   </p>
 
                   <div className="mt-6">
                     <CustomerNoteForm customerId={customer.id} />
                   </div>
 
-                  <div className="mt-8 space-y-4">
-                    {customer.timelineEntries.length === 0 ? (
-                      <p className="text-sm text-slate-500">
-                        Zaman çizelgesi için not bulunmuyor.
-                      </p>
-                    ) : (
-                      customer.timelineEntries.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                        >
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge>{formatNoteType(entry.type)}</Badge>
-                            <span className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                              {formatDateTime(entry.createdAt)}
-                            </span>
-                          </div>
-                          <p className="mt-3 text-sm leading-7 text-slate-700">{entry.content}</p>
-                          <p className="mt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
-                            {entry.createdBy?.name ?? "Sistem"}
-                          </p>
-                        </div>
-                      ))
-                    )}
+                  <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900">
+                    💡 Eklediğin not + diğer tüm olaylar (görevler, teklifler, siparişler) sayfanın altındaki <strong>Zaman Çizelgesi</strong> bölümünde görünür.
                   </div>
                 </Card>
 
@@ -750,6 +853,21 @@ export default async function CustomerDetailPage({
           },
         ]}
       />
+
+      {/* ── BİRLEŞİK ZAMAN ÇİZELGESİ ─────────────────────────────────── */}
+      <section>
+        <div className="mb-4 flex items-center gap-2">
+          <ActivityIcon className="h-4 w-4 text-slate-600" />
+          <h2 className="text-base font-semibold text-slate-900">Zaman Çizelgesi</h2>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
+            {timelineEvents.length} olay
+          </span>
+        </div>
+        <p className="mb-3 text-xs text-slate-500">
+          Notlar + görevler + teklifler + pazaryeri siparişleri + ilgi alanları — hepsi tek akışta, en yenisi üstte.
+        </p>
+        <CustomerTimeline events={timelineEvents} />
+      </section>
       </div>
 
       {/* ── Sticky right rail (desktop only) ───────────────────── */}
