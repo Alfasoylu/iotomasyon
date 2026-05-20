@@ -223,6 +223,10 @@ function normalizeCustomerData(input: CustomerInput) {
     customerType:          customerTypeRaw ? (customerTypeRaw as import("@prisma/client").CustomerType) : null,
     monthlySalesPotential: mspRaw && mspRaw.length > 0 ? parseFloat(mspRaw) : null,
     platformNotes:         emptyToNull(input.platformNotes),
+    // Phase 99
+    industryId:            emptyToNull(input.industryId),
+    usedTech:              Array.isArray(input.usedTech) ? input.usedTech.filter((s) => s.trim()) : [],
+    currentSupplier:       emptyToNull(input.currentSupplier),
   };
 }
 

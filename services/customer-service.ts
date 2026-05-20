@@ -28,6 +28,7 @@ export type UserOption = {
 
 const customerDetailInclude = Prisma.validator<Prisma.CustomerInclude>()({
   owner: { select: { id: true, name: true } },
+  industry: { select: { id: true, name: true, slug: true, parent: { select: { id: true, name: true } } } },
   attributeInterests: {
     include: { attribute: { select: { id: true, name: true } } },
     orderBy: { createdAt: "asc" as const },

@@ -27,6 +27,10 @@ export const customerSchema = z.object({
   customerType:          z.string().trim().max(40),
   monthlySalesPotential: z.string().trim().max(20),
   platformNotes:         z.string().trim().max(2000),
+  // Phase 99
+  industryId:      z.string().trim().max(40),
+  usedTech:        z.array(z.string().trim().max(30)),
+  currentSupplier: z.string().trim().max(120),
 });
 
 export type CustomerInput = z.infer<typeof customerSchema>;

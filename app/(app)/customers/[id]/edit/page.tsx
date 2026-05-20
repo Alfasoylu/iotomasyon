@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { getLocations } from "@/lib/turkey-locations";
 import { listAttributes } from "@/services/attribute-service";
 import { getCustomerById, listUsersForSelect } from "@/services/customer-service";
+import { getCustomerFilterOptions } from "@/services/customer-filter-options-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -18,10 +19,11 @@ export default async function EditCustomerPage({
 }) {
   await requirePermission(PERMISSIONS.CUSTOMERS_UPDATE);
   const { id } = await params;
-  const [{ databaseAvailable, customer }, users, allAttributes] = await Promise.all([
+  const [{ databaseAvailable, customer }, users, allAttributes, filterOptions] = await Promise.all([
     getCustomerById(id),
     listUsersForSelect(),
     listAttributes(),
+    getCustomerFilterOptions(),
   ]);
   const { cities, districtsByCity } = getLocations();
 
@@ -105,9 +107,13 @@ export default async function EditCustomerPage({
               ? String(customer.monthlySalesPotential)
               : "",
             platformNotes:         customer.platformNotes ?? "",
+            industryId:            customer.industryId ?? "",
+            usedTech:              customer.usedTech ?? [],
+            currentSupplier:       customer.currentSupplier ?? "",
           }}
           cities={cities}
           districtsByCity={districtsByCity}
+          industryGroups={filterOptions.industryGroups}
         />
       </Card>
     </div>

@@ -968,6 +968,47 @@ export default async function CustomerDetailPage({
             </Card>
           )}
 
+          {/* Phase 99 — Sektör & Teknoloji Profili */}
+          {(customer.industry || customer.usedTech?.length || customer.currentSupplier) && (
+            <Card className="p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Sektör & Teknoloji
+              </p>
+              <div className="mt-3 space-y-3 text-sm">
+                {customer.industry && (
+                  <div>
+                    <p className="text-xs text-slate-500">Sektör</p>
+                    <p className="mt-0.5 font-medium text-slate-900">
+                      {customer.industry.parent?.name ? `${customer.industry.parent.name} → ` : ""}
+                      {customer.industry.name}
+                    </p>
+                  </div>
+                )}
+                {customer.usedTech?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-500">Kullandığı teknoloji</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {customer.usedTech.map((tech) => (
+                        <span
+                          key={tech}
+                          className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {customer.currentSupplier && (
+                  <div>
+                    <p className="text-xs text-slate-500">Mevcut tedarikçi (rakip)</p>
+                    <p className="mt-0.5 font-medium text-amber-700">{customer.currentSupplier}</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
           {/* Quick actions */}
           <Card className="p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
