@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Phone, Moon, Sparkles, FileText } from "lucide-react";
+import { Phone, Moon, Sparkles, FileText, Zap } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import type { CohortCounts, CohortKey } from "@/services/customer-cohort-service";
@@ -9,8 +9,15 @@ const CARDS: Array<{
   title: string;
   hint: string;
   icon: React.ComponentType<{ className?: string }>;
-  tone: "danger" | "warning" | "success" | "info";
+  tone: "danger" | "warning" | "success" | "info" | "violet";
 }> = [
+  {
+    key: "queue",
+    title: "Sıralı Arama",
+    hint: "Akıllı sıralı — telefonu olan + sıcak",
+    icon: Zap,
+    tone: "violet",
+  },
   {
     key: "todayCall",
     title: "Bugün Ara",
@@ -42,6 +49,12 @@ const CARDS: Array<{
 ];
 
 const TONE_STYLES = {
+  violet: {
+    card: "border-violet-200 bg-violet-50",
+    icon: "text-violet-600",
+    iconBg: "bg-violet-100",
+    value: "text-violet-700",
+  },
   danger: {
     card: "border-rose-200 bg-rose-50",
     icon: "text-rose-600",
@@ -76,6 +89,7 @@ export function CustomerCohortCards({
   activeCohort: CohortKey | null;
 }) {
   const valueByKey: Record<CohortKey, number> = {
+    queue: 30, // top 30 smart-sorted (sabit gösterim)
     todayCall: counts.todayCall,
     dormant: counts.dormant,
     new: counts.newOpportunities,
@@ -88,7 +102,7 @@ export function CustomerCohortCards({
         <Phone className="h-3.5 w-3.5" />
         Bugün Senin İçin
       </p>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {CARDS.map(({ key, title, hint, icon: Icon, tone }) => {
           const s = TONE_STYLES[tone];
           const value = valueByKey[key];
