@@ -81,6 +81,137 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### Phase 95 — Çağrı Merkezi Satış Workspace v2 (Sales Operating System)
+
+**Neden:**
+Mevcut müşteri ekranı (Phase 92-94 sonrası bile) çağrı merkezi sales uzmanı
+için profesyonellikten uzak duruyor. Sayfa amatör, etkileşim yavaş, sıralı
+arama yok, klavye kısayolu yok, akıllı önceliklendirme yok. Müşteri başına
+60+ kez tıklama gerekiyor.
+
+**Hedef Persona:**
+Çağrı merkezi satış uzmanı — günde 50-100 telefon, müşteri başına 10-15 dk
+hazırlık+çağrı+wrap-up. Her tıklama maliyetli. Yanlış müşteriye/yanlış
+zamanda aramak para kaybı.
+
+**Acceptance Criteria — 35 Litmus Soru:**
+Bu sayfa şu 35 soruya "evet" diyene kadar tamamlanmış sayılmaz:
+
+A. Günün İlk 30 Saniyesi
+1. Sabah ilk açtığımda bugün arayacağım sıralı liste otomatik üretiliyor mu?
+2. Günlük hedef + şu ana kadar yaptığım sayı görünüyor mu?
+3. Haftalık performansım (ekip karşılaştırması ile) görünür mü?
+4. Acil/gecikmiş görevler kırmızı/pulse ile dikkat çekiyor mu?
+
+B. Müşteri Bulma Hızı
+5. Cmd+K global komut paleti var mı?
+6. Klavye okları (↑↓/J K) ile satır arası gezinti var mı?
+7. Yazdığım anda liste filtrelenir (live search) mi?
+8. Kayıtlı görünümler (saved views) var mı?
+9. Tag/etiket sistemi var mı?
+
+C. Çağrı Öncesi Bağlam (2 saniye)
+10. "Ne almak istiyor" (ProductInterest) ekranda anında görünüyor mu?
+11. Geçmişte ne aldığı (pazaryeri özet) anında görünür mü?
+12. Son temas + sonraki aksiyon açıkta mı?
+13. Lead skoru + renk açık mı?
+14. Avatar/logo görsel kimlik var mı?
+15. Son ne konuşulduğunu görüyor muyum?
+
+D. Çağrı Sırasında
+16. Telefon başlatmak 1 tıklama mı?
+17. Persistent dialer footer var mı?
+18. Inline yeni ürün ilgisi ekleme var mı?
+19. Sevdiği ürünleri tek bakışta görüyor muyum?
+
+E. Çağrı Sonrası Wrap-up (30 saniye)
+20. Modal yerine outcome chip'leri (1-tıkla logla) var mı?
+21. Sonraki aksiyon inline date picker 2 saniye mi?
+22. Snooze ("Pazartesi 10:00 ara") kısayolu var mı?
+23. Status değişimi inline mi?
+24. Auto-progression (Power Mode) var mı?
+
+F. Sıralı Arama (Power Mode)
+25. Power Queue modu var mı?
+26. 3 deneme açılmadıysa auto-snooze öneriyor mu?
+27. Mute/DND "bir daha aramayın" işareti var mı?
+
+G. Çoklu İşlem
+28. Checkbox + bulk toolbar var mı?
+29. Filtreli liste CSV indir var mı?
+
+H. Görsel Profesyonellik
+30. Avatar (initials veya foto) her müşteride var mı?
+31. Density toggle var mı?
+32. Renk semantiği tutarlı mı?
+33. Screenshot olarak paylaşılırsa profesyonel görünür mü?
+
+I. Akıllı Sıralama
+34. Smart priority score (lead × urgency × time × value) tek sıralama var mı?
+35. Sistem context-aware önerisi sunuyor mu?
+
+**Schema değişimleri (additive):**
+- `Customer.tags String[]` — tag sistemi
+- `Customer.doNotCall Boolean @default(false)` — DND işareti
+- `Customer.avatarUrl String?` — foto/logo (opsiyonel)
+- `Customer.callAttempts Int @default(0)` — açılmadı sayacı (3 olunca auto-snooze)
+- `Customer.lastCallAttemptAt DateTime?`
+- (yeni model) `SavedView` — saved view kaydı
+- Migration tag normalize için bir defalık.
+
+**Bilgi Tamlığı Skoru (ÖNEMLİ — kullanıcı talebi):**
+Power Queue + akıllı öneri sıralamasında "bilgisi en eksiksiz müşteri" öne
+çıkmalı. Aynı müşteri tekrar tekrar gösterilmemeli (rotation).
+
+Formül:
+```
+infoCompleteness =
+   (hasPhone ? 25 : 0)
+ + (hasEmail ? 10 : 0)
+ + (hasWhatsapp ? 15 : 0)
+ + (hasTaxNumber ? 10 : 0)
+ + (hasCity ? 5 : 0)
+ + (hasAddress ? 5 : 0)
+ + (hasCompany ? 10 : 0)
+ + (hasInterests ? 10 : 0)
+ + (hasNotes ? 10 : 0)
+```
+Telefonu olmayan müşteri tıklanır kart üretmez, doğal olarak son sırada.
+
+Anti-monotony (aynı müşteri hep çıkmasın):
+- `Customer.shownInQueueCount` field (queue'da kaç kez gösterildi)
+- Power Queue sıralama: priority × (1 / (shownInQueueCount + 1))
+- 7 günde sıfırlanır
+- Her queue render'ında increment
+
+**Implementation Plan — 8 PR:**
+
+| PR | İçerik | Süre | Q'lar | Bağımlılık |
+|---|---|---|---|---|
+| PR-α (Phase 95a) | ⌘K Komut Paleti + global search index | 2s | Q5, Q7 | yok |
+| PR-β (Phase 95b) | Avatar sistemi + Customer.tags + Customer.doNotCall schema | 2s | Q9, Q14, Q30 | yok |
+| PR-γ (Phase 95c) | Inline status edit + Outcome chips | 2s | Q20-23 | PR-α |
+| PR-δ (Phase 95d) | Power Queue (sol sütun) + klavye nav + bilgi tamlık skoru | 3s | Q1, Q6, Q11, Q12, Q24-26 | PR-β |
+| PR-ε (Phase 95e) | Kişisel KPI bar + ekip aktivite widget | 1.5s | Q2, Q3 | yok |
+| PR-ζ (Phase 95f) | Kayıtlı görünümler (SavedView) + bulk actions + CSV | 2s | Q8, Q28, Q29 | PR-δ |
+| PR-η (Phase 95g) | Persistent Dialer Footer + DND + callAttempts auto-snooze | 2s | Q17 | PR-γ |
+| PR-θ (Phase 95h) | SmartPriorityScore + context-aware nudges + density toggle | 1.5s | Q31, Q34, Q35 | PR-δ |
+
+Her PR ayrı canlıya, sıralı uygulanır. Toplam ~16 saat.
+
+**Anti-goals:**
+- Otomatik telefon arama (Twilio/etc.) BU FAZDA YOK — sonraki faza
+- Sesli dikte / call recording BU FAZDA YOK
+- E-posta gönderme entegrasyonu BU FAZDA YOK
+- WhatsApp template message BU FAZDA YOK
+- Pazaryerine outbound push KESINLIKLE YOK (Entegra kuralı)
+
+**Exit kriteri:**
+35 sorunun tümüne "evet". Bir bayi/ortağa ekran paylaşırken utanılmayacak
+seviyede profesyonel görünüm.
+
+---
+
 ### ✓ Phase 89 — Stock Source-of-Truth Fix (Entegra Authoritative) (2026-05-19)
 
 **Neden:** Codex P0 audit'inin "kalan riskler" listesinde duran P1 ihlal: warehouse sayım + manuel adjustment akışları `Product.stockQuantity`'yi doğrudan mutate ediyordu — mimari kural "Entegra source-of-truth (via XML sync)" ile çelişiyordu.

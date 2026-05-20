@@ -1124,6 +1124,124 @@ Owner-intelligence now fully implemented through Phase 22:
 
 ---
 
+## Phase 92 — Multi-Channel Sales Foundation (2026-05-20)
+
+Status: implemented + canlıda.
+
+Yapılan:
+- `MarketplaceSalesRecord` modeli (channel discriminator, 14 kanal)
+- Entegra ihracı 141k satır → 140,466 yeni kayıt (1,514 Trendyol dedup)
+- Kanallar: TRENDYOL, HEPSIBURADA, N11, IDEASOFT, GG, PAZARAMA, EPTT,
+  MIRAKL_KOCTAS, IDEFIX, AMAZON, CICEKSEPETI, TEMU, MIRAKL_TEKNOSA,
+  SHOPPHP, MANUAL
+- 542 ticari müşteri (Vergi No + ≥2 sipariş) Customer'a upsert
+- 765 ProductInterest (stage=ORDERED, status=WON)
+- 1,311 sales record müşteriye linklendi
+- `lib/sales-forecast.ts` — recency-weighted (90d×0.5 + 365d×0.3 + lt×0.2)
+  + mevsimsel düzeltme tahmini
+
+Schema:
+- MarketplaceSalesRecord (rich, 30 alan): channel + orderNumber + ürün +
+  miktar + fiyat + komisyon + müşteri + kargo
+- Product.marketplaceSalesRecords back-relation
+- Customer.marketplaceSalesRecords back-relation
+- Customer.taxNumber index
+
+Tools:
+- scripts/import-entegra-sales.ts (idempotent, dedup)
+- scripts/extract-commercial-customers.ts (Customer + ProductInterest)
+
+---
+
+## Phase 93 — UX/IA Yeniden Yapılandırma (2026-05-20)
+
+Status: implemented + canlıda. 7 PR.
+
+Yapılan:
+- Sidebar 6 grup → 8 mantıksal grup (Pano / Günlük Durum / Satış /
+  Ürünler & Stok / Pazaryerleri / İthalat / Finans / Sistem)
+- Lucide icons her itemde
+- PageHeader bileşeni (breadcrumb + ikon + title + subtitle + actions + meta)
+- KpiCard + SectionCard (5 tone sistemi)
+- EmptyState standartı
+- HelpDrawer + page registry (6 sayfa içeriği)
+- Glosari sayfası /yardim/glosari (30+ terim, 5 grup)
+- Abbr tooltip bileşeni
+- FirstTimeBanner (localStorage dismissable)
+- Akıllı Öneriler motoru lib/smart-recommendations.ts (6 kategori, 8 öneri)
+- Admin Dashboard yeniden tasarımı (10 bölüm)
+- Mobile card-list pattern (Müşteri/Teklif/Pazaryeri)
+- Import Cockpit AL/BEKLE/ALMA legend
+
+---
+
+## Phase 94 — Çağrı Merkezi CRM v1 (Müşteri Liste/Detay) (2026-05-20)
+
+Status: implemented + canlıda. 4 PR (A-B-C-D-E birleşik).
+
+Yapılan:
+- "Bugün Senin İçin" cohort kartları (4): Bugün Ara / Uyuyan /
+  Yeni Fırsatlar / Açık Teklifler
+- Cohort filter URL params (?cohort=...)
+- Lead skoru motoru lib/customer-lead-score.ts (0-100, Sıcak/Kaliteli/
+  Durağan/Soğuk renk-kod)
+- Müşteri row card (info-dense): lead skoru rozeti + ad + iletişim +
+  stats + son temas/sonraki aksiyon + 5 inline aksiyon
+- Inline modallar: Hızlı Görev (başlık + vade + öncelik) + Hızlı Not (5 tip)
+- Phone normalize helpers: telLink/whatsappLink/displayPhone (+90 format)
+- Müşteri detay: Hero kartı + 6-KPI Quick Stats + Çağrı Bağlam Kartı
+  (Ne İstiyor / Pazaryeri Geçmişi)
+- Birleşik Timeline (Note + Task + Quote + Interest + Sales + Customer
+  creation = 6 olay tipi)
+- services/customer-cohort-service.ts (counts + ids + stats)
+- services/customer-timeline-service.ts (6-tablo union)
+
+Bug fix (Phase 94.1):
+- Dormant cohort `lastContactedAt = null` durumunu kapsamıyordu →
+  OR(null, < 60g) + marketplaceSalesRecords.none(>= 60g) eklendi
+- New Opportunities cohort'tan Entegra import kaynaklı müşteriler hariç
+  tutuldu
+
+---
+
+## Phase 95 — Çağrı Merkezi Sales Workspace v2 (PLANNED)
+
+Status: planlandı, henüz başlanmadı.
+
+Detay: docs/NEXT-STEPS.md Phase 95.
+
+35 litmus testi soru. 8 PR.
+
+Yeni bileşenler:
+- ⌘K Komut Paleti (global search)
+- Power Queue (sıralı arama, klavye nav, akıllı sıralama)
+- Outcome chips (1-tıkla wrap-up)
+- Persistent Dialer Footer
+- Personal KPI Bar (günlük hedef + progress)
+- Inline status editor
+- SavedView modeli + bulk multi-select + CSV
+- Avatar sistemi (initials + foto)
+- Tag sistemi (Customer.tags)
+- DND (Customer.doNotCall)
+- Customer.callAttempts + auto-snooze
+- SmartPriorityScore (lead × urgency × time × value × info_completeness)
+
+Yeni schema (Phase 95b):
+- Customer.tags String[]
+- Customer.doNotCall Boolean
+- Customer.avatarUrl String?
+- Customer.callAttempts Int
+- Customer.lastCallAttemptAt DateTime?
+- Customer.shownInQueueCount Int (anti-monotony)
+- model SavedView
+
+**Bilgi Tamlığı Skoru — Kullanıcı talebi:**
+Power Queue + öneri sıralamasında bilgisi en eksiksiz müşteri öne çıkar.
+Telefon numarası en yüksek puan (25pt). Aynı müşteri tekrar tekrar
+gösterilmesin — shownInQueueCount ile rotation.
+
+---
+
 # Ownership Rules
 
 - `ROADMAP.md` = target architecture
@@ -1145,7 +1263,7 @@ Needed next:
 # Last Updated
 
 Date:
-2026-05-17 (Phase 28 browser-verified)
+2026-05-20 (Phase 95 planlandı; Phase 92-94 canlıda)
 
 Alignment source:
 `ROADMAP.md`

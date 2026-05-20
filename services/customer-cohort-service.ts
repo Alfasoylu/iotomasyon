@@ -227,6 +227,7 @@ export async function getCustomerIdsForCohort(cohort: CohortKey): Promise<Set<st
  *   - openQuoteCount         (Quote SENT/DRAFT)
  *   - nextActionAt           (en yakın açık FollowUpTask)
  *   - nextActionTitle
+ *   - hasInterests            (info completeness için)
  */
 export interface CustomerStatsRow {
   customerId: string;
@@ -236,6 +237,7 @@ export interface CustomerStatsRow {
   openQuoteCount: number;
   nextActionAt: Date | null;
   nextActionTitle: string | null;
+  hasInterests: boolean;
 }
 
 export async function getCustomerStats(
@@ -282,6 +284,15 @@ export async function getCustomerStats(
     }),
   ]);
 
+  // Toplam ProductInterest sayımı (aktif olmayan da dahil — info completeness)
+  const allInterests = await prisma.productInterest.groupBy({
+    by: ["customerId"],
+    where: { customerId: { in: customerIds } },
+    _count: { id: true },
+  });
+  const interestsAll = new Map<string, number>();
+  for (const r of allInterests) if (r.customerId) interestsAll.set(r.customerId, r._count.id);
+
   const result = new Map<string, CustomerStatsRow>();
   for (const id of customerIds) {
     result.set(id, {
@@ -292,6 +303,7 @@ export async function getCustomerStats(
       openQuoteCount: 0,
       nextActionAt: null,
       nextActionTitle: null,
+      hasInterests: (interestsAll.get(id) ?? 0) > 0,
     });
   }
   for (const r of interestsRows) {
