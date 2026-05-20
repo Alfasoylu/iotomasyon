@@ -17,12 +17,12 @@ enum UserRole {
 
 // Phase 42 — Stock Adjustment Log
 enum StockAdjustmentType {
-  RESTOCK    // Supplier delivery / stock giriş
+  RESTOCK // Supplier delivery / stock giriş
   CORRECTION // Manual count correction / sayım düzeltme
-  DAMAGE     // Damaged/defective / hasar/fire
-  RETURN     // Customer return / müşteri iadesi
-  SALE       // Manual sale record / manuel satış kaydı
-  OTHER      // Diğer
+  DAMAGE // Damaged/defective / hasar/fire
+  RETURN // Customer return / müşteri iadesi
+  SALE // Manual sale record / manuel satış kaydı
+  OTHER // Diğer
 }
 
 enum InterestStatus {
@@ -154,7 +154,7 @@ enum StockConfidence {
 
 // Phase 11A — Product classification
 enum ProductKind {
-  MAIN_STOCK      // physical inventory product
+  MAIN_STOCK // physical inventory product
   LISTING_PACKAGE // marketplace listing / variant / bundle product
 }
 
@@ -181,10 +181,10 @@ model MarketplacePrice {
   productId        String
   product          Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   marketplace      PriceMarketplace
-  priceTry         Decimal          @db.Decimal(15,2)
+  priceTry         Decimal          @db.Decimal(15, 2)
   currency         String           @default("TRY")
   source           PriceSource      @default(XML)
-  rawExternalValue Decimal?         @db.Decimal(15,4)
+  rawExternalValue Decimal?         @db.Decimal(15, 4)
   updatedAt        DateTime         @updatedAt
   createdAt        DateTime         @default(now())
 
@@ -297,29 +297,30 @@ model UserPermission {
 }
 
 model User {
-  id                       String             @id @default(cuid())
-  email                    String             @unique
+  id                       String                         @id @default(cuid())
+  email                    String                         @unique
   passwordHash             String
   name                     String
-  role                     UserRole           @default(ADMIN)
-  isActive                 Boolean            @default(true)
-  createdAt                DateTime           @default(now())
-  updatedAt                DateTime           @updatedAt
+  role                     UserRole                       @default(ADMIN)
+  isActive                 Boolean                        @default(true)
+  createdAt                DateTime                       @default(now())
+  updatedAt                DateTime                       @updatedAt
   // RBAC — no new column; relation only
   userPermissions          UserPermission[]
   // existing relations unchanged
-  productsCreated          Product[]          @relation("CreatedProducts")
-  stockCountedProducts     Product[]          @relation("StockCountedBy")
+  productsCreated          Product[]                      @relation("CreatedProducts")
+  stockCountedProducts     Product[]                      @relation("StockCountedBy")
   notesCreated             Note[]
-  interestsCreated         ProductInterest[]  @relation("CreatedInterests")
-  interestsOwned           ProductInterest[]  @relation("AssignedInterests")
-  tasksCreated             FollowUpTask[]     @relation("CreatedTasks")
-  tasksOwned               FollowUpTask[]     @relation("AssignedTasks")
+  interestsCreated         ProductInterest[]              @relation("CreatedInterests")
+  interestsOwned           ProductInterest[]              @relation("AssignedInterests")
+  tasksCreated             FollowUpTask[]                 @relation("CreatedTasks")
+  tasksOwned               FollowUpTask[]                 @relation("AssignedTasks")
   quotesCreated            Quote[]
-  categoryInterestsCreated CategoryInterest[] @relation("CreatedCategoryInterests")
-  campaignsCreated         OutreachCampaign[] @relation("CreatedCampaigns")
-  customersOwned           Customer[]         @relation("OwnedCustomers")
-  savedViews               SavedView[]        @relation("UserSavedViews")
+  categoryInterestsCreated CategoryInterest[]             @relation("CreatedCategoryInterests")
+  campaignsCreated         OutreachCampaign[]             @relation("CreatedCampaigns")
+  customersOwned           Customer[]                     @relation("OwnedCustomers")
+  savedViews               SavedView[]                    @relation("UserSavedViews")
+  leadLists                LeadList[]                     @relation("UserLeadLists")
   capitalConfigs           CapitalConfig[]
   marketplaceListings      MarketplaceListing[]           @relation("ListingResponsible")
   marketplaceMappings      MarketplaceProductMapping[]    @relation("MappingCreatedBy")
@@ -329,8 +330,8 @@ model User {
   marketplacePolicies      MarketplacePlatformPolicy[]    @relation("PolicyUpdatedBy")
   importDecisionSnapshots  ImportDecisionSnapshot[]       @relation("SnapshotCreatedBy")
   stockAdjustments         StockAdjustmentLog[]           @relation("AdjustmentCreatedBy")
-  purchaseOrders           PurchaseOrder[]                @relation("PurchaseOrderCreatedBy")   // Phase 77
-  physicalCounts           Product[]                      @relation("PhysicalCountBy")          // Phase 89
+  purchaseOrders           PurchaseOrder[]                @relation("PurchaseOrderCreatedBy") // Phase 77
+  physicalCounts           Product[]                      @relation("PhysicalCountBy") // Phase 89
 }
 
 model ProductCategory {
@@ -352,126 +353,126 @@ model ProductCategory {
 }
 
 model Product {
-  id              String           @id @default(cuid())
-  sku             String           @unique
-  barcode         String?          @unique
-  name            String
-  imageUrl        String?
-  category        String?
-  categoryId      String?
-  brand           String?
-  model           String?
-  supplier        String?
-  stockQuantity   Int              @default(0)
-  minimumStock    Int              @default(0)
-  reorderLeadTime Int?
-  stockSource         StockSource?
-  stockConfidence     StockConfidence?
-  lastStockSyncAt     DateTime?
-  lastStockCountById  String?
-  lastStockCountBy    User?            @relation("StockCountedBy", fields: [lastStockCountById], references: [id], onDelete: SetNull)
-  location            String?
-  description         String?
-  isActive            Boolean          @default(true)
-  shippingCost             Decimal?
-  shippingCostOverride     Decimal?
-  marketplaceCommission    Decimal?
+  id                            String                       @id @default(cuid())
+  sku                           String                       @unique
+  barcode                       String?                      @unique
+  name                          String
+  imageUrl                      String?
+  category                      String?
+  categoryId                    String?
+  brand                         String?
+  model                         String?
+  supplier                      String?
+  stockQuantity                 Int                          @default(0)
+  minimumStock                  Int                          @default(0)
+  reorderLeadTime               Int?
+  stockSource                   StockSource?
+  stockConfidence               StockConfidence?
+  lastStockSyncAt               DateTime?
+  lastStockCountById            String?
+  lastStockCountBy              User?                        @relation("StockCountedBy", fields: [lastStockCountById], references: [id], onDelete: SetNull)
+  location                      String?
+  description                   String?
+  isActive                      Boolean                      @default(true)
+  shippingCost                  Decimal?
+  shippingCostOverride          Decimal?
+  marketplaceCommission         Decimal?
   marketplaceCommissionOverride Decimal?
-  importDate          DateTime?
-  importQuantity      Int?
-  importUnitCostUsd   Decimal?
-  inventoryCountDate  DateTime?
-  inventoryCountStock Int?
+  importDate                    DateTime?
+  importQuantity                Int?
+  importUnitCostUsd             Decimal?
+  inventoryCountDate            DateTime?
+  inventoryCountStock           Int?
   // Phase 8 — Profitability Engine
-  unitCostTry              Decimal?
-  sellingPriceTry          Decimal?
-  wholesalePriceTry        Decimal?
-  marketplacePriceTry      Decimal?
-  packagingCost            Decimal?
-  vatRate                  Decimal?
-  paymentFeeRate           Decimal?
-  returnReserveRate        Decimal?
+  unitCostTry                   Decimal?
+  sellingPriceTry               Decimal?
+  wholesalePriceTry             Decimal?
+  marketplacePriceTry           Decimal?
+  packagingCost                 Decimal?
+  vatRate                       Decimal?
+  paymentFeeRate                Decimal?
+  returnReserveRate             Decimal?
   // Phase 9 — Sales Potential Engine
-  onlineSalesPotential     Int?
-  wholesaleSalesPotential  Int?
-  installerSalesPotential  Int?
+  onlineSalesPotential          Int?
+  wholesaleSalesPotential       Int?
+  installerSalesPotential       Int?
   // Phase 11 — XML Sync override protection
-  xmlLocked                Boolean  @default(false)
+  xmlLocked                     Boolean                      @default(false)
   // Phase 11A — XML import tracking
-  xmlImported              Boolean  @default(false)
+  xmlImported                   Boolean                      @default(false)
   // Phase 11A — Product classification
-  productKind              ProductKind @default(MAIN_STOCK)
-  mainProductId            String?     // for LISTING_PACKAGE → main stock product
-  mainProduct              Product?    @relation("ProductHierarchy", fields: [mainProductId], references: [id], onDelete: SetNull)
-  variantProducts          Product[]   @relation("ProductHierarchy")
+  productKind                   ProductKind                  @default(MAIN_STOCK)
+  mainProductId                 String? // for LISTING_PACKAGE → main stock product
+  mainProduct                   Product?                     @relation("ProductHierarchy", fields: [mainProductId], references: [id], onDelete: SetNull)
+  variantProducts               Product[]                    @relation("ProductHierarchy")
   // Phase 16 — USD cost for import-priced products (do NOT remove unitCostTry)
-  unitCostUsd              Decimal?
+  unitCostUsd                   Decimal?
   // Phase 11C — Import decision inputs
-  weightKg                 Decimal?
-  customsRatePct           Decimal?
-  shippingMethodPref       String?
+  weightKg                      Decimal?
+  customsRatePct                Decimal?
+  shippingMethodPref            String?
   // Phase 31 — RMB-first import economics
-  sourceCostRmb            Decimal? @db.Decimal(15,2) // Purchase cost in RMB/CNY
-  importPaymentFeePct      Decimal? @db.Decimal(5,2)  // Payment commission % (e.g. 3.0)
+  sourceCostRmb                 Decimal?                     @db.Decimal(15, 2) // Purchase cost in RMB/CNY
+  importPaymentFeePct           Decimal?                     @db.Decimal(5, 2) // Payment commission % (e.g. 3.0)
   // GTİP kodları — 3 adet, çünkü bazı ürünler farklı GTİP'lerle ithal edilebilir
   // (örn. bir kamera seti hem 8525.81 hem 8517.62 dilimine girebilir).
   // Format: "8525.81.00.00" gibi 12 haneli string (ondalık opsiyonel). NULL ise atanmamış.
   // Açıklama alanları: ilgili GTİP'in TGTC tarifesindeki resmi tanımı (operatör kolaylığı için).
-  gtip1                    String?
-  gtip1Desc                String?
-  gtip2                    String?
-  gtip2Desc                String?
-  gtip3                    String?
-  gtip3Desc                String?
+  gtip1                         String?
+  gtip1Desc                     String?
+  gtip2                         String?
+  gtip2Desc                     String?
+  gtip3                         String?
+  gtip3Desc                     String?
   // Phase 89 — Physical count (warehouse-managed, distinct from Entegra stockQuantity).
   // stockQuantity = source-of-truth from Entegra XML sync; never mutated by warehouse staff.
   // physicalCountQuantity = last physical count recorded in warehouse; variance = stockQuantity - physicalCountQuantity.
-  physicalCountQuantity    Int?
-  physicalCountAt          DateTime?
-  physicalCountById        String?
-  physicalCountBy          User?    @relation("PhysicalCountBy", fields: [physicalCountById], references: [id], onDelete: SetNull)
-  physicalCountNote        String?
-  createdById     String?
-  createdBy       User?            @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
-  productCategory ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  interests            ProductInterest[]
-  notes                Note[]
-  tasks                FollowUpTask[]
-  quoteItems           QuoteItem[]
-  campaigns            OutreachCampaign[]
-  attributeAssignments ProductAttributeAssignment[]
-  marketplaceListings  MarketplaceListing[]
-  marketplaceMappings  MarketplaceProductMapping[]
-  quoteTemplateItems   QuoteTemplateItem[]            @relation("TemplateItems")
+  physicalCountQuantity         Int?
+  physicalCountAt               DateTime?
+  physicalCountById             String?
+  physicalCountBy               User?                        @relation("PhysicalCountBy", fields: [physicalCountById], references: [id], onDelete: SetNull)
+  physicalCountNote             String?
+  createdById                   String?
+  createdBy                     User?                        @relation("CreatedProducts", fields: [createdById], references: [id], onDelete: SetNull)
+  productCategory               ProductCategory?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt                     DateTime                     @default(now())
+  updatedAt                     DateTime                     @updatedAt
+  interests                     ProductInterest[]
+  notes                         Note[]
+  tasks                         FollowUpTask[]
+  quoteItems                    QuoteItem[]
+  campaigns                     OutreachCampaign[]
+  attributeAssignments          ProductAttributeAssignment[]
+  marketplaceListings           MarketplaceListing[]
+  marketplaceMappings           MarketplaceProductMapping[]
+  quoteTemplateItems            QuoteTemplateItem[]          @relation("TemplateItems")
   // Phase 11A — multi-image support
-  images               ProductImage[]
+  images                        ProductImage[]
   // Phase 11A — XML source data
-  xmlData              XmlProductData?
+  xmlData                       XmlProductData?
   // Phase 20 — supplier links
-  supplierLinks        SupplierProduct[]
+  supplierLinks                 SupplierProduct[]
   // Phase 26 — Trendyol sales records
-  trendyolSalesRecords TrendyolSalesRecord[]
+  trendyolSalesRecords          TrendyolSalesRecord[]
   // Phase 28 — Owner-only private intelligence (EXECUTIVE_READ only)
-  privateNote          String?
+  privateNote                   String?
   // Phase 29 — Trendyol return/claim records
-  trendyolReturnRecords TrendyolReturnRecord[]
+  trendyolReturnRecords         TrendyolReturnRecord[]
   // Hepsiburada (paralel mimari — read-only)
-  hepsiburadaSalesRecords   HepsiburadaSalesRecord[]   @relation("HbSalesProduct")
-  hepsiburadaReturnRecords  HepsiburadaReturnRecord[]  @relation("HbReturnsProduct")
+  hepsiburadaSalesRecords       HepsiburadaSalesRecord[]     @relation("HbSalesProduct")
+  hepsiburadaReturnRecords      HepsiburadaReturnRecord[]    @relation("HbReturnsProduct")
   // Phase 92 — Generic marketplace sales (Entegra ihracı)
-  marketplaceSalesRecords   MarketplaceSalesRecord[]   @relation("MarketplaceSalesProduct")
+  marketplaceSalesRecords       MarketplaceSalesRecord[]     @relation("MarketplaceSalesProduct")
   // Phase 32 — Import decision snapshots
-  importDecisionSnapshots ImportDecisionSnapshot[]
+  importDecisionSnapshots       ImportDecisionSnapshot[]
   // Phase 42 — Stock adjustment log
-  stockAdjustments        StockAdjustmentLog[]
+  stockAdjustments              StockAdjustmentLog[]
   // Phase 49 — XML stock change log (Entegra ERP sync deltas)
-  xmlStockChangeLogs      XmlStockChangeLog[]
+  xmlStockChangeLogs            XmlStockChangeLog[]
   // Phase 71 — Canonical marketplace prices
-  marketplacePrices    MarketplacePrice[]
+  marketplacePrices             MarketplacePrice[]
   // Phase 77 — Purchase order line items
-  purchaseOrderItems   PurchaseOrderItem[]
+  purchaseOrderItems            PurchaseOrderItem[]
 
   @@index([name])
   @@index([barcode])
@@ -489,45 +490,46 @@ model Product {
 }
 
 model Customer {
-  id                String             @id @default(cuid())
-  name              String
-  phone             String?
-  whatsapp          String?
-  email             String?
-  company           String?
-  status            CustomerStatus     @default(NEW)
-  country           String?
-  customerNotes         String?            @map("notes")
-  customerType          CustomerType?
-  monthlySalesPotential Decimal?
-  platformNotes         String?
-  city              String?
-  district          String?
-  address           String?
-  taxOffice         String?
-  taxNumber         String?
-  source            String?
-  ownedById         String?
-  isActive          Boolean            @default(true)
-  lastContactedAt   DateTime?
+  id                      String                       @id @default(cuid())
+  name                    String
+  phone                   String?
+  whatsapp                String?
+  email                   String?
+  company                 String?
+  status                  CustomerStatus               @default(NEW)
+  country                 String?
+  customerNotes           String?                      @map("notes")
+  customerType            CustomerType?
+  monthlySalesPotential   Decimal?
+  platformNotes           String?
+  city                    String?
+  district                String?
+  address                 String?
+  taxOffice               String?
+  taxNumber               String?
+  source                  String?
+  ownedById               String?
+  isActive                Boolean                      @default(true)
+  lastContactedAt         DateTime?
   // Phase 95b — Çağrı Merkezi Sales Workspace v2
-  tags              String[]           @default([])   // VIP, Bayi, Anahtar, vb.
-  doNotCall         Boolean            @default(false) // DND — bir daha aramayın
-  avatarUrl         String?                            // foto / logo
-  callAttempts      Int                @default(0)     // açılmadı sayacı (3+ olunca auto-snooze)
-  lastCallAttemptAt DateTime?
-  shownInQueueCount Int                @default(0)     // anti-monotony rotation
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  owner               User?              @relation("OwnedCustomers", fields: [ownedById], references: [id], onDelete: SetNull)
-  interests           ProductInterest[]
-  categoryInterests   CategoryInterest[]
-  timelineEntries     Note[]
-  tasks               FollowUpTask[]
-  quotes               Quote[]
-  outreachRecipients   OutreachRecipient[]
-  attributeInterests   CustomerAttributeInterest[]
-  marketplaceSalesRecords MarketplaceSalesRecord[] @relation("MarketplaceSalesCustomer")
+  tags                    String[]                     @default([]) // VIP, Bayi, Anahtar, vb.
+  doNotCall               Boolean                      @default(false) // DND — bir daha aramayın
+  avatarUrl               String? // foto / logo
+  callAttempts            Int                          @default(0) // açılmadı sayacı (3+ olunca auto-snooze)
+  lastCallAttemptAt       DateTime?
+  shownInQueueCount       Int                          @default(0) // anti-monotony rotation
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
+  owner                   User?                        @relation("OwnedCustomers", fields: [ownedById], references: [id], onDelete: SetNull)
+  interests               ProductInterest[]
+  categoryInterests       CategoryInterest[]
+  timelineEntries         Note[]
+  tasks                   FollowUpTask[]
+  quotes                  Quote[]
+  outreachRecipients      OutreachRecipient[]
+  attributeInterests      CustomerAttributeInterest[]
+  marketplaceSalesRecords MarketplaceSalesRecord[]     @relation("MarketplaceSalesCustomer")
+  leadListMemberships     CustomerLeadListMembership[] @relation("CustomerLeadLists")
 
   @@index([name])
   @@index([phone])
@@ -540,14 +542,43 @@ model Customer {
   @@index([shownInQueueCount])
 }
 
+// Phase 97 — Lead List Manager (Google Maps Import)
+model LeadList {
+  id          String                       @id @default(cuid())
+  name        String // "Hatay güvenlik şirketleri Mayıs 2026"
+  source      String // "Google Maps" | "Manuel" | "Trendyol Q&A"
+  city        String? // "Hatay"
+  category    String? // "Güvenlik"
+  totalCount  Int                          @default(0)
+  importedAt  DateTime                     @default(now())
+  createdById String
+  createdBy   User                         @relation("UserLeadLists", fields: [createdById], references: [id], onDelete: Cascade)
+  members     CustomerLeadListMembership[]
+
+  @@index([createdById])
+  @@index([source])
+  @@index([city])
+}
+
+model CustomerLeadListMembership {
+  customerId String
+  leadListId String
+  addedAt    DateTime @default(now())
+  customer   Customer @relation("CustomerLeadLists", fields: [customerId], references: [id], onDelete: Cascade)
+  leadList   LeadList @relation(fields: [leadListId], references: [id], onDelete: Cascade)
+
+  @@id([customerId, leadListId])
+  @@index([leadListId])
+}
+
 // Phase 95f — Kayıtlı görünümler (saved views)
 model SavedView {
   id          String   @id @default(cuid())
-  userId      String   // owner (user-private veya shared)
-  name        String   // "Mersin'deki ticarilerim"
+  userId      String // owner (user-private veya shared)
+  name        String // "Mersin'deki ticarilerim"
   isShared    Boolean  @default(false)
-  resource    String   // "customers" | "products" | "marketplace" — gelecek için generic
-  filtersJson String   // URL params snapshot
+  resource    String // "customers" | "products" | "marketplace" — gelecek için generic
+  filtersJson String // URL params snapshot
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   user        User     @relation("UserSavedViews", fields: [userId], references: [id], onDelete: Cascade)
@@ -653,25 +684,25 @@ model FollowUpTask {
 }
 
 model Quote {
-  id            String      @id @default(cuid())
-  customerId    String
-  quoteNumber   String      @unique
-  status        QuoteStatus @default(DRAFT)
-  notes         String?
-  paymentTerms  String?
-  deliveryTerms String?
-  warrantyTerms String?
-  validityDate  DateTime?
-  sentAt        DateTime?
-  currencyMode  QuoteCurrencyMode @default(TRY)
-  exchangeRate  Decimal?
-  subtotal      Decimal     @default(0)
-  discountTotal Decimal     @default(0)
-  taxTotal      Decimal     @default(0)
-  total         Decimal     @default(0)
-  createdById   String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id                 String              @id @default(cuid())
+  customerId         String
+  quoteNumber        String              @unique
+  status             QuoteStatus         @default(DRAFT)
+  notes              String?
+  paymentTerms       String?
+  deliveryTerms      String?
+  warrantyTerms      String?
+  validityDate       DateTime?
+  sentAt             DateTime?
+  currencyMode       QuoteCurrencyMode   @default(TRY)
+  exchangeRate       Decimal?
+  subtotal           Decimal             @default(0)
+  discountTotal      Decimal             @default(0)
+  taxTotal           Decimal             @default(0)
+  total              Decimal             @default(0)
+  createdById        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   customer           Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
   createdBy          User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
   items              QuoteItem[]
@@ -765,17 +796,17 @@ model OutreachCampaign {
 
 // Phase 11 — XML Inventory Sync
 model XmlSyncSource {
-  id             String       @id @default(cuid())
-  name           String
-  url            String
-  secondaryUrl   String?      // Phase 75: optional supplementary feed (same supplier, different subset)
-  isEnabled      Boolean      @default(true)
-  authHeader     String?
-  lastSyncAt     DateTime?
-  lastStatus     String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  logs           XmlSyncLog[]
+  id           String       @id @default(cuid())
+  name         String
+  url          String
+  secondaryUrl String? // Phase 75: optional supplementary feed (same supplier, different subset)
+  isEnabled    Boolean      @default(true)
+  authHeader   String?
+  lastSyncAt   DateTime?
+  lastStatus   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  logs         XmlSyncLog[]
 }
 
 model XmlSyncLog {
@@ -785,7 +816,7 @@ model XmlSyncLog {
   completedAt    DateTime?
   status         XmlSyncStatus @default(RUNNING)
   recordsFound   Int           @default(0)
-  recordsCreated Int           @default(0)  // Phase 11A: new products created from XML
+  recordsCreated Int           @default(0) // Phase 11A: new products created from XML
   recordsUpdated Int           @default(0)
   recordsSkipped Int           @default(0)
   errorMessage   String?
@@ -867,7 +898,7 @@ model MarketplaceQuestionActionLog {
   actionType     String   @default("ANSWERED")
   answerText     String?
   userId         String?
-  responseStatus String   // SUCCESS | ERROR
+  responseStatus String // SUCCESS | ERROR
   errorMessage   String?
   createdAt      DateTime @default(now())
   user           User?    @relation("QuestionActionUser", fields: [userId], references: [id], onDelete: SetNull)
@@ -884,11 +915,11 @@ model MarketplaceReturnActionLog {
   platform       String   @default("TRENDYOL")
   claimId        String
   claimItemId    String?
-  actionType     String   // APPROVED | ISSUE_CREATED
+  actionType     String // APPROVED | ISSUE_CREATED
   reasonCode     String?
   note           String?
   userId         String?
-  responseStatus String   // SUCCESS | ERROR
+  responseStatus String // SUCCESS | ERROR
   errorMessage   String?
   createdAt      DateTime @default(now())
   user           User?    @relation("ReturnActionUser", fields: [userId], references: [id], onDelete: SetNull)
@@ -904,9 +935,9 @@ model MarketplaceReturnActionLog {
 model MonthlyExchangeRate {
   id         String   @id @default(cuid())
   year       Int
-  month      Int      // 1–12
+  month      Int // 1–12
   usdTryRate Decimal
-  rmbUsdRate Decimal? @db.Decimal(12,4) // RMB per 1 USD (e.g. 7.25)
+  rmbUsdRate Decimal? @db.Decimal(12, 4) // RMB per 1 USD (e.g. 7.25)
   note       String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -917,26 +948,26 @@ model MonthlyExchangeRate {
 
 // Phase 14 — Trendyol API Integration (singleton config row)
 model TrendyolConfig {
-  id          String    @id @default("singleton")
-  supplierId  String    @default("")
-  apiKey      String    @default("")
-  apiSecret   String    @default("")
-  isEnabled   Boolean   @default(false)
-  lastSyncAt  DateTime?
-  updatedAt   DateTime  @updatedAt
+  id         String    @id @default("singleton")
+  supplierId String    @default("")
+  apiKey     String    @default("")
+  apiSecret  String    @default("")
+  isEnabled  Boolean   @default(false)
+  lastSyncAt DateTime?
+  updatedAt  DateTime  @updatedAt
 }
 
 // Hepsiburada Marketplace API config (singleton row, paralel mimari Trendyol'a)
 // READ-ONLY: katalog/sipariş/iade çekiyoruz; push işlemi Entegra'nın işi.
 model HepsiburadaConfig {
-  id          String    @id @default("singleton")
-  merchantId  String    @default("")
-  username    String    @default("")
-  password    String    @default("")
-  storeName   String?   // bilgi amaçlı (mağaza adı)
-  isEnabled   Boolean   @default(false)
-  lastSyncAt  DateTime?
-  updatedAt   DateTime  @updatedAt
+  id         String    @id @default("singleton")
+  merchantId String    @default("")
+  username   String    @default("")
+  password   String    @default("")
+  storeName  String? // bilgi amaçlı (mağaza adı)
+  isEnabled  Boolean   @default(false)
+  lastSyncAt DateTime?
+  updatedAt  DateTime  @updatedAt
 }
 
 model OutreachRecipient {
@@ -963,18 +994,18 @@ model OutreachRecipient {
 // Phase 11A — Product multi-image support
 // sortOrder 0 = primary image (maps to resim1), 1-4 = resim2-5
 model ProductImage {
-  id        String  @id @default(cuid())
+  id        String                      @id @default(cuid())
   productId String
   url       String
-  sortOrder Int     @default(0)  // 0=primary
-  source    String  @default("XML")  // XML | MANUAL
+  sortOrder Int                         @default(0) // 0=primary
+  source    String                      @default("XML") // XML | MANUAL
   altText   String?
   // Phase 91 — CLIP image embedding (512-dim) for similarity search.
   // Populated by scripts/backfill-image-embeddings.ts via Hugging Face Inference.
   embedding Unsupported("vector(512)")?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime                    @default(now())
+  updatedAt DateTime                    @updatedAt
+  product   Product                     @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId, sortOrder])
   @@index([productId])
@@ -984,44 +1015,44 @@ model ProductImage {
 // Stores raw XML feed values without polluting the Product master record.
 // These are informational; IOTOMASYON product fields are the business truth.
 model XmlProductData {
-  id                     String    @id @default(cuid())
-  productId              String    @unique  // one row per product
-  sourceId               String?            // which XmlSyncSource produced this
-  xmlSku                 String             // urun_kodu
-  xmlName                String?            // urun_ismi
-  xmlBrand               String?            // marka
-  xmlUrunTipi            String?            // urun_tipi (informational, not business truth)
-  xmlCurrencyType        String?            // CurrencyType (USD/TRY)
-  xmlKdv                 Decimal?           // KDV rate
-  xmlDateChange          String?            // date_change raw string
-  xmlDateAdd             String?            // date_add raw string
-  xmlAnaUrunKodu         String?            // ana_urun_kodu (parent product code)
+  id                    String   @id @default(cuid())
+  productId             String   @unique // one row per product
+  sourceId              String? // which XmlSyncSource produced this
+  xmlSku                String // urun_kodu
+  xmlName               String? // urun_ismi
+  xmlBrand              String? // marka
+  xmlUrunTipi           String? // urun_tipi (informational, not business truth)
+  xmlCurrencyType       String? // CurrencyType (USD/TRY)
+  xmlKdv                Decimal? // KDV rate
+  xmlDateChange         String? // date_change raw string
+  xmlDateAdd            String? // date_add raw string
+  xmlAnaUrunKodu        String? // ana_urun_kodu (parent product code)
   // USD-denominated marketplace prices from XML
-  xmlPrice4              Decimal?           // base price (price4)
-  xmlTrendyolPrice       Decimal?           // trendyol_salePrice
-  xmlHbPrice             Decimal?           // hb_price
-  xmlAmazonPrice         Decimal?           // amazon_price
-  xmlPazaramaPrice       Decimal?           // pazarama_salePrice
-  xmlIdefixPrice         Decimal?           // idefix_sale_price
-  xmlBayiPrice           Decimal?           // bayi (dealer)
-  xmlKoctasPrice         Decimal?           // koctas
-  xmlTeknosaPrice        Decimal?           // teknosa_sale_price
-  xmlTemuPrice           Decimal?           // temu_sale_price
+  xmlPrice4             Decimal? // base price (price4)
+  xmlTrendyolPrice      Decimal? // trendyol_salePrice
+  xmlHbPrice            Decimal? // hb_price
+  xmlAmazonPrice        Decimal? // amazon_price
+  xmlPazaramaPrice      Decimal? // pazarama_salePrice
+  xmlIdefixPrice        Decimal? // idefix_sale_price
+  xmlBayiPrice          Decimal? // bayi (dealer)
+  xmlKoctasPrice        Decimal? // koctas
+  xmlTeknosaPrice       Decimal? // teknosa_sale_price
+  xmlTemuPrice          Decimal? // temu_sale_price
   // Textual content
-  xmlDescription         String?            // aciklama
+  xmlDescription        String? // aciklama
   // Image URLs (preserved for reference even if ProductImage table is used)
-  xmlImage1              String?
-  xmlImage2              String?
-  xmlImage3              String?
-  xmlImage4              String?
-  xmlImage5              String?
+  xmlImage1             String?
+  xmlImage2             String?
+  xmlImage3             String?
+  xmlImage4             String?
+  xmlImage5             String?
   // Sync tracking
-  firstSeenAt            DateTime  @default(now())
-  lastSeenAt             DateTime  @default(now())
-  missingFromLatestFeed  Boolean   @default(false)
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-  product                Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  firstSeenAt           DateTime @default(now())
+  lastSeenAt            DateTime @default(now())
+  missingFromLatestFeed Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  product               Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([xmlSku])
   @@index([lastSeenAt])
@@ -1031,26 +1062,26 @@ model XmlProductData {
 // ─── Phase 20 — Supplier Intelligence ────────────────────────────────────────
 
 model Supplier {
-  id              String    @id @default(cuid())
-  name            String
-  contactName     String?
-  phone           String?
-  email           String?
-  countryOfOrigin String?   // e.g. "CN", "TR", "DE"
-  paymentTerms    String?   // free text: "NET 30", "Peşin", etc.
-  defaultLeadDays Int?      // default lead time in days for this supplier
-  notes           String?
-  isActive        Boolean   @default(true)
+  id                        String   @id @default(cuid())
+  name                      String
+  contactName               String?
+  phone                     String?
+  email                     String?
+  countryOfOrigin           String? // e.g. "CN", "TR", "DE"
+  paymentTerms              String? // free text: "NET 30", "Peşin", etc.
+  defaultLeadDays           Int? // default lead time in days for this supplier
+  notes                     String?
+  isActive                  Boolean  @default(true)
   // Phase 32 — Supplier-level import defaults
-  defaultAirFreightUsdPerKg Decimal? @db.Decimal(8,4)  // override AIR freight rate for this supplier
-  defaultSeaFreightUsdPerKg Decimal? @db.Decimal(8,4)  // override SEA freight rate for this supplier
-  defaultPaymentFeePct      Decimal? @db.Decimal(5,2)  // override payment commission % for this supplier
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  defaultAirFreightUsdPerKg Decimal? @db.Decimal(8, 4) // override AIR freight rate for this supplier
+  defaultSeaFreightUsdPerKg Decimal? @db.Decimal(8, 4) // override SEA freight rate for this supplier
+  defaultPaymentFeePct      Decimal? @db.Decimal(5, 2) // override payment commission % for this supplier
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   products          SupplierProduct[]
   decisionSnapshots ImportDecisionSnapshot[]
-  purchaseOrders    PurchaseOrder[]          // Phase 77
+  purchaseOrders    PurchaseOrder[] // Phase 77
 
   @@index([name])
   @@index([isActive])
@@ -1059,16 +1090,16 @@ model Supplier {
 // One row per (supplier, product) pair.
 // leadDays / unitCostUsd override the supplier-level defaults for this specific product.
 model SupplierProduct {
-  id           String   @id @default(cuid())
-  supplierId   String
-  productId    String
-  unitCostUsd  Decimal?  // supplier price for this product in USD
-  moq          Int?      // minimum order quantity
-  leadDays     Int?      // lead time override for this product (days)
-  isPreferred  Boolean  @default(false)  // preferred supplier for this product
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  supplierId  String
+  productId   String
+  unitCostUsd Decimal? // supplier price for this product in USD
+  moq         Int? // minimum order quantity
+  leadDays    Int? // lead time override for this product (days)
+  isPreferred Boolean  @default(false) // preferred supplier for this product
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -1084,22 +1115,22 @@ model SupplierProduct {
 // productId is nullable: unmatched lines kept for audit but excluded from rankings.
 
 model TrendyolSalesRecord {
-  id           String   @id @default(cuid())
-  orderId      String   // Trendyol order numeric ID (as string)
-  lineId       BigInt   // order line ID — Trendyol uses int64, exceeds PostgreSQL INT range
-  productId    String?
-  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  id        String   @id @default(cuid())
+  orderId   String // Trendyol order numeric ID (as string)
+  lineId    BigInt // order line ID — Trendyol uses int64, exceeds PostgreSQL INT range
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  orderDate      DateTime
-  status         String   // e.g. "Delivered", "Cancelled", "Picking"
-  merchantSku    String?
-  barcode        String?
-  productName    String
-  quantity       Int
-  unitPriceTry   Decimal  @db.Decimal(15,2)  // discountedPrice per unit
-  totalPriceTry  Decimal  @db.Decimal(15,2)  // quantity × discountedPrice
-  syncedAt       DateTime @default(now())
-  stockDeducted  Boolean  @default(false)    // Phase 43: true once quantity deducted from Product.stockQuantity
+  orderDate     DateTime
+  status        String // e.g. "Delivered", "Cancelled", "Picking"
+  merchantSku   String?
+  barcode       String?
+  productName   String
+  quantity      Int
+  unitPriceTry  Decimal  @db.Decimal(15, 2) // discountedPrice per unit
+  totalPriceTry Decimal  @db.Decimal(15, 2) // quantity × discountedPrice
+  syncedAt      DateTime @default(now())
+  stockDeducted Boolean  @default(false) // Phase 43: true once quantity deducted from Product.stockQuantity
 
   @@unique([orderId, lineId])
   @@index([productId])
@@ -1114,24 +1145,24 @@ model TrendyolSalesRecord {
 // productId is nullable: unmatched claims kept for audit.
 
 model TrendyolReturnRecord {
-  id            String   @id @default(cuid())
-  claimId       String   // Trendyol claim ID (string)
-  orderLineId   Int      // Trendyol order line ID within the claim
-  productId     String?
-  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  id          String   @id @default(cuid())
+  claimId     String // Trendyol claim ID (string)
+  orderLineId Int // Trendyol order line ID within the claim
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  orderNumber   String   // Trendyol order number (display string)
-  orderDate     DateTime // original order date
-  claimDate     DateTime // when the return claim was opened
-  status        String   // claimItemStatus.name e.g. "Accepted", "WaitingForArrival"
-  reasonName    String?  // Turkish reason from customerClaimItemReason.name
-  reasonCode    String?  // reason code
+  orderNumber String // Trendyol order number (display string)
+  orderDate   DateTime // original order date
+  claimDate   DateTime // when the return claim was opened
+  status      String // claimItemStatus.name e.g. "Accepted", "WaitingForArrival"
+  reasonName  String? // Turkish reason from customerClaimItemReason.name
+  reasonCode  String? // reason code
 
-  productName   String
-  barcode       String?
-  merchantSku   String?
-  unitPriceTry  Decimal  @db.Decimal(15,2) @default(0)
-  syncedAt      DateTime @default(now())
+  productName  String
+  barcode      String?
+  merchantSku  String?
+  unitPriceTry Decimal  @default(0) @db.Decimal(15, 2)
+  syncedAt     DateTime @default(now())
 
   @@unique([claimId, orderLineId])
   @@index([productId])
@@ -1144,22 +1175,22 @@ model TrendyolReturnRecord {
 // productId nullable: eşleşmemiş kayıtlar audit için tutulur.
 
 model HepsiburadaSalesRecord {
-  id             String   @id @default(cuid())
-  orderId        String   // Hepsiburada order number (display)
-  lineId         String   // Hepsiburada line item ID
-  productId      String?
-  product        Product? @relation("HbSalesProduct", fields: [productId], references: [id], onDelete: SetNull)
+  id        String   @id @default(cuid())
+  orderId   String // Hepsiburada order number (display)
+  lineId    String // Hepsiburada line item ID
+  productId String?
+  product   Product? @relation("HbSalesProduct", fields: [productId], references: [id], onDelete: SetNull)
 
-  orderDate      DateTime
-  status         String   // e.g. "Delivered", "Cancelled"
-  merchantSku    String?
-  barcode        String?
-  hbSku          String?  // Hepsiburada SKU (HBSKU)
-  productName    String
-  quantity       Int
-  unitPriceTry   Decimal  @db.Decimal(15,2)
-  totalPriceTry  Decimal  @db.Decimal(15,2)
-  syncedAt       DateTime @default(now())
+  orderDate     DateTime
+  status        String // e.g. "Delivered", "Cancelled"
+  merchantSku   String?
+  barcode       String?
+  hbSku         String? // Hepsiburada SKU (HBSKU)
+  productName   String
+  quantity      Int
+  unitPriceTry  Decimal  @db.Decimal(15, 2)
+  totalPriceTry Decimal  @db.Decimal(15, 2)
+  syncedAt      DateTime @default(now())
 
   @@unique([orderId, lineId])
   @@index([productId])
@@ -1169,24 +1200,24 @@ model HepsiburadaSalesRecord {
 }
 
 model HepsiburadaReturnRecord {
-  id            String   @id @default(cuid())
-  claimId       String
-  orderLineId   String
-  productId     String?
-  product       Product? @relation("HbReturnsProduct", fields: [productId], references: [id], onDelete: SetNull)
+  id          String   @id @default(cuid())
+  claimId     String
+  orderLineId String
+  productId   String?
+  product     Product? @relation("HbReturnsProduct", fields: [productId], references: [id], onDelete: SetNull)
 
-  orderNumber   String
-  orderDate     DateTime
-  claimDate     DateTime
-  status        String
-  reasonName    String?
-  reasonCode    String?
+  orderNumber String
+  orderDate   DateTime
+  claimDate   DateTime
+  status      String
+  reasonName  String?
+  reasonCode  String?
 
-  productName   String
-  barcode       String?
-  merchantSku   String?
-  unitPriceTry  Decimal  @db.Decimal(15,2) @default(0)
-  syncedAt      DateTime @default(now())
+  productName  String
+  barcode      String?
+  merchantSku  String?
+  unitPriceTry Decimal  @default(0) @db.Decimal(15, 2)
+  syncedAt     DateTime @default(now())
 
   @@unique([claimId, orderLineId])
   @@index([productId])
@@ -1203,46 +1234,46 @@ model HepsiburadaReturnRecord {
 // yüklenirken existing Trendyol orderId'leri atlanır (no double count).
 
 model MarketplaceSalesRecord {
-  id              String   @id @default(cuid())
-  channel         String   // TRENDYOL | HEPSIBURADA | N11 | IDEASOFT | GG | PAZARAMA | EPTT | MIRAKL_KOCTAS | IDEFIX | AMAZON | CICEKSEPETI | TEMU | MIRAKL_TEKNOSA | SHOPPHP | MANUAL
-  orderNumber     String   // "Sipariş Numarası" (composite veya tek)
-  platformRef     String?  // "Platform Ref. No"
-  externalLineId  String?  // Entegra ID kolonu (line-item identifier)
+  id             String  @id @default(cuid())
+  channel        String // TRENDYOL | HEPSIBURADA | N11 | IDEASOFT | GG | PAZARAMA | EPTT | MIRAKL_KOCTAS | IDEFIX | AMAZON | CICEKSEPETI | TEMU | MIRAKL_TEKNOSA | SHOPPHP | MANUAL
+  orderNumber    String // "Sipariş Numarası" (composite veya tek)
+  platformRef    String? // "Platform Ref. No"
+  externalLineId String? // Entegra ID kolonu (line-item identifier)
 
-  orderDate       DateTime
-  status          String?  // "Durum Adı" — Yeni Siparis / Onaylandı / İade-İptal vb.
+  orderDate DateTime
+  status    String? // "Durum Adı" — Yeni Siparis / Onaylandı / İade-İptal vb.
 
-  productName     String?
-  productCode     String?
-  modelNumber     String?
-  storeStockName  String?
-  productId       String?
-  product         Product? @relation("MarketplaceSalesProduct", fields: [productId], references: [id], onDelete: SetNull)
+  productName    String?
+  productCode    String?
+  modelNumber    String?
+  storeStockName String?
+  productId      String?
+  product        Product? @relation("MarketplaceSalesProduct", fields: [productId], references: [id], onDelete: SetNull)
 
-  quantity        Int      @default(1)
-  grossAmountTry  Decimal? @db.Decimal(15,2)  // "Toplam"
-  vatAmountTry    Decimal? @db.Decimal(15,2)  // "Vergi"
-  totalAmountTry  Decimal? @db.Decimal(15,2)  // "Genel Toplam"
-  commissionTry   Decimal? @db.Decimal(15,2)  // "Komisyon Tutarı"
-  commissionPct   Decimal? @db.Decimal(5,2)   // "Komisyon Oranı"
-  platformPaymentTry Decimal? @db.Decimal(15,2) // "PazaryerindenGelenOdemeTutar"
+  quantity           Int      @default(1)
+  grossAmountTry     Decimal? @db.Decimal(15, 2) // "Toplam"
+  vatAmountTry       Decimal? @db.Decimal(15, 2) // "Vergi"
+  totalAmountTry     Decimal? @db.Decimal(15, 2) // "Genel Toplam"
+  commissionTry      Decimal? @db.Decimal(15, 2) // "Komisyon Tutarı"
+  commissionPct      Decimal? @db.Decimal(5, 2) // "Komisyon Oranı"
+  platformPaymentTry Decimal? @db.Decimal(15, 2) // "PazaryerindenGelenOdemeTutar"
 
-  customerCode    String?  // "Müşteri Kodu"
-  customerFirma   String?  // "Firma"
-  customerInvoiceName String? // "Fatura Adı"
-  customerVergiNo String?  // "Vergi No"
-  customerTcKimlik String? // "TC Kimlik"
+  customerCode         String? // "Müşteri Kodu"
+  customerFirma        String? // "Firma"
+  customerInvoiceName  String? // "Fatura Adı"
+  customerVergiNo      String? // "Vergi No"
+  customerTcKimlik     String? // "TC Kimlik"
   customerVergiDairesi String? // "Vergi Dairesi"
-  customerCity    String?  // "Fatura Şehir"
+  customerCity         String? // "Fatura Şehir"
 
   cargoCompany    String?
   cargoTrackingNo String?
-  desiTotal       Decimal? @db.Decimal(8,2)
+  desiTotal       Decimal? @db.Decimal(8, 2)
 
-  customerId      String?
-  customer        Customer? @relation("MarketplaceSalesCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  customerId String?
+  customer   Customer? @relation("MarketplaceSalesCustomer", fields: [customerId], references: [id], onDelete: SetNull)
 
-  importedAt      DateTime @default(now())
+  importedAt DateTime @default(now())
 
   @@unique([channel, orderNumber, externalLineId])
   @@index([channel])
@@ -1265,11 +1296,11 @@ model MarketplaceSalesRecord {
 model MarketplacePlatformPolicy {
   id                    String              @id @default(cuid())
   platform              MarketplacePlatform @unique
-  standardShippingTry   Decimal             @default(0)  @db.Decimal(10,2)
-  standardCommissionPct Decimal             @default(20) @db.Decimal(5,2)
-  paymentFeePct         Decimal             @default(0)  @db.Decimal(5,2)
-  returnReservePct      Decimal             @default(0)  @db.Decimal(5,2)
-  vatPct                Decimal             @default(20) @db.Decimal(5,2)
+  standardShippingTry   Decimal             @default(0) @db.Decimal(10, 2)
+  standardCommissionPct Decimal             @default(20) @db.Decimal(5, 2)
+  paymentFeePct         Decimal             @default(0) @db.Decimal(5, 2)
+  returnReservePct      Decimal             @default(0) @db.Decimal(5, 2)
+  vatPct                Decimal             @default(20) @db.Decimal(5, 2)
   // Phase 51 — USD-tiered shipping: JSON array [{maxPriceUsd?, costUsd}]
   // Last entry (no maxPriceUsd) is the catch-all fallback.
   // If null, falls back to standardShippingTry.
@@ -1288,36 +1319,36 @@ model MarketplacePlatformPolicy {
 // After rates or defaults change, historical decisions remain explainable.
 
 model ImportDecisionSnapshot {
-  id                  String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   productId           String
-  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product             Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   supplierId          String?
   supplier            Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   // Rate context
   rateYear            Int?
   rateMonth           Int?
-  usdTryRate          Decimal  @db.Decimal(12,4)
-  rmbUsdRate          Decimal? @db.Decimal(12,4)
+  usdTryRate          Decimal   @db.Decimal(12, 4)
+  rmbUsdRate          Decimal?  @db.Decimal(12, 4)
   // Frozen inputs
-  sourceCostRmb       Decimal? @db.Decimal(15,2)
-  sourcePriceUsd      Decimal? @db.Decimal(12,4)
-  importPaymentFeePct Decimal? @db.Decimal(5,2)
-  weightKg            Decimal? @db.Decimal(8,3)
-  customsRatePct      Decimal? @db.Decimal(5,2)
+  sourceCostRmb       Decimal?  @db.Decimal(15, 2)
+  sourcePriceUsd      Decimal?  @db.Decimal(12, 4)
+  importPaymentFeePct Decimal?  @db.Decimal(5, 2)
+  weightKg            Decimal?  @db.Decimal(8, 3)
+  customsRatePct      Decimal?  @db.Decimal(5, 2)
   shippingMethodPref  String?
-  airFreightPerKg     Decimal  @db.Decimal(8,4)
-  seaFreightPerKg     Decimal  @db.Decimal(8,4)
+  airFreightPerKg     Decimal   @db.Decimal(8, 4)
+  seaFreightPerKg     Decimal   @db.Decimal(8, 4)
   // Computed outputs
-  effectiveSourceUsd  Decimal  @db.Decimal(12,4)  // resolved USD cost (after RMB conversion + payment fee)
-  effectiveMethod     String   // AIR or SEA
-  landedCostUsd       Decimal  @db.Decimal(12,4)
-  profitRatio         Decimal  @db.Decimal(8,4)
-  decision            String   // ALWAYS_STOCK / BUY_SMALL / DO_NOT_BUY / MISSING_DATA
-  score               Decimal  @db.Decimal(8,4)
+  effectiveSourceUsd  Decimal   @db.Decimal(12, 4) // resolved USD cost (after RMB conversion + payment fee)
+  effectiveMethod     String // AIR or SEA
+  landedCostUsd       Decimal   @db.Decimal(12, 4)
+  profitRatio         Decimal   @db.Decimal(8, 4)
+  decision            String // ALWAYS_STOCK / BUY_SMALL / DO_NOT_BUY / MISSING_DATA
+  score               Decimal   @db.Decimal(8, 4)
   notes               String?
   createdById         String?
-  createdBy           User?    @relation("SnapshotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt           DateTime @default(now())
+  createdBy           User?     @relation("SnapshotCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt           DateTime  @default(now())
 
   @@index([productId])
   @@index([supplierId])
@@ -1335,7 +1366,7 @@ model StockAdjustmentLog {
   productId      String
   product        Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
   adjustmentType StockAdjustmentType
-  quantityChange Int                 // positive = in, negative = out
+  quantityChange Int // positive = in, negative = out
   previousQty    Int
   newQty         Int
   notes          String?
@@ -1376,28 +1407,28 @@ model XmlStockChangeLog {
 // decision recommendations. Status flows: DRAFT → CONFIRMED → ORDERED → RECEIVED.
 
 enum PurchaseOrderStatus {
-  DRAFT       // being built; not yet sent to supplier
-  CONFIRMED   // reviewed and approved internally
-  ORDERED     // sent to supplier / payment made
-  SHIPPED     // in transit
-  RECEIVED    // stock arrived and counted
+  DRAFT // being built; not yet sent to supplier
+  CONFIRMED // reviewed and approved internally
+  ORDERED // sent to supplier / payment made
+  SHIPPED // in transit
+  RECEIVED // stock arrived and counted
 }
 
 model PurchaseOrder {
-  id             String              @id @default(cuid())
-  orderNo        String              @unique  // auto: PO-YYYYMMDD-NNN
-  supplierId     String?
-  supplier       Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
-  status         PurchaseOrderStatus @default(DRAFT)
-  shippingMethod String?             // AIR | SEA
-  orderDate      DateTime            @default(now())
+  id               String              @id @default(cuid())
+  orderNo          String              @unique // auto: PO-YYYYMMDD-NNN
+  supplierId       String?
+  supplier         Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  status           PurchaseOrderStatus @default(DRAFT)
+  shippingMethod   String? // AIR | SEA
+  orderDate        DateTime            @default(now())
   estimatedArrival DateTime?
-  notes          String?
-  totalCostTry   Decimal?            @db.Decimal(14,2)  // estimated total landed cost
-  createdById    String?
-  createdBy      User?               @relation("PurchaseOrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  notes            String?
+  totalCostTry     Decimal?            @db.Decimal(14, 2) // estimated total landed cost
+  createdById      String?
+  createdBy        User?               @relation("PurchaseOrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   items PurchaseOrderItem[]
 
@@ -1412,10 +1443,10 @@ model PurchaseOrderItem {
   order        PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId    String
   product      Product       @relation(fields: [productId], references: [id])
-  qty          Int           // ordered quantity
-  unitCostRmb  Decimal?      @db.Decimal(12,4)  // snapshot of sourceCostRmb at order time
-  unitCostTry  Decimal?      @db.Decimal(12,2)  // estimated landed cost per unit in TRY
-  totalCostTry Decimal?      @db.Decimal(14,2)  // qty × unitCostTry
+  qty          Int // ordered quantity
+  unitCostRmb  Decimal?      @db.Decimal(12, 4) // snapshot of sourceCostRmb at order time
+  unitCostTry  Decimal?      @db.Decimal(12, 2) // estimated landed cost per unit in TRY
+  totalCostTry Decimal?      @db.Decimal(14, 2) // qty × unitCostTry
   notes        String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

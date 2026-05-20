@@ -53,6 +53,7 @@ export default async function CustomersPage({
   const ownedById    = typeof params.ownedById    === "string" ? params.ownedById    : "all";
   const attributeId  = typeof params.attributeId  === "string" ? params.attributeId  : "all";
   const customerType = typeof params.customerType === "string" ? params.customerType : "all";
+  const leadListId   = typeof params.leadListId   === "string" ? params.leadListId   : "all";
   const cohortParam  = typeof params.cohort       === "string" ? params.cohort       : null;
   const validCohorts: CohortKey[] = ["queue", "todayCall", "dormant", "new", "openQuotes"];
   const cohort: CohortKey | null =
@@ -62,7 +63,7 @@ export default async function CustomersPage({
 
   const [{ databaseAvailable, customers }, users, attributes, cohortCounts, salesKpis, savedViews] =
     await Promise.all([
-      listCustomers({ q: query, status, source, ownedById, attributeId, customerType }),
+      listCustomers({ q: query, status, source, ownedById, attributeId, customerType, leadListId }),
       listUsersForSelect(),
       listAttributes(),
       getCustomerCohortCounts(),

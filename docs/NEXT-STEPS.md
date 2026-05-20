@@ -81,6 +81,99 @@ These are structural gaps in the current system, not single-feature bugs:
 
 ## Immediate Priority Stack
 
+### Phase 97 — Lead List Manager (Google Maps Import + Yönetim)
+
+**Neden:**
+Kullanıcı Google Maps'ten elle topladığı firma listelerini (örn. "Hatay
+güvenlik şirketleri 50 firma") sisteme aktaracak. Sales rep bu firmaları
+arayacak, mesajlaşacak, görüşecek. Mevcut CSV import çok basit — kolon
+mapping yok, dedup yok, lead list konsepti yok, otomatik tag yok.
+
+**Hedef:**
+Tek tıkla 50-200 firmalık liste eklenir, telefon dedup'lanır, otomatik
+tag/source eklenir, sales rep Power Queue'da bunları görür ve arar.
+
+**Schema değişimleri:**
+- `LeadList` modeli (id, name, source, city, category, createdById)
+- `CustomerLeadListMembership` (customerId + leadListId composite key)
+- Customer.tags array (zaten var Phase 95b)
+
+**Implementation Plan — 3 PR:**
+
+PR Phase 97a: Schema + Import sayfası (CSV + paste)
+- /customers/import-list yeni sayfa
+- Form: Liste adı, Kaynak (Google Maps/Manuel/Trendyol Q&A), Şehir,
+  Kategori, CustomerType, CSV upload veya paste textarea
+- Sütun mapping UI (CSV için): drop-down per kolon
+- Server action: createLeadListAction(name, source, rows[])
+
+PR Phase 97b: Dedup + önizleme + otomatik tag
+- Phone normalize → existing Customer kontrol → skip veya membership-only
+- Önizleme: "X yeni, Y duplikat, Z hatalı"
+- Tag otomatik: ["google-maps", "google-maps-{city}", "yeni-fırsat"]
+- Customer.source = "Google Maps - {kategori} - {şehir}"
+- shownInQueueCount = 0 (Power Queue'da öne çıkar)
+
+PR Phase 97c: Lead List yönetim sayfası
+- /customers/lists — tüm listeler tablosu
+- Her satırda: ad, kaynak, toplam, arandı/teklif/kazanılan oranı
+- "Aramaya başla" → ?leadList={id} filtre
+- Liste sil + listeden müşteri çıkar
+
+**Anti-goals:**
+- Google Places API entegrasyonu BU FAZDA YOK (manuel/CSV yeterli)
+- Otomatik Maps scraping BU FAZDA YOK
+- Cross-list customer reassignment BU FAZDA YOK
+
+**Exit:**
+- Kullanıcı "Hatay güvenlik 50.csv" yükler → 50 firma 1 dakikada sisteme
+  girer, dedup çalışır, sales rep Power Queue'da bunları görür ve aramaya
+  başlar.
+
+---
+
+### Phase 96 — Sales Operating Maturity (Team Performance + Productivity)
+
+**Neden:**
+Phase 95 sales rep WORKSPACE'i tamamladı. Ama:
+- Yönetici ekip performansını göremiyor
+- Lead source ROI takip edilmiyor
+- Sales rep çağrı sırasında ürün fiyatına hızlı erişemiyor
+- WhatsApp mesajları her seferinde yeniden yazılıyor
+- Aynı müşteri 2 sales rep tarafından aynı saatte aranabilir (çakışma uyarısı yok)
+
+**Implementation Plan — 5 PR:**
+
+PR Phase 96a: Team Performance Dashboard
+- /admin/sales-performance yeni sayfa
+- Bu hafta ekip leaderboard (görüşme/teklif/kazanılan)
+- Sales rep aktif saat heatmap (opsiyonel ileri)
+
+PR Phase 96b: Lead Source ROI + Şehir Heatmap
+- Source bazlı conversion stats
+- Şehir bazlı satış haritası (top 10 + bar chart)
+
+PR Phase 96c: Ürün Hızlı Erişim + Hızlı Teklif (müşteri detay)
+- Müşteri kartında widget: Kategori favorileri
+- Tıkla → mini popover ürünleri (ad + fiyat + stok)
+- "Hızlı Teklif" buton → ürün ara + miktar + ekle
+
+PR Phase 96d: WhatsApp Message Templates
+- MessageTemplate model + admin CRUD
+- Sales rep'in WhatsApp butonunda template dropdown
+- Değişkenler: {{müşteri_adı}}, {{son_teklif_no}}, {{son_görüşme}}
+
+PR Phase 96e: Çağrı Çakışma Uyarısı + Haftalık KPI
+- Müşteri kartında "Son 2 saat içinde Ali aktif" rozet
+- KPI bar'a hover → haftalık özet + delta
+
+**Exit:**
+- Yönetici ekibin performansını hafta hafta görür
+- Sales rep çağrı sırasında ürün + teklif + WhatsApp tek-akışta üretir
+- İki rep aynı müşteriyi aynı saatte aramaz
+
+---
+
 ### Phase 95 — Çağrı Merkezi Satış Workspace v2 (Sales Operating System)
 
 **Neden:**

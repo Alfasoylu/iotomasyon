@@ -113,6 +113,20 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     permission: PERMISSIONS.CUSTOMERS_READ,
     section: "Satış",
   },
+  {
+    href: "/customers/import-list",
+    label: "Lead Listesi Import",
+    iconKey: "filePlus",
+    permission: PERMISSIONS.CUSTOMERS_UPDATE,
+    section: "Satış",
+  },
+  {
+    href: "/customers/lists",
+    label: "Listelerim",
+    iconKey: "clipboardList",
+    permission: PERMISSIONS.CUSTOMERS_READ,
+    section: "Satış",
+  },
 
   // ── ÜRÜNLER & STOK ──────────────────────────────────────────────────────
   {
