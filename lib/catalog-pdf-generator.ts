@@ -375,7 +375,8 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
       if (options.priceMode !== "hidden" && product.priceUsd != null) {
         const priceTxt = fmtUsd(product.priceUsd);
         drawTxt(page, font, priceTxt, tx, rowY - 90, 14, C.charcoal);
-        drawTxt(page, font, "(KDV hariç)", tx + 60, rowY - 90, 7, C.slate500);
+        const priceW = font.widthOfTextAtSize(priceTxt, 14);
+        drawTxt(page, font, "+KDV", tx + priceW + 4, rowY - 86, 8, C.slate500);
       } else {
         drawTxt(page, font, "Fiyat için iletişime geçin", tx, rowY - 90, 8, C.slate500);
       }

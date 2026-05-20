@@ -18,9 +18,11 @@ export function BulkMarkupForm({ categories, brands }: Props) {
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState<string>("");
   const [brand, setBrand] = useState<string>("");
-  const [sourceField, setSourceField] = useState<"unitCostUsd" | "wholesalePriceUsd">("unitCostUsd");
+  const [sourceField, setSourceField] = useState<
+    "unitCostUsd" | "wholesalePriceUsd" | "xmlBayiPrice"
+  >("xmlBayiPrice");
   const [targetField, setTargetField] = useState<"wholesalePriceUsd" | "retailPriceUsd">("wholesalePriceUsd");
-  const [multiplier, setMultiplier] = useState<string>("1.25");
+  const [multiplier, setMultiplier] = useState<string>("1.00");
   const [overwrite, setOverwrite] = useState(false);
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export function BulkMarkupForm({ categories, brands }: Props) {
           <div>
             <h3 className="text-sm font-semibold text-slate-900">Toplu Marj Uygulama</h3>
             <p className="text-xs text-slate-500">
-              Kategori bazında bir alanı çarpan ile başka bir alana doldur (örn. maliyet × 1.25 = bayi).
+              Kategori bazında bir kaynak alanı çarpan ile başka bir alana doldur (örn. XML Bayi × 1.00 = Bayi, ya da maliyet × 1.25 = bayi).
             </p>
           </div>
           <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
@@ -137,12 +139,15 @@ export function BulkMarkupForm({ categories, brands }: Props) {
           <select
             value={sourceField}
             onChange={(e) =>
-              setSourceField(e.target.value as "unitCostUsd" | "wholesalePriceUsd")
+              setSourceField(
+                e.target.value as "unitCostUsd" | "wholesalePriceUsd" | "xmlBayiPrice",
+              )
             }
             className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs"
           >
+            <option value="xmlBayiPrice">XML Bayi Fiyatı</option>
             <option value="unitCostUsd">Maliyet USD</option>
-            <option value="wholesalePriceUsd">Bayi USD</option>
+            <option value="wholesalePriceUsd">Bayi USD (mevcut)</option>
           </select>
         </div>
         <div>
