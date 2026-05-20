@@ -12,6 +12,7 @@ export type CustomerFilters = {
   ownedById?: string;
   attributeId?: string;
   customerType?: string;
+  leadListId?: string;
 };
 
 export type UserOption = {
@@ -109,6 +110,10 @@ export async function listCustomers(filters: CustomerFilters) {
 
   if (filters.customerType && filters.customerType !== "all") {
     where.customerType = filters.customerType as import("@prisma/client").CustomerType;
+  }
+
+  if (filters.leadListId && filters.leadListId !== "all") {
+    where.leadListMemberships = { some: { leadListId: filters.leadListId } };
   }
 
   const orderBy = [{ updatedAt: "desc" as const }, { name: "asc" as const }];

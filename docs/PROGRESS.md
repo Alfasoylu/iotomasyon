@@ -1204,7 +1204,55 @@ Bug fix (Phase 94.1):
 
 ---
 
-## Phase 95 — Çağrı Merkezi Sales Workspace v2 (PLANNED)
+## Phase 95 — Çağrı Merkezi Sales Workspace v2 (IMPLEMENTED 2026-05-20)
+
+Status: 8 PR canlıda. 35 sorudan ~25 cevaplandı.
+
+PR'lar:
+- 95b: Schema (Customer 6 alan + SavedView) + Avatar + Bilgi Tamlığı Skoru
+- 95a: ⌘K Komut Paleti (global search + action shortcuts)
+- 95c: Outcome chips (7) + Inline status editor + auto-snooze
+- 95d: Power Queue (smart priority: lead × info × rotation)
+- 95e: Personal KPI Bar (görüşme progress + quote + win + overdue)
+- 95f: SavedView CRUD + Bulk multi-select + CSV (17 kolon UTF-8)
+- 95g: Klavye navigasyon (J/K + ?) + kısayol yardımı
+- 95h: Density toggle + pulse acil görev
+
+Kullanıcı talepleri:
+- ✅ Bilgi tamlığı: telefonu olan müşteri 25pt'le öncelikli sıralanıyor
+- ✅ Anti-monotony: shownInQueueCount ile aynı müşteri tekrar tekrar çıkmıyor
+
+---
+
+## Phase 96 — Sales Operating Maturity (PLANNED)
+
+Status: planlandı, henüz başlanmadı (Phase 97'den sonra).
+
+Detay: docs/NEXT-STEPS.md Phase 96.
+
+5 PR:
+- 96a Team Performance Dashboard
+- 96b Lead Source ROI + Şehir Heatmap
+- 96c Ürün Hızlı Erişim + Hızlı Teklif (müşteri detay)
+- 96d WhatsApp Message Templates
+- 96e Çağrı Çakışma Uyarısı + Haftalık KPI
+
+---
+
+## Phase 97 — Lead List Manager / Google Maps Import (IN PROGRESS)
+
+Status: aktif geliştiriliyor.
+
+Detay: docs/NEXT-STEPS.md Phase 97.
+
+3 PR:
+- 97a Schema (LeadList + CustomerLeadListMembership) + import sayfası
+- 97b Dedup + önizleme + otomatik tag
+- 97c Lead List yönetim sayfası /customers/lists
+
+---
+
+# Ownership Rules
 
 Status: planlandı, henüz başlanmadı.
 
@@ -1242,11 +1290,6 @@ gösterilmesin — shownInQueueCount ile rotation.
 
 ---
 
-# Ownership Rules
-
-- `ROADMAP.md` = target architecture
-- `PROGRESS.md` = factual implementation state
-- never mark incomplete work as complete
 
 ---
 
