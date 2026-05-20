@@ -1224,31 +1224,40 @@ Kullanıcı talepleri:
 
 ---
 
-## Phase 96 — Sales Operating Maturity (PLANNED)
+## Phase 96 — Sales Operating Maturity (IMPLEMENTED)
 
-Status: planlandı, henüz başlanmadı (Phase 97'den sonra).
+Status: tüm 5 PR canlıya alındı.
 
 Detay: docs/NEXT-STEPS.md Phase 96.
 
-5 PR:
-- 96a Team Performance Dashboard
-- 96b Lead Source ROI + Şehir Heatmap
-- 96c Ürün Hızlı Erişim + Hızlı Teklif (müşteri detay)
-- 96d WhatsApp Message Templates
-- 96e Çağrı Çakışma Uyarısı + Haftalık KPI
+PR'ler (merged → main):
+- **PR-96a** Team Performance Dashboard — /admin/sales-performance · #42
+  * Haftalık leaderboard, win % rozet, gecikmiş görev sayacı
+- **PR-96b** Lead Source ROI + Şehir Heatmap — /admin/lead-source-roi · #43
+  * Source bazlı conversion + top 15 şehir gradient bar
+- **PR-96c** Ürün Önerileri Widget — customer detay sağ kolon · #46
+  * Kategori interest'lere göre stok+fiyatlı ürün öner
+- **PR-96d** WhatsApp Message Templates — /admin/message-templates · #44
+  * MessageTemplate model + admin CRUD + customer detay dropdown
+  * Değişkenler: {{musteri_adi}} {{firma}} {{teklif_no}} {{son_gorusme}} {{telefon}} {{sehir}}
+- **PR-96e** Çağrı Çakışma Uyarısı — customer-row badge · #45
+  * Son 2 saatte başka rep çağırdıysa amber rozet
 
 ---
 
-## Phase 97 — Lead List Manager / Google Maps Import (IN PROGRESS)
+## Phase 97 — Lead List Manager / Google Maps Import (IMPLEMENTED)
 
-Status: aktif geliştiriliyor.
+Status: PR-97a + 97c canlıya alındı (97b içeriği 97a action'larına entegre edildi).
 
 Detay: docs/NEXT-STEPS.md Phase 97.
 
-3 PR:
-- 97a Schema (LeadList + CustomerLeadListMembership) + import sayfası
-- 97b Dedup + önizleme + otomatik tag
-- 97c Lead List yönetim sayfası /customers/lists
+PR'ler (merged → main):
+- **PR-97a+c** Lead List Manager · #41
+  * Schema: LeadList + CustomerLeadListMembership
+  * /customers/import-list (paste OR CSV dual-mode)
+  * /customers/lists (kartlı yönetim + stats + safe delete)
+  * Telefon dedup, auto-tag (yeni-fırsat + source-city)
+  * listCustomers leadListId filtresi
 
 ---
 
