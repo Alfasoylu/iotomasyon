@@ -22,6 +22,9 @@ import {
 import { getSalesRepKPIs } from "@/services/sales-rep-kpi-service";
 import { listAttributes } from "@/services/attribute-service";
 import { SalesRepKpiBar } from "@/components/customers/sales-rep-kpi-bar";
+import { SavedViewSelector } from "@/components/customers/saved-view-selector";
+import { CustomerBulkList } from "@/components/customers/customer-bulk-list";
+import { listMySavedViews } from "@/lib/actions/saved-view-actions";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -55,13 +58,14 @@ export default async function CustomersPage({
       ? (cohortParam as CohortKey)
       : null;
 
-  const [{ databaseAvailable, customers }, users, attributes, cohortCounts, salesKpis] =
+  const [{ databaseAvailable, customers }, users, attributes, cohortCounts, salesKpis, savedViews] =
     await Promise.all([
       listCustomers({ q: query, status, source, ownedById, attributeId, customerType }),
       listUsersForSelect(),
       listAttributes(),
       getCustomerCohortCounts(),
       getSalesRepKPIs(user.id),
+      listMySavedViews("customers"),
     ]);
 
   // Cohort filtresi varsa ID set'i ile filtrele
@@ -101,6 +105,7 @@ export default async function CustomersPage({
         actions={
           <>
             <PageHelp pageKey="customers" />
+            <SavedViewSelector views={savedViews} currentUserId={user.id} resource="customers" />
             <Link href="/customers/new">
               <Button>Yeni müşteri</Button>
             </Link>
@@ -196,15 +201,12 @@ export default async function CustomersPage({
               }
             />
           ) : (
-            <div className="space-y-2">
-              {filteredCustomers.map((customer) => (
-                <CustomerRow
-                  key={customer.id}
-                  customer={customer}
-                  stats={statsMap.get(customer.id) ?? null}
-                />
-              ))}
-            </div>
+            <CustomerBulkList
+              customers={filteredCustomers}
+              statsByCustomerId={Object.fromEntries(
+                filteredCustomers.map((c) => [c.id, statsMap.get(c.id)]).filter(([, v]) => !!v) as [string, NonNullable<ReturnType<typeof statsMap.get>>][],
+              )}
+            />
           )}
         </section>
       )}
