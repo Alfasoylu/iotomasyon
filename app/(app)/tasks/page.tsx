@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 import { CustomerTaskCompleteButton } from "@/components/customers/customer-task-complete-button";
+import { TaskCohortCards } from "@/components/tasks/task-cohort-cards";
 import {
   formatTaskPriority,
   formatTaskStatus,
@@ -12,8 +13,9 @@ import {
   getTaskStatusTone,
 } from "@/lib/customer-utils";
 import { formatDateTime } from "@/lib/utils";
-import { listTasks, listUsersWithTasks } from "@/services/task-service";
+import { getTaskCohortCounts, listTasks, listUsersWithTasks } from "@/services/task-service";
 import type { TaskPriority, TaskStatus } from "@/types/customers";
+import { requireUser } from "@/lib/auth";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -42,18 +44,24 @@ export default async function TasksPage({
     priority?: string;
     userId?: string;
     page?: string;
+    cohort?: string;
+    mine?: string;
   }>;
 }) {
   await requirePermission(PERMISSIONS.TASKS_READ);
+  const currentUser = await requireUser();
   const sp = await searchParams;
   const status = sp.status ?? "OPEN";
   const priority = sp.priority ?? "all";
-  const userId = sp.userId ?? "all";
+  const cohort = sp.cohort ?? null;
+  const mineFilter = sp.mine !== "0"; // P3: varsayılan "bana atanmış"
+  const userId = sp.userId ?? (mineFilter && currentUser.role === "SALES" ? currentUser.id : "all");
   const page = Math.max(1, Number(sp.page ?? 1));
 
-  const [{ tasks, total, pageSize }, users] = await Promise.all([
-    listTasks({ status, priority, userId, page }),
+  const [{ tasks, total, pageSize }, users, cohortCounts] = await Promise.all([
+    listTasks({ status, priority, userId, page, cohort: cohort ?? undefined }),
     listUsersWithTasks(),
+    getTaskCohortCounts(currentUser.role === "SALES" ? currentUser.id : undefined),
   ]);
 
   const totalPages = Math.ceil(total / pageSize);
@@ -94,60 +102,63 @@ export default async function TasksPage({
         }
       />
 
-      {/* Filters */}
-      <Card className="p-4">
-        <form method="GET" action="/tasks" className="flex flex-wrap gap-3">
-          {/* Status tabs */}
+      {/* P3 — Cohort kartları */}
+      <TaskCohortCards counts={cohortCounts} activeCohort={cohort} />
+
+      {/* P3 — "Bana atanmış" / "Tümü" hızlı toggle + filtre */}
+      <Card className="p-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex rounded-xl border border-slate-200 bg-slate-50 p-1 gap-1">
-            {STATUS_OPTIONS.map((opt) => (
-              <Link
-                key={opt.value}
-                href={`/tasks?status=${opt.value}${priority !== "all" ? `&priority=${priority}` : ""}${userId !== "all" ? `&userId=${userId}` : ""}`}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                  status === opt.value
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                {opt.label}
-              </Link>
-            ))}
+            <Link
+              href={`/tasks${cohort ? `?cohort=${cohort}` : ""}`}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                userId !== "all" && userId === currentUser.id
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Bana atanmış
+            </Link>
+            <Link
+              href={`/tasks?mine=0${cohort ? `&cohort=${cohort}` : ""}`}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                userId === "all"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Tümü
+            </Link>
           </div>
-
-          <select
-            name="priority"
-            defaultValue={priority}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-          >
-            {PRIORITY_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            name="userId"
-            defaultValue={userId}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-          >
-            <option value="all">Tüm atananlar</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
-
-          <input type="hidden" name="status" value={status} />
-
-          <button
-            type="submit"
-            className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-700"
-          >
-            Filtrele
-          </button>
-        </form>
+          <form method="GET" action="/tasks" className="flex flex-wrap items-center gap-2">
+            <select
+              name="priority"
+              defaultValue={priority}
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+            >
+              {PRIORITY_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <select
+              name="status"
+              defaultValue={status}
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            {cohort && <input type="hidden" name="cohort" value={cohort} />}
+            <input type="hidden" name="mine" value={userId === "all" ? "0" : "1"} />
+            <button
+              type="submit"
+              className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-700"
+            >
+              Filtrele
+            </button>
+          </form>
+        </div>
       </Card>
 
       {/* Task list */}
