@@ -35,6 +35,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Günlük Durum",
   },
   {
+    href: "/admin/catalog-performance",
+    label: "Katalog Performansı",
+    iconKey: "chart",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Günlük Durum",
+  },
+  {
     href: "/admin/executive",
     label: "Yönetici Paneli",
     iconKey: "chart",
