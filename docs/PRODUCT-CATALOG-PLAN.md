@@ -1,8 +1,32 @@
-# Ürün Kataloğu — Sektör Odaklı Aksiyon Planı (v2)
+# Ürün Kataloğu — Sektör Odaklı Aksiyon Planı (v3 — Onaylı)
 
 **Tarih:** 2026-05-20
 **Sahibi:** Alfa Soylu Elektronik
 **Hedef:** Satış temsilcisi telefon görüşmesi sonrası müşteriye sektör-odaklı PDF/web katalog gönderir; müşterinin reaksiyonu (açılma, ürün ilgisi, geri dönüş) otomatik takip edilir.
+
+---
+
+## 0.5 Onaylanan Kararlar (2026-05-20)
+
+| # | Karar | Sonuç |
+|---|---|---|
+| 1 | Faz sıralaması: 2 → 1 → 4 → 3 → 5 → 6 | ✅ Onaylı |
+| 2 | Sektör haritası (12 sektör, §2) | ✅ Onaylı (genişletilebilir) |
+| 3 | Şema yaklaşımı: Hard-coded A → DB-based B migration | ✅ Onaylı |
+| 4 | **ProductBundle MVP'de?** | 🟡 **Yargı çağrısı:** Faz 3'e atıldı. MVP'de sektör kataloğu zaten "paket teklif" hissi veriyor. |
+| 5 | **MVP scope** | 🟡 **Yargı çağrısı:** Faz 2 + Faz 1 + **Faz 4** (public link). WhatsApp paylaşımı core value; PDF tek başına yarım kalır. |
+| 6 | SALES rolüne wholesale erişimi | ❌ **HAYIR** — sadece ADMIN. SALES `retail` + `hidden` modlarına erişebilir. |
+| 7 | B2B watermark stratejisi | ❌ Kaldırıldı — yetki matrisi (madde 6) zaten leak'i önlüyor |
+| 8 | Public katalogta lead capture form | ❌ Kaldırıldı — sadece "İlgilendim" işareti yeterli |
+| 9 | Faz 6 (performans raporu) zamanlaması | ✅ **Hemen** — Faz 4 ile birlikte yayında |
+
+### ⚡ Yeni kritik kural: Katalog fiyatları **USD + KDV hariç**
+
+- Sales rep ne TRY ne KDV-dahil görür — sadece **USD net** fiyat
+- Mevcut TRY alanları (`sellingPriceTry`, `wholesalePriceTry`) quote sistemi için kalır
+- Katalog için **yeni USD alanları** Product şemasına eklenir (bkz. §3.3)
+- PDF'te fiyat formatı: **"$X.XX (KDV hariç)"**
+- Public link'te de aynı: **"$X.XX net"**
 
 ---
 
@@ -127,13 +151,14 @@ Phase 99'da kurulan `Industry` hiyerarşisini kullanıyoruz:
    - Banka IBAN bilgisi (mevcut quote PDF reuse)
    - Standart teslimat süresi: "Stoklu ürünlerde 1-3 iş günü"
    - Garanti: 2 yıl üretici garantisi
-   - KDV durumu: "Tüm fiyatlara KDV dahildir" (veya hariç — config)
+   - Fiyat/KDV: **"Tüm fiyatlar USD bazındadır ve KDV hariçtir."** (sabit, override yok)
+   - Faturalama: "Türk Lirası karşılığı, fatura kesim günündeki TCMB döviz kuru üzerinden hesaplanır."
 
 7. **Kapanış sayfası (CTA)**
    - "Hemen sipariş için: WhatsApp / Telefon"
    - "Bu kataloğun web versiyonu: {public_link}"
    - Geçerlilik: "Bu fiyatlar {validityDate} tarihine kadar geçerlidir"
-   - Watermark (B2B fiyatlı kataloglarda): "Gizli — Sadece bayi kullanımı içindir. Müşteri ile paylaşmayınız."
+   - KDV notu: "Tüm fiyatlar USD bazındadır ve KDV hariçtir. KDV: %20 (genel oran)."
 
 **PDF teknik özellikleri:**
 - Boyut: A4 portrait (210x297mm)
@@ -170,9 +195,19 @@ Statik DB kaydı dinamik üretim ile çakışır.
 
 **Karar: Yaklaşım A ile başla → Faz 5'te B'ye taşı.**
 
-### 3.3 Yeni şemalar (Faz 3 + Faz 4 için)
+### 3.3 Yeni şemalar (Faz 2 + Faz 3 + Faz 4 için)
 
 ```prisma
+// Faz 2: USD net fiyat (KDV hariç) — katalog için yeni alanlar
+model Product {
+  // ...mevcut alanlar (sellingPriceTry, wholesalePriceTry vb. dokunulmaz — quote için)...
+
+  // YENİ — katalog özel, USD net, KDV hariç
+  wholesalePriceUsd  Decimal? @db.Decimal(12, 2)  // Bayi katalog fiyatı
+  retailPriceUsd     Decimal? @db.Decimal(12, 2)  // Son müşteri katalog fiyatı
+  // NOT: KDV `vatRate` mevcut alanından okunur, fiyatlara dahil değildir.
+}
+
 // Faz 3: Paket çözümler
 model ProductBundle {
   id              String   @id @default(cuid())
@@ -231,19 +266,22 @@ model CatalogProductInterest {
 }
 ```
 
-### 3.4 Fiyatlama detayı
+### 3.4 Fiyatlama detayı (revize — v3, USD + KDV hariç)
 
 | Mod | Hangi alan | Kim için | Format |
 |---|---|---|---|
-| `wholesale` | `Product.wholesalePriceTry` | B2B bayi | "Toptan: ₺X (KDV hariç)" |
-| `retail` | `Product.sellingPriceTry` | Installation müşteri | "₺X (KDV dahil)" |
+| `wholesale` | `Product.wholesalePriceUsd` | B2B bayi | **"$X.XX (KDV hariç)"** |
+| `retail` | `Product.retailPriceUsd` | Installation / son müşteri | **"$X.XX (KDV hariç)"** |
 | `hidden` | — | Yeni müşteri (sektör=null) | "Fiyat için iletişime geçin" |
-| `marketplace` | `Product.marketplacePriceTry` | Pazaryeri rakip referansı | Sadece admin görsün, dahili |
+
+**Tüm fiyatlar USD + KDV hariç.** TRY hiçbir yerde gösterilmez. KDV not olarak en altta yazılır: _"Tüm fiyatlar USD bazındadır ve KDV hariçtir. KDV oranı: %20 (genel)."_
 
 **Boş fiyatlı ürünler:**
-- `wholesale` mode'da `wholesalePriceTry` null ise ürün katalogtan **otomatik dışlanır**
-- `retail` mode'da `sellingPriceTry` null ise dışlanır
+- `wholesale` mode'da `wholesalePriceUsd` null ise ürün katalogtan **otomatik dışlanır**
+- `retail` mode'da `retailPriceUsd` null ise dışlanır
 - `hidden` mode'da hepsi gösterilir (fiyat satırı boş)
+
+**Kur değişimi:** USD net fiyat sabittir, gönderim anında snapshot alınmaz — müşteri katalogta gördüğü USD fiyat 30 günlük geçerlilik içinde aynı kalır.
 
 ### 3.5 Kişiselleştirme (yeni — v2)
 
@@ -271,13 +309,17 @@ Modal'da ekstra opsiyon: **"Sadece bu markalardan göster"** multi-select
 
 | Rol | Erişim |
 |---|---|
-| **ADMIN** | Tüm katalogları üretebilir, herhangi bir profili seçebilir, fiyat mode override edebilir |
-| **SALES** | Kendi atadığı müşterilere katalog üretebilir, fiyat mode sadece "wholesale" veya "retail" (profile'a bağlı), "hidden" mode SALES'e açık |
+| **ADMIN** | Tüm katalogları üretebilir, herhangi bir profili + tüm fiyat modlarını (wholesale/retail/hidden) seçebilir |
+| **SALES** | Kendi atadığı müşterilere katalog üretebilir, **`wholesale` modu YOKTUR** — sadece `retail` veya `hidden` seçebilir |
 | **OPERATIONS** | Katalog üretemez (görür ama buton disabled) |
 | **MARKETPLACE_OPERATOR** | Erişim yok |
 | **WAREHOUSE** | Erişim yok |
 
-Yeni permission: `CATALOGS_CREATE` — `lib/permissions.ts`'a eklenir.
+İki permission eklenir:
+- `CATALOGS_CREATE` — ADMIN + SALES
+- `CATALOGS_WHOLESALE_MODE` — sadece ADMIN
+
+Bu sayede bayi toptan fiyat sızıntısı yapısal olarak engellenir (watermark gerekmez).
 
 ### 3.9 Sales rep kişisel mesaj (cover note)
 
@@ -290,18 +332,30 @@ PDF kapak sonrası sayfada `Geist` regular ile render edilir.
 
 ## 4. Faz Planı — PR'lara Bölünme
 
-### **Faz 2 (önce) — Ürün fiyatları doldurma** (3-4 saat, 1 PR)
+### **Faz 2 (önce) — USD net fiyat doldurma** (4-5 saat, 1 PR)
 
-**Çıktı:** Admin toplu fiyat girer, eksik fiyatları görür.
+**Çıktı:** Admin **USD + KDV hariç** toptan ve perakende fiyatlarını toplu girer.
+
+**Schema değişikliği:**
+```prisma
+model Product {
+  wholesalePriceUsd  Decimal? @db.Decimal(12, 2)  // Bayi katalog fiyatı (USD net)
+  retailPriceUsd     Decimal? @db.Decimal(12, 2)  // Son müşteri katalog fiyatı (USD net)
+}
+```
 
 **İçerik:**
-- `/admin/product-pricing` yeni sayfa — fiyatı boş ürünler tablosu + inline edit
-- Kategori bazında toplu fiyat girme (örn. "Tüm aktif CCTV ürünlerine min ₺X marj uygula")
-- CSV import şablon güncellemesi (`wholesalePriceTry`, `sellingPriceTry`, `marketplacePriceTry` ayrı kolonlar)
-- **Trendyol/Hepsiburada satış fiyatından `marketplacePriceTry` otomatik backfill** scripti
-- Bayi marjı şablonu: "Maliyet × 1.25 = wholesale, wholesale × 1.30 = retail"
+- `/admin/product-pricing` yeni sayfa — sadece **USD alanları** için inline edit
+- Tablo kolonları: Görsel · SKU · Ad · Kategori · `unitCostUsd` (mevcut) · **`wholesalePriceUsd` (yeni)** · **`retailPriceUsd` (yeni)** · Marj %
+- Filtre: "Sadece USD fiyatı boş olanlar" + kategori + marka
+- Kategori bazında toplu marj uygulama: "Tüm aktif CCTV: `unitCostUsd × 1.25 = wholesale`, `wholesale × 1.30 = retail`"
+- CSV import şablonu: `sku, wholesalePriceUsd, retailPriceUsd`
+- Migration: `wholesalePriceUsd` + `retailPriceUsd` alanları + index'siz (büyük write yok)
+- **Validation:** `retailPriceUsd >= wholesalePriceUsd` uyarısı (zorlama yok, sadece warning)
 
-**Acceptance:** Admin 30 dakikada 78 aktif CCTV ürünün toptan + perakende fiyatlarını doldurur.
+**NOT:** TRY alanlarına (`sellingPriceTry`, `wholesalePriceTry`) dokunulmuyor — quote sistemi onları kullanmaya devam ediyor. USD katalog için, TRY quote için.
+
+**Acceptance:** Admin 30 dakikada 78 aktif CCTV ürünün `wholesalePriceUsd` + `retailPriceUsd` alanlarını doldurur.
 
 ---
 
@@ -353,7 +407,6 @@ PDF kapak sonrası sayfada `Geist` regular ile render edilir.
 - **Müşteri detay sayfasında:** "Gönderilen kataloglar" timeline bölümü
   - Her kataloğun: ne zaman gönderildi, açıldı mı, hangi ürünlere ilgi gösterdi
 - **Otomatik ProductInterest:** Müşteri katalogtan "İlgilendim" işaretlerse `ProductInterest` (mevcut Phase 7 schema) otomatik oluşur — quote oluştururken hazır
-- **Lead capture (opsiyonel):** Public katalogta küçük form: "Telefon numaranızı bırakın, sizi arayalım" — Customer yoksa yeni Customer oluşturur
 
 **Permission:** Public route, ama token kontrol — `expiresAt` geçtiyse 410 Gone.
 
@@ -423,32 +476,38 @@ PDF kapak sonrası sayfada `Geist` regular ile render edilir.
 
 ## 5. Önerilen Sıralama + Toplam Effort
 
-| Faz | İş | Tahmin | Bağımlılık |
-|---|---|---|---|
-| **Faz 2 (önce)** | Ürün fiyatları doldurma — admin UI + CSV | 3-4 sa | Yok |
-| **Faz 1** | Temel katalog motoru + WhatsApp paylaş + timeline event | 1.5-2 gün | Faz 2 |
-| **Faz 4** | Public link + analytics + müşteri geri dönüşü | 1 gün | Faz 1 |
-| **Faz 3** | Paket çözümler (Installation) | 1 gün | Faz 1 |
-| **Faz 5** | Admin katalog profili UI (hard-code→DB) | 4-6 sa | Faz 1 |
-| **Faz 6** | Catalog→quote performans raporu | 4-6 sa | Faz 4 |
+| Faz | İş | Tahmin | Bağımlılık | MVP? |
+|---|---|---|---|---|
+| **Faz 2 (önce)** | USD net fiyat doldurma — admin UI + CSV | 4-5 sa | Yok | ✅ |
+| **Faz 1** | Temel katalog motoru + WhatsApp paylaş + timeline event | 1.5-2 gün | Faz 2 | ✅ |
+| **Faz 4** | Public link + analytics + müşteri geri dönüşü | 1 gün | Faz 1 | ✅ |
+| **Faz 6** | Catalog→quote performans raporu | 4-6 sa | Faz 4 | ⏩ MVP+1 |
+| **Faz 3** | Paket çözümler (Installation) | 1 gün | Faz 1 | — |
+| **Faz 5** | Admin katalog profili UI (hard-code→DB) | 4-6 sa | Faz 1 | — |
 
 **Toplam:** 5.5-6.5 iş günü, 6 PR.
+**MVP:** Faz 2 + 1 + 4 = ~3-3.5 iş günü, 3 PR.
 
 ---
 
-## 6. MVP Tanımı (revize — v2)
+## 6. MVP Tanımı (revize — v3)
 
-**Minimum çalışan versiyon: Faz 2 + Faz 1 — 2 gün.**
+**Minimum çalışan versiyon: Faz 2 + Faz 1 + Faz 4 — 3-3.5 iş günü.**
 
-- Sales rep telefonda → müşteri detayında "Katalog Gönder" → modal'da sektör + fiyat seçer → PDF üretir → WhatsApp paylaşır
-- Fiyatlar dolu (Faz 2'den), sektör doğru (Industry'den), kişiselleştirme aktif (CategoryInterest'ten)
-- Müşteri detay timeline'da "Katalog gönderildi" eventi
+WhatsApp paylaşımı core value olduğu için public link (Faz 4) MVP'ye dahil edildi — PDF yalnız başına yarım kalır.
 
-**Ardından önerilen sıra:**
-1. **Faz 4** (Public link + analytics) — sales rep "açıldı mı?" geri besleme alır, en yüksek katma değer
-2. **Faz 3** (Paketler) — Installation segment için sahnede
-3. **Faz 5** (Admin UI) — sales manager profil düzenleyebilir
-4. **Faz 6** (Performans raporu) — uzun dönem optimizasyon
+**MVP işleyişi:**
+1. **Sales rep** telefonda → müşteri detayında "Katalog Gönder" → modal'da sektör + fiyat + marka seçer
+2. **Sistem** USD net + KDV hariç fiyatlı PDF üretir + public link oluşturur
+3. **Sales rep** WhatsApp'tan link gönderir (PDF yedek olarak indirilebilir)
+4. **Müşteri** linke tıklar → mobile-friendly web katalog → "İlgilendim" işaretleyebilir
+5. **Sistem** açılma + ilgi event'lerini takip eder → 24 saat sonra otomatik takip görevi oluşturur
+6. **Müşteri detay timeline:** "Katalog gönderildi · Açıldı · 3 üründe ilgi gösterdi"
+
+**MVP sonrası önerilen sıra:**
+1. **Faz 3** (Paketler) — Installation segment için sahnede
+2. **Faz 5** (Admin UI) — sales manager profil düzenleyebilir
+3. **Faz 6** (Performans raporu) — **Faz 4 ile birlikte yayında** olduğu için aslında MVP+1 ile birlikte gider
 
 ---
 
@@ -460,13 +519,15 @@ PDF kapak sonrası sayfada `Geist` regular ile render edilir.
 | Ürün resmi yok, placeholder göze batar | Orta | Tasarım zayıflar | Kategori default ikonu fallback |
 | Restoran müşteriye 100 ürünlü CCTV katalogu gider | Düşük | İlgisiz teklif | `Industry.slug` doğru atanmalı |
 | PDF boyutu çok büyük | Orta | WhatsApp 16MB limit | Resim 200x200 + JPEG q70 + 60 sayfa max |
-| Public link kötüye kullanım | Düşük | Fiyat sızıntısı | Token + expiresAt + view limit + watermark (B2B) |
-| `wholesalePriceTry` vs `sellingPriceTry` karışıklığı | Orta | Yanlış müşteriye yanlış fiyat | UI'da label sıkı + rol bazlı kısıt |
+| Public link kötüye kullanım | Düşük | Fiyat sızıntısı | Token + `expiresAt` (30 gün) + view limit |
+| `wholesale` vs `retail` mod karışıklığı | Orta | Yanlış müşteriye yanlış fiyat | **SALES rolünde `wholesale` modu YOK** (yetki matrisi §3.8) — yapısal koruma |
 | Sektörü olmayan müşteri (Industry null) | Orta | Belirsizlik | "Genel Katalog" fallback — fiyatsız |
 | Müşteri bir kataloğu iki kez açar — duplicate task | Orta | Görev spam'i | 24 saat içinde tek görev |
 | **CategoryInterest yoksa kişiselleştirme zayıf** (yeni) | Orta | Standart sıralama | Fallback: kategori popüleritesine göre |
 | **Mobile WhatsApp PDF açma sorunu** (yeni) | Yüksek | Müşteri açamaz | Public link öncelikli (Faz 4); PDF yedek |
-| **B2B müşteri kataloğu pazarda paylaşır** (yeni) | Orta | Toptan fiyat sızıntısı | Watermark + müşteri adı kapak + token istatistiği |
+| **B2B müşteri kataloğu pazarda paylaşır** (v3) | Düşük | Bayi fiyatı sızar | Sadece ADMIN wholesale üretebilir + token istatistiği + kapakta müşteri adı kişiselleştirme |
+| **USD kur farkı şikayeti** (v3) | Orta | Müşteri "ben başka kurla bekledim" der | PDF + public katalogta TCMB notu (faturalama günü kuru) |
+| **`wholesalePriceUsd`/`retailPriceUsd` boş ürün** (v3) | Yüksek (başlangıçta) | Katalog seyrek | Faz 2 önce; otomatik filtreleme; `unitCostUsd` varsa marj önerisi |
 | **Cover note'ta yanlış müşteri adı** (yeni) | Düşük | Profesyonellik | Modal'da preview göster |
 | **Aynı müşteriye versiyon karışıklığı** (yeni) | Orta | "Hangisi son?" | Timeline'da gönderilen tüm kataloglar listelenir |
 | **İptal/iade edilmiş ürün katalogta** (yeni) | Düşük | Yanlış teklif | Sadece `isActive=true` + `stockQuantity>0` |
@@ -521,58 +582,90 @@ scripts/
 
 ## 9. Acceptance Smoke Test (yeni — v2)
 
-MVP (Faz 1+2) bittiğinde uçtan uca test:
+MVP (Faz 2 + 1 + 4) bittiğinde uçtan uca test:
 
-1. **Admin** /admin/product-pricing → 78 aktif CCTV ürünün toptan fiyatlarını 15 dk'da doldurur
+1. **Admin** /admin/product-pricing → 78 aktif CCTV ürününün `wholesalePriceUsd` + `retailPriceUsd` (USD net) alanlarını 30 dk'da doldurur
 2. **Sales rep** /customers'a gider → Industry=Güvenlik Tedarikçisi olan bir müşteriyi açar
-3. "Katalog Gönder" → modal açılır → Sektör otomatik seçili, Fiyat=Toptan, Marka=Tümü
+3. "Katalog Gönder" → modal açılır → Sektör otomatik seçili, Fiyat=Retail (SALES'in wholesale modu yok), Marka=Tümü
 4. Cover note ekler: "Ahmet bey, dün konuştuk, AHD ürünlerimize bakın"
-5. PDF üretilir (5 sn) → indirilir veya WhatsApp ile paylaşılır
-6. **Timeline:** Müşteri detayında "Katalog gönderildi: Bayi Toptan Kataloğu, 2026-05-20 14:30" eventi
-7. **MessageTemplate dropdown'unda** {{katalog_linki}} değişkeni kullanılan şablonlar görünür
-
-Faz 4 sonrası:
-8. Müşteri WhatsApp'tan linke tıklar → web katalog açılır
+5. PDF üretilir (5 sn) — fiyatlar **"$X.XX (KDV hariç)"** formatında → public link de oluşur
+6. Sales rep WhatsApp template ile link gönderir (`{{katalog_linki}}` çözülür)
+7. **Timeline:** "Katalog gönderildi: Bayi Kataloğu, 2026-05-20 14:30" eventi
+8. Müşteri WhatsApp'tan linke tıklar → web katalog açılır (USD net fiyatlar)
 9. 2 ürünü "İlgilendim" işaretler → `ProductInterest` otomatik oluşur
 10. Sales rep dashboard'da "Ahmet bey 2 üründe ilgi gösterdi" bildirim
 11. 24 saat sonra otomatik takip görevi oluşur
+12. **Faz 6:** Admin /admin/catalog-performance → "Bu hafta gönderilen 14 katalog, açılma %71, ilgi %43" raporunu görür
 
 ---
 
-## 10. Karar Beklenenler (revize — v2)
+## 10. Sıradaki Aksiyon (v3 — Onaylı)
 
-Bu plan'ı onaylar mısın? Sırayla:
+9 karar maddesi yanıtlandı (bkz. §0.5). Plan dondu, implementation başlayabilir.
 
-1. **Faz sıralaması doğru mu?** (Faz 2 fiyat → Faz 1 motor → Faz 4 public link → Faz 3 paket → Faz 5 admin → Faz 6 rapor)
-2. **Sektör mapping'i** (Tablo §2) doğru mu? Eklemek/kaldırmak istediğin sektör/kategori var mı?
-3. **Şema yaklaşımı**: Yaklaşım A (hard-coded) → Yaklaşım B (DB) geçişi mantıklı mı?
-4. **Paket fiyatlandırma**: Installation segment için pre-defined bundle'lar gerekli mi, yoksa katalog ürün ürün yeterli mi?
-5. **MVP scope'u**: Sadece Faz 2 + Faz 1 ile başlayalım mı, yoksa Public link (Faz 4) MVP'ye dahil mi?
-6. **Yetkilendirme**: SALES rolüne `wholesale` mode'a erişim açık mı, yoksa sadece ADMIN mi yapsın?
-7. **Watermark stratejisi**: B2B toptan fiyatlı katalogta "Gizli — sadece bayi kullanımı" damgası uygun mu?
-8. **Lead capture (Faz 4)**: Public katalogta "Beni arayın" formu gerekli mi, yoksa sadece "İlgilendim" yeterli mi?
-9. **Performans raporu (Faz 6)**: Sales manager için gerekli mi, yoksa daha sonra eklensin mi?
+**MVP yolu (3 PR, ~3-3.5 iş günü):**
 
-Onay verirsen Faz 2'den başlarım (ürün fiyatlarını dolduran admin UI + Trendyol backfill scripti).
+1. **PR-1 (Faz 2):** USD net fiyat şeması + admin doldurma UI
+   - Schema migration: `Product.wholesalePriceUsd` + `Product.retailPriceUsd`
+   - `/admin/product-pricing` sayfası — filtreli inline edit
+   - Kategori bazında toplu marj uygulama
+   - CSV import şablonu
+
+2. **PR-2 (Faz 1):** Katalog motoru + PDF + WhatsApp paylaş
+   - `lib/catalog-mapping.ts` (12 sektör hard-coded)
+   - `lib/catalog-pdf-generator.ts` (pdf-lib + Geist + logo)
+   - `app/api/catalogs/[customerId]/pdf/route.ts`
+   - `components/customers/catalog-modal.tsx`
+   - Permission: `CATALOGS_CREATE` (ADMIN + SALES), `CATALOGS_WHOLESALE_MODE` (ADMIN only)
+   - WhatsApp template: `{{katalog_linki}}` değişkeni
+
+3. **PR-3 (Faz 4 + Faz 6):** Public link + analytics + performans raporu
+   - Schema: `CatalogShare` + `CatalogProductInterest`
+   - `app/c/[token]/page.tsx` (mobile-friendly web katalog)
+   - "İlgilendim" event + otomatik takip görevi (24 saat)
+   - `/admin/catalog-performance` sayfası (Faz 6 hemen yayında)
+
+**Sonraki adım:** PR-1'i (Faz 2) başlatmak için onay bekleniyor.
 
 ---
 
-## v2 Eklemeleri (özet)
+## v3 Değişiklikleri (özet — v2'den)
+
+**Yeni kurallar:**
+- ⚡ Tüm katalog fiyatları **USD + KDV hariç** (sabit, override yok)
+- 🔒 SALES rolü `wholesale` modunu seçemez (sadece ADMIN)
+- 🚫 Watermark ve lead capture kaldırıldı (yetki matrisi yeterli)
+
+**MVP scope genişlemesi:**
+- Faz 2 + Faz 1 → **Faz 2 + Faz 1 + Faz 4** (3 PR)
+- Faz 6 (performans raporu) artık Faz 4 ile birlikte yayında — sales manager geri besleme günden bir alır
+
+**Schema değişiklikleri:**
+- `Product.wholesalePriceUsd` (yeni)
+- `Product.retailPriceUsd` (yeni)
+- TRY alanları dokunulmaz (quote sistemi bağımlı)
+
+**Yetki güçlendirmesi:**
+- `CATALOGS_CREATE` (ADMIN + SALES)
+- `CATALOGS_WHOLESALE_MODE` (ADMIN only)
+
+---
+
+## v2 Eklemeleri (özet — referans)
 
 **v1'e göre yeni içerikler:**
 - §0: Genişletilmiş vizyon (takip + ilgi + otomatik görev)
 - §1.3: Mevcut altyapı reuse tablosu
 - §3.1: Detaylı PDF sayfa yapısı (7 bölüm)
 - §3.3: Yeni şemalar (ProductBundle + CatalogShare + CatalogProductInterest)
-- §3.4: Fiyatlama detayı (3 mode + boş fiyat davranışı)
+- §3.4: Fiyatlama detayı
 - §3.5: Kişiselleştirme (CategoryInterest + tags + currentSupplier)
 - §3.6: Marka filtresi
 - §3.8: Yetkilendirme matrisi
 - §3.9: Sales rep kişisel mesaj
 - §4 Faz 1: Timeline event + WhatsApp template entegrasyonu
 - §4 Faz 4: Lead capture + OG meta tags + otomatik görev
-- §4 Faz 6: Yeni — Performans raporu (catalog→quote conversion)
-- §7: Genişletilmiş risk matrisi (8 yeni edge case)
+- §4 Faz 6: Performans raporu (catalog→quote conversion)
+- §7: Genişletilmiş risk matrisi
 - §8: Implementation file structure
 - §9: Acceptance smoke test
-- §10: 9 karar maddesi (v1'de 5'ti)
