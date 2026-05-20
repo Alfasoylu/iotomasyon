@@ -285,13 +285,23 @@ export function Sidebar({ items }: SidebarProps) {
         }`}
       >
         {/* Brand */}
-        <div className="flex-shrink-0 border-b border-slate-200 px-5 py-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-            Iotomasyon
-          </p>
-          <h1 className="mt-1.5 text-xl font-semibold text-slate-900">
-            Dahili CRM
-          </h1>
+        <div className="flex-shrink-0 border-b border-slate-200 px-4 py-4">
+          <div className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/Soylu logo şeffaf.png"
+              alt="Alfa Soylu Elektronik"
+              className="h-10 w-10 object-contain"
+            />
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-slate-400 leading-tight">
+                Alfa Soylu Elektronik
+              </p>
+              <h1 className="text-base font-semibold text-slate-900 leading-tight">
+                Dahili CRM
+              </h1>
+            </div>
+          </div>
         </div>
 
         {/* Scrollable navigation */}

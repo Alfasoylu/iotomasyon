@@ -1,8 +1,10 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/login-form";
 import { Card } from "@/components/ui/card";
 import { getCurrentSession } from "@/lib/auth";
+import { COMPANY_SETTINGS } from "@/lib/company-settings";
 
 export default async function LoginPage() {
   const user = await getCurrentSession();
@@ -15,12 +17,24 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.2fr_0.9fr]">
         <section className="rounded-[2rem] border border-[color:var(--border)] bg-slate-950 px-8 py-10 text-white shadow-2xl">
-          <p className="text-sm uppercase tracking-[0.4em] text-white/60">iotomasyon</p>
+          <div className="flex items-center gap-3">
+            <Image
+              src={COMPANY_SETTINGS.logoUrl}
+              alt={COMPANY_SETTINGS.companyName}
+              width={56}
+              height={56}
+              className="bg-white/10 rounded-xl p-1"
+            />
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.4em] text-white/60">iotomasyon CRM</p>
+              <p className="text-base font-bold tracking-tight text-white">{COMPANY_SETTINGS.companyName}</p>
+            </div>
+          </div>
           <h1 className="mt-6 max-w-lg text-4xl font-semibold leading-tight">
             Müşteri, teklif ve görev yönetimini tek merkezden yönetin.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-slate-300">
-            IoT ve otomasyon sektörüne özel CRM. Müşteri takibi, teklif hazırlama,
+            Güvenlik kameraları ve elektronik sistemler için özel CRM. Müşteri takibi, teklif hazırlama,
             görev planlaması ve kampanya yönetimi tek ekranda.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
