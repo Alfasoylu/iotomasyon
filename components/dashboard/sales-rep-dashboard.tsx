@@ -4,6 +4,7 @@ import { Phone, MessageCircle, Zap, Target, FileText, Trophy, Clock, AlertTriang
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CustomerAvatar } from "@/components/customers/customer-avatar";
+import { SalesRepFirstTimeBanner } from "@/components/dashboard/sales-rep-first-time-banner";
 import { telLink, whatsappLink } from "@/lib/customer-contact";
 import type { SalesRepKPIs } from "@/services/sales-rep-kpi-service";
 import type { CohortCounts } from "@/services/customer-cohort-service";
@@ -81,6 +82,9 @@ export function SalesRepDashboard({
           Bugün ne yapacaksın? Aşağıdaki müşteriyi ara, görevini bitir, hedefe ilerle.
         </p>
       </div>
+
+      {/* P5 — İlk giriş onboarding banner (LS hatırlar, bir kez gösterir) */}
+      <SalesRepFirstTimeBanner />
 
       {/* Bugün KPI manşet bandı */}
       <Card className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
