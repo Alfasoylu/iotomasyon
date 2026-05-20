@@ -7,12 +7,18 @@ IOTOMASYON is evolving from an internal CRM into an internal business operating 
 It is not yet that full operating system.
 
 Today, it is best described as:
-- an internal CRM foundation
+- an internal CRM foundation (Phase 6 complete)
 - a quote and sales workflow foundation
 - a relationship-aware operational panel
+- a multi-channel marketplace sales intelligence platform (Phase 92, 2026-05-20)
+- a call-center optimized sales workspace v1 (Phase 94, 2026-05-20)
+
+Phase 95 (planned, in execution): full Sales Operating System — ⌘K command
+palette + Power Queue + outcome chips + smart priority sorting + tag/DND/
+avatar + info-completeness ranking + anti-monotony rotation.
 
 It is not yet:
-- a marketplace operating system (write-side sync deferred)
+- a marketplace operating system (write-side sync deferred — Entegra'nın işi)
 - a procurement intelligence system (Phases 19–21)
 - a full owner-intelligence dashboard (Phase 22 KPI dashboard missing)
 
