@@ -310,6 +310,44 @@ export default async function CustomerDetailPage({
             <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
               <OutcomeChips customerId={customer.id} />
             </div>
+
+            {/* P2 — Sektör & Teknoloji compact strip (çağrı sırasında hızla görsel referans) */}
+            {(customer.industry || customer.usedTech?.length || customer.currentSupplier) && (
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+                  {customer.industry && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-blue-700 uppercase tracking-wide">Sektör</span>
+                      <span className="font-medium text-slate-900">
+                        {customer.industry.parent?.name ? `${customer.industry.parent.name} → ` : ""}
+                        {customer.industry.name}
+                      </span>
+                    </span>
+                  )}
+                  {customer.usedTech?.length > 0 && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-blue-700 uppercase tracking-wide">Teknoloji</span>
+                      <span className="flex flex-wrap gap-1">
+                        {customer.usedTech.map((tech) => (
+                          <span
+                            key={tech}
+                            className="rounded bg-white px-1.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-200"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </span>
+                    </span>
+                  )}
+                  {customer.currentSupplier && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-amber-700 uppercase tracking-wide">Rakip</span>
+                      <span className="font-medium text-amber-800">{customer.currentSupplier}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 
@@ -980,49 +1018,7 @@ export default async function CustomerDetailPage({
             </Card>
           )}
 
-          {/* Phase 99 — Sektör & Teknoloji Profili */}
-          {(customer.industry || customer.usedTech?.length || customer.currentSupplier) && (
-            <Card className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Sektör & Teknoloji
-              </p>
-              <div className="mt-3 space-y-3 text-sm">
-                {customer.industry && (
-                  <div>
-                    <p className="text-xs text-slate-500">Sektör</p>
-                    <p className="mt-0.5 font-medium text-slate-900">
-                      {customer.industry.parent?.name ? `${customer.industry.parent.name} → ` : ""}
-                      {customer.industry.name}
-                    </p>
-                  </div>
-                )}
-                {customer.usedTech?.length > 0 && (
-                  <div>
-                    <p className="text-xs text-slate-500">Kullandığı teknoloji</p>
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {customer.usedTech.map((tech) => (
-                        <span
-                          key={tech}
-                          className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {customer.currentSupplier && (
-                  <div>
-                    <p className="text-xs text-slate-500">Mevcut tedarikçi (rakip)</p>
-                    <p className="mt-0.5 font-medium text-amber-700">{customer.currentSupplier}</p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {/* P0: "Hızlı işlemler" kartı sol bloktaki aksiyon paneli ile duplicate olduğu için kaldırıldı.
-              WhatsApp template dropdown sol blok'taki ARA/WhatsApp aksiyon satırına taşındı. */}
+          {/* P2: Sektör & Teknoloji sol bloka taşındı (hero altına). Sağ panelde tekrar gösterme. */}
 
           {/* Phase 96c — Ürün önerileri (kategori geçmişine göre) */}
           {productSuggestions.length > 0 && (
