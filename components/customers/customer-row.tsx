@@ -111,7 +111,7 @@ export function CustomerRow({
   const cityDisplay = customer.city;
 
   return (
-    <Card className={`p-4 transition hover:border-slate-300 hover:shadow-sm ${customer.doNotCall ? "opacity-60" : ""}`}>
+    <Card data-customer-row={customer.id} className={`p-4 transition hover:border-slate-300 hover:shadow-sm ${customer.doNotCall ? "opacity-60" : ""}`}>
       <div className="flex flex-col gap-3 md:flex-row md:items-start">
         {/* Avatar + Lead skoru kombo (sol blok) */}
         <div className="flex-shrink-0 flex items-center gap-2.5">

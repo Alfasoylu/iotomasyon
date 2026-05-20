@@ -24,6 +24,7 @@ import { listAttributes } from "@/services/attribute-service";
 import { SalesRepKpiBar } from "@/components/customers/sales-rep-kpi-bar";
 import { SavedViewSelector } from "@/components/customers/saved-view-selector";
 import { CustomerBulkList } from "@/components/customers/customer-bulk-list";
+import { KeyboardNav } from "@/components/customers/keyboard-nav";
 import { listMySavedViews } from "@/lib/actions/saved-view-actions";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -105,6 +106,7 @@ export default async function CustomersPage({
         actions={
           <>
             <PageHelp pageKey="customers" />
+            <KeyboardNav />
             <SavedViewSelector views={savedViews} currentUserId={user.id} resource="customers" />
             <Link href="/customers/new">
               <Button>Yeni müşteri</Button>
