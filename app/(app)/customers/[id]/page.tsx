@@ -7,6 +7,8 @@ import { CategoryInterestDeleteButton } from "@/components/categories/category-i
 import { CategoryInterestForm } from "@/components/categories/category-interest-form";
 import { CustomerDeleteButton } from "@/components/customers/customer-delete-button";
 import { CustomerWhatsAppButton } from "@/components/customers/customer-whatsapp-button";
+import { CatalogModal } from "@/components/customers/catalog-modal";
+import { listCatalogProfiles, getCatalogProfile } from "@/lib/catalog-mapping";
 import { CustomerProductSuggestionsWidget } from "@/components/customers/customer-product-suggestions-widget";
 import { getProductSuggestionsForCustomer } from "@/services/customer-product-suggestions-service";
 import { CustomerInterestDeleteButton } from "@/components/customers/customer-interest-delete-button";
@@ -68,25 +70,49 @@ export default async function CustomerDetailPage({
   const currentUser = await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
   const canAssign = await checkPermission(currentUser, PERMISSIONS.TASKS_ASSIGN);
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats, statsMap, timelineEvents, whatsAppTemplates, productSuggestions] =
-    await Promise.all([
-      getCustomerById(id),
-      listCustomerInterestProducts(),
-      listCategoriesForSelect(),
-      listAttributes(),
-      listQuoteTemplates(),
-      canAssign ? listUsersWithTasks() : Promise.resolve([]),
-      fetchCustomerMarketplaceStats(id),
-      getCustomerStats([id]),
-      listCustomerTimeline(id, 100),
-      prisma.messageTemplate.findMany({
-        where: { isActive: true, channel: "whatsapp" },
-        select: { id: true, name: true, body: true, category: true },
-        orderBy: [{ usageCount: "desc" }, { name: "asc" }],
-        take: 20,
-      }).catch(() => [] as Array<{ id: string; name: string; body: string; category: string | null }>),
-      getProductSuggestionsForCustomer(id, 6).catch(() => []),
-    ]);
+  const [
+    { databaseAvailable, customer },
+    productOptionsResult,
+    categoryOptionsResult,
+    allAttributes,
+    quoteTemplates,
+    taskUsers,
+    marketplaceStats,
+    statsMap,
+    timelineEvents,
+    whatsAppTemplates,
+    productSuggestions,
+    canCreateCatalog,
+    canWholesale,
+    catalogBrands,
+  ] = await Promise.all([
+    getCustomerById(id),
+    listCustomerInterestProducts(),
+    listCategoriesForSelect(),
+    listAttributes(),
+    listQuoteTemplates(),
+    canAssign ? listUsersWithTasks() : Promise.resolve([]),
+    fetchCustomerMarketplaceStats(id),
+    getCustomerStats([id]),
+    listCustomerTimeline(id, 100),
+    prisma.messageTemplate.findMany({
+      where: { isActive: true, channel: "whatsapp" },
+      select: { id: true, name: true, body: true, category: true },
+      orderBy: [{ usageCount: "desc" }, { name: "asc" }],
+      take: 20,
+    }).catch(() => [] as Array<{ id: string; name: string; body: string; category: string | null }>),
+    getProductSuggestionsForCustomer(id, 6).catch(() => []),
+    checkPermission(currentUser, PERMISSIONS.CATALOGS_CREATE),
+    checkPermission(currentUser, PERMISSIONS.CATALOGS_WHOLESALE_MODE),
+    prisma.product
+      .findMany({
+        where: { isActive: true, brand: { not: null } },
+        select: { brand: true },
+        distinct: ["brand"],
+        orderBy: { brand: "asc" },
+      })
+      .catch(() => [] as Array<{ brand: string | null }>),
+  ]);
   const stats = statsMap.get(id) ?? null;
 
   if (!databaseAvailable) {
@@ -303,6 +329,27 @@ export default async function CustomerDetailPage({
                 lastContactedAt={customer.lastContactedAt}
                 templates={whatsAppTemplates}
               />
+              {canCreateCatalog && (
+                <CatalogModal
+                  customerId={customer.id}
+                  customerName={customer.name}
+                  customerCompany={customer.company}
+                  customerPhone={customer.phone}
+                  customerWhatsapp={customer.whatsapp}
+                  customerIndustrySlug={customer.industry?.slug ?? null}
+                  profiles={listCatalogProfiles().map((p) => ({
+                    slug: p.slug,
+                    title: p.title,
+                    subtitle: p.subtitle,
+                    defaultPriceMode: p.defaultPriceMode,
+                  }))}
+                  canWholesale={canWholesale}
+                  brands={catalogBrands.map((b) => b.brand!).filter(Boolean)}
+                  defaultProfileSlug={
+                    getCatalogProfile(customer.industry?.slug).slug
+                  }
+                />
+              )}
               <CustomerRowActions
                 customerId={customer.id}
                 phone={customer.phone}

@@ -144,6 +144,12 @@ const PERMISSIONS = [
   // Executive
   { key: "executive.read",              name: "Yönetici Paneli",                 category: "executive" },
 
+  // Catalogs (Faz 1-6)
+  { key: "catalogs.read",               name: "Katalog Görüntüleme",             category: "catalogs" },
+  { key: "catalogs.create",             name: "Katalog Üretme",                  category: "catalogs" },
+  { key: "catalogs.wholesaleMode",      name: "Katalog Toptan Fiyatlandırma (Bayi)", category: "catalogs" },
+  { key: "catalogs.pricingWrite",       name: "Katalog USD Fiyat Yazma",         category: "catalogs" },
+
   // Dangerous — registered in Permission table but NEVER in RolePermission.
   // Only accessible via explicit UserPermission grant.
   { key: "migrations.approve",          name: "Migrasyon Onayı ⚠️",              category: "dangerous" },
@@ -175,6 +181,9 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
     "attributes.read",
     "search.read",
     "activity.read",
+    // Faz 1 — Katalog (wholesale modu YOK, sadece retail/hidden)
+    "catalogs.read",
+    "catalogs.create",
   ],
   OPERATIONS: [
     "products.read",
