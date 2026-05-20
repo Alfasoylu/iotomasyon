@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { MobileNavButton } from "@/components/dashboard/mobile-nav-button";
 import { Sidebar, type NavItem } from "@/components/dashboard/sidebar";
+import { CommandPalette } from "@/components/layout/command-palette";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -403,6 +404,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-3">
+              <CommandPalette />
               <div className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-right md:block">
                 <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
                   Hesap
