@@ -112,7 +112,14 @@ export async function createCustomerNoteAction(
       },
     });
 
+    // Hızlı not de lastContactedAt'i ileri sürmeli (sales rep "konuştum" diye not düşüyor)
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { lastContactedAt: new Date() },
+    });
+
     revalidatePath(`/customers/${customerId}`);
+    revalidatePath("/customers");
     return { ok: true };
   } catch {
     return {
@@ -162,6 +169,7 @@ export async function createCustomerTaskAction(
     });
 
     revalidatePath(`/customers/${customerId}`);
+    revalidatePath("/customers");
     revalidatePath("/dashboard");
     return { ok: true };
   } catch {
