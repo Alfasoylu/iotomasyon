@@ -23,6 +23,7 @@ export function CustomerFilters({
   initialOwnedById,
   initialAttributeId,
   initialCustomerType,
+  initialSegment = "all",
   users,
   attributes = [],
 }: {
@@ -32,6 +33,7 @@ export function CustomerFilters({
   initialOwnedById: string;
   initialAttributeId: string;
   initialCustomerType: string;
+  initialSegment?: string;
   users: UserOption[];
   attributes?: AttributeOption[];
 }) {
@@ -43,10 +45,11 @@ export function CustomerFilters({
   const [ownedById,    setOwnedById]    = useState(initialOwnedById);
   const [attributeId,  setAttributeId]  = useState(initialAttributeId);
   const [customerType, setCustomerType] = useState(initialCustomerType);
+  const [segment,      setSegment]      = useState(initialSegment);
 
   return (
     <form
-      className="grid gap-3 md:grid-cols-[minmax(0,2fr)_160px_160px_160px_160px_160px_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,2fr)_140px_140px_140px_140px_140px_150px_auto]"
       onSubmit={(event) => {
         event.preventDefault();
 
@@ -57,6 +60,7 @@ export function CustomerFilters({
           ownedById:    ownedById    !== "all" ? ownedById    : undefined,
           attributeId:  attributeId  !== "all" ? attributeId  : undefined,
           customerType: customerType !== "all" ? customerType : undefined,
+          segment:      segment      !== "all" ? segment      : undefined,
         });
 
         router.push(`/customers${nextQuery}`);
@@ -125,6 +129,18 @@ export function CustomerFilters({
         {CUSTOMER_TYPE_OPTIONS.map((t) => (
           <option key={t} value={t}>{CUSTOMER_TYPE_LABELS[t]}</option>
         ))}
+      </select>
+
+      <select
+        value={segment}
+        onChange={(event) => setSegment(event.target.value)}
+        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+        title="Çatı: B2B Bayi / Montaj Fırsatı / Pazaryeri"
+      >
+        <option value="all">Tüm çatılar</option>
+        <option value="B2B_RESELLER">B2B Bayilerim</option>
+        <option value="INSTALLATION">Montaj Fırsatları</option>
+        <option value="MARKETPLACE">Pazaryeri</option>
       </select>
 
       <Button type="submit">Filtrele</Button>

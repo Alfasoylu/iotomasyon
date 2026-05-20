@@ -13,6 +13,7 @@ export type CustomerFilters = {
   attributeId?: string;
   customerType?: string;
   leadListId?: string;
+  segment?: string;
 };
 
 export type UserOption = {
@@ -116,6 +117,10 @@ export async function listCustomers(filters: CustomerFilters) {
     where.leadListMemberships = { some: { leadListId: filters.leadListId } };
   }
 
+  if (filters.segment && filters.segment !== "all") {
+    where.segment = filters.segment as import("@prisma/client").CustomerSegment;
+  }
+
   const orderBy = [{ updatedAt: "desc" as const }, { name: "asc" as const }];
 
   try {
@@ -153,7 +158,7 @@ export async function listCustomers(filters: CustomerFilters) {
           },
           orderBy,
         });
-        // Merge with null stubs for Phase 6 + 95b fields to satisfy TypeScript types.
+        // Merge with null stubs for Phase 6 + 95b + 98 fields to satisfy TypeScript types.
         const customers = rows.map((r) => ({
           ...r,
           monthlySalesPotential: null as null,
@@ -164,6 +169,7 @@ export async function listCustomers(filters: CustomerFilters) {
           callAttempts: 0,
           lastCallAttemptAt: null as null,
           shownInQueueCount: 0,
+          segment: null as null,
         }));
         return { databaseAvailable: true as const, customers };
       } catch {
