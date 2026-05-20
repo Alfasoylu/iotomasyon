@@ -1,25 +1,36 @@
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { Users, FileSpreadsheet } from "lucide-react";
 
 import { CustomerImportForm } from "@/components/customers/customer-import-form";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageHelp } from "@/components/layout/page-help";
+import { EmptyState } from "@/components/layout/empty-state";
 import { CustomerKanbanBoard } from "@/components/customers/customer-kanban-board";
-import { Badge } from "@/components/ui/badge";
+import { CustomerCohortCards } from "@/components/customers/customer-cohort-cards";
+import { CustomerRow } from "@/components/customers/customer-row";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CustomerFilters } from "@/components/customers/customer-filters";
-import {
-  formatCustomerStatus,
-  getCustomerStatusTone,
-} from "@/lib/customer-utils";
-import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 import { listCustomers, listUsersForSelect } from "@/services/customer-service";
+import {
+  getCustomerCohortCounts,
+  getCustomerIdsForCohort,
+  getCustomerStats,
+  type CohortKey,
+} from "@/services/customer-cohort-service";
 import { listAttributes } from "@/services/attribute-service";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
+
+function fmtTry(n: number): string {
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
 
 export default async function CustomersPage({
   searchParams,
@@ -34,12 +45,31 @@ export default async function CustomersPage({
   const ownedById    = typeof params.ownedById    === "string" ? params.ownedById    : "all";
   const attributeId  = typeof params.attributeId  === "string" ? params.attributeId  : "all";
   const customerType = typeof params.customerType === "string" ? params.customerType : "all";
+  const cohortParam  = typeof params.cohort       === "string" ? params.cohort       : null;
+  const validCohorts: CohortKey[] = ["todayCall", "dormant", "new", "openQuotes"];
+  const cohort: CohortKey | null =
+    cohortParam && (validCohorts as string[]).includes(cohortParam)
+      ? (cohortParam as CohortKey)
+      : null;
 
-  const [{ databaseAvailable, customers }, users, attributes] = await Promise.all([
-    listCustomers({ q: query, status, source, ownedById, attributeId, customerType }),
-    listUsersForSelect(),
-    listAttributes(),
-  ]);
+  const [{ databaseAvailable, customers }, users, attributes, cohortCounts] =
+    await Promise.all([
+      listCustomers({ q: query, status, source, ownedById, attributeId, customerType }),
+      listUsersForSelect(),
+      listAttributes(),
+      getCustomerCohortCounts(),
+    ]);
+
+  // Cohort filtresi varsa ID set'i ile filtrele
+  let filteredCustomers = customers;
+  if (cohort) {
+    const cohortIds = await getCustomerIdsForCohort(cohort);
+    filteredCustomers = customers.filter((c) => cohortIds.has(c.id));
+  }
+
+  const statsMap = databaseAvailable
+    ? await getCustomerStats(filteredCustomers.map((c) => c.id))
+    : new Map();
 
   return (
     <div className="space-y-6">
@@ -47,7 +77,7 @@ export default async function CustomersPage({
         icon={Users}
         breadcrumb={[{ label: "Satış" }, { label: "Müşteriler" }]}
         title="Müşteriler"
-        subtitle="Tüm müşteri portföyün. Kanban görünümüyle satış aşamasını takip et, kayıt aç, görev ata."
+        subtitle="Tüm müşteri portföyün. 'Bugün senin için' kartlarından günlük iş listesini hızla aç."
         actions={
           <>
             <PageHelp pageKey="customers" />
@@ -58,6 +88,32 @@ export default async function CustomersPage({
         }
       />
 
+      {/* Cohort kartları */}
+      {databaseAvailable && (
+        <CustomerCohortCards counts={cohortCounts} activeCohort={cohort} />
+      )}
+
+      {/* Quick KPI şeridi */}
+      {databaseAvailable && (
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
+          <span>
+            🧑 <strong className="text-slate-900">{cohortCounts.totalActive.toLocaleString("tr-TR")}</strong> aktif portföy
+          </span>
+          <span>
+            📞 <strong className="text-slate-900">{cohortCounts.weeklyContacted.toLocaleString("tr-TR")}</strong> bu hafta arandı
+          </span>
+          <span>
+            📄 <strong className="text-slate-900">{fmtTry(cohortCounts.openQuoteAmount)}</strong> açık teklif
+          </span>
+          {cohortCounts.overdueTaskCount > 0 && (
+            <span className="text-rose-600">
+              ⏰ <strong>{cohortCounts.overdueTaskCount}</strong> vadesi geçmiş görev
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Filtreler */}
       <Card className="p-5">
         <CustomerFilters
           initialQuery={query}
@@ -71,169 +127,70 @@ export default async function CustomersPage({
         />
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
-        <Card className="p-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Satış hattı
-          </p>
-          <h2 className="mt-3 text-xl font-semibold text-slate-950">
-            Müşteri durum panosu
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Kayıtları durum bazlı izleyin ve satış sürecindeki yoğunluğu görün.
-          </p>
-        </Card>
+      {/* Kanban — yalnızca cohort filtresi yokken göster (gürültü olmasın) */}
+      {databaseAvailable && !cohort && (
+        <CustomerKanbanBoard customers={customers} />
+      )}
 
-        <Card className="p-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
-            CSV ile içe aktar
-          </p>
-          <h2 className="mt-3 text-xl font-semibold text-slate-950">
-            Müşteri listesini içe aktar
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            Kolon adlari: name, company, phone, whatsapp, email, taxNumber, address,
-            city, country, notes, status
-          </p>
-          <div className="mt-5">
-            <CustomerImportForm />
-          </div>
-        </Card>
-      </div>
-
-      <CustomerKanbanBoard customers={customers} />
-
-      {!databaseAvailable ? (
+      {!databaseAvailable && (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
           Veritabanı bağlantısı şu anda kullanılamıyor. Müşteri listesi gösterilemiyor.
         </Card>
-      ) : null}
-
-      {/* Mobile card list (md altı) */}
-      {databaseAvailable && customers.length > 0 && (
-        <div className="md:hidden space-y-2">
-          {customers.map((customer) => (
-            <Link
-              key={customer.id}
-              href={`/customers/${customer.id}`}
-              className="block rounded-2xl border border-slate-200 bg-white p-4 transition active:bg-slate-50"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-900 truncate">
-                    {customer.name}
-                  </p>
-                  {customer.company && (
-                    <p className="text-xs text-slate-500 truncate mt-0.5">
-                      {customer.company}
-                    </p>
-                  )}
-                </div>
-                <Badge tone={getCustomerStatusTone(customer.status)}>
-                  {formatCustomerStatus(customer.status)}
-                </Badge>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
-                {customer.phone && (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400">Tel</p>
-                    <p className="mt-0.5 font-medium">{customer.phone}</p>
-                  </div>
-                )}
-                {customer.city && (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400">Şehir</p>
-                    <p className="mt-0.5 font-medium">{customer.city}</p>
-                  </div>
-                )}
-                {customer.customerType && (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400">Tip</p>
-                    <p className="mt-0.5 font-medium">
-                      {CUSTOMER_TYPE_LABELS[customer.customerType]}
-                    </p>
-                  </div>
-                )}
-                {customer.owner?.name && (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400">Sorumlu</p>
-                    <p className="mt-0.5 font-medium truncate">{customer.owner.name}</p>
-                  </div>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
       )}
 
-      {/* Desktop tablo (md+) */}
-      <Card className="hidden md:block overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.25em] text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Müşteri</th>
-                <th className="px-4 py-3">İletişim</th>
-                <th className="px-4 py-3">Şehir</th>
-                <th className="px-4 py-3">Tip</th>
-                <th className="px-4 py-3">Kaynak</th>
-                <th className="px-4 py-3">Sorumlu</th>
-                <th className="px-4 py-3">Durum</th>
-                <th className="px-4 py-3 text-right">Aksiyon</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white text-sm">
-              {customers.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
-                    Bu filtrelerle eşleşen müşteri bulunamadı.
-                  </td>
-                </tr>
-              ) : (
-                customers.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-4">
-                      <p className="font-semibold text-slate-900">{customer.name}</p>
-                      <p className="text-slate-500">{customer.company ?? "-"}</p>
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      <p>{customer.phone ?? "-"}</p>
-                      <p>{customer.email ?? customer.whatsapp ?? "-"}</p>
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {[customer.city, customer.country].filter(Boolean).join(" / ") || "-"}
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {customer.customerType
-                        ? CUSTOMER_TYPE_LABELS[customer.customerType]
-                        : "-"}
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {customer.source ?? "-"}
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {customer.owner?.name ?? "-"}
-                    </td>
-                    <td className="px-4 py-4">
-                      <Badge tone={getCustomerStatusTone(customer.status)}>
-                        {formatCustomerStatus(customer.status)}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-4 text-right">
-                      <Link
-                        href={`/customers/${customer.id}`}
-                        className="text-sm font-semibold text-slate-900 hover:text-[color:var(--accent)]"
-                      >
-                        Detay
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Yeni müşteri listesi — info-dense kartlar */}
+      {databaseAvailable && (
+        <section>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">
+            {cohort === "todayCall" ? "🔴 Bugün Aranacaklar" :
+             cohort === "dormant" ? "🟡 Uyuyan Müşteriler" :
+             cohort === "new" ? "🟢 Yeni Fırsatlar" :
+             cohort === "openQuotes" ? "🔵 Açık Teklifler" :
+             "Müşteri Listesi"}
+            {" "}
+            <span className="text-slate-400 font-normal">({filteredCustomers.length})</span>
+          </p>
+
+          {filteredCustomers.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Bu filtrelerle eşleşen müşteri bulunamadı"
+              hint="Filtreleri temizleyebilir veya yeni müşteri ekleyebilirsin."
+              action={
+                <Link href="/customers/new">
+                  <Button>Yeni müşteri ekle</Button>
+                </Link>
+              }
+            />
+          ) : (
+            <div className="space-y-2">
+              {filteredCustomers.map((customer) => (
+                <CustomerRow
+                  key={customer.id}
+                  customer={customer}
+                  stats={statsMap.get(customer.id) ?? null}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* CSV import — sayfa altında collapsible */}
+      <details className="rounded-2xl border border-slate-200 bg-white">
+        <summary className="cursor-pointer list-none px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          <span className="inline-flex items-center gap-2">
+            <FileSpreadsheet className="h-4 w-4 text-slate-400" />
+            CSV ile toplu müşteri içe aktar
+          </span>
+        </summary>
+        <div className="border-t border-slate-100 px-5 py-4">
+          <p className="text-xs text-slate-500 mb-3">
+            Kolon adları: name, company, phone, whatsapp, email, taxNumber, address, city, country, notes, status
+          </p>
+          <CustomerImportForm />
         </div>
-      </Card>
+      </details>
     </div>
   );
 }
