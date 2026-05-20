@@ -153,13 +153,8 @@ export function CustomerWhatsAppButton({
         </div>
       )}
 
-      <button
-        disabled={isPending}
-        onClick={logContact}
-        className="inline-flex h-9 items-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-50"
-      >
-        {isPending ? "..." : "İletişim kuruldu"}
-      </button>
+      {/* P6/CD2-02: "İletişim kuruldu" butonu kaldırıldı.
+          WhatsApp aç ya da telefon ARA tıklandığında otomatik markCustomerContacted çalışıyor + outcome chip'ler de bunu yapıyor. */}
     </div>
   );
 }

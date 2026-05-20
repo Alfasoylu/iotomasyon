@@ -10,6 +10,7 @@ import {
 import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 import type { CustomerStatus } from "@prisma/client";
 import { displayPhone } from "@/lib/customer-contact";
+import { shortenCustomerName } from "@/lib/display-helpers";
 import { calcLeadScore, daysSinceContact } from "@/lib/customer-lead-score";
 import { calcInfoCompleteness } from "@/lib/customer-info-completeness";
 import type { CustomerStatsRow } from "@/services/customer-cohort-service";
@@ -137,10 +138,11 @@ export function CustomerRow({
               <Link
                 href={`/customers/${customer.id}`}
                 className="text-base font-semibold text-slate-950 hover:text-slate-700"
+                title={customer.name}
               >
-                {customer.name}
+                {shortenCustomerName(customer.name, 60)}
               </Link>
-              {customer.company && (
+              {customer.company && customer.company.trim() !== customer.name.trim() && (
                 <p className="text-xs text-slate-500 truncate">{customer.company}</p>
               )}
             </div>

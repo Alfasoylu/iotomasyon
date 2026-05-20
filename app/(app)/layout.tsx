@@ -415,7 +415,23 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         : null;
     }),
   );
-  const allowedNav = navChecks.filter(Boolean) as NavItem[];
+  let allowedNav = navChecks.filter(Boolean) as NavItem[];
+
+  // P6/D2-05: SALES rolündeki kullanıcılar yönetim/ithalat/finans menülerini görmesin
+  if (user.role === "SALES") {
+    const SALES_HIDDEN_SECTIONS = new Set(["Günlük Durum", "İthalat", "Finans", "Sistem", "Pazaryerleri"]);
+    const SALES_HIDDEN_HREFS = new Set([
+      "/admin/sales-performance",
+      "/admin/lead-source-roi",
+      "/admin/sales-opportunities",
+      "/admin/task-board",
+    ]);
+    allowedNav = allowedNav.filter(
+      (item) =>
+        !SALES_HIDDEN_HREFS.has(item.href) &&
+        (!item.section || !SALES_HIDDEN_SECTIONS.has(item.section)),
+    );
+  }
 
   const hasAccess = allowedNav.some((item) => item.href !== "/dashboard");
   if (!hasAccess) redirect("/no-access");

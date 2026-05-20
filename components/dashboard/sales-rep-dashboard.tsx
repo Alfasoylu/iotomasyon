@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { CustomerAvatar } from "@/components/customers/customer-avatar";
 import { SalesRepFirstTimeBanner } from "@/components/dashboard/sales-rep-first-time-banner";
 import { telLink, whatsappLink } from "@/lib/customer-contact";
+import { shortenCustomerName } from "@/lib/display-helpers";
 import type { SalesRepKPIs } from "@/services/sales-rep-kpi-service";
 import type { CohortCounts } from "@/services/customer-cohort-service";
 
@@ -147,11 +148,12 @@ export function SalesRepDashboard({
                 <Link
                   href={`/customers/${nowCallCustomer.id}`}
                   className="mt-1 block text-xl font-bold text-slate-900 hover:text-slate-700"
+                  title={nowCallCustomer.name}
                 >
-                  {nowCallCustomer.name}
+                  {shortenCustomerName(nowCallCustomer.name, 50)}
                 </Link>
-                {nowCallCustomer.company && (
-                  <p className="text-sm text-slate-600 truncate">{nowCallCustomer.company}</p>
+                {nowCallCustomer.company && nowCallCustomer.company.trim() !== nowCallCustomer.name.trim() && (
+                  <p className="text-sm text-slate-600 truncate">{shortenCustomerName(nowCallCustomer.company, 60)}</p>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
                   {nowCallCustomer.phone && (
