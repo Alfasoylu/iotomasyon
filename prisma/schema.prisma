@@ -124,6 +124,24 @@ enum CustomerSegment {
   MARKETPLACE
 }
 
+// Phase 99 — Sektör hiyerarşisi
+// Ana grup: "Güvenlik Bayisi" → Alt: "Tedarikçi", "Kurulum", vb.
+// Customer'a tek industryId atanır (alt sektör), grup parent üzerinden bulunur.
+model Industry {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  parentId  String?
+  parent    Industry?  @relation("IndustryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Industry[] @relation("IndustryHierarchy")
+  customers Customer[]
+  sortOrder Int        @default(0)
+  isActive  Boolean    @default(true)
+
+  @@index([parentId])
+  @@index([slug])
+}
+
 enum StockSource {
   MANUAL
   XML
@@ -512,6 +530,10 @@ model Customer {
   customerNotes           String?                      @map("notes")
   customerType            CustomerType?
   segment                 CustomerSegment? // Phase 98 — B2B / Installation / Marketplace çatısı
+  industryId              String?          // Phase 99 — alt sektör (Industry.id)
+  industry                Industry?        @relation(fields: [industryId], references: [id], onDelete: SetNull)
+  usedTech                String[]         @default([]) // IP, AHD, PoE, NVR, Alarm, vb.
+  currentSupplier         String?          // Şu an aldığı marka/firma — rakip bilgisi
   monthlySalesPotential   Decimal?
   platformNotes           String?
   city                    String?
@@ -553,6 +575,9 @@ model Customer {
   @@index([doNotCall])
   @@index([shownInQueueCount])
   @@index([segment])
+  @@index([industryId])
+  @@index([city])
+  @@index([district])
 }
 
 // Phase 97 — Lead List Manager (Google Maps Import)

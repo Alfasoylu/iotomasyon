@@ -23,6 +23,7 @@ import {
 import { SegmentStrip } from "@/components/customers/segment-strip";
 import { getSalesRepKPIs } from "@/services/sales-rep-kpi-service";
 import { getRecentActivityByOthers } from "@/services/customer-activity-service";
+import { getCustomerFilterOptions } from "@/services/customer-filter-options-service";
 import { listAttributes } from "@/services/attribute-service";
 import { SalesRepKpiBar } from "@/components/customers/sales-rep-kpi-bar";
 import { SavedViewSelector } from "@/components/customers/saved-view-selector";
@@ -58,6 +59,11 @@ export default async function CustomersPage({
   const customerType = typeof params.customerType === "string" ? params.customerType : "all";
   const leadListId   = typeof params.leadListId   === "string" ? params.leadListId   : "all";
   const segment      = typeof params.segment      === "string" ? params.segment      : "all";
+  const city            = typeof params.city            === "string" ? params.city            : "all";
+  const district        = typeof params.district        === "string" ? params.district        : "all";
+  const industryGroupId = typeof params.industryGroupId === "string" ? params.industryGroupId : "all";
+  const industryId      = typeof params.industryId      === "string" ? params.industryId      : "all";
+  const categoryId      = typeof params.categoryId      === "string" ? params.categoryId      : "all";
   const cohortParam  = typeof params.cohort       === "string" ? params.cohort       : null;
   const validCohorts: CohortKey[] = ["queue", "todayCall", "dormant", "new", "openQuotes"];
   const cohort: CohortKey | null =
@@ -65,15 +71,19 @@ export default async function CustomersPage({
       ? (cohortParam as CohortKey)
       : null;
 
-  const [{ databaseAvailable, customers }, users, attributes, cohortCounts, salesKpis, savedViews, segmentCounts] =
+  const [{ databaseAvailable, customers }, users, attributes, cohortCounts, salesKpis, savedViews, segmentCounts, filterOptions] =
     await Promise.all([
-      listCustomers({ q: query, status, source, ownedById, attributeId, customerType, leadListId, segment }),
+      listCustomers({
+        q: query, status, source, ownedById, attributeId, customerType,
+        leadListId, segment, city, district, industryGroupId, industryId, categoryId,
+      }),
       listUsersForSelect(),
       listAttributes(),
       getCustomerCohortCounts(),
       getSalesRepKPIs(user.id),
       listMySavedViews("customers"),
       getSegmentCounts(),
+      getCustomerFilterOptions(),
     ]);
 
   // Cohort filtresi varsa ID set'i ile filtrele
@@ -172,8 +182,17 @@ export default async function CustomersPage({
           initialAttributeId={attributeId}
           initialCustomerType={customerType}
           initialSegment={segment}
+          initialCity={city}
+          initialDistrict={district}
+          initialIndustryGroupId={industryGroupId}
+          initialIndustryId={industryId}
+          initialCategoryId={categoryId}
           users={users}
           attributes={attributes}
+          cities={filterOptions.cities}
+          districtsByCity={Object.fromEntries(filterOptions.districts.entries())}
+          industryGroups={filterOptions.industryGroups}
+          categories={filterOptions.categories}
         />
       </Card>
 
