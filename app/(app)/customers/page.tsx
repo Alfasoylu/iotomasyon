@@ -20,6 +20,7 @@ import {
   type CohortKey,
 } from "@/services/customer-cohort-service";
 import { getSalesRepKPIs } from "@/services/sales-rep-kpi-service";
+import { getRecentActivityByOthers } from "@/services/customer-activity-service";
 import { listAttributes } from "@/services/attribute-service";
 import { SalesRepKpiBar } from "@/components/customers/sales-rep-kpi-bar";
 import { SavedViewSelector } from "@/components/customers/saved-view-selector";
@@ -96,6 +97,10 @@ export default async function CustomersPage({
 
   const statsMap = databaseAvailable
     ? await getCustomerStats(filteredCustomers.map((c) => c.id))
+    : new Map();
+
+  const recentActivityMap = databaseAvailable
+    ? await getRecentActivityByOthers(filteredCustomers.map((c) => c.id), user.id)
     : new Map();
 
   return (
@@ -210,6 +215,12 @@ export default async function CustomersPage({
               customers={filteredCustomers}
               statsByCustomerId={Object.fromEntries(
                 filteredCustomers.map((c) => [c.id, statsMap.get(c.id)]).filter(([, v]) => !!v) as [string, NonNullable<ReturnType<typeof statsMap.get>>][],
+              )}
+              recentActivityByCustomerId={Object.fromEntries(
+                Array.from(recentActivityMap.entries()).map(([cid, a]) => [
+                  cid,
+                  { byUserName: a.byUserName, minutesAgo: a.minutesAgo },
+                ]),
               )}
             />
           )}

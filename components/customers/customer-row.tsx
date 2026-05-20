@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Phone, Mail, MapPin, Clock, Target, Briefcase, PhoneOff, AlertCircle } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Target, Briefcase, PhoneOff, AlertCircle, Users as UsersIcon } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -81,9 +81,11 @@ const SCORE_BG = {
 export function CustomerRow({
   customer,
   stats,
+  recentActivity,
 }: {
   customer: CustomerLike;
   stats: CustomerStatsRow | null;
+  recentActivity?: { byUserName: string; minutesAgo: number } | null;
 }) {
   const days = daysSinceContact(customer.lastContactedAt);
   const score = calcLeadScore({
@@ -143,6 +145,15 @@ export function CustomerRow({
               )}
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
+              {recentActivity && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 ring-1 ring-amber-200"
+                  title={`${recentActivity.byUserName} bu müşteriyi son ${recentActivity.minutesAgo} dakika önce aradı. Çakışmayı önle.`}
+                >
+                  <UsersIcon className="h-3 w-3" />
+                  {recentActivity.byUserName.split(" ")[0]} aktif · {recentActivity.minutesAgo}dk
+                </span>
+              )}
               {customer.doNotCall && (
                 <span
                   className="inline-flex items-center gap-1 rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700"
