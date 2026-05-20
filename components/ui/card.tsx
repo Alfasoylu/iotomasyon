@@ -1,16 +1,16 @@
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
-export function Card({
-  children,
-  className = "",
-  id,
-}: {
+interface CardProps extends Omit<HTMLAttributes<HTMLElement>, "children"> {
   children: ReactNode;
   className?: string;
-  id?: string;
-}) {
+}
+
+export function Card({ children, className = "", ...rest }: CardProps) {
   return (
-    <section id={id} className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>
+    <section
+      {...rest}
+      className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}
+    >
       {children}
     </section>
   );
