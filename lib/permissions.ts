@@ -129,6 +129,12 @@ export const PERMISSIONS = {
   // Executive
   EXECUTIVE_READ:               "executive.read",
 
+  // Catalogs (Faz 1-6) — Ürün katalogu sektör odaklı PDF/web
+  CATALOGS_READ:                "catalogs.read",
+  CATALOGS_CREATE:              "catalogs.create",
+  CATALOGS_WHOLESALE_MODE:      "catalogs.wholesaleMode",  // Sadece ADMIN — bayi fiyat sızıntısı engeli
+  CATALOGS_PRICING_WRITE:       "catalogs.pricingWrite",   // Faz 2 — USD net fiyat doldurma
+
   // Dangerous — require explicit UserPermission grant even for ADMIN
   MIGRATIONS_APPROVE:           "migrations.approve",
   DESTRUCTIVE_ACTIONS_APPROVE:  "destructiveActions.approve",

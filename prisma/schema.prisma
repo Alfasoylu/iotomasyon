@@ -417,6 +417,9 @@ model Product {
   sellingPriceTry               Decimal?
   wholesalePriceTry             Decimal?
   marketplacePriceTry           Decimal?
+  // Faz 2 — Catalog USD net prices (KDV hariç) — sales rep katalog için
+  wholesalePriceUsd             Decimal?                     @db.Decimal(12, 2)
+  retailPriceUsd                Decimal?                     @db.Decimal(12, 2)
   packagingCost                 Decimal?
   vatRate                       Decimal?
   paymentFeeRate                Decimal?

@@ -179,6 +179,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Ürünler & Stok",
   },
   {
+    href: "/admin/product-pricing",
+    label: "Katalog Fiyatları (USD)",
+    iconKey: "dollar",
+    permission: PERMISSIONS.PRODUCTS_UPDATE,
+    section: "Ürünler & Stok",
+  },
+  {
     href: "/warehouse",
     label: "Depo",
     iconKey: "warehouse",
