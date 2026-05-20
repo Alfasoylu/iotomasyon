@@ -121,6 +121,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Satış",
   },
   {
+    href: "/admin/lead-source-roi",
+    label: "Lead Source ROI",
+    iconKey: "pieChart",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Satış",
+  },
+  {
     href: "/customers/import-list",
     label: "Lead Listesi Import",
     iconKey: "filePlus",
