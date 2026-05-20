@@ -361,6 +361,7 @@ model User {
   stockAdjustments         StockAdjustmentLog[]           @relation("AdjustmentCreatedBy")
   purchaseOrders           PurchaseOrder[]                @relation("PurchaseOrderCreatedBy") // Phase 77
   physicalCounts           Product[]                      @relation("PhysicalCountBy") // Phase 89
+  catalogSharesSent        CatalogShare[]                 @relation("CatalogSharesSentBy") // Faz 4
 }
 
 model ProductCategory {
@@ -505,6 +506,8 @@ model Product {
   marketplacePrices             MarketplacePrice[]
   // Phase 77 — Purchase order line items
   purchaseOrderItems            PurchaseOrderItem[]
+  // Faz 4 — Katalog ürün ilgi event'leri
+  catalogInterests              CatalogProductInterest[]
 
   @@index([name])
   @@index([barcode])
@@ -567,6 +570,7 @@ model Customer {
   attributeInterests      CustomerAttributeInterest[]
   marketplaceSalesRecords MarketplaceSalesRecord[]     @relation("MarketplaceSalesCustomer")
   leadListMemberships     CustomerLeadListMembership[] @relation("CustomerLeadLists")
+  catalogShares           CatalogShare[] // Faz 4 — gönderilen katalog linkleri
 
   @@index([name])
   @@index([phone])
@@ -1513,5 +1517,49 @@ model PurchaseOrderItem {
 
   @@unique([orderId, productId])
   @@index([orderId])
+  @@index([productId])
+}
+
+// Faz 4 — Public katalog link + view analytics
+// Sales rep "Katalog Gönder" yaptığında oluşturulur. Müşteri /c/[token] üzerinden
+// (login gerektirmeden) açar. Açılma + ürün ilgi olayları takip edilir.
+model CatalogShare {
+  id                  String                  @id @default(cuid())
+  token               String                  @unique // /c/{token} public route
+  customerId          String
+  sentById            String?
+  profileSlug         String                  // CatalogProfile.slug
+  priceMode           String                  // "wholesale" | "retail" | "hidden"
+  brandFilter         String?                 // CSV — modal'da seçilen markalar
+  onlyStock           Boolean                 @default(true)
+  coverNote           String?                 @db.Text
+  expiresAt           DateTime                // 30 gün varsayılan
+  viewCount           Int                     @default(0)
+  firstViewedAt       DateTime?
+  lastViewedAt        DateTime?
+  followUpTaskCreated Boolean                 @default(false) // 24h sonra task spawn flag
+  createdAt           DateTime                @default(now())
+  customer            Customer                @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sentBy              User?                   @relation("CatalogSharesSentBy", fields: [sentById], references: [id], onDelete: SetNull)
+  productInterests    CatalogProductInterest[]
+
+  @@index([token])
+  @@index([customerId])
+  @@index([sentById])
+  @@index([createdAt])
+}
+
+// Müşteri katalog içinde bir ürüne "İlgilendim" tıklarsa kayıt olur.
+// Otomatik olarak ana ProductInterest tablosuna da düşer (catalog-share-service'te).
+model CatalogProductInterest {
+  id             String       @id @default(cuid())
+  catalogShareId String
+  productId      String
+  action         String       // "INTERESTED" | "ADD_TO_CART" | "VIEWED_LONG"
+  createdAt      DateTime     @default(now())
+  share          CatalogShare @relation(fields: [catalogShareId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([catalogShareId])
   @@index([productId])
 }

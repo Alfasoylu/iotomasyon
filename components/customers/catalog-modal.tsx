@@ -85,18 +85,46 @@ export function CatalogModal({
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  function onWhatsApp() {
+  async function createShareLink(): Promise<string | null> {
+    try {
+      const res = await fetch("/api/catalogs/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId,
+          profileSlug,
+          priceMode,
+          brandFilter: selectedBrands,
+          onlyStock,
+          coverNote: coverNote.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        alert("Paylaşım linki oluşturulamadı.");
+        return null;
+      }
+      const data = await res.json();
+      return data.url as string;
+    } catch {
+      alert("Bağlantı hatası, paylaşım linki oluşturulamadı.");
+      return null;
+    }
+  }
+
+  async function onWhatsApp() {
     const phone = (customerWhatsapp ?? customerPhone)?.replace(/\D/g, "") ?? "";
     if (!phone) {
       alert("Müşterinin telefon numarası yok.");
       return;
     }
+    const shareUrl = await createShareLink();
+    if (!shareUrl) return;
     const profile = profiles.find((p) => p.slug === profileSlug);
-    const pdfFullUrl = `${window.location.origin}${buildPdfUrl()}`;
+    const fullShare = `${window.location.origin}${shareUrl}`;
     const msg =
       `Merhaba ${customerName},\n\n` +
-      `Sizin için hazırladığımız ${profile?.title ?? "ürün kataloğumuzu"} ekte iletiyoruz.\n\n` +
-      `${pdfFullUrl}\n\n` +
+      `Sizin için hazırladığımız ${profile?.title ?? "ürün kataloğumuzu"} aşağıdaki linkten inceleyebilirsiniz:\n\n` +
+      `${fullShare}\n\n` +
       `Sorularınız için 0850 307 7397'den ulaşabilirsiniz.\n\nAlfa Soylu Elektronik`;
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
     logCatalogEvent("WHATSAPP");
