@@ -19,7 +19,9 @@ import {
   getPowerQueueIds,
   type CohortKey,
 } from "@/services/customer-cohort-service";
+import { getSalesRepKPIs } from "@/services/sales-rep-kpi-service";
 import { listAttributes } from "@/services/attribute-service";
+import { SalesRepKpiBar } from "@/components/customers/sales-rep-kpi-bar";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -38,7 +40,7 @@ export default async function CustomersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requirePermission(PERMISSIONS.CUSTOMERS_READ);
+  const user = await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const params = await searchParams;
   const query        = typeof params.q            === "string" ? params.q            : "";
   const status       = typeof params.status       === "string" ? params.status       : "all";
@@ -53,12 +55,13 @@ export default async function CustomersPage({
       ? (cohortParam as CohortKey)
       : null;
 
-  const [{ databaseAvailable, customers }, users, attributes, cohortCounts] =
+  const [{ databaseAvailable, customers }, users, attributes, cohortCounts, salesKpis] =
     await Promise.all([
       listCustomers({ q: query, status, source, ownedById, attributeId, customerType }),
       listUsersForSelect(),
       listAttributes(),
       getCustomerCohortCounts(),
+      getSalesRepKPIs(user.id),
     ]);
 
   // Cohort filtresi varsa ID set'i ile filtrele
@@ -104,6 +107,11 @@ export default async function CustomersPage({
           </>
         }
       />
+
+      {/* Personal KPI bar (Phase 95e) */}
+      {databaseAvailable && salesKpis.databaseAvailable && (
+        <SalesRepKpiBar kpis={salesKpis} userName={user.name} />
+      )}
 
       {/* Cohort kartları */}
       {databaseAvailable && (
