@@ -36,9 +36,11 @@ interface CustomerLike {
 export function CustomerBulkList({
   customers,
   statsByCustomerId,
+  recentActivityByCustomerId,
 }: {
   customers: CustomerLike[];
   statsByCustomerId: Record<string, CustomerStatsRow>;
+  recentActivityByCustomerId?: Record<string, { byUserName: string; minutesAgo: number }>;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -196,6 +198,7 @@ export function CustomerBulkList({
               <CustomerRow
                 customer={customer}
                 stats={statsByCustomerId[customer.id] ?? null}
+                recentActivity={recentActivityByCustomerId?.[customer.id] ?? null}
               />
             </div>
           </div>
