@@ -77,6 +77,17 @@ export async function GET(
   const fontBytes = await readFile(fontPath);
   const font = await pdf.embedFont(fontBytes, { subset: true });
 
+  // ── Logo (PNG embed) ─────────────────────────────────────────
+  let logoImage: Awaited<ReturnType<typeof pdf.embedPng>> | null = null;
+  try {
+    const logoPath = path.join(process.cwd(), "public", "Soylu logo şeffaf.png");
+    const logoBytes = await readFile(logoPath);
+    logoImage = await pdf.embedPng(logoBytes);
+  } catch {
+    // Logo yüklenemezse sessizce devam — placeholder bar gösterilir
+    logoImage = null;
+  }
+
   // ── Currency context ──────────────────────────────────────────
   const quoteCurrency = quote.items[0]?.currency ?? "TRY";
   const mode = quote.currencyMode ?? "TRY";
@@ -112,39 +123,65 @@ export async function GET(
   let y = PH;
 
   function ensureSpace(needed: number) {
-    if (y - needed < 56) {
+    if (y - needed < 80) {
       page = pdf.addPage([PW, PH]);
-      page.drawRectangle({ x: 0, y: PH - 24, width: PW, height: 24, color: C.charcoal });
+      // Orange accent stripe
+      page.drawRectangle({ x: 0, y: PH - 3, width: PW, height: 3, color: C.orange });
+      // Dark mini header bar
+      page.drawRectangle({ x: 0, y: PH - 28, width: PW, height: 25, color: C.charcoal });
       page.drawText(safe(COMPANY_SETTINGS.companyName), {
-        x: ML, y: PH - 16, size: 8, font, color: C.white,
+        x: ML, y: PH - 19, size: 9, font, color: C.white,
       });
       page.drawText(safe(`${quote!.quoteNumber} — devam`), {
-        x: PW - ML - 90, y: PH - 16, size: 8, font, color: C.slate300,
+        x: PW - ML - 100, y: PH - 19, size: 8, font, color: C.orange,
       });
-      y = PH - 38;
+      y = PH - 42;
     }
   }
 
   // ── SECTION 1: Header ─────────────────────────────────────────
-  const HEADER_H = 100;
+  const HEADER_H = 110;
   // Orange accent stripe at very top
   page.drawRectangle({ x: 0, y: PH - 3, width: PW, height: 3, color: C.orange });
   // Dark charcoal header body
   page.drawRectangle({ x: 0, y: PH - HEADER_H, width: PW, height: HEADER_H - 3, color: C.charcoal });
 
-  // Orange vertical brand mark (logo placeholder)
-  page.drawRectangle({ x: ML, y: PH - 85, width: 4, height: 60, color: C.orange });
+  // Logo (sol üst köşe). Yoksa orange vertical bar fallback.
+  const LOGO_BOX_W = 70;
+  const LOGO_BOX_H = 70;
+  const LOGO_X = ML;
+  const LOGO_Y = PH - HEADER_H + 22;
+  if (logoImage) {
+    const ratio = logoImage.width / logoImage.height;
+    let w = LOGO_BOX_W;
+    let h = w / ratio;
+    if (h > LOGO_BOX_H) {
+      h = LOGO_BOX_H;
+      w = h * ratio;
+    }
+    page.drawImage(logoImage, {
+      x: LOGO_X + (LOGO_BOX_W - w) / 2,
+      y: LOGO_Y + (LOGO_BOX_H - h) / 2,
+      width: w,
+      height: h,
+    });
+  } else {
+    page.drawRectangle({ x: ML, y: PH - 90, width: 4, height: 65, color: C.orange });
+  }
 
-  // Company info — left, offset from brand mark
-  drawTxt(page, font, safe(COMPANY_SETTINGS.companyName), ML + 10, PH - 26, 16, C.white);
-  drawTxt(page, font, safe(COMPANY_SETTINGS.tagline), ML + 10, PH - 44, 8, C.slate300);
-  drawTxt(page, font, safe(COMPANY_SETTINGS.address), ML + 10, PH - 57, 8, C.slate300);
-  drawTxt(page, font, safe(COMPANY_SETTINGS.phone), ML + 10, PH - 70, 8, C.slate300);
-  drawTxt(page, font, safe(`${COMPANY_SETTINGS.email}  |  ${COMPANY_SETTINGS.website}`), ML + 10, PH - 83, 8, C.slate300);
+  // Company info — logo'nun sağında
+  const COMP_X = ML + LOGO_BOX_W + 14;
+  drawTxt(page, font, safe(COMPANY_SETTINGS.companyName), COMP_X, PH - 26, 14, C.white);
+  drawTxt(page, font, safe(COMPANY_SETTINGS.tagline), COMP_X, PH - 42, 7.5, C.slate300);
+  drawTxt(page, font, safe(limitTxt(COMPANY_SETTINGS.address, 90)), COMP_X, PH - 56, 7, C.slate300);
+  drawTxt(page, font, safe(`Tel: ${COMPANY_SETTINGS.phone}  |  ${COMPANY_SETTINGS.phoneSecondary}`), COMP_X, PH - 69, 7, C.slate300);
+  drawTxt(page, font, safe(`${COMPANY_SETTINGS.email}  |  www.${COMPANY_SETTINGS.website}`), COMP_X, PH - 82, 7, C.slate300);
+  drawTxt(page, font, safe(`VD: ${COMPANY_SETTINGS.taxOffice}  |  VN: ${COMPANY_SETTINGS.taxNumber}`), COMP_X, PH - 95, 7, C.slate300);
 
   // "FİYAT TEKLİFİ" — right
   drawTxt(page, font, "FİYAT TEKLİFİ", PW - ML - 116, PH - 28, 13, C.white);
-  drawTxt(page, font, safe(quote.quoteNumber), PW - ML - 116, PH - 46, 9, C.slate300);
+  drawTxt(page, font, safe(quote.quoteNumber), PW - ML - 116, PH - 46, 9, C.orange);
+  drawTxt(page, font, safe(fmtDate(quote.createdAt)), PW - ML - 116, PH - 60, 8, C.slate300);
 
   y = PH - HEADER_H - 10;
 
@@ -357,26 +394,48 @@ export async function GET(
 
   y -= TERMS_H + 10;
 
+  // ── SECTION 6.5: Banka & Ödeme Bilgileri ─────────────────────
+  const BANK_H = 56;
+  ensureSpace(BANK_H + 8);
+  page.drawRectangle({
+    x: ML, y: y - BANK_H, width: CW, height: BANK_H,
+    color: C.white, borderColor: C.orange, borderWidth: 0.8,
+  });
+  // Sol şerit accent
+  page.drawRectangle({ x: ML, y: y - BANK_H, width: 3, height: BANK_H, color: C.orange });
+
+  drawTxt(page, font, "ÖDEME BİLGİLERİ", ML + 10, y - 14, 7, C.orange);
+  drawTxt(page, font, safe(`Banka: ${COMPANY_SETTINGS.bankName}  |  Hesap Türü: ${COMPANY_SETTINGS.bankAccountType}`), ML + 10, y - 28, 8, C.slate700);
+  drawTxt(page, font, safe(`IBAN: ${COMPANY_SETTINGS.bankIban}`), ML + 10, y - 41, 9, C.slate900);
+  drawTxt(page, font, safe(`Hesap Sahibi: ${limitTxt(COMPANY_SETTINGS.bankAccountHolder, 78)}`), ML + 10, y - 52, 7, C.slate500);
+
+  y -= BANK_H + 10;
+
   // ── SECTION 7: Footer ─────────────────────────────────────────
   const FY = 42;
   page.drawLine({
-    start: { x: ML, y: FY + 16 },
-    end: { x: PW - MR, y: FY + 16 },
+    start: { x: ML, y: FY + 24 },
+    end: { x: PW - MR, y: FY + 24 },
     thickness: 0.5,
     color: C.slate200,
   });
+  // Resmi unvan (alt satır, koyu)
   drawTxt(
     page,
     font,
-    safe(`${COMPANY_SETTINGS.website}  |  ${COMPANY_SETTINGS.email}  |  ${COMPANY_SETTINGS.phone}`),
-    ML,
-    FY,
-    8,
-    C.slate500,
+    safe(limitTxt(COMPANY_SETTINGS.legalName, 100)),
+    ML, FY + 10, 7, C.slate700,
+  );
+  // İletişim hattı
+  drawTxt(
+    page,
+    font,
+    safe(`${COMPANY_SETTINGS.phone}  |  ${COMPANY_SETTINGS.email}  |  www.${COMPANY_SETTINGS.website}`),
+    ML, FY - 2, 7, C.slate500,
   );
   if (quote.validityDate) {
     const vText = safe(`Geçerlilik: ${fmtDate(quote.validityDate)}`);
-    drawTxt(page, font, vText, PW - MR - 110, FY, 8, C.slate500);
+    drawTxt(page, font, vText, PW - MR - 110, FY - 2, 7, C.slate500);
   }
 
   const bytes = await pdf.save();
