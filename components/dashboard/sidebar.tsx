@@ -44,6 +44,7 @@ import {
   Archive,
   ShieldCheck,
   Sparkles,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 
@@ -104,6 +105,7 @@ const ICONS: Record<string, LucideIcon> = {
   archive: Archive,
   shield: ShieldCheck,
   sparkles: Sparkles,
+  messageSquare: MessageSquare,
 };
 
 // Section meta — order + icon + short description (tooltip).

@@ -65,7 +65,7 @@ export default async function CustomerDetailPage({
   const currentUser = await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
   const canAssign = await checkPermission(currentUser, PERMISSIONS.TASKS_ASSIGN);
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats, statsMap, timelineEvents] =
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats, statsMap, timelineEvents, whatsAppTemplates] =
     await Promise.all([
       getCustomerById(id),
       listCustomerInterestProducts(),
@@ -76,6 +76,12 @@ export default async function CustomerDetailPage({
       fetchCustomerMarketplaceStats(id),
       getCustomerStats([id]),
       listCustomerTimeline(id, 100),
+      prisma.messageTemplate.findMany({
+        where: { isActive: true, channel: "whatsapp" },
+        select: { id: true, name: true, body: true, category: true },
+        orderBy: [{ usageCount: "desc" }, { name: "asc" }],
+        take: 20,
+      }).catch(() => [] as Array<{ id: string; name: string; body: string; category: string | null }>),
     ]);
   const stats = statsMap.get(id) ?? null;
 
@@ -969,6 +975,11 @@ export default async function CustomerDetailPage({
                 customerId={customer.id}
                 phone={customer.whatsapp ?? customer.phone}
                 customerName={customer.name}
+                customerCompany={customer.company}
+                customerCity={customer.city}
+                lastQuoteNumber={customer.quotes[0]?.quoteNumber ?? null}
+                lastContactedAt={customer.lastContactedAt}
+                templates={whatsAppTemplates}
               />
               <Link href={`/customers/${customer.id}/edit`} className="w-full">
                 <Button variant="secondary" className="w-full">

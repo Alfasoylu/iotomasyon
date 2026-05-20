@@ -321,6 +321,7 @@ model User {
   customersOwned           Customer[]                     @relation("OwnedCustomers")
   savedViews               SavedView[]                    @relation("UserSavedViews")
   leadLists                LeadList[]                     @relation("UserLeadLists")
+  messageTemplates         MessageTemplate[]              @relation("CreatedMessageTemplates")
   capitalConfigs           CapitalConfig[]
   marketplaceListings      MarketplaceListing[]           @relation("ListingResponsible")
   marketplaceMappings      MarketplaceProductMapping[]    @relation("MappingCreatedBy")
@@ -569,6 +570,25 @@ model CustomerLeadListMembership {
 
   @@id([customerId, leadListId])
   @@index([leadListId])
+}
+
+// Phase 96d — WhatsApp / mesaj şablonları
+model MessageTemplate {
+  id          String   @id @default(cuid())
+  name        String // "İlk Teklif Sonrası Hatırlatma"
+  channel     String   @default("whatsapp") // whatsapp | sms | email
+  category    String? // "follow-up" | "negotiation" | "after-sale"
+  body        String   @db.Text // Değişkenler: {{musteri_adi}}, {{teklif_no}}, {{son_gorusme}}, {{firma}}
+  isActive    Boolean  @default(true)
+  usageCount  Int      @default(0)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User?    @relation("CreatedMessageTemplates", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([channel])
+  @@index([createdById])
 }
 
 // Phase 95f — Kayıtlı görünümler (saved views)

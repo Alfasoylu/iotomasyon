@@ -1,32 +1,95 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { ChevronDown, MessageSquare } from "lucide-react";
 
 import { markCustomerContactedAction } from "@/lib/actions/customer-crm-actions";
+import { incrementTemplateUsageAction } from "@/lib/actions/message-template-actions";
+
+export interface WhatsAppTemplate {
+  id: string;
+  name: string;
+  body: string;
+  category: string | null;
+}
+
+interface CustomerContext {
+  name: string;
+  company?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  lastQuoteNumber?: string | null;
+  lastContactedAt?: Date | null;
+}
+
+function renderTemplate(body: string, ctx: CustomerContext): string {
+  const now = new Date();
+  const lastGorusme = ctx.lastContactedAt
+    ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "long" }).format(ctx.lastContactedAt)
+    : new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "long" }).format(now);
+  return body
+    .replace(/\{\{musteri_adi\}\}/g, ctx.name || "")
+    .replace(/\{\{firma\}\}/g, ctx.company || "")
+    .replace(/\{\{telefon\}\}/g, ctx.phone || "")
+    .replace(/\{\{sehir\}\}/g, ctx.city || "")
+    .replace(/\{\{teklif_no\}\}/g, ctx.lastQuoteNumber || "")
+    .replace(/\{\{son_gorusme\}\}/g, lastGorusme);
+}
 
 export function CustomerWhatsAppButton({
   customerId,
   phone,
   customerName,
+  customerCompany,
+  customerCity,
+  lastQuoteNumber,
+  lastContactedAt,
+  templates,
 }: {
   customerId: string;
   phone: string | null | undefined;
   customerName: string;
+  customerCompany?: string | null;
+  customerCity?: string | null;
+  lastQuoteNumber?: string | null;
+  lastContactedAt?: Date | null;
+  templates?: WhatsAppTemplate[];
 }) {
   const [isPending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
 
   const normalized = phone?.replace(/\D/g, "") ?? "";
-  const waUrl = normalized
-    ? `https://wa.me/${normalized}?text=${encodeURIComponent(`Merhaba ${customerName},`)}`
-    : null;
+  const ctx: CustomerContext = {
+    name: customerName,
+    company: customerCompany,
+    city: customerCity,
+    phone,
+    lastQuoteNumber,
+    lastContactedAt,
+  };
+  const defaultMessage = `Merhaba ${customerName},`;
+  const waUrlFor = (msg: string) =>
+    normalized ? `https://wa.me/${normalized}?text=${encodeURIComponent(msg)}` : null;
 
-  function handleClick() {
+  function logContact() {
     startTransition(async () => {
       await markCustomerContactedAction(customerId);
     });
   }
 
-  if (!waUrl) {
+  function onTemplateClick(t: WhatsAppTemplate) {
+    setOpen(false);
+    startTransition(async () => {
+      await Promise.all([
+        markCustomerContactedAction(customerId),
+        incrementTemplateUsageAction(t.id),
+      ]);
+    });
+    const url = waUrlFor(renderTemplate(t.body, ctx));
+    if (url) window.open(url, "_blank", "noopener");
+  }
+
+  if (!normalized) {
     return (
       <span className="inline-flex h-9 items-center rounded-xl bg-slate-100 px-4 text-sm text-slate-400">
         WhatsApp numarası yok
@@ -37,10 +100,10 @@ export function CustomerWhatsAppButton({
   return (
     <div className="flex flex-wrap gap-2">
       <a
-        href={waUrl}
+        href={waUrlFor(defaultMessage) ?? "#"}
         target="_blank"
         rel="noreferrer"
-        onClick={handleClick}
+        onClick={logContact}
         className="inline-flex h-9 items-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -48,13 +111,51 @@ export function CustomerWhatsAppButton({
         </svg>
         WhatsApp aç
       </a>
+
+      {templates && templates.length > 0 && (
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Şablon
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          {open && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setOpen(false)}
+                aria-hidden
+              />
+              <div className="absolute right-0 top-10 z-20 max-h-80 w-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                {templates.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => onTemplateClick(t)}
+                    className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50"
+                  >
+                    <div className="font-medium text-slate-900">{t.name}</div>
+                    {t.category && (
+                      <div className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-400">
+                        {t.category}
+                      </div>
+                    )}
+                    <div className="mt-1 line-clamp-2 text-xs text-slate-500">{t.body}</div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       <button
         disabled={isPending}
-        onClick={() =>
-          startTransition(async () => {
-            await markCustomerContactedAction(customerId);
-          })
-        }
+        onClick={logContact}
         className="inline-flex h-9 items-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-50"
       >
         {isPending ? "..." : "İletişim kuruldu"}
