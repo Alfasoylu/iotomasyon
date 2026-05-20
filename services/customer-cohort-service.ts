@@ -28,6 +28,33 @@ export interface CohortCounts {
   overdueTaskCount: number;
 }
 
+export interface SegmentCounts {
+  b2bReseller: number;
+  installation: number;
+  marketplace: number;
+}
+
+export async function getSegmentCounts(): Promise<SegmentCounts> {
+  try {
+    const grouped = await prisma.customer.groupBy({
+      by: ["segment"],
+      where: { isActive: true },
+      _count: { _all: true },
+    });
+    const map = new Map<string, number>();
+    for (const g of grouped) {
+      if (g.segment) map.set(g.segment, g._count._all);
+    }
+    return {
+      b2bReseller: map.get("B2B_RESELLER") ?? 0,
+      installation: map.get("INSTALLATION") ?? 0,
+      marketplace: map.get("MARKETPLACE") ?? 0,
+    };
+  } catch {
+    return { b2bReseller: 0, installation: 0, marketplace: 0 };
+  }
+}
+
 export async function getCustomerCohortCounts(
   currentUserId?: string,
 ): Promise<CohortCounts> {

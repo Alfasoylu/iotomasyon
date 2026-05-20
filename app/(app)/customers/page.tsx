@@ -17,8 +17,10 @@ import {
   getCustomerIdsForCohort,
   getCustomerStats,
   getPowerQueueIds,
+  getSegmentCounts,
   type CohortKey,
 } from "@/services/customer-cohort-service";
+import { SegmentStrip } from "@/components/customers/segment-strip";
 import { getSalesRepKPIs } from "@/services/sales-rep-kpi-service";
 import { getRecentActivityByOthers } from "@/services/customer-activity-service";
 import { listAttributes } from "@/services/attribute-service";
@@ -55,6 +57,7 @@ export default async function CustomersPage({
   const attributeId  = typeof params.attributeId  === "string" ? params.attributeId  : "all";
   const customerType = typeof params.customerType === "string" ? params.customerType : "all";
   const leadListId   = typeof params.leadListId   === "string" ? params.leadListId   : "all";
+  const segment      = typeof params.segment      === "string" ? params.segment      : "all";
   const cohortParam  = typeof params.cohort       === "string" ? params.cohort       : null;
   const validCohorts: CohortKey[] = ["queue", "todayCall", "dormant", "new", "openQuotes"];
   const cohort: CohortKey | null =
@@ -62,14 +65,15 @@ export default async function CustomersPage({
       ? (cohortParam as CohortKey)
       : null;
 
-  const [{ databaseAvailable, customers }, users, attributes, cohortCounts, salesKpis, savedViews] =
+  const [{ databaseAvailable, customers }, users, attributes, cohortCounts, salesKpis, savedViews, segmentCounts] =
     await Promise.all([
-      listCustomers({ q: query, status, source, ownedById, attributeId, customerType, leadListId }),
+      listCustomers({ q: query, status, source, ownedById, attributeId, customerType, leadListId, segment }),
       listUsersForSelect(),
       listAttributes(),
       getCustomerCohortCounts(),
       getSalesRepKPIs(user.id),
       listMySavedViews("customers"),
+      getSegmentCounts(),
     ]);
 
   // Cohort filtresi varsa ID set'i ile filtrele
@@ -128,6 +132,11 @@ export default async function CustomersPage({
         <SalesRepKpiBar kpis={salesKpis} userName={user.name} />
       )}
 
+      {/* Phase 98 — Segment çatıları */}
+      {databaseAvailable && (
+        <SegmentStrip counts={segmentCounts} activeSegment={segment} />
+      )}
+
       {/* Cohort kartları */}
       {databaseAvailable && (
         <CustomerCohortCards counts={cohortCounts} activeCohort={cohort} />
@@ -162,6 +171,7 @@ export default async function CustomersPage({
           initialOwnedById={ownedById}
           initialAttributeId={attributeId}
           initialCustomerType={customerType}
+          initialSegment={segment}
           users={users}
           attributes={attributes}
         />

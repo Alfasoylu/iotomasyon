@@ -114,6 +114,16 @@ enum CustomerType {
   CUSTOM
 }
 
+// Phase 98 — Müşteri çatı segmentasyonu
+// B2B_RESELLER: bayi/güvenlik şirketi/nalbur — sürekli alır, sürekli temas
+// INSTALLATION: cafe/restoran/site yönetimi/ofis — tek seferlik montaj
+// MARKETPLACE:  Entegra'dan gelen pazaryeri müşterileri
+enum CustomerSegment {
+  B2B_RESELLER
+  INSTALLATION
+  MARKETPLACE
+}
+
 enum StockSource {
   MANUAL
   XML
@@ -501,6 +511,7 @@ model Customer {
   country                 String?
   customerNotes           String?                      @map("notes")
   customerType            CustomerType?
+  segment                 CustomerSegment? // Phase 98 — B2B / Installation / Marketplace çatısı
   monthlySalesPotential   Decimal?
   platformNotes           String?
   city                    String?
@@ -541,6 +552,7 @@ model Customer {
   @@index([taxNumber])
   @@index([doNotCall])
   @@index([shownInQueueCount])
+  @@index([segment])
 }
 
 // Phase 97 — Lead List Manager (Google Maps Import)
