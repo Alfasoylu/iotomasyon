@@ -40,6 +40,12 @@ import { listCategoriesForSelect } from "@/services/category-service";
 import { getCustomerById, listCustomerInterestProducts } from "@/services/customer-service";
 import { listQuoteTemplates } from "@/services/quote-template-service";
 import { listUsersWithTasks } from "@/services/task-service";
+import { getCustomerStats } from "@/services/customer-cohort-service";
+import { calcLeadScore, daysSinceContact } from "@/lib/customer-lead-score";
+import { displayPhone, telLink, whatsappLink } from "@/lib/customer-contact";
+import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
+import { Phone, MessageCircle, Mail, MapPin, Briefcase, Clock, Target, Plus, NotebookPen } from "lucide-react";
+import { CustomerRowActions } from "@/components/customers/customer-row-actions";
 import { prisma } from "@/lib/prisma";
 import { requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -54,7 +60,7 @@ export default async function CustomerDetailPage({
   const currentUser = await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
   const canAssign = await checkPermission(currentUser, PERMISSIONS.TASKS_ASSIGN);
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats] =
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats, statsMap] =
     await Promise.all([
       getCustomerById(id),
       listCustomerInterestProducts(),
@@ -63,7 +69,9 @@ export default async function CustomerDetailPage({
       listQuoteTemplates(),
       canAssign ? listUsersWithTasks() : Promise.resolve([]),
       fetchCustomerMarketplaceStats(id),
+      getCustomerStats([id]),
     ]);
+  const stats = statsMap.get(id) ?? null;
 
   if (!databaseAvailable) {
     return (
@@ -100,6 +108,39 @@ export default async function CustomerDetailPage({
 
   const recentQuotes = customer.quotes.slice(0, 3);
 
+  // Lead skoru
+  const days = daysSinceContact(customer.lastContactedAt);
+  const leadScore = calcLeadScore({
+    activeInterestsCount: stats?.activeInterestsCount ?? 0,
+    lifetimeOrdersCount: stats?.lifetimeOrders ?? 0,
+    daysSinceContact: days,
+    openQuoteCount: stats?.openQuoteCount ?? 0,
+    status: customer.status,
+  });
+
+  const SCORE_BG_HERO = {
+    success: "bg-emerald-100 text-emerald-700 border-emerald-300",
+    info: "bg-blue-100 text-blue-700 border-blue-300",
+    warning: "bg-amber-100 text-amber-700 border-amber-300",
+    neutral: "bg-slate-100 text-slate-600 border-slate-300",
+  } as const;
+
+  function relTime(d: Date | null): string {
+    if (!d) return "hiç temas yok";
+    const dt = new Date(d).getTime();
+    const ds = Math.floor((Date.now() - dt) / (24 * 60 * 60 * 1000));
+    if (ds === 0) return "bugün";
+    if (ds === 1) return "dün";
+    if (ds < 7) return `${ds} gün önce`;
+    if (ds < 30) return `${Math.floor(ds / 7)} hafta önce`;
+    if (ds < 365) return `${Math.floor(ds / 30)} ay önce`;
+    return `${Math.floor(ds / 365)} yıl önce`;
+  }
+
+  const phoneHref = telLink(customer.phone || customer.whatsapp);
+  const waHref = whatsappLink(customer.whatsapp || customer.phone);
+  const phoneDisplay = customer.phone ? displayPhone(customer.phone) : null;
+
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
       {/* ── Main workspace ─────────────────────────────────────── */}
@@ -110,33 +151,172 @@ export default async function CustomerDetailPage({
         >
           ← Müşteriler
         </Link>
+        {/* ── HERO KARTI (yeni — çağrı merkezi tasarımı) ─────────────── */}
         <Card className="p-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <Badge tone={getCustomerStatusTone(customer.status)}>
-                {formatCustomerStatus(customer.status)}
-              </Badge>
-              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-                {customer.name}
-              </h1>
-              <p className="mt-2 text-sm text-slate-500">
-                {customer.company ?? "Firma belirtilmedi"}
-              </p>
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+              {/* Lead skoru rozeti */}
+              <div
+                className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-2xl border ${SCORE_BG_HERO[leadScore.tone]}`}
+                title={`Lead Skoru ${leadScore.score}/100 — ${leadScore.label}`}
+              >
+                <span className="text-2xl font-bold tabular-nums leading-none">{leadScore.score}</span>
+                <span className="mt-0.5 text-[9px] uppercase tracking-wide opacity-80">
+                  {leadScore.label}
+                </span>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={getCustomerStatusTone(customer.status)}>
+                    {formatCustomerStatus(customer.status)}
+                  </Badge>
+                  {customer.customerType && (
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                      {CUSTOMER_TYPE_LABELS[customer.customerType]}
+                    </span>
+                  )}
+                </div>
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                  {customer.name}
+                </h1>
+                <p className="mt-1 text-sm text-slate-500">
+                  {customer.company ?? "Firma belirtilmedi"}
+                </p>
+
+                {/* İletişim satırı */}
+                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-slate-700">
+                  {phoneDisplay && phoneHref && (
+                    <a href={phoneHref} className="flex items-center gap-1.5 font-mono hover:text-emerald-700">
+                      <Phone className="h-4 w-4 text-emerald-600" />
+                      <span className="font-medium">{phoneDisplay}</span>
+                    </a>
+                  )}
+                  {customer.email && (
+                    <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 hover:text-blue-700">
+                      <Mail className="h-4 w-4 text-slate-400" />
+                      {customer.email}
+                    </a>
+                  )}
+                  {customer.city && (
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <MapPin className="h-4 w-4 text-slate-400" />
+                      {[customer.district, customer.city].filter(Boolean).join(" / ")}
+                    </span>
+                  )}
+                  {customer.taxNumber && (
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <Briefcase className="h-4 w-4 text-slate-400" />
+                      VN: <span className="font-mono">{customer.taxNumber}</span>
+                      {customer.taxOffice && <span className="text-slate-400">({customer.taxOffice})</span>}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <CustomerWhatsAppButton
+            {/* Son temas + Sonraki aksiyon — kritik bant */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5">
+                <span className="flex items-center gap-1.5 text-slate-600">
+                  <Clock className="h-4 w-4 text-slate-400" />
+                  Son temas: <strong className="text-slate-900">{relTime(customer.lastContactedAt)}</strong>
+                </span>
+                {stats?.nextActionAt ? (
+                  <span className="flex items-center gap-1.5 text-slate-700">
+                    <Target className="h-4 w-4 text-amber-500" />
+                    Sonraki:{" "}
+                    <strong className="text-slate-900">
+                      {new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(stats.nextActionAt)}
+                    </strong>
+                    {stats.nextActionTitle && (
+                      <span className="text-slate-500">— {stats.nextActionTitle}</span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-slate-400 italic">Sonraki aksiyon planlanmamış</span>
+                )}
+              </div>
+            </div>
+
+            {/* 5'li aksiyon butonları (prominent) */}
+            <div className="flex flex-wrap gap-2">
+              {phoneHref && (
+                <a
+                  href={phoneHref}
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  <Phone className="h-4 w-4" />
+                  ARA
+                </a>
+              )}
+              {waHref && (
+                <a
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </a>
+              )}
+              <CustomerRowActions
                 customerId={customer.id}
-                phone={customer.whatsapp ?? customer.phone}
-                customerName={customer.name}
+                phone={customer.phone}
+                whatsapp={customer.whatsapp}
               />
               <Link href={`/customers/${customer.id}/edit`}>
-                <Button>Düzenle</Button>
+                <Button variant="secondary">Düzenle</Button>
               </Link>
               <CustomerDeleteButton customerId={customer.id} />
             </div>
           </div>
         </Card>
+
+        {/* ── Quick Stats şeridi (6 KPI) ──────────────────────────────── */}
+        {(marketplaceStats || stats) && (
+          <Card className="p-4">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
+              <StatChip
+                label="Toplam Ciro"
+                value={marketplaceStats ? new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(marketplaceStats.totalRevenueTry) : "—"}
+                tone="success"
+              />
+              <StatChip
+                label="Sipariş Adedi"
+                value={String(marketplaceStats?.totalOrders ?? 0)}
+                tone="info"
+              />
+              <StatChip
+                label="Farklı Ürün"
+                value={String(marketplaceStats?.uniqueProducts ?? 0)}
+                tone="neutral"
+              />
+              <StatChip
+                label="Aktif İlgi"
+                value={String(stats?.activeInterestsCount ?? 0)}
+                tone={stats && stats.activeInterestsCount > 0 ? "warning" : "neutral"}
+              />
+              <StatChip
+                label="Açık Teklif"
+                value={String(stats?.openQuoteCount ?? 0)}
+                tone={stats && stats.openQuoteCount > 0 ? "info" : "neutral"}
+              />
+              <StatChip
+                label="Müşterilik"
+                value={(() => {
+                  const months = Math.max(0, Math.floor((Date.now() - new Date(customer.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000)));
+                  if (months < 12) return `${months} ay`;
+                  const years = Math.floor(months / 12);
+                  const remainder = months % 12;
+                  return remainder === 0 ? `${years} yıl` : `${years}y ${remainder}a`;
+                })()}
+                tone="neutral"
+              />
+            </div>
+          </Card>
+        )}
 
         <CustomerWorkspaceTabs
         defaultTabId="overview"
@@ -736,6 +916,33 @@ function HistoryMetric({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">{label}</p>
       <p className="mt-2 text-sm font-medium text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function StatChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "success" | "info" | "warning" | "neutral";
+}) {
+  const toneClass = {
+    success: "text-emerald-700",
+    info: "text-blue-700",
+    warning: "text-amber-700",
+    neutral: "text-slate-900",
+  }[tone];
+  return (
+    <div className="border-l-2 border-slate-200 pl-3">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        {label}
+      </p>
+      <p className={`mt-0.5 text-lg font-bold tabular-nums ${toneClass}`}>
+        {value}
+      </p>
     </div>
   );
 }
