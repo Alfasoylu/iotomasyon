@@ -297,3 +297,180 @@ function decimalOrNull(value: string) {
 
   return value.trim();
 }
+
+// ── Phase 95c — Outcome chip server actions ────────────────────────────────
+
+export type CallOutcomeKind =
+  | "INTERESTED"      // İlgileniyor → görev oluştur
+  | "NO_ANSWER"       // Açmadı → callAttempts++, 3+ olunca auto-snooze
+  | "WRONG_NUMBER"    // Yanlış numara
+  | "NOT_INTERESTED"  // İlgisiz → status=LOST
+  | "DEAL_WON"        // Satış oldu → status=WON
+  | "DND"             // Bir daha aramayın → doNotCall=true
+  | "CALL_LATER";     // Snooze (tarih ver)
+
+interface CallOutcomeInput {
+  outcome: CallOutcomeKind;
+  note?: string;
+  nextActionDate?: string;   // ISO date YYYY-MM-DD
+  nextActionTitle?: string;
+}
+
+export async function logCallOutcomeAction(
+  customerId: string,
+  input: CallOutcomeInput,
+): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
+
+  try {
+    const noteContent =
+      input.note?.trim() ||
+      ({
+        INTERESTED: "Telefonla görüşüldü — ilgileniyor",
+        NO_ANSWER: "Aradım, açmadı",
+        WRONG_NUMBER: "Yanlış numara",
+        NOT_INTERESTED: "Görüşüldü — ilgisiz",
+        DEAL_WON: "Satış kapatıldı",
+        DND: "Müşteri 'aramayın' dedi (DND işaretlendi)",
+        CALL_LATER: "Sonra aranacak",
+      }[input.outcome]);
+
+    await prisma.note.create({
+      data: {
+        customerId,
+        content: noteContent,
+        type: "CALL",
+        createdById: user.id,
+      },
+    });
+
+    // Customer field updates
+    const customerUpdates: {
+      lastContactedAt: Date;
+      status?: "WON" | "LOST";
+      doNotCall?: boolean;
+      callAttempts?: { increment: number } | number;
+      lastCallAttemptAt?: Date;
+    } = {
+      lastContactedAt: new Date(),
+    };
+
+    if (input.outcome === "DEAL_WON") customerUpdates.status = "WON";
+    if (input.outcome === "NOT_INTERESTED") customerUpdates.status = "LOST";
+    if (input.outcome === "DND") customerUpdates.doNotCall = true;
+    if (input.outcome === "NO_ANSWER") {
+      customerUpdates.callAttempts = { increment: 1 };
+      customerUpdates.lastCallAttemptAt = new Date();
+    }
+    if (input.outcome === "INTERESTED" || input.outcome === "DEAL_WON") {
+      // Successful contact → reset callAttempts
+      customerUpdates.callAttempts = 0;
+    }
+
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: customerUpdates,
+    });
+
+    // Optional follow-up task (CALL_LATER + INTERESTED with nextActionDate)
+    if (
+      (input.outcome === "CALL_LATER" || input.outcome === "INTERESTED") &&
+      input.nextActionDate
+    ) {
+      await prisma.followUpTask.create({
+        data: {
+          customerId,
+          title: input.nextActionTitle?.trim() || (
+            input.outcome === "CALL_LATER" ? "Geri ara" : "Takip et"
+          ),
+          dueDate: new Date(input.nextActionDate),
+          priority: "MEDIUM",
+          status: "OPEN",
+          createdById: user.id,
+        },
+      });
+    }
+
+    // NO_ANSWER 3+ kez olduysa auto-snooze (24 saat sonra tekrar dene)
+    if (input.outcome === "NO_ANSWER") {
+      const updated = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { callAttempts: true },
+      });
+      if (updated && updated.callAttempts >= 3) {
+        const snoozeDate = new Date();
+        snoozeDate.setDate(snoozeDate.getDate() + 2);
+        await prisma.followUpTask.create({
+          data: {
+            customerId,
+            title: `3 kez açmadı — ${snoozeDate.toLocaleDateString("tr-TR")} sonra dene`,
+            dueDate: snoozeDate,
+            priority: "LOW",
+            status: "OPEN",
+            createdById: user.id,
+          },
+        });
+      }
+    }
+
+    revalidatePath(`/customers/${customerId}`);
+    revalidatePath("/customers");
+    revalidatePath("/dashboard");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Çağrı sonucu kaydedilemedi." };
+  }
+}
+
+// Inline status edit
+export async function updateCustomerStatusAction(
+  customerId: string,
+  status: "NEW" | "CONTACTED" | "QUOTED" | "NEGOTIATING" | "WON" | "LOST",
+): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
+
+  try {
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { status, lastContactedAt: new Date() },
+    });
+    revalidatePath(`/customers/${customerId}`);
+    revalidatePath("/customers");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Durum güncellenemedi." };
+  }
+}
+
+// DND toggle (ayrı action)
+export async function toggleDoNotCallAction(
+  customerId: string,
+  doNotCall: boolean,
+): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CUSTOMERS_UPDATE))) return PERM_DENIED;
+
+  try {
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { doNotCall },
+    });
+    if (doNotCall) {
+      await prisma.note.create({
+        data: {
+          customerId,
+          content: "DND işaretlendi — bir daha aramayın",
+          type: "NOTE",
+          createdById: user.id,
+        },
+      });
+    }
+    revalidatePath(`/customers/${customerId}`);
+    revalidatePath("/customers");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "DND güncellenemedi." };
+  }
+}

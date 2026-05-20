@@ -48,6 +48,9 @@ import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
 import { Phone, MessageCircle, Mail, MapPin, Briefcase, Clock, Target, Heart, ShoppingBag, Activity as ActivityIcon } from "lucide-react";
 import { CustomerRowActions } from "@/components/customers/customer-row-actions";
 import { CustomerTimeline } from "@/components/customers/customer-timeline";
+import { OutcomeChips } from "@/components/customers/outcome-chips";
+import { InlineStatusEditor } from "@/components/customers/inline-status-editor";
+import { CustomerAvatar } from "@/components/customers/customer-avatar";
 import { prisma } from "@/lib/prisma";
 import { requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -158,26 +161,45 @@ export default async function CustomerDetailPage({
         <Card className="p-6">
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-              {/* Lead skoru rozeti */}
-              <div
-                className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-2xl border ${SCORE_BG_HERO[leadScore.tone]}`}
-                title={`Lead Skoru ${leadScore.score}/100 — ${leadScore.label}`}
-              >
-                <span className="text-2xl font-bold tabular-nums leading-none">{leadScore.score}</span>
-                <span className="mt-0.5 text-[9px] uppercase tracking-wide opacity-80">
-                  {leadScore.label}
-                </span>
+              {/* Avatar + Lead skoru kombo */}
+              <div className="flex-shrink-0 flex items-center gap-3">
+                <CustomerAvatar name={customer.name} avatarUrl={customer.avatarUrl} size="lg" />
+                <div
+                  className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-2xl border ${SCORE_BG_HERO[leadScore.tone]}`}
+                  title={`Lead Skoru ${leadScore.score}/100 — ${leadScore.label}`}
+                >
+                  <span className="text-2xl font-bold tabular-nums leading-none">{leadScore.score}</span>
+                  <span className="mt-0.5 text-[9px] uppercase tracking-wide opacity-80">
+                    {leadScore.label}
+                  </span>
+                </div>
               </div>
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone={getCustomerStatusTone(customer.status)}>
-                    {formatCustomerStatus(customer.status)}
-                  </Badge>
+                  {/* Status — inline edit dropdown */}
+                  <InlineStatusEditor customerId={customer.id} currentStatus={customer.status} />
                   {customer.customerType && (
                     <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                       {CUSTOMER_TYPE_LABELS[customer.customerType]}
                     </span>
+                  )}
+                  {customer.doNotCall && (
+                    <span className="rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                      📵 DND
+                    </span>
+                  )}
+                  {customer.tags && customer.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {customer.tags.slice(0, 5).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-medium text-blue-700"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
                 <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
@@ -273,6 +295,11 @@ export default async function CustomerDetailPage({
                 <Button variant="secondary">Düzenle</Button>
               </Link>
               <CustomerDeleteButton customerId={customer.id} />
+            </div>
+
+            {/* ── Çağrı Sonu Outcome Chips (Phase 95c) ──────────────────── */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+              <OutcomeChips customerId={customer.id} />
             </div>
           </div>
         </Card>
