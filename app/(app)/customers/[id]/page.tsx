@@ -273,8 +273,9 @@ export default async function CustomerDetailPage({
               </div>
             </div>
 
-            {/* 5'li aksiyon butonları (prominent) */}
-            <div className="flex flex-wrap gap-2">
+            {/* Aksiyon butonları — tek sıra, duplicate yok (P0)
+                ARA + WhatsApp (template dropdown'lı) + Not + Görev + Düzenle */}
+            <div className="flex flex-wrap items-center gap-2">
               {phoneHref && (
                 <a
                   href={phoneHref}
@@ -284,26 +285,25 @@ export default async function CustomerDetailPage({
                   ARA
                 </a>
               )}
-              {waHref && (
-                <a
-                  href={waHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  WhatsApp
-                </a>
-              )}
+              <CustomerWhatsAppButton
+                customerId={customer.id}
+                phone={customer.whatsapp ?? customer.phone}
+                customerName={customer.name}
+                customerCompany={customer.company}
+                customerCity={customer.city}
+                lastQuoteNumber={customer.quotes[0]?.quoteNumber ?? null}
+                lastContactedAt={customer.lastContactedAt}
+                templates={whatsAppTemplates}
+              />
               <CustomerRowActions
                 customerId={customer.id}
                 phone={customer.phone}
                 whatsapp={customer.whatsapp}
+                compact
               />
               <Link href={`/customers/${customer.id}/edit`}>
                 <Button variant="secondary">Düzenle</Button>
               </Link>
-              <CustomerDeleteButton customerId={customer.id} />
             </div>
 
             {/* ── Çağrı Sonu Outcome Chips (Phase 95c) ──────────────────── */}
@@ -313,49 +313,63 @@ export default async function CustomerDetailPage({
           </div>
         </Card>
 
-        {/* ── Quick Stats şeridi (6 KPI) ──────────────────────────────── */}
-        {(marketplaceStats || stats) && (
-          <Card className="p-4">
-            <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
-              <StatChip
-                label="Toplam Ciro"
-                value={marketplaceStats ? new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(marketplaceStats.totalRevenueTry) : "—"}
-                tone="success"
-              />
-              <StatChip
-                label="Sipariş Adedi"
-                value={String(marketplaceStats?.totalOrders ?? 0)}
-                tone="info"
-              />
-              <StatChip
-                label="Farklı Ürün"
-                value={String(marketplaceStats?.uniqueProducts ?? 0)}
-                tone="neutral"
-              />
-              <StatChip
-                label="Aktif İlgi"
-                value={String(stats?.activeInterestsCount ?? 0)}
-                tone={stats && stats.activeInterestsCount > 0 ? "warning" : "neutral"}
-              />
-              <StatChip
-                label="Açık Teklif"
-                value={String(stats?.openQuoteCount ?? 0)}
-                tone={stats && stats.openQuoteCount > 0 ? "info" : "neutral"}
-              />
-              <StatChip
-                label="Müşterilik"
-                value={(() => {
-                  const months = Math.max(0, Math.floor((Date.now() - new Date(customer.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000)));
-                  if (months < 12) return `${months} ay`;
-                  const years = Math.floor(months / 12);
-                  const remainder = months % 12;
+        {/* ── Quick Stats şeridi — P0: 0'lı chip'leri gizle, hiç veri yoksa "Yeni müşteri" rozet ── */}
+        {(() => {
+          const totalRevenue = marketplaceStats?.totalRevenueTry ?? 0;
+          const totalOrders = marketplaceStats?.totalOrders ?? 0;
+          const uniqueProducts = marketplaceStats?.uniqueProducts ?? 0;
+          const activeInterests = stats?.activeInterestsCount ?? 0;
+          const openQuotes = stats?.openQuoteCount ?? 0;
+          const monthsTotal = Math.max(0, Math.floor((Date.now() - new Date(customer.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000)));
+
+          const visibleChips: Array<{ label: string; value: string; tone: "success" | "info" | "warning" | "neutral" }> = [];
+          if (totalRevenue > 0) {
+            visibleChips.push({
+              label: "Toplam Ciro",
+              value: new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(totalRevenue),
+              tone: "success",
+            });
+          }
+          if (totalOrders > 0) visibleChips.push({ label: "Sipariş Adedi", value: String(totalOrders), tone: "info" });
+          if (uniqueProducts > 0) visibleChips.push({ label: "Farklı Ürün", value: String(uniqueProducts), tone: "neutral" });
+          if (activeInterests > 0) visibleChips.push({ label: "Aktif İlgi", value: String(activeInterests), tone: "warning" });
+          if (openQuotes > 0) visibleChips.push({ label: "Açık Teklif", value: String(openQuotes), tone: "info" });
+
+          // Müşterilik süresi — sadece >0 ay ise göster
+          if (monthsTotal > 0) {
+            const value = monthsTotal < 12
+              ? `${monthsTotal} ay`
+              : (() => {
+                  const years = Math.floor(monthsTotal / 12);
+                  const remainder = monthsTotal % 12;
                   return remainder === 0 ? `${years} yıl` : `${years}y ${remainder}a`;
-                })()}
-                tone="neutral"
-              />
-            </div>
-          </Card>
-        )}
+                })();
+            visibleChips.push({ label: "Müşterilik", value, tone: "neutral" });
+          }
+
+          if (visibleChips.length === 0) {
+            return (
+              <Card className="p-4">
+                <p className="text-sm text-slate-500">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700">
+                    ✨ Yeni müşteri
+                  </span>
+                  <span className="ml-2 text-xs text-slate-400">Henüz satış geçmişi yok — ilk çağrıyı yap, ilgi alanlarını kaydet.</span>
+                </p>
+              </Card>
+            );
+          }
+
+          return (
+            <Card className="p-4">
+              <div className={`grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3 ${visibleChips.length >= 4 ? "lg:grid-cols-6" : "lg:grid-cols-3"}`}>
+                {visibleChips.map((chip) => (
+                  <StatChip key={chip.label} label={chip.label} value={chip.value} tone={chip.tone} />
+                ))}
+              </div>
+            </Card>
+          );
+        })()}
 
         {/* ── ÇAĞRI SIRASINDA BİLMEM GEREKENLER ─────────────────────── */}
         <div className="grid gap-4 lg:grid-cols-2">
@@ -909,20 +923,18 @@ export default async function CustomerDetailPage({
       {/* ── Sticky right rail (desktop only) ───────────────────── */}
       <aside className="hidden xl:block">
         <div className="sticky top-6 space-y-4">
-          {/* Contact quick info */}
-          <Card className="p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              İletişim
-            </p>
-            <div className="mt-4 space-y-3">
-              <RailItem label="Telefon" value={customer.phone || "-"} />
-              <RailItem label="WhatsApp" value={customer.whatsapp || "-"} />
-              <RailItem label="E-posta" value={customer.email || "-"} />
-              {customer.lastContactedAt ? (
-                <RailItem label="Son iletişim" value={formatDateTime(customer.lastContactedAt)} />
-              ) : null}
-            </div>
-          </Card>
+          {/* P0: "İletişim" kartı kaldırıldı — telefon/whatsapp/email zaten hero başlığında var.
+              Sadece "Son iletişim" tarihi göster (kritik takip bilgisi). */}
+          {customer.lastContactedAt && (
+            <Card className="p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Son iletişim
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">
+                {formatDateTime(customer.lastContactedAt)}
+              </p>
+            </Card>
+          )}
 
           {/* Pazaryeri satış geçmişi (yeni — MarketplaceSalesRecord) */}
           {marketplaceStats && (
@@ -1009,29 +1021,8 @@ export default async function CustomerDetailPage({
             </Card>
           )}
 
-          {/* Quick actions */}
-          <Card className="p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Hızlı işlemler
-            </p>
-            <div className="mt-4 flex flex-col gap-2">
-              <CustomerWhatsAppButton
-                customerId={customer.id}
-                phone={customer.whatsapp ?? customer.phone}
-                customerName={customer.name}
-                customerCompany={customer.company}
-                customerCity={customer.city}
-                lastQuoteNumber={customer.quotes[0]?.quoteNumber ?? null}
-                lastContactedAt={customer.lastContactedAt}
-                templates={whatsAppTemplates}
-              />
-              <Link href={`/customers/${customer.id}/edit`} className="w-full">
-                <Button variant="secondary" className="w-full">
-                  Müşteriyi düzenle
-                </Button>
-              </Link>
-            </div>
-          </Card>
+          {/* P0: "Hızlı işlemler" kartı sol bloktaki aksiyon paneli ile duplicate olduğu için kaldırıldı.
+              WhatsApp template dropdown sol blok'taki ARA/WhatsApp aksiyon satırına taşındı. */}
 
           {/* Phase 96c — Ürün önerileri (kategori geçmişine göre) */}
           {productSuggestions.length > 0 && (

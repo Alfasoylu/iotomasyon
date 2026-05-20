@@ -17,6 +17,8 @@ interface Props {
   phone: string | null;
   whatsapp: string | null;
   detailHref?: string;
+  /** Detay sayfasında ARA/WhatsApp/Detay zaten başka yerde — sadece Not + Görev modal'larını göster */
+  compact?: boolean;
 }
 
 /**
@@ -29,7 +31,7 @@ interface Props {
  *
  * Hedef: çağrı merkezi sales rep detaya gitmeden günlük işini bitirir.
  */
-export function CustomerRowActions({ customerId, phone, whatsapp, detailHref }: Props) {
+export function CustomerRowActions({ customerId, phone, whatsapp, detailHref, compact = false }: Props) {
   const [openTask, setOpenTask] = useState(false);
   const [openNote, setOpenNote] = useState(false);
 
@@ -39,7 +41,7 @@ export function CustomerRowActions({ customerId, phone, whatsapp, detailHref }: 
   return (
     <div className="flex flex-wrap items-center gap-2">
       {/* 📞 ARA */}
-      {phoneHref ? (
+      {!compact && (phoneHref ? (
         <a
           href={phoneHref}
           className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
@@ -53,10 +55,10 @@ export function CustomerRowActions({ customerId, phone, whatsapp, detailHref }: 
           <Phone className="h-3.5 w-3.5" />
           —
         </span>
-      )}
+      ))}
 
       {/* 💬 WhatsApp */}
-      {waHref ? (
+      {!compact && waHref && (
         <a
           href={waHref}
           target="_blank"
@@ -67,7 +69,7 @@ export function CustomerRowActions({ customerId, phone, whatsapp, detailHref }: 
           <MessageCircle className="h-3.5 w-3.5" />
           WhatsApp
         </a>
-      ) : null}
+      )}
 
       {/* ➕ Görev */}
       <button
@@ -92,7 +94,7 @@ export function CustomerRowActions({ customerId, phone, whatsapp, detailHref }: 
       </button>
 
       {/* → Detay */}
-      {detailHref && (
+      {!compact && detailHref && (
         <Link
           href={detailHref}
           className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
