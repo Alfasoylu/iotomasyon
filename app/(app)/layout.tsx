@@ -141,6 +141,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     permission: PERMISSIONS.CUSTOMERS_READ,
     section: "Satış",
   },
+  {
+    href: "/admin/message-templates",
+    label: "Mesaj Şablonları",
+    iconKey: "messageSquare",
+    permission: PERMISSIONS.CAMPAIGNS_READ,
+    section: "Satış",
+  },
 
   // ── ÜRÜNLER & STOK ──────────────────────────────────────────────────────
   {
