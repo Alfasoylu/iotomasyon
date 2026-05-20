@@ -59,23 +59,33 @@ export async function getCustomerCohortCounts(
         select: { customerId: true },
         distinct: ["customerId"],
       }),
-      // 2) Uyuyan — lastContactedAt < 60g önce VE marketplaceSalesRecords var
+      // 2) Uyuyan — lifetime satışı var ama son temas yok/60g+ önce VE son satış da 60g+ önce
+      //    Yeni alınan müşterileri "uyuyan" sayma (recent purchase varsa hâlâ aktif)
       prisma.customer.findMany({
         where: {
           isActive: true,
-          AND: [
+          OR: [
+            { lastContactedAt: null },
             { lastContactedAt: { lt: since60 } },
-            { marketplaceSalesRecords: { some: {} } },
           ],
+          marketplaceSalesRecords: {
+            some: {},
+            none: { orderDate: { gte: since60 } },
+          },
         },
         select: { id: true },
       }),
-      // 3) Yeni Fırsatlar — created < 7g VE lastContactedAt IS NULL
+      // 3) Yeni Fırsatlar — son 7g eklenmiş, hiç aranmamış, ENTEGRA IMPORT DEĞİL
+      //    (Entegra import 542 müşteri "uyuyan" cohort'a düşer)
       prisma.customer.findMany({
         where: {
           isActive: true,
           createdAt: { gte: since7 },
           lastContactedAt: null,
+          OR: [
+            { source: null },
+            { NOT: { source: { startsWith: "Entegra import" } } },
+          ],
         },
         select: { id: true },
       }),
@@ -164,10 +174,14 @@ export async function getCustomerIdsForCohort(cohort: CohortKey): Promise<Set<st
     const rows = await prisma.customer.findMany({
       where: {
         isActive: true,
-        AND: [
+        OR: [
+          { lastContactedAt: null },
           { lastContactedAt: { lt: since60 } },
-          { marketplaceSalesRecords: { some: {} } },
         ],
+        marketplaceSalesRecords: {
+          some: {},
+          none: { orderDate: { gte: since60 } },
+        },
       },
       select: { id: true },
     });
@@ -180,6 +194,10 @@ export async function getCustomerIdsForCohort(cohort: CohortKey): Promise<Set<st
         isActive: true,
         createdAt: { gte: since7 },
         lastContactedAt: null,
+        OR: [
+          { source: null },
+          { NOT: { source: { startsWith: "Entegra import" } } },
+        ],
       },
       select: { id: true },
     });
