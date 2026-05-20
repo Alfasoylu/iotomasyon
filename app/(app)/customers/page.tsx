@@ -16,6 +16,7 @@ import {
   getCustomerCohortCounts,
   getCustomerIdsForCohort,
   getCustomerStats,
+  getPowerQueueIds,
   type CohortKey,
 } from "@/services/customer-cohort-service";
 import { listAttributes } from "@/services/attribute-service";
@@ -46,7 +47,7 @@ export default async function CustomersPage({
   const attributeId  = typeof params.attributeId  === "string" ? params.attributeId  : "all";
   const customerType = typeof params.customerType === "string" ? params.customerType : "all";
   const cohortParam  = typeof params.cohort       === "string" ? params.cohort       : null;
-  const validCohorts: CohortKey[] = ["todayCall", "dormant", "new", "openQuotes"];
+  const validCohorts: CohortKey[] = ["queue", "todayCall", "dormant", "new", "openQuotes"];
   const cohort: CohortKey | null =
     cohortParam && (validCohorts as string[]).includes(cohortParam)
       ? (cohortParam as CohortKey)
@@ -62,7 +63,23 @@ export default async function CustomersPage({
 
   // Cohort filtresi varsa ID set'i ile filtrele
   let filteredCustomers = customers;
-  if (cohort) {
+  if (cohort === "queue") {
+    // Power Queue: smart priority sırasını koru
+    const orderedIds = await getPowerQueueIds(30);
+    const customerById = new Map(customers.map((c) => [c.id, c]));
+    filteredCustomers = orderedIds
+      .map((id) => customerById.get(id))
+      .filter((c): c is (typeof customers)[number] => !!c);
+
+    // Anti-monotony: shownInQueueCount artır (gösterildi)
+    if (orderedIds.length > 0) {
+      const { prisma } = await import("@/lib/prisma");
+      await prisma.customer.updateMany({
+        where: { id: { in: orderedIds } },
+        data: { shownInQueueCount: { increment: 1 } },
+      }).catch(() => null);
+    }
+  } else if (cohort) {
     const cohortIds = await getCustomerIdsForCohort(cohort);
     filteredCustomers = customers.filter((c) => cohortIds.has(c.id));
   }
@@ -142,7 +159,8 @@ export default async function CustomersPage({
       {databaseAvailable && (
         <section>
           <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">
-            {cohort === "todayCall" ? "🔴 Bugün Aranacaklar" :
+            {cohort === "queue" ? "⚡ Sıralı Arama Listesi — En Yüksek Öncelikten" :
+             cohort === "todayCall" ? "🔴 Bugün Aranacaklar" :
              cohort === "dormant" ? "🟡 Uyuyan Müşteriler" :
              cohort === "new" ? "🟢 Yeni Fırsatlar" :
              cohort === "openQuotes" ? "🔵 Açık Teklifler" :
@@ -150,6 +168,13 @@ export default async function CustomersPage({
             {" "}
             <span className="text-slate-400 font-normal">({filteredCustomers.length})</span>
           </p>
+          {cohort === "queue" && (
+            <p className="mb-3 text-[11px] text-slate-500 leading-relaxed">
+              Akıllı sıralama: <strong>Lead skoru × Bilgi tamlığı × Anti-monotony</strong>.
+              Telefonu olan + satışı geçmiş + bu hafta az gösterilmiş müşteri öncelikli.
+              Aynı müşteri tekrar tekrar çıkmaz (shownInQueueCount ile soğutma).
+            </p>
+          )}
 
           {filteredCustomers.length === 0 ? (
             <EmptyState

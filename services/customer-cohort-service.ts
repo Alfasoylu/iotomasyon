@@ -14,7 +14,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { isDatabaseUnavailableError } from "@/lib/database";
 
-export type CohortKey = "todayCall" | "dormant" | "new" | "openQuotes";
+export type CohortKey = "queue" | "todayCall" | "dormant" | "new" | "openQuotes";
 
 export interface CohortCounts {
   databaseAvailable: boolean;
@@ -158,6 +158,11 @@ export async function getCustomerIdsForCohort(cohort: CohortKey): Promise<Set<st
   const since60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
   const since7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+  if (cohort === "queue") {
+    const ids = await getPowerQueueIds(30);
+    return new Set(ids);
+  }
+
   if (cohort === "todayCall") {
     const rows = await prisma.followUpTask.findMany({
       where: {
@@ -217,6 +222,82 @@ export async function getCustomerIdsForCohort(cohort: CohortKey): Promise<Set<st
   }
 
   return new Set();
+}
+
+/**
+ * Power Queue sıralaması için smart priority score hesaplı, ilk N müşteri ID'si.
+ * Sıralama: calcCallPriority(leadScore × 0.6 + infoCompleteness × 0.4) × rotationFactor
+ *
+ * Telefonu olmayan ve DND'li müşteriler skor 0 → liste sonuna düşer.
+ * Aynı müşteri tekrar tekrar gösterilmesin diye shownInQueueCount ile soğutulur.
+ */
+export async function getPowerQueueIds(limit = 30): Promise<string[]> {
+  const customers = await prisma.customer.findMany({
+    where: { isActive: true, doNotCall: false, phone: { not: null } },
+    select: {
+      id: true,
+      phone: true,
+      whatsapp: true,
+      email: true,
+      taxNumber: true,
+      company: true,
+      city: true,
+      address: true,
+      customerNotes: true,
+      status: true,
+      lastContactedAt: true,
+      doNotCall: true,
+      shownInQueueCount: true,
+    },
+    take: 500, // initial scan, computed sort below
+  });
+
+  // Lazy load stats only if needed (skip empty phone customers)
+  const ids = customers.map((c) => c.id);
+  const statsMap = await getCustomerStats(ids);
+
+  type WithScore = (typeof customers)[number] & { score: number };
+  const scored: WithScore[] = customers.map((c) => {
+    const stats = statsMap.get(c.id) ?? null;
+    const days = c.lastContactedAt
+      ? Math.floor((Date.now() - c.lastContactedAt.getTime()) / (24 * 60 * 60 * 1000))
+      : null;
+    // import here lazily to avoid cycle
+    const leadScore = (() => {
+      const interests = stats?.activeInterestsCount ?? 0;
+      const orders = stats?.lifetimeOrders ?? 0;
+      const quotes = stats?.openQuoteCount ?? 0;
+      const won = c.status === "WON" ? 15 : 0;
+      const i = Math.min(40, interests * 8);
+      const o = Math.min(32, orders * 4);
+      const r = days == null ? 0 : Math.max(0, Math.min(20, (60 - days) / 3));
+      const q = Math.min(30, quotes * 10);
+      return Math.max(0, Math.min(100, Math.round(i + o + r + q + won)));
+    })();
+
+    const info = (() => {
+      let s = 0;
+      if (c.phone) s += 25;
+      if (c.whatsapp) s += 15;
+      if (c.email) s += 10;
+      if (c.taxNumber) s += 10;
+      if (c.company) s += 10;
+      if (stats?.hasInterests) s += 10;
+      if (c.city) s += 5;
+      if (c.address) s += 5;
+      if (c.customerNotes) s += 10;
+      return s;
+    })();
+
+    const base = leadScore * 0.6 + info * 0.4;
+    const rotation = 1 / (1 + c.shownInQueueCount * 0.1);
+    const score = base * rotation;
+
+    return { ...c, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit).map((c) => c.id);
 }
 
 /**
