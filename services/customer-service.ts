@@ -148,11 +148,17 @@ export async function listCustomers(filters: CustomerFilters) {
           },
           orderBy,
         });
-        // Merge with null stubs for Phase 6 fields to satisfy TypeScript types.
+        // Merge with null stubs for Phase 6 + 95b fields to satisfy TypeScript types.
         const customers = rows.map((r) => ({
           ...r,
           monthlySalesPotential: null as null,
           platformNotes: null as null,
+          tags: [] as string[],
+          doNotCall: false,
+          avatarUrl: null as null,
+          callAttempts: 0,
+          lastCallAttemptAt: null as null,
+          shownInQueueCount: 0,
         }));
         return { databaseAvailable: true as const, customers };
       } catch {

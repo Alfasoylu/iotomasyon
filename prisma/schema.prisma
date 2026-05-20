@@ -319,6 +319,7 @@ model User {
   categoryInterestsCreated CategoryInterest[] @relation("CreatedCategoryInterests")
   campaignsCreated         OutreachCampaign[] @relation("CreatedCampaigns")
   customersOwned           Customer[]         @relation("OwnedCustomers")
+  savedViews               SavedView[]        @relation("UserSavedViews")
   capitalConfigs           CapitalConfig[]
   marketplaceListings      MarketplaceListing[]           @relation("ListingResponsible")
   marketplaceMappings      MarketplaceProductMapping[]    @relation("MappingCreatedBy")
@@ -509,6 +510,13 @@ model Customer {
   ownedById         String?
   isActive          Boolean            @default(true)
   lastContactedAt   DateTime?
+  // Phase 95b — Çağrı Merkezi Sales Workspace v2
+  tags              String[]           @default([])   // VIP, Bayi, Anahtar, vb.
+  doNotCall         Boolean            @default(false) // DND — bir daha aramayın
+  avatarUrl         String?                            // foto / logo
+  callAttempts      Int                @default(0)     // açılmadı sayacı (3+ olunca auto-snooze)
+  lastCallAttemptAt DateTime?
+  shownInQueueCount Int                @default(0)     // anti-monotony rotation
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   owner               User?              @relation("OwnedCustomers", fields: [ownedById], references: [id], onDelete: SetNull)
@@ -528,6 +536,24 @@ model Customer {
   @@index([ownedById])
   @@index([source])
   @@index([taxNumber])
+  @@index([doNotCall])
+  @@index([shownInQueueCount])
+}
+
+// Phase 95f — Kayıtlı görünümler (saved views)
+model SavedView {
+  id          String   @id @default(cuid())
+  userId      String   // owner (user-private veya shared)
+  name        String   // "Mersin'deki ticarilerim"
+  isShared    Boolean  @default(false)
+  resource    String   // "customers" | "products" | "marketplace" — gelecek için generic
+  filtersJson String   // URL params snapshot
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation("UserSavedViews", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, resource])
+  @@index([isShared, resource])
 }
 
 model CategoryInterest {
