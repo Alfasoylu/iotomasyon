@@ -96,7 +96,24 @@ export type CustomerFormValues = {
   customerType: string;
   monthlySalesPotential: string;
   platformNotes: string;
+  // Phase 99
+  industryId: string;
+  usedTech: string[];
+  currentSupplier: string;
 };
+
+export const USED_TECH_OPTIONS = [
+  { value: "IP", label: "IP Kamera" },
+  { value: "AHD", label: "AHD (Analog HD)" },
+  { value: "TVI", label: "HD-TVI" },
+  { value: "CVI", label: "HD-CVI" },
+  { value: "POE", label: "PoE NVR" },
+  { value: "NVR", label: "NVR" },
+  { value: "DVR", label: "DVR" },
+  { value: "ALARM", label: "Alarm / Hırsız" },
+  { value: "INTERCOM", label: "Diafon / Interkom" },
+  { value: "ACCESS", label: "Kartlı Geçiş" },
+] as const;
 
 export type CustomerInterestFormValues = {
   productId: string;

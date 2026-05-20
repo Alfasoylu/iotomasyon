@@ -20,6 +20,7 @@ import {
   CUSTOMER_SOURCE_OPTIONS,
   CUSTOMER_TYPE_OPTIONS,
   CUSTOMER_TYPE_LABELS,
+  USED_TECH_OPTIONS,
   type CustomerFormValues,
 } from "@/types/customers";
 import type { AttributeOption } from "@/services/attribute-service";
@@ -42,7 +43,16 @@ const emptyValues: CustomerFormValues = {
   customerType:          "",
   monthlySalesPotential: "",
   platformNotes:         "",
+  industryId:            "",
+  usedTech:              [],
+  currentSupplier:       "",
 };
+
+interface IndustryOptionGroup {
+  id: string;
+  name: string;
+  children: Array<{ id: string; name: string }>;
+}
 
 export function CustomerForm({
   mode,
@@ -55,6 +65,7 @@ export function CustomerForm({
   preselectedCategoryId,
   cities = [],
   districtsByCity = {},
+  industryGroups = [],
 }: {
   mode: "create" | "edit";
   customerId?: string;
@@ -66,6 +77,7 @@ export function CustomerForm({
   preselectedCategoryId?: string;
   cities?: string[];
   districtsByCity?: Record<string, string[]>;
+  industryGroups?: IndustryOptionGroup[];
 }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string>();
@@ -80,6 +92,21 @@ export function CustomerForm({
   const selectedCity = useWatch({ control: form.control, name: "city" }) ?? "";
   const selectedDistrict = useWatch({ control: form.control, name: "district" }) ?? "";
   const districtOptions = districtsByCity[selectedCity] ?? [];
+
+  const selectedIndustryId = useWatch({ control: form.control, name: "industryId" }) ?? "";
+  const selectedUsedTech = useWatch({ control: form.control, name: "usedTech" }) ?? [];
+  // Sektör + grubunu bul (UI'da hangi grup işaretli görünsün diye)
+  const selectedIndustryGroup = industryGroups.find((g) =>
+    g.children.some((c) => c.id === selectedIndustryId),
+  );
+
+  function toggleUsedTech(value: string) {
+    const current = form.getValues("usedTech") ?? [];
+    const next = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    form.setValue("usedTech", next, { shouldValidate: true });
+  }
 
   const submit = form.handleSubmit((values) => {
     setServerMessage(undefined);
@@ -227,6 +254,79 @@ export function CustomerForm({
           </Field>
         )}
       </div>
+
+      {/* Phase 99 — Sektör + Teknoloji + Mevcut Tedarikçi */}
+      {industryGroups.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+          <p className="text-sm font-semibold text-slate-700">Sektör & Teknoloji Profili</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Sektör grubu">
+              <select
+                value={selectedIndustryGroup?.id ?? ""}
+                onChange={(e) => {
+                  // Grup değişince alt sektörü sıfırla
+                  const newGroupId = e.target.value;
+                  form.setValue("industryId", "");
+                  // Grup ID'yi hidden state olarak tutmuyoruz — sadece UI cascading için
+                  if (!newGroupId) return;
+                  // Otomatik ilk alt sektörü seç (kullanışlı)
+                  const grp = industryGroups.find((g) => g.id === newGroupId);
+                  if (grp?.children[0]) {
+                    form.setValue("industryId", grp.children[0].id, { shouldValidate: true });
+                  }
+                }}
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+              >
+                <option value="">— Grup seçin —</option>
+                {industryGroups.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Alt sektör">
+              <select
+                {...form.register("industryId")}
+                disabled={!selectedIndustryGroup}
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400 disabled:opacity-50"
+              >
+                <option value="">{selectedIndustryGroup ? "— Alt sektör —" : "Önce grup seçin"}</option>
+                {selectedIndustryGroup?.children.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+
+          <Field label="Kullandığı teknoloji (çağrıda öğrenirken işaretle)">
+            <div className="flex flex-wrap gap-2">
+              {USED_TECH_OPTIONS.map((opt) => {
+                const checked = selectedUsedTech.includes(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => toggleUsedTech(opt.value)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                      checked
+                        ? "border-blue-500 bg-blue-500 text-white"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          <Field label="Mevcut tedarikçisi / marka (rakip — biliyorsan)" error={form.formState.errors.currentSupplier?.message}>
+            <Input
+              {...form.register("currentSupplier")}
+              placeholder="örn: Hikvision, Avocon, Dahua..."
+            />
+          </Field>
+        </div>
+      )}
 
       <Field label="Adres" error={form.formState.errors.address?.message}>
         <Textarea {...form.register("address")} className="min-h-24" />

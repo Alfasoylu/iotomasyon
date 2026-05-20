@@ -4,6 +4,7 @@ import { CustomerForm } from "@/components/customers/customer-form";
 import { Card } from "@/components/ui/card";
 import { listAttributes, getProductAttributeIds } from "@/services/attribute-service";
 import { listUsersForSelect } from "@/services/customer-service";
+import { getCustomerFilterOptions } from "@/services/customer-filter-options-service";
 import { getLocations } from "@/lib/turkey-locations";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -19,10 +20,11 @@ export default async function NewCustomerPage({
   const params = await searchParams;
   const productId  = typeof params.productId  === "string" ? params.productId  : undefined;
   const categoryId = typeof params.categoryId === "string" ? params.categoryId : undefined;
-  const [users, allAttributes, preselectedAttrIds] = await Promise.all([
+  const [users, allAttributes, preselectedAttrIds, filterOptions] = await Promise.all([
     listUsersForSelect(),
     listAttributes(),
     productId ? getProductAttributeIds(productId) : Promise.resolve([]),
+    getCustomerFilterOptions(),
   ]);
   const { cities, districtsByCity } = getLocations();
 
@@ -53,6 +55,7 @@ export default async function NewCustomerPage({
           preselectedCategoryId={categoryId}
           cities={cities}
           districtsByCity={districtsByCity}
+          industryGroups={filterOptions.industryGroups}
         />
       </Card>
     </div>
