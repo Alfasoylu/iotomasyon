@@ -196,10 +196,8 @@ export default async function CustomersPage({
         />
       </Card>
 
-      {/* Kanban — yalnızca cohort filtresi yokken göster (gürültü olmasın) */}
-      {databaseAvailable && !cohort && (
-        <CustomerKanbanBoard customers={customers} />
-      )}
+      {/* C2-01: Kanban Board kaldırıldı (boş ilçe kolonları görsel kirlilik yapıyordu).
+          İleride istenirse SavedView / ayrı /customers/kanban sayfasına taşınabilir. */}
 
       {!databaseAvailable && (
         <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">

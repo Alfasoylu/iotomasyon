@@ -54,6 +54,7 @@ import { OutcomeChips } from "@/components/customers/outcome-chips";
 import { InlineStatusEditor } from "@/components/customers/inline-status-editor";
 import { CustomerAvatar } from "@/components/customers/customer-avatar";
 import { prisma } from "@/lib/prisma";
+import { shortenCustomerName } from "@/lib/display-helpers";
 import { requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -199,8 +200,8 @@ export default async function CustomerDetailPage({
                     </span>
                   )}
                   {customer.tags && customer.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {customer.tags.slice(0, 5).map((tag) => (
+                    <div className="flex flex-wrap gap-1" title={customer.tags.join(", ")}>
+                      {customer.tags.slice(0, 3).map((tag) => (
                         <span
                           key={tag}
                           className="rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-medium text-blue-700"
@@ -208,15 +209,22 @@ export default async function CustomerDetailPage({
                           {tag}
                         </span>
                       ))}
+                      {customer.tags.length > 3 && (
+                        <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                          +{customer.tags.length - 3}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
-                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-                  {customer.name}
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl" title={customer.name}>
+                  {shortenCustomerName(customer.name, 70)}
                 </h1>
-                <p className="mt-1 text-sm text-slate-500">
-                  {customer.company ?? "Firma belirtilmedi"}
-                </p>
+                {customer.company && customer.company.trim() !== customer.name.trim() ? (
+                  <p className="mt-1 text-sm text-slate-500">{shortenCustomerName(customer.company, 80)}</p>
+                ) : (
+                  <p className="mt-1 text-sm text-slate-400 italic">Firma belirtilmedi</p>
+                )}
 
                 {/* İletişim satırı */}
                 <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-slate-700">
@@ -410,7 +418,10 @@ export default async function CustomerDetailPage({
         })()}
 
         {/* ── ÇAĞRI SIRASINDA BİLMEM GEREKENLER ─────────────────────── */}
+        {/* P6/CD2-03: Boş "Ne Almak İstiyor?" + "Pazaryeri Geçmişi" kartlarını gizle */}
+        {(customer.interests.length > 0 || customer.categoryInterests.length > 0 || customer.attributeInterests.length > 0 || (marketplaceStats && marketplaceStats.totalOrders > 0)) && (
         <div className="grid gap-4 lg:grid-cols-2">
+          {(customer.interests.length > 0 || customer.categoryInterests.length > 0 || customer.attributeInterests.length > 0) && (
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100">
@@ -421,9 +432,6 @@ export default async function CustomerDetailPage({
                 <p className="text-[10px] text-slate-500">Aktif ilgileri + aradığı özellikler</p>
               </div>
             </div>
-            {customer.interests.length === 0 && customer.categoryInterests.length === 0 && customer.attributeInterests.length === 0 ? (
-              <p className="py-4 text-center text-xs text-slate-400">Henüz ilgi alanı kaydedilmedi.</p>
-            ) : (
               <div className="space-y-3">
                 {customer.interests.length > 0 && (
                   <div>
@@ -484,9 +492,10 @@ export default async function CustomerDetailPage({
                   </div>
                 )}
               </div>
-            )}
           </Card>
+          )}
 
+          {marketplaceStats && marketplaceStats.totalOrders > 0 && (
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100">
@@ -497,39 +506,37 @@ export default async function CustomerDetailPage({
                 <p className="text-[10px] text-slate-500">Lifetime sipariş + kanal dağılımı</p>
               </div>
             </div>
-            {!marketplaceStats || marketplaceStats.totalOrders === 0 ? (
-              <p className="py-4 text-center text-xs text-slate-400">Pazaryeri satış kaydı yok.</p>
-            ) : (
-              <div>
-                <div className="text-center mb-3">
-                  <p className="text-2xl font-bold tabular-nums text-emerald-700">
-                    {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(marketplaceStats.totalRevenueTry)}
-                  </p>
-                  <p className="text-[11px] text-slate-500">
-                    {marketplaceStats.totalOrders} sipariş · {marketplaceStats.uniqueProducts} farklı ürün
-                  </p>
-                </div>
-                <div className="space-y-1.5">
-                  {marketplaceStats.channels.slice(0, 5).map((c) => {
-                    const pct = marketplaceStats.totalRevenueTry > 0 ? (c.revenueTry / marketplaceStats.totalRevenueTry) * 100 : 0;
-                    return (
-                      <div key={c.channel} className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-slate-700">{c.channel}</span>
-                        <span className="flex items-center gap-2">
-                          <span className="text-slate-500">{c.orders} sip.</span>
-                          <span className="font-mono font-semibold text-slate-800">
-                            {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(c.revenueTry)}
-                          </span>
-                          <span className="text-[10px] text-slate-400 w-9 text-right">%{pct.toFixed(0)}</span>
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+            <div>
+              <div className="text-center mb-3">
+                <p className="text-2xl font-bold tabular-nums text-emerald-700">
+                  {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(marketplaceStats.totalRevenueTry)}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {marketplaceStats.totalOrders} sipariş · {marketplaceStats.uniqueProducts} farklı ürün
+                </p>
               </div>
-            )}
+              <div className="space-y-1.5">
+                {marketplaceStats.channels.slice(0, 5).map((c) => {
+                  const pct = marketplaceStats.totalRevenueTry > 0 ? (c.revenueTry / marketplaceStats.totalRevenueTry) * 100 : 0;
+                  return (
+                    <div key={c.channel} className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-700">{c.channel}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-slate-500">{c.orders} sip.</span>
+                        <span className="font-mono font-semibold text-slate-800">
+                          {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(c.revenueTry)}
+                        </span>
+                        <span className="text-[10px] text-slate-400 w-9 text-right">%{pct.toFixed(0)}</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </Card>
+          )}
         </div>
+        )}
 
         <CustomerWorkspaceTabs
         defaultTabId="overview"

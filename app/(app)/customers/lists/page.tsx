@@ -284,12 +284,21 @@ export default async function LeadListsPage({
                           </div>
                         </div>
 
-                        <Link
-                          href={`/customers?leadListId=${list.id}&cohort=queue`}
-                          className="mt-2 block w-full text-center rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700"
-                        >
-                          📞 Aramaya Başla
-                        </Link>
+                        {stats.total > 0 && stats.contacted >= stats.total ? (
+                          <Link
+                            href={`/customers?leadListId=${list.id}`}
+                            className="mt-2 block w-full text-center rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                          >
+                            ✓ Tamamlandı — Listeyi Gör
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/customers?leadListId=${list.id}&cohort=queue`}
+                            className="mt-2 block w-full text-center rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700"
+                          >
+                            📞 Aramaya Başla ({stats.total - stats.contacted})
+                          </Link>
+                        )}
                       </Card>
                     );
                   })}

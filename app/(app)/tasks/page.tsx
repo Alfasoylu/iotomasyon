@@ -55,7 +55,8 @@ export default async function TasksPage({
   const priority = sp.priority ?? "all";
   const cohort = sp.cohort ?? null;
   const mineFilter = sp.mine !== "0"; // P3: varsayılan "bana atanmış"
-  const userId = sp.userId ?? (mineFilter && currentUser.role === "SALES" ? currentUser.id : "all");
+  // P6/T2-03: ADMIN dahil tüm roller için "Bana atanmış" varsayılan + sıkı filtre.
+  const userId = sp.userId ?? (mineFilter ? currentUser.id : "all");
   const page = Math.max(1, Number(sp.page ?? 1));
 
   const [{ tasks, total, pageSize }, users, cohortCounts] = await Promise.all([
@@ -105,14 +106,14 @@ export default async function TasksPage({
       {/* P3 — Cohort kartları */}
       <TaskCohortCards counts={cohortCounts} activeCohort={cohort} />
 
-      {/* P3 — "Bana atanmış" / "Tümü" hızlı toggle + filtre */}
+      {/* P3 — "Bana atanmış" / "Tümü" hızlı toggle + filtre (P6: aktif state fix) */}
       <Card className="p-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex rounded-xl border border-slate-200 bg-slate-50 p-1 gap-1">
             <Link
               href={`/tasks${cohort ? `?cohort=${cohort}` : ""}`}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                userId !== "all" && userId === currentUser.id
+                mineFilter
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-500 hover:text-slate-900"
               }`}
@@ -122,7 +123,7 @@ export default async function TasksPage({
             <Link
               href={`/tasks?mine=0${cohort ? `&cohort=${cohort}` : ""}`}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                userId === "all"
+                !mineFilter
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-500 hover:text-slate-900"
               }`}
