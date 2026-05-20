@@ -7,6 +7,8 @@ import { CategoryInterestDeleteButton } from "@/components/categories/category-i
 import { CategoryInterestForm } from "@/components/categories/category-interest-form";
 import { CustomerDeleteButton } from "@/components/customers/customer-delete-button";
 import { CustomerWhatsAppButton } from "@/components/customers/customer-whatsapp-button";
+import { CustomerProductSuggestionsWidget } from "@/components/customers/customer-product-suggestions-widget";
+import { getProductSuggestionsForCustomer } from "@/services/customer-product-suggestions-service";
 import { CustomerInterestDeleteButton } from "@/components/customers/customer-interest-delete-button";
 import { CustomerInterestForm } from "@/components/customers/customer-interest-form";
 import { CustomerNoteForm } from "@/components/customers/customer-note-form";
@@ -65,7 +67,7 @@ export default async function CustomerDetailPage({
   const currentUser = await requirePermission(PERMISSIONS.CUSTOMERS_READ);
   const { id } = await params;
   const canAssign = await checkPermission(currentUser, PERMISSIONS.TASKS_ASSIGN);
-  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats, statsMap, timelineEvents, whatsAppTemplates] =
+  const [{ databaseAvailable, customer }, productOptionsResult, categoryOptionsResult, allAttributes, quoteTemplates, taskUsers, marketplaceStats, statsMap, timelineEvents, whatsAppTemplates, productSuggestions] =
     await Promise.all([
       getCustomerById(id),
       listCustomerInterestProducts(),
@@ -82,6 +84,7 @@ export default async function CustomerDetailPage({
         orderBy: [{ usageCount: "desc" }, { name: "asc" }],
         take: 20,
       }).catch(() => [] as Array<{ id: string; name: string; body: string; category: string | null }>),
+      getProductSuggestionsForCustomer(id, 6).catch(() => []),
     ]);
   const stats = statsMap.get(id) ?? null;
 
@@ -988,6 +991,14 @@ export default async function CustomerDetailPage({
               </Link>
             </div>
           </Card>
+
+          {/* Phase 96c — Ürün önerileri (kategori geçmişine göre) */}
+          {productSuggestions.length > 0 && (
+            <CustomerProductSuggestionsWidget
+              customerId={customer.id}
+              products={productSuggestions}
+            />
+          )}
 
           {/* Recent quotes */}
           <Card className="overflow-hidden">
