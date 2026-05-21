@@ -14,12 +14,14 @@
  */
 
 import Link from "next/link";
+import { Truck, AlertTriangle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { calculateProcurement, urgencyRank, URGENCY_LABELS, URGENCY_TONES, type ReorderUrgency } from "@/lib/procurement";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -199,42 +201,33 @@ export default async function ProcurementPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="overflow-hidden rounded-3xl bg-slate-950">
-        <div className="h-1 bg-orange-500" />
-        <div className="px-6 py-8 xl:px-8">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                Yönetim
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-                Tedarik Asistanı
-              </h1>
-              <p className="mt-2 text-sm text-slate-400">
-                Stok aciliyetine ve yatırım skoruna göre sıralanmış satın alma önerileri.
-                {actualDataCount > 0 && (
-                  <span className="ml-2 text-emerald-400">
-                    {actualDataCount} üründe gerçek Trendyol satış hızı kullanılıyor.
-                  </span>
-                )}
-              </p>
-            </div>
-            <Link
-              href="/admin/capital"
-              className="text-sm font-medium text-slate-400 transition hover:text-white"
-            >
-              ← Sermaye
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Truck}
+        breadcrumb={[{ label: "Yönetim" }, { label: "Tedarik Asistanı" }]}
+        title="Tedarik Asistanı"
+        subtitle="Stok aciliyetine ve yatırım skoruna göre sıralanmış satın alma önerileri."
+        meta={
+          actualDataCount > 0 ? (
+            <Badge variant="ok">
+              {actualDataCount} üründe gerçek Trendyol satış hızı
+            </Badge>
+          ) : null
+        }
+        actions={
+          <Link
+            href="/admin/capital"
+            className="inline-flex h-8 items-center rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[12px] font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)]"
+          >
+            ← Sermaye
+          </Link>
+        }
+      />
 
       {/* Data coverage notice */}
       {actualDataCount > 0 && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-          <p className="text-sm text-emerald-800">
-            <span className="font-semibold">Gerçek Satış Verisi Aktif:</span>{" "}
+        <div className="rounded-lg border border-[var(--ok-border)] bg-[var(--ok-dim)] px-5 py-4">
+          <p className="text-sm text-[var(--text-secondary)]">
+            <span className="font-semibold text-[var(--ok)]">Gerçek Satış Verisi Aktif:</span>{" "}
             {actualDataCount} ürün için son 30 günlük Trendyol sipariş verisi talep tahmini olarak kullanılıyor.
             Kalan {rows.length - actualDataCount} ürün için manuel tahmin veya veri yok.
           </p>
@@ -253,30 +246,30 @@ export default async function ProcurementPage() {
       {/* Financial summary */}
       {actionable.length > 0 ? (
         <Card className="overflow-hidden">
-          <div className="border-b border-slate-200 px-6 py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Mali Özet</p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-950">Tahmini Alım Bütçesi</h2>
+          <div className="border-b border-[var(--border-subtle)] px-6 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Mali Özet · Tahmini Alım Bütçesi</p>
           </div>
-          <div className="grid divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0 px-6 py-5 gap-4 sm:gap-0">
+          <div className="grid gap-4 divide-y divide-[var(--border-subtle)] px-6 py-5 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-y-0">
             <div className="sm:pr-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Toplam Önerilen Alım</p>
-              <p className="mt-1 text-2xl font-bold text-slate-950">{fmtTry(totalSuggestedCost)}</p>
-              <p className="mt-1 text-xs text-slate-400">KRİTİK + YÜKSEK + ORTA + DÜŞÜK aciliyetli ürünler için</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Toplam Önerilen Alım</p>
+              <p className="mt-2 font-mono text-[22px] font-semibold tabular-nums text-[var(--text-primary)]">{fmtTry(totalSuggestedCost)}</p>
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">KRİTİK + YÜKSEK + ORTA + DÜŞÜK aciliyetli ürünler için</p>
             </div>
             <div className="sm:px-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Kritik+Yüksek Aylık Kâr</p>
-              <p className="mt-1 text-2xl font-bold text-emerald-600">{fmtTry(totalMonthlyProfit)}</p>
-              <p className="mt-1 text-xs text-slate-400">Satış gerçekleşirse tahmini aylık net kâr</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kritik+Yüksek Aylık Kâr</p>
+              <p className="mt-2 font-mono text-[22px] font-semibold tabular-nums text-[var(--ok)]">{fmtTry(totalMonthlyProfit)}</p>
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">Satış gerçekleşirse tahmini aylık net kâr</p>
             </div>
             <div className="sm:pl-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Aksiyon Gerektiren</p>
-              <p className="mt-1 text-2xl font-bold text-slate-950">{actionable.length}</p>
-              <p className="mt-1 text-xs text-slate-400">ürün önerilen alım listesinde</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Aksiyon Gerektiren</p>
+              <p className="mt-2 font-mono text-[22px] font-semibold tabular-nums text-[var(--text-primary)]">{actionable.length}</p>
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">ürün önerilen alım listesinde</p>
             </div>
           </div>
-          <div className="border-t border-amber-100 bg-amber-50 px-6 py-3">
-            <p className="text-xs text-amber-700">
-              ⚠ Bu liste öneridir — satın alma kararı vermez. Tedarikçi teklifi ve stok doğrulaması yapılmadan alım yapmayın.
+          <div className="flex items-center gap-2 border-t border-[var(--warn-border)] bg-[var(--warn-dim)] px-6 py-3">
+            <AlertTriangle size={14} strokeWidth={1.5} className="flex-shrink-0 text-[var(--warn)]" />
+            <p className="text-xs text-[var(--warn)]">
+              Bu liste öneridir — satın alma kararı vermez. Tedarikçi teklifi ve stok doğrulaması yapılmadan alım yapmayın.
             </p>
           </div>
         </Card>
@@ -284,96 +277,89 @@ export default async function ProcurementPage() {
 
       {/* Actionable products table */}
       <Card className="overflow-hidden">
-        <div className="border-b border-slate-200 px-6 py-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Aciliyet Sıralaması ({actionable.length} ürün)
+        <div className="border-b border-[var(--border-subtle)] px-6 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+            Satın Alma Önerileri · {actionable.length} ürün
           </p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-950">Satın Alma Önerileri</h2>
         </div>
 
         {actionable.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[var(--text-secondary)]">
               Şu anda acil tedarik gerektiren ürün yok.
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
               Ürünlerin stok, talep ve tedarik süresi verilerini doldurun.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100 text-sm">
-              <thead className="bg-slate-50">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+              <thead className="bg-[var(--surface-1)]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Ürün</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Aciliyet</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Stok</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Kalan Süre</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Tedarik Süresi</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Aylık Talep</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Hız Kaynağı</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">T30G Satış</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Önerilen Adet</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Tahmini Maliyet</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Skor</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500" />
+                  <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                  <th className="px-4 py-3 text-center text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Aciliyet</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Stok</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kalan Süre</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tedarik Süresi</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Aylık Talep</th>
+                  <th className="px-4 py-3 text-center text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Hız Kaynağı</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">T30G Satış</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Önerilen Adet</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tahmini Maliyet</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Skor</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {actionable.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50">
+                  <tr key={row.id} className="hover:bg-[var(--surface-3)]">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-900">{row.name}</p>
-                      {row.sku ? <p className="text-xs text-slate-400">{row.sku}</p> : null}
+                      <p className="font-medium text-[var(--text-primary)]">{row.name}</p>
+                      {row.sku ? <p className="font-mono text-xs tabular-nums text-[var(--text-muted)]">{row.sku}</p> : null}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <Badge tone={URGENCY_TONES[row.urgency]}>
                         {URGENCY_LABELS[row.urgency]}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-slate-700">{row.stock}</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className={row.daysRemaining !== null && row.daysRemaining <= (row.leadTimeDays * 1.5) ? "font-semibold text-red-600" : "text-slate-700"}>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">{row.stock}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums">
+                      <span className={row.daysRemaining !== null && row.daysRemaining <= (row.leadTimeDays * 1.5) ? "font-semibold text-[var(--danger)]" : "text-[var(--text-secondary)]"}>
                         {fmtDays(row.daysRemaining)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-500">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-muted)]">
                       {row.leadTimeDays > 0 ? `${row.leadTimeDays} gün` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-700">{row.monthlyUnits} adet/ay</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">{row.monthlyUnits} adet/ay</td>
                     <td className="px-4 py-3 text-center">
                       {row.velocitySource === "actual" ? (
-                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                          Gerçek
-                        </span>
+                        <Badge variant="ok">Gerçek</Badge>
                       ) : row.velocitySource === "estimated" ? (
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                          Tahmin
-                        </span>
+                        <Badge variant="neutral">Tahmin</Badge>
                       ) : (
-                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                          Veri Yok
-                        </span>
+                        <Badge variant="warn">Veri Yok</Badge>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-500">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-muted)]">
                       {row.actualSalesQty !== null ? `${row.actualSalesQty} adet` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                    <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                       {row.suggestedQty > 0 ? `${row.suggestedQty} adet` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                    <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                       {row.suggestedCost > 0 ? fmtTry(row.suggestedCost) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`text-sm font-bold ${row.score >= 60 ? "text-emerald-600" : row.score >= 30 ? "text-amber-600" : "text-slate-500"}`}>
+                      <span className={`font-mono text-sm font-semibold tabular-nums ${row.score >= 60 ? "text-[var(--ok)]" : row.score >= 30 ? "text-[var(--warn)]" : "text-[var(--text-muted)]"}`}>
                         {row.score}/100
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/products/${row.id}`}
-                        className="text-xs font-medium text-slate-500 hover:text-slate-900"
+                        className="text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       >
                         Detay →
                       </Link>
@@ -389,29 +375,26 @@ export default async function ProcurementPage() {
       {/* OK products (adequately stocked) */}
       {okRows.length > 0 ? (
         <Card className="overflow-hidden">
-          <div className="border-b border-slate-200 px-6 py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Stok Durumu Yeterli ({okRows.length} ürün)
+          <div className="border-b border-[var(--border-subtle)] px-6 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+              Aksiyon Gerekmeyenler · {okRows.length} ürün
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-950">Aksiyon Gerekmeyenler</h2>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[var(--border-subtle)]">
             {okRows.map((row) => (
               <div key={row.id} className="flex items-center justify-between px-6 py-3">
                 <div>
-                  <span className="font-medium text-slate-800">{row.name}</span>
-                  {row.sku ? <span className="ml-2 text-xs text-slate-400">{row.sku}</span> : null}
+                  <span className="font-medium text-[var(--text-primary)]">{row.name}</span>
+                  {row.sku ? <span className="ml-2 font-mono text-xs tabular-nums text-[var(--text-muted)]">{row.sku}</span> : null}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-slate-500">
-                  <span>{row.stock} adet stok</span>
-                  <span>{fmtDays(row.daysRemaining)}</span>
+                <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)]">
+                  <span className="font-mono tabular-nums">{row.stock} adet stok</span>
+                  <span className="font-mono tabular-nums">{fmtDays(row.daysRemaining)}</span>
                   {row.velocitySource === "actual" && (
-                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                      Gerçek ({row.actualSalesQty} T30G)
-                    </span>
+                    <Badge variant="ok">Gerçek ({row.actualSalesQty} T30G)</Badge>
                   )}
                   <Badge tone="success">YETERLİ</Badge>
-                  <Link href={`/products/${row.id}`} className="text-xs text-slate-400 hover:text-slate-700">Detay →</Link>
+                  <Link href={`/products/${row.id}`} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">Detay →</Link>
                 </div>
               </div>
             ))}
@@ -431,31 +414,17 @@ function SummaryCard({
   value: number;
   tone: "danger" | "warning" | "success" | "default";
 }) {
-  const bg = {
-    danger: "bg-red-50 border-red-100",
-    warning: "bg-amber-50 border-amber-100",
-    success: "bg-emerald-50 border-emerald-100",
-    default: "bg-slate-50 border-slate-200",
-  }[tone];
-
-  const text = {
-    danger: "text-red-700",
-    warning: "text-amber-700",
-    success: "text-emerald-700",
-    default: "text-slate-600",
-  }[tone];
-
-  const num = {
-    danger: "text-red-900",
-    warning: "text-amber-900",
-    success: "text-emerald-900",
-    default: "text-slate-800",
+  const valueColor = {
+    danger: "text-[var(--danger)]",
+    warning: "text-[var(--warn)]",
+    success: "text-[var(--ok)]",
+    default: "text-[var(--text-primary)]",
   }[tone];
 
   return (
-    <div className={`rounded-2xl border p-5 ${bg}`}>
-      <p className={`text-xs font-semibold uppercase tracking-wider ${text}`}>{label}</p>
-      <p className={`mt-2 text-4xl font-bold ${num}`}>{value}</p>
+    <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-4">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
+      <p className={`mt-2 text-[28px] font-semibold leading-tight tabular-nums ${valueColor}`}>{value}</p>
     </div>
   );
 }

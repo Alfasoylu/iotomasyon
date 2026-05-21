@@ -12,7 +12,7 @@
  * No schema change — reads existing TrendyolSalesRecord (Phase 26).
  */
 
-import { DollarSign } from "lucide-react";
+import { DollarSign, AlertTriangle, Package } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -193,18 +193,18 @@ export default async function CapitalPage() {
         subtitle="Mevcut sermayeyi en kârlı ürünlere dağıtmak için öneri motoru. Satın alma öncesi yönetici onayı zorunludur."
         meta={
           actualDataCount > 0 ? (
-            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+            <Badge variant="ok">
               {actualDataCount} üründe gerçek satış hızı
-            </span>
+            </Badge>
           ) : null
         }
       />
 
       {/* Real velocity notice */}
       {actualDataCount > 0 && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-          <p className="text-sm text-emerald-800">
-            <span className="font-semibold">Gerçek Satış Verisi Aktif:</span>{" "}
+        <div className="rounded-lg border border-[var(--ok-border)] bg-[var(--ok-dim)] px-5 py-4">
+          <p className="text-sm text-[var(--text-primary)]">
+            <span className="font-semibold text-[var(--ok)]">Gerçek Satış Verisi Aktif:</span>{" "}
             {actualDataCount} ürün için son 30 günlük Trendyol sipariş verisi yatırım skoru hesabında kullanılıyor.
             Gerçek satış verisi olan ürünlerin önceliği daha güvenilirdir.
           </p>
@@ -213,8 +213,8 @@ export default async function CapitalPage() {
 
       {/* Capital config form */}
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-slate-950">Sermaye ayarları</h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Sermaye ayarları</h2>
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Toplam sermayenizi ve rezerv oranınızı girin. Sistem kilitli stok değerini otomatik hesaplar.
         </p>
         <div className="mt-5">
@@ -240,11 +240,12 @@ export default async function CapitalPage() {
           </div>
 
           {/* Safety notice */}
-          <Card className="border-amber-200 bg-amber-50 p-4">
-            <p className="text-sm font-semibold text-amber-900">
-              ⚠ Bu liste öneridir — satın alma kararı vermez.
+          <Card className="border-[var(--warn-border)] bg-[var(--warn-dim)] p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold text-[var(--warn)]">
+              <AlertTriangle size={14} strokeWidth={1.5} />
+              Bu liste öneridir — satın alma kararı vermez.
             </p>
-            <p className="mt-1 text-sm text-amber-800">
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
               Aşağıdaki miktarlar yatırım skoru ve aylık talep tahminine dayanır.
               Satın alma yapılmadan önce yönetici onayı zorunludur.
               Sermayenin %{reservePct.toFixed(0)}&apos;i ({fmt(allocation.reserveAmount)}) her zaman rezervde tutulur.
@@ -254,23 +255,24 @@ export default async function CapitalPage() {
           {/* Suggestions table */}
           {allocation.suggestions.length > 0 ? (
             <Card className="overflow-hidden p-0">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-semibold text-slate-950">Satın alma önerileri</h2>
+                  <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Satın alma önerileri</h2>
                   <Badge>{allocation.suggestions.length} ürün</Badge>
                 </div>
                 {/* Phase 77: direct link to create purchase order pre-filled from capital */}
                 <a
                   href="/admin/purchase-orders/new?from=capital"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 transition"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 text-[12px] font-medium text-[var(--accent-fg)] transition-all hover:brightness-110"
                 >
-                  📦 Satın Alma Siparişi Oluştur
+                  <Package size={14} strokeWidth={1.5} />
+                  Satın Alma Siparişi Oluştur
                 </a>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       <th className="px-6 py-3 text-left">Ürün</th>
                       <th className="px-4 py-3 text-right">Skor</th>
                       <th className="px-4 py-3 text-center">Hız</th>
@@ -283,40 +285,40 @@ export default async function CapitalPage() {
                       <th className="px-4 py-3 text-right">Tahmini aylık ROI</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {allocation.suggestions.map((s, i) => (
-                      <tr key={s.product.id} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                    {allocation.suggestions.map((s) => (
+                      <tr key={s.product.id} className="hover:bg-[var(--surface-3)]">
                         <td className="px-6 py-3">
-                          <p className="font-medium text-slate-900">{s.product.name}</p>
-                          <p className="font-mono text-xs text-slate-400">{s.product.sku}</p>
+                          <p className="font-medium text-[var(--text-primary)]">{s.product.name}</p>
+                          <p className="font-mono text-xs text-[var(--text-muted)]">{s.product.sku}</p>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <span className="font-bold tabular-nums text-slate-700">{s.product.investmentScore}</span>
+                          <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">{s.product.investmentScore}</span>
                         </td>
                         <td className="px-4 py-3 text-center">
                           {(s.product as { velocitySource?: string }).velocitySource === "actual" ? (
-                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Gerçek</span>
+                            <Badge variant="ok">Gerçek</Badge>
                           ) : (
-                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">Tahmin</span>
+                            <Badge variant="neutral">Tahmin</Badge>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{s.product.stockQuantity}</td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{s.targetStock}</td>
+                        <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">{s.product.stockQuantity}</td>
+                        <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">{s.targetStock}</td>
                         <td className="px-4 py-3 text-right">
-                          <span className="font-bold tabular-nums text-slate-900">{s.allocatedQty}</span>
+                          <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">{s.allocatedQty}</span>
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-600">
+                        <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                           {fmt(s.currentStockValue)}
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-600">
+                        <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                           {s.product.unitCostTry != null ? fmt(s.product.unitCostTry) : "—"}
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">
+                        <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                           {fmt(s.allocatedAmount)}
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums">
+                        <td className="px-4 py-3 text-right font-mono tabular-nums">
                           {s.expectedMonthlyROI != null ? (
-                            <span className={s.expectedMonthlyROI >= 0 ? "text-emerald-700 font-medium" : "text-red-600 font-medium"}>
+                            <span className={s.expectedMonthlyROI >= 0 ? "font-medium text-[var(--ok)]" : "font-medium text-[var(--danger)]"}>
                               {fmtPct(s.expectedMonthlyROI)}
                             </span>
                           ) : "—"}
@@ -325,14 +327,14 @@ export default async function CapitalPage() {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t-2 border-slate-200 bg-slate-50">
-                      <td colSpan={8} className="px-6 py-3 text-sm font-semibold text-slate-700">Toplam tahsis</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-900">{fmt(allocation.allocatedTotal)}</td>
+                    <tr className="border-t border-[var(--border-default)] bg-[var(--surface-1)]">
+                      <td colSpan={8} className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">Toplam tahsis</td>
+                      <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">{fmt(allocation.allocatedTotal)}</td>
                       <td />
                     </tr>
-                    <tr className="bg-slate-50">
-                      <td colSpan={8} className="px-6 py-2 text-xs text-slate-500">Tahsis sonrası kalan kullanılabilir sermaye</td>
-                      <td className="px-4 py-2 text-right text-xs font-semibold text-emerald-700">{fmt(allocation.remainingAfterAllocation)}</td>
+                    <tr className="bg-[var(--surface-1)]">
+                      <td colSpan={8} className="px-6 py-2 text-xs text-[var(--text-muted)]">Tahsis sonrası kalan kullanılabilir sermaye</td>
+                      <td className="px-4 py-2 text-right font-mono text-xs font-semibold tabular-nums text-[var(--ok)]">{fmt(allocation.remainingAfterAllocation)}</td>
                       <td />
                     </tr>
                   </tfoot>
@@ -340,13 +342,13 @@ export default async function CapitalPage() {
               </div>
             </Card>
           ) : (
-            <Card className="p-6 text-center text-slate-500 text-sm">
+            <Card className="p-6 text-center text-sm text-[var(--text-muted)]">
               Şu an satın alma önerisi oluşturulamadı. Ürünlere maliyet, fiyat ve aylık talep bilgisi girildiğinde öneriler burada görünür.
             </Card>
           )}
 
           {allocation.skippedCount > 0 ? (
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--text-muted)]">
               {allocation.skippedCount} ürün maliyet veya talep verisi eksik olduğu için hesaplamaya dahil edilmedi.
             </p>
           ) : null}
@@ -354,10 +356,10 @@ export default async function CapitalPage() {
           {/* Phase 73 — Kilitli sermaye dağılımı */}
           {capitalBreakdown.length > 0 && (
             <Card className="overflow-hidden p-0">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-950">Kilitli sermaye dağılımı</h2>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kilitli sermaye dağılımı</h2>
+                  <p className="mt-1.5 text-xs text-[var(--text-secondary)]">
                     Hangi ürünler sermayeni bağlıyor? En yüksek stok değeri × maliyet (iniş maliyeti) — ilk 20 ürün.
                   </p>
                 </div>
@@ -366,38 +368,41 @@ export default async function CapitalPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       <th className="px-6 py-3 text-left">Ürün</th>
                       <th className="px-4 py-3 text-right">Stok</th>
                       <th className="px-4 py-3 text-right">Birim maliyet</th>
                       <th className="px-4 py-3 text-right">Stok değeri</th>
                       <th className="px-4 py-3 text-right">Toplam içindeki pay</th>
-                      <th className="px-6 py-3 text-left w-48">Dağılım</th>
+                      <th className="w-48 px-6 py-3 text-left">Dağılım</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {capitalBreakdown.map((p: BreakdownRow, i: number) => {
+                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                    {capitalBreakdown.map((p: BreakdownRow) => {
                       const pct = totalLockedValue > 0 ? (p.stockValue / totalLockedValue) * 100 : 0;
                       const barWidth = Math.min(100, pct * 4); // scale for visual
                       return (
-                        <tr key={p.id} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                          <td className="px-6 py-3 max-w-[240px]">
-                            <p className="font-medium text-slate-900 line-clamp-1">{p.name}</p>
-                            <p className="font-mono text-xs text-slate-400">{p.sku ?? "—"}</p>
+                        <tr key={p.id} className="hover:bg-[var(--surface-3)]">
+                          <td className="max-w-[240px] px-6 py-3">
+                            <p className="line-clamp-1 font-medium text-[var(--text-primary)]">{p.name}</p>
+                            <p className="font-mono text-xs text-[var(--text-muted)]">{p.sku ?? "—"}</p>
                           </td>
-                          <td className="px-4 py-3 text-right tabular-nums text-slate-700">{p.stockQuantity}</td>
-                          <td className="px-4 py-3 text-right tabular-nums text-slate-600">{fmt(p.unitCostTry)}</td>
-                          <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">{fmt(p.stockValue)}</td>
-                          <td className="px-4 py-3 text-right tabular-nums">
-                            <span className={pct >= 10 ? "font-bold text-amber-700" : "text-slate-600"}>
+                          <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">{p.stockQuantity}</td>
+                          <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">{fmt(p.unitCostTry)}</td>
+                          <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">{fmt(p.stockValue)}</td>
+                          <td className="px-4 py-3 text-right font-mono tabular-nums">
+                            <span className={pct >= 10 ? "font-semibold text-[var(--warn)]" : "text-[var(--text-secondary)]"}>
                               %{pct.toFixed(1)}
                             </span>
                           </td>
                           <td className="px-6 py-3">
-                            <div className="h-2 w-full max-w-[160px] rounded-full bg-slate-100">
+                            <div className="h-1.5 w-full max-w-[160px] rounded-md bg-[var(--surface-3)]">
                               <div
-                                className={`h-2 rounded-full ${pct >= 10 ? "bg-amber-400" : "bg-slate-400"}`}
-                                style={{ width: `${Math.max(2, barWidth)}%` }}
+                                className="h-1.5 rounded-md"
+                                style={{
+                                  width: `${Math.max(2, barWidth)}%`,
+                                  backgroundColor: pct >= 10 ? "var(--warn)" : "var(--accent)",
+                                }}
                               />
                             </div>
                           </td>
@@ -406,10 +411,10 @@ export default async function CapitalPage() {
                     })}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t-2 border-slate-200 bg-slate-50">
-                      <td colSpan={3} className="px-6 py-3 text-sm font-semibold text-slate-700">Toplam kilitli sermaye</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-900">{fmt(totalLockedValue)}</td>
-                      <td colSpan={2} className="px-4 py-3 text-xs text-slate-400">iniş maliyeti × stok adeti (maliyet verisi olan tüm ürünler)</td>
+                    <tr className="border-t border-[var(--border-default)] bg-[var(--surface-1)]">
+                      <td colSpan={3} className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">Toplam kilitli sermaye</td>
+                      <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">{fmt(totalLockedValue)}</td>
+                      <td colSpan={2} className="px-4 py-3 text-xs text-[var(--text-muted)]">iniş maliyeti × stok adeti (maliyet verisi olan tüm ürünler)</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -418,7 +423,7 @@ export default async function CapitalPage() {
           )}
         </>
       ) : (
-        <Card className="p-6 text-center text-slate-500 text-sm">
+        <Card className="p-6 text-center text-sm text-[var(--text-muted)]">
           Sermaye dağılım analizini başlatmak için yukarıdaki formu doldurun.
         </Card>
       )}
@@ -428,12 +433,22 @@ export default async function CapitalPage() {
 
 function SummaryCard({ label, value, highlight, subtitle }: { label: string; value: string; highlight?: boolean; subtitle?: string }) {
   return (
-    <div className={`rounded-2xl border p-4 ${highlight ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white"}`}>
-      <p className={`text-xs font-semibold uppercase tracking-widest ${highlight ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
-      <p className={`mt-2 text-lg font-bold tabular-nums ${highlight ? "text-white" : "text-slate-900"}`}>{value}</p>
-      {subtitle && (
-        <p className={`mt-1 text-xs ${highlight ? "text-slate-400" : "text-slate-400"}`}>{subtitle}</p>
-      )}
+    <div
+      className={`rounded-lg border p-4 ${
+        highlight
+          ? "border-[var(--accent-border)] bg-[var(--accent-dim)]"
+          : "border-[var(--border-default)] bg-[var(--surface-2)]"
+      }`}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
+      <p
+        className={`mt-2 text-[22px] font-semibold tabular-nums tracking-tight ${
+          highlight ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
+        }`}
+      >
+        {value}
+      </p>
+      {subtitle && <p className="mt-1 text-[11px] text-[var(--text-muted)]">{subtitle}</p>}
     </div>
   );
 }

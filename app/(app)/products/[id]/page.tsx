@@ -1,5 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ChevronLeft,
+  Plane,
+  Ship,
+  Lock,
+  Star,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
+} from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { ProductDeleteButton } from "@/components/products/product-delete-button";
@@ -136,18 +146,19 @@ export default async function ProductDetailPage({
         <div>
           <Link
             href="/products"
-            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+            className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
           >
-            ← Ürünler
+            <ChevronLeft size={14} strokeWidth={1.5} />
+            Ürünler
           </Link>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Ürün detayı geçici olarak kullanılamıyor
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">
             Veritabanı bağlantısı şu anda kullanılamıyor.
           </p>
         </div>
-        <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
+        <Card className="border-[var(--warn-border)] bg-[var(--warn-dim)] p-6 text-[13px] leading-6 text-[var(--warn)]">
           Canlı ürün verisi alınamadığı için detay ekranı gösterilemiyor.
         </Card>
       </div>
@@ -330,42 +341,43 @@ export default async function ProductDetailPage({
     <div className="space-y-6">
       <Link
         href="/products"
-        className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+        className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
       >
-        ← Ürünler
+        <ChevronLeft size={14} strokeWidth={1.5} />
+        Ürünler
       </Link>
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <Badge tone={product.isActive ? "success" : "default"}>
+          <div className="flex items-center gap-2">
+            <Badge variant={product.isActive ? "ok" : "neutral"}>
               {product.isActive ? "Aktif" : "Pasif"}
             </Badge>
-            {isLowStock ? <Badge tone="warning">Düşük stok</Badge> : null}
-            {canViewFinance && hasProfit && isLosing ? <Badge tone="danger">Kaybettiriyor</Badge> : null}
-            {canViewFinance && hasProfit && !isLosing ? <Badge tone="success">Kârlı</Badge> : null}
+            {isLowStock ? <Badge variant="warn">Düşük stok</Badge> : null}
+            {canViewFinance && hasProfit && isLosing ? <Badge variant="danger">Kaybettiriyor</Badge> : null}
+            {canViewFinance && hasProfit && !isLosing ? <Badge variant="ok">Kârlı</Badge> : null}
             {canViewFinance && salesPotential.buySignal !== "UNKNOWN" ? (
               <Badge tone={BUY_SIGNAL_TONES[salesPotential.buySignal]}>
                 {BUY_SIGNAL_LABELS[salesPotential.buySignal]}
               </Badge>
             ) : null}
-            {product.xmlImported ? <Badge tone="default">XML İthalatı</Badge> : null}
-            {product.productKind === "LISTING_PACKAGE" ? <Badge tone="default">Listeleme Paketi</Badge> : null}
+            {product.xmlImported ? <Badge variant="neutral">XML İthalatı</Badge> : null}
+            {product.productKind === "LISTING_PACKAGE" ? <Badge variant="neutral">Listeleme Paketi</Badge> : null}
           </div>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             {product.name}
           </h1>
-          <p className="mt-2 font-mono text-sm text-slate-500">{product.sku}</p>
+          <p className="mt-1 font-mono text-[12px] text-[var(--text-muted)]">{product.sku}</p>
           {product.productCategory ? (
             <Link
               href={`/categories/${product.productCategory.id}`}
-              className="mt-2 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+              className="mt-2 inline-flex items-center gap-1 text-[12px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
             >
               {product.productCategory.name}
             </Link>
           ) : null}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           {canCreateCustomer && (
             <Link href={`/customers/new?productId=${product.id}`}>
               <Button variant="secondary">Yeni Müşteri Ekle</Button>
@@ -390,7 +402,7 @@ export default async function ProductDetailPage({
                 <img
                   src={img.url}
                   alt={img.altText ?? `${product.name} — resim ${idx + 1}`}
-                  className={`rounded-lg object-contain bg-slate-50 ${idx === 0 ? "h-64 w-64" : "h-24 w-24 border border-slate-200"}`}
+                  className={`rounded-md object-contain bg-[var(--surface-1)] ${idx === 0 ? "h-64 w-64" : "h-24 w-24 border border-[var(--border-default)]"}`}
                 />
               </a>
             ))}
@@ -402,14 +414,14 @@ export default async function ProductDetailPage({
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="h-64 w-full object-contain bg-slate-50 p-4"
+            className="h-64 w-full object-contain bg-[var(--surface-1)] p-4"
           />
         </Card>
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Ürün bilgileri</h2>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün bilgileri</p>
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             <Info label="Kategori" value={product.productCategory?.name ?? product.category} />
             <Info label="Marka" value={product.brand} />
@@ -485,12 +497,12 @@ export default async function ProductDetailPage({
           </dl>
           {product.attributeAssignments.length > 0 && (
             <div className="mt-6">
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Özellikler</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Özellikler</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {product.attributeAssignments.map((a) => (
                   <span
                     key={a.attributeId}
-                    className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                    className="inline-flex rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]"
                   >
                     {a.attribute.name}
                   </span>
@@ -502,23 +514,23 @@ export default async function ProductDetailPage({
           {product.description ? (
             product.description.trimStart().startsWith("<") ? (
               <div
-                className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600 [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-slate-800 [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-slate-700 [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5 [&_strong]:font-semibold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline"
+                className="mt-6 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 text-[13px] leading-6 text-[var(--text-secondary)] [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-[14px] [&_h2]:font-semibold [&_h2]:text-[var(--text-primary)] [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:text-[var(--text-primary)] [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[var(--info)] [&_a]:underline"
                 dangerouslySetInnerHTML={{ __html: product.description }}
               />
             ) : (
-              <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+              <div className="mt-6 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 text-[13px] leading-6 text-[var(--text-secondary)]">
                 {product.description}
               </div>
             )
           ) : (
-            <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-400">
+            <div className="mt-6 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 text-[13px] leading-6 text-[var(--text-muted)]">
               Bu ürün için açıklama eklenmedi.
             </div>
           )}
         </Card>
 
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Kayıt metrikleri</h2>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kayıt metrikleri</p>
           <dl className="mt-5 space-y-4">
             <Info label="Oluşturulma" value={formatDateTime(product.createdAt)} />
             <Info label="Güncellenme" value={formatDateTime(product.updatedAt)} />
@@ -530,7 +542,7 @@ export default async function ProductDetailPage({
 
       {canViewFinance && hasProfit ? (
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Kârlılık analizi</h2>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kârlılık analizi</p>
           <p className="mt-1 text-sm text-slate-500">
             KDV dahil fiyat varsayımı. Maliyet: birim + kargo + ambalaj. Pazar yeri kanalında komisyon uygulanır.
           </p>
@@ -591,73 +603,73 @@ export default async function ProductDetailPage({
         if (rows.length === 0) return null;
         return (
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-slate-950">Pazar Yeri Fiyatlandırması</h2>
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Pazar Yeri Fiyatlandırması</p>
             <p className="mt-1 text-sm text-slate-500">
               Etkin fiyat, kargo, komisyon ve net kalan gelir. Kur: 1 USD = ₺{usdTryRate.toFixed(2)}
             </p>
             <div className="mt-5 overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-[12px]">
                 <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wide text-left">
-                    <th className="pb-2 pr-4 font-semibold">Platform</th>
-                    <th className="pb-2 pr-4 font-semibold">XML Fiyat</th>
-                    <th className="pb-2 pr-4 font-semibold">Etkin Fiyat</th>
-                    <th className="pb-2 pr-4 font-semibold">Kaynak</th>
-                    <th className="pb-2 pr-4 font-semibold text-right">Kargo ₺</th>
-                    <th className="pb-2 pr-4 font-semibold text-right">Komisyon %</th>
-                    <th className="pb-2 pr-4 font-semibold text-right">Net Kalan ₺</th>
-                    <th className="pb-2 font-semibold text-right">Net Marj %</th>
+                  <tr className="border-b border-[var(--border-subtle)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] text-left">
+                    <th className="pb-2 pr-4">Platform</th>
+                    <th className="pb-2 pr-4">XML Fiyat</th>
+                    <th className="pb-2 pr-4">Etkin Fiyat</th>
+                    <th className="pb-2 pr-4">Kaynak</th>
+                    <th className="pb-2 pr-4 text-right">Kargo ₺</th>
+                    <th className="pb-2 pr-4 text-right">Komisyon %</th>
+                    <th className="pb-2 pr-4 text-right">Net Kalan ₺</th>
+                    <th className="pb-2 text-right">Net Marj %</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody>
                   {rows.map((r) => (
-                    <tr key={r.platform} className="text-slate-600">
-                      <td className="py-2 pr-4 font-medium text-slate-800">{r.platformLabel}</td>
-                      <td className="py-2 pr-4 font-mono">
-                        {r.xmlPriceTry != null ? `₺${r.xmlPriceTry.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                    <tr key={r.platform} className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)]">
+                      <td className="py-2 pr-4 font-medium text-[var(--text-primary)]">{r.platformLabel}</td>
+                      <td className="py-2 pr-4 font-mono tabular-nums">
+                        {r.xmlPriceTry != null ? `₺${r.xmlPriceTry.toFixed(2)}` : <span className="text-[var(--text-muted)]">—</span>}
                       </td>
-                      <td className="py-2 pr-4 font-mono font-semibold">
-                        {r.effectivePriceTry != null ? `₺${r.effectivePriceTry.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                      <td className="py-2 pr-4 font-mono tabular-nums font-semibold text-[var(--text-primary)]">
+                        {r.effectivePriceTry != null ? `₺${r.effectivePriceTry.toFixed(2)}` : <span className="text-[var(--text-muted)] font-normal">—</span>}
                       </td>
                       <td className="py-2 pr-4">
-                        <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-medium ${priceSourceColor(r.priceSource)}`}>
+                        <span className={`inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium ${priceSourceColor(r.priceSource)}`}>
                           {priceSourceLabel(r.priceSource)}
                         </span>
                       </td>
-                      <td className="py-2 pr-4 text-right font-mono">
-                        {r.hasData ? `₺${r.shippingTry.toFixed(2)}` : <span className="text-slate-300">—</span>}
+                      <td className="py-2 pr-4 text-right font-mono tabular-nums">
+                        {r.hasData ? `₺${r.shippingTry.toFixed(2)}` : <span className="text-[var(--text-muted)]">—</span>}
                         {r.hasData && (
-                          <span className={`ml-1 inline-flex rounded px-1 text-xs font-medium ${policySourceColor(r.shippingSource === "price_tier" ? "system_default" : r.shippingSource as "product_override" | "product_value" | "platform_standard" | "system_default")}`}>
+                          <span className={`ml-1 inline-flex rounded px-1 text-[11px] font-medium ${policySourceColor(r.shippingSource === "price_tier" ? "system_default" : r.shippingSource as "product_override" | "product_value" | "platform_standard" | "system_default")}`}>
                             {shippingSourceLabel(r.shippingSource)}
                           </span>
                         )}
                       </td>
-                      <td className="py-2 pr-4 text-right font-mono">
+                      <td className="py-2 pr-4 text-right font-mono tabular-nums">
                         {r.commissionPct.toFixed(1)}%
-                        <span className={`ml-1 inline-flex rounded px-1 text-xs font-medium ${policySourceColor(r.commissionSource)}`}>
+                        <span className={`ml-1 inline-flex rounded px-1 text-[11px] font-medium ${policySourceColor(r.commissionSource)}`}>
                           {policySourceLabel(r.commissionSource)}
                         </span>
                       </td>
-                      <td className="py-2 pr-4 text-right font-mono">
+                      <td className="py-2 pr-4 text-right font-mono tabular-nums">
                         {r.netRevenueTry != null ? (
-                          <span className={r.netRevenueTry >= 0 ? "text-emerald-700" : "text-red-600"}>
+                          <span className={r.netRevenueTry >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}>
                             ₺{r.netRevenueTry.toFixed(2)}
                           </span>
-                        ) : <span className="text-slate-300">—</span>}
+                        ) : <span className="text-[var(--text-muted)]">—</span>}
                       </td>
-                      <td className="py-2 text-right font-mono">
+                      <td className="py-2 text-right font-mono tabular-nums">
                         {r.netMarginPct != null ? (
-                          <span className={r.netMarginPct >= 15 ? "text-emerald-700" : r.netMarginPct >= 5 ? "text-amber-600" : "text-red-600"}>
+                          <span className={r.netMarginPct >= 15 ? "text-[var(--ok)]" : r.netMarginPct >= 5 ? "text-[var(--warn)]" : "text-[var(--danger)]"}>
                             %{r.netMarginPct.toFixed(1)}
                           </span>
-                        ) : <span className="text-slate-300">—</span>}
+                        ) : <span className="text-[var(--text-muted)]">—</span>}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-slate-400">
+            <p className="mt-3 text-[11px] text-[var(--text-muted)]">
               Net kalan = Etkin fiyat − Kargo − Komisyon − Ödeme komisyonu − İade rezervi
               · Kargo yok ise fiyat dilimine göre hesaplanır (&lt;5$→₺{(1.2 * usdTryRate).toFixed(0)}, 5–7.5$→₺{(2 * usdTryRate).toFixed(0)}, &gt;7.5$→₺{(3.3 * usdTryRate).toFixed(0)})
             </p>
@@ -669,16 +681,16 @@ export default async function ProductDetailPage({
         <Card className="p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">Yatırım skoru</h2>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Yatırım skoru</p>
               <p className="mt-1 text-sm text-slate-500">
                 Aylık satış tahminine göre hesaplanır. Stok devir hızı ve kârlılık dikkate alınır.
               </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-3xl font-bold tabular-nums text-slate-950">
+                <p className="text-[28px] font-semibold leading-none tabular-nums font-mono text-[var(--text-primary)]">
                   {salesPotential.investmentScore}
-                  <span className="text-base font-normal text-slate-400">/100</span>
+                  <span className="text-[13px] font-normal text-[var(--text-muted)]">/100</span>
                 </p>
               </div>
               <Badge tone={BUY_SIGNAL_TONES[salesPotential.buySignal]}>
@@ -698,33 +710,33 @@ export default async function ProductDetailPage({
             />
           </div>
           {(salesPotential.onlineMonthlyRevenue > 0 || salesPotential.wholesaleMonthlyRevenue > 0 || salesPotential.installerMonthlyRevenue > 0) ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-3 text-xs text-slate-500">
+            <div className="mt-4 grid gap-3 sm:grid-cols-3 text-[12px] text-[var(--text-secondary)]">
               {salesPotential.onlineMonthlyRevenue > 0 ? (
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <p className="font-semibold uppercase tracking-widest text-slate-400">Online</p>
-                  <p className="mt-1 text-sm font-medium text-slate-700">{product.onlineSalesPotential} adet/ay</p>
-                  <p className="text-slate-500">{formatCurrency(salesPotential.onlineMonthlyRevenue)} ciro</p>
-                  <p className={salesPotential.onlineMonthlyProfit >= 0 ? "text-emerald-600" : "text-red-600"}>
+                <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Online</p>
+                  <p className="mt-1 text-[13px] font-medium tabular-nums text-[var(--text-primary)]">{product.onlineSalesPotential} adet/ay</p>
+                  <p className="tabular-nums font-mono text-[var(--text-secondary)]">{formatCurrency(salesPotential.onlineMonthlyRevenue)} ciro</p>
+                  <p className={`tabular-nums font-mono ${salesPotential.onlineMonthlyProfit >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
                     {formatCurrency(salesPotential.onlineMonthlyProfit)} kâr
                   </p>
                 </div>
               ) : null}
               {salesPotential.wholesaleMonthlyRevenue > 0 ? (
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <p className="font-semibold uppercase tracking-widest text-slate-400">Toptan</p>
-                  <p className="mt-1 text-sm font-medium text-slate-700">{product.wholesaleSalesPotential} adet/ay</p>
-                  <p className="text-slate-500">{formatCurrency(salesPotential.wholesaleMonthlyRevenue)} ciro</p>
-                  <p className={salesPotential.wholesaleMonthlyProfit >= 0 ? "text-emerald-600" : "text-red-600"}>
+                <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Toptan</p>
+                  <p className="mt-1 text-[13px] font-medium tabular-nums text-[var(--text-primary)]">{product.wholesaleSalesPotential} adet/ay</p>
+                  <p className="tabular-nums font-mono text-[var(--text-secondary)]">{formatCurrency(salesPotential.wholesaleMonthlyRevenue)} ciro</p>
+                  <p className={`tabular-nums font-mono ${salesPotential.wholesaleMonthlyProfit >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
                     {formatCurrency(salesPotential.wholesaleMonthlyProfit)} kâr
                   </p>
                 </div>
               ) : null}
               {salesPotential.installerMonthlyRevenue > 0 ? (
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <p className="font-semibold uppercase tracking-widest text-slate-400">Montör/Kurumsal</p>
-                  <p className="mt-1 text-sm font-medium text-slate-700">{product.installerSalesPotential} adet/ay</p>
-                  <p className="text-slate-500">{formatCurrency(salesPotential.installerMonthlyRevenue)} ciro</p>
-                  <p className={salesPotential.installerMonthlyProfit >= 0 ? "text-emerald-600" : "text-red-600"}>
+                <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Montör/Kurumsal</p>
+                  <p className="mt-1 text-[13px] font-medium tabular-nums text-[var(--text-primary)]">{product.installerSalesPotential} adet/ay</p>
+                  <p className="tabular-nums font-mono text-[var(--text-secondary)]">{formatCurrency(salesPotential.installerMonthlyRevenue)} ciro</p>
+                  <p className={`tabular-nums font-mono ${salesPotential.installerMonthlyProfit >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
                     {formatCurrency(salesPotential.installerMonthlyProfit)} kâr
                   </p>
                 </div>
@@ -812,36 +824,36 @@ export default async function ProductDetailPage({
 
         return (
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-slate-950">Trendyol Kâr Analizi</h2>
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol Kâr Analizi</p>
             <p className="mt-1 text-sm text-slate-500">
               RMB alış + ağırlık + XML/Manuel Trendyol fiyatı üzerinden hesaplanmıştır.
               Kur: 1 USD = ₺{usdTryRate.toFixed(2)} · 1 USD = {rmbUsdRate.toFixed(1)} RMB
             </p>
-            <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <div className="rounded-lg bg-slate-50 p-3">
-                <div className="text-xs text-slate-500">RMB Alış</div>
-                <div className="mt-1 text-lg font-bold text-slate-900">¥{Number(product.sourceCostRmb).toFixed(2)}</div>
-                <div className="text-xs text-slate-400">₺{rmbTl.toFixed(2)} · ${rmbUsd.toFixed(2)}</div>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] p-3">
+                <div className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">RMB Alış</div>
+                <div className="mt-1 text-[18px] font-semibold tabular-nums font-mono text-[var(--text-primary)]">¥{Number(product.sourceCostRmb).toFixed(2)}</div>
+                <div className="text-[11px] tabular-nums font-mono text-[var(--text-muted)]">₺{rmbTl.toFixed(2)} · ${rmbUsd.toFixed(2)}</div>
               </div>
-              <div className="rounded-lg bg-slate-50 p-3">
-                <div className="text-xs text-slate-500">Ağırlık + Kargo</div>
-                <div className="mt-1 text-lg font-bold text-slate-900">{Number(product.weightKg).toFixed(3)} kg</div>
-                <div className="text-xs text-slate-400">₺{cargoTl.toFixed(2)} · ${cargoUsd.toFixed(2)}</div>
+              <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] p-3">
+                <div className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ağırlık + Kargo</div>
+                <div className="mt-1 text-[18px] font-semibold tabular-nums font-mono text-[var(--text-primary)]">{Number(product.weightKg).toFixed(3)} kg</div>
+                <div className="text-[11px] tabular-nums font-mono text-[var(--text-muted)]">₺{cargoTl.toFixed(2)} · ${cargoUsd.toFixed(2)}</div>
               </div>
-              <div className="rounded-lg bg-slate-50 p-3">
-                <div className="text-xs text-slate-500">Gümrük (%{Number(product.customsRatePct ?? 30).toFixed(0)})</div>
-                <div className="mt-1 text-lg font-bold text-slate-900">₺{customsTl.toFixed(2)}</div>
-                <div className="text-xs text-slate-400">${customsUsd.toFixed(2)}</div>
+              <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] p-3">
+                <div className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Gümrük (%{Number(product.customsRatePct ?? 30).toFixed(0)})</div>
+                <div className="mt-1 text-[18px] font-semibold tabular-nums font-mono text-[var(--text-primary)]">₺{customsTl.toFixed(2)}</div>
+                <div className="text-[11px] tabular-nums font-mono text-[var(--text-muted)]">${customsUsd.toFixed(2)}</div>
               </div>
-              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
-                <div className="text-xs text-amber-700">Toplam İthalat Maliyeti</div>
-                <div className="mt-1 text-lg font-bold text-amber-900">₺{totalMaliyetTl.toFixed(2)}</div>
-                <div className="text-xs text-amber-600">${totalMaliyetUsd.toFixed(2)}</div>
+              <div className="rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] p-3">
+                <div className="text-[11px] font-medium uppercase tracking-widest text-[var(--warn)]">Toplam İthalat Maliyeti</div>
+                <div className="mt-1 text-[18px] font-semibold tabular-nums font-mono text-[var(--warn)]">₺{totalMaliyetTl.toFixed(2)}</div>
+                <div className="text-[11px] tabular-nums font-mono text-[var(--warn)] opacity-80">${totalMaliyetUsd.toFixed(2)}</div>
               </div>
-              <div className="rounded-lg bg-slate-50 p-3">
-                <div className="text-xs text-slate-500">Trendyol Satış Fiyatı</div>
-                <div className="mt-1 text-lg font-bold text-slate-900">₺{effectivePriceTry.toFixed(2)}</div>
-                <div className="text-xs text-slate-400">
+              <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] p-3">
+                <div className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol Satış Fiyatı</div>
+                <div className="mt-1 text-[18px] font-semibold tabular-nums font-mono text-[var(--text-primary)]">₺{effectivePriceTry.toFixed(2)}</div>
+                <div className="text-[11px] tabular-nums font-mono text-[var(--text-muted)]">
                   ${priceUsd.toFixed(2)} ·{" "}
                   {trendyolMpPrice
                     ? (trendyolMpPrice.source === "MANUAL" ? "Manuel" : "XML")
@@ -850,31 +862,31 @@ export default async function ProductDetailPage({
                       : "Manuel"}
                 </div>
               </div>
-              <div className="rounded-lg bg-slate-50 p-3">
-                <div className="text-xs text-slate-500">Trendyol Net Kalan</div>
-                <div className="mt-1 text-lg font-bold text-slate-900">₺{trendyolNetKalan.toFixed(2)}</div>
-                <div className="text-xs text-slate-400">${netKalanUsd.toFixed(2)}</div>
-                <div className="mt-1 text-[10px] text-slate-400 leading-tight">
+              <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] p-3">
+                <div className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol Net Kalan</div>
+                <div className="mt-1 text-[18px] font-semibold tabular-nums font-mono text-[var(--text-primary)]">₺{trendyolNetKalan.toFixed(2)}</div>
+                <div className="text-[11px] tabular-nums font-mono text-[var(--text-muted)]">${netKalanUsd.toFixed(2)}</div>
+                <div className="mt-1 text-[10px] tabular-nums font-mono text-[var(--text-muted)] leading-tight">
                   −kargo ₺{shippingTry.toFixed(2)} · −kom %{trendyolRow.commissionPct.toFixed(1)} (₺{commissionTry.toFixed(2)})
                   {paymentFeeTry > 0 && <> · −fee ₺{paymentFeeTry.toFixed(2)}</>}
                   {returnReserveTry > 0 && <> · −iade ₺{returnReserveTry.toFixed(2)}</>}
                 </div>
               </div>
-              <div className={`rounded-lg border p-3 ${netKar >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
-                <div className={`text-xs ${netKar >= 0 ? "text-emerald-700" : "text-red-700"}`}>Net Kâr</div>
-                <div className={`mt-1 text-lg font-bold ${netKar >= 0 ? "text-emerald-900" : "text-red-900"}`}>₺{netKar.toFixed(2)}</div>
-                <div className={`text-xs font-semibold ${netKar >= 0 ? "text-emerald-700" : "text-red-700"}`}>${netKarUsd.toFixed(2)}</div>
-                <div className={`text-xs ${netKar >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+              <div className={`rounded-md border p-3 ${netKar >= 0 ? "border-[var(--ok-border)] bg-[var(--ok-dim)]" : "border-[var(--danger-border)] bg-[var(--danger-dim)]"}`}>
+                <div className={`text-[11px] font-medium uppercase tracking-widest ${netKar >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>Net Kâr</div>
+                <div className={`mt-1 text-[18px] font-semibold tabular-nums font-mono ${netKar >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>₺{netKar.toFixed(2)}</div>
+                <div className={`text-[11px] font-semibold tabular-nums font-mono ${netKar >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>${netKarUsd.toFixed(2)}</div>
+                <div className={`text-[11px] tabular-nums ${netKar >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"} opacity-80`}>
                   Marj: %{karMarji.toFixed(1)}
                 </div>
               </div>
-              <div className={`rounded-lg border p-3 ${roi >= 20 ? "bg-emerald-50 border-emerald-200" : roi >= 0 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200"}`}>
-                <div className={`text-xs ${roi >= 20 ? "text-emerald-700" : roi >= 0 ? "text-amber-700" : "text-red-700"}`}>ROI</div>
-                <div className={`mt-1 text-lg font-bold ${roi >= 20 ? "text-emerald-900" : roi >= 0 ? "text-amber-900" : "text-red-900"}`}>%{roi.toFixed(1)}</div>
-                <div className="text-xs text-slate-400">USD bazlı sermaye getirisi</div>
+              <div className={`rounded-md border p-3 ${roi >= 20 ? "border-[var(--ok-border)] bg-[var(--ok-dim)]" : roi >= 0 ? "border-[var(--warn-border)] bg-[var(--warn-dim)]" : "border-[var(--danger-border)] bg-[var(--danger-dim)]"}`}>
+                <div className={`text-[11px] font-medium uppercase tracking-widest ${roi >= 20 ? "text-[var(--ok)]" : roi >= 0 ? "text-[var(--warn)]" : "text-[var(--danger)]"}`}>ROI</div>
+                <div className={`mt-1 text-[18px] font-semibold tabular-nums font-mono ${roi >= 20 ? "text-[var(--ok)]" : roi >= 0 ? "text-[var(--warn)]" : "text-[var(--danger)]"}`}>%{roi.toFixed(1)}</div>
+                <div className="text-[11px] text-[var(--text-muted)]">USD bazlı sermaye getirisi</div>
               </div>
             </div>
-            <p className="mt-3 text-xs text-slate-400">
+            <p className="mt-3 text-[11px] text-[var(--text-muted)]">
               İthalat kargosu: Hava yolu 8 USD/kg · Trendyol kargo/komisyon: <code>lib/marketplace-pricing.ts</code> kanonik formülü (Pazaryeri tablosu ile birebir tutarlı) · Gümrük oran: DB değeri ·{" "}
               {paymentFeeUsd > 0 && <>Ödeme fee ${paymentFeeUsd.toFixed(2)} · </>}
               {returnReserveUsd > 0 && <>İade rezervi ${returnReserveUsd.toFixed(2)} · </>}
@@ -889,7 +901,7 @@ export default async function ProductDetailPage({
       <Card className="p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-950">İthalat Kararı</h2>
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İthalat Kararı</p>
             <p className="mt-1 text-sm text-slate-500">
               Hava/deniz kargo ekonomisi. Kur: 1 USD = ₺{usdTryRate.toFixed(2)}
             </p>
@@ -907,93 +919,97 @@ export default async function ProductDetailPage({
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Air scenario */}
               {importDecision.air ? (
-                <div className={`rounded-xl border p-4 ${importDecision.effectiveMethod === "AIR" ? "border-blue-300 bg-blue-50" : "border-slate-100 bg-slate-50"}`}>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">✈ Hava yolu ({120} gün)</p>
-                  <div className="mt-3 space-y-1 text-sm">
+                <div className={`rounded-md border p-4 ${importDecision.effectiveMethod === "AIR" ? "border-[var(--info-border)] bg-[var(--info-dim)]" : "border-[var(--border-default)] bg-[var(--surface-2)]"}`}>
+                  <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-[var(--info)]">
+                    <Plane size={14} strokeWidth={1.5} /> Hava yolu ({120} gün)
+                  </p>
+                  <div className="mt-3 space-y-1 text-[13px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">İniş maliyeti</span>
-                      <span className="font-mono font-medium">${importDecision.air.landedCostUsd.toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">İniş maliyeti</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">${importDecision.air.landedCostUsd.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Kâr oranı</span>
-                      <span className={`font-mono font-medium ${importDecision.air.profitRatio >= 1 ? "text-emerald-700" : "text-red-600"}`}>
+                      <span className="text-[var(--text-muted)]">Kâr oranı</span>
+                      <span className={`font-mono tabular-nums font-medium ${importDecision.air.profitRatio >= 1 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
                         {importDecision.air.profitRatio.toFixed(3)}×
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Aylık kâr</span>
-                      <span className="font-mono font-medium">${importDecision.air.monthlyProfitUsd.toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">Aylık kâr</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">${importDecision.air.monthlyProfitUsd.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Yıllık kâr</span>
-                      <span className="font-mono font-medium">${importDecision.air.annualProfitUsd.toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">Yıllık kâr</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">${importDecision.air.annualProfitUsd.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Gerekli sermaye</span>
-                      <span className="font-mono font-medium">${importDecision.air.requiredCapitalUsd.toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">Gerekli sermaye</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">${importDecision.air.requiredCapitalUsd.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Yıllık ROI</span>
-                      <span className="font-mono font-medium">{importDecision.air.annualRoiMultiplier.toFixed(3)}×</span>
+                      <span className="text-[var(--text-muted)]">Yıllık ROI</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">{importDecision.air.annualRoiMultiplier.toFixed(3)}×</span>
                     </div>
                   </div>
                 </div>
               ) : null}
               {/* Sea scenario */}
               {importDecision.sea ? (
-                <div className={`rounded-xl border p-4 ${importDecision.effectiveMethod === "SEA" ? "border-teal-300 bg-teal-50" : "border-slate-100 bg-slate-50"}`}>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-teal-600">🚢 Deniz yolu ({210} gün)</p>
-                  <div className="mt-3 space-y-1 text-sm">
+                <div className={`rounded-md border p-4 ${importDecision.effectiveMethod === "SEA" ? "border-[var(--info-border)] bg-[var(--info-dim)]" : "border-[var(--border-default)] bg-[var(--surface-2)]"}`}>
+                  <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-[var(--info)]">
+                    <Ship size={14} strokeWidth={1.5} /> Deniz yolu ({210} gün)
+                  </p>
+                  <div className="mt-3 space-y-1 text-[13px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">İniş maliyeti</span>
-                      <span className="font-mono font-medium">${importDecision.sea.landedCostUsd.toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">İniş maliyeti</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">${importDecision.sea.landedCostUsd.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Kâr oranı</span>
-                      <span className={`font-mono font-medium ${importDecision.sea.profitRatio >= 1 ? "text-emerald-700" : "text-red-600"}`}>
+                      <span className="text-[var(--text-muted)]">Kâr oranı</span>
+                      <span className={`font-mono tabular-nums font-medium ${importDecision.sea.profitRatio >= 1 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
                         {importDecision.sea.profitRatio.toFixed(3)}×
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Aylık kâr</span>
-                      <span className="font-mono font-medium">${importDecision.sea.monthlyProfitUsd.toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">Aylık kâr</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">${importDecision.sea.monthlyProfitUsd.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Yıllık kâr</span>
-                      <span className="font-mono font-medium">${importDecision.sea.annualProfitUsd.toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">Yıllık kâr</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">${importDecision.sea.annualProfitUsd.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Gerekli sermaye</span>
-                      <span className="font-mono font-medium">${importDecision.sea.requiredCapitalUsd.toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">Gerekli sermaye</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">${importDecision.sea.requiredCapitalUsd.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Yıllık ROI</span>
-                      <span className="font-mono font-medium">{importDecision.sea.annualRoiMultiplier.toFixed(3)}×</span>
+                      <span className="text-[var(--text-muted)]">Yıllık ROI</span>
+                      <span className="font-mono tabular-nums font-medium text-[var(--text-primary)]">{importDecision.sea.annualRoiMultiplier.toFixed(3)}×</span>
                     </div>
                   </div>
                 </div>
               ) : null}
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-[11px] text-[var(--text-muted)]">
               Önerilen yöntem:{" "}
-              <span className="font-semibold">
-                {importDecision.recommendedMethod === "AIR" ? "✈ Hava yolu" : "🚢 Deniz yolu"}
+              <span className="font-semibold text-[var(--text-secondary)]">
+                {importDecision.recommendedMethod === "AIR" ? "Hava yolu" : "Deniz yolu"}
               </span>
               {importDecision.effectiveMethod !== importDecision.recommendedMethod
                 ? ` (manuel override: ${importDecision.effectiveMethod})`
                 : ""}
-              {" · "}Skor: {importDecision.score.toFixed(3)}
+              {" · "}Skor: <span className="tabular-nums font-mono">{importDecision.score.toFixed(3)}</span>
             </p>
           </div>
         ) : (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="mt-4 rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-4 py-3 text-[13px] text-[var(--warn)]">
             <p className="font-medium">Hesaplama için eksik veri:</p>
-            <ul className="mt-1 list-inside list-disc text-xs">
+            <ul className="mt-1 list-inside list-disc text-[12px]">
               {importDecision.missingFields.map((f) => (
                 <li key={f}>{f}</li>
               ))}
             </ul>
-            <p className="mt-2 text-xs">
+            <p className="mt-2 text-[12px]">
               Ürünü düzenleyerek ağırlık, gümrük oranı, satış fiyatı ve aylık talep bilgilerini girin.
             </p>
           </div>
@@ -1004,48 +1020,51 @@ export default async function ProductDetailPage({
       {/* Phase 32 — Import Decision Snapshot History — finance only */}
       {canViewFinance && importSnapshots.length > 0 && (
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Karar Geçmişi</h2>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Karar Geçmişi</p>
           <p className="mt-1 text-sm text-slate-500">
             Son {importSnapshots.length} kaydedilmiş ithalat kararı.
           </p>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-[12px]">
               <thead>
-                <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wide">
-                  <th className="pb-2 pr-4 text-left font-semibold">Tarih</th>
-                  <th className="pb-2 pr-4 text-left font-semibold">Karar</th>
-                  <th className="pb-2 pr-4 text-right font-semibold">Skor</th>
-                  <th className="pb-2 pr-4 text-left font-semibold">Yöntem</th>
-                  <th className="pb-2 pr-4 text-right font-semibold">İniş USD</th>
-                  <th className="pb-2 pr-4 text-right font-semibold">Kâr Oranı</th>
-                  <th className="pb-2 pr-4 text-right font-semibold">Kur</th>
-                  <th className="pb-2 text-left font-semibold">Kaydeden</th>
+                <tr className="border-b border-[var(--border-subtle)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+                  <th className="pb-2 pr-4 text-left">Tarih</th>
+                  <th className="pb-2 pr-4 text-left">Karar</th>
+                  <th className="pb-2 pr-4 text-right">Skor</th>
+                  <th className="pb-2 pr-4 text-left">Yöntem</th>
+                  <th className="pb-2 pr-4 text-right">İniş USD</th>
+                  <th className="pb-2 pr-4 text-right">Kâr Oranı</th>
+                  <th className="pb-2 pr-4 text-right">Kur</th>
+                  <th className="pb-2 text-left">Kaydeden</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {importSnapshots.map((s) => (
-                  <tr key={s.id} className="text-slate-600">
-                    <td className="py-2 pr-4 font-mono text-slate-400">
+                  <tr key={s.id} className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)]">
+                    <td className="py-2 pr-4 font-mono tabular-nums text-[var(--text-muted)]">
                       {new Date(s.createdAt).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                     </td>
                     <td className="py-2 pr-4">
-                      <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-medium ${
-                        s.decision === "ALWAYS_STOCK" ? "bg-emerald-50 text-emerald-700" :
-                        s.decision === "BUY_SMALL" ? "bg-amber-50 text-amber-700" :
-                        s.decision === "DO_NOT_BUY" ? "bg-red-50 text-red-600" :
-                        "bg-slate-100 text-slate-500"
+                      <span className={`inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium border ${
+                        s.decision === "ALWAYS_STOCK" ? "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]" :
+                        s.decision === "BUY_SMALL" ? "border-[var(--warn-border)] bg-[var(--warn-dim)] text-[var(--warn)]" :
+                        s.decision === "DO_NOT_BUY" ? "border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]" :
+                        "border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-muted)]"
                       }`}>
                         {RECOMMENDATION_LABELS[s.decision as keyof typeof RECOMMENDATION_LABELS] ?? s.decision}
                       </span>
                     </td>
-                    <td className="py-2 pr-4 text-right font-mono">{Number(s.score).toFixed(3)}</td>
+                    <td className="py-2 pr-4 text-right font-mono tabular-nums">{Number(s.score).toFixed(3)}</td>
                     <td className="py-2 pr-4">
-                      {s.effectiveMethod === "AIR" ? "✈ Hava" : "🚢 Deniz"}
+                      <span className="inline-flex items-center gap-1">
+                        {s.effectiveMethod === "AIR" ? <Plane size={14} strokeWidth={1.5} /> : <Ship size={14} strokeWidth={1.5} />}
+                        {s.effectiveMethod === "AIR" ? "Hava" : "Deniz"}
+                      </span>
                     </td>
-                    <td className="py-2 pr-4 text-right font-mono">${Number(s.landedCostUsd).toFixed(2)}</td>
-                    <td className="py-2 pr-4 text-right font-mono">{Number(s.profitRatio).toFixed(3)}×</td>
-                    <td className="py-2 pr-4 text-right font-mono">₺{Number(s.usdTryRate).toFixed(2)}</td>
-                    <td className="py-2 text-slate-400">{s.createdBy?.name ?? "—"}</td>
+                    <td className="py-2 pr-4 text-right font-mono tabular-nums">${Number(s.landedCostUsd).toFixed(2)}</td>
+                    <td className="py-2 pr-4 text-right font-mono tabular-nums">{Number(s.profitRatio).toFixed(3)}×</td>
+                    <td className="py-2 pr-4 text-right font-mono tabular-nums">₺{Number(s.usdTryRate).toFixed(2)}</td>
+                    <td className="py-2 text-[var(--text-muted)]">{s.createdBy?.name ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1059,59 +1078,59 @@ export default async function ProductDetailPage({
       <Card className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-950">Trendyol Satış Performansı</h2>
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol Satış Performansı</p>
             <p className="mt-1 text-sm text-slate-500">
               Senkronize edilmiş Trendyol sipariş verisi (iptal siparişler hariç).
             </p>
           </div>
           <Link
             href="/admin/product-performance"
-            className="text-xs text-slate-400 hover:text-slate-700 transition"
+            className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
           >
-            Tüm Sıralama →
+            Tüm Sıralama
           </Link>
         </div>
 
         {salesRecords.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-400">
+          <p className="mt-4 text-[13px] text-[var(--text-muted)]">
             Bu ürün için henüz senkronize satış verisi yok.{" "}
-            <Link href="/admin/product-performance" className="underline hover:text-slate-600">
+            <Link href="/admin/product-performance" className="underline hover:text-[var(--text-secondary)]">
               Satış Performansı
             </Link>{" "}
             sayfasından senkronize edin.
           </p>
         ) : (
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Son 30G Satış</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{totalQty30d}</p>
-              <p className="text-xs text-slate-400">adet</p>
+            <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Son 30G Satış</p>
+              <p className="mt-1 text-[24px] font-semibold tabular-nums font-mono leading-none text-[var(--text-primary)]">{totalQty30d}</p>
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">adet</p>
             </div>
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Son 30G Ciro</p>
-              <p className="mt-1 text-lg font-bold text-slate-900">
+            <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Son 30G Ciro</p>
+              <p className="mt-1 text-[18px] font-semibold tabular-nums font-mono leading-none text-[var(--text-primary)]">
                 ₺{totalRev30d.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}
               </p>
-              <p className="text-xs text-slate-400">TRY</p>
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">TRY</p>
             </div>
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Toplam Satış</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{totalQtyAll}</p>
-              <p className="text-xs text-slate-400">adet (tüm zamanlar)</p>
+            <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Toplam Satış</p>
+              <p className="mt-1 text-[24px] font-semibold tabular-nums font-mono leading-none text-[var(--text-primary)]">{totalQtyAll}</p>
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">adet (tüm zamanlar)</p>
             </div>
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Gerçekleşen Marj</p>
+            <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Gerçekleşen Marj</p>
               {realizedMargin !== null ? (
                 <>
-                  <p className={`mt-1 text-2xl font-bold ${realizedMargin >= 25 ? "text-emerald-600" : realizedMargin >= 10 ? "text-amber-600" : "text-red-600"}`}>
+                  <p className={`mt-1 text-[24px] font-semibold tabular-nums font-mono leading-none ${realizedMargin >= 25 ? "text-[var(--ok)]" : realizedMargin >= 10 ? "text-[var(--warn)]" : "text-[var(--danger)]"}`}>
                     %{realizedMargin.toFixed(1)}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="mt-1 text-[11px] tabular-nums font-mono text-[var(--text-muted)]">
                     ort. ₺{avgUnitPrice?.toFixed(2)} / birim
                   </p>
                 </>
               ) : (
-                <p className="mt-1 text-sm text-slate-300">Maliyet eksik</p>
+                <p className="mt-1 text-[13px] text-[var(--text-muted)]">Maliyet eksik</p>
               )}
             </div>
           </div>
@@ -1124,55 +1143,56 @@ export default async function ProductDetailPage({
         <Card className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">Trendyol Aylık Satış Trendi</h2>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol Aylık Satış Trendi</p>
               <p className="mt-1 text-sm text-slate-500">Son 6 aylık sipariş ve ciro dağılımı (iptal hariç).</p>
             </div>
             {trendDir !== "none" && (
               <span
-                className={`mt-1 rounded-full px-3 py-1 text-xs font-semibold ${
+                className={`mt-1 inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium ${
                   trendDir === "up"
-                    ? "bg-emerald-50 text-emerald-700"
+                    ? "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]"
                     : trendDir === "down"
-                    ? "bg-red-50 text-red-600"
-                    : "bg-slate-100 text-slate-500"
+                    ? "border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]"
+                    : "border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-muted)]"
                 }`}
               >
-                {trendDir === "up" ? "↑ Artış" : trendDir === "down" ? "↓ Düşüş" : "→ Sabit"}
+                {trendDir === "up" ? <ArrowUpRight size={14} strokeWidth={1.5} /> : trendDir === "down" ? <ArrowDownRight size={14} strokeWidth={1.5} /> : <Minus size={14} strokeWidth={1.5} />}
+                {trendDir === "up" ? "Artış" : trendDir === "down" ? "Düşüş" : "Sabit"}
               </span>
             )}
           </div>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-[13px]">
               <thead>
-                <tr className="border-b border-slate-100 text-xs uppercase tracking-widest text-slate-400">
-                  <th className="pb-2 text-left font-medium">Ay</th>
-                  <th className="pb-2 text-right font-medium">Adet</th>
-                  <th className="pb-2 text-right font-medium">Ciro</th>
-                  <th className="pb-2 text-right font-medium">Ort. Fiyat</th>
+                <tr className="border-b border-[var(--border-subtle)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+                  <th className="pb-2 text-left">Ay</th>
+                  <th className="pb-2 text-right">Adet</th>
+                  <th className="pb-2 text-right">Ciro</th>
+                  <th className="pb-2 text-right">Ort. Fiyat</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {trendMonths.map(([key, d], i) => {
                   const avgPrice = d.qty > 0 ? d.rev / d.qty : null;
                   const prevQty = i < trendMonths.length - 1 ? trendMonths[i + 1][1].qty : null;
                   const delta = prevQty !== null ? d.qty - prevQty : null;
                   return (
-                    <tr key={key} className={i === 0 ? "font-medium" : ""}>
-                      <td className="py-2 text-slate-700">
+                    <tr key={key} className={`border-b border-[var(--border-subtle)] ${i === 0 ? "font-medium" : ""}`}>
+                      <td className="py-2 text-[var(--text-primary)]">
                         {trendMonthLabel(key)}
                         {i === 0 && (
-                          <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400">
+                          <span className="ml-2 rounded border border-[var(--border-subtle)] bg-[var(--surface-3)] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
                             Son
                           </span>
                         )}
                       </td>
-                      <td className="py-2 text-right tabular-nums text-slate-700">
+                      <td className="py-2 text-right tabular-nums font-mono text-[var(--text-primary)]">
                         <span className="inline-flex items-center gap-1">
                           {d.qty}
                           {delta !== null && delta !== 0 && (
                             <span
                               className={`text-[10px] font-semibold ${
-                                delta > 0 ? "text-emerald-600" : "text-red-500"
+                                delta > 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"
                               }`}
                             >
                               {delta > 0 ? `+${delta}` : delta}
@@ -1180,10 +1200,10 @@ export default async function ProductDetailPage({
                           )}
                         </span>
                       </td>
-                      <td className="py-2 text-right tabular-nums text-slate-700">
+                      <td className="py-2 text-right tabular-nums font-mono text-[var(--text-primary)]">
                         ₺{d.rev.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}
                       </td>
-                      <td className="py-2 text-right tabular-nums text-slate-500">
+                      <td className="py-2 text-right tabular-nums font-mono text-[var(--text-secondary)]">
                         {avgPrice != null
                           ? `₺${avgPrice.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}`
                           : "—"}
@@ -1193,12 +1213,12 @@ export default async function ProductDetailPage({
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t border-slate-200 text-xs font-semibold text-slate-600">
+                <tr className="border-t border-[var(--border-default)] text-[12px] font-semibold text-[var(--text-primary)]">
                   <td className="pt-2">Toplam</td>
-                  <td className="pt-2 text-right tabular-nums">
+                  <td className="pt-2 text-right tabular-nums font-mono">
                     {trendMonths.reduce((s, [, d]) => s + d.qty, 0)}
                   </td>
-                  <td className="pt-2 text-right tabular-nums">
+                  <td className="pt-2 text-right tabular-nums font-mono">
                     ₺{trendMonths.reduce((s, [, d]) => s + d.rev, 0).toLocaleString("tr-TR", { maximumFractionDigits: 0 })}
                   </td>
                   <td className="pt-2 text-right">—</td>
@@ -1225,7 +1245,7 @@ export default async function ProductDetailPage({
           {directInterests.length > 0 ? (
             <Card className="p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-950">Doğrudan ilgili</h2>
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Doğrudan ilgili</p>
                 <Badge>{directInterests.length}</Badge>
               </div>
               <p className="mt-2 text-sm leading-7 text-slate-600">
@@ -1234,25 +1254,25 @@ export default async function ProductDetailPage({
               <div className="mt-5 space-y-2">
                 {directInterests.map((interest) => (
                   <Link key={interest.id} href={`/customers/${interest.customer.id}`}>
-                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 hover:border-slate-200 transition">
+                    <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3 transition hover:border-[var(--border-strong)]">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-slate-900">{interest.customer.name}</p>
+                        <p className="text-[13px] font-medium text-[var(--text-primary)]">{interest.customer.name}</p>
                         {interest.customer.customerType ? (
-                          <Badge tone="default">{CUSTOMER_TYPE_LABELS[interest.customer.customerType]}</Badge>
+                          <Badge variant="neutral">{CUSTOMER_TYPE_LABELS[interest.customer.customerType]}</Badge>
                         ) : null}
                       </div>
                       {interest.customer.company ? (
-                        <p className="text-xs text-slate-500">{interest.customer.company}</p>
+                        <p className="text-[12px] text-[var(--text-muted)]">{interest.customer.company}</p>
                       ) : null}
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         {interest.stage ? (
-                          <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                            interest.stage === "INTERESTED" ? "bg-blue-50 text-blue-700" :
-                            interest.stage === "PRICE_SENT" ? "bg-amber-50 text-amber-700" :
-                            interest.stage === "NEGOTIATING" ? "bg-violet-50 text-violet-700" :
-                            interest.stage === "WAITING" ? "bg-slate-100 text-slate-600" :
-                            interest.stage === "ORDERED" ? "bg-emerald-50 text-emerald-700" :
-                            "bg-red-50 text-red-600"
+                          <span className={`rounded border px-1.5 py-0.5 text-[10px] font-medium ${
+                            interest.stage === "INTERESTED" ? "border-[var(--info-border)] bg-[var(--info-dim)] text-[var(--info)]" :
+                            interest.stage === "PRICE_SENT" ? "border-[var(--warn-border)] bg-[var(--warn-dim)] text-[var(--warn)]" :
+                            interest.stage === "NEGOTIATING" ? "border-[var(--info-border)] bg-[var(--info-dim)] text-[var(--info)]" :
+                            interest.stage === "WAITING" ? "border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-muted)]" :
+                            interest.stage === "ORDERED" ? "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]" :
+                            "border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]"
                           }`}>
                             {interest.stage === "INTERESTED" ? "İlgileniyor" :
                              interest.stage === "PRICE_SENT" ? "Fiyat Gönderildi" :
@@ -1263,18 +1283,18 @@ export default async function ProductDetailPage({
                           </span>
                         ) : null}
                         {(interest.priority === "HIGH" || interest.priority === "URGENT") ? (
-                          <span className="text-[10px] text-red-500 font-medium">
-                            {interest.priority === "URGENT" ? "🔴 Acil" : "🟠 Yüksek öncelik"}
+                          <span className={`text-[10px] font-medium ${interest.priority === "URGENT" ? "text-[var(--danger)]" : "text-[var(--warn)]"}`}>
+                            {interest.priority === "URGENT" ? "Acil" : "Yüksek öncelik"}
                           </span>
                         ) : null}
                       </div>
                       {interest.lastContactedAt ? (
-                        <p className="mt-1 text-[10px] text-slate-400">
+                        <p className="mt-1 text-[10px] text-[var(--text-muted)]">
                           Son temas: {formatDateTime(interest.lastContactedAt)}
                         </p>
                       ) : null}
                       {interest.assignedTo ? (
-                        <p className="mt-0.5 text-[10px] text-slate-400">
+                        <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">
                           Temsilci: {interest.assignedTo.name}
                         </p>
                       ) : null}
@@ -1288,7 +1308,7 @@ export default async function ProductDetailPage({
           {attributeInterests.length > 0 ? (
             <Card className="p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-950">Özellik ilgili</h2>
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Özellik ilgili</p>
                 <Badge>{attributeInterests.length}</Badge>
               </div>
               <p className="mt-2 text-sm leading-7 text-slate-600">
@@ -1297,17 +1317,17 @@ export default async function ProductDetailPage({
               <div className="mt-5 space-y-2">
                 {attributeInterests.map((ai) => (
                   <Link key={`${ai.customerId}-${ai.attributeId}`} href={`/customers/${ai.customer.id}`}>
-                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 hover:border-slate-200 transition">
+                    <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3 transition hover:border-[var(--border-strong)]">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-slate-900">{ai.customer.name}</p>
+                        <p className="text-[13px] font-medium text-[var(--text-primary)]">{ai.customer.name}</p>
                         {ai.customer.customerType ? (
-                          <Badge tone="default">{CUSTOMER_TYPE_LABELS[ai.customer.customerType]}</Badge>
+                          <Badge variant="neutral">{CUSTOMER_TYPE_LABELS[ai.customer.customerType]}</Badge>
                         ) : null}
                       </div>
                       {ai.customer.company ? (
-                        <p className="text-xs text-slate-500">{ai.customer.company}</p>
+                        <p className="text-[12px] text-[var(--text-muted)]">{ai.customer.company}</p>
                       ) : null}
-                      <p className="mt-1 text-xs text-slate-400">{ai.attribute.name}</p>
+                      <p className="mt-1 text-[11px] text-[var(--text-muted)]">{ai.attribute.name}</p>
                     </div>
                   </Link>
                 ))}
@@ -1318,7 +1338,7 @@ export default async function ProductDetailPage({
           {categoryInterests.length > 0 ? (
             <Card className="p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-950">Kategori ilgili</h2>
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kategori ilgili</p>
                 <Badge>{categoryInterests.length}</Badge>
               </div>
               <p className="mt-2 text-sm leading-7 text-slate-600">
@@ -1327,15 +1347,15 @@ export default async function ProductDetailPage({
               <div className="mt-5 space-y-2">
                 {categoryInterests.map((interest) => (
                   <Link key={interest.id} href={`/customers/${interest.customer.id}`}>
-                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 hover:border-slate-200 transition">
+                    <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3 transition hover:border-[var(--border-strong)]">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-slate-900">{interest.customer.name}</p>
+                        <p className="text-[13px] font-medium text-[var(--text-primary)]">{interest.customer.name}</p>
                         {interest.customer.customerType ? (
-                          <Badge tone="default">{CUSTOMER_TYPE_LABELS[interest.customer.customerType]}</Badge>
+                          <Badge variant="neutral">{CUSTOMER_TYPE_LABELS[interest.customer.customerType]}</Badge>
                         ) : null}
                       </div>
                       {interest.customer.company ? (
-                        <p className="text-xs text-slate-500">{interest.customer.company}</p>
+                        <p className="text-[12px] text-[var(--text-muted)]">{interest.customer.company}</p>
                       ) : null}
                     </div>
                   </Link>
@@ -1349,7 +1369,7 @@ export default async function ProductDetailPage({
       {/* Phase 11A — XML source data section — finance only (contains per-channel prices) */}
       {canViewFinance && product.xmlData && (
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">XML Kaynak Verisi</h2>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">XML Kaynak Verisi</p>
           <p className="mt-1 text-sm text-slate-500">
             Entegra feed&apos;inden son alınan ham değerler. Bunlar bilgilendirme amaçlıdır;
             ürün alanları iş verisidir.
@@ -1366,9 +1386,7 @@ export default async function ProductDetailPage({
             <Info label="Son Görülme" value={product.xmlData.lastSeenAt ? formatDateTime(product.xmlData.lastSeenAt) : null} />
             {product.xmlData.missingFromLatestFeed && (
               <div className="sm:col-span-2 lg:col-span-3">
-                <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
-                  Son feed&apos;de bu ürün bulunamadı
-                </span>
+                <Badge variant="warn">Son feed&apos;de bu ürün bulunamadı</Badge>
               </div>
             )}
           </dl>
@@ -1390,10 +1408,10 @@ export default async function ProductDetailPage({
       {/* Phase 11A — Classification: parent product link */}
       {product.mainProduct && (
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-950">Ürün Hiyerarşisi</h2>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün Hiyerarşisi</p>
           <p className="mt-2 text-sm text-slate-500">Bu ürün bir listeleme paketidir.</p>
           <div className="mt-3">
-            <Link href={`/products/${product.mainProduct.id}`} className="text-sm font-medium text-slate-700 hover:text-slate-900 underline">
+            <Link href={`/products/${product.mainProduct.id}`} className="text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline">
               Ana ürün: {product.mainProduct.name} ({product.mainProduct.sku})
             </Link>
           </div>
@@ -1404,32 +1422,33 @@ export default async function ProductDetailPage({
       {canViewFinance && supplierLinks.length > 0 && (
         <Card className="p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-950">Tedarikçi Kaynağı</h2>
-            <Link href={`/products/${product.id}/edit`} className="text-xs text-slate-400 hover:text-slate-700 transition">
-              Düzenle →
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tedarikçi Kaynağı</p>
+            <Link href={`/products/${product.id}/edit`} className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
+              Düzenle
             </Link>
           </div>
-          <p className="mt-1 text-sm text-slate-500">Bu ürünü sağlayan tedarikçiler.</p>
+          <p className="mt-1 text-[12px] text-[var(--text-muted)]">Bu ürünü sağlayan tedarikçiler.</p>
           <div className="mt-4 space-y-2">
             {supplierLinks.map((sl) => (
-              <div key={sl.supplierId} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+              <div key={sl.supplierId} className="flex items-center justify-between rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
                 <div className="flex items-center gap-2">
                   {sl.isPreferred && (
-                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                      ★ Tercihli
+                    <span className="inline-flex items-center gap-1 rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] px-2 py-0.5 text-[11px] font-medium text-[var(--ok)]">
+                      <Star size={12} strokeWidth={1.5} />
+                      Tercihli
                     </span>
                   )}
-                  <span className="text-sm font-medium text-slate-900">{sl.supplier.name}</span>
+                  <span className="text-[13px] font-medium text-[var(--text-primary)]">{sl.supplier.name}</span>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-slate-500">
+                <div className="flex items-center gap-4 text-[12px] text-[var(--text-muted)]">
                   {sl.unitCostUsd != null && (
-                    <span className="font-mono">${Number(sl.unitCostUsd).toFixed(2)}</span>
+                    <span className="font-mono tabular-nums">${Number(sl.unitCostUsd).toFixed(2)}</span>
                   )}
                   {sl.leadDays != null && (
-                    <span>{sl.leadDays} gün</span>
+                    <span className="tabular-nums">{sl.leadDays} gün</span>
                   )}
                   {sl.moq != null && (
-                    <span>MOQ: {sl.moq}</span>
+                    <span className="tabular-nums">MOQ: {sl.moq}</span>
                   )}
                 </div>
               </div>
@@ -1440,22 +1459,23 @@ export default async function ProductDetailPage({
 
       {/* Phase 28 — Owner-only private note (isOwner gated — ADMIN_EMAIL only) */}
       {canViewPrivate && product.privateNote && (
-        <Card className="overflow-hidden border-amber-200">
-          <div className="border-b border-amber-200 bg-amber-50 px-6 py-4">
+        <Card className="overflow-hidden border-[var(--warn-border)]">
+          <div className="border-b border-[var(--warn-border)] bg-[var(--warn-dim)] px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                  🔒 Özel Not
+                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-2 py-0.5 text-[11px] font-medium text-[var(--warn)]">
+                  <Lock size={12} strokeWidth={1.5} />
+                  Özel Not
                 </span>
-                <span className="text-xs text-amber-700">Sadece sahip görebilir</span>
+                <span className="text-[11px] text-[var(--warn)]">Sadece sahip görebilir</span>
               </div>
-              <Link href={`/products/${product.id}/edit`} className="text-xs text-amber-600 hover:text-amber-800 transition">
-                Düzenle →
+              <Link href={`/products/${product.id}/edit`} className="text-[11px] font-medium uppercase tracking-widest text-[var(--warn)] hover:opacity-80 transition">
+                Düzenle
               </Link>
             </div>
           </div>
-          <div className="bg-amber-50/30 px-6 py-4">
-            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{product.privateNote}</p>
+          <div className="px-6 py-4">
+            <p className="whitespace-pre-wrap text-[13px] leading-6 text-[var(--text-secondary)]">{product.privateNote}</p>
           </div>
         </Card>
       )}
@@ -1463,36 +1483,36 @@ export default async function ProductDetailPage({
       {/* Phase 68 — XML Stock Movement History */}
       {xmlStockChangeLogs.length > 0 && (
         <Card className="overflow-hidden p-0">
-          <div className="border-b border-slate-100 px-6 py-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <div className="border-b border-[var(--border-subtle)] px-6 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               XML Stok Değişim Geçmişi
             </p>
-            <p className="mt-1 text-xs text-slate-400">Son {xmlStockChangeLogs.length} XML senkronizasyon değişimi</p>
+            <p className="mt-1 text-[11px] text-[var(--text-muted)]">Son {xmlStockChangeLogs.length} XML senkronizasyon değişimi</p>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.2em] text-slate-400">
-                <tr>
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b border-[var(--border-subtle)] text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                   <th className="px-4 py-3">Tarih</th>
                   <th className="px-4 py-3 text-right">Önceki</th>
                   <th className="px-4 py-3 text-right">Yeni</th>
                   <th className="px-4 py-3 text-right">Değişim</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 bg-white text-sm">
+              <tbody className="text-[13px]">
                 {xmlStockChangeLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/60 transition">
-                    <td className="px-4 py-2 text-xs text-slate-500">
+                  <tr key={log.id} className="border-b border-[var(--border-subtle)] transition hover:bg-[var(--surface-3)]">
+                    <td className="px-4 py-2 text-[12px] text-[var(--text-muted)]">
                       {formatDateTime(log.syncedAt)}
                     </td>
-                    <td className="px-4 py-2 text-right font-mono text-xs text-slate-500">
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-[12px] text-[var(--text-muted)]">
                       {log.previousQty}
                     </td>
-                    <td className="px-4 py-2 text-right font-mono text-xs font-semibold text-slate-800">
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-[12px] font-semibold text-[var(--text-primary)]">
                       {log.newQty}
                     </td>
-                    <td className="px-4 py-2 text-right font-mono text-xs font-bold">
-                      <span className={log.delta > 0 ? "text-emerald-600" : log.delta < 0 ? "text-red-500" : "text-slate-400"}>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-[12px] font-semibold">
+                      <span className={log.delta > 0 ? "text-[var(--ok)]" : log.delta < 0 ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}>
                         {log.delta > 0 ? `+${log.delta}` : log.delta}
                       </span>
                     </td>
@@ -1525,79 +1545,79 @@ export default async function ProductDetailPage({
 function Info({ label, value, mono }: { label: string; value: string | null | undefined; mono?: boolean }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</dt>
-      <dd className={`mt-2 text-sm font-medium text-slate-900 ${mono ? "font-mono" : ""}`}>{value || "-"}</dd>
+      <dt className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</dt>
+      <dd className={`mt-1.5 text-[13px] font-medium text-[var(--text-primary)] ${mono ? "font-mono tabular-nums" : ""}`}>{value || "-"}</dd>
     </div>
   );
 }
 
 function StatBox({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
   const valueColor =
-    positive === true ? "text-emerald-700" :
-    positive === false ? "text-red-600" :
-    "text-slate-900";
+    positive === true ? "text-[var(--ok)]" :
+    positive === false ? "text-[var(--danger)]" :
+    "text-[var(--text-primary)]";
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{label}</p>
-      <p className={`mt-1 text-sm font-bold tabular-nums ${valueColor}`}>{value}</p>
+    <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
+      <p className={`mt-1 text-[16px] font-semibold tabular-nums font-mono ${valueColor}`}>{value}</p>
     </div>
   );
 }
 
 function ProfitCard({ title, result }: { title: string; result: ChannelResult }) {
-  const profitColor = result.profitable ? "text-emerald-700" : "text-red-600";
+  const profitColor = result.profitable ? "text-[var(--ok)]" : "text-[var(--danger)]";
   const bgColor = result.profitable
-    ? "border-emerald-100 bg-emerald-50/40"
-    : "border-red-100 bg-red-50/40";
+    ? "border-[var(--ok-border)] bg-[var(--ok-dim)]"
+    : "border-[var(--danger-border)] bg-[var(--danger-dim)]";
 
   return (
-    <div className={`rounded-2xl border p-4 ${bgColor}`}>
-      <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">{title}</p>
-      <p className={`mt-2 text-2xl font-bold tabular-nums ${profitColor}`}>
+    <div className={`rounded-md border p-4 ${bgColor}`}>
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{title}</p>
+      <p className={`mt-2 text-[24px] font-semibold tabular-nums font-mono leading-none ${profitColor}`}>
         {formatCurrency(result.netProfit)}
       </p>
-      <p className={`text-sm font-medium ${profitColor}`}>
+      <p className={`mt-1 text-[12px] font-medium ${profitColor}`}>
         Marj: {formatPct(result.margin)}
         {result.roi != null ? ` · ROI: ${formatPct(result.roi)}` : ""}
       </p>
-      <div className="mt-3 space-y-1 text-xs text-slate-500">
+      <div className="mt-3 space-y-1 text-[12px] text-[var(--text-secondary)]">
         <div className="flex justify-between">
           <span>Satış fiyatı</span>
-          <span className="font-medium text-slate-700">{formatCurrency(result.revenue)}</span>
+          <span className="font-medium tabular-nums font-mono text-[var(--text-primary)]">{formatCurrency(result.revenue)}</span>
         </div>
-        <div className="flex justify-between text-slate-400" title="KDV cash-flow'dan düşülmez; bilgi amaçlı gösterilir. Trendyol komisyonu KDV dahil tutar üzerinden alındığı için kâr hesabımız da KDV dahil tutara göre yapılır.">
+        <div className="flex justify-between text-[var(--text-muted)]" title="KDV cash-flow'dan düşülmez; bilgi amaçlı gösterilir. Trendyol komisyonu KDV dahil tutar üzerinden alındığı için kâr hesabımız da KDV dahil tutara göre yapılır.">
           <span>İçerdiği KDV (bilgi)</span>
-          <span>{formatCurrency(result.vatAmt)}</span>
+          <span className="tabular-nums font-mono">{formatCurrency(result.vatAmt)}</span>
         </div>
         <div className="flex justify-between">
           <span>Birim maliyet</span>
-          <span>−{formatCurrency(result.unitCost)}</span>
+          <span className="tabular-nums font-mono">−{formatCurrency(result.unitCost)}</span>
         </div>
         <div className="flex justify-between">
           <span>Kargo + ambalaj</span>
-          <span>−{formatCurrency(result.shippingCost)}</span>
+          <span className="tabular-nums font-mono">−{formatCurrency(result.shippingCost)}</span>
         </div>
         {result.commissionAmt > 0 ? (
           <div className="flex justify-between">
             <span>Komisyon</span>
-            <span>−{formatCurrency(result.commissionAmt)}</span>
+            <span className="tabular-nums font-mono">−{formatCurrency(result.commissionAmt)}</span>
           </div>
         ) : null}
         {result.paymentAmt > 0 ? (
           <div className="flex justify-between">
             <span>Ödeme ücreti</span>
-            <span>−{formatCurrency(result.paymentAmt)}</span>
+            <span className="tabular-nums font-mono">−{formatCurrency(result.paymentAmt)}</span>
           </div>
         ) : null}
         {result.returnAmt > 0 ? (
           <div className="flex justify-between">
             <span>İade karşılığı</span>
-            <span>−{formatCurrency(result.returnAmt)}</span>
+            <span className="tabular-nums font-mono">−{formatCurrency(result.returnAmt)}</span>
           </div>
         ) : null}
-        <div className="mt-2 flex justify-between border-t border-slate-200 pt-2">
-          <span className="font-semibold text-slate-600">Net kâr</span>
-          <span className={`font-bold ${profitColor}`}>{formatCurrency(result.netProfit)}</span>
+        <div className="mt-2 flex justify-between border-t border-[var(--border-subtle)] pt-2">
+          <span className="font-semibold text-[var(--text-secondary)]">Net kâr</span>
+          <span className={`font-semibold tabular-nums font-mono ${profitColor}`}>{formatCurrency(result.netProfit)}</span>
         </div>
       </div>
     </div>

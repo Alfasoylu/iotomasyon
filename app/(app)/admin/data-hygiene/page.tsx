@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check } from "lucide-react";
 
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -17,16 +18,21 @@ function IssueCount({
   label: string;
   tone?: "ok" | "warn" | "danger" | "default";
 }) {
-  const colours = {
-    ok:      "border-emerald-200 bg-emerald-50 text-emerald-700",
-    warn:    "border-amber-200   bg-amber-50   text-amber-700",
-    danger:  "border-red-200     bg-red-50     text-red-700",
-    default: "border-slate-200   bg-white      text-slate-700",
-  };
+  const valueColor = {
+    ok: "text-[var(--ok)]",
+    warn: "text-[var(--warn)]",
+    danger: "text-[var(--danger)]",
+    default: "text-[var(--text-primary)]",
+  }[tone];
+
   return (
-    <div className={`rounded-xl border p-4 ${colours[tone]}`}>
-      <p className="text-3xl font-bold">{count}</p>
-      <p className="mt-1 text-sm font-medium">{label}</p>
+    <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-4">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+        {label}
+      </p>
+      <p className={`mt-2 text-[28px] font-semibold leading-tight tabular-nums ${valueColor}`}>
+        {count}
+      </p>
     </div>
   );
 }
@@ -43,20 +49,28 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+    <section className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
+      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-6 py-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-          <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+            {title}
+          </h2>
+          <p className="mt-1.5 text-sm text-[var(--text-secondary)]">{subtitle}</p>
         </div>
         <span
-          className={`rounded-full px-3 py-1 text-sm font-semibold ${
+          className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium ${
             count === 0
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-red-100 text-red-700"
+              ? "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]"
+              : "border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]"
           }`}
         >
-          {count === 0 ? "✓ Temiz" : `${count} sorun`}
+          {count === 0 ? (
+            <>
+              <Check size={14} strokeWidth={1.5} /> Temiz
+            </>
+          ) : (
+            `${count} sorun`
+          )}
         </span>
       </div>
       <div className="p-6">{children}</div>
@@ -66,7 +80,9 @@ function Section({
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <p className="text-sm text-emerald-600">✓ {message}</p>
+    <p className="flex items-center gap-1.5 text-sm text-[var(--ok)]">
+      <Check size={14} strokeWidth={1.5} /> {message}
+    </p>
   );
 }
 
@@ -82,7 +98,7 @@ function ProductTable({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <tr className="border-b border-[var(--border-subtle)] text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             <th className="pb-2 pr-4">SKU</th>
             <th className="pb-2 pr-4">Ürün Adı</th>
             {columns?.map((c) => (
@@ -93,20 +109,25 @@ function ProductTable({
             <th className="pb-2"></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-50">
+        <tbody className="divide-y divide-[var(--border-subtle)]">
           {products.map((p) => (
-            <tr key={p.id} className="hover:bg-slate-50">
-              <td className="py-2 pr-4 font-mono text-xs text-slate-500">{p.sku}</td>
-              <td className="py-2 pr-4 font-medium text-slate-900">{p.name}</td>
+            <tr key={p.id} className="hover:bg-[var(--surface-3)]">
+              <td className="py-2 pr-4 font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                {p.sku}
+              </td>
+              <td className="py-2 pr-4 font-medium text-[var(--text-primary)]">{p.name}</td>
               {columns?.map((c) => (
-                <td key={c.key} className="py-2 pr-4 text-slate-600">
+                <td
+                  key={c.key}
+                  className="py-2 pr-4 font-mono tabular-nums text-[var(--text-secondary)]"
+                >
                   {p.extra ?? "—"}
                 </td>
               ))}
               <td className="py-2 text-right">
                 <Link
                   href={`/products/${p.id}/edit`}
-                  className="text-xs text-blue-600 hover:underline"
+                  className="text-xs text-[var(--accent)] hover:brightness-110"
                 >
                   Düzenle →
                 </Link>
@@ -207,25 +228,21 @@ export default async function DataHygienePage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
           YÖNETİM / VERİ KALİTESİ
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">
+        <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           Veri Hijyeni
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Eksik maliyet, fiyat, kategori ve tanımlayıcı alanlarına sahip ürünleri
-          listeler. Düzeltme için Düzenle bağlantılarını kullanın.
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          Eksik maliyet, fiyat, kategori ve tanımlayıcı alanlarına sahip ürünleri listeler.
+          Düzeltme için Düzenle bağlantılarını kullanın.
         </p>
       </div>
 
       {/* Summary row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <IssueCount
-          count={totalProducts}
-          label="Aktif Ürün"
-          tone="default"
-        />
+        <IssueCount count={totalProducts} label="Aktif Ürün" tone="default" />
         <IssueCount
           count={cleanProducts}
           label="Tam Dolu Ürün"
@@ -244,9 +261,11 @@ export default async function DataHygienePage() {
       </div>
 
       {totalIssues === 0 && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-5 text-emerald-800">
-          <p className="text-base font-semibold">✓ Veri tabanı temiz</p>
-          <p className="mt-1 text-sm">
+        <div className="rounded-lg border border-[var(--ok-border)] bg-[var(--ok-dim)] px-6 py-5">
+          <p className="flex items-center gap-1.5 text-base font-semibold text-[var(--ok)]">
+            <Check size={14} strokeWidth={1.5} /> Veri tabanı temiz
+          </p>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             Tüm aktif ürünlerin maliyet, fiyat, kategori ve barkod bilgileri dolu.
           </p>
         </div>
@@ -360,19 +379,19 @@ export default async function DataHygienePage() {
       </Section>
 
       {/* Footer */}
-      <div className="flex flex-wrap gap-4 text-sm text-slate-500">
-        <Link href="/products" className="hover:text-slate-900 hover:underline">
+      <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
+        <Link href="/products" className="transition-colors hover:text-[var(--text-primary)]">
           ← Ürünler
         </Link>
         <Link
           href="/admin/executive"
-          className="hover:text-slate-900 hover:underline"
+          className="transition-colors hover:text-[var(--text-primary)]"
         >
           Yönetici Paneli →
         </Link>
         <Link
           href="/admin/procurement"
-          className="hover:text-slate-900 hover:underline"
+          className="transition-colors hover:text-[var(--text-primary)]"
         >
           Tedarik Asistanı →
         </Link>
