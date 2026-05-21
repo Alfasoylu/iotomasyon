@@ -9,17 +9,19 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary:
-    "bg-slate-950 text-white hover:bg-slate-800 disabled:bg-slate-400",
+    "bg-[var(--accent)] text-[var(--accent-fg)] hover:brightness-110 active:scale-[0.98] disabled:opacity-50",
   secondary:
-    "bg-white text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50 disabled:text-slate-400",
-  danger: "bg-red-600 text-white hover:bg-red-500 disabled:bg-red-300",
-  ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
+    "bg-[var(--surface-3)] text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] disabled:opacity-50",
+  danger:
+    "text-[var(--danger)] border border-[var(--danger-border)] hover:bg-[var(--danger-dim)] disabled:opacity-50",
+  ghost:
+    "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)] disabled:opacity-50",
 };
 
 const sizes: Record<NonNullable<ButtonProps["size"]>, string> = {
-  sm: "h-8 px-3 text-xs rounded-lg",
-  md: "h-11 px-4 text-sm rounded-xl",
-  lg: "h-12 px-5 text-sm rounded-xl",
+  sm: "h-8 px-3 text-[12px] rounded-md",
+  md: "h-9 px-3.5 text-[13px] rounded-md",
+  lg: "h-10 px-4 text-[13px] rounded-md",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -28,7 +30,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         type={type}
-        className={`inline-flex items-center justify-center font-semibold transition ${sizes[size]} ${variants[variant]} ${className}`}
+        className={`inline-flex items-center justify-center gap-1.5 font-medium transition-all duration-100 ${sizes[size]} ${variants[variant]} ${className}`}
         {...props}
       />
     );

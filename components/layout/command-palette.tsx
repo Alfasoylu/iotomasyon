@@ -161,12 +161,12 @@ export function CommandPalette() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden md:inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-500 hover:border-slate-300 hover:text-slate-700 transition"
+        className="hidden md:inline-flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-1.5 text-[12px] text-[var(--text-muted)] hover:border-[var(--border-strong)] hover:text-[var(--text-secondary)] transition-colors duration-100"
         title="Global ara (⌘K)"
       >
-        <Search className="h-3.5 w-3.5" />
+        <Search size={13} strokeWidth={1.5} />
         <span>Ara…</span>
-        <kbd className="ml-2 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-mono">⌘K</kbd>
+        <kbd className="ml-2 rounded border border-[var(--border-default)] bg-[var(--surface-3)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--text-secondary)]">⌘K</kbd>
       </button>
 
       {/* Modal */}

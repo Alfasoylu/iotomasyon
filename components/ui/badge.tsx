@@ -1,21 +1,43 @@
-export function Badge({
-  children,
-  tone = "default",
-}: {
-  children: React.ReactNode;
-  tone?: "default" | "success" | "danger" | "warning";
-}) {
-  const toneClass =
-    tone === "success"
-      ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-      : tone === "danger"
-        ? "bg-red-50 text-red-700 ring-red-200"
-        : tone === "warning"
-          ? "bg-amber-50 text-amber-800 ring-amber-200"
-          : "bg-slate-100 text-slate-700 ring-slate-200";
+import type { ReactNode } from "react";
 
+type Variant = "neutral" | "accent" | "ok" | "warn" | "danger" | "info";
+
+// Back-compat with old call sites that used `tone`.
+type LegacyTone = "default" | "success" | "danger" | "warning";
+
+const VARIANTS: Record<Variant, string> = {
+  neutral:
+    "bg-[var(--surface-3)] text-[var(--text-secondary)] border-[var(--border-subtle)]",
+  accent:
+    "bg-[var(--accent-dim)] text-[var(--accent)] border-[var(--accent-border)]",
+  ok: "bg-[var(--ok-dim)] text-[var(--ok)] border-[var(--ok-border)]",
+  warn: "bg-[var(--warn-dim)] text-[var(--warn)] border-[var(--warn-border)]",
+  danger:
+    "bg-[var(--danger-dim)] text-[var(--danger)] border-[var(--danger-border)]",
+  info: "bg-[var(--info-dim)] text-[var(--info)] border-[var(--info-border)]",
+};
+
+const LEGACY_MAP: Record<LegacyTone, Variant> = {
+  default: "neutral",
+  success: "ok",
+  danger: "danger",
+  warning: "warn",
+};
+
+interface BadgeProps {
+  children: ReactNode;
+  variant?: Variant;
+  /** @deprecated use `variant` */
+  tone?: LegacyTone;
+  className?: string;
+}
+
+export function Badge({ children, variant, tone, className = "" }: BadgeProps) {
+  const v = variant ?? (tone ? LEGACY_MAP[tone] : "neutral");
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${toneClass}`}>
+    <span
+      className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium border ${VARIANTS[v]} ${className}`}
+    >
       {children}
     </span>
   );
