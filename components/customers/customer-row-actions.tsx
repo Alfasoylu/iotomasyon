@@ -38,69 +38,75 @@ export function CustomerRowActions({ customerId, phone, whatsapp, detailHref, co
   const phoneHref = telLink(phone || whatsapp);
   const waHref = whatsappLink(whatsapp || phone);
 
+  const actionBase =
+    "inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-medium uppercase tracking-widest transition";
+
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* 📞 ARA */}
+      {/* ARA */}
       {!compact && (phoneHref ? (
         <a
           href={phoneHref}
-          className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+          className={`${actionBase} border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)] hover:brightness-110`}
           title="Telefon: tel: linki açılır"
         >
-          <Phone className="h-3.5 w-3.5" />
-          ARA
+          <Phone size={14} strokeWidth={1.5} />
+          Ara
         </a>
       ) : (
-        <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-400" title="Telefon yok">
-          <Phone className="h-3.5 w-3.5" />
+        <span
+          className={`${actionBase} border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-muted)]`}
+          title="Telefon yok"
+        >
+          <Phone size={14} strokeWidth={1.5} />
           —
         </span>
       ))}
 
-      {/* 💬 WhatsApp */}
+      {/* WhatsApp */}
       {!compact && waHref && (
         <a
           href={waHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-medium text-green-700 transition hover:bg-green-100"
+          className={`${actionBase} border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)] hover:brightness-110`}
           title="WhatsApp web/uygulamada aç"
         >
-          <MessageCircle className="h-3.5 w-3.5" />
+          <MessageCircle size={14} strokeWidth={1.5} />
           WhatsApp
         </a>
       )}
 
-      {/* ➕ Görev */}
+      {/* Görev */}
       <button
         type="button"
         onClick={() => setOpenTask(true)}
-        className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
+        className={`${actionBase} border-[var(--warn-border)] bg-[var(--warn-dim)] text-[var(--warn)] hover:brightness-110`}
         title="Hızlı görev ekle"
       >
-        <ListPlus className="h-3.5 w-3.5" />
+        <ListPlus size={14} strokeWidth={1.5} />
         Görev
       </button>
 
-      {/* 📝 Hızlı Not */}
+      {/* Hızlı Not */}
       <button
         type="button"
         onClick={() => setOpenNote(true)}
-        className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+        className={`${actionBase} border-[var(--info-border)] bg-[var(--info-dim)] text-[var(--info)] hover:brightness-110`}
         title="Hızlı not ekle"
       >
-        <NotebookPen className="h-3.5 w-3.5" />
+        <NotebookPen size={14} strokeWidth={1.5} />
         Not
       </button>
 
-      {/* → Detay */}
+      {/* Detay */}
       {!compact && detailHref && (
         <Link
           href={detailHref}
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+          className={`${actionBase} border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]`}
         >
           Detay
-          <ArrowRight className="h-3 w-3" />
+          <ArrowRight size={14} strokeWidth={1.5} />
         </Link>
       )}
 
@@ -154,51 +160,59 @@ function QuickTaskModal({
     });
   }
 
+  const inputCls =
+    "w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]";
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-0)]/70 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"
+        className="w-full max-w-md rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-900">Hızlı Görev Ekle</h3>
-          <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100">
-            <X className="h-4 w-4" />
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+            Hızlı Görev Ekle
+          </h3>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
+          >
+            <X size={14} strokeWidth={1.5} />
           </button>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Başlık</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Başlık</label>
             <input
               type="text"
               autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="örn. Geri ara, fiyat teyit"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+              className={inputCls}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Vade tarihi</label>
+              <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Vade tarihi</label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Öncelik</label>
+              <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Öncelik</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as "LOW" | "MEDIUM" | "HIGH")}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                className={inputCls}
               >
                 <option value="LOW">Düşük</option>
                 <option value="MEDIUM">Orta</option>
@@ -208,7 +222,7 @@ function QuickTaskModal({
           </div>
 
           {error && (
-            <p className="rounded-lg bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700">
+            <p className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] p-2 text-xs text-[var(--danger)]">
               {error}
             </p>
           )}
@@ -256,64 +270,75 @@ function QuickNoteModal({
     });
   }
 
+  const inputCls =
+    "w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]";
+  const noteTypeLabels: Record<"NOTE" | "CALL" | "WHATSAPP" | "EMAIL" | "MEETING", string> = {
+    CALL: "Telefon",
+    WHATSAPP: "WhatsApp",
+    EMAIL: "E-posta",
+    MEETING: "Toplantı",
+    NOTE: "Not",
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-0)]/70 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"
+        className="w-full max-w-md rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-900">Hızlı Not</h3>
-          <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100">
-            <X className="h-4 w-4" />
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+            Hızlı Not
+          </h3>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
+          >
+            <X size={14} strokeWidth={1.5} />
           </button>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Tip</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Tip</label>
             <div className="flex flex-wrap gap-1">
               {(["CALL", "WHATSAPP", "EMAIL", "MEETING", "NOTE"] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setType(t)}
-                  className={`rounded-md px-2.5 py-1 text-xs transition ${
+                  className={`rounded-md border px-2.5 py-1 text-[11px] font-medium uppercase tracking-widest transition ${
                     type === t
-                      ? "bg-slate-900 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      ? "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]"
+                      : "border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-default)] hover:text-[var(--text-primary)]"
                   }`}
                 >
-                  {t === "CALL" ? "📞 Telefon" :
-                   t === "WHATSAPP" ? "💬 WhatsApp" :
-                   t === "EMAIL" ? "📩 E-posta" :
-                   t === "MEETING" ? "🤝 Toplantı" :
-                   "📝 Not"}
+                  {noteTypeLabels[t]}
                 </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Not</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Not</label>
             <textarea
               autoFocus
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="örn. Ahmet bey fiyat sordu, kamerayı önerdim..."
               rows={4}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none resize-none"
+              className={`${inputCls} resize-none`}
             />
-            <p className="mt-1 text-[10px] text-slate-400">
+            <p className="mt-1 text-[10px] text-[var(--text-muted)]">
               Not eklenince müşterinin &quot;Son temas&quot; tarihi güncellenir.
             </p>
           </div>
 
           {error && (
-            <p className="rounded-lg bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700">
+            <p className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] p-2 text-xs text-[var(--danger)]">
               {error}
             </p>
           )}

@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Search, X, ArrowRight } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 
 export interface UnmatchedRow {
   barcode: string | null;
@@ -33,33 +36,39 @@ export function TrendyolUnmatchedTable({ rows }: { rows: UnmatchedRow[] }) {
 
   return (
     <div>
-      <div className="border-b border-slate-100 bg-white px-6 py-3 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[280px]">
+      <div className="flex flex-wrap items-center gap-3 border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-6 py-3">
+        <div className="relative min-w-[280px] flex-1">
+          <Search
+            size={14}
+            strokeWidth={1.5}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+          />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="🔎 Trendyol ürün adı, barkod veya stok kodu ara…"
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100"
+            placeholder="Trendyol ürün adı, barkod veya stok kodu ara…"
+            className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] py-2 pl-9 pr-8 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none transition focus:border-[var(--accent-border)]"
           />
           {query && (
             <button
               onClick={() => setQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              aria-label="Aramayı temizle"
             >
-              ✕
+              <X size={14} strokeWidth={1.5} />
             </button>
           )}
         </div>
-        <span className="ml-auto rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+        <Badge variant="neutral" className="ml-auto tabular-nums">
           {filtered.length} / {rows.length}
-        </span>
+        </Badge>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
               <th className="px-6 py-3 text-left">Trendyol Ürünü</th>
               <th className="px-4 py-3 text-left">Barkod</th>
               <th className="px-4 py-3 text-left">Stok Kodu</th>
@@ -68,38 +77,54 @@ export function TrendyolUnmatchedTable({ rows }: { rows: UnmatchedRow[] }) {
               <th className="px-4 py-3 text-left">İşlem</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {filtered.length === 0 ? (
-              <tr><td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">Aramaya uyan ürün yok.</td></tr>
-            ) : filtered.slice(0, 1000).map((r, i) => {
-              const mappingHref = r.barcode
-                ? `/admin/marketplace-mappings?barcode=${encodeURIComponent(r.barcode)}&title=${encodeURIComponent(r.trendyolTitle)}#add-form`
-                : "/admin/marketplace-mappings";
-              return (
-                <tr key={i} className="hover:bg-slate-50">
-                  <td className="px-6 py-3 text-slate-700 max-w-[220px] truncate" title={r.trendyolTitle}>
-                    {r.trendyolTitle}
-                  </td>
-                  <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.barcode ?? "—"}</td>
-                  <td className="px-4 py-3 text-xs text-slate-400">{r.stockCode ?? "—"}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-700">{r.trendyolQty}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-600">
-                    {r.trendyolPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={mappingHref} className="text-xs text-blue-600 hover:underline">
-                      Eşleştir →
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-sm text-[var(--text-muted)]">
+                  Aramaya uyan ürün yok.
+                </td>
+              </tr>
+            ) : (
+              filtered.slice(0, 1000).map((r, i) => {
+                const mappingHref = r.barcode
+                  ? `/admin/marketplace-mappings?barcode=${encodeURIComponent(r.barcode)}&title=${encodeURIComponent(r.trendyolTitle)}#add-form`
+                  : "/admin/marketplace-mappings";
+                return (
+                  <tr key={i} className="transition hover:bg-[var(--surface-3)]">
+                    <td className="max-w-[220px] truncate px-6 py-3 text-[var(--text-secondary)]" title={r.trendyolTitle}>
+                      {r.trendyolTitle}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                      {r.barcode ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                      {r.stockCode ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
+                      {r.trendyolQty}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
+                      {r.trendyolPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={mappingHref}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[var(--info)] hover:underline"
+                      >
+                        Eşleştir
+                        <ArrowRight size={12} strokeWidth={1.5} />
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
       {filtered.length > 1000 && (
-        <div className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500 bg-slate-50/30">
-          İlk 1000 gösteriliyor (toplam {filtered.length}).
+        <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-1)] px-6 py-3 text-xs text-[var(--text-muted)]">
+          İlk 1000 gösteriliyor (toplam <span className="tabular-nums">{filtered.length}</span>).
         </div>
       )}
     </div>

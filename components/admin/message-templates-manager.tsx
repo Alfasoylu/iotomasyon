@@ -58,9 +58,9 @@ export function MessageTemplatesManager({ templates }: { templates: Template[] }
 
       {templates.length === 0 ? (
         <Card className="p-12 text-center">
-          <MessageSquare className="mx-auto mb-3 h-12 w-12 text-slate-300" />
-          <p className="text-sm font-semibold text-slate-700">Henüz şablon yok</p>
-          <p className="mt-1 text-xs text-slate-500">
+          <MessageSquare size={36} strokeWidth={1.5} className="mx-auto mb-3 text-[var(--text-muted)]" />
+          <p className="text-sm font-semibold text-[var(--text-primary)]">Henüz şablon yok</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             İlk şablonunu eklediğinde müşteri detayında WhatsApp butonu altında çıkacak.
           </p>
         </Card>
@@ -125,15 +125,19 @@ function TemplateCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <Icon className="h-4 w-4 text-emerald-600" />
-            <h3 className="truncate text-sm font-semibold text-slate-900">{template.name}</h3>
+            <Icon size={14} strokeWidth={1.5} className="text-[var(--ok)]" />
+            <h3 className="truncate text-sm font-semibold text-[var(--text-primary)]">{template.name}</h3>
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
-            <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium">{channelMeta.label}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
+            <span className="rounded border border-[var(--border-subtle)] bg-[var(--surface-3)] px-1.5 py-0.5 font-medium text-[var(--text-secondary)]">
+              {channelMeta.label}
+            </span>
             {template.category && (
-              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">{template.category}</span>
+              <span className="rounded border border-[var(--info-border)] bg-[var(--info-dim)] px-1.5 py-0.5 text-[var(--info)]">
+                {template.category}
+              </span>
             )}
-            <span>· {template.usageCount} kullanıldı</span>
+            <span className="tabular-nums">· {template.usageCount} kullanıldı</span>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -141,36 +145,40 @@ function TemplateCard({
             type="button"
             onClick={toggleActive}
             disabled={pending}
-            className={`h-7 w-7 rounded-md text-xs ${
+            className={`h-7 w-7 rounded-md border text-xs transition ${
               template.isActive
-                ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                ? "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]"
+                : "border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-muted)]"
             }`}
             title={template.isActive ? "Aktif" : "Pasif"}
           >
-            {template.isActive ? <Check className="mx-auto h-3.5 w-3.5" /> : <X className="mx-auto h-3.5 w-3.5" />}
+            {template.isActive ? (
+              <Check size={14} strokeWidth={1.5} className="mx-auto" />
+            ) : (
+              <X size={14} strokeWidth={1.5} className="mx-auto" />
+            )}
           </button>
           <button
             type="button"
             onClick={onEdit}
-            className="h-7 w-7 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="h-7 w-7 rounded-md text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
             title="Düzenle"
           >
-            <Pencil className="mx-auto h-3.5 w-3.5" />
+            <Pencil size={14} strokeWidth={1.5} className="mx-auto" />
           </button>
           <button
             type="button"
             onClick={onDelete}
             disabled={pending}
-            className="h-7 w-7 rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+            className="h-7 w-7 rounded-md text-[var(--text-muted)] transition hover:bg-[var(--danger-dim)] hover:text-[var(--danger)]"
             title="Sil"
           >
-            <Trash2 className="mx-auto h-3.5 w-3.5" />
+            <Trash2 size={14} strokeWidth={1.5} className="mx-auto" />
           </button>
         </div>
       </div>
 
-      <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 font-sans text-xs text-slate-700">
+      <pre className="mt-3 whitespace-pre-wrap rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] p-3 font-sans text-xs text-[var(--text-secondary)]">
         {template.body}
       </pre>
     </Card>
@@ -207,28 +215,31 @@ function TemplateForm({
     });
   }
 
+  const inputCls =
+    "mt-1 w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]";
+
   return (
     <Card className="p-5 md:col-span-2">
-      <h3 className="mb-4 text-sm font-semibold text-slate-900">
+      <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
         {initial ? "Şablonu Düzenle" : "Yeni Şablon"}
       </h3>
       <div className="grid gap-3 md:grid-cols-3">
         <label className="md:col-span-2">
-          <span className="text-xs font-medium text-slate-700">Şablon Adı</span>
+          <span className="text-xs font-medium text-[var(--text-secondary)]">Şablon Adı</span>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="örn: İlk Teklif Sonrası Hatırlatma"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className={inputCls}
           />
         </label>
         <label>
-          <span className="text-xs font-medium text-slate-700">Kanal</span>
+          <span className="text-xs font-medium text-[var(--text-secondary)]">Kanal</span>
           <select
             value={channel}
             onChange={(e) => setChannel(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className={inputCls}
           >
             {CHANNELS.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
@@ -236,33 +247,35 @@ function TemplateForm({
           </select>
         </label>
         <label>
-          <span className="text-xs font-medium text-slate-700">Kategori (opsiyonel)</span>
+          <span className="text-xs font-medium text-[var(--text-secondary)]">Kategori (opsiyonel)</span>
           <input
             type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             list="message-template-categories"
             placeholder="follow-up, after-sale, vb."
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className={inputCls}
           />
           <datalist id="message-template-categories">
             {CATEGORIES.map((c) => <option key={c} value={c} />)}
           </datalist>
         </label>
         <label className="md:col-span-3">
-          <span className="text-xs font-medium text-slate-700">Mesaj İçeriği</span>
+          <span className="text-xs font-medium text-[var(--text-secondary)]">Mesaj İçeriği</span>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={6}
             placeholder="Merhaba {{musteri_adi}}, {{son_gorusme}} tarihinde konuştuğumuz teklif konusunda bilgi vermek istedim..."
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono"
+            className={`${inputCls} font-mono`}
           />
         </label>
       </div>
 
       {error && (
-        <div className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>
+        <div className="mt-3 rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2 text-sm text-[var(--danger)]">
+          {error}
+        </div>
       )}
 
       <div className="mt-4 flex justify-end gap-2">

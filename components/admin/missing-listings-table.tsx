@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Search, X, AlertTriangle } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 
 export interface MissingListingRow {
   productId: string;
@@ -56,33 +59,38 @@ export function MissingListingsTable({ rows }: { rows: MissingListingRow[] }) {
   return (
     <div className="overflow-hidden">
       {/* Filtre çubuğu */}
-      <div className="border-b border-amber-100 bg-white px-6 py-3">
+      <div className="border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-6 py-3">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[280px]">
+          <div className="relative min-w-[280px] flex-1">
+            <Search
+              size={14}
+              strokeWidth={1.5}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+            />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="🔎 Ürün adı, SKU, barkod veya marka ara…"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
+              placeholder="Ürün adı, SKU, barkod veya marka ara…"
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] py-2 pl-9 pr-8 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none transition focus:border-[var(--accent-border)]"
             />
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 aria-label="Aramayı temizle"
               >
-                ✕
+                <X size={14} strokeWidth={1.5} />
               </button>
             )}
           </div>
 
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-700">
+          <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
             <input
               type="checkbox"
               checked={onlyPreviouslySold}
               onChange={(e) => setOnlyPreviouslySold(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-400"
+              className="h-4 w-4 rounded border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--warn)] focus:ring-[var(--warn-border)]"
             />
             Sadece daha önce satılmış olanlar
           </label>
@@ -91,7 +99,7 @@ export function MissingListingsTable({ rows }: { rows: MissingListingRow[] }) {
             <select
               value={brandFilter}
               onChange={(e) => setBrandFilter(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
+              className="rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]"
             >
               <option value="">Tüm markalar ({brands.length})</option>
               {brands.map((b) => (
@@ -102,9 +110,9 @@ export function MissingListingsTable({ rows }: { rows: MissingListingRow[] }) {
             </select>
           )}
 
-          <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+          <Badge variant="warn" className="ml-auto tabular-nums">
             {sortedFiltered.length} / {rows.length} gösteriliyor
-          </span>
+          </Badge>
         </div>
       </div>
 
@@ -112,7 +120,7 @@ export function MissingListingsTable({ rows }: { rows: MissingListingRow[] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
               <th className="px-6 py-3 text-left">Ürün</th>
               <th className="px-4 py-3 text-left">SKU</th>
               <th className="px-4 py-3 text-left">Barkod</th>
@@ -127,10 +135,10 @@ export function MissingListingsTable({ rows }: { rows: MissingListingRow[] }) {
               <th className="px-4 py-3 text-left">Durum</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {sortedFiltered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
+                <td colSpan={7} className="px-6 py-12 text-center text-sm text-[var(--text-muted)]">
                   Filtreye uyan ürün yok.
                 </td>
               </tr>
@@ -138,37 +146,42 @@ export function MissingListingsTable({ rows }: { rows: MissingListingRow[] }) {
               sortedFiltered.slice(0, 1000).map((r) => (
                 <tr
                   key={r.productId}
-                  className={r.lifetimeSold > 0 ? "bg-red-50/40 hover:bg-red-50" : "hover:bg-slate-50"}
+                  className={
+                    r.lifetimeSold > 0
+                      ? "bg-[var(--danger-dim)] transition hover:bg-[var(--danger-dim)]"
+                      : "transition hover:bg-[var(--surface-3)]"
+                  }
                 >
-                  <td className="px-6 py-3 max-w-[300px]">
+                  <td className="max-w-[300px] px-6 py-3">
                     <Link
                       href={`/products/${r.productId}`}
-                      className="font-medium text-slate-900 hover:underline truncate block"
+                      className="block truncate font-medium text-[var(--text-primary)] hover:underline"
                       title={r.productName}
                     >
                       {r.productName}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.sku}</td>
-                  <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.barcode ?? "—"}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500">{r.brand ?? "—"}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-700">{r.stockQuantity}</td>
+                  <td className="px-4 py-3 font-mono text-xs tabular-nums text-[var(--text-muted)]">{r.sku}</td>
+                  <td className="px-4 py-3 font-mono text-xs tabular-nums text-[var(--text-muted)]">{r.barcode ?? "—"}</td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{r.brand ?? "—"}</td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
+                    {r.stockQuantity}
+                  </td>
                   <td
-                    className={`px-4 py-3 text-right tabular-nums text-sm ${
-                      r.lifetimeSold > 0 ? "font-bold text-red-700" : "text-slate-400"
+                    className={`px-4 py-3 text-right font-mono text-sm tabular-nums ${
+                      r.lifetimeSold > 0 ? "font-bold text-[var(--danger)]" : "text-[var(--text-muted)]"
                     }`}
                   >
                     {r.lifetimeSold > 0 ? r.lifetimeSold : "—"}
                   </td>
-                  <td className="px-4 py-3 text-xs">
+                  <td className="px-4 py-3">
                     {r.lifetimeSold > 0 ? (
-                      <span className="rounded bg-red-100 px-1.5 py-0.5 font-medium text-red-700">
-                        ⚠ Daha önce satılmış
-                      </span>
+                      <Badge variant="danger">
+                        <AlertTriangle size={12} strokeWidth={1.5} className="mr-1" />
+                        Daha önce satılmış
+                      </Badge>
                     ) : (
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-500">
-                        Listemeden eksik
-                      </span>
+                      <Badge variant="neutral">Listemeden eksik</Badge>
                     )}
                   </td>
                 </tr>
@@ -179,9 +192,10 @@ export function MissingListingsTable({ rows }: { rows: MissingListingRow[] }) {
       </div>
 
       {sortedFiltered.length > 1000 && (
-        <div className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500 bg-slate-50/30">
-          İlk 1000 ürün gösteriliyor (filtreye uyan toplam {sortedFiltered.length}). Daha
-          fazlasını görmek için arama veya filtre uygulayın.
+        <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-1)] px-6 py-3 text-xs text-[var(--text-muted)]">
+          İlk 1000 ürün gösteriliyor (filtreye uyan toplam{" "}
+          <span className="tabular-nums">{sortedFiltered.length}</span>). Daha fazlasını görmek için arama veya filtre
+          uygulayın.
         </div>
       )}
     </div>
