@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Check, AlertTriangle, X } from "lucide-react";
+import { Upload, Check, AlertTriangle } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -150,20 +150,22 @@ export function LeadListImporter() {
   if (phase === "done" && doneSummary) {
     return (
       <Card className="p-8 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-          <Check className="h-8 w-8 text-emerald-600" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[var(--ok-border)] bg-[var(--ok-dim)]">
+          <Check size={32} strokeWidth={1.5} className="text-[var(--ok)]" />
         </div>
-        <h2 className="mt-4 text-xl font-bold text-slate-900">Import tamamlandı!</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          <strong className="text-emerald-700">{doneSummary.created}</strong> yeni müşteri eklendi
+        <h2 className="mt-4 text-xl font-semibold text-[var(--text-primary)]">Import tamamlandı</h2>
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+          <strong className="font-mono tabular-nums text-[var(--ok)]">{doneSummary.created}</strong> yeni müşteri eklendi
           {doneSummary.skipped > 0 && (
-            <span>, <strong className="text-slate-700">{doneSummary.skipped}</strong> atlandı</span>
+            <span>
+              , <strong className="font-mono tabular-nums text-[var(--text-primary)]">{doneSummary.skipped}</strong> atlandı
+            </span>
           )}
           .
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Button onClick={() => router.push("/customers?cohort=queue")}>
-            Power Queue'ya git → ara!
+            Power Queue&apos;ya git
           </Button>
           <Button variant="secondary" onClick={() => router.push("/customers/lists")}>
             Listeleri gör
@@ -175,42 +177,44 @@ export function LeadListImporter() {
 
   if (phase === "preview" && preview) {
     return (
-      <Card className="p-6 space-y-4">
-        <h2 className="text-base font-semibold text-slate-900">Önizleme — {name}</h2>
-        <p className="text-sm text-slate-500">
-          Kaynak: <strong>{source}</strong>
-          {city && <> · Şehir: <strong>{city}</strong></>}
-          {category && <> · Kategori: <strong>{category}</strong></>}
+      <Card className="space-y-4 p-6">
+        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Önizleme — <span className="text-[var(--text-primary)]">{name}</span>
+        </h2>
+        <p className="text-sm text-[var(--text-secondary)]">
+          Kaynak: <strong className="text-[var(--text-primary)]">{source}</strong>
+          {city && <> · Şehir: <strong className="text-[var(--text-primary)]">{city}</strong></>}
+          {category && <> · Kategori: <strong className="text-[var(--text-primary)]">{category}</strong></>}
         </p>
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center">
-            <p className="text-3xl font-bold text-emerald-700">{preview.newCount}</p>
-            <p className="text-xs text-emerald-700/80 mt-1">Yeni eklenecek</p>
+          <div className="rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] p-3 text-center">
+            <p className="font-mono text-3xl font-semibold tabular-nums text-[var(--ok)]">{preview.newCount}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-widest text-[var(--ok)]">Yeni eklenecek</p>
           </div>
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center">
-            <p className="text-3xl font-bold text-amber-700">{preview.duplicateCount}</p>
-            <p className="text-xs text-amber-700/80 mt-1">Telefon zaten kayıtlı</p>
+          <div className="rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] p-3 text-center">
+            <p className="font-mono text-3xl font-semibold tabular-nums text-[var(--warn)]">{preview.duplicateCount}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-widest text-[var(--warn)]">Telefon kayıtlı</p>
           </div>
-          <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-center">
-            <p className="text-3xl font-bold text-rose-700">{preview.invalidCount}</p>
-            <p className="text-xs text-rose-700/80 mt-1">Hatalı (atlanacak)</p>
+          <div className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] p-3 text-center">
+            <p className="font-mono text-3xl font-semibold tabular-nums text-[var(--danger)]">{preview.invalidCount}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-widest text-[var(--danger)]">Hatalı (atlanacak)</p>
           </div>
         </div>
 
         {preview.duplicates.length > 0 && (
-          <details className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <summary className="cursor-pointer text-sm font-medium text-slate-700">
-              Duplikat detay ({preview.duplicates.length})
+          <details className="rounded-md border border-[var(--border-default)] bg-[var(--surface-1)] p-3">
+            <summary className="cursor-pointer text-sm font-medium text-[var(--text-secondary)]">
+              Duplikat detay (<span className="tabular-nums">{preview.duplicates.length}</span>)
             </summary>
             <ul className="mt-2 space-y-1 text-xs">
               {preview.duplicates.slice(0, 20).map((d, i) => (
-                <li key={i} className="text-slate-600">
+                <li key={i} className="text-[var(--text-secondary)]">
                   • {d.name} ({d.phone})
                 </li>
               ))}
               {preview.duplicates.length > 20 && (
-                <li className="text-slate-400">+ {preview.duplicates.length - 20} daha</li>
+                <li className="text-[var(--text-muted)]">+ {preview.duplicates.length - 20} daha</li>
               )}
             </ul>
             <label className="mt-3 flex items-center gap-2 text-xs">
@@ -225,13 +229,13 @@ export function LeadListImporter() {
         )}
 
         {preview.invalids.length > 0 && (
-          <details className="rounded-lg border border-rose-200 bg-rose-50 p-3">
-            <summary className="cursor-pointer text-sm font-medium text-rose-700">
-              Hatalı satırlar ({preview.invalids.length})
+          <details className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] p-3">
+            <summary className="cursor-pointer text-sm font-medium text-[var(--danger)]">
+              Hatalı satırlar (<span className="tabular-nums">{preview.invalids.length}</span>)
             </summary>
             <ul className="mt-2 space-y-1 text-xs">
               {preview.invalids.slice(0, 20).map((inv, i) => (
-                <li key={i} className="text-rose-700">
+                <li key={i} className="text-[var(--danger)]">
                   Satır {inv.row}: {inv.name} → {inv.reason}
                 </li>
               ))}
@@ -240,7 +244,9 @@ export function LeadListImporter() {
         )}
 
         {error && (
-          <p className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-sm text-rose-700">{error}</p>
+          <p className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] p-3 text-sm text-[var(--danger)]">
+            {error}
+          </p>
         )}
 
         <div className="flex justify-end gap-2 pt-2">
@@ -253,89 +259,94 @@ export function LeadListImporter() {
     );
   }
 
+  const inputCls =
+    "w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]";
+  const labelCls =
+    "mb-1 block text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]";
+
   return (
-    <Card className="p-6 space-y-4">
+    <Card className="space-y-4 p-6">
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Liste Adı *</label>
+          <label className={labelCls}>Liste Adı *</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="örn. Hatay güvenlik şirketleri Mayıs 2026"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            className={inputCls}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Kaynak</label>
+          <label className={labelCls}>Kaynak</label>
           <select
             value={source}
             onChange={(e) => setSource(e.target.value as Source)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className={inputCls}
           >
             {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Şehir (opsiyonel)</label>
+          <label className={labelCls}>Şehir (opsiyonel)</label>
           <input
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="Hatay, İstanbul..."
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className={inputCls}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Kategori (opsiyonel)</label>
+          <label className={labelCls}>Kategori (opsiyonel)</label>
           <input
             type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             placeholder="Güvenlik, Site Yönetimi..."
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className={inputCls}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Müşteri Tipi (opsiyonel)</label>
+          <label className={labelCls}>Müşteri Tipi (opsiyonel)</label>
           <select
             value={customerType}
             onChange={(e) => setCustomerType(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className={inputCls}
           >
             {CUSTOMER_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
         </div>
       </div>
 
-      <div className="border-t border-slate-100 pt-4 space-y-3">
+      <div className="space-y-3 border-t border-[var(--border-subtle)] pt-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
-            Veri Girişi (1: Yapıştır)
-          </label>
+          <label className={labelCls}>Veri Girişi (1: Yapıştır)</label>
           <textarea
             value={pasteText}
             onChange={(e) => { setPasteText(e.target.value); setCsvText(""); }}
             placeholder={`Her satır 1 firma — format: "İsim, Telefon, Şehir, İlçe, Adres"\n\nABC Güvenlik, 0212 555 0001, İstanbul, Beşiktaş\nXYZ Sistem, 0532 555 0002, İstanbul, Kadıköy`}
             rows={6}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-mono focus:border-slate-400 focus:outline-none"
+            className={`${inputCls} font-mono text-xs`}
           />
         </div>
 
-        <div className="text-center text-xs text-slate-400">— veya —</div>
+        <div className="text-center text-xs text-[var(--text-muted)]">— veya —</div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
-            Veri Girişi (2: CSV yapıştır — ilk satır header)
-          </label>
-          <div className="flex gap-2 mb-1">
-            <span className="text-[10px] text-slate-500">Ayırıcı:</span>
+          <label className={labelCls}>Veri Girişi (2: CSV yapıştır — ilk satır header)</label>
+          <div className="mb-1 flex gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">Ayırıcı:</span>
             {([",", ";", "\t"] as const).map((d) => (
               <button
                 key={d}
                 type="button"
                 onClick={() => setDelimiter(d)}
-                className={`text-[10px] px-2 py-0.5 rounded ${delimiter === d ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}
+                className={`rounded-md border px-2 py-0.5 text-[10px] font-medium transition ${
+                  delimiter === d
+                    ? "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]"
+                    : "border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-default)]"
+                }`}
               >
                 {d === "\t" ? "tab" : `'${d}'`}
               </button>
@@ -346,24 +357,24 @@ export function LeadListImporter() {
             onChange={(e) => { setCsvText(e.target.value); setPasteText(""); }}
             placeholder={`name,phone,city,address\n"ABC Güvenlik","+90 212 555 0001","İstanbul","Beşiktaş Cd. No:1"\n"XYZ Sistem","+90 532 555 0002","İstanbul","Kadıköy Mah."`}
             rows={6}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-mono focus:border-slate-400 focus:outline-none"
+            className={`${inputCls} font-mono text-xs`}
           />
-          <p className="mt-1 text-[10px] text-slate-500">
+          <p className="mt-1 text-[10px] text-[var(--text-muted)]">
             Header kolon adları otomatik algılanır: name, phone, whatsapp, email, city, district, address, website, category.
           </p>
         </div>
       </div>
 
       {error && (
-        <p className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-sm text-rose-700 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+        <p className="flex items-center gap-2 rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] p-3 text-sm text-[var(--danger)]">
+          <AlertTriangle size={14} strokeWidth={1.5} className="flex-shrink-0" />
           {error}
         </p>
       )}
 
       <div className="flex justify-end pt-2">
         <Button onClick={handlePreview} disabled={pending || !name.trim() || (!pasteText && !csvText)}>
-          <Upload className="h-4 w-4 mr-2" />
+          <Upload size={14} strokeWidth={1.5} className="mr-1.5" />
           {pending ? "Hazırlanıyor..." : "Önizle"}
         </Button>
       </div>

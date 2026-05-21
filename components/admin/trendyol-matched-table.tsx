@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Search, X, Check } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 
 export interface MatchedRow {
   barcode: string;
@@ -51,24 +54,47 @@ export function TrendyolMatchedTable({ rows }: { rows: MatchedRow[] }) {
     synced: rows.filter((r) => r.delta === 0).length,
   }), [rows]);
 
+  function filterClasses(f: Filter) {
+    const active = filter === f;
+    if (!active) {
+      return "border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-default)] hover:text-[var(--text-primary)]";
+    }
+    if (f === "oversell") {
+      return "border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]";
+    }
+    if (f === "synced") {
+      return "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]";
+    }
+    if (f === "surplus") {
+      return "border-[var(--warn-border)] bg-[var(--warn-dim)] text-[var(--warn)]";
+    }
+    return "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]";
+  }
+
   return (
     <div>
-      <div className="border-b border-slate-100 bg-white px-6 py-3">
+      <div className="border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-6 py-3">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[280px]">
+          <div className="relative min-w-[280px] flex-1">
+            <Search
+              size={14}
+              strokeWidth={1.5}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+            />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="🔎 Ürün adı, SKU, barkod ara…"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              placeholder="Ürün adı, SKU, barkod ara…"
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] py-2 pl-9 pr-8 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none transition focus:border-[var(--accent-border)]"
             />
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                aria-label="Aramayı temizle"
               >
-                ✕
+                <X size={14} strokeWidth={1.5} />
               </button>
             )}
           </div>
@@ -78,33 +104,29 @@ export function TrendyolMatchedTable({ rows }: { rows: MatchedRow[] }) {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                  filter === f
-                    ? f === "oversell" ? "bg-red-600 text-white"
-                    : f === "synced" ? "bg-emerald-600 text-white"
-                    : f === "surplus" ? "bg-amber-500 text-white"
-                    : "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
+                className={`rounded-md border px-3 py-1.5 text-[11px] font-medium uppercase tracking-widest transition ${filterClasses(f)}`}
               >
-                {f === "all" ? `Tümü (${counts.all})`
-                  : f === "oversell" ? `Aşım Riski (${counts.oversell})`
-                  : f === "surplus" ? `İç Fazla (${counts.surplus})`
+                {f === "all"
+                  ? `Tümü (${counts.all})`
+                  : f === "oversell"
+                  ? `Aşım Riski (${counts.oversell})`
+                  : f === "surplus"
+                  ? `İç Fazla (${counts.surplus})`
                   : `Senkron (${counts.synced})`}
               </button>
             ))}
           </div>
 
-          <span className="ml-auto rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">
+          <Badge variant="info" className="ml-auto tabular-nums">
             {filtered.length} / {rows.length}
-          </span>
+          </Badge>
         </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
               <th className="px-6 py-3 text-left">Ürün (İç)</th>
               <th className="px-4 py-3 text-left">SKU</th>
               <th className="px-4 py-3 text-left">Barkod</th>
@@ -114,37 +136,73 @@ export function TrendyolMatchedTable({ rows }: { rows: MatchedRow[] }) {
               <th className="px-4 py-3 text-right">Trendyol Fiyat (₺)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {filtered.length === 0 ? (
-              <tr><td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">Filtreye uyan ürün yok.</td></tr>
-            ) : filtered.slice(0, 1000).map((r) => (
-              <tr key={r.barcode} className={r.delta < 0 ? "bg-red-50/40 hover:bg-red-50" : "hover:bg-slate-50"}>
-                <td className="px-6 py-3 font-medium text-slate-900 max-w-[200px] truncate">
-                  <Link href={`/products/${r.productId}`} className="hover:underline" title={r.productName}>
-                    {r.productName}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-400">{r.sku ?? "—"}</td>
-                <td className="px-4 py-3 text-xs font-mono text-slate-600">{r.barcode}</td>
-                <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-800">{r.internalQty}</td>
-                <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-800">{r.trendyolQty}</td>
-                <td className={`px-4 py-3 text-right tabular-nums text-xs ${
-                  r.delta < 0 ? "text-red-600 font-bold" : r.delta > 0 ? "text-amber-600 font-semibold" : "text-emerald-600"
-                }`}>
-                  {r.delta === 0 ? "✓ Senkron" : r.delta > 0 ? `+${r.delta} iç fazla` : `${r.delta} Trendyol fazla`}
-                </td>
-                <td className="px-4 py-3 text-right tabular-nums text-slate-600">
-                  {r.trendyolPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <tr>
+                <td colSpan={7} className="px-6 py-12 text-center text-sm text-[var(--text-muted)]">
+                  Filtreye uyan ürün yok.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filtered.slice(0, 1000).map((r) => (
+                <tr
+                  key={r.barcode}
+                  className={
+                    r.delta < 0
+                      ? "bg-[var(--danger-dim)] transition hover:bg-[var(--danger-dim)]"
+                      : "transition hover:bg-[var(--surface-3)]"
+                  }
+                >
+                  <td className="max-w-[200px] truncate px-6 py-3 font-medium text-[var(--text-primary)]">
+                    <Link href={`/products/${r.productId}`} className="hover:underline" title={r.productName}>
+                      {r.productName}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                    {r.sku ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs tabular-nums text-[var(--text-secondary)]">
+                    {r.barcode}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">
+                    {r.internalQty}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">
+                    {r.trendyolQty}
+                  </td>
+                  <td
+                    className={`px-4 py-3 text-right font-mono text-xs tabular-nums ${
+                      r.delta < 0
+                        ? "font-bold text-[var(--danger)]"
+                        : r.delta > 0
+                        ? "font-semibold text-[var(--warn)]"
+                        : "text-[var(--ok)]"
+                    }`}
+                  >
+                    {r.delta === 0 ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Check size={12} strokeWidth={1.5} />
+                        Senkron
+                      </span>
+                    ) : r.delta > 0 ? (
+                      `+${r.delta} iç fazla`
+                    ) : (
+                      `${r.delta} Trendyol fazla`
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
+                    {r.trendyolPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {filtered.length > 1000 && (
-        <div className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500 bg-slate-50/30">
-          İlk 1000 gösteriliyor (toplam {filtered.length}). Arama veya filtre kullanın.
+        <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-1)] px-6 py-3 text-xs text-[var(--text-muted)]">
+          İlk 1000 gösteriliyor (toplam <span className="tabular-nums">{filtered.length}</span>). Arama veya filtre kullanın.
         </div>
       )}
     </div>

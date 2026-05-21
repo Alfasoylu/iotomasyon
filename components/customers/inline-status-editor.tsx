@@ -57,25 +57,27 @@ export function InlineStatusEditor({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1 transition opacity-90 hover:opacity-100"
+        className="inline-flex items-center gap-1 opacity-90 transition hover:opacity-100"
         disabled={pending}
         title="Durumu değiştir"
       >
         <Badge tone={getCustomerStatusTone(currentStatus)}>
           {formatCustomerStatus(currentStatus)}
         </Badge>
-        <ChevronDown className="h-3 w-3 text-slate-400" />
+        <ChevronDown size={12} strokeWidth={1.5} className="text-[var(--text-muted)]" />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-30 w-44 rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden">
+        <div className="absolute left-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-md border border-[var(--border-default)] bg-[var(--surface-2)]">
           {STATUSES.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => selectStatus(s)}
               className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs transition ${
-                s === currentStatus ? "bg-slate-50 font-semibold" : "hover:bg-slate-50"
+                s === currentStatus
+                  ? "bg-[var(--surface-3)]"
+                  : "hover:bg-[var(--surface-3)]"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -83,7 +85,9 @@ export function InlineStatusEditor({
                   {formatCustomerStatus(s)}
                 </Badge>
               </span>
-              {s === currentStatus && <Check className="h-3 w-3 text-slate-400" />}
+              {s === currentStatus && (
+                <Check size={12} strokeWidth={1.5} className="text-[var(--accent)]" />
+              )}
             </button>
           ))}
         </div>

@@ -1,4 +1,4 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, Lightbulb } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
@@ -193,28 +193,30 @@ export default function GlossaryPage() {
 
       {GROUPS.map((group, gi) => (
         <Card key={gi} className="overflow-hidden p-0">
-          <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">{group.title}</h2>
-            <p className="mt-0.5 text-xs text-slate-500">{group.description}</p>
+          <div className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] px-5 py-3">
+            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              {group.title}
+            </h2>
+            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{group.description}</p>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[var(--border-subtle)]">
             {group.terms.map((t, i) => (
               <div key={i} className="px-5 py-4">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <h3 className="font-mono text-sm font-semibold text-slate-900">
+                  <h3 className="font-mono text-sm font-semibold tabular-nums text-[var(--text-primary)]">
                     {t.term}
                   </h3>
                   {t.shortFor && (
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-[var(--text-muted)]">
                       ({t.shortFor})
                     </span>
                   )}
                 </div>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-700">
+                <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
                   {t.definition}
                 </p>
                 {t.example && (
-                  <p className="mt-1.5 text-xs italic text-slate-500">
+                  <p className="mt-1.5 text-xs italic text-[var(--text-muted)]">
                     Örnek: {t.example}
                   </p>
                 )}
@@ -224,11 +226,14 @@ export default function GlossaryPage() {
         </Card>
       ))}
 
-      <Card className="border-blue-200 bg-blue-50 p-5">
-        <p className="text-sm leading-relaxed text-blue-900">
-          <strong>📚 İpucu:</strong> Tablolarda altı noktalı çizgili yazıların üzerine gelirsen kısaltmanın açılımını görürsün
-          (örn. <span className="cursor-help underline decoration-dotted decoration-blue-500 underline-offset-2">T30G</span>).
-          Daha fazla terim eklenmeli mi? Yöneticiye söyle.
+      <Card className="border-[var(--info-border)] bg-[var(--info-dim)] p-5">
+        <p className="flex items-start gap-2 text-sm leading-relaxed text-[var(--info)]">
+          <Lightbulb size={14} strokeWidth={1.5} className="mt-0.5 flex-shrink-0" />
+          <span>
+            <strong>İpucu:</strong> Tablolarda altı noktalı çizgili yazıların üzerine gelirsen kısaltmanın açılımını görürsün
+            (örn. <span className="cursor-help underline decoration-dotted underline-offset-2">T30G</span>).
+            Daha fazla terim eklenmeli mi? Yöneticiye söyle.
+          </span>
         </p>
       </Card>
     </div>

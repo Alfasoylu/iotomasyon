@@ -1,5 +1,7 @@
 "use client";
 
+import { Download } from "lucide-react";
+
 interface Column {
   header: string;
   key: string;
@@ -43,9 +45,10 @@ export function CsvDownloadButton({ filename, columns, rows, label = "CSV indir"
       type="button"
       onClick={handleDownload}
       disabled={rows.length === 0}
-      className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-50"
     >
-      ⬇ {label}
+      <Download size={14} strokeWidth={1.5} />
+      {label}
     </button>
   );
 }
