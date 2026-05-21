@@ -6,48 +6,21 @@ import { Card } from "@/components/ui/card";
 
 export type SectionTone = "neutral" | "info" | "success" | "warning" | "danger";
 
-const TONE_STYLES: Record<SectionTone, { card: string; iconBg: string; iconColor: string; subtitle: string }> = {
-  neutral: {
-    card: "border-slate-200 bg-white",
-    iconBg: "bg-slate-100",
-    iconColor: "text-slate-700",
-    subtitle: "text-slate-500",
-  },
-  info: {
-    card: "border-blue-200 bg-blue-50/40",
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-700",
-    subtitle: "text-blue-700/70",
-  },
-  success: {
-    card: "border-emerald-200 bg-emerald-50/40",
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-700",
-    subtitle: "text-emerald-700/70",
-  },
-  warning: {
-    card: "border-amber-200 bg-amber-50/40",
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-700",
-    subtitle: "text-amber-700/70",
-  },
-  danger: {
-    card: "border-rose-200 bg-rose-50/40",
-    iconBg: "bg-rose-100",
-    iconColor: "text-rose-700",
-    subtitle: "text-rose-700/70",
-  },
+const ICON_COLOR: Record<SectionTone, string> = {
+  neutral: "var(--text-secondary)",
+  info: "var(--info)",
+  success: "var(--ok)",
+  warning: "var(--warn)",
+  danger: "var(--danger)",
 };
 
 interface SectionCardProps {
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string; color?: string; size?: number; strokeWidth?: number }>;
   title: string;
   subtitle?: string;
   tone?: SectionTone;
-  /** Sağ tarafta detay linki ("[Detay →]") */
   href?: string;
   hrefLabel?: string;
-  /** Header'ın sağında ek rozet/aksiyon */
   rightSlot?: ReactNode;
   className?: string;
   children: ReactNode;
@@ -56,22 +29,9 @@ interface SectionCardProps {
 /**
  * Section başlığı + içerik için tutarlı kart bileşeni.
  *
- * - Icon + title + subtitle (ne için kullanılıyor)
- * - Sağ tarafta "Detay →" linki veya ek slot
- * - Tone'lara göre renk (neutral/info/success/warning/danger)
- *
- * ```tsx
- * <SectionCard
- *   icon={ShoppingCart}
- *   title="Pazaryerleri"
- *   subtitle="Bu hafta net kâr ve satış adetleri"
- *   tone="info"
- *   href="/marketplace"
- *   hrefLabel="Detay"
- * >
- *   ...
- * </SectionCard>
- * ```
+ * Industrial-minimal: tüm kartlar surface-2 + border-default.
+ * `tone` artık sadece header icon rengini etkiler (vurgu için);
+ * kartın kendisi tek tip görünür.
  */
 export function SectionCard({
   icon: Icon,
@@ -84,23 +44,24 @@ export function SectionCard({
   className = "",
   children,
 }: SectionCardProps) {
-  const styles = TONE_STYLES[tone];
+  const iconColor = ICON_COLOR[tone];
 
   return (
-    <Card className={`overflow-hidden p-0 ${styles.card} ${className}`}>
-      <div className="flex items-start justify-between gap-3 border-b border-current/10 px-5 py-4">
+    <Card className={`overflow-hidden p-0 ${className}`}>
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--border-subtle)] px-5 py-3.5">
         <div className="flex items-start gap-3 min-w-0">
           {Icon && (
-            <div
-              className={`flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg ${styles.iconBg}`}
-            >
-              <Icon className={`h-4 w-4 ${styles.iconColor}`} />
-            </div>
+            <Icon
+              size={16}
+              strokeWidth={1.5}
+              color={iconColor}
+              className="mt-0.5 flex-shrink-0"
+            />
           )}
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+            <h3 className="text-[13px] font-semibold text-[var(--text-primary)]">{title}</h3>
             {subtitle && (
-              <p className={`mt-0.5 text-xs ${styles.subtitle}`}>{subtitle}</p>
+              <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">{subtitle}</p>
             )}
           </div>
         </div>
@@ -109,10 +70,10 @@ export function SectionCard({
           {href && (
             <Link
               href={href}
-              className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              className="flex items-center gap-1 text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-100"
             >
               {hrefLabel}
-              <ArrowRight className="h-3 w-3" />
+              <ArrowRight size={12} strokeWidth={1.5} />
             </Link>
           )}
         </div>

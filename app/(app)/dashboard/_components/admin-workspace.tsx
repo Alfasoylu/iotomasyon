@@ -418,33 +418,33 @@ export async function AdminWorkspace({
           hrefLabel="Tüm Görevler"
         >
           {!dueToday.databaseAvailable ? (
-            <p className="text-sm text-slate-600">
+            <p className="text-[13px] text-[var(--text-secondary)]">
               Veritabanı bağlantısı yok — bugünkü görevler yüklenemedi.
             </p>
           ) : (dueToday.tasks?.length ?? 0) === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">
+            <p className="py-6 text-center text-[13px] text-[var(--text-muted)]">
               Bugün için açık görev yok ✓
             </p>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {dueToday.tasks.slice(0, 5).map((task) => (
                 <div
                   key={task.id}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+                  className="rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] px-3 py-2.5"
                 >
-                  <p className="text-sm font-medium text-slate-900">{task.title}</p>
+                  <p className="text-[13px] font-medium text-[var(--text-primary)]">{task.title}</p>
                   <div className="mt-1 flex items-center justify-between gap-2">
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-[11px] text-[var(--text-secondary)] truncate">
                       {task.customer?.name ?? "Müşteri bağlantısı yok"}
                     </p>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                    <p className="text-[10px] uppercase tracking-widest font-medium text-[var(--text-muted)]">
                       {task.dueDate ? formatDateTime(task.dueDate) : "Termin yok"}
                     </p>
                   </div>
                 </div>
               ))}
               {dueToday.tasks.length > 5 && (
-                <p className="pt-1 text-center text-xs text-slate-400">
+                <p className="pt-1 text-center text-[11px] text-[var(--text-muted)]">
                   + {dueToday.tasks.length - 5} daha
                 </p>
               )}
@@ -461,22 +461,22 @@ export async function AdminWorkspace({
           hrefLabel="Ürünler"
         >
           {stats.topProducts.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">
+            <p className="py-6 text-center text-[13px] text-[var(--text-muted)]">
               Henüz kazanılan teklif kalemi yok
             </p>
           ) : (
-            <ol className="space-y-2.5">
+            <ol className="space-y-2">
               {stats.topProducts.slice(0, 5).map((p, i) => (
                 <li
                   key={p.productId}
-                  className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5"
+                  className="flex items-center gap-3 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] px-3 py-2"
                 >
-                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[var(--accent)] text-[11px] font-bold text-[var(--accent-fg)] tabular-nums">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-900">{p.name}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="truncate text-[13px] font-medium text-[var(--text-primary)]">{p.name}</p>
+                    <p className="text-[11px] text-[var(--text-secondary)]">
                       {p.sku} · {p.totalQty} adet
                     </p>
                   </div>
@@ -546,16 +546,16 @@ function PipelineCell({
   value: number;
   tone?: "neutral" | "success" | "warning" | "danger";
 }) {
-  const t = {
-    neutral: "bg-slate-100 text-slate-700",
-    success: "bg-emerald-100 text-emerald-700",
-    warning: "bg-amber-100 text-amber-700",
-    danger: "bg-rose-100 text-rose-700",
-  }[tone];
+  const cellStyle: Record<NonNullable<typeof tone>, string> = {
+    neutral: "bg-[var(--surface-3)] text-[var(--text-secondary)] border-[var(--border-subtle)]",
+    success: "bg-[var(--ok-dim)] text-[var(--ok)] border-[var(--ok-border)]",
+    warning: "bg-[var(--warn-dim)] text-[var(--warn)] border-[var(--warn-border)]",
+    danger: "bg-[var(--danger-dim)] text-[var(--danger)] border-[var(--danger-border)]",
+  };
   return (
-    <div className={`rounded-lg ${t} px-2 py-2`}>
-      <p className="text-lg font-bold tabular-nums">{value}</p>
-      <p className="text-[9px] uppercase tracking-wide opacity-80">{label}</p>
+    <div className={`rounded-md border px-2 py-2 ${cellStyle[tone]}`}>
+      <p className="text-[15px] font-semibold tabular-nums leading-tight">{value}</p>
+      <p className="mt-0.5 text-[9px] uppercase tracking-widest font-medium opacity-90">{label}</p>
     </div>
   );
 }
