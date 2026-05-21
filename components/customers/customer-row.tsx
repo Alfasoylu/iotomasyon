@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { Phone, Mail, MapPin, Clock, Target, Briefcase, PhoneOff, AlertCircle, Users as UsersIcon } from "lucide-react";
+import {
+  Phone, Mail, MapPin, Clock, Target, Briefcase, PhoneOff, AlertCircle,
+  Users as UsersIcon, Briefcase as BriefcaseIcon, FileText, Package,
+} from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,25 +61,25 @@ function relTime(d: Date | null): string {
   return `${Math.floor(days / 365)} yıl önce`;
 }
 
-function formatNextAction(d: Date | null, title: string | null): string {
-  if (!d) return "";
+function formatNextAction(d: Date | null, title: string | null): { tone: "danger" | "warn" | "neutral"; label: string } {
+  if (!d) return { tone: "neutral", label: "" };
   const days = Math.floor((d.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
   const dateStr = new Intl.DateTimeFormat("tr-TR", {
     day: "2-digit",
     month: "2-digit",
   }).format(d);
-  if (days < 0) return `🔴 ${dateStr} (${Math.abs(days)}g gecikti): ${title ?? ""}`;
-  if (days === 0) return `🟡 BUGÜN: ${title ?? ""}`;
-  if (days === 1) return `🟡 YARIN: ${title ?? ""}`;
-  if (days < 7) return `${dateStr} (${days}g): ${title ?? ""}`;
-  return `${dateStr}: ${title ?? ""}`;
+  if (days < 0) return { tone: "danger", label: `${dateStr} (${Math.abs(days)}g gecikti): ${title ?? ""}` };
+  if (days === 0) return { tone: "warn", label: `BUGÜN: ${title ?? ""}` };
+  if (days === 1) return { tone: "warn", label: `YARIN: ${title ?? ""}` };
+  if (days < 7) return { tone: "neutral", label: `${dateStr} (${days}g): ${title ?? ""}` };
+  return { tone: "neutral", label: `${dateStr}: ${title ?? ""}` };
 }
 
-const SCORE_BG = {
-  success: "bg-emerald-100 text-emerald-700 border-emerald-300",
-  info: "bg-blue-100 text-blue-700 border-blue-300",
-  warning: "bg-amber-100 text-amber-700 border-amber-300",
-  neutral: "bg-slate-100 text-slate-600 border-slate-300",
+const SCORE_BG: Record<"success" | "info" | "warning" | "neutral", string> = {
+  success: "bg-[var(--ok-dim)] text-[var(--ok)] border-[var(--ok-border)]",
+  info: "bg-[var(--info-dim)] text-[var(--info)] border-[var(--info-border)]",
+  warning: "bg-[var(--warn-dim)] text-[var(--warn)] border-[var(--warn-border)]",
+  neutral: "bg-[var(--surface-3)] text-[var(--text-secondary)] border-[var(--border-default)]",
 };
 
 export function CustomerRow({
@@ -112,19 +115,23 @@ export function CustomerRow({
 
   const phoneDisplay = customer.phone ? displayPhone(customer.phone) : null;
   const cityDisplay = customer.city;
+  const nextAction = stats?.nextActionAt ? formatNextAction(stats.nextActionAt, stats.nextActionTitle) : null;
 
   return (
-    <Card data-customer-row={customer.id} className={`p-4 transition hover:border-slate-300 hover:shadow-sm ${customer.doNotCall ? "opacity-60" : ""}`}>
+    <Card
+      data-customer-row={customer.id}
+      className={`p-4 transition hover:border-[var(--border-strong)] ${customer.doNotCall ? "opacity-60" : ""}`}
+    >
       <div className="flex flex-col gap-3 md:flex-row md:items-start">
         {/* Avatar + Lead skoru kombo (sol blok) */}
         <div className="flex-shrink-0 flex items-center gap-2.5">
           <CustomerAvatar name={customer.name} avatarUrl={customer.avatarUrl} size="md" />
           <div
-            className={`flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-xl border ${SCORE_BG[score.tone]}`}
+            className={`flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-md border ${SCORE_BG[score.tone]}`}
             title={`Lead Skoru ${score.score}/100 — ${score.label}`}
           >
-            <span className="text-base font-bold tabular-nums leading-none">{score.score}</span>
-            <span className="mt-0.5 text-[8px] uppercase tracking-wide opacity-80">
+            <span className="font-mono text-base font-semibold tabular-nums leading-none">{score.score}</span>
+            <span className="mt-0.5 text-[8px] uppercase tracking-wider opacity-80">
               {score.label}
             </span>
           </div>
@@ -137,31 +144,31 @@ export function CustomerRow({
             <div className="min-w-0 flex-1">
               <Link
                 href={`/customers/${customer.id}`}
-                className="text-base font-semibold text-slate-950 hover:text-slate-700"
+                className="text-base font-semibold text-[var(--text-primary)] hover:text-[var(--accent)]"
                 title={customer.name}
               >
                 {shortenCustomerName(customer.name, 60)}
               </Link>
               {customer.company && customer.company.trim() !== customer.name.trim() && (
-                <p className="text-xs text-slate-500 truncate">{customer.company}</p>
+                <p className="text-xs text-[var(--text-muted)] truncate">{customer.company}</p>
               )}
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {recentActivity && (
                 <span
-                  className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 ring-1 ring-amber-200"
+                  className="inline-flex items-center gap-1 rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--warn)]"
                   title={`${recentActivity.byUserName} bu müşteriyi son ${recentActivity.minutesAgo} dakika önce aradı. Çakışmayı önle.`}
                 >
-                  <UsersIcon className="h-3 w-3" />
+                  <UsersIcon size={14} strokeWidth={1.5} />
                   {recentActivity.byUserName.split(" ")[0]} aktif · {recentActivity.minutesAgo}dk
                 </span>
               )}
               {customer.doNotCall && (
                 <span
-                  className="inline-flex items-center gap-1 rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700"
+                  className="inline-flex items-center gap-1 rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--danger)]"
                   title="Aramayın işaretli (DND)"
                 >
-                  <PhoneOff className="h-3 w-3" />
+                  <PhoneOff size={14} strokeWidth={1.5} />
                   DND
                 </span>
               )}
@@ -169,9 +176,9 @@ export function CustomerRow({
                 {formatCustomerStatus(customer.status)}
               </Badge>
               {customer.customerType && (
-                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                <Badge variant="neutral">
                   {CUSTOMER_TYPE_LABELS[customer.customerType as keyof typeof CUSTOMER_TYPE_LABELS]}
-                </span>
+                </Badge>
               )}
             </div>
           </div>
@@ -182,48 +189,48 @@ export function CustomerRow({
               {customer.tags.slice(0, 5).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-medium text-blue-700"
+                  className="rounded-md border border-[var(--info-border)] bg-[var(--info-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--info)]"
                 >
                   {tag}
                 </span>
               ))}
               {customer.tags.length > 5 && (
-                <span className="text-[10px] text-slate-400">+{customer.tags.length - 5}</span>
+                <span className="text-[10px] text-[var(--text-muted)]">+{customer.tags.length - 5}</span>
               )}
             </div>
           )}
 
           {/* İletişim satırı */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-secondary)]">
             {phoneDisplay ? (
               <span className="flex items-center gap-1.5">
-                <Phone className="h-3 w-3 text-slate-400" />
-                <span className="font-mono">{phoneDisplay}</span>
+                <Phone size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                <span className="font-mono tabular-nums">{phoneDisplay}</span>
               </span>
             ) : (
               <span
-                className="flex items-center gap-1.5 text-amber-600"
+                className="flex items-center gap-1.5 text-[var(--warn)]"
                 title={`Bilgi tamlığı %${info.score}. Eksik: ${info.missing.join(", ")}`}
               >
-                <AlertCircle className="h-3 w-3" />
+                <AlertCircle size={14} strokeWidth={1.5} />
                 <span className="text-[11px] italic">Telefon yok</span>
               </span>
             )}
             {customer.email && (
               <span className="flex items-center gap-1.5 truncate">
-                <Mail className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                <Mail size={14} strokeWidth={1.5} className="text-[var(--text-muted)] flex-shrink-0" />
                 <span className="truncate">{customer.email}</span>
               </span>
             )}
             {cityDisplay && (
               <span className="flex items-center gap-1.5">
-                <MapPin className="h-3 w-3 text-slate-400" />
+                <MapPin size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
                 {cityDisplay}
               </span>
             )}
             {customer.owner?.name && (
-              <span className="flex items-center gap-1.5 text-slate-500">
-                <Briefcase className="h-3 w-3 text-slate-400" />
+              <span className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                <Briefcase size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
                 {customer.owner.name}
               </span>
             )}
@@ -231,17 +238,24 @@ export function CustomerRow({
 
           {/* İstatistik satırı */}
           {stats && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--text-muted)]">
               {stats.activeInterestsCount > 0 && (
-                <span>💼 {stats.activeInterestsCount} aktif ilgi</span>
+                <span className="inline-flex items-center gap-1">
+                  <BriefcaseIcon size={14} strokeWidth={1.5} />
+                  <span className="font-mono tabular-nums">{stats.activeInterestsCount}</span> aktif ilgi
+                </span>
               )}
               {stats.openQuoteCount > 0 && (
-                <span>📄 {stats.openQuoteCount} açık teklif</span>
+                <span className="inline-flex items-center gap-1">
+                  <FileText size={14} strokeWidth={1.5} />
+                  <span className="font-mono tabular-nums">{stats.openQuoteCount}</span> açık teklif
+                </span>
               )}
               {stats.lifetimeOrders > 0 && (
-                <span>
-                  📦 {stats.lifetimeOrders} sipariş ·{" "}
-                  <span className="font-mono font-medium text-slate-700">
+                <span className="inline-flex items-center gap-1">
+                  <Package size={14} strokeWidth={1.5} />
+                  <span className="font-mono tabular-nums">{stats.lifetimeOrders}</span> sipariş ·{" "}
+                  <span className="font-mono font-medium tabular-nums text-[var(--text-secondary)]">
                     {fmtTry(stats.lifetimeRevenueTry)}
                   </span>{" "}
                   ciro
@@ -252,20 +266,22 @@ export function CustomerRow({
 
           {/* Son temas + Sonraki aksiyon */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
-            <span className="flex items-center gap-1 text-slate-500">
-              <Clock className="h-3 w-3" />
-              Son temas: <strong className="text-slate-700">{relTime(customer.lastContactedAt)}</strong>
+            <span className="flex items-center gap-1 text-[var(--text-muted)]">
+              <Clock size={14} strokeWidth={1.5} />
+              Son temas: <strong className="text-[var(--text-secondary)]">{relTime(customer.lastContactedAt)}</strong>
             </span>
-            {stats?.nextActionAt && (
+            {nextAction && (
               <span
                 className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 ${
-                  stats.nextActionAt < new Date()
-                    ? "bg-rose-100 text-rose-700 pulse-urgent"
-                    : "text-slate-600"
+                  nextAction.tone === "danger"
+                    ? "border border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)] pulse-urgent"
+                    : nextAction.tone === "warn"
+                      ? "border border-[var(--warn-border)] bg-[var(--warn-dim)] text-[var(--warn)]"
+                      : "text-[var(--text-secondary)]"
                 }`}
               >
-                <Target className="h-3 w-3" />
-                {formatNextAction(stats.nextActionAt, stats.nextActionTitle)}
+                <Target size={14} strokeWidth={1.5} />
+                {nextAction.label}
               </span>
             )}
           </div>
@@ -273,7 +289,7 @@ export function CustomerRow({
       </div>
 
       {/* Inline aksiyonlar */}
-      <div className="mt-3 pt-3 border-t border-slate-100">
+      <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
         <CustomerRowActions
           customerId={customer.id}
           phone={customer.phone}

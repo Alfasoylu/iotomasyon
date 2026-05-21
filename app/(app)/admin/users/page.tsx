@@ -46,13 +46,13 @@ export default async function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Yönetim
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Kullanıcılar
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Sistem kullanıcılarını ve yetkilerini yönetin.
           </p>
         </div>
@@ -61,23 +61,23 @@ export default async function AdminUsersPage() {
         </Link>
       </div>
 
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden p-0 rounded-lg">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50">
+          <thead className="border-b border-[var(--border-default)] bg-[var(--surface-1)]">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Ad</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">E-posta</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Rol</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Durum</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Kayıt tarihi</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ad</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">E-posta</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Rol</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Durum</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kayıt tarihi</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {users.map((u) => (
-              <tr key={u.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-900">{u.name}</td>
-                <td className="px-4 py-3 text-slate-600">{u.email}</td>
+              <tr key={u.id} className="hover:bg-[var(--surface-1)]">
+                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{u.name}</td>
+                <td className="px-4 py-3 text-[var(--text-secondary)]">{u.email}</td>
                 <td className="px-4 py-3">
                   <Badge tone={ROLE_TONE[u.role] ?? "default"}>
                     {ROLE_LABELS[u.role] ?? u.role}
@@ -88,7 +88,7 @@ export default async function AdminUsersPage() {
                     {u.isActive ? "Aktif" : "Pasif"}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-slate-500">
+                <td className="px-4 py-3 text-[var(--text-muted)] tabular-nums font-mono">
                   {new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium" }).format(u.createdAt)}
                 </td>
                 <td className="px-4 py-3 text-right">

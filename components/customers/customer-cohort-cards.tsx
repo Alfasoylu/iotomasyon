@@ -4,19 +4,21 @@ import { Phone, Moon, Sparkles, FileText, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { CohortCounts, CohortKey } from "@/services/customer-cohort-service";
 
+type CohortTone = "accent" | "danger" | "warn" | "ok" | "info";
+
 const CARDS: Array<{
   key: CohortKey;
   title: string;
   hint: string;
-  icon: React.ComponentType<{ className?: string }>;
-  tone: "danger" | "warning" | "success" | "info" | "violet";
+  icon: React.ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
+  tone: CohortTone;
 }> = [
   {
     key: "queue",
     title: "Sıralı Arama",
     hint: "Akıllı sıralı — telefonu olan + sıcak",
     icon: Zap,
-    tone: "violet",
+    tone: "accent",
   },
   {
     key: "todayCall",
@@ -30,14 +32,14 @@ const CARDS: Array<{
     title: "Uyuyan Müşteriler",
     hint: "60g+ contact yok, satışı var",
     icon: Moon,
-    tone: "warning",
+    tone: "warn",
   },
   {
     key: "new",
     title: "Yeni Fırsatlar",
     hint: "son 7g eklenmiş, aranmamış",
     icon: Sparkles,
-    tone: "success",
+    tone: "ok",
   },
   {
     key: "openQuotes",
@@ -48,36 +50,31 @@ const CARDS: Array<{
   },
 ];
 
-const TONE_STYLES = {
-  violet: {
-    card: "border-violet-200 bg-violet-50",
-    icon: "text-violet-600",
-    iconBg: "bg-violet-100",
-    value: "text-violet-700",
+const TONE_STYLES: Record<CohortTone, { card: string; icon: string; value: string }> = {
+  accent: {
+    card: "border-[var(--accent-border)] bg-[var(--accent-dim)]",
+    icon: "text-[var(--accent)]",
+    value: "text-[var(--accent)]",
   },
   danger: {
-    card: "border-rose-200 bg-rose-50",
-    icon: "text-rose-600",
-    iconBg: "bg-rose-100",
-    value: "text-rose-700",
+    card: "border-[var(--danger-border)] bg-[var(--danger-dim)]",
+    icon: "text-[var(--danger)]",
+    value: "text-[var(--danger)]",
   },
-  warning: {
-    card: "border-amber-200 bg-amber-50",
-    icon: "text-amber-600",
-    iconBg: "bg-amber-100",
-    value: "text-amber-700",
+  warn: {
+    card: "border-[var(--warn-border)] bg-[var(--warn-dim)]",
+    icon: "text-[var(--warn)]",
+    value: "text-[var(--warn)]",
   },
-  success: {
-    card: "border-emerald-200 bg-emerald-50",
-    icon: "text-emerald-600",
-    iconBg: "bg-emerald-100",
-    value: "text-emerald-700",
+  ok: {
+    card: "border-[var(--ok-border)] bg-[var(--ok-dim)]",
+    icon: "text-[var(--ok)]",
+    value: "text-[var(--ok)]",
   },
   info: {
-    card: "border-blue-200 bg-blue-50",
-    icon: "text-blue-600",
-    iconBg: "bg-blue-100",
-    value: "text-blue-700",
+    card: "border-[var(--info-border)] bg-[var(--info-dim)]",
+    icon: "text-[var(--info)]",
+    value: "text-[var(--info)]",
   },
 };
 
@@ -98,8 +95,8 @@ export function CustomerCohortCards({
 
   return (
     <div>
-      <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
-        <Phone className="h-3.5 w-3.5" />
+      <p className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+        <Phone size={14} strokeWidth={1.5} />
         Bugün Senin İçin
       </p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
@@ -111,22 +108,24 @@ export function CustomerCohortCards({
             <Link
               key={key}
               href={isActive ? "/customers" : `/customers?cohort=${key}`}
-              className={`block transition ${isActive ? "ring-2 ring-slate-900" : ""}`}
+              className={`block transition ${isActive ? "ring-1 ring-[var(--border-strong)]" : ""}`}
             >
-              <Card className={`${s.card} p-4 hover:shadow-md transition-shadow`}>
+              <Card className={`${s.card} p-4 transition-colors`}>
                 <div className="flex items-start justify-between gap-2">
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${s.iconBg}`}>
-                    <Icon className={`h-4 w-4 ${s.icon}`} />
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border-subtle)] bg-[var(--surface-2)] ${s.icon}`}
+                  >
+                    <Icon size={14} strokeWidth={1.5} />
                   </div>
-                  <p className={`text-2xl font-bold tabular-nums ${s.value}`}>
+                  <p className={`font-mono text-2xl font-semibold tabular-nums ${s.value}`}>
                     {value.toLocaleString("tr-TR")}
                   </p>
                 </div>
-                <p className="mt-2 text-sm font-semibold text-slate-900">{title}</p>
-                <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{title}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">{hint}</p>
                 {isActive && (
-                  <p className="mt-1 text-[10px] font-semibold text-slate-900">
-                    ✓ Aktif filtre — tıkla kapat
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--accent)]">
+                    Aktif filtre — tıkla kapat
                   </p>
                 )}
               </Card>

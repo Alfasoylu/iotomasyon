@@ -126,12 +126,12 @@ export function CustomerBulkList({
         <button
           type="button"
           onClick={selected.size === customers.length ? clearAll : selectAll}
-          className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
+          className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           {selected.size === customers.length && customers.length > 0 ? (
-            <CheckSquare className="h-3.5 w-3.5" />
+            <CheckSquare size={14} strokeWidth={1.5} />
           ) : (
-            <Square className="h-3.5 w-3.5" />
+            <Square size={14} strokeWidth={1.5} />
           )}
           {selected.size > 0
             ? `${selected.size} seçili / ${customers.length}`
@@ -142,10 +142,10 @@ export function CustomerBulkList({
           <button
             type="button"
             onClick={() => exportCsv(false)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
             title="Mevcut filtreli liste CSV"
           >
-            <Download className="h-3 w-3" />
+            <Download size={14} strokeWidth={1.5} />
             Tümü CSV
           </button>
         </div>
@@ -153,25 +153,25 @@ export function CustomerBulkList({
 
       {/* Sticky bulk toolbar when ≥1 selected */}
       {selected.size > 0 && (
-        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5">
-          <p className="text-sm font-medium text-blue-900">
-            <strong>{selected.size}</strong> müşteri seçildi
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-4 py-2.5">
+          <p className="text-sm font-medium text-[var(--accent)]">
+            <strong className="font-mono tabular-nums">{selected.size}</strong> müşteri seçildi
           </p>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => exportCsv(true)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
+              className="inline-flex items-center gap-1.5 rounded-md bg-[var(--accent)] px-2.5 py-1 text-xs font-semibold text-[var(--accent-fg)] hover:opacity-90"
             >
-              <Download className="h-3 w-3" />
+              <Download size={14} strokeWidth={1.5} />
               Seçili CSV indir
             </button>
             <button
               type="button"
               onClick={clearAll}
-              className="rounded-md border border-blue-200 bg-white px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
+              className="inline-flex items-center gap-1 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
             >
-              <X className="h-3 w-3 inline-block" />
+              <X size={14} strokeWidth={1.5} />
               Seçimi temizle
             </button>
           </div>
@@ -185,13 +185,13 @@ export function CustomerBulkList({
             <button
               type="button"
               onClick={() => toggle(customer.id)}
-              className="mt-5 flex-shrink-0 text-slate-300 hover:text-slate-700"
+              className="mt-5 flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               aria-label={selected.has(customer.id) ? "Seçimi kaldır" : "Seç"}
             >
               {selected.has(customer.id) ? (
-                <CheckSquare className="h-4 w-4 text-blue-600" />
+                <CheckSquare size={14} strokeWidth={1.5} className="text-[var(--accent)]" />
               ) : (
-                <Square className="h-4 w-4" />
+                <Square size={14} strokeWidth={1.5} />
               )}
             </button>
             <div className="min-w-0 flex-1">

@@ -19,8 +19,7 @@ export function SegmentStrip({
     label: string;
     hint: string;
     count: number;
-    icon: React.ComponentType<{ className?: string }>;
-    tone: string;
+    icon: React.ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
   }> = [
     {
       key: "all",
@@ -28,7 +27,6 @@ export function SegmentStrip({
       hint: "tümü",
       count: counts.b2bReseller + counts.installation + counts.marketplace,
       icon: Users,
-      tone: "slate",
     },
     {
       key: "B2B_RESELLER",
@@ -36,7 +34,6 @@ export function SegmentStrip({
       hint: "güvenlik şirketi, nalbur — sürekli müşteri",
       count: counts.b2bReseller,
       icon: Users,
-      tone: "blue",
     },
     {
       key: "INSTALLATION",
@@ -44,7 +41,6 @@ export function SegmentStrip({
       hint: "cafe/restoran/site/ofis — tek seferlik",
       count: counts.installation,
       icon: Wrench,
-      tone: "amber",
     },
     {
       key: "MARKETPLACE",
@@ -52,55 +48,46 @@ export function SegmentStrip({
       hint: "Entegra import edilen son kullanıcılar",
       count: counts.marketplace,
       icon: Store,
-      tone: "emerald",
     },
   ];
-
-  const TONE_STYLES: Record<string, { active: string; inactive: string; icon: string }> = {
-    slate: {
-      active: "bg-slate-900 text-white",
-      inactive: "bg-white text-slate-700 hover:bg-slate-50",
-      icon: "text-slate-500",
-    },
-    blue: {
-      active: "bg-blue-600 text-white",
-      inactive: "bg-white text-slate-700 hover:bg-blue-50",
-      icon: "text-blue-600",
-    },
-    amber: {
-      active: "bg-amber-600 text-white",
-      inactive: "bg-white text-slate-700 hover:bg-amber-50",
-      icon: "text-amber-600",
-    },
-    emerald: {
-      active: "bg-emerald-600 text-white",
-      inactive: "bg-white text-slate-700 hover:bg-emerald-50",
-      icon: "text-emerald-600",
-    },
-  };
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {items.map((it) => {
         const active = activeSegment === it.key;
-        const tone = TONE_STYLES[it.tone];
         const Icon = it.icon;
         const href = it.key === "all" ? "/customers" : `/customers?segment=${it.key}`;
+        const baseCls =
+          "flex items-center gap-3 rounded-md border px-4 py-3 transition-colors";
+        const activeCls =
+          "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]";
+        const inactiveCls =
+          "border-[var(--border-default)] bg-[var(--surface-2)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-3)]";
         return (
           <Link
             key={it.key}
             href={href}
-            className={`flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition ${
-              active ? tone.active : tone.inactive
-            }`}
+            className={`${baseCls} ${active ? activeCls : inactiveCls}`}
             title={it.hint}
           >
-            <Icon className={`h-5 w-5 ${active ? "text-white" : tone.icon}`} />
+            <Icon
+              size={18}
+              strokeWidth={1.5}
+              className={active ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}
+            />
             <div className="min-w-0 flex-1">
-              <p className={`text-xs font-medium ${active ? "text-white/80" : "text-slate-500"}`}>
+              <p
+                className={`text-[11px] font-semibold uppercase tracking-widest ${
+                  active ? "text-[var(--accent)]" : "text-[var(--text-muted)]"
+                }`}
+              >
                 {it.label}
               </p>
-              <p className="text-lg font-bold tabular-nums leading-none">
+              <p
+                className={`font-mono text-lg font-semibold tabular-nums leading-none ${
+                  active ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
+                }`}
+              >
                 {it.count.toLocaleString("tr-TR")}
               </p>
             </div>

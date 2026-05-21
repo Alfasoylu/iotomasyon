@@ -19,57 +19,23 @@
  */
 
 import Link from "next/link";
+import { Flame, Clock, Package, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { UpdateInterestForm } from "./update-interest-form";
 
 export const dynamic = "force-dynamic";
 
 // ── Enum etiketleri ──────────────────────────────────────────────────────────
-const STATUS_LABEL: Record<string, string> = {
-  NEW:           "Yeni",
-  WAITING_STOCK: "Stok Bekliyor",
-  CONTACTED:     "İletişim Kuruldu",
-  QUOTED:        "Teklif Verildi",
-  WON:           "Kazanıldı",
-  LOST:          "Kaybedildi",
-  CANCELLED:     "İptal",
-};
-
-const STATUS_STYLE: Record<string, string> = {
-  NEW:           "bg-blue-100 text-blue-700",
-  WAITING_STOCK: "bg-amber-100 text-amber-700",
-  CONTACTED:     "bg-sky-100 text-sky-700",
-  QUOTED:        "bg-violet-100 text-violet-700",
-  WON:           "bg-emerald-100 text-emerald-700",
-  LOST:          "bg-slate-100 text-slate-500",
-  CANCELLED:     "bg-slate-100 text-slate-400",
-};
-
-const PRIORITY_LABEL: Record<string, string> = {
-  LOW:    "Düşük",
-  NORMAL: "Normal",
-  HIGH:   "Yüksek",
-  URGENT: "Acil",
-};
-
-const PRIORITY_STYLE: Record<string, string> = {
-  LOW:    "text-slate-400",
-  NORMAL: "text-slate-600",
-  HIGH:   "text-amber-600 font-semibold",
-  URGENT: "text-red-600 font-bold",
-};
-
 type Tab = "all" | "hot" | "followup" | "waiting_stock";
 
-const TAB_LABELS: Record<Tab, string> = {
-  all:           "Tümü",
-  hot:           "🔥 Stok Var",
-  followup:      "⏰ Takip",
-  waiting_stock: "📦 Stok Bekliyor",
+const TAB_LABELS: Record<Tab, { label: string; icon: typeof Flame | null }> = {
+  all:           { label: "Tümü", icon: null },
+  hot:           { label: "Stok Var", icon: Flame },
+  followup:      { label: "Takip", icon: Clock },
+  waiting_stock: { label: "Stok Bekliyor", icon: Package },
 };
 
 // ── Row tipi ─────────────────────────────────────────────────────────────────
@@ -226,9 +192,9 @@ export default async function SalesOpportunitiesPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">CRM / Satış</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Satış Fırsatları</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">CRM / Satış</p>
+        <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">Satış Fırsatları</h1>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           Ürün bazında müşteri talepleri — stokla çapraz, takip tarihleriyle sıralı.
         </p>
       </div>
@@ -236,52 +202,59 @@ export default async function SalesOpportunitiesPage({
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {[
-          { label: "Aktif Talep", value: totalInterests, tone: "slate" },
-          { label: "Farklı Ürün", value: totalProducts, tone: "slate" },
-          { label: "Toplam Talep Adeti", value: totalUnits, tone: "slate" },
-          { label: "Gecikmiş Takip", value: overdueFollowups, tone: overdueFollowups > 0 ? "red" : "slate" },
-          { label: "Stoklu Fırsat", value: hotOpportunities, tone: hotOpportunities > 0 ? "emerald" : "slate" },
-        ].map(({ label, value, tone }) => (
-          <Card key={label} className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
-            <p
-              className={`mt-1 text-2xl font-semibold ${
-                tone === "emerald"
-                  ? "text-emerald-700"
-                  : tone === "red"
-                  ? "text-red-600"
-                  : "text-slate-800"
-              }`}
-            >
-              {value}
-            </p>
-          </Card>
-        ))}
+          { label: "Aktif Talep",        value: totalInterests,    tone: "neutral" as const },
+          { label: "Farklı Ürün",        value: totalProducts,     tone: "neutral" as const },
+          { label: "Toplam Talep Adeti", value: totalUnits,        tone: "neutral" as const },
+          { label: "Gecikmiş Takip",     value: overdueFollowups,  tone: overdueFollowups > 0 ? "danger" : "neutral" as const },
+          { label: "Stoklu Fırsat",      value: hotOpportunities,  tone: hotOpportunities > 0 ? "ok" : "neutral" as const },
+        ].map(({ label, value, tone }) => {
+          const valueColor =
+            tone === "ok"
+              ? "text-[var(--ok)]"
+              : tone === "danger"
+              ? "text-[var(--danger)]"
+              : "text-[var(--text-primary)]";
+          return (
+            <Card key={label} className="p-4 rounded-lg">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
+              <p className={`mt-2 text-2xl font-semibold tabular-nums font-mono ${valueColor}`}>
+                {value}
+              </p>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <Link
-            key={t}
-            href={`/admin/sales-opportunities?tab=${t}`}
-            className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-              tab === t
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            {TAB_LABELS[t]}
-            <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">
-              {tabCounts[t]}
-            </span>
-          </Link>
-        ))}
+        {tabs.map((t) => {
+          const TabIcon = TAB_LABELS[t].icon;
+          const isActive = tab === t;
+          return (
+            <Link
+              key={t}
+              href={`/admin/sales-opportunities?tab=${t}`}
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium border transition ${
+                isActive
+                  ? "bg-[var(--accent-dim)] border-[var(--accent-border)] text-[var(--accent)]"
+                  : "bg-[var(--surface-2)] border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--surface-3)]"
+              }`}
+            >
+              {TabIcon && <TabIcon size={14} strokeWidth={1.5} />}
+              <span>{TAB_LABELS[t].label}</span>
+              <span className={`ml-1 rounded-md px-1.5 py-0.5 text-[10px] tabular-nums font-mono ${
+                isActive ? "bg-[var(--accent-dim)] text-[var(--accent)]" : "bg-[var(--surface-3)] text-[var(--text-muted)]"
+              }`}>
+                {tabCounts[t]}
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Product groups table */}
       {filteredGroups.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-slate-400">
+        <Card className="p-8 text-center text-sm text-[var(--text-muted)] rounded-lg">
           Bu filtrede fırsat kaydı yok.
         </Card>
       ) : (
@@ -292,11 +265,11 @@ export default async function SalesOpportunitiesPage({
             const stockEmpty = g.stockQuantity === 0;
 
             return (
-              <Card key={g.productId} className="overflow-hidden">
+              <Card key={g.productId} className="overflow-hidden rounded-lg">
                 {/* Product header row */}
                 <div
                   className={`flex flex-wrap items-center justify-between gap-3 px-5 py-4 ${
-                    isExpanded ? "border-b border-slate-100 bg-slate-50" : ""
+                    isExpanded ? "border-b border-[var(--border-subtle)] bg-[var(--surface-1)]" : ""
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -307,56 +280,58 @@ export default async function SalesOpportunitiesPage({
                           ? `/admin/sales-opportunities?tab=${tab}`
                           : `/admin/sales-opportunities?tab=${tab}&expand=${g.productId}`
                       }
-                      className="flex-shrink-0 text-slate-400 hover:text-slate-700"
+                      className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                       aria-label={isExpanded ? "Kapat" : "Aç"}
                     >
-                      <span className="text-sm">{isExpanded ? "▲" : "▶"}</span>
+                      {isExpanded ? <ChevronDown size={14} strokeWidth={1.5} /> : <ChevronRight size={14} strokeWidth={1.5} />}
                     </Link>
 
                     <div className="min-w-0">
                       <Link
                         href={`/products/${g.productId}`}
-                        className="text-sm font-semibold text-slate-800 hover:underline"
+                        className="text-sm font-semibold text-[var(--text-primary)] hover:underline"
                       >
                         {g.productName}
                       </Link>
                       {g.productSku && (
-                        <span className="ml-2 font-mono text-xs text-slate-400">{g.productSku}</span>
+                        <span className="ml-2 font-mono text-xs text-[var(--text-muted)]">{g.productSku}</span>
                       )}
                     </div>
 
                     {/* Follow-up alert */}
                     {g.hasOverdueFollowup && (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-600">
-                        ⏰ Gecikmiş
+                      <span className="inline-flex items-center gap-1 rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--danger)]">
+                        <AlertTriangle size={14} strokeWidth={1.5} />
+                        Gecikmiş
                       </span>
                     )}
                     {!g.hasOverdueFollowup && g.hasTodayFollowup && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                        ⏰ Bugün
+                      <span className="inline-flex items-center gap-1 rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-2 py-0.5 text-[10px] font-medium text-[var(--warn)]">
+                        <Clock size={14} strokeWidth={1.5} />
+                        Bugün
                       </span>
                     )}
                   </div>
 
                   {/* Right side stats */}
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
                     {/* Stock pill */}
                     <span
-                      className={`rounded-full px-2.5 py-1 font-medium ${
+                      className={`rounded-md border px-2 py-0.5 text-xs font-medium tabular-nums font-mono ${
                         stockEmpty
-                          ? "bg-red-100 text-red-600"
+                          ? "bg-[var(--danger-dim)] border-[var(--danger-border)] text-[var(--danger)]"
                           : stockLow
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-emerald-100 text-emerald-700"
+                          ? "bg-[var(--warn-dim)] border-[var(--warn-border)] text-[var(--warn)]"
+                          : "bg-[var(--ok-dim)] border-[var(--ok-border)] text-[var(--ok)]"
                       }`}
                     >
                       Stok: {g.stockQuantity}
                     </span>
 
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-[var(--text-primary)] tabular-nums font-mono">
                       {g.customerCount} müşteri
                     </span>
-                    <span className="text-slate-500">
+                    <span className="text-[var(--text-muted)] tabular-nums font-mono">
                       {g.totalUnits} adet talep
                     </span>
                   </div>
@@ -367,17 +342,17 @@ export default async function SalesOpportunitiesPage({
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-widest text-slate-400">
-                          <th className="px-5 py-2 text-left">Müşteri</th>
-                          <th className="px-3 py-2 text-left">Durum / Öncelik</th>
-                          <th className="px-3 py-2 text-right">Talep Adeti</th>
-                          <th className="px-3 py-2 text-right">Teklif Fiyatı</th>
-                          <th className="px-3 py-2 text-right">Takip Tarihi</th>
-                          <th className="px-3 py-2 text-left">Not</th>
+                        <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
+                          <th className="px-5 py-2 text-left font-medium">Müşteri</th>
+                          <th className="px-3 py-2 text-left font-medium">Durum / Öncelik</th>
+                          <th className="px-3 py-2 text-right font-medium">Talep Adeti</th>
+                          <th className="px-3 py-2 text-right font-medium">Teklif Fiyatı</th>
+                          <th className="px-3 py-2 text-right font-medium">Takip Tarihi</th>
+                          <th className="px-3 py-2 text-left font-medium">Not</th>
                           <th className="px-3 py-2"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-[var(--border-subtle)]">
                         {g.interests.map((i) => {
                           const isOverdue =
                             i.followUpAt != null && i.followUpAt < todayStart;
@@ -386,16 +361,16 @@ export default async function SalesOpportunitiesPage({
                             i.followUpAt >= todayStart &&
                             i.followUpAt <= today;
                           return (
-                            <tr key={i.id} className="hover:bg-slate-50/60">
+                            <tr key={i.id} className="hover:bg-[var(--surface-1)]">
                               <td className="px-5 py-2.5">
                                 <Link
                                   href={`/customers/${i.customer.id}`}
-                                  className="font-medium text-slate-800 hover:underline"
+                                  className="font-medium text-[var(--text-primary)] hover:underline"
                                 >
                                   {i.customer.company ?? i.customer.name}
                                 </Link>
                                 {i.customer.company && (
-                                  <span className="ml-1 text-xs text-slate-400">
+                                  <span className="ml-1 text-xs text-[var(--text-muted)]">
                                     ({i.customer.name})
                                   </span>
                                 )}
@@ -407,40 +382,38 @@ export default async function SalesOpportunitiesPage({
                                   currentPriority={i.priority}
                                 />
                               </td>
-                              <td className="px-3 py-2.5 text-right tabular-nums text-slate-700">
+                              <td className="px-3 py-2.5 text-right tabular-nums font-mono text-[var(--text-secondary)]">
                                 {i.quantity}
                               </td>
-                              <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">
+                              <td className="px-3 py-2.5 text-right tabular-nums font-mono text-[var(--text-secondary)]">
                                 {i.quotedPrice
                                   ? `${i.quotedPrice} ${i.currency}`
-                                  : <span className="text-slate-300">—</span>}
+                                  : <span className="text-[var(--text-muted)]">—</span>}
                               </td>
-                              <td className="px-3 py-2.5 text-right text-xs">
+                              <td className="px-3 py-2.5 text-right text-xs tabular-nums font-mono">
                                 {i.followUpAt ? (
                                   <span
                                     className={
                                       isOverdue
-                                        ? "font-semibold text-red-600"
+                                        ? "font-semibold text-[var(--danger)]"
                                         : isToday
-                                        ? "font-semibold text-amber-600"
-                                        : "text-slate-500"
+                                        ? "font-semibold text-[var(--warn)]"
+                                        : "text-[var(--text-muted)]"
                                     }
                                   >
                                     {i.followUpAt.toLocaleDateString("tr-TR")}
-                                    {isOverdue && " ⚠"}
-                                    {isToday && " ●"}
                                   </span>
                                 ) : (
-                                  <span className="text-slate-300">—</span>
+                                  <span className="text-[var(--text-muted)]">—</span>
                                 )}
                               </td>
-                              <td className="px-3 py-2.5 text-xs text-slate-500 max-w-[200px] truncate">
-                                {i.interestNotes ?? <span className="text-slate-300">—</span>}
+                              <td className="px-3 py-2.5 text-xs text-[var(--text-muted)] max-w-[200px] truncate">
+                                {i.interestNotes ?? <span className="text-[var(--text-muted)]">—</span>}
                               </td>
                               <td className="px-3 py-2.5 text-right">
                                 <Link
                                   href={`/customers/${i.customer.id}`}
-                                  className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+                                  className="text-xs text-[var(--info)] hover:underline whitespace-nowrap"
                                 >
                                   Müşteri →
                                 </Link>
@@ -460,12 +433,12 @@ export default async function SalesOpportunitiesPage({
 
       {/* Empty state for no interests at all */}
       {allInterests.length === 0 && (
-        <Card className="p-8 text-center">
-          <p className="text-sm text-slate-500">Henüz aktif ürün ilgi kaydı yok.</p>
-          <p className="mt-2 text-xs text-slate-400">
+        <Card className="p-8 text-center rounded-lg">
+          <p className="text-sm text-[var(--text-secondary)]">Henüz aktif ürün ilgi kaydı yok.</p>
+          <p className="mt-2 text-xs text-[var(--text-muted)]">
             Müşteri detay sayfalarından ürün ilgisi ekleyebilirsiniz.
           </p>
-          <Link href="/customers" className="mt-3 inline-block text-xs text-blue-600 underline">
+          <Link href="/customers" className="mt-3 inline-block text-xs text-[var(--info)] underline">
             Müşterilere git →
           </Link>
         </Card>

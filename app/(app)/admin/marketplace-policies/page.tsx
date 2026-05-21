@@ -68,13 +68,13 @@ export default async function MarketplacePoliciesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Yönetim / Pazar Yeri
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Platform Marj Politikaları
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Her platform için standart kargo maliyeti ve komisyon oranını tanımlayın.
             Ürün düzeyinde geçersiz kılma değerleri bu standartları ezer.
           </p>
@@ -88,56 +88,56 @@ export default async function MarketplacePoliciesPage() {
 
       {/* Summary */}
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Toplam Platform
           </p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">{ALL_PLATFORMS.length}</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{ALL_PLATFORMS.length}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Yapılandırıldı
           </p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-600">{configuredCount}</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums font-mono text-[var(--ok)]">{configuredCount}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Yapılandırılmadı
           </p>
-          <p className="mt-1 text-2xl font-semibold text-amber-600">
+          <p className="mt-2 text-2xl font-semibold tabular-nums font-mono text-[var(--warn)]">
             {ALL_PLATFORMS.length - configuredCount}
           </p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Sistem Varsayılanı
           </p>
-          <p className="mt-1 text-sm font-semibold text-slate-700">
+          <p className="mt-2 text-sm font-semibold tabular-nums font-mono text-[var(--text-secondary)]">
             Kargo: ₺0 · Komisyon: %20
           </p>
         </Card>
       </div>
 
       {/* Resolution order explanation */}
-      <Card className="p-5 bg-blue-50/50 border-blue-100">
-        <h2 className="text-sm font-semibold text-slate-900 mb-2">
+      <Card className="p-5 rounded-lg border-[var(--info-border)] bg-[var(--info-dim)]">
+        <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--info)] mb-3">
           Değer Çözümleme Sırası
         </h2>
-        <ol className="space-y-1 text-xs text-slate-600">
+        <ol className="space-y-1.5 text-xs text-[var(--text-secondary)]">
           <li>
-            <span className="inline-block rounded-full bg-blue-100 text-blue-700 px-2 py-0.5 font-medium mr-2">1. Ürün Geçersiz Kılma</span>
+            <span className="inline-block rounded-md border border-[var(--info-border)] bg-[var(--info-dim)] px-2 py-0.5 font-medium text-[var(--info)] mr-2 tabular-nums font-mono">1. Ürün Geçersiz Kılma</span>
             Ürün formundaki &quot;Kargo Geçersiz Kılma&quot; / &quot;Komisyon Geçersiz Kılma&quot; alanları — en yüksek öncelik
           </li>
           <li>
-            <span className="inline-block rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 font-medium mr-2">2. Ürün Değeri</span>
+            <span className="inline-block rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-2 py-0.5 font-medium text-[var(--text-secondary)] mr-2 tabular-nums font-mono">2. Ürün Değeri</span>
             Ürün formundaki standart kargo / komisyon alanları
           </li>
           <li>
-            <span className="inline-block rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 font-medium mr-2">3. Platform Standardı</span>
+            <span className="inline-block rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] px-2 py-0.5 font-medium text-[var(--ok)] mr-2 tabular-nums font-mono">3. Platform Standardı</span>
             Aşağıdaki bu sayfa — platform bazında varsayılan değerler
           </li>
           <li>
-            <span className="inline-block rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 font-medium mr-2">4. Sistem Varsayılanı</span>
+            <span className="inline-block rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-2 py-0.5 font-medium text-[var(--warn)] mr-2 tabular-nums font-mono">4. Sistem Varsayılanı</span>
             Kargo ₺0 · Komisyon %20 — hiçbir değer tanımlanmamışsa
           </li>
         </ol>
@@ -145,7 +145,7 @@ export default async function MarketplacePoliciesPage() {
 
       {/* Platform forms */}
       <div className="space-y-4">
-        <h2 className="text-base font-semibold text-slate-900">Platform Ayarları</h2>
+        <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">Platform Ayarları</h2>
         {ALL_PLATFORMS.map((platform) => (
           <PlatformPolicyForm
             key={platform}
