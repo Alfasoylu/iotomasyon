@@ -1,20 +1,23 @@
 import Link from "next/link";
 import {
-  Heart,
   Users,
   ShoppingCart,
   Package,
   DollarSign,
   CheckSquare,
   TrendingUp,
-  Ship,
+  CircleAlert,
+  CalendarClock,
+  ListChecks,
+  Link2,
   Sparkles,
   ArrowRight,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { KpiCard, type KpiTone } from "@/components/layout/kpi-card";
+import { MetricCard, type MetricStatus } from "@/components/ui/metric-card";
+import { KpiCard } from "@/components/layout/kpi-card";
 import { SectionCard } from "@/components/layout/section-card";
 import { SmartRecsCard } from "@/components/dashboard/smart-recs-card";
 import { FirstTimeBanner } from "@/components/dashboard/first-time-banner";
@@ -86,141 +89,145 @@ export async function AdminWorkspace({
       <FirstTimeBanner />
 
       {/* ── 1) Hoş geldin satırı ──────────────────────────────────────── */}
-      <Card className="border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              {dayName}, {dateStr}
-            </p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">
-              {greeting}, {user.name.split(" ")[0]}
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Bugün ne yapmalısın? Aşağıdaki manşet sermaye sağlık skoruna ve gruplara bakarak başla.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            {usdTry && (
-              <span className="rounded-full bg-slate-100 px-3 py-1.5 font-mono">
-                1 USD = ₺{usdTry.toFixed(2)}
-              </span>
-            )}
-            {rmbUsd && rmbUsd > 0 && (
-              <span className="rounded-full bg-slate-100 px-3 py-1.5 font-mono">
-                1 USD = {rmbUsd.toFixed(2)} ¥
-              </span>
-            )}
-            <Link
-              href="/admin/exchange-rates"
-              className="text-slate-500 hover:text-slate-900 underline-offset-4 hover:underline"
-            >
-              Kur geçmişi →
-            </Link>
-          </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)] font-medium">
+            {dayName}, {dateStr}
+          </p>
+          <h1 className="mt-1.5 text-[22px] font-semibold tracking-tight text-[var(--text-primary)] sm:text-[24px]">
+            {greeting}, {user.name.split(" ")[0]}
+          </h1>
+          <p className="mt-1 text-[13px] text-[var(--text-secondary)] leading-relaxed">
+            Aşağıdaki sermaye sağlık skoruna ve gruplara bakarak başla.
+          </p>
         </div>
-      </Card>
-
-      {/* ── 2) Sermaye Sağlık Skoru manşeti ──────────────────────────── */}
-      {capital.databaseAvailable && (
-        <Link href="/admin/sermaye-saglik" className="block">
-          <Card
-            className={`p-6 transition-shadow hover:shadow-md ${
-              capital.scoreTone === "success" ? "border-emerald-300 bg-emerald-50" :
-              capital.scoreTone === "info" ? "border-blue-300 bg-blue-50" :
-              capital.scoreTone === "warning" ? "border-amber-300 bg-amber-50" :
-              "border-rose-300 bg-rose-50"
-            }`}
+        <div className="flex flex-wrap items-center gap-2 text-[12px]">
+          {usdTry && (
+            <span className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[var(--text-secondary)] tabular-nums">
+              1 USD = ₺{usdTry.toFixed(2)}
+            </span>
+          )}
+          {rmbUsd && rmbUsd > 0 && (
+            <span className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-2.5 py-1 font-mono text-[var(--text-secondary)] tabular-nums">
+              1 USD = {rmbUsd.toFixed(2)} ¥
+            </span>
+          )}
+          <Link
+            href="/admin/exchange-rates"
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
           >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/70">
-                  <Heart className={`h-6 w-6 ${
-                    capital.scoreTone === "success" ? "text-emerald-700" :
-                    capital.scoreTone === "info" ? "text-blue-700" :
-                    capital.scoreTone === "warning" ? "text-amber-700" :
-                    "text-rose-700"
-                  }`} />
-                </div>
+            Kur geçmişi →
+          </Link>
+        </div>
+      </div>
+
+      {/* ── 2) Sermaye Sağlık Skoru hero ─────────────────────────────── */}
+      {capital.databaseAvailable && (() => {
+        const scoreStatus = scoreToneToStatus(capital.scoreTone);
+        const scoreColor = statusColor(scoreStatus);
+        return (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
+            {/* Sol: Skor */}
+            <Link href="/admin/sermaye-saglik" className="block">
+              <div className="flex h-full flex-col justify-between rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-6 transition-colors hover:border-[var(--border-strong)]">
                 <div>
-                  <p className={`text-xs font-semibold uppercase tracking-[0.25em] ${
-                    capital.scoreTone === "success" ? "text-emerald-700" :
-                    capital.scoreTone === "info" ? "text-blue-700" :
-                    capital.scoreTone === "warning" ? "text-amber-700" :
-                    "text-rose-700"
-                  }`}>
-                    Sermaye Sağlık Skoru
-                  </p>
-                  <div className="mt-1 flex items-baseline gap-2.5">
-                    <span className={`text-5xl font-bold tabular-nums ${
-                      capital.scoreTone === "success" ? "text-emerald-700" :
-                      capital.scoreTone === "info" ? "text-blue-700" :
-                      capital.scoreTone === "warning" ? "text-amber-700" :
-                      "text-rose-700"
-                    }`}>
+                  <div className="flex items-start justify-between">
+                    <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+                      Sermaye Sağlık Skoru
+                    </span>
+                    <ArrowRight size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                  </div>
+                  <div className="mt-4 flex items-baseline gap-2 tabular-nums">
+                    <span
+                      className="text-[64px] font-bold leading-none"
+                      style={{ color: scoreColor }}
+                    >
                       {capital.healthScore}
                     </span>
-                    <span className="text-sm text-slate-500">/ 100</span>
-                    <span className={`rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-semibold ${
-                      capital.scoreTone === "success" ? "text-emerald-700" :
-                      capital.scoreTone === "info" ? "text-blue-700" :
-                      capital.scoreTone === "warning" ? "text-amber-700" :
-                      "text-rose-700"
-                    }`}>
-                      {capital.scoreLabel}
-                    </span>
+                    <span className="text-[20px] text-[var(--text-muted)]">/ 100</span>
                   </div>
                 </div>
+                <Badge variant={scoreStatus} className="self-start mt-3">
+                  {capital.scoreLabel}
+                </Badge>
               </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-4">
-                <ScoreMini label="Bağlı Sermaye" value={fmtUsd(capital.totalLockedUsd)} />
-                <ScoreMini label="Aylık Beklenen" value={fmtUsd(capital.monthlyExpectedUsd)} />
-                <ScoreMini label="Yıllık ROI" value={`%${capital.annualRoiPct.toFixed(1)}`} />
-                <ScoreMini label="Ölü Stok" value={`${capital.deadStockCount} ürün`} />
-              </div>
-              <ArrowRight className="hidden lg:block h-5 w-5 text-slate-400" />
+            </Link>
+
+            {/* Sağ: 4 metrik */}
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <MetricCard
+                label="Bağlı Sermaye"
+                value={fmtUsd(capital.totalLockedUsd)}
+                icon={DollarSign}
+                href="/admin/capital"
+              />
+              <MetricCard
+                label="Aylık Beklenen"
+                value={fmtUsd(capital.monthlyExpectedUsd)}
+                icon={TrendingUp}
+                status="ok"
+                href="/admin/sermaye-saglik"
+              />
+              <MetricCard
+                label="Yıllık ROI"
+                value={`%${capital.annualRoiPct.toFixed(1)}`}
+                icon={TrendingUp}
+                status={capital.annualRoiPct >= 50 ? "ok" : capital.annualRoiPct >= 30 ? "info" : "warn"}
+              />
+              <MetricCard
+                label="Ölü Stok"
+                value={String(capital.deadStockCount)}
+                unit="ürün"
+                icon={Package}
+                status={capital.deadStockCount > 100 ? "warn" : "neutral"}
+                href="/admin/stock-health"
+              />
             </div>
-          </Card>
-        </Link>
-      )}
+          </div>
+        );
+      })()}
 
       {/* ── 3) Akıllı Öneriler kartı ──────────────────────────────────── */}
       {smartRecs.length > 0 && <SmartRecsCard recs={smartRecs} />}
 
       {/* ── 4) DB durumu uyarısı ──────────────────────────────────────── */}
       {!stats.databaseAvailable && (
-        <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
-          Veritabanı bağlantısı şu anda kullanılamıyor. Pano yüklendi ancak canlı
-          metrikler gösterilemiyor.
+        <Card className="p-4 text-[13px] leading-6 text-[var(--warn)]" style={{ borderColor: "var(--warn-border)", background: "var(--warn-dim)" }}>
+          Veritabanı bağlantısı şu anda kullanılamıyor. Pano yüklendi ancak canlı metrikler gösterilemiyor.
         </Card>
       )}
 
       {/* ── 4) Bugün için manşet KPI'lar ──────────────────────────────── */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
           label="Acil Sipariş"
           value={String(capital.urgentReorderCount)}
-          tone={capital.urgentReorderCount > 0 ? "danger" : "neutral"}
-          hint="14 günden az stoku kalan ürün"
+          icon={CircleAlert}
+          status={capital.urgentReorderCount > 0 ? "danger" : "neutral"}
+          hint="14 günden az stoklu ürün"
           href="/admin/sermaye-saglik"
         />
-        <KpiCard
+        <MetricCard
           label="Bugün Görev"
           value={String(dueToday.tasks?.length ?? 0)}
-          tone={(dueToday.tasks?.length ?? 0) > 0 ? "warning" : "neutral"}
-          hint={stats.overdueTasks > 0 ? `+ ${stats.overdueTasks} gecikmiş` : "vadesi geldi"}
+          icon={CalendarClock}
+          status={(dueToday.tasks?.length ?? 0) > 0 ? "warn" : "neutral"}
+          hint={stats.overdueTasks > 0 ? `+ ${stats.overdueTasks} gecikmiş` : "vadesi bugün"}
           href="/tasks"
         />
-        <KpiCard
+        <MetricCard
           label="Açık Görev"
           value={String(stats.openFollowups)}
-          tone="info"
+          icon={ListChecks}
+          status="info"
           hint="devam eden tüm görevler"
           href="/tasks"
         />
-        <KpiCard
+        <MetricCard
           label="Eşleşmemiş Sipariş"
           value={String(alerts.unmatchedOrdersCount)}
-          tone={alerts.unmatchedOrdersCount > 100 ? "warning" : "neutral"}
+          icon={Link2}
+          status={alerts.unmatchedOrdersCount > 100 ? "warn" : "neutral"}
           hint="Trendyol'da eşleşmesi gereken"
           href="/admin/marketplace-mappings"
         />
@@ -481,16 +488,15 @@ export async function AdminWorkspace({
       </div>
 
       {/* ── 10) Bilgi: bu pano hakkında ─────────────────────────────────── */}
-      <Card className="border-slate-200 bg-slate-50 p-5">
+      <Card className="p-4">
         <div className="flex items-start gap-3">
-          <Sparkles className="h-5 w-5 flex-shrink-0 text-slate-400 mt-0.5" />
+          <Sparkles size={16} strokeWidth={1.5} className="mt-0.5 flex-shrink-0 text-[var(--text-muted)]" />
           <div>
-            <p className="text-sm font-semibold text-slate-800">Bu pano nedir?</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+            <p className="text-[13px] font-medium text-[var(--text-primary)]">Bu pano nedir?</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-secondary)]">
               Günde 1 kez açıp 5 saniyede &quot;bugün ne yapmalıyım&quot; sorusuna cevap bulman için tasarlandı.
-              Üstteki <strong>Sermaye Sağlık Skoru</strong> tek bakışta durumu (0–100) verir.
-              Aşağıda sırasıyla <strong>Satış</strong>, <strong>Pazaryerleri</strong>, <strong>Stok & İthalat</strong> ve <strong>Finans</strong> gruplarında ilgili sayfalara link ve özet metrikler bulursun.
-              Her kartı tıklayarak detay sayfasına gidebilirsin.
+              Üstteki <strong className="text-[var(--text-primary)]">Sermaye Sağlık Skoru</strong> tek bakışta durumu (0–100) verir.
+              Aşağıda sırasıyla <strong className="text-[var(--text-primary)]">Satış</strong>, <strong className="text-[var(--text-primary)]">Pazaryerleri</strong>, <strong className="text-[var(--text-primary)]">Stok & İthalat</strong> ve <strong className="text-[var(--text-primary)]">Finans</strong> gruplarında ilgili sayfalara link ve özet metrikler bulursun.
             </p>
           </div>
         </div>
@@ -509,13 +515,26 @@ function computeGreeting(date: Date): string {
   return "İyi akşamlar";
 }
 
-function ScoreMini({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
-      <p className="mt-0.5 font-mono text-sm font-semibold text-slate-800">{value}</p>
-    </div>
-  );
+function scoreToneToStatus(tone: "success" | "info" | "warning" | "danger"): MetricStatus {
+  if (tone === "success") return "ok";
+  if (tone === "info") return "info";
+  if (tone === "warning") return "warn";
+  return "danger";
+}
+
+function statusColor(status: MetricStatus): string {
+  switch (status) {
+    case "ok":
+      return "var(--ok)";
+    case "warn":
+      return "var(--warn)";
+    case "danger":
+      return "var(--danger)";
+    case "info":
+      return "var(--info)";
+    default:
+      return "var(--text-primary)";
+  }
 }
 
 function PipelineCell({
