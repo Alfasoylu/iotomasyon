@@ -23,31 +23,31 @@ const KIND_ICONS: Record<RecKind, LucideIcon> = {
   "missing-data": HelpCircle,
 };
 
-const SEVERITY_STYLES: Record<RecSeverity, { row: string; iconBg: string; iconColor: string }> = {
+const SEVERITY_STYLES: Record<RecSeverity, { row: string; iconWrap: string }> = {
   success: {
-    row: "hover:bg-emerald-50/60",
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-700",
+    row: "hover:bg-[var(--ok-dim)]",
+    iconWrap:
+      "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]",
   },
   info: {
-    row: "hover:bg-blue-50/60",
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-700",
+    row: "hover:bg-[var(--info-dim)]",
+    iconWrap:
+      "border-[var(--info-border)] bg-[var(--info-dim)] text-[var(--info)]",
   },
   warning: {
-    row: "hover:bg-amber-50/60",
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-700",
+    row: "hover:bg-[var(--warn-dim)]",
+    iconWrap:
+      "border-[var(--warn-border)] bg-[var(--warn-dim)] text-[var(--warn)]",
   },
   danger: {
-    row: "hover:bg-rose-50/60",
-    iconBg: "bg-rose-100",
-    iconColor: "text-rose-700",
+    row: "hover:bg-[var(--danger-dim)]",
+    iconWrap:
+      "border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]",
   },
 };
 
 /**
- * Dashboard'da "🎯 Bugün Senin İçin Akıllı Öneriler" kartı.
+ * Dashboard'da "Bugün Senin İçin Akıllı Öneriler" kartı.
  *
  * Her öneri tıklanır (ilgili sayfaya gider). Kategori ikonu ile severity'ye göre
  * renk kodlu.
@@ -55,14 +55,14 @@ const SEVERITY_STYLES: Record<RecSeverity, { row: string; iconBg: string; iconCo
 export function SmartRecsCard({ recs }: { recs: SmartRec[] }) {
   if (recs.length === 0) {
     return (
-      <Card className="border-slate-200 bg-white p-6">
+      <Card className="p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
-            <Sparkles className="h-5 w-5 text-slate-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] text-[var(--text-muted)]">
+            <Sparkles size={18} strokeWidth={1.5} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">Bugün için öneri yok</p>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Bugün için öneri yok</p>
+            <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
               Tüm metrikler iyi durumda. Sermaye Sağlığı panosuna detay için bakabilirsin.
             </p>
           </div>
@@ -72,23 +72,23 @@ export function SmartRecsCard({ recs }: { recs: SmartRec[] }) {
   }
 
   return (
-    <Card className="overflow-hidden border-slate-200 bg-white p-0">
-      <div className="border-b border-slate-100 bg-gradient-to-r from-violet-50 to-blue-50 px-5 py-3.5">
+    <Card className="overflow-hidden p-0">
+      <div className="border-b border-[var(--border-default)] bg-[var(--surface-1)] px-5 py-3.5">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-violet-600" />
-          <h3 className="text-sm font-semibold text-slate-900">
-            🎯 Bugün Senin İçin Akıllı Öneriler
+          <Sparkles size={14} strokeWidth={1.5} className="text-[var(--accent)]" />
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+            Bugün Senin İçin Akıllı Öneriler
           </h3>
-          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600">
-            {recs.length} öneri
+          <span className="rounded border border-[var(--border-subtle)] bg-[var(--surface-3)] px-2 py-0.5 font-mono text-[11px] font-medium tabular-nums text-[var(--text-secondary)]">
+            {recs.length}
           </span>
         </div>
-        <p className="mt-0.5 text-xs text-slate-600">
+        <p className="mt-1 text-xs text-[var(--text-secondary)]">
           Sistem önerileri — tıkla, ilgili sayfaya git, kararı sen ver.
         </p>
       </div>
 
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-[var(--border-subtle)]">
         {recs.map((rec) => {
           const Icon = KIND_ICONS[rec.kind];
           const styles = SEVERITY_STYLES[rec.severity];
@@ -99,17 +99,21 @@ export function SmartRecsCard({ recs }: { recs: SmartRec[] }) {
                 className={`group flex items-start gap-3 px-5 py-3 transition-colors ${styles.row}`}
               >
                 <div
-                  className={`flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg ${styles.iconBg}`}
+                  className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border ${styles.iconWrap}`}
                 >
-                  <Icon className={`h-4 w-4 ${styles.iconColor}`} />
+                  <Icon size={14} strokeWidth={1.5} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900">{rec.title}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{rec.title}</p>
                   {rec.detail && (
-                    <p className="mt-0.5 text-xs text-slate-500">{rec.detail}</p>
+                    <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{rec.detail}</p>
                   )}
                 </div>
-                <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600" />
+                <ArrowRight
+                  size={14}
+                  strokeWidth={1.5}
+                  className="mt-1 flex-shrink-0 text-[var(--text-muted)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--text-primary)]"
+                />
               </Link>
             </li>
           );

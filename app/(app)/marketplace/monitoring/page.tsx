@@ -8,11 +8,13 @@
  */
 
 import Link from "next/link";
+import { AlertTriangle, X, Clock, ArrowLeft, Check } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { CreateMonitoringTaskButton } from "@/components/marketplace/create-monitoring-task-button";
 
 export const dynamic = "force-dynamic";
@@ -21,21 +23,23 @@ const PLATFORM_LABELS: Record<string, string> = {
   TRENDYOL: "Trendyol", HEPSIBURADA: "Hepsiburada", N11: "N11",
   PTTAVM: "PTT AVM", KOCTAS: "Koçtaş", TEKNOSA: "Teknosa", TEMU: "Temu", CUSTOM: "Diğer",
 };
-const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "bg-emerald-100 text-emerald-700",
-  INACTIVE: "bg-slate-100 text-slate-500",
-  SUSPENDED: "bg-red-100 text-red-700",
-  UNKNOWN: "bg-amber-100 text-amber-700",
+
+const STATUS_VARIANTS: Record<string, "ok" | "neutral" | "danger" | "warn"> = {
+  ACTIVE: "ok",
+  INACTIVE: "neutral",
+  SUSPENDED: "danger",
+  UNKNOWN: "warn",
 };
+
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Aktif", INACTIVE: "Pasif", SUSPENDED: "Askıya alındı", UNKNOWN: "Bilinmiyor",
 };
 
-function AlertBadge({ count, color }: { count: number; color: string }) {
+function AlertCount({ count, variant }: { count: number; variant: "warn" | "danger" | "neutral" }) {
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${color}`}>
+    <Badge variant={variant} className="font-semibold">
       {count}
-    </span>
+    </Badge>
   );
 }
 
@@ -85,55 +89,52 @@ export default async function MarketplaceMonitoringPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Pazar Yerleri</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">İzleme Merkezi</h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Pazar Yerleri</p>
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">İzleme Merkezi</h1>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Listeleme boşluklarını ve sorunlu listelemelerini takip edin.{" "}
             {totalAlerts > 0 ? (
-              <span className="font-semibold text-amber-700">{totalAlerts} uyarı tespit edildi.</span>
+              <span className="font-semibold text-[var(--warn)]">{totalAlerts} uyarı tespit edildi.</span>
             ) : (
-              <span className="text-emerald-700 font-semibold">Tüm kontroller temiz.</span>
+              <span className="text-[var(--ok)] font-semibold">Tüm kontroller temiz.</span>
             )}
           </p>
         </div>
         <Link href="/marketplace">
-          <Button variant="secondary">← Listeleme Kaydı</Button>
+          <Button variant="secondary">
+            <ArrowLeft size={14} strokeWidth={1.5} className="mr-1" />
+            Listeleme Kaydı
+          </Button>
         </Link>
       </div>
 
       {/* Summary cards */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <Card className="p-4 flex items-center gap-4">
-          <div className="rounded-xl bg-amber-100 p-3">
-            <svg className="h-5 w-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-            </svg>
+        <Card className="p-4 rounded-lg flex items-center gap-4">
+          <div className="rounded-md bg-[var(--warn-dim)] border border-[var(--warn-border)] p-3">
+            <AlertTriangle size={14} strokeWidth={1.5} className="text-[var(--warn)]" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-slate-900">{gapProducts.length}</p>
-            <p className="text-xs text-slate-500">Listelenmemiş ürün</p>
+            <p className="text-2xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{gapProducts.length}</p>
+            <p className="text-xs text-[var(--text-muted)]">Listelenmemiş ürün</p>
           </div>
         </Card>
-        <Card className="p-4 flex items-center gap-4">
-          <div className="rounded-xl bg-red-100 p-3">
-            <svg className="h-5 w-5 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+        <Card className="p-4 rounded-lg flex items-center gap-4">
+          <div className="rounded-md bg-[var(--danger-dim)] border border-[var(--danger-border)] p-3">
+            <X size={14} strokeWidth={1.5} className="text-[var(--danger)]" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-slate-900">{problemListings.length}</p>
-            <p className="text-xs text-slate-500">Sorunlu listeleme</p>
+            <p className="text-2xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{problemListings.length}</p>
+            <p className="text-xs text-[var(--text-muted)]">Sorunlu listeleme</p>
           </div>
         </Card>
-        <Card className="p-4 flex items-center gap-4">
-          <div className="rounded-xl bg-slate-100 p-3">
-            <svg className="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        <Card className="p-4 rounded-lg flex items-center gap-4">
+          <div className="rounded-md bg-[var(--surface-3)] border border-[var(--border-default)] p-3">
+            <Clock size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
           </div>
           <div>
-            <p className="text-2xl font-semibold text-slate-900">{staleListings.length}</p>
-            <p className="text-xs text-slate-500">Hiç kontrol edilmemiş (aktif)</p>
+            <p className="text-2xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{staleListings.length}</p>
+            <p className="text-xs text-[var(--text-muted)]">Hiç kontrol edilmemiş (aktif)</p>
           </div>
         </Card>
       </div>
@@ -141,36 +142,39 @@ export default async function MarketplaceMonitoringPage() {
       {/* 1. Gap alerts */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-slate-900">Listeleme Boşluğu</h2>
-          <AlertBadge count={gapProducts.length} color="bg-amber-100 text-amber-700" />
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">Listeleme Boşluğu</h2>
+          <AlertCount count={gapProducts.length} variant="warn" />
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[var(--text-muted)]">
           Aktif olup henüz hiçbir pazar yerinde listelenmemiş ürünler.
         </p>
         {gapProducts.length === 0 ? (
-          <Card className="p-4">
-            <p className="text-sm text-emerald-600 font-medium">✓ Tüm aktif ürünler en az bir pazar yerinde listelendi.</p>
+          <Card className="p-4 rounded-lg">
+            <p className="text-sm text-[var(--ok)] font-medium inline-flex items-center gap-2">
+              <Check size={14} strokeWidth={1.5} />
+              Tüm aktif ürünler en az bir pazar yerinde listelendi.
+            </p>
           </Card>
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">SKU</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün Adı</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">İşlem</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">SKU</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün Adı</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
                   {gapProducts.map((p) => (
-                    <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <tr key={p.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
                       <td className="py-3 px-4">
-                        <Link href={`/products/${p.id}`} className="font-mono text-xs text-slate-500 hover:text-slate-800 hover:underline">
+                        <Link href={`/products/${p.id}`} className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:underline">
                           {p.sku}
                         </Link>
                       </td>
-                      <td className="py-3 px-4 text-sm text-slate-700 max-w-[240px] truncate">{p.name}</td>
+                      <td className="py-3 px-4 text-sm text-[var(--text-secondary)] max-w-[240px] truncate">{p.name}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Link href={`/marketplace/new?productId=${p.id}`}>
@@ -195,50 +199,53 @@ export default async function MarketplaceMonitoringPage() {
       {/* 2. Problem listings */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-slate-900">Sorunlu Listelemeler</h2>
-          <AlertBadge count={problemListings.length} color="bg-red-100 text-red-700" />
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">Sorunlu Listelemeler</h2>
+          <AlertCount count={problemListings.length} variant="danger" />
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[var(--text-muted)]">
           Durumu Askıya alındı veya Bilinmiyor olan listelemeler — inceleme ve durum güncellemesi gerekir.
         </p>
         {problemListings.length === 0 ? (
-          <Card className="p-4">
-            <p className="text-sm text-emerald-600 font-medium">✓ Sorunlu listeleme yok.</p>
+          <Card className="p-4 rounded-lg">
+            <p className="text-sm text-[var(--ok)] font-medium inline-flex items-center gap-2">
+              <Check size={14} strokeWidth={1.5} />
+              Sorunlu listeleme yok.
+            </p>
           </Card>
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Durum</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Sorumlu</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">İşlem</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Platform</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Durum</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Sorumlu</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
                   {problemListings.map((l) => (
-                    <tr key={l.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <tr key={l.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
                       <td className="py-3 px-4">
-                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+                        <span className="rounded-md bg-[var(--surface-3)] border border-[var(--border-subtle)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
                           {PLATFORM_LABELS[l.platform] ?? l.platform}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <Link href={`/products/${l.product.id}`} className="font-mono text-xs text-slate-500 hover:text-slate-800 hover:underline">
+                        <Link href={`/products/${l.product.id}`} className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:underline">
                           {l.product.sku}
                         </Link>
-                        <p className="text-xs text-slate-500 mt-0.5 max-w-[160px] truncate">{l.product.name}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5 max-w-[160px] truncate">{l.product.name}</p>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[l.status] ?? ""}`}>
+                        <Badge variant={STATUS_VARIANTS[l.status] ?? "neutral"}>
                           {STATUS_LABELS[l.status] ?? l.status}
-                        </span>
+                        </Badge>
                       </td>
-                      <td className="py-3 px-4 text-xs text-slate-500">
-                        {l.responsible?.name ?? <span className="text-slate-300">—</span>}
+                      <td className="py-3 px-4 text-xs text-[var(--text-muted)]">
+                        {l.responsible?.name ?? <span className="text-[var(--text-muted)]">—</span>}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -265,48 +272,51 @@ export default async function MarketplaceMonitoringPage() {
       {/* 3. Stale / never-checked listings */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-slate-900">Hiç Kontrol Edilmemiş Aktif Listelemeler</h2>
-          <AlertBadge count={staleListings.length} color="bg-slate-200 text-slate-600" />
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">Hiç Kontrol Edilmemiş Aktif Listelemeler</h2>
+          <AlertCount count={staleListings.length} variant="neutral" />
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[var(--text-muted)]">
           Durumu Aktif fakat hiç kontrol tarihi girilmemiş listelemeler — URL ve listeleme durumu doğrulanmalı.
         </p>
         {staleListings.length === 0 ? (
-          <Card className="p-4">
-            <p className="text-sm text-emerald-600 font-medium">✓ Tüm aktif listelemeler kontrol edildi.</p>
+          <Card className="p-4 rounded-lg">
+            <p className="text-sm text-[var(--ok)] font-medium inline-flex items-center gap-2">
+              <Check size={14} strokeWidth={1.5} />
+              Tüm aktif listelemeler kontrol edildi.
+            </p>
           </Card>
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Başlık</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Sorumlu</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">İşlem</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Platform</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Başlık</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Sorumlu</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
                   {staleListings.map((l) => (
-                    <tr key={l.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <tr key={l.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
                       <td className="py-3 px-4">
-                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+                        <span className="rounded-md bg-[var(--surface-3)] border border-[var(--border-subtle)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
                           {PLATFORM_LABELS[l.platform] ?? l.platform}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <Link href={`/products/${l.product.id}`} className="font-mono text-xs text-slate-500 hover:text-slate-800 hover:underline">
+                        <Link href={`/products/${l.product.id}`} className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:underline">
                           {l.product.sku}
                         </Link>
-                        <p className="text-xs text-slate-500 mt-0.5 max-w-[160px] truncate">{l.product.name}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5 max-w-[160px] truncate">{l.product.name}</p>
                       </td>
-                      <td className="py-3 px-4 text-xs text-slate-600 max-w-[160px] truncate">
-                        {l.listingTitle ?? <span className="text-slate-300">—</span>}
+                      <td className="py-3 px-4 text-xs text-[var(--text-secondary)] max-w-[160px] truncate">
+                        {l.listingTitle ?? <span className="text-[var(--text-muted)]">—</span>}
                       </td>
-                      <td className="py-3 px-4 text-xs text-slate-500">
-                        {l.responsible?.name ?? <span className="text-slate-300">—</span>}
+                      <td className="py-3 px-4 text-xs text-[var(--text-muted)]">
+                        {l.responsible?.name ?? <span className="text-[var(--text-muted)]">—</span>}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2 flex-wrap">

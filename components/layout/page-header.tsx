@@ -15,7 +15,7 @@ export interface PageHeaderProps {
   /** 1 cümlelik açıklama — yeni kullanıcının "bu sayfa ne için" sorusunu çözer */
   subtitle?: string;
   /** Lucide ikonu (opsiyonel — sayfa türünü görsel olarak gösterir) */
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
   /** Sağ tarafta gösterilen aksiyon butonları (yeni kayıt, dışa aktar, vb.) */
   actions?: ReactNode;
   /** Başlığın altında küçük durum rozeti / mini bilgi şeridi */
@@ -55,7 +55,7 @@ export function PageHeader({
     <div className="mb-6 space-y-3">
       {/* Breadcrumb */}
       {breadcrumb && breadcrumb.length > 0 && (
-        <nav className="flex items-center gap-1 text-xs text-slate-500">
+        <nav className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
           {breadcrumb.map((b, i) => {
             const isLast = i === breadcrumb.length - 1;
             return (
@@ -63,17 +63,17 @@ export function PageHeader({
                 {b.href && !isLast ? (
                   <Link
                     href={b.href}
-                    className="hover:text-slate-900 transition-colors"
+                    className="transition-colors hover:text-[var(--text-primary)]"
                   >
                     {b.label}
                   </Link>
                 ) : (
-                  <span className={isLast ? "text-slate-700 font-medium" : ""}>
+                  <span className={isLast ? "font-medium text-[var(--text-secondary)]" : ""}>
                     {b.label}
                   </span>
                 )}
                 {!isLast && (
-                  <ChevronRight className="h-3 w-3 text-slate-300" />
+                  <ChevronRight size={12} strokeWidth={1.5} className="text-[var(--text-muted)]" />
                 )}
               </span>
             );
@@ -83,18 +83,18 @@ export function PageHeader({
 
       {/* Title row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3 min-w-0">
+        <div className="flex min-w-0 items-start gap-3">
           {Icon && (
-            <div className="flex-shrink-0 mt-1 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
-              <Icon className="h-5 w-5" />
+            <div className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]">
+              <Icon size={18} strokeWidth={1.5} />
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">
                 {subtitle}
               </p>
             )}

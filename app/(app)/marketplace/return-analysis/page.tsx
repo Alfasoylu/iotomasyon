@@ -35,10 +35,10 @@ interface ProductReturn {
 }
 
 function rateColor(rate: number | null) {
-  if (rate == null) return "text-slate-400";
-  if (rate >= 10) return "font-semibold text-red-700";
-  if (rate >= 5) return "font-semibold text-amber-700";
-  return "text-emerald-700";
+  if (rate == null) return "text-[var(--text-muted)]";
+  if (rate >= 10) return "font-semibold text-[var(--danger)]";
+  if (rate >= 5) return "font-semibold text-[var(--warn)]";
+  return "text-[var(--ok)]";
 }
 
 function KpiCard({
@@ -52,40 +52,38 @@ function KpiCard({
   sub?: string;
   tone?: "neutral" | "red" | "amber" | "green" | "dark";
 }) {
-  const bg =
-    tone === "dark"
-      ? "border-slate-900 bg-slate-900"
-      : tone === "red"
-        ? "border-red-200 bg-red-50"
-        : tone === "amber"
-          ? "border-amber-200 bg-amber-50"
-          : tone === "green"
-            ? "border-emerald-200 bg-emerald-50"
-            : "border-slate-200 bg-white";
+  const borderClass =
+    tone === "red"
+      ? "border-[var(--danger-border)] bg-[var(--danger-dim)]"
+      : tone === "amber"
+        ? "border-[var(--warn-border)] bg-[var(--warn-dim)]"
+        : tone === "green"
+          ? "border-[var(--ok-border)] bg-[var(--ok-dim)]"
+          : tone === "dark"
+            ? "border-[var(--border-strong)] bg-[var(--surface-1)]"
+            : "border-[var(--border-default)] bg-[var(--surface-2)]";
   const labelColor =
-    tone === "dark"
-      ? "text-slate-400"
-      : tone === "red"
-        ? "text-red-700"
-        : tone === "amber"
-          ? "text-amber-700"
-          : tone === "green"
-            ? "text-emerald-700"
-            : "text-slate-500";
+    tone === "red"
+      ? "text-[var(--danger)]"
+      : tone === "amber"
+        ? "text-[var(--warn)]"
+        : tone === "green"
+          ? "text-[var(--ok)]"
+          : tone === "dark"
+            ? "text-[var(--text-muted)]"
+            : "text-[var(--text-muted)]";
   const valueColor =
-    tone === "dark"
-      ? "text-white"
-      : tone === "red"
-        ? "text-red-900"
-        : tone === "amber"
-          ? "text-amber-900"
-          : tone === "green"
-            ? "text-emerald-900"
-            : "text-slate-900";
+    tone === "red"
+      ? "text-[var(--danger)]"
+      : tone === "amber"
+        ? "text-[var(--warn)]"
+        : tone === "green"
+          ? "text-[var(--ok)]"
+          : "text-[var(--text-primary)]";
   return (
-    <div className={`rounded-2xl border p-4 ${bg}`}>
-      <p className={`text-xs font-semibold uppercase tracking-widest ${labelColor}`}>{label}</p>
-      <p className={`mt-2 text-xl font-bold tabular-nums ${valueColor}`}>{value}</p>
+    <div className={`rounded-lg border p-4 ${borderClass}`}>
+      <p className={`text-[11px] font-medium uppercase tracking-widest ${labelColor}`}>{label}</p>
+      <p className={`mt-2 text-xl font-semibold tabular-nums font-mono ${valueColor}`}>{value}</p>
       {sub && <p className={`mt-0.5 text-xs ${labelColor}`}>{sub}</p>}
     </div>
   );
@@ -94,35 +92,35 @@ function KpiCard({
 function ProductTable({ rows, emptyLabel }: { rows: ProductReturn[]; emptyLabel: string }) {
   if (rows.length === 0) {
     return (
-      <div className="px-6 py-6 text-center text-sm text-slate-400">{emptyLabel}</div>
+      <div className="px-6 py-6 text-center text-sm text-[var(--text-muted)]">{emptyLabel}</div>
     );
   }
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+          <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             <th className="px-6 py-3 text-left">Ürün</th>
             <th className="px-4 py-3 text-right">İade Talebi</th>
             <th className="px-4 py-3 text-right">Satış Adedi</th>
             <th className="px-4 py-3 text-right">İade Oranı</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
-          {rows.map((p, i) => (
-            <tr key={p.productId} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+        <tbody className="divide-y divide-[var(--border-subtle)]">
+          {rows.map((p) => (
+            <tr key={p.productId} className="hover:bg-[var(--surface-3)]">
               <td className="px-6 py-3">
                 <Link
                   href={`/products/${p.productId}`}
-                  className="font-medium text-slate-900 underline decoration-dotted hover:text-slate-600"
+                  className="font-medium text-[var(--text-primary)] underline decoration-dotted hover:text-[var(--text-secondary)]"
                 >
                   {p.name}
                 </Link>
-                {p.sku && <p className="font-mono text-xs text-slate-400">{p.sku}</p>}
+                {p.sku && <p className="font-mono text-xs text-[var(--text-muted)]">{p.sku}</p>}
               </td>
-              <td className="px-4 py-3 text-right tabular-nums text-slate-700">{p.claimCount}</td>
-              <td className="px-4 py-3 text-right tabular-nums text-slate-500">{p.soldQty || "—"}</td>
-              <td className={`px-4 py-3 text-right tabular-nums ${rateColor(p.returnRate)}`}>
+              <td className="px-4 py-3 text-right tabular-nums font-mono text-[var(--text-secondary)]">{p.claimCount}</td>
+              <td className="px-4 py-3 text-right tabular-nums font-mono text-[var(--text-muted)]">{p.soldQty || "—"}</td>
+              <td className={`px-4 py-3 text-right tabular-nums font-mono ${rateColor(p.returnRate)}`}>
                 {p.returnRate != null ? fmtPct(p.returnRate) : "Satış kaydı yok"}
               </td>
             </tr>
@@ -222,13 +220,13 @@ export default async function ReturnAnalysisPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Pazar Yerleri / İade Analizi
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             İade Oranı Analizi
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Trendyol iade kayıtlarından hesaplanan ürün bazlı iade oranı.
             Yüksek iade oranı, fiyat, kalite veya listeleme sorununa işaret eder.
           </p>
@@ -236,13 +234,13 @@ export default async function ReturnAnalysisPage() {
         <div className="flex gap-2">
           <Link
             href="/marketplace/realized-margin"
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-3)]"
           >
             ← Gerçekleşen Marj
           </Link>
           <Link
             href="/marketplace/trendyol/returns"
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-3)]"
           >
             İade Merkezi →
           </Link>
@@ -279,15 +277,15 @@ export default async function ReturnAnalysisPage() {
 
       {/* High return risk */}
       {highRiskRows.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
-          <div className="border-b border-red-100 bg-red-50 px-6 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-red-600">
+        <div className="overflow-hidden rounded-lg border border-[var(--danger-border)] bg-[var(--surface-2)]">
+          <div className="border-b border-[var(--danger-border)] bg-[var(--danger-dim)] px-6 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--danger)]">
               Yüksek Risk
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">
+            <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
               Yüksek İade Oranı — ≥%5 ({highRiskRows.length} ürün)
             </h2>
-            <p className="mt-0.5 text-xs text-red-700">
+            <p className="mt-0.5 text-xs text-[var(--danger)]">
               Bu ürünler için listeleme, fiyat ve ürün kalitesini gözden geçirin.
             </p>
           </div>
@@ -296,12 +294,12 @@ export default async function ReturnAnalysisPage() {
       )}
 
       {/* Normal return rate */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-6 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+      <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
+        <div className="border-b border-[var(--border-subtle)] px-6 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Normal
           </p>
-          <h2 className="mt-1 text-lg font-semibold text-slate-900">
+          <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
             Düşük İade Oranı ({normalRows.length} ürün)
           </h2>
         </div>
@@ -313,15 +311,15 @@ export default async function ReturnAnalysisPage() {
 
       {/* No sales data */}
       {noSalesRows.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+        <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
+          <div className="border-b border-[var(--border-subtle)] px-6 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Satış Kaydı Yok
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">
+            <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
               Satış Verisi Eksik ({noSalesRows.length} ürün)
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 text-xs text-[var(--text-muted)]">
               İade talebi var ancak eşleşen satış kaydı bulunamadı. Senkronize edilmemiş olabilir.
             </p>
           </div>
@@ -331,32 +329,32 @@ export default async function ReturnAnalysisPage() {
 
       {/* Top return reasons */}
       {topReasons.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+        <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
+          <div className="border-b border-[var(--border-subtle)] px-6 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               İade Nedenleri
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">
+            <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
               En Sık İade Nedenleri (Top 10)
             </h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                   <th className="px-6 py-3 text-left">Neden</th>
                   <th className="px-4 py-3 text-right">Adet</th>
                   <th className="px-4 py-3 text-right">Oran</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {topReasons.map(([reason, count], i) => (
-                  <tr key={reason} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                    <td className="px-6 py-3 text-slate-700">{reason}</td>
-                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-800">
+              <tbody className="divide-y divide-[var(--border-subtle)]">
+                {topReasons.map(([reason, count]) => (
+                  <tr key={reason} className="hover:bg-[var(--surface-3)]">
+                    <td className="px-6 py-3 text-[var(--text-secondary)]">{reason}</td>
+                    <td className="px-4 py-3 text-right tabular-nums font-mono font-semibold text-[var(--text-primary)]">
                       {count}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-500">
+                    <td className="px-4 py-3 text-right tabular-nums font-mono text-[var(--text-muted)]">
                       {totalMatchedClaims > 0
                         ? fmtPct((count / totalMatchedClaims) * 100)
                         : "—"}
@@ -371,8 +369,8 @@ export default async function ReturnAnalysisPage() {
 
       {/* Empty state */}
       {totalMatchedClaims === 0 && (
-        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
-          <p className="text-slate-500">
+        <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] px-6 py-12 text-center">
+          <p className="text-[var(--text-secondary)]">
             Henüz eşleşmiş iade kaydı yok.{" "}
             <Link href="/marketplace/trendyol/returns" className="underline">
               İade Merkezi

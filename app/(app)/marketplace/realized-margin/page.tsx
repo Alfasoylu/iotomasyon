@@ -13,6 +13,7 @@
  */
 
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -255,17 +256,17 @@ export default async function RealizedMarginPage() {
     : null;
 
   function marginColor(pct: number | null): string {
-    if (pct == null) return "text-slate-300";
-    if (pct >= 25) return "text-emerald-600";
-    if (pct >= 10) return "text-amber-600";
-    return "text-red-600";
+    if (pct == null) return "text-[var(--text-muted)]";
+    if (pct >= 25) return "text-[var(--ok)]";
+    if (pct >= 10) return "text-[var(--warn)]";
+    return "text-[var(--danger)]";
   }
 
   function deltaColor(pct: number | null): string {
-    if (pct == null) return "text-slate-300";
-    if (pct >= 0) return "text-emerald-600";
-    if (pct >= -5) return "text-amber-600";
-    return "text-red-600";
+    if (pct == null) return "text-[var(--text-muted)]";
+    if (pct >= 0) return "text-[var(--ok)]";
+    if (pct >= -5) return "text-[var(--warn)]";
+    return "text-[var(--danger)]";
   }
 
   return (
@@ -273,19 +274,22 @@ export default async function RealizedMarginPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Pazar Yerleri / Gerçekleşen Marj
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Gerçekleşen Marj Analizi
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Trendyol sipariş geçmişinden hesaplanan gerçekleşen marj — beklenen marjla karşılaştırmalı (son 90 gün).
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/marketplace/profit">
-            <Button variant="secondary">← Kâr Paneli</Button>
+            <Button variant="secondary">
+              <ArrowLeft size={14} strokeWidth={1.5} className="mr-1" />
+              Kâr Paneli
+            </Button>
           </Link>
           <Link href="/admin/product-performance">
             <Button variant="secondary">Satış Performansı</Button>
@@ -295,31 +299,31 @@ export default async function RealizedMarginPage() {
 
       {/* Summary cards */}
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Satılan Ürün Çeşidi
           </p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">{rows.length}</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{rows.length}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Toplam Ciro (90G)
           </p>
-          <p className="mt-1 text-xl font-semibold text-slate-900">{fmt(totalRevenue)}</p>
+          <p className="mt-2 text-xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{fmt(totalRevenue)}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Ort. Gerçekleşen Marj
           </p>
-          <p className={`mt-1 text-2xl font-semibold ${marginColor(avgMargin)}`}>
+          <p className={`mt-2 text-2xl font-semibold tabular-nums font-mono ${marginColor(avgMargin)}`}>
             {avgMargin != null ? fmtPct(avgMargin) : "—"}
           </p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Beklenenden Kötü (−5%)
           </p>
-          <p className={`mt-1 text-2xl font-semibold ${diverging.length > 0 ? "text-red-600" : "text-emerald-600"}`}>
+          <p className={`mt-2 text-2xl font-semibold tabular-nums font-mono ${diverging.length > 0 ? "text-[var(--danger)]" : "text-[var(--ok)]"}`}>
             {diverging.length}
           </p>
         </Card>
@@ -327,11 +331,11 @@ export default async function RealizedMarginPage() {
 
       {/* Empty state */}
       {rows.length === 0 && (
-        <Card className="p-10 text-center space-y-3">
-          <p className="text-slate-500 text-sm font-medium">
+        <Card className="p-10 text-center space-y-3 rounded-lg">
+          <p className="text-[var(--text-secondary)] text-sm font-medium">
             Son 90 günde eşleşmiş Trendyol satışı bulunamadı.
           </p>
-          <p className="text-slate-400 text-xs">
+          <p className="text-[var(--text-muted)] text-xs">
             Sipariş verilerini senkronize edin.
           </p>
           <Link href="/admin/product-performance">
@@ -343,9 +347,9 @@ export default async function RealizedMarginPage() {
       {/* Losers */}
       {losers.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-red-700">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--danger)]">
             Zarar Eden Satışlar{" "}
-            <span className="text-slate-400 font-normal text-sm">({losers.length} ürün — gerçekleşen marj negatif)</span>
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">({losers.length} ürün — gerçekleşen marj negatif)</span>
           </h2>
           <MarginTable rows={losers} marginColor={marginColor} deltaColor={deltaColor} />
         </section>
@@ -354,13 +358,13 @@ export default async function RealizedMarginPage() {
       {/* Diverging from expected */}
       {diverging.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-amber-700">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--warn)]">
             Beklenenden Düşük Marj{" "}
-            <span className="text-slate-400 font-normal text-sm">
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">
               ({diverging.length} ürün — gerçekleşen, beklenen marjdan 5+ puan düşük)
             </span>
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--text-secondary)]">
             Bu ürünler için fiyat politikası, iade oranı veya maliyet girdilerini gözden geçirin.
           </p>
           <MarginTable rows={diverging} marginColor={marginColor} deltaColor={deltaColor} showDelta />
@@ -370,9 +374,9 @@ export default async function RealizedMarginPage() {
       {/* Winners */}
       {winners.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">
             Kârlı Satışlar{" "}
-            <span className="text-slate-400 font-normal text-sm">(gerçekleşen marj — yüksekten düşüğe)</span>
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">(gerçekleşen marj — yüksekten düşüğe)</span>
           </h2>
           <MarginTable rows={winners} marginColor={marginColor} deltaColor={deltaColor} showDelta />
         </section>
@@ -381,34 +385,34 @@ export default async function RealizedMarginPage() {
       {/* No cost data */}
       {noData.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-amber-700">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--warn)]">
             Maliyet Verisi Eksik{" "}
-            <span className="text-slate-400 font-normal text-sm">({noData.length} ürün)</span>
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">({noData.length} ürün)</span>
           </h2>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-amber-50/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Satış (90G)</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Ciro</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Yapılacak</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--warn-dim)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                    <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Satış (90G)</th>
+                    <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ciro</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Yapılacak</th>
                   </tr>
                 </thead>
                 <tbody>
                   {noData.map((r) => (
-                    <tr key={r.productId} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <tr key={r.productId} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
                       <td className="py-3 px-4">
-                        <Link href={`/products/${r.productId}`} className="font-mono text-xs text-slate-500 hover:text-slate-800">
+                        <Link href={`/products/${r.productId}`} className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                           {r.productSku}
                         </Link>
-                        <p className="text-xs text-slate-600 mt-0.5 max-w-[200px] truncate">{r.productName}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 max-w-[200px] truncate">{r.productName}</p>
                       </td>
-                      <td className="py-3 px-4 text-right text-xs text-slate-700">{r.qtySold}</td>
-                      <td className="py-3 px-4 text-right text-xs text-slate-700">{fmt(r.totalRevenue)}</td>
+                      <td className="py-3 px-4 text-right text-xs text-[var(--text-secondary)] tabular-nums font-mono">{r.qtySold}</td>
+                      <td className="py-3 px-4 text-right text-xs text-[var(--text-secondary)] tabular-nums font-mono">{fmt(r.totalRevenue)}</td>
                       <td className="py-3 px-4">
-                        <Link href={`/products/${r.productId}/edit`} className="text-xs text-amber-600 hover:text-amber-800 underline underline-offset-2">
+                        <Link href={`/products/${r.productId}/edit`} className="text-xs text-[var(--warn)] hover:brightness-110 underline underline-offset-2">
                           Maliyet gir →
                         </Link>
                       </td>
@@ -422,8 +426,8 @@ export default async function RealizedMarginPage() {
       )}
 
       {/* Formula note */}
-      <Card className="p-4 bg-slate-50/50 text-xs text-slate-500 space-y-1">
-        <p className="font-semibold text-slate-700">Hesaplama Notu</p>
+      <Card className="p-4 rounded-lg bg-[var(--surface-1)] text-xs text-[var(--text-secondary)] space-y-1">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">Hesaplama Notu</p>
         <p>Gerçekleşen marj = (Ort. gerçekleşen fiyat − tahm. komisyon − tahm. kargo − ödeme komisyonu − iade rezervi − birim maliyet) / fiyat × 100</p>
         <p>Komisyon ve kargo, gerçekleşen fiyat üzerinden platform politikasına veya sistem varsayılanına göre hesaplanır.</p>
         <p>Delta = Gerçekleşen marj − Beklenen marj (negatif: beklenden kötü, pozitif: beklenden iyi).</p>
@@ -460,53 +464,53 @@ function MarginTable({
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden rounded-lg">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-slate-700 border-collapse">
+        <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50">
-              <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Satış (90G)</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Ort. Fiyat</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Birim Maliyet</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Gerçekleşen Marj</th>
+            <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+              <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Satış (90G)</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ort. Fiyat</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Birim Maliyet</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Gerçekleşen Marj</th>
               {showDelta && (
                 <>
-                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Beklenen Marj</th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Delta</th>
+                  <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Beklenen Marj</th>
+                  <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Delta</th>
                 </>
               )}
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Ciro</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ciro</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.productId} className="border-b border-slate-50 hover:bg-slate-50/50">
+              <tr key={r.productId} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
                 <td className="py-3 px-4">
-                  <Link href={`/products/${r.productId}`} className="font-mono text-xs text-slate-500 hover:text-slate-800">
+                  <Link href={`/products/${r.productId}`} className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                     {r.productSku}
                   </Link>
-                  <p className="text-xs text-slate-600 mt-0.5 max-w-[200px] truncate">{r.productName}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 max-w-[200px] truncate">{r.productName}</p>
                 </td>
-                <td className="py-3 px-4 text-right text-xs text-slate-700">{r.qtySold}</td>
-                <td className="py-3 px-4 text-right text-xs text-slate-700">{fmt(r.avgRealizedPriceTry)}</td>
-                <td className="py-3 px-4 text-right text-xs text-slate-700">
-                  {r.unitCostTry > 0 ? fmt(r.unitCostTry) : <span className="text-amber-500">Eksik</span>}
+                <td className="py-3 px-4 text-right text-xs text-[var(--text-secondary)] tabular-nums font-mono">{r.qtySold}</td>
+                <td className="py-3 px-4 text-right text-xs text-[var(--text-secondary)] tabular-nums font-mono">{fmt(r.avgRealizedPriceTry)}</td>
+                <td className="py-3 px-4 text-right text-xs text-[var(--text-secondary)] tabular-nums font-mono">
+                  {r.unitCostTry > 0 ? fmt(r.unitCostTry) : <span className="text-[var(--warn)]">Eksik</span>}
                 </td>
-                <td className={`py-3 px-4 text-right text-xs font-semibold ${marginColor(r.realizedMarginPct)}`}>
+                <td className={`py-3 px-4 text-right text-xs font-semibold tabular-nums font-mono ${marginColor(r.realizedMarginPct)}`}>
                   {r.realizedMarginPct != null ? fmtPct(r.realizedMarginPct) : "—"}
                 </td>
                 {showDelta && (
                   <>
-                    <td className={`py-3 px-4 text-right text-xs ${marginColor(r.expectedMarginPct)}`}>
+                    <td className={`py-3 px-4 text-right text-xs tabular-nums font-mono ${marginColor(r.expectedMarginPct)}`}>
                       {r.expectedMarginPct != null ? fmtPct(r.expectedMarginPct) : "—"}
                     </td>
-                    <td className={`py-3 px-4 text-right text-xs font-semibold ${deltaColor(r.deltaPct)}`}>
+                    <td className={`py-3 px-4 text-right text-xs font-semibold tabular-nums font-mono ${deltaColor(r.deltaPct)}`}>
                       {r.deltaPct != null ? (r.deltaPct >= 0 ? `+${r.deltaPct.toFixed(1)}` : r.deltaPct.toFixed(1)) : "—"}
                     </td>
                   </>
                 )}
-                <td className="py-3 px-4 text-right text-xs text-slate-700">{fmt(r.totalRevenue)}</td>
+                <td className="py-3 px-4 text-right text-xs text-[var(--text-secondary)] tabular-nums font-mono">{fmt(r.totalRevenue)}</td>
               </tr>
             ))}
           </tbody>

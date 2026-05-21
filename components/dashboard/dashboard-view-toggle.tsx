@@ -25,10 +25,10 @@ export function DashboardViewToggle({ currentView }: { currentView: "admin" | "s
   return (
     <Link
       href={`/dashboard${qs ? `?${qs}` : ""}`}
-      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+      className="inline-flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
       title="Dashboard temasını değiştir"
     >
-      <Eye className="h-3.5 w-3.5" />
+      <Eye size={14} strokeWidth={1.5} />
       {otherLabel} →
     </Link>
   );
