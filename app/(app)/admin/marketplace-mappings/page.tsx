@@ -110,13 +110,13 @@ export default async function MarketplaceMappingsPage({
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Yönetim / Ürün Eşleştirme
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Pazar Yeri Ürün Eşleştirme
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Platform kimliklerini (barkod, SKU, listeleme ID) iç ürünlere bağlayın.
           </p>
         </div>
@@ -131,24 +131,24 @@ export default async function MarketplaceMappingsPage({
 
       {/* ── Phase 37: Unmatched Barcodes Inbox ── */}
       {unmatchedTop.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
+        <Card className="overflow-hidden rounded-lg">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-subtle)] px-6 py-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Trendyol / Eşleşmemiş
               </p>
-              <h2 className="mt-1 text-lg font-semibold text-slate-900">
+              <h2 className="mt-1 flex items-center gap-2 text-base font-semibold text-[var(--text-primary)]">
                 Eşleşmemiş Barkodlar
-                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-sm font-semibold text-amber-800">
+                <span className="rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-2 py-0.5 text-xs font-medium tabular-nums font-mono text-[var(--warn)]">
                   {totalUnmatched} barkod
                 </span>
               </h2>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
                 Bu satışlar hiçbir iç ürünle eşleşmedi.{" "}
-                <span className="font-medium text-amber-700">{fmt(totalUnmatchedRevenue)}</span>{" "}
+                <span className="font-medium tabular-nums font-mono text-[var(--warn)]">{fmt(totalUnmatchedRevenue)}</span>{" "}
                 tutarında ciro kârlılık analizine dahil edilemiyor.
                 {totalUnmatched > 30 && (
-                  <span className="ml-1 text-slate-400">(İlk 30 barkod gösteriliyor.)</span>
+                  <span className="ml-1 text-[var(--text-muted)]">(İlk 30 barkod gösteriliyor.)</span>
                 )}
               </p>
             </div>
@@ -157,40 +157,40 @@ export default async function MarketplaceMappingsPage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
-                  <th className="px-4 py-3 text-left">Platform Barkod</th>
-                  <th className="px-4 py-3 text-left">Trendyol Ürün Adı</th>
-                  <th className="px-4 py-3 text-left">SKU</th>
-                  <th className="px-4 py-3 text-right">Kayıt</th>
-                  <th className="px-4 py-3 text-right">Toplam Ciro</th>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
+                  <th className="px-4 py-3 text-left font-medium">Platform Barkod</th>
+                  <th className="px-4 py-3 text-left font-medium">Trendyol Ürün Adı</th>
+                  <th className="px-4 py-3 text-left font-medium">SKU</th>
+                  <th className="px-4 py-3 text-right font-medium">Kayıt</th>
+                  <th className="px-4 py-3 text-right font-medium">Toplam Ciro</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {unmatchedTop.map((row, i) => (
+              <tbody className="divide-y divide-[var(--border-subtle)]">
+                {unmatchedTop.map((row) => (
                   <tr
                     key={row.barcode}
-                    className={`${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"} ${
-                      defaultBarcode === row.barcode ? "ring-2 ring-inset ring-amber-300" : ""
+                    className={`hover:bg-[var(--surface-1)] ${
+                      defaultBarcode === row.barcode ? "ring-1 ring-inset ring-[var(--warn-border)] bg-[var(--warn-dim)]" : ""
                     }`}
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.barcode}</td>
-                    <td className="px-4 py-3 max-w-[260px] truncate text-xs text-slate-600">
+                    <td className="px-4 py-3 font-mono text-xs text-[var(--text-primary)]">{row.barcode}</td>
+                    <td className="px-4 py-3 max-w-[260px] truncate text-xs text-[var(--text-secondary)]">
                       {row.productName}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate-400">
+                    <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
                       {row.merchantSku ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-xs text-slate-500">
+                    <td className="px-4 py-3 text-right tabular-nums font-mono text-xs text-[var(--text-muted)]">
                       {row.count}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-xs font-semibold text-slate-700">
+                    <td className="px-4 py-3 text-right tabular-nums font-mono text-xs font-semibold text-[var(--text-primary)]">
                       {fmt(row.revenue)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/admin/marketplace-mappings?barcode=${encodeURIComponent(row.barcode)}&title=${encodeURIComponent(row.productName)}#add-form`}
-                        className="rounded-md bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200"
+                        className="rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-3 py-1 text-xs font-medium text-[var(--warn)] hover:bg-[var(--surface-3)]"
                       >
                         Eşleştir →
                       </Link>
@@ -205,11 +205,11 @@ export default async function MarketplaceMappingsPage({
 
       {/* Add form */}
       <div id="add-form">
-      <Card className="p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-slate-800">
+      <Card className="p-6 space-y-4 rounded-lg">
+        <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">
           Yeni Eşleştirme Ekle
           {defaultBarcode && (
-            <span className="ml-2 font-mono text-xs font-normal text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+            <span className="ml-2 rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-2 py-0.5 font-mono text-xs font-normal normal-case tracking-normal text-[var(--warn)]">
               Barkod ön dolduruldu: {defaultBarcode}
             </span>
           )}
@@ -224,59 +224,65 @@ export default async function MarketplaceMappingsPage({
 
       {/* Mappings list */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-slate-800">
+        <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">
           Mevcut Eşleştirmeler ({mappings.length})
         </h2>
         {mappings.length === 0 ? (
-          <Card className="p-10 text-center">
-            <p className="text-slate-400 text-sm">Henüz eşleştirme eklenmedi.</p>
+          <Card className="p-10 text-center rounded-lg">
+            <p className="text-sm text-[var(--text-muted)]">Henüz eşleştirme eklenmedi.</p>
           </Card>
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">İç Ürün</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Barkod</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">SKU</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Listeleme ID</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform Başlığı</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Güven</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ekleyen</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Platform</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İç Ürün</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Barkod</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">SKU</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Listeleme ID</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Platform Başlığı</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Güven</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ekleyen</th>
                     <th className="py-3 px-4"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {mappings.map((m) => (
-                    <tr key={m.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <tr key={m.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-1)]">
                       <td className="py-3 px-4">
-                        <span className="rounded-full bg-blue-100 text-blue-700 px-2 py-0.5 text-xs font-medium">
+                        <span className="rounded-md border border-[var(--info-border)] bg-[var(--info-dim)] px-2 py-0.5 text-xs font-medium text-[var(--info)]">
                           {PLATFORM_LABELS[m.platform] ?? m.platform}
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <Link
                           href={`/products/${m.product.id}`}
-                          className="text-xs font-medium text-slate-800 hover:text-slate-950 underline decoration-dotted"
+                          className="text-xs font-medium text-[var(--text-primary)] hover:text-[var(--accent)] underline decoration-dotted"
                         >
                           {m.product.name}
                         </Link>
                         {m.product.sku && (
-                          <span className="block font-mono text-[10px] text-slate-400">{m.product.sku}</span>
+                          <span className="block font-mono text-[10px] text-[var(--text-muted)]">{m.product.sku}</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 font-mono text-xs text-slate-600">{m.platformBarcode ?? "—"}</td>
-                      <td className="py-3 px-4 font-mono text-xs text-slate-600">{m.platformSku ?? "—"}</td>
-                      <td className="py-3 px-4 font-mono text-xs text-slate-600">{m.platformListingId ?? "—"}</td>
-                      <td className="py-3 px-4 text-xs text-slate-500 max-w-[180px] truncate">{m.platformTitle ?? "—"}</td>
+                      <td className="py-3 px-4 font-mono text-xs text-[var(--text-secondary)]">{m.platformBarcode ?? "—"}</td>
+                      <td className="py-3 px-4 font-mono text-xs text-[var(--text-secondary)]">{m.platformSku ?? "—"}</td>
+                      <td className="py-3 px-4 font-mono text-xs text-[var(--text-secondary)]">{m.platformListingId ?? "—"}</td>
+                      <td className="py-3 px-4 text-xs text-[var(--text-muted)] max-w-[180px] truncate">{m.platformTitle ?? "—"}</td>
                       <td className="py-3 px-4">
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${m.confidence === "MANUAL" ? "bg-slate-100 text-slate-600" : "bg-emerald-100 text-emerald-700"}`}>
+                        <span
+                          className={`rounded-md border px-2 py-0.5 text-[10px] font-medium ${
+                            m.confidence === "MANUAL"
+                              ? "border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--text-secondary)]"
+                              : "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]"
+                          }`}
+                        >
                           {m.confidence}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-xs text-slate-400">{m.createdBy?.name ?? "—"}</td>
+                      <td className="py-3 px-4 text-xs text-[var(--text-muted)]">{m.createdBy?.name ?? "—"}</td>
                       <td className="py-3 px-4">
                         <DeleteMappingButton id={m.id} />
                       </td>

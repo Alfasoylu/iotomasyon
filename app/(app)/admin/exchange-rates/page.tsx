@@ -6,6 +6,7 @@
  */
 
 import Link from "next/link";
+import { Info } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -32,13 +33,13 @@ export default async function ExchangeRatesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Yönetim / Döviz Kurları
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Aylık Döviz Kurları
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             İthalat maliyeti hesaplamasında kullanılan aylık USD/TRY ve RMB/USD kurlarını yönetin.
           </p>
         </div>
@@ -48,48 +49,52 @@ export default async function ExchangeRatesPage() {
       </div>
 
       {/* Add / edit form */}
-      <Card className="p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-slate-800">Kur Ekle / Güncelle</h2>
-        <p className="text-xs text-slate-500">
-          Aynı yıl–ay kombinasyonu için kayıt varsa mevcut değer güncellenir.
-        </p>
+      <Card className="p-6 space-y-4 rounded-lg">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+            Kur Ekle / Güncelle
+          </p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Aynı yıl–ay kombinasyonu için kayıt varsa mevcut değer güncellenir.
+          </p>
+        </div>
         <ExchangeRateForm />
       </Card>
 
       {/* Rate list */}
       {rates.length === 0 ? (
-        <Card className="p-10 text-center">
-          <p className="text-slate-400 text-sm">Henüz kur kaydı bulunmuyor.</p>
+        <Card className="p-10 text-center rounded-lg">
+          <p className="text-sm text-[var(--text-muted)]">Henüz kur kaydı bulunmuyor.</p>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden rounded-lg">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-slate-700 border-collapse">
+            <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Dönem</th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">USD/TRY</th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">RMB/USD</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Not</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Güncellendi</th>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                  <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Dönem</th>
+                  <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">USD/TRY</th>
+                  <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">RMB/USD</th>
+                  <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Not</th>
+                  <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Güncellendi</th>
                 </tr>
               </thead>
               <tbody>
                 {rates.map((r) => (
-                  <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="py-3 px-4 font-medium text-slate-900">
+                  <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-1)]">
+                    <td className="py-3 px-4 font-medium text-[var(--text-primary)]">
                       {MONTHS[r.month] ?? r.month} {r.year}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-semibold text-slate-800">
+                    <td className="py-3 px-4 text-right tabular-nums font-mono font-semibold text-[var(--text-primary)]">
                       {Number(r.usdTryRate).toFixed(4)}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono text-slate-600">
-                      {r.rmbUsdRate != null ? Number(r.rmbUsdRate).toFixed(4) : <span className="text-slate-300">—</span>}
+                    <td className="py-3 px-4 text-right tabular-nums font-mono text-[var(--text-secondary)]">
+                      {r.rmbUsdRate != null ? Number(r.rmbUsdRate).toFixed(4) : <span className="text-[var(--text-muted)]">—</span>}
                     </td>
-                    <td className="py-3 px-4 text-xs text-slate-500">
+                    <td className="py-3 px-4 text-xs text-[var(--text-secondary)]">
                       {r.note ?? "—"}
                     </td>
-                    <td className="py-3 px-4 text-xs text-slate-400">
+                    <td className="py-3 px-4 text-xs tabular-nums font-mono text-[var(--text-muted)]">
                       {new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(r.updatedAt))}
                     </td>
                   </tr>
@@ -100,9 +105,12 @@ export default async function ExchangeRatesPage() {
         </Card>
       )}
 
-      <Card className="p-4 border-blue-100 bg-blue-50">
-        <p className="text-xs font-semibold text-blue-700">Nasıl kullanılır?</p>
-        <ul className="mt-2 text-xs text-blue-600 space-y-1 list-disc list-inside">
+      <Card className="p-4 rounded-lg border-[var(--info-border)] bg-[var(--info-dim)]">
+        <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-[var(--info)]">
+          <Info size={14} strokeWidth={1.5} />
+          Nasıl kullanılır?
+        </p>
+        <ul className="mt-2 text-xs text-[var(--text-secondary)] space-y-1 list-disc list-inside">
           <li><strong>USD/TRY:</strong> Her ay için TCMB ortalama kurunu girin. İthalat maliyetini TRY&apos;ye çevirmek için kullanılır.</li>
           <li><strong>RMB/USD:</strong> Çin&apos;den RMB cinsinden alım yapılan aylar için girin (ör. 7.25 = 1 USD = 7.25 RMB). İthalat karar motorunda RMB-öncelikli formül için gereklidir.</li>
           <li>Kur bulunamazsa sistem fallback olarak en son girilen kuru kullanır.</li>

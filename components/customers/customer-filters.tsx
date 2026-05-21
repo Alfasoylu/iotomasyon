@@ -98,6 +98,9 @@ export function CustomerFilters({
     return industryGroups.find((g) => g.id === industryGroupId)?.children ?? [];
   }, [industryGroupId, industryGroups]);
 
+  const selectCls =
+    "h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)] disabled:opacity-50";
+
   return (
     <form
       className="space-y-3"
@@ -130,7 +133,7 @@ export function CustomerFilters({
         <select
           value={status}
           onChange={(event) => setStatus(event.target.value)}
-          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+          className={selectCls}
         >
           <option value="all">Tüm durumlar</option>
           {CUSTOMER_STATUS_OPTIONS.map((option) => (
@@ -140,7 +143,7 @@ export function CustomerFilters({
         <select
           value={segment}
           onChange={(event) => setSegment(event.target.value)}
-          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+          className={selectCls}
           title="Çatı: B2B Bayi / Montaj Fırsatı / Pazaryeri"
         >
           <option value="all">Tüm çatılar</option>
@@ -152,7 +155,7 @@ export function CustomerFilters({
           <select
             value={ownedById}
             onChange={(event) => setOwnedById(event.target.value)}
-            className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+            className={selectCls}
           >
             <option value="all">Tüm sahipler</option>
             {users.map((u) => (
@@ -168,7 +171,7 @@ export function CustomerFilters({
         <select
           value={city}
           onChange={(event) => { setCity(event.target.value); setDistrict("all"); }}
-          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+          className={selectCls}
         >
           <option value="all">Tüm şehirler</option>
           {cities.map((c) => (
@@ -181,7 +184,7 @@ export function CustomerFilters({
           value={district}
           onChange={(event) => setDistrict(event.target.value)}
           disabled={city === "all"}
-          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 disabled:opacity-50"
+          className={selectCls}
         >
           <option value="all">{city === "all" ? "Önce şehir seç" : "Tüm ilçeler"}</option>
           {availableDistricts.map((d) => (
@@ -193,7 +196,7 @@ export function CustomerFilters({
         <select
           value={industryGroupId}
           onChange={(event) => { setIndustryGroupId(event.target.value); setIndustryId("all"); }}
-          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+          className={selectCls}
         >
           <option value="all">Tüm sektör grupları</option>
           {industryGroups.map((g) => (
@@ -204,7 +207,7 @@ export function CustomerFilters({
           value={industryId}
           onChange={(event) => setIndustryId(event.target.value)}
           disabled={industryGroupId === "all"}
-          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 disabled:opacity-50"
+          className={selectCls}
         >
           <option value="all">{industryGroupId === "all" ? "Önce grup seç" : "Alt sektör (tümü)"}</option>
           {availableSubIndustries.map((c) => (
@@ -214,7 +217,7 @@ export function CustomerFilters({
         <select
           value={categoryId}
           onChange={(event) => setCategoryId(event.target.value)}
-          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+          className={selectCls}
           title="Müşterinin ilgilendiği ürün kategorisi"
         >
           <option value="all">Tüm ürün kategorileri</option>
@@ -226,14 +229,14 @@ export function CustomerFilters({
 
       {/* Satır 3: Source + customerType + attribute (eski filtreler, daha gizli) */}
       <details className="text-sm">
-        <summary className="cursor-pointer text-slate-500 hover:text-slate-700">
+        <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-secondary)]">
           Diğer filtreler (kaynak / müşteri tipi / özellik)
         </summary>
         <div className="mt-2 grid gap-2 md:grid-cols-3">
           <select
             value={source}
             onChange={(event) => setSource(event.target.value)}
-            className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+            className={selectCls}
           >
             <option value="all">Tüm kaynaklar</option>
             {CUSTOMER_SOURCE_OPTIONS.map((option) => (
@@ -243,7 +246,7 @@ export function CustomerFilters({
           <select
             value={customerType}
             onChange={(event) => setCustomerType(event.target.value)}
-            className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+            className={selectCls}
           >
             <option value="all">Tüm tipler</option>
             {CUSTOMER_TYPE_OPTIONS.map((t) => (
@@ -254,7 +257,7 @@ export function CustomerFilters({
             <select
               value={attributeId}
               onChange={(event) => setAttributeId(event.target.value)}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+              className={selectCls}
             >
               <option value="all">Tüm özellikler</option>
               {attributes.map((a) => (
