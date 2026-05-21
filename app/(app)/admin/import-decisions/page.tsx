@@ -10,6 +10,7 @@
  */
 
 import Link from "next/link";
+import { Plane, Ship } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -238,15 +239,15 @@ export default async function ImportDecisionsPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
           Yönetici paneli
         </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+        <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           İthalat Kararları
         </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-1 text-sm leading-7 text-[var(--text-secondary)]">
           Her aktif ürün için hava/deniz kargo ekonomisi ve satın alma önerisi.
-          Kur: <span className="font-semibold">1 USD = ₺{usdTryRate.toFixed(2)}</span>
+          Kur: <span className="font-semibold font-mono tabular-nums">1 USD = ₺{usdTryRate.toFixed(2)}</span>
           {latestRate
             ? ` (${latestRate.month}/${latestRate.year})`
             : " (varsayılan — kur tablosu boş)"}
@@ -287,172 +288,173 @@ export default async function ImportDecisionsPage({
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs uppercase tracking-wide text-slate-400">Filtrele:</span>
+        <span className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Filtrele:</span>
         <Link
           href={filterLink({})}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${!hasFilters ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition border ${!hasFilters ? "bg-[var(--accent-dim)] text-[var(--accent)] border-[var(--accent-border)]" : "bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border-default)] hover:bg-[var(--surface-3)]"}`}
         >
           Tümü ({rows.length})
         </Link>
         <Link
           href={filterLink({ ...Object.fromEntries(new URLSearchParams(hasFilters ? `` : ``)), method: "AIR" })}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${filterMethod === "AIR" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition border ${filterMethod === "AIR" ? "bg-[var(--accent-dim)] text-[var(--accent)] border-[var(--accent-border)]" : "bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border-default)] hover:bg-[var(--surface-3)]"}`}
         >
           Hava yolu
         </Link>
         <Link
           href={filterLink({ decision: filterDecision, method: "SEA" })}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${filterMethod === "SEA" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition border ${filterMethod === "SEA" ? "bg-[var(--accent-dim)] text-[var(--accent)] border-[var(--accent-border)]" : "bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border-default)] hover:bg-[var(--surface-3)]"}`}
         >
           Deniz yolu
         </Link>
         {hasFilters && (
           <Link
             href="/admin/import-decisions"
-            className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100"
+            className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-1.5 text-xs font-medium text-[var(--danger)] transition hover:brightness-110"
           >
             Filtreyi temizle
           </Link>
         )}
-        <span className="ml-auto text-xs text-slate-400">
+        <span className="ml-auto text-xs text-[var(--text-muted)] tabular-nums">
           {sorted.length} ürün gösteriliyor
         </span>
       </div>
 
       {/* Products table */}
       {sorted.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-slate-500">
+        <Card className="p-8 text-center text-sm text-[var(--text-muted)]">
           Bu filtreyle eşleşen ürün bulunamadı.
         </Card>
       ) : (
         <Card className="overflow-hidden p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-100 bg-slate-50">
+              <thead className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Ürün
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Karar
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Skor
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Yöntem
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     İniş Maliyeti
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Kâr Oranı
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Aylık Kâr
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Yıllık Kâr
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Gerekli Sermaye
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Trendyol 90g
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Talep/ay
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Stok
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Kaydet
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {sorted.map(({ product: p, decision: d, monthlyUnits, trendyolVelocity, monthlyUnitsSource }) => (
-                  <tr key={p.id} className="hover:bg-slate-50/50">
+                  <tr key={p.id} className="hover:bg-[var(--surface-3)]">
                     <td className="px-4 py-3">
                       <Link
                         href={`/products/${p.id}`}
-                        className="font-medium text-slate-900 hover:text-slate-600"
+                        className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
                       >
                         {p.name}
                       </Link>
-                      <p className="mt-0.5 font-mono text-xs text-slate-400">{p.sku}</p>
+                      <p className="mt-0.5 font-mono tabular-nums text-xs text-[var(--text-muted)]">{p.sku}</p>
                     </td>
                     <td className="px-4 py-3">
                       <Badge tone={DECISION_TONE[d.decision]}>
                         {RECOMMENDATION_LABELS[d.decision]}
                       </Badge>
                       {d.decision === "MISSING_DATA" && d.missingFields.length > 0 && (
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-[var(--text-muted)]">
                           Eksik: {d.missingFields.join(", ")}
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-slate-700">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                       {d.hasData ? fmt(d.score, 3) : "—"}
                     </td>
                     <td className="px-4 py-3">
                       {d.effectiveMethod ? (
-                        <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${d.effectiveMethod === "AIR" ? "bg-blue-50 text-blue-700" : "bg-teal-50 text-teal-700"}`}>
-                          {d.effectiveMethod === "AIR" ? "✈ Hava" : "🚢 Deniz"}
+                        <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${d.effectiveMethod === "AIR" ? "border-[var(--info-border)] bg-[var(--info-dim)] text-[var(--info)]" : "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]"}`}>
+                          {d.effectiveMethod === "AIR" ? <Plane size={14} strokeWidth={1.5} /> : <Ship size={14} strokeWidth={1.5} />}
+                          {d.effectiveMethod === "AIR" ? "Hava" : "Deniz"}
                           {p.shippingMethodPref ? " (manuel)" : ""}
                         </span>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-[var(--text-muted)]">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-slate-700">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                       {d.effectiveScenario ? fmtUsd(d.effectiveScenario.landedCostUsd) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums">
                       {d.effectiveScenario ? (
-                        <span className={d.effectiveScenario.profitRatio >= 1 ? "text-emerald-700" : "text-red-600"}>
+                        <span className={d.effectiveScenario.profitRatio >= 1 ? "text-[var(--ok)]" : "text-[var(--danger)]"}>
                           {fmt(d.effectiveScenario.profitRatio, 3)}×
                         </span>
                       ) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-slate-700">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                       {d.effectiveScenario ? fmtUsd(d.effectiveScenario.monthlyProfitUsd) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-slate-700">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                       {d.effectiveScenario ? fmtUsd(d.effectiveScenario.annualProfitUsd) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-slate-700">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                       {d.effectiveScenario ? fmtUsd(d.effectiveScenario.requiredCapitalUsd) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {trendyolVelocity ? (
                         <div className="flex flex-col items-end gap-0.5">
-                          <span className="font-mono text-xs font-semibold text-emerald-700">
+                          <span className="font-mono tabular-nums text-xs font-semibold text-[var(--ok)]">
                             {trendyolVelocity.qty90d} adet
                           </span>
-                          <span className="text-[10px] text-emerald-600">
+                          <span className="text-[10px] text-[var(--ok)] opacity-70 font-mono tabular-nums">
                             ~{trendyolVelocity.monthlyVelocity}/ay
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-300">—</span>
+                        <span className="text-xs text-[var(--text-muted)]">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {monthlyUnitsSource === "none" ? (
-                        <span className="text-xs text-slate-300">—</span>
+                        <span className="text-xs text-[var(--text-muted)]">—</span>
                       ) : (
                         <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-sm text-slate-700">
+                          <span className="text-sm text-[var(--text-secondary)] font-mono tabular-nums">
                             {Math.max(monthlyUnits, trendyolVelocity?.monthlyVelocity ?? 0)}
                           </span>
                           <span className={`text-[10px] font-medium ${
                             monthlyUnitsSource === "trendyol"
-                              ? "text-emerald-600"
+                              ? "text-[var(--ok)]"
                               : monthlyUnitsSource === "combined"
-                                ? "text-blue-600"
-                                : "text-slate-400"
+                                ? "text-[var(--info)]"
+                                : "text-[var(--text-muted)]"
                           }`}>
                             {monthlyUnitsSource === "trendyol"
                               ? "Trendyol"
@@ -463,7 +465,7 @@ export default async function ImportDecisionsPage({
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-600">
+                    <td className="px-4 py-3 text-right text-[var(--text-secondary)] font-mono tabular-nums">
                       {p.stockQuantity}
                     </td>
                     <td className="px-4 py-3">
@@ -478,19 +480,19 @@ export default async function ImportDecisionsPage({
       )}
 
       {/* Air vs Sea explanation */}
-      <Card className="p-5 text-xs leading-6 text-slate-500">
-        <p className="font-semibold text-slate-700">Formül kaynağı: Top.ürünler çalışma sayfası</p>
-        <p className="mt-1">
+      <Card className="p-5 text-xs leading-6 text-[var(--text-secondary)]">
+        <p className="font-semibold text-[var(--text-primary)]">Formül kaynağı: Top.ürünler çalışma sayfası</p>
+        <p className="mt-1 font-mono tabular-nums">
           İniş maliyeti = (Kaynak USD + Kargo$/kg × Ağırlık) × (1 + Gümrük%)
           | Hava: {8}$/kg, {120} gün döngü
           | Deniz: {2}$/kg, {210} gün döngü
         </p>
-        <p>
+        <p className="font-mono tabular-nums">
           Kâr oranı = Net gelir USD / İniş maliyeti
           | Yıllık ROI = oran^(365/döngü)
           | Deniz kazanır: deniz ROI / hava ROI ≥ 1.1
         </p>
-        <p>
+        <p className="font-mono tabular-nums">
           Karar: Yıllık kâr / sermaye &gt; 2 → HEP STOKTA OLMALI | &gt; 1.4 → AZ AL | diğer → ALMA
         </p>
       </Card>
@@ -512,23 +514,31 @@ function SummaryCard({
   active?: boolean;
 }) {
   const bg = {
-    success: active ? "bg-emerald-700 text-white" : "bg-white border border-emerald-200 hover:border-emerald-400",
-    warning: active ? "bg-amber-600 text-white" : "bg-white border border-amber-200 hover:border-amber-400",
-    danger: active ? "bg-red-700 text-white" : "bg-white border border-red-200 hover:border-red-400",
-    default: active ? "bg-slate-700 text-white" : "bg-white border border-slate-200 hover:border-slate-400",
+    success: active
+      ? "border-[var(--ok-border)] bg-[var(--ok-dim)]"
+      : "border-[var(--border-default)] bg-[var(--surface-2)] hover:border-[var(--ok-border)]",
+    warning: active
+      ? "border-[var(--warn-border)] bg-[var(--warn-dim)]"
+      : "border-[var(--border-default)] bg-[var(--surface-2)] hover:border-[var(--warn-border)]",
+    danger: active
+      ? "border-[var(--danger-border)] bg-[var(--danger-dim)]"
+      : "border-[var(--border-default)] bg-[var(--surface-2)] hover:border-[var(--danger-border)]",
+    default: active
+      ? "border-[var(--accent-border)] bg-[var(--accent-dim)]"
+      : "border-[var(--border-default)] bg-[var(--surface-2)] hover:border-[var(--border-strong)]",
   }[tone];
 
   const countColor = {
-    success: active ? "text-emerald-100" : "text-emerald-700",
-    warning: active ? "text-amber-100" : "text-amber-700",
-    danger: active ? "text-red-100" : "text-red-700",
-    default: active ? "text-slate-300" : "text-slate-700",
+    success: "text-[var(--ok)]",
+    warning: "text-[var(--warn)]",
+    danger: "text-[var(--danger)]",
+    default: active ? "text-[var(--accent)]" : "text-[var(--text-primary)]",
   }[tone];
 
   return (
-    <Link href={href} className={`rounded-2xl p-4 transition ${bg}`}>
-      <p className={`text-3xl font-bold ${countColor}`}>{count}</p>
-      <p className={`mt-1 text-xs font-semibold ${active ? "opacity-80" : "text-slate-600"}`}>
+    <Link href={href} className={`rounded-lg border p-4 transition ${bg}`}>
+      <p className={`text-2xl font-semibold font-mono tabular-nums ${countColor}`}>{count}</p>
+      <p className={`mt-1 text-[11px] font-medium uppercase tracking-widest ${active ? "text-[var(--text-secondary)]" : "text-[var(--text-muted)]"}`}>
         {label}
       </p>
     </Link>

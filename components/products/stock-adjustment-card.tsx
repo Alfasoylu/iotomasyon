@@ -14,11 +14,14 @@
 
 import { useState, useTransition } from "react";
 import { StockAdjustmentType } from "@prisma/client";
+import { Plus, Minus } from "lucide-react";
 import {
   createStockAdjustmentAction,
   type StockAdjustmentFormValues,
 } from "@/lib/actions/stock-adjustment-actions";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const TYPE_LABELS: Record<StockAdjustmentType, string> = {
   RESTOCK:    "Stok Girişi",
@@ -29,13 +32,13 @@ const TYPE_LABELS: Record<StockAdjustmentType, string> = {
   OTHER:      "Diğer",
 };
 
-const TYPE_COLORS: Record<StockAdjustmentType, string> = {
-  RESTOCK:    "bg-emerald-100 text-emerald-800",
-  CORRECTION: "bg-blue-100 text-blue-800",
-  DAMAGE:     "bg-red-100 text-red-700",
-  RETURN:     "bg-amber-100 text-amber-800",
-  SALE:       "bg-slate-100 text-slate-700",
-  OTHER:      "bg-slate-100 text-slate-500",
+const TYPE_VARIANTS: Record<StockAdjustmentType, "ok" | "info" | "danger" | "warn" | "neutral"> = {
+  RESTOCK:    "ok",
+  CORRECTION: "info",
+  DAMAGE:     "danger",
+  RETURN:     "warn",
+  SALE:       "neutral",
+  OTHER:      "neutral",
 };
 
 interface AdjustmentRow {
@@ -122,31 +125,36 @@ export function StockAdjustmentCard({
   const variance = latestPhysical != null ? entegraStock - latestPhysical : null;
   const varianceTone =
     variance == null
-      ? "text-slate-400"
+      ? "text-[var(--text-muted)]"
       : variance === 0
-        ? "text-emerald-600"
+        ? "text-[var(--ok)]"
         : variance > 0
-          ? "text-amber-600"  // Entegra has more than physical count
-          : "text-red-600";   // Entegra has less than physical count (oversell risk)
+          ? "text-[var(--warn)]"  // Entegra has more than physical count
+          : "text-[var(--danger)]"; // Entegra has less than physical count (oversell risk)
+
+  const inputCls =
+    "w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]";
 
   return (
     <Card className="overflow-hidden p-0">
-      <div className="border-b border-slate-100 px-6 py-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-2 border-b border-[var(--border-default)] px-6 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Fiziksel Sayım Hareketleri</h2>
-          <p className="mt-0.5 text-xs text-slate-500 max-w-md">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+            Fiziksel Sayım Hareketleri
+          </h2>
+          <p className="mt-0.5 max-w-md text-xs text-[var(--text-secondary)]">
             Fiziksel sayım kayıtları. Entegra stoğunu (XML sync) etkilemez —
             yalnızca depo sayımı ve variance raporu için saklanır.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs tabular-nums">
-          <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-medium text-slate-700">
-            Entegra: <span className="font-bold text-slate-900">{entegraStock}</span>
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs tabular-nums">
+          <span className="rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 font-medium text-[var(--text-secondary)]">
+            Entegra: <span className="font-bold text-[var(--text-primary)]">{entegraStock}</span>
           </span>
-          <span className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-700">
-            Sayım: <span className="font-bold text-slate-900">{latestPhysical ?? "—"}</span>
+          <span className="rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 font-medium text-[var(--text-secondary)]">
+            Sayım: <span className="font-bold text-[var(--text-primary)]">{latestPhysical ?? "—"}</span>
           </span>
-          <span className={`rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium ${varianceTone}`}>
+          <span className={`rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 font-medium ${varianceTone}`}>
             Fark: <span className="font-bold">
               {variance == null ? "—" : variance > 0 ? `+${variance}` : variance}
             </span>
@@ -155,23 +163,25 @@ export function StockAdjustmentCard({
       </div>
 
       {physicalCountAt && (
-        <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-2 text-[11px] text-slate-500">
+        <div className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] px-6 py-2 text-[11px] text-[var(--text-muted)]">
           Son sayım: {new Date(physicalCountAt).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" })}
           {physicalCountByName ? ` — ${physicalCountByName}` : ""}
         </div>
       )}
 
       {/* Add form */}
-      <div className="border-b border-slate-100 bg-slate-50 px-6 py-4">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">
+      <div className="border-b border-[var(--border-default)] bg-[var(--surface-1)] px-6 py-4">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
           Yeni Hareket Ekle
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {/* Type */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Hareket Türü</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
+              Hareket Türü
+            </label>
             <select
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className={inputCls}
               value={adjType}
               onChange={(e) => setAdjType(e.target.value as StockAdjustmentType)}
             >
@@ -183,41 +193,47 @@ export function StockAdjustmentCard({
 
           {/* Direction */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Yön</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
+              Yön
+            </label>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setDirection("in")}
-                className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                className={`flex flex-1 items-center justify-center gap-1 rounded-md border px-3 py-2 text-sm font-medium transition ${
                   direction === "in"
-                    ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    ? "border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]"
+                    : "border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]"
                 }`}
               >
-                + Giriş
+                <Plus size={14} strokeWidth={1.5} />
+                Giriş
               </button>
               <button
                 type="button"
                 onClick={() => setDirection("out")}
-                className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                className={`flex flex-1 items-center justify-center gap-1 rounded-md border px-3 py-2 text-sm font-medium transition ${
                   direction === "out"
-                    ? "border-red-400 bg-red-50 text-red-700"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    ? "border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]"
+                    : "border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]"
                 }`}
               >
-                − Çıkış
+                <Minus size={14} strokeWidth={1.5} />
+                Çıkış
               </button>
             </div>
           </div>
 
           {/* Quantity */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Adet</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
+              Adet
+            </label>
             <input
               type="number"
               min="1"
               placeholder="0"
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className={`${inputCls} font-mono tabular-nums`}
               value={qty}
               onChange={(e) => setQty(e.target.value)}
             />
@@ -225,12 +241,14 @@ export function StockAdjustmentCard({
 
           {/* Notes */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Not (isteğe bağlı)</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
+              Not (isteğe bağlı)
+            </label>
             <input
               type="text"
               maxLength={200}
               placeholder="ör. Tedarikçi teslimi"
-              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className={inputCls}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -238,16 +256,11 @@ export function StockAdjustmentCard({
         </div>
 
         <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isPending}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
-          >
+          <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? "Kaydediliyor…" : "Hareketi Kaydet"}
-          </button>
+          </Button>
           {result && (
-            <span className={`text-xs font-medium ${result.ok ? "text-emerald-600" : "text-red-600"}`}>
+            <span className={`text-xs font-medium ${result.ok ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
               {result.message}
             </span>
           )}
@@ -256,41 +269,49 @@ export function StockAdjustmentCard({
 
       {/* History table */}
       {adjustments.length === 0 ? (
-        <div className="px-6 py-8 text-center text-sm text-slate-400">
+        <div className="px-6 py-8 text-center text-sm text-[var(--text-muted)]">
           Henüz fiziksel sayım hareketi kaydedilmedi.
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
-                <th className="px-6 py-3 text-left">Tür</th>
-                <th className="px-4 py-3 text-right">Değişim</th>
-                <th className="px-4 py-3 text-right">Önceki</th>
-                <th className="px-4 py-3 text-right">Sonraki</th>
-                <th className="px-4 py-3 text-left">Not</th>
-                <th className="px-4 py-3 text-left">Kaydeden</th>
-                <th className="px-4 py-3 text-left">Tarih</th>
+              <tr className="border-b border-[var(--border-default)] bg-[var(--surface-1)] text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
+                <th className="px-6 py-3 text-left font-semibold">Tür</th>
+                <th className="px-4 py-3 text-right font-semibold">Değişim</th>
+                <th className="px-4 py-3 text-right font-semibold">Önceki</th>
+                <th className="px-4 py-3 text-right font-semibold">Sonraki</th>
+                <th className="px-4 py-3 text-left font-semibold">Not</th>
+                <th className="px-4 py-3 text-left font-semibold">Kaydeden</th>
+                <th className="px-4 py-3 text-left font-semibold">Tarih</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {adjustments.map((row, i) => (
-                <tr key={row.id} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+            <tbody className="divide-y divide-[var(--border-subtle)]">
+              {adjustments.map((row) => (
+                <tr key={row.id} className="transition hover:bg-[var(--surface-3)]">
                   <td className="px-6 py-3">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${TYPE_COLORS[row.adjustmentType]}`}>
+                    <Badge variant={TYPE_VARIANTS[row.adjustmentType]}>
                       {TYPE_LABELS[row.adjustmentType]}
-                    </span>
+                    </Badge>
                   </td>
-                  <td className="px-4 py-3 text-right font-bold tabular-nums">
-                    <span className={row.quantityChange >= 0 ? "text-emerald-700" : "text-red-600"}>
+                  <td className="px-4 py-3 text-right font-mono font-bold tabular-nums">
+                    <span className={row.quantityChange >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}>
                       {row.quantityChange >= 0 ? "+" : ""}{row.quantityChange}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-500">{row.previousQty}</td>
-                  <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-800">{row.newQty}</td>
-                  <td className="px-4 py-3 max-w-[200px] truncate text-xs text-slate-500">{row.notes ?? "—"}</td>
-                  <td className="px-4 py-3 text-xs text-slate-400">{row.createdBy?.name ?? "—"}</td>
-                  <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
+                    {row.previousQty}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">
+                    {row.newQty}
+                  </td>
+                  <td className="max-w-[200px] truncate px-4 py-3 text-xs text-[var(--text-secondary)]">
+                    {row.notes ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-muted)]">
+                    {row.createdBy?.name ?? "—"}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
                     {new Date(row.createdAt).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" })}
                   </td>
                 </tr>

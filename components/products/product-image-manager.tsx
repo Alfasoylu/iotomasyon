@@ -12,12 +12,15 @@
  */
 
 import { startTransition, useRef, useState } from "react";
+import { Folder, Package, Check, X } from "lucide-react";
 import {
   addProductImageByUrlAction,
   deleteProductImageAction,
   setPrimaryImageAction,
   uploadProductImageAction,
 } from "@/lib/actions/product-image-actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 type ImageEntry = {
   id: string;
@@ -136,7 +139,7 @@ export function ProductImageManager({ productId, initialImages, canUpload }: Pro
     <div className="space-y-6">
       {/* Current images grid */}
       {images.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-8 text-center text-sm text-slate-500">
+        <div className="rounded-lg border border-dashed border-[var(--border-default)] bg-[var(--surface-1)] px-6 py-8 text-center text-sm text-[var(--text-secondary)]">
           Henüz görsel eklenmemiş. Aşağıdan URL girerek veya dosya yükleyerek görsel ekleyin.
         </div>
       ) : (
@@ -165,18 +168,22 @@ export function ProductImageManager({ productId, initialImages, canUpload }: Pro
 
       {/* Status feedback */}
       {status.type === "loading" && (
-        <p className="text-sm text-slate-500">İşleniyor…</p>
+        <p className="text-sm text-[var(--text-secondary)]">İşleniyor…</p>
       )}
       {status.type === "success" && (
-        <p className="text-sm text-emerald-600">✓ {status.message}</p>
+        <p className="inline-flex items-center gap-1 text-sm text-[var(--ok)]">
+          <Check size={14} strokeWidth={1.5} /> {status.message}
+        </p>
       )}
       {status.type === "error" && (
-        <p className="text-sm text-red-600">✗ {status.message}</p>
+        <p className="inline-flex items-center gap-1 text-sm text-[var(--danger)]">
+          <X size={14} strokeWidth={1.5} /> {status.message}
+        </p>
       )}
 
       {/* Add by URL */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
           URL ile görsel ekle
         </p>
         <div className="flex gap-2">
@@ -191,29 +198,29 @@ export function ProductImageManager({ productId, initialImages, canUpload }: Pro
               }
             }}
             placeholder="https://example.com/gorsel.jpg"
-            className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100"
+            className="h-10 flex-1 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]"
             disabled={status.type === "loading"}
           />
-          <button
-            type="button"
+          <Button
             onClick={handleAddByUrl}
             disabled={!urlInput.trim() || status.type === "loading"}
-            className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-40"
           >
             Ekle
-          </button>
+          </Button>
         </div>
-        <p className="text-xs text-slate-400">Enter tuşuna basarak veya &quot;Ekle&quot; butonuyla birden fazla URL ekleyebilirsiniz.</p>
+        <p className="text-xs text-[var(--text-muted)]">
+          Enter tuşuna basarak veya &quot;Ekle&quot; butonuyla birden fazla URL ekleyebilirsiniz.
+        </p>
       </div>
 
       {/* Local file upload */}
       {canUpload && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
             Bilgisayardan yükle
           </p>
-          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-600 transition hover:border-slate-400 hover:bg-white">
-            <span>📁</span>
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-[var(--border-default)] bg-[var(--surface-1)] px-4 py-3 text-sm text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--surface-3)]">
+            <Folder size={14} strokeWidth={1.5} />
             <span>Dosya seçin — JPEG, PNG, WebP, GIF · maks. 5 MB</span>
             <input
               ref={fileRef}
@@ -228,7 +235,7 @@ export function ProductImageManager({ productId, initialImages, canUpload }: Pro
       )}
 
       {!canUpload && (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-lg border border-[var(--warn-border)] bg-[var(--warn-dim)] px-4 py-3 text-sm text-[var(--warn)]">
           Dosya yükleme için <code className="font-mono text-xs">SUPABASE_URL</code> ve{" "}
           <code className="font-mono text-xs">SUPABASE_SERVICE_ROLE_KEY</code> ortam değişkenleri gereklidir.
           Şu an sadece URL ile görsel ekleyebilirsiniz.
@@ -255,12 +262,14 @@ function ImageCard({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-xl border bg-white shadow-sm transition ${
-        isPrimary ? "border-slate-900 ring-2 ring-slate-900" : "border-slate-200"
+      className={`relative overflow-hidden rounded-lg border bg-[var(--surface-2)] transition ${
+        isPrimary
+          ? "border-[var(--accent-border)] ring-1 ring-[var(--accent-border)]"
+          : "border-[var(--border-default)]"
       }`}
     >
       {/* Image */}
-      <div className="relative aspect-square w-full bg-slate-100">
+      <div className="relative aspect-square w-full bg-[var(--surface-1)]">
         {!imgError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -271,40 +280,36 @@ function ImageCard({
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-3xl text-slate-300">
-            📦
+          <div className="flex h-full items-center justify-center text-[var(--text-muted)]">
+            <Package size={28} strokeWidth={1.5} />
           </div>
         )}
         {/* Source badge */}
-        <span
-          className={`absolute left-1 top-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
-            image.source === "MANUAL"
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-blue-100 text-blue-700"
-          }`}
-        >
-          {image.source === "MANUAL" ? "Manuel" : "XML"}
+        <span className="absolute left-1 top-1">
+          <Badge variant={image.source === "MANUAL" ? "ok" : "info"}>
+            {image.source === "MANUAL" ? "Manuel" : "XML"}
+          </Badge>
         </span>
         {/* Primary badge */}
         {isPrimary && (
-          <span className="absolute right-1 top-1 rounded bg-slate-900 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-            Birincil
+          <span className="absolute right-1 top-1">
+            <Badge variant="accent">Birincil</Badge>
           </span>
         )}
       </div>
 
       {/* URL (truncated) */}
-      <div className="truncate border-t border-slate-100 px-2 py-1 text-[10px] text-slate-400">
+      <div className="truncate border-t border-[var(--border-subtle)] px-2 py-1 font-mono text-[10px] text-[var(--text-muted)]">
         {image.url}
       </div>
 
       {/* Actions */}
-      <div className="flex gap-1 border-t border-slate-100 p-2">
+      <div className="flex gap-1 border-t border-[var(--border-subtle)] p-2">
         {!isPrimary && (
           <button
             type="button"
             onClick={onSetPrimary}
-            className="flex-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+            className="flex-1 rounded-md border border-[var(--border-default)] px-2 py-1 text-xs font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
           >
             Birincil yap
           </button>
@@ -312,7 +317,7 @@ function ImageCard({
         <button
           type="button"
           onClick={onDelete}
-          className="flex-1 rounded-lg border border-red-200 px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50"
+          className="flex-1 rounded-md border border-[var(--danger-border)] px-2 py-1 text-xs font-medium text-[var(--danger)] transition hover:bg-[var(--danger-dim)]"
         >
           Sil
         </button>

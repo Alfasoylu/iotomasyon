@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect, useCallback } from "react";
+import { Search, X, Pencil, Check } from "lucide-react";
 import {
   createMarketplaceMappingAction,
   deleteMarketplaceMappingAction,
@@ -26,6 +27,12 @@ interface Product {
   sku: string | null;
 }
 
+const INPUT_CLS =
+  "w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]";
+
+const LABEL_CLS =
+  "mb-1 block text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]";
+
 // ── Product Combobox ──────────────────────────────────────────────────────────
 
 interface ProductComboboxProps {
@@ -41,7 +48,9 @@ function highlight(text: string, query: string) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="bg-amber-100 text-amber-900 rounded-sm">{text.slice(idx, idx + query.length)}</mark>
+      <mark className="rounded-sm bg-[var(--accent-dim)] text-[var(--accent)]">
+        {text.slice(idx, idx + query.length)}
+      </mark>
       {text.slice(idx + query.length)}
     </>
   );
@@ -134,48 +143,44 @@ function ProductCombobox({ products, value, onChange }: ProductComboboxProps) {
     <div ref={containerRef} className="relative">
       {/* Selected state */}
       {selected && !open ? (
-        <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2">
+        <div className="flex items-center gap-2 rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] px-3 py-2">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-900">{selected.name}</p>
+            <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+              {selected.name}
+            </p>
             {selected.sku && (
-              <p className="font-mono text-[10px] text-slate-400">{selected.sku}</p>
+              <p className="font-mono text-[10px] text-[var(--text-muted)]">{selected.sku}</p>
             )}
           </div>
           <button
             type="button"
             onClick={clearSelection}
-            className="flex-shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+            className="rounded-md p-0.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
             title="Seçimi temizle"
           >
-            <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-            </svg>
+            <X size={14} strokeWidth={1.5} />
           </button>
           <button
             type="button"
             onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0); }}
-            className="flex-shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+            className="rounded-md p-0.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
             title="Değiştir"
           >
-            <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61zm1.414 1.06a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354l-1.086-1.086zM11.189 6.25 9.75 4.81l-6.286 6.287a.25.25 0 0 0-.064.108l-.558 1.953 1.953-.558a.25.25 0 0 0 .108-.064l6.286-6.286z"/>
-            </svg>
+            <Pencil size={14} strokeWidth={1.5} />
           </button>
         </div>
       ) : (
         /* Search input */
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1 0 6.5 6.5a7.5 7.5 0 0 0 10.65 10.65z"/>
-            </svg>
+            <Search size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
           </div>
           <input
             ref={inputRef}
             type="text"
             value={query}
             placeholder="Ürün adı veya SKU ile ara..."
-            className="w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] py-2 pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]"
             onChange={(e) => {
               setQuery(e.target.value);
               setOpen(true);
@@ -189,11 +194,9 @@ function ProductCombobox({ products, value, onChange }: ProductComboboxProps) {
             <button
               type="button"
               onClick={() => { setQuery(""); inputRef.current?.focus(); }}
-              className="absolute inset-y-0 right-2 flex items-center px-1 text-slate-300 hover:text-slate-500"
+              className="absolute inset-y-0 right-2 flex items-center px-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             >
-              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-              </svg>
+              <X size={14} strokeWidth={1.5} />
             </button>
           )}
         </div>
@@ -201,16 +204,16 @@ function ProductCombobox({ products, value, onChange }: ProductComboboxProps) {
 
       {/* Dropdown list */}
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-slate-200 bg-white shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
           {/* Stats bar */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-3 py-1.5">
-            <span className="text-[10px] text-slate-400">
+          <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-3 py-1.5">
+            <span className="font-mono text-[10px] tabular-nums text-[var(--text-muted)]">
               {filtered.length === products.length
                 ? `${products.length} ürün`
                 : `${filtered.length} / ${products.length} ürün`}
             </span>
             {query && filtered.length === 0 && (
-              <span className="text-[10px] text-amber-600">Sonuç bulunamadı</span>
+              <span className="text-[10px] text-[var(--warn)]">Sonuç bulunamadı</span>
             )}
           </div>
 
@@ -221,7 +224,7 @@ function ProductCombobox({ products, value, onChange }: ProductComboboxProps) {
             role="listbox"
           >
             {filtered.length === 0 ? (
-              <li className="px-3 py-4 text-center text-xs text-slate-400">
+              <li className="px-3 py-4 text-center text-xs text-[var(--text-muted)]">
                 &quot;{query}&quot; ile eşleşen ürün bulunamadı.
               </li>
             ) : (
@@ -234,8 +237,8 @@ function ProductCombobox({ products, value, onChange }: ProductComboboxProps) {
                   onMouseDown={(e) => { e.preventDefault(); selectProduct(p); }}
                   className={`flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors ${
                     i === cursor
-                      ? "bg-slate-900 text-white"
-                      : "text-slate-800 hover:bg-slate-50"
+                      ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+                      : "text-[var(--text-primary)] hover:bg-[var(--surface-3)]"
                   }`}
                 >
                   <div className="min-w-0 flex-1">
@@ -243,15 +246,17 @@ function ProductCombobox({ products, value, onChange }: ProductComboboxProps) {
                       {highlight(p.name, query)}
                     </p>
                     {p.sku && (
-                      <p className={`font-mono text-[10px] ${i === cursor ? "text-slate-300" : "text-slate-400"}`}>
+                      <p
+                        className={`font-mono text-[10px] ${
+                          i === cursor ? "text-[var(--accent-fg)] opacity-70" : "text-[var(--text-muted)]"
+                        }`}
+                      >
                         {highlight(p.sku, query)}
                       </p>
                     )}
                   </div>
                   {i === cursor && (
-                    <svg className="h-4 w-4 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
+                    <Check size={14} strokeWidth={1.5} className="flex-shrink-0" />
                   )}
                 </li>
               ))
@@ -259,8 +264,8 @@ function ProductCombobox({ products, value, onChange }: ProductComboboxProps) {
           </ul>
 
           {/* Footer hint */}
-          <div className="border-t border-slate-100 px-3 py-1.5">
-            <p className="text-[10px] text-slate-300">
+          <div className="border-t border-[var(--border-subtle)] px-3 py-1.5">
+            <p className="text-[10px] text-[var(--text-muted)]">
               ↑↓ Gezin · Enter Seç · Esc Kapat
             </p>
           </div>
@@ -318,9 +323,9 @@ export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitl
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {/* Platform */}
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">Platform</label>
+          <label className={LABEL_CLS}>Platform</label>
           <select
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={INPUT_CLS}
             value={platform}
             onChange={(e) => setPlatform(e.target.value as MarketplacePlatform)}
           >
@@ -332,10 +337,12 @@ export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitl
 
         {/* İç Ürün — Combobox */}
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">
+          <label className={LABEL_CLS}>
             İç Ürün
             {!productId && (
-              <span className="ml-1 text-slate-400 font-normal">(ad veya SKU ile ara)</span>
+              <span className="ml-1 font-normal normal-case tracking-normal text-[var(--text-muted)]">
+                (ad veya SKU ile ara)
+              </span>
             )}
           </label>
           <ProductCombobox
@@ -347,10 +354,10 @@ export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitl
 
         {/* Platform Barkod */}
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">Platform Barkod</label>
+          <label className={LABEL_CLS}>Platform Barkod</label>
           <input
             type="text"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={`${INPUT_CLS} font-mono tabular-nums`}
             placeholder="ör. 8681234567890"
             value={platformBarcode}
             onChange={(e) => setPlatformBarcode(e.target.value)}
@@ -359,10 +366,10 @@ export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitl
 
         {/* Platform SKU */}
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">Platform SKU</label>
+          <label className={LABEL_CLS}>Platform SKU</label>
           <input
             type="text"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={`${INPUT_CLS} font-mono`}
             placeholder="ör. TRN-00123"
             value={platformSku}
             onChange={(e) => setPlatformSku(e.target.value)}
@@ -371,10 +378,10 @@ export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitl
 
         {/* Listeleme ID */}
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">Listeleme ID</label>
+          <label className={LABEL_CLS}>Listeleme ID</label>
           <input
             type="text"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={`${INPUT_CLS} font-mono`}
             placeholder="Platform listeleme ID'si"
             value={platformListingId}
             onChange={(e) => setPlatformListingId(e.target.value)}
@@ -383,12 +390,15 @@ export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitl
 
         {/* Platform Başlığı */}
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">
-            Platform Başlığı <span className="text-slate-400 font-normal">(isteğe bağlı)</span>
+          <label className={LABEL_CLS}>
+            Platform Başlığı{" "}
+            <span className="font-normal normal-case tracking-normal text-[var(--text-muted)]">
+              (isteğe bağlı)
+            </span>
           </label>
           <input
             type="text"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={INPUT_CLS}
             placeholder="Platformdaki ürün adı"
             value={platformTitle}
             onChange={(e) => setPlatformTitle(e.target.value)}
@@ -401,7 +411,7 @@ export function MappingForm({ products, defaultBarcode = "", defaultPlatformTitl
           {isPending ? "Kaydediliyor..." : "Eşleştirme Ekle"}
         </Button>
         {result && (
-          <span className={`text-xs font-medium ${result.ok ? "text-emerald-600" : "text-red-600"}`}>
+          <span className={`text-xs font-medium ${result.ok ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
             {result.ok ? (result.message ?? "Kaydedildi.") : result.message}
           </span>
         )}
@@ -419,7 +429,7 @@ export function DeleteMappingButton({ id }: { id: string }) {
   if (!confirmed) {
     return (
       <button
-        className="text-xs text-red-500 hover:text-red-700 underline"
+        className="text-xs text-[var(--danger)] underline transition hover:brightness-110"
         onClick={() => setConfirmed(true)}
       >
         Sil
@@ -430,7 +440,7 @@ export function DeleteMappingButton({ id }: { id: string }) {
   return (
     <span className="flex items-center gap-1 text-xs">
       <button
-        className="text-red-600 font-semibold hover:text-red-800 underline"
+        className="font-semibold text-[var(--danger)] underline transition hover:brightness-110"
         disabled={isPending}
         onClick={() => {
           startTransition(async () => {
@@ -441,8 +451,11 @@ export function DeleteMappingButton({ id }: { id: string }) {
       >
         {isPending ? "..." : "Onayla"}
       </button>
-      <span className="text-slate-400">|</span>
-      <button className="text-slate-500 hover:text-slate-700" onClick={() => setConfirmed(false)}>
+      <span className="text-[var(--text-muted)]">|</span>
+      <button
+        className="text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+        onClick={() => setConfirmed(false)}
+      >
         İptal
       </button>
     </span>

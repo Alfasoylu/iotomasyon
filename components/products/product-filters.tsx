@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 
@@ -71,10 +72,10 @@ export function ProductFilters({
   }
 
   const pillCls = (active: boolean) =>
-    `inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition cursor-pointer select-none ${
+    `inline-flex cursor-pointer select-none items-center rounded-md px-3 py-1.5 text-xs font-medium transition ${
       active
-        ? "bg-slate-900 text-white"
-        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+        ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+        : "bg-[var(--surface-3)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
     }`;
 
   const hasFilters = status !== "all" || stock !== "all" || query.length >= 2;
@@ -83,7 +84,11 @@ export function ProductFilters({
     <div className="space-y-3">
       {/* Search input */}
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+        <Search
+          size={14}
+          strokeWidth={1.5}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+        />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -91,7 +96,7 @@ export function ProductFilters({
           className="pl-8"
         />
         {query.length > 0 && query.length < 2 && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]">
             {2 - query.length} karakter daha…
           </span>
         )}
@@ -99,7 +104,9 @@ export function ProductFilters({
 
       {/* Compact filter + sort row */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs uppercase tracking-wide text-slate-400">Durum:</span>
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Durum
+        </span>
         <button
           type="button"
           className={pillCls(status === "all")}
@@ -116,7 +123,9 @@ export function ProductFilters({
           onClick={() => { setStatus("inactive"); applyFilters({ status: "inactive" }); }}
         >Pasif</button>
 
-        <span className="ml-3 text-xs uppercase tracking-wide text-slate-400">Stok:</span>
+        <span className="ml-3 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Stok
+        </span>
         <button
           type="button"
           className={pillCls(stock === "all")}
@@ -137,7 +146,7 @@ export function ProductFilters({
           {hasFilters && (
             <button
               type="button"
-              className="text-xs text-red-500 hover:text-red-700 transition"
+              className="text-xs text-[var(--danger)] transition hover:brightness-110"
               onClick={() => {
                 setQuery(""); setStatus("all"); setStock("all"); setSort("updated_desc");
                 router.push("/products");
@@ -149,14 +158,16 @@ export function ProductFilters({
           <select
             value={sort}
             onChange={(e) => { setSort(e.target.value); applyFilters({ sort: e.target.value }); }}
-            className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 transition focus:outline-none focus:ring-2 focus:ring-slate-200"
+            className="h-8 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-2 text-xs text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
           {total != null && (
-            <span className="text-xs text-slate-400">{total} ürün</span>
+            <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+              {total} ürün
+            </span>
           )}
         </div>
       </div>

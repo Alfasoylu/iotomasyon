@@ -11,6 +11,7 @@
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 import { getCurrentSession, isOwner } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
@@ -79,9 +80,13 @@ export default async function TrendyolMatchingPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Trendyol</p>
-        <h1 className="text-2xl font-bold text-slate-800">Satış Eşleştirme Yönetimi</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1">
+          Trendyol
+        </p>
+        <h1 className="text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
+          Satış Eşleştirme Yönetimi
+        </h1>
+        <p className="text-sm text-[var(--text-secondary)] mt-1">
           Eşleşmeyen Trendyol siparişlerini ürün kataloğuyla otomatik eşleştir.
           Eşleşme T30G satış hızını ve ithalat ROI hesaplamalarını etkiler.
         </p>
@@ -90,37 +95,58 @@ export default async function TrendyolMatchingPage() {
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4">
-          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Toplam Kayıt</p>
-          <p className="text-2xl font-bold text-slate-800">{totalRecords.toLocaleString("tr-TR")}</p>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1">
+            Toplam Kayıt
+          </p>
+          <p className="text-2xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">
+            {totalRecords.toLocaleString("tr-TR")}
+          </p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Eşleşen</p>
-          <p className="text-2xl font-bold text-emerald-600">{matchedRecords.toLocaleString("tr-TR")}</p>
-          <p className="text-xs text-slate-400">%{matchRate}</p>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1">
+            Eşleşen
+          </p>
+          <p className="text-2xl font-semibold tabular-nums font-mono text-[var(--ok)]">
+            {matchedRecords.toLocaleString("tr-TR")}
+          </p>
+          <p className="text-xs text-[var(--text-muted)] tabular-nums">%{matchRate}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Eşleşmeyen</p>
-          <p className="text-2xl font-bold text-red-500">{unmatchedRecords.toLocaleString("tr-TR")}</p>
-          <p className="text-xs text-slate-400">{unmatchedGroupCount} farklı ürün</p>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1">
+            Eşleşmeyen
+          </p>
+          <p className="text-2xl font-semibold tabular-nums font-mono text-[var(--danger)]">
+            {unmatchedRecords.toLocaleString("tr-TR")}
+          </p>
+          <p className="text-xs text-[var(--text-muted)] tabular-nums">
+            {unmatchedGroupCount} farklı ürün
+          </p>
         </Card>
-        <Card className="p-4 border-emerald-200 bg-emerald-50">
-          <p className="text-xs text-emerald-600 uppercase tracking-wider mb-1">Otomatik Düzeltilebilir</p>
-          <p className="text-2xl font-bold text-emerald-700">{fixableCount.toLocaleString("tr-TR")}</p>
-          <p className="text-xs text-emerald-500">SKU / barkod eşleşmesi</p>
+        <Card className="p-4 border-[var(--ok-border)] bg-[var(--ok-dim)]">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--ok)] mb-1">
+            Otomatik Düzeltilebilir
+          </p>
+          <p className="text-2xl font-semibold tabular-nums font-mono text-[var(--ok)]">
+            {fixableCount.toLocaleString("tr-TR")}
+          </p>
+          <p className="text-xs text-[var(--ok)] opacity-70">SKU / barkod eşleşmesi</p>
         </Card>
       </div>
 
       {/* Re-match action */}
-      <Card className="p-5 border-emerald-200">
+      <Card className="p-5 border-[var(--ok-border)]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-semibold text-slate-800 mb-1">Otomatik Yeniden Eşleştir</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="font-semibold text-[var(--text-primary)] mb-1">
+              Otomatik Yeniden Eşleştir
+            </h2>
+            <p className="text-sm text-[var(--text-secondary)]">
               Eşleşmeyen kayıtlar arasında mevcut ürün SKU veya barkod eşleşmesi bulunanları
               otomatik olarak günceller. Trendyol API çağrısı yapılmaz — sadece DB güncellenir.
             </p>
-            <p className="text-xs text-amber-600 mt-2">
-              ⚠ Bu işlem geri alınamaz. Yanlış eşleşme durumunda satış verileri etkilenebilir.
+            <p className="text-xs text-[var(--warn)] mt-2 inline-flex items-center gap-1.5">
+              <AlertTriangle size={14} strokeWidth={1.5} />
+              Bu işlem geri alınamaz. Yanlış eşleşme durumunda satış verileri etkilenebilir.
             </p>
           </div>
           <RematchButton fixableCount={fixableCount} />
@@ -129,38 +155,38 @@ export default async function TrendyolMatchingPage() {
 
       {/* Unmatched groups table */}
       <Card className="p-5">
-        <h2 className="font-semibold text-slate-800 mb-4">
+        <h2 className="font-semibold text-[var(--text-primary)] mb-4">
           Eşleşmeyen Ürünler ({unmatchedGroupCount} grup)
         </h2>
         {unmatchedGroups.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-6">
-            Tüm kayıtlar eşleştirilmiş ✓
+          <p className="text-sm text-[var(--text-muted)] text-center py-6">
+            Tüm kayıtlar eşleştirilmiş
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium uppercase tracking-wide">
+                <tr className="border-b border-[var(--border-subtle)]">
+                  <th className="text-left px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Ürün Adı
                   </th>
-                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium uppercase tracking-wide">
+                  <th className="text-left px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Merchant SKU
                   </th>
-                  <th className="text-left px-3 py-2 text-xs text-slate-500 font-medium uppercase tracking-wide">
+                  <th className="text-left px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Barkod
                   </th>
-                  <th className="text-right px-3 py-2 text-xs text-slate-500 font-medium uppercase tracking-wide">
+                  <th className="text-right px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Toplam
                   </th>
-                  <th className="text-right px-3 py-2 text-xs text-slate-500 font-medium uppercase tracking-wide">
+                  <th className="text-right px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                     Son 30G
                   </th>
                   <th className="px-3 py-2"></th>
                   <th className="px-3 py-2"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {unmatchedGroups.map((g, i) => {
                   // Strip trailing product code from productName (often appended as "Name CODE, one size")
                   const cleanName = g.sampleName
@@ -176,46 +202,46 @@ export default async function TrendyolMatchingPage() {
                   return (
                     <tr
                       key={i}
-                      className={`hover:bg-slate-50 ${g.cnt30d > 0 ? "" : "opacity-60"}`}
+                      className={`hover:bg-[var(--surface-3)] ${g.cnt30d > 0 ? "" : "opacity-60"}`}
                     >
                       <td className="px-3 py-2 max-w-xs">
-                        <p className="text-xs text-slate-600 truncate" title={g.sampleName}>
+                        <p className="text-xs text-[var(--text-secondary)] truncate" title={g.sampleName}>
                           {cleanName}
                         </p>
                       </td>
                       <td className="px-3 py-2">
-                        <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">
+                        <code className="text-xs bg-[var(--surface-3)] px-1.5 py-0.5 rounded text-[var(--text-secondary)] font-mono tabular-nums">
                           {g.merchantSku}
                         </code>
                       </td>
                       <td className="px-3 py-2">
                         {g.barcode ? (
-                          <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">
+                          <code className="text-xs bg-[var(--surface-3)] px-1.5 py-0.5 rounded text-[var(--text-muted)] font-mono tabular-nums">
                             {g.barcode}
                           </code>
                         ) : (
-                          <span className="text-xs text-slate-300">—</span>
+                          <span className="text-xs text-[var(--text-muted)]">—</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono text-xs text-slate-600">
+                      <td className="px-3 py-2 text-right font-mono tabular-nums text-xs text-[var(--text-secondary)]">
                         {g.totalCnt}
                       </td>
                       <td className="px-3 py-2 text-right">
                         {g.cnt30d > 0 ? (
-                          <span className="font-mono text-xs font-semibold text-emerald-600">
+                          <span className="font-mono tabular-nums text-xs font-semibold text-[var(--ok)]">
                             {g.cnt30d}
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-300">0</span>
+                          <span className="text-xs text-[var(--text-muted)] font-mono tabular-nums">0</span>
                         )}
                       </td>
                       <td className="px-3 py-2 text-right">
                         <Link
                           href={searchHref}
-                          className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+                          className="inline-flex items-center gap-1 text-xs text-[var(--accent)] hover:brightness-110 whitespace-nowrap"
                           target="_blank"
                         >
-                          Ara →
+                          Ara <ArrowRight size={14} strokeWidth={1.5} />
                         </Link>
                       </td>
                       <td className="px-3 py-2 text-right">
@@ -231,7 +257,7 @@ export default async function TrendyolMatchingPage() {
               </tbody>
             </table>
             {unmatchedGroups.length >= 100 && (
-              <p className="text-xs text-slate-400 text-center mt-3">
+              <p className="text-xs text-[var(--text-muted)] text-center mt-3">
                 İlk 100 grup gösteriliyor. Otomatik eşleştirme sonrası liste güncellenir.
               </p>
             )}
@@ -239,8 +265,8 @@ export default async function TrendyolMatchingPage() {
         )}
       </Card>
 
-      <div className="text-xs text-slate-400 text-center">
-        <Link href="/admin/trendyol-report" className="hover:underline">
+      <div className="text-xs text-[var(--text-muted)] text-center">
+        <Link href="/admin/trendyol-report" className="hover:text-[var(--text-primary)] transition-colors">
           ← Trendyol Raporu
         </Link>
       </div>

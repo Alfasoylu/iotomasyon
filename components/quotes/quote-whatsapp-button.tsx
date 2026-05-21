@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useState } from "react";
+import { MessageCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { markQuoteSentAction } from "@/lib/actions/quote-actions";
@@ -64,6 +65,7 @@ export function QuoteWhatsAppButton({
         });
       }}
     >
+      <MessageCircle size={14} strokeWidth={1.5} />
       {pending ? "Mesaj hazırlanıyor..." : "WhatsApp ile gönder"}
     </Button>
   );

@@ -178,27 +178,27 @@ export default async function NewPurchaseOrderPage({
       <div>
         <Link
           href="/admin/purchase-orders"
-          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
         >
           ← Satın Alma Siparişleri
         </Link>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Yeni Satın Alma Siparişi</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Kur: <span className="font-semibold">1 USD = ₺{usdTryRate.toFixed(2)}</span>
-          {rmbUsdRate && <> · <span className="font-semibold">1 USD = ¥{rmbUsdRate.toFixed(4)}</span></>}
+        <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">Yeni Satın Alma Siparişi</h1>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          Kur: <span className="font-semibold font-mono tabular-nums">1 USD = ₺{usdTryRate.toFixed(2)}</span>
+          {rmbUsdRate && <> · <span className="font-semibold font-mono tabular-nums">1 USD = ¥{rmbUsdRate.toFixed(4)}</span></>}
         </p>
       </div>
 
       {fromImporter && importerSuggestions.length > 0 && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          📦 İthalatçı görünümünden <strong>{importerSuggestions.length} ürün</strong> sipariş önerisiyle yüklendi.
+        <div className="rounded-lg border border-[var(--ok-border)] bg-[var(--ok-dim)] px-4 py-3 text-sm text-[var(--ok)]">
+          İthalatçı görünümünden <strong>{importerSuggestions.length} ürün</strong> sipariş önerisiyle yüklendi.
           Aşağıda önerilen adetlerle ön doldurulmuş — değiştirebilirsiniz.
         </div>
       )}
 
       {fromCockpit && importerSuggestions.length > 0 && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          ✓ İthalat Cockpiti&apos;nden <strong>{importerSuggestions.length} AL-sinyalli ürün</strong> 90 günlük stok hedefiyle yüklendi.
+        <div className="rounded-lg border border-[var(--ok-border)] bg-[var(--ok-dim)] px-4 py-3 text-sm text-[var(--ok)]">
+          İthalat Cockpiti&apos;nden <strong>{importerSuggestions.length} AL-sinyalli ürün</strong> 90 günlük stok hedefiyle yüklendi.
           Adetleri değiştirebilirsiniz.
         </div>
       )}

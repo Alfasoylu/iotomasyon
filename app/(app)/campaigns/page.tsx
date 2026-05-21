@@ -27,10 +27,10 @@ function FunnelBar({ sent, total }: { sent: number; total: number }) {
   const pct = total > 0 ? Math.round((sent / total) * 100) : 0;
   return (
     <div className="mt-1 flex items-center gap-2">
-      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full rounded-full bg-slate-400" style={{ width: `${pct}%` }} />
+      <div className="h-1.5 w-16 overflow-hidden rounded-md bg-[var(--surface-3)]">
+        <div className="h-full rounded-md bg-[var(--accent)]" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs text-slate-400">%{pct} gönderildi</span>
+      <span className="text-xs text-[var(--text-muted)] font-mono tabular-nums">%{pct} gönderildi</span>
     </div>
   );
 }
@@ -42,17 +42,17 @@ export default async function CampaignsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
           WhatsApp Outreach
         </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Kampanyalar</h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">Kampanyalar</h1>
+        <p className="mt-1 text-sm leading-7 text-[var(--text-secondary)]">
           Ürün ve kategori bazlı WhatsApp kampanyalarınızı yönetin.
         </p>
       </div>
 
       {!databaseAvailable ? (
-        <Card className="border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+        <Card className="border-[var(--warn-border)] bg-[var(--warn-dim)] p-6 text-sm text-[var(--warn)]">
           Veritabanı geçici olarak kullanılamıyor.
         </Card>
       ) : campaigns.length === 0 ? (
@@ -67,13 +67,13 @@ export default async function CampaignsPage() {
             const { funnel } = c;
             return (
               <Link key={c.id} href={`/campaigns/${c.id}`}>
-                <Card className="p-4 transition hover:border-slate-300">
+                <Card className="p-4 transition hover:border-[var(--border-strong)]">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-slate-900">
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">
                         {c.product?.name ?? c.category?.name ?? "Kampanya"}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">{formatDateTime(c.createdAt)}</p>
+                      <p className="mt-0.5 text-xs text-[var(--text-muted)] font-mono tabular-nums">{formatDateTime(c.createdAt)}</p>
                       <FunnelBar sent={funnel.sent} total={funnel.total} />
                     </div>
 
@@ -89,7 +89,7 @@ export default async function CampaignsPage() {
                   </div>
 
                   {funnel.revenue > 0 ? (
-                    <p className="mt-2 text-xs font-semibold text-emerald-700">
+                    <p className="mt-2 text-xs font-semibold text-[var(--ok)] font-mono tabular-nums">
                       Revenue: {funnel.revenue.toLocaleString("tr-TR")} {c.product ? "TRY" : ""}
                     </p>
                   ) : null}

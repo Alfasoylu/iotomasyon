@@ -23,10 +23,14 @@ const LABELS: Record<string, string> = {
 };
 
 const STYLES: Record<string, string> = {
-  SENT: "bg-amber-50 text-amber-900 ring-amber-200 hover:bg-amber-100",
-  VIEWED: "bg-blue-50 text-blue-900 ring-blue-200 hover:bg-blue-100",
-  WON: "bg-emerald-50 text-emerald-900 ring-emerald-200 hover:bg-emerald-100",
-  LOST: "bg-red-50 text-red-900 ring-red-200 hover:bg-red-100",
+  SENT:
+    "bg-[var(--warn-dim)] text-[var(--warn)] border-[var(--warn-border)] hover:brightness-110",
+  VIEWED:
+    "bg-[var(--info-dim)] text-[var(--info)] border-[var(--info-border)] hover:brightness-110",
+  WON:
+    "bg-[var(--ok-dim)] text-[var(--ok)] border-[var(--ok-border)] hover:brightness-110",
+  LOST:
+    "bg-[var(--danger-dim)] text-[var(--danger)] border-[var(--danger-border)] hover:brightness-110",
 };
 
 export function QuoteStatusButtons({
@@ -52,7 +56,7 @@ export function QuoteStatusButtons({
               await updateQuoteStatusAction(quoteId, next);
             })
           }
-          className={`inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-semibold ring-1 transition disabled:opacity-50 ${STYLES[next]}`}
+          className={`inline-flex h-9 items-center justify-center rounded-md border px-4 text-sm font-semibold transition disabled:opacity-50 ${STYLES[next]}`}
         >
           {isPending ? "..." : LABELS[next]}
         </button>

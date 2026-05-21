@@ -2,6 +2,7 @@
 
 import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,7 +105,8 @@ export function ListingForm({
     });
   }
 
-  const selectCls = "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100";
+  const selectCls =
+    "h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -141,13 +143,13 @@ export function ListingForm({
       <Section title="Platform detayları">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Platform listeleme ID">
-            <Input value={values.platformListingId} onChange={(e) => set("platformListingId", e.target.value)} placeholder="123456789" className="font-mono" />
+            <Input value={values.platformListingId} onChange={(e) => set("platformListingId", e.target.value)} placeholder="123456789" className="font-mono tabular-nums" />
           </Field>
           <Field label="Listeleme SKU">
             <Input value={values.listingSku} onChange={(e) => set("listingSku", e.target.value)} placeholder="Platform SKU kodu" className="font-mono" />
           </Field>
           <Field label="Listeleme barkod">
-            <Input value={values.listingBarcode} onChange={(e) => set("listingBarcode", e.target.value)} placeholder="8681234567890" className="font-mono" />
+            <Input value={values.listingBarcode} onChange={(e) => set("listingBarcode", e.target.value)} placeholder="8681234567890" className="font-mono tabular-nums" />
           </Field>
           <Field label="Listeleme başlığı" className="md:col-span-2">
             <Input value={values.listingTitle} onChange={(e) => set("listingTitle", e.target.value)} placeholder="Platformdaki ürün başlığı" />
@@ -162,8 +164,8 @@ export function ListingForm({
       </Section>
 
       {message && (
-        <p className="flex items-center gap-1.5 text-sm text-red-600">
-          <span className="text-base leading-none">⚠</span> {message}
+        <p className="inline-flex items-center gap-1.5 text-sm text-[var(--danger)]">
+          <AlertTriangle size={14} strokeWidth={1.5} /> {message}
         </p>
       )}
 
@@ -175,7 +177,7 @@ export function ListingForm({
           Vazgeç
         </Button>
         {mode === "edit" && (
-          <Button type="button" variant="secondary" onClick={handleDelete} disabled={pending}>
+          <Button type="button" variant="danger" onClick={handleDelete} disabled={pending}>
             Listelemeyi sil
           </Button>
         )}
@@ -187,8 +189,12 @@ export function ListingForm({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-4">
-      <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{title}</p>
-      <div className="rounded-2xl border border-slate-100 bg-slate-50/50 px-5 py-5 space-y-4">{children}</div>
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+        {title}
+      </p>
+      <div className="space-y-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-5 py-5">
+        {children}
+      </div>
     </div>
   );
 }
@@ -196,7 +202,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <label className="block text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</label>
+      <label className="block text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+        {label}
+      </label>
       {children}
     </div>
   );

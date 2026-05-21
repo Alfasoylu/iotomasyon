@@ -10,7 +10,9 @@
  */
 
 import { useState } from "react";
+import { X, Plane, Ship, Save } from "lucide-react";
 import type { ImporterProduct } from "@/app/api/products/importer-view/route";
+import { Button } from "@/components/ui/button";
 
 type UpdatedFields = {
   sourceCostRmb: number | null;
@@ -95,34 +97,34 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
   return (
     /* Backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Panel */}
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      <div className="w-full max-w-md rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-[var(--border-default)] px-6 py-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
               İthalat Alanı Düzenle
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-900 leading-tight">
+            <p className="mt-0.5 text-sm font-semibold leading-tight text-[var(--text-primary)]">
               {product.name}
             </p>
             {product.sku && (
-              <p className="text-xs text-slate-400 font-mono mt-0.5">{product.sku}</p>
+              <p className="mt-0.5 font-mono text-xs text-[var(--text-muted)]">{product.sku}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="mt-0.5 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+            className="mt-0.5 rounded-md p-1 text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
           >
-            ✕
+            <X size={14} strokeWidth={1.5} />
           </button>
         </div>
 
         {/* Form */}
-        <div className="px-6 py-5 space-y-4">
+        <div className="space-y-4 px-6 py-5">
           {/* Row 1 — Cost + Weight */}
           <div className="grid grid-cols-2 gap-3">
             <Field
@@ -164,7 +166,7 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
 
           {/* Shipping method */}
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
+            <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
               Kargo Tercihi
             </label>
             <div className="flex gap-2">
@@ -172,25 +174,37 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
                 <button
                   key={v}
                   onClick={() => setShippingMethodPref(v)}
-                  className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                  className={`flex flex-1 items-center justify-center gap-1 rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
                     shippingMethodPref === v
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      ? "border-[var(--accent-border)] bg-[var(--accent)] text-[var(--accent-fg)]"
+                      : "border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]"
                   }`}
                 >
-                  {v === "" ? "Otomatik" : v === "AIR" ? "✈ Hava" : "⛵ Deniz"}
+                  {v === "" ? (
+                    "Otomatik"
+                  ) : v === "AIR" ? (
+                    <>
+                      <Plane size={14} strokeWidth={1.5} /> Hava
+                    </>
+                  ) : (
+                    <>
+                      <Ship size={14} strokeWidth={1.5} /> Deniz
+                    </>
+                  )}
                 </button>
               ))}
             </div>
-            <p className="mt-1 text-[10px] text-slate-400">
+            <p className="mt-1 text-[10px] text-[var(--text-muted)]">
               Otomatik: ≥5 kg → Deniz, &lt;5 kg → Hava
             </p>
           </div>
 
           {/* Current values hint */}
-          <div className="rounded-lg bg-slate-50 px-3 py-2 text-[10px] text-slate-400 space-y-0.5">
-            <p className="font-medium text-slate-500 mb-1">Mevcut değerler:</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+          <div className="space-y-0.5 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-[10px] text-[var(--text-muted)]">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              Mevcut değerler:
+            </p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 font-mono tabular-nums">
               <span>Maliyet: {product.sourceCostRmb != null ? `¥${product.sourceCostRmb}` : "—"}</span>
               <span>Ağırlık: {product.weightKg != null ? `${product.weightKg} kg` : "—"}</span>
               <span>Gümrük: {product.customsRatePct != null ? `%${product.customsRatePct}` : "—"}</span>
@@ -201,27 +215,21 @@ export function ImportQuickEdit({ product, onClose, onSave }: Props) {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2 text-xs text-[var(--danger)]">
               {error}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
-          >
+        <div className="flex items-center justify-end gap-2 border-t border-[var(--border-default)] px-6 py-4">
+          <Button variant="secondary" onClick={onClose}>
             İptal
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-50 transition"
-          >
-            {loading ? "Kaydediliyor…" : "💾 Kaydet"}
-          </button>
+          </Button>
+          <Button onClick={handleSave} disabled={loading}>
+            <Save size={14} strokeWidth={1.5} />
+            {loading ? "Kaydediliyor…" : "Kaydet"}
+          </Button>
         </div>
       </div>
     </div>
@@ -245,7 +253,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-700 mb-1">{label}</label>
+      <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
+        {label}
+      </label>
       <input
         type="number"
         step="any"
@@ -253,9 +263,9 @@ function Field({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-300 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 transition"
+        className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 font-mono text-sm tabular-nums text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]"
       />
-      {hint && <p className="mt-0.5 text-[10px] text-slate-400">{hint}</p>}
+      {hint && <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">{hint}</p>}
     </div>
   );
 }
