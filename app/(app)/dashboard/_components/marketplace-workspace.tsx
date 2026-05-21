@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageCircle, Undo2, ShoppingCart, Link2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,7 +104,7 @@ export function MarketplaceWorkspace({
             href="/marketplace/trendyol/questions"
             className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:shadow-md"
           >
-            <span className="text-3xl">💬</span>
+            <MessageCircle size={14} strokeWidth={1.5} className="text-[var(--text-secondary)]" />
             <div>
               <p className="font-semibold text-slate-900">Müşteri Soruları</p>
               <p className="text-sm text-slate-500">Bekleyen soruları yanıtla</p>
@@ -113,7 +114,7 @@ export function MarketplaceWorkspace({
             href="/marketplace/trendyol/returns"
             className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:shadow-md"
           >
-            <span className="text-3xl">↩️</span>
+            <Undo2 size={14} strokeWidth={1.5} className="text-[var(--text-secondary)]" />
             <div>
               <p className="font-semibold text-slate-900">İade Merkezi</p>
               <p className="text-sm text-slate-500">Açık iade taleplerini yönet</p>
@@ -123,7 +124,7 @@ export function MarketplaceWorkspace({
             href="/marketplace/trendyol"
             className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:shadow-md"
           >
-            <span className="text-3xl">🛒</span>
+            <ShoppingCart size={14} strokeWidth={1.5} className="text-[var(--text-secondary)]" />
             <div>
               <p className="font-semibold text-slate-900">Trendyol Paneli</p>
               <p className="text-sm text-slate-500">Son siparişler ve durum</p>
@@ -133,7 +134,7 @@ export function MarketplaceWorkspace({
             href="/admin/marketplace-mappings"
             className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:shadow-md"
           >
-            <span className="text-3xl">🔗</span>
+            <Link2 size={14} strokeWidth={1.5} className="text-[var(--text-secondary)]" />
             <div>
               <p className="font-semibold text-slate-900">Ürün Eşleştirme</p>
               <p className="text-sm text-slate-500">Eşleşmemiş siparişleri çöz</p>

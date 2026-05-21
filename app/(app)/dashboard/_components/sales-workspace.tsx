@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleAlert } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,10 +36,17 @@ const CUSTOMER_STATUS_TONES: Record<string, string> = {
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
-  URGENT: "🔴 Acil",
-  HIGH: "🟠 Yüksek",
-  NORMAL: "🟡 Normal",
-  LOW: "🟢 Düşük",
+  URGENT: "Acil",
+  HIGH: "Yüksek",
+  NORMAL: "Normal",
+  LOW: "Düşük",
+};
+
+const PRIORITY_TONE_CLASS: Record<string, string> = {
+  URGENT: "text-red-600",
+  HIGH: "text-orange-600",
+  NORMAL: "text-amber-600",
+  LOW: "text-emerald-600",
 };
 
 const STAGE_LABELS: Record<string, string> = {
@@ -140,9 +148,11 @@ export function SalesWorkspace({ data }: { data: SalesPipelineData }) {
                           {interest.customer.name}
                         </p>
                         {(interest.priority === "URGENT" || interest.priority === "HIGH") && (
-                          <span className="flex-shrink-0 text-[10px]">
-                            {interest.priority === "URGENT" ? "🔴" : "🟠"}
-                          </span>
+                          <CircleAlert
+                            size={14}
+                            strokeWidth={1.5}
+                            className={`flex-shrink-0 ${interest.priority === "URGENT" ? "text-red-600" : "text-orange-600"}`}
+                          />
                         )}
                       </div>
                       <p className="mt-0.5 truncate text-xs text-slate-500">
@@ -207,7 +217,7 @@ export function SalesWorkspace({ data }: { data: SalesPipelineData }) {
                         </p>
                       )}
                     </div>
-                    <span className="flex-shrink-0 text-[10px] text-slate-400">
+                    <span className={`flex-shrink-0 text-[10px] font-medium ${PRIORITY_TONE_CLASS[task.priority] ?? "text-slate-400"}`}>
                       {PRIORITY_LABELS[task.priority] ?? task.priority}
                     </span>
                   </div>
@@ -238,7 +248,7 @@ export function SalesWorkspace({ data }: { data: SalesPipelineData }) {
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-semibold text-slate-900 truncate">{opp.customer.name}</p>
-                  <span className="flex-shrink-0 text-xs font-medium">
+                  <span className={`flex-shrink-0 text-xs font-medium ${PRIORITY_TONE_CLASS[opp.priority] ?? "text-slate-500"}`}>
                     {PRIORITY_LABELS[opp.priority] ?? opp.priority}
                   </span>
                 </div>

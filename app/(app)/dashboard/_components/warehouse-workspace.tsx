@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Search, Package } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -105,7 +106,7 @@ export function WarehouseWorkspace({
             href="/warehouse"
             className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:shadow-md"
           >
-            <span className="text-3xl">🔍</span>
+            <Search size={14} strokeWidth={1.5} className="text-[var(--text-secondary)]" />
             <div>
               <p className="font-semibold text-slate-900">Ürün Ara</p>
               <p className="text-sm text-slate-500">Barkod, SKU veya ad ile ara</p>
@@ -115,7 +116,7 @@ export function WarehouseWorkspace({
             href="/warehouse/count"
             className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:shadow-md"
           >
-            <span className="text-3xl">📦</span>
+            <Package size={14} strokeWidth={1.5} className="text-[var(--text-secondary)]" />
             <div>
               <p className="font-semibold text-slate-900">Stok Sayımı</p>
               <p className="text-sm text-slate-500">Sayım girişi yap ve kaydet</p>

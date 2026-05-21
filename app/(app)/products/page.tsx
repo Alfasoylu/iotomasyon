@@ -15,7 +15,7 @@
  */
 
 import Link from "next/link";
-import { Package } from "lucide-react";
+import { Package, BarChart3, Ship, Plane, Check } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -177,7 +177,7 @@ export default async function ProductsPage({
     if (query) safeParams.set("q", query);
     return (
       <div className="space-y-6">
-        <p className="text-sm text-slate-500">Bu görünüme erişim yetkiniz yok.</p>
+        <p className="text-sm text-[var(--text-secondary)]">Bu görünüme erişim yetkiniz yok.</p>
       </div>
     );
   }
@@ -305,26 +305,27 @@ export default async function ProductsPage({
 
       {/* View switcher — Admin only */}
       {isAdmin && (
-        <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 w-fit">
+        <div className="flex items-center gap-1 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] p-1 w-fit">
           <Link
             href="/products"
-            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${
               view !== "importer"
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-50"
+                ? "bg-[var(--accent-dim)] border border-[var(--accent-border)] text-[var(--accent)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
             Standart Görünüm
           </Link>
           <Link
             href="/products?view=importer"
-            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
+            className={`inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition ${
               view === "importer"
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-50"
+                ? "bg-[var(--accent-dim)] border border-[var(--accent-border)] text-[var(--accent)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
-            📊 İthalatçı Görünümü
+            <BarChart3 size={14} strokeWidth={1.5} />
+            İthalatçı Görünümü
           </Link>
         </div>
       )}
@@ -348,7 +349,7 @@ export default async function ProductsPage({
       </Card>
 
       {!databaseAvailable ? (
-        <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
+        <Card className="border-[var(--warn-border)] bg-[var(--warn-dim)] p-5 text-sm leading-7 text-[var(--warn)]">
           Veritabanı bağlantısı şu anda kullanılamıyor. Ürün listesi gösterilemiyor.
         </Card>
       ) : null}
@@ -357,32 +358,34 @@ export default async function ProductsPage({
       {canViewFinance && (
       <div className="flex flex-wrap gap-2">
         {([
-          { key: "all",      label: "Tümü",     cls: "bg-white border-slate-200 text-slate-700 hover:border-slate-400" },
-          { key: "EXCELLENT",label: "Mükemmel", cls: "bg-white border-emerald-200 text-emerald-700 hover:border-emerald-400" },
-          { key: "GOOD",     label: "İyi",      cls: "bg-white border-emerald-100 text-emerald-600 hover:border-emerald-300" },
-          { key: "LOW",      label: "Düşük",    cls: "bg-white border-amber-200 text-amber-700 hover:border-amber-400" },
-          { key: "LOSS",     label: "Zarar",    cls: "bg-white border-red-200 text-red-700 hover:border-red-400" },
-          { key: "no_profit",label: "Veri Yok", cls: "bg-white border-slate-100 text-slate-400 hover:border-slate-300" },
-        ] as const).map(({ key, label, cls }) => {
+          { key: "all",      label: "Tümü"     },
+          { key: "EXCELLENT",label: "Mükemmel" },
+          { key: "GOOD",     label: "İyi"      },
+          { key: "LOW",      label: "Düşük"    },
+          { key: "LOSS",     label: "Zarar"    },
+          { key: "no_profit",label: "Veri Yok" },
+        ] as const).map(({ key, label }) => {
           const isActive = durumFilter === key;
           const count = durumCounts[key];
+          const base =
+            "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition";
+          const stateCls = isActive
+            ? "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]"
+            : "border-[var(--border-default)] bg-[var(--surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]";
           return (
             <Link
               key={key}
               href={durumHref(key)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                isActive
-                  ? key === "EXCELLENT" ? "bg-emerald-700 border-emerald-700 text-white"
-                  : key === "GOOD"      ? "bg-emerald-600 border-emerald-600 text-white"
-                  : key === "LOW"       ? "bg-amber-600 border-amber-600 text-white"
-                  : key === "LOSS"      ? "bg-red-600 border-red-600 text-white"
-                  : key === "no_profit" ? "bg-slate-500 border-slate-500 text-white"
-                  : "bg-slate-900 border-slate-900 text-white"
-                  : cls
-              }`}
+              className={`${base} ${stateCls}`}
             >
               {label}
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${isActive ? "bg-white/20" : "bg-slate-100 text-slate-500"}`}>
+              <span
+                className={`rounded-md px-1.5 py-0.5 text-[10px] tabular-nums font-mono ${
+                  isActive
+                    ? "bg-[var(--accent)]/15 text-[var(--accent)]"
+                    : "bg-[var(--surface-3)] text-[var(--text-muted)]"
+                }`}
+              >
                 {count}
               </span>
             </Link>
@@ -393,8 +396,8 @@ export default async function ProductsPage({
 
       <Card className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.2em] text-slate-400">
+          <table className="min-w-full divide-y divide-[var(--border-subtle)]">
+            <thead className="bg-[var(--surface-1)] text-left text-[11px] uppercase tracking-wider font-medium text-[var(--text-muted)]">
               <tr>
                 <th className="w-14 px-3 py-3" aria-label="Görsel" />
                 <th className="px-4 py-3">Ürün</th>
@@ -410,10 +413,10 @@ export default async function ProductsPage({
                 <th className="px-4 py-3 text-right">Aksiyon</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 bg-white text-sm">
+            <tbody className="divide-y divide-[var(--border-subtle)] bg-[var(--surface-2)] text-sm">
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={canViewFinance ? 12 : 7} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={canViewFinance ? 12 : 7} className="px-4 py-12 text-center text-[var(--text-muted)]">
                     {query.length >= 2
                       ? `"${query}" için ürün bulunamadı.`
                       : "Bu filtrelerle eşleşen ürün bulunamadı."}
@@ -425,7 +428,7 @@ export default async function ProductsPage({
                     product.images[0]?.url ?? product.imageUrl ?? null;
 
                   return (
-                    <tr key={product.id} className="hover:bg-slate-50/60 transition">
+                    <tr key={product.id} className="hover:bg-[var(--surface-3)] transition">
                       {/* Thumbnail */}
                       <td className="px-3 py-2">
                         <Link href={`/products/${product.id}`} tabIndex={-1}>
@@ -434,12 +437,12 @@ export default async function ProductsPage({
                             <img
                               src={thumbnailUrl}
                               alt={product.name}
-                              className="h-12 w-12 rounded-lg object-contain bg-slate-50 border border-slate-100"
+                              className="h-12 w-12 rounded-md object-contain bg-[var(--surface-1)] border border-[var(--border-subtle)]"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 text-lg border border-slate-100">
-                              📦
+                            <div className="h-12 w-12 rounded-md bg-[var(--surface-1)] flex items-center justify-center text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                              <Package size={14} strokeWidth={1.5} />
                             </div>
                           )}
                         </Link>
@@ -448,14 +451,14 @@ export default async function ProductsPage({
                       {/* Product name + SKU */}
                       <td className="px-4 py-3">
                         <Link href={`/products/${product.id}`} className="group">
-                          <p className="font-semibold text-slate-900 group-hover:text-slate-600 transition leading-tight">
+                          <p className="font-medium text-[var(--text-primary)] group-hover:text-[var(--accent)] transition leading-tight">
                             {product.name}
                           </p>
-                          <p className="mt-0.5 font-mono text-xs text-slate-400">
+                          <p className="mt-0.5 font-mono text-xs text-[var(--text-muted)]">
                             {product.sku}
                           </p>
                           {(product.brand || product.model) && (
-                            <p className="mt-0.5 text-xs text-slate-400">
+                            <p className="mt-0.5 text-xs text-[var(--text-muted)]">
                               {[product.brand, product.model].filter(Boolean).join(" · ")}
                             </p>
                           )}
@@ -463,9 +466,9 @@ export default async function ProductsPage({
                       </td>
 
                       {/* Category */}
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                         {product.productCategory?.name ?? product.category ?? (
-                          <span className="text-slate-300">—</span>
+                          <span className="text-[var(--text-muted)]">—</span>
                         )}
                       </td>
 
@@ -473,22 +476,22 @@ export default async function ProductsPage({
                       {canViewFinance && (
                         <td className="px-4 py-3 text-right">
                           {trendyolPriceTry != null ? (
-                            <span className="font-mono text-sm font-medium text-slate-700">
+                            <span className="tabular-nums font-mono text-sm font-medium text-[var(--text-primary)]">
                               ₺{trendyolPriceTry.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           ) : (
-                            <span className="text-slate-300 text-xs">—</span>
+                            <span className="text-[var(--text-muted)] text-xs">—</span>
                           )}
                         </td>
                       )}
 
                       {/* Stock */}
                       <td className="px-4 py-3 text-right">
-                        <span className={`font-mono font-semibold text-sm ${isLowStock ? "text-amber-600" : "text-slate-800"}`}>
+                        <span className={`tabular-nums font-mono font-semibold text-sm ${isLowStock ? "text-[var(--warn)]" : "text-[var(--text-primary)]"}`}>
                           {product.stockQuantity}
                         </span>
                         {product.minimumStock > 0 && (
-                          <span className="ml-1 text-xs text-slate-400">
+                          <span className="ml-1 text-xs tabular-nums font-mono text-[var(--text-muted)]">
                             / {product.minimumStock}
                           </span>
                         )}
@@ -498,9 +501,9 @@ export default async function ProductsPage({
                       <td className="px-4 py-3 text-right">
                         {(() => {
                           const qty = velocity30d.get(product.id);
-                          if (!qty) return <span className="text-xs text-slate-300">—</span>;
+                          if (!qty) return <span className="text-xs text-[var(--text-muted)]">—</span>;
                           return (
-                            <span className={`font-mono text-sm font-semibold ${qty >= 10 ? "text-emerald-600" : qty >= 3 ? "text-amber-600" : "text-slate-600"}`}>
+                            <span className={`tabular-nums font-mono text-sm font-semibold ${qty >= 10 ? "text-[var(--ok)]" : qty >= 3 ? "text-[var(--warn)]" : "text-[var(--text-secondary)]"}`}>
                               {qty}
                             </span>
                           );
@@ -511,47 +514,62 @@ export default async function ProductsPage({
                       {canViewFinance && (
                         <td className="px-4 py-3 text-right">
                           {profit ? (
-                            <span className={`font-mono text-sm font-semibold ${profit.netProfit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            <span className={`tabular-nums font-mono text-sm font-semibold ${profit.netProfit >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
                               ₺{profit.netProfit.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </span>
-                          ) : <span className="text-xs text-slate-300">—</span>}
+                          ) : <span className="text-xs text-[var(--text-muted)]">—</span>}
                         </td>
                       )}
 
                       {canViewFinance && (
                         <td className="px-4 py-3 text-right">
                           {profit ? (
-                            <span className={`font-mono text-sm font-semibold ${profit.marginPct >= 15 ? "text-emerald-600" : profit.marginPct >= 0 ? "text-amber-600" : "text-red-600"}`}>
+                            <span className={`tabular-nums font-mono text-sm font-semibold ${profit.marginPct >= 15 ? "text-[var(--ok)]" : profit.marginPct >= 0 ? "text-[var(--warn)]" : "text-[var(--danger)]"}`}>
                               %{profit.marginPct.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                             </span>
-                          ) : <span className="text-xs text-slate-300">—</span>}
+                          ) : <span className="text-xs text-[var(--text-muted)]">—</span>}
                         </td>
                       )}
 
                       {canViewFinance && (
                         <td className="px-4 py-3 text-right">
                           {profit ? (
-                            <span className={`font-mono text-sm ${profit.roi >= 30 ? "text-emerald-600" : profit.roi >= 0 ? "text-amber-600" : "text-red-600"}`}>
+                            <span className={`tabular-nums font-mono text-sm ${profit.roi >= 30 ? "text-[var(--ok)]" : profit.roi >= 0 ? "text-[var(--warn)]" : "text-[var(--danger)]"}`}>
                               %{profit.roi.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </span>
-                          ) : <span className="text-xs text-slate-300">—</span>}
+                          ) : <span className="text-xs text-[var(--text-muted)]">—</span>}
                         </td>
                       )}
 
                       {canViewFinance && (
                         <td className="px-4 py-3 text-center">
                           {profit ? (() => {
-                            const durum = { LOSS: { label: "Zarar", cls: "bg-red-100 text-red-700" }, LOW: { label: "Düşük", cls: "bg-amber-100 text-amber-700" }, GOOD: { label: "İyi", cls: "bg-emerald-100 text-emerald-700" }, EXCELLENT: { label: "Mükemmel", cls: "bg-emerald-200 text-emerald-900 font-semibold" } }[profit.status];
+                            const durum = {
+                              LOSS:      { label: "Zarar",    cls: "border border-[var(--danger-border)] bg-[var(--danger-dim)] text-[var(--danger)]" },
+                              LOW:       { label: "Düşük",    cls: "border border-[var(--warn-border)] bg-[var(--warn-dim)] text-[var(--warn)]" },
+                              GOOD:      { label: "İyi",      cls: "border border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)]" },
+                              EXCELLENT: { label: "Mükemmel", cls: "border border-[var(--ok-border)] bg-[var(--ok-dim)] text-[var(--ok)] font-semibold" },
+                            }[profit.status];
                             return (
                               <div className="flex flex-col items-center gap-0.5">
-                                <span className={`inline-block rounded px-2 py-0.5 text-xs ${durum.cls}`}>{durum.label}</span>
+                                <span className={`inline-block rounded-md px-2 py-0.5 text-xs ${durum.cls}`}>{durum.label}</span>
                                 {/* Phase 76: kargo modu göstergesi */}
-                                <span className={`text-[10px] font-medium ${profit.shippingMethod === "SEA" ? "text-blue-500" : "text-orange-400"}`}>
-                                  {profit.shippingMethod === "SEA" ? "🚢 Deniz" : "✈ Hava"}
+                                <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${profit.shippingMethod === "SEA" ? "text-[var(--info)]" : "text-[var(--warn)]"}`}>
+                                  {profit.shippingMethod === "SEA" ? (
+                                    <>
+                                      <Ship size={14} strokeWidth={1.5} />
+                                      Deniz
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Plane size={14} strokeWidth={1.5} />
+                                      Hava
+                                    </>
+                                  )}
                                 </span>
                               </div>
                             );
-                          })() : <span className="text-xs text-slate-300">—</span>}
+                          })() : <span className="text-xs text-[var(--text-muted)]">—</span>}
                         </td>
                       )}
 
@@ -559,7 +577,7 @@ export default async function ProductsPage({
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
                           {healthCues.length === 0 ? (
-                            <span className="text-xs text-emerald-500">✓</span>
+                            <Check size={14} strokeWidth={1.5} className="text-[var(--ok)]" />
                           ) : (
                             healthCues.map((c) => (
                               <Badge key={c.label} tone={c.tone}>
@@ -576,14 +594,14 @@ export default async function ProductsPage({
                           {canUpdate && (
                             <Link
                               href={`/products/${product.id}/edit`}
-                              className="text-xs font-medium text-slate-400 hover:text-slate-700 transition"
+                              className="text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
                             >
                               Düzenle
                             </Link>
                           )}
                           <Link
                             href={`/products/${product.id}`}
-                            className="text-xs font-semibold text-slate-900 hover:text-slate-600 transition"
+                            className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
                           >
                             Detay
                           </Link>
@@ -598,7 +616,7 @@ export default async function ProductsPage({
         </div>
 
         {filteredRows.length > 0 && (
-          <div className="border-t border-slate-100 px-4 py-3 text-right text-xs text-slate-400">
+          <div className="border-t border-[var(--border-subtle)] px-4 py-3 text-right text-xs text-[var(--text-muted)]">
             {filteredRows.length} ürün gösteriliyor{durumFilter !== "all" && ` (${allRows.length} toplam)`}
           </div>
         )}

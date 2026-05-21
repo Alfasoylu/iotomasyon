@@ -21,6 +21,7 @@ import { QuoteWhatsAppButton } from "@/components/quotes/quote-whatsapp-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { MetricCard, type MetricStatus } from "@/components/ui/metric-card";
 import {
   formatCustomerStatus,
   formatInterestStage,
@@ -49,7 +50,7 @@ import { listCustomerTimeline } from "@/services/customer-timeline-service";
 import { calcLeadScore, daysSinceContact } from "@/lib/customer-lead-score";
 import { displayPhone, telLink, whatsappLink } from "@/lib/customer-contact";
 import { CUSTOMER_TYPE_LABELS } from "@/types/customers";
-import { Phone, MessageCircle, Mail, MapPin, Briefcase, Clock, Target, Heart, ShoppingBag, Activity as ActivityIcon } from "lucide-react";
+import { Phone, Mail, MapPin, Briefcase, Clock, Target, Heart, ShoppingBag, Activity as ActivityIcon, PhoneOff, Sparkles, Zap, Tag, Search, Check, Lightbulb, DollarSign, Package, FileText as FileTextIcon } from "lucide-react";
 import { CustomerRowActions } from "@/components/customers/customer-row-actions";
 import { CustomerTimeline } from "@/components/customers/customer-timeline";
 import { OutcomeChips } from "@/components/customers/outcome-chips";
@@ -121,20 +122,20 @@ export default async function CustomerDetailPage({
         <div>
           <Link
             href="/customers"
-            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+            className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
           >
             ← Müşteriler
           </Link>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Müşteri detayı geçici olarak kullanılamıyor
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">
             Veritabanı bağlantısı şu anda kullanılamıyor. Bağlantı geri geldiğinde müşteri
             detayları tekrar yüklenecek.
           </p>
         </div>
 
-        <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
+        <Card className="p-6 text-[13px] leading-6 text-[var(--warn)] border-[var(--warn-border)] bg-[var(--warn-dim)]">
           Canlı müşteri verisi alınamadığı için detay ekranı gösterilemiyor.
         </Card>
       </div>
@@ -161,10 +162,10 @@ export default async function CustomerDetailPage({
   });
 
   const SCORE_BG_HERO = {
-    success: "bg-emerald-100 text-emerald-700 border-emerald-300",
-    info: "bg-blue-100 text-blue-700 border-blue-300",
-    warning: "bg-amber-100 text-amber-700 border-amber-300",
-    neutral: "bg-slate-100 text-slate-600 border-slate-300",
+    success: "bg-[var(--ok-dim)] text-[var(--ok)] border-[var(--ok-border)]",
+    info: "bg-[var(--info-dim)] text-[var(--info)] border-[var(--info-border)]",
+    warning: "bg-[var(--warn-dim)] text-[var(--warn)] border-[var(--warn-border)]",
+    neutral: "bg-[var(--surface-3)] text-[var(--text-secondary)] border-[var(--border-default)]",
   } as const;
 
   function relTime(d: Date | null): string {
@@ -189,7 +190,7 @@ export default async function CustomerDetailPage({
       <div className="min-w-0 space-y-6">
         <Link
           href="/customers"
-          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
         >
           ← Müşteriler
         </Link>
@@ -201,10 +202,10 @@ export default async function CustomerDetailPage({
               <div className="flex-shrink-0 flex items-center gap-3">
                 <CustomerAvatar name={customer.name} avatarUrl={customer.avatarUrl} size="lg" />
                 <div
-                  className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-2xl border ${SCORE_BG_HERO[leadScore.tone]}`}
+                  className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-lg border ${SCORE_BG_HERO[leadScore.tone]}`}
                   title={`Lead Skoru ${leadScore.score}/100 — ${leadScore.label}`}
                 >
-                  <span className="text-2xl font-bold tabular-nums leading-none">{leadScore.score}</span>
+                  <span className="text-2xl font-semibold tabular-nums leading-none">{leadScore.score}</span>
                   <span className="mt-0.5 text-[9px] uppercase tracking-wide opacity-80">
                     {leadScore.label}
                   </span>
@@ -216,67 +217,65 @@ export default async function CustomerDetailPage({
                   {/* Status — inline edit dropdown */}
                   <InlineStatusEditor customerId={customer.id} currentStatus={customer.status} />
                   {customer.customerType && (
-                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    <Badge variant="neutral">
                       {CUSTOMER_TYPE_LABELS[customer.customerType]}
-                    </span>
+                    </Badge>
                   )}
                   {customer.doNotCall && (
-                    <span className="rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
-                      📵 DND
-                    </span>
+                    <Badge variant="danger" className="gap-1">
+                      <PhoneOff size={14} strokeWidth={1.5} />
+                      DND
+                    </Badge>
                   )}
                   {customer.tags && customer.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1" title={customer.tags.join(", ")}>
                       {customer.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-medium text-blue-700"
-                        >
+                        <Badge key={tag} variant="info">
                           {tag}
-                        </span>
+                        </Badge>
                       ))}
                       {customer.tags.length > 3 && (
-                        <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                        <Badge variant="neutral">
                           +{customer.tags.length - 3}
-                        </span>
+                        </Badge>
                       )}
                     </div>
                   )}
                 </div>
-                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl" title={customer.name}>
+                <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]" title={customer.name}>
                   {shortenCustomerName(customer.name, 70)}
                 </h1>
                 {customer.company && customer.company.trim() !== customer.name.trim() ? (
-                  <p className="mt-1 text-sm text-slate-500">{shortenCustomerName(customer.company, 80)}</p>
+                  <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{shortenCustomerName(customer.company, 80)}</p>
                 ) : (
-                  <p className="mt-1 text-sm text-slate-400 italic">Firma belirtilmedi</p>
+                  <p className="mt-1 text-[13px] text-[var(--text-muted)] italic">Firma belirtilmedi</p>
                 )}
 
                 {/* İletişim satırı */}
-                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-slate-700">
+                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px] text-[var(--text-secondary)]">
                   {phoneDisplay && phoneHref && (
-                    <a href={phoneHref} className="flex items-center gap-1.5 font-mono hover:text-emerald-700">
-                      <Phone className="h-4 w-4 text-emerald-600" />
-                      <span className="font-medium">{phoneDisplay}</span>
+                    <a href={phoneHref} className="flex items-center gap-1.5 font-mono hover:text-[var(--ok)] transition-colors">
+                      <Phone size={14} strokeWidth={1.5} className="text-[var(--ok)]" />
+                      <span className="font-medium text-[var(--text-primary)]">{phoneDisplay}</span>
                     </a>
                   )}
                   {customer.email && (
-                    <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 hover:text-blue-700">
-                      <Mail className="h-4 w-4 text-slate-400" />
+                    <a href={`mailto:${customer.email}`} className="flex items-center gap-1.5 hover:text-[var(--info)] transition-colors">
+                      <Mail size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
                       {customer.email}
                     </a>
                   )}
                   {customer.city && (
-                    <span className="flex items-center gap-1.5 text-slate-600">
-                      <MapPin className="h-4 w-4 text-slate-400" />
+                    <span className="flex items-center gap-1.5">
+                      <MapPin size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
                       {[customer.district, customer.city].filter(Boolean).join(" / ")}
                     </span>
                   )}
                   {customer.taxNumber && (
-                    <span className="flex items-center gap-1.5 text-slate-600">
-                      <Briefcase className="h-4 w-4 text-slate-400" />
+                    <span className="flex items-center gap-1.5">
+                      <Briefcase size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
                       VN: <span className="font-mono">{customer.taxNumber}</span>
-                      {customer.taxOffice && <span className="text-slate-400">({customer.taxOffice})</span>}
+                      {customer.taxOffice && <span className="text-[var(--text-muted)]">({customer.taxOffice})</span>}
                     </span>
                   )}
                 </div>
@@ -284,25 +283,25 @@ export default async function CustomerDetailPage({
             </div>
 
             {/* Son temas + Sonraki aksiyon — kritik bant */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm">
+            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-3)] px-4 py-3 text-[13px]">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5">
-                <span className="flex items-center gap-1.5 text-slate-600">
-                  <Clock className="h-4 w-4 text-slate-400" />
-                  Son temas: <strong className="text-slate-900">{relTime(customer.lastContactedAt)}</strong>
+                <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                  <Clock size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                  Son temas: <strong className="text-[var(--text-primary)] font-semibold">{relTime(customer.lastContactedAt)}</strong>
                 </span>
                 {stats?.nextActionAt ? (
-                  <span className="flex items-center gap-1.5 text-slate-700">
-                    <Target className="h-4 w-4 text-amber-500" />
+                  <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                    <Target size={14} strokeWidth={1.5} className="text-[var(--warn)]" />
                     Sonraki:{" "}
-                    <strong className="text-slate-900">
+                    <strong className="text-[var(--text-primary)] font-semibold">
                       {new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(stats.nextActionAt)}
                     </strong>
                     {stats.nextActionTitle && (
-                      <span className="text-slate-500">— {stats.nextActionTitle}</span>
+                      <span className="text-[var(--text-muted)]">— {stats.nextActionTitle}</span>
                     )}
                   </span>
                 ) : (
-                  <span className="text-slate-400 italic">Sonraki aksiyon planlanmamış</span>
+                  <span className="text-[var(--text-muted)] italic">Sonraki aksiyon planlanmamış</span>
                 )}
               </div>
             </div>
@@ -313,9 +312,9 @@ export default async function CustomerDetailPage({
               {phoneHref && (
                 <a
                   href={phoneHref}
-                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[var(--accent)] px-3.5 text-[13px] font-medium text-[var(--accent-fg)] transition-all duration-100 hover:brightness-110 active:scale-[0.98]"
                 >
-                  <Phone className="h-4 w-4" />
+                  <Phone size={14} strokeWidth={1.5} />
                   ARA
                 </a>
               )}
@@ -362,18 +361,18 @@ export default async function CustomerDetailPage({
             </div>
 
             {/* ── Çağrı Sonu Outcome Chips (Phase 95c) ──────────────────── */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-3)] p-4">
               <OutcomeChips customerId={customer.id} />
             </div>
 
             {/* P2 — Sektör & Teknoloji compact strip (çağrı sırasında hızla görsel referans) */}
             {(customer.industry || customer.usedTech?.length || customer.currentSupplier) && (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <div className="rounded-lg border border-[var(--info-border)] bg-[var(--info-dim)] px-4 py-3">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
                   {customer.industry && (
                     <span className="flex items-center gap-1.5">
-                      <span className="text-xs font-medium text-blue-700 uppercase tracking-wide">Sektör</span>
-                      <span className="font-medium text-slate-900">
+                      <span className="text-[11px] font-medium text-[var(--info)] uppercase tracking-widest">Sektör</span>
+                      <span className="font-medium text-[var(--text-primary)]">
                         {customer.industry.parent?.name ? `${customer.industry.parent.name} → ` : ""}
                         {customer.industry.name}
                       </span>
@@ -381,12 +380,12 @@ export default async function CustomerDetailPage({
                   )}
                   {customer.usedTech?.length > 0 && (
                     <span className="flex items-center gap-1.5">
-                      <span className="text-xs font-medium text-blue-700 uppercase tracking-wide">Teknoloji</span>
+                      <span className="text-[11px] font-medium text-[var(--info)] uppercase tracking-widest">Teknoloji</span>
                       <span className="flex flex-wrap gap-1">
                         {customer.usedTech.map((tech) => (
                           <span
                             key={tech}
-                            className="rounded bg-white px-1.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-200"
+                            className="rounded bg-[var(--surface-2)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--info)] border border-[var(--info-border)]"
                           >
                             {tech}
                           </span>
@@ -396,8 +395,8 @@ export default async function CustomerDetailPage({
                   )}
                   {customer.currentSupplier && (
                     <span className="flex items-center gap-1.5">
-                      <span className="text-xs font-medium text-amber-700 uppercase tracking-wide">Rakip</span>
-                      <span className="font-medium text-amber-800">{customer.currentSupplier}</span>
+                      <span className="text-[11px] font-medium text-[var(--warn)] uppercase tracking-widest">Rakip</span>
+                      <span className="font-medium text-[var(--warn)]">{customer.currentSupplier}</span>
                     </span>
                   )}
                 </div>
@@ -415,18 +414,19 @@ export default async function CustomerDetailPage({
           const openQuotes = stats?.openQuoteCount ?? 0;
           const monthsTotal = Math.max(0, Math.floor((Date.now() - new Date(customer.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000)));
 
-          const visibleChips: Array<{ label: string; value: string; tone: "success" | "info" | "warning" | "neutral" }> = [];
+          const visibleChips: Array<{ label: string; value: string; status: MetricStatus; icon: typeof DollarSign }> = [];
           if (totalRevenue > 0) {
             visibleChips.push({
               label: "Toplam Ciro",
               value: new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(totalRevenue),
-              tone: "success",
+              status: "ok",
+              icon: DollarSign,
             });
           }
-          if (totalOrders > 0) visibleChips.push({ label: "Sipariş Adedi", value: String(totalOrders), tone: "info" });
-          if (uniqueProducts > 0) visibleChips.push({ label: "Farklı Ürün", value: String(uniqueProducts), tone: "neutral" });
-          if (activeInterests > 0) visibleChips.push({ label: "Aktif İlgi", value: String(activeInterests), tone: "warning" });
-          if (openQuotes > 0) visibleChips.push({ label: "Açık Teklif", value: String(openQuotes), tone: "info" });
+          if (totalOrders > 0) visibleChips.push({ label: "Sipariş Adedi", value: String(totalOrders), status: "info", icon: ShoppingBag });
+          if (uniqueProducts > 0) visibleChips.push({ label: "Farklı Ürün", value: String(uniqueProducts), status: "neutral", icon: Package });
+          if (activeInterests > 0) visibleChips.push({ label: "Aktif İlgi", value: String(activeInterests), status: "warn", icon: Heart });
+          if (openQuotes > 0) visibleChips.push({ label: "Açık Teklif", value: String(openQuotes), status: "info", icon: FileTextIcon });
 
           // Müşterilik süresi — sadece >0 ay ise göster
           if (monthsTotal > 0) {
@@ -437,30 +437,37 @@ export default async function CustomerDetailPage({
                   const remainder = monthsTotal % 12;
                   return remainder === 0 ? `${years} yıl` : `${years}y ${remainder}a`;
                 })();
-            visibleChips.push({ label: "Müşterilik", value, tone: "neutral" });
+            visibleChips.push({ label: "Müşterilik", value, status: "neutral", icon: Clock });
           }
 
           if (visibleChips.length === 0) {
             return (
               <Card className="p-4">
-                <p className="text-sm text-slate-500">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700">
-                    ✨ Yeni müşteri
+                <div className="flex items-center gap-3">
+                  <Badge variant="info" className="gap-1">
+                    <Sparkles size={14} strokeWidth={1.5} />
+                    Yeni müşteri
+                  </Badge>
+                  <span className="text-[12px] text-[var(--text-muted)]">
+                    Henüz satış geçmişi yok — ilk çağrıyı yap, ilgi alanlarını kaydet.
                   </span>
-                  <span className="ml-2 text-xs text-slate-400">Henüz satış geçmişi yok — ilk çağrıyı yap, ilgi alanlarını kaydet.</span>
-                </p>
+                </div>
               </Card>
             );
           }
 
           return (
-            <Card className="p-4">
-              <div className={`grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3 ${visibleChips.length >= 4 ? "lg:grid-cols-6" : "lg:grid-cols-3"}`}>
-                {visibleChips.map((chip) => (
-                  <StatChip key={chip.label} label={chip.label} value={chip.value} tone={chip.tone} />
-                ))}
-              </div>
-            </Card>
+            <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${visibleChips.length >= 4 ? "lg:grid-cols-6" : "lg:grid-cols-3"}`}>
+              {visibleChips.map((chip) => (
+                <MetricCard
+                  key={chip.label}
+                  label={chip.label}
+                  value={chip.value}
+                  status={chip.status}
+                  icon={chip.icon}
+                />
+              ))}
+            </div>
           );
         })()}
 
@@ -471,49 +478,51 @@ export default async function CustomerDetailPage({
           {(customer.interests.length > 0 || customer.categoryInterests.length > 0 || customer.attributeInterests.length > 0) && (
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100">
-                <Heart className="h-3.5 w-3.5 text-rose-700" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--danger-dim)] border border-[var(--danger-border)]">
+                <Heart size={14} strokeWidth={1.5} className="text-[var(--danger)]" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-900">Ne Almak İstiyor?</h3>
-                <p className="text-[10px] text-slate-500">Aktif ilgileri + aradığı özellikler</p>
+                <h3 className="text-[13px] font-semibold text-[var(--text-primary)]">Ne Almak İstiyor?</h3>
+                <p className="text-[11px] text-[var(--text-muted)]">Aktif ilgileri + aradığı özellikler</p>
               </div>
             </div>
               <div className="space-y-3">
                 {customer.interests.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                      ⚡ Ürün İlgileri ({customer.interests.length})
+                    <p className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1.5">
+                      <Zap size={14} strokeWidth={1.5} />
+                      Ürün İlgileri ({customer.interests.length})
                     </p>
                     <ul className="space-y-1">
                       {customer.interests.slice(0, 4).map((i) => (
-                        <li key={i.id} className="text-xs">
-                          <Link href={`/products/${i.product.id}`} className="font-medium text-slate-800 hover:text-slate-600">
+                        <li key={i.id} className="text-[12px]">
+                          <Link href={`/products/${i.product.id}`} className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors">
                             {i.product.name}
                           </Link>
-                          {i.quantity > 1 && <span className="ml-1 text-slate-400">×{i.quantity}</span>}
+                          {i.quantity > 1 && <span className="ml-1 text-[var(--text-muted)]">×{i.quantity}</span>}
                           {i.stage && (
-                            <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-600">{i.stage}</span>
+                            <span className="ml-2 rounded bg-[var(--surface-3)] border border-[var(--border-subtle)] px-1.5 py-0.5 text-[10px] text-[var(--text-secondary)]">{i.stage}</span>
                           )}
                         </li>
                       ))}
                       {customer.interests.length > 4 && (
-                        <li className="text-[10px] text-slate-400">+ {customer.interests.length - 4} daha</li>
+                        <li className="text-[11px] text-[var(--text-muted)]">+ {customer.interests.length - 4} daha</li>
                       )}
                     </ul>
                   </div>
                 )}
                 {customer.categoryInterests.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                      🏷️ Kategori İlgileri
+                    <p className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1.5">
+                      <Tag size={14} strokeWidth={1.5} />
+                      Kategori İlgileri
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {customer.categoryInterests.map((ci) => (
                         <Link
                           key={ci.id}
                           href={`/categories/${ci.category.id}`}
-                          className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700 hover:bg-slate-200"
+                          className="rounded bg-[var(--surface-3)] border border-[var(--border-subtle)] px-2 py-0.5 text-[11px] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition-colors"
                         >
                           {ci.category.name}
                         </Link>
@@ -523,17 +532,16 @@ export default async function CustomerDetailPage({
                 )}
                 {customer.attributeInterests.length > 0 && (
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                      🔍 Aradığı Özellikler
+                    <p className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1.5">
+                      <Search size={14} strokeWidth={1.5} />
+                      Aradığı Özellikler
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {customer.attributeInterests.map((ai) => (
-                        <span
-                          key={ai.attributeId}
-                          className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
-                        >
-                          ✓ {ai.attribute.name}
-                        </span>
+                        <Badge key={ai.attributeId} variant="ok" className="gap-1">
+                          <Check size={14} strokeWidth={1.5} />
+                          {ai.attribute.name}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -545,20 +553,20 @@ export default async function CustomerDetailPage({
           {marketplaceStats && marketplaceStats.totalOrders > 0 && (
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100">
-                <ShoppingBag className="h-3.5 w-3.5 text-blue-700" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--info-dim)] border border-[var(--info-border)]">
+                <ShoppingBag size={14} strokeWidth={1.5} className="text-[var(--info)]" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-900">Pazaryeri Geçmişi</h3>
-                <p className="text-[10px] text-slate-500">Lifetime sipariş + kanal dağılımı</p>
+                <h3 className="text-[13px] font-semibold text-[var(--text-primary)]">Pazaryeri Geçmişi</h3>
+                <p className="text-[11px] text-[var(--text-muted)]">Lifetime sipariş + kanal dağılımı</p>
               </div>
             </div>
             <div>
               <div className="text-center mb-3">
-                <p className="text-2xl font-bold tabular-nums text-emerald-700">
+                <p className="text-2xl font-semibold tabular-nums text-[var(--ok)]">
                   {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(marketplaceStats.totalRevenueTry)}
                 </p>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[var(--text-muted)]">
                   {marketplaceStats.totalOrders} sipariş · {marketplaceStats.uniqueProducts} farklı ürün
                 </p>
               </div>
@@ -566,14 +574,14 @@ export default async function CustomerDetailPage({
                 {marketplaceStats.channels.slice(0, 5).map((c) => {
                   const pct = marketplaceStats.totalRevenueTry > 0 ? (c.revenueTry / marketplaceStats.totalRevenueTry) * 100 : 0;
                   return (
-                    <div key={c.channel} className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-slate-700">{c.channel}</span>
+                    <div key={c.channel} className="flex items-center justify-between text-[12px]">
+                      <span className="font-medium text-[var(--text-secondary)]">{c.channel}</span>
                       <span className="flex items-center gap-2">
-                        <span className="text-slate-500">{c.orders} sip.</span>
-                        <span className="font-mono font-semibold text-slate-800">
+                        <span className="text-[var(--text-muted)]">{c.orders} sip.</span>
+                        <span className="font-mono font-semibold text-[var(--text-primary)]">
                           {new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(c.revenueTry)}
                         </span>
-                        <span className="text-[10px] text-slate-400 w-9 text-right">%{pct.toFixed(0)}</span>
+                        <span className="text-[10px] text-[var(--text-muted)] w-9 text-right">%{pct.toFixed(0)}</span>
                       </span>
                     </div>
                   );
@@ -595,7 +603,7 @@ export default async function CustomerDetailPage({
             content: (
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_360px]">
                 <Card className="p-6">
-                  <h2 className="text-lg font-semibold text-slate-950">Müşteri bilgileri</h2>
+                  <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Müşteri bilgileri</h2>
                   <dl className="mt-5 grid gap-4 sm:grid-cols-2">
                     <Info label="Telefon" value={customer.phone} />
                     <Info label="WhatsApp" value={customer.whatsapp} />
@@ -614,7 +622,7 @@ export default async function CustomerDetailPage({
 
                 <div className="space-y-4">
                   <Card className="p-6">
-                    <h2 className="text-lg font-semibold text-slate-950">Kayıt metrikleri</h2>
+                    <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Kayıt metrikleri</h2>
                     <dl className="mt-5 space-y-4">
                       <Info label="Oluşturulma" value={formatDateTime(customer.createdAt)} />
                       <Info label="Güncellenme" value={formatDateTime(customer.updatedAt)} />
@@ -626,8 +634,8 @@ export default async function CustomerDetailPage({
 
                   {allAttributes.length > 0 ? (
                     <Card className="p-6">
-                      <h2 className="text-lg font-semibold text-slate-950">İlgi alanları</h2>
-                      <p className="mt-2 text-sm leading-7 text-slate-600">
+                      <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">İlgi alanları</h2>
+                      <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">
                         Kampanya eşleşmelerinde kullanılan özellik tercihleri.
                       </p>
                       <div className="mt-5">
@@ -652,8 +660,8 @@ export default async function CustomerDetailPage({
                 <Card className="p-6">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-950">Ürün ilgileri</h2>
-                      <p className="mt-2 text-sm leading-7 text-slate-600">
+                      <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Ürün ilgileri</h2>
+                      <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">
                         Müşterinin ilgilendiği ürünleri ve teklif sürecini takip edin.
                       </p>
                     </div>
@@ -669,26 +677,26 @@ export default async function CustomerDetailPage({
 
                   <div className="mt-8 space-y-4">
                     {customer.interests.length === 0 ? (
-                      <p className="text-sm text-slate-500">Henüz ürün ilgisi eklenmedi.</p>
+                      <p className="text-[13px] text-[var(--text-muted)]">Henüz ürün ilgisi eklenmedi.</p>
                     ) : (
                       customer.interests.map((interest) => (
                         <div
                           key={interest.id}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                          className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-3)] p-4"
                         >
                           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                             <div>
-                              <p className="font-semibold text-slate-900">
+                              <p className="font-semibold text-[var(--text-primary)] text-[13px]">
                                 {interest.product.name} ({interest.product.sku})
                               </p>
-                              <p className="mt-1 text-sm text-slate-600">
+                              <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
                                 Miktar: {interest.quantity}
                                 {interest.quotedPrice
                                   ? ` | Teklif: ${interest.quotedPrice.toString()} ${interest.currency}`
                                   : ""}
                               </p>
                               {interest.interestNotes ? (
-                                <p className="mt-3 text-sm leading-7 text-slate-600">
+                                <p className="mt-3 text-[13px] leading-6 text-[var(--text-secondary)]">
                                   {interest.interestNotes}
                                 </p>
                               ) : null}
@@ -704,7 +712,7 @@ export default async function CustomerDetailPage({
                               />
                             </div>
                           </div>
-                          <p className="mt-4 text-xs uppercase tracking-[0.25em] text-slate-400">
+                          <p className="mt-4 text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
                             {formatDateTime(interest.createdAt)}
                           </p>
                         </div>
@@ -716,8 +724,8 @@ export default async function CustomerDetailPage({
                 <Card className="p-6">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-950">Kategori ilgileri</h2>
-                      <p className="mt-2 text-sm leading-7 text-slate-600">
+                      <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Kategori ilgileri</h2>
+                      <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">
                         Ürün kategori eğilimini satış fırsatlarıyla birlikte izleyin.
                       </p>
                     </div>
@@ -733,25 +741,25 @@ export default async function CustomerDetailPage({
 
                   <div className="mt-8 space-y-4">
                     {customer.categoryInterests.length === 0 ? (
-                      <p className="text-sm text-slate-500">Henüz kategori ilgisi eklenmedi.</p>
+                      <p className="text-[13px] text-[var(--text-muted)]">Henüz kategori ilgisi eklenmedi.</p>
                     ) : (
                       customer.categoryInterests.map((ci) => (
                         <div
                           key={ci.id}
-                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                          className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-3)] p-4"
                         >
                           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                             <div>
                               <Link
                                 href={`/categories/${ci.category.id}`}
-                                className="font-semibold text-slate-900 hover:text-[color:var(--accent)]"
+                                className="font-semibold text-[var(--text-primary)] text-[13px] hover:text-[var(--accent)] transition-colors"
                               >
                                 {ci.category.name}
                               </Link>
                               {ci.notes ? (
-                                <p className="mt-2 text-sm leading-7 text-slate-600">{ci.notes}</p>
+                                <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">{ci.notes}</p>
                               ) : null}
-                              <p className="mt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
+                              <p className="mt-3 text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
                                 {formatDateTime(ci.createdAt)}
                               </p>
                             </div>
@@ -782,13 +790,13 @@ export default async function CustomerDetailPage({
                 <Card className="p-6">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                         Teklif stüdyosu
                       </p>
-                      <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+                      <h2 className="mt-2 text-[18px] font-semibold tracking-tight text-[var(--text-primary)]">
                         Bu müşteri için profesyonel teklif hazırla
                       </h2>
-                      <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+                      <p className="mt-2 max-w-3xl text-[13px] leading-6 text-[var(--text-secondary)]">
                         Quote builder tam genişlikte çalışır. Sağ tarafta canlı toplam özeti yer alır,
                         geçmiş teklifler ise üretim alanını sıkıştırmadan aşağıda listelenir.
                       </p>
@@ -830,15 +838,15 @@ export default async function CustomerDetailPage({
                 </Card>
 
                 <Card className="overflow-hidden">
-                  <div className="border-b border-slate-200 px-6 py-5">
-                    <h3 className="text-lg font-semibold text-slate-950">Teklif geçmişi</h3>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                  <div className="border-b border-[var(--border-subtle)] px-6 py-5">
+                    <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">Teklif geçmişi</h3>
+                    <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">
                       Önceki teklifleri açın, PDF olarak inceleyin veya WhatsApp ile tekrar paylaşın.
                     </p>
                   </div>
 
                   {customer.quotes.length === 0 ? (
-                    <div className="px-6 py-8 text-sm text-slate-500">
+                    <div className="px-6 py-8 text-[13px] text-[var(--text-muted)]">
                       Henüz teklif oluşturulmadı.
                     </div>
                   ) : (
@@ -856,7 +864,7 @@ export default async function CustomerDetailPage({
                         return (
                           <div
                             key={quote.id}
-                            className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+                            className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-3)] p-5"
                           >
                             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                               <div className="grid gap-4 md:grid-cols-3 xl:flex-1">
@@ -874,10 +882,10 @@ export default async function CustomerDetailPage({
                                 </Badge>
                                 <div className="flex flex-wrap gap-2">
                                   <Link href={`/quotes/${quote.id}`}>
-                                    <Button variant="secondary">Aç</Button>
+                                    <Button variant="secondary" size="sm">Aç</Button>
                                   </Link>
                                   <a href={`/quotes/${quote.id}/pdf`} target="_blank" rel="noreferrer">
-                                    <Button variant="ghost">PDF</Button>
+                                    <Button variant="ghost" size="sm">PDF</Button>
                                   </a>
                                   <QuoteWhatsAppButton
                                     quoteId={quote.id}
@@ -906,8 +914,8 @@ export default async function CustomerDetailPage({
             content: (
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <Card className="p-6">
-                  <h2 className="text-lg font-semibold text-slate-950">Yeni not ekle</h2>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">
+                  <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Yeni not ekle</h2>
+                  <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">
                     Birleşik zaman çizelgesi (tüm notlar + görevler + teklifler + siparişler) sayfanın altında.
                   </p>
 
@@ -915,14 +923,15 @@ export default async function CustomerDetailPage({
                     <CustomerNoteForm customerId={customer.id} />
                   </div>
 
-                  <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-900">
-                    💡 Eklediğin not + diğer tüm olaylar (görevler, teklifler, siparişler) sayfanın altındaki <strong>Zaman Çizelgesi</strong> bölümünde görünür.
+                  <div className="mt-4 flex items-start gap-2 rounded-md bg-[var(--info-dim)] border border-[var(--info-border)] p-3 text-[12px] text-[var(--info)]">
+                    <Lightbulb size={14} strokeWidth={1.5} className="mt-0.5 flex-shrink-0" />
+                    <span>Eklediğin not + diğer tüm olaylar (görevler, teklifler, siparişler) sayfanın altındaki <strong>Zaman Çizelgesi</strong> bölümünde görünür.</span>
                   </div>
                 </Card>
 
                 <Card className="p-6">
-                  <h2 className="text-lg font-semibold text-slate-950">Takip görevleri</h2>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">
+                  <h2 className="text-[15px] font-semibold text-[var(--text-primary)]">Takip görevleri</h2>
+                  <p className="mt-2 text-[13px] leading-6 text-[var(--text-secondary)]">
                     Açık takip kayıtlarını planlayın ve tamamlandığında kapatın.
                   </p>
 
@@ -936,7 +945,7 @@ export default async function CustomerDetailPage({
 
                   <div className="mt-8 space-y-4">
                     {customer.tasks.length === 0 ? (
-                      <p className="text-sm text-slate-500">Açık takip görevi bulunmuyor.</p>
+                      <p className="text-[13px] text-[var(--text-muted)]">Açık takip görevi bulunmuyor.</p>
                     ) : (
                       customer.tasks.map((task) => {
                         const isOverdue =
@@ -947,15 +956,15 @@ export default async function CustomerDetailPage({
                         return (
                           <div
                             key={task.id}
-                            className={`rounded-2xl border p-4 ${
+                            className={`rounded-lg border p-4 ${
                               isOverdue
-                                ? "border-red-200 bg-red-50"
-                                : "border-slate-200 bg-slate-50"
+                                ? "border-[var(--danger-border)] bg-[var(--danger-dim)]"
+                                : "border-[var(--border-subtle)] bg-[var(--surface-3)]"
                             }`}
                           >
                             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                               <div>
-                                <p className="font-semibold text-slate-900">{task.title}</p>
+                                <p className="font-semibold text-[var(--text-primary)] text-[13px]">{task.title}</p>
                                 <div className="mt-2 flex flex-wrap gap-2">
                                   <Badge tone={getTaskStatusTone(task.status)}>
                                     {formatTaskStatus(task.status)}
@@ -966,11 +975,11 @@ export default async function CustomerDetailPage({
                                   {isOverdue ? <Badge tone="danger">Gecikmiş</Badge> : null}
                                 </div>
                                 {task.description ? (
-                                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                                  <p className="mt-3 text-[13px] leading-6 text-[var(--text-secondary)]">
                                     {task.description}
                                   </p>
                                 ) : null}
-                                <p className="mt-3 text-xs uppercase tracking-[0.25em] text-slate-400">
+                                <p className="mt-3 text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
                                   {task.dueDate
                                     ? `Termin: ${formatDateTime(task.dueDate)}`
                                     : "Termin yok"}
@@ -999,13 +1008,11 @@ export default async function CustomerDetailPage({
       {/* ── BİRLEŞİK ZAMAN ÇİZELGESİ ─────────────────────────────────── */}
       <section>
         <div className="mb-4 flex items-center gap-2">
-          <ActivityIcon className="h-4 w-4 text-slate-600" />
-          <h2 className="text-base font-semibold text-slate-900">Zaman Çizelgesi</h2>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">
-            {timelineEvents.length} olay
-          </span>
+          <ActivityIcon size={14} strokeWidth={1.5} className="text-[var(--text-secondary)]" />
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Zaman Çizelgesi</h2>
+          <Badge variant="neutral">{timelineEvents.length} olay</Badge>
         </div>
-        <p className="mb-3 text-xs text-slate-500">
+        <p className="mb-3 text-[12px] text-[var(--text-muted)]">
           Notlar + görevler + teklifler + pazaryeri siparişleri + ilgi alanları — hepsi tek akışta, en yenisi üstte.
         </p>
         <CustomerTimeline events={timelineEvents} />
@@ -1019,10 +1026,10 @@ export default async function CustomerDetailPage({
               Sadece "Son iletişim" tarihi göster (kritik takip bilgisi). */}
           {customer.lastContactedAt && (
             <Card className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Son iletişim
               </p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">
+              <p className="mt-2 text-[13px] font-semibold text-[var(--text-primary)]">
                 {formatDateTime(customer.lastContactedAt)}
               </p>
             </Card>
@@ -1030,40 +1037,40 @@ export default async function CustomerDetailPage({
 
           {/* Pazaryeri satış geçmişi (yeni — MarketplaceSalesRecord) */}
           {marketplaceStats && (
-            <Card className="overflow-hidden p-0 border-emerald-200 bg-emerald-50/30">
-              <div className="border-b border-emerald-100 bg-white/60 px-5 py-3.5">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
+            <Card className="overflow-hidden p-0 border-[var(--ok-border)] bg-[var(--ok-dim)]">
+              <div className="border-b border-[var(--ok-border)] bg-[var(--surface-2)] px-5 py-3.5">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--ok)]">
                   Pazaryeri Satış Geçmişi
                 </p>
-                <p className="mt-2 text-2xl font-bold tabular-nums text-emerald-700">
+                <p className="mt-2 text-[22px] font-semibold tracking-tight tabular-nums text-[var(--ok)]">
                   {fmtTry(marketplaceStats.totalRevenueTry)}
                 </p>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-[12px] text-[var(--text-muted)]">
                   {marketplaceStats.totalOrders} sipariş · {marketplaceStats.uniqueProducts} farklı ürün
                 </p>
                 {marketplaceStats.lastOrderDate && (
-                  <p className="mt-1 text-[10px] text-slate-400">
+                  <p className="mt-1 text-[10px] text-[var(--text-muted)]">
                     Son sipariş: {formatDateTime(marketplaceStats.lastOrderDate)}
                   </p>
                 )}
               </div>
               {marketplaceStats.channels.length > 0 && (
-                <div className="divide-y divide-emerald-50">
+                <div className="divide-y divide-[var(--border-subtle)]">
                   {marketplaceStats.channels.slice(0, 5).map((c) => (
                     <div
                       key={c.channel}
-                      className="flex items-center justify-between px-5 py-2 text-xs"
+                      className="flex items-center justify-between px-5 py-2 text-[12px]"
                     >
-                      <span className="font-medium text-slate-700">
+                      <span className="font-medium text-[var(--text-secondary)]">
                         {CHANNEL_DISPLAY[c.channel] ?? c.channel}
                       </span>
-                      <span className="font-mono text-slate-600">
+                      <span className="font-mono text-[var(--text-secondary)]">
                         {c.orders} · {fmtTry(c.revenueTry)}
                       </span>
                     </div>
                   ))}
                   {marketplaceStats.channels.length > 5 && (
-                    <p className="px-5 py-2 text-center text-[10px] text-slate-400">
+                    <p className="px-5 py-2 text-center text-[10px] text-[var(--text-muted)]">
                       + {marketplaceStats.channels.length - 5} kanal daha
                     </p>
                   )}
@@ -1084,26 +1091,26 @@ export default async function CustomerDetailPage({
 
           {/* Recent quotes */}
           <Card className="overflow-hidden">
-            <div className="border-b border-slate-200 px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <div className="border-b border-[var(--border-subtle)] px-5 py-4">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Son teklifler
               </p>
-              <p className="mt-1 text-lg font-semibold text-slate-950">
+              <p className="mt-1 text-[15px] font-semibold text-[var(--text-primary)]">
                 {customer.quotes.length} teklif
               </p>
             </div>
             {recentQuotes.length === 0 ? (
-              <p className="px-5 py-4 text-sm text-slate-500">Henüz teklif yok.</p>
+              <p className="px-5 py-4 text-[13px] text-[var(--text-muted)]">Henüz teklif yok.</p>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-[var(--border-subtle)]">
                 {recentQuotes.map((quote) => (
                   <Link
                     key={quote.id}
                     href={`/quotes/${quote.id}`}
-                    className="block px-5 py-3 transition hover:bg-slate-50"
+                    className="block px-5 py-3 transition-colors hover:bg-[var(--surface-3)]"
                   >
-                    <p className="text-sm font-semibold text-slate-900">{quote.quoteNumber}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="text-[13px] font-semibold text-[var(--text-primary)]">{quote.quoteNumber}</p>
+                    <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">
                       {formatDateTime(quote.createdAt)}
                     </p>
                   </Link>
@@ -1126,8 +1133,8 @@ function Info({
 }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</dt>
-      <dd className="mt-2 text-sm font-medium text-slate-900">{value || "-"}</dd>
+      <dt className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</dt>
+      <dd className="mt-2 text-[13px] font-medium text-[var(--text-primary)]">{value || "-"}</dd>
     </div>
   );
 }
@@ -1141,21 +1148,10 @@ function InfoBlock({
 }) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</p>
-      <div className="mt-2 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
+      <div className="mt-2 rounded-lg bg-[var(--surface-3)] border border-[var(--border-subtle)] p-4 text-[13px] leading-6 text-[var(--text-secondary)]">
         {value || "-"}
       </div>
-    </div>
-  );
-}
-
-function RailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-medium text-slate-900">{value}</p>
     </div>
   );
 }
@@ -1163,35 +1159,8 @@ function RailItem({ label, value }: { label: string; value: string }) {
 function HistoryMetric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">{label}</p>
-      <p className="mt-2 text-sm font-medium text-slate-900">{value}</p>
-    </div>
-  );
-}
-
-function StatChip({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: "success" | "info" | "warning" | "neutral";
-}) {
-  const toneClass = {
-    success: "text-emerald-700",
-    info: "text-blue-700",
-    warning: "text-amber-700",
-    neutral: "text-slate-900",
-  }[tone];
-  return (
-    <div className="border-l-2 border-slate-200 pl-3">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-        {label}
-      </p>
-      <p className={`mt-0.5 text-lg font-bold tabular-nums ${toneClass}`}>
-        {value}
-      </p>
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
+      <p className="mt-2 text-[13px] font-medium text-[var(--text-primary)]">{value}</p>
     </div>
   );
 }
