@@ -32,11 +32,11 @@ export default async function BulkImportPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Yönetim</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Yönetim</p>
+        <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           Toplu Veri Girişi
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           Ürünlerin ağırlık, maliyet ve gümrük verilerini Excel şablonu üzerinden toplu güncelleyin.
         </p>
       </div>

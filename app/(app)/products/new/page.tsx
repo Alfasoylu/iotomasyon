@@ -23,14 +23,14 @@ export default async function NewProductPage() {
       <div>
         <Link
           href="/products"
-          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
         >
           ← Ürünler
         </Link>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+        <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           Yeni ürün oluştur
         </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
           SKU, stok ve lokasyon bilgilerini kaydederek envanteri aratılabilir hale getirin.
         </p>
       </div>

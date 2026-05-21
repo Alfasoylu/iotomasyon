@@ -25,14 +25,14 @@ export default async function MessageTemplatesPage() {
       />
 
       <Card className="p-4">
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-[var(--text-secondary)]">
           <strong>Kullanılabilir değişkenler:</strong>{" "}
-          <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px]">{"{{musteri_adi}}"}</code>{" "}
-          <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px]">{"{{firma}}"}</code>{" "}
-          <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px]">{"{{teklif_no}}"}</code>{" "}
-          <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px]">{"{{son_gorusme}}"}</code>{" "}
-          <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px]">{"{{telefon}}"}</code>{" "}
-          <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px]">{"{{sehir}}"}</code>
+          <code className="rounded bg-[var(--surface-2)] px-1.5 py-0.5 text-[11px] font-mono text-[var(--text-primary)]">{"{{musteri_adi}}"}</code>{" "}
+          <code className="rounded bg-[var(--surface-2)] px-1.5 py-0.5 text-[11px] font-mono text-[var(--text-primary)]">{"{{firma}}"}</code>{" "}
+          <code className="rounded bg-[var(--surface-2)] px-1.5 py-0.5 text-[11px] font-mono text-[var(--text-primary)]">{"{{teklif_no}}"}</code>{" "}
+          <code className="rounded bg-[var(--surface-2)] px-1.5 py-0.5 text-[11px] font-mono text-[var(--text-primary)]">{"{{son_gorusme}}"}</code>{" "}
+          <code className="rounded bg-[var(--surface-2)] px-1.5 py-0.5 text-[11px] font-mono text-[var(--text-primary)]">{"{{telefon}}"}</code>{" "}
+          <code className="rounded bg-[var(--surface-2)] px-1.5 py-0.5 text-[11px] font-mono text-[var(--text-primary)]">{"{{sehir}}"}</code>
         </p>
       </Card>
 

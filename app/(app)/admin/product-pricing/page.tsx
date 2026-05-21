@@ -117,34 +117,34 @@ export default async function ProductPricingPage({ searchParams }: PageProps) {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Card className="p-4">
-          <p className="text-[10px] uppercase tracking-widest text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Aktif Ürün
           </p>
-          <p className="mt-2 text-2xl font-bold text-slate-950">{stats.total}</p>
+          <p className="mt-2 text-[22px] font-semibold tracking-tight tabular-nums font-mono text-[var(--text-primary)]">{stats.total}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-[10px] uppercase tracking-widest text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Bayi (Wholesale USD)
           </p>
-          <p className="mt-2 text-2xl font-bold text-slate-950">
+          <p className="mt-2 flex items-center gap-2 text-[22px] font-semibold tracking-tight tabular-nums font-mono text-[var(--text-primary)]">
             {stats.withWholesale}{" "}
-            <Badge tone={wholesalePct >= 80 ? "success" : wholesalePct >= 40 ? "warning" : "danger"}>
+            <Badge variant={wholesalePct >= 80 ? "ok" : wholesalePct >= 40 ? "warn" : "danger"}>
               {wholesalePct.toFixed(0)}%
             </Badge>
           </p>
-          <p className="mt-1 text-xs text-slate-400">{stats.total - stats.withWholesale} boş</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)] tabular-nums font-mono">{stats.total - stats.withWholesale} boş</p>
         </Card>
         <Card className="p-4">
-          <p className="text-[10px] uppercase tracking-widest text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Perakende (Retail USD)
           </p>
-          <p className="mt-2 text-2xl font-bold text-slate-950">
+          <p className="mt-2 flex items-center gap-2 text-[22px] font-semibold tracking-tight tabular-nums font-mono text-[var(--text-primary)]">
             {stats.withRetail}{" "}
-            <Badge tone={retailPct >= 80 ? "success" : retailPct >= 40 ? "warning" : "danger"}>
+            <Badge variant={retailPct >= 80 ? "ok" : retailPct >= 40 ? "warn" : "danger"}>
               {retailPct.toFixed(0)}%
             </Badge>
           </p>
-          <p className="mt-1 text-xs text-slate-400">{stats.total - stats.withRetail} boş</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)] tabular-nums font-mono">{stats.total - stats.withRetail} boş</p>
         </Card>
       </div>
 

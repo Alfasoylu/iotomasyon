@@ -14,17 +14,17 @@ export default async function NewUserPage() {
   return (
     <div className="space-y-6">
       <div>
-        <nav className="flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+        <nav className="flex flex-wrap items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
           <span>Yönetim</span>
-          <span className="text-slate-300">/</span>
-          <Link href="/admin/users" className="hover:text-slate-900 transition">
+          <span className="text-[var(--border-default)]">/</span>
+          <Link href="/admin/users" className="transition hover:text-[var(--text-primary)]">
             ← Kullanıcılar
           </Link>
         </nav>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+        <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           Yeni kullanıcı
         </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
           Yeni bir sistem kullanıcısı oluşturun.
         </p>
       </div>

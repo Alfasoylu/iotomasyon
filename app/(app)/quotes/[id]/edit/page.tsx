@@ -49,16 +49,16 @@ export default async function QuoteEditPage({
 
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-3xl bg-slate-950">
-        <div className="h-1 bg-orange-500" />
+      <div className="overflow-hidden rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)]">
+        <div className="h-1 bg-[var(--accent)]" />
         <div className="px-6 py-8 xl:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Teklif Düzenle
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
+          <h1 className="mt-3 text-[22px] font-semibold tracking-tight tabular-nums font-mono text-[var(--text-primary)]">
             {quote.quoteNumber}
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
             {quote.customer.name}
             {quote.customer.company ? ` · ${quote.customer.company}` : ""}
           </p>

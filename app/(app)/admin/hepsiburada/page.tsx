@@ -22,13 +22,13 @@ export default async function HepsiburadaAdminPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
           Yönetim / Hepsiburada
         </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+        <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           Hepsiburada API Yapılandırması
         </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
           Hepsiburada Marketplace API&apos;ye bağlanmak için kimlik bilgilerinizi girin.
           Yalnızca okuma işlemleri gerçekleştirilir — ürün/stok/fiyat push Entegra
           üzerinden gönderilir.
@@ -39,21 +39,23 @@ export default async function HepsiburadaAdminPage() {
       {config && (
         <div className="flex flex-wrap items-center gap-3">
           <span
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              config.isEnabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+            className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium ${
+              config.isEnabled
+                ? "bg-[var(--ok-dim)] text-[var(--ok)] border-[var(--ok-border)]"
+                : "bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-subtle)]"
             }`}
           >
             {config.isEnabled ? "Entegrasyon aktif" : "Entegrasyon pasif"}
           </span>
           {config.merchantId && (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-[var(--text-muted)]">
               Mağaza ID:{" "}
-              <span className="font-mono text-slate-600 break-all">{config.merchantId}</span>
+              <span className="font-mono tabular-nums text-[var(--text-secondary)] break-all">{config.merchantId}</span>
             </span>
           )}
-          <span className="text-xs text-slate-400">Son güncelleme: {fmt(config.updatedAt)}</span>
+          <span className="text-xs text-[var(--text-muted)]">Son güncelleme: {fmt(config.updatedAt)}</span>
           {config.lastSyncAt && (
-            <span className="text-xs text-slate-400">Son senkron: {fmt(config.lastSyncAt)}</span>
+            <span className="text-xs text-[var(--text-muted)]">Son senkron: {fmt(config.lastSyncAt)}</span>
           )}
         </div>
       )}
@@ -72,17 +74,17 @@ export default async function HepsiburadaAdminPage() {
 
       {/* Info */}
       <Card className="p-6 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
           Nasıl bulunur?
         </p>
-        <ol className="space-y-1.5 text-sm text-slate-600 list-decimal list-inside">
+        <ol className="space-y-1.5 text-sm text-[var(--text-secondary)] list-decimal list-inside">
           <li>
             Hepsiburada Mağaza Yönetim Paneli&apos;ne giriş yapın (merchant.hepsiburada.com)
           </li>
           <li>Sol menüden <strong>Entegrasyon</strong> &rarr; <strong>Entegratör Bilgileri</strong></li>
           <li>
             <strong>Mağaza ID</strong> sayfanın üst kısmında UUID formatında görünür
-            (örn. <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">ed812a85-…</code>)
+            (örn. <code className="rounded bg-[var(--surface-2)] px-1 py-0.5 text-xs font-mono">ed812a85-…</code>)
           </li>
           <li>
             <strong>Entegratörlerim</strong> bölümünde mevcut entegratörü seçin ya da{" "}
@@ -98,8 +100,8 @@ export default async function HepsiburadaAdminPage() {
             <strong>Bağlantıyı test et</strong>.
           </li>
         </ol>
-        <p className="text-xs text-slate-400 mt-2">
-          Bağlantı testi <code>mpop.hepsiburada.com/product/api/products/all-products-of-merchant/&#123;merchantId&#125;</code>{" "}
+        <p className="text-xs text-[var(--text-muted)] mt-2">
+          Bağlantı testi <code className="font-mono">mpop.hepsiburada.com/product/api/products/all-products-of-merchant/&#123;merchantId&#125;</code>{" "}
           endpoint&apos;ine 1 ürünlük çağrı atar.
         </p>
       </Card>

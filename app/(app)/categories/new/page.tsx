@@ -17,14 +17,14 @@ export default async function NewCategoryPage() {
       <div>
         <Link
           href="/categories"
-          className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+          className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
         >
           ← Kategoriler
         </Link>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+        <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           Yeni kategori
         </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
           Ürün kataloğunuzu organize etmek için yeni bir kategori tanımlayın.
         </p>
       </div>

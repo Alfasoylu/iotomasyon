@@ -22,9 +22,9 @@ export default async function TrendyolAdminPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Yönetim / Trendyol</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Trendyol API Yapılandırması</h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Yönetim / Trendyol</p>
+        <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">Trendyol API Yapılandırması</h1>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
           Trendyol Satıcı API&apos;ye bağlanmak için kimlik bilgilerinizi girin. Yalnızca okuma işlemleri gerçekleştirilir.
         </p>
       </div>
@@ -32,13 +32,13 @@ export default async function TrendyolAdminPage() {
       {/* Status badge */}
       {config && (
         <div className="flex items-center gap-3">
-          <span className={`rounded-full px-3 py-1 text-xs font-medium ${config.isEnabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+          <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium ${config.isEnabled ? "bg-[var(--ok-dim)] text-[var(--ok)] border-[var(--ok-border)]" : "bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-subtle)]"}`}>
             {config.isEnabled ? "Entegrasyon aktif" : "Entegrasyon pasif"}
           </span>
           {config.supplierId && (
-            <span className="text-xs text-slate-400">Satıcı ID: <span className="font-mono text-slate-600">{config.supplierId}</span></span>
+            <span className="text-xs text-[var(--text-muted)]">Satıcı ID: <span className="font-mono tabular-nums text-[var(--text-secondary)]">{config.supplierId}</span></span>
           )}
-          <span className="text-xs text-slate-400">Son güncelleme: {fmt(config.updatedAt)}</span>
+          <span className="text-xs text-[var(--text-muted)]">Son güncelleme: {fmt(config.updatedAt)}</span>
         </div>
       )}
 
@@ -55,8 +55,8 @@ export default async function TrendyolAdminPage() {
 
       {/* Info card */}
       <Card className="p-6 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Nasıl bulunur?</p>
-        <ol className="space-y-1.5 text-sm text-slate-600 list-decimal list-inside">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Nasıl bulunur?</p>
+        <ol className="space-y-1.5 text-sm text-[var(--text-secondary)] list-decimal list-inside">
           <li>Trendyol Satıcı Paneli&apos;ne giriş yapın (satici.trendyol.com)</li>
           <li>Sağ üst köşede profil → <strong>Hesap Bilgileri</strong> seçin</li>
           <li><strong>API Bilgileri</strong> sekmesine gidin</li>
