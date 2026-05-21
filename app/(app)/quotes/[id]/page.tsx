@@ -56,47 +56,47 @@ export default async function QuoteDetailPage({
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <div className="overflow-hidden rounded-3xl bg-slate-950">
-        <div className="h-1 bg-orange-500" />
-        <div className="px-6 py-8 xl:px-8">
+      <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--surface-1)]">
+        <div className="h-px bg-[var(--accent)]" />
+        <div className="px-6 py-7 xl:px-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="space-y-4">
               <Link
                 href="/quotes"
-                className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 hover:text-white transition"
+                className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
               >
                 ← Teklifler
               </Link>
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-3xl font-semibold tracking-tight text-white">
+                  <h1 className="text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
                     {quote.quoteNumber}
                   </h1>
                   <Badge tone={getQuoteStatusTone(quote.status)}>
                     {formatQuoteStatus(quote.status)}
                   </Badge>
                 </div>
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
                   {quote.customer.name}
                   {quote.customer.company ? ` · ${quote.customer.company}` : ""}
                   {" · "}
                   {formatDateTime(quote.createdAt)}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2 text-sm text-slate-400">
-                <span className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5">
+              <div className="flex flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
+                <span className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-2.5 py-1 tabular-nums">
                   {formatQuoteCurrencyMode(currencyMode)}
                   {exchangeRate ? ` · 1 USD = ${exchangeRate.toLocaleString("tr-TR")} TL` : ""}
                 </span>
                 {quote.validityDate ? (
-                  <span className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5">
+                  <span className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-2.5 py-1">
                     Geçerlilik: {formatDateTime(quote.validityDate)}
                   </span>
                 ) : null}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               <QuoteStatusButtons quoteId={quote.id} currentStatus={quote.status} />
               <Link href={`/quotes/${quote.id}/edit`}>
                 <Button variant="secondary">Düzenle</Button>
@@ -113,21 +113,19 @@ export default async function QuoteDetailPage({
                 validityDate={quote.validityDate}
               />
               <Link href={`/customers/${quote.customerId}`}>
-                <Button variant="ghost" className="text-slate-300 hover:text-white">
-                  Müşteriye dön
-                </Button>
+                <Button variant="ghost">Müşteriye dön</Button>
               </Link>
             </div>
           </div>
         </div>
 
         {/* Grand total accent bar */}
-        <div className="border-t border-orange-900/40 bg-slate-900 px-6 py-4 xl:px-8">
+        <div className="border-t border-[var(--border-default)] bg-[var(--surface-2)] px-6 py-4 xl:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Genel Toplam
             </p>
-            <p className="text-2xl font-semibold text-orange-400">{totalDisplay}</p>
+            <p className="text-xl font-semibold tabular-nums text-[var(--accent)]">{totalDisplay}</p>
           </div>
         </div>
       </div>
@@ -138,10 +136,10 @@ export default async function QuoteDetailPage({
         <div className="space-y-6">
           {/* Customer */}
           <Card className="p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Alıcı
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-950">Müşteri bilgileri</h2>
+            <h2 className="mt-2 text-base font-semibold text-[var(--text-primary)]">Müşteri bilgileri</h2>
             <dl className="mt-5 grid gap-4 sm:grid-cols-2">
               <Info label="Müşteri adı" value={quote.customer.name} />
               <Info label="Firma" value={quote.customer.company ?? "Belirtilmedi"} />
@@ -154,39 +152,39 @@ export default async function QuoteDetailPage({
 
           {/* Items table */}
           <Card className="overflow-hidden">
-            <div className="border-b border-slate-200 px-6 py-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <div className="border-b border-[var(--border-subtle)] px-6 py-4">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Kalemler
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-slate-950">Teklif detayları</h2>
+              <h2 className="mt-2 text-base font-semibold text-[var(--text-primary)]">Teklif detayları</h2>
             </div>
 
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="bg-slate-50 text-left">
-                    <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  <tr className="bg-[var(--surface-1)] text-left">
+                    <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       Ürün / Açıklama
                     </th>
-                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                    <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       Adet
                     </th>
-                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                    <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       Birim fiyat
                     </th>
-                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                    <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       İndirim
                     </th>
-                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                    <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       KDV
                     </th>
-                    <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                    <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       Toplam
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {quote.items.map((item, idx) => {
+                <tbody className="divide-y divide-[var(--border-subtle)]">
+                  {quote.items.map((item) => {
                     const unitDisplay = formatDisplayPair(
                       resolveDisplayAmounts(
                         Number(item.unitPrice),
@@ -219,32 +217,29 @@ export default async function QuoteDetailPage({
                     );
 
                     return (
-                      <tr
-                        key={item.id}
-                        className={idx % 2 === 1 ? "bg-slate-50/50" : "bg-white"}
-                      >
+                      <tr key={item.id}>
                         <td className="px-6 py-4">
-                          <p className="font-semibold text-slate-900">{item.description}</p>
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{item.description}</p>
                           {item.product ? (
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-[var(--text-muted)]">
                               {item.product.name}{" "}
-                              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono">
+                              <span className="rounded bg-[var(--surface-3)] px-1.5 py-0.5 font-mono text-[var(--text-secondary)]">
                                 {item.product.sku}
                               </span>
                             </p>
                           ) : (
-                            <p className="mt-1 text-xs text-slate-400">Manuel kalem</p>
+                            <p className="mt-1 text-xs text-[var(--text-muted)]">Manuel kalem</p>
                           )}
                         </td>
-                        <td className="px-4 py-4 text-sm text-slate-600">{item.quantity}</td>
-                        <td className="px-4 py-4 text-sm text-slate-600">{unitDisplay}</td>
-                        <td className="px-4 py-4 text-sm text-slate-600">
+                        <td className="px-4 py-4 text-sm tabular-nums font-mono text-[var(--text-secondary)]">{item.quantity}</td>
+                        <td className="px-4 py-4 text-sm tabular-nums font-mono text-[var(--text-secondary)]">{unitDisplay}</td>
+                        <td className="px-4 py-4 text-sm tabular-nums font-mono text-[var(--text-secondary)]">
                           {formatCurrencyAmount(item.discount.toString(), item.currency)}
                         </td>
-                        <td className="px-4 py-4 text-sm text-slate-600">
+                        <td className="px-4 py-4 text-sm tabular-nums font-mono text-[var(--text-secondary)]">
                           {taxRateDisplay ?? taxAmountDisplay}
                         </td>
-                        <td className="px-4 py-4 text-right text-sm font-semibold text-slate-900">
+                        <td className="px-4 py-4 text-right text-sm font-semibold tabular-nums font-mono text-[var(--text-primary)]">
                           {totalRowDisplay}
                         </td>
                       </tr>
@@ -252,14 +247,14 @@ export default async function QuoteDetailPage({
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-slate-200 bg-slate-50">
+                  <tr className="border-t border-[var(--border-default)] bg-[var(--surface-1)]">
                     <td
                       colSpan={5}
-                      className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500"
+                      className="px-6 py-4 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]"
                     >
                       Genel Toplam
                     </td>
-                    <td className="px-4 py-4 text-right text-base font-semibold text-slate-950">
+                    <td className="px-4 py-4 text-right text-sm font-semibold tabular-nums font-mono text-[var(--text-primary)]">
                       {totalDisplay}
                     </td>
                   </tr>
@@ -271,10 +266,10 @@ export default async function QuoteDetailPage({
           {/* Notes */}
           {quote.notes ? (
             <Card className="p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Teklif notu
               </p>
-              <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+              <div className="mt-4 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 text-sm leading-7 text-[var(--text-secondary)]">
                 {quote.notes}
               </div>
             </Card>
@@ -286,7 +281,7 @@ export default async function QuoteDetailPage({
           {/* Totals */}
           <Card className="overflow-hidden">
             <div className="p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Toplamlar
               </p>
               <dl className="mt-5 space-y-3">
@@ -295,17 +290,17 @@ export default async function QuoteDetailPage({
                 <InfoRow label="KDV" value={taxDisplay} />
               </dl>
             </div>
-            <div className="bg-slate-950 px-6 py-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+            <div className="border-t border-[var(--border-default)] bg-[var(--surface-1)] px-6 py-5">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Genel toplam
               </p>
-              <p className="mt-2 text-2xl font-semibold text-white">{totalDisplay}</p>
+              <p className="mt-2 text-xl font-semibold tabular-nums font-mono text-[var(--accent)]">{totalDisplay}</p>
             </div>
           </Card>
 
           {/* Commercial terms */}
           <Card className="p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Ticari Koşullar
             </p>
             <div className="mt-5 space-y-4">
@@ -317,7 +312,7 @@ export default async function QuoteDetailPage({
 
           {/* Quote metadata */}
           <Card className="p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Teklif bilgileri
             </p>
             <dl className="mt-5 space-y-3">
@@ -341,8 +336,8 @@ export default async function QuoteDetailPage({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</dt>
-      <dd className="mt-2 text-sm font-medium text-slate-900">{value}</dd>
+      <dt className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</dt>
+      <dd className="mt-2 text-sm font-medium text-[var(--text-primary)]">{value}</dd>
     </div>
   );
 }
@@ -350,8 +345,8 @@ function Info({ label, value }: { label: string; value: string }) {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <dt className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</dt>
-      <dd className="text-right text-sm text-slate-700">{value}</dd>
+      <dt className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</dt>
+      <dd className="text-right text-sm tabular-nums font-mono text-[var(--text-secondary)]">{value}</dd>
     </div>
   );
 }
@@ -359,8 +354,8 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function TermBlock({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">{label}</p>
-      <p className="mt-1.5 text-sm leading-6 text-slate-600">{value}</p>
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
+      <p className="mt-1.5 text-sm leading-6 text-[var(--text-secondary)]">{value}</p>
     </div>
   );
 }
