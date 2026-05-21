@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, type ComponentType } from "react";
+import { useState, useEffect } from "react";
 import {
   Home,
   Activity,
@@ -45,6 +45,7 @@ import {
   ShieldCheck,
   Sparkles,
   MessageSquare,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -63,7 +64,6 @@ interface SidebarProps {
 }
 
 // ── Icon registry ─────────────────────────────────────────────────────────
-// İçeride tutulur — Server Component'ten string key olarak geliyor.
 const ICONS: Record<string, LucideIcon> = {
   home: Home,
   activity: Activity,
@@ -110,39 +110,22 @@ const ICONS: Record<string, LucideIcon> = {
 
 // Section meta — order + icon + short description (tooltip).
 const SECTION_META: Array<{ key: string; icon: LucideIcon; desc: string }> = [
-  { key: "Günlük Durum", icon: Sparkles, desc: "Manşet panolar — bugün ne yapmalı?" },
-  { key: "Satış", icon: Users, desc: "Müşteri, teklif, görev, kampanya" },
-  { key: "Ürünler & Stok", icon: Package, desc: "Ürünler, kategoriler, depo" },
-  { key: "Pazaryerleri", icon: ShoppingCart, desc: "Trendyol, Hepsiburada, kârlılık" },
-  { key: "İthalat", icon: Ship, desc: "Karar kokpiti, hesaplayıcı, tedarikçi" },
-  { key: "Finans", icon: DollarSign, desc: "Sermaye, döviz, raporlar" },
+  { key: "Günlük Durum", icon: Sparkles, desc: "Manşet panolar" },
+  { key: "Satış", icon: Users, desc: "Müşteri, teklif, görev" },
+  { key: "Ürünler & Stok", icon: Package, desc: "Ürünler, kategoriler" },
+  { key: "Pazaryerleri", icon: ShoppingCart, desc: "Trendyol, kârlılık" },
+  { key: "İthalat", icon: Ship, desc: "Karar kokpiti, tedarikçi" },
+  { key: "Finans", icon: DollarSign, desc: "Sermaye, döviz" },
   { key: "Sistem", icon: Settings, desc: "Kullanıcılar, arşiv" },
 ];
 const SECTION_ORDER = SECTION_META.map((s) => s.key);
 const SECTION_ICONS = Object.fromEntries(SECTION_META.map((s) => [s.key, s.icon]));
 
-function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      className={`h-3 w-3 flex-shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2.5}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
-  );
-}
-
 export function Sidebar({ items }: SidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebarStore();
 
-  // ── Grouping ─────────────────────────────────────────────────────────────
-
   const topItems = items.filter((i) => !i.section);
-
   const grouped = new Map<string, NavItem[]>();
   for (const sec of SECTION_ORDER) {
     const secItems = items.filter((i) => i.section === sec);
@@ -154,21 +137,15 @@ export function Sidebar({ items }: SidebarProps) {
     }
   }
 
-  // ── Active detection ──────────────────────────────────────────────────────
-
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(`${href}/`);
   }
-
   const activeSection =
     items.find((i) => i.section && isActive(i.href))?.section ?? null;
-
-  // ── Collapsible state ─────────────────────────────────────────────────────
 
   const [openSections, setOpenSections] = useState<Set<string>>(
     () => new Set(SECTION_ORDER),
   );
-
   useEffect(() => {
     if (activeSection) {
       setOpenSections((prev) => {
@@ -187,39 +164,34 @@ export function Sidebar({ items }: SidebarProps) {
     });
   }
 
-  // ── Nav link ─────────────────────────────────────────────────────────────
-
   function NavLink({ item, indent = false }: { item: NavItem; indent?: boolean }) {
     const active = isActive(item.href);
-    const Icon: ComponentType<{ className?: string }> | undefined = item.iconKey
-      ? ICONS[item.iconKey]
-      : undefined;
+    const Icon: LucideIcon | undefined = item.iconKey ? ICONS[item.iconKey] : undefined;
     return (
       <Link
         href={item.href}
         onClick={() => setMobileOpen(false)}
-        className={`flex items-center gap-2 rounded-lg ${indent ? "pl-5 pr-3" : "px-3"} py-2 text-sm font-medium transition-colors ${
-          active
-            ? "bg-slate-900 text-white"
-            : "text-slate-600 hover:bg-white hover:text-slate-950"
-        }`}
         title={item.label}
+        className={`flex items-center gap-2.5 rounded-md ${indent ? "pl-6 pr-3" : "px-3"} py-1.5 text-[13px] font-medium transition-colors duration-100 ${
+          active
+            ? "bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--accent-border)]"
+            : "border border-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
+        }`}
       >
         {Icon ? (
-          <Icon
-            className={`h-4 w-4 flex-shrink-0 ${active ? "text-white/90" : "text-slate-400"}`}
-          />
+          <Icon size={14} strokeWidth={active ? 2 : 1.5} className="flex-shrink-0" />
         ) : (
-          <span className="w-4" />
+          <span className="w-3.5 flex-shrink-0" />
         )}
         <span className="truncate">{item.label}</span>
       </Link>
     );
   }
 
-  // Render section items with sub-group headers.
   function SectionItems({ items: secItems }: { items: NavItem[] }) {
-    type Block = { kind: "items"; items: NavItem[] } | { kind: "header"; label: string; items: NavItem[] };
+    type Block =
+      | { kind: "items"; items: NavItem[] }
+      | { kind: "header"; label: string; items: NavItem[] };
     const blocks: Block[] = [];
     let currentSub: string | null = null;
     let buffer: NavItem[] = [];
@@ -230,7 +202,6 @@ export function Sidebar({ items }: SidebarProps) {
       else blocks.push({ kind: "header", label: currentSub, items: buffer });
       buffer = [];
     }
-
     for (const item of secItems) {
       const sub = item.subGroup ?? null;
       if (sub !== currentSub) {
@@ -242,7 +213,7 @@ export function Sidebar({ items }: SidebarProps) {
     flush();
 
     return (
-      <div className="ml-1 mt-0.5 space-y-0.5">
+      <div className="mt-0.5 space-y-0.5">
         {blocks.map((b, i) =>
           b.kind === "items" ? (
             <div key={`b${i}`} className="space-y-0.5">
@@ -252,7 +223,7 @@ export function Sidebar({ items }: SidebarProps) {
             </div>
           ) : (
             <div key={`b${i}`} className="mt-2 space-y-0.5">
-              <p className="px-3 pt-1 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+              <p className="px-3 pt-1 pb-0.5 text-[10px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 {b.label}
               </p>
               {b.items.map((item) => (
@@ -265,13 +236,11 @@ export function Sidebar({ items }: SidebarProps) {
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
     <>
       {/* Mobile backdrop */}
       <div
-        className={`fixed inset-0 z-30 bg-slate-950/30 transition-opacity md:hidden ${
+        className={`fixed inset-0 z-30 bg-black/60 transition-opacity md:hidden ${
           mobileOpen
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
@@ -280,39 +249,39 @@ export function Sidebar({ items }: SidebarProps) {
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-[#f4f1ea] transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-[var(--border-default)] bg-[var(--surface-1)] transition-transform duration-300 md:static md:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Brand */}
-        <div className="flex-shrink-0 border-b border-slate-200 px-4 py-4">
+        <div className="flex-shrink-0 border-b border-[var(--border-default)] px-4 py-4">
           <div className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/Soylu logo şeffaf.png"
               alt="Alfa Soylu Elektronik"
-              className="h-10 w-10 object-contain"
+              className="h-9 w-9 object-contain"
             />
             <div className="min-w-0">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-slate-400 leading-tight">
-                Alfa Soylu Elektronik
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)] leading-tight">
+                Alfa Soylu
               </p>
-              <h1 className="text-base font-semibold text-slate-900 leading-tight">
-                Dahili CRM
+              <h1 className="text-[13px] font-semibold text-[var(--text-primary)] leading-tight">
+                İotomasyon CRM
               </h1>
             </div>
           </div>
         </div>
 
         {/* Scrollable navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
           {/* Top-level items (Pano) */}
           {topItems.map((item) => (
             <NavLink key={item.href} item={item} />
           ))}
 
           {topItems.length > 0 && grouped.size > 0 && (
-            <div className="my-2 border-t border-slate-200" />
+            <div className="my-2 border-t border-[var(--border-subtle)]" />
           )}
 
           {/* Grouped sections */}
@@ -326,27 +295,32 @@ export function Sidebar({ items }: SidebarProps) {
                 <button
                   type="button"
                   onClick={() => toggleSection(sec)}
-                  className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 transition-colors hover:bg-slate-100 ${
-                    hasActive ? "text-slate-800" : "text-slate-500 hover:text-slate-700"
+                  className={`flex w-full items-center justify-between rounded-md px-3 py-1.5 transition-colors duration-100 hover:bg-[var(--surface-3)] ${
+                    hasActive
+                      ? "text-[var(--text-primary)]"
+                      : "text-[var(--text-muted)]"
                   }`}
                 >
                   <span className="flex items-center gap-2">
                     {SecIcon ? (
                       <SecIcon
-                        className={`h-3.5 w-3.5 ${hasActive ? "text-slate-700" : "text-slate-400"}`}
+                        size={12}
+                        strokeWidth={1.5}
+                        className={hasActive ? "text-[var(--text-secondary)]" : "text-[var(--text-muted)]"}
                       />
                     ) : null}
-                    <span
-                      className={`text-[10px] font-semibold uppercase tracking-widest ${
-                        hasActive ? "text-slate-700" : "text-slate-500"
-                      }`}
-                    >
+                    <span className="text-[10px] font-medium uppercase tracking-widest">
                       {sec}
                     </span>
                   </span>
-                  <ChevronIcon open={isOpen} />
+                  <ChevronRight
+                    size={12}
+                    strokeWidth={1.5}
+                    className={`text-[var(--text-muted)] transition-transform duration-150 ${
+                      isOpen ? "rotate-90" : ""
+                    }`}
+                  />
                 </button>
-
                 {isOpen && <SectionItems items={secItems} />}
               </div>
             );
@@ -354,8 +328,8 @@ export function Sidebar({ items }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="flex-shrink-0 border-t border-slate-200 px-5 py-3">
-          <p className="text-[10px] text-slate-400">v2026.5</p>
+        <div className="flex-shrink-0 border-t border-[var(--border-default)] px-4 py-3">
+          <p className="text-[10px] text-[var(--text-muted)]">v2026.5</p>
         </div>
       </aside>
     </>

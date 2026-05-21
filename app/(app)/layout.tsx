@@ -451,18 +451,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!hasAccess) redirect("/no-access");
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[var(--surface-0)]">
       <Sidebar items={allowedNav} />
       <div className="flex min-h-screen flex-1 flex-col">
-        <header className="sticky top-0 z-20 border-b border-slate-200 bg-[#f8f5ef]/90 px-4 py-4 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-20 border-b border-[var(--border-default)] bg-[var(--surface-1)]/95 px-4 py-3 backdrop-blur md:px-8">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <MobileNavButton />
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)] font-medium">
                   Dahili çalışma alanı
                 </p>
-                <h2 className="text-lg font-semibold text-slate-950">
+                <h2 className="text-[15px] font-semibold text-[var(--text-primary)] leading-tight">
                   {user.name}
                 </h2>
               </div>
@@ -470,11 +470,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
             <div className="flex items-center gap-3">
               <CommandPalette />
-              <div className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-right md:block">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
+              <div className="hidden rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-1.5 text-right md:block">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)] font-medium">
                   Hesap
                 </p>
-                <p className="text-sm font-medium text-slate-800">
+                <p className="text-[12px] font-medium text-[var(--text-primary)]">
                   {user.email}
                 </p>
               </div>
