@@ -6,7 +6,7 @@
  */
 
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Settings } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -65,12 +65,12 @@ function StatusBadge({ status, map }: { status: string; map: Record<string, stri
   const isDone = status === "Delivered" || status === "Refunded";
   const isCancel = status === "Cancelled" || status === "Rejected";
   const cls = isDone
-    ? "bg-emerald-100 text-emerald-700"
+    ? "bg-[var(--ok-dim)] text-[var(--ok)] border-[var(--ok-border)]"
     : isCancel
-      ? "bg-red-100 text-red-700"
-      : "bg-amber-100 text-amber-700";
+      ? "bg-[var(--danger-dim)] text-[var(--danger)] border-[var(--danger-border)]"
+      : "bg-[var(--warn-dim)] text-[var(--warn)] border-[var(--warn-border)]";
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{label}</span>
+    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${cls}`}>{label}</span>
   );
 }
 
@@ -149,24 +149,27 @@ export default async function TrendyolDashboardPage() {
       {/* Not-configured state */}
       {notConfigured && (
         <Card className="p-10 text-center space-y-4">
-          <p className="text-slate-600 text-sm font-medium">Trendyol API yapılandırılmamış veya pasif.</p>
-          <p className="text-slate-400 text-xs">
+          <p className="text-sm font-medium text-[var(--text-primary)]">Trendyol API yapılandırılmamış veya pasif.</p>
+          <p className="text-xs text-[var(--text-muted)]">
             Sipariş ve iade verilerini görmek için API kimlik bilgilerini girin ve entegrasyonu aktive edin.
           </p>
           <Link href="/admin/trendyol">
-            <Button className="mt-2">⚙ API Ayarlarına git</Button>
+            <Button className="mt-2 inline-flex items-center gap-1.5">
+              <Settings size={14} strokeWidth={1.5} />
+              API Ayarlarına git
+            </Button>
           </Link>
         </Card>
       )}
 
       {/* API error state */}
       {!notConfigured && data.error && (
-        <Card className="p-6 border-red-200 bg-red-50">
-          <p className="text-sm font-semibold text-red-700">Trendyol API bağlantısı başarısız</p>
-          <p className="mt-1 text-xs text-red-600">{data.error}</p>
-          <p className="mt-3 text-xs text-red-500">
+        <Card className="p-6 border-[var(--danger-border)] bg-[var(--danger-dim)]">
+          <p className="text-sm font-semibold text-[var(--danger)]">Trendyol API bağlantısı başarısız</p>
+          <p className="mt-1 text-xs text-[var(--danger)]">{data.error}</p>
+          <p className="mt-3 text-xs text-[var(--text-secondary)]">
             API kimlik bilgilerini{" "}
-            <Link href="/admin/trendyol" className="underline hover:text-red-700">
+            <Link href="/admin/trendyol" className="underline underline-offset-2 hover:text-[var(--accent)]">
               ayarlar sayfasından
             </Link>{" "}
             kontrol edin.
@@ -179,59 +182,59 @@ export default async function TrendyolDashboardPage() {
         <>
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
             <Card className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Toplam Sipariş</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{data.orderTotal}</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Toplam Sipariş</p>
+              <p className="mt-2 text-[28px] font-semibold tabular-nums leading-tight text-[var(--text-primary)]">{data.orderTotal}</p>
             </Card>
             <Card className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Son 20 Sipariş</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{data.orders.length}</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Son 20 Sipariş</p>
+              <p className="mt-2 text-[28px] font-semibold tabular-nums leading-tight text-[var(--text-primary)]">{data.orders.length}</p>
             </Card>
             <Card className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Toplam İade</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{data.returnTotal}</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Toplam İade</p>
+              <p className="mt-2 text-[28px] font-semibold tabular-nums leading-tight text-[var(--text-primary)]">{data.returnTotal}</p>
             </Card>
             <Card className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Son 10 İade</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">{data.returns.length}</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Son 10 İade</p>
+              <p className="mt-2 text-[28px] font-semibold tabular-nums leading-tight text-[var(--text-primary)]">{data.returns.length}</p>
             </Card>
           </div>
 
           {/* Orders table */}
           <section className="space-y-3">
-            <h2 className="text-base font-semibold text-slate-900">Son Siparişler</h2>
+            <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Son Siparişler</h2>
             {data.orders.length === 0 ? (
               <Card className="p-6 text-center">
-                <p className="text-sm text-slate-400">Sipariş bulunamadı.</p>
+                <p className="text-sm text-[var(--text-muted)]">Sipariş bulunamadı.</p>
               </Card>
             ) : (
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-slate-700 border-collapse">
+                  <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/50">
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Sipariş No</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Tarih</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Müşteri</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Tutar</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Durum</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün(ler)</th>
+                      <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Sipariş No</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tarih</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Müşteri</th>
+                        <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tutar</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Durum</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün(ler)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.orders.map((order) => (
-                        <tr key={order.orderNumber} className="border-b border-slate-50 hover:bg-slate-50/50">
-                          <td className="py-3 px-4 font-mono text-xs text-slate-600">{order.orderNumber}</td>
-                          <td className="py-3 px-4 text-xs text-slate-500">{fmtDate(order.orderDate)}</td>
-                          <td className="py-3 px-4 text-xs text-slate-600">
+                        <tr key={order.orderNumber} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)] transition-colors">
+                          <td className="py-3 px-4 font-mono text-xs tabular-nums text-[var(--text-primary)]">{order.orderNumber}</td>
+                          <td className="py-3 px-4 font-mono text-xs tabular-nums text-[var(--text-secondary)]">{fmtDate(order.orderDate)}</td>
+                          <td className="py-3 px-4 text-xs text-[var(--text-primary)]">
                             {order.customerFirstName} {order.customerLastName}
                           </td>
-                          <td className="py-3 px-4 text-xs font-medium text-slate-800">
+                          <td className="py-3 px-4 text-right font-mono text-xs tabular-nums font-semibold text-[var(--text-primary)]">
                             {fmtCurrency(order.totalPrice, order.currencyCode)}
                           </td>
                           <td className="py-3 px-4">
                             <StatusBadge status={order.status} map={STATUS_TR} />
                           </td>
-                          <td className="py-3 px-4 text-xs text-slate-500 max-w-[200px] truncate">
+                          <td className="py-3 px-4 text-xs text-[var(--text-secondary)] max-w-[200px] truncate">
                             {(order.lines ?? []).map((l) => l.productName).join(", ")}
                           </td>
                         </tr>
@@ -245,23 +248,23 @@ export default async function TrendyolDashboardPage() {
 
           {/* Returns table */}
           <section className="space-y-3">
-            <h2 className="text-base font-semibold text-slate-900">Son İadeler</h2>
+            <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Son İadeler</h2>
             {data.returns.length === 0 ? (
               <Card className="p-6 text-center">
-                <p className="text-sm text-slate-400">İade bulunamadı.</p>
+                <p className="text-sm text-[var(--text-muted)]">İade bulunamadı.</p>
               </Card>
             ) : (
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-slate-700 border-collapse">
+                  <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/50">
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">İade ID</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Sipariş No</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Tarih</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Müşteri</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Durum</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün(ler)</th>
+                      <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İade ID</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Sipariş No</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tarih</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Müşteri</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Durum</th>
+                        <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün(ler)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -273,19 +276,19 @@ export default async function TrendyolDashboardPage() {
                         // Product names from items[].orderLine
                         const productNames = (ret.items ?? []).map((i) => i.orderLine?.productName ?? "").filter(Boolean);
                         return (
-                          <tr key={ret.claimId} className="border-b border-slate-50 hover:bg-slate-50/50">
-                            <td className="py-3 px-4 font-mono text-xs text-slate-600">{ret.claimId}</td>
-                            <td className="py-3 px-4 font-mono text-xs text-slate-500">{ret.orderNumber ?? "—"}</td>
-                            <td className="py-3 px-4 text-xs text-slate-500">{fmtDate(ret.claimDate)}</td>
-                            <td className="py-3 px-4 text-xs text-slate-600">
+                          <tr key={ret.claimId} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)] transition-colors">
+                            <td className="py-3 px-4 font-mono text-xs tabular-nums text-[var(--text-primary)]">{ret.claimId}</td>
+                            <td className="py-3 px-4 font-mono text-xs tabular-nums text-[var(--text-secondary)]">{ret.orderNumber ?? "—"}</td>
+                            <td className="py-3 px-4 font-mono text-xs tabular-nums text-[var(--text-secondary)]">{fmtDate(ret.claimDate)}</td>
+                            <td className="py-3 px-4 text-xs text-[var(--text-primary)]">
                               {ret.customerFirstName} {ret.customerLastName}
                             </td>
                             <td className="py-3 px-4">
-                              {firstStatus ? <StatusBadge status={firstStatus} map={RETURN_STATUS_TR} /> : <span className="text-slate-300 text-xs">—</span>}
+                              {firstStatus ? <StatusBadge status={firstStatus} map={RETURN_STATUS_TR} /> : <span className="text-[var(--text-muted)] text-xs">—</span>}
                             </td>
-                            <td className="py-3 px-4 text-xs text-slate-500 max-w-[240px]">
+                            <td className="py-3 px-4 text-xs text-[var(--text-secondary)] max-w-[240px]">
                               <div className="truncate">{productNames.join(", ") || "—"}</div>
-                              {firstReason && <div className="text-xs text-slate-400 mt-0.5 truncate">{firstReason}</div>}
+                              {firstReason && <div className="text-xs text-[var(--text-muted)] mt-0.5 truncate">{firstReason}</div>}
                             </td>
                           </tr>
                         );

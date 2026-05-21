@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { FolderTree } from "lucide-react";
+import { FolderTree, ChevronRight, AlertTriangle } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -20,15 +19,16 @@ export default async function CategoriesPage() {
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Kategoriler
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Kategoriler geçici olarak kullanılamıyor
           </h1>
         </div>
-        <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
-          Veritabanı bağlantısı şu anda kullanılamıyor.
+        <Card className="flex items-start gap-3 border-[var(--warn-border)] bg-[var(--warn-dim)] p-5 text-[13px] leading-relaxed text-[var(--warn)]">
+          <AlertTriangle size={14} strokeWidth={1.5} className="mt-0.5 flex-shrink-0" />
+          <span>Veritabanı bağlantısı şu anda kullanılamıyor.</span>
         </Card>
       </div>
     );
@@ -63,44 +63,98 @@ export default async function CategoriesPage() {
           }
         />
       ) : (
-        <div className="space-y-2">
-          {rootCategories.map((cat) => {
-            const children = childCategories.filter((c) => c.parentId === cat.id);
+        <>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+            Tüm kategoriler
+          </p>
+          <Card className="divide-y divide-[var(--border-subtle)] overflow-hidden">
+            {rootCategories.map((cat) => {
+              const children = childCategories.filter((c) => c.parentId === cat.id);
 
-            return (
-              <div key={cat.id}>
-                <Link href={`/categories/${cat.id}`}>
-                  <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 hover:border-slate-300 hover:bg-slate-50 transition">
-                    <div>
-                      <p className="font-semibold text-slate-900">{cat.name}</p>
-                      {cat.description ? (
-                        <p className="mt-1 text-sm text-slate-500 line-clamp-1">{cat.description}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge>{cat._count.products} ürün</Badge>
-                      <Badge tone="default">{cat._count.interests} ilgi</Badge>
-                    </div>
-                  </div>
-                </Link>
-
-                {children.map((child) => (
-                  <Link key={child.id} href={`/categories/${child.id}`}>
-                    <div className="ml-6 mt-1 flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 px-5 py-3 hover:border-slate-200 hover:bg-slate-50 transition">
-                      <div>
-                        <p className="text-sm font-medium text-slate-700">{child.name}</p>
+              return (
+                <div key={cat.id}>
+                  <Link
+                    href={`/categories/${cat.id}`}
+                    className="group flex items-center justify-between gap-3 px-5 py-4 transition hover:bg-[var(--surface-3)]"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <ChevronRight
+                        size={14}
+                        strokeWidth={1.5}
+                        className="flex-shrink-0 text-[var(--text-muted)] transition group-hover:text-[var(--text-secondary)]"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-medium text-[var(--text-primary)]">
+                          {cat.name}
+                        </p>
+                        {cat.description ? (
+                          <p className="mt-0.5 text-[12px] text-[var(--text-secondary)] line-clamp-1">
+                            {cat.description}
+                          </p>
+                        ) : null}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge>{child._count.products} ürün</Badge>
-                        <Badge tone="default">{child._count.interests} ilgi</Badge>
-                      </div>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-4">
+                      <span className="font-mono text-[12px] tabular-nums text-[var(--text-secondary)]">
+                        <span className="font-semibold text-[var(--text-primary)]">
+                          {cat._count.products.toLocaleString("tr-TR")}
+                        </span>
+                        <span className="ml-1 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
+                          ürün
+                        </span>
+                      </span>
+                      <span className="font-mono text-[12px] tabular-nums text-[var(--text-secondary)]">
+                        <span className="font-semibold text-[var(--text-primary)]">
+                          {cat._count.interests.toLocaleString("tr-TR")}
+                        </span>
+                        <span className="ml-1 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
+                          ilgi
+                        </span>
+                      </span>
                     </div>
                   </Link>
-                ))}
-              </div>
-            );
-          })}
-        </div>
+
+                  {children.map((child) => (
+                    <Link
+                      key={child.id}
+                      href={`/categories/${child.id}`}
+                      className="group flex items-center justify-between gap-3 border-t border-[var(--border-subtle)] bg-[var(--surface-1)] px-5 py-3 pl-12 transition hover:bg-[var(--surface-3)]"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <ChevronRight
+                          size={14}
+                          strokeWidth={1.5}
+                          className="flex-shrink-0 text-[var(--text-muted)] transition group-hover:text-[var(--text-secondary)]"
+                        />
+                        <p className="text-[13px] text-[var(--text-secondary)]">
+                          {child.name}
+                        </p>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-4">
+                        <span className="font-mono text-[12px] tabular-nums text-[var(--text-secondary)]">
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {child._count.products.toLocaleString("tr-TR")}
+                          </span>
+                          <span className="ml-1 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
+                            ürün
+                          </span>
+                        </span>
+                        <span className="font-mono text-[12px] tabular-nums text-[var(--text-secondary)]">
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {child._count.interests.toLocaleString("tr-TR")}
+                          </span>
+                          <span className="ml-1 text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
+                            ilgi
+                          </span>
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              );
+            })}
+          </Card>
+        </>
       )}
     </div>
   );

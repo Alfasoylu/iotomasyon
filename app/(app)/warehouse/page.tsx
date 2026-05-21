@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Warehouse } from "lucide-react";
+import { Warehouse, Package, AlertTriangle, MapPin, Search, Check } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { requirePermission } from "@/lib/auth";
@@ -66,17 +66,24 @@ export default async function WarehousePage({
       {/* Search form */}
       <form method="GET" action="/warehouse">
         <div className="flex gap-2">
-          <input
-            type="search"
-            name="q"
-            defaultValue={query}
-            placeholder="Barkod / SKU / Ürün adı..."
-            autoFocus
-            className="min-w-0 flex-1 rounded-xl border border-slate-300 px-4 py-3 text-base focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
-          />
+          <div className="relative flex-1 min-w-0">
+            <Search
+              size={14}
+              strokeWidth={1.5}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+            />
+            <input
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder="Barkod / SKU / Ürün adı..."
+              autoFocus
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] py-3 pl-9 pr-3 text-base text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none transition focus:border-[var(--accent-border)]"
+            />
+          </div>
           <button
             type="submit"
-            className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+            className="rounded-md bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--accent-fg)] transition hover:brightness-110"
           >
             Ara
           </button>
@@ -87,21 +94,23 @@ export default async function WarehousePage({
       <div className="flex gap-3">
         <Link
           href="/warehouse/count"
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+          className="flex-1 inline-flex items-center justify-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3 text-center text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface-3)]"
         >
-          📦 Stok Sayımı
+          <Package size={14} strokeWidth={1.5} />
+          Stok Sayımı
         </Link>
         <Link
           href="/admin/stock-health"
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+          className="flex-1 inline-flex items-center justify-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3 text-center text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface-3)]"
         >
-          ⚠️ Stok Sağlığı
+          <AlertTriangle size={14} strokeWidth={1.5} className="text-[var(--warn)]" />
+          Stok Sağlığı
         </Link>
       </div>
 
       {/* Results */}
       {query.length >= 2 && products.length === 0 && (
-        <p className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-8 text-center text-sm text-slate-500">
+        <p className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] px-5 py-8 text-center text-sm text-[var(--text-secondary)]">
           &quot;{query}&quot; için sonuç bulunamadı.
         </p>
       )}
@@ -117,12 +126,12 @@ export default async function WarehousePage({
             return (
               <li
                 key={product.id}
-                className={`rounded-2xl border bg-white p-4 shadow-sm ${
+                className={`rounded-lg border bg-[var(--surface-2)] p-4 transition hover:bg-[var(--surface-3)] ${
                   isCritical
-                    ? "border-red-200"
+                    ? "border-[var(--danger-border)]"
                     : isLow
-                      ? "border-amber-200"
-                      : "border-slate-200"
+                      ? "border-[var(--warn-border)]"
+                      : "border-[var(--border-default)]"
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -132,26 +141,27 @@ export default async function WarehousePage({
                     <img
                       src={product.imageUrl}
                       alt={product.name}
-                      className="h-16 w-16 flex-shrink-0 rounded-xl object-cover"
+                      className="h-16 w-16 flex-shrink-0 rounded-md object-cover border border-[var(--border-subtle)]"
                     />
                   ) : (
-                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-2xl">
-                      📦
+                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-md bg-[var(--surface-1)] border border-[var(--border-subtle)] text-[var(--text-muted)]">
+                      <Package size={14} strokeWidth={1.5} />
                     </div>
                   )}
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-slate-900">
+                    <p className="truncate font-semibold text-[var(--text-primary)]">
                       {product.name}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-[var(--text-secondary)] font-mono tabular-nums">
                       SKU: {product.sku}
                       {product.barcode && ` · ${product.barcode}`}
                     </p>
                     {product.location && (
-                      <p className="mt-0.5 text-xs text-slate-400">
-                        📍 {product.location}
+                      <p className="mt-1 inline-flex items-center gap-1 text-xs text-[var(--text-muted)]">
+                        <MapPin size={14} strokeWidth={1.5} />
+                        {product.location}
                       </p>
                     )}
                   </div>
@@ -159,28 +169,28 @@ export default async function WarehousePage({
                   {/* Stock badge — Entegra source-of-truth + physical count variance */}
                   <div className="flex-shrink-0 text-right">
                     <p
-                      className={`text-2xl font-bold ${
+                      className={`text-[28px] font-semibold tabular-nums font-mono leading-tight ${
                         isCritical
-                          ? "text-red-600"
+                          ? "text-[var(--danger)]"
                           : isLow
-                            ? "text-amber-600"
-                            : "text-emerald-600"
+                            ? "text-[var(--warn)]"
+                            : "text-[var(--ok)]"
                       }`}
                     >
                       {product.stockQuantity}
                     </p>
-                    <p className="text-[10px] text-slate-400">Entegra</p>
+                    <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">Entegra</p>
                     {product.physicalCountQuantity != null && (() => {
                       const variance = product.stockQuantity - product.physicalCountQuantity;
                       const tone =
-                        variance === 0 ? "text-emerald-600"
-                        : variance > 0 ? "text-amber-600"
-                        : "text-red-600";
+                        variance === 0 ? "text-[var(--ok)]"
+                        : variance > 0 ? "text-[var(--warn)]"
+                        : "text-[var(--danger)]";
                       return (
-                        <div className="mt-1 text-[11px] text-slate-500">
-                          <span>Sayım: <span className="font-semibold text-slate-700">{product.physicalCountQuantity}</span></span>
-                          <span className={`ml-1 font-semibold ${tone}`}>
-                            {variance === 0 ? "✓" : variance > 0 ? `(+${variance})` : `(${variance})`}
+                        <div className="mt-1 text-[11px] text-[var(--text-secondary)] font-mono tabular-nums">
+                          <span>Sayım: <span className="font-semibold text-[var(--text-primary)]">{product.physicalCountQuantity}</span></span>
+                          <span className={`ml-1 inline-flex items-center font-semibold ${tone}`}>
+                            {variance === 0 ? <Check size={14} strokeWidth={1.5} /> : variance > 0 ? `(+${variance})` : `(${variance})`}
                           </span>
                         </div>
                       );
@@ -192,13 +202,13 @@ export default async function WarehousePage({
                 <div className="mt-3 flex gap-2">
                   <Link
                     href={`/warehouse/count?productId=${product.id}&productName=${encodeURIComponent(product.name)}&sku=${encodeURIComponent(product.sku)}`}
-                    className="flex-1 rounded-lg bg-slate-900 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-slate-700"
+                    className="flex-1 rounded-md bg-[var(--accent)] px-3 py-2 text-center text-xs font-semibold text-[var(--accent-fg)] transition hover:brightness-110"
                   >
                     Sayım Gir
                   </Link>
                   <Link
                     href={`/products/${product.id}`}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-2 text-center text-xs font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
                   >
                     Detay
                   </Link>
@@ -210,7 +220,7 @@ export default async function WarehousePage({
       )}
 
       {!query && (
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-[var(--text-muted)]">
           Aramak için en az 2 karakter girin.
         </p>
       )}
