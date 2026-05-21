@@ -10,10 +10,12 @@
  */
 
 import Link from "next/link";
+import { Check, AlertTriangle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ReassignForm } from "./reassign-form";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +28,11 @@ const PRIORITY_LABEL: Record<string, string> = {
   LOW:    "Düşük",
 };
 
-const PRIORITY_STYLE: Record<string, string> = {
-  URGENT: "bg-red-100 text-red-700",
-  HIGH:   "bg-amber-100 text-amber-700",
-  MEDIUM: "bg-sky-100 text-sky-700",
-  LOW:    "bg-slate-100 text-slate-500",
+const PRIORITY_VARIANT: Record<string, "danger" | "warn" | "info" | "neutral"> = {
+  URGENT: "danger",
+  HIGH:   "warn",
+  MEDIUM: "info",
+  LOW:    "neutral",
 };
 
 const PRIORITY_SORT: Record<string, number> = {
@@ -149,26 +151,26 @@ export default async function TaskBoardPage({
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Operasyon / Koordinasyon
           </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Ekip Görev Panosu
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             Açık görevler atanana göre gruplandırıldı. Selectbox ile anında atama yapabilirsiniz.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             href={showDone ? "/admin/task-board" : "/admin/task-board?done=1"}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+            className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-3)]"
           >
             {showDone ? "Sadece Açık" : "Tamamlananları Göster"}
           </Link>
           <Link
             href="/tasks"
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+            className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-3)]"
           >
             Liste Görünümü →
           </Link>
@@ -178,20 +180,20 @@ export default async function TaskBoardPage({
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: "Açık Görev", value: totalOpen, tone: "slate" },
-          { label: "Gecikmiş", value: totalOverdue, tone: totalOverdue > 0 ? "red" : "slate" },
-          { label: "Atanmamış", value: totalUnassigned, tone: totalUnassigned > 0 ? "amber" : "slate" },
-          { label: "Aktif Kullanıcı", value: activeUsers, tone: "slate" },
+          { label: "Açık Görev", value: totalOpen, tone: "neutral" as const },
+          { label: "Gecikmiş", value: totalOverdue, tone: totalOverdue > 0 ? ("danger" as const) : ("neutral" as const) },
+          { label: "Atanmamış", value: totalUnassigned, tone: totalUnassigned > 0 ? ("warn" as const) : ("neutral" as const) },
+          { label: "Aktif Kullanıcı", value: activeUsers, tone: "neutral" as const },
         ].map(({ label, value, tone }) => (
-          <Card key={label} className="p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
+          <Card key={label} className="p-4 rounded-lg">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
             <p
-              className={`mt-1 text-2xl font-semibold ${
-                tone === "red"
-                  ? "text-red-600"
-                  : tone === "amber"
-                  ? "text-amber-700"
-                  : "text-slate-800"
+              className={`mt-2 text-2xl font-semibold tabular-nums font-mono ${
+                tone === "danger"
+                  ? "text-[var(--danger)]"
+                  : tone === "warn"
+                  ? "text-[var(--warn)]"
+                  : "text-[var(--text-primary)]"
               }`}
             >
               {value}
@@ -202,35 +204,37 @@ export default async function TaskBoardPage({
 
       {/* Groups */}
       {groups.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-slate-400">
+        <Card className="p-8 text-center text-sm text-[var(--text-muted)] rounded-lg">
           Görev bulunamadı.
         </Card>
       ) : (
         <div className="space-y-4">
           {groups.map((g) => (
-            <Card key={g.userId ?? "__unassigned__"} className="overflow-hidden">
+            <Card key={g.userId ?? "__unassigned__"} className="overflow-hidden rounded-lg">
               {/* Group header */}
-              <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3">
-                {/* Avatar initial */}
+              <div className="flex items-center gap-3 border-b border-[var(--border-subtle)] bg-[var(--surface-1)] px-5 py-3">
+                {/* Avatar initial — kept rounded-full as per spec exception (iconic round) */}
                 <span
-                  className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
-                    g.userId ? "bg-slate-700" : "bg-slate-300"
+                  className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    g.userId
+                      ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+                      : "bg-[var(--surface-3)] text-[var(--text-muted)]"
                   }`}
                 >
                   {g.userName.charAt(0).toUpperCase()}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <span className="text-sm font-semibold text-slate-800">
+                <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">
                     {g.userName}
                   </span>
-                  <span className="ml-2 text-xs text-slate-400">
+                  <span className="text-xs text-[var(--text-muted)] tabular-nums font-mono">
                     {g.openCount} açık
-                    {g.overdueCount > 0 && (
-                      <span className="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
-                        {g.overdueCount} gecikmiş
-                      </span>
-                    )}
                   </span>
+                  {g.overdueCount > 0 && (
+                    <Badge variant="danger" className="text-[10px] font-semibold">
+                      {g.overdueCount} gecikmiş
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -238,7 +242,7 @@ export default async function TaskBoardPage({
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-50 text-[10px] uppercase tracking-widest text-slate-400">
+                    <tr className="border-b border-[var(--border-subtle)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       <th className="px-5 py-2 text-left">Görev</th>
                       <th className="px-3 py-2 text-left">Müşteri</th>
                       <th className="px-3 py-2 text-center">Öncelik</th>
@@ -246,7 +250,7 @@ export default async function TaskBoardPage({
                       <th className="px-3 py-2 text-left">Ata</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-[var(--border-subtle)]">
                     {g.tasks.map((t) => {
                       const isOverdue =
                         t.status === "OPEN" &&
@@ -256,49 +260,52 @@ export default async function TaskBoardPage({
                       return (
                         <tr
                           key={t.id}
-                          className={`hover:bg-slate-50/60 ${isDone ? "opacity-40" : ""}`}
+                          className={`hover:bg-[var(--surface-3)] ${isDone ? "opacity-40" : ""}`}
                         >
-                          <td className="px-5 py-2.5 font-medium text-slate-800">
-                            {t.title}
-                            {isDone && (
-                              <span className="ml-1.5 text-[10px] text-slate-400">✓</span>
-                            )}
+                          <td className="px-5 py-2.5 font-medium text-[var(--text-primary)]">
+                            <span className="inline-flex items-center gap-1.5">
+                              {t.title}
+                              {isDone && (
+                                <Check size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                              )}
+                            </span>
                           </td>
                           <td className="px-3 py-2.5">
                             {t.customer ? (
                               <Link
                                 href={`/customers/${t.customer.id}`}
-                                className="text-xs text-slate-600 hover:underline"
+                                className="text-xs text-[var(--text-secondary)] hover:underline"
                               >
                                 {t.customer.company ?? t.customer.name}
                               </Link>
                             ) : (
-                              <span className="text-xs text-slate-300">—</span>
+                              <span className="text-xs text-[var(--text-muted)]">—</span>
                             )}
                           </td>
                           <td className="px-3 py-2.5 text-center">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                PRIORITY_STYLE[t.priority] ?? "bg-slate-100 text-slate-500"
-                              }`}
+                            <Badge
+                              variant={PRIORITY_VARIANT[t.priority] ?? "neutral"}
+                              className="text-[10px]"
                             >
                               {PRIORITY_LABEL[t.priority] ?? t.priority}
-                            </span>
+                            </Badge>
                           </td>
-                          <td className="px-3 py-2.5 text-right text-xs">
+                          <td className="px-3 py-2.5 text-right text-xs tabular-nums font-mono">
                             {t.dueDate ? (
                               <span
-                                className={
+                                className={`inline-flex items-center gap-1 ${
                                   isOverdue
-                                    ? "font-semibold text-red-600"
-                                    : "text-slate-500"
-                                }
+                                    ? "font-semibold text-[var(--danger)]"
+                                    : "text-[var(--text-muted)]"
+                                }`}
                               >
                                 {new Date(t.dueDate).toLocaleDateString("tr-TR")}
-                                {isOverdue && " ⚠"}
+                                {isOverdue && (
+                                  <AlertTriangle size={14} strokeWidth={1.5} />
+                                )}
                               </span>
                             ) : (
-                              <span className="text-slate-300">—</span>
+                              <span className="text-[var(--text-muted)]">—</span>
                             )}
                           </td>
                           <td className="px-3 py-2.5">

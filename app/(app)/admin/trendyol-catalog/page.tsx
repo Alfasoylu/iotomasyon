@@ -17,12 +17,14 @@
  */
 
 import Link from "next/link";
+import { ShieldCheck, AlertTriangle } from "lucide-react";
 
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { fetchTrendyolCatalog, TrendyolCatalogProduct, TrendyolApiError } from "@/lib/trendyol-api";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { MissingListingsTable } from "@/components/admin/missing-listings-table";
 import { TrendyolMatchedTable } from "@/components/admin/trendyol-matched-table";
 import { TrendyolUnmatchedTable } from "@/components/admin/trendyol-unmatched-table";
@@ -69,12 +71,12 @@ export default async function TrendyolCatalogPage() {
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Faz 46 — Trendyol Katalog</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Trendyol Katalog</h1>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Faz 46 — Trendyol Katalog</p>
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">Trendyol Katalog</h1>
         </div>
-        <Card className="p-6 border-amber-200 bg-amber-50">
-          <p className="text-sm font-semibold text-amber-900">Trendyol API yapılandırması eksik veya devre dışı.</p>
-          <Link href="/admin/trendyol" className="mt-2 inline-block text-xs text-amber-700 underline">
+        <Card className="p-6 rounded-lg border-[var(--warn-border)] bg-[var(--warn-dim)]">
+          <p className="text-sm font-semibold text-[var(--warn)]">Trendyol API yapılandırması eksik veya devre dışı.</p>
+          <Link href="/admin/trendyol" className="mt-2 inline-block text-xs text-[var(--warn)] underline">
             Trendyol API yapılandırmasına git →
           </Link>
         </Card>
@@ -178,6 +180,7 @@ export default async function TrendyolCatalogPage() {
   const oversellCount = matched.filter((r) => r.delta < 0).length;
   const inSyncCount = matched.filter((r) => r.delta === 0).length;
   const surplusCount = matched.filter((r) => r.delta > 0).length;
+  void surplusCount;
 
   // ── Eksik Listeme: stoğumuzda var ama Trendyol'da yok ──────────────────────
   // Trendyol katalogunda gördüğümüz tüm barkod + stockCode'lar (lowercase)
@@ -238,16 +241,16 @@ export default async function TrendyolCatalogPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Faz 46 — Trendyol Katalog
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Trendyol Katalog
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Trendyol&apos;daki ürünler ile iç stok karşılaştırması.{" "}
             {totalElements > 0 && (
-              <span className="text-slate-500">
+              <span className="text-[var(--text-muted)]">
                 ({trendyolProducts.length} / {totalElements} ürün, {totalPages} sayfa çekildi)
               </span>
             )}
@@ -256,7 +259,7 @@ export default async function TrendyolCatalogPage() {
         <div className="flex gap-3">
           <Link
             href="/admin/marketplace-mappings"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+            className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-3)] transition"
           >
             Ürün Eşleştirme →
           </Link>
@@ -265,56 +268,59 @@ export default async function TrendyolCatalogPage() {
 
       {/* Fetch error */}
       {fetchError && (
-        <Card className="p-6 border-red-200 bg-red-50">
-          <p className="text-sm font-semibold text-red-900">Trendyol&apos;dan ürün listesi alınamadı.</p>
-          <p className="mt-1 text-xs text-red-700 font-mono">{fetchError}</p>
+        <Card className="p-6 rounded-lg border-[var(--danger-border)] bg-[var(--danger-dim)]">
+          <p className="text-sm font-semibold text-[var(--danger)]">Trendyol&apos;dan ürün listesi alınamadı.</p>
+          <p className="mt-1 text-xs text-[var(--danger)] font-mono">{fetchError}</p>
         </Card>
       )}
 
       {!fetchError && (
         <>
           {/* Architecture banner */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-xs leading-6 text-slate-600">
-            🛡 <strong>Mimari:</strong> iotomasyon yalnızca Trendyol&apos;dan veri{" "}
-            <strong>çeker</strong> (read-only). Pazaryerlerine ürün/stok/fiyat verisi{" "}
-            <strong>Entegra</strong> üzerinden gönderilir. Stok düzeltmeleri Trendyol panelinden veya Entegra üzerinden yapılır.
+          <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-1)] px-5 py-3 text-xs leading-6 text-[var(--text-secondary)] flex items-start gap-2">
+            <ShieldCheck size={14} strokeWidth={1.5} className="mt-1 shrink-0 text-[var(--info)]" />
+            <span>
+              <strong className="text-[var(--text-primary)]">Mimari:</strong> iotomasyon yalnızca Trendyol&apos;dan veri{" "}
+              <strong className="text-[var(--text-primary)]">çeker</strong> (read-only). Pazaryerlerine ürün/stok/fiyat verisi{" "}
+              <strong className="text-[var(--text-primary)]">Entegra</strong> üzerinden gönderilir. Stok düzeltmeleri Trendyol panelinden veya Entegra üzerinden yapılır.
+            </span>
           </div>
 
           {/* KPI cards — clickable navigate to relevant section */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             <a href="#section-matched" className="block group">
-              <Card className="p-5 transition group-hover:shadow-md group-hover:border-blue-200">
-                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Trendyol&apos;da</p>
-                <p className="mt-2 text-4xl font-bold text-blue-700 tabular-nums">{trendyolProducts.length}</p>
-                <p className="mt-1 text-xs text-slate-400">onaylı ürün · tıkla →</p>
+              <Card className="p-5 rounded-lg transition group-hover:border-[var(--info-border)]">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--info)]">Trendyol&apos;da</p>
+                <p className="mt-2 text-3xl font-semibold text-[var(--info)] tabular-nums font-mono">{trendyolProducts.length}</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">onaylı ürün · tıkla →</p>
               </Card>
             </a>
             <a href="#section-matched" className="block group">
-              <Card className="p-5 transition group-hover:shadow-md group-hover:border-red-200">
-                <p className="text-xs font-semibold uppercase tracking-wide text-red-500">Aşım Riski</p>
-                <p className="mt-2 text-4xl font-bold text-red-600 tabular-nums">{oversellCount}</p>
-                <p className="mt-1 text-xs text-slate-400">Trendyol fazla · tıkla →</p>
+              <Card className="p-5 rounded-lg transition group-hover:border-[var(--danger-border)]">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--danger)]">Aşım Riski</p>
+                <p className="mt-2 text-3xl font-semibold text-[var(--danger)] tabular-nums font-mono">{oversellCount}</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Trendyol fazla · tıkla →</p>
               </Card>
             </a>
             <a href="#section-matched" className="block group">
-              <Card className="p-5 transition group-hover:shadow-md group-hover:border-emerald-200">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Senkron</p>
-                <p className="mt-2 text-4xl font-bold text-emerald-700 tabular-nums">{inSyncCount}</p>
-                <p className="mt-1 text-xs text-slate-400">eşleşmiş · tıkla →</p>
+              <Card className="p-5 rounded-lg transition group-hover:border-[var(--ok-border)]">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--ok)]">Senkron</p>
+                <p className="mt-2 text-3xl font-semibold text-[var(--ok)] tabular-nums font-mono">{inSyncCount}</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">eşleşmiş · tıkla →</p>
               </Card>
             </a>
             <a href="#section-unmatched" className="block group">
-              <Card className="p-5 transition group-hover:shadow-md group-hover:border-slate-300">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Trendyol&apos;da Eşleşmemiş</p>
-                <p className="mt-2 text-4xl font-bold text-slate-500 tabular-nums">{unmatched.length}</p>
-                <p className="mt-1 text-xs text-slate-400">iç sistemde yok · tıkla →</p>
+              <Card className="p-5 rounded-lg transition group-hover:border-[var(--border-strong)]">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol&apos;da Eşleşmemiş</p>
+                <p className="mt-2 text-3xl font-semibold text-[var(--text-secondary)] tabular-nums font-mono">{unmatched.length}</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">iç sistemde yok · tıkla →</p>
               </Card>
             </a>
             <a href="#section-missing-listing" className="block group">
-              <Card className="p-5 border-amber-200 bg-amber-50/40 transition group-hover:shadow-md group-hover:border-amber-400">
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Eksik Listeme</p>
-                <p className="mt-2 text-4xl font-bold text-amber-700 tabular-nums">{missingListings.length}</p>
-                <p className="mt-1 text-xs text-amber-600">
+              <Card className="p-5 rounded-lg border-[var(--warn-border)] bg-[var(--warn-dim)] transition group-hover:brightness-110">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--warn)]">Eksik Listeme</p>
+                <p className="mt-2 text-3xl font-semibold text-[var(--warn)] tabular-nums font-mono">{missingListings.length}</p>
+                <p className="mt-1 text-xs text-[var(--warn)]">
                   stokta var, Trendyol&apos;da yok
                   {missingPreviouslySold > 0 && (
                     <> · {missingPreviouslySold} satılmış</>
@@ -329,21 +335,24 @@ export default async function TrendyolCatalogPage() {
           {matched.length > 0 && (
             <Card
               id="section-matched"
-              className="overflow-hidden p-0 scroll-mt-24"
+              className="overflow-hidden p-0 scroll-mt-24 rounded-lg"
             >
-              <div className="border-b border-slate-100 px-6 py-4 flex items-center gap-3">
-                <h2 className="text-base font-semibold text-slate-950">
+              <div className="border-b border-[var(--border-subtle)] px-6 py-4 flex items-center gap-3">
+                <h2 className="text-base font-semibold text-[var(--text-primary)]">
                   Eşleşmiş Ürünler — Stok Karşılaştırması
                 </h2>
-                <span className="ml-auto rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-                  {matched.length} ürün
+                <span className="ml-auto">
+                  <Badge variant="info" className="font-semibold">{matched.length} ürün</Badge>
                 </span>
               </div>
               <TrendyolMatchedTable rows={matched} />
               {oversellCount > 0 && (
-                <div className="border-t border-slate-100 px-6 py-3 text-xs text-red-700 bg-red-50/50">
-                  ⚠ {oversellCount} üründe Trendyol iç stoktan fazla gösteriyor — mükerrer satış riski.
-                  Stok düzeltmesi Trendyol paneli veya Entegra üzerinden yapılır (iotomasyon push yapmaz).
+                <div className="border-t border-[var(--border-subtle)] px-6 py-3 text-xs text-[var(--danger)] bg-[var(--danger-dim)] flex items-start gap-2">
+                  <AlertTriangle size={14} strokeWidth={1.5} className="mt-0.5 shrink-0" />
+                  <span>
+                    {oversellCount} üründe Trendyol iç stoktan fazla gösteriyor — mükerrer satış riski.
+                    Stok düzeltmesi Trendyol paneli veya Entegra üzerinden yapılır (iotomasyon push yapmaz).
+                  </span>
                 </div>
               )}
             </Card>
@@ -353,15 +362,15 @@ export default async function TrendyolCatalogPage() {
           {unmatched.length > 0 && (
             <Card
               id="section-unmatched"
-              className="overflow-hidden p-0 scroll-mt-24"
+              className="overflow-hidden p-0 scroll-mt-24 rounded-lg"
             >
-              <div className="border-b border-slate-100 px-6 py-4 flex items-center gap-3">
-                <span className="inline-block h-2 w-2 rounded-full bg-slate-400" />
-                <h2 className="text-base font-semibold text-slate-950">
+              <div className="border-b border-[var(--border-subtle)] px-6 py-4 flex items-center gap-3">
+                <span className="inline-block h-2 w-2 rounded-full bg-[var(--text-muted)]" />
+                <h2 className="text-base font-semibold text-[var(--text-primary)]">
                   Trendyol&apos;da Var — İç Sistemde Eşleşmemiş
                 </h2>
-                <span className="ml-auto rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600">
-                  {unmatched.length} ürün
+                <span className="ml-auto">
+                  <Badge variant="neutral" className="font-semibold">{unmatched.length} ürün</Badge>
                 </span>
               </div>
               <TrendyolUnmatchedTable rows={unmatched} />
@@ -372,22 +381,22 @@ export default async function TrendyolCatalogPage() {
           {missingListings.length > 0 && (
             <Card
               id="section-missing-listing"
-              className="overflow-hidden p-0 border-amber-200 scroll-mt-24"
+              className="overflow-hidden p-0 border-[var(--warn-border)] scroll-mt-24 rounded-lg"
             >
-              <div className="border-b border-amber-100 px-6 py-4 flex items-center gap-3 bg-amber-50/40">
-                <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
-                <h2 className="text-base font-semibold text-amber-900">
+              <div className="border-b border-[var(--warn-border)] px-6 py-4 flex items-center gap-3 bg-[var(--warn-dim)]">
+                <span className="inline-block h-2 w-2 rounded-full bg-[var(--warn)]" />
+                <h2 className="text-base font-semibold text-[var(--warn)]">
                   Eksik Listeme — Stoğumuzda Var, Trendyol&apos;da Yok
                 </h2>
-                <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
-                  {missingListings.length} ürün
+                <span className="ml-auto">
+                  <Badge variant="warn" className="font-semibold">{missingListings.length} ürün</Badge>
                 </span>
               </div>
-              <div className="px-6 py-3 text-xs text-amber-700 bg-amber-50/40 border-b border-amber-100">
+              <div className="px-6 py-3 text-xs text-[var(--warn)] bg-[var(--warn-dim)] border-b border-[var(--warn-border)]">
                 Aktif stoğumuzda olan ama Trendyol katalogunda barkod/SKU eşleşmesi
                 olmayan ürünler. Daha önce satılmış olanlar listeden düşmüş
                 olabilir — kırmızı badge ile vurgulanır.{" "}
-                <strong>Trendyol&apos;a ürün ekleme/düzeltme Entegra üzerinden yapılır.</strong>
+                <strong className="text-[var(--text-primary)]">Trendyol&apos;a ürün ekleme/düzeltme Entegra üzerinden yapılır.</strong>
               </div>
               <MissingListingsTable rows={missingListings} />
             </Card>
@@ -395,17 +404,17 @@ export default async function TrendyolCatalogPage() {
 
           {/* Eksik Listeme — stoğumuzda var ama Trendyol'da yok */}
           {missingListings.length > 0 && (
-            <Card className="overflow-hidden p-0 border-amber-200">
-              <div className="border-b border-amber-100 px-6 py-4 flex items-center gap-3 bg-amber-50/40">
-                <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
-                <h2 className="text-base font-semibold text-amber-900">
+            <Card className="overflow-hidden p-0 border-[var(--warn-border)] rounded-lg">
+              <div className="border-b border-[var(--warn-border)] px-6 py-4 flex items-center gap-3 bg-[var(--warn-dim)]">
+                <span className="inline-block h-2 w-2 rounded-full bg-[var(--warn)]" />
+                <h2 className="text-base font-semibold text-[var(--warn)]">
                   Eksik Listeme — Stoğumuzda Var, Trendyol&apos;da Yok
                 </h2>
-                <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
-                  {missingListings.length} ürün
+                <span className="ml-auto">
+                  <Badge variant="warn" className="font-semibold">{missingListings.length} ürün</Badge>
                 </span>
               </div>
-              <div className="px-6 py-3 text-xs text-amber-700 bg-amber-50/40 border-b border-amber-100">
+              <div className="px-6 py-3 text-xs text-[var(--warn)] bg-[var(--warn-dim)] border-b border-[var(--warn-border)]">
                 Bu ürünler aktif stoğumuzda olduğu hâlde Trendyol katalogunda
                 bulunamadı (barkod veya SKU eşleşmesi yok). Daha önce satılmış
                 olanlar listeden düşmüş olabilir — bu yüzden lifetime satışına
@@ -414,7 +423,7 @@ export default async function TrendyolCatalogPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       <th className="px-6 py-3 text-left">Ürün</th>
                       <th className="px-4 py-3 text-left">SKU</th>
                       <th className="px-4 py-3 text-left">Barkod</th>
@@ -426,33 +435,31 @@ export default async function TrendyolCatalogPage() {
                       <th className="px-4 py-3 text-left">Notlar</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-[var(--border-subtle)]">
                     {missingListings.slice(0, 500).map((r) => (
                       <tr
                         key={r.productId}
-                        className={r.lifetimeSold > 0 ? "bg-red-50/40 hover:bg-red-50" : "hover:bg-slate-50"}
+                        className={r.lifetimeSold > 0 ? "bg-[var(--danger-dim)] hover:bg-[var(--surface-3)]" : "hover:bg-[var(--surface-3)]"}
                       >
                         <td className="px-6 py-3 max-w-[260px] truncate">
-                          <Link href={`/products/${r.productId}`} className="font-medium text-slate-900 hover:underline">
+                          <Link href={`/products/${r.productId}`} className="font-medium text-[var(--text-primary)] hover:underline">
                             {r.productName}
                           </Link>
                         </td>
-                        <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.sku}</td>
-                        <td className="px-4 py-3 text-xs font-mono text-slate-500">{r.barcode ?? "—"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500">{r.brand ?? "—"}</td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{r.stockQuantity}</td>
-                        <td className={`px-4 py-3 text-right tabular-nums text-sm ${r.lifetimeSold > 0 ? "font-bold text-red-700" : "text-slate-400"}`}>
+                        <td className="px-4 py-3 text-xs font-mono text-[var(--text-muted)]">{r.sku}</td>
+                        <td className="px-4 py-3 text-xs font-mono text-[var(--text-muted)]">{r.barcode ?? "—"}</td>
+                        <td className="px-4 py-3 text-xs text-[var(--text-muted)]">{r.brand ?? "—"}</td>
+                        <td className="px-4 py-3 text-right tabular-nums font-mono text-[var(--text-secondary)]">{r.stockQuantity}</td>
+                        <td className={`px-4 py-3 text-right tabular-nums font-mono text-sm ${r.lifetimeSold > 0 ? "font-bold text-[var(--danger)]" : "text-[var(--text-muted)]"}`}>
                           {r.lifetimeSold > 0 ? r.lifetimeSold : "—"}
                         </td>
                         <td className="px-4 py-3 text-xs">
                           {r.lifetimeSold > 0 ? (
-                            <span className="rounded bg-red-100 px-1.5 py-0.5 text-red-700 font-medium">
-                              ⚠ Daha önce satılmış
-                            </span>
+                            <Badge variant="danger" className="font-medium">
+                              Daha önce satılmış
+                            </Badge>
                           ) : (
-                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-500">
-                              Listemeden eksik
-                            </span>
+                            <Badge variant="neutral">Listemeden eksik</Badge>
                           )}
                         </td>
                       </tr>
@@ -461,7 +468,7 @@ export default async function TrendyolCatalogPage() {
                 </table>
               </div>
               {missingListings.length > 500 && (
-                <div className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500 bg-slate-50/30">
+                <div className="border-t border-[var(--border-subtle)] px-6 py-3 text-xs text-[var(--text-muted)] bg-[var(--surface-1)]">
                   İlk 500 ürün gösteriliyor (toplam {missingListings.length}).
                 </div>
               )}
@@ -470,7 +477,7 @@ export default async function TrendyolCatalogPage() {
 
           {/* Empty state */}
           {trendyolProducts.length === 0 && (
-            <Card className="p-8 text-center text-sm text-slate-400">
+            <Card className="p-8 text-center text-sm text-[var(--text-muted)] rounded-lg">
               Trendyol&apos;da onaylı ürün bulunamadı. API yapılandırmanızı ve satıcı bilgilerinizi kontrol edin.
             </Card>
           )}

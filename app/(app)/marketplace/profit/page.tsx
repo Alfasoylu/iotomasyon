@@ -19,23 +19,23 @@
  */
 
 import Link from "next/link";
+import { Settings, AlertTriangle, ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { calculateProfitability } from "@/lib/profitability";
 import {
   policySourceLabel,
-  policySourceColor,
   type PolicySource,
 } from "@/lib/marketplace-policy";
 import {
   calcMarketplacePricingRow,
   priceSourceLabel,
-  priceSourceColor,
   type PriceSource,
 } from "@/lib/marketplace-pricing";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { Prisma, MarketplacePlatform } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -114,50 +114,54 @@ interface ListingRow {
 
 function PlatformChip({ platform }: { platform: string }) {
   return (
-    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+    <span className="rounded-md bg-[var(--surface-3)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)] border border-[var(--border-subtle)]">
       {PLATFORM_LABELS[platform] ?? platform}
     </span>
   );
 }
 
 function PolicyBadge({ source }: { source: PolicySource | "price_tier" }) {
-  const label = source === "price_tier" ? "Fiyat Dilimi" : policySourceLabel(source as PolicySource);
-  const color = source === "price_tier" ? "bg-orange-50 text-orange-600" : policySourceColor(source as PolicySource);
+  const label =
+    source === "price_tier"
+      ? "Fiyat Dilimi"
+      : policySourceLabel(source as PolicySource);
+  const variant: "warn" | "ok" | "info" | "neutral" =
+    source === "price_tier"
+      ? "warn"
+      : source === "product_override"
+        ? "info"
+        : source === "platform_standard"
+          ? "ok"
+          : "neutral";
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${color}`}>
+    <Badge variant={variant} className="text-[10px]">
       {label}
-    </span>
+    </Badge>
   );
 }
 
 function PriceBadge({ source }: { source: PriceSource }) {
+  const variant: "ok" | "info" | "neutral" | "warn" =
+    source === "manual"
+      ? "info"
+      : source === "xml"
+        ? "ok"
+        : "neutral";
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${priceSourceColor(source)}`}>
+    <Badge variant={variant} className="text-[10px]">
       {priceSourceLabel(source)}
-    </span>
+    </Badge>
   );
 }
 
 function ProfitBadge({ row }: { row: ListingRow }) {
   if (!row.hasData) {
-    return (
-      <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-        Veri yok
-      </span>
-    );
+    return <Badge variant="warn">Veri yok</Badge>;
   }
   if (row.profitable) {
-    return (
-      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-        Kârlı
-      </span>
-    );
+    return <Badge variant="ok">Kârlı</Badge>;
   }
-  return (
-    <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
-      Kârsız
-    </span>
-  );
+  return <Badge variant="danger">Kârsız</Badge>;
 }
 
 function ProfitTable({
@@ -169,73 +173,76 @@ function ProfitTable({
   highlight?: "danger";
   showPolicySources?: boolean;
 }) {
-  const headBg = highlight === "danger" ? "bg-red-50/50" : "bg-slate-50/50";
+  const headBg =
+    highlight === "danger"
+      ? "bg-[var(--danger-dim)]"
+      : "bg-[var(--surface-1)]";
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden rounded-lg">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-slate-700 border-collapse">
+        <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
           <thead>
-            <tr className={`border-b border-slate-100 ${headBg}`}>
-              <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform</th>
-              <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Etkin Fiyat</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Net Kâr</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Marj</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">ROI</th>
+            <tr className={`border-b border-[var(--border-subtle)] ${headBg}`}>
+              <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Platform</th>
+              <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Etkin Fiyat</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Net Kâr</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Marj</th>
+              <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">ROI</th>
               {showPolicySources && (
                 <>
-                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Kargo</th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Komisyon</th>
+                  <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kargo</th>
+                  <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Komisyon</th>
                 </>
               )}
-              <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Durum</th>
+              <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Durum</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+              <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
                 <td className="py-3 px-4">
                   <PlatformChip platform={r.platform} />
                 </td>
                 <td className="py-3 px-4">
                   <Link
                     href={`/products/${r.productId}`}
-                    className="font-mono text-xs text-slate-500 hover:text-slate-800"
+                    className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   >
                     {r.productSku}
                   </Link>
-                  <p className="text-xs text-slate-600 mt-0.5 max-w-[200px] truncate">
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 max-w-[200px] truncate">
                     {r.productName}
                   </p>
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-xs text-slate-700">
-                      {r.marketplacePrice > 0 ? fmt(r.marketplacePrice) : <span className="text-slate-300">—</span>}
+                    <span className="text-xs text-[var(--text-secondary)] tabular-nums font-mono">
+                      {r.marketplacePrice > 0 ? fmt(r.marketplacePrice) : <span className="text-[var(--text-muted)]">—</span>}
                     </span>
                     <PriceBadge source={r.priceSource} />
                   </div>
                 </td>
-                <td className={`py-3 px-4 text-right text-xs font-semibold ${r.netProfit != null ? (r.netProfit >= 0 ? "text-emerald-600" : "text-red-600") : "text-slate-300"}`}>
+                <td className={`py-3 px-4 text-right text-xs font-semibold tabular-nums font-mono ${r.netProfit != null ? (r.netProfit >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]") : "text-[var(--text-muted)]"}`}>
                   {r.netProfit != null ? fmt(r.netProfit) : "—"}
                 </td>
-                <td className={`py-3 px-4 text-right text-xs font-semibold ${r.margin != null ? (r.margin >= 0 ? "text-emerald-600" : "text-red-600") : "text-slate-300"}`}>
+                <td className={`py-3 px-4 text-right text-xs font-semibold tabular-nums font-mono ${r.margin != null ? (r.margin >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]") : "text-[var(--text-muted)]"}`}>
                   {r.margin != null ? fmtPct(r.margin) : "—"}
                 </td>
-                <td className={`py-3 px-4 text-right text-xs ${r.roi != null ? (r.roi >= 0 ? "text-slate-700" : "text-red-600") : "text-slate-300"}`}>
+                <td className={`py-3 px-4 text-right text-xs tabular-nums font-mono ${r.roi != null ? (r.roi >= 0 ? "text-[var(--text-secondary)]" : "text-[var(--danger)]") : "text-[var(--text-muted)]"}`}>
                   {r.roi != null ? fmtPct(r.roi) : "—"}
                 </td>
                 {showPolicySources && (
                   <>
                     <td className="py-3 px-4 text-right">
                       <div className="flex flex-col items-end gap-0.5">
-                        <span className="text-xs text-slate-700">{fmt(r.shippingTry)}</span>
+                        <span className="text-xs text-[var(--text-secondary)] tabular-nums font-mono">{fmt(r.shippingTry)}</span>
                         <PolicyBadge source={r.shippingSource} />
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex flex-col items-end gap-0.5">
-                        <span className="text-xs text-slate-700">{fmtPct(r.commissionPct)}</span>
+                        <span className="text-xs text-[var(--text-secondary)] tabular-nums font-mono">{fmtPct(r.commissionPct)}</span>
                         <PolicyBadge source={r.commissionSource} />
                       </div>
                     </td>
@@ -426,42 +433,51 @@ export default async function MarketplaceProfitPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Pazar Yerleri / Kârlılık
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Pazar Yeri Kâr Paneli
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             Aktif listeleme başına pazar yeri kanalı kârlılığı — etkin marj politikasıyla hesaplanmıştır.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/admin/marketplace-policies">
-            <Button variant="secondary">⚙ Marj Politikaları</Button>
+            <Button variant="secondary">
+              <Settings size={14} strokeWidth={1.5} className="mr-1" />
+              Marj Politikaları
+            </Button>
           </Link>
           <Link href="/marketplace/monitoring">
-            <Button variant="secondary">⚠ İzleme</Button>
+            <Button variant="secondary">
+              <AlertTriangle size={14} strokeWidth={1.5} className="mr-1" />
+              İzleme
+            </Button>
           </Link>
           <Link href="/marketplace">
-            <Button variant="secondary">← Listeleme Kaydı</Button>
+            <Button variant="secondary">
+              <ArrowLeft size={14} strokeWidth={1.5} className="mr-1" />
+              Listeleme Kaydı
+            </Button>
           </Link>
         </div>
       </div>
 
       {/* Policy coverage notice */}
       {policyConfiguredCount === 0 && (
-        <Card className="p-4 bg-amber-50 border-amber-200">
+        <Card className="p-4 rounded-lg border-[var(--warn-border)] bg-[var(--warn-dim)]">
           <div className="flex items-start gap-3">
-            <span className="text-amber-600 text-lg">⚠</span>
+            <AlertTriangle size={14} strokeWidth={1.5} className="text-[var(--warn)] mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-amber-800">
+              <p className="text-sm font-semibold text-[var(--warn)]">
                 Platform politikaları henüz yapılandırılmadı
               </p>
-              <p className="text-xs text-amber-700 mt-1">
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
                 Kargo ve komisyon değerleri sistem varsayılanları kullanılarak hesaplanıyor (Kargo: ₺0, Komisyon: %20).
                 {" "}
-                <Link href="/admin/marketplace-policies" className="underline font-medium">
+                <Link href="/admin/marketplace-policies" className="underline font-medium text-[var(--warn)]">
                   Platform politikalarını yapılandır →
                 </Link>
               </p>
@@ -472,31 +488,31 @@ export default async function MarketplaceProfitPage() {
 
       {/* Summary cards */}
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Aktif Listeleme
           </p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">{rows.length}</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{rows.length}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Kârlı</p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-600">{profitable.length}</p>
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kârlı</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums font-mono text-[var(--ok)]">{profitable.length}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Kârsız</p>
-          <p className="mt-1 text-2xl font-semibold text-red-600">{losing.length}</p>
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Kârsız</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums font-mono text-[var(--danger)]">{losing.length}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Veri Eksik</p>
-          <p className="mt-1 text-2xl font-semibold text-amber-600">{noData.length}</p>
+        <Card className="p-4 rounded-lg">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Veri Eksik</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums font-mono text-[var(--warn)]">{noData.length}</p>
         </Card>
       </div>
 
       {/* No listings at all */}
       {rows.length === 0 && (
-        <Card className="p-10 text-center space-y-3">
-          <p className="text-slate-500 text-sm font-medium">Aktif listeleme bulunamadı.</p>
-          <p className="text-slate-400 text-xs">
+        <Card className="p-10 text-center space-y-3 rounded-lg">
+          <p className="text-[var(--text-secondary)] text-sm font-medium">Aktif listeleme bulunamadı.</p>
+          <p className="text-[var(--text-muted)] text-xs">
             Kârlılık analizi için önce pazar yeri listelemeleri ekleyin.
           </p>
           <Link href="/marketplace/new">
@@ -508,28 +524,28 @@ export default async function MarketplaceProfitPage() {
       {/* Platform breakdown */}
       {platforms.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900">Platform Özeti</h2>
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">Platform Özeti</h2>
           <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
             {platforms.map((pf) => {
               const s = platformMap[pf];
               const hasPol = policyByPlatform[pf] != null;
               return (
-                <Card key={pf} className="p-4 space-y-1">
+                <Card key={pf} className="p-4 space-y-1 rounded-lg">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       {PLATFORM_LABELS[pf] ?? pf}
                     </p>
                     {hasPol ? (
-                      <span className="text-[10px] rounded-full bg-emerald-100 text-emerald-700 px-1.5 py-0.5">Politika ✓</span>
+                      <Badge variant="ok" className="text-[10px]">Politika ✓</Badge>
                     ) : (
-                      <span className="text-[10px] rounded-full bg-amber-100 text-amber-700 px-1.5 py-0.5">Varsayılan</span>
+                      <Badge variant="warn" className="text-[10px]">Varsayılan</Badge>
                     )}
                   </div>
-                  <p className="text-xl font-semibold text-slate-900">{s.total} listeleme</p>
-                  <div className="flex flex-wrap gap-x-3 text-xs mt-1">
-                    <span className="text-emerald-600">{s.profitable} kârlı</span>
-                    {s.losing > 0 && <span className="text-red-600">{s.losing} kârsız</span>}
-                    {s.noData > 0 && <span className="text-amber-600">{s.noData} veri yok</span>}
+                  <p className="text-xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{s.total} listeleme</p>
+                  <div className="flex flex-wrap gap-x-3 text-xs mt-1 tabular-nums font-mono">
+                    <span className="text-[var(--ok)]">{s.profitable} kârlı</span>
+                    {s.losing > 0 && <span className="text-[var(--danger)]">{s.losing} kârsız</span>}
+                    {s.noData > 0 && <span className="text-[var(--warn)]">{s.noData} veri yok</span>}
                   </div>
                 </Card>
               );
@@ -541,9 +557,9 @@ export default async function MarketplaceProfitPage() {
       {/* Winners table */}
       {winners.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">
             En Kârlı Listelemeler{" "}
-            <span className="text-slate-400 font-normal text-sm">
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">
               (marj sıralaması — en fazla 20)
             </span>
           </h2>
@@ -554,9 +570,9 @@ export default async function MarketplaceProfitPage() {
       {/* Losers table */}
       {loserRows.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-red-700">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--danger)]">
             Kârsız Listelemeler{" "}
-            <span className="text-slate-400 font-normal text-sm">({loserRows.length} listeleme)</span>
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">({loserRows.length} listeleme)</span>
           </h2>
           <ProfitTable rows={loserRows} highlight="danger" showPolicySources />
         </section>
@@ -565,35 +581,35 @@ export default async function MarketplaceProfitPage() {
       {/* Missing price/cost data */}
       {noData.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-amber-700">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--warn)]">
             Fiyat / Maliyet Verisi Eksik{" "}
-            <span className="text-slate-400 font-normal text-sm">({noData.length} listeleme)</span>
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">({noData.length} listeleme)</span>
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--text-secondary)]">
             Bu ürünlere pazar yeri fiyatı veya maliyet bilgisi girilmediğinden kârlılık hesaplanamıyor.
           </p>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-amber-50/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Yapılacak</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--warn-dim)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Platform</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Yapılacak</th>
                   </tr>
                 </thead>
                 <tbody>
                   {noData.map((r) => (
-                    <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
                       <td className="py-3 px-4"><PlatformChip platform={r.platform} /></td>
                       <td className="py-3 px-4">
-                        <Link href={`/products/${r.productId}`} className="font-mono text-xs text-slate-500 hover:text-slate-800">
+                        <Link href={`/products/${r.productId}`} className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                           {r.productSku}
                         </Link>
-                        <p className="text-xs text-slate-600 mt-0.5 max-w-[220px] truncate">{r.productName}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 max-w-[220px] truncate">{r.productName}</p>
                       </td>
                       <td className="py-3 px-4">
-                        <Link href={`/products/${r.productId}/edit`} className="text-xs text-amber-600 hover:text-amber-800 underline underline-offset-2">
+                        <Link href={`/products/${r.productId}/edit`} className="text-xs text-[var(--warn)] hover:brightness-110 underline underline-offset-2">
                           Fiyatlandırma ve kârlılık bölümünü doldur →
                         </Link>
                       </td>
@@ -609,40 +625,40 @@ export default async function MarketplaceProfitPage() {
       {/* High stock / low demand */}
       {highStockLowSales.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-700">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)]">
             Yüksek Stok / Düşük Satış Potansiyeli{" "}
-            <span className="text-slate-400 font-normal text-sm">
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">
               ({highStockLowSales.length} listeleme)
             </span>
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--text-secondary)]">
             Stok miktarı 5&apos;ten fazla olan ancak çevrimiçi satış potansiyeli tanımlanmamış aktif listelemeler.
           </p>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden rounded-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Stok</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Satış Pot.</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Net Kâr</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Platform</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                    <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Stok</th>
+                    <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Satış Pot.</th>
+                    <th className="py-3 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Net Kâr</th>
                   </tr>
                 </thead>
                 <tbody>
                   {highStockLowSales.map((r) => (
-                    <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
                       <td className="py-3 px-4"><PlatformChip platform={r.platform} /></td>
                       <td className="py-3 px-4">
-                        <Link href={`/products/${r.productId}`} className="font-mono text-xs text-slate-500 hover:text-slate-800">
+                        <Link href={`/products/${r.productId}`} className="font-mono text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                           {r.productSku}
                         </Link>
-                        <p className="text-xs text-slate-600 mt-0.5 max-w-[220px] truncate">{r.productName}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 max-w-[220px] truncate">{r.productName}</p>
                       </td>
-                      <td className="py-3 px-4 text-right font-semibold text-slate-700">{r.stockQuantity}</td>
-                      <td className="py-3 px-4 text-right text-slate-400">—</td>
-                      <td className={`py-3 px-4 text-right text-xs font-semibold ${r.netProfit != null ? (r.netProfit >= 0 ? "text-emerald-600" : "text-red-600") : "text-slate-300"}`}>
+                      <td className="py-3 px-4 text-right font-semibold text-[var(--text-secondary)] tabular-nums font-mono">{r.stockQuantity}</td>
+                      <td className="py-3 px-4 text-right text-[var(--text-muted)] tabular-nums font-mono">—</td>
+                      <td className={`py-3 px-4 text-right text-xs font-semibold tabular-nums font-mono ${r.netProfit != null ? (r.netProfit >= 0 ? "text-[var(--ok)]" : "text-[var(--danger)]") : "text-[var(--text-muted)]"}`}>
                         {r.netProfit != null ? fmt(r.netProfit) : "—"}
                       </td>
                     </tr>

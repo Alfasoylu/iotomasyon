@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 interface EmptyStateProps {
   /** Lucide ikon (büyük, decorative) */
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string; size?: number; strokeWidth?: number }>;
   /** Ana başlık (örn. "Henüz müşteri yok") */
   title: string;
   /** Altyazı — bu durumun ne zaman çözüleceğini açıklar */
@@ -44,16 +44,16 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 py-12 px-6 text-center ${className}`}
+      className={`flex flex-col items-center justify-center rounded-lg border border-dashed border-[var(--border-default)] bg-[var(--surface-1)] py-12 px-6 text-center ${className}`}
     >
       {Icon && (
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
-          <Icon className="h-6 w-6 text-slate-400" />
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)]">
+          <Icon size={22} strokeWidth={1.5} className="text-[var(--text-muted)]" />
         </div>
       )}
-      <p className="text-sm font-semibold text-slate-700">{title}</p>
+      <p className="text-sm font-semibold text-[var(--text-primary)]">{title}</p>
       {hint && (
-        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-slate-500">
+        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-[var(--text-secondary)]">
           {hint}
         </p>
       )}

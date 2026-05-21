@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { Phone, MessageCircle, Zap, Target, FileText, Trophy, Clock, AlertTriangle } from "lucide-react";
+import {
+  Phone,
+  MessageCircle,
+  Zap,
+  FileText,
+  Trophy,
+  Clock,
+  AlertTriangle,
+  MapPin,
+  Sparkles,
+  PhoneCall,
+} from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -52,11 +63,11 @@ function fmtTry(n: number): string {
   }).format(n);
 }
 
-const PRIORITY_LABELS: Record<string, string> = {
-  URGENT: "🔴",
-  HIGH: "🟠",
-  MEDIUM: "🟡",
-  LOW: "🟢",
+const PRIORITY_DOT: Record<string, string> = {
+  URGENT: "bg-[var(--danger)]",
+  HIGH: "bg-[var(--warn)]",
+  MEDIUM: "bg-[var(--accent)]",
+  LOW: "bg-[var(--ok)]",
 };
 
 export function SalesRepDashboard({
@@ -72,14 +83,16 @@ export function SalesRepDashboard({
   const waHref = nowCallCustomer ? whatsappLink(nowCallCustomer.whatsapp || nowCallCustomer.phone) : null;
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="max-w-6xl space-y-6">
       {/* Hero başlık */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-600">SATIŞ PANOSU</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-          Günaydın, {userName.split(" ")[0]} 👋
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Satış Panosu
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+          Günaydın, {userName.split(" ")[0]}
         </h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           Bugün ne yapacaksın? Aşağıdaki müşteriyi ara, görevini bitir, hedefe ilerle.
         </p>
       </div>
@@ -88,47 +101,55 @@ export function SalesRepDashboard({
       <SalesRepFirstTimeBanner />
 
       {/* Bugün KPI manşet bandı */}
-      <Card className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <Card className="p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Bugün
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
-              <Phone className="h-3.5 w-3.5" />
-              Bugün görüşme
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              <Phone size={14} strokeWidth={1.5} />
+              Görüşme
             </p>
-            <p className="mt-1 text-2xl font-bold text-slate-900 tabular-nums">
-              {kpis.todayCallsLogged}<span className="text-base text-slate-400">/{kpis.dailyCallTarget}</span>
+            <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-[var(--text-primary)]">
+              {kpis.todayCallsLogged}
+              <span className="font-mono text-base text-[var(--text-muted)]">/{kpis.dailyCallTarget}</span>
             </p>
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white">
+            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-md bg-[var(--surface-3)]">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
+                className="h-full bg-[var(--accent)]"
                 style={{ width: `${callsProgress}%` }}
               />
             </div>
           </div>
           <div>
-            <p className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
-              <FileText className="h-3.5 w-3.5" />
-              Bugün teklif
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              <FileText size={14} strokeWidth={1.5} />
+              Teklif
             </p>
-            <p className="mt-1 text-2xl font-bold text-slate-900 tabular-nums">
+            <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-[var(--text-primary)]">
               {fmtTry(kpis.todayQuotesAmountTry)}
             </p>
           </div>
           <div>
-            <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-              <Trophy className="h-3.5 w-3.5" />
-              Bu hafta kazandın
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              <Trophy size={14} strokeWidth={1.5} />
+              Bu hafta kazanılan
             </p>
-            <p className="mt-1 text-2xl font-bold text-emerald-700 tabular-nums">
+            <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-[var(--ok)]">
               {kpis.thisWeekDealsWon}
             </p>
           </div>
           <div>
-            <p className="flex items-center gap-1.5 text-xs font-medium text-rose-700">
-              <AlertTriangle className="h-3.5 w-3.5" />
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              <AlertTriangle size={14} strokeWidth={1.5} />
               Gecikmiş görev
             </p>
-            <p className={`mt-1 text-2xl font-bold tabular-nums ${kpis.overdueTaskCount > 0 ? "text-rose-700" : "text-slate-900"}`}>
+            <p
+              className={`mt-1 font-mono text-2xl font-semibold tabular-nums ${
+                kpis.overdueTaskCount > 0 ? "text-[var(--danger)]" : "text-[var(--text-primary)]"
+              }`}
+            >
               {kpis.overdueTaskCount}
             </p>
           </div>
@@ -137,43 +158,50 @@ export function SalesRepDashboard({
 
       {/* Şimdi bunu ara hero */}
       {nowCallCustomer ? (
-        <Card className="p-6 border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-white shadow-md">
+        <Card className="border-[var(--accent-border)] bg-[var(--accent-dim)] p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-4 min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 items-start gap-4">
               <CustomerAvatar name={nowCallCustomer.name} avatarUrl={null} size="lg" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
-                  ⚡ Şimdi bunu ara
+                <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--accent)]">
+                  <Sparkles size={14} strokeWidth={1.5} />
+                  Şimdi bunu ara
                 </p>
                 <Link
                   href={`/customers/${nowCallCustomer.id}`}
-                  className="mt-1 block text-xl font-bold text-slate-900 hover:text-slate-700"
+                  className="mt-1 block text-xl font-semibold text-[var(--text-primary)] transition hover:text-[var(--accent)]"
                   title={nowCallCustomer.name}
                 >
                   {shortenCustomerName(nowCallCustomer.name, 50)}
                 </Link>
                 {nowCallCustomer.company && nowCallCustomer.company.trim() !== nowCallCustomer.name.trim() && (
-                  <p className="text-sm text-slate-600 truncate">{shortenCustomerName(nowCallCustomer.company, 60)}</p>
+                  <p className="truncate text-sm text-[var(--text-secondary)]">
+                    {shortenCustomerName(nowCallCustomer.company, 60)}
+                  </p>
                 )}
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-secondary)]">
                   {nowCallCustomer.phone && (
-                    <span className="font-mono font-semibold text-slate-900">
+                    <span className="font-mono font-semibold text-[var(--text-primary)] tabular-nums">
                       {nowCallCustomer.phone}
                     </span>
                   )}
                   {nowCallCustomer.city && (
-                    <span>📍 {nowCallCustomer.city}{nowCallCustomer.district ? ` / ${nowCallCustomer.district}` : ""}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                      {nowCallCustomer.city}
+                      {nowCallCustomer.district ? ` / ${nowCallCustomer.district}` : ""}
+                    </span>
                   )}
                   {nowCallCustomer.industryLabel && (
-                    <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-slate-200">
+                    <span className="rounded border border-[var(--border-subtle)] bg-[var(--surface-2)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
                       {nowCallCustomer.industryLabel}
                     </span>
                   )}
                   {nowCallCustomer.segmentLabel && (
-                    <Badge tone="success">{nowCallCustomer.segmentLabel}</Badge>
+                    <Badge variant="ok">{nowCallCustomer.segmentLabel}</Badge>
                   )}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-[var(--text-muted)]">
                   {nowCallCustomer.lastContactedAt
                     ? `Son temas ${nowCallCustomer.daysSinceContact} gün önce`
                     : "Hiç temas yok — soğuk müşteri"}
@@ -184,9 +212,9 @@ export function SalesRepDashboard({
               {phoneHref && (
                 <a
                   href={phoneHref}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-base font-bold text-white shadow-md transition hover:bg-emerald-700"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-6 py-3 text-base font-semibold text-[var(--accent-fg)] transition hover:opacity-90"
                 >
-                  <Phone className="h-5 w-5" />
+                  <Phone size={18} strokeWidth={1.5} />
                   ARA
                 </a>
               )}
@@ -195,15 +223,15 @@ export function SalesRepDashboard({
                   href={waHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] px-6 py-3 text-sm font-semibold text-[var(--ok)] transition hover:bg-[var(--surface-3)]"
                 >
-                  <MessageCircle className="h-4 w-4" />
+                  <MessageCircle size={14} strokeWidth={1.5} />
                   WhatsApp
                 </a>
               )}
               <Link
                 href="/customers?cohort=queue"
-                className="text-center text-xs text-slate-500 hover:text-slate-700"
+                className="text-center text-xs text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
               >
                 Tüm kuyruğa git →
               </Link>
@@ -212,9 +240,13 @@ export function SalesRepDashboard({
         </Card>
       ) : (
         <Card className="p-6 text-center">
-          <Zap className="mx-auto h-10 w-10 text-slate-300" />
-          <p className="mt-2 text-sm font-semibold text-slate-700">Sıralı aramaya hazır müşteri yok</p>
-          <p className="mt-1 text-xs text-slate-500">Tüm müşteriler aranmış veya kuyruk boş.</p>
+          <Zap size={28} strokeWidth={1.5} className="mx-auto text-[var(--text-muted)]" />
+          <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
+            Sıralı aramaya hazır müşteri yok
+          </p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Tüm müşteriler aranmış veya kuyruk boş.
+          </p>
         </Card>
       )}
 
@@ -222,42 +254,50 @@ export function SalesRepDashboard({
       <div className="grid gap-3 sm:grid-cols-3">
         <Link
           href="/customers?cohort=queue"
-          className="rounded-xl border border-violet-200 bg-violet-50 p-4 transition hover:bg-violet-100"
+          className="block rounded-lg border border-[var(--accent-border)] bg-[var(--accent-dim)] p-4 transition hover:bg-[var(--surface-3)]"
         >
           <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-violet-600" />
-            <span className="text-xs font-medium text-violet-700">Sıralı Arama</span>
+            <Zap size={14} strokeWidth={1.5} className="text-[var(--accent)]" />
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              Sıralı Arama
+            </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-violet-900 tabular-nums">
+          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-[var(--accent)]">
             {Math.min(30, cohortCounts.totalActive)}
           </p>
-          <p className="text-xs text-violet-700">akıllı sıralı — telefonu olan</p>
+          <p className="text-[11px] text-[var(--text-secondary)]">
+            akıllı sıralı — telefonu olan
+          </p>
         </Link>
         <Link
           href="/customers?cohort=todayCall"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-4 transition hover:bg-rose-100"
+          className="block rounded-lg border border-[var(--danger-border)] bg-[var(--danger-dim)] p-4 transition hover:bg-[var(--surface-3)]"
         >
           <div className="flex items-center gap-2">
-            <Phone className="h-5 w-5 text-rose-600" />
-            <span className="text-xs font-medium text-rose-700">Bugün Görev</span>
+            <Phone size={14} strokeWidth={1.5} className="text-[var(--danger)]" />
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              Bugün Görev
+            </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-rose-900 tabular-nums">
+          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-[var(--danger)]">
             {cohortCounts.todayCall}
           </p>
-          <p className="text-xs text-rose-700">vadesi gelen müşteri</p>
+          <p className="text-[11px] text-[var(--text-secondary)]">vadesi gelen müşteri</p>
         </Link>
         <Link
           href="/customers?cohort=openQuotes"
-          className="rounded-xl border border-amber-200 bg-amber-50 p-4 transition hover:bg-amber-100"
+          className="block rounded-lg border border-[var(--warn-border)] bg-[var(--warn-dim)] p-4 transition hover:bg-[var(--surface-3)]"
         >
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-amber-600" />
-            <span className="text-xs font-medium text-amber-700">Açık Teklif</span>
+            <FileText size={14} strokeWidth={1.5} className="text-[var(--warn)]" />
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              Açık Teklif
+            </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-amber-900 tabular-nums">
+          <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-[var(--warn)]">
             {cohortCounts.openQuotes}
           </p>
-          <p className="text-xs text-amber-700">7g+ hareketsiz, takip et</p>
+          <p className="text-[11px] text-[var(--text-secondary)]">7g+ hareketsiz, takip et</p>
         </Link>
       </div>
 
@@ -266,37 +306,45 @@ export function SalesRepDashboard({
         {/* Görevlerim */}
         <Card className="p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
               Görevlerim
             </p>
-            <Link href="/tasks" className="text-xs font-medium text-blue-600 hover:text-blue-800">
+            <Link
+              href="/tasks"
+              className="text-xs font-medium text-[var(--accent)] transition hover:text-[var(--text-primary)]"
+            >
               Tümü →
             </Link>
           </div>
           {myTasks.length === 0 ? (
-            <p className="mt-4 text-center text-sm text-slate-400 py-6">
-              ✨ Sana atanmış açık görev yok.
+            <p className="mt-4 py-6 text-center text-sm text-[var(--text-muted)]">
+              Sana atanmış açık görev yok.
             </p>
           ) : (
-            <ul className="mt-3 divide-y divide-slate-100">
+            <ul className="mt-3 divide-y divide-[var(--border-subtle)]">
               {myTasks.slice(0, 5).map((task) => (
                 <li key={task.id} className="py-2.5">
                   <Link
                     href={task.customerId ? `/customers/${task.customerId}` : "/tasks"}
-                    className="flex items-start gap-2 hover:bg-slate-50 -mx-2 px-2 py-1 rounded"
+                    className="-mx-2 flex items-start gap-2 rounded-md px-2 py-1 transition hover:bg-[var(--surface-3)]"
                   >
-                    <span className="flex-shrink-0 text-base mt-0.5">
-                      {PRIORITY_LABELS[task.priority]}
-                    </span>
+                    <span
+                      className={`mt-1.5 inline-block h-2 w-2 flex-shrink-0 rounded-full ${PRIORITY_DOT[task.priority]}`}
+                      aria-hidden="true"
+                    />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-900 truncate">{task.title}</p>
+                      <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                        {task.title}
+                      </p>
                       {task.customerName && (
-                        <p className="text-xs text-slate-500 truncate">{task.customerName}</p>
+                        <p className="truncate text-xs text-[var(--text-secondary)]">
+                          {task.customerName}
+                        </p>
                       )}
                     </div>
                     <span
-                      className={`flex-shrink-0 text-[10px] font-semibold whitespace-nowrap ${
-                        task.isOverdue ? "text-rose-700" : "text-slate-500"
+                      className={`flex-shrink-0 whitespace-nowrap font-mono text-[11px] font-semibold tabular-nums ${
+                        task.isOverdue ? "text-[var(--danger)]" : "text-[var(--text-muted)]"
                       }`}
                     >
                       {task.dueDate
@@ -312,43 +360,56 @@ export function SalesRepDashboard({
 
         {/* Bu hafta hedef */}
         <Card className="p-5">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
             Bu Hafta Hedef
           </p>
           <div className="mt-4 space-y-4">
             <div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600">📞 Görüşme</span>
-                <span className="font-semibold text-slate-900 tabular-nums">
+                <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+                  <PhoneCall size={14} strokeWidth={1.5} />
+                  Görüşme
+                </span>
+                <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                   {kpis.todayCallsLogged} / {weeklyTarget.calls}
                 </span>
               </div>
-              <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-md bg-[var(--surface-3)]">
                 <div
-                  className="h-full bg-blue-500"
-                  style={{ width: `${Math.min(100, Math.round((kpis.todayCallsLogged / weeklyTarget.calls) * 100))}%` }}
+                  className="h-full bg-[var(--info)]"
+                  style={{
+                    width: `${Math.min(100, Math.round((kpis.todayCallsLogged / weeklyTarget.calls) * 100))}%`,
+                  }}
                 />
               </div>
             </div>
             <div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600">📄 Teklif</span>
-                <span className="font-semibold text-slate-900 tabular-nums">
+                <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+                  <FileText size={14} strokeWidth={1.5} />
+                  Teklif
+                </span>
+                <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                   {fmtTry(kpis.todayQuotesAmountTry)}
                 </span>
               </div>
             </div>
             <div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600">🏆 Kazanılan teklif</span>
-                <span className="font-semibold text-slate-900 tabular-nums">
+                <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
+                  <Trophy size={14} strokeWidth={1.5} />
+                  Kazanılan teklif
+                </span>
+                <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                   {kpis.thisWeekDealsWon} / {weeklyTarget.deals}
                 </span>
               </div>
-              <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-md bg-[var(--surface-3)]">
                 <div
-                  className="h-full bg-emerald-500"
-                  style={{ width: `${Math.min(100, Math.round((kpis.thisWeekDealsWon / Math.max(1, weeklyTarget.deals)) * 100))}%` }}
+                  className="h-full bg-[var(--ok)]"
+                  style={{
+                    width: `${Math.min(100, Math.round((kpis.thisWeekDealsWon / Math.max(1, weeklyTarget.deals)) * 100))}%`,
+                  }}
                 />
               </div>
             </div>
@@ -356,11 +417,13 @@ export function SalesRepDashboard({
         </Card>
       </div>
 
-      <Card className="p-4 bg-slate-50">
-        <p className="text-xs text-slate-500">
-          <Clock className="mr-1 inline h-3 w-3 align-text-bottom" />
-          Sıralı arama akıllı sıraya göre: telefonu olan + sıcak fırsat + uyuyan müşteri rotasyonu.
-          Bir müşteri arandığında otomatik sonraki gelir.
+      <Card className="bg-[var(--surface-1)] p-4">
+        <p className="flex items-start gap-2 text-xs text-[var(--text-muted)]">
+          <Clock size={14} strokeWidth={1.5} className="mt-0.5 flex-shrink-0" />
+          <span>
+            Sıralı arama akıllı sıraya göre: telefonu olan + sıcak fırsat + uyuyan müşteri rotasyonu.
+            Bir müşteri arandığında otomatik sonraki gelir.
+          </span>
         </p>
       </Card>
     </div>
