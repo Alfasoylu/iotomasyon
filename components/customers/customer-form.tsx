@@ -54,6 +54,9 @@ interface IndustryOptionGroup {
   children: Array<{ id: string; name: string }>;
 }
 
+const selectCls =
+  "h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)] disabled:opacity-50";
+
 export function CustomerForm({
   mode,
   customerId,
@@ -143,139 +146,138 @@ export function CustomerForm({
     <form onSubmit={submit} className="space-y-6">
       {/* Pre-link notice */}
       {(preselectedProductId || preselectedCategoryId) && (
-        <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        <div className="rounded-md border border-[var(--info-border)] bg-[var(--info-dim)] px-4 py-3 text-[13px] text-[var(--info)]">
           {preselectedProductId
             ? "Müşteri kaydedilince seçili ürün ilgisi otomatik eklenir."
             : "Müşteri kaydedilince seçili kategori ilgisi otomatik eklenir."}
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Müşteri adı *" error={form.formState.errors.name?.message}>
-          <Input {...form.register("name")} />
-        </Field>
-        <Field label="Firma" error={form.formState.errors.company?.message}>
-          <Input {...form.register("company")} />
-        </Field>
-        <Field label="Telefon" error={form.formState.errors.phone?.message}>
-          <Input {...form.register("phone")} />
-        </Field>
-        <Field label="WhatsApp" error={form.formState.errors.whatsapp?.message}>
-          <Input {...form.register("whatsapp")} />
-        </Field>
-        <Field label="E-posta" error={form.formState.errors.email?.message}>
-          <Input type="email" {...form.register("email")} />
-        </Field>
-        <Field label="Vergi no" error={form.formState.errors.taxNumber?.message}>
-          <Input {...form.register("taxNumber")} />
-        </Field>
+      <Section title="Kimlik & İletişim">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Müşteri adı *" error={form.formState.errors.name?.message}>
+            <Input {...form.register("name")} />
+          </Field>
+          <Field label="Firma" error={form.formState.errors.company?.message}>
+            <Input {...form.register("company")} />
+          </Field>
+          <Field label="Telefon" error={form.formState.errors.phone?.message}>
+            <Input {...form.register("phone")} />
+          </Field>
+          <Field label="WhatsApp" error={form.formState.errors.whatsapp?.message}>
+            <Input {...form.register("whatsapp")} />
+          </Field>
+          <Field label="E-posta" error={form.formState.errors.email?.message}>
+            <Input type="email" {...form.register("email")} />
+          </Field>
+          <Field label="Vergi no" error={form.formState.errors.taxNumber?.message}>
+            <Input {...form.register("taxNumber")} className="font-mono" />
+          </Field>
+        </div>
+      </Section>
 
-        {/* City combobox */}
-        <Field label="İl" error={form.formState.errors.city?.message}>
-          <LocationCombobox
-            options={cities}
-            value={selectedCity}
-            onChange={(val) => {
-              form.setValue("city", val, { shouldValidate: true });
-              form.setValue("district", "");
-            }}
-            placeholder="İl seçin veya yazın..."
-          />
-        </Field>
+      <Section title="Konum">
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* City combobox */}
+          <Field label="İl" error={form.formState.errors.city?.message}>
+            <LocationCombobox
+              options={cities}
+              value={selectedCity}
+              onChange={(val) => {
+                form.setValue("city", val, { shouldValidate: true });
+                form.setValue("district", "");
+              }}
+              placeholder="İl seçin veya yazın..."
+            />
+          </Field>
 
-        {/* District combobox — key resets component when city changes */}
-        <Field label="İlçe" error={form.formState.errors.district?.message}>
-          <LocationCombobox
-            key={selectedCity}
-            options={districtOptions}
-            value={selectedDistrict}
-            onChange={(val) =>
-              form.setValue("district", val, { shouldValidate: true })
-            }
-            placeholder={
-              selectedCity ? "İlçe seçin veya yazın..." : "Önce il seçin"
-            }
-            disabled={!selectedCity}
-          />
-        </Field>
+          {/* District combobox — key resets component when city changes */}
+          <Field label="İlçe" error={form.formState.errors.district?.message}>
+            <LocationCombobox
+              key={selectedCity}
+              options={districtOptions}
+              value={selectedDistrict}
+              onChange={(val) =>
+                form.setValue("district", val, { shouldValidate: true })
+              }
+              placeholder={
+                selectedCity ? "İlçe seçin veya yazın..." : "Önce il seçin"
+              }
+              disabled={!selectedCity}
+            />
+          </Field>
+        </div>
 
-        <Field label="Durum" error={form.formState.errors.status?.message}>
-          <select
-            {...form.register("status")}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-          >
-            {CUSTOMER_STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+        <Field label="Adres" error={form.formState.errors.address?.message}>
+          <Textarea {...form.register("address")} className="min-h-24" />
         </Field>
-        <Field label="Müşteri nereden geldi?" error={form.formState.errors.source?.message}>
-          <select
-            {...form.register("source")}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-          >
-            <option value="">— Kaynak seçin —</option>
-            {CUSTOMER_SOURCE_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Müşteri tipi" error={form.formState.errors.customerType?.message}>
-          <select
-            {...form.register("customerType")}
-            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-          >
-            <option value="">— Tip seçin —</option>
-            {CUSTOMER_TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>{CUSTOMER_TYPE_LABELS[t]}</option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Aylık satış potansiyeli (USD)" error={form.formState.errors.monthlySalesPotential?.message}>
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            {...form.register("monthlySalesPotential")}
-          />
-        </Field>
-        {users.length > 0 && (
-          <Field label="Müşteri sahibi" error={form.formState.errors.ownedById?.message}>
-            <select
-              {...form.register("ownedById")}
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
-            >
-              <option value="">— Sahip seçin —</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>{u.name}</option>
+      </Section>
+
+      <Section title="Sınıflandırma">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Durum" error={form.formState.errors.status?.message}>
+            <select {...form.register("status")} className={selectCls}>
+              {CUSTOMER_STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </Field>
-        )}
-      </div>
+          <Field label="Müşteri nereden geldi?" error={form.formState.errors.source?.message}>
+            <select {...form.register("source")} className={selectCls}>
+              <option value="">— Kaynak seçin —</option>
+              {CUSTOMER_SOURCE_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Müşteri tipi" error={form.formState.errors.customerType?.message}>
+            <select {...form.register("customerType")} className={selectCls}>
+              <option value="">— Tip seçin —</option>
+              {CUSTOMER_TYPE_OPTIONS.map((t) => (
+                <option key={t} value={t}>{CUSTOMER_TYPE_LABELS[t]}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Aylık satış potansiyeli (USD)" error={form.formState.errors.monthlySalesPotential?.message}>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              className="font-mono tabular-nums"
+              {...form.register("monthlySalesPotential")}
+            />
+          </Field>
+          {users.length > 0 && (
+            <Field label="Müşteri sahibi" error={form.formState.errors.ownedById?.message}>
+              <select {...form.register("ownedById")} className={selectCls}>
+                <option value="">— Sahip seçin —</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </Field>
+          )}
+        </div>
+      </Section>
 
       {/* Phase 99 — Sektör + Teknoloji + Mevcut Tedarikçi */}
       {industryGroups.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
-          <p className="text-sm font-semibold text-slate-700">Sektör & Teknoloji Profili</p>
+        <Section title="Sektör & Teknoloji Profili">
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Sektör grubu">
               <select
                 value={selectedIndustryGroup?.id ?? ""}
                 onChange={(e) => {
-                  // Grup değişince alt sektörü sıfırla
                   const newGroupId = e.target.value;
                   form.setValue("industryId", "");
-                  // Grup ID'yi hidden state olarak tutmuyoruz — sadece UI cascading için
                   if (!newGroupId) return;
-                  // Otomatik ilk alt sektörü seç (kullanışlı)
                   const grp = industryGroups.find((g) => g.id === newGroupId);
                   if (grp?.children[0]) {
                     form.setValue("industryId", grp.children[0].id, { shouldValidate: true });
                   }
                 }}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+                className={selectCls}
               >
                 <option value="">— Grup seçin —</option>
                 {industryGroups.map((g) => (
@@ -287,7 +289,7 @@ export function CustomerForm({
               <select
                 {...form.register("industryId")}
                 disabled={!selectedIndustryGroup}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400 disabled:opacity-50"
+                className={selectCls}
               >
                 <option value="">{selectedIndustryGroup ? "— Alt sektör —" : "Önce grup seçin"}</option>
                 {selectedIndustryGroup?.children.map((c) => (
@@ -306,10 +308,10 @@ export function CustomerForm({
                     key={opt.value}
                     type="button"
                     onClick={() => toggleUsedTech(opt.value)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                    className={`rounded-md border px-3 py-1.5 text-[12px] font-medium transition ${
                       checked
-                        ? "border-blue-500 bg-blue-500 text-white"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        ? "border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]"
+                        : "border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     {opt.label}
@@ -325,40 +327,41 @@ export function CustomerForm({
               placeholder="örn: Hikvision, Avocon, Dahua..."
             />
           </Field>
-        </div>
+        </Section>
       )}
 
-      <Field label="Adres" error={form.formState.errors.address?.message}>
-        <Textarea {...form.register("address")} className="min-h-24" />
-      </Field>
+      <Section title="Notlar">
+        <Field label="Notlar" error={form.formState.errors.notes?.message}>
+          <Textarea {...form.register("notes")} className="min-h-24" />
+        </Field>
 
-      <Field label="Notlar" error={form.formState.errors.notes?.message}>
-        <Textarea {...form.register("notes")} className="min-h-24" />
-      </Field>
-
-      <Field label="Platform notları" error={form.formState.errors.platformNotes?.message}>
-        <Textarea
-          {...form.register("platformNotes")}
-          className="min-h-24"
-          placeholder="Platform özelinde notlar (ör. Trendyol mağaza linki, özel anlaşmalar...)"
-        />
-      </Field>
+        <Field label="Platform notları" error={form.formState.errors.platformNotes?.message}>
+          <Textarea
+            {...form.register("platformNotes")}
+            className="min-h-24"
+            placeholder="Platform özelinde notlar (ör. Trendyol mağaza linki, özel anlaşmalar...)"
+          />
+        </Field>
+      </Section>
 
       {allAttributes.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-700">İlgi alanları</p>
-          <p className="text-xs text-slate-500">Müşterinin ilgilendiği ürün özelliklerini seçin.</p>
+        <Section title="İlgi alanları">
+          <p className="text-[12px] text-[var(--text-muted)]">
+            Müşterinin ilgilendiği ürün özelliklerini seçin.
+          </p>
           <AttributePicker
             value={selectedAttributeIds}
             onChange={setSelectedAttributeIds}
             options={allAttributes}
           />
-        </div>
+        </Section>
       )}
 
-      {serverMessage ? <p className="text-sm text-red-600">{serverMessage}</p> : null}
+      {serverMessage ? (
+        <p className="text-[13px] text-[var(--danger)]">{serverMessage}</p>
+      ) : null}
 
-      <div className="flex gap-3">
+      <div className="flex gap-2 border-t border-[var(--border-subtle)] pt-5">
         <Button type="submit" disabled={pending}>
           {pending
             ? mode === "create" ? "Kaydediliyor..." : "Güncelleniyor..."
@@ -366,7 +369,7 @@ export function CustomerForm({
         </Button>
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           onClick={() => router.push(mode === "create" ? "/customers" : `/customers/${customerId}`)}
         >
           Vazgeç
@@ -376,20 +379,35 @@ export function CustomerForm({
   );
 }
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-4 border-t border-[var(--border-subtle)] pt-5 first:border-t-0 first:pt-0">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+        {title}
+      </p>
+      <div className="space-y-4">{children}</div>
+    </div>
+  );
+}
+
 function Field({
   label,
   error,
   children,
+  className,
 }: {
   label: string;
   error?: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-700">{label}</label>
+    <div className={`space-y-1.5 ${className ?? ""}`}>
+      <label className="block text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+        {label}
+      </label>
       {children}
-      <p className="text-sm text-red-600">{error}</p>
+      {error ? <p className="text-[12px] text-[var(--danger)]">{error}</p> : null}
     </div>
   );
 }
