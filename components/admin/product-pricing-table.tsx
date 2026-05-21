@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, useMemo } from "react";
+import { Check } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,9 @@ function marginPct(cost: number | null, sell: number | null): number | null {
   return ((sell - cost) / sell) * 100;
 }
 
+const selectClass =
+  "h-9 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-2 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-border)] transition";
+
 export function ProductPricingTable({ products, categories, brands, activeFilters }: Props) {
   const router = useRouter();
 
@@ -66,7 +70,7 @@ export function ProductPricingTable({ products, categories, brands, activeFilter
         <select
           value={activeFilters.filter}
           onChange={(e) => applyFilter({ filter: e.target.value as ActiveFilters["filter"] })}
-          className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs"
+          className={selectClass}
         >
           <option value="all">Tümü</option>
           <option value="empty-both">Her İki USD Fiyatı Boş</option>
@@ -76,7 +80,7 @@ export function ProductPricingTable({ products, categories, brands, activeFilter
         <select
           value={activeFilters.categoryId ?? ""}
           onChange={(e) => applyFilter({ categoryId: e.target.value || null })}
-          className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs"
+          className={selectClass}
         >
           <option value="">Tüm Kategoriler</option>
           {categories.map((c) => (
@@ -88,7 +92,7 @@ export function ProductPricingTable({ products, categories, brands, activeFilter
         <select
           value={activeFilters.brand ?? ""}
           onChange={(e) => applyFilter({ brand: e.target.value || null })}
-          className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs"
+          className={selectClass}
         >
           <option value="">Tüm Markalar</option>
           {brands.map((b) => (
@@ -98,27 +102,27 @@ export function ProductPricingTable({ products, categories, brands, activeFilter
           ))}
         </select>
         <SearchInput initial={activeFilters.q} onChange={(q) => applyFilter({ q })} />
-        <span className="ml-auto text-xs text-slate-500">{products.length} ürün gösteriliyor (max 300)</span>
+        <span className="ml-auto text-xs tabular-nums text-[var(--text-muted)]">{products.length} ürün gösteriliyor (max 300)</span>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-100">
+      <div className="overflow-x-auto rounded-lg border border-[var(--border-default)]">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500">
+          <thead className="bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             <tr>
-              <th className="px-2 py-2 text-left">Ürün</th>
-              <th className="px-2 py-2 text-left">Kategori</th>
-              <th className="px-2 py-2 text-right">Stok</th>
-              <th className="px-2 py-2 text-right">Maliyet $</th>
-              <th className="px-2 py-2 text-right">Bayi USD</th>
-              <th className="px-2 py-2 text-right">Perakende USD</th>
-              <th className="px-2 py-2 text-right">Marj (Per.)</th>
+              <th className="px-3 py-2.5 text-left">Ürün</th>
+              <th className="px-3 py-2.5 text-left">Kategori</th>
+              <th className="px-3 py-2.5 text-right">Stok</th>
+              <th className="px-3 py-2.5 text-right">Maliyet $</th>
+              <th className="px-3 py-2.5 text-right">Bayi USD</th>
+              <th className="px-3 py-2.5 text-right">Perakende USD</th>
+              <th className="px-3 py-2.5 text-right">Marj (Per.)</th>
             </tr>
           </thead>
           <tbody>
             {products.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-sm text-slate-400">
+                <td colSpan={7} className="px-3 py-8 text-center text-sm text-[var(--text-muted)]">
                   Filtre kriterlerine uyan ürün bulunamadı.
                 </td>
               </tr>
@@ -198,44 +202,44 @@ function ProductRow({ product }: { product: Product }) {
   const justSaved = savedAt && Date.now() - savedAt < 1500;
 
   return (
-    <tr className="border-t border-slate-100 hover:bg-slate-50/50">
-      <td className="px-2 py-2 align-top">
+    <tr className="border-t border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
+      <td className="px-3 py-2 align-top">
         <div className="flex items-start gap-2">
           {product.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="h-10 w-10 flex-shrink-0 rounded object-cover ring-1 ring-slate-200"
+              className="h-10 w-10 flex-shrink-0 rounded object-cover ring-1 ring-[var(--border-default)]"
               loading="lazy"
             />
           ) : (
-            <div className="h-10 w-10 flex-shrink-0 rounded bg-slate-100" />
+            <div className="h-10 w-10 flex-shrink-0 rounded bg-[var(--surface-3)]" />
           )}
           <div className="min-w-0">
             <Link
               href={`/products/${product.id}`}
-              className="line-clamp-2 text-xs font-medium text-slate-900 hover:underline"
+              className="line-clamp-2 text-xs font-medium text-[var(--text-primary)] hover:text-[var(--accent)] hover:underline"
             >
               {product.name}
             </Link>
-            <p className="font-mono text-[10px] text-slate-400">{product.sku}</p>
+            <p className="font-mono text-[10px] text-[var(--text-muted)]">{product.sku}</p>
             {product.brand && (
-              <span className="text-[10px] text-slate-500">{product.brand}</span>
+              <span className="text-[10px] text-[var(--text-muted)]">{product.brand}</span>
             )}
           </div>
         </div>
       </td>
-      <td className="px-2 py-2 align-top text-xs text-slate-600">{product.categoryName ?? "—"}</td>
-      <td className="px-2 py-2 align-top text-right text-xs">
-        <span className={product.stockQuantity > 0 ? "text-slate-900" : "text-slate-400"}>
+      <td className="px-3 py-2 align-top text-xs text-[var(--text-secondary)]">{product.categoryName ?? "—"}</td>
+      <td className="px-3 py-2 align-top text-right text-xs tabular-nums font-mono">
+        <span className={product.stockQuantity > 0 ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}>
           {product.stockQuantity}
         </span>
       </td>
-      <td className="px-2 py-2 align-top text-right font-mono text-xs text-slate-500">
+      <td className="px-3 py-2 align-top text-right font-mono text-xs tabular-nums text-[var(--text-muted)]">
         {fmtUsd(product.unitCostUsd)}
       </td>
-      <td className="px-2 py-2 align-top text-right">
+      <td className="px-3 py-2 align-top text-right">
         <Input
           type="number"
           step="0.01"
@@ -245,10 +249,10 @@ function ProductRow({ product }: { product: Product }) {
           onBlur={() => save("wholesale")}
           placeholder="0.00"
           disabled={pending}
-          className="h-8 w-24 text-right text-xs"
+          className="h-8 w-24 text-right text-xs tabular-nums font-mono"
         />
       </td>
-      <td className="px-2 py-2 align-top text-right">
+      <td className="px-3 py-2 align-top text-right">
         <Input
           type="number"
           step="0.01"
@@ -258,16 +262,20 @@ function ProductRow({ product }: { product: Product }) {
           onBlur={() => save("retail")}
           placeholder="0.00"
           disabled={pending}
-          className="h-8 w-24 text-right text-xs"
+          className="h-8 w-24 text-right text-xs tabular-nums font-mono"
         />
-        {error && <p className="mt-1 text-[10px] text-red-600">{error}</p>}
-        {justSaved && <p className="mt-1 text-[10px] text-emerald-600">✓ Kaydedildi</p>}
+        {error && <p className="mt-1 text-[10px] text-[var(--danger)]">{error}</p>}
+        {justSaved && (
+          <p className="mt-1 inline-flex items-center gap-1 text-[10px] text-[var(--ok)]">
+            <Check size={10} strokeWidth={1.5} /> Kaydedildi
+          </p>
+        )}
       </td>
-      <td className="px-2 py-2 align-top text-right text-xs">
+      <td className="px-3 py-2 align-top text-right text-xs">
         {margin == null ? (
-          <span className="text-slate-300">—</span>
+          <span className="text-[var(--text-muted)]">—</span>
         ) : (
-          <Badge tone={margin >= 25 ? "success" : margin >= 10 ? "warning" : "danger"}>
+          <Badge variant={margin >= 25 ? "ok" : margin >= 10 ? "warn" : "danger"}>
             {margin.toFixed(1)}%
           </Badge>
         )}

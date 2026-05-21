@@ -7,11 +7,13 @@
  */
 
 import Link from "next/link";
+import { X } from "lucide-react";
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { OrdersSyncButton } from "@/components/orders/orders-sync-button";
 
@@ -27,26 +29,24 @@ const TAB_LABELS: Record<Tab, string> = {
   unmatched: "Eşleşmemiş",
 };
 
-const STATUS_TONE: Record<string, string> = {
-  "Delivered":         "bg-emerald-100 text-emerald-700",
-  "Teslim Edildi":     "bg-emerald-100 text-emerald-700",
-  "Cancelled":         "bg-red-100 text-red-600",
-  "İptal":             "bg-red-100 text-red-600",
-  "Picking":           "bg-amber-100 text-amber-700",
-  "Created":           "bg-slate-100 text-slate-600",
-  "Accepted":          "bg-emerald-100 text-emerald-700",
-  "WaitingForArrival": "bg-amber-100 text-amber-700",
-  "Refunded":          "bg-blue-100 text-blue-700",
-  "InAnalysis":        "bg-purple-100 text-purple-700",
+type BadgeVariant = "neutral" | "ok" | "warn" | "danger" | "info";
+
+const STATUS_VARIANT: Record<string, BadgeVariant> = {
+  "Delivered":         "ok",
+  "Teslim Edildi":     "ok",
+  "Cancelled":         "danger",
+  "İptal":             "danger",
+  "Picking":           "warn",
+  "Created":           "neutral",
+  "Accepted":          "ok",
+  "WaitingForArrival": "warn",
+  "Refunded":          "info",
+  "InAnalysis":        "info",
 };
 
 function statusBadge(status: string) {
-  const cls = STATUS_TONE[status] ?? "bg-slate-100 text-slate-600";
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${cls}`}>
-      {status}
-    </span>
-  );
+  const variant = STATUS_VARIANT[status] ?? "neutral";
+  return <Badge variant={variant}>{status}</Badge>;
 }
 
 function fmt(d: Date) {
@@ -249,20 +249,20 @@ export default async function OrdersPage({
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Faz 29 — Sipariş Defteri
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Siparişler ve İadeler
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
             Trendyol sipariş ve iade geçmişi — yerel veritabanından, API süresi dolmuş kayıtlar dahil.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link
             href="/admin/marketplace-mappings"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+            className="inline-flex h-9 items-center rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-xs font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition"
           >
             Ürün Eşleştirme →
           </Link>
@@ -272,8 +272,8 @@ export default async function OrdersPage({
       {/* Sync card */}
       <Card className="p-4 flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Senkronizasyon</p>
-          <p className="text-xs text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1">Senkronizasyon</p>
+          <p className="text-xs text-[var(--text-secondary)]">
             Son 365 günün sipariş ve iade kayıtlarını Trendyol&apos;dan çeker. Mevcut kayıtlar güncellenir, yeniler eklenir.
           </p>
         </div>
@@ -288,38 +288,38 @@ export default async function OrdersPage({
           name="q"
           defaultValue={q}
           placeholder="Ürün adı, barkod, SKU veya sipariş no..."
-          className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-400 transition"
+          className="h-9 flex-1 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--accent-border)] transition"
         />
         <button
           type="submit"
-          className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+          className="inline-flex h-9 items-center rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-4 text-sm font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition"
         >
           Ara
         </button>
         {q && (
           <a
             href={`/orders?tab=${tab}`}
-            className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-400 hover:bg-slate-50 transition"
+            className="inline-flex h-9 items-center gap-1 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
           >
-            ✕ Temizle
+            <X size={14} strokeWidth={1.5} /> Temizle
           </a>
         )}
       </form>
 
       {/* Tab bar */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-0">
+      <div className="flex flex-wrap gap-1 border-b border-[var(--border-subtle)] pb-0">
         {(Object.entries(TAB_LABELS) as [Tab, string][]).map(([t, label]) => (
           <Link
             key={t}
             href={tabHref(t)}
-            className={`inline-flex items-center gap-1.5 rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-medium transition ${
+            className={`inline-flex items-center gap-1.5 border-b-2 px-3.5 py-2 text-sm font-medium transition ${
               tab === t
-                ? "border-slate-900 text-slate-900"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+                ? "border-[var(--accent)] text-[var(--text-primary)]"
+                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             {label}
-            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+            <span className="rounded bg-[var(--surface-3)] px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-[var(--text-secondary)]">
               {tabCounts[t].toLocaleString("tr-TR")}
             </span>
           </Link>
@@ -328,8 +328,8 @@ export default async function OrdersPage({
 
       {/* Unmatched hint */}
       {tab === "unmatched" && totalUnmatched > 0 && (
-        <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-          <strong>{totalUnmatched}</strong> sipariş satırı iç ürünle eşleşmedi. Eşleştirmek için{" "}
+        <div className="rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] p-3 text-sm text-[var(--warn)]">
+          <strong className="tabular-nums">{totalUnmatched}</strong> sipariş satırı iç ürünle eşleşmedi. Eşleştirmek için{" "}
           <Link href="/admin/marketplace-mappings" className="font-medium underline">
             Ürün Eşleştirme
           </Link>{" "}
@@ -340,64 +340,64 @@ export default async function OrdersPage({
       {/* Table */}
       <Card className="overflow-hidden">
         {rows.length === 0 ? (
-          <div className="p-10 text-center text-sm text-slate-400">
+          <div className="p-10 text-center text-sm text-[var(--text-muted)]">
             {tab === "returns"
               ? "Henüz iade kaydı yok. Senkronize etmek için yukarıdaki butonu kullanın."
               : "Bu filtre için kayıt bulunamadı."}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-slate-700 border-collapse">
+            <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Tarih</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Sipariş No</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Durum</th>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                  <th className="py-2.5 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tarih</th>
+                  <th className="py-2.5 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Sipariş No</th>
+                  <th className="py-2.5 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                  <th className="py-2.5 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Durum</th>
                   {tab === "returns" && (
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">İade Nedeni</th>
+                    <th className="py-2.5 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İade Nedeni</th>
                   )}
                   {tab !== "returns" && (
-                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Adet</th>
+                    <th className="py-2.5 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Adet</th>
                   )}
-                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Tutar</th>
+                  <th className="py-2.5 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tutar</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr key={row.id} className={`border-b border-slate-50 hover:bg-slate-50/50 ${isCancelled(row.status) ? "opacity-60" : ""}`}>
-                    <td className="py-2.5 px-4 text-xs text-slate-500 whitespace-nowrap">{fmt(row.orderDate)}</td>
-                    <td className="py-2.5 px-4 font-mono text-xs text-slate-600">{row.orderId.slice(0, 16)}</td>
+                  <tr key={row.id} className={`border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)] ${isCancelled(row.status) ? "opacity-60" : ""}`}>
+                    <td className="py-2.5 px-4 text-xs tabular-nums font-mono text-[var(--text-muted)] whitespace-nowrap">{fmt(row.orderDate)}</td>
+                    <td className="py-2.5 px-4 font-mono text-xs tabular-nums text-[var(--text-secondary)]">{row.orderId.slice(0, 16)}</td>
                     <td className="py-2.5 px-4 max-w-[240px]">
                       {row.productId ? (
                         <Link
                           href={`/products/${row.productId}`}
-                          className="font-medium text-slate-800 hover:text-slate-950 underline decoration-dotted line-clamp-1"
+                          className="font-medium text-[var(--text-primary)] hover:text-[var(--accent)] underline decoration-dotted line-clamp-1"
                         >
                           {row.productName}
                         </Link>
                       ) : (
-                        <span className="text-slate-500 line-clamp-1">{row.productName}</span>
+                        <span className="text-[var(--text-secondary)] line-clamp-1">{row.productName}</span>
                       )}
                       {row.productSku && (
-                        <span className="block font-mono text-[10px] text-slate-400">{row.productSku}</span>
+                        <span className="block font-mono text-[10px] text-[var(--text-muted)]">{row.productSku}</span>
                       )}
                       {!row.productId && (
-                        <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 mt-0.5">
-                          Eşleşmemiş
+                        <span className="mt-0.5 inline-block">
+                          <Badge variant="warn">Eşleşmemiş</Badge>
                         </span>
                       )}
                     </td>
                     <td className="py-2.5 px-4">{statusBadge(row.status)}</td>
                     {tab === "returns" && (
-                      <td className="py-2.5 px-4 text-xs text-slate-500 max-w-[160px] truncate">
+                      <td className="py-2.5 px-4 text-xs text-[var(--text-muted)] max-w-[160px] truncate">
                         {row.returnReason ?? "—"}
                       </td>
                     )}
                     {tab !== "returns" && (
-                      <td className="py-2.5 px-4 text-right text-xs tabular-nums">{row.quantity}</td>
+                      <td className="py-2.5 px-4 text-right text-xs tabular-nums font-mono">{row.quantity}</td>
                     )}
-                    <td className="py-2.5 px-4 text-right text-xs tabular-nums text-slate-700">
+                    <td className="py-2.5 px-4 text-right text-xs tabular-nums font-mono text-[var(--text-secondary)]">
                       {fmtPrice(row.totalPriceTry)}
                     </td>
                   </tr>
@@ -409,15 +409,15 @@ export default async function OrdersPage({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3">
-            <p className="text-xs text-slate-400">
+          <div className="flex items-center justify-between border-t border-[var(--border-subtle)] px-4 py-3">
+            <p className="text-xs tabular-nums text-[var(--text-muted)]">
               Toplam {totalCount.toLocaleString("tr-TR")} kayıt · Sayfa {page} / {totalPages}
             </p>
             <div className="flex gap-2">
               {page > 1 && (
                 <Link
                   href={`/orders?tab=${tab}&page=${page - 1}`}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+                  className="rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition"
                 >
                   ← Önceki
                 </Link>
@@ -425,7 +425,7 @@ export default async function OrdersPage({
               {page < totalPages && (
                 <Link
                   href={`/orders?tab=${tab}&page=${page + 1}`}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition"
+                  className="rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition"
                 >
                   Sonraki →
                 </Link>

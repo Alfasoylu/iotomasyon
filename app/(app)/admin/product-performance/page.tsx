@@ -65,9 +65,9 @@ function fmtTry(n: number): string {
 }
 
 function MarginBadge({ pct }: { pct: number | null }) {
-  if (pct === null) return <span className="text-slate-300 text-xs">—</span>;
-  const tone = pct >= 25 ? "success" : pct >= 10 ? "warning" : "danger";
-  return <Badge tone={tone}>{pct.toFixed(1)}%</Badge>;
+  if (pct === null) return <span className="text-[var(--text-muted)] text-xs">—</span>;
+  const variant = pct >= 25 ? "ok" : pct >= 10 ? "warn" : "danger";
+  return <Badge variant={variant}>{pct.toFixed(1)}%</Badge>;
 }
 
 function RankTable({
@@ -84,8 +84,8 @@ function RankTable({
   if (rows.length === 0) {
     return (
       <Card className="p-5">
-        <h3 className="text-sm font-semibold text-slate-700 mb-2">{label}</h3>
-        <p className="text-xs text-slate-400">
+        <h3 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-2">{label}</h3>
+        <p className="text-xs text-[var(--text-muted)]">
           Henüz senkronize edilmiş satış verisi yok.{" "}
           Yukarıdaki &quot;Trendyol Siparişleri Senkronize Et&quot; butonunu kullanın.
         </p>
@@ -95,12 +95,12 @@ function RankTable({
 
   return (
     <Card className="overflow-hidden p-0">
-      <div className="px-5 py-3 border-b border-slate-100">
-        <h3 className="text-sm font-semibold text-slate-700">{label}</h3>
+      <div className="px-5 py-3 border-b border-[var(--border-subtle)]">
+        <h3 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</h3>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-50 text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-[0.2em] text-slate-400 text-left">
+        <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+          <thead className="bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] text-left">
             <tr>
               <th className="w-8 px-3 py-3">#</th>
               <th className="px-4 py-3">Ürün</th>
@@ -109,7 +109,7 @@ function RankTable({
               <th className="px-4 py-3 text-right">Gerçekleşen Marj</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50 bg-white">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {rows.map((r, i) => {
               const value = r[valueKey];
               const avgPrice = r.qtyAll > 0 ? r.revenueAll / r.qtyAll : null;
@@ -117,23 +117,23 @@ function RankTable({
               const isLowStock = r.stockQuantity <= 0;
 
               return (
-                <tr key={r.id} className="hover:bg-slate-50/60 transition">
-                  <td className="px-3 py-2 text-xs text-slate-400 font-mono">{i + 1}</td>
+                <tr key={r.id} className="hover:bg-[var(--surface-3)] transition">
+                  <td className="px-3 py-2.5 text-xs tabular-nums text-[var(--text-muted)] font-mono">{i + 1}</td>
                   <td className="px-4 py-3">
                     <Link href={`/products/${r.id}`} className="group">
-                      <p className="font-medium text-slate-900 group-hover:text-slate-600 leading-tight">
+                      <p className="font-medium text-[var(--text-primary)] group-hover:text-[var(--accent)] leading-tight">
                         {r.name}
                       </p>
-                      <p className="mt-0.5 font-mono text-xs text-slate-400">{r.sku}</p>
+                      <p className="mt-0.5 font-mono text-xs text-[var(--text-muted)]">{r.sku}</p>
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-slate-800">
+                  <td className="px-4 py-3 text-right font-mono text-sm font-semibold tabular-nums text-[var(--text-primary)]">
                     {valueKey === "qty30d"
                       ? `${value} adet`
                       : fmtTry(value as number)}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className={`font-mono text-sm font-semibold ${isLowStock ? "text-red-600" : "text-slate-700"}`}>
+                    <span className={`font-mono text-sm font-semibold tabular-nums ${isLowStock ? "text-[var(--danger)]" : "text-[var(--text-secondary)]"}`}>
                       {r.stockQuantity}
                     </span>
                   </td>
@@ -250,17 +250,17 @@ export default async function ProductPerformancePage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Yönetim / Satış İstihbaratı
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Ürün Performans Sıralaması
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
             Trendyol siparişlerine göre ürün bazlı satış adedi, ciro ve gerçekleşen marj.
           </p>
         </div>
-        <Link href="/admin/executive" className="text-xs text-slate-400 hover:text-slate-700 transition">
+        <Link href="/admin/executive" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
           ← Yönetici Paneli
         </Link>
       </div>
@@ -268,18 +268,18 @@ export default async function ProductPerformancePage() {
       {/* Sync card */}
       <Card className="p-5 space-y-3">
         <div className="flex flex-col gap-1">
-          <h2 className="text-sm font-semibold text-slate-700">Trendyol Satış Senkronizasyonu</h2>
-          <p className="text-xs text-slate-500">
+          <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol Satış Senkronizasyonu</h2>
+          <p className="text-xs text-[var(--text-secondary)]">
             Son 365 günlük siparişleri çeker, barkod / SKU üzerinden ürünlerle eşleştirir.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-6 text-xs text-slate-500">
-          <span>Toplam kayıt: <strong className="text-slate-700">{totalRecords}</strong></span>
-          <span>Eşleşen: <strong className="text-slate-700">{matchedRecords}</strong></span>
+        <div className="flex flex-wrap gap-6 text-xs text-[var(--text-muted)]">
+          <span>Toplam kayıt: <strong className="tabular-nums font-mono text-[var(--text-primary)]">{totalRecords}</strong></span>
+          <span>Eşleşen: <strong className="tabular-nums font-mono text-[var(--text-primary)]">{matchedRecords}</strong></span>
           <span>
             Son senkronizasyon:{" "}
-            <strong className="text-slate-700">
+            <strong className="tabular-nums font-mono text-[var(--text-primary)]">
               {lastRecord
                 ? lastRecord.syncedAt.toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
                 : "—"}
@@ -294,60 +294,60 @@ export default async function ProductPerformancePage() {
       {(highRevenueLoStock.length > 0 || highStockWeakSales.length > 0 || lowMarginHighSales.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {highRevenueLoStock.length > 0 && (
-            <Card className="p-4 border-red-200 bg-red-50">
-              <p className="text-xs font-semibold uppercase tracking-wide text-red-600 mb-1">
+            <Card className="p-4 border-[var(--danger-border)] bg-[var(--danger-dim)]">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--danger)] mb-1">
                 Yüksek Ciro / Sıfır Stok
               </p>
-              <p className="text-2xl font-bold text-red-700">{highRevenueLoStock.length}</p>
-              <p className="text-xs text-red-500 mt-1">Son 30 günde satış yapan ama stoku tükenmiş ürün.</p>
+              <p className="text-xl font-semibold tabular-nums font-mono text-[var(--danger)]">{highRevenueLoStock.length}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Son 30 günde satış yapan ama stoku tükenmiş ürün.</p>
               <div className="mt-2 space-y-0.5">
                 {highRevenueLoStock.slice(0, 3).map((p) => (
-                  <Link key={p.id} href={`/products/${p.id}`} className="block text-xs text-red-700 hover:underline truncate">
+                  <Link key={p.id} href={`/products/${p.id}`} className="block text-xs text-[var(--danger)] hover:underline truncate">
                     {p.name}
                   </Link>
                 ))}
                 {highRevenueLoStock.length > 3 && (
-                  <span className="text-xs text-red-400">+{highRevenueLoStock.length - 3} daha</span>
+                  <span className="text-xs text-[var(--text-muted)]">+{highRevenueLoStock.length - 3} daha</span>
                 )}
               </div>
             </Card>
           )}
 
           {lowMarginHighSales.length > 0 && (
-            <Card className="p-4 border-amber-200 bg-amber-50">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-1">
+            <Card className="p-4 border-[var(--warn-border)] bg-[var(--warn-dim)]">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--warn)] mb-1">
                 Düşük Marj / Yüksek Satış
               </p>
-              <p className="text-2xl font-bold text-amber-700">{lowMarginHighSales.length}</p>
-              <p className="text-xs text-amber-600 mt-1">Son 30 günde ≥5 adet satılan ama marjı %15 altı ürün.</p>
+              <p className="text-xl font-semibold tabular-nums font-mono text-[var(--warn)]">{lowMarginHighSales.length}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Son 30 günde ≥5 adet satılan ama marjı %15 altı ürün.</p>
               <div className="mt-2 space-y-0.5">
                 {lowMarginHighSales.slice(0, 3).map((p) => (
-                  <Link key={p.id} href={`/products/${p.id}`} className="block text-xs text-amber-700 hover:underline truncate">
+                  <Link key={p.id} href={`/products/${p.id}`} className="block text-xs text-[var(--warn)] hover:underline truncate">
                     {p.name}
                   </Link>
                 ))}
                 {lowMarginHighSales.length > 3 && (
-                  <span className="text-xs text-amber-500">+{lowMarginHighSales.length - 3} daha</span>
+                  <span className="text-xs text-[var(--text-muted)]">+{lowMarginHighSales.length - 3} daha</span>
                 )}
               </div>
             </Card>
           )}
 
           {highStockWeakSales.length > 0 && (
-            <Card className="p-4 border-slate-200 bg-slate-50">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+            <Card className="p-4">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-1">
                 Yüksek Stok / Zayıf Satış
               </p>
-              <p className="text-2xl font-bold text-slate-700">{highStockWeakSales.length}</p>
-              <p className="text-xs text-slate-400 mt-1">Stok &gt;10 ama son 30 günde sıfır satış yapan ürün.</p>
+              <p className="text-xl font-semibold tabular-nums font-mono text-[var(--text-primary)]">{highStockWeakSales.length}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Stok &gt;10 ama son 30 günde sıfır satış yapan ürün.</p>
               <div className="mt-2 space-y-0.5">
                 {highStockWeakSales.slice(0, 3).map((p) => (
-                  <Link key={p.id} href={`/products/${p.id}`} className="block text-xs text-slate-600 hover:underline truncate">
+                  <Link key={p.id} href={`/products/${p.id}`} className="block text-xs text-[var(--text-secondary)] hover:underline truncate">
                     {p.name}
                   </Link>
                 ))}
                 {highStockWeakSales.length > 3 && (
-                  <span className="text-xs text-slate-400">+{highStockWeakSales.length - 3} daha</span>
+                  <span className="text-xs text-[var(--text-muted)]">+{highStockWeakSales.length - 3} daha</span>
                 )}
               </div>
             </Card>
@@ -378,10 +378,10 @@ export default async function ProductPerformancePage() {
       </div>
 
       {/* Footer */}
-      <div className="text-xs text-slate-400 flex gap-4 pt-2">
-        <Link href="/products" className="hover:text-slate-600 transition">← Ürünler</Link>
-        <Link href="/admin/executive" className="hover:text-slate-600 transition">Yönetici Paneli →</Link>
-        <Link href="/admin/data-hygiene" className="hover:text-slate-600 transition">Veri Hijyeni →</Link>
+      <div className="text-xs text-[var(--text-muted)] flex gap-4 pt-2">
+        <Link href="/products" className="hover:text-[var(--text-primary)] transition">← Ürünler</Link>
+        <Link href="/admin/executive" className="hover:text-[var(--text-primary)] transition">Yönetici Paneli →</Link>
+        <Link href="/admin/data-hygiene" className="hover:text-[var(--text-primary)] transition">Veri Hijyeni →</Link>
       </div>
     </div>
   );
