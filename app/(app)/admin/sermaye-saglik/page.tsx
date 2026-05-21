@@ -13,8 +13,9 @@
  * Veri kaynağı: Product + TrendyolSalesRecord. Yeni schema yok.
  */
 
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Star, CircleDot, CircleAlert, Circle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -308,24 +309,18 @@ export default async function SermayeSaglikPage() {
   const healthScore = Math.round(roiScore + deadScore + urgentScore + liquidationScore);
 
   const healthTone =
-    healthScore >= 75 ? "emerald" :
-    healthScore >= 55 ? "blue" :
-    healthScore >= 35 ? "amber" : "red";
+    healthScore >= 75 ? "ok" :
+    healthScore >= 55 ? "info" :
+    healthScore >= 35 ? "warn" : "danger";
   const healthLabel =
     healthScore >= 75 ? "Mükemmel" :
     healthScore >= 55 ? "İyi" :
     healthScore >= 35 ? "Dikkat" : "Kritik";
-  const healthBg = {
-    emerald: "border-emerald-300 bg-emerald-50",
-    blue: "border-blue-300 bg-blue-50",
-    amber: "border-amber-300 bg-amber-50",
-    red: "border-red-300 bg-red-50",
-  }[healthTone];
   const healthText = {
-    emerald: "text-emerald-700",
-    blue: "text-blue-700",
-    amber: "text-amber-700",
-    red: "text-red-700",
+    ok:     "text-[var(--ok)]",
+    info:   "text-[var(--info)]",
+    warn:   "text-[var(--warn)]",
+    danger: "text-[var(--danger)]",
   }[healthTone];
 
   // ── Kategori dağılımı ─────────────────────────────────────────────────────
@@ -356,19 +351,19 @@ export default async function SermayeSaglikPage() {
       />
 
       {/* Sermaye Sağlık Skoru — manşet */}
-      <Card className={`${healthBg} p-6`}>
+      <Card className="p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-baseline gap-4">
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-[0.25em] ${healthText}`}>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Sermaye Sağlık Skoru
               </p>
               <div className="mt-1 flex items-baseline gap-3">
-                <span className={`text-6xl font-bold tabular-nums ${healthText}`}>
+                <span className={`text-[64px] leading-none font-semibold tabular-nums ${healthText}`}>
                   {healthScore}
                 </span>
-                <span className="text-sm text-slate-500">/ 100</span>
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${healthText} bg-white/70`}>
+                <span className="text-sm text-[var(--text-muted)]">/ 100</span>
+                <span className={`rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-2.5 py-0.5 text-xs font-medium ${healthText}`}>
                   {healthLabel}
                 </span>
               </div>
@@ -376,26 +371,26 @@ export default async function SermayeSaglikPage() {
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs sm:grid-cols-4">
             <div>
-              <p className="text-slate-500">ROI</p>
-              <p className="font-mono font-semibold text-slate-800">
+              <p className="text-[11px] uppercase tracking-widest font-medium text-[var(--text-muted)]">ROI</p>
+              <p className="mt-1 font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                 {roiScore.toFixed(0)}/50
               </p>
             </div>
             <div>
-              <p className="text-slate-500">Ölü stok</p>
-              <p className="font-mono font-semibold text-slate-800">
+              <p className="text-[11px] uppercase tracking-widest font-medium text-[var(--text-muted)]">Ölü stok</p>
+              <p className="mt-1 font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                 {deadScore.toFixed(0)}/25
               </p>
             </div>
             <div>
-              <p className="text-slate-500">Acil sipariş</p>
-              <p className="font-mono font-semibold text-slate-800">
+              <p className="text-[11px] uppercase tracking-widest font-medium text-[var(--text-muted)]">Acil sipariş</p>
+              <p className="mt-1 font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                 {urgentScore.toFixed(0)}/10
               </p>
             </div>
             <div>
-              <p className="text-slate-500">Likidasyon</p>
-              <p className="font-mono font-semibold text-slate-800">
+              <p className="text-[11px] uppercase tracking-widest font-medium text-[var(--text-muted)]">Likidasyon</p>
+              <p className="mt-1 font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                 {liquidationScore.toFixed(0)}/15
               </p>
             </div>
@@ -405,81 +400,67 @@ export default async function SermayeSaglikPage() {
 
       {/* Üst KPI şeridi */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card className="p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Bağlı Sermaye
-          </p>
-          <p className="mt-2 text-3xl font-bold tabular-nums text-slate-900">
-            {fmtUsd(totalLockedUsd)}
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {enriched.length} aktif ürün
-          </p>
-        </Card>
-        <Card className="p-5 border-emerald-200 bg-emerald-50/40">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            Aylık Beklenen Nakit
-          </p>
-          <p className="mt-2 text-3xl font-bold tabular-nums text-emerald-700">
-            {fmtUsd(monthlyExpectedUsd)}
-          </p>
-          <DeltaBadge delta={monthlyDelta} className="mt-1" />
-        </Card>
-        <Card className="p-5 border-blue-200 bg-blue-50/40">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-            Yıllık ROI Projeksiyonu
-          </p>
-          <p className="mt-2 text-3xl font-bold tabular-nums text-blue-700">
-            {fmtPct(annualRoiPct)}
-          </p>
-          <DeltaBadge delta={roiDelta} className="mt-1" />
-        </Card>
-        <Card className="p-5 border-amber-200 bg-amber-50/40">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
-            Ölü Stok
-          </p>
-          <p className="mt-2 text-3xl font-bold tabular-nums text-amber-700">
-            {fmtUsd(deadStockUsd)}
-          </p>
-          <p className="mt-1 text-xs text-amber-600">
-            {deadStock.length} ürün, hiç satılmamış
-          </p>
-        </Card>
+        <MetricTile
+          label="Bağlı Sermaye"
+          value={fmtUsd(totalLockedUsd)}
+          sub={`${enriched.length} aktif ürün`}
+        />
+        <MetricTile
+          label="Aylık Beklenen Nakit"
+          value={fmtUsd(monthlyExpectedUsd)}
+          valueColor="text-[var(--ok)]"
+          subSlot={<DeltaBadge delta={monthlyDelta} className="mt-1" />}
+        />
+        <MetricTile
+          label="Yıllık ROI Projeksiyonu"
+          value={fmtPct(annualRoiPct)}
+          valueColor="text-[var(--info)]"
+          subSlot={<DeltaBadge delta={roiDelta} className="mt-1" />}
+        />
+        <MetricTile
+          label="Ölü Stok"
+          value={fmtUsd(deadStockUsd)}
+          valueColor="text-[var(--warn)]"
+          sub={`${deadStock.length} ürün, hiç satılmamış`}
+        />
       </div>
 
       {/* Kategori dağılımı */}
       <Card className="overflow-hidden p-0">
-        <div className="border-b border-slate-100 px-6 py-4">
-          <h2 className="text-base font-semibold text-slate-950">
+        <div className="border-b border-[var(--border-default)] px-6 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+            Kategori Dağılımı
+          </p>
+          <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)]">
             Kategori bazlı bağlı sermaye dağılımı
           </h2>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             Top 10 kategori — toplam: {fmtUsd(totalLockedUsd)}
           </p>
         </div>
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-[var(--border-subtle)]">
           {topCats.map((c) => {
             const pct = totalLockedUsd > 0 ? (c.lockedUsd / totalLockedUsd) * 100 : 0;
             return (
-              <div key={c.name} className="grid grid-cols-12 items-center gap-3 px-6 py-3">
-                <div className="col-span-3 text-sm font-medium text-slate-700 truncate" title={c.name}>
+              <div key={c.name} className="grid grid-cols-12 items-center gap-3 px-6 py-3 hover:bg-[var(--surface-3)] transition">
+                <div className="col-span-3 text-sm font-medium text-[var(--text-primary)] truncate" title={c.name}>
                   {c.name}
                 </div>
                 <div className="col-span-5">
-                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-2 rounded-md bg-[var(--surface-3)] overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-slate-700"
+                      className="h-full rounded-md bg-[var(--accent)]"
                       style={{ width: `${Math.min(100, pct).toFixed(1)}%` }}
                     />
                   </div>
                 </div>
-                <div className="col-span-1 text-right text-xs font-mono text-slate-500 tabular-nums">
+                <div className="col-span-1 text-right text-xs font-mono text-[var(--text-muted)] tabular-nums">
                   {fmtPct(pct, 1)}
                 </div>
-                <div className="col-span-2 text-right text-sm font-mono font-semibold text-slate-900 tabular-nums">
+                <div className="col-span-2 text-right text-sm font-mono font-semibold text-[var(--text-primary)] tabular-nums">
                   {fmtUsd(c.lockedUsd)}
                 </div>
-                <div className="col-span-1 text-right text-xs text-slate-400">
+                <div className="col-span-1 text-right text-xs text-[var(--text-muted)]">
                   {c.productCount} ürün
                 </div>
               </div>
@@ -491,7 +472,7 @@ export default async function SermayeSaglikPage() {
       {/* 4 aksiyon listesi: 2x2 grid */}
       <div className="grid gap-4 lg:grid-cols-2">
         <ActionList
-          title="⭐ Yıldız Ürünler"
+          title="Yıldız Ürünler"
           subtitle="En çok aylık kâr getiren 10 ürün — sipariş artırın"
           color="emerald"
           csv={{
@@ -525,7 +506,7 @@ export default async function SermayeSaglikPage() {
         />
 
         <ActionList
-          title="🟡 Ölü Stok"
+          title="Ölü Stok"
           subtitle="Hiç satılmamış + bağlı sermayesi yüksek 10 ürün — tasfiye / indirim"
           color="amber"
           csv={{
@@ -558,11 +539,11 @@ export default async function SermayeSaglikPage() {
             value: fmtUsd(p.totalCostUsd ?? 0, 0),
             meta: `stok ${p.stockQuantity} · lifetime 0`,
           }))}
-          emptyMsg="Ölü stok yok ✓"
+          emptyMsg="Ölü stok yok"
         />
 
         <ActionList
-          title="🔴 Acil Sipariş"
+          title="Acil Sipariş"
           subtitle="14 günden az stoku kalan ürünler — hemen sipariş ver"
           color="red"
           csv={{
@@ -597,11 +578,11 @@ export default async function SermayeSaglikPage() {
             value: `${p.stockDays}g`,
             meta: `stok ${p.stockQuantity} · aylık ${p.effectiveMonthlyUnits}`,
           }))}
-          emptyMsg="Acil sipariş yok ✓"
+          emptyMsg="Acil sipariş yok"
         />
 
         <ActionList
-          title="🟠 Likidasyon Adayı"
+          title="Likidasyon Adayı"
           subtitle="Daha önce satılmış ama son 30 gündür hiç hareket yok"
           color="orange"
           csv={{
@@ -634,16 +615,44 @@ export default async function SermayeSaglikPage() {
             value: fmtUsd(p.totalCostUsd ?? 0, 0),
             meta: `stok ${p.stockQuantity} · lifetime ${p.lifetimeSold}`,
           }))}
-          emptyMsg="Likidasyon adayı yok ✓"
+          emptyMsg="Likidasyon adayı yok"
         />
       </div>
 
-      <p className="text-xs text-slate-400 text-center">
+      <p className="text-xs text-[var(--text-muted)] text-center">
         Kur: 1 USD = ₺{usdTryRate.toFixed(2)} · 1 USD = {rmbUsdRate.toFixed(2)} RMB ·
         Kâr hesabı: <code>lib/pricing-engine.ts</code> kanonik formülü (Trendyol kargo dilim + komisyon, KDV dahil) ·
         Karşılaştırma: son 30g vs önceki 30g.
       </p>
     </div>
+  );
+}
+
+// ── Metric tile (KPI) ──────────────────────────────────────────────────────
+
+function MetricTile({
+  label,
+  value,
+  sub,
+  subSlot,
+  valueColor = "text-[var(--text-primary)]",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  subSlot?: ReactNode;
+  valueColor?: string;
+}) {
+  return (
+    <Card className="p-5">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+        {label}
+      </p>
+      <p className={`mt-2 text-[28px] leading-tight font-semibold tabular-nums ${valueColor}`}>
+        {value}
+      </p>
+      {subSlot ?? (sub && <p className="mt-1 text-xs text-[var(--text-muted)]">{sub}</p>)}
+    </Card>
   );
 }
 
@@ -657,13 +666,13 @@ function DeltaBadge({
   className?: string;
 }) {
   const toneClass = {
-    up: "text-emerald-600",
-    down: "text-rose-600",
-    flat: "text-slate-400",
+    up: "text-[var(--ok)]",
+    down: "text-[var(--danger)]",
+    flat: "text-[var(--text-muted)]",
   }[delta.tone];
   const arrow = delta.tone === "up" ? "▲" : delta.tone === "down" ? "▼" : "·";
   return (
-    <p className={`text-xs font-medium ${toneClass} ${className ?? ""}`}>
+    <p className={`text-xs font-medium tabular-nums ${toneClass} ${className ?? ""}`}>
       {arrow} {delta.text}
     </p>
   );
@@ -701,27 +710,30 @@ function ActionList({
   csv: CsvSpec;
   emptyMsg: string;
 }) {
-  const colorClasses = {
-    emerald: "border-emerald-200 bg-emerald-50/30",
-    amber: "border-amber-200 bg-amber-50/30",
-    red: "border-red-200 bg-red-50/30",
-    orange: "border-orange-200 bg-orange-50/30",
-  }[color];
   const headerColors = {
-    emerald: "text-emerald-800",
-    amber: "text-amber-800",
-    red: "text-red-800",
-    orange: "text-orange-800",
+    emerald: "text-[var(--ok)]",
+    amber: "text-[var(--warn)]",
+    red: "text-[var(--danger)]",
+    orange: "text-[var(--warn)]",
+  }[color];
+  const HeaderIcon = {
+    emerald: Star,
+    amber: CircleDot,
+    red: CircleAlert,
+    orange: Circle,
   }[color];
 
   return (
-    <Card className={`overflow-hidden p-0 ${colorClasses}`}>
-      <div className="flex items-start justify-between gap-3 border-b border-white/60 bg-white/60 px-5 py-3">
+    <Card className="overflow-hidden p-0">
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--surface-1)] px-5 py-3">
         <div className="min-w-0 flex-1">
-          <h3 className={`text-sm font-bold ${headerColors}`}>{title}</h3>
-          <p className="text-xs text-slate-600 mt-0.5">{subtitle}</p>
+          <h3 className={`inline-flex items-center gap-1.5 text-sm font-semibold ${headerColors}`}>
+            <HeaderIcon size={14} strokeWidth={1.5} />
+            {title}
+          </h3>
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">{subtitle}</p>
           {csv.rows.length > rows.length && (
-            <p className="text-[10px] text-slate-400 mt-0.5">
+            <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
               Görüntüde ilk {rows.length} satır · CSV'de {csv.rows.length} satır
             </p>
           )}
@@ -732,30 +744,30 @@ function ActionList({
           rows={csv.rows}
         />
       </div>
-      <div className="divide-y divide-white/60 bg-white/50">
+      <div className="divide-y divide-[var(--border-subtle)]">
         {rows.length === 0 ? (
-          <p className="px-5 py-8 text-center text-xs text-slate-400">{emptyMsg}</p>
+          <p className="px-5 py-8 text-center text-xs text-[var(--text-muted)]">{emptyMsg}</p>
         ) : (
           rows.map((r) => (
             <Link
               key={r.id}
               href={`/products/${r.id}`}
-              className="block px-5 py-2.5 hover:bg-white transition"
+              className="block px-5 py-2.5 hover:bg-[var(--surface-3)] transition"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-900" title={r.primary}>
+                  <p className="truncate text-sm font-medium text-[var(--text-primary)]" title={r.primary}>
                     {r.primary}
                   </p>
-                  <p className="text-[10px] text-slate-400 truncate">{r.secondary}</p>
+                  <p className="text-[10px] text-[var(--text-muted)] truncate font-mono">{r.secondary}</p>
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <p className="text-sm font-semibold tabular-nums text-slate-900">{r.value}</p>
-                  <p className="text-[9px] text-slate-400">{r.valueLabel}</p>
+                  <p className={`text-sm font-semibold tabular-nums font-mono ${headerColors}`}>{r.value}</p>
+                  <p className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">{r.valueLabel}</p>
                 </div>
               </div>
               {r.meta && (
-                <p className="mt-1 text-[10px] text-slate-400">{r.meta}</p>
+                <p className="mt-1 text-[10px] text-[var(--text-muted)] tabular-nums">{r.meta}</p>
               )}
             </Link>
           ))

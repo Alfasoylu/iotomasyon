@@ -256,18 +256,15 @@ export function Sidebar({ items }: SidebarProps) {
         {/* Brand */}
         <div className="flex-shrink-0 border-b border-[var(--border-default)] px-4 py-4">
           <div className="flex items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/Soylu logo şeffaf.png"
-              alt="Alfa Soylu Elektronik"
-              className="h-9 w-9 object-contain"
-            />
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-[var(--accent)] text-[var(--accent-fg)] font-bold text-[15px]">
+              AS
+            </div>
             <div className="min-w-0">
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-muted)] leading-tight">
                 Alfa Soylu
               </p>
               <h1 className="text-[13px] font-semibold text-[var(--text-primary)] leading-tight">
-                İotomasyon CRM
+                İotomasyon
               </h1>
             </div>
           </div>

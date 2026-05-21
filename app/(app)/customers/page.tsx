@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, FileSpreadsheet } from "lucide-react";
+import { Users, FileSpreadsheet, User as UserIcon, Phone, FileText, Clock, Zap, CircleAlert, CircleDot, Circle } from "lucide-react";
 
 import { CustomerImportForm } from "@/components/customers/customer-import-form";
 import { PageHeader } from "@/components/layout/page-header";
@@ -131,7 +131,7 @@ export default async function CustomersPage({
             <KeyboardNav />
             <SavedViewSelector views={savedViews} currentUserId={user.id} resource="customers" />
             <Link href="/customers/new">
-              <Button>Yeni müşteri</Button>
+              <Button size="sm">Yeni müşteri</Button>
             </Link>
           </>
         }
@@ -154,19 +154,23 @@ export default async function CustomersPage({
 
       {/* Quick KPI şeridi */}
       {databaseAvailable && (
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
-          <span>
-            🧑 <strong className="text-slate-900">{cohortCounts.totalActive.toLocaleString("tr-TR")}</strong> aktif portföy
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-2.5 text-[12px] text-[var(--text-secondary)]">
+          <span className="inline-flex items-center gap-1.5">
+            <UserIcon size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+            <strong className="text-[var(--text-primary)] font-semibold">{cohortCounts.totalActive.toLocaleString("tr-TR")}</strong> aktif portföy
           </span>
-          <span>
-            📞 <strong className="text-slate-900">{cohortCounts.weeklyContacted.toLocaleString("tr-TR")}</strong> bu hafta arandı
+          <span className="inline-flex items-center gap-1.5">
+            <Phone size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+            <strong className="text-[var(--text-primary)] font-semibold">{cohortCounts.weeklyContacted.toLocaleString("tr-TR")}</strong> bu hafta arandı
           </span>
-          <span>
-            📄 <strong className="text-slate-900">{fmtTry(cohortCounts.openQuoteAmount)}</strong> açık teklif
+          <span className="inline-flex items-center gap-1.5">
+            <FileText size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+            <strong className="text-[var(--text-primary)] font-semibold">{fmtTry(cohortCounts.openQuoteAmount)}</strong> açık teklif
           </span>
           {cohortCounts.overdueTaskCount > 0 && (
-            <span className="text-rose-600">
-              ⏰ <strong>{cohortCounts.overdueTaskCount}</strong> vadesi geçmiş görev
+            <span className="inline-flex items-center gap-1.5 text-[var(--danger)]">
+              <Clock size={14} strokeWidth={1.5} />
+              <strong className="font-semibold">{cohortCounts.overdueTaskCount}</strong> vadesi geçmiş görev
             </span>
           )}
         </div>
@@ -200,7 +204,7 @@ export default async function CustomersPage({
           İleride istenirse SavedView / ayrı /customers/kanban sayfasına taşınabilir. */}
 
       {!databaseAvailable && (
-        <Card className="border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-900">
+        <Card className="p-5 text-[13px] leading-6 text-[var(--warn)] border-[var(--warn-border)] bg-[var(--warn-dim)]">
           Veritabanı bağlantısı şu anda kullanılamıyor. Müşteri listesi gösterilemiyor.
         </Card>
       )}
@@ -208,19 +212,40 @@ export default async function CustomersPage({
       {/* Yeni müşteri listesi — info-dense kartlar */}
       {databaseAvailable && (
         <section>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">
-            {cohort === "queue" ? "⚡ Sıralı Arama Listesi — En Yüksek Öncelikten" :
-             cohort === "todayCall" ? "🔴 Bugün Aranacaklar" :
-             cohort === "dormant" ? "🟡 Uyuyan Müşteriler" :
-             cohort === "new" ? "🟢 Yeni Fırsatlar" :
-             cohort === "openQuotes" ? "🔵 Açık Teklifler" :
-             "Müşteri Listesi"}
-            {" "}
-            <span className="text-slate-400 font-normal">({filteredCustomers.length})</span>
+          <p className="mb-3 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+            {cohort === "queue" ? (
+              <>
+                <Zap size={14} strokeWidth={1.5} className="text-[var(--accent)]" />
+                <span>Sıralı Arama Listesi — En Yüksek Öncelikten</span>
+              </>
+            ) : cohort === "todayCall" ? (
+              <>
+                <CircleAlert size={14} strokeWidth={1.5} className="text-[var(--danger)]" />
+                <span>Bugün Aranacaklar</span>
+              </>
+            ) : cohort === "dormant" ? (
+              <>
+                <CircleDot size={14} strokeWidth={1.5} className="text-[var(--warn)]" />
+                <span>Uyuyan Müşteriler</span>
+              </>
+            ) : cohort === "new" ? (
+              <>
+                <Circle size={14} strokeWidth={1.5} className="text-[var(--ok)]" />
+                <span>Yeni Fırsatlar</span>
+              </>
+            ) : cohort === "openQuotes" ? (
+              <>
+                <CircleDot size={14} strokeWidth={1.5} className="text-[var(--info)]" />
+                <span>Açık Teklifler</span>
+              </>
+            ) : (
+              <span>Müşteri Listesi</span>
+            )}
+            <span className="text-[var(--text-muted)] font-normal normal-case tracking-normal">({filteredCustomers.length})</span>
           </p>
           {cohort === "queue" && (
-            <p className="mb-3 text-[11px] text-slate-500 leading-relaxed">
-              Akıllı sıralama: <strong>Lead skoru × Bilgi tamlığı × Anti-monotony</strong>.
+            <p className="mb-3 text-[11px] text-[var(--text-muted)] leading-relaxed">
+              Akıllı sıralama: <strong className="text-[var(--text-secondary)]">Lead skoru × Bilgi tamlığı × Anti-monotony</strong>.
               Telefonu olan + satışı geçmiş + bu hafta az gösterilmiş müşteri öncelikli.
               Aynı müşteri tekrar tekrar çıkmaz (shownInQueueCount ile soğutma).
             </p>
@@ -233,7 +258,7 @@ export default async function CustomersPage({
               hint="Filtreleri temizleyebilir veya yeni müşteri ekleyebilirsin."
               action={
                 <Link href="/customers/new">
-                  <Button>Yeni müşteri ekle</Button>
+                  <Button size="sm">Yeni müşteri ekle</Button>
                 </Link>
               }
             />
@@ -255,15 +280,15 @@ export default async function CustomersPage({
       )}
 
       {/* CSV import — sayfa altında collapsible */}
-      <details className="rounded-2xl border border-slate-200 bg-white">
-        <summary className="cursor-pointer list-none px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+      <details className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
+        <summary className="cursor-pointer list-none px-5 py-3 text-[13px] font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)] transition-colors">
           <span className="inline-flex items-center gap-2">
-            <FileSpreadsheet className="h-4 w-4 text-slate-400" />
+            <FileSpreadsheet size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
             CSV ile toplu müşteri içe aktar
           </span>
         </summary>
-        <div className="border-t border-slate-100 px-5 py-4">
-          <p className="text-xs text-slate-500 mb-3">
+        <div className="border-t border-[var(--border-subtle)] px-5 py-4">
+          <p className="text-[12px] text-[var(--text-muted)] mb-3">
             Kolon adları: name, company, phone, whatsapp, email, taxNumber, address, city, country, notes, status
           </p>
           <CustomerImportForm />

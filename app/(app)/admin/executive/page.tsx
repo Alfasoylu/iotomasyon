@@ -50,49 +50,29 @@ function KpiCard({
   sub?: string;
   tone?: "neutral" | "green" | "amber" | "red" | "dark";
 }) {
-  const bg =
-    tone === "dark"
-      ? "border-slate-900 bg-slate-900"
-      : tone === "green"
-        ? "border-emerald-200 bg-emerald-50"
-        : tone === "amber"
-          ? "border-amber-200 bg-amber-50"
-          : tone === "red"
-            ? "border-red-200 bg-red-50"
-            : "border-slate-200 bg-white";
-  const labelColor =
-    tone === "dark"
-      ? "text-slate-400"
-      : tone === "green"
-        ? "text-emerald-700"
-        : tone === "amber"
-          ? "text-amber-700"
-          : tone === "red"
-            ? "text-red-700"
-            : "text-slate-500";
   const valueColor =
-    tone === "dark"
-      ? "text-white"
-      : tone === "green"
-        ? "text-emerald-900"
-        : tone === "amber"
-          ? "text-amber-900"
-          : tone === "red"
-            ? "text-red-900"
-            : "text-slate-900";
+    tone === "green"
+      ? "text-[var(--ok)]"
+      : tone === "amber"
+        ? "text-[var(--warn)]"
+        : tone === "red"
+          ? "text-[var(--danger)]"
+          : "text-[var(--text-primary)]";
 
   return (
-    <div className={`rounded-2xl border p-4 ${bg}`}>
-      <p className={`text-xs font-semibold uppercase tracking-widest ${labelColor}`}>
+    <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-4">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
         {label}
       </p>
-      <p className={`mt-2 text-xl font-bold tabular-nums ${valueColor}`}>{value}</p>
-      {sub && <p className={`mt-0.5 text-xs ${labelColor}`}>{sub}</p>}
+      <p className={`mt-2 text-[28px] font-semibold tabular-nums leading-tight ${valueColor}`}>
+        {value}
+      </p>
+      {sub && <p className="mt-1 text-xs text-[var(--text-muted)]">{sub}</p>}
     </div>
   );
 }
 
-// ─── Urgency Badge ─────────────────────────────────────────────────────────────
+// ─── Urgency Pill ─────────────────────────────────────────────────────────────
 
 function UrgencyPill({
   label,
@@ -103,18 +83,20 @@ function UrgencyPill({
   count: number;
   tone: "red" | "orange" | "amber" | "blue" | "green" | "slate";
 }) {
-  const colors: Record<string, string> = {
-    red: "bg-red-100 text-red-800 border border-red-200",
-    orange: "bg-orange-100 text-orange-800 border border-orange-200",
-    amber: "bg-amber-100 text-amber-800 border border-amber-200",
-    blue: "bg-blue-100 text-blue-800 border border-blue-200",
-    green: "bg-emerald-100 text-emerald-800 border border-emerald-200",
-    slate: "bg-slate-100 text-slate-600 border border-slate-200",
+  const valueColor: Record<string, string> = {
+    red: "text-[var(--danger)]",
+    orange: "text-[var(--warn)]",
+    amber: "text-[var(--warn)]",
+    blue: "text-[var(--info)]",
+    green: "text-[var(--ok)]",
+    slate: "text-[var(--text-secondary)]",
   };
   return (
-    <div className={`flex items-center justify-between rounded-lg px-4 py-3 ${colors[tone]}`}>
-      <span className="text-sm font-semibold">{label}</span>
-      <span className="text-lg font-bold tabular-nums">{count}</span>
+    <div className="flex items-center justify-between rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+      <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+        {label}
+      </span>
+      <span className={`text-lg font-semibold tabular-nums ${valueColor[tone]}`}>{count}</span>
     </div>
   );
 }
@@ -374,18 +356,18 @@ export default async function ExecutivePage() {
 
       {/* ── Section 3: Trendyol 90-day Revenue ── */}
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-default)] px-6 py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Trendyol / Son 90 Gün
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">
+            <h2 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">
               Gerçekleşen Satış Özeti
             </h2>
           </div>
           <Link
             href="/marketplace/realized-margin"
-            className="text-sm font-medium text-slate-500 hover:text-slate-900"
+            className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             Gerçekleşen Marj →
           </Link>
@@ -413,28 +395,28 @@ export default async function ExecutivePage() {
         </div>
 
         {top5Revenue90d.length > 0 && (
-          <div className="border-t border-slate-100">
-            <p className="px-6 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+          <div className="border-t border-[var(--border-default)]">
+            <p className="px-6 py-3 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               En Yüksek Ciro — Top 5 (90G)
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                  <tr className="border-b border-[var(--border-default)] bg-[var(--surface-1)] text-[11px] uppercase tracking-wider font-medium text-[var(--text-muted)]">
                     <th className="px-6 py-3 text-left">Ürün</th>
                     <th className="px-4 py-3 text-right">Ciro (90G)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[var(--border-subtle)]">
                   {top5Revenue90d.map((p, i) => (
-                    <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+                    <tr key={i} className="hover:bg-[var(--surface-3)] transition">
                       <td className="px-6 py-3">
-                        <p className="font-medium text-slate-900">{p.name}</p>
+                        <p className="font-medium text-[var(--text-primary)]">{p.name}</p>
                         {p.sku && (
-                          <p className="font-mono text-xs text-slate-400">{p.sku}</p>
+                          <p className="font-mono text-xs text-[var(--text-muted)]">{p.sku}</p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-emerald-700">
+                      <td className="px-4 py-3 text-right tabular-nums font-mono font-semibold text-[var(--ok)]">
                         {fmt(p.revenue)}
                       </td>
                     </tr>
@@ -446,7 +428,7 @@ export default async function ExecutivePage() {
         )}
 
         {top5Revenue90d.length === 0 && (
-          <div className="border-t border-slate-100 px-6 py-6 text-center text-sm text-slate-400">
+          <div className="border-t border-[var(--border-default)] px-6 py-6 text-center text-sm text-[var(--text-muted)]">
             90 günlük Trendyol satış verisi bulunamadı. Ürün Performansı sayfasından senkronize edin.
           </div>
         )}
@@ -456,21 +438,25 @@ export default async function ExecutivePage() {
       <Card className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Tedarik Aciliyeti
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">Stok Uyarıları</h2>
+            <h2 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">Stok Uyarıları</h2>
           </div>
           <div className="flex items-center gap-3">
             {urgentCount > 0 && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-right">
-                <p className="text-xs text-red-700">Tahmini acil alım maliyeti</p>
-                <p className="text-base font-bold text-red-900">{fmt(totalReorderCost)}</p>
+              <div className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-4 py-2 text-right">
+                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+                  Tahmini acil alım maliyeti
+                </p>
+                <p className="text-base font-semibold tabular-nums text-[var(--danger)]">
+                  {fmt(totalReorderCost)}
+                </p>
               </div>
             )}
             <Link
               href="/admin/procurement"
-              className="text-sm font-medium text-slate-500 hover:text-slate-900"
+              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             >
               Tedarik Asistanı →
             </Link>
@@ -488,12 +474,12 @@ export default async function ExecutivePage() {
 
       {/* ── Section 5: Profitability Top 5 ── */}
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border-default)] px-6 py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Kârlılık
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">
+            <h2 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">
               En Kârlı 5 Ürün (Pazar Yeri)
             </h2>
           </div>
@@ -505,7 +491,7 @@ export default async function ExecutivePage() {
             )}
             <Link
               href="/marketplace/profit"
-              className="text-sm font-medium text-slate-500 hover:text-slate-900"
+              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             >
               Pazar Kârlılığı →
             </Link>
@@ -516,45 +502,45 @@ export default async function ExecutivePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-widest text-slate-500">
+                <tr className="border-b border-[var(--border-default)] bg-[var(--surface-1)] text-[11px] uppercase tracking-wider font-medium text-[var(--text-muted)]">
                   <th className="px-6 py-3 text-left">Ürün</th>
                   <th className="px-4 py-3 text-right">Pazar Yeri Marjı</th>
                   <th className="px-4 py-3 text-right">Perakende Marjı</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {top5Marketplace.map((p, i) => {
+              <tbody className="divide-y divide-[var(--border-subtle)]">
+                {top5Marketplace.map((p) => {
                   const mpColor =
                     p.marketplaceMargin == null
-                      ? "text-slate-400"
+                      ? "text-[var(--text-muted)]"
                       : p.marketplaceMargin >= 25
-                        ? "text-emerald-700 font-semibold"
+                        ? "text-[var(--ok)] font-semibold"
                         : p.marketplaceMargin >= 10
-                          ? "text-amber-700 font-semibold"
-                          : "text-red-700 font-semibold";
+                          ? "text-[var(--warn)] font-semibold"
+                          : "text-[var(--danger)] font-semibold";
                   const rtColor =
                     p.retailMargin == null
-                      ? "text-slate-400"
+                      ? "text-[var(--text-muted)]"
                       : p.retailMargin >= 25
-                        ? "text-emerald-700 font-semibold"
+                        ? "text-[var(--ok)] font-semibold"
                         : p.retailMargin >= 10
-                          ? "text-amber-700 font-semibold"
-                          : "text-red-700 font-semibold";
+                          ? "text-[var(--warn)] font-semibold"
+                          : "text-[var(--danger)] font-semibold";
                   return (
                     <tr
                       key={p.id}
-                      className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}
+                      className="hover:bg-[var(--surface-3)] transition"
                     >
                       <td className="px-6 py-3">
-                        <p className="font-medium text-slate-900">{p.name}</p>
+                        <p className="font-medium text-[var(--text-primary)]">{p.name}</p>
                         {p.sku && (
-                          <p className="font-mono text-xs text-slate-400">{p.sku}</p>
+                          <p className="font-mono text-xs text-[var(--text-muted)]">{p.sku}</p>
                         )}
                       </td>
-                      <td className={`px-4 py-3 text-right tabular-nums ${mpColor}`}>
+                      <td className={`px-4 py-3 text-right tabular-nums font-mono ${mpColor}`}>
                         {p.marketplaceMargin != null ? fmtPct(p.marketplaceMargin) : "—"}
                       </td>
-                      <td className={`px-4 py-3 text-right tabular-nums ${rtColor}`}>
+                      <td className={`px-4 py-3 text-right tabular-nums font-mono ${rtColor}`}>
                         {p.retailMargin != null ? fmtPct(p.retailMargin) : "—"}
                       </td>
                     </tr>
@@ -564,30 +550,30 @@ export default async function ExecutivePage() {
             </table>
           </div>
         ) : (
-          <div className="px-6 py-8 text-center text-sm text-slate-400">
+          <div className="px-6 py-8 text-center text-sm text-[var(--text-muted)]">
             Kârlılık verisi hesaplamak için ürünlere fiyat ve maliyet bilgisi girilmesi gerekir.
           </div>
         )}
       </Card>
 
       {/* ── Footer links ── */}
-      <div className="flex flex-wrap gap-4 text-xs text-slate-400">
-        <Link href="/admin/capital" className="hover:text-slate-700">
+      <div className="flex flex-wrap gap-4 text-xs text-[var(--text-muted)]">
+        <Link href="/admin/capital" className="hover:text-[var(--text-primary)]">
           Sermaye Dağılımı →
         </Link>
-        <Link href="/admin/procurement" className="hover:text-slate-700">
+        <Link href="/admin/procurement" className="hover:text-[var(--text-primary)]">
           Tedarik Asistanı →
         </Link>
-        <Link href="/admin/import-calculator" className="hover:text-slate-700">
+        <Link href="/admin/import-calculator" className="hover:text-[var(--text-primary)]">
           İthalat Hesaplayıcısı →
         </Link>
-        <Link href="/marketplace/profit" className="hover:text-slate-700">
+        <Link href="/marketplace/profit" className="hover:text-[var(--text-primary)]">
           Pazar Kârlılığı →
         </Link>
-        <Link href="/marketplace/realized-margin" className="hover:text-slate-700">
+        <Link href="/marketplace/realized-margin" className="hover:text-[var(--text-primary)]">
           Gerçekleşen Marj →
         </Link>
-        <Link href="/admin/exchange-rates" className="hover:text-slate-700">
+        <Link href="/admin/exchange-rates" className="hover:text-[var(--text-primary)]">
           Döviz Kurları →
         </Link>
       </div>

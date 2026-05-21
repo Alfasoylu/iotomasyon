@@ -8,9 +8,15 @@ import { StatCard, LinkedStatCard } from "./shared/stat-card";
 import type { OperationsDashboardData } from "@/services/dashboard-service";
 
 const PRIORITY_LABELS: Record<string, string> = {
-  HIGH: "🔴 Yüksek",
-  MEDIUM: "🟡 Orta",
-  LOW: "🟢 Düşük",
+  HIGH: "Yüksek",
+  MEDIUM: "Orta",
+  LOW: "Düşük",
+};
+
+const PRIORITY_TONE_CLASS: Record<string, string> = {
+  HIGH: "text-red-600",
+  MEDIUM: "text-amber-600",
+  LOW: "text-emerald-600",
 };
 
 export function OperationsWorkspace({
@@ -162,7 +168,7 @@ export function OperationsWorkspace({
                       )}
                     </div>
                     <div className="flex flex-shrink-0 flex-col items-end gap-1">
-                      <span className="text-[10px] text-slate-400">
+                      <span className={`text-[10px] font-medium ${PRIORITY_TONE_CLASS[task.priority] ?? "text-slate-400"}`}>
                         {PRIORITY_LABELS[task.priority] ?? task.priority}
                       </span>
                       {task.dueDate && (
