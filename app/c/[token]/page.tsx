@@ -259,7 +259,7 @@ export default async function PublicCatalogPage({
                         {share.priceMode !== "hidden" && p.priceUsd != null ? (
                           <p className="mt-2 text-xl font-bold text-slate-900">
                             ${p.priceUsd.toFixed(2)}{" "}
-                            <span className="text-[10px] font-normal text-slate-500">KDV hariç</span>
+                            <span className="text-xs font-semibold text-slate-500">+KDV</span>
                           </p>
                         ) : (
                           <p className="mt-2 text-sm text-slate-500">Fiyat için iletişime geçin</p>

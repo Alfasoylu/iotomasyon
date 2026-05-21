@@ -68,7 +68,7 @@ export async function updateCatalogPriceAction(
 const bulkSchema = z.object({
   categoryId: z.string().nullable().optional(),
   brand: z.string().nullable().optional(),
-  sourceField: z.enum(["unitCostUsd", "wholesalePriceUsd"]),
+  sourceField: z.enum(["unitCostUsd", "wholesalePriceUsd", "xmlBayiPrice"]),
   targetField: z.enum(["wholesalePriceUsd", "retailPriceUsd"]),
   multiplier: z.number().min(0.5).max(10),
   overwriteExisting: z.boolean().default(false),
@@ -103,7 +103,11 @@ export async function bulkApplyMarkupAction(
   if (onlyActive) where.isActive = true;
   if (categoryId) where.categoryId = categoryId;
   if (brand) where.brand = brand;
-  where[sourceField] = { not: null };
+  if (sourceField === "xmlBayiPrice") {
+    where.xmlData = { is: { xmlBayiPrice: { not: null } } };
+  } else {
+    where[sourceField] = { not: null };
+  }
   if (!overwriteExisting) {
     where[targetField] = null;
   }
@@ -115,32 +119,39 @@ export async function bulkApplyMarkupAction(
       unitCostUsd: true,
       wholesalePriceUsd: true,
       retailPriceUsd: true,
+      xmlData: sourceField === "xmlBayiPrice" ? { select: { xmlBayiPrice: true } } : false,
     },
   });
 
-  let updatedCount = 0;
+  // Group products by computed target price so we can batch-update with updateMany.
+  // For 1000+ rows this is dramatically faster than per-row updates.
+  const groups = new Map<number, string[]>();
   for (const p of products) {
     const sourceRaw =
       sourceField === "unitCostUsd"
         ? p.unitCostUsd
-        : p.wholesalePriceUsd;
+        : sourceField === "xmlBayiPrice"
+          ? p.xmlData?.xmlBayiPrice ?? null
+          : p.wholesalePriceUsd;
     if (sourceRaw == null) continue;
     const num = Number(sourceRaw);
     if (!Number.isFinite(num)) continue;
     const target = Math.round(num * multiplier * 100) / 100;
+    const bucket = groups.get(target);
+    if (bucket) bucket.push(p.id);
+    else groups.set(target, [p.id]);
+  }
 
-    if (targetField === "wholesalePriceUsd") {
-      await prisma.product.update({
-        where: { id: p.id },
-        data: { wholesalePriceUsd: target },
-      });
-    } else {
-      await prisma.product.update({
-        where: { id: p.id },
-        data: { retailPriceUsd: target },
-      });
-    }
-    updatedCount++;
+  let updatedCount = 0;
+  for (const [price, ids] of groups) {
+    const result = await prisma.product.updateMany({
+      where: { id: { in: ids } },
+      data:
+        targetField === "wholesalePriceUsd"
+          ? { wholesalePriceUsd: price }
+          : { retailPriceUsd: price },
+    });
+    updatedCount += result.count;
   }
 
   revalidatePath("/admin/product-pricing");
