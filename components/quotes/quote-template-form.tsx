@@ -42,6 +42,12 @@ interface Props {
   defaultWarrantyTerms?: string;
 }
 
+const INPUT_CLS =
+  "h-10 w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]";
+
+const TEXTAREA_CLS =
+  "min-h-24 w-full resize-none rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]";
+
 export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultDeliveryTerms = "", defaultWarrantyTerms = "" }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -134,7 +140,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="ör. Toptan Elektronik Paketi"
-            className="input-base"
+            className={INPUT_CLS}
           />
         </FieldBlock>
         <FieldBlock label="Açıklama">
@@ -143,14 +149,14 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Opsiyonel kısa açıklama"
-            className="input-base"
+            className={INPUT_CLS}
           />
         </FieldBlock>
         <FieldBlock label="Para Birimi Modu">
           <select
             value={currencyMode}
             onChange={(e) => setCurrencyMode(e.target.value as "TRY" | "USD" | "BOTH")}
-            className="input-base"
+            className={INPUT_CLS}
           >
             <option value="TRY">Sadece TL</option>
             <option value="USD">Sadece USD</option>
@@ -161,16 +167,23 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
 
       {/* Items */}
       <div className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Kalemler</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Kalemler
+        </p>
         {items.map((item, index) => (
-          <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div
+            key={index}
+            className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-1)] p-4"
+          >
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-700">Kalem {index + 1}</span>
+              <span className="text-sm font-medium text-[var(--text-primary)]">
+                Kalem {index + 1}
+              </span>
               {items.length > 1 ? (
                 <button
                   type="button"
                   onClick={() => removeItem(index)}
-                  className="text-xs text-red-500 hover:text-red-700"
+                  className="text-xs text-[var(--danger)] transition hover:brightness-110"
                 >
                   Kaldır
                 </button>
@@ -181,7 +194,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
                 <select
                   value={item.productId}
                   onChange={(e) => handleProductChange(index, e.target.value)}
-                  className="input-base"
+                  className={INPUT_CLS}
                 >
                   <option value="">Ürün bağlama (opsiyonel)</option>
                   {products.map((p) => (
@@ -195,7 +208,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
                   value={item.description}
                   onChange={(e) => updateItem(index, "description", e.target.value)}
                   placeholder="Teklifte görünecek açıklama"
-                  className="input-base"
+                  className={INPUT_CLS}
                 />
               </FieldBlock>
               <FieldBlock label="Adet">
@@ -204,7 +217,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
                   min={1}
                   value={item.quantity}
                   onChange={(e) => updateItem(index, "quantity", e.target.value)}
-                  className="input-base"
+                  className={`${INPUT_CLS} font-mono tabular-nums`}
                 />
               </FieldBlock>
               <FieldBlock label="Birim Fiyat">
@@ -213,14 +226,14 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
                   value={item.unitPrice}
                   onChange={(e) => updateItem(index, "unitPrice", e.target.value)}
                   placeholder="0,00"
-                  className="input-base"
+                  className={`${INPUT_CLS} font-mono tabular-nums`}
                 />
               </FieldBlock>
               <FieldBlock label="Para Birimi">
                 <select
                   value={item.currency}
                   onChange={(e) => updateItem(index, "currency", e.target.value)}
-                  className="input-base"
+                  className={INPUT_CLS}
                 >
                   <option value="TRY">TRY ₺</option>
                   <option value="USD">USD $</option>
@@ -232,7 +245,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
                   value={item.discount}
                   onChange={(e) => updateItem(index, "discount", e.target.value)}
                   placeholder="0"
-                  className="input-base"
+                  className={`${INPUT_CLS} font-mono tabular-nums`}
                 />
               </FieldBlock>
               <FieldBlock label="KDV %">
@@ -241,7 +254,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
                   value={item.tax}
                   onChange={(e) => updateItem(index, "tax", e.target.value)}
                   placeholder="20"
-                  className="input-base"
+                  className={`${INPUT_CLS} font-mono tabular-nums`}
                 />
               </FieldBlock>
             </div>
@@ -250,7 +263,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
         <button
           type="button"
           onClick={addItem}
-          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          className="text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
         >
           + Kalem ekle
         </button>
@@ -263,7 +276,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
             value={paymentTerms}
             onChange={(e) => setPaymentTerms(e.target.value)}
             rows={3}
-            className="input-base resize-none"
+            className={TEXTAREA_CLS}
           />
         </FieldBlock>
         <FieldBlock label="Teslimat Koşulu">
@@ -271,7 +284,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
             value={deliveryTerms}
             onChange={(e) => setDeliveryTerms(e.target.value)}
             rows={3}
-            className="input-base resize-none"
+            className={TEXTAREA_CLS}
           />
         </FieldBlock>
         <FieldBlock label="Garanti Koşulu">
@@ -279,7 +292,7 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
             value={warrantyTerms}
             onChange={(e) => setWarrantyTerms(e.target.value)}
             rows={3}
-            className="input-base resize-none"
+            className={TEXTAREA_CLS}
           />
         </FieldBlock>
       </div>
@@ -289,37 +302,11 @@ export function QuoteTemplateForm({ products, defaultPaymentTerms = "", defaultD
           {isPending ? "Kaydediliyor..." : "Şablonu Kaydet"}
         </Button>
         {result ? (
-          <span className={`text-xs font-medium ${result.ok ? "text-emerald-600" : "text-red-600"}`}>
+          <span className={`text-xs font-medium ${result.ok ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
             {result.ok ? "Şablon kaydedildi." : result.message}
           </span>
         ) : null}
       </div>
-
-      <style jsx>{`
-        .input-base {
-          width: 100%;
-          height: 2.5rem;
-          border-radius: 0.5rem;
-          border: 1px solid #e2e8f0;
-          background: white;
-          padding: 0 0.75rem;
-          font-size: 0.875rem;
-          color: #0f172a;
-          outline: none;
-          transition: border-color 0.15s;
-        }
-        .input-base:focus {
-          border-color: #94a3b8;
-        }
-        textarea.input-base {
-          height: auto;
-          padding-top: 0.5rem;
-          padding-bottom: 0.5rem;
-        }
-        select.input-base {
-          appearance: auto;
-        }
-      `}</style>
     </div>
   );
 }
@@ -340,7 +327,7 @@ export function DeleteTemplateButton({ id, name }: { id: string; name: string })
   return (
     <div className="flex items-center gap-2">
       {result && !result.ok ? (
-        <span className="text-xs text-red-600">{result.message}</span>
+        <span className="text-xs text-[var(--danger)]">{result.message}</span>
       ) : null}
       <Button variant="danger" size="sm" onClick={handleDelete} disabled={isPending}>
         {isPending ? "Siliniyor..." : "Sil"}
@@ -352,7 +339,9 @@ export function DeleteTemplateButton({ id, name }: { id: string; name: string })
 function FieldBlock({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+        {label}
+      </span>
       {children}
     </label>
   );

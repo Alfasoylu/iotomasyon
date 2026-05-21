@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { upsertPlatformPolicyAction } from "@/lib/actions/marketplace-policy-actions";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { MarketplacePlatform } from "@prisma/client";
 import {
   parseShippingTiers,
@@ -22,6 +23,14 @@ interface PlatformPolicyFormProps {
     notes: string | null;
   } | null;
 }
+
+const INPUT_CLS =
+  "w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]";
+
+const NUMBER_INPUT_CLS = `${INPUT_CLS} font-mono tabular-nums`;
+
+const LABEL_CLS =
+  "mb-1 block text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]";
 
 function tiersToRows(json: string | null | undefined): ShippingTier[] {
   const tiers = parseShippingTiers(json);
@@ -132,25 +141,24 @@ export function PlatformPolicyForm({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+    <div className="space-y-4 rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-900">{platformLabel}</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">{platformLabel}</h3>
         {current ? (
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-            Yapılandırıldı
-          </span>
+          <Badge variant="ok">Yapılandırıldı</Badge>
         ) : (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-            Varsayılan
-          </span>
+          <Badge variant="warn">Varsayılan</Badge>
         )}
       </div>
 
       {/* Core fields */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">
-            Standart Kargo (₺) <span className="text-slate-400 font-normal">— kademe yoksa</span>
+          <label className={LABEL_CLS}>
+            Standart Kargo (₺){" "}
+            <span className="font-normal normal-case tracking-normal text-[var(--text-muted)]">
+              — kademe yoksa
+            </span>
           </label>
           <input
             type="number"
@@ -158,13 +166,11 @@ export function PlatformPolicyForm({
             min="0"
             value={shipping}
             onChange={(e) => setShipping(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className={NUMBER_INPUT_CLS}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">
-            Komisyon (%)
-          </label>
+          <label className={LABEL_CLS}>Komisyon (%)</label>
           <input
             type="number"
             step="0.01"
@@ -172,13 +178,11 @@ export function PlatformPolicyForm({
             max="100"
             value={commission}
             onChange={(e) => setCommission(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className={NUMBER_INPUT_CLS}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">
-            Ödeme Komisyonu (%)
-          </label>
+          <label className={LABEL_CLS}>Ödeme Komisyonu (%)</label>
           <input
             type="number"
             step="0.01"
@@ -186,13 +190,11 @@ export function PlatformPolicyForm({
             max="100"
             value={payment}
             onChange={(e) => setPayment(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className={NUMBER_INPUT_CLS}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">
-            İade Rezervi (%)
-          </label>
+          <label className={LABEL_CLS}>İade Rezervi (%)</label>
           <input
             type="number"
             step="0.01"
@@ -200,13 +202,11 @@ export function PlatformPolicyForm({
             max="100"
             value={returns}
             onChange={(e) => setReturns(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className={NUMBER_INPUT_CLS}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">
-            KDV Oranı (%)
-          </label>
+          <label className={LABEL_CLS}>KDV Oranı (%)</label>
           <input
             type="number"
             step="0.01"
@@ -214,25 +214,23 @@ export function PlatformPolicyForm({
             max="100"
             value={vat}
             onChange={(e) => setVat(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className={NUMBER_INPUT_CLS}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">
-            Not
-          </label>
+          <label className={LABEL_CLS}>Not</label>
           <input
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Opsiyonel..."
-            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className={INPUT_CLS}
           />
         </div>
       </div>
 
       {/* Tiered shipping section */}
-      <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 space-y-3">
+      <div className="space-y-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <input
@@ -240,11 +238,11 @@ export function PlatformPolicyForm({
               type="checkbox"
               checked={useTiers}
               onChange={(e) => setUseTiers(e.target.checked)}
-              className="rounded border-slate-300"
+              className="rounded border-[var(--border-default)] accent-[var(--accent)]"
             />
             <label
               htmlFor={`use-tiers-${platform}`}
-              className="text-xs font-semibold text-slate-700 cursor-pointer"
+              className="cursor-pointer text-xs font-semibold text-[var(--text-primary)]"
             >
               USD Kademeli Kargo Kullan
             </label>
@@ -253,7 +251,7 @@ export function PlatformPolicyForm({
             <button
               type="button"
               onClick={loadDefaultTiers}
-              className="text-xs text-blue-600 hover:text-blue-800 underline"
+              className="text-xs text-[var(--info)] underline transition hover:brightness-110"
             >
               Trendyol Varsayılanlarını Yükle
             </button>
@@ -262,10 +260,10 @@ export function PlatformPolicyForm({
 
         {useTiers && (
           <div className="space-y-2">
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--text-muted)]">
               Satış fiyatı USD cinsinden eşikle karşılaştırılır. Son satır sınırsız (catch-all) olmalıdır.
             </p>
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-x-2 gap-y-1 text-xs font-semibold text-slate-500 px-1">
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-x-2 gap-y-1 px-1 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
               <span>Maks. Fiyat (USD)</span>
               <span>Kargo Maliyeti (USD)</span>
               <span />
@@ -273,7 +271,7 @@ export function PlatformPolicyForm({
             {tierRows.map((row, idx) => {
               const isLast = idx === tierRows.length - 1;
               return (
-                <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-x-2 items-center">
+                <div key={idx} className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-2">
                   <div className="relative">
                     <input
                       type="number"
@@ -283,7 +281,7 @@ export function PlatformPolicyForm({
                       placeholder={isLast ? "∞ (catch-all)" : "örn. 5.00"}
                       value={row.maxPriceUsd !== undefined ? String(row.maxPriceUsd) : ""}
                       onChange={(e) => updateTier(idx, "maxPriceUsd", e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:bg-slate-100 disabled:text-slate-400"
+                      className={`${NUMBER_INPUT_CLS} disabled:bg-[var(--surface-1)] disabled:text-[var(--text-muted)]`}
                     />
                   </div>
                   <input
@@ -293,13 +291,13 @@ export function PlatformPolicyForm({
                     placeholder="örn. 1.20"
                     value={String(row.costUsd)}
                     onChange={(e) => updateTier(idx, "costUsd", e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                    className={NUMBER_INPUT_CLS}
                   />
                   <button
                     type="button"
                     onClick={() => removeTier(idx)}
                     disabled={tierRows.length === 1}
-                    className="text-slate-400 hover:text-red-500 disabled:opacity-30 text-base px-1"
+                    className="px-1 text-base text-[var(--text-muted)] transition hover:text-[var(--danger)] disabled:opacity-30"
                     title="Satırı sil"
                   >
                     ×
@@ -310,7 +308,7 @@ export function PlatformPolicyForm({
             <button
               type="button"
               onClick={addTier}
-              className="text-xs text-slate-500 hover:text-slate-800 underline mt-1"
+              className="mt-1 text-xs text-[var(--text-secondary)] underline transition hover:text-[var(--text-primary)]"
             >
               + Kademe ekle
             </button>
@@ -319,22 +317,18 @@ export function PlatformPolicyForm({
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-[var(--text-muted)]">
           Kargo ve komisyon değerleri ürün düzeyinde geçersiz kılınabilir.
         </p>
         <div className="flex items-center gap-3">
           {msg && (
             <span
-              className={`text-xs font-medium ${msg.ok ? "text-emerald-600" : "text-red-600"}`}
+              className={`text-xs font-medium ${msg.ok ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}
             >
               {msg.text}
             </span>
           )}
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={isPending}
-          >
+          <Button size="sm" onClick={handleSave} disabled={isPending}>
             {isPending ? "Kaydediliyor…" : "Kaydet"}
           </Button>
         </div>

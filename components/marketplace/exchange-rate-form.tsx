@@ -14,6 +14,12 @@ interface Props {
   defaultMonth?: number;
 }
 
+const INPUT_CLS =
+  "w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)]";
+
+const LABEL_CLS =
+  "mb-1 block text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]";
+
 export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
@@ -60,10 +66,10 @@ export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">Yıl</label>
+          <label className={LABEL_CLS}>Yıl</label>
           <input
             type="number"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={`${INPUT_CLS} font-mono tabular-nums`}
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
             min={2020}
@@ -71,9 +77,9 @@ export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">Ay</label>
+          <label className={LABEL_CLS}>Ay</label>
           <select
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={INPUT_CLS}
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
           >
@@ -83,32 +89,37 @@ export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">USD/TRY Kuru</label>
+          <label className={LABEL_CLS}>USD/TRY Kuru</label>
           <input
             type="text"
             inputMode="decimal"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={`${INPUT_CLS} font-mono tabular-nums`}
             placeholder="ör. 38.50"
             value={rate}
             onChange={(e) => setRate(e.target.value)}
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">RMB/USD Kuru <span className="text-slate-400">(isteğe bağlı)</span></label>
+          <label className={LABEL_CLS}>
+            RMB/USD Kuru{" "}
+            <span className="font-normal text-[var(--text-muted)] normal-case tracking-normal">
+              (isteğe bağlı)
+            </span>
+          </label>
           <input
             type="text"
             inputMode="decimal"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={`${INPUT_CLS} font-mono tabular-nums`}
             placeholder="ör. 7.25"
             value={rmbRate}
             onChange={(e) => setRmbRate(e.target.value)}
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600 block mb-1">Not (isteğe bağlı)</label>
+          <label className={LABEL_CLS}>Not (isteğe bağlı)</label>
           <input
             type="text"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className={INPUT_CLS}
             placeholder="TCMB ortalaması, vs."
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -122,7 +133,7 @@ export function ExchangeRateForm({ defaultYear, defaultMonth }: Props) {
           {isPending ? "Kaydediliyor..." : "Kaydet / Güncelle"}
         </Button>
         {result && (
-          <span className={`text-xs font-medium ${result.ok ? "text-emerald-600" : "text-red-600"}`}>
+          <span className={`text-xs font-medium ${result.ok ? "text-[var(--ok)]" : "text-[var(--danger)]"}`}>
             {result.ok ? "Kaydedildi." : result.message}
           </span>
         )}

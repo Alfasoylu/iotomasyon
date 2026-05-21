@@ -5,10 +5,12 @@
  * per-source sync log, and controls to add/edit/trigger/delete sources.
  */
 
+import { ArrowUp, ArrowDown } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { XmlSyncForm, NewXmlSourceForm } from "@/components/xml-sync/xml-sync-form";
 
 export const dynamic = "force-dynamic";
@@ -24,11 +26,11 @@ const STATUS_LABELS: Record<string, string> = {
   ERROR: "Hata",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  RUNNING: "bg-blue-100 text-blue-700",
-  SUCCESS: "bg-emerald-100 text-emerald-700",
-  PARTIAL: "bg-amber-100 text-amber-700",
-  ERROR: "bg-red-100 text-red-700",
+const STATUS_VARIANT: Record<string, "info" | "ok" | "warn" | "danger"> = {
+  RUNNING: "info",
+  SUCCESS: "ok",
+  PARTIAL: "warn",
+  ERROR: "danger",
 };
 
 function fmt(d: Date | null) {
@@ -42,19 +44,19 @@ function fmt(d: Date | null) {
 function DeltaBadge({ delta }: { delta: number }) {
   if (delta > 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700">
-        ↑ +{delta}
+      <span className="inline-flex items-center gap-0.5 rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] px-1.5 py-0.5 text-xs font-semibold font-mono tabular-nums text-[var(--ok)]">
+        <ArrowUp size={14} strokeWidth={1.5} /> +{delta}
       </span>
     );
   }
   if (delta < 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700">
-        ↓ {delta}
+      <span className="inline-flex items-center gap-0.5 rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-1.5 py-0.5 text-xs font-semibold font-mono tabular-nums text-[var(--danger)]">
+        <ArrowDown size={14} strokeWidth={1.5} /> {delta}
       </span>
     );
   }
-  return <span className="text-slate-300 text-xs">—</span>;
+  return <span className="text-[var(--text-muted)] text-xs">—</span>;
 }
 
 export default async function XmlSyncPage() {
@@ -90,9 +92,9 @@ export default async function XmlSyncPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Yönetim</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">XML Envanter Senkronizasyonu</h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Yönetim</p>
+        <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">XML Envanter Senkronizasyonu</h1>
+        <p className="mt-1 text-sm leading-7 text-[var(--text-secondary)]">
           XML kaynaklarını yapılandırın, senkronizasyon geçmişini görüntüleyin ve manuel senkronizasyon başlatın.
           Otomatik senkronizasyon günde bir kez çalışır (02:00 UTC). Manuel tetikleme her zaman mümkündür.
         </p>
@@ -101,8 +103,8 @@ export default async function XmlSyncPage() {
       {/* Sources */}
       {sources.length === 0 ? (
         <Card className="p-8 text-center">
-          <p className="text-sm text-slate-500">Henüz XML kaynağı eklenmemiş.</p>
-          <p className="mt-1 text-xs text-slate-400">Aşağıdan yeni kaynak ekleyin.</p>
+          <p className="text-sm text-[var(--text-secondary)]">Henüz XML kaynağı eklenmemiş.</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Aşağıdan yeni kaynak ekleyin.</p>
         </Card>
       ) : (
         <div className="space-y-6">
@@ -112,18 +114,18 @@ export default async function XmlSyncPage() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-semibold text-slate-900">{source.name}</h2>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${source.isEnabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                    <h2 className="text-base font-semibold text-[var(--text-primary)]">{source.name}</h2>
+                    <Badge variant={source.isEnabled ? "ok" : "neutral"}>
                       {source.isEnabled ? "Aktif" : "Pasif"}
-                    </span>
+                    </Badge>
                     {source.lastStatus && (
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[source.lastStatus] ?? "bg-slate-100 text-slate-500"}`}>
+                      <Badge variant={STATUS_VARIANT[source.lastStatus] ?? "neutral"}>
                         {STATUS_LABELS[source.lastStatus] ?? source.lastStatus}
-                      </span>
+                      </Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-xs font-mono text-slate-400 break-all">{source.url}</p>
-                  <p className="mt-1 text-xs text-slate-400">Son senkronizasyon: {fmt(source.lastSyncAt)}</p>
+                  <p className="mt-1 text-xs font-mono tabular-nums text-[var(--text-muted)] break-all">{source.url}</p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)] tabular-nums">Son senkronizasyon: {fmt(source.lastSyncAt)}</p>
                 </div>
               </div>
 
@@ -144,42 +146,42 @@ export default async function XmlSyncPage() {
               {/* Sync log */}
               {source.logs.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] mb-3">
                     Son senkronizasyon geçmişi
                   </p>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-slate-600 border-collapse">
+                    <table className="w-full text-xs text-[var(--text-secondary)] border-collapse">
                       <thead>
-                        <tr className="border-b border-slate-100">
-                          <th className="py-2 pr-4 text-left text-slate-400 font-semibold uppercase tracking-wide">Başlangıç</th>
-                          <th className="py-2 pr-4 text-left text-slate-400 font-semibold uppercase tracking-wide">Bitiş</th>
-                          <th className="py-2 pr-4 text-left text-slate-400 font-semibold uppercase tracking-wide">Durum</th>
-                          <th className="py-2 pr-4 text-right text-slate-400 font-semibold uppercase tracking-wide">Bulunan</th>
-                          <th className="py-2 pr-4 text-right text-slate-400 font-semibold uppercase tracking-wide">Oluşturulan</th>
-                          <th className="py-2 pr-4 text-right text-slate-400 font-semibold uppercase tracking-wide">Güncellenen</th>
-                          <th className="py-2 text-right text-slate-400 font-semibold uppercase tracking-wide">Atlanan</th>
+                        <tr className="border-b border-[var(--border-subtle)]">
+                          <th className="py-2 pr-4 text-left text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-widest">Başlangıç</th>
+                          <th className="py-2 pr-4 text-left text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-widest">Bitiş</th>
+                          <th className="py-2 pr-4 text-left text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-widest">Durum</th>
+                          <th className="py-2 pr-4 text-right text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-widest">Bulunan</th>
+                          <th className="py-2 pr-4 text-right text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-widest">Oluşturulan</th>
+                          <th className="py-2 pr-4 text-right text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-widest">Güncellenen</th>
+                          <th className="py-2 text-right text-[11px] text-[var(--text-muted)] font-medium uppercase tracking-widest">Atlanan</th>
                         </tr>
                       </thead>
                       <tbody>
                         {source.logs.map((log) => (
-                          <tr key={log.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                            <td className="py-2 pr-4 font-mono">{fmt(log.startedAt)}</td>
-                            <td className="py-2 pr-4 font-mono">{fmt(log.completedAt)}</td>
+                          <tr key={log.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
+                            <td className="py-2 pr-4 font-mono tabular-nums">{fmt(log.startedAt)}</td>
+                            <td className="py-2 pr-4 font-mono tabular-nums">{fmt(log.completedAt)}</td>
                             <td className="py-2 pr-4">
-                              <span className={`rounded-full px-2 py-0.5 font-medium ${STATUS_COLORS[log.status] ?? "bg-slate-100 text-slate-500"}`}>
+                              <Badge variant={STATUS_VARIANT[log.status] ?? "neutral"}>
                                 {STATUS_LABELS[log.status] ?? log.status}
-                              </span>
+                              </Badge>
                             </td>
-                            <td className="py-2 pr-4 text-right">{log.recordsFound}</td>
-                            <td className="py-2 pr-4 text-right text-blue-600 font-medium">{log.recordsCreated}</td>
-                            <td className="py-2 pr-4 text-right text-emerald-600 font-medium">{log.recordsUpdated}</td>
-                            <td className="py-2 text-right text-slate-400">{log.recordsSkipped}</td>
+                            <td className="py-2 pr-4 text-right font-mono tabular-nums">{log.recordsFound}</td>
+                            <td className="py-2 pr-4 text-right text-[var(--info)] font-mono tabular-nums font-medium">{log.recordsCreated}</td>
+                            <td className="py-2 pr-4 text-right text-[var(--ok)] font-mono tabular-nums font-medium">{log.recordsUpdated}</td>
+                            <td className="py-2 text-right text-[var(--text-muted)] font-mono tabular-nums">{log.recordsSkipped}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                     {source.logs.find((l) => l.errorMessage) && (
-                      <p className="mt-2 text-xs text-red-500">
+                      <p className="mt-2 text-xs text-[var(--danger)]">
                         Hata: {source.logs.find((l) => l.errorMessage)?.errorMessage}
                       </p>
                     )}
@@ -194,8 +196,8 @@ export default async function XmlSyncPage() {
       {/* Add new source */}
       <Card className="p-6 space-y-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Yeni kaynak ekle</p>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Yeni kaynak ekle</p>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             Yeni bir XML kaynağı tanımlayın. Kaynak eklendikten sonra manuel veya otomatik senkronizasyon çalışabilir.
           </p>
         </div>
@@ -205,15 +207,15 @@ export default async function XmlSyncPage() {
       {/* Son Değişimler — Phase 49 */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">Son Senkronizasyon Değişimleri</h2>
+          <h2 className="text-base font-semibold text-[var(--text-primary)]">Son Senkronizasyon Değişimleri</h2>
           {latestSyncAt && (
-            <span className="text-xs text-slate-400">{fmt(latestSyncAt)}</span>
+            <span className="text-xs text-[var(--text-muted)] font-mono tabular-nums">{fmt(latestSyncAt)}</span>
           )}
         </div>
 
         {latestSyncChanges.length === 0 ? (
           <Card className="p-6 text-center">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--text-muted)]">
               {recentChanges.length === 0
                 ? "Henüz stok değişim kaydı yok. Senkronizasyon çalıştıktan sonra burada görünecek."
                 : "Son senkronizasyonda stok değişimi yapılmadı."}
@@ -221,36 +223,36 @@ export default async function XmlSyncPage() {
           </Card>
         ) : (
           <Card className="overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+              <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 {latestSyncChanges.length} ürün değişti
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-[var(--text-muted)] tabular-nums">
                 Artış: {latestSyncChanges.filter((c) => c.delta > 0).length} · Azalış: {latestSyncChanges.filter((c) => c.delta < 0).length}
               </span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm text-[var(--text-secondary)] border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="py-2 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-                    <th className="py-2 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">SKU</th>
-                    <th className="py-2 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Önceki</th>
-                    <th className="py-2 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Yeni</th>
-                    <th className="py-2 px-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-400">Değişim</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                    <th className="py-2 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                    <th className="py-2 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">SKU</th>
+                    <th className="py-2 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Önceki</th>
+                    <th className="py-2 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Yeni</th>
+                    <th className="py-2 px-4 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Değişim</th>
                   </tr>
                 </thead>
                 <tbody>
                   {latestSyncChanges.map((change) => (
-                    <tr key={change.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                      <td className="py-2 px-4 text-xs text-slate-700 max-w-[200px] truncate">
-                        <a href={`/products/${change.product.id}`} className="hover:underline hover:text-slate-900">
+                    <tr key={change.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
+                      <td className="py-2 px-4 text-xs text-[var(--text-secondary)] max-w-[200px] truncate">
+                        <a href={`/products/${change.product.id}`} className="hover:text-[var(--accent)]">
                           {change.product.name}
                         </a>
                       </td>
-                      <td className="py-2 px-4 font-mono text-xs text-slate-500">{change.product.sku}</td>
-                      <td className="py-2 px-4 text-xs text-right text-slate-500">{change.previousQty}</td>
-                      <td className="py-2 px-4 text-xs text-right font-medium text-slate-800">{change.newQty}</td>
+                      <td className="py-2 px-4 font-mono tabular-nums text-xs text-[var(--text-muted)]">{change.product.sku}</td>
+                      <td className="py-2 px-4 text-xs text-right font-mono tabular-nums text-[var(--text-muted)]">{change.previousQty}</td>
+                      <td className="py-2 px-4 text-xs text-right font-mono tabular-nums font-medium text-[var(--text-primary)]">{change.newQty}</td>
                       <td className="py-2 px-4 text-right">
                         <DeltaBadge delta={change.delta} />
                       </td>
@@ -264,9 +266,9 @@ export default async function XmlSyncPage() {
       </div>
 
       {/* Info */}
-      <Card className="border-blue-200 bg-blue-50 p-6">
-        <p className="text-sm font-semibold text-blue-800 mb-2">Senkronizasyon davranışı (Phase 11A)</p>
-        <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
+      <Card className="border-[var(--info-border)] bg-[var(--info-dim)] p-6">
+        <p className="text-sm font-semibold text-[var(--info)] mb-2">Senkronizasyon davranışı (Phase 11A)</p>
+        <ul className="text-xs text-[var(--info)] space-y-1 list-disc list-inside opacity-90">
           <li>Feed&apos;de bulunan ancak veritabanında olmayan SKU&apos;lar için <strong>yeni ürün oluşturulur</strong> (xmlImported=true).</li>
           <li>Üründe <strong>XML kilidi</strong> aktifse ürün alanları atlanır; ancak XML anlık görüntüsü yine güncellenir.</li>
           <li>Stok kaynağı <strong>Manuel giriş</strong> olan ürünlerin stoğu güncellenmez.</li>

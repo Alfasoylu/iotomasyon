@@ -8,6 +8,7 @@
  */
 
 import { useRef, useState } from "react";
+import { Download, Upload } from "lucide-react";
 
 type ImportResult = {
   updated: number;
@@ -47,20 +48,26 @@ export function ProductBulkButtons() {
     }
   }
 
+  const btnBase =
+    "inline-flex items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition hover:border-[var(--border-strong)]";
+
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex items-center gap-2">
         {/* Download */}
-        <a
-          href="/api/products/bulk-export"
-          download
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
-        >
-          ⬇ CSV İndir
+        <a href="/api/products/bulk-export" download className={btnBase}>
+          <Download size={14} strokeWidth={1.5} />
+          CSV İndir
         </a>
 
         {/* Upload */}
-        <label className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${loading ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+        <label
+          className={`${btnBase} cursor-pointer ${
+            loading
+              ? "cursor-not-allowed text-[var(--text-muted)] opacity-60"
+              : ""
+          }`}
+        >
           <input
             ref={fileRef}
             type="file"
@@ -69,16 +76,19 @@ export function ProductBulkButtons() {
             disabled={loading}
             onChange={handleFile}
           />
-          {loading ? "Yükleniyor…" : "⬆ CSV Yükle"}
+          <Upload size={14} strokeWidth={1.5} />
+          {loading ? "Yükleniyor…" : "CSV Yükle"}
         </label>
       </div>
 
       {/* Inline feedback */}
-      {error && (
-        <p className="text-xs text-red-600">{error}</p>
-      )}
+      {error && <p className="text-xs text-[var(--danger)]">{error}</p>}
       {result && (
-        <p className={`text-xs font-medium ${result.errors.length > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+        <p
+          className={`font-mono text-xs font-medium tabular-nums ${
+            result.errors.length > 0 ? "text-[var(--warn)]" : "text-[var(--ok)]"
+          }`}
+        >
           {result.updated} güncellendi
           {result.skipped > 0 && `, ${result.skipped} atlandı`}
           {result.errors.length > 0 && ` · ${result.errors.length} hata`}

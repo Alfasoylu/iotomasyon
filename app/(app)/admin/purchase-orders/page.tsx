@@ -8,10 +8,12 @@
  */
 
 import Link from "next/link";
+import { Plus, Plane, Ship } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { PurchaseOrderStatusButton } from "@/components/purchase-orders/purchase-order-status-button";
 
 export const dynamic = "force-dynamic";
@@ -24,12 +26,12 @@ const STATUS_LABELS: Record<string, string> = {
   RECEIVED:  "Teslim Alındı",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  DRAFT:     "bg-slate-100 text-slate-600",
-  CONFIRMED: "bg-blue-100 text-blue-700",
-  ORDERED:   "bg-amber-100 text-amber-700",
-  SHIPPED:   "bg-violet-100 text-violet-700",
-  RECEIVED:  "bg-emerald-100 text-emerald-700",
+const STATUS_VARIANT: Record<string, "neutral" | "info" | "warn" | "accent" | "ok"> = {
+  DRAFT:     "neutral",
+  CONFIRMED: "info",
+  ORDERED:   "warn",
+  SHIPPED:   "accent",
+  RECEIVED:  "ok",
 };
 
 function fmt(n: number) {
@@ -75,37 +77,37 @@ export default async function PurchaseOrdersPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Tedarik</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Satın Alma Siparişleri</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tedarik</p>
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">Satın Alma Siparişleri</h1>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             İthalat siparişlerini takip edin. Sermaye dağılımı önerilerinden veya manuel olarak oluşturun.
           </p>
         </div>
         <Link
           href="/admin/purchase-orders/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 transition"
+          className="inline-flex items-center gap-2 rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-fg)] hover:brightness-110 transition"
         >
-          + Yeni Sipariş
+          <Plus size={14} strokeWidth={1.5} /> Yeni Sipariş
         </Link>
       </div>
 
       {/* Status summary pills */}
       <div className="flex flex-wrap gap-2">
         {(Object.entries(statusCounts) as Array<[string, number]>).map(([status, count]) => (
-          <span key={status} className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[status]}`}>
-            {STATUS_LABELS[status]}
-            <span className="font-bold">{count}</span>
-          </span>
+          <Badge key={status} variant={STATUS_VARIANT[status]}>
+            <span className="mr-1">{STATUS_LABELS[status]}</span>
+            <span className="font-mono tabular-nums font-semibold">{count}</span>
+          </Badge>
         ))}
       </div>
 
       {/* Orders list */}
       {orders.length === 0 ? (
         <Card className="p-12 text-center">
-          <p className="text-slate-400 text-sm">Henüz sipariş oluşturulmamış.</p>
+          <p className="text-[var(--text-muted)] text-sm">Henüz sipariş oluşturulmamış.</p>
           <Link
             href="/admin/purchase-orders/new"
-            className="mt-4 inline-block text-sm font-semibold text-slate-900 underline"
+            className="mt-4 inline-block text-sm font-semibold text-[var(--accent)] hover:brightness-110"
           >
             İlk siparişi oluştur →
           </Link>
@@ -124,17 +126,18 @@ export default async function PurchaseOrdersPage() {
                   {/* Left: order info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-sm font-bold text-slate-900">{order.orderNo}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[order.status]}`}>
+                      <span className="font-mono tabular-nums text-sm font-semibold text-[var(--text-primary)]">{order.orderNo}</span>
+                      <Badge variant={STATUS_VARIANT[order.status]}>
                         {STATUS_LABELS[order.status]}
-                      </span>
+                      </Badge>
                       {order.shippingMethod && (
-                        <span className={`text-xs font-medium ${order.shippingMethod === "SEA" ? "text-blue-600" : "text-orange-500"}`}>
-                          {order.shippingMethod === "SEA" ? "🚢 Deniz" : "✈ Hava"}
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium ${order.shippingMethod === "SEA" ? "text-[var(--info)]" : "text-[var(--warn)]"}`}>
+                          {order.shippingMethod === "SEA" ? <Ship size={14} strokeWidth={1.5} /> : <Plane size={14} strokeWidth={1.5} />}
+                          {order.shippingMethod === "SEA" ? "Deniz" : "Hava"}
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-[var(--text-muted)] tabular-nums">
                       {fmtDate(order.createdAt)}
                       {order.supplier && <> · {order.supplier.name}</>}
                       {order.createdBy && <> · {order.createdBy.name}</>}
@@ -142,17 +145,17 @@ export default async function PurchaseOrdersPage() {
                     {/* Items summary */}
                     <div className="mt-2 flex flex-wrap gap-1">
                       {order.items.slice(0, 4).map((item: ItemRow) => (
-                        <span key={item.id} className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
-                          <span className="font-mono">{item.qty}×</span>
+                        <span key={item.id} className="inline-flex items-center gap-1 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] px-2 py-0.5 text-xs text-[var(--text-secondary)]">
+                          <span className="font-mono tabular-nums">{item.qty}×</span>
                           <span className="max-w-[160px] truncate">{item.product.name}</span>
                         </span>
                       ))}
                       {order.items.length > 4 && (
-                        <span className="text-xs text-slate-400">+{order.items.length - 4} daha</span>
+                        <span className="text-xs text-[var(--text-muted)]">+{order.items.length - 4} daha</span>
                       )}
                     </div>
                     {order.notes && (
-                      <p className="mt-1 text-xs text-slate-400 italic">{order.notes}</p>
+                      <p className="mt-1 text-xs text-[var(--text-muted)] italic">{order.notes}</p>
                     )}
                   </div>
 
@@ -160,16 +163,16 @@ export default async function PurchaseOrdersPage() {
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <div className="text-right">
                       {totalCost != null ? (
-                        <p className="text-base font-bold text-slate-900">{fmt(totalCost)}</p>
+                        <p className="text-base font-semibold font-mono tabular-nums text-[var(--text-primary)]">{fmt(totalCost)}</p>
                       ) : (
-                        <p className="text-sm text-slate-400">Maliyet hesaplanmadı</p>
+                        <p className="text-sm text-[var(--text-muted)]">Maliyet hesaplanmadı</p>
                       )}
-                      <p className="text-xs text-slate-400">{itemCount} ürün · {totalQty} adet</p>
+                      <p className="text-xs text-[var(--text-muted)] tabular-nums">{itemCount} ürün · {totalQty} adet</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/purchase-orders/${order.id}`}
-                        className="text-xs font-semibold text-slate-900 underline hover:text-slate-600"
+                        className="text-xs font-semibold text-[var(--accent)] hover:brightness-110"
                       >
                         Detay
                       </Link>

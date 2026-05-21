@@ -12,6 +12,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  BarChart3,
+  Settings2,
+  Package,
+  Ship,
+  Plane,
+  Pencil,
+} from "lucide-react";
+import {
   allocateBudget,
   calcDecisionLabel,
   calcImportCost,
@@ -26,6 +34,7 @@ import {
 } from "@/lib/importer-cost";
 import type { ImporterProduct } from "@/app/api/products/importer-view/route";
 import { ImportQuickEdit } from "@/components/products/import-quick-edit";
+import { Badge } from "@/components/ui/badge";
 
 // ── Formatting helpers ──────────────────────────────────────────────────────────
 
@@ -44,30 +53,25 @@ function fmtPct(v: number | null, digits = 1): string {
   return "%" + v.toFixed(digits);
 }
 
-function fmtRmb(v: number | null): string {
-  if (v == null) return "—";
-  return "¥" + v.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+// ── Decision label variants (mapped to Badge component) ─────────────────────────
 
-// ── Decision label styles ───────────────────────────────────────────────────────
-
-const DECISION_STYLES: Record<DecisionLabel, string> = {
-  "Al":                 "bg-emerald-100 text-emerald-800 border border-emerald-200",
-  "Yüksek ROI":         "bg-emerald-50 text-emerald-700 border border-emerald-100",
-  "Nakit Dönüş Hızlı":  "bg-teal-100 text-teal-800 border border-teal-200",
-  "Bekle":              "bg-blue-50 text-blue-700 border border-blue-100",
-  "Stok Fazla":         "bg-amber-100 text-amber-800 border border-amber-200",
-  "Zarar":              "bg-red-100 text-red-800 border border-red-200",
-  "Fiyat Yok":          "bg-slate-100 text-slate-600 border border-slate-200",
-  "Maliyet Yok":        "bg-slate-100 text-slate-600 border border-slate-200",
-  "Veri Eksik":         "bg-slate-100 text-slate-400 border border-slate-100",
+const DECISION_VARIANTS: Record<DecisionLabel, "ok" | "info" | "warn" | "danger" | "neutral" | "accent"> = {
+  "Al":                "ok",
+  "Yüksek ROI":        "ok",
+  "Nakit Dönüş Hızlı": "accent",
+  "Bekle":             "info",
+  "Stok Fazla":        "warn",
+  "Zarar":             "danger",
+  "Fiyat Yok":         "neutral",
+  "Maliyet Yok":       "neutral",
+  "Veri Eksik":        "neutral",
 };
 
 // ── Missing field chips ─────────────────────────────────────────────────────────
 // Returns a list of human-readable labels for every missing input field.
-// Shown as small red/amber chips below the decision badge.
+// Shown as small dim+border chips below the decision badge.
 
-type MissingField = { label: string; tone: "red" | "amber" };
+type MissingField = { label: string; tone: "danger" | "warn" };
 
 function getMissingFields(p: {
   sourceCostRmb: number | null;
@@ -77,33 +81,33 @@ function getMissingFields(p: {
   netProfitUsd?: number | null;
 }): MissingField[] {
   const missing: MissingField[] = [];
-  if (!p.sourceCostRmb) missing.push({ label: "Alış RMB", tone: "red" });
-  if (!p.weightKg) missing.push({ label: "Ağırlık", tone: "red" });
-  if (!p.hasTrendyolPrice) missing.push({ label: "T. Fiyat", tone: "red" });
-  if (p.t30g === 0) missing.push({ label: "Satış Yok", tone: "amber" });
+  if (!p.sourceCostRmb) missing.push({ label: "Alış RMB", tone: "danger" });
+  if (!p.weightKg) missing.push({ label: "Ağırlık", tone: "danger" });
+  if (!p.hasTrendyolPrice) missing.push({ label: "T. Fiyat", tone: "danger" });
+  if (p.t30g === 0) missing.push({ label: "Satış Yok", tone: "warn" });
   return missing;
 }
 
 function roiColor(roi: number | null): string {
-  if (roi == null) return "text-slate-400";
-  if (roi >= 100) return "text-emerald-600 font-semibold";
-  if (roi >= 50) return "text-emerald-500";
-  if (roi >= 30) return "text-amber-500";
-  return "text-red-500";
+  if (roi == null) return "text-[var(--text-muted)]";
+  if (roi >= 100) return "text-[var(--ok)] font-semibold";
+  if (roi >= 50) return "text-[var(--ok)]";
+  if (roi >= 30) return "text-[var(--warn)]";
+  return "text-[var(--danger)]";
 }
 
 function marginColor(m: number | null): string {
-  if (m == null) return "text-slate-400";
-  if (m >= 40) return "text-emerald-600 font-semibold";
-  if (m >= 20) return "text-emerald-500";
-  if (m >= 10) return "text-amber-500";
-  return "text-red-500";
+  if (m == null) return "text-[var(--text-muted)]";
+  if (m >= 40) return "text-[var(--ok)] font-semibold";
+  if (m >= 20) return "text-[var(--ok)]";
+  if (m >= 10) return "text-[var(--warn)]";
+  return "text-[var(--danger)]";
 }
 
 function profitColor(p: number | null): string {
-  if (p == null) return "text-slate-400";
-  if (p > 0) return "text-emerald-600";
-  return "text-red-600 font-semibold";
+  if (p == null) return "text-[var(--text-muted)]";
+  if (p > 0) return "text-[var(--ok)]";
+  return "text-[var(--danger)] font-semibold";
 }
 
 // ── Client-side recalculation after inline edit ─────────────────────────────────
@@ -202,7 +206,7 @@ function InlineEditNumber({
   }, [editState, productId, field, onSave]);
 
   if (isSaving) {
-    return <span className="text-[10px] text-slate-400 animate-pulse">…</span>;
+    return <span className="animate-pulse text-[10px] text-[var(--text-muted)]">…</span>;
   }
 
   if (isEditing) {
@@ -218,7 +222,7 @@ function InlineEditNumber({
           if (e.key === "Escape") setEditState(null);
         }}
         onBlur={commit}
-        className="w-16 text-right text-xs border border-blue-400 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+        className="w-16 rounded border border-[var(--accent-border)] bg-[var(--surface-3)] px-1 py-0.5 text-right font-mono text-xs tabular-nums text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
       />
     );
   }
@@ -226,12 +230,12 @@ function InlineEditNumber({
   return (
     <button
       onClick={() => setEditState({ id: productId, field, value: value != null ? String(value) : "" })}
-      className="group text-left font-mono hover:bg-blue-50 hover:text-blue-700 rounded px-1 transition cursor-pointer w-full"
+      className="group w-full rounded px-1 text-left font-mono tabular-nums transition hover:bg-[var(--accent-dim)] hover:text-[var(--accent)]"
       title="Tıkla ve düzenle (Enter = kaydet)"
     >
       {value != null
         ? <span className="text-xs">{value.toFixed(decimals)}{suffix}</span>
-        : <span className="text-[10px] text-red-400 group-hover:text-blue-500">{placeholder ?? "—"}</span>
+        : <span className="text-[10px] text-[var(--danger)] group-hover:text-[var(--accent)]">{placeholder ?? "—"}</span>
       }
     </button>
   );
@@ -453,7 +457,11 @@ export function ImporterViewClient() {
   const SortBtn = ({ k, label }: { k: SortKey; label: string }) => (
     <button
       onClick={() => handleSort(k)}
-      className={`text-xs px-2 py-1 rounded transition ${sortKey === k ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+      className={`rounded-md px-2 py-1 text-xs font-medium transition ${
+        sortKey === k
+          ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+          : "border border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]"
+      }`}
     >
       {label} {sortKey === k ? (sortAsc ? "↑" : "↓") : ""}
     </button>
@@ -461,9 +469,9 @@ export function ImporterViewClient() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24 text-slate-400">
+      <div className="flex items-center justify-center py-24 text-[var(--text-muted)]">
         <div className="text-center">
-          <div className="mb-3 text-3xl animate-pulse">📊</div>
+          <BarChart3 size={28} strokeWidth={1.5} className="mx-auto mb-3 animate-pulse" />
           <p className="text-sm">İthalatçı verileri hesaplanıyor…</p>
         </div>
       </div>
@@ -472,58 +480,77 @@ export function ImporterViewClient() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
-        <p className="text-sm font-semibold text-red-700">Veri yüklenemedi</p>
-        <p className="mt-1 text-xs text-red-500">{error}</p>
+      <div className="rounded-lg border border-[var(--danger-border)] bg-[var(--danger-dim)] p-8 text-center">
+        <p className="text-sm font-semibold text-[var(--danger)]">Veri yüklenemedi</p>
+        <p className="mt-1 text-xs text-[var(--danger)] opacity-80">{error}</p>
       </div>
     );
   }
+
+  const summaryCards = [
+    { label: "Stok Maliyeti", value: fmtUsd(summary.totalStockCostUsd, 0), sub: "toplam envanter", tone: "neutral" as const },
+    { label: "Aylık Potansiyel Kâr", value: fmtUsd(summary.totalPotentialProfit, 0), sub: "max(T30G, manuel aylık)", tone: "ok" as const },
+    { label: "Önerilen Bütçe", value: fmtUsd(summary.recommendedBudget, 0), sub: "sipariş için", tone: "info" as const },
+    { label: "İlk 10 Ürün Kârı", value: fmtUsd(summary.top10Profit, 0), sub: "aylık · max(T30G, manuel)", tone: "accent" as const },
+    { label: "Veri Eksik", value: String(summary.missingData), sub: "ürün", tone: summary.missingData > 0 ? ("warn" as const) : ("neutral" as const) },
+    { label: "Zarar Eden", value: String(summary.losing), sub: "ürün", tone: summary.losing > 0 ? ("danger" as const) : ("neutral" as const) },
+  ];
+
+  const cardBgFor = (tone: "ok" | "info" | "accent" | "warn" | "danger" | "neutral") => {
+    switch (tone) {
+      case "ok": return "bg-[var(--ok-dim)] border-[var(--ok-border)]";
+      case "info": return "bg-[var(--info-dim)] border-[var(--info-border)]";
+      case "accent": return "bg-[var(--accent-dim)] border-[var(--accent-border)]";
+      case "warn": return "bg-[var(--warn-dim)] border-[var(--warn-border)]";
+      case "danger": return "bg-[var(--danger-dim)] border-[var(--danger-border)]";
+      default: return "bg-[var(--surface-2)] border-[var(--border-default)]";
+    }
+  };
+
+  const cardTextFor = (tone: "ok" | "info" | "accent" | "warn" | "danger" | "neutral") => {
+    switch (tone) {
+      case "ok": return "text-[var(--ok)]";
+      case "info": return "text-[var(--info)]";
+      case "accent": return "text-[var(--accent)]";
+      case "warn": return "text-[var(--warn)]";
+      case "danger": return "text-[var(--danger)]";
+      default: return "text-[var(--text-primary)]";
+    }
+  };
 
   return (
     <div className="space-y-5">
       {/* ── Summary cards ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {[
-          { label: "Stok Maliyeti", value: fmtUsd(summary.totalStockCostUsd, 0), sub: "toplam envanter", color: "slate" },
-          { label: "Aylık Potansiyel Kâr", value: fmtUsd(summary.totalPotentialProfit, 0), sub: "max(T30G, manuel aylık)", color: "emerald" },
-          { label: "Önerilen Bütçe", value: fmtUsd(summary.recommendedBudget, 0), sub: "sipariş için", color: "blue" },
-          { label: "İlk 10 Ürün Kârı", value: fmtUsd(summary.top10Profit, 0), sub: "aylık · max(T30G, manuel)", color: "teal" },
-          { label: "Veri Eksik", value: String(summary.missingData), sub: "ürün", color: summary.missingData > 0 ? "amber" : "slate" },
-          { label: "Zarar Eden", value: String(summary.losing), sub: "ürün", color: summary.losing > 0 ? "red" : "slate" },
-        ].map(({ label, value, sub, color }) => (
-          <div key={label} className={`rounded-xl border p-4 ${
-            color === "emerald" ? "bg-emerald-50 border-emerald-200" :
-            color === "blue"    ? "bg-blue-50 border-blue-200" :
-            color === "teal"    ? "bg-teal-50 border-teal-200" :
-            color === "amber"   ? "bg-amber-50 border-amber-200" :
-            color === "red"     ? "bg-red-50 border-red-200" :
-            "bg-white border-slate-200"
-          }`}>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">{label}</p>
-            <p className={`mt-1 text-lg font-bold ${
-              color === "emerald" ? "text-emerald-800" :
-              color === "blue"    ? "text-blue-800" :
-              color === "teal"    ? "text-teal-800" :
-              color === "amber"   ? "text-amber-800" :
-              color === "red"     ? "text-red-700" :
-              "text-slate-900"
-            }`}>{value}</p>
-            <p className="text-[10px] text-slate-400">{sub}</p>
+        {summaryCards.map(({ label, value, sub, tone }) => (
+          <div key={label} className={`rounded-lg border p-4 ${cardBgFor(tone)}`}>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              {label}
+            </p>
+            <p className={`mt-1 font-mono text-lg font-bold tabular-nums ${cardTextFor(tone)}`}>
+              {value}
+            </p>
+            <p className="text-[10px] text-[var(--text-muted)]">{sub}</p>
           </div>
         ))}
       </div>
 
       {/* ── Budget params panel ────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-slate-200 bg-white">
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
         <button
           onClick={() => setShowParams((v) => !v)}
-          className="flex w-full items-center justify-between px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition rounded-xl"
+          className="flex w-full items-center justify-between rounded-lg px-5 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-3)]"
         >
-          <span>⚙ Bütçe & Sipariş Parametreleri</span>
-          <span className="text-xs text-slate-400">{showParams ? "Kapat ▲" : "Düzenle ▼"}</span>
+          <span className="inline-flex items-center gap-2">
+            <Settings2 size={14} strokeWidth={1.5} />
+            Bütçe & Sipariş Parametreleri
+          </span>
+          <span className="text-xs text-[var(--text-muted)]">
+            {showParams ? "Kapat ▲" : "Düzenle ▼"}
+          </span>
         </button>
         {showParams && (
-          <div className="border-t border-slate-100 p-5">
+          <div className="border-t border-[var(--border-subtle)] p-5">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {[
                 { key: "totalBudgetUsd", label: "Toplam Bütçe (USD)", min: 0, step: 500 },
@@ -533,7 +560,9 @@ export function ImporterViewClient() {
                 { key: "minOrderQty", label: "Min. Sipariş Adedi", min: 1, step: 1 },
               ].map(({ key, label, min, step }) => (
                 <div key={key}>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
+                  <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">
+                    {label}
+                  </label>
                   <input
                     type="number"
                     min={min}
@@ -542,12 +571,12 @@ export function ImporterViewClient() {
                     onChange={(e) =>
                       setParams((prev) => ({ ...prev, [key]: Number(e.target.value) }))
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    className="w-full rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 py-1.5 font-mono text-sm tabular-nums text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]"
                   />
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-xs text-slate-400">
+            <p className="mt-3 text-xs text-[var(--text-muted)]">
               Parametreleri değiştirdiğinizde sipariş önerileri anında güncellenir. Bütçe sınırına göre en yüksek ROI&apos;li ürünler önce doldurulur.
             </p>
           </div>
@@ -568,15 +597,15 @@ export function ImporterViewClient() {
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+            className={`rounded-md border px-3 py-1 text-xs font-medium transition ${
               filter === key
-                ? "bg-slate-900 border-slate-900 text-white"
-                : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
+                ? "border-[var(--accent-border)] bg-[var(--accent)] text-[var(--accent-fg)]"
+                : "border-[var(--border-default)] bg-[var(--surface-3)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]"
             }`}
           >
             {label}
             {key !== "all" && (
-              <span className="ml-1 text-[10px] opacity-70">
+              <span className="ml-1 font-mono text-[10px] tabular-nums opacity-70">
                 ({
                   key === "order"        ? enriched.filter(p => p.recommendedQty > 0).length :
                   key === "high_roi"     ? enriched.filter(p => (p.annualRoiPct ?? 0) >= 100).length :
@@ -601,9 +630,10 @@ export function ImporterViewClient() {
           return (
             <Link
               href={href}
-              className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition"
+              className="inline-flex items-center gap-1 rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] px-3 py-1 text-xs font-semibold text-[var(--ok)] transition hover:brightness-110"
             >
-              📦 Sipariş Oluştur ({orderItems.length})
+              <Package size={14} strokeWidth={1.5} />
+              Sipariş Oluştur ({orderItems.length})
             </Link>
           );
         })()}
@@ -625,80 +655,86 @@ export function ImporterViewClient() {
         </div>
       </div>
 
-      <p className="text-xs text-slate-400">{filtered.length} / {enriched.length} ürün gösteriliyor</p>
+      <p className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+        {filtered.length} / {enriched.length} ürün gösteriliyor
+      </p>
 
       {/* ── Table ─────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-slate-200 bg-white overflow-auto max-h-[calc(100vh-260px)]">
-          <table className="min-w-full divide-y divide-slate-100 text-sm">
-            <thead className="sticky top-0 z-20 bg-slate-900 text-left text-[10px] uppercase tracking-[0.2em] text-slate-300 [&_th]:bg-slate-900">
+      <div className="max-h-[calc(100vh-260px)] overflow-auto rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)]">
+          <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+            <thead className="sticky top-0 z-20 bg-[var(--surface-1)] text-left text-[11px] uppercase tracking-widest text-[var(--text-muted)] [&_th]:bg-[var(--surface-1)]">
               <tr>
                 <th className="w-12 px-2 py-3" />
-                <th className="px-3 py-3 min-w-[200px]">Ürün</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">T. Fiyat (₺)</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">Bayi ($)</th>
-                <th className="px-3 py-3 text-right">Stok</th>
+                <th className="min-w-[200px] px-3 py-3 font-semibold">Ürün</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold">T. Fiyat (₺)</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold">Bayi ($)</th>
+                <th className="px-3 py-3 text-right font-semibold">Stok</th>
                 <th
-                  className="px-3 py-3 text-right whitespace-nowrap cursor-pointer hover:text-white"
+                  className="cursor-pointer whitespace-nowrap px-3 py-3 text-right font-semibold hover:text-[var(--text-primary)]"
                   onClick={() => handleSort("lifetime")}
                   title="Tüm zamanlar Trendyol toplam satış adedi (iptaller hariç)"
                 >
                   Toplam {sortKey === "lifetime" ? (sortAsc ? "↑" : "↓") : "↕"}
                 </th>
                 <th
-                  className="px-3 py-3 text-right cursor-pointer hover:text-white"
+                  className="cursor-pointer px-3 py-3 text-right font-semibold hover:text-[var(--text-primary)]"
                   onClick={() => handleSort("t30g")}
                   title="T30G = Son 30 Gün. Tüm 14 kanaldan satış adedi (iptaller hariç)."
                 >
-                  <abbr title="Son 30 Gün satışı" className="no-underline cursor-pointer">T30G</abbr>{" "}
+                  <abbr title="Son 30 Gün satışı" className="cursor-pointer no-underline">T30G</abbr>{" "}
                   {sortKey === "t30g" ? (sortAsc ? "↑" : "↓") : "↕"}
                 </th>
                 <th
-                  className="px-3 py-3 text-right whitespace-nowrap text-emerald-300"
+                  className="whitespace-nowrap px-3 py-3 text-right font-semibold text-[var(--ok)]"
                   title="Sistem tahmini aylık satış: tüm 14 kanal × 5 yıllık tarihçe, recency-weighted + mevsimsel düzeltme (lib/sales-forecast.ts). İthalat kararında max(forecast, manuel) kullanılır."
                 >
                   Tahmin
                 </th>
                 <th
-                  className="px-3 py-3 text-right whitespace-nowrap text-blue-300"
+                  className="whitespace-nowrap px-3 py-3 text-right font-semibold text-[var(--accent)]"
                   title="Manuel aylık satış tahmini — tıkla → düzenle. İthalat kararında max(sistem tahmini, manuel) kullanılır."
                 >
                   Manuel ✎
                 </th>
                 {/* Editable import input columns */}
-                <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Alış (¥) ✎</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Ağırlık (kg) ✎</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap text-blue-300" title="Tıkla → düzenle">Gümrük % ✎</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">Freight ($)</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">Maliyet ($)</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">Net Kâr ($)</th>
-                <th className="px-3 py-3 text-right">Marj %</th>
-                <th className="px-3 py-3 text-right">ROI %</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">Stok Gün</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold text-[var(--accent)]" title="Tıkla → düzenle">Alış (¥) ✎</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold text-[var(--accent)]" title="Tıkla → düzenle">Ağırlık (kg) ✎</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold text-[var(--accent)]" title="Tıkla → düzenle">Gümrük % ✎</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold">Freight ($)</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold">Maliyet ($)</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold">Net Kâr ($)</th>
+                <th className="px-3 py-3 text-right font-semibold">Marj %</th>
+                <th className="px-3 py-3 text-right font-semibold">ROI %</th>
+                <th className="whitespace-nowrap px-3 py-3 text-right font-semibold">Stok Gün</th>
                 <th
-                  className="px-3 py-3 text-right whitespace-nowrap cursor-pointer hover:text-white"
+                  className="cursor-pointer whitespace-nowrap px-3 py-3 text-right font-semibold hover:text-[var(--text-primary)]"
                   onClick={() => handleSort("order")}
                   title="Sipariş adedi'ne göre sırala"
                 >
                   Sipariş (Adet) {sortKey === "order" ? (sortAsc ? "↑" : "↓") : "↕"}
                 </th>
                 <th
-                  className="px-3 py-3 text-right whitespace-nowrap cursor-pointer hover:text-white"
+                  className="cursor-pointer whitespace-nowrap px-3 py-3 text-right font-semibold hover:text-[var(--text-primary)]"
                   onClick={() => handleSort("monthly_profit")}
                   title="Net Kâr × Aylık Satış (= effectiveMonthlyUnits × netProfitUsd)"
                 >
                   Aylık Kâr ($) {sortKey === "monthly_profit" ? (sortAsc ? "↑" : "↓") : "↕"}
                 </th>
-                <th className="px-3 py-3 text-center">Durum</th>
-                <th className="px-3 py-3 text-center whitespace-nowrap cursor-pointer hover:text-white" onClick={() => handleSort("health")} title="Skor'a göre sırala">
+                <th className="px-3 py-3 text-center font-semibold">Durum</th>
+                <th
+                  className="cursor-pointer whitespace-nowrap px-3 py-3 text-center font-semibold hover:text-[var(--text-primary)]"
+                  onClick={() => handleSort("health")}
+                  title="Skor'a göre sırala"
+                >
                   Skor {sortKey === "health" ? (sortAsc ? "↑" : "↓") : "↕"}
                 </th>
                 <th className="w-10 px-2 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 bg-white">
+            <tbody className="divide-y divide-[var(--border-subtle)] bg-[var(--surface-2)]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={23} className="px-4 py-12 text-center text-slate-400 text-sm">
+                  <td colSpan={23} className="px-4 py-12 text-center text-sm text-[var(--text-muted)]">
                     Bu filtre için ürün bulunamadı.
                   </td>
                 </tr>
@@ -710,7 +746,13 @@ export function ImporterViewClient() {
                   return (
                     <tr
                       key={p.id}
-                      className={`hover:bg-slate-50/60 transition ${isLoss ? "bg-red-50/30" : isOrder ? "bg-emerald-50/20" : ""}`}
+                      className={`transition hover:bg-[var(--surface-3)] ${
+                        isLoss
+                          ? "bg-[var(--danger-dim)]"
+                          : isOrder
+                            ? "bg-[var(--ok-dim)]"
+                            : ""
+                      }`}
                     >
                       {/* Thumbnail */}
                       <td className="px-2 py-2">
@@ -720,12 +762,12 @@ export function ImporterViewClient() {
                             <img
                               src={p.imageUrl}
                               alt={p.name}
-                              className="h-10 w-10 rounded-lg object-contain bg-slate-50 border border-slate-100"
+                              className="h-10 w-10 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] object-contain"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 border border-slate-100 text-sm">
-                              📦
+                            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] text-[var(--text-muted)]">
+                              <Package size={14} strokeWidth={1.5} />
                             </div>
                           )}
                         </Link>
@@ -734,16 +776,16 @@ export function ImporterViewClient() {
                       {/* Product */}
                       <td className="px-3 py-2">
                         <Link href={`/products/${p.id}`} className="group">
-                          <p className="font-medium text-slate-900 group-hover:text-slate-600 leading-tight text-xs">
+                          <p className="text-xs font-medium leading-tight text-[var(--text-primary)] group-hover:text-[var(--accent)]">
                             {p.name}
                           </p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="font-mono text-[10px] text-slate-400">{p.sku}</span>
+                          <div className="mt-0.5 flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] text-[var(--text-muted)]">{p.sku}</span>
                             {p.productKind === "LISTING_PACKAGE" && (
-                              <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] text-violet-600">Paket</span>
+                              <Badge variant="info" className="text-[9px]">Paket</Badge>
                             )}
                             {p.brand && (
-                              <span className="text-[10px] text-slate-400">{p.brand}</span>
+                              <span className="text-[10px] text-[var(--text-muted)]">{p.brand}</span>
                             )}
                           </div>
                         </Link>
@@ -752,28 +794,32 @@ export function ImporterViewClient() {
                       {/* Trendyol price TRY */}
                       <td className="px-3 py-2 text-right">
                         {p.trendyolPriceTry != null ? (
-                          <span className="font-mono text-xs font-medium text-slate-700">
+                          <span className="font-mono text-xs font-medium tabular-nums text-[var(--text-secondary)]">
                             {fmtTry(p.trendyolPriceTry)}
                           </span>
                         ) : (
-                          <span className="text-[10px] text-red-400">Fiyat yok</span>
+                          <span className="text-[10px] text-[var(--danger)]">Fiyat yok</span>
                         )}
                       </td>
 
                       {/* Bayi price USD */}
                       <td className="px-3 py-2 text-right">
                         {p.bayiPriceUsd != null ? (
-                          <span className="font-mono text-xs text-slate-600">
+                          <span className="font-mono text-xs tabular-nums text-[var(--text-secondary)]">
                             {fmtUsd(p.bayiPriceUsd)}
                           </span>
                         ) : (
-                          <span className="text-[10px] text-slate-300">Bayi fiyat yok</span>
+                          <span className="text-[10px] text-[var(--text-muted)]">Bayi fiyat yok</span>
                         )}
                       </td>
 
                       {/* Stock */}
                       <td className="px-3 py-2 text-right">
-                        <span className={`font-mono text-xs font-semibold ${p.stockQuantity <= p.minimumStock ? "text-amber-600" : "text-slate-800"}`}>
+                        <span className={`font-mono text-xs font-semibold tabular-nums ${
+                          p.stockQuantity <= p.minimumStock
+                            ? "text-[var(--warn)]"
+                            : "text-[var(--text-primary)]"
+                        }`}>
                           {p.stockQuantity}
                         </span>
                       </td>
@@ -781,7 +827,11 @@ export function ImporterViewClient() {
                       {/* Lifetime total satış (Trendyol) */}
                       <td className="px-3 py-2 text-right">
                         <span
-                          className={`font-mono text-xs ${p.lifetimeTotalQty > 0 ? "text-slate-700 font-semibold" : "text-slate-300"}`}
+                          className={`font-mono text-xs tabular-nums ${
+                            p.lifetimeTotalQty > 0
+                              ? "font-semibold text-[var(--text-secondary)]"
+                              : "text-[var(--text-muted)]"
+                          }`}
                           title="Trendyol'da tüm zamanlardaki toplam satış adedi (iptaller hariç)"
                         >
                           {p.lifetimeTotalQty > 0 ? p.lifetimeTotalQty : "—"}
@@ -790,7 +840,11 @@ export function ImporterViewClient() {
 
                       {/* T30G */}
                       <td className="px-3 py-2 text-right">
-                        <span className={`font-mono text-xs ${p.t30g > 0 ? "text-emerald-600 font-semibold" : "text-slate-300"}`}>
+                        <span className={`font-mono text-xs tabular-nums ${
+                          p.t30g > 0
+                            ? "font-semibold text-[var(--ok)]"
+                            : "text-[var(--text-muted)]"
+                        }`}>
                           {p.t30g > 0 ? p.t30g : "—"}
                         </span>
                       </td>
@@ -798,7 +852,11 @@ export function ImporterViewClient() {
                       {/* Phase 92: Sistem tahmini (forecast) */}
                       <td className="px-3 py-2 text-right">
                         <span
-                          className={`font-mono text-xs ${p.forecastMonthlyUnits > 0 ? "text-emerald-700 font-semibold" : "text-slate-300"}`}
+                          className={`font-mono text-xs tabular-nums ${
+                            p.forecastMonthlyUnits > 0
+                              ? "font-semibold text-[var(--ok)]"
+                              : "text-[var(--text-muted)]"
+                          }`}
                           title={`Sistem tahmini (formül: ${p.forecastFormula})`}
                         >
                           {p.forecastMonthlyUnits > 0 ? p.forecastMonthlyUnits : "—"}
@@ -872,44 +930,52 @@ export function ImporterViewClient() {
                       <td className="px-3 py-2 text-right">
                         {p.freightUsd != null ? (
                           <div className="text-right">
-                            <span className="font-mono text-xs text-slate-600">{fmtUsd(p.freightUsd)}</span>
-                            <p className={`text-[9px] ${p.shippingMethod === "SEA" ? "text-blue-500" : "text-orange-400"}`}>
-                              {p.shippingMethod === "SEA" ? "🚢 Deniz" : "✈ Hava"}
+                            <span className="font-mono text-xs tabular-nums text-[var(--text-secondary)]">
+                              {fmtUsd(p.freightUsd)}
+                            </span>
+                            <p className={`inline-flex items-center gap-0.5 text-[9px] ${
+                              p.shippingMethod === "SEA" ? "text-[var(--info)]" : "text-[var(--warn)]"
+                            }`}>
+                              {p.shippingMethod === "SEA" ? (
+                                <><Ship size={14} strokeWidth={1.5} /> Deniz</>
+                              ) : (
+                                <><Plane size={14} strokeWidth={1.5} /> Hava</>
+                              )}
                             </p>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-slate-300">Ağırlık yok</span>
+                          <span className="text-[10px] text-[var(--text-muted)]">Ağırlık yok</span>
                         )}
                       </td>
 
                       {/* Total cost USD */}
                       <td className="px-3 py-2 text-right">
                         {p.totalCostUsd != null ? (
-                          <span className="font-mono text-xs font-semibold text-slate-700">
+                          <span className="font-mono text-xs font-semibold tabular-nums text-[var(--text-secondary)]">
                             {fmtUsd(p.totalCostUsd)}
                           </span>
                         ) : (
-                          <span className="text-[10px] text-red-400">Yok</span>
+                          <span className="text-[10px] text-[var(--danger)]">Yok</span>
                         )}
                       </td>
 
                       {/* Net profit USD */}
                       <td className="px-3 py-2 text-right">
-                        <span className={`font-mono text-xs ${profitColor(p.netProfitUsd)}`}>
+                        <span className={`font-mono text-xs tabular-nums ${profitColor(p.netProfitUsd)}`}>
                           {fmtUsd(p.netProfitUsd)}
                         </span>
                       </td>
 
                       {/* Margin % */}
                       <td className="px-3 py-2 text-right">
-                        <span className={`text-xs ${marginColor(p.marginPct)}`}>
+                        <span className={`font-mono text-xs tabular-nums ${marginColor(p.marginPct)}`}>
                           {fmtPct(p.marginPct)}
                         </span>
                       </td>
 
                       {/* Annual ROI % */}
                       <td className="px-3 py-2 text-right">
-                        <span className={`text-xs ${roiColor(p.annualRoiPct)}`}>
+                        <span className={`font-mono text-xs tabular-nums ${roiColor(p.annualRoiPct)}`}>
                           {p.annualRoiPct != null ? fmtPct(p.annualRoiPct, 0) : "—"}
                         </span>
                       </td>
@@ -917,16 +983,16 @@ export function ImporterViewClient() {
                       {/* Stock days */}
                       <td className="px-3 py-2 text-right">
                         {p.stockDays != null ? (
-                          <span className={`text-xs font-mono ${
-                            p.stockDays < 10 ? "text-red-600 font-semibold" :
-                            p.stockDays < 20 ? "text-amber-600" :
-                            p.stockDays > 90 ? "text-slate-400" :
-                            "text-slate-700"
+                          <span className={`font-mono text-xs tabular-nums ${
+                            p.stockDays < 10 ? "font-semibold text-[var(--danger)]" :
+                            p.stockDays < 20 ? "text-[var(--warn)]" :
+                            p.stockDays > 90 ? "text-[var(--text-muted)]" :
+                            "text-[var(--text-secondary)]"
                           }`}>
                             {p.stockDays}g
                           </span>
                         ) : (
-                          <span className="text-[10px] text-slate-300">Satış yok</span>
+                          <span className="text-[10px] text-[var(--text-muted)]">Satış yok</span>
                         )}
                       </td>
 
@@ -934,11 +1000,15 @@ export function ImporterViewClient() {
                       <td className="px-3 py-2 text-right">
                         {p.recommendedQty > 0 ? (
                           <div className="text-right">
-                            <span className="font-mono text-xs font-bold text-emerald-700">{p.recommendedQty}</span>
-                            <p className="text-[9px] text-slate-400">{fmtUsd(p.budgetCost, 0)}</p>
+                            <span className="font-mono text-xs font-bold tabular-nums text-[var(--ok)]">
+                              {p.recommendedQty}
+                            </span>
+                            <p className="font-mono text-[9px] tabular-nums text-[var(--text-muted)]">
+                              {fmtUsd(p.budgetCost, 0)}
+                            </p>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-slate-300">—</span>
+                          <span className="text-[10px] text-[var(--text-muted)]">—</span>
                         )}
                       </td>
 
@@ -947,11 +1017,17 @@ export function ImporterViewClient() {
                         {(() => {
                           const m = (p.netProfitUsd ?? 0) * p.effectiveMonthlyUnits;
                           if (p.netProfitUsd == null || p.effectiveMonthlyUnits === 0) {
-                            return <span className="text-[10px] text-slate-300">—</span>;
+                            return <span className="text-[10px] text-[var(--text-muted)]">—</span>;
                           }
                           return (
                             <span
-                              className={`font-mono text-xs font-semibold ${m > 0 ? "text-emerald-700" : m < 0 ? "text-red-500" : "text-slate-500"}`}
+                              className={`font-mono text-xs font-semibold tabular-nums ${
+                                m > 0
+                                  ? "text-[var(--ok)]"
+                                  : m < 0
+                                    ? "text-[var(--danger)]"
+                                    : "text-[var(--text-secondary)]"
+                              }`}
                               title={`Net kâr ${fmtUsd(p.netProfitUsd)} × ${p.effectiveMonthlyUnits} aylık satış`}
                             >
                               {fmtUsd(m, 0)}
@@ -963,21 +1039,14 @@ export function ImporterViewClient() {
                       {/* Decision label + missing field detail */}
                       <td className="px-3 py-2 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${DECISION_STYLES[p.decisionLabel]}`}>
+                          <Badge variant={DECISION_VARIANTS[p.decisionLabel]}>
                             {p.decisionLabel}
-                          </span>
+                          </Badge>
                           {/* Show which fields are missing — always, not only when "Veri Eksik" */}
                           {getMissingFields(p).map((f) => (
-                            <span
-                              key={f.label}
-                              className={`inline-block rounded px-1.5 py-0 text-[9px] font-medium leading-4 ${
-                                f.tone === "red"
-                                  ? "bg-red-50 text-red-500 border border-red-100"
-                                  : "bg-amber-50 text-amber-600 border border-amber-100"
-                              }`}
-                            >
+                            <Badge key={f.label} variant={f.tone} className="text-[9px]">
                               {f.label}
-                            </span>
+                            </Badge>
                           ))}
                         </div>
                       </td>
@@ -985,19 +1054,19 @@ export function ImporterViewClient() {
                       {/* Skor (health score) — prominent number + mini bar */}
                       <td className="px-3 py-2 text-center">
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className={`text-sm font-bold tabular-nums ${
-                            p.healthScore >= 70 ? "text-emerald-600" :
-                            p.healthScore >= 40 ? "text-amber-500" :
-                            "text-red-400"
+                          <span className={`font-mono text-sm font-bold tabular-nums ${
+                            p.healthScore >= 70 ? "text-[var(--ok)]" :
+                            p.healthScore >= 40 ? "text-[var(--warn)]" :
+                            "text-[var(--danger)]"
                           }`}>
                             {p.healthScore}
                           </span>
-                          <div className="w-10 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                          <div className="h-1.5 w-10 overflow-hidden rounded-md bg-[var(--surface-3)]">
                             <div
-                              className={`h-full rounded-full transition-all ${
-                                p.healthScore >= 70 ? "bg-emerald-400" :
-                                p.healthScore >= 40 ? "bg-amber-400" :
-                                "bg-red-400"
+                              className={`h-full rounded-md transition-all ${
+                                p.healthScore >= 70 ? "bg-[var(--ok)]" :
+                                p.healthScore >= 40 ? "bg-[var(--warn)]" :
+                                "bg-[var(--danger)]"
                               }`}
                               style={{ width: `${p.healthScore}%` }}
                             />
@@ -1009,10 +1078,10 @@ export function ImporterViewClient() {
                       <td className="px-2 py-2 text-center">
                         <button
                           onClick={() => setEditingProduct(products.find((q) => q.id === p.id) ?? null)}
-                          className="rounded-lg p-1.5 text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition"
+                          className="rounded-md p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
                           title="İthalat alanlarını düzenle"
                         >
-                          ✏
+                          <Pencil size={14} strokeWidth={1.5} />
                         </button>
                       </td>
                     </tr>
@@ -1033,7 +1102,7 @@ export function ImporterViewClient() {
       )}
 
       {/* Footer note */}
-      <p className="text-[10px] text-slate-400 text-center">
+      <p className="text-center text-[10px] text-[var(--text-muted)]">
         Kur: Veritabanındaki en son aylık kur · Komisyon %20 · Kargo dilimi (Pazaryeri kanonik): &lt;$5→$1.2, $5–7.5→$2, &gt;$7.5→$3.3
         · Aylık talep: max(Sistem tahmini, manuel). Tahmin = recency-weighted (90d×0.5 + 365d×0.3 + lifetime×0.2) × mevsimsel. Tüm 14 kanal × 5 yıl.
         · AIR döngüsü 150g · SEA döngüsü 210g · Kargo seçimi ROI bazlı

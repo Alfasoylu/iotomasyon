@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, ListPlus, Users, Phone, Trash2, ChevronDown } from "lucide-react";
+import { ClipboardList, ListPlus, ChevronDown, Phone, MapPin, Building2, FileText, Check } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Card } from "@/components/ui/card";
@@ -148,26 +148,30 @@ export default async function LeadListsPage({
       {lists.length > 0 && (
         <Card className="p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-              <span>
-                📋 <strong>{lists.length}</strong> liste
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-[var(--text-secondary)]">
+              <span className="inline-flex items-center gap-1.5">
+                <FileText size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                <strong className="text-[var(--text-primary)] font-mono tabular-nums">{lists.length}</strong> liste
               </span>
-              <span>
-                🏢 <strong>{totalFirms.toLocaleString("tr-TR")}</strong> firma
+              <span className="inline-flex items-center gap-1.5">
+                <Building2 size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                <strong className="text-[var(--text-primary)] font-mono tabular-nums">{totalFirms.toLocaleString("tr-TR")}</strong> firma
               </span>
-              <span>
-                📞 <strong>{totalContacted.toLocaleString("tr-TR")}</strong> arandı (%
-                {totalFirms > 0 ? Math.round((totalContacted / totalFirms) * 100) : 0})
+              <span className="inline-flex items-center gap-1.5">
+                <Phone size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                <strong className="text-[var(--text-primary)] font-mono tabular-nums">{totalContacted.toLocaleString("tr-TR")}</strong> arandı (%
+                <span className="font-mono tabular-nums">{totalFirms > 0 ? Math.round((totalContacted / totalFirms) * 100) : 0}</span>)
               </span>
-              <span>
-                🗺 <strong>{allCities.length}</strong> şehir
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin size={14} strokeWidth={1.5} className="text-[var(--text-muted)]" />
+                <strong className="text-[var(--text-primary)] font-mono tabular-nums">{allCities.length}</strong> şehir
               </span>
             </div>
             <form method="GET" action="/customers/lists" className="flex items-center gap-2">
               <select
                 name="city"
                 defaultValue={cityFilter}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                className="h-9 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] text-[var(--text-primary)] px-3 text-sm"
               >
                 <option value="all">Tüm şehirler ({allCities.length})</option>
                 {allCities.map((c) => (
@@ -178,7 +182,7 @@ export default async function LeadListsPage({
               </select>
               <button
                 type="submit"
-                className="h-9 rounded-lg bg-slate-900 px-3 text-xs font-medium text-white"
+                className="h-9 rounded-md bg-[var(--accent)] px-3 text-xs font-medium text-[var(--accent-fg)] hover:brightness-110 transition"
               >
                 Filtrele
               </button>
@@ -212,22 +216,24 @@ export default async function LeadListsPage({
               <details
                 key={group.city}
                 open={idx === 0 || cityFilter !== "all"}
-                className="group rounded-2xl border border-slate-200 bg-white overflow-hidden"
+                className="group rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] overflow-hidden"
               >
-                <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50 list-none">
+                <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-3 hover:bg-[var(--surface-3)] list-none">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" />
-                    <h3 className="text-base font-semibold text-slate-900">{group.city}</h3>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    <ChevronDown className="h-4 w-4 text-[var(--text-muted)] transition-transform group-open:rotate-180" strokeWidth={1.5} />
+                    <h3 className="text-base font-semibold text-[var(--text-primary)]">{group.city}</h3>
+                    <span className="rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] px-2 py-0.5 text-xs font-medium text-[var(--text-secondary)] font-mono tabular-nums">
                       {group.lists.length} liste · {group.totalFirms} firma
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-500 flex-shrink-0">
-                    <span>📞 {group.contactedFirms} arandı (%{contactPct})</span>
+                  <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] flex-shrink-0">
+                    <span className="inline-flex items-center gap-1 font-mono tabular-nums">
+                      <Phone size={14} strokeWidth={1.5} /> {group.contactedFirms} arandı (%{contactPct})
+                    </span>
                   </div>
                 </summary>
 
-                <div className="border-t border-slate-100 bg-slate-50/50 p-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-1)] p-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                   {group.lists.map((list) => {
                     const stats = statsByList.get(list.id) ?? {
                       total: list._count.members,
@@ -244,10 +250,10 @@ export default async function LeadListsPage({
                       <Card key={list.id} className="p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <h4 className="truncate text-sm font-semibold text-slate-900">
+                            <h4 className="truncate text-sm font-semibold text-[var(--text-primary)]">
                               {list.name.replace(/\s*\(Excel.*\)$/, "")}
                             </h4>
-                            <p className="mt-0.5 text-[10px] text-slate-400">
+                            <p className="mt-0.5 text-[10px] text-[var(--text-muted)] font-mono tabular-nums">
                               {formatDate(list.importedAt)} · {list.createdBy?.name ?? "—"}
                             </p>
                           </div>
@@ -257,28 +263,30 @@ export default async function LeadListsPage({
                         </div>
 
                         <div className="mt-2 grid grid-cols-4 gap-1 text-center">
-                          <div className="rounded bg-slate-100 px-1 py-1">
-                            <div className="text-sm font-bold text-slate-900 tabular-nums">{stats.total}</div>
-                            <div className="text-[9px] uppercase text-slate-500">Toplam</div>
+                          <div className="rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] px-1 py-1">
+                            <div className="text-sm font-semibold text-[var(--text-primary)] tabular-nums font-mono">{stats.total}</div>
+                            <div className="text-[9px] uppercase tracking-widest text-[var(--text-muted)]">Toplam</div>
                           </div>
-                          <div className="rounded bg-blue-50 px-1 py-1">
-                            <div className="text-sm font-bold text-blue-700 tabular-nums">{stats.contacted}</div>
-                            <div className="text-[9px] uppercase text-blue-600">Arandı</div>
+                          <div className="rounded-md border border-[var(--info-border)] bg-[var(--info-dim)] px-1 py-1">
+                            <div className="text-sm font-semibold text-[var(--info)] tabular-nums font-mono">{stats.contacted}</div>
+                            <div className="text-[9px] uppercase tracking-widest text-[var(--info)] opacity-80">Arandı</div>
                           </div>
-                          <div className="rounded bg-amber-50 px-1 py-1">
-                            <div className="text-sm font-bold text-amber-700 tabular-nums">{stats.proposal}</div>
-                            <div className="text-[9px] uppercase text-amber-600">Teklif</div>
+                          <div className="rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-1 py-1">
+                            <div className="text-sm font-semibold text-[var(--warn)] tabular-nums font-mono">{stats.proposal}</div>
+                            <div className="text-[9px] uppercase tracking-widest text-[var(--warn)] opacity-80">Teklif</div>
                           </div>
-                          <div className="rounded bg-emerald-50 px-1 py-1">
-                            <div className="text-sm font-bold text-emerald-700 tabular-nums">{stats.won}</div>
-                            <div className="text-[9px] uppercase text-emerald-600">✓</div>
+                          <div className="rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] px-1 py-1">
+                            <div className="text-sm font-semibold text-[var(--ok)] tabular-nums font-mono">{stats.won}</div>
+                            <div className="text-[9px] uppercase tracking-widest text-[var(--ok)] opacity-80 inline-flex items-center justify-center gap-0.5">
+                              <Check size={10} strokeWidth={1.5} />
+                            </div>
                           </div>
                         </div>
 
                         <div className="mt-2">
-                          <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-1 w-full overflow-hidden rounded-md bg-[var(--surface-3)]">
                             <div
-                              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all"
+                              className="h-full rounded-md bg-[var(--accent)] transition-all"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -287,16 +295,16 @@ export default async function LeadListsPage({
                         {stats.total > 0 && stats.contacted >= stats.total ? (
                           <Link
                             href={`/customers?leadListId=${list.id}`}
-                            className="mt-2 block w-full text-center rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[var(--ok-border)] bg-[var(--ok-dim)] px-3 py-1.5 text-xs font-semibold text-[var(--ok)] hover:brightness-110 transition"
                           >
-                            ✓ Tamamlandı — Listeyi Gör
+                            <Check size={14} strokeWidth={1.5} /> Tamamlandı — Listeyi Gör
                           </Link>
                         ) : (
                           <Link
                             href={`/customers?leadListId=${list.id}&cohort=queue`}
-                            className="mt-2 block w-full text-center rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700"
+                            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[var(--accent-fg)] transition hover:brightness-110"
                           >
-                            📞 Aramaya Başla ({stats.total - stats.contacted})
+                            <Phone size={14} strokeWidth={1.5} /> Aramaya Başla ({stats.total - stats.contacted})
                           </Link>
                         )}
                       </Card>

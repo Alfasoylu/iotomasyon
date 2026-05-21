@@ -10,7 +10,10 @@
  */
 
 import { useState, useTransition } from "react";
+import { Lock, Check } from "lucide-react";
 import { updatePrivateNoteAction } from "@/lib/actions/product-actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   productId: string;
@@ -41,10 +44,11 @@ export function PrivateNoteEditor({ productId, initialNote }: Props) {
     <div className="space-y-3">
       {/* Header badge */}
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-          🔒 Sadece sahip görebilir
-        </span>
-        <span className="text-xs text-slate-500">
+        <Badge variant="warn" className="gap-1">
+          <Lock size={14} strokeWidth={1.5} />
+          Sadece sahip görebilir
+        </Badge>
+        <span className="text-xs text-[var(--text-muted)]">
           Bu not diğer kullanıcılara görünmez.
         </span>
       </div>
@@ -55,26 +59,25 @@ export function PrivateNoteEditor({ productId, initialNote }: Props) {
         placeholder="Tedarikçi bilgisi, fiyat müzakeresi, ithalat notu, özel satın alma stratejisi…"
         rows={5}
         maxLength={5000}
-        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-7 text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-100 resize-none"
+        className="w-full resize-none rounded-lg border border-[var(--border-default)] bg-[var(--surface-3)] px-4 py-3 text-sm leading-7 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none transition focus:border-[var(--accent-border)]"
       />
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-400">{note.length} / 5000</span>
+        <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+          {note.length} / 5000
+        </span>
         <div className="flex items-center gap-3">
           {saved && (
-            <span className="text-xs font-medium text-emerald-600">✓ Kaydedildi</span>
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--ok)]">
+              <Check size={14} strokeWidth={1.5} /> Kaydedildi
+            </span>
           )}
           {error && (
-            <span className="text-xs font-medium text-red-600">{error}</span>
+            <span className="text-xs font-medium text-[var(--danger)]">{error}</span>
           )}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isPending}
-            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50 transition"
-          >
+          <Button onClick={handleSave} disabled={isPending}>
             {isPending ? "Kaydediliyor…" : "Notu kaydet"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -60,52 +60,52 @@ export default async function ImportCalculatorPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Yönetim / İthalat Maliyet Hesaplayıcısı
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             İthalat Maliyet Hesaplayıcısı
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-1 text-sm leading-7 text-[var(--text-secondary)]">
             Sipariş miktarı, birim maliyet, nakliye ve gümrük üzerinden toplam ithalat maliyetini
             ve kanal bazlı marjı hesaplayın.
           </p>
         </div>
         <Link
           href="/admin/suppliers"
-          className="text-sm font-medium text-slate-500 hover:text-slate-900"
+          className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
         >
           ← Tedarikçiler
         </Link>
       </div>
 
       {/* How it works */}
-      <Card className="border-blue-100 bg-blue-50 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+      <Card className="border-[var(--info-border)] bg-[var(--info-dim)] p-5">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--info)]">
           Hesaplama Mantığı
         </p>
-        <div className="mt-3 grid gap-2 text-xs text-blue-700 sm:grid-cols-2">
+        <div className="mt-3 grid gap-2 text-xs text-[var(--info)] sm:grid-cols-2">
           <div>
             <p className="font-semibold">Toplam İthalat Maliyeti (USD)</p>
-            <p className="font-mono mt-0.5 text-blue-600">
+            <p className="font-mono tabular-nums mt-0.5 opacity-80">
               = (Adet × Birim Maliyet) + Nakliye + Gümrük Vergisi
             </p>
           </div>
           <div>
             <p className="font-semibold">Birim Başına İthalat Maliyeti (TRY)</p>
-            <p className="font-mono mt-0.5 text-blue-600">
+            <p className="font-mono tabular-nums mt-0.5 opacity-80">
               = (Toplam USD / Adet) × USD/TRY Kuru
             </p>
           </div>
           <div>
             <p className="font-semibold">Marj (%)</p>
-            <p className="font-mono mt-0.5 text-blue-600">
+            <p className="font-mono tabular-nums mt-0.5 opacity-80">
               = (Satış Fiyatı − Birim Maliyet TRY) / Satış Fiyatı × 100
             </p>
           </div>
           <div>
             <p className="font-semibold">Başa Baş Fiyatı</p>
-            <p className="font-mono mt-0.5 text-blue-600">
+            <p className="font-mono tabular-nums mt-0.5 opacity-80">
               = Birim Maliyet TRY × 1.20 (minimum %20 marj)
             </p>
           </div>
@@ -115,11 +115,11 @@ export default async function ImportCalculatorPage() {
       {/* Calculator */}
       <Card className="p-6 space-y-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Girdiler
           </p>
-          <h2 className="mt-1 text-lg font-semibold text-slate-900">Hesaplama Parametreleri</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">Hesaplama Parametreleri</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             Tedarikçi ve ürün seçilirse birim maliyet otomatik doldurulur.
           </p>
         </div>
