@@ -53,17 +53,19 @@ export function LoginForm() {
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium text-slate-700">
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-1.5">
+        <label htmlFor="email" className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
           E-posta
         </label>
         <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
-        <p className="text-sm text-red-600">{form.formState.errors.email?.message}</p>
+        {form.formState.errors.email?.message ? (
+          <p className="text-[12px] text-[var(--danger)]">{form.formState.errors.email.message}</p>
+        ) : null}
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium text-slate-700">
+      <div className="space-y-1.5">
+        <label htmlFor="password" className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
           Şifre
         </label>
         <Input
@@ -72,10 +74,16 @@ export function LoginForm() {
           autoComplete="current-password"
           {...form.register("password")}
         />
-        <p className="text-sm text-red-600">{form.formState.errors.password?.message}</p>
+        {form.formState.errors.password?.message ? (
+          <p className="text-[12px] text-[var(--danger)]">{form.formState.errors.password.message}</p>
+        ) : null}
       </div>
 
-      {serverError ? <p className="text-sm text-red-600">{serverError}</p> : null}
+      {serverError ? (
+        <p className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2 text-[12px] text-[var(--danger)]">
+          {serverError}
+        </p>
+      ) : null}
 
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? "Giriş yapılıyor..." : "Giriş yap"}
