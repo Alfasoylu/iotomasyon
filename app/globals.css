@@ -114,6 +114,211 @@ select {
   background: var(--border-strong);
 }
 
+/*
+ * ──────────────────────────────────────────────────────────────────────
+ * App shell dark overrides — covers raw Tailwind utility classes in
+ * pages that haven't been migrated to tokens yet. Scoped to
+ * [data-app-shell] so the public catalog (and any future light-themed
+ * route outside the auth shell) stays untouched.
+ *
+ * Specificity-wise, [data-app-shell] .bg-white wins over .bg-white,
+ * so utility output gets remapped automatically.
+ * ──────────────────────────────────────────────────────────────────────
+ */
+[data-app-shell] .bg-white { background-color: var(--surface-2) !important; }
+[data-app-shell] .bg-slate-50 { background-color: var(--surface-1) !important; }
+[data-app-shell] .bg-slate-100 { background-color: var(--surface-3) !important; }
+[data-app-shell] .bg-slate-200 { background-color: var(--surface-3) !important; }
+[data-app-shell] .bg-slate-900 { background-color: var(--surface-1) !important; }
+[data-app-shell] .bg-slate-950 { background-color: var(--surface-0) !important; }
+[data-app-shell] .bg-gray-50 { background-color: var(--surface-1) !important; }
+[data-app-shell] .bg-gray-100 { background-color: var(--surface-3) !important; }
+[data-app-shell] .bg-gray-200 { background-color: var(--surface-3) !important; }
+[data-app-shell] .bg-gray-900 { background-color: var(--surface-1) !important; }
+[data-app-shell] .bg-neutral-50 { background-color: var(--surface-1) !important; }
+[data-app-shell] .bg-neutral-100 { background-color: var(--surface-3) !important; }
+[data-app-shell] .bg-zinc-50 { background-color: var(--surface-1) !important; }
+[data-app-shell] .bg-zinc-100 { background-color: var(--surface-3) !important; }
+[data-app-shell] .bg-stone-50 { background-color: var(--surface-1) !important; }
+[data-app-shell] .bg-stone-100 { background-color: var(--surface-3) !important; }
+
+/* Subtle gradient backgrounds — flatten to surface */
+[data-app-shell] [class*="from-slate-"][class*="to-white"],
+[data-app-shell] [class*="from-gray-"][class*="to-white"],
+[data-app-shell] [class*="bg-gradient-to-"][class*="from-white"] {
+  background-image: none !important;
+  background-color: var(--surface-2) !important;
+}
+
+/* Text — re-map dark text to primary, mid greys to secondary/muted */
+[data-app-shell] .text-black,
+[data-app-shell] .text-slate-900,
+[data-app-shell] .text-slate-950,
+[data-app-shell] .text-gray-900,
+[data-app-shell] .text-zinc-900,
+[data-app-shell] .text-neutral-900,
+[data-app-shell] .text-stone-900 { color: var(--text-primary) !important; }
+
+[data-app-shell] .text-slate-800,
+[data-app-shell] .text-slate-700,
+[data-app-shell] .text-gray-800,
+[data-app-shell] .text-gray-700 { color: var(--text-primary) !important; }
+
+[data-app-shell] .text-slate-600,
+[data-app-shell] .text-slate-500,
+[data-app-shell] .text-gray-600,
+[data-app-shell] .text-gray-500,
+[data-app-shell] .text-zinc-600,
+[data-app-shell] .text-zinc-500,
+[data-app-shell] .text-neutral-600,
+[data-app-shell] .text-neutral-500 { color: var(--text-secondary) !important; }
+
+[data-app-shell] .text-slate-400,
+[data-app-shell] .text-slate-300,
+[data-app-shell] .text-gray-400,
+[data-app-shell] .text-gray-300,
+[data-app-shell] .text-zinc-400,
+[data-app-shell] .text-neutral-400 { color: var(--text-muted) !important; }
+
+/* Borders */
+[data-app-shell] .border-slate-100,
+[data-app-shell] .border-gray-100,
+[data-app-shell] .border-neutral-100,
+[data-app-shell] .border-zinc-100 { border-color: var(--border-subtle) !important; }
+
+[data-app-shell] .border-slate-200,
+[data-app-shell] .border-slate-300,
+[data-app-shell] .border-gray-200,
+[data-app-shell] .border-gray-300,
+[data-app-shell] .border-neutral-200,
+[data-app-shell] .border-zinc-200 { border-color: var(--border-default) !important; }
+
+[data-app-shell] .ring-slate-200,
+[data-app-shell] .ring-slate-300,
+[data-app-shell] .ring-gray-200,
+[data-app-shell] .ring-gray-300 { --tw-ring-color: var(--border-default) !important; }
+
+/* Divider lines */
+[data-app-shell] .divide-slate-100 > * + *,
+[data-app-shell] .divide-gray-100 > * + * { border-color: var(--border-subtle) !important; }
+[data-app-shell] .divide-slate-200 > * + *,
+[data-app-shell] .divide-gray-200 > * + * { border-color: var(--border-default) !important; }
+
+/* Semantic tint backgrounds — flatten to dark dim variants */
+[data-app-shell] .bg-emerald-50,
+[data-app-shell] .bg-emerald-100,
+[data-app-shell] .bg-green-50,
+[data-app-shell] .bg-green-100 { background-color: var(--ok-dim) !important; }
+
+[data-app-shell] .bg-rose-50,
+[data-app-shell] .bg-rose-100,
+[data-app-shell] .bg-red-50,
+[data-app-shell] .bg-red-100 { background-color: var(--danger-dim) !important; }
+
+[data-app-shell] .bg-amber-50,
+[data-app-shell] .bg-amber-100,
+[data-app-shell] .bg-yellow-50,
+[data-app-shell] .bg-yellow-100,
+[data-app-shell] .bg-orange-50,
+[data-app-shell] .bg-orange-100 { background-color: var(--warn-dim) !important; }
+
+[data-app-shell] .bg-blue-50,
+[data-app-shell] .bg-blue-100,
+[data-app-shell] .bg-sky-50,
+[data-app-shell] .bg-sky-100,
+[data-app-shell] .bg-indigo-50,
+[data-app-shell] .bg-indigo-100 { background-color: var(--info-dim) !important; }
+
+[data-app-shell] .bg-purple-50,
+[data-app-shell] .bg-purple-100,
+[data-app-shell] .bg-violet-50,
+[data-app-shell] .bg-violet-100 { background-color: var(--info-dim) !important; }
+
+/* Semantic borders */
+[data-app-shell] .border-emerald-200,
+[data-app-shell] .border-emerald-300,
+[data-app-shell] .border-green-200 { border-color: var(--ok-border) !important; }
+[data-app-shell] .border-rose-200,
+[data-app-shell] .border-rose-300,
+[data-app-shell] .border-red-200 { border-color: var(--danger-border) !important; }
+[data-app-shell] .border-amber-200,
+[data-app-shell] .border-amber-300,
+[data-app-shell] .border-orange-200 { border-color: var(--warn-border) !important; }
+[data-app-shell] .border-blue-200,
+[data-app-shell] .border-blue-300,
+[data-app-shell] .border-sky-200,
+[data-app-shell] .border-indigo-200 { border-color: var(--info-border) !important; }
+
+/* Semantic text — keep contrast against dark dim bg */
+[data-app-shell] .text-emerald-700,
+[data-app-shell] .text-emerald-600,
+[data-app-shell] .text-emerald-800,
+[data-app-shell] .text-green-700,
+[data-app-shell] .text-green-600 { color: var(--ok) !important; }
+
+[data-app-shell] .text-rose-700,
+[data-app-shell] .text-rose-600,
+[data-app-shell] .text-rose-800,
+[data-app-shell] .text-red-700,
+[data-app-shell] .text-red-600,
+[data-app-shell] .text-red-800,
+[data-app-shell] .text-red-900 { color: var(--danger) !important; }
+
+[data-app-shell] .text-amber-700,
+[data-app-shell] .text-amber-600,
+[data-app-shell] .text-amber-800,
+[data-app-shell] .text-amber-900,
+[data-app-shell] .text-orange-700,
+[data-app-shell] .text-orange-600 { color: var(--warn) !important; }
+
+[data-app-shell] .text-blue-700,
+[data-app-shell] .text-blue-600,
+[data-app-shell] .text-blue-800,
+[data-app-shell] .text-sky-700,
+[data-app-shell] .text-indigo-700 { color: var(--info) !important; }
+
+/* Shadows — flatten in dark theme */
+[data-app-shell] .shadow,
+[data-app-shell] .shadow-sm,
+[data-app-shell] .shadow-md,
+[data-app-shell] .shadow-lg,
+[data-app-shell] .shadow-xl,
+[data-app-shell] .shadow-2xl,
+[data-app-shell] .hover\:shadow-sm:hover,
+[data-app-shell] .hover\:shadow-md:hover,
+[data-app-shell] .hover\:shadow-lg:hover { box-shadow: none !important; }
+
+/* Hover bg on light surfaces — keep subtle on dark */
+[data-app-shell] .hover\:bg-slate-50:hover,
+[data-app-shell] .hover\:bg-slate-100:hover,
+[data-app-shell] .hover\:bg-gray-50:hover,
+[data-app-shell] .hover\:bg-gray-100:hover,
+[data-app-shell] .hover\:bg-white:hover { background-color: var(--surface-3) !important; }
+
+/* Rounded-full pills → industrial 4px radius (spec: no pill shapes)
+   except specifically iconic round elements (avatars, dots) — those use
+   width=height with rounded-full and we want to keep them round. */
+[data-app-shell] .rounded-full:where(:not([class*="h-1"]):not([class*="h-2"]):not([class*="h-3"]):not([class*="w-1"]):not([class*="w-2"]):not([class*="w-3"])) {
+  border-radius: 6px !important;
+}
+
+/* Common chip/pill patterns — explicit override */
+[data-app-shell] button.rounded-full,
+[data-app-shell] a.rounded-full {
+  border-radius: 6px !important;
+}
+
+/* Form controls — inputs/selects/textareas with raw light styling */
+[data-app-shell] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([class*="bg-"]),
+[data-app-shell] textarea:not([class*="bg-"]),
+[data-app-shell] select:not([class*="bg-"]) {
+  background-color: var(--surface-3);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+[data-app-shell] input::placeholder,
+[data-app-shell] textarea::placeholder { color: var(--text-muted); }
+
 /* Phase 95h — Density toggle */
 [data-density="compact"] [data-customer-row] {
   padding: 0.5rem 0.875rem !important;

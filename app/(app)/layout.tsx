@@ -451,7 +451,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!hasAccess) redirect("/no-access");
 
   return (
-    <div className="flex min-h-screen bg-[var(--surface-0)]">
+    <div data-app-shell className="flex min-h-screen bg-[var(--surface-0)]">
       <Sidebar items={allowedNav} />
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="sticky top-0 z-20 border-b border-[var(--border-default)] bg-[var(--surface-1)]/95 px-4 py-3 backdrop-blur md:px-8">
