@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { CheckSquare } from "lucide-react";
+import { CheckSquare, CircleAlert, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 import { CustomerTaskCompleteButton } from "@/components/customers/customer-task-complete-button";
@@ -9,7 +10,6 @@ import { TaskCohortCards } from "@/components/tasks/task-cohort-cards";
 import {
   formatTaskPriority,
   formatTaskStatus,
-  getTaskPriorityTone,
   getTaskStatusTone,
 } from "@/lib/customer-utils";
 import { formatDateTime } from "@/lib/utils";
@@ -36,6 +36,18 @@ const PRIORITY_OPTIONS = [
   { value: "LOW", label: "Düşük" },
 ];
 
+// Priority → semantic token + label. Replaces emoji + Badge tone combos with
+// a unified CircleAlert + accent color for industrial minimal feel.
+const PRIORITY_META: Record<
+  TaskPriority,
+  { color: string; label: string }
+> = {
+  URGENT: { color: "var(--danger)", label: "Acil" },
+  HIGH: { color: "var(--danger)", label: "Yüksek" },
+  MEDIUM: { color: "var(--warn)", label: "Orta" },
+  LOW: { color: "var(--text-muted)", label: "Düşük" },
+};
+
 export default async function TasksPage({
   searchParams,
 }: {
@@ -59,16 +71,17 @@ export default async function TasksPage({
   const userId = sp.userId ?? (mineFilter ? currentUser.id : "all");
   const page = Math.max(1, Number(sp.page ?? 1));
 
-  const [{ tasks, total, pageSize }, users, cohortCounts] = await Promise.all([
+  const [{ tasks, total, pageSize }, , cohortCounts] = await Promise.all([
     listTasks({ status, priority, userId, page, cohort: cohort ?? undefined }),
     listUsersWithTasks(),
     getTaskCohortCounts(currentUser.role === "SALES" ? currentUser.id : undefined),
   ]);
 
   const totalPages = Math.ceil(total / pageSize);
+  const now = Date.now();
   const overdueCount = tasks.filter(
     (t) =>
-      t.status === "OPEN" && t.dueDate && new Date(t.dueDate) < new Date(),
+      t.status === "OPEN" && t.dueDate && new Date(t.dueDate).getTime() < now,
   ).length;
 
   function pageUrl(p: number) {
@@ -91,11 +104,12 @@ export default async function TasksPage({
         subtitle="Tüm takip görevleri. Vadesi gelen, gecikmiş ve devam eden işler."
         meta={
           <>
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-[var(--text-secondary)] tabular-nums">
               {total.toLocaleString("tr-TR")} görev
             </span>
             {overdueCount > 0 && (
-              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-[var(--danger)] tabular-nums">
+                <CircleAlert size={12} strokeWidth={1.5} />
                 {overdueCount} gecikmiş
               </span>
             )}
@@ -106,26 +120,26 @@ export default async function TasksPage({
       {/* P3 — Cohort kartları */}
       <TaskCohortCards counts={cohortCounts} activeCohort={cohort} />
 
-      {/* P3 — "Bana atanmış" / "Tümü" hızlı toggle + filtre (P6: aktif state fix) */}
+      {/* P3 — "Bana atanmış" / "Tümü" hızlı toggle + filtre */}
       <Card className="p-3">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex rounded-xl border border-slate-200 bg-slate-50 p-1 gap-1">
+          <div className="flex rounded-md border border-[var(--border-default)] bg-[var(--surface-1)] p-0.5 gap-0.5">
             <Link
               href={`/tasks${cohort ? `?cohort=${cohort}` : ""}`}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-md px-3 py-1.5 text-[12px] font-medium transition ${
                 mineFilter
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "border border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]"
+                  : "border border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
             >
               Bana atanmış
             </Link>
             <Link
               href={`/tasks?mine=0${cohort ? `&cohort=${cohort}` : ""}`}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-md px-3 py-1.5 text-[12px] font-medium transition ${
                 !mineFilter
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "border border-[var(--accent-border)] bg-[var(--accent-dim)] text-[var(--accent)]"
+                  : "border border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
             >
               Tümü
@@ -135,7 +149,7 @@ export default async function TasksPage({
             <select
               name="priority"
               defaultValue={priority}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+              className="h-9 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition focus:border-[var(--border-strong)]"
             >
               {PRIORITY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -144,7 +158,7 @@ export default async function TasksPage({
             <select
               name="status"
               defaultValue={status}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+              className="h-9 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition focus:border-[var(--border-strong)]"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -152,20 +166,17 @@ export default async function TasksPage({
             </select>
             {cohort && <input type="hidden" name="cohort" value={cohort} />}
             <input type="hidden" name="mine" value={userId === "all" ? "0" : "1"} />
-            <button
-              type="submit"
-              className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-700"
-            >
+            <Button type="submit" size="md" variant="secondary">
               Filtrele
-            </button>
+            </Button>
           </form>
         </div>
       </Card>
 
       {/* Task list */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {tasks.length === 0 ? (
-          <Card className="p-10 text-center text-sm text-slate-500">
+          <Card className="p-10 text-center text-[13px] text-[var(--text-muted)]">
             Bu filtreye uygun görev bulunamadı.
           </Card>
         ) : (
@@ -173,37 +184,48 @@ export default async function TasksPage({
             const isOverdue =
               task.status === "OPEN" &&
               task.dueDate &&
-              new Date(task.dueDate) < new Date();
+              new Date(task.dueDate).getTime() < now;
+            const prioMeta = PRIORITY_META[task.priority as TaskPriority];
 
             return (
-              <Card key={task.id} className="p-5">
+              <Card
+                key={task.id}
+                className="p-4 transition hover:bg-[var(--surface-3)]"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-2">
+                  <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider"
+                        style={{ color: prioMeta.color }}
+                        title={`Öncelik: ${formatTaskPriority(task.priority as TaskPriority)}`}
+                      >
+                        <CircleAlert size={14} strokeWidth={1.5} />
+                        {prioMeta.label}
+                      </span>
                       <Badge tone={getTaskStatusTone(task.status as TaskStatus)}>
                         {formatTaskStatus(task.status as TaskStatus)}
-                      </Badge>
-                      <Badge tone={getTaskPriorityTone(task.priority as TaskPriority)}>
-                        {formatTaskPriority(task.priority as TaskPriority)}
                       </Badge>
                       {isOverdue && (
                         <Badge tone="danger">Gecikmiş</Badge>
                       )}
                     </div>
 
-                    <p className="text-sm font-semibold text-slate-900">
+                    <p className="text-[14px] font-medium text-[var(--text-primary)]">
                       {task.title}
                     </p>
 
                     {task.description && (
-                      <p className="text-sm text-slate-500">{task.description}</p>
+                      <p className="text-[13px] leading-relaxed text-[var(--text-secondary)]">
+                        {task.description}
+                      </p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[var(--text-muted)]">
                       {task.customer && (
                         <Link
                           href={`/customers/${task.customer.id}`}
-                          className="font-medium text-slate-600 hover:underline"
+                          className="font-medium text-[var(--text-secondary)] transition hover:text-[var(--accent)]"
                         >
                           {task.customer.name}
                           {task.customer.company
@@ -212,22 +234,25 @@ export default async function TasksPage({
                         </Link>
                       )}
                       {task.dueDate && (
-                        <span>
-                          Son tarih:{" "}
+                        <span className="inline-flex items-center gap-1">
+                          <span className="uppercase tracking-wider text-[11px]">Son tarih</span>
                           <span
-                            className={
-                              isOverdue ? "font-semibold text-red-500" : ""
-                            }
+                            className={`font-mono tabular-nums ${
+                              isOverdue ? "text-[var(--danger)]" : "text-[var(--text-secondary)]"
+                            }`}
                           >
                             {formatDateTime(task.dueDate)}
                           </span>
                         </span>
                       )}
                       <span>
-                        Oluşturan: {task.createdBy?.name ?? "Sistem"}
+                        <span className="uppercase tracking-wider text-[11px]">Oluşturan</span>{" "}
+                        <span className="text-[var(--text-secondary)]">
+                          {task.createdBy?.name ?? "Sistem"}
+                        </span>
                       </span>
                       {task.assignedTo && (
-                        <span className="font-medium text-slate-500">
+                        <span className="font-medium text-[var(--text-secondary)]">
                           → {task.assignedTo.name}
                         </span>
                       )}
@@ -253,20 +278,22 @@ export default async function TasksPage({
           {page > 1 && (
             <Link
               href={pageUrl(page - 1)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
             >
-              ← Önceki
+              <ChevronLeft size={14} strokeWidth={1.5} />
+              Önceki
             </Link>
           )}
-          <span className="text-sm text-slate-500">
+          <span className="font-mono text-[12px] tabular-nums text-[var(--text-muted)]">
             {page} / {totalPages}
           </span>
           {page < totalPages && (
             <Link
               href={pageUrl(page + 1)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
             >
-              Sonraki →
+              Sonraki
+              <ChevronRight size={14} strokeWidth={1.5} />
             </Link>
           )}
         </div>

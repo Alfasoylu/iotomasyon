@@ -34,10 +34,14 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "bg-emerald-100 text-emerald-700",
-  INACTIVE: "bg-slate-100 text-slate-500",
-  SUSPENDED: "bg-red-100 text-red-700",
-  UNKNOWN: "bg-amber-100 text-amber-700",
+  ACTIVE:
+    "bg-[var(--ok-dim)] text-[var(--ok)] border border-[var(--ok-border)]",
+  INACTIVE:
+    "bg-[var(--surface-3)] text-[var(--text-muted)] border border-[var(--border-subtle)]",
+  SUSPENDED:
+    "bg-[var(--danger-dim)] text-[var(--danger)] border border-[var(--danger-border)]",
+  UNKNOWN:
+    "bg-[var(--warn-dim)] text-[var(--warn)] border border-[var(--warn-border)]",
 };
 
 // 14 kanal display adları (MarketplaceSalesRecord.channel için)
@@ -166,10 +170,10 @@ export default async function MarketplacePage() {
         <section>
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">
+              <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Bu Ay Kanal Performansı
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-[var(--text-secondary)] tabular-nums font-mono">
                 {totalOrdersThisMonth.toLocaleString("tr-TR")} sipariş · {fmtTry(totalRevenueThisMonth)} ciro · {channelStats.length} aktif kanal
               </p>
             </div>
@@ -187,28 +191,28 @@ export default async function MarketplacePage() {
                 <Link
                   key={c.channel}
                   href={channelHref}
-                  className="block rounded-2xl border border-slate-200 bg-white p-4 transition active:bg-slate-50"
+                  className="block rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-4 transition hover:bg-[var(--surface-3)]"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <p className="font-semibold text-slate-900">
+                    <p className="font-semibold text-[var(--text-primary)]">
                       {CHANNEL_NAMES[c.channel] ?? c.channel}
                     </p>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-mono text-slate-600">
+                    <span className="rounded-md bg-[var(--surface-3)] border border-[var(--border-subtle)] px-2 py-0.5 text-[10px] font-mono tabular-nums text-[var(--text-secondary)]">
                       %{pct.toFixed(0)}
                     </span>
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-400">Sipariş</p>
-                      <p className="mt-0.5 font-mono font-semibold text-slate-900">{c.orders.toLocaleString("tr-TR")}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">Sipariş</p>
+                      <p className="mt-1 font-mono font-semibold tabular-nums text-[var(--text-primary)]">{c.orders.toLocaleString("tr-TR")}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-400">Adet</p>
-                      <p className="mt-0.5 font-mono text-slate-700">{c.quantity.toLocaleString("tr-TR")}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">Adet</p>
+                      <p className="mt-1 font-mono tabular-nums text-[var(--text-secondary)]">{c.quantity.toLocaleString("tr-TR")}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-400">Ciro</p>
-                      <p className="mt-0.5 font-mono font-semibold text-emerald-700">{fmtTry(c.revenueTry)}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">Ciro</p>
+                      <p className="mt-1 font-mono font-semibold tabular-nums text-[var(--ok)]">{fmtTry(c.revenueTry)}</p>
                     </div>
                   </div>
                 </Link>
@@ -218,17 +222,17 @@ export default async function MarketplacePage() {
 
           {/* Desktop tablo (md+) */}
           <Card className="hidden md:block overflow-hidden p-0">
-            <table className="min-w-full divide-y divide-slate-100 text-sm">
-              <thead className="bg-slate-50 text-left text-[10px] uppercase tracking-[0.2em] text-slate-500">
+            <table className="min-w-full divide-y divide-[var(--border-subtle)] text-sm">
+              <thead className="bg-[var(--surface-1)] text-left text-[11px] uppercase tracking-widest text-[var(--text-muted)]">
                 <tr>
-                  <th className="px-5 py-3 font-semibold">Kanal</th>
-                  <th className="px-5 py-3 text-right font-semibold">Sipariş</th>
-                  <th className="px-5 py-3 text-right font-semibold">Adet</th>
-                  <th className="px-5 py-3 text-right font-semibold">Ciro</th>
-                  <th className="px-5 py-3 text-right font-semibold">Pay</th>
+                  <th className="px-5 py-3 font-medium">Kanal</th>
+                  <th className="px-5 py-3 text-right font-medium">Sipariş</th>
+                  <th className="px-5 py-3 text-right font-medium">Adet</th>
+                  <th className="px-5 py-3 text-right font-medium">Ciro</th>
+                  <th className="px-5 py-3 text-right font-medium">Pay</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 bg-white">
+              <tbody className="divide-y divide-[var(--border-subtle)]">
                 {channelStats.map((c) => {
                   const pct = totalRevenueThisMonth > 0 ? (c.revenueTry / totalRevenueThisMonth) * 100 : 0;
                   const channelHref =
@@ -236,33 +240,33 @@ export default async function MarketplacePage() {
                     c.channel === "HEPSIBURADA" ? "/admin/hepsiburada" :
                     "/marketplace/profit";
                   return (
-                    <tr key={c.channel} className="hover:bg-slate-50/50">
+                    <tr key={c.channel} className="hover:bg-[var(--surface-3)] transition-colors">
                       <td className="px-5 py-3">
                         <Link
                           href={channelHref}
-                          className="text-sm font-medium text-slate-900 hover:text-slate-600 hover:underline"
+                          className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors"
                         >
                           {CHANNEL_NAMES[c.channel] ?? c.channel}
                         </Link>
                       </td>
-                      <td className="px-5 py-3 text-right font-mono text-sm text-slate-700 tabular-nums">
+                      <td className="px-5 py-3 text-right font-mono text-sm text-[var(--text-primary)] tabular-nums">
                         {c.orders.toLocaleString("tr-TR")}
                       </td>
-                      <td className="px-5 py-3 text-right font-mono text-sm text-slate-500 tabular-nums">
+                      <td className="px-5 py-3 text-right font-mono text-sm text-[var(--text-secondary)] tabular-nums">
                         {c.quantity.toLocaleString("tr-TR")}
                       </td>
-                      <td className="px-5 py-3 text-right font-mono text-sm font-semibold text-slate-900 tabular-nums">
+                      <td className="px-5 py-3 text-right font-mono text-sm font-semibold text-[var(--text-primary)] tabular-nums">
                         {fmtTry(c.revenueTry)}
                       </td>
                       <td className="px-5 py-3 text-right">
                         <div className="inline-flex items-center gap-2">
-                          <div className="h-1.5 w-16 rounded-full bg-slate-100 overflow-hidden">
+                          <div className="h-1.5 w-16 rounded-md bg-[var(--surface-3)] overflow-hidden">
                             <div
-                              className="h-full bg-emerald-500"
+                              className="h-full bg-[var(--accent)]"
                               style={{ width: `${Math.min(100, pct).toFixed(1)}%` }}
                             />
                           </div>
-                          <span className="font-mono text-[11px] text-slate-600 tabular-nums w-10 text-right">
+                          <span className="font-mono text-[11px] text-[var(--text-secondary)] tabular-nums w-10 text-right">
                             %{pct.toFixed(0)}
                           </span>
                         </div>
@@ -271,24 +275,24 @@ export default async function MarketplacePage() {
                   );
                 })}
               </tbody>
-              <tfoot className="bg-slate-50 text-sm font-semibold">
+              <tfoot className="bg-[var(--surface-1)] text-sm font-semibold">
                 <tr>
-                  <td className="px-5 py-2.5 text-slate-700">Toplam</td>
-                  <td className="px-5 py-2.5 text-right font-mono tabular-nums">
+                  <td className="px-5 py-2.5 text-[var(--text-primary)]">Toplam</td>
+                  <td className="px-5 py-2.5 text-right font-mono tabular-nums text-[var(--text-primary)]">
                     {totalOrdersThisMonth.toLocaleString("tr-TR")}
                   </td>
-                  <td className="px-5 py-2.5 text-right font-mono tabular-nums text-slate-500">
+                  <td className="px-5 py-2.5 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                     {channelStats.reduce((s, c) => s + c.quantity, 0).toLocaleString("tr-TR")}
                   </td>
-                  <td className="px-5 py-2.5 text-right font-mono tabular-nums">
+                  <td className="px-5 py-2.5 text-right font-mono tabular-nums text-[var(--text-primary)]">
                     {fmtTry(totalRevenueThisMonth)}
                   </td>
-                  <td className="px-5 py-2.5 text-right text-xs text-slate-400">%100</td>
+                  <td className="px-5 py-2.5 text-right text-xs text-[var(--text-muted)] tabular-nums font-mono">%100</td>
                 </tr>
               </tfoot>
             </table>
           </Card>
-          <p className="mt-2 text-[10px] text-slate-400">
+          <p className="mt-2 text-[10px] text-[var(--text-muted)]">
             Veri kaynağı: MarketplaceSalesRecord + TrendyolSalesRecord + HepsiburadaSalesRecord birleşik. İptal/iade hariç. Tarih ≥ {startOfMonth.toLocaleDateString("tr-TR")}.
           </p>
         </section>
@@ -297,10 +301,10 @@ export default async function MarketplacePage() {
       {/* ── Listeleme Kaydı (eski davranış) ─────────────────────────────── */}
       {listings.length === 0 ? (
         <Card className="p-12 text-center space-y-3">
-          <p className="text-slate-500 text-sm">Henüz pazar yeri listlemesi eklenmemiş.</p>
-          <p className="text-slate-400 text-xs">Ürünlerin hangi platformlarda aktif olduğunu kayıt altına alın.</p>
+          <p className="text-sm text-[var(--text-secondary)]">Henüz pazar yeri listlemesi eklenmemiş.</p>
+          <p className="text-xs text-[var(--text-muted)]">Ürünlerin hangi platformlarda aktif olduğunu kayıt altına alın.</p>
           <Link href="/marketplace/new">
-            <Button className="mt-2">+ Yeni listeleme ekle</Button>
+            <Button className="mt-2">Yeni listeleme ekle</Button>
           </Link>
         </Card>
       ) : (
@@ -312,55 +316,55 @@ export default async function MarketplacePage() {
               const active = items.filter((l) => l.status === "ACTIVE").length;
               return (
                 <Card key={platform} className="p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{PLATFORM_LABELS[platform] ?? platform}</p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-900">{items.length}</p>
-                  <p className="text-xs text-slate-400">{active} aktif</p>
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{PLATFORM_LABELS[platform] ?? platform}</p>
+                  <p className="mt-2 text-[24px] font-semibold tabular-nums leading-tight text-[var(--text-primary)]">{items.length}</p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)] tabular-nums font-mono">{active} aktif</p>
                 </Card>
               );
             })}
           </div>
 
           {/* Full listing table */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-700 border-collapse">
+              <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Platform</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Ürün</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Başlık</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Durum</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">Sorumlu</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">İşlem</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Platform</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Başlık</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Durum</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Sorumlu</th>
+                    <th className="py-3 px-4 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İşlem</th>
                   </tr>
                 </thead>
                 <tbody>
                   {listings.map((l) => (
-                    <tr key={l.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                    <tr key={l.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-3)] transition-colors">
                       <td className="py-3 px-4">
-                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+                        <span className="rounded-md bg-[var(--surface-3)] border border-[var(--border-subtle)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
                           {PLATFORM_LABELS[l.platform] ?? l.platform}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <Link href={`/products/${l.product.id}`} className="font-mono text-xs text-slate-500 hover:text-slate-800">
+                        <Link href={`/products/${l.product.id}`} className="font-mono text-xs tabular-nums text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">
                           {l.product.sku}
                         </Link>
-                        <p className="text-xs text-slate-600 mt-0.5 max-w-[180px] truncate">{l.product.name}</p>
+                        <p className="text-xs text-[var(--text-primary)] mt-0.5 max-w-[180px] truncate">{l.product.name}</p>
                       </td>
-                      <td className="py-3 px-4 max-w-[200px] truncate text-sm text-slate-600">
-                        {l.listingTitle ?? <span className="text-slate-300">—</span>}
+                      <td className="py-3 px-4 max-w-[200px] truncate text-sm text-[var(--text-secondary)]">
+                        {l.listingTitle ?? <span className="text-[var(--text-muted)]">—</span>}
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[l.status] ?? "bg-slate-100 text-slate-500"}`}>
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${STATUS_COLORS[l.status] ?? "bg-[var(--surface-3)] text-[var(--text-muted)] border border-[var(--border-subtle)]"}`}>
                           {STATUS_LABELS[l.status] ?? l.status}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-xs text-slate-500">
-                        {l.responsible?.name ?? <span className="text-slate-300">—</span>}
+                      <td className="py-3 px-4 text-xs text-[var(--text-secondary)]">
+                        {l.responsible?.name ?? <span className="text-[var(--text-muted)]">—</span>}
                       </td>
                       <td className="py-3 px-4">
-                        <Link href={`/marketplace/${l.id}`} className="text-xs text-slate-500 hover:text-slate-800 underline-offset-2 hover:underline">
+                        <Link href={`/marketplace/${l.id}`} className="text-xs text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors">
                           Görüntüle
                         </Link>
                       </td>

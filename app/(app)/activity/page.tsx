@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { Activity } from "lucide-react";
+import {
+  Activity,
+  StickyNote,
+  Phone,
+  Users as UsersIcon,
+  Mail,
+  MessageCircle,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -20,6 +31,16 @@ const NOTE_TYPE_TR: Record<string, string> = {
   EMAIL: "E-posta",
   WHATSAPP: "WhatsApp",
   QUOTE: "Teklif",
+};
+
+// Phase: type-specific Lucide icon + token color for activity feed
+const NOTE_TYPE_ICON: Record<string, { icon: LucideIcon; cls: string }> = {
+  NOTE: { icon: StickyNote, cls: "text-[var(--text-secondary)]" },
+  CALL: { icon: Phone, cls: "text-[var(--info)]" },
+  MEETING: { icon: UsersIcon, cls: "text-[var(--info)]" },
+  EMAIL: { icon: Mail, cls: "text-[var(--text-secondary)]" },
+  WHATSAPP: { icon: MessageCircle, cls: "text-[var(--ok)]" },
+  QUOTE: { icon: FileText, cls: "text-[var(--accent)]" },
 };
 
 export default async function ActivityPage({
@@ -58,7 +79,7 @@ export default async function ActivityPage({
         title="Aktiviteler"
         subtitle="Tüm kullanıcıların müşteri/teklif notları — zaman akışı."
         meta={
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+          <span className="inline-flex items-center rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] px-2 py-0.5 text-[11px] font-medium tabular-nums font-mono text-[var(--text-secondary)]">
             {total.toLocaleString("tr-TR")} kayıt
           </span>
         }
@@ -66,11 +87,11 @@ export default async function ActivityPage({
 
       {/* Filters */}
       <Card className="p-4">
-        <form method="GET" action="/activity" className="flex flex-wrap gap-3">
+        <form method="GET" action="/activity" className="flex flex-wrap gap-2">
           <select
             name="userId"
             defaultValue={userId}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+            className="h-9 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]"
           >
             <option value="all">Tüm kullanıcılar</option>
             {users.map((u) => (
@@ -83,7 +104,7 @@ export default async function ActivityPage({
           <select
             name="type"
             defaultValue={type}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+            className="h-9 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-border)]"
           >
             <option value="all">Tüm türler</option>
             {Object.entries(NOTE_TYPE_TR).map(([val, label]) => (
@@ -95,7 +116,7 @@ export default async function ActivityPage({
 
           <button
             type="submit"
-            className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-700"
+            className="h-9 rounded-md bg-[var(--accent)] px-4 text-sm font-medium text-[var(--accent-fg)] transition hover:brightness-110"
           >
             Filtrele
           </button>
@@ -103,7 +124,7 @@ export default async function ActivityPage({
           {(userId !== "all" || type !== "all") && (
             <Link
               href="/activity"
-              className="flex h-10 items-center rounded-xl border border-slate-200 px-4 text-sm text-slate-600 transition hover:bg-slate-50"
+              className="inline-flex h-9 items-center rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
             >
               Temizle
             </Link>
@@ -111,46 +132,61 @@ export default async function ActivityPage({
         </form>
       </Card>
 
+      {/* Section header */}
+      <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+        Zaman Akışı
+      </h2>
+
       {/* Entries */}
       <div className="space-y-3">
         {entries.length === 0 ? (
-          <Card className="p-8 text-center text-sm text-slate-500">
+          <Card className="p-8 text-center text-sm text-[var(--text-muted)]">
             Kayıt bulunamadı.
           </Card>
         ) : (
-          entries.map((entry) => (
-            <Card key={entry.id} className="p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{formatNoteType(entry.type as NoteType)}</Badge>
-                  {entry.customer ? (
-                    <Link
-                      href={`/customers/${entry.customer.id}`}
-                      className="text-sm font-medium text-slate-900 hover:underline"
-                    >
-                      {entry.customer.name}
-                      {entry.customer.company
-                        ? ` · ${entry.customer.company}`
-                        : ""}
-                    </Link>
-                  ) : (
-                    <span className="text-sm text-slate-500">Genel kayıt</span>
-                  )}
+          entries.map((entry) => {
+            const typeKey = entry.type as string;
+            const iconCfg = NOTE_TYPE_ICON[typeKey] ?? NOTE_TYPE_ICON.NOTE;
+            const Icon = iconCfg.icon;
+            return (
+              <Card key={entry.id} className="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex h-5 w-5 items-center justify-center ${iconCfg.cls}`}>
+                      <Icon size={14} strokeWidth={1.5} />
+                    </span>
+                    <Badge>{formatNoteType(entry.type as NoteType)}</Badge>
+                    {entry.customer ? (
+                      <Link
+                        href={`/customers/${entry.customer.id}`}
+                        className="text-sm font-medium text-[var(--text-primary)] transition-colors hover:text-[var(--accent)]"
+                      >
+                        {entry.customer.name}
+                        {entry.customer.company
+                          ? ` · ${entry.customer.company}`
+                          : ""}
+                      </Link>
+                    ) : (
+                      <span className="text-sm text-[var(--text-muted)]">Genel kayıt</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="font-medium text-[var(--text-secondary)]">
+                      {entry.createdBy?.name ?? "Sistem"}
+                    </span>
+                    <span className="font-mono tabular-nums text-[var(--text-muted)]">
+                      {formatDateTime(entry.createdAt)}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-slate-400">
-                  <span className="font-medium text-slate-600">
-                    {entry.createdBy?.name ?? "Sistem"}
-                  </span>
-                  <span>{formatDateTime(entry.createdAt)}</span>
-                </div>
-              </div>
-
-              <p className="mt-3 text-sm leading-6 text-slate-700">
-                {entry.content}
-              </p>
-            </Card>
-          ))
+                <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
+                  {entry.content}
+                </p>
+              </Card>
+            );
+          })
         )}
       </div>
 
@@ -160,20 +196,22 @@ export default async function ActivityPage({
           {page > 1 && (
             <Link
               href={pageUrl(page - 1)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
             >
-              ← Önceki
+              <ChevronLeft size={14} strokeWidth={1.5} />
+              Önceki
             </Link>
           )}
-          <span className="text-sm text-slate-500">
+          <span className="text-sm font-mono tabular-nums text-[var(--text-muted)]">
             {page} / {totalPages}
           </span>
           {page < totalPages && (
             <Link
               href={pageUrl(page + 1)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
             >
-              Sonraki →
+              Sonraki
+              <ChevronRight size={14} strokeWidth={1.5} />
             </Link>
           )}
         </div>

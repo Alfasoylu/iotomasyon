@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { FileText, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,8 @@ export default async function QuotesPage({
     return `/quotes${qs ? `?${qs}` : ""}`;
   }
 
+  const hasFilters = status !== "all" || Boolean(q);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -58,7 +60,7 @@ export default async function QuotesPage({
         title="Teklifler"
         subtitle="Tüm müşteri teklifleri. Durum filtresiyle aşamayı, müşteri bazlı görünümle takibi yap."
         meta={
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+          <span className="inline-flex items-center rounded-md border border-[var(--border-subtle)] bg-[var(--surface-3)] px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-[var(--text-secondary)] tabular-nums">
             {total.toLocaleString("tr-TR")} teklif
           </span>
         }
@@ -66,17 +68,17 @@ export default async function QuotesPage({
 
       {/* Filters */}
       <Card className="p-4">
-        <form method="GET" action="/quotes" className="flex flex-wrap gap-3">
+        <form method="GET" action="/quotes" className="flex flex-wrap gap-2">
           <input
             name="q"
             defaultValue={q}
             placeholder="Teklif no veya müşteri ara..."
-            className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400 min-w-[200px]"
+            className="h-9 flex-1 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition focus:border-[var(--border-strong)] min-w-[200px]"
           />
           <select
             name="status"
             defaultValue={status}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400"
+            className="h-9 rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[13px] text-[var(--text-primary)] outline-none transition focus:border-[var(--border-strong)]"
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -84,16 +86,13 @@ export default async function QuotesPage({
               </option>
             ))}
           </select>
-          <button
-            type="submit"
-            className="h-10 rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-700"
-          >
+          <Button type="submit" size="md" variant="secondary">
             Ara
-          </button>
-          {(status !== "all" || q) && (
+          </Button>
+          {hasFilters && (
             <Link
               href="/quotes"
-              className="flex h-10 items-center rounded-xl border border-slate-200 px-4 text-sm text-slate-600 transition hover:bg-slate-50"
+              className="inline-flex h-9 items-center rounded-md border border-[var(--border-default)] px-3.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
             >
               Temizle
             </Link>
@@ -108,14 +107,14 @@ export default async function QuotesPage({
             <Link
               key={quote.id}
               href={`/quotes/${quote.id}`}
-              className="block rounded-2xl border border-slate-200 bg-white p-4 transition active:bg-slate-50"
+              className="block rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-4 transition hover:bg-[var(--surface-3)] active:bg-[var(--surface-3)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-sm font-semibold text-slate-900">
+                  <p className="font-mono text-[13px] font-semibold text-[var(--text-primary)] tabular-nums">
                     {quote.quoteNumber}
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-600 truncate">
+                  <p className="mt-0.5 text-xs text-[var(--text-secondary)] truncate">
                     {quote.customer.name}
                   </p>
                 </div>
@@ -123,9 +122,9 @@ export default async function QuotesPage({
                   {formatQuoteStatus(quote.status)}
                 </Badge>
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                <span>{formatDateTime(quote.createdAt)}</span>
-                <span className="font-mono font-semibold text-slate-900">
+              <div className="mt-3 flex items-center justify-between text-xs text-[var(--text-muted)]">
+                <span className="tabular-nums">{formatDateTime(quote.createdAt)}</span>
+                <span className="font-mono font-semibold text-[var(--text-primary)] tabular-nums">
                   {Number(quote.total).toLocaleString("tr-TR", { minimumFractionDigits: 2 })}{" "}
                   {formatQuoteCurrencyMode(quote.currencyMode ?? "TRY")}
                 </span>
@@ -138,64 +137,64 @@ export default async function QuotesPage({
       {/* Desktop tablo (md+) */}
       <Card className="hidden md:block overflow-hidden">
         {quotes.length === 0 ? (
-          <div className="p-10 text-center text-sm text-slate-500">
+          <div className="p-10 text-center text-[13px] text-[var(--text-muted)]">
             Teklif bulunamadı.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="bg-slate-50 text-left">
-                  <th className="px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                <tr className="border-b border-[var(--border-default)] bg-[var(--surface-1)] text-left">
+                  <th className="px-6 py-3 text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
                     Teklif No
                   </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
                     Müşteri
                   </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
                     Durum
                   </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
                     Para Birimi
                   </th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
                     Toplam
                   </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
                     Tarih
                   </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                  <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
                     Hazırlayan
                   </th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {quotes.map((quote, idx) => (
+              <tbody className="divide-y divide-[var(--border-subtle)]">
+                {quotes.map((quote) => (
                   <tr
                     key={quote.id}
-                    className={idx % 2 === 1 ? "bg-slate-50/50" : "bg-white"}
+                    className="transition hover:bg-[var(--surface-3)]"
                   >
                     <td className="px-6 py-4">
                       <Link
                         href={`/quotes/${quote.id}`}
-                        className="font-mono text-sm font-semibold text-slate-900 hover:text-orange-600"
+                        className="font-mono text-[13px] font-semibold tabular-nums text-[var(--text-primary)] transition hover:text-[var(--accent)]"
                       >
                         {quote.quoteNumber}
                       </Link>
-                      <p className="mt-0.5 text-xs text-slate-400">
+                      <p className="mt-0.5 text-xs text-[var(--text-muted)] tabular-nums">
                         {quote._count.items} kalem
                       </p>
                     </td>
                     <td className="px-4 py-4">
                       <Link
                         href={`/customers/${quote.customer.id}`}
-                        className="text-sm font-medium text-slate-900 hover:underline"
+                        className="text-[13px] font-medium text-[var(--text-primary)] transition hover:text-[var(--accent)]"
                       >
                         {quote.customer.name}
                       </Link>
                       {quote.customer.company && (
-                        <p className="mt-0.5 text-xs text-slate-400">
+                        <p className="mt-0.5 text-xs text-[var(--text-muted)]">
                           {quote.customer.company}
                         </p>
                       )}
@@ -205,24 +204,24 @@ export default async function QuotesPage({
                         {formatQuoteStatus(quote.status)}
                       </Badge>
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-600">
+                    <td className="px-4 py-4 text-[13px] text-[var(--text-secondary)]">
                       {formatQuoteCurrencyMode(quote.currencyMode ?? "TRY")}
                     </td>
-                    <td className="px-4 py-4 text-right text-sm font-semibold text-slate-900">
+                    <td className="px-4 py-4 text-right font-mono text-[13px] font-semibold tabular-nums text-[var(--text-primary)]">
                       {Number(quote.total).toLocaleString("tr-TR", {
                         minimumFractionDigits: 2,
                       })}
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-500">
+                    <td className="px-4 py-4 font-mono text-[12px] tabular-nums text-[var(--text-muted)]">
                       {formatDateTime(quote.createdAt)}
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-500">
+                    <td className="px-4 py-4 text-[13px] text-[var(--text-secondary)]">
                       {quote.createdBy?.name ?? "—"}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <Link href={`/quotes/${quote.id}`}>
-                          <Button variant="ghost" className="h-8 px-3 text-xs">
+                          <Button variant="ghost" size="sm">
                             Görüntüle
                           </Button>
                         </Link>
@@ -231,10 +230,7 @@ export default async function QuotesPage({
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <Button
-                            variant="ghost"
-                            className="h-8 px-3 text-xs text-slate-500"
-                          >
+                          <Button variant="ghost" size="sm">
                             PDF
                           </Button>
                         </a>
@@ -254,20 +250,22 @@ export default async function QuotesPage({
           {page > 1 && (
             <Link
               href={pageUrl(page - 1)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
             >
-              ← Önceki
+              <ChevronLeft size={14} strokeWidth={1.5} />
+              Önceki
             </Link>
           )}
-          <span className="text-sm text-slate-500">
+          <span className="font-mono text-[12px] tabular-nums text-[var(--text-muted)]">
             {page} / {totalPages}
           </span>
           {page < totalPages && (
             <Link
               href={pageUrl(page + 1)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3.5 text-[13px] font-medium text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
             >
-              Sonraki →
+              Sonraki
+              <ChevronRight size={14} strokeWidth={1.5} />
             </Link>
           )}
         </div>
