@@ -53,18 +53,18 @@ export default async function EditProductPage({
         <div>
           <Link
             href="/products"
-            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+            className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
           >
             ← Ürünler
           </Link>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Ürün düzenleme geçici olarak kullanılamıyor
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
             Veritabanı bağlantısı şu anda kullanılamıyor.
           </p>
         </div>
-        <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
+        <Card className="border-[var(--warn-border)] bg-[var(--warn-dim)] p-6 text-sm leading-relaxed text-[var(--warn)]">
           Veritabanına ulaşılamadığı için ürün düzenleme formu yüklenemedi.
         </Card>
       </div>
@@ -76,23 +76,23 @@ export default async function EditProductPage({
   return (
     <div className="space-y-6">
       <div>
-        <nav className="flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-          <Link href="/products" className="hover:text-slate-900 transition">
+        <nav className="flex flex-wrap items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+          <Link href="/products" className="transition hover:text-[var(--text-primary)]">
             ← Ürünler
           </Link>
-          <span className="text-slate-300">/</span>
+          <span className="text-[var(--border-default)]">/</span>
           <Link
             href={`/products/${product.id}`}
-            className="max-w-[280px] truncate normal-case tracking-normal text-slate-500 hover:text-slate-900 transition"
+            className="max-w-[280px] truncate normal-case tracking-normal text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
             title={product.name}
           >
             {product.name}
           </Link>
         </nav>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+        <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           Ürün düzenle
         </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
           Ürün bilgilerini, stok zekasını ve maliyet girdilerini güncelleyin.
         </p>
       </div>
@@ -171,12 +171,12 @@ export default async function EditProductPage({
 
       {/* Phase 27: Product Media Studio */}
       <Card className="overflow-hidden">
-        <div className="border-b border-slate-200 px-6 py-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+        <div className="border-b border-[var(--border-subtle)] px-6 py-5">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Faz 27 — Medya Stüdyosu
           </p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-950">Ürün Görselleri</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">Ürün Görselleri</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             URL girerek veya dosya yükleyerek görsel ekleyin. Birincil görsel ürün listesinde ve detay sayfasında kullanılır.
           </p>
         </div>
@@ -197,12 +197,12 @@ export default async function EditProductPage({
 
       {/* Phase 20: Supplier product links */}
       <Card className="overflow-hidden">
-        <div className="border-b border-slate-200 px-6 py-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+        <div className="border-b border-[var(--border-subtle)] px-6 py-5">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             Faz 20 — Tedarikçi Zekası
           </p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-950">Tedarikçi Bağlantıları</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">Tedarikçi Bağlantıları</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             Bu ürünü tedarik eden tedarikçileri, maliyetleri ve koşulları yönetin.
           </p>
         </div>
@@ -226,13 +226,13 @@ export default async function EditProductPage({
 
       {/* Phase 28: Owner-only private note */}
       {canViewPrivate && (
-        <Card className="overflow-hidden border-amber-200">
-          <div className="border-b border-amber-200 bg-amber-50 px-6 py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">
+        <Card className="overflow-hidden border-[var(--warn-border)]">
+          <div className="border-b border-[var(--warn-border)] bg-[var(--warn-dim)] px-6 py-5">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--warn)]">
               Faz 28 — Özel Zeka
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-slate-950">Özel Not</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="mt-2 text-lg font-semibold text-[var(--text-primary)]">Özel Not</h2>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
               Sadece sahip/yönetici görebilir. Tedarikçi bilgisi, fiyat stratejisi, özel satın alma notları.
             </p>
           </div>

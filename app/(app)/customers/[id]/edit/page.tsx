@@ -33,20 +33,20 @@ export default async function EditCustomerPage({
         <div>
           <Link
             href="/customers"
-            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition"
+            className="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
           >
             ← Müşteriler
           </Link>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
             Müşteri düzenleme geçici olarak kullanılamıyor
           </h1>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
+          <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
             Veritabanı bağlantısı şu anda kullanılamıyor. Bağlantı geri geldiğinde
             bu ekran tekrar kullanılabilir olacak.
           </p>
         </div>
 
-        <Card className="border-amber-200 bg-amber-50 p-6 text-sm leading-7 text-amber-900">
+        <Card className="border-[var(--warn-border)] bg-[var(--warn-dim)] p-6 text-sm leading-relaxed text-[var(--warn)]">
           Veritabanına ulaşılamadığı için müşteri düzenleme formu yüklenemedi.
         </Card>
       </div>
@@ -60,23 +60,23 @@ export default async function EditCustomerPage({
   return (
     <div className="space-y-6">
       <div>
-        <nav className="flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-          <Link href="/customers" className="hover:text-slate-900 transition">
+        <nav className="flex flex-wrap items-center gap-1 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+          <Link href="/customers" className="transition hover:text-[var(--text-primary)]">
             ← Müşteriler
           </Link>
-          <span className="text-slate-300">/</span>
+          <span className="text-[var(--border-default)]">/</span>
           <Link
             href={`/customers/${customer.id}`}
-            className="max-w-[280px] truncate normal-case tracking-normal text-slate-500 hover:text-slate-900 transition"
+            className="max-w-[280px] truncate normal-case tracking-normal text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
             title={customer.name}
           >
             {customer.name}
           </Link>
         </nav>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+        <h1 className="mt-3 text-[22px] font-semibold tracking-tight text-[var(--text-primary)]">
           Müşteri düzenle
         </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
           Müşteri iletişim kaydını ve satış durumunu güncelleyin.
         </p>
       </div>
