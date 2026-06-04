@@ -1182,6 +1182,24 @@ model SupplierProduct {
 // One row per Trendyol order line. Synced via /admin/product-performance.
 // productId is nullable: unmatched lines kept for audit but excluded from rankings.
 
+model ProductSourceLink {
+  id         String   @id @default(cuid())
+  productId  String
+  sourceName String   @default("1688")
+  label      String?
+  url        String
+  notes      String?
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([sourceName])
+  @@index([sortOrder])
+}
+
 model TrendyolSalesRecord {
   id        String   @id @default(cuid())
   orderId   String // Trendyol order numeric ID (as string)
