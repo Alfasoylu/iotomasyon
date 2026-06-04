@@ -18,7 +18,13 @@ import {
   getCatalogProfile,
   CATALOG_PROFILES,
   GENERAL_PROFILE,
+  type CatalogPriceMode,
 } from "@/lib/catalog-mapping";
+import {
+  CATALOG_PRICE_SELECT,
+  catalogPriceFilter,
+  resolveCatalogPrice,
+} from "@/lib/catalog-price";
 import { getShareByToken, recordShareView } from "@/services/catalog-share-service";
 import { prisma } from "@/lib/prisma";
 import { CatalogInterestButton } from "@/components/catalog/catalog-interest-button";
@@ -87,8 +93,8 @@ export default async function PublicCatalogPage({
     const where: Record<string, unknown> = { isActive: true, categoryId: cat.id };
     if (share.onlyStock) where.stockQuantity = { gt: 0 };
     if (share.brandFilter.length > 0) where.brand = { in: share.brandFilter };
-    if (share.priceMode === "wholesale") where.wholesalePriceUsd = { not: null };
-    else if (share.priceMode === "retail") where.retailPriceUsd = { not: null };
+    const priceFilter = catalogPriceFilter(share.priceMode as CatalogPriceMode);
+    if (priceFilter) Object.assign(where, priceFilter);
 
     const products = await prisma.product.findMany({
       where: where as Parameters<typeof prisma.product.findMany>[0] extends infer T
@@ -104,8 +110,7 @@ export default async function PublicCatalogPage({
         brand: true,
         imageUrl: true,
         stockQuantity: true,
-        wholesalePriceUsd: true,
-        retailPriceUsd: true,
+        ...CATALOG_PRICE_SELECT,
       },
       orderBy: [{ stockQuantity: "desc" }, { name: "asc" }],
       take: 50,
@@ -123,16 +128,7 @@ export default async function PublicCatalogPage({
         brand: p.brand,
         imageUrl: p.imageUrl,
         stockQuantity: p.stockQuantity,
-        priceUsd:
-          share.priceMode === "wholesale"
-            ? p.wholesalePriceUsd
-              ? Number(p.wholesalePriceUsd)
-              : null
-            : share.priceMode === "retail"
-              ? p.retailPriceUsd
-                ? Number(p.retailPriceUsd)
-                : null
-              : null,
+        priceUsd: resolveCatalogPrice(p, share.priceMode as CatalogPriceMode),
       })),
     });
   }
