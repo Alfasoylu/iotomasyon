@@ -188,22 +188,33 @@ export function renderContentPages({ pdf, fonts: f, quote }: ContentInput): void
 
   y = sy - 8;
 
-  // Grand total — Faz 3: yine ink box (sol accent şerit Faz 4'te eklenecek)
-  page.drawRectangle({ x: TX, y: y - GT_H, width: TOTALS_W, height: GT_H, color: C.ink });
-  drawStyled(page, f, "GENEL TOPLAM", TX + 8, y - 13, TYPE.sectionLabel, C.captionOnDark);
+  // Grand total — Faz 4 DRAMATIC: ink box + sol accent yellow şerit + büyük mono
+  // Tek boyut: BOTH mode'da 56px, tek currency mode'da 44px
+  const GT_FAZ4_H = isBoth ? 56 : 44;
+  // Ink box
+  page.drawRectangle({ x: TX, y: y - GT_FAZ4_H, width: TOTALS_W, height: GT_FAZ4_H, color: C.ink });
+  // Sol accent yellow şerit (4px)
+  page.drawRectangle({ x: TX, y: y - GT_FAZ4_H, width: 4, height: GT_FAZ4_H, color: C.accent });
+
+  // Label sol üst — uppercase tracking widest accent rengi
+  drawStyled(page, f, "GENEL TOPLAM", TX + 14, y - 14, TYPE.sectionLabel, C.accent);
 
   const grandLines = pdfLines(ctx, Number(quote.total), quoteCurrency);
   const grand0 = safe(grandLines[0] ?? "");
-  const grandToken = { ...TYPE.monoMoney, size: 14 };
+  // Faz 4: 22px mono semibold — eski 14px → 22px (dramatic ama BOTH mode'da iki satır sığsın)
+  const grandToken = isBoth
+    ? { ...TYPE.monoMoney, size: 18 }
+    : { ...TYPE.monoMoney, size: 22 };
   const grand0W = measureWidth(f, grand0, grandToken);
-  drawStyled(page, f, grand0, rightEdge - grand0W, y - 28, grandToken, C.textOnDark);
+  drawStyled(page, f, grand0, rightEdge - grand0W, y - (isBoth ? 30 : 34), grandToken, C.textOnDark);
   if (grandLines[1]) {
     const grand1 = safe(grandLines[1]);
-    const grand1W = measureWidth(f, grand1, TYPE.monoBody);
-    drawStyled(page, f, grand1, rightEdge - grand1W, y - 42, TYPE.monoBody, C.captionOnDark);
+    const grand1Token = { ...TYPE.monoMoney, size: 13 };
+    const grand1W = measureWidth(f, grand1, grand1Token);
+    drawStyled(page, f, grand1, rightEdge - grand1W, y - 48, grand1Token, C.captionOnDark);
   }
 
-  y -= GT_H + 12;
+  y -= GT_FAZ4_H + 12;
 
   if (ctx.rate && ctx.rate > 0) {
     const rateN = new Intl.NumberFormat("tr-TR", {
@@ -259,6 +270,52 @@ export function renderContentPages({ pdf, fonts: f, quote }: ContentInput): void
   drawText(page, f.sansRegular, safe(`Banka: ${COMPANY_SETTINGS.bankName}  |  Hesap Türü: ${COMPANY_SETTINGS.bankAccountType}`), ML + 10, y - 28, 8, C.textBody);
   drawStyled(page, f, safe(`IBAN: ${COMPANY_SETTINGS.bankIban}`), ML + 10, y - 42, TYPE.quoteNumberLarge, C.textPrimary);
   drawText(page, f.sansRegular, safe(`Hesap Sahibi: ${limitTxt(COMPANY_SETTINGS.bankAccountHolder, 78)}`), ML + 10, y - 52, 7, C.textMuted);
+
+  y -= BANK_H + 24;
+
+  // ── ACCEPTANCE SECTION (Faz 4) ───────────────────────────────
+  // Müşterinin imza/onay alanı + dijital onay link
+  const ACCEPTANCE_H = 88;
+  ensureSpace(ACCEPTANCE_H + 8);
+
+  // Header
+  drawStyled(page, f, "KABUL", ML, y - 8, TYPE.sectionLabel, C.textMuted);
+  drawStyled(
+    page, f,
+    "Bu teklifi koşullarıyla birlikte kabul ediyorum.",
+    ML, y - 26, TYPE.bodyEmphasis, C.textPrimary,
+  );
+
+  // İmza + tarih satırı
+  const SIG_Y = y - 60;
+  const SIG_LABEL_Y = SIG_Y - 12;
+
+  // "Müşteri imzası: ________________________" — line via drawLine
+  drawText(page, f.sansRegular, "Müşteri imzası:", ML, SIG_Y, 9, C.textSecondary);
+  page.drawLine({
+    start: { x: ML + 80, y: SIG_Y - 2 },
+    end: { x: ML + 280, y: SIG_Y - 2 },
+    thickness: 0.5,
+    color: C.borderStrong,
+  });
+
+  drawText(page, f.sansRegular, "Tarih:", ML + 310, SIG_Y, 9, C.textSecondary);
+  page.drawLine({
+    start: { x: ML + 340, y: SIG_Y - 2 },
+    end: { x: ML + 440, y: SIG_Y - 2 },
+    thickness: 0.5,
+    color: C.borderStrong,
+  });
+  // Date format hint — satırın altında, çakışmasın
+  drawStyled(page, f, "GG / AA / YYYY", ML + 360, SIG_LABEL_Y, TYPE.tinyCaption, C.textMuted);
+
+  // Online onay linki — kendi satırında, biraz daha alt
+  const onlineUrl = `iotomasyon.com/q/${quote.quoteNumber}/accept`;
+  drawStyled(
+    page, f,
+    safe(`Çevrimiçi onay: ${onlineUrl}`),
+    ML, y - ACCEPTANCE_H + 4, TYPE.monoBody, C.textMuted,
+  );
 }
 
 /**
