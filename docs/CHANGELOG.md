@@ -7,6 +7,98 @@
 - If a change is inferred from documentation but not independently verified in code, avoid wording it as fully implemented.
 - ROADMAP items must not appear here unless implemented.
 
+## 2026-06
+
+### Tedarik Kaynak Linkleri — Sınırsız ölçekli model (2026-06-05)
+
+**Amaç:**
+Ürünlerde sabit 2 adet `source1688Url1/2` kolonu yetersizdi; admin için satın alma/tedarik
+kaynaklarını sınırsız tutan ölçeklenebilir bir model gerekiyordu.
+
+**Yapı:**
+- Yeni `ProductSourceLink` modeli: `productId`, `sourceName` (default "1688"), `label`, `url`,
+  `notes`, `sortOrder`, `createdAt`, `updatedAt` — bir Product'a N tane link bağlanabilir
+- Migration 20260605000200: eski `source1688Url1/2` verisini yeni tabloya taşır,
+  veri kaybı yok
+- `app/(app)/products/[id]/edit` — Tedarik Kaynak Linkleri modülü (admin), ekle/güncelle/sil
+- `app/(app)/products/[id]` — detay sayfasında kart olarak listelenir
+- `app/api/products/importer-view` + `components/products/importer-view-client.tsx`
+  — importer görünümünde tıklanabilir link listesi
+- `lib/actions/product-source-link-actions.ts` — Server action'lar
+- `services/product-service.ts` — sourceLinks relation include'u
+
+**Deploy:**
+- PR olmadan main'e direkt commit edildi (Codex tarafından, 98869f0 + de1d340)
+- `Fix missing product source link model` commit'i ilk push'taki schema eksiğini tamamladı
+- Vercel git build durumu: READY (commit `de1d340`)
+
+### XML satış import — Entegra 5 yıllık veri yüklemesi (2026-06-04)
+
+**Amaç:**
+Müşterinin Entegra'dan dışa aktardığı 5 yıllık (2020-2026) tüm pazaryeri satış geçmişini
+`MarketplaceSalesRecord` tablosuna yüklemek. Müşteri kaydı oluşturulmaması istendi
+(tek-seferlik B2C siparişler).
+
+**Sonuç:**
+- 141.021 Excel satırı işlendi, 1.580 yeni kayıt eklendi (kalanı önceki backfill'den dedup)
+- 142.046 toplam MarketplaceSalesRecord — 7 yıllık (2020-2026), ~₺80M ciro
+- 90.9% ürün eşleşmesi (SKU/barcode/Jaccard name-match)
+- 15 kanal: TRENDYOL (99.855), HEPSIBURADA (28.682), N11 (6.794), IDEASOFT, GG,
+  PAZARAMA, EPTT, MIRAKL_KOCTAS, IDEFIX, AMAZON, TEMU, CICEKSEPETI, MIRAKL_TEKNOSA,
+  SHOPPHP, MANUAL
+- Müşteri tablosuna yazılmadı — `customerFirma`, `customerInvoiceName`, `customerCity`,
+  `customerVergiNo` alanları string olarak `MarketplaceSalesRecord` içinde
+- Script: `scripts/import-entegra-sales.ts` — dotenv otomatik, `--file=path` param,
+  idempotent composite key dedup
+
+### Katalog XML fiyat fallback (2026-06-04)
+
+Catalog ürün listesi şimdi `Product.wholesalePriceUsd`/`retailPriceUsd` boşsa
+XML kaynaklı `XmlProductData.xmlBayiPrice`/`xmlPrice4`'a düşer. Yeni XML ürünleri
+manuel backfill gerektirmeden katalogda görünür. Elle override yapılanlar XML sync'te
+ezilmez. Perakende kataloğu 627→1198 ürüne çıktı (94.3% kapsama). `lib/catalog-price.ts`
+helper'ı tek noktadan yönetir.
+
+### Quote PDF reformu (Faz 1-5, 2026-06-04/05)
+
+Eski 493 satır tek-dosya route handler tamamen yeniden yazıldı — Stripe / Linear /
+Vercel receipt kalitesinde modüler PDF.
+
+**Yapı:**
+- `lib/quote-pdf/` modüler dizini: index.ts, document.ts, currency.ts, types.ts,
+  primitives/ (typography, colors, qr-code, page-numbers), layout/ (cover-page, content-pages)
+- `app/(app)/quotes/[id]/pdf/route.ts` 493 → 36 satır
+
+**Yeni özellikler:**
+- **Cover sayfası:** 32px "Fiyat Teklifi" H1, 14px mono quote no, 22px müşteri kart,
+  140px logo, üst sağ 3 sarı accent çubuk, QR kod (qrcode npm), KAPSAM + GEÇERLİLİK stat
+- **Tipografi:** Geist Sans (Regular/Medium/SemiBold) + Geist Mono (Regular/Medium),
+  17-token TYPE sistemi
+- **Renk:** Endüstriyel-minimal (ink + neutral + accent yellow #e8ff5a restraint ile)
+- **Content pages:** Sticky chrome (her sayfada), items table, dramatic Genel Toplam
+  (sol sarı şerit + 22px mono semibold)
+- **Acceptance section:** KABUL bloğu + imza/tarih alanları + GG/AA/YYYY hint +
+  çevrimiçi onay linki
+- **"Sayfa X / Y"** iki-geçişli render
+- **PDF metadata:** setTitle/setAuthor/setSubject/setKeywords/setProducer
+- **Benchmark:** 5 senaryo (1/5/50 kalem, BOTH mode, max-strings) — P95 max 316ms
+  (hedef 800ms), boyut 89-104 KB
+
+### Tasarım reformu — Endüstriyel-minimal dark theme (2026-06-04)
+
+Tüm CRM koyu tema (#0f0f0f surface + #e8ff5a Soylu electric yellow accent).
+
+- 14 PR (#67-#81) ile 130+ dosya migre edildi
+- Token sistemi (`globals.css`): surface-0/1/2/3, text-primary/secondary/muted,
+  border-subtle/default/strong, accent + semantic ok/warn/danger/info
+- Sidebar yeniden tasarlandı: surface-1 bg, accent-dim active state (border'lı),
+  14px Lucide ikon, AS monogram (PNG logo yerine)
+- Primitivler token'a bağlandı: Card, Button (accent primary), Badge (variant API),
+  Input/Textarea (surface-3), MetricCard (yeni)
+- `[data-app-shell]` scope'lu CSS override — 170+ raw Tailwind class otomatik dark
+- 42+ emoji Lucide ikona çevrildi
+- ASCII logo path (UTF-8 NFC/NFD bug fix): `/soylu-logo.png`
+
 ## 2026-05
 
 ### Phase 91 — Görselle Ürün Arama (Self-hosted CLIP Space + pgvector) (2026-05-19)
