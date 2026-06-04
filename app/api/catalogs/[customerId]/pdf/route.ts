@@ -22,6 +22,11 @@ import {
   type CatalogPdfCategorySection,
   type CatalogPdfProduct,
 } from "@/lib/catalog-pdf-generator";
+import {
+  CATALOG_PRICE_SELECT,
+  catalogPriceFilter,
+  resolveCatalogPrice,
+} from "@/lib/catalog-price";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -104,9 +109,9 @@ export async function GET(
     if (onlyStock) where.stockQuantity = { gt: 0 };
     if (brandFilter.length > 0) where.brand = { in: brandFilter };
 
-    // Filter out products without USD price (when priceMode is wholesale or retail)
-    if (priceMode === "wholesale") where.wholesalePriceUsd = { not: null };
-    else if (priceMode === "retail") where.retailPriceUsd = { not: null };
+    // Fiyatı olan ürünleri filtrele — manual override VEYA XML fallback
+    const priceFilter = catalogPriceFilter(priceMode);
+    if (priceFilter) Object.assign(where, priceFilter);
 
     const products = await prisma.product.findMany({
       where: where as Parameters<typeof prisma.product.findMany>[0] extends infer T
@@ -122,8 +127,7 @@ export async function GET(
         brand: true,
         stockQuantity: true,
         imageUrl: true,
-        wholesalePriceUsd: true,
-        retailPriceUsd: true,
+        ...CATALOG_PRICE_SELECT,
       },
       orderBy: [{ stockQuantity: "desc" }, { name: "asc" }],
       take: 60, // hard cap per category
@@ -139,16 +143,7 @@ export async function GET(
       brand: p.brand,
       stockQuantity: p.stockQuantity,
       imageUrl: p.imageUrl,
-      priceUsd:
-        priceMode === "wholesale"
-          ? p.wholesalePriceUsd
-            ? Number(p.wholesalePriceUsd)
-            : null
-          : priceMode === "retail"
-            ? p.retailPriceUsd
-              ? Number(p.retailPriceUsd)
-              : null
-            : null,
+      priceUsd: resolveCatalogPrice(p, priceMode),
     }));
 
     sections.push({
