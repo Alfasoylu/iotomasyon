@@ -161,10 +161,14 @@ export async function renderCoverPage({
   }
 
   // ── 6) Alt yarım: QR kod + KAPSAM/GEÇERLİLİK stat sütunları ──────
-  // QR kod sol altta
+  // QR ve stat'lar dinamik konumlanır: ön söz varsa onun hemen altında,
+  // yoksa müşteri kartının altında — büyük boşluk kalmasın.
+  // Ama minimum 140px yukarıda dursun (alt iletişim şeridinden boşluk).
   const QR_SIZE = 80;
   const QR_X = ML;
-  const QR_Y = 170;
+  const STAT_GAP_AFTER_CONTENT = 40; // kart sonu ile QR arasında nefes alanı
+  const QR_MIN_Y = 140; // alt iletişim şeridinden korunan boşluk
+  const QR_Y = Math.max(QR_MIN_Y, nextY - STAT_GAP_AFTER_CONTENT - QR_SIZE);
   const url = quotePublicUrl(quote.quoteNumber);
   const qrImage = await embedQrCode(pdf, { url, size: 240 });
   if (qrImage) {
