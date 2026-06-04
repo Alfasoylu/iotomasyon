@@ -1,15 +1,19 @@
 import "server-only";
 
-import type { PDFFont, PDFImage, PDFPage } from "pdf-lib";
+import type { PDFDocument, PDFImage } from "pdf-lib";
 
 import { COMPANY_SETTINGS } from "@/lib/company-settings";
 import { formatQuoteStatus, getStoredTaxRateDisplay } from "@/lib/quote-utils";
 
+import type { QuotePdfFonts } from "../document";
 import { makeCurrencyContext, pdfLines } from "../currency";
 import { COLORS as C } from "../primitives/colors";
 import {
+  TYPE,
+  drawStyled,
   drawText,
   formatDate,
+  measureWidth,
   sanitize as safe,
   truncate as limitTxt,
   wrapText as wrapTxt,
@@ -17,16 +21,14 @@ import {
 import type { QuotePdfData } from "../types";
 
 /**
- * Faz 1 — Mevcut PDF layout'unun extract'i
+ * Faz 2 — Tipografi + renk yenilenmiş layout (yapı/yerleşim aynı)
  *
- * Bu dosya, eski route.ts'teki çizim mantığının birebir taşınmış halidir.
- * Görsel çıktı eskisiyle identical olmalı — sadece kod organizasyonu değişti.
+ * Değişen: Geist Sans + Geist Mono, TYPE token sistemi, neutral palet.
+ * Aynı kalan: section sıralaması, boyutlar, page break davranışı.
  *
- * Faz 2-4'te bu dosyanın yerini şu modüller alacak:
- *  - layout/cover-page.ts
- *  - layout/line-items.ts
- *  - layout/totals-page.ts
- *  - layout/page-chrome.ts
+ * Numerikler (tutarlar, IBAN, miktarlar) artık mono. Section başlıkları
+ * uppercase tracking-widest. Eski orange → ink (siyah), restraint amaçlı
+ * accent yellow bu fazda KULLANILMIYOR (Faz 3'te cover'da, Faz 4'te totals).
  */
 
 // ── Page constants ──────────────────────────────────────────────
@@ -34,10 +36,9 @@ const PW = 595;
 const PH = 842;
 const ML = 40;
 const MR = 40;
-const CW = PW - ML - MR; // 515 usable width
+const CW = PW - ML - MR;
 
-// ── Column layout ────────────────────────────────────────────────
-// NO | ÜRÜN / AÇIKLAMA (merged) | ADET | BİRİM FİYAT | KDV | TOPLAM
+// ── Column layout — aynı ─────────────────────────────────────────
 const COLS = [
   { key: "num",   x: ML + 6,   w: 18,  label: "NO" },
   { key: "item",  x: ML + 26,  w: 224, label: "ÜRÜN / AÇIKLAMA" },
@@ -48,13 +49,15 @@ const COLS = [
 ] as const;
 
 export interface RenderInput {
-  pdf: import("pdf-lib").PDFDocument;
-  font: PDFFont;
+  pdf: PDFDocument;
+  fonts: QuotePdfFonts;
   logo: PDFImage | null;
   quote: QuotePdfData;
 }
 
-export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): void {
+export function renderCurrentLayout({ pdf, fonts, logo, quote }: RenderInput): void {
+  const f = fonts; // shorthand
+
   // ── Currency context ──────────────────────────────────────────
   const ctx = makeCurrencyContext(quote);
   const quoteCurrency = quote.items[0]?.currency ?? "TRY";
@@ -67,24 +70,20 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
   function ensureSpace(needed: number): void {
     if (y - needed < 80) {
       page = pdf.addPage([PW, PH]);
-      // Orange accent stripe
-      page.drawRectangle({ x: 0, y: PH - 3, width: PW, height: 3, color: C.orange });
+      // Faz 2: üst aksan çubuk → ince ink çubuk (sarı yok henüz)
+      page.drawRectangle({ x: 0, y: PH - 2, width: PW, height: 2, color: C.ink });
       // Dark mini header bar
-      page.drawRectangle({ x: 0, y: PH - 28, width: PW, height: 25, color: C.charcoal });
-      page.drawText(safe(COMPANY_SETTINGS.companyName), {
-        x: ML, y: PH - 19, size: 9, font, color: C.white,
-      });
-      page.drawText(safe(`${quote.quoteNumber} — devam`), {
-        x: PW - ML - 100, y: PH - 19, size: 8, font, color: C.orange,
-      });
+      page.drawRectangle({ x: 0, y: PH - 28, width: PW, height: 25, color: C.ink });
+      drawStyled(page, f, safe(COMPANY_SETTINGS.companyName), ML, PH - 19, TYPE.chromeBrand, C.textOnDark);
+      drawStyled(page, f, safe(`${quote.quoteNumber} — devam`), PW - ML - 100, PH - 19, TYPE.chromeMeta, C.captionOnDark);
       y = PH - 42;
     }
   }
 
   // ── SECTION 1: Header ─────────────────────────────────────────
   const HEADER_H = 110;
-  page.drawRectangle({ x: 0, y: PH - 3, width: PW, height: 3, color: C.orange });
-  page.drawRectangle({ x: 0, y: PH - HEADER_H, width: PW, height: HEADER_H - 3, color: C.charcoal });
+  page.drawRectangle({ x: 0, y: PH - 2, width: PW, height: 2, color: C.ink });
+  page.drawRectangle({ x: 0, y: PH - HEADER_H, width: PW, height: HEADER_H - 2, color: C.ink });
 
   const LOGO_BOX_W = 70;
   const LOGO_BOX_H = 70;
@@ -105,20 +104,21 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
       height: h,
     });
   } else {
-    page.drawRectangle({ x: ML, y: PH - 90, width: 4, height: 65, color: C.orange });
+    page.drawRectangle({ x: ML, y: PH - 90, width: 4, height: 65, color: C.accent });
   }
 
   const COMP_X = ML + LOGO_BOX_W + 14;
-  drawText(page, font, safe(COMPANY_SETTINGS.companyName), COMP_X, PH - 26, 14, C.white);
-  drawText(page, font, safe(COMPANY_SETTINGS.tagline), COMP_X, PH - 42, 7.5, C.slate300);
-  drawText(page, font, safe(limitTxt(COMPANY_SETTINGS.address, 90)), COMP_X, PH - 56, 7, C.slate300);
-  drawText(page, font, safe(`Tel: ${COMPANY_SETTINGS.phone}  |  ${COMPANY_SETTINGS.phoneSecondary}`), COMP_X, PH - 69, 7, C.slate300);
-  drawText(page, font, safe(`${COMPANY_SETTINGS.email}  |  www.${COMPANY_SETTINGS.website}`), COMP_X, PH - 82, 7, C.slate300);
-  drawText(page, font, safe(`VD: ${COMPANY_SETTINGS.taxOffice}  |  VN: ${COMPANY_SETTINGS.taxNumber}`), COMP_X, PH - 95, 7, C.slate300);
+  drawStyled(page, f, safe(COMPANY_SETTINGS.companyName), COMP_X, PH - 26, TYPE.sectionTitle, C.textOnDark);
+  drawText(page, f.sansRegular, safe(COMPANY_SETTINGS.tagline), COMP_X, PH - 42, 7.5, C.captionOnDark);
+  drawText(page, f.sansRegular, safe(limitTxt(COMPANY_SETTINGS.address, 90)), COMP_X, PH - 56, 7, C.captionOnDark);
+  drawText(page, f.sansRegular, safe(`Tel: ${COMPANY_SETTINGS.phone}  |  ${COMPANY_SETTINGS.phoneSecondary}`), COMP_X, PH - 69, 7, C.captionOnDark);
+  drawText(page, f.sansRegular, safe(`${COMPANY_SETTINGS.email}  |  www.${COMPANY_SETTINGS.website}`), COMP_X, PH - 82, 7, C.captionOnDark);
+  drawText(page, f.sansRegular, safe(`VD: ${COMPANY_SETTINGS.taxOffice}  |  VN: ${COMPANY_SETTINGS.taxNumber}`), COMP_X, PH - 95, 7, C.captionOnDark);
 
-  drawText(page, font, "FİYAT TEKLİFİ", PW - ML - 116, PH - 28, 13, C.white);
-  drawText(page, font, safe(quote.quoteNumber), PW - ML - 116, PH - 46, 9, C.orange);
-  drawText(page, font, safe(formatDate(quote.createdAt)), PW - ML - 116, PH - 60, 8, C.slate300);
+  // Sağ üst — "FİYAT TEKLİFİ" + numara
+  drawStyled(page, f, "FİYAT TEKLİFİ", PW - ML - 116, PH - 28, TYPE.sectionTitle, C.textOnDark);
+  drawStyled(page, f, safe(quote.quoteNumber), PW - ML - 116, PH - 48, TYPE.quoteNumberLarge, C.textOnDark);
+  drawStyled(page, f, safe(formatDate(quote.createdAt)), PW - ML - 116, PH - 64, TYPE.monoBody, C.captionOnDark);
 
   y = PH - HEADER_H - 10;
 
@@ -126,20 +126,20 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
   const META_H = 44;
   page.drawRectangle({
     x: ML, y: y - META_H, width: CW, height: META_H,
-    color: C.orangeLight, borderColor: C.slate200, borderWidth: 0.5,
+    color: C.surface1, borderColor: C.borderSubtle, borderWidth: 0.5,
   });
 
   const metaCols = [
-    ["TEKLİF NO", safe(quote.quoteNumber)],
-    ["TARİH", formatDate(quote.createdAt)],
-    ["GEÇERLİLİK", quote.validityDate ? formatDate(quote.validityDate) : "Belirtilmedi"],
-    ["DURUM", safe(formatQuoteStatus(quote.status as Parameters<typeof formatQuoteStatus>[0]))],
+    ["TEKLİF NO", safe(quote.quoteNumber), true],   // mono
+    ["TARİH", formatDate(quote.createdAt), true],
+    ["GEÇERLİLİK", quote.validityDate ? formatDate(quote.validityDate) : "Belirtilmedi", true],
+    ["DURUM", safe(formatQuoteStatus(quote.status as Parameters<typeof formatQuoteStatus>[0])), false],
   ] as const;
   const metaColW = CW / 4;
-  metaCols.forEach(([label, value], i) => {
+  metaCols.forEach(([label, value, mono], i) => {
     const mx = ML + 10 + i * metaColW;
-    drawText(page, font, label, mx, y - 15, 7, C.slate500);
-    drawText(page, font, safe(value), mx, y - 29, 9, C.slate900);
+    drawStyled(page, f, label, mx, y - 15, TYPE.sectionLabel, C.textMuted);
+    drawStyled(page, f, safe(value), mx, y - 31, mono ? TYPE.monoMoney : TYPE.bodyEmphasis, C.textPrimary);
   });
 
   y -= META_H + 12;
@@ -148,23 +148,23 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
   const CUST_H = 88;
   page.drawRectangle({
     x: ML, y: y - CUST_H, width: CW, height: CUST_H,
-    color: C.white, borderColor: C.slate200, borderWidth: 0.5,
+    color: C.paper, borderColor: C.borderSubtle, borderWidth: 0.5,
   });
-  drawText(page, font, "ALICI", ML + 10, y - 14, 7, C.slate500);
+  drawStyled(page, f, "ALICI", ML + 10, y - 14, TYPE.sectionLabel, C.textMuted);
 
-  const custRows = [
-    ["Firma / Müşteri", safe(limitTxt(quote.customer.company ?? quote.customer.name, 40))],
-    ["Yetkili", safe(limitTxt(quote.customer.name, 36))],
-    ["Telefon", safe(quote.customer.phone ?? "-")],
-    ["E-posta", safe(limitTxt(quote.customer.email ?? "-", 36))],
+  const custRows: Array<readonly [string, string, boolean]> = [
+    ["Firma / Müşteri", safe(limitTxt(quote.customer.company ?? quote.customer.name, 40)), false],
+    ["Yetkili", safe(limitTxt(quote.customer.name, 36)), false],
+    ["Telefon", safe(quote.customer.phone ?? "-"), true],   // mono
+    ["E-posta", safe(limitTxt(quote.customer.email ?? "-", 36)), false],
   ];
-  custRows.forEach(([label, value], i) => {
+  custRows.forEach(([label, value, mono], i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
     const cx = ML + 10 + col * (CW / 2);
     const cy = y - 36 - row * 26;
-    drawText(page, font, safe(label), cx, cy + 11, 7, C.slate500);
-    drawText(page, font, safe(value), cx, cy, 9, C.slate900);
+    drawText(page, f.sansRegular, safe(label), cx, cy + 11, 7, C.textMuted);
+    drawStyled(page, f, value, cx, cy, mono ? TYPE.monoMoney : TYPE.bodyEmphasis, C.textPrimary);
   });
 
   y -= CUST_H + 12;
@@ -174,9 +174,9 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
   const ROW_H = 54;
 
   function drawTableHeader(): void {
-    page.drawRectangle({ x: ML, y: y - TH_H, width: CW, height: TH_H, color: C.charcoal });
+    page.drawRectangle({ x: ML, y: y - TH_H, width: CW, height: TH_H, color: C.ink });
     COLS.forEach((col) => {
-      drawText(page, font, col.label, col.x, y - 15, 7, C.white);
+      drawStyled(page, f, col.label, col.x, y - 15, TYPE.tableHeader, C.textOnDark);
     });
     y -= TH_H;
   }
@@ -187,11 +187,11 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
     ensureSpace(ROW_H + 4);
     if (y === PH - 38) drawTableHeader();
 
-    const shaded = idx % 2 === 1;
+    // Faz 2: zebra striping ince — sadece subtle border, hover'lı gibi
     page.drawRectangle({
       x: ML, y: y - ROW_H, width: CW, height: ROW_H,
-      color: shaded ? C.slate50 : C.white,
-      borderColor: C.slate200, borderWidth: 0.5,
+      color: C.paper,
+      borderColor: C.borderSubtle, borderWidth: 0.5,
     });
 
     const unitLines = pdfLines(ctx, Number(item.unitPrice), item.currency);
@@ -211,25 +211,45 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
     const tyR  = isBoth ? y - 14 : y - 26;
     const tyR2 = tyR - 12;
 
-    drawText(page, font, String(idx + 1), COLS[0].x, yCellTop, 8, C.slate500);
+    // Row number (mono)
+    drawStyled(page, f, String(idx + 1), COLS[0].x, yCellTop, TYPE.monoBody, C.textMuted);
 
     if (item.product) {
-      drawText(page, font, safe(limitTxt(item.product.name, 40)), COLS[1].x, yCellTop, 9, C.slate900);
-      drawText(page, font, safe(item.product.sku), COLS[1].x, yCellSku, 7, C.slate500);
+      drawStyled(page, f, safe(limitTxt(item.product.name, 40)), COLS[1].x, yCellTop, TYPE.bodyEmphasis, C.textPrimary);
+      drawStyled(page, f, safe(item.product.sku), COLS[1].x, yCellSku, TYPE.monoBody, C.textMuted);
       const descLines = wrapTxt(safe(item.description), 50).slice(0, 2);
-      if (descLines[0]) drawText(page, font, descLines[0], COLS[1].x, yCellD1, 8, C.slate700);
-      if (descLines[1]) drawText(page, font, descLines[1], COLS[1].x, yCellD2, 8, C.slate700);
+      if (descLines[0]) drawText(page, f.sansRegular, descLines[0], COLS[1].x, yCellD1, 8, C.textBody);
+      if (descLines[1]) drawText(page, f.sansRegular, descLines[1], COLS[1].x, yCellD2, 8, C.textBody);
     } else {
-      drawText(page, font, safe(limitTxt(item.description, 40)), COLS[1].x, yCellTop, 9, C.slate900);
-      drawText(page, font, "Manuel kalem", COLS[1].x, yCellSku, 7, C.slate500);
+      drawStyled(page, f, safe(limitTxt(item.description, 40)), COLS[1].x, yCellTop, TYPE.bodyEmphasis, C.textPrimary);
+      drawText(page, f.sansRegular, "Manuel kalem", COLS[1].x, yCellSku, 7, C.textMuted);
     }
 
-    drawText(page, font, String(item.quantity), COLS[2].x, tyR, 8, C.slate700);
-    drawText(page, font, safe(unitLines[0] ?? ""), COLS[3].x, tyR, 8, C.slate700);
-    if (unitLines[1]) drawText(page, font, safe(unitLines[1]), COLS[3].x, tyR2, 7, C.slate500);
-    drawText(page, font, safe(taxRateDisplay), COLS[4].x, tyR, 8, C.slate700);
-    drawText(page, font, safe(totalLines[0] ?? ""), COLS[5].x, tyR, 8, C.slate900);
-    if (totalLines[1]) drawText(page, font, safe(totalLines[1]), COLS[5].x, tyR2, 7, C.slate700);
+    // Numeric kolonlar — mono + sağa hizalı için measure
+    const qtyToken = TYPE.monoBody;
+    const qtyStr = String(item.quantity);
+    const qtyW = measureWidth(f, qtyStr, qtyToken);
+    drawStyled(page, f, qtyStr, COLS[2].x + 18 - qtyW, tyR, qtyToken, C.textBody);
+
+    const unitMonoToken = TYPE.monoBody;
+    const unitW0 = measureWidth(f, safe(unitLines[0] ?? ""), unitMonoToken);
+    drawStyled(page, f, safe(unitLines[0] ?? ""), COLS[3].x + 80 - unitW0, tyR, unitMonoToken, C.textBody);
+    if (unitLines[1]) {
+      const unitW1 = measureWidth(f, safe(unitLines[1]), TYPE.tinyCaption);
+      drawStyled(page, f, safe(unitLines[1]), COLS[3].x + 80 - unitW1, tyR2, TYPE.tinyCaption, C.textMuted);
+    }
+
+    // KDV oranı — küçük, mono değil (oran metin gibi okunur)
+    drawText(page, f.sansRegular, safe(taxRateDisplay), COLS[4].x, tyR, 8, C.textBody);
+
+    // Toplam — biraz daha güçlü
+    const totalToken = TYPE.monoMoney;
+    const totalW0 = measureWidth(f, safe(totalLines[0] ?? ""), totalToken);
+    drawStyled(page, f, safe(totalLines[0] ?? ""), COLS[5].x + 100 - totalW0, tyR, totalToken, C.textPrimary);
+    if (totalLines[1]) {
+      const totalW1 = measureWidth(f, safe(totalLines[1]), TYPE.tinyCaption);
+      drawStyled(page, f, safe(totalLines[1]), COLS[5].x + 100 - totalW1, tyR2, TYPE.tinyCaption, C.textMuted);
+    }
 
     y -= ROW_H;
   });
@@ -253,31 +273,33 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
   let sy = y - 8;
   subRows.forEach(([label, lines]) => {
     const line0 = safe(lines[0] ?? "");
-    const line0W = font.widthOfTextAtSize(line0, 9);
-    drawText(page, font, safe(label), TX + 6, sy, 9, C.slate500);
-    drawText(page, font, line0, rightEdge - line0W, sy, 9, C.slate700);
+    const line0W = measureWidth(f, line0, TYPE.monoMoney);
+    drawStyled(page, f, safe(label), TX + 6, sy, TYPE.body, C.textMuted);
+    drawStyled(page, f, line0, rightEdge - line0W, sy, TYPE.monoMoney, C.textBody);
     if (lines[1]) {
       const line1 = safe(lines[1]);
-      const line1W = font.widthOfTextAtSize(line1, 8);
-      drawText(page, font, line1, rightEdge - line1W, sy - 14, 8, C.slate500);
+      const line1W = measureWidth(f, line1, TYPE.monoBody);
+      drawStyled(page, f, line1, rightEdge - line1W, sy - 14, TYPE.monoBody, C.textMuted);
     }
     sy -= SUB_ROW_H;
   });
 
   y = sy - 8;
 
-  // Grand total
-  page.drawRectangle({ x: TX, y: y - GT_H, width: TOTALS_W, height: GT_H, color: C.charcoal });
-  drawText(page, font, "GENEL TOPLAM", TX + 8, y - 13, 7, C.orange);
+  // Grand total — ink box (Faz 4'te sol accent şerit eklenecek)
+  page.drawRectangle({ x: TX, y: y - GT_H, width: TOTALS_W, height: GT_H, color: C.ink });
+  drawStyled(page, f, "GENEL TOPLAM", TX + 8, y - 13, TYPE.sectionLabel, C.captionOnDark);
 
   const grandLines = pdfLines(ctx, Number(quote.total), quoteCurrency);
   const grand0 = safe(grandLines[0] ?? "");
-  const grand0W = font.widthOfTextAtSize(grand0, 12);
-  drawText(page, font, grand0, rightEdge - grand0W, y - 28, 12, C.white);
+  // Faz 2: grand total mono medium 14px (Faz 4'te 28px'e büyüyecek)
+  const grandToken = { ...TYPE.monoMoney, size: 14 };
+  const grand0W = measureWidth(f, grand0, grandToken);
+  drawStyled(page, f, grand0, rightEdge - grand0W, y - 28, grandToken, C.textOnDark);
   if (grandLines[1]) {
     const grand1 = safe(grandLines[1]);
-    const grand1W = font.widthOfTextAtSize(grand1, 9);
-    drawText(page, font, grand1, rightEdge - grand1W, y - 42, 9, C.slate300);
+    const grand1W = measureWidth(f, grand1, TYPE.monoBody);
+    drawStyled(page, f, grand1, rightEdge - grand1W, y - 42, TYPE.monoBody, C.captionOnDark);
   }
 
   y -= GT_H + 12;
@@ -287,7 +309,7 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(ctx.rate);
-    drawText(page, font, safe(`Kur: 1 USD = TL ${rateN}`), ML, y, 8, C.slate500);
+    drawStyled(page, f, safe(`Kur: 1 USD = TL ${rateN}`), ML, y, TYPE.monoBody, C.textMuted);
     y -= 18;
   }
 
@@ -312,13 +334,13 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
 
   page.drawRectangle({
     x: ML, y: y - TERMS_H, width: CW, height: TERMS_H,
-    color: C.slate50, borderColor: C.slate200, borderWidth: 0.5,
+    color: C.surface1, borderColor: C.borderSubtle, borderWidth: 0.5,
   });
-  drawText(page, font, "TİCARİ KOŞULLAR VE NOTLAR", ML + 10, y - 14, 7, C.slate500);
+  drawStyled(page, f, "TİCARİ KOŞULLAR VE NOTLAR", ML + 10, y - 14, TYPE.sectionLabel, C.textMuted);
 
   let termsY = y - 28;
   for (const line of allTermLines) {
-    drawText(page, font, line, ML + 10, termsY, 8, C.slate700);
+    drawText(page, f.sansRegular, line, ML + 10, termsY, 8, C.textBody);
     termsY -= TERM_LINE_H;
   }
 
@@ -329,14 +351,16 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
   ensureSpace(BANK_H + 8);
   page.drawRectangle({
     x: ML, y: y - BANK_H, width: CW, height: BANK_H,
-    color: C.white, borderColor: C.orange, borderWidth: 0.8,
+    color: C.paper, borderColor: C.borderDefault, borderWidth: 0.5,
   });
-  page.drawRectangle({ x: ML, y: y - BANK_H, width: 3, height: BANK_H, color: C.orange });
+  // Faz 2: sol accent şerit ink (Faz 4'te yellow accent olacak)
+  page.drawRectangle({ x: ML, y: y - BANK_H, width: 3, height: BANK_H, color: C.ink });
 
-  drawText(page, font, "ÖDEME BİLGİLERİ", ML + 10, y - 14, 7, C.orange);
-  drawText(page, font, safe(`Banka: ${COMPANY_SETTINGS.bankName}  |  Hesap Türü: ${COMPANY_SETTINGS.bankAccountType}`), ML + 10, y - 28, 8, C.slate700);
-  drawText(page, font, safe(`IBAN: ${COMPANY_SETTINGS.bankIban}`), ML + 10, y - 41, 9, C.slate900);
-  drawText(page, font, safe(`Hesap Sahibi: ${limitTxt(COMPANY_SETTINGS.bankAccountHolder, 78)}`), ML + 10, y - 52, 7, C.slate500);
+  drawStyled(page, f, "ÖDEME BİLGİLERİ", ML + 10, y - 14, TYPE.sectionLabel, C.textMuted);
+  drawText(page, f.sansRegular, safe(`Banka: ${COMPANY_SETTINGS.bankName}  |  Hesap Türü: ${COMPANY_SETTINGS.bankAccountType}`), ML + 10, y - 28, 8, C.textBody);
+  // IBAN mono — 14px medium, kopyalanabilir görünür
+  drawStyled(page, f, safe(`IBAN: ${COMPANY_SETTINGS.bankIban}`), ML + 10, y - 42, TYPE.quoteNumberLarge, C.textPrimary);
+  drawText(page, f.sansRegular, safe(`Hesap Sahibi: ${limitTxt(COMPANY_SETTINGS.bankAccountHolder, 78)}`), ML + 10, y - 52, 7, C.textMuted);
 
   y -= BANK_H + 10;
 
@@ -346,22 +370,19 @@ export function renderCurrentLayout({ pdf, font, logo, quote }: RenderInput): vo
     start: { x: ML, y: FY + 24 },
     end: { x: PW - MR, y: FY + 24 },
     thickness: 0.5,
-    color: C.slate200,
+    color: C.borderSubtle,
   });
   drawText(
-    page,
-    font,
+    page, f.sansRegular,
     safe(limitTxt(COMPANY_SETTINGS.legalName, 100)),
-    ML, FY + 10, 7, C.slate700,
+    ML, FY + 10, 7, C.textBody,
   );
   drawText(
-    page,
-    font,
+    page, f.sansRegular,
     safe(`${COMPANY_SETTINGS.phone}  |  ${COMPANY_SETTINGS.email}  |  www.${COMPANY_SETTINGS.website}`),
-    ML, FY - 2, 7, C.slate500,
+    ML, FY - 2, 7, C.textMuted,
   );
   if (quote.validityDate) {
-    const vText = safe(`Geçerlilik: ${formatDate(quote.validityDate)}`);
-    drawText(page, font, vText, PW - MR - 110, FY - 2, 7, C.slate500);
+    drawStyled(page, f, safe(`Geçerlilik: ${formatDate(quote.validityDate)}`), PW - MR - 110, FY - 2, TYPE.monoBody, C.textMuted);
   }
 }

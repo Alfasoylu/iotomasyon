@@ -9,16 +9,15 @@ export type { QuotePdfData, QuotePdfItem, QuotePdfCustomer, QuotePdfOptions } fr
 /**
  * Quote PDF generator public API.
  *
- * Faz 1 — Modüler yapı + mevcut görsel layout (görsel değişiklik yok).
- * Faz 2-4'te bu fonksiyon yeni cover/items/totals layout'larını çağıracak.
+ * Faz 2 — Modüler yapı + Geist Sans/Mono fontlar + yeni neutral palet.
+ *         Layout yapısı aynı (Faz 1'le birebir), sadece tipografi ve renkler değişti.
  *
- * Çağıran tarafın sorumluluğu: auth, permission check, quote fetch.
- * Bu fonksiyon saf: input → Uint8Array PDF bytes.
+ * Faz 3-4'te bu fonksiyon yeni cover/items/totals layout'larını çağıracak.
  */
 export async function buildQuotePdf(options: QuotePdfOptions): Promise<Uint8Array> {
-  const { pdf, font, logo } = await createQuotePdfDocument();
+  const { pdf, fonts, logo } = await createQuotePdfDocument();
 
-  renderCurrentLayout({ pdf, font, logo, quote: options.quote });
+  renderCurrentLayout({ pdf, fonts, logo, quote: options.quote });
 
   return pdf.save();
 }

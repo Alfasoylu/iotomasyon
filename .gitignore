@@ -56,3 +56,4 @@ adresler/mahalle.csv
 
 .env*.local
 docs/aranacak firmalar.xlsx
+test-quote-*.pdf

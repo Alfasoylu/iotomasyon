@@ -2,13 +2,69 @@ import "server-only";
 
 import type { PDFFont, PDFPage, rgb } from "pdf-lib";
 
+import type { QuotePdfFonts } from "../document";
+
 /**
- * Faz 1 — Tipografi primitivleri
+ * Faz 2 — TYPE token sistemi + tipografi primitivleri
  *
- * Mevcut route.ts'teki helper'lar buraya taşındı. Faz 2'de TYPE token
- * sistemi eklenecek (TYPE.body, TYPE.monoMoney, vb.).
+ * Spec'teki tipografi hiyerarşisi token olarak burada tanımlı. Her token:
+ *   { font: "sansRegular|sansMedium|sansSemibold|monoRegular|monoMedium",
+ *     size: number,
+ *     letterSpacing?: number (opt — şu an pdf-lib desteklemiyor, doc amaçlı),
+ *     uppercase?: boolean }
+ *
+ * Kullanım:
+ *   drawStyledText(page, fonts, "Fiyat Teklifi", x, y, TYPE.documentTitle, COLORS.textPrimary)
  */
 
+export type TypeFontKey = keyof QuotePdfFonts;
+
+export interface TypeToken {
+  font: TypeFontKey;
+  size: number;
+  /** Hint for designers; pdf-lib doesn't apply this automatically. */
+  letterSpacing?: number;
+  uppercase?: boolean;
+}
+
+export const TYPE = {
+  // Cover page
+  brandWordmark:    { font: "sansRegular",  size: 18 },
+  documentTitle:    { font: "sansSemibold", size: 32, letterSpacing: -0.3 },
+  customerName:     { font: "sansSemibold", size: 22, letterSpacing: -0.2 },
+
+  // Section headers
+  sectionLabel:     { font: "sansMedium", size: 9,  letterSpacing: 1.8, uppercase: true },
+  sectionTitle:     { font: "sansSemibold", size: 13 },
+
+  // Page chrome (sticky header on subsequent pages)
+  chromeBrand:      { font: "sansMedium",  size: 9 },
+  chromeMeta:       { font: "monoRegular", size: 8 },
+
+  // Body
+  body:             { font: "sansRegular", size: 10 },
+  bodyEmphasis:     { font: "sansMedium",  size: 10 },
+  caption:          { font: "sansRegular", size: 8 },
+  tinyCaption:      { font: "sansRegular", size: 7 },
+
+  // Numeric (mono)
+  monoBody:         { font: "monoRegular", size: 9 },
+  monoMoney:        { font: "monoMedium",  size: 10 },
+  monoMoneyLarge:   { font: "monoMedium",  size: 28 },
+
+  // Special
+  quoteNumberLarge: { font: "monoMedium",  size: 14 },
+  tableHeader:      { font: "sansMedium",  size: 7, letterSpacing: 1.5, uppercase: true },
+} satisfies Record<string, TypeToken>;
+
+export type TypeKey = keyof typeof TYPE;
+
+// ── Drawing helpers ─────────────────────────────────────────────────
+
+/**
+ * Backward-compatible raw drawer — caller picks font and size directly.
+ * Existing layout code uses this; new code should prefer `drawStyled`.
+ */
 export function drawText(
   page: PDFPage,
   font: PDFFont,
@@ -22,23 +78,44 @@ export function drawText(
 }
 
 /**
- * PDF metnine güvenle yazılabilir karakterlere indir — control char'ları
- * (newline hariç) at, böylece pdf-lib'in WinAnsi encoder'ı patlamaz.
+ * Token-aware drawer. Resolves the correct font from the family and applies
+ * uppercase if the token requests it.
  */
+export function drawStyled(
+  page: PDFPage,
+  fonts: QuotePdfFonts,
+  text: string,
+  x: number,
+  y: number,
+  token: TypeToken,
+  color: ReturnType<typeof rgb>,
+): void {
+  const finalText = token.uppercase ? text.toLocaleUpperCase("tr-TR") : text;
+  page.drawText(finalText, { x, y, size: token.size, font: fonts[token.font], color });
+}
+
+/**
+ * Measure rendered width — useful for right-aligned numeric columns.
+ */
+export function measureWidth(
+  fonts: QuotePdfFonts,
+  text: string,
+  token: TypeToken,
+): number {
+  const finalText = token.uppercase ? text.toLocaleUpperCase("tr-TR") : text;
+  return fonts[token.font].widthOfTextAtSize(finalText, token.size);
+}
+
+// ── Text utilities (unchanged from Faz 1) ───────────────────────────
+
 export function sanitize(value: string): string {
   return Array.from(value).filter((c) => c.charCodeAt(0) > 31).join("");
 }
 
-/**
- * Maksimum karakter sayısına göre metni truncate et — fazlası ellipsis ile.
- */
 export function truncate(value: string, max: number): string {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
 }
 
-/**
- * Sözcükleri koruyarak satır wrap. PDF tablosunda açıklama gibi alanlar için.
- */
 export function wrapText(value: string, maxCharsPerLine: number): string[] {
   const words = value.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -56,9 +133,6 @@ export function wrapText(value: string, maxCharsPerLine: number): string[] {
   return lines;
 }
 
-/**
- * Türkçe locale ile tarih formatla (medium).
- */
 export function formatDate(value: Date): string {
   return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium" }).format(value);
 }
