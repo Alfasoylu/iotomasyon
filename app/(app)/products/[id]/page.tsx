@@ -203,6 +203,7 @@ export default async function ProductDetailPage({
     }
     (product as { xmlData: unknown }).xmlData = null;
     (product as { marketplacePrices: unknown }).marketplacePrices = [];
+    (product as { sourceLinks: unknown }).sourceLinks = [];
   }
 
   const isLowStock = product.stockQuantity <= product.minimumStock;
@@ -1406,6 +1407,37 @@ export default async function ProductDetailPage({
       )}
 
       {/* Phase 11A — Classification: parent product link */}
+      {canViewFinance && product.sourceLinks.length > 0 && (
+        <Card className="overflow-hidden border-orange-200">
+          <div className="border-b border-orange-200 bg-orange-50 px-6 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-600">
+              Kaynak Linkleri
+            </p>
+            <p className="mt-1 text-sm text-orange-800">
+              Satın alma sırasında kullanılan kaynak ürün linkleri.
+            </p>
+          </div>
+          <div className="space-y-3 px-6 py-5">
+            {product.sourceLinks.map((link, index) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between gap-4 rounded-xl border border-orange-100 bg-orange-50/50 px-4 py-3 text-sm text-slate-700 transition hover:border-orange-300 hover:bg-orange-50"
+              >
+                <span className="shrink-0 font-medium text-orange-700">
+                  {link.label ?? `${link.sourceName} Link${index + 1}`}
+                </span>
+                <span className="truncate text-xs text-slate-500">
+                  {link.url}
+                </span>
+              </a>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {product.mainProduct && (
         <Card className="p-6">
           <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ürün Hiyerarşisi</p>

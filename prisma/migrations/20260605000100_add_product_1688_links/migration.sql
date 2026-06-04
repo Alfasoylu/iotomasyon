@@ -1,0 +1,3 @@
+ALTER TABLE "Product"
+ADD COLUMN "source1688Url1" TEXT,
+ADD COLUMN "source1688Url2" TEXT;

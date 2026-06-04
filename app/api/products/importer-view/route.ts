@@ -56,6 +56,12 @@ export type ImporterProduct = {
   shippingMethodPref: string | null;
   customsRatePct: number | null;
   importPaymentFeePct: number | null;
+  sourceLinks: Array<{
+    id: string;
+    sourceName: string;
+    label: string | null;
+    url: string;
+  }>;
 
   // Phase 9 + Phase 90 + Phase 92 — Marketplace monthly sales estimate (units/month).
   // `onlineSalesPotential` is the raw DB value (null = not entered).
@@ -114,7 +120,32 @@ export async function GET(_req: NextRequest) {
   const products = await prisma.product.findMany({
     where: { isActive: true },
     orderBy: [{ name: "asc" }],
-    include: {
+    select: {
+      id: true,
+      sku: true,
+      name: true,
+      brand: true,
+      barcode: true,
+      imageUrl: true,
+      productKind: true,
+      stockQuantity: true,
+      minimumStock: true,
+      sourceCostRmb: true,
+      weightKg: true,
+      shippingMethodPref: true,
+      customsRatePct: true,
+      importPaymentFeePct: true,
+      onlineSalesPotential: true,
+      sourceLinks: {
+        select: {
+          id: true,
+          sourceName: true,
+          label: true,
+          url: true,
+          sortOrder: true,
+        },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      },
       images: { take: 1, orderBy: { sortOrder: "asc" }, select: { url: true } },
       xmlData: {
         select: {
@@ -263,6 +294,12 @@ export async function GET(_req: NextRequest) {
       shippingMethodPref: p.shippingMethodPref,
       customsRatePct: p.customsRatePct != null ? Number(p.customsRatePct) : null,
       importPaymentFeePct: p.importPaymentFeePct != null ? Number(p.importPaymentFeePct) : null,
+      sourceLinks: p.sourceLinks.map((link) => ({
+        id: link.id,
+        sourceName: link.sourceName,
+        label: link.label,
+        url: link.url,
+      })),
 
       onlineSalesPotential: p.onlineSalesPotential,
       // Phase 92: demand sinyali = max(forecast, manuel onlineSalesPotential).

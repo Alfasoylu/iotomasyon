@@ -447,6 +447,8 @@ model Product {
   // Phase 31 — RMB-first import economics
   sourceCostRmb                 Decimal?                     @db.Decimal(15, 2) // Purchase cost in RMB/CNY
   importPaymentFeePct           Decimal?                     @db.Decimal(5, 2) // Payment commission % (e.g. 3.0)
+  source1688Url1                String?
+  source1688Url2                String?
   // GTİP kodları — 3 adet, çünkü bazı ürünler farklı GTİP'lerle ithal edilebilir
   // (örn. bir kamera seti hem 8525.81 hem 8517.62 dilimine girebilir).
   // Format: "8525.81.00.00" gibi 12 haneli string (ondalık opsiyonel). NULL ise atanmamış.
@@ -485,6 +487,8 @@ model Product {
   xmlData                       XmlProductData?
   // Phase 20 — supplier links
   supplierLinks                 SupplierProduct[]
+  // Phase 93 â€” scalable product source links (1688 and other procurement URLs)
+  sourceLinks                   ProductSourceLink[]
   // Phase 26 — Trendyol sales records
   trendyolSalesRecords          TrendyolSalesRecord[]
   // Phase 28 — Owner-only private intelligence (EXECUTIVE_READ only)

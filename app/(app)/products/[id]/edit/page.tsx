@@ -12,6 +12,7 @@ import { requirePermission, checkPermission, requireUser, isOwner } from "@/lib/
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { SupplierProductSection } from "@/components/suppliers/supplier-product-section";
+import { ProductSourceLinkSection } from "@/components/products/product-source-link-section";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,7 @@ export default async function EditProductPage({
     // Phase 57: Only EXECUTIVE_READ users see financial/cost/import fields in the form.
     checkPermission(user, PERMISSIONS.EXECUTIVE_READ),
   ]);
+  const canManageSourceLinks = user.role === "ADMIN";
 
   if (!databaseAvailable) {
     return (
@@ -167,6 +169,25 @@ export default async function EditProductPage({
             gtip3Desc: product.gtip3Desc ?? "",
           }}
         />
+      </Card>
+
+      <Card className="overflow-hidden border-orange-200">
+        <div className="border-b border-orange-200 bg-orange-50 px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-600">
+            Faz 93 - Kaynak Linkleri
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-slate-950">Tedarik Kaynak Linkleri</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            1688 basta olmak uzere urunun satin alma linklerini burada yonetin.
+          </p>
+        </div>
+        <div className="p-6">
+          <ProductSourceLinkSection
+            productId={product.id}
+            initialLinks={product.sourceLinks}
+            canWrite={canManageSourceLinks}
+          />
+        </div>
       </Card>
 
       {/* Phase 27: Product Media Studio */}
