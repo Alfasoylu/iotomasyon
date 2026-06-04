@@ -16,16 +16,30 @@
  *   DATABASE_URL=... DIRECT_URL=... npx tsx scripts/import-entegra-sales.ts          # dry-run
  *   DATABASE_URL=... DIRECT_URL=... npx tsx scripts/import-entegra-sales.ts --apply
  */
+import { config as loadEnv } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import * as XLSX from "xlsx";
 
+loadEnv();
+
 const cs = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
-const adapter = new PrismaPg({ connectionString: cs! });
+if (!cs) {
+  console.error("DATABASE_URL veya DIRECT_URL bulunamadı (.env yüklü mü?)");
+  process.exit(1);
+}
+const adapter = new PrismaPg({ connectionString: cs });
 const prisma = new PrismaClient({ adapter });
 
 const APPLY = process.argv.includes("--apply");
-const EXCEL_PATH = "C:/dev/iotomasyoncom/iotomasyon/ithalat/liste.xlsx";
+
+// --file=path/to/xlsx override; varsayılan docs/son-5-yil-siparisler.xlsx
+function parseFileArg(): string {
+  const arg = process.argv.find((a) => a.startsWith("--file="));
+  if (arg) return arg.slice("--file=".length);
+  return "C:/dev/iotomasyoncom/iotomasyon/docs/son-5-yil-siparisler.xlsx";
+}
+const EXCEL_PATH = parseFileArg();
 
 // ── Türkçe → ASCII (matching için) ──────────────────────────────────────────
 const TR_MAP: Record<string, string> = {
