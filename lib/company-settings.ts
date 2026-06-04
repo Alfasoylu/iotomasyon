@@ -1,6 +1,6 @@
 /**
  * Şirket sabitleri — fiyat teklifi PDF, müşteri detay footer ve diğer ihracata bağlı yerlerde kullanılır.
- * Logo: public/Soylu logo şeffaf.png
+ * Logo: public/soylu-logo.png (ASCII-only — UTF-8 NFC/NFD farklarından kaçınmak için).
  */
 export const COMPANY_SETTINGS = {
   // Marka
@@ -37,8 +37,8 @@ export const COMPANY_SETTINGS = {
   deliveryTerms:  "Stoklu ürünlerde 1-3 iş günü içinde sevkiyat. İthal ürünlerde tedarik süresi sipariş anında teyit edilir.",
   warrantyTerms:  "Ürünler 2 yıl üretici garantisi kapsamındadır. Garanti dışı durumlar üretici şartlarına göre değerlendirilir.",
 
-  // Görsel
-  logoUrl:        "/Soylu logo şeffaf.png",
+  // Görsel — ASCII-only path (eski "Soylu logo şeffaf.png" da public/'te kopya olarak bulunur)
+  logoUrl:        "/soylu-logo.png",
   logoUrlAlt:     "/soylu elektronik logo.png",
   brandColor:     "#F97316",
   accentColor:    "#F97316",

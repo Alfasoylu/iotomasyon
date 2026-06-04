@@ -27,7 +27,10 @@ const FONT_PATHS = {
   monoMedium:   path.join(FONTS_BASE, "geist-mono", "GeistMono-Medium.ttf"),
 } as const;
 
-const LOGO_PATH = path.join(process.cwd(), "public", "Soylu logo şeffaf.png");
+// Logo: ASCII-only filename — UTF-8 normalization (NFC/NFD) farkları nedeniyle
+// "Soylu logo şeffaf.png" path'i bazı ortamlarda fs.existsSync false döndürüyordu.
+// public/soylu-logo.png aynı dosyanın ASCII kopyası.
+const LOGO_PATH = path.join(process.cwd(), "public", "soylu-logo.png");
 
 export interface QuotePdfFonts {
   sansRegular:  PDFFont;

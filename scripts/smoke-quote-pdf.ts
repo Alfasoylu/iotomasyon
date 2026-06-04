@@ -38,10 +38,13 @@ async function main() {
     paymentTerms: "%50 sipariş, %50 teslimat",
     deliveryTerms: "5-7 iş günü içinde, ücretsiz kargo",
     warrantyTerms: "2 yıl üretici garantisi",
-    subtotal: "104530.00",
+    // Subtotal: 24500 + 29500 + 5000 + 7600 + 8400 = 75000
+    // KDV: 4900 + 5900 + 1000 + 1520 + 1680 = 15000 (subtotal'ın %20'si)
+    // Total: 75000 + 15000 = 90000
+    subtotal: "75000.00",
     discountTotal: "0.00",
-    taxTotal: "20906.00",
-    total: "125436.00",
+    taxTotal: "15000.00",
+    total: "90000.00",
     currencyMode: "TRY",
     exchangeRate: "34.20",
     customer: {
@@ -50,6 +53,8 @@ async function main() {
       phone: "+90 532 123 45 67",
       email: "ahmet@testbayi.com",
     },
+    // KDV hesap kuralı: tax = quantity × unitPrice × 0.20 (subtotal'ın %20'si)
+    // Bu sayede getStoredTaxRateDisplay doğru "%20" dönsün
     items: [
       {
         description:
@@ -57,8 +62,8 @@ async function main() {
         quantity: 10,
         unitPrice: "2450.00",
         discount: "0.00",
-        tax: "490.00",
-        total: "24500.00",
+        tax: "4900.00",        // 10 × 2450 × 0.20 = 4900
+        total: "29400.00",     // 24500 + 4900 = 29400
         currency: "TRY",
         product: { name: "AHD HD 4K 2MP Set", sku: "AHD-2MP-4K" },
       },
@@ -67,8 +72,8 @@ async function main() {
         quantity: 25,
         unitPrice: "1180.00",
         discount: "0.00",
-        tax: "236.00",
-        total: "29500.00",
+        tax: "5900.00",        // 25 × 1180 × 0.20 = 5900
+        total: "35400.00",
         currency: "TRY",
         product: { name: "Hikvision DS-2CD1043G2-LIUF", sku: "HIK-1043G2" },
       },
@@ -78,7 +83,7 @@ async function main() {
         unitPrice: "5000.00",
         discount: "0.00",
         tax: "1000.00",
-        total: "5000.00",
+        total: "6000.00",
         currency: "TRY",
         product: null,
       },
@@ -87,8 +92,8 @@ async function main() {
         quantity: 2,
         unitPrice: "3800.00",
         discount: "0.00",
-        tax: "760.00",
-        total: "7600.00",
+        tax: "1520.00",        // 2 × 3800 × 0.20 = 1520
+        total: "9120.00",
         currency: "TRY",
         product: { name: "MikroTik CSS610-16P-2S+IN", sku: "MT-CSS610" },
       },
@@ -97,8 +102,8 @@ async function main() {
         quantity: 4,
         unitPrice: "2100.00",
         discount: "0.00",
-        tax: "420.00",
-        total: "8400.00",
+        tax: "1680.00",        // 4 × 2100 × 0.20 = 1680
+        total: "10080.00",
         currency: "TRY",
         product: { name: "WD Purple 8TB", sku: "WD-PURPLE-8TB" },
       },
