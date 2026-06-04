@@ -26,7 +26,7 @@ M._resolveFilename = function (request: string, ...rest: unknown[]) {
 
 async function main() {
   // Dinamik require — override aktif olduktan sonra modülü çöz
-  const { buildQuotePdf } = await import("../lib/quote-pdf/index.ts");
+  const { buildQuotePdf } = await import("../lib/quote-pdf/index");
 
   const fakeQuote = {
     quoteNumber: "QT-2026-TEST",

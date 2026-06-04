@@ -1,7 +1,8 @@
 import "server-only";
 
 import { createQuotePdfDocument } from "./document";
-import { renderCurrentLayout } from "./layout/current-layout";
+import { renderContentPages } from "./layout/content-pages";
+import { renderCoverPage } from "./layout/cover-page";
 import type { QuotePdfOptions } from "./types";
 
 export type { QuotePdfData, QuotePdfItem, QuotePdfCustomer, QuotePdfOptions } from "./types";
@@ -9,15 +10,22 @@ export type { QuotePdfData, QuotePdfItem, QuotePdfCustomer, QuotePdfOptions } fr
 /**
  * Quote PDF generator public API.
  *
- * Faz 2 — Modüler yapı + Geist Sans/Mono fontlar + yeni neutral palet.
- *         Layout yapısı aynı (Faz 1'le birebir), sadece tipografi ve renkler değişti.
+ * Faz 3 — Cover sayfası + content pages ayrıştırıldı.
  *
- * Faz 3-4'te bu fonksiyon yeni cover/items/totals layout'larını çağıracak.
+ *   Page 1: Cover (logo, brand mark, "Fiyat Teklifi" H1, müşteri kartı,
+ *           opsiyonel ön söz, QR kod + KAPSAM + GEÇERLİLİK stat'ları)
+ *   Page 2+: Content (items table, totals, terms, bank info, sticky chrome)
+ *
+ * Faz 4'te:
+ *   - Genel Toplam'ın sol şeridi accent yellow olacak (Faz 3 ink)
+ *   - Acceptance section + imza alanı eklenecek
+ *   - Sayfa numarası "Sayfa X / Y" (iki geçişli render)
  */
 export async function buildQuotePdf(options: QuotePdfOptions): Promise<Uint8Array> {
   const { pdf, fonts, logo } = await createQuotePdfDocument();
 
-  renderCurrentLayout({ pdf, fonts, logo, quote: options.quote });
+  await renderCoverPage({ pdf, fonts, logo, quote: options.quote });
+  renderContentPages({ pdf, fonts, logo, quote: options.quote });
 
   return pdf.save();
 }
