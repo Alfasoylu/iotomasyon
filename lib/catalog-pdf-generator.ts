@@ -95,7 +95,8 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
 
   let logoImage: PDFImage | null = null;
   try {
-    const logoBytes = await readFile(path.join(process.cwd(), "public", "Soylu logo şeffaf.png"));
+    // ASCII-only — UTF-8 NFC/NFD farkları için (public/soylu-logo.png aynı dosya)
+    const logoBytes = await readFile(path.join(process.cwd(), "public", "soylu-logo.png"));
     logoImage = await pdf.embedPng(logoBytes);
   } catch {
     logoImage = null;
