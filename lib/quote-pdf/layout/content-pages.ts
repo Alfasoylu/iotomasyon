@@ -2,7 +2,11 @@ import "server-only";
 
 import type { PDFDocument, PDFImage, PDFPage } from "pdf-lib";
 
-import { COMPANY_SETTINGS } from "@/lib/company-settings";
+import {
+  COMPANY_SETTINGS,
+  type CompanyBranding,
+  type CompanySettingsData,
+} from "@/lib/company-settings";
 import { getStoredTaxRateDisplay } from "@/lib/quote-utils";
 
 import type { QuotePdfFonts } from "../document";
@@ -55,20 +59,22 @@ export interface ContentInput {
   fonts: QuotePdfFonts;
   logo: PDFImage | null; // şimdilik kullanılmıyor, gelecekte chrome'da kullanılabilir
   quote: QuotePdfData;
+  companySettings?: CompanySettingsData & CompanyBranding;
 }
 
-export function renderContentPages({ pdf, fonts: f, quote }: ContentInput): void {
+export function renderContentPages({ pdf, fonts: f, quote, companySettings }: ContentInput): void {
+  const CS = companySettings ?? COMPANY_SETTINGS;
   const ctx = makeCurrencyContext(quote);
   const quoteCurrency = quote.items[0]?.currency ?? "TRY";
   const isBoth = ctx.mode === "BOTH";
 
   let page = pdf.addPage([PW, PH]);
-  drawPageChrome(page, f, quote);
+  drawPageChrome(page, f, quote, CS);
   let y = CONTENT_TOP;
 
   function newContentPage(): void {
     page = pdf.addPage([PW, PH]);
-    drawPageChrome(page, f, quote);
+    drawPageChrome(page, f, quote, CS);
     y = CONTENT_TOP;
   }
 
@@ -230,9 +236,9 @@ export function renderContentPages({ pdf, fonts: f, quote }: ContentInput): void
   // ── COMMERCIAL TERMS ─────────────────────────────────────────
   // Cover'da ön söz olarak gösterildiyse notes tekrar gösterilmez — sadece
   // sözleşme şartları yer alır.
-  const payText = quote.paymentTerms ?? COMPANY_SETTINGS.paymentTerms;
-  const delText = quote.deliveryTerms ?? COMPANY_SETTINGS.deliveryTerms;
-  const warText = quote.warrantyTerms ?? COMPANY_SETTINGS.warrantyTerms;
+  const payText = quote.paymentTerms ?? CS.paymentTerms;
+  const delText = quote.deliveryTerms ?? CS.deliveryTerms;
+  const warText = quote.warrantyTerms ?? CS.warrantyTerms;
   const payLines = payText ? wrapTxt(safe(`Ödeme: ${payText}`), 90).slice(0, 4) : [];
   const delLines = delText ? wrapTxt(safe(`Teslimat: ${delText}`), 90).slice(0, 4) : [];
   const warLines = warText ? wrapTxt(safe(`Garanti: ${warText}`), 90).slice(0, 4) : [];
@@ -267,9 +273,9 @@ export function renderContentPages({ pdf, fonts: f, quote }: ContentInput): void
   page.drawRectangle({ x: ML, y: y - BANK_H, width: 3, height: BANK_H, color: C.ink });
 
   drawStyled(page, f, "ÖDEME BİLGİLERİ", ML + 10, y - 14, TYPE.sectionLabel, C.textMuted);
-  drawText(page, f.sansRegular, safe(`Banka: ${COMPANY_SETTINGS.bankName}  |  Hesap Türü: ${COMPANY_SETTINGS.bankAccountType}`), ML + 10, y - 28, 8, C.textBody);
-  drawStyled(page, f, safe(`IBAN: ${COMPANY_SETTINGS.bankIban}`), ML + 10, y - 42, TYPE.quoteNumberLarge, C.textPrimary);
-  drawText(page, f.sansRegular, safe(`Hesap Sahibi: ${limitTxt(COMPANY_SETTINGS.bankAccountHolder, 78)}`), ML + 10, y - 52, 7, C.textMuted);
+  drawText(page, f.sansRegular, safe(`Banka: ${CS.bankName}  |  Hesap Türü: ${CS.bankAccountType}`), ML + 10, y - 28, 8, C.textBody);
+  drawStyled(page, f, safe(`IBAN: ${CS.bankIban}`), ML + 10, y - 42, TYPE.quoteNumberLarge, C.textPrimary);
+  drawText(page, f.sansRegular, safe(`Hesap Sahibi: ${limitTxt(CS.bankAccountHolder, 78)}`), ML + 10, y - 52, 7, C.textMuted);
 
   y -= BANK_H + 24;
 
@@ -322,14 +328,19 @@ export function renderContentPages({ pdf, fonts: f, quote }: ContentInput): void
  * Her content sayfasında çizilen sticky chrome — üst başlık + alt footer.
  * Cover (sayfa 1) bunu kullanmaz; cover'ın kendi tasarımı vardır.
  */
-function drawPageChrome(page: PDFPage, f: QuotePdfFonts, quote: QuotePdfData): void {
+function drawPageChrome(
+  page: PDFPage,
+  f: QuotePdfFonts,
+  quote: QuotePdfData,
+  CS: CompanySettingsData & CompanyBranding,
+): void {
   // Üst ince accent yellow line
   page.drawRectangle({ x: 0, y: PH - 2, width: PW, height: 2, color: C.accent });
   // Dark mini header bar
   page.drawRectangle({ x: 0, y: PH - 28, width: PW, height: 25, color: C.ink });
   drawStyled(
     page, f,
-    safe(COMPANY_SETTINGS.companyName),
+    safe(CS.companyName),
     ML, PH - 19, TYPE.chromeBrand, C.textOnDark,
   );
   // Quote # right-aligned in chrome
@@ -351,12 +362,12 @@ function drawPageChrome(page: PDFPage, f: QuotePdfFonts, quote: QuotePdfData): v
   });
   drawText(
     page, f.sansRegular,
-    safe(limitTxt(COMPANY_SETTINGS.legalName, 100)),
+    safe(limitTxt(CS.legalName, 100)),
     ML, FY + 10, 7, C.textBody,
   );
   drawText(
     page, f.sansRegular,
-    safe(`${COMPANY_SETTINGS.phone}  |  ${COMPANY_SETTINGS.email}  |  www.${COMPANY_SETTINGS.website}`),
+    safe(`${CS.phone}  |  ${CS.email}  |  www.${CS.website}`),
     ML, FY - 2, 7, C.textMuted,
   );
   if (quote.validityDate) {

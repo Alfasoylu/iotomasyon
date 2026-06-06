@@ -390,6 +390,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
 
   // ── SİSTEM ──────────────────────────────────────────────────────────────
   {
+    href: "/admin/company-settings",
+    label: "Şirket Bilgileri",
+    iconKey: "settings",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Sistem",
+  },
+  {
     href: "/admin/users",
     label: "Kullanıcılar",
     iconKey: "user",

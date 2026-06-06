@@ -26,27 +26,24 @@ export type { QuotePdfData, QuotePdfItem, QuotePdfCustomer, QuotePdfOptions } fr
  */
 export async function buildQuotePdf(options: QuotePdfOptions): Promise<Uint8Array> {
   const { pdf, fonts, logo } = await createQuotePdfDocument();
-  const { quote } = options;
+  const { quote, companySettings } = options;
 
   // PDF metadata — PDF viewer'lar başlık çubuğunda gösterir, arama motoru indexler
   pdf.setTitle(`Fiyat Teklifi ${quote.quoteNumber} — ${quote.customer.company ?? quote.customer.name}`);
-  pdf.setAuthor("Alfa Soylu Elektronik");
+  pdf.setAuthor(companySettings?.companyName ?? "Alfa Soylu Elektronik");
   pdf.setSubject(`B2B Fiyat Teklifi — ${quote.items.length} kalem`);
   pdf.setKeywords([
     "fiyat teklifi",
-    "alfa soylu",
-    "soylu elektronik",
+    companySettings?.companyName ?? "alfa soylu",
     quote.quoteNumber,
-    "güvenlik kamerası",
-    "elektronik sistemler",
   ]);
   pdf.setProducer("iotomasyon CRM — quote-pdf v2");
   pdf.setCreator("iotomasyon CRM");
   pdf.setCreationDate(quote.createdAt);
   pdf.setModificationDate(quote.createdAt);
 
-  await renderCoverPage({ pdf, fonts, logo, quote });
-  renderContentPages({ pdf, fonts, logo, quote });
+  await renderCoverPage({ pdf, fonts, logo, quote, companySettings });
+  renderContentPages({ pdf, fonts, logo, quote, companySettings });
 
   // İki-geçiş — tüm sayfalar çizildikten sonra "Sayfa X / Y" stamp
   stampPageNumbers(pdf, fonts);

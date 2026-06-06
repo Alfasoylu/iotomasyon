@@ -27,6 +27,7 @@ import {
   catalogPriceFilter,
   resolveCatalogPrice,
 } from "@/lib/catalog-price";
+import { getCompanySettings } from "@/lib/get-company-settings";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -166,6 +167,8 @@ export async function GET(
   const validity = new Date();
   validity.setDate(validity.getDate() + 30);
 
+  const companySettings = await getCompanySettings();
+
   const bytes = await buildCatalogPdf({
     customer: {
       name: customer.name,
@@ -180,6 +183,7 @@ export async function GET(
     sections,
     generatedAt: new Date(),
     validityDate: validity,
+    companySettings,
   });
 
   const safeName =

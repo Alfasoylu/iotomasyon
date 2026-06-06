@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getCurrentSession, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { buildQuotePdf } from "@/lib/quote-pdf";
+import { getCompanySettings } from "@/lib/get-company-settings";
 import { getQuoteById } from "@/services/quote-service";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,8 @@ export async function GET(
   const quote = await getQuoteById(id);
   if (!quote) return new NextResponse("Not Found", { status: 404 });
 
-  const bytes = await buildQuotePdf({ quote });
+  const companySettings = await getCompanySettings();
+  const bytes = await buildQuotePdf({ quote, companySettings });
 
   return new NextResponse(new Uint8Array(bytes), {
     status: 200,

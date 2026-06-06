@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { CompanyBranding, CompanySettingsData } from "@/lib/company-settings";
+
 /**
  * Faz 1 — Modüler quote PDF generator type'ları
  *
@@ -56,4 +58,9 @@ export interface QuotePdfData {
 
 export interface QuotePdfOptions {
   quote: QuotePdfData;
+  /**
+   * Şirket bilgileri — caller `getCompanySettings()` ile DB'den okur ve geçer.
+   * Verilmezse static fallback (`COMPANY_SETTINGS`) kullanılır.
+   */
+  companySettings?: CompanySettingsData & CompanyBranding;
 }

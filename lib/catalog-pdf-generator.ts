@@ -20,7 +20,11 @@ import path from "node:path";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, PDFFont, PDFPage, rgb, type PDFImage } from "pdf-lib";
 
-import { COMPANY_SETTINGS } from "@/lib/company-settings";
+import {
+  COMPANY_SETTINGS,
+  type CompanyBranding,
+  type CompanySettingsData,
+} from "@/lib/company-settings";
 import type { CatalogPriceMode, CatalogProfile } from "@/lib/catalog-mapping";
 import { loadCatalogImages } from "@/lib/catalog-image-loader";
 
@@ -74,9 +78,16 @@ export interface CatalogPdfOptions {
   sections: CatalogPdfCategorySection[];
   generatedAt: Date;
   validityDate: Date;
+  /**
+   * Şirket bilgileri — DB'den okunduysa caller `getCompanySettings()` ile
+   * doldurur. Verilmezse module-level static `COMPANY_SETTINGS` (fallback) kullanılır.
+   */
+  companySettings?: CompanySettingsData & CompanyBranding;
 }
 
 export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8Array> {
+  // DB'den gelen taze değerler varsa onları kullan, yoksa static fallback
+  const CS = options.companySettings ?? COMPANY_SETTINGS;
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
 
@@ -107,7 +118,7 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
   const imageCache = await loadCatalogImages(pdf, imageUrls);
 
   pdf.setTitle(`Katalog - ${options.customer.name}`);
-  pdf.setAuthor(options.salesRepName ?? COMPANY_SETTINGS.companyName);
+  pdf.setAuthor(options.salesRepName ?? CS.companyName);
   pdf.setSubject(options.profile.title);
 
   let page = pdf.addPage([PW, PH]);
@@ -121,7 +132,7 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
     // Header strip
     page.drawRectangle({ x: 0, y: PH - 3, width: PW, height: 3, color: C.orange });
     page.drawRectangle({ x: 0, y: PH - 26, width: PW, height: 23, color: C.charcoal });
-    drawTxt(page, font, safe(COMPANY_SETTINGS.companyName), ML, PH - 18, 8, C.white);
+    drawTxt(page, font, safe(CS.companyName), ML, PH - 18, 8, C.white);
     drawTxt(page, font, safe(options.profile.title), PW - ML - 200, PH - 18, 8, C.orange);
     // Footer
     drawPageFooter();
@@ -139,7 +150,7 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
       page,
       font,
       safe(
-        `${COMPANY_SETTINGS.phone}  |  ${COMPANY_SETTINGS.email}  |  ${COMPANY_SETTINGS.website}`,
+        `${CS.phone}  |  ${CS.email}  |  ${CS.website}`,
       ),
       ML,
       24,
@@ -170,7 +181,7 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
 
   // Brand tag — top-left
   page.drawRectangle({ x: 0, y: PH - 38, width: 4, height: 34, color: C.orange });
-  drawTxt(page, font, safe(COMPANY_SETTINGS.companyName.toUpperCase()), ML, PH - 22, 9, C.white);
+  drawTxt(page, font, safe(CS.companyName.toUpperCase()), ML, PH - 22, 9, C.white);
   drawTxt(page, font, "B2B KATALOG · USD NET (KDV HARİÇ)", ML, PH - 34, 7, C.slate300);
 
   // Logo — large, left-aligned, with breathing room
@@ -266,9 +277,9 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
   page.drawRectangle({ x: 0, y: BAND_Y + BAND_H, width: PW, height: 1, color: C.orange });
 
   drawTxt(page, font, "İLETİŞİM", ML, BAND_Y + BAND_H - 18, 7, C.orange);
-  drawTxt(page, font, safe(COMPANY_SETTINGS.phone), ML, BAND_Y + BAND_H - 36, 11, C.white);
-  drawTxt(page, font, safe(COMPANY_SETTINGS.email), ML, BAND_Y + BAND_H - 52, 9, C.slate300);
-  drawTxt(page, font, safe(COMPANY_SETTINGS.website), ML, BAND_Y + BAND_H - 66, 9, C.slate300);
+  drawTxt(page, font, safe(CS.phone), ML, BAND_Y + BAND_H - 36, 11, C.white);
+  drawTxt(page, font, safe(CS.email), ML, BAND_Y + BAND_H - 52, 9, C.slate300);
+  drawTxt(page, font, safe(CS.website), ML, BAND_Y + BAND_H - 66, 9, C.slate300);
 
   drawTxt(page, font, "GEÇERLİLİK", PW - MR - 160, BAND_Y + BAND_H - 18, 7, C.orange);
   const validStr = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long" }).format(options.validityDate);
@@ -451,9 +462,9 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
   y -= 40;
 
   const terms: Array<[string, string]> = [
-    ["Ödeme", COMPANY_SETTINGS.paymentTerms],
-    ["Teslimat", COMPANY_SETTINGS.deliveryTerms],
-    ["Garanti", COMPANY_SETTINGS.warrantyTerms],
+    ["Ödeme", CS.paymentTerms],
+    ["Teslimat", CS.deliveryTerms],
+    ["Garanti", CS.warrantyTerms],
     [
       "Fiyat / KDV",
       "Tüm fiyatlar USD bazında ve KDV hariçtir. Faturada TCMB kuru üzerinden TL hesaplanır.",
@@ -490,17 +501,17 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
   drawTxt(
     page,
     font,
-    safe(`Banka: ${COMPANY_SETTINGS.bankName}  |  Hesap: ${COMPANY_SETTINGS.bankAccountType}`),
+    safe(`Banka: ${CS.bankName}  |  Hesap: ${CS.bankAccountType}`),
     ML + 12,
     y - 30,
     8,
     C.slate700,
   );
-  drawTxt(page, font, safe(`IBAN: ${COMPANY_SETTINGS.bankIban}`), ML + 12, y - 44, 9, C.slate900);
+  drawTxt(page, font, safe(`IBAN: ${CS.bankIban}`), ML + 12, y - 44, 9, C.slate900);
   drawTxt(
     page,
     font,
-    safe(`Hesap Sahibi: ${limitTxt(COMPANY_SETTINGS.bankAccountHolder, 80)}`),
+    safe(`Hesap Sahibi: ${limitTxt(CS.bankAccountHolder, 80)}`),
     ML + 12,
     y - 58,
     7,
@@ -523,7 +534,7 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
     page,
     font,
     safe(
-      `Telefon: ${COMPANY_SETTINGS.phone}  ·  WhatsApp: ${COMPANY_SETTINGS.phoneSecondary}`,
+      `Telefon: ${CS.phone}  ·  WhatsApp: ${CS.phoneSecondary}`,
     ),
     ML + 16,
     y - 42,
@@ -533,7 +544,7 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
   drawTxt(
     page,
     font,
-    safe(`E-posta: ${COMPANY_SETTINGS.email}`),
+    safe(`E-posta: ${CS.email}`),
     ML + 16,
     y - 58,
     9,

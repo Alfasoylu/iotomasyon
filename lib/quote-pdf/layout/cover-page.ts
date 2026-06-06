@@ -2,7 +2,11 @@ import "server-only";
 
 import type { PDFDocument, PDFImage } from "pdf-lib";
 
-import { COMPANY_SETTINGS } from "@/lib/company-settings";
+import {
+  COMPANY_SETTINGS,
+  type CompanyBranding,
+  type CompanySettingsData,
+} from "@/lib/company-settings";
 
 import type { QuotePdfFonts } from "../document";
 import { COLORS as C } from "../primitives/colors";
@@ -48,6 +52,7 @@ export interface CoverInput {
   fonts: QuotePdfFonts;
   logo: PDFImage | null;
   quote: QuotePdfData;
+  companySettings?: CompanySettingsData & CompanyBranding;
 }
 
 export async function renderCoverPage({
@@ -55,7 +60,9 @@ export async function renderCoverPage({
   fonts: f,
   logo,
   quote,
+  companySettings,
 }: CoverInput): Promise<void> {
+  const CS = companySettings ?? COMPANY_SETTINGS;
   const page = pdf.addPage([PW, PH]);
 
   // ── 1) Üst sağ 3 aksent çubuk — Soylu kimliği (restraint) ─────────
@@ -77,13 +84,13 @@ export async function renderCoverPage({
   const wordmarkY = PH - 56;
   drawStyled(
     page, f,
-    safe(COMPANY_SETTINGS.companyName),
+    safe(CS.companyName),
     ML + (logo ? LOGO_TARGET_W + 14 : 0),
     wordmarkY, TYPE.brandWordmark, C.textPrimary,
   );
   drawStyled(
     page, f,
-    safe(COMPANY_SETTINGS.tagline),
+    safe(CS.tagline),
     ML + (logo ? LOGO_TARGET_W + 14 : 0),
     wordmarkY - 14, TYPE.caption, C.textSecondary,
   );
@@ -210,7 +217,7 @@ export async function renderCoverPage({
   drawStyled(page, f, "İLETİŞİM", ML, FOOTER_Y + 14, TYPE.sectionLabel, C.textMuted);
   drawStyled(
     page, f,
-    safe(`${COMPANY_SETTINGS.phone}  ·  ${COMPANY_SETTINGS.email}  ·  www.${COMPANY_SETTINGS.website}`),
+    safe(`${CS.phone}  ·  ${CS.email}  ·  www.${CS.website}`),
     ML, FOOTER_Y, TYPE.body, C.textBody,
   );
 

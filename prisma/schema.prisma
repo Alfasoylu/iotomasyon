@@ -1185,6 +1185,43 @@ model SupplierProduct {
 // One row per Trendyol order line. Synced via /admin/product-performance.
 // productId is nullable: unmatched lines kept for audit but excluded from rankings.
 
+// Singleton model — şirket bilgileri ve default ticari koşullar.
+// PDF generator'lar (catalog + quote), login sayfası ve müşteri-facing footer'lar
+// bu tabloya bakar. İlk yaratımda `lib/company-settings.ts`'teki defaults seed olur.
+// Tek satır beklenir (id = "default"). UI: /admin/company-settings
+model CompanySettings {
+  id                 String   @id @default("default")
+  // Marka
+  companyName        String
+  legalName          String
+  tagline            String
+  salesContact       String
+  // İletişim
+  website            String
+  email              String
+  phone              String
+  phoneSecondary     String
+  // Adresler
+  address            String   @db.Text
+  perpaAddress       String   @db.Text
+  city               String
+  district           String
+  country            String
+  // Vergi
+  taxOffice          String
+  taxNumber          String
+  // Banka
+  bankName           String
+  bankIban           String
+  bankAccountHolder  String
+  bankAccountType    String
+  // Default ticari koşullar (PDF'te bunlar fallback; quote başına override mümkün)
+  paymentTerms       String   @db.Text
+  deliveryTerms      String   @db.Text
+  warrantyTerms      String   @db.Text
+  updatedAt          DateTime @updatedAt
+}
+
 model ProductSourceLink {
   id         String   @id @default(cuid())
   productId  String
