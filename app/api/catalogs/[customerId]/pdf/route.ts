@@ -92,10 +92,15 @@ export async function GET(
   const coverNote = url.searchParams.get("coverNote")?.slice(0, 500) ?? null;
 
   // Fetch products for each category in profile
-  const categories = await prisma.productCategory.findMany({
+  // ⚠ Prisma `slug IN (...)` order'ı korumaz — categorySlugs array order'ına göre yeniden sırala.
+  const categoriesFromDb = await prisma.productCategory.findMany({
     where: { slug: { in: profile.categorySlugs } },
     select: { id: true, name: true, slug: true },
   });
+  const byCatalogSlug = new Map(categoriesFromDb.map((c) => [c.slug, c]));
+  const categories = profile.categorySlugs
+    .map((s) => byCatalogSlug.get(s))
+    .filter((c): c is { id: string; name: string; slug: string } => !!c);
 
   const sections: CatalogPdfCategorySection[] = [];
   for (const cat of categories) {

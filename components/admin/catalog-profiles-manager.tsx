@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, ChevronRight, Save, Trash2, Plus } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Save, Trash2, Plus, ArrowUp, ArrowDown, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -224,6 +224,32 @@ function ProfileEditor({
     }));
   }
 
+  function moveCategory(index: number, dir: -1 | 1) {
+    setValues((v) => {
+      const arr = [...v.categorySlugs];
+      const target = index + dir;
+      if (target < 0 || target >= arr.length) return v;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      return { ...v, categorySlugs: arr };
+    });
+  }
+
+  function removeCategory(slug: string) {
+    setValues((v) => ({
+      ...v,
+      categorySlugs: v.categorySlugs.filter((s) => s !== slug),
+    }));
+  }
+
+  // Map for quick lookup
+  const categoryMap = new Map(categories.map((c) => [c.slug, c]));
+  const selectedCategories = values.categorySlugs
+    .map((s) => categoryMap.get(s))
+    .filter((c): c is Category => !!c);
+  const availableCategories = categories.filter(
+    (c) => !values.categorySlugs.includes(c.slug),
+  );
+
   function save() {
     setError(null);
     startTransition(async () => {
@@ -333,42 +359,101 @@ function ProfileEditor({
         </div>
       </div>
 
-      {/* Kategori seçimi */}
-      <div>
-        <div className="flex items-center justify-between">
-          <label className="block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
-            Bu profile dahil kategoriler ({values.categorySlugs.length} seçili)
-          </label>
-          <span className="text-[10px] tabular-nums text-[var(--text-muted)]">
-            ~{totalProducts} ürün toplam
-          </span>
+      {/* Kategori yönetimi — iki panel: seçili (sıralı) + havuz */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* SOL: Seçili kategoriler — sırayla, ↑↓ butonlarıyla reorder */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+              KATALOGDA GÖRÜNECEKLER ({selectedCategories.length}) · katalogun başında ne çıksın istiyorsan üste taşı
+            </label>
+            <span className="text-[10px] tabular-nums text-[var(--text-muted)]">
+              ~{totalProducts} ürün
+            </span>
+          </div>
+          <div className="mt-2 max-h-[340px] overflow-y-auto rounded border border-[var(--accent-border)] bg-[var(--accent-dim)] p-2">
+            {selectedCategories.length === 0 ? (
+              <p className="py-8 text-center text-[11px] text-[var(--text-muted)]">
+                Henüz kategori eklenmemiş. Sağdaki havuzdan ekle.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {selectedCategories.map((c, idx) => (
+                  <div
+                    key={c.slug}
+                    className="flex items-center gap-1.5 rounded bg-[var(--surface-1)] px-2 py-1.5 text-[11.5px]"
+                  >
+                    <span className="flex-shrink-0 w-5 text-right font-mono text-[10px] text-[var(--text-muted)]">
+                      {idx + 1}.
+                    </span>
+                    <span className="flex-1 truncate text-[var(--text-primary)]">{c.name}</span>
+                    <span className="flex-shrink-0 font-mono text-[10px] text-[var(--text-muted)]">
+                      {c.productCount}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={pending || idx === 0}
+                      onClick={() => moveCategory(idx, -1)}
+                      className="flex-shrink-0 rounded p-0.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)] disabled:opacity-30"
+                      title="Yukarı taşı"
+                    >
+                      <ArrowUp size={11} strokeWidth={1.8} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pending || idx === selectedCategories.length - 1}
+                      onClick={() => moveCategory(idx, 1)}
+                      className="flex-shrink-0 rounded p-0.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)] disabled:opacity-30"
+                      title="Aşağı taşı"
+                    >
+                      <ArrowDown size={11} strokeWidth={1.8} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => removeCategory(c.slug)}
+                      className="flex-shrink-0 rounded p-0.5 text-[var(--text-muted)] transition hover:bg-[var(--danger)]/20 hover:text-[var(--danger)]"
+                      title="Kaldır"
+                    >
+                      <X size={11} strokeWidth={1.8} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="mt-2 grid max-h-[300px] gap-1 overflow-y-auto rounded border border-[var(--border-subtle)] bg-[var(--surface-2)] p-2 sm:grid-cols-2">
-          {categories.map((c) => {
-            const isSelected = values.categorySlugs.includes(c.slug);
-            return (
-              <label
-                key={c.slug}
-                className={`flex items-center gap-2 rounded px-2 py-1.5 text-[11.5px] cursor-pointer transition ${
-                  isSelected
-                    ? "bg-[var(--accent-dim)] text-[var(--text-primary)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--surface-3)]"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => toggleCategory(c.slug)}
-                  disabled={pending}
-                  className="flex-shrink-0"
-                />
-                <span className="flex-1 truncate">{c.name}</span>
-                <span className="flex-shrink-0 font-mono text-[10px] text-[var(--text-muted)]">
-                  {c.productCount}
-                </span>
-              </label>
-            );
-          })}
+
+        {/* SAĞ: Havuz — eklenmemiş kategoriler */}
+        <div>
+          <label className="block text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+            EKLENEBİLİR KATEGORİLER ({availableCategories.length}) · tıkla → seçili listeye eklenir (sona)
+          </label>
+          <div className="mt-2 max-h-[340px] overflow-y-auto rounded border border-[var(--border-subtle)] bg-[var(--surface-2)] p-2">
+            {availableCategories.length === 0 ? (
+              <p className="py-8 text-center text-[11px] text-[var(--text-muted)]">
+                Tüm kategoriler eklendi.
+              </p>
+            ) : (
+              <div className="space-y-0.5">
+                {availableCategories.map((c) => (
+                  <button
+                    key={c.slug}
+                    type="button"
+                    disabled={pending}
+                    onClick={() => toggleCategory(c.slug)}
+                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[11.5px] text-[var(--text-secondary)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]"
+                  >
+                    <Plus size={11} strokeWidth={1.8} className="flex-shrink-0 text-[var(--text-muted)]" />
+                    <span className="flex-1 truncate">{c.name}</span>
+                    <span className="flex-shrink-0 font-mono text-[10px] text-[var(--text-muted)]">
+                      {c.productCount}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
