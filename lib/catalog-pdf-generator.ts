@@ -160,164 +160,165 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
     drawTxt(page, font, `Sayfa ${pageNumber}`, PW - ML - 40, 24, 7, C.slate500);
   }
 
-  // ── Cover page ─────────────────────────────────────────────────────────────
+  // ── Cover page — Editorial / Annual Report stili ──────────────────────────
+  //
+  // Tasarım dili: Hermès / Stripe Press / Bloomberg / Apple annual report.
+  //   - Bol negative space (sayfanın %50+'sı boş)
+  //   - Tek aksan rengi (orange) — sadece bir aksan ipinde ve eyebrow'da
+  //   - Mono mini etiketler (UPPERCASE tracking-widest 7px)
+  //   - Büyük tek hiyerarşi (36px başlık, multi-line)
+  //   - Dekoratif öğe SIFIR (diagonal çubuk yok, beyaz kart yok)
+  //   - Yatay ince ayraç çizgileri (0.5px slate700) → bilgi bantlarını ayırır
+  //
+  // Anatomi (yukarıdan aşağıya):
+  //   1. Top brand band  (logo + wordmark — sol, edition no — sağ)
+  //   2. Eyebrow + DEV başlık + subtitle
+  //   3. Cover note (opsiyonel, başlık-grid arası)
+  //   4. Negatif boşluk
+  //   5. Müşteri bloku
+  //   6. Alt 4-sütun data grid (HAZIRLAYAN / GEÇERLİLİK / İLETİŞİM / WEB)
+
   // Full-bleed charcoal background
   page.drawRectangle({ x: 0, y: 0, width: PW, height: PH, color: C.charcoal });
 
-  // Top orange band (~64% of height) — bold graphic anchor
-  const HERO_H = 540;
-  page.drawRectangle({
-    x: 0,
-    y: PH - HERO_H,
-    width: PW,
-    height: HERO_H,
-    color: C.charcoal,
-  });
-
-  // Decorative orange diagonal bars top-right
-  page.drawRectangle({ x: PW - 110, y: PH - 4, width: 110, height: 4, color: C.orange });
-  page.drawRectangle({ x: PW - 60, y: PH - 12, width: 60, height: 4, color: C.orange });
-  page.drawRectangle({ x: PW - 30, y: PH - 20, width: 30, height: 4, color: C.orange });
-
-  // Brand tag — top-left
-  page.drawRectangle({ x: 0, y: PH - 38, width: 4, height: 34, color: C.orange });
-  drawTxt(page, font, safe(CS.companyName.toUpperCase()), ML, PH - 22, 9, C.white);
-  drawTxt(page, font, "B2B KATALOG · USD NET (KDV HARİÇ)", ML, PH - 34, 7, C.slate300);
-
-  // Logo — large, left-aligned, with breathing room
+  // ── 1) Üst brand band (logo + wordmark sol, edition sağ) ─────────
+  const BRAND_BAND_Y = PH - 56;
+  const LOGO_H = 28;
   if (logoImage) {
     const ratio = logoImage.width / logoImage.height;
-    const targetH = 140;
-    const w = targetH * ratio;
+    const logoW = LOGO_H * ratio;
     page.drawImage(logoImage, {
       x: ML,
-      y: PH - 220,
-      width: w,
-      height: targetH,
+      y: BRAND_BAND_Y - 6,
+      width: logoW,
+      height: LOGO_H,
     });
+    drawTxt(page, font, safe(CS.companyName.toUpperCase()), ML + logoW + 12, BRAND_BAND_Y + 7, 9, C.white);
   } else {
-    page.drawRectangle({ x: ML, y: PH - 220, width: 140, height: 140, color: C.orange });
+    drawTxt(page, font, safe(CS.companyName.toUpperCase()), ML, BRAND_BAND_Y + 7, 11, C.white);
   }
 
-  // Heavy orange separator
-  page.drawRectangle({ x: ML, y: PH - 244, width: 80, height: 4, color: C.orange });
+  // Sağ üst — edition (mono, küçük)
+  const editionStr = new Intl.DateTimeFormat("tr-TR", { year: "numeric" }).format(options.generatedAt);
+  const editionLabel = `EDITION ${editionStr}`;
+  const editionWidth = font.widthOfTextAtSize(editionLabel, 7);
+  drawTxt(page, font, editionLabel, PW - MR - editionWidth, BRAND_BAND_Y + 9, 7, C.slate500);
 
-  // Catalog edition label
-  drawTxt(
-    page,
-    font,
-    safe(new Intl.DateTimeFormat("tr-TR", { year: "numeric", month: "long" }).format(options.generatedAt).toUpperCase()),
-    ML,
-    PH - 264,
-    8,
-    C.slate300,
-  );
+  // İnce ayraç çizgisi brand band'ın altında (tüm genişlik, 0.5px)
+  page.drawRectangle({ x: ML, y: BRAND_BAND_Y - 18, width: CW, height: 0.5, color: C.slate700 });
 
-  // Profile title — large, bold-feeling
-  const titleLines = wrapTxt(safe(options.profile.title), 32).slice(0, 2);
-  let ty = PH - 296;
+  // ── 2) Aksan ipi (sadece bu kullanılır — diğer dekorasyon yok) ────
+  const ACCENT_Y = PH - 152;
+  page.drawRectangle({ x: ML, y: ACCENT_Y, width: 32, height: 2, color: C.orange });
+
+  // ── 3) Eyebrow (ay + B2B KATALOG) ──────────────────────────────────
+  const monthYear = new Intl.DateTimeFormat("tr-TR", { year: "numeric", month: "long" })
+    .format(options.generatedAt)
+    .toLocaleUpperCase("tr-TR");
+  drawTxt(page, font, safe(`${monthYear} · B2B KATALOG`), ML, ACCENT_Y - 18, 8, C.slate300);
+
+  // ── 4) DEV başlık (36pt, multi-line OK, beyaz) ─────────────────────
+  const titleLines = wrapTxt(safe(options.profile.title), 22).slice(0, 3);
+  let ty = ACCENT_Y - 52;
   for (const line of titleLines) {
-    drawTxt(page, font, line, ML, ty, 26, C.white);
-    ty -= 32;
+    drawTxt(page, font, line, ML, ty, 36, C.white);
+    ty -= 44;
   }
-  drawTxt(page, font, safe(options.profile.subtitle), ML, ty - 4, 11, C.orange);
 
-  // Lower section — light card on dark hero, contains customer block + meta
-  const CARD_Y = PH - HERO_H + 24;
-  const CARD_H = HERO_H - 320;
-  page.drawRectangle({
-    x: ML,
-    y: CARD_Y,
-    width: CW,
-    height: CARD_H,
-    color: C.white,
-  });
-  page.drawRectangle({ x: ML, y: CARD_Y + CARD_H - 4, width: CW, height: 4, color: C.orange });
+  // ── 5) Subtitle (accent orange, 13px) ───────────────────────────────
+  drawTxt(page, font, safe(options.profile.subtitle), ML, ty - 6, 13, C.orange);
+  const subtitleEndY = ty - 6;
 
-  // Customer block in white card
-  drawTxt(page, font, "HAZIRLANAN MÜŞTERİ", ML + 20, CARD_Y + CARD_H - 28, 7, C.orange);
-  drawTxt(
-    page,
-    font,
-    safe(limitTxt(options.customer.company ?? options.customer.name, 50)),
-    ML + 20,
-    CARD_Y + CARD_H - 50,
-    15,
-    C.slate900,
-  );
+  // ── 6) Cover note (opsiyonel, başlık ile data grid arasında) ────────
+  let dataTopY = 260; // Default: müşteri bloku 260'tan başlar
+  if (options.coverNote && options.coverNote.trim().length > 0) {
+    const noteLines = wrapTxt(safe(options.coverNote.trim()), 80).slice(0, 4);
+    const noteH = 18 + noteLines.length * 14;
+    const noteY = Math.min(subtitleEndY - 40, 360 + noteH); // başlık altında belli boşluk bırak
 
+    // Sol border (2px accent çizgi) — tek dekorasyon olarak izin verildi
+    page.drawRectangle({ x: ML, y: noteY - noteH, width: 2, height: noteH, color: C.orange });
+    drawTxt(page, font, "ÖN SÖZ", ML + 14, noteY - 12, 7, C.slate300);
+    let ny = noteY - 28;
+    for (const line of noteLines) {
+      drawTxt(page, font, line, ML + 14, ny, 10, C.white);
+      ny -= 14;
+    }
+    // Data grid'i ön sözün altına çek
+    dataTopY = Math.min(dataTopY, noteY - noteH - 40);
+  }
+
+  // ── 7) Müşteri bloku ────────────────────────────────────────────────
+  // Üst ayraç çizgisi
+  page.drawRectangle({ x: ML, y: dataTopY, width: CW, height: 0.5, color: C.slate700 });
+
+  drawTxt(page, font, "HAZIRLANAN MÜŞTERİ", ML, dataTopY - 18, 7, C.orange);
+  const customerLabel = safe(limitTxt(options.customer.company ?? options.customer.name, 60));
+  const customerLines = wrapTxt(customerLabel, 38).slice(0, 2);
+  let cy = dataTopY - 42;
+  for (const line of customerLines) {
+    drawTxt(page, font, line, ML, cy, 17, C.white);
+    cy -= 22;
+  }
+
+  // Müşteri sub-meta (yetkili + şehir + sektör)
   const subParts: string[] = [];
   if (options.customer.company && options.customer.name !== options.customer.company) {
-    subParts.push(`Yetkili: ${options.customer.name}`);
+    subParts.push(options.customer.name);
   }
   if (options.customer.city) subParts.push(options.customer.city);
   if (options.customer.industryName) subParts.push(options.customer.industryName);
   if (subParts.length > 0) {
-    drawTxt(page, font, safe(subParts.join("  ·  ")), ML + 20, CARD_Y + CARD_H - 68, 9, C.slate700);
+    drawTxt(page, font, safe(subParts.join("  ·  ")), ML, cy - 2, 10, C.slate300);
   }
 
-  // Sales rep + validity — right column of card
-  if (options.salesRepName) {
-    drawTxt(page, font, "HAZIRLAYAN", PW - MR - 160, CARD_Y + CARD_H - 28, 7, C.orange);
-    drawTxt(
-      page,
-      font,
-      safe(limitTxt(options.salesRepName, 24)),
-      PW - MR - 160,
-      CARD_Y + CARD_H - 46,
-      11,
-      C.slate900,
-    );
-  }
+  // ── 8) Alt 4-sütun data grid ────────────────────────────────────────
+  // Üst ayraç + 4 eşit kolon: HAZIRLAYAN | GEÇERLİLİK | İLETİŞİM | WEB
+  const GRID_TOP = 88;
+  page.drawRectangle({ x: ML, y: GRID_TOP + 28, width: CW, height: 0.5, color: C.slate700 });
 
-  // Bottom dark band — contacts + validity
-  const BAND_Y = 40;
-  const BAND_H = 110;
-  page.drawRectangle({ x: 0, y: BAND_Y, width: PW, height: BAND_H, color: C.charcoal });
-  page.drawRectangle({ x: 0, y: BAND_Y + BAND_H, width: PW, height: 1, color: C.orange });
+  const colWidth = CW / 4;
+  const validDateStr = new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(options.validityDate);
 
-  drawTxt(page, font, "İLETİŞİM", ML, BAND_Y + BAND_H - 18, 7, C.orange);
-  drawTxt(page, font, safe(CS.phone), ML, BAND_Y + BAND_H - 36, 11, C.white);
-  drawTxt(page, font, safe(CS.email), ML, BAND_Y + BAND_H - 52, 9, C.slate300);
-  drawTxt(page, font, safe(CS.website), ML, BAND_Y + BAND_H - 66, 9, C.slate300);
+  const dataCols = [
+    {
+      label: "HAZIRLAYAN",
+      value: safe(limitTxt(options.salesRepName ?? CS.salesContact, 22)),
+    },
+    {
+      label: "GEÇERLİLİK",
+      value: safe(validDateStr),
+    },
+    {
+      label: "İLETİŞİM",
+      value: safe(CS.phone),
+    },
+    {
+      label: "WEB",
+      value: safe(CS.website),
+    },
+  ];
+  dataCols.forEach((c, i) => {
+    const cx = ML + i * colWidth;
+    drawTxt(page, font, c.label, cx, GRID_TOP + 12, 7, C.orange);
+    drawTxt(page, font, c.value, cx, GRID_TOP - 8, 10, C.white);
+  });
 
-  drawTxt(page, font, "GEÇERLİLİK", PW - MR - 160, BAND_Y + BAND_H - 18, 7, C.orange);
-  const validStr = new Intl.DateTimeFormat("tr-TR", { dateStyle: "long" }).format(options.validityDate);
-  drawTxt(page, font, safe(validStr), PW - MR - 160, BAND_Y + BAND_H - 36, 10, C.white);
-
+  // En alt — tek satır legal/note
   if (options.priceMode !== "hidden") {
     drawTxt(
       page,
       font,
-      "USD bazlı · KDV hariç · TCMB kuru",
-      PW - MR - 160,
-      BAND_Y + BAND_H - 52,
-      8,
-      C.slate300,
+      "Tüm fiyatlar USD bazında ve KDV hariçtir. Faturada TCMB kuru üzerinden TL hesaplanır.",
+      ML,
+      GRID_TOP - 36,
+      7,
+      C.slate500,
     );
-  }
-
-  // Cover note (optional) — slim white strip between card and bottom band
-  if (options.coverNote && options.coverNote.trim().length > 0) {
-    const noteLines = wrapTxt(safe(options.coverNote.trim()), 95).slice(0, 4);
-    const noteH = 16 + noteLines.length * 12;
-    const NOTE_Y = BAND_Y + BAND_H + 14;
-    page.drawRectangle({
-      x: ML,
-      y: NOTE_Y,
-      width: CW,
-      height: noteH,
-      color: C.charcoal,
-      borderColor: C.orange,
-      borderWidth: 0.6,
-    });
-    page.drawRectangle({ x: ML, y: NOTE_Y, width: 4, height: noteH, color: C.orange });
-    drawTxt(page, font, "ÖN SÖZ", ML + 12, NOTE_Y + noteH - 12, 6, C.orange);
-    let ny = NOTE_Y + noteH - 24;
-    for (const line of noteLines) {
-      drawTxt(page, font, line, ML + 12, ny, 8, C.white);
-      ny -= 12;
-    }
   }
 
   // ── Category sections ──────────────────────────────────────────────────────
