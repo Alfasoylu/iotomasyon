@@ -14,12 +14,8 @@ import { notFound } from "next/navigation";
 import { Phone, MessageCircle, Mail, MapPin } from "lucide-react";
 
 import { COMPANY_SETTINGS } from "@/lib/company-settings";
-import {
-  getCatalogProfile,
-  CATALOG_PROFILES,
-  GENERAL_PROFILE,
-  type CatalogPriceMode,
-} from "@/lib/catalog-mapping";
+import { GENERAL_PROFILE, type CatalogPriceMode } from "@/lib/catalog-mapping";
+import { getCatalogProfile } from "@/lib/get-catalog-profile";
 import {
   CATALOG_PRICE_SELECT,
   catalogPriceFilter,
@@ -64,10 +60,8 @@ export default async function PublicCatalogPage({
   await recordShareView(share.id).catch(() => {});
 
   // Resolve profile
-  const profile =
-    share.profileSlug === GENERAL_PROFILE.slug
-      ? GENERAL_PROFILE
-      : CATALOG_PROFILES[share.profileSlug] ?? getCatalogProfile(null);
+  // DB-driven (CatalogProfile model). Share'in profileSlug'ı ile join.
+  const profile = await getCatalogProfile(share.profileSlug);
 
   // Fetch products by section
   const categories = await prisma.productCategory.findMany({

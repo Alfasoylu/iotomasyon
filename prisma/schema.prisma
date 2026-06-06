@@ -1222,6 +1222,27 @@ model CompanySettings {
   updatedAt          DateTime @updatedAt
 }
 
+// Catalog profilleri — Industry.slug ile join edilir, müşteriye gönderilecek
+// katalogun kategori seti, başlık, altyazı ve fiyat modunu belirler.
+// /admin/catalog-profiles sayfasından düzenlenir.
+//
+// Mevcut hard-coded mapping (lib/catalog-mapping.ts) bu tabloya seed olur.
+// getCatalogProfile() async olarak DB'den okur, DB miss durumunda hard-coded
+// fallback (lib/catalog-mapping-fallback.ts) devreye girer.
+model CatalogProfile {
+  id               String   @id @default(cuid())
+  slug             String   @unique  // Industry.slug ile eşleşir, "general" özel fallback
+  title            String   // PDF kapak başlığı
+  subtitle         String   // PDF kapak alt başlığı
+  categorySlugs    String[] // ProductCategory.slug listesi (Postgres text[])
+  defaultPriceMode String   // "wholesale" | "retail" | "hidden"
+  enabled          Boolean  @default(true)
+  sortOrder        Int      @default(100)
+  updatedAt        DateTime @updatedAt
+
+  @@index([enabled])
+}
+
 model ProductSourceLink {
   id         String   @id @default(cuid())
   productId  String

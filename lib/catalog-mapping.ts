@@ -1,8 +1,9 @@
 /**
- * Faz 1 — Sektör → Katalog Profili Eşleştirme (Hard-coded MVP)
+ * Sektör → Katalog Profili eşleştirmesi.
  *
- * 12 sektör profili. Phase 99 Industry.slug değerleriyle eşleşir.
- * Faz 5'te DB tabanlı yapıya (Industry.catalog* alanları) taşınacak.
+ * Migration 20260606000300 ile DB tabanlı (CatalogProfile model). Bu dosya
+ * tip tanımlarını + hard-coded fallback'i (eski 12 profil) içerir. DB'den
+ * okuma için `lib/get-catalog-profile.ts` kullanılır.
  *
  * Profil yapısı:
  * - title: Katalog kapağında gösterilen başlık
@@ -28,135 +29,7 @@ export interface CatalogProfile {
   defaultPriceMode: CatalogPriceMode;
 }
 
-// ── 12 sektör profili + fallback ──────────────────────────────────────────────
-
-const CCTV_CORE = ["cctv-kamera-sistemleri"];
-const CCTV_EXPANDED = [
-  "cctv-kamera-sistemleri",
-  "telsiz-haberlesme",
-  "metal-dedektoru",
-  "akilli-ev-iot-otomasyon",
-];
-const SECURITY_INSTALLER = [
-  "cctv-kamera-sistemleri",
-  "akilli-ev-iot-otomasyon",
-  "guc-kaynagi-donusturucu",
-  "telsiz-haberlesme",
-];
-const RETAIL_QUICK = [
-  "cctv-kamera-sistemleri",
-  "metal-dedektoru",
-  "guc-kaynagi-donusturucu",
-];
-const IT_RESELLER = [
-  "cctv-kamera-sistemleri",
-  "bilgisayar-cevre-baglanti",
-  "bilgisayar-donanim-sogutucu",
-  "akilli-ev-iot-otomasyon",
-];
-const ELECTRICAL = [
-  "aydinlatma-led",
-  "cctv-kamera-sistemleri",
-  "guc-kaynagi-donusturucu",
-  "elektronik-modul-gelistirme",
-];
-const INSTALLATION_VENUE = [
-  "cctv-kamera-sistemleri",
-  "akilli-ev-iot-otomasyon",
-  "audio-amfi-hoparlor",
-];
-
-export const CATALOG_PROFILES: Record<string, CatalogProfile> = {
-  // ── Güvenlik Bayisi grubu ───────────────────────────────────────────────────
-  "guvenlik-sistemi-tedarikcisi": {
-    slug: "guvenlik-sistemi-tedarikcisi",
-    title: "Güvenlik Bayileri için Toptan Katalog",
-    subtitle: "CCTV · Telsiz · Akıllı Ev · Metal Dedektör",
-    categorySlugs: CCTV_EXPANDED,
-    defaultPriceMode: "wholesale",
-  },
-  "guvenlik-sistemi-kurulum": {
-    slug: "guvenlik-sistemi-kurulum",
-    title: "Kurulum Hizmeti Sağlayıcılar Kataloğu",
-    subtitle: "Kameralar · Aksesuar · Akıllı Ev",
-    categorySlugs: SECURITY_INSTALLER,
-    defaultPriceMode: "wholesale",
-  },
-  "guvenlik-sirketi": {
-    slug: "guvenlik-sirketi",
-    title: "Kurumsal Güvenlik Sistemleri",
-    subtitle: "IP Kameralar · NVR · Erişim Kontrol",
-    categorySlugs: CCTV_EXPANDED,
-    defaultPriceMode: "wholesale",
-  },
-  "bilgisayar-guvenlik": {
-    slug: "bilgisayar-guvenlik",
-    title: "Bilişim & Güvenlik Hizmet Kataloğu",
-    subtitle: "CCTV + Bilgisayar Çevre Birimi + Akıllı Ev",
-    categorySlugs: IT_RESELLER,
-    defaultPriceMode: "wholesale",
-  },
-
-  // ── Yan Bayi grubu ──────────────────────────────────────────────────────────
-  "nalbur": {
-    slug: "nalbur",
-    title: "Nalbur Hızlı Satış Kataloğu",
-    subtitle: "Popüler AHD/IP + Alarm + Kit",
-    categorySlugs: RETAIL_QUICK,
-    defaultPriceMode: "wholesale",
-  },
-  "elektronik-magaza": {
-    slug: "elektronik-magaza",
-    title: "Mağaza Tezgah Ürünleri Kataloğu",
-    subtitle: "Hazır setler · Perakende kit",
-    categorySlugs: CCTV_CORE.concat("akilli-ev-iot-otomasyon", "guc-kaynagi-donusturucu"),
-    defaultPriceMode: "retail",
-  },
-  "bilgisayar-servisi": {
-    slug: "bilgisayar-servisi",
-    title: "IT Servisi Çözümleri",
-    subtitle: "Starter setler + Çevre birim",
-    categorySlugs: IT_RESELLER,
-    defaultPriceMode: "wholesale",
-  },
-  "elektrikci": {
-    slug: "elektrikci",
-    title: "Elektrikçi Aksesuar Kataloğu",
-    subtitle: "Aydınlatma · Kameralar · Güç Kaynağı",
-    categorySlugs: ELECTRICAL,
-    defaultPriceMode: "wholesale",
-  },
-
-  // ── Montaj Müşterisi grubu ──────────────────────────────────────────────────
-  "restoran-cafe": {
-    slug: "restoran-cafe",
-    title: "Restoran & Cafe Güvenlik Paketi",
-    subtitle: "4-8 Kamera Mini Set · Alarm",
-    categorySlugs: INSTALLATION_VENUE,
-    defaultPriceMode: "retail",
-  },
-  "site-yonetimi": {
-    slug: "site-yonetimi",
-    title: "Site Güvenlik Çözümleri",
-    subtitle: "IP/PTZ + NVR + Erişim Kontrol",
-    categorySlugs: INSTALLATION_VENUE,
-    defaultPriceMode: "retail",
-  },
-  "otel-pansiyon": {
-    slug: "otel-pansiyon",
-    title: "Otel & Pansiyon Güvenlik Çözümü",
-    subtitle: "IP Backbone + NVR",
-    categorySlugs: INSTALLATION_VENUE,
-    defaultPriceMode: "retail",
-  },
-  "ofis-isyeri": {
-    slug: "ofis-isyeri",
-    title: "Ofis & İşyeri Güvenlik Paketi",
-    subtitle: "Mini IP Set + Alarm",
-    categorySlugs: INSTALLATION_VENUE,
-    defaultPriceMode: "retail",
-  },
-};
+// ── Hard-coded FALLBACK profilleri (DB miss durumunda) ────────────────────────
 
 export const GENERAL_PROFILE: CatalogProfile = {
   slug: "general",
@@ -171,11 +44,115 @@ export const GENERAL_PROFILE: CatalogProfile = {
   defaultPriceMode: "hidden",
 };
 
-export function getCatalogProfile(industrySlug: string | null | undefined): CatalogProfile {
+/**
+ * FALLBACK_PROFILES — DÜZELTİLMİŞ hard-coded mapping (bug-fix).
+ * Önceki versiyonda nalbur/elektrikçi sektörlerine yanlışlıkla CCTV
+ * kataloğu gidiyordu. Bu fallback DB unavailable olduğunda kullanılır.
+ * Esas kaynak: CatalogProfile DB tablosu (migration 20260606000300).
+ */
+export const FALLBACK_PROFILES: Record<string, CatalogProfile> = {
+  "guvenlik-sistemi-tedarikcisi": {
+    slug: "guvenlik-sistemi-tedarikcisi",
+    title: "Güvenlik Bayileri için Toptan Katalog",
+    subtitle: "CCTV · Telsiz · Akıllı Ev · Metal Dedektör",
+    categorySlugs: ["cctv-kamera-sistemleri", "telsiz-haberlesme", "metal-dedektoru", "akilli-ev-iot-otomasyon"],
+    defaultPriceMode: "wholesale",
+  },
+  "guvenlik-sistemi-kurulum": {
+    slug: "guvenlik-sistemi-kurulum",
+    title: "Kurulum Hizmeti Sağlayıcılar Kataloğu",
+    subtitle: "Kameralar · Aksesuar · Akıllı Ev",
+    categorySlugs: ["cctv-kamera-sistemleri", "akilli-ev-iot-otomasyon", "guc-kaynagi-donusturucu", "telsiz-haberlesme"],
+    defaultPriceMode: "wholesale",
+  },
+  "guvenlik-sirketi": {
+    slug: "guvenlik-sirketi",
+    title: "Kurumsal Güvenlik Sistemleri",
+    subtitle: "IP Kameralar · NVR · Erişim Kontrol",
+    categorySlugs: ["cctv-kamera-sistemleri", "telsiz-haberlesme", "metal-dedektoru", "akilli-ev-iot-otomasyon"],
+    defaultPriceMode: "wholesale",
+  },
+  "bilgisayar-guvenlik": {
+    slug: "bilgisayar-guvenlik",
+    title: "Bilişim & Güvenlik Hizmet Kataloğu",
+    subtitle: "CCTV + Bilgisayar Çevre Birimi + Akıllı Ev",
+    categorySlugs: ["cctv-kamera-sistemleri", "bilgisayar-cevre-baglanti", "bilgisayar-donanim-sogutucu", "akilli-ev-iot-otomasyon"],
+    defaultPriceMode: "wholesale",
+  },
+  "nalbur": {
+    slug: "nalbur",
+    title: "Nalbur & Yapı Marketi Kataloğu",
+    subtitle: "Musluk · El Aleti · Aydınlatma · Güç Kaynağı",
+    categorySlugs: ["banyo-mutfak-bataryasi", "el-aleti-lehim", "aydinlatma-led", "guc-kaynagi-donusturucu", "su-aritma-pompa-akvaryum", "pil-aku"],
+    defaultPriceMode: "wholesale",
+  },
+  "elektronik-magaza": {
+    slug: "elektronik-magaza",
+    title: "Mağaza Tezgah Ürünleri Kataloğu",
+    subtitle: "Hazır setler · Perakende kit",
+    categorySlugs: ["cctv-kamera-sistemleri", "akilli-ev-iot-otomasyon", "guc-kaynagi-donusturucu", "telefon-tablet-aksesuar", "gaming-konsol-aksesuar", "audio-amfi-hoparlor"],
+    defaultPriceMode: "retail",
+  },
+  "bilgisayar-servisi": {
+    slug: "bilgisayar-servisi",
+    title: "IT Servisi Çözümleri",
+    subtitle: "Starter setler + Çevre birim",
+    categorySlugs: ["bilgisayar-cevre-baglanti", "bilgisayar-donanim-sogutucu", "cctv-kamera-sistemleri", "akilli-ev-iot-otomasyon"],
+    defaultPriceMode: "wholesale",
+  },
+  "elektrikci": {
+    slug: "elektrikci",
+    title: "Elektrikçi Aksesuar Kataloğu",
+    subtitle: "Aydınlatma · El Aleti · Güç Kaynağı · Ölçüm",
+    categorySlugs: ["aydinlatma-led", "el-aleti-lehim", "guc-kaynagi-donusturucu", "elektronik-modul-gelistirme", "olcum-test-cihazlari", "motor-rc-surucu"],
+    defaultPriceMode: "wholesale",
+  },
+  "restoran-cafe": {
+    slug: "restoran-cafe",
+    title: "Restoran & Cafe Güvenlik Paketi",
+    subtitle: "4-8 Kamera Mini Set · Alarm",
+    categorySlugs: ["cctv-kamera-sistemleri", "akilli-ev-iot-otomasyon", "audio-amfi-hoparlor"],
+    defaultPriceMode: "retail",
+  },
+  "site-yonetimi": {
+    slug: "site-yonetimi",
+    title: "Site Güvenlik Çözümleri",
+    subtitle: "IP/PTZ + NVR + Erişim Kontrol",
+    categorySlugs: ["cctv-kamera-sistemleri", "akilli-ev-iot-otomasyon", "audio-amfi-hoparlor"],
+    defaultPriceMode: "retail",
+  },
+  "otel-pansiyon": {
+    slug: "otel-pansiyon",
+    title: "Otel & Pansiyon Güvenlik Çözümü",
+    subtitle: "IP Backbone + NVR",
+    categorySlugs: ["cctv-kamera-sistemleri", "akilli-ev-iot-otomasyon", "audio-amfi-hoparlor"],
+    defaultPriceMode: "retail",
+  },
+  "ofis-isyeri": {
+    slug: "ofis-isyeri",
+    title: "Ofis & İşyeri Güvenlik Paketi",
+    subtitle: "Mini IP Set + Alarm",
+    categorySlugs: ["cctv-kamera-sistemleri", "akilli-ev-iot-otomasyon", "audio-amfi-hoparlor"],
+    defaultPriceMode: "retail",
+  },
+};
+
+/**
+ * Senkron getter — eski API. Sadece FALLBACK_PROFILES'ten okur, DB'yi atlar.
+ * Yeni kod `getCatalogProfile()` (async, DB-aware) kullanmalı.
+ *
+ * @deprecated Use `getCatalogProfile` from `lib/get-catalog-profile.ts` instead.
+ */
+export function getCatalogProfileSync(industrySlug: string | null | undefined): CatalogProfile {
   if (!industrySlug) return GENERAL_PROFILE;
-  return CATALOG_PROFILES[industrySlug] ?? GENERAL_PROFILE;
+  return FALLBACK_PROFILES[industrySlug] ?? GENERAL_PROFILE;
 }
 
-export function listCatalogProfiles(): CatalogProfile[] {
-  return [GENERAL_PROFILE, ...Object.values(CATALOG_PROFILES)];
+export function listFallbackProfiles(): CatalogProfile[] {
+  return [GENERAL_PROFILE, ...Object.values(FALLBACK_PROFILES)];
 }
+
+// ── Backward compat aliases (geçiş sürecinde — yakında silinir) ──────────────
+export const CATALOG_PROFILES = FALLBACK_PROFILES;
+export const getCatalogProfile = getCatalogProfileSync; // eski sync API
+export const listCatalogProfiles = listFallbackProfiles;

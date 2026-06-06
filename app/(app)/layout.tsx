@@ -397,6 +397,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Sistem",
   },
   {
+    href: "/admin/catalog-profiles",
+    label: "Katalog Profilleri",
+    iconKey: "folderTree",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Sistem",
+  },
+  {
     href: "/admin/users",
     label: "Kullanıcılar",
     iconKey: "user",

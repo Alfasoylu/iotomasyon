@@ -12,11 +12,8 @@ import { NextResponse } from "next/server";
 import { getCurrentSession, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import {
-  getCatalogProfile,
-  CATALOG_PROFILES,
-  type CatalogPriceMode,
-} from "@/lib/catalog-mapping";
+import { type CatalogPriceMode } from "@/lib/catalog-mapping";
+import { getCatalogProfile } from "@/lib/get-catalog-profile";
 import {
   buildCatalogPdf,
   type CatalogPdfCategorySection,
@@ -63,10 +60,9 @@ export async function GET(
   });
   if (!customer) return new NextResponse("Customer not found", { status: 404 });
 
-  const profile =
-    profileSlug && CATALOG_PROFILES[profileSlug]
-      ? CATALOG_PROFILES[profileSlug]
-      : getCatalogProfile(customer.industry?.slug);
+  // DB-driven catalog profile — Industry.slug ile join.
+  // profileSlug query param ile override edilebilir (UI'da kullanılır).
+  const profile = await getCatalogProfile(profileSlug ?? customer.industry?.slug);
 
   // Price mode
   const requestedMode = url.searchParams.get("priceMode") as CatalogPriceMode | null;

@@ -8,7 +8,7 @@ import { CategoryInterestForm } from "@/components/categories/category-interest-
 import { CustomerDeleteButton } from "@/components/customers/customer-delete-button";
 import { CustomerWhatsAppButton } from "@/components/customers/customer-whatsapp-button";
 import { CatalogModal } from "@/components/customers/catalog-modal";
-import { listCatalogProfiles, getCatalogProfile } from "@/lib/catalog-mapping";
+import { listAllCatalogProfiles } from "@/lib/get-catalog-profile";
 import { CustomerProductSuggestionsWidget } from "@/components/customers/customer-product-suggestions-widget";
 import { getProductSuggestionsForCustomer } from "@/services/customer-product-suggestions-service";
 import { CustomerInterestDeleteButton } from "@/components/customers/customer-interest-delete-button";
@@ -86,6 +86,7 @@ export default async function CustomerDetailPage({
     canCreateCatalog,
     canWholesale,
     catalogBrands,
+    catalogProfilesList,
   ] = await Promise.all([
     getCustomerById(id),
     listCustomerInterestProducts(),
@@ -113,6 +114,7 @@ export default async function CustomerDetailPage({
         orderBy: { brand: "asc" },
       })
       .catch(() => [] as Array<{ brand: string | null }>),
+    listAllCatalogProfiles(),
   ]);
   const stats = statsMap.get(id) ?? null;
 
@@ -336,7 +338,7 @@ export default async function CustomerDetailPage({
                   customerPhone={customer.phone}
                   customerWhatsapp={customer.whatsapp}
                   customerIndustrySlug={customer.industry?.slug ?? null}
-                  profiles={listCatalogProfiles().map((p) => ({
+                  profiles={catalogProfilesList.map((p) => ({
                     slug: p.slug,
                     title: p.title,
                     subtitle: p.subtitle,
@@ -344,9 +346,7 @@ export default async function CustomerDetailPage({
                   }))}
                   canWholesale={canWholesale}
                   brands={catalogBrands.map((b) => b.brand!).filter(Boolean)}
-                  defaultProfileSlug={
-                    getCatalogProfile(customer.industry?.slug).slug
-                  }
+                  defaultProfileSlug={customer.industry?.slug ?? "general"}
                 />
               )}
               <CustomerRowActions
