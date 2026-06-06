@@ -48,5 +48,6 @@ export async function buildQuotePdf(options: QuotePdfOptions): Promise<Uint8Arra
   // İki-geçiş — tüm sayfalar çizildikten sonra "Sayfa X / Y" stamp
   stampPageNumbers(pdf, fonts);
 
-  return pdf.save();
+  // useObjectStreams ile %20-40 boyut düşer
+  return pdf.save({ useObjectStreams: true });
 }

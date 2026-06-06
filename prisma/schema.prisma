@@ -1409,6 +1409,11 @@ model MarketplaceSalesRecord {
   @@index([customerVergiNo])
   @@index([customerCity])
   @@index([status])
+  // Composite index — pazaryeri performans/kâr sayfalarındaki "kanal × tarih" sorguları
+  // (142k satırlık tablo, query başına 100-500ms → 10-50ms hedef).
+  @@index([channel, orderDate])
+  // productId + orderDate composite — ürün başına satış geçmişi sayfasında
+  @@index([productId, orderDate])
 }
 
 // Phase 30 — Marketplace Margin Policy Normalization

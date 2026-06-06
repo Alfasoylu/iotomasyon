@@ -1,10 +1,24 @@
 import "server-only";
 
+import sharp from "sharp";
 import type { PDFDocument, PDFImage } from "pdf-lib";
 
 const FETCH_TIMEOUT_MS = 5000;
-const MAX_BYTES = 5 * 1024 * 1024; // 5MB cap per image
+const MAX_BYTES = 5 * 1024 * 1024; // 5MB cap per source image
 const CONCURRENCY = 6;
+
+/**
+ * Catalog PDF görsel hedef boyutu.
+ *
+ * Slot ~80×80px PDF'te. Yazdırma + retina için 2.5x = 200px yeterli.
+ * Sharp ile JPEG q=72 çıktı tipik 8-15 KB / görsel.
+ *
+ * 60 ürünlü katalog × 12KB = ~720KB toplam görsel — eski "orijinal embed"
+ * yaklaşımında 60 × 500KB+ = 30MB+ idi. WhatsApp limit 100MB ama paylaşım
+ * kullanılabilirliği için <5MB hedefliyoruz.
+ */
+const PDF_IMAGE_MAX_PX = 280;
+const PDF_JPEG_QUALITY = 72;
 
 async function fetchImageBytes(url: string): Promise<Uint8Array | null> {
   const ctrl = new AbortController();
@@ -27,35 +41,54 @@ async function fetchImageBytes(url: string): Promise<Uint8Array | null> {
   }
 }
 
-function detectType(bytes: Uint8Array): "jpg" | "png" | null {
-  if (bytes.length < 4) return null;
-  // PNG signature: 89 50 4E 47
-  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
-    return "png";
+/**
+ * Sharp ile resize + JPEG compress.
+ *  - PNG → JPEG (transparency catalog'da gerekmez)
+ *  - max 280px (en uzun kenar)
+ *  - quality 72, progressive, mozjpeg
+ *  - flatten white background (PNG transparency için)
+ *  - chrome-subsampling 4:2:0 (default, sharp halleder)
+ */
+async function compressForPdf(bytes: Uint8Array): Promise<Uint8Array | null> {
+  try {
+    const out = await sharp(Buffer.from(bytes), { failOn: "none" })
+      .rotate() // EXIF orientation
+      .resize(PDF_IMAGE_MAX_PX, PDF_IMAGE_MAX_PX, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .jpeg({
+        quality: PDF_JPEG_QUALITY,
+        progressive: true,
+        mozjpeg: true,
+      })
+      .toBuffer();
+    return new Uint8Array(out);
+  } catch {
+    return null;
   }
-  // JPEG signature: FF D8 FF
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    return "jpg";
-  }
-  return null;
 }
 
 async function embedOne(pdf: PDFDocument, url: string): Promise<PDFImage | null> {
-  const bytes = await fetchImageBytes(url);
-  if (!bytes) return null;
-  const type = detectType(bytes);
-  if (!type) return null;
+  const sourceBytes = await fetchImageBytes(url);
+  if (!sourceBytes) return null;
+  const compressed = await compressForPdf(sourceBytes);
+  if (!compressed) return null;
   try {
-    return type === "jpg" ? await pdf.embedJpg(bytes) : await pdf.embedPng(bytes);
+    return await pdf.embedJpg(compressed);
   } catch {
     return null;
   }
 }
 
 /**
- * Fetches and embeds all unique image URLs into the given PDF document,
- * returning a Map<url, PDFImage|null> for lookup during page rendering.
- * Failed/timed-out fetches map to null so the renderer can fall back to a placeholder.
+ * Fetches, compresses (sharp resize+JPEG) and embeds all unique image URLs
+ * into the given PDF document. Returns a Map<url, PDFImage|null> for lookup
+ * during page rendering.
+ *
+ * Failed/timed-out fetches map to null so the renderer can fall back to a
+ * placeholder block.
  */
 export async function loadCatalogImages(
   pdf: PDFDocument,

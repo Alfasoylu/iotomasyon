@@ -551,7 +551,8 @@ export async function buildCatalogPdf(options: CatalogPdfOptions): Promise<Uint8
     C.white,
   );
 
-  const bytes = await pdf.save();
+  // useObjectStreams=true → PDF nesnelerini stream'lere paketler, %20-40 boyut düşürür
+  const bytes = await pdf.save({ useObjectStreams: true });
   return bytes;
 }
 
