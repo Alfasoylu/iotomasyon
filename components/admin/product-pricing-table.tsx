@@ -8,7 +8,10 @@ import { Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { updateCatalogPriceAction } from "@/lib/actions/catalog-pricing-actions";
+import {
+  updateCatalogPriceAction,
+  updateCatalogSortOrderAction,
+} from "@/lib/actions/catalog-pricing-actions";
 
 type Product = {
   id: string;
@@ -21,6 +24,7 @@ type Product = {
   unitCostUsd: number | null;
   wholesalePriceUsd: number | null;
   retailPriceUsd: number | null;
+  catalogSortOrder: number;
 };
 
 type ActiveFilters = {
@@ -65,6 +69,12 @@ export function ProductPricingTable({ products, categories, brands, activeFilter
 
   return (
     <div className="space-y-4">
+      {/* Bilgilendirme */}
+      <div className="rounded-md border border-[var(--accent-border)] bg-[var(--accent-dim)] px-3 py-2 text-[12px] text-[var(--text-secondary)]">
+        <span className="font-medium text-[var(--text-primary)]">Katalog sıralaması:</span> Sıra sütununa <code className="rounded bg-[var(--surface-3)] px-1 font-mono text-[var(--text-primary)]">1-999</code> arası bir sayı gir (küçük olan kataloğun başında çıkar). Boş bırakırsan otomatik (stok+ad) sıralanır.
+        Fiyat bayi modu için <strong>wholesalePriceUsd</strong> (manuel) → boşsa <strong>xmlBayiPrice</strong> (XML); perakende için <strong>retailPriceUsd</strong> → boşsa <strong>xmlPrice4</strong>.
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <select
@@ -110,6 +120,7 @@ export function ProductPricingTable({ products, categories, brands, activeFilter
         <table className="w-full text-sm">
           <thead className="bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
             <tr>
+              <th className="px-2 py-2.5 text-right" title="Katalog sıralaması — 1-999 manuel, boş/0 = otomatik">Sıra</th>
               <th className="px-3 py-2.5 text-left">Ürün</th>
               <th className="px-3 py-2.5 text-left">Kategori</th>
               <th className="px-3 py-2.5 text-right">Stok</th>
@@ -122,7 +133,7 @@ export function ProductPricingTable({ products, categories, brands, activeFilter
           <tbody>
             {products.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-sm text-[var(--text-muted)]">
+                <td colSpan={8} className="px-3 py-8 text-center text-sm text-[var(--text-muted)]">
                   Filtre kriterlerine uyan ürün bulunamadı.
                 </td>
               </tr>
@@ -168,9 +179,33 @@ function ProductRow({ product }: { product: Product }) {
   const [retail, setRetail] = useState<string>(
     product.retailPriceUsd != null ? String(product.retailPriceUsd) : "",
   );
+  // Sıra No: 1000 (default) → boş gösterilir; manuel (1-999) → değer gösterilir
+  const [sortOrder, setSortOrder] = useState<string>(
+    product.catalogSortOrder !== 1000 ? String(product.catalogSortOrder) : "",
+  );
+  const [sortSavedAt, setSortSavedAt] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  function saveSortOrder() {
+    const raw = sortOrder.trim();
+    const value = raw === "" ? null : Number(raw);
+    if (value !== null && (!Number.isFinite(value) || value < 0 || value > 99999)) {
+      setError("Sıra: 0-99999 arası bir sayı");
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const res = await updateCatalogSortOrderAction(product.id, value);
+      if (res.ok) {
+        setSortSavedAt(Date.now());
+        setTimeout(() => setSortSavedAt(null), 1500);
+      } else {
+        setError(res.message ?? "Sıralama kaydedilemedi");
+      }
+    });
+  }
 
   const margin = useMemo(() => {
     const r = retail ? Number(retail) : null;
@@ -201,8 +236,28 @@ function ProductRow({ product }: { product: Product }) {
 
   const justSaved = savedAt && Date.now() - savedAt < 1500;
 
+  const sortJustSaved = sortSavedAt && Date.now() - sortSavedAt < 1500;
+
   return (
     <tr className="border-t border-[var(--border-subtle)] hover:bg-[var(--surface-3)]">
+      <td className="px-2 py-2 align-top">
+        <Input
+          type="number"
+          min="0"
+          max="999"
+          step="1"
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          onBlur={saveSortOrder}
+          placeholder="—"
+          disabled={pending}
+          className="h-8 w-14 text-right text-xs tabular-nums font-mono"
+          title="1-999 manuel sıralama (küçük önce). Boş = otomatik (stok+ad)."
+        />
+        {sortJustSaved && (
+          <span className="mt-0.5 block text-center text-[9px] text-[var(--ok)]">✓</span>
+        )}
+      </td>
       <td className="px-3 py-2 align-top">
         <div className="flex items-start gap-2">
           {product.imageUrl ? (

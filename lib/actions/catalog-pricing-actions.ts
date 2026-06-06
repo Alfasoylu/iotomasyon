@@ -65,6 +65,43 @@ export async function updateCatalogPriceAction(
   }
 }
 
+/**
+ * Catalog sıralama güncelle — admin/product-pricing tablosundan inline edit.
+ * Range: 1-9999 (1-999 manuel öncelik, 1000+ otomatik bölgesine düşer).
+ * 0 / boş input → 1000 (default) yazılır (otomatik).
+ */
+const sortOrderSchema = z.object({
+  catalogSortOrder: z.number().int().min(0).max(99999),
+});
+
+export type CatalogSortOrderInput = z.infer<typeof sortOrderSchema>;
+
+export async function updateCatalogSortOrderAction(
+  productId: string,
+  rawValue: number | null,
+): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.PRODUCTS_UPDATE))) return PERM_DENIED;
+
+  // Boş veya 0 → default 1000 (otomatik sıralama)
+  const value = rawValue == null || rawValue === 0 ? 1000 : rawValue;
+  const parsed = sortOrderSchema.safeParse({ catalogSortOrder: value });
+  if (!parsed.success) {
+    return { ok: false, message: "Geçersiz sıralama değeri." };
+  }
+
+  try {
+    await prisma.product.update({
+      where: { id: productId },
+      data: { catalogSortOrder: parsed.data.catalogSortOrder },
+    });
+    revalidatePath("/admin/product-pricing");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Sıralama güncellenemedi." };
+  }
+}
+
 const bulkSchema = z.object({
   categoryId: z.string().nullable().optional(),
   brand: z.string().nullable().optional(),

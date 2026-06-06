@@ -112,7 +112,11 @@ export default async function PublicCatalogPage({
         stockQuantity: true,
         ...CATALOG_PRICE_SELECT,
       },
-      orderBy: [{ stockQuantity: "desc" }, { name: "asc" }],
+      orderBy: [
+        { catalogSortOrder: "asc" }, // manuel sıralama (1-999), default 1000 sonda
+        { stockQuantity: "desc" },
+        { name: "asc" },
+      ],
       take: 50,
     });
 

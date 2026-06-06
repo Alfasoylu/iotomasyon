@@ -70,8 +70,13 @@ export default async function ProductPricingPage({ searchParams }: PageProps) {
         sellingPriceTry: true,
         wholesalePriceUsd: true,
         retailPriceUsd: true,
+        catalogSortOrder: true,
       },
-      orderBy: [{ stockQuantity: "desc" }, { name: "asc" }],
+      orderBy: [
+        { catalogSortOrder: "asc" },
+        { stockQuantity: "desc" },
+        { name: "asc" },
+      ],
       take: 300,
     }),
     prisma.productCategory.findMany({
@@ -170,6 +175,7 @@ export default async function ProductPricingPage({ searchParams }: PageProps) {
             unitCostUsd: p.unitCostUsd ? Number(p.unitCostUsd) : null,
             wholesalePriceUsd: p.wholesalePriceUsd ? Number(p.wholesalePriceUsd) : null,
             retailPriceUsd: p.retailPriceUsd ? Number(p.retailPriceUsd) : null,
+            catalogSortOrder: p.catalogSortOrder,
           }))}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           brands={brands.map((b) => b.brand!).filter(Boolean)}

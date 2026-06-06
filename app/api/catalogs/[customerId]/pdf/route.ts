@@ -129,7 +129,18 @@ export async function GET(
         imageUrl: true,
         ...CATALOG_PRICE_SELECT,
       },
-      orderBy: [{ stockQuantity: "desc" }, { name: "asc" }],
+      // Sıralama:
+      //   1. catalogSortOrder > 0 olanlar üstte (admin manuel sırası, küçük önce)
+      //   2. catalogSortOrder = 0 olanlar otomatik (stockQuantity desc, name asc)
+      // Prisma'da "0 son" sıralama için: önce non-zero ascending, sonra 0'lar stok+isim.
+      // Pragmatik çözüm: catalogSortOrder asc (0'lar başta) yerine COALESCE(NULLIF(0, ...))
+      // taklidi yapamayız tek pass'te. Bu yüzden iki orderBy: sortOrder asc, stock desc, name asc.
+      // 0'lı ürünler eşit sıralanır ve stok+ad ile düzenlenir, manuel olanlar (1+) en üstte.
+      orderBy: [
+        { catalogSortOrder: "asc" },
+        { stockQuantity: "desc" },
+        { name: "asc" },
+      ],
       take: 60, // hard cap per category
     });
 
