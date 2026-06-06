@@ -813,6 +813,8 @@ export default async function CustomerDetailPage({
                         id: p.id,
                         name: p.name,
                         sku: p.sku ?? "",
+                        brand: p.brand ?? null,
+                        stockQuantity: p.stockQuantity ?? null,
                         sellingPriceTry: p.sellingPriceTry ? Number(p.sellingPriceTry) : null,
                       }))}
                       templates={quoteTemplates.map((t) => ({

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ProductCombobox } from "@/components/quotes/product-combobox";
 import { createQuoteAction, updateQuoteAction } from "@/lib/actions/quote-actions";
 import { COMPANY_SETTINGS } from "@/lib/company-settings";
 import {
@@ -71,7 +72,14 @@ export function QuoteForm({
   customerId: string;
   customerName?: string;
   customerCompany?: string | null;
-  products: Array<{ id: string; name: string; sku: string; sellingPriceTry?: number | null }>;
+  products: Array<{
+    id: string;
+    name: string;
+    sku: string;
+    brand?: string | null;
+    stockQuantity?: number | null;
+    sellingPriceTry?: number | null;
+  }>;
   templates?: TemplateOption[];
   quoteId?: string;
   initialValues?: Partial<QuoteFormValues>;
@@ -308,41 +316,27 @@ export function QuoteForm({
                         </td>
                         <td className="px-4 py-3">
                           <div className="space-y-2">
-                            {(() => {
-                              const { onChange: rhfOnChange, ...restReg } = form.register(`items.${index}.productId`);
-                              return (
-                                <select
-                                  {...restReg}
-                                  className={selectCls}
-                                  onChange={(e) => {
-                                    rhfOnChange(e);
-                                    const pid = e.target.value;
-                                    if (pid) {
-                                      const p = products.find((pr) => pr.id === pid);
-                                      if (p) {
-                                        if (!form.getValues(`items.${index}.description`)) {
-                                          form.setValue(`items.${index}.description`, p.name);
-                                        }
-                                        if (p.sellingPriceTry != null && p.sellingPriceTry > 0) {
-                                          form.setValue(`items.${index}.unitPrice`, String(p.sellingPriceTry));
-                                          form.setValue(`items.${index}.currency`, "TRY");
-                                        }
-                                      }
-                                    }
-                                  }}
-                                >
-                                  <option value="">Ürün bağlama (opsiyonel)</option>
-                                  {products.map((product) => (
-                                    <option key={product.id} value={product.id}>
-                                      {product.name} ({product.sku})
-                                    </option>
-                                  ))}
-                                </select>
-                              );
-                            })()}
+                            <ProductCombobox
+                              value={form.watch(`items.${index}.productId`) ?? ""}
+                              products={products}
+                              onChange={(pid, product) => {
+                                form.setValue(`items.${index}.productId`, pid, { shouldDirty: true });
+                                if (product) {
+                                  // Sadece açıklama boşsa otomatik doldur (kullanıcı override'ı korunur)
+                                  if (!form.getValues(`items.${index}.description`)?.trim()) {
+                                    form.setValue(`items.${index}.description`, product.name, { shouldDirty: true });
+                                  }
+                                  if (product.sellingPriceTry != null && product.sellingPriceTry > 0) {
+                                    form.setValue(`items.${index}.unitPrice`, String(product.sellingPriceTry), { shouldDirty: true });
+                                    form.setValue(`items.${index}.currency`, "TRY", { shouldDirty: true });
+                                  }
+                                }
+                              }}
+                            />
                             <Input
                               {...form.register(`items.${index}.description`)}
-                              placeholder="Teklifte görünecek açıklama"
+                              placeholder="Teklifte görünecek açıklama (ürün seçince otomatik dolar)"
+                              className="text-[12px]"
                             />
                           </div>
                         </td>
