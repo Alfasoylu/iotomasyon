@@ -66,7 +66,12 @@ export type DecisionLabel =
   | "Fiyat Yok"
   | "Maliyet Yok"
   | "Yüksek ROI"
-  | "Nakit Dönüş Hızlı";
+  | "Nakit Dönüş Hızlı"
+  /** Stoğu 0/azalmış + geçmişte satışı var — son 30 günde satış yok çünkü stoğu yok.
+   *  "Veri Eksik" değil, AKSİNE acil sipariş. UI'da dikkat çekici (turuncu/kırmızı). */
+  | "Stoksuz · Acil"
+  /** Stoğu 0 + lifetime > 0 ama trend yavaşlamış — yine de stok yenile. */
+  | "Stoksuz · Sipariş";
 
 export interface ImportCostResult {
   shippingMethod: ShippingMethod;
@@ -264,11 +269,23 @@ export function calcDecisionLabel(params: {
   targetStockDays: number;
   recommendedQty: number;
   t30g: number;
+  /** Phase 100 — stoğu biten satışlı ürünleri "Veri Eksik" göstermemek için.
+   *  stockQuantity=0 + lifetimeSold>0 ise "Stoksuz · Acil" sinyali döner. */
+  stockQuantity?: number;
+  lifetimeSold?: number;
 }): DecisionLabel {
-  const { hasCost, hasTrendyolPrice, netProfitUsd, annualRoiPct, stockDays, targetStockDays, recommendedQty, t30g } = params;
+  const { hasCost, hasTrendyolPrice, netProfitUsd, annualRoiPct, stockDays, targetStockDays, recommendedQty, t30g, stockQuantity, lifetimeSold } = params;
 
   if (!hasCost) return "Maliyet Yok";
   if (!hasTrendyolPrice) return "Fiyat Yok";
+
+  // ⚡ Phase 100 — Stoksuz ama eskiden satıyordu? "Veri Eksik" değil → AKSİNE acil sipariş!
+  // Stoğu olmadığı için son 30 gün satışı 0 olabilir, ama lifetime satış var.
+  if (stockQuantity != null && stockQuantity === 0 && lifetimeSold != null && lifetimeSold > 0) {
+    // Lifetime satışı çok (≥10) ise "Acil", az ise "Sipariş"
+    return lifetimeSold >= 10 ? "Stoksuz · Acil" : "Stoksuz · Sipariş";
+  }
+
   if (netProfitUsd != null && netProfitUsd <= 0) return "Zarar";
   if (t30g === 0) return "Veri Eksik";
   if (stockDays != null && stockDays > targetStockDays * 1.5) return "Stok Fazla";
@@ -277,6 +294,33 @@ export function calcDecisionLabel(params: {
   if (recommendedQty > 0) return "Al";
   if (netProfitUsd != null && netProfitUsd > 0) return "Bekle";
   return "Veri Eksik";
+}
+
+/**
+ * Phase 100 — Historical velocity tabanlı sipariş tahmini.
+ *
+ * t30g (son 30 gün) 0 olsa bile, lifetime satış varsa ortalama aylık velocity'yi
+ * hesaplayıp targetStockDays kadarlık stoku öner.
+ *
+ * Mantık:
+ *   ortalama aylık = lifetimeSold / lifetimeMonths  (default 12 ay)
+ *   önerilen = ortalama aylık × (targetStockDays / 30)
+ *
+ * Minimum 5 adet — küçük lifetime'da bile mantıklı kit boyutu.
+ */
+export function calcHistoricalRecommendedQty(params: {
+  lifetimeSold: number;
+  lifetimeMonths?: number;
+  targetStockDays: number;
+  minOrderQty?: number;
+}): number {
+  const { lifetimeSold, targetStockDays } = params;
+  const lifetimeMonths = params.lifetimeMonths ?? 12;
+  const minOrderQty = params.minOrderQty ?? 5;
+  if (lifetimeSold <= 0 || lifetimeMonths <= 0) return 0;
+  const monthlyAvg = lifetimeSold / lifetimeMonths;
+  const recommended = Math.ceil(monthlyAvg * (targetStockDays / 30));
+  return Math.max(minOrderQty, recommended);
 }
 
 // ── Health score (0–100) ───────────────────────────────────────────────────────

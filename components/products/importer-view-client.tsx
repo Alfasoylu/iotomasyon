@@ -14,6 +14,7 @@ import Link from "next/link";
 import {
   allocateBudget,
   calcDecisionLabel,
+  calcHistoricalRecommendedQty,
   calcImportCost,
   calcRevenue,
   calcProfit,
@@ -61,6 +62,9 @@ const DECISION_STYLES: Record<DecisionLabel, string> = {
   "Fiyat Yok":          "bg-slate-100 text-slate-600 border border-slate-200",
   "Maliyet Yok":        "bg-slate-100 text-slate-600 border border-slate-200",
   "Veri Eksik":         "bg-slate-100 text-slate-400 border border-slate-100",
+  // Phase 100 — Stoksuz ama eskiden satıyor: turuncu (acil dikkat), pulse animation
+  "Stoksuz · Acil":     "bg-orange-100 text-orange-900 border border-orange-300 font-semibold",
+  "Stoksuz · Sipariş":  "bg-amber-50 text-amber-800 border border-amber-200",
 };
 
 // ── Missing field chips ─────────────────────────────────────────────────────────
@@ -74,13 +78,19 @@ function getMissingFields(p: {
   weightKg: number | null;
   hasTrendyolPrice: boolean;
   t30g: number;
+  stockQuantity?: number;
+  lifetimeTotalQty?: number;
   netProfitUsd?: number | null;
 }): MissingField[] {
   const missing: MissingField[] = [];
   if (!p.sourceCostRmb) missing.push({ label: "Alış RMB", tone: "red" });
   if (!p.weightKg) missing.push({ label: "Ağırlık", tone: "red" });
   if (!p.hasTrendyolPrice) missing.push({ label: "T. Fiyat", tone: "red" });
-  if (p.t30g === 0) missing.push({ label: "Satış Yok", tone: "amber" });
+  // Phase 100 — "Satış Yok" sadece tarihsel satışı olmayan ürünler için göster.
+  // Stoğu biten ama eskiden satışı olan ürünler için "Satış Yok" yanıltıcı.
+  if (p.t30g === 0 && (p.lifetimeTotalQty ?? 0) === 0) {
+    missing.push({ label: "Satış Yok", tone: "amber" });
+  }
   return missing;
 }
 
@@ -246,7 +256,7 @@ type SortKey =
 
 type FilterKey =
   | "all" | "order" | "missing_cost" | "no_trendyol" | "no_bayi"
-  | "loss" | "high_roi" | "low_stock";
+  | "loss" | "high_roi" | "low_stock" | "stocksuz_acil";
 
 // ── Component ────────────────────────────────────────────────────────────────────
 
@@ -359,10 +369,29 @@ export function ImporterViewClient() {
 
   // Enrich products with allocation results + decision labels
   // decisionLabel ("Stok Fazla" / "Veri Eksik" vs.) Phase 90: effectiveMonthlyUnits ile hesaplanır
-  type EnrichedProduct = ImporterProduct & AllocationResult & { decisionLabel: DecisionLabel };
+  // Phase 100 — stockQ=0 + lifetimeSold>0 → "Stoksuz · Acil/Sipariş" sinyali +
+  //   recommendedQty bulunamadıysa historical velocity ile hesapla.
+  type EnrichedProduct = ImporterProduct & AllocationResult & {
+    decisionLabel: DecisionLabel;
+    historicalRecommendedQty: number | null;
+  };
   const enriched: EnrichedProduct[] = useMemo(() => {
     return products.map((p) => {
       const alloc = allocationMap.get(p.id) ?? { recommendedQty: 0, neededQty: 0, budgetCost: 0 };
+
+      // Historical fallback — sadece stoksuz + lifetime satışlı ürünler için
+      const isStocksuzSatisli =
+        p.stockQuantity === 0 && p.lifetimeTotalQty > 0;
+      const historicalRecommendedQty = isStocksuzSatisli
+        ? calcHistoricalRecommendedQty({
+            lifetimeSold: p.lifetimeTotalQty,
+            // Conservative: lifetimeTotalQty 12 ayda biriktiği varsayımı (ortalama)
+            lifetimeMonths: 12,
+            targetStockDays: params.targetStockDays,
+            minOrderQty: 5,
+          })
+        : null;
+
       const decisionLabel = calcDecisionLabel({
         hasCost: p.hasCost,
         hasTrendyolPrice: p.hasTrendyolPrice,
@@ -372,8 +401,11 @@ export function ImporterViewClient() {
         targetStockDays: params.targetStockDays,
         recommendedQty: alloc.recommendedQty,
         t30g: p.effectiveMonthlyUnits,
+        // Phase 100 — yeni sinyal için
+        stockQuantity: p.stockQuantity,
+        lifetimeSold: p.lifetimeTotalQty,
       });
-      return { ...p, ...alloc, decisionLabel };
+      return { ...p, ...alloc, decisionLabel, historicalRecommendedQty };
     });
   }, [products, allocationMap, params.targetStockDays]);
 
@@ -415,6 +447,10 @@ export function ImporterViewClient() {
       case "loss":        rows = rows.filter((p) => p.hasCost && p.hasTrendyolPrice && (p.netProfitUsd ?? 0) <= 0); break;
       case "high_roi":    rows = rows.filter((p) => (p.annualRoiPct ?? 0) >= 100); break;
       case "low_stock":   rows = rows.filter((p) => p.stockQuantity <= p.minimumStock); break;
+      // Phase 100 — Stoksuz ama eskiden satışı olan ürünler (acil sipariş gerektirir)
+      case "stocksuz_acil":
+        rows = rows.filter((p) => p.decisionLabel === "Stoksuz · Acil" || p.decisionLabel === "Stoksuz · Sipariş");
+        break;
     }
 
     rows.sort((a, b) => {
@@ -557,13 +593,14 @@ export function ImporterViewClient() {
       {/* ── Filter bar + sort ──────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2">
         {([
-          ["all",          "Tümü"],
-          ["order",        "Sipariş Önerisi"],
-          ["high_roi",     "Yüksek ROI"],
-          ["loss",         "Zarar Edenler"],
-          ["missing_cost", "Maliyet Eksik"],
-          ["no_trendyol",  "T. Fiyat Yok"],
-          ["low_stock",    "Düşük Stok"],
+          ["all",            "Tümü"],
+          ["stocksuz_acil",  "⚡ Stoksuz · Acil"],
+          ["order",          "Sipariş Önerisi"],
+          ["high_roi",       "Yüksek ROI"],
+          ["loss",           "Zarar Edenler"],
+          ["missing_cost",   "Maliyet Eksik"],
+          ["no_trendyol",    "T. Fiyat Yok"],
+          ["low_stock",      "Düşük Stok"],
         ] as [FilterKey, string][]).map(([key, label]) => (
           <button
             key={key}
@@ -578,11 +615,12 @@ export function ImporterViewClient() {
             {key !== "all" && (
               <span className="ml-1 text-[10px] opacity-70">
                 ({
-                  key === "order"        ? enriched.filter(p => p.recommendedQty > 0).length :
-                  key === "high_roi"     ? enriched.filter(p => (p.annualRoiPct ?? 0) >= 100).length :
-                  key === "loss"         ? summary.losing :
-                  key === "missing_cost" ? enriched.filter(p => !p.hasCost).length :
-                  key === "no_trendyol"  ? enriched.filter(p => !p.hasTrendyolPrice).length :
+                  key === "stocksuz_acil" ? enriched.filter(p => p.decisionLabel === "Stoksuz · Acil" || p.decisionLabel === "Stoksuz · Sipariş").length :
+                  key === "order"         ? enriched.filter(p => p.recommendedQty > 0).length :
+                  key === "high_roi"      ? enriched.filter(p => (p.annualRoiPct ?? 0) >= 100).length :
+                  key === "loss"          ? summary.losing :
+                  key === "missing_cost"  ? enriched.filter(p => !p.hasCost).length :
+                  key === "no_trendyol"   ? enriched.filter(p => !p.hasTrendyolPrice).length :
                   enriched.filter(p => p.stockQuantity <= p.minimumStock).length
                 })
               </span>
@@ -986,6 +1024,13 @@ export function ImporterViewClient() {
                           <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${DECISION_STYLES[p.decisionLabel]}`}>
                             {p.decisionLabel}
                           </span>
+                          {/* Phase 100 — Stoksuz + lifetime satışlı için "≈X adet sipariş" ipucu */}
+                          {p.historicalRecommendedQty != null && p.historicalRecommendedQty > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded bg-orange-50 px-1.5 py-0 text-[9px] font-medium leading-4 text-orange-700 border border-orange-200">
+                              <span className="font-mono tabular-nums">≈{p.historicalRecommendedQty}</span>
+                              <span>adet öner</span>
+                            </span>
+                          )}
                           {/* Show which fields are missing — always, not only when "Veri Eksik" */}
                           {getMissingFields(p).map((f) => (
                             <span
