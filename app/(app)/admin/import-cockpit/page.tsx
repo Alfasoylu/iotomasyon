@@ -438,8 +438,14 @@ export default async function ImportCockpitPage({
     const lifetimeQty = lifetimeQtyMap.get(p.id) ?? 0;
     const lifetimeMonths = lifetimeMonthsMap.get(p.id) ?? null;
     const isStocksuzSatisli = p.stockQuantity === 0 && lifetimeQty > 0;
-    // Stoksuz + lifetime satışlı + maliyet+fiyat varsa → STOKSUZ_AL sinyali
-    if (isStocksuzSatisli && resolvedPriceTry != null && landedCostTry != null && netProfitTry != null && netProfitTry > 0) {
+    // Sinyal koşulu GEVŞETİLDİ — sadece stoksuz + lifetime varsa yeterli.
+    // Maliyet bilinmiyor olsa bile bu ürün eskiden satıyordu → sipariş gerekli.
+    // Kullanıcı sonra maliyet/fiyat girer, kâr hesaplanır.
+    // SADECE "Zarar" (kâr<0) açık tespit edildiyse override etme.
+    if (
+      isStocksuzSatisli &&
+      !(netProfitTry != null && netProfitTry <= 0) // bilinen zarar değilse
+    ) {
       signal = "STOKSUZ_AL";
     }
 
