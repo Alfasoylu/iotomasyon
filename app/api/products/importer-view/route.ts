@@ -49,6 +49,10 @@ export type ImporterProduct = {
   t30g: number;
   /** Trendyol'da bu ürünün tüm zamanlardaki toplam satış adedi (iptaller hariç) */
   lifetimeTotalQty: number;
+  /** Phase 100 — İlk satıştan bu yana geçen ay sayısı. Stoksuz + lifetimeSold>0 ürünler
+   *  için "ortalama aylık velocity" = lifetimeTotalQty / lifetimeMonths hesabında kullanılır.
+   *  Hiç satış yoksa null. */
+  lifetimeMonths: number | null;
 
   // Import inputs
   sourceCostRmb: number | null;
@@ -200,19 +204,30 @@ export async function GET(_req: NextRequest) {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const t30gMap = new Map<string, number>();
   const lifetime = new Map<string, number>();
+  // Phase 100 — Gerçek aktif satış ay sayısı (ilk satış ayından bu yana).
+  // Historical velocity hesabı (calcHistoricalRecommendedQty) için kullanılır.
+  const lifetimeMonthsMap = new Map<string, number>();
   // Walk monthly buckets to compute t30g approximation (within-month) and lifetime
   // Note: t30g here is approximate (month-bucket granular, ≈last full month).
   // Yeterince doğru çünkü tahmin motoru zaten daha iyi sinyal üretiyor.
   for (const [pid, m] of monthlyByProduct) {
     let lt = 0;
     let t30 = 0;
+    let firstMonth: string | null = null;
     const thirtyAgoKey = thirtyDaysAgo.toISOString().slice(0, 7);
     for (const [k, units] of m) {
       lt += units;
       if (k >= thirtyAgoKey) t30 += units;
+      if (firstMonth === null || k < firstMonth) firstMonth = k;
     }
     t30gMap.set(pid, t30);
     lifetime.set(pid, lt);
+    // firstMonth: "2023-04" formatında. Bugüne kadar geçen ay sayısı.
+    if (firstMonth) {
+      const [fy, fm] = firstMonth.split("-").map(Number);
+      const monthsElapsed = (now.getFullYear() - fy) * 12 + (now.getMonth() + 1 - fm) + 1;
+      lifetimeMonthsMap.set(pid, Math.max(1, monthsElapsed));
+    }
   }
 
   // ── Compute per product ────────────────────────────────────────────────────
@@ -288,6 +303,7 @@ export async function GET(_req: NextRequest) {
       minimumStock: p.minimumStock,
       t30g,
       lifetimeTotalQty: lifetime.get(p.id) ?? 0,
+      lifetimeMonths: lifetimeMonthsMap.get(p.id) ?? null,
 
       sourceCostRmb: p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null,
       weightKg: p.weightKg != null ? Number(p.weightKg) : null,

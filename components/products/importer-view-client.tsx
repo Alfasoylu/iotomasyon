@@ -385,8 +385,9 @@ export function ImporterViewClient() {
       const historicalRecommendedQty = isStocksuzSatisli
         ? calcHistoricalRecommendedQty({
             lifetimeSold: p.lifetimeTotalQty,
-            // Conservative: lifetimeTotalQty 12 ayda biriktiği varsayımı (ortalama)
-            lifetimeMonths: 12,
+            // Phase 100 — Gerçek aktif ay sayısı (ilk satıştan bu yana).
+            // null ise 12 ay fallback (conservative).
+            lifetimeMonths: p.lifetimeMonths ?? 12,
             targetStockDays: params.targetStockDays,
             minOrderQty: 5,
           })

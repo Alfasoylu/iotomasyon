@@ -41,7 +41,8 @@ import { resolveMarginPolicy } from "@/lib/marketplace-policy";
 export const dynamic = "force-dynamic";
 
 // ── Sinyal tipi ──────────────────────────────────────────────────────────────
-type Signal = "AL" | "BEKLE" | "ALMA" | "VERİ_EKSİK";
+// Phase 100 — STOKSUZ_AL: stok 0 ama geçmişte satışı olan ürün → acil sipariş.
+type Signal = "AL" | "STOKSUZ_AL" | "BEKLE" | "ALMA" | "VERİ_EKSİK";
 
 function computeSignal(marginPct: number | null, monthlyProfitTry: number | null): Signal {
   if (marginPct === null || monthlyProfitTry === null) return "VERİ_EKSİK";
@@ -53,6 +54,7 @@ function computeSignal(marginPct: number | null, monthlyProfitTry: number | null
 
 const SIGNAL_BADGE: Record<Signal, "ok" | "warn" | "danger" | "neutral"> = {
   AL: "ok",
+  STOKSUZ_AL: "warn", // turuncu — acil dikkat
   BEKLE: "warn",
   ALMA: "danger",
   VERİ_EKSİK: "neutral",
@@ -60,6 +62,7 @@ const SIGNAL_BADGE: Record<Signal, "ok" | "warn" | "danger" | "neutral"> = {
 
 const SIGNAL_ICON: Record<Signal, ReactNode> = {
   AL: <Check size={14} strokeWidth={1.5} />,
+  STOKSUZ_AL: <Check size={14} strokeWidth={2} />,
   BEKLE: <Pause size={14} strokeWidth={1.5} />,
   ALMA: <X size={14} strokeWidth={1.5} />,
   VERİ_EKSİK: null,
@@ -67,6 +70,7 @@ const SIGNAL_ICON: Record<Signal, ReactNode> = {
 
 const SIGNAL_LABEL: Record<Signal, string> = {
   AL: "AL",
+  STOKSUZ_AL: "STOKSUZ · AL",
   BEKLE: "BEKLE",
   ALMA: "ALMA",
   VERİ_EKSİK: "Veri Eksik",
@@ -74,6 +78,7 @@ const SIGNAL_LABEL: Record<Signal, string> = {
 
 const SIGNAL_TEXT_COLOR: Record<Signal, string> = {
   AL: "text-[var(--ok)]",
+  STOKSUZ_AL: "text-[var(--warn)]",
   BEKLE: "text-[var(--warn)]",
   ALMA: "text-[var(--danger)]",
   VERİ_EKSİK: "text-[var(--text-muted)]",
@@ -90,13 +95,14 @@ function fmtPct(n: number) {
   return `%${n.toFixed(1)}`;
 }
 
-type Tab = "all" | "AL" | "BEKLE" | "ALMA" | "VERİ_EKSİK";
+type Tab = "all" | "AL" | "STOKSUZ_AL" | "BEKLE" | "ALMA" | "VERİ_EKSİK";
 
 const TAB_LABELS: Record<Tab, string> = {
-  all:       "Tümü",
-  AL:        "AL",
-  BEKLE:     "BEKLE",
-  ALMA:      "ALMA",
+  all:        "Tümü",
+  AL:         "AL",
+  STOKSUZ_AL: "⚡ Stoksuz · AL",
+  BEKLE:      "BEKLE",
+  ALMA:       "ALMA",
   VERİ_EKSİK: "Veri Eksik",
 };
 
@@ -115,7 +121,7 @@ export default async function ImportCockpitPage({
   const ago30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   // ── Paralel veri çekimi ───────────────────────────────────────────────────
-  const [latestRate, trendyolPolicy, products, sales90Raw, sales30Raw, returnsRaw, mpPricesRaw] = await Promise.all([
+  const [latestRate, trendyolPolicy, products, sales90Raw, sales30Raw, returnsRaw, mpPricesRaw, lifetimeSalesRaw] = await Promise.all([
     prisma.monthlyExchangeRate.findFirst({
       orderBy: [{ year: "desc" }, { month: "desc" }],
     }),
@@ -188,6 +194,15 @@ export default async function ImportCockpitPage({
       where: { marketplace: "TRENDYOL" },
       select: { productId: true, priceTry: true },
     }),
+    // Phase 100 — Lifetime satış (tüm zamanlar, tüm marketplace) + ilk satış tarihi.
+    // Stoksuz + lifetime>0 ürünler için "AL" sinyali ve recommendedQty hesabı.
+    // 142k MSR satırı + composite index (productId, orderDate) → ~50ms.
+    prisma.marketplaceSalesRecord.groupBy({
+      by: ["productId"],
+      where: { productId: { not: null } },
+      _sum: { quantity: true },
+      _min: { orderDate: true },
+    }),
   ]);
 
   const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
@@ -234,6 +249,20 @@ export default async function ImportCockpitPage({
     mpTrendyolMap.set(mp.productId, Number(mp.priceTry));
   }
 
+  // Phase 100 — Lifetime satış + ilk satış tarihi
+  const lifetimeQtyMap = new Map<string, number>();
+  const lifetimeMonthsMap = new Map<string, number>();
+  for (const r of lifetimeSalesRaw) {
+    if (!r.productId) continue;
+    lifetimeQtyMap.set(r.productId, r._sum.quantity ?? 0);
+    if (r._min.orderDate) {
+      const monthsElapsed =
+        (now.getFullYear() - r._min.orderDate.getFullYear()) * 12 +
+        (now.getMonth() - r._min.orderDate.getMonth()) + 1;
+      lifetimeMonthsMap.set(r.productId, Math.max(1, monthsElapsed));
+    }
+  }
+
   // ── Satır hesapları ───────────────────────────────────────────────────────
   type Row = {
     id: string;
@@ -268,6 +297,8 @@ export default async function ImportCockpitPage({
     daysOfCoverage: number | null;
     // Phase 85 — Önerilen sipariş adeti
     recommendedQty: number | null;
+    // Phase 100 — Lifetime satış (tüm zamanlar, tüm marketplace)
+    lifetimeTotalQty: number;
   };
 
   const rows: Row[] = products.map((p) => {
@@ -398,7 +429,19 @@ export default async function ImportCockpitPage({
         ? netProfitTry * effectiveMonthlyUnits
         : null;
 
-    const signal = computeSignal(marginPct, monthlyProfitTry);
+    let signal = computeSignal(marginPct, monthlyProfitTry);
+
+    // Phase 100 — Stoksuz + tarihsel satışlı ürünler için sinyal override.
+    // Stoğu 0 olduğu için son 30 gün satışı 0 → effectiveMonthlyUnits=0 →
+    // monthlyProfit=null → "VERİ_EKSİK" sinyali çıkıyordu. Ama bu ürün
+    // aslında AKSİNE acil sipariş gerektiriyor (eskiden satıyordu).
+    const lifetimeQty = lifetimeQtyMap.get(p.id) ?? 0;
+    const lifetimeMonths = lifetimeMonthsMap.get(p.id) ?? null;
+    const isStocksuzSatisli = p.stockQuantity === 0 && lifetimeQty > 0;
+    // Stoksuz + lifetime satışlı + maliyet+fiyat varsa → STOKSUZ_AL sinyali
+    if (isStocksuzSatisli && resolvedPriceTry != null && landedCostTry != null && netProfitTry != null && netProfitTry > 0) {
+      signal = "STOKSUZ_AL";
+    }
 
     // Phase 66 — Days of coverage = stockQty / (effectiveMonthlyUnits / 30)
     const dailyVelocity =
@@ -408,12 +451,17 @@ export default async function ImportCockpitPage({
     const daysOfCoverage =
       dailyVelocity != null ? Math.round(p.stockQuantity / dailyVelocity) : null;
 
-    // Phase 85 — Recommended order qty (target 90-day supply)
+    // Phase 85/100 — Recommended order qty (target 90-day supply)
+    // Eğer stoksuz + lifetime varsa historical velocity fallback kullan.
     const TARGET_DAYS = 90;
-    const recommendedQty =
-      dailyVelocity != null && signal !== "ALMA"
-        ? Math.max(0, Math.ceil(dailyVelocity * TARGET_DAYS) - p.stockQuantity)
-        : null;
+    let recommendedQty: number | null = null;
+    if (dailyVelocity != null && signal !== "ALMA") {
+      recommendedQty = Math.max(0, Math.ceil(dailyVelocity * TARGET_DAYS) - p.stockQuantity);
+    } else if (signal === "STOKSUZ_AL" && lifetimeMonths != null && lifetimeMonths > 0) {
+      // Historical velocity: lifetimeQty / lifetimeMonths × (90/30) → 3 ay stok
+      const historicalMonthly = lifetimeQty / lifetimeMonths;
+      recommendedQty = Math.max(5, Math.ceil(historicalMonthly * 3));
+    }
 
     return {
       id: p.id,
@@ -441,15 +489,17 @@ export default async function ImportCockpitPage({
       signal,
       daysOfCoverage,
       recommendedQty,
+      lifetimeTotalQty: lifetimeQty,
     };
   });
 
   // ── Sayımlar ─────────────────────────────────────────────────────────────
   const counts: Record<Tab, number> = {
-    all:       rows.length,
-    AL:        rows.filter((r) => r.signal === "AL").length,
-    BEKLE:     rows.filter((r) => r.signal === "BEKLE").length,
-    ALMA:      rows.filter((r) => r.signal === "ALMA").length,
+    all:        rows.length,
+    AL:         rows.filter((r) => r.signal === "AL").length,
+    STOKSUZ_AL: rows.filter((r) => r.signal === "STOKSUZ_AL").length,
+    BEKLE:      rows.filter((r) => r.signal === "BEKLE").length,
+    ALMA:       rows.filter((r) => r.signal === "ALMA").length,
     VERİ_EKSİK: rows.filter((r) => r.signal === "VERİ_EKSİK").length,
   };
   const unmatchedCount = rows.filter((r) => !r.hasTrendyolData).length;
@@ -461,7 +511,8 @@ export default async function ImportCockpitPage({
       : rows.filter((r) => r.signal === (tab as Signal));
 
   // Sırala: AL → BEKLE → ALMA → VERİ_EKSİK, içinde aylık kâr büyükten küçüğe
-  const signalOrder: Record<Signal, number> = { AL: 0, BEKLE: 1, ALMA: 2, VERİ_EKSİK: 3 };
+  // Phase 100 — STOKSUZ_AL en üstte (acil dikkat), sonra AL, BEKLE, ALMA, VERİ_EKSİK
+  const signalOrder: Record<Signal, number> = { STOKSUZ_AL: 0, AL: 1, BEKLE: 2, ALMA: 3, VERİ_EKSİK: 4 };
   const sorted = [...filtered].sort((a, b) => {
     const diff = signalOrder[a.signal] - signalOrder[b.signal];
     if (diff !== 0) return diff;
@@ -473,8 +524,9 @@ export default async function ImportCockpitPage({
   }
 
   // Phase 85 — Build purchase order URL for AL products with recommendedQty > 0
+  // Phase 100 — PO dahil edilecekler: AL + STOKSUZ_AL (her ikisi de acil sipariş)
   const orderCandidates = rows.filter(
-    (r) => r.signal === "AL" && r.recommendedQty != null && r.recommendedQty > 0,
+    (r) => (r.signal === "AL" || r.signal === "STOKSUZ_AL") && r.recommendedQty != null && r.recommendedQty > 0,
   );
   const orderItemsParam =
     orderCandidates.length > 0
@@ -687,10 +739,25 @@ export default async function ImportCockpitPage({
 
                     {/* Sinyal */}
                     <td className="px-4 py-3">
-                      <Badge variant={SIGNAL_BADGE[row.signal]} className="gap-1">
-                        {SIGNAL_ICON[row.signal]}
-                        {SIGNAL_LABEL[row.signal]}
-                      </Badge>
+                      <div className="flex flex-col items-start gap-1">
+                        <Badge variant={SIGNAL_BADGE[row.signal]} className="gap-1">
+                          {SIGNAL_ICON[row.signal]}
+                          {SIGNAL_LABEL[row.signal]}
+                        </Badge>
+                        {/* Phase 100 — Önerilen sipariş adeti (AL + STOKSUZ_AL satırlarında) */}
+                        {(row.signal === "AL" || row.signal === "STOKSUZ_AL") && row.recommendedQty != null && row.recommendedQty > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded bg-[var(--accent-dim)] px-1.5 py-0 text-[10px] font-medium text-[var(--accent)]">
+                            <span className="font-mono tabular-nums">≈{row.recommendedQty}</span>
+                            <span>adet öner</span>
+                          </span>
+                        )}
+                        {/* Stoksuz · AL: lifetime satış adedini muted hint olarak göster */}
+                        {row.signal === "STOKSUZ_AL" && row.lifetimeTotalQty > 0 && (
+                          <span className="text-[9px] text-[var(--text-muted)]">
+                            <span className="tabular-nums">{row.lifetimeTotalQty}</span> adet satıldı
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Ort. Fiyat */}
