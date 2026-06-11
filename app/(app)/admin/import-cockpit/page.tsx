@@ -127,6 +127,10 @@ export default async function ImportCockpitPage({
         id: true,
         name: true,
         sku: true,
+        // UX iyileştirme — görsel + marka + kategori tablo satırlarında
+        imageUrl: true,
+        brand: true,
+        productCategory: { select: { id: true, name: true, slug: true } },
         stockQuantity: true,
         importUnitCostUsd: true,
         unitCostUsd: true,
@@ -235,6 +239,10 @@ export default async function ImportCockpitPage({
     id: string;
     name: string;
     sku: string | null;
+    imageUrl: string | null;
+    brand: string | null;
+    categoryName: string | null;
+    categorySlug: string | null;
     stockQuantity: number;
     // Trendyol verisi
     hasTrendyolData: boolean;
@@ -411,6 +419,10 @@ export default async function ImportCockpitPage({
       id: p.id,
       name: p.name,
       sku: p.sku,
+      imageUrl: p.imageUrl,
+      brand: p.brand,
+      categoryName: p.productCategory?.name ?? null,
+      categorySlug: p.productCategory?.slug ?? null,
       stockQuantity: p.stockQuantity,
       hasTrendyolData,
       trendyolAvgPriceTry,
@@ -633,17 +645,44 @@ export default async function ImportCockpitPage({
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {sorted.map((row) => (
                   <tr key={row.id} className="hover:bg-[var(--surface-3)]">
-                    {/* Ürün */}
-                    <td className="max-w-[200px] px-4 py-3">
-                      <Link
-                        href={`/products/${row.id}`}
-                        className="line-clamp-1 font-medium text-[var(--text-primary)] hover:text-[var(--accent)]"
-                      >
-                        {row.name}
-                      </Link>
-                      {row.sku && (
-                        <p className="mt-0.5 font-mono text-[10px] tabular-nums text-[var(--text-muted)]">{row.sku}</p>
-                      )}
+                    {/* Ürün — küçük görsel + ad + SKU + marka + kategori */}
+                    <td className="max-w-[260px] px-4 py-3">
+                      <div className="flex items-start gap-2.5">
+                        {row.imageUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={row.imageUrl}
+                            alt=""
+                            loading="lazy"
+                            className="h-10 w-10 flex-shrink-0 rounded object-cover ring-1 ring-[var(--border-default)]"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 flex-shrink-0 rounded bg-[var(--surface-3)] ring-1 ring-[var(--border-subtle)]" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            href={`/products/${row.id}`}
+                            className="line-clamp-1 font-medium text-[13px] text-[var(--text-primary)] hover:text-[var(--accent)]"
+                          >
+                            {row.name}
+                          </Link>
+                          <div className="mt-0.5 flex items-center gap-2 text-[10px]">
+                            {row.sku && (
+                              <span className="font-mono tabular-nums text-[var(--text-muted)]">{row.sku}</span>
+                            )}
+                            {row.brand && (
+                              <span className="rounded bg-[var(--surface-3)] px-1.5 py-0.5 font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                                {row.brand}
+                              </span>
+                            )}
+                          </div>
+                          {row.categoryName && (
+                            <p className="mt-0.5 line-clamp-1 text-[10px] text-[var(--text-muted)]">
+                              {row.categoryName}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </td>
 
                     {/* Sinyal */}
