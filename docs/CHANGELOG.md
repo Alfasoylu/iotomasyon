@@ -9,6 +9,31 @@
 
 ## 2026-06
 
+### Ürün Formu stockQuantity Entegra Gate'i (2026-06-13)
+
+**Amaç:**
+Codex P0 audit'inin "kalan riskler" listesindeki son maddeyi kapatmak: ürün formu
+(`createProductAction` / `updateProductAction`) `Product.stockQuantity`'yi doğrudan
+yazıyordu. Bu, "Entegra source-of-truth (via XML sync)" Immutable mimari kuralını
+ihlal ediyordu — form yüklenmesi ile kaydetme arasında XML sync stoğu güncellerse,
+formdaki bayat değer taze Entegra değerini eziyordu (lost-update race).
+
+**Teslim edilenler:**
+- `lib/actions/product-actions.ts`: `stockQuantity` her iki normalize fonksiyonundan
+  (`normalizeProductData`, `normalizeProductDataNonFinancial`) çıkarıldı.
+  `createProductAction` ilk değeri bootstrap olarak yazar (XML sync'in kendi create
+  yolu gibi). `updateProductAction` yalnızca `stockIsManuallyOwned()` —
+  `stockSource === "MANUAL"` veya `xmlLocked` — olduğunda yazar; bunlar XML sync'in
+  zaten atladığı durumlar olduğundan rakip yazıcı yok. XML/API/IMPORT kaynaklı
+  ürünlerde stockQuantity'ye hiç dokunulmaz.
+- `components/products/product-form.tsx`: edit modunda XML-sahipli ürünlerde "Güncel
+  stok" alanı `disabled` + açıklama satırı; sessiz no-op edit önlenir.
+- Şema/migration değişikliği YOK.
+
+**Sonuç:** `Product.stockQuantity` artık yalnızca (1) XML sync (Entegra) ve (2)
+manuel-yönetilen ürünler için ürün formu tarafından yazılıyor. Phase 89 (warehouse
+sayım + adjustment) ile birlikte tüm stock source-of-truth ihlalleri kapandı.
+
 ### Katalog & Satış Araçları Dalgası — Katalog profilleri, şirket ayarları, stoksuz sinyali (2026-06-06)
 
 **Amaç:**

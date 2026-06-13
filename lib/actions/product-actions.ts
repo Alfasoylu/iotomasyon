@@ -34,6 +34,10 @@ export async function createProductAction(
       const p = await tx.product.create({
         data: {
           ...normalizeProductData(parsed.data),
+          // Entegra source-of-truth: stockQuantity is owned by XML sync. On create we
+          // bootstrap the initial value from the form (the same way the XML sync's own
+          // create path seeds it); ongoing updates are gated in updateProductAction.
+          stockQuantity: parsed.data.stockQuantity,
           createdById: user.id,
         },
       });
@@ -91,9 +95,18 @@ export async function updateProductAction(
   // Phase 57: non-admin users cannot write financial/import fields.
   // Server-side enforcement — UI may also hide these fields, but we guard here regardless.
   const canWriteFinancials = await checkPermission(user, PERMISSIONS.EXECUTIVE_READ);
-  const productData = canWriteFinancials
+  const baseData = canWriteFinancials
     ? normalizeProductData(parsed.data)
     : normalizeProductDataNonFinancial(parsed.data);
+
+  // Entegra source-of-truth (immutable architecture rule): stockQuantity is owned by
+  // the XML sync (Entegra ERP). The product form may only set it for manually-managed
+  // stock — stockSource MANUAL or XML-locked — which the XML sync itself skips. For
+  // XML/API/IMPORT-sourced products we never overwrite stockQuantity here, preventing a
+  // lost-update race against an XML sync that runs between form load and save.
+  const productData = stockIsManuallyOwned(parsed.data)
+    ? { ...baseData, stockQuantity: parsed.data.stockQuantity }
+    : baseData;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -172,7 +185,8 @@ function normalizeProductData(input: ProductInput) {
     brand: emptyToNull(input.brand),
     model: emptyToNull(input.model),
     supplier: emptyToNull(input.supplier),
-    stockQuantity: input.stockQuantity,
+    // stockQuantity intentionally omitted — Entegra source-of-truth. Set explicitly in
+    // createProductAction (bootstrap) and conditionally in updateProductAction (manual only).
     minimumStock: input.minimumStock,
     reorderLeadTime: positiveIntOrNull(input.reorderLeadTime),
     stockSource,
@@ -243,7 +257,7 @@ function normalizeProductDataNonFinancial(input: ProductInput) {
     brand: emptyToNull(input.brand),
     model: emptyToNull(input.model),
     supplier: emptyToNull(input.supplier),
-    stockQuantity: input.stockQuantity,
+    // stockQuantity intentionally omitted — Entegra source-of-truth (see normalizeProductData).
     minimumStock: input.minimumStock,
     reorderLeadTime: positiveIntOrNull(input.reorderLeadTime),
     stockSource,
@@ -273,6 +287,17 @@ function normalizeProductDataNonFinancial(input: ProductInput) {
     // weightKg, customsRatePct, shippingMethodPref,
     // onlineSalesPotential, wholesaleSalesPotential, installerSalesPotential
   };
+}
+
+/**
+ * Entegra source-of-truth gate. stockQuantity may be written from the product form
+ * only when stock is manually managed — stockSource === "MANUAL" or the product is
+ * XML-locked. These are exactly the cases the XML sync (lib/actions/xml-sync-actions.ts)
+ * skips, so there is no competing writer. For every other source the XML sync owns
+ * stockQuantity and the form must not touch it.
+ */
+function stockIsManuallyOwned(input: ProductInput): boolean {
+  return input.stockSource === "MANUAL" || input.xmlLocked === true;
 }
 
 function positiveIntOrNull(value: string | undefined): number | null {

@@ -305,6 +305,19 @@ seviyede profesyonel görünüm.
 
 ---
 
+### ✓ Ürün Formu stockQuantity Entegra Gate'i (2026-06-13)
+
+**Neden:** Codex P0 audit'inin "kalan riskler" listesindeki son madde: `updateProductAction` (ve `createProductAction`) `normalizeProductData` / `normalizeProductDataNonFinancial` üzerinden `Product.stockQuantity`'yi doğrudan yazıyordu. Bu, "Entegra source-of-truth (via XML sync)" Immutable mimari kuralını ihlal ediyordu: bir kullanıcı ürün formunu açıp kaydettiğinde, form yüklenmesi ile kayıt arasında XML sync stoğu güncellemişse formdaki **bayat değer taze Entegra değerini eziyordu** (lost-update race).
+
+Teslim edilenler:
+- `lib/actions/product-actions.ts`: `stockQuantity` her iki normalize fonksiyonundan çıkarıldı. `createProductAction` ilk değeri bootstrap olarak yazar (XML sync'in kendi create yolu gibi). `updateProductAction` yalnızca `stockIsManuallyOwned()` (stockSource === "MANUAL" **veya** xmlLocked) olduğunda yazar — bunlar XML sync'in zaten atladığı durumlar, rakip yazıcı yok. XML/API/IMPORT kaynaklı ürünlerde stockQuantity'ye hiç dokunulmaz.
+- `components/products/product-form.tsx`: edit modunda XML-sahipli ürünlerde "Güncel stok" alanı disabled + açıklama ("Entegra (XML) yönetiyor — düzenlemek için stok kaynağını Manuel yapın ya da XML kilidini açın"). Sessiz no-op edit önlenir.
+- Şema/migration değişikliği YOK. Tip-güvenli (değişiklik izole; lokal tsc gürültüsü yalnızca generate edilmemiş `@prisma/client`'tan, Vercel build postinstall'da üretiyor).
+
+Sonuç: `Product.stockQuantity`'ye artık yalnızca (1) XML sync (Entegra) ve (2) manuel-yönetilen ürünler için ürün formu yazıyor. Phase 89 ile birlikte source-of-truth ihlalleri kapandı.
+
+---
+
 ### ✓ Katalog & Satış Araçları Dalgası (2026-06-06)
 
 **Neden:** Müşteriye özel katalog üretimi, marka kimliği, hızlı teklif girişi ve stoğu biten ama geçmişte satılan ürünlerin görünürlüğü gerekiyordu. Tek doğrusal yığın halinde geliştirilip main'e alındı (`86974c2` → `74ed23c`, origin/main READY).
@@ -363,8 +376,8 @@ Teslim edilenler:
 - Docs: PROGRESS / current-state / PERMISSION-MODEL / NEXT-STEPS / CHANGELOG güncellendi.
 
 Açık kalan riskler:
-- **Stock source-of-truth ihlali**: `lib/actions/inventory-count-actions.ts` ve `lib/actions/stock-adjustment-actions.ts` `Product.stockQuantity` doğrudan mutate ediyor. Bu, "Entegra source-of-truth" mimari kuralı ile çelişiyor. Önerilen güvenli patch: ayrı `physicalCountQuantity` / `xmlStockQuantity` / `variance` / `countedAt` / `countedBy` / `countNote` alanları ekleyip XML sync dışındaki yazımları bunlara yönlendirmek. Destructive olduğundan ayrı bir migration phase'e bırakıldı.
-- **`normalizeProductData`** içindeki `stockQuantity` direct update'i. Sadece ADMIN bu yola erişiyor (form), ama gelecek phase'de stockQuantity yazımının yalnızca XML sync + inventory count yolu ile yapılması önerilir.
+- ~~**Stock source-of-truth ihlali** (inventory-count / stock-adjustment)~~ — ✓ **ÇÖZÜLDÜ (Phase 89, 2026-05-19)**: warehouse sayım + manuel adjustment artık `physicalCountQuantity`'ye yazıyor, `stockQuantity`'ye dokunmuyor.
+- ~~**`normalizeProductData`** içindeki `stockQuantity` direct update'i~~ — ✓ **ÇÖZÜLDÜ (2026-06-13)**: bkz. aşağıdaki "Ürün Formu stockQuantity Entegra Gate'i" girişi.
 
 ---
 

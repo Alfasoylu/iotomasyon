@@ -136,6 +136,16 @@ export function ProductForm({
     defaultValues: initialValues ?? emptyValues,
   });
 
+  // Entegra source-of-truth: stockQuantity is owned by the XML sync. On edit the field
+  // is only writable for manually-managed stock (stockSource MANUAL or XML-locked) —
+  // matching the server-side gate in updateProductAction. On create we always allow the
+  // bootstrap value. When locked, the server ignores the field, so we disable it here to
+  // avoid a silent no-op edit.
+  const watchedStockSource = form.watch("stockSource");
+  const watchedXmlLocked = form.watch("xmlLocked");
+  const stockEditable =
+    mode === "create" || watchedStockSource === "MANUAL" || watchedXmlLocked === true;
+
   const submit = form.handleSubmit((values) => {
     setServerMessage(undefined);
     setPending(true);
@@ -315,7 +325,18 @@ export function ProductForm({
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Güncel stok" error={form.formState.errors.stockQuantity?.message}>
-            <Input type="number" min={0} className="tabular-nums" {...form.register("stockQuantity", { valueAsNumber: true })} />
+            <Input
+              type="number"
+              min={0}
+              disabled={!stockEditable}
+              className="tabular-nums disabled:cursor-not-allowed disabled:opacity-60"
+              {...form.register("stockQuantity", { valueAsNumber: true })}
+            />
+            {!stockEditable && (
+              <p className="mt-1 text-[11px] leading-4 text-[var(--text-muted)]">
+                Entegra (XML) yönetiyor — düzenlemek için stok kaynağını &quot;Manuel giriş&quot; yapın ya da XML kilidini açın.
+              </p>
+            )}
           </Field>
           <Field label="Minimum stok eşiği" error={form.formState.errors.minimumStock?.message}>
             <Input type="number" min={0} className="tabular-nums" {...form.register("minimumStock", { valueAsNumber: true })} />
