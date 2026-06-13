@@ -9,6 +9,47 @@
 
 ## 2026-06
 
+### Katalog & Satış Araçları Dalgası — Katalog profilleri, şirket ayarları, stoksuz sinyali (2026-06-06)
+
+**Amaç:**
+Müşteriye özel katalog üretimi, marka kimliği, hızlı teklif girişi ve "stoğu biten ama
+geçmişte satılan ürün" görünürlüğü için bir dizi katalog/satış/cockpit iyileştirmesi.
+Tek doğrusal yığın halinde geliştirilip main'e alındı (commit `86974c2` → `74ed23c`).
+
+**Teslim edilenler:**
+- **Katalog fiyat temizliği + sıralama** (`86974c2`): yanlış uniform fiyatların temizlenmesi
+  (`scripts/clean-uniform-catalog-prices.ts` + verify script), `Product.catalogSortOrder`
+  alanı + admin UI sıralama. Migration `20260606000000_add_catalog_sort_order`.
+- **Şirket Ayarları DB** (`44d5585`): `CompanySettings` modeli + `/admin/company-settings`
+  sayfası (`company-settings-form.tsx`, `company-settings-actions.ts`, `get-company-settings.ts`);
+  CLAUDE.md placeholder'ları yerine DB-driven şirket profili. Migration
+  `20260606000100_add_company_settings`.
+- **Katalog PDF perf + DB indeksleri** (`ab8f54e`): katalog PDF görsel compress;
+  `MarketplaceSalesRecord` composite index'leri. Migration
+  `20260606000200_marketplace_sales_composite_indexes`.
+- **Katalog PDF kapak yeniden tasarımı** (`ab9c7bc`): editorial / annual-report stili kapak
+  (`catalog-pdf-generator.ts`, `cover-page.ts`).
+- **Marka kimliği** (`1b464e0`): favicon + apple-icon + OG/Twitter image (Soylu logosu);
+  `scripts/generate-favicons.ts`.
+- **Teklif oluşturucu — aranabilir ürün combobox** (`3609ef3`): `product-combobox.tsx` ile
+  1000+ üründe hızlı seçim (`quote-form.tsx`).
+- **DB-driven CatalogProfile** (`45b1f47`): müşteri segmentine göre katalog içeriği
+  (`CatalogProfile` modeli + `/admin/catalog-profiles` + `catalog-profiles-manager.tsx` +
+  `get-catalog-profile.ts`) — örn. nalbura CCTV yerine MUSLUK kategorisi gönderilir.
+  Migration `20260606000300_add_catalog_profiles`.
+- **Katalog kategori sırası korunumu** (`df0c7d7`): katalog PDF'inde kategori sırası
+  korunur + admin ↑↓ reorder.
+- **İthalat cockpit satır zenginleştirme** (`011ab16`): cockpit satırlarına ürün görseli +
+  marka + kategori chip'leri.
+- **Stoksuz sinyali** (`96e37fd`, `346b7a1`, `74ed23c`): importer + cockpit'te stoğu biten
+  ama geçmişte satışı olan ürünlere "Stoksuz · Acil/Sipariş" sinyali; gerçek `lifetimeMonths`
+  hesabı; `STOKSUZ_AL` koşulu maliyet bilinmese de sinyal verecek şekilde gevşetildi
+  (`importer-cost.ts`). `scripts/test-stocksuz-signal.ts` ile doğrulandı.
+
+**Deploy:**
+- Tüm yığın origin/main'e push edilmiş ve Vercel'de READY (commit `74ed23c`).
+- 4 additive migration production Supabase'e uygulandı (veri kaybı yok).
+
 ### Tedarik Kaynak Linkleri — Sınırsız ölçekli model (2026-06-05)
 
 **Amaç:**

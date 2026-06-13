@@ -12,6 +12,9 @@ Today, it is best described as:
 - a relationship-aware operational panel
 - a multi-channel marketplace sales intelligence platform (Phase 92, 2026-05-20)
 - a call-center optimized sales workspace v1 (Phase 94, 2026-05-20)
+- a customer-segmented catalog generator (2026-06: DB-driven `CatalogProfile` +
+  `/admin/catalog-profiles`, `CompanySettings` DB profile, editorial PDF cover,
+  catalog sort/category ordering, out-of-stock "Stoksuz · Acil/Sipariş" signal)
 
 Phase 95 (planned, in execution): full Sales Operating System — ⌘K command
 palette + Power Queue + outcome chips + smart priority sorting + tag/DND/

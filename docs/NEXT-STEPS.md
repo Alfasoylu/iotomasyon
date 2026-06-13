@@ -305,6 +305,26 @@ seviyede profesyonel görünüm.
 
 ---
 
+### ✓ Katalog & Satış Araçları Dalgası (2026-06-06)
+
+**Neden:** Müşteriye özel katalog üretimi, marka kimliği, hızlı teklif girişi ve stoğu biten ama geçmişte satılan ürünlerin görünürlüğü gerekiyordu. Tek doğrusal yığın halinde geliştirilip main'e alındı (`86974c2` → `74ed23c`, origin/main READY).
+
+Teslim edilenler:
+- Katalog yanlış uniform fiyat temizliği + `Product.catalogSortOrder` + admin sıralama (migration `20260606000000`)
+- `CompanySettings` DB + `/admin/company-settings` — DB-driven şirket profili (migration `20260606000100`)
+- Katalog PDF görsel compress + `MarketplaceSalesRecord` composite index'ler (migration `20260606000200`)
+- Katalog PDF kapak yeniden tasarımı (editorial / annual-report stili)
+- Favicon + apple-icon + OG/Twitter image (Soylu logosu)
+- Teklif oluşturucu aranabilir ürün combobox — 1000+ üründe hızlı seçim
+- DB-driven `CatalogProfile` + `/admin/catalog-profiles` — müşteri segmentine göre katalog içeriği (nalbura MUSLUK, migration `20260606000300`)
+- Katalog kategori sırası korunumu + admin ↑↓ reorder
+- İthalat cockpit satır görseli + marka + kategori chip'leri
+- Stoksuz sinyali: importer + cockpit'te "Stoksuz · Acil/Sipariş" + gerçek `lifetimeMonths` + `STOKSUZ_AL` gevşetildi
+
+4 additive migration production Supabase'e uygulandı (veri kaybı yok). `scripts/test-stocksuz-signal.ts` ile doğrulandı.
+
+---
+
 ### ✓ Phase 89 — Stock Source-of-Truth Fix (Entegra Authoritative) (2026-05-19)
 
 **Neden:** Codex P0 audit'inin "kalan riskler" listesinde duran P1 ihlal: warehouse sayım + manuel adjustment akışları `Product.stockQuantity`'yi doğrudan mutate ediyordu — mimari kural "Entegra source-of-truth (via XML sync)" ile çelişiyordu.
