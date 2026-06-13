@@ -62,7 +62,7 @@ Not yet complete:
 - product finance field sprawl still exists across import cost, TRY cost, marketplace price, shipping, commission, and override inputs
 - operator-facing product finance truth is still too crowded for safe daily use
 - XML sync'te stok değişim loglaması (hangi ürünün stoğu ne kadar değişti per sync)
-- Trendyol sipariş verilerinde eşleşme oranı hâlâ düşük (188 eşleşmemiş ürün)
+- Trendyol satış eşleşmesi %84.8 (2026-06-13 sonrası); kalan ~475 eşleşmemiş kaydın asıl sorunu KATALOG EKSİĞİ — Trendyol'da aktif satan ama katalogda olmayan ürünler (örn. AL4858, CAPTURE4-4K-VC200). Bunlar eşleştirilemez; katalereğa eklenmeli. Kalan uzun kuyruk manuel bağ (/admin/trendyol-matching) gerektirir.
 - İthalat kar analizi Trendyol gerçek satış fiyatlarıyla tam entegre değil
 - Ürün bazında "bu ithalat karlı mı?" sorusunu tek sayfada yanıtlayan bir cockpit yok
 
@@ -302,6 +302,19 @@ Her PR ayrı canlıya, sıralı uygulanır. Toplam ~16 saat.
 **Exit kriteri:**
 35 sorunun tümüne "evet". Bir bayi/ortağa ekran paylaşırken utanılmayacak
 seviyede profesyonel görünüm.
+
+---
+
+### ✓ Trendyol Satış Eşleştirme — Ad-Kodu + Katalog Eksiği Tespiti (2026-06-13)
+
+**Neden:** 580 eşleşmemiş `TrendyolSalesRecord` (69 grup) T30G hızını ve ithalat ROI'sini bozuyordu. Mevcut otomatik eşleştirme yalnızca tam `merchantSku=sku` / `barcode=barcode` deniyordu; oysa Trendyol gerçek katalog SKU'sunu ürün adının sonuna gömüyor (örn. "...AL4858, one size").
+
+Teslim edilenler:
+- `trendyol-rematch-action.ts`: Step 3 — ad-kodu eşleştirme (productName son token → Product.sku, yalnızca tek aday; POSIX `[[:space:]]` regex). `RematchResult.fixedByName`.
+- `trendyol-matching/page.tsx` fixableCount + `rematch-button.tsx` ad-kodu satırı.
+- Production'da 105 kayıt eşleştirildi (ANUNNAKIPOINTER 91, 60W-TYPE-C-SARJ-KABLOSU 11, 4929293837363 2, 490345764 1). Oran %81.5 → %84.8 (2653/3128), 0 belirsiz.
+
+**Kalan 475 = katalog eksiği (eşleştirme sorunu değil):** AL4858 (102) + CAPTURE4-4K-VC200 (96) gibi Trendyol'da aktif satan ürünler katalogda hiç yok → eklenmeli. Uzun kuyruk manuel bağ gerektirir. Bu, ayrı bir "katalog tamlığı" işi.
 
 ---
 

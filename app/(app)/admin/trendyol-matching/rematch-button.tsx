@@ -15,6 +15,7 @@ export function RematchButton({ fixableCount }: { fixableCount: number }) {
     totalFixed: number;
     fixedBySku: number;
     fixedByBarcode: number;
+    fixedByName: number;
     remainingUnmatched: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export function RematchButton({ fixableCount }: { fixableCount: number }) {
           totalFixed: res.totalFixed,
           fixedBySku: res.fixedBySku,
           fixedByBarcode: res.fixedByBarcode,
+          fixedByName: res.fixedByName,
           remainingUnmatched: res.remainingUnmatched,
         });
         // Reload to refresh stats table
@@ -58,6 +60,9 @@ export function RematchButton({ fixableCount }: { fixableCount: number }) {
         )}
         {result.fixedByBarcode > 0 && (
           <p className="text-xs text-slate-500">Barkod: {result.fixedByBarcode} kayıt</p>
+        )}
+        {result.fixedByName > 0 && (
+          <p className="text-xs text-slate-500">Ad kodu: {result.fixedByName} kayıt</p>
         )}
         <p className="text-xs text-slate-400">
           Kalan eşleşmeyen: {result.remainingUnmatched}

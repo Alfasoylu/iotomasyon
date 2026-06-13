@@ -52,6 +52,10 @@ export default async function TrendyolMatchingPage() {
         SELECT 1 FROM "Product" p
         WHERE (p.sku IS NOT NULL AND LOWER(tsr."merchantSku") = LOWER(p.sku))
            OR (p.barcode IS NOT NULL AND LOWER(tsr."barcode") = LOWER(p.barcode))
+           -- Step 3 (name-embedded stock code → Product.sku); see trendyol-rematch-action.ts
+           OR (p.sku IS NOT NULL AND LOWER(p.sku) = LOWER(trim(substring(
+                 regexp_replace(tsr."productName", ',[[:space:]]*one size[[:space:]]*$', '', 'i')
+                 from '([^[:space:]]+)[[:space:]]*$'))))
       )
   `;
   const fixableCount = fixableResult[0]?.cnt ?? 0;

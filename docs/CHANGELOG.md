@@ -9,6 +9,35 @@
 
 ## 2026-06
 
+### Trendyol Satış Eşleştirme — Ad-Kodu Eşleştirme + Katalog Eksiği Tespiti (2026-06-13)
+
+**Amaç:**
+580 eşleşmemiş `TrendyolSalesRecord` (69 grup) T30G satış hızını ve ithalat ROI'sini
+bozuyordu. Mevcut otomatik eşleştirme yalnızca `merchantSku=sku` ve `barcode=barcode`
+tam eşleşmesi deniyordu; ama Trendyol listelemeleri kendi merchantSku/barkodunu taşıyor
+ve gerçek katalog SKU'su çoğu zaman ürün adının **sonuna** gömülü oluyor (örn.
+"...Adaptör AL4858, one size" → `AL4858`).
+
+**Teslim edilenler:**
+- `lib/actions/trendyol-rematch-action.ts`: yeni **Step 3 — ad-kodu eşleştirme**.
+  Ürün adından `, one size` eki atılır, son token alınır ve `Product.sku` ile
+  (case-insensitive) eşleştirilir — **yalnızca tek aday varsa** (belirsizlik = bağlama
+  yok). Regex'te `\s`/`\S` yerine POSIX sınıfları (`[[:space:]]`) kullanıldı (JS
+  tagged-template backslash tuzağından kaçınmak için). Sonuç tipine `fixedByName` eklendi.
+- `app/(app)/admin/trendyol-matching/page.tsx`: "Otomatik Düzeltilebilir" sayacı artık
+  ad-kodu adaylarını da kapsıyor (buton doğru etkinleşiyor).
+- `rematch-button.tsx`: "Ad kodu: N kayıt" satırı.
+- **Veri**: production'da güvenli kural uygulandı — 105 kayıt eşleştirildi
+  (ANUNNAKIPOINTER 91, 60W-TYPE-C-SARJ-KABLOSU 11, 4929293837363 2, 490345764 1).
+  Eşleşme oranı **%81.5 → %84.8** (2548 → 2653 / 3128). 0 belirsiz eşleşme.
+
+**Kalan 475 kaydın asıl sorunu: katalog eksiği (eşleştirme değil).**
+En büyük 2 grup — `AL4858` (102 satış, hepsi son 30 gün) ve `CAPTURE4-4K-VC200`
+(96 satış, hepsi son 30 gün) — Trendyol'da aktif satan ama iotomasyon kataloğunda
+**hiç kaydı olmayan** ürünler. Hiçbir algoritma katalogda olmayan ürünü eşleştiremez;
+bunların katalereğa eklenmesi gerekir. Kalanın uzun kuyruğu ya katalogda yok ya da
+ad belirsizliği nedeniyle manuel bağ (`/admin/trendyol-matching` "Bağla →") gerektirir.
+
 ### Ürün Formu stockQuantity Entegra Gate'i (2026-06-13)
 
 **Amaç:**
