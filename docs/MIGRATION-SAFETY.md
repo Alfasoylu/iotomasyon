@@ -9,6 +9,24 @@ This document governs production schema changes, backup discipline, rollback pro
 
 ---
 
+## Row Level Security (RLS) — Invariant
+
+As of 2026-06-13, **RLS is enabled on every `public` table** (migration
+`20260613000000_enable_rls_all_public_tables`). There are **no RLS policies** — this is
+intentional: it denies the Supabase Data API roles (`anon`, `authenticated` via PostgREST)
+by default. The app is unaffected because it connects only via Prisma as the `postgres`
+role (`rolbypassrls = true`) and via Storage with the `service_role` key — both bypass RLS.
+
+Rules for future schema work:
+- **Every new `public` table must have RLS enabled** in the same migration that creates it
+  (`ALTER TABLE "NewTable" ENABLE ROW LEVEL SECURITY;`). Run `get_advisors(security)` after
+  any DDL to confirm no `rls_disabled_in_public` errors reappear.
+- Do **not** add permissive `anon`/`authenticated` policies unless a feature genuinely
+  needs client-side Supabase access (currently none — the app is Prisma-only).
+- The `rls_enabled_no_policy` advisor INFO notices are expected and desired (deny-all).
+
+---
+
 ## Pre-Migration Checklist
 
 Before applying any `prisma migrate deploy` to production, confirm each item:

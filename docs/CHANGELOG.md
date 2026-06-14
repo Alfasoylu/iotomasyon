@@ -9,6 +9,31 @@
 
 ## 2026-06
 
+### GÜVENLİK — Supabase RLS tüm public tablolarda açıldı (2026-06-13)
+
+**Açık (kritik):** iotomasyon Supabase projesinde (`frbxpodiostxuwlrubkt`) 58 public
+tablonun **tamamında RLS kapalıydı** ve `anon` + `authenticated` rolleri bu tablolarda
+**SELECT/INSERT/UPDATE/DELETE/TRUNCATE** yetkisine sahipti. Supabase Data API
+(PostgREST) bu tabloları dışa açtığı ve anon key tasarımı gereği publik olduğu için,
+anon key'i ele geçiren herkes müşteri/satış verisini **okuyabilir, değiştirebilir,
+silebilirdi**. Dahası kimlik bilgisi kolonları açıktaydı: `TrendyolConfig.apiKey`,
+`HepsiburadaConfig.password`, `CatalogShare.token`.
+
+**Düzeltme:** Tüm public tablolarda `ENABLE ROW LEVEL SECURITY` (policy eklenmeden =
+anon/authenticated için deny-all). Migration `20260613000000_enable_rls_all_public_tables`
+(idempotent DO bloğu) production'a uygulandı.
+
+**App etkisi: YOK.** Uygulama Prisma ile `postgres` rolü (`rolbypassrls=true`) üzerinden
+bağlanıyor; Storage `service_role` key (yine bypassrls) kullanıyor. İkisi de RLS'i
+tamamen bypass eder. Kodda `@supabase/supabase-js` / anon key kullanımı yok — yalnızca
+server-side Prisma + Storage REST (service key). Doğrulama: security advisor'daki tüm
+`rls_disabled_in_public` ve `sensitive_columns_exposed` ERROR'ları temizlendi (58→0).
+
+**Önemli artçı işlem (kullanıcıya):** RLS kapalıyken açıkta kalan kimlik bilgileri
+sızmış olabilir → `TrendyolConfig.apiKey` ve `HepsiburadaConfig.password` **rotate
+edilmeli**, aktif `CatalogShare` token'ları yenilenmeli. Ek sertleştirme: app
+PostgREST kullanmadığından Supabase Data API tamamen kapatılabilir (Settings → API).
+
 ### Trendyol Satış Eşleştirme — Ad-Kodu Eşleştirme + Katalog Eksiği Tespiti (2026-06-13)
 
 **Amaç:**
