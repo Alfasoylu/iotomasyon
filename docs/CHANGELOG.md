@@ -29,10 +29,22 @@ tamamen bypass eder. Kodda `@supabase/supabase-js` / anon key kullanımı yok �
 server-side Prisma + Storage REST (service key). Doğrulama: security advisor'daki tüm
 `rls_disabled_in_public` ve `sensitive_columns_exposed` ERROR'ları temizlendi (58→0).
 
-**Önemli artçı işlem (kullanıcıya):** RLS kapalıyken açıkta kalan kimlik bilgileri
-sızmış olabilir → `TrendyolConfig.apiKey` ve `HepsiburadaConfig.password` **rotate
-edilmeli**, aktif `CatalogShare` token'ları yenilenmeli. Ek sertleştirme: app
-PostgREST kullanmadığından Supabase Data API tamamen kapatılabilir (Settings → API).
+**İkinci katman (uygulandı):** Migration `20260613000100_lockdown_data_api_revoke_anon` —
+`anon`/`authenticated` rollerinden public şemadaki tüm tablo/sequence/function yetkileri
++ şema USAGE geri alındı (guarded; non-Supabase DB'de no-op). Artık veri üç bağımsız
+katmanla korunuyor: (1) RLS deny-all, (2) anon tablo grant'ları sıfır, (3) anon'a
+default privilege olmadığından yeni tablolar otomatik açılmaz. RLS katmanı Supabase
+grant'ları yeniden uygulasa dahi kalıcıdır.
+
+**Geçmiş kontrolü:** Supabase API (PostgREST) logları (son 24s) boş — anon/Data API
+erişimi görünmüyor. (Pencere 24s ile sınırlı; uygulamanın login logları ayrı bir yüzey
+olduğu için tek başına tam kanıt değildi, bu yüzden doğru yüzey olan API logları
+kontrol edildi.)
+
+**Artçı işlem (opsiyonel — kanıt yok):** RLS kapalı dönemde kimlik bilgileri teknik
+olarak okunabilirdi; loglar erişim göstermese de kesinlik için `TrendyolConfig.apiKey`
+ve `HepsiburadaConfig.password` rotate edilebilir. Aktif erişim kanıtı olmadığından
+düşük öncelik.
 
 ### Trendyol Satış Eşleştirme — Ad-Kodu Eşleştirme + Katalog Eksiği Tespiti (2026-06-13)
 
