@@ -52,6 +52,10 @@ export const SEA_AUTO_WEIGHT_KG = 5;          // ≥5 kg → auto SEA (fallback 
 export const AIR_CYCLE_DAYS = 150;
 export const SEA_CYCLE_DAYS = 210;
 export const TRENDYOL_COMMISSION_PCT = 20;
+/** KDV oranı (%). Entegra'dan gelen Trendyol fiyatları KDV HARİÇ; gerçek satış = net × (1 + KDV/100). */
+export const KDV_PCT = 20;
+/** stok ≥ bu eşik → Entegra dropship/sipariş-üzerine placeholder'ı; gerçek elde-stok DEĞİL. */
+export const DROPSHIP_STOCK_THRESHOLD = 1000;
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -82,6 +86,8 @@ export interface ImportCostResult {
 }
 
 export interface RevenueResult {
+  /** KDV dahil gerçek satış fiyatı (Trendyol'da görünen, komisyon matrahı). */
+  priceInclVatTry: number;
   netRevenueTry: number;
   netRevenueUsd: number;
 }
@@ -109,6 +115,40 @@ export const DEFAULT_BUDGET_PARAMS: BudgetParams = {
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+
+/**
+ * RMB cinsi alış maliyetini USD'ye çevirir. Maliyet her yerde USD gösterilmek istenir.
+ * Veri yoksa null döner (UI "—" gösterir).
+ */
+export function rmbToUsd(
+  sourceCostRmb: number | null | undefined,
+  rmbUsdRate: number,
+): number | null {
+  if (sourceCostRmb == null || sourceCostRmb <= 0) return null;
+  const rate = rmbUsdRate > 0 ? rmbUsdRate : DEFAULT_RMB_USD_RATE;
+  return sourceCostRmb / rate;
+}
+
+/**
+ * Entegra/XML'den gelen KDV HARİÇ Trendyol fiyatına KDV ekleyip gerçek satış
+ * fiyatını (komisyon matrahı) döndürür. Örn: 2338 → 2805.6 (KDV %20).
+ */
+export function trendyolPriceInclVat(
+  netPriceTry: number | null | undefined,
+  vatPct: number = KDV_PCT,
+): number | null {
+  if (netPriceTry == null || netPriceTry <= 0) return null;
+  return netPriceTry * (1 + vatPct / 100);
+}
+
+/**
+ * stok ≥ DROPSHIP_STOCK_THRESHOLD (1000) → Entegra'nın "sipariş üzerine temin"
+ * placeholder'ı. Gerçekte elde tutulan mal değil; stok değeri / kapsama / atıl
+ * sermaye metriklerinden HARİÇ tutulmalı. Satılabilir kalır.
+ */
+export function isDropshipStock(stockQuantity: number | null | undefined): boolean {
+  return stockQuantity != null && stockQuantity >= DROPSHIP_STOCK_THRESHOLD;
+}
 
 /**
  * Belirli bir kargo metodu için ImportCostResult döndürür (resolution adımı yok).
@@ -217,19 +257,28 @@ export function calcImportCost(input: {
  * (calcShippingFromPriceTiers — lib/marketplace-pricing.ts).
  */
 export function calcRevenue(input: {
+  /** KDV HARİÇ Trendyol fiyatı (Entegra/XML net değeri). */
   trendyolPriceTry: number | null;
   usdTryRate: number;
+  /** KDV oranı (%) — default KDV_PCT (20). */
+  vatPct?: number;
 }): RevenueResult | null {
   const { trendyolPriceTry, usdTryRate } = input;
   if (!trendyolPriceTry || trendyolPriceTry <= 0) return null;
   const rate = usdTryRate > 0 ? usdTryRate : DEFAULT_USD_TRY_RATE;
+  const vatPct = input.vatPct ?? KDV_PCT;
 
-  const commission = trendyolPriceTry * (TRENDYOL_COMMISSION_PCT / 100);
-  const shippingTry = calcShippingFromPriceTiers(trendyolPriceTry, rate);
+  // Entegra Trendyol fiyatı KDV HARİÇ gelir. Gerçek satış fiyatı = net × (1+KDV);
+  // Trendyol komisyonu ve kargo bandı bu KDV DAHİL fiyat üzerinden işler.
+  const priceInclVatTry = trendyolPriceTry * (1 + vatPct / 100);
+  const commission = priceInclVatTry * (TRENDYOL_COMMISSION_PCT / 100);
+  const shippingTry = calcShippingFromPriceTiers(priceInclVatTry, rate);
+  // KDV bir geçiş kalemi (müşteriden tahsil edilip devlete ödenir) → elde kalan
+  // gelir KDV HARİÇ tutardır. Komisyon ise KDV dahil matrah üzerinden düşer.
   const netRevenueTry = trendyolPriceTry - commission - shippingTry;
   const netRevenueUsd = netRevenueTry / rate;
 
-  return { netRevenueTry, netRevenueUsd };
+  return { priceInclVatTry, netRevenueTry, netRevenueUsd };
 }
 
 // ── Profit + ROI ───────────────────────────────────────────────────────────────
