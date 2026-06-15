@@ -30,7 +30,7 @@ import { listProducts } from "@/services/product-service";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { resolveFinanceGate } from "@/lib/finance-visibility";
-import { calcImportCost, calcRevenue } from "@/lib/importer-cost";
+import { calcImportCost, calcRevenue, trendyolPriceInclVat } from "@/lib/importer-cost";
 
 export const dynamic = "force-dynamic";
 
@@ -402,7 +402,7 @@ export default async function ProductsPage({
                 <th className="w-14 px-3 py-3" aria-label="Görsel" />
                 <th className="px-4 py-3">Ürün</th>
                 <th className="px-4 py-3">Kategori</th>
-                {canViewFinance && <th className="px-4 py-3 text-right">T.Fiyat</th>}
+                {canViewFinance && <th className="px-4 py-3 text-right" title="KDV dahil gerçek satış fiyatı (Entegra net × 1.20)">T.Fiyat<span className="text-[9px] font-normal normal-case text-[var(--text-muted)]"> (KDV dahil)</span></th>}
                 <th className="px-4 py-3 text-right">Stok</th>
                 <th className="px-4 py-3 text-right">T30G</th>
                 {canViewFinance && <th className="px-4 py-3 text-right">Net Kâr</th>}
@@ -472,13 +472,21 @@ export default async function ProductsPage({
                         )}
                       </td>
 
-                      {/* Trendyol Price — finance only */}
+                      {/* Trendyol Price — finance only. Entegra net → KDV dahil (×1.20) göster. */}
                       {canViewFinance && (
                         <td className="px-4 py-3 text-right">
                           {trendyolPriceTry != null ? (
-                            <span className="tabular-nums font-mono text-sm font-medium text-[var(--text-primary)]">
-                              ₺{trendyolPriceTry.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
+                            <div>
+                              <span
+                                className="tabular-nums font-mono text-sm font-medium text-[var(--text-primary)]"
+                                title="KDV dahil gerçek satış fiyatı (Entegra net × 1.20)"
+                              >
+                                ₺{trendyolPriceInclVat(trendyolPriceTry)!.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <p className="text-[10px] tabular-nums font-mono text-[var(--text-muted)]" title="Entegra'dan gelen KDV hariç net fiyat">
+                                net ₺{trendyolPriceTry.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              </p>
+                            </div>
                           ) : (
                             <span className="text-[var(--text-muted)] text-xs">—</span>
                           )}
