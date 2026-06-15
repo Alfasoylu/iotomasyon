@@ -400,10 +400,10 @@ export default async function ImportCockpitPage({
 
     // ── Net kâr / marj — kanonik calcRevenue motoru (KDV-farkında) ─────────
     // KDV tabanı KAYNAĞA göre belirlenir:
-    //   trendyol (gerçekleşen satış) + manuel  → KDV DAHİL (gross)
-    //   mp / xml (Entegra/XML beslemesi)        → KDV HARİÇ (net)
+    //   trendyol (gerçekleşen satış, API)        → KDV DAHİL (gross)
+    //   manuel / mp / xml (Entegra/XML besleme)  → KDV HARİÇ (net) → ×1.2
     // Komisyon KDV dahil matrah üzerinden; elde kalan gelir KDV hariç (KDV geçiş kalemi).
-    const priceIncludesVat = priceSource === "trendyol" || priceSource === "manual";
+    const priceIncludesVat = priceSource === "trendyol";
 
     let netRevenueTry: number | null = null;
     let netProfitTry: number | null = null;
@@ -924,7 +924,7 @@ export default async function ImportCockpitPage({
         </p>
         <p>
           <span className="font-medium text-[var(--text-primary)]">KDV:</span>{" "}
-          Gerçekleşen Trendyol satışı + manuel fiyat KDV dahildir; Entegra/XML fiyatı KDV hariçtir (×1.20 ile dahile çevrilir).
+          Gerçekleşen Trendyol satışı KDV dahildir; manuel + Entegra/XML fiyatı KDV hariçtir (×1.20 ile dahile çevrilir).
           Komisyon KDV dahil fiyat üzerinden kesilir; elde kalan gelir KDV hariç tutardır (KDV devlete ödenen geçiş kalemi).
         </p>
         <p>
