@@ -27,6 +27,7 @@ import {
   calcImportCost,
   calcRevenue,
   calcProfit,
+  isDropshipStock,
   DEFAULT_USD_TRY_RATE,
   DEFAULT_RMB_USD_RATE,
 } from "@/lib/importer-cost";
@@ -222,7 +223,14 @@ export default async function SermayeSaglikPage() {
     else if (p.unitCostUsd != null) unitCostUsd = Number(p.unitCostUsd);
     else if (p.unitCostTry != null) unitCostUsd = Number(p.unitCostTry) / usdTryRate;
 
-    const totalCostUsd = unitCostUsd != null ? unitCostUsd * p.stockQuantity : null;
+    // Dropship/sipariş-üzerine (stok ≥ 1000) gerçek elde stok değil → bağlı sermaye
+    // ve stok-günü hesaplarından çıkar; satış/kâr metriklerinde kalır.
+    const isDropship = isDropshipStock(p.stockQuantity);
+    const totalCostUsd = isDropship
+      ? 0
+      : unitCostUsd != null
+        ? unitCostUsd * p.stockQuantity
+        : null;
 
     const revenueResult = calcRevenue({ trendyolPriceTry, usdTryRate });
     const profitResult = costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;
@@ -231,7 +239,7 @@ export default async function SermayeSaglikPage() {
     const prevMonthlyProfitUsd = netProfitUsd != null ? netProfitUsd * prevT30g : 0;
 
     const stockDays =
-      effectiveMonthlyUnits > 0
+      !isDropship && effectiveMonthlyUnits > 0
         ? Math.round((p.stockQuantity / effectiveMonthlyUnits) * 30)
         : null;
 
@@ -263,7 +271,9 @@ export default async function SermayeSaglikPage() {
     totalLockedUsd > 0 ? (monthlyExpectedUsd * 12 / totalLockedUsd) * 100 : 0;
   const prevAnnualRoiPct =
     totalLockedUsd > 0 ? (prevMonthlyExpectedUsd * 12 / totalLockedUsd) * 100 : 0;
-  const deadStock = enriched.filter((p) => p.lifetimeSold === 0 && p.stockQuantity > 0);
+  const deadStock = enriched.filter(
+    (p) => p.lifetimeSold === 0 && p.stockQuantity > 0 && !isDropshipStock(p.stockQuantity),
+  );
   const deadStockUsd = deadStock.reduce((s, p) => s + (p.totalCostUsd ?? 0), 0);
 
   // ── Aksiyon listeleri ─────────────────────────────────────────────────────

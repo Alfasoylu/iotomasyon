@@ -17,6 +17,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { calculateCapitalAllocation } from "@/lib/capital-allocation";
+import { isDropshipStock } from "@/lib/importer-cost";
 import { calculateSalesPotential } from "@/lib/sales-potential";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -160,7 +161,8 @@ export default async function CapitalPage() {
   type BreakdownRow = { id: string; name: string; sku: string | null; stockQuantity: number; unitCostTry: number; stockValue: number };
   type ScoreItem = { id: string; name: string; sku: string | null; unitCostTry: number | null; stockQuantity: number };
   const capitalBreakdown: BreakdownRow[] = (productsWithScore as ScoreItem[])
-    .filter((p: ScoreItem) => p.unitCostTry != null && p.unitCostTry > 0 && p.stockQuantity > 0)
+    // Dropship (stok ≥ 1000) gerçek bağlı sermaye değil → kilitli sermaye dağılımından hariç.
+    .filter((p: ScoreItem) => p.unitCostTry != null && p.unitCostTry > 0 && p.stockQuantity > 0 && !isDropshipStock(p.stockQuantity))
     .map((p: ScoreItem) => ({
       id: p.id,
       name: p.name,
@@ -173,7 +175,7 @@ export default async function CapitalPage() {
     .slice(0, 20);
 
   const totalLockedValue = (productsWithScore as ScoreItem[])
-    .filter((p: ScoreItem) => p.unitCostTry != null && p.unitCostTry > 0)
+    .filter((p: ScoreItem) => p.unitCostTry != null && p.unitCostTry > 0 && !isDropshipStock(p.stockQuantity))
     .reduce((sum: number, p: ScoreItem) => sum + p.stockQuantity * (p.unitCostTry as number), 0);
 
   const totalCapital = config ? Number(config.totalCapitalTry) : 0;

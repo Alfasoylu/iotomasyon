@@ -6,6 +6,7 @@ import {
   calcImportCost,
   calcRevenue,
   calcProfit,
+  isDropshipStock,
   DEFAULT_USD_TRY_RATE,
   DEFAULT_RMB_USD_RATE,
 } from "@/lib/importer-cost";
@@ -125,7 +126,10 @@ export async function getCapitalSnapshot(): Promise<CapitalSnapshot> {
       if (costResult) unitCostUsd = costResult.totalCostUsd;
       else if (p.unitCostUsd != null) unitCostUsd = Number(p.unitCostUsd);
       else if (p.unitCostTry != null) unitCostUsd = Number(p.unitCostTry) / usdTryRate;
-      const totalCostUsd = unitCostUsd != null ? unitCostUsd * p.stockQuantity : 0;
+      // Dropship/sipariş-üzerine (stok ≥ 1000) gerçek elde stok değil → bağlı sermaye
+      // ve stok-günü hesaplarından çıkar; satış/kâr metriklerinde kalır.
+      const isDropship = isDropshipStock(p.stockQuantity);
+      const totalCostUsd = !isDropship && unitCostUsd != null ? unitCostUsd * p.stockQuantity : 0;
 
       const revenueResult = calcRevenue({ trendyolPriceTry, usdTryRate });
       const profitResult = costResult && revenueResult ? calcProfit(costResult, revenueResult) : null;
@@ -134,12 +138,12 @@ export async function getCapitalSnapshot(): Promise<CapitalSnapshot> {
 
       totalLockedUsd += totalCostUsd;
       if (monthlyProfitUsd > 0) monthlyExpectedUsd += monthlyProfitUsd;
-      if (lifetimeSold === 0 && p.stockQuantity > 0) {
+      if (lifetimeSold === 0 && p.stockQuantity > 0 && !isDropship) {
         deadStockCount++;
         deadStockUsd += totalCostUsd;
       }
 
-      const stockDays = effectiveMonthlyUnits > 0
+      const stockDays = !isDropship && effectiveMonthlyUnits > 0
         ? Math.round((p.stockQuantity / effectiveMonthlyUnits) * 30)
         : null;
       if (stockDays != null && stockDays > 0 && stockDays < 14 && effectiveMonthlyUnits > 0) {
