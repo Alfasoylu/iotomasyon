@@ -88,6 +88,12 @@ export interface ImportCostResult {
 export interface RevenueResult {
   /** KDV dahil gerçek satış fiyatı (Trendyol'da görünen, komisyon matrahı). */
   priceInclVatTry: number;
+  /** KDV hariç fiyat — elde kalan gelir tabanı (KDV devlete ödenir). */
+  priceNetTry: number;
+  /** Komisyon (KDV dahil matrah × komisyon oranı). */
+  commissionTry: number;
+  /** Yurtiçi kargo kesintisi (TRY). */
+  shippingTry: number;
   netRevenueTry: number;
   netRevenueUsd: number;
 }
@@ -257,28 +263,44 @@ export function calcImportCost(input: {
  * (calcShippingFromPriceTiers — lib/marketplace-pricing.ts).
  */
 export function calcRevenue(input: {
-  /** KDV HARİÇ Trendyol fiyatı (Entegra/XML net değeri). */
+  /**
+   * Trendyol fiyatı (TRY). `priceIncludesVat` false (default) ise KDV HARİÇ
+   * (Entegra/XML net değeri), true ise KDV DAHİL (gerçekleşen satış / manuel
+   * gerçek fiyat) kabul edilir.
+   */
   trendyolPriceTry: number | null;
   usdTryRate: number;
   /** KDV oranı (%) — default KDV_PCT (20). */
   vatPct?: number;
+  /** Girdi fiyatı KDV dahil mi? default false (Entegra net). */
+  priceIncludesVat?: boolean;
+  /** Komisyon oranı (%) — default TRENDYOL_COMMISSION_PCT (20). */
+  commissionPct?: number;
+  /** Yurtiçi kargo (TRY) — verilirse kullanılır; yoksa fiyat dilimi (gross) baz alınır. */
+  domesticShippingTry?: number | null;
 }): RevenueResult | null {
   const { trendyolPriceTry, usdTryRate } = input;
   if (!trendyolPriceTry || trendyolPriceTry <= 0) return null;
   const rate = usdTryRate > 0 ? usdTryRate : DEFAULT_USD_TRY_RATE;
   const vatPct = input.vatPct ?? KDV_PCT;
+  const commissionPct = input.commissionPct ?? TRENDYOL_COMMISSION_PCT;
 
-  // Entegra Trendyol fiyatı KDV HARİÇ gelir. Gerçek satış fiyatı = net × (1+KDV);
-  // Trendyol komisyonu ve kargo bandı bu KDV DAHİL fiyat üzerinden işler.
-  const priceInclVatTry = trendyolPriceTry * (1 + vatPct / 100);
-  const commission = priceInclVatTry * (TRENDYOL_COMMISSION_PCT / 100);
-  const shippingTry = calcShippingFromPriceTiers(priceInclVatTry, rate);
-  // KDV bir geçiş kalemi (müşteriden tahsil edilip devlete ödenir) → elde kalan
-  // gelir KDV HARİÇ tutardır. Komisyon ise KDV dahil matrah üzerinden düşer.
-  const netRevenueTry = trendyolPriceTry - commission - shippingTry;
+  // Tek kanonik model (her iki tabanda da aynı): Trendyol komisyonu KDV DAHİL
+  // fiyat üzerinden kesilir; elde kalan gelir KDV HARİÇ tutardır (KDV bir geçiş
+  // kalemi — müşteriden tahsil edilip devlete ödenir).
+  const priceInclVatTry =
+    input.priceIncludesVat === true ? trendyolPriceTry : trendyolPriceTry * (1 + vatPct / 100);
+  const priceNetTry = priceInclVatTry / (1 + vatPct / 100);
+
+  const commissionTry = priceInclVatTry * (commissionPct / 100);
+  const shippingTry =
+    input.domesticShippingTry != null
+      ? input.domesticShippingTry
+      : calcShippingFromPriceTiers(priceInclVatTry, rate);
+  const netRevenueTry = priceNetTry - commissionTry - shippingTry;
   const netRevenueUsd = netRevenueTry / rate;
 
-  return { priceInclVatTry, netRevenueTry, netRevenueUsd };
+  return { priceInclVatTry, priceNetTry, commissionTry, shippingTry, netRevenueTry, netRevenueUsd };
 }
 
 // ── Profit + ROI ───────────────────────────────────────────────────────────────

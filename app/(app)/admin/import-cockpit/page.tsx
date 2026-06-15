@@ -36,6 +36,7 @@ import {
   calculateImportDecision,
   DEFAULT_USD_TRY_RATE,
 } from "@/lib/import-decision";
+import { calcRevenue } from "@/lib/importer-cost";
 import { resolveMarginPolicy } from "@/lib/marketplace-policy";
 
 export const dynamic = "force-dynamic";
@@ -282,6 +283,8 @@ export default async function ImportCockpitPage({
     returnRate: number | null; // 0‥1
     // Kullanılan satış fiyatı
     resolvedPriceTry: number | null;
+    /** KDV dahil gerçek satış fiyatı (gösterim + komisyon matrahı). */
+    priceInclVatTry: number | null;
     priceSource: "trendyol" | "mp" | "xml" | "manual" | "none";
     // Hesaplama
     landedCostTry: number | null;
@@ -395,15 +398,35 @@ export default async function ImportCockpitPage({
     const landedCostUsd = decisionResult.effectiveScenario?.landedCostUsd ?? null;
     const landedCostTry = landedCostUsd != null ? landedCostUsd * usdTryRate : null;
 
-    // ── Net kâr / marj ─────────────────────────────────────────────────────
+    // ── Net kâr / marj — kanonik calcRevenue motoru (KDV-farkında) ─────────
+    // KDV tabanı KAYNAĞA göre belirlenir:
+    //   trendyol (gerçekleşen satış) + manuel  → KDV DAHİL (gross)
+    //   mp / xml (Entegra/XML beslemesi)        → KDV HARİÇ (net)
+    // Komisyon KDV dahil matrah üzerinden; elde kalan gelir KDV hariç (KDV geçiş kalemi).
+    const priceIncludesVat = priceSource === "trendyol" || priceSource === "manual";
+
     let netRevenueTry: number | null = null;
     let netProfitTry: number | null = null;
     let marginPct: number | null = null;
+    let priceInclVatTry: number | null = null;
 
-    if (resolvedPriceTry != null && landedCostTry != null) {
-      netRevenueTry = resolvedPriceTry * (1 - commissionPct / 100) - domesticShippingTry;
-      netProfitTry = netRevenueTry - landedCostTry;
-      marginPct = resolvedPriceTry > 0 ? (netProfitTry / resolvedPriceTry) * 100 : null;
+    if (resolvedPriceTry != null) {
+      const rev = calcRevenue({
+        trendyolPriceTry: resolvedPriceTry,
+        usdTryRate,
+        priceIncludesVat,
+        commissionPct,
+        domesticShippingTry,
+      });
+      if (rev) {
+        priceInclVatTry = rev.priceInclVatTry;
+        if (landedCostTry != null) {
+          netRevenueTry = rev.netRevenueTry;
+          netProfitTry = rev.netRevenueTry - landedCostTry;
+          // Marj tabanı: KDV hariç net satış fiyatı (gerçek gelir tabanı).
+          marginPct = rev.priceNetTry > 0 ? (netProfitTry / rev.priceNetTry) * 100 : null;
+        }
+      }
     }
 
     // ── Aylık kâr tahmini ──────────────────────────────────────────────────
@@ -485,6 +508,7 @@ export default async function ImportCockpitPage({
       returnCount,
       returnRate,
       resolvedPriceTry,
+      priceInclVatTry,
       priceSource,
       landedCostTry,
       netRevenueTry,
@@ -770,8 +794,8 @@ export default async function ImportCockpitPage({
                     <td className="px-4 py-3 text-right font-mono text-xs tabular-nums text-[var(--text-secondary)]">
                       {row.trendyolAvgPriceTry != null
                         ? fmtTry(row.trendyolAvgPriceTry)
-                        : row.resolvedPriceTry != null
-                          ? <span className="text-[var(--text-muted)]">{fmtTry(row.resolvedPriceTry)}</span>
+                        : row.priceInclVatTry != null
+                          ? <span className="text-[var(--text-muted)]" title="KDV dahil (Entegra net × 1.20)">{fmtTry(row.priceInclVatTry)}</span>
                           : <span className="text-[var(--text-muted)]">—</span>}
                     </td>
 
@@ -899,8 +923,13 @@ export default async function ImportCockpitPage({
           İniş maliyeti (USD) × kur · hava/deniz seçimi mevcut motora göre
         </p>
         <p>
+          <span className="font-medium text-[var(--text-primary)]">KDV:</span>{" "}
+          Gerçekleşen Trendyol satışı + manuel fiyat KDV dahildir; Entegra/XML fiyatı KDV hariçtir (×1.20 ile dahile çevrilir).
+          Komisyon KDV dahil fiyat üzerinden kesilir; elde kalan gelir KDV hariç tutardır (KDV devlete ödenen geçiş kalemi).
+        </p>
+        <p>
           <span className="font-medium text-[var(--text-primary)]">Net kâr/adet:</span>{" "}
-          Satış fiyatı × (1 − komisyon%) − kargo − ithal maliyet TRY
+          (KDV hariç fiyat − komisyon[KDV dahil matrah] − kargo) − ithal maliyet TRY · Marj = net kâr / KDV hariç fiyat
         </p>
         <p>
           <span className="font-medium text-[var(--text-primary)]">Aylık kâr:</span>{" "}
