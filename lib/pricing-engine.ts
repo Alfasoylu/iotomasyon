@@ -83,13 +83,14 @@ export interface PricingResult {
 
   // ── Pazaryeri (revenue side) ───────────────────────────────────────────
   revenue: {
-    effectivePriceTry: number;           // KDV dahil etkin satış fiyatı
+    effectivePriceTry: number;           // KDV HARİÇ etkin satış fiyatı (gelir tabanı)
+    priceInclVatTry: number;             // KDV dahil gerçek satış fiyatı (komisyon matrahı)
     shippingTry: number;                 // platform kargo kesintisi (TL)
     commissionPct: number;               // uygulanan komisyon %
-    commissionTry: number;               // komisyon TL (KDV dahil tutardan)
+    commissionTry: number;               // komisyon TL (KDV dahil matrahtan)
     paymentFeeTry: number;               // ödeme fee TL
     returnReserveTry: number;            // iade rezervi TL
-    netRevenueTry: number;               // ne kalır TL (KDV dahil)
+    netRevenueTry: number;               // ne kalır TL (KDV hariç tabandan)
     netRevenueUsd: number;               // = netRevenueTry / usdTryRate
   } | null;
 
@@ -169,6 +170,7 @@ export function computeProductEconomics(input: PricingInput): PricingResult {
   const revenue = mpRow.hasData && mpRow.netRevenueTry != null
     ? {
         effectivePriceTry: mpRow.effectivePriceTry!,
+        priceInclVatTry: mpRow.priceInclVatTry!,
         shippingTry: mpRow.shippingTry,
         commissionPct: mpRow.commissionPct,
         commissionTry: mpRow.commissionTry,
@@ -201,9 +203,10 @@ export function computeProductEconomics(input: PricingInput): PricingResult {
   }
 
   // ── KDV bilgi (cash-flow'da kullanılmaz, sadece raporlama) ────────────
+  // effectivePriceTry KDV HARİÇ olduğundan KDV tutarı = net × KDV/100.
   const vatPct = input.platformPolicy?.vatPct ?? 20;
   const vatInfoTry = revenue
-    ? (revenue.effectivePriceTry * vatPct) / (100 + vatPct)
+    ? (revenue.effectivePriceTry * vatPct) / 100
     : 0;
 
   return { cost, revenue, profit, vatInfoTry, warnings };

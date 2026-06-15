@@ -614,7 +614,7 @@ export default async function ProductDetailPage({
                   <tr className="border-b border-[var(--border-subtle)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)] text-left">
                     <th className="pb-2 pr-4">Platform</th>
                     <th className="pb-2 pr-4">XML Fiyat</th>
-                    <th className="pb-2 pr-4">Etkin Fiyat</th>
+                    <th className="pb-2 pr-4" title="KDV dahil gerçek satış fiyatı (net × (1+KDV))">Etkin Fiyat (KDV dahil)</th>
                     <th className="pb-2 pr-4">Kaynak</th>
                     <th className="pb-2 pr-4 text-right">Kargo ₺</th>
                     <th className="pb-2 pr-4 text-right">Komisyon %</th>
@@ -630,7 +630,14 @@ export default async function ProductDetailPage({
                         {r.xmlPriceTry != null ? `₺${r.xmlPriceTry.toFixed(2)}` : <span className="text-[var(--text-muted)]">—</span>}
                       </td>
                       <td className="py-2 pr-4 font-mono tabular-nums font-semibold text-[var(--text-primary)]">
-                        {r.effectivePriceTry != null ? `₺${r.effectivePriceTry.toFixed(2)}` : <span className="text-[var(--text-muted)] font-normal">—</span>}
+                        {r.priceInclVatTry != null ? (
+                          <>
+                            ₺{r.priceInclVatTry.toFixed(2)}
+                            {r.effectivePriceTry != null && (
+                              <span className="ml-1 text-[10px] font-normal text-[var(--text-muted)]">net ₺{r.effectivePriceTry.toFixed(0)}</span>
+                            )}
+                          </>
+                        ) : <span className="text-[var(--text-muted)] font-normal">—</span>}
                       </td>
                       <td className="py-2 pr-4">
                         <span className={`inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium ${priceSourceColor(r.priceSource)}`}>
@@ -852,10 +859,10 @@ export default async function ProductDetailPage({
                 <div className="text-[11px] tabular-nums font-mono text-[var(--warn)] opacity-80">${totalMaliyetUsd.toFixed(2)}</div>
               </div>
               <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] p-3">
-                <div className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol Satış Fiyatı</div>
-                <div className="mt-1 text-[18px] font-semibold tabular-nums font-mono text-[var(--text-primary)]">₺{effectivePriceTry.toFixed(2)}</div>
+                <div className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Trendyol Satış Fiyatı (KDV dahil)</div>
+                <div className="mt-1 text-[18px] font-semibold tabular-nums font-mono text-[var(--text-primary)]">₺{(trendyolRow.priceInclVatTry ?? effectivePriceTry).toFixed(2)}</div>
                 <div className="text-[11px] tabular-nums font-mono text-[var(--text-muted)]">
-                  ${priceUsd.toFixed(2)} ·{" "}
+                  net ₺{effectivePriceTry.toFixed(2)} · ${priceUsd.toFixed(2)} ·{" "}
                   {trendyolMpPrice
                     ? (trendyolMpPrice.source === "MANUAL" ? "Manuel" : "XML")
                     : product.xmlData?.xmlTrendyolPrice != null

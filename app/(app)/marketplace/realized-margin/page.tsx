@@ -186,7 +186,8 @@ export default async function RealizedMarginPage() {
       platform:          "TRENDYOL",
       platformLabel:     "Trendyol",
       xmlPriceUsd:       null, // not relevant — we override with realized price below
-      manualOverrideTry: avgRealizedPriceTry, // actual selling price
+      manualOverrideTry: avgRealizedPriceTry, // actual selling price (KDV DAHİL)
+      priceIncludesVat:  true, // gerçekleşen Trendyol fiyatı KDV dahildir → çift-KDV'yi önle
       product:           productPolicyInput,
       platformPolicy:    platformPolicyInput,
       usdTryRate,
@@ -196,9 +197,11 @@ export default async function RealizedMarginPage() {
     const estimatedShippingTry   = realizedPricing.shippingTry;
 
     let realizedMarginPct: number | null = null;
-    if (hasFullData) {
-      const netRealized = avgRealizedPriceTry - estimatedCommissionTry - estimatedShippingTry - realizedPricing.paymentFeeTry - realizedPricing.returnReserveTry - unitCostTry;
-      realizedMarginPct = (netRealized / avgRealizedPriceTry) * 100;
+    if (hasFullData && realizedPricing.netRevenueTry != null) {
+      // Net gelir KDV hariç tabandan (KDV geçiş kalemi); marj net satış fiyatına göre.
+      const netRealized = realizedPricing.netRevenueTry - unitCostTry;
+      const base = realizedPricing.effectivePriceTry ?? avgRealizedPriceTry;
+      realizedMarginPct = base > 0 ? (netRealized / base) * 100 : null;
     }
 
     // Expected pricing: use current effective price from canonical engine

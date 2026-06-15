@@ -51,8 +51,10 @@ export interface MarketplacePricingRow {
   xmlPriceTry: number | null;
   /** Manual override price in TRY (null when not set) */
   manualOverrideTry: number | null;
-  /** Effective price used for calculations (manual override beats XML) */
+  /** Effective price used for calculations (manual override beats XML). KDV HARİÇ (net) — gelir tabanı. */
   effectivePriceTry: number | null;
+  /** KDV dahil gerçek satış fiyatı (= effectivePriceTry × (1+KDV)). Komisyon matrahı + gösterim. */
+  priceInclVatTry: number | null;
   priceSource: PriceSource;
   /** Resolved shipping cost (TRY) — tier default or policy override */
   shippingTry: number;
@@ -80,6 +82,11 @@ export interface MarketplacePricingInput {
   xmlPriceUsd: number | null;
   /** Manual override price in TRY on this product (null when not set) */
   manualOverrideTry: number | null;
+  /**
+   * Girdi fiyatı KDV DAHİL mi? default false (Entegra/XML/manuel net fiyat).
+   * Gerçekleşen satış fiyatı gibi KDV dahil değerler için true geçilir.
+   */
+  priceIncludesVat?: boolean;
   product: ProductPolicyInput;
   platformPolicy: PlatformPolicyInput;
   usdTryRate: number;
@@ -125,22 +132,41 @@ export function calcMarketplacePricingRow(
     ? xmlPriceUsd * usdTryRate
     : null;
 
-  let effectivePriceTry: number | null;
+  let resolvedPriceTry: number | null;
   let priceSource: PriceSource;
 
   if (manualOverrideTry != null && manualOverrideTry > 0) {
-    effectivePriceTry = manualOverrideTry;
+    resolvedPriceTry = manualOverrideTry;
     priceSource = "manual";
   } else if (xmlPriceTry != null) {
-    effectivePriceTry = xmlPriceTry;
+    resolvedPriceTry = xmlPriceTry;
     priceSource = "xml";
   } else {
-    effectivePriceTry = null;
+    resolvedPriceTry = null;
     priceSource = "none";
   }
 
   // ── Policy (commission, payment fee, return reserve, VAT) ──────────────
   const policy = resolveMarginPolicy(product, platformPolicy);
+
+  // KDV: girdi fiyatı KDV HARİÇ (default — Entegra/XML/manuel net) ya da KDV DAHİL
+  // (priceIncludesVat=true — gerçekleşen satış fiyatı) olabilir. effectivePriceTry
+  // HER ZAMAN KDV hariç (gelir tabanı); priceInclVatTry komisyon matrahıdır.
+  // Komisyon/ödeme/iade/kargo-dilimi KDV dahil üzerinden; elde kalan gelir KDV
+  // hariç tutardır (KDV bir geçiş kalemi — devlete ödenir).
+  const vatMul = 1 + policy.vatPct / 100;
+  const effectivePriceTry: number | null =
+    resolvedPriceTry == null
+      ? null
+      : input.priceIncludesVat === true
+        ? resolvedPriceTry / vatMul
+        : resolvedPriceTry;
+  const priceInclVatTry: number | null =
+    resolvedPriceTry == null
+      ? null
+      : input.priceIncludesVat === true
+        ? resolvedPriceTry
+        : resolvedPriceTry * vatMul;
 
   // ── Shipping ─────────────────────────────────────────────────────────────
   let shippingTry: number;
@@ -150,9 +176,9 @@ export function calcMarketplacePricingRow(
     // Product or platform has an explicit shipping value — honour it
     shippingTry = policy.shippingTry;
     shippingSource = policy.shippingSource;
-  } else if (effectivePriceTry != null) {
-    // Fall back to roadmap price-tier table
-    shippingTry = calcShippingFromPriceTiers(effectivePriceTry, usdTryRate);
+  } else if (priceInclVatTry != null) {
+    // Fall back to roadmap price-tier table (KDV dahil gerçek fiyat üzerinden)
+    shippingTry = calcShippingFromPriceTiers(priceInclVatTry, usdTryRate);
     shippingSource = "price_tier";
   } else {
     shippingTry = 0;
@@ -160,13 +186,14 @@ export function calcMarketplacePricingRow(
   }
 
   // ── Derived amounts ─────────────────────────────────────────────────────
-  if (effectivePriceTry == null) {
+  if (effectivePriceTry == null || priceInclVatTry == null) {
     return {
       platform,
       platformLabel,
       xmlPriceTry,
       manualOverrideTry,
       effectivePriceTry: null,
+      priceInclVatTry: null,
       priceSource,
       shippingTry,
       shippingSource,
@@ -181,9 +208,11 @@ export function calcMarketplacePricingRow(
     };
   }
 
-  const commissionTry   = (effectivePriceTry * policy.commissionPct)    / 100;
-  const paymentFeeTry   = (effectivePriceTry * policy.paymentFeePct)     / 100;
-  const returnReserveTry = (effectivePriceTry * policy.returnReservePct) / 100;
+  // Komisyon/ödeme/iade KDV DAHİL matrah üzerinden kesilir.
+  const commissionTry   = (priceInclVatTry * policy.commissionPct)    / 100;
+  const paymentFeeTry   = (priceInclVatTry * policy.paymentFeePct)     / 100;
+  const returnReserveTry = (priceInclVatTry * policy.returnReservePct) / 100;
+  // Elde kalan gelir KDV HARİÇ fiyat tabanından hesaplanır (KDV devlete ödenir).
   const netRevenueTry   = effectivePriceTry - shippingTry - commissionTry - paymentFeeTry - returnReserveTry;
   const netMarginPct    = effectivePriceTry > 0
     ? (netRevenueTry / effectivePriceTry) * 100
@@ -195,6 +224,7 @@ export function calcMarketplacePricingRow(
     xmlPriceTry,
     manualOverrideTry,
     effectivePriceTry,
+    priceInclVatTry,
     priceSource,
     shippingTry,
     shippingSource,
