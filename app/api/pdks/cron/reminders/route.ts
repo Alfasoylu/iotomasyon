@@ -110,21 +110,33 @@ export async function GET(req: NextRequest) {
   let autoClosed = 0;
 
   const openRecs = await prisma.pdksAttendanceRecord.findMany({
-    where: { workDate: today, status: "open", checkInAt: { not: null }, overtime: false },
+    where: { workDate: { lte: today }, status: "open", checkInAt: { not: null }, overtime: false },
     include: { personnel: { include: { subs: true } } },
   });
 
   for (const rec of openRecs) {
     const expectedOut = toMinutes(rec.personnel.expectedCheckOut ?? "");
     if (expectedOut == null) continue; // çıkış saati tanımsız → otomatik işlem yok
-    const minutesAfter = nowMin - expectedOut;
-    if (minutesAfter < 0) continue; // çıkış saati henüz gelmedi
 
     const subs = rec.personnel.subs.map((s) => ({
       endpoint: s.endpoint,
       p256dh: s.p256dh,
       auth: s.auth,
     }));
+
+    // Geçmiş güne ait açık kayıt → kesin gecikmiş; sessizce otomatik kapat (bildirim yok).
+    if (rec.workDate.getTime() < today.getTime()) {
+      const checkOutAt = trTimeOnDateToUtc(rec.workDate, rec.personnel.expectedCheckOut ?? "");
+      await prisma.pdksAttendanceRecord.update({
+        where: { id: rec.id },
+        data: { checkOutAt, status: "closed", autoCheckout: true },
+      });
+      autoClosed += 1;
+      continue;
+    }
+
+    const minutesAfter = nowMin - expectedOut;
+    if (minutesAfter < 0) continue; // çıkış saati henüz gelmedi
 
     if (minutesAfter >= AUTO_CHECKOUT_DELAY_MIN) {
       // Otomatik çıkış: çıkış saatini beklenen çıkışa sabitle (adil; admin düzeltebilir).
