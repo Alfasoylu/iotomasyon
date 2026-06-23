@@ -9,6 +9,22 @@
 
 ## 2026-06
 
+### PDKS — Puantaj düzeltme (admin: düzenle / sil / manuel ekle) (2026-06-23)
+
+Yönetici artık devam kayıtlarını düzeltebiliyor (gerçek kullanımda zorunlu).
+Şema değişikliği yok.
+
+- `lib/actions/pdks-admin-actions.ts`: `updateAttendanceAction` (giriş/çıkış saatini
+  TR olarak düzeltir), `deleteAttendanceAction` (yanlış kaydı siler),
+  `createManualAttendanceAction` (unutulan gün için elle kayıt). Hepsi `PDKS_MANAGE`
+  + tenant-scoped.
+- `lib/pdks/timesheet.ts`: `TimesheetRow.id` eklendi; `trTimeOnDateToUtc()` (TR
+  wall-clock saat → UTC, sabit +3).
+- `components/admin/pdks/timesheet-table.tsx`: satır içi düzenle/sil + "Manuel kayıt
+  ekle" formu (personel/tarih/giriş/çıkış). `/admin/pdks/puantaj` statik tablo bu
+  client bileşenle değiştirildi; metrik + personel özeti sunucuda kalır.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
+
 ### PDKS — Şifre/PIN girişi + cihaz bağlama + çıkış saati + artan geç-bildirim (2026-06-23)
 
 Saha kullanımı için giriş ve güvenlik modeli güncellendi. Tek migration

@@ -7,6 +7,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prismaPdks } from "@/lib/pdks/prisma";
 import { hashPassword, normalizePhone } from "@/lib/pdks/auth";
+import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
 import {
   personnelSchema,
   type PersonnelInput,
@@ -288,4 +289,106 @@ export async function setWorksiteAssignmentsAction(
 
   revalidateWorksites();
   return result;
+}
+
+// ── Puantaj düzeltme (attendance) ─────────────────────────────────────────────
+
+const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function revalidatePuantaj() {
+  revalidatePath("/admin/pdks");
+  revalidatePath("/admin/pdks/puantaj");
+}
+
+/** Bir devam kaydının giriş/çıkış saatini düzeltir (TR saati). Çıkış boş → kayıt açık. */
+export async function updateAttendanceAction(
+  recordId: string,
+  checkInTime: string,
+  checkOutTime: string,
+): Promise<ActionResult> {
+  const ci = checkInTime.trim();
+  const co = checkOutTime.trim();
+  if (!TIME_RE.test(ci)) return { ok: false, message: "Giriş saati HH:MM olmalı." };
+  if (co && !TIME_RE.test(co)) return { ok: false, message: "Çıkış saati HH:MM olmalı." };
+
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  return runWithPdksAdmin(user, async (): Promise<ActionResult> => {
+    const rec = await prismaPdks.pdksAttendanceRecord.findFirst({ where: { id: recordId } });
+    if (!rec) return { ok: false, message: "Kayıt bulunamadı." };
+
+    const checkInAt = trTimeOnDateToUtc(rec.workDate, ci);
+    if (!checkInAt) return { ok: false, message: "Giriş saati geçersiz." };
+    const checkOutAt = co ? trTimeOnDateToUtc(rec.workDate, co) : null;
+    if (co && !checkOutAt) return { ok: false, message: "Çıkış saati geçersiz." };
+    if (checkOutAt && checkOutAt.getTime() < checkInAt.getTime()) {
+      return { ok: false, message: "Çıkış, girişten önce olamaz." };
+    }
+
+    await prismaPdks.pdksAttendanceRecord.updateMany({
+      where: { id: recordId },
+      data: { checkInAt, checkOutAt, status: checkOutAt ? "closed" : "open" },
+    });
+    revalidatePuantaj();
+    return { ok: true };
+  });
+}
+
+/** Yanlış girilmiş bir devam kaydını siler. */
+export async function deleteAttendanceAction(recordId: string): Promise<ActionResult> {
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  const { count } = await runWithPdksAdmin(user, () =>
+    prismaPdks.pdksAttendanceRecord.deleteMany({ where: { id: recordId } }),
+  );
+  if (count === 0) return { ok: false, message: "Kayıt bulunamadı." };
+  revalidatePuantaj();
+  return { ok: true };
+}
+
+/** Unutulan bir gün için manuel devam kaydı oluşturur (konum/şantiye olmadan). */
+export async function createManualAttendanceAction(
+  personnelId: string,
+  ymd: string,
+  checkInTime: string,
+  checkOutTime: string,
+): Promise<ActionResult> {
+  if (!YMD_RE.test(ymd)) return { ok: false, message: "Tarih YYYY-AA-GG olmalı." };
+  const ci = checkInTime.trim();
+  const co = checkOutTime.trim();
+  if (!TIME_RE.test(ci)) return { ok: false, message: "Giriş saati HH:MM olmalı." };
+  if (co && !TIME_RE.test(co)) return { ok: false, message: "Çıkış saati HH:MM olmalı." };
+
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  return runWithPdksAdmin(user, async (tenantId): Promise<ActionResult> => {
+    const p = await prismaPdks.pdksPersonnel.findFirst({ where: { id: personnelId } });
+    if (!p) return { ok: false, message: "Personel bulunamadı." };
+
+    const workDate = new Date(`${ymd}T00:00:00.000Z`);
+    const checkInAt = trTimeOnDateToUtc(workDate, ci);
+    if (!checkInAt) return { ok: false, message: "Giriş saati geçersiz." };
+    const checkOutAt = co ? trTimeOnDateToUtc(workDate, co) : null;
+    if (checkOutAt && checkOutAt.getTime() < checkInAt.getTime()) {
+      return { ok: false, message: "Çıkış, girişten önce olamaz." };
+    }
+
+    await prismaPdks.pdksAttendanceRecord.create({
+      data: {
+        tenantId,
+        personnelId,
+        worksiteId: null,
+        workDate,
+        checkInAt,
+        checkOutAt,
+        status: checkOutAt ? "closed" : "open",
+      },
+    });
+    revalidatePuantaj();
+    return { ok: true };
+  });
 }

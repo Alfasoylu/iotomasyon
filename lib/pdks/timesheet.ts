@@ -3,6 +3,7 @@ import "server-only";
 import { prismaPdks } from "./prisma";
 
 export type TimesheetRow = {
+  id: string;
   personnelId: string;
   personnelName: string;
   workDate: Date;
@@ -50,6 +51,20 @@ function hhmmToMinutes(s: string | null): number | null {
 }
 
 /**
+ * workDate (@db.Date → TR takvim gününün UTC gece-yarısı) + "HH:MM" TR saati → UTC Date.
+ * TR sabit UTC+3 olduğundan: UTC = gün-başı + (saat:dk − 180dk). Manuel puantaj
+ * düzeltmesinde admin'in girdiği yerel saati doğru UTC instant'a çevirir.
+ */
+export function trTimeOnDateToUtc(workDate: Date, hhmm: string): Date | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) return null;
+  return new Date(workDate.getTime() + (h * 60 + min - 180) * 60_000);
+}
+
+/**
  * Tarih aralığını çözer. workDate (@db.Date) TR gününün UTC gece-yarısı olarak
  * saklandığından, "YYYY-MM-DD" → `${ymd}T00:00:00Z` ile birebir eşleşir.
  * Varsayılan: içinde bulunulan TR ayının 1'i → bugün.
@@ -86,6 +101,7 @@ export async function fetchTimesheet(from: Date, to: Date): Promise<TimesheetRow
     const late =
       r.checkInAt != null && expectedMin != null && trMinutes(r.checkInAt) > expectedMin;
     return {
+      id: r.id,
       personnelId: r.personnelId,
       personnelName: r.personnel.fullName,
       workDate: r.workDate,

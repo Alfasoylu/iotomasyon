@@ -7,7 +7,9 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
+import { prismaPdks } from "@/lib/pdks/prisma";
 import { fetchTimesheet, parseRange, buildTimesheetSummary } from "@/lib/pdks/timesheet";
+import { TimesheetTable } from "@/components/admin/pdks/timesheet-table";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,10 @@ function trTime(d: Date | null): string {
     timeZone: "Europe/Istanbul",
   });
 }
+/** Düzenleme inputu için "HH:MM" | "" (null → boş). */
+function trTimeOrEmpty(d: Date | null): string {
+  return d ? trTime(d) : "";
+}
 
 const inputCls =
   "rounded-lg border border-[var(--border-default)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--border-strong)] focus:outline-none";
@@ -35,13 +41,36 @@ export default async function PdksTimesheetPage({
   const sp = await searchParams;
   const { from, to, fromYmd, toYmd } = parseRange(sp.from, sp.to);
 
-  const rows = await runWithPdksAdmin(user, () => fetchTimesheet(from, to));
+  const { rows, personnel } = await runWithPdksAdmin(user, async () => {
+    const [rows, personnel] = await Promise.all([
+      fetchTimesheet(from, to),
+      prismaPdks.pdksPersonnel.findMany({
+        where: { isActive: true, role: "employee" },
+        orderBy: { fullName: "asc" },
+        select: { id: true, fullName: true },
+      }),
+    ]);
+    return { rows, personnel };
+  });
 
   const totalHours = rows.reduce((acc, r) => acc + (r.hours ?? 0), 0);
   const distinctPersonnel = new Set(rows.map((r) => r.personnelId)).size;
   const lateCount = rows.filter((r) => r.late).length;
   const missingCount = rows.filter((r) => r.missingCheckout).length;
   const summary = buildTimesheetSummary(rows);
+
+  const editableRows = rows.map((r) => ({
+    id: r.id,
+    personnelName: r.personnelName,
+    workDateYmd: r.workDate.toISOString().slice(0, 10),
+    workDateLabel: trDate(r.workDate),
+    checkInTR: trTimeOrEmpty(r.checkInAt),
+    checkOutTR: trTimeOrEmpty(r.checkOutAt),
+    worksiteName: r.worksiteName,
+    hours: r.hours,
+    late: r.late,
+    missingCheckout: r.missingCheckout,
+  }));
 
   return (
     <div className="space-y-6">
@@ -129,55 +158,7 @@ export default async function PdksTimesheetPage({
         </Card>
       )}
 
-      <Card className="overflow-hidden p-0 rounded-lg">
-        <table className="w-full text-sm">
-          <thead className="border-b border-[var(--border-default)] bg-[var(--surface-1)]">
-            <tr>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Personel</th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Tarih</th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Giriş</th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Çıkış</th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Süre</th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Şantiye</th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Mesafe (g/ç)</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--border-subtle)]">
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-[var(--text-muted)]">
-                  Bu aralıkta kayıt yok.
-                </td>
-              </tr>
-            )}
-            {rows.map((r, i) => (
-              <tr key={`${r.personnelId}-${i}`} className="hover:bg-[var(--surface-1)]">
-                <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{r.personnelName}</td>
-                <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums">{trDate(r.workDate)}</td>
-                <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums font-mono">
-                  <span className="inline-flex items-center gap-1.5">
-                    {trTime(r.checkInAt)}
-                    {r.late && <Badge tone="warning">Geç</Badge>}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums font-mono">
-                  <span className="inline-flex items-center gap-1.5">
-                    {trTime(r.checkOutAt)}
-                    {r.missingCheckout && <Badge tone="danger">Eksik</Badge>}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums">
-                  {r.hours != null ? `${r.hours.toFixed(2)} s` : "—"}
-                </td>
-                <td className="px-4 py-3 text-[var(--text-secondary)]">{r.worksiteName ?? "—"}</td>
-                <td className="px-4 py-3 text-[var(--text-muted)] tabular-nums font-mono">
-                  {r.checkInDistanceM ?? "—"} / {r.checkOutDistanceM ?? "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      <TimesheetTable rows={editableRows} personnel={personnel} defaultYmd={toYmd} />
     </div>
   );
 }
