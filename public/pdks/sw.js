@@ -14,8 +14,8 @@ self.addEventListener("push", (event) => {
   const title = data.title || "PDKS";
   const options = {
     body: data.body || "",
-    icon: "/soylu-logo.png",
-    badge: "/soylu-logo.png",
+    icon: "/pdks/icon-192.png",
+    badge: "/pdks/icon-192.png",
     data: { url: data.url || "/pdks" },
   };
   event.waitUntil(self.registration.showNotification(title, options));
