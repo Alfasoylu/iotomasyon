@@ -9,6 +9,14 @@
 
 ## 2026-06
 
+### PDKS — Şantiye konumu için harita/link seçici (2026-06-23)
+
+Admin şantiye formuna (ekle + düzenle) "Google Maps linki veya 'enlem, boylam'
+yapıştır" alanı + **canlı harita önizleme** (OpenStreetMap embed, API anahtarı
+gerekmez) eklendi. `parseLocation()` desteklenen biçimler: `lat, lng`, `@lat,lng`,
+`!3dlat!4dlng`, `?q=/ll=/center=lat,lng`. "Konumumu kullan" + elle koordinat korundu.
+"Google Maps'te aç/doğrula" linki. `tsc --noEmit` 0 hata, eslint temiz.
+
 ### PDKS — Personel ekranı /pdks → /personel taşındı (2026-06-23)
 
 Kısa, anlamlı adres: personel girişi artık `iotomasyon.com/personel`. PWA (manifest,
