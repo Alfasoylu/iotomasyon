@@ -36,6 +36,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // KVKK: konum işleme için açık rıza zorunlu (sunucu tarafı kapı).
+    const me = await prismaPdks.pdksPersonnel.findFirst({
+      where: { id: session.personnelId },
+      select: { kvkkConsentAt: true },
+    });
+    if (!me?.kvkkConsentAt) {
+      return NextResponse.json(
+        { error: "Önce KVKK aydınlatma metnini onaylamanız gerekir.", needsConsent: true },
+        { status: 403 },
+      );
+    }
+
     const links = await prismaPdks.pdksPersonnelWorksite.findMany({
       where: { personnelId: session.personnelId },
       include: { worksite: true },

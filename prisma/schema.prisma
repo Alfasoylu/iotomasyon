@@ -1689,6 +1689,8 @@ model PdksPersonnel {
   expectedCheckIn String? // "08:30" — hatırlatma eşiği
   // Geç-kalan hatırlatması en son hangi TR gününde gönderildi (cron idempotency).
   lastLateReminderOn DateTime? @db.Date
+  // KVKK açık rıza zamanı (konum işleme). null = rıza yok → giriş/çıkış engellenir.
+  kvkkConsentAt   DateTime?
   isActive        Boolean    @default(true)
   createdAt       DateTime   @default(now())
 

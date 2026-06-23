@@ -9,6 +9,7 @@ type Initial =
       authed: true;
       role: string;
       name: string;
+      consented: boolean; // KVKK açık rıza verildi mi
       status: string | null; // 'open' | 'closed' | null
       checkInAt: string | null;
       checkOutAt: string | null;
@@ -202,6 +203,23 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
     router.refresh();
   }, [router]);
 
+  const submitConsent = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/pdks/consent", { method: "POST" });
+      if (!res.ok) {
+        setError("Onay kaydedilemedi. Tekrar deneyin.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Ağ hatası");
+    } finally {
+      setBusy(false);
+    }
+  }, [router]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
   if (!initial.authed) {
     return (
@@ -242,6 +260,22 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
           </button>
         </form>
         {iosHint && <IosHint />}
+      </Shell>
+    );
+  }
+
+  // KVKK açık rıza alınmadıysa giriş/çıkış ekranı yerine aydınlatma + rıza ekranı.
+  if (!initial.consented) {
+    return (
+      <Shell>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">KVKK Aydınlatma & Onay</h1>
+          <button onClick={logout} className="text-sm text-slate-400 underline">
+            Çıkış
+          </button>
+        </div>
+        <ConsentGate onAccept={submitConsent} busy={busy} />
+        {error && <p className="mt-4 text-center text-sm text-red-400">{error}</p>}
       </Shell>
     );
   }
@@ -327,6 +361,49 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1 block text-sm text-slate-400">{label}</span>
       {children}
     </label>
+  );
+}
+
+function ConsentGate({ onAccept, busy }: { onAccept: () => void; busy: boolean }) {
+  const [agreed, setAgreed] = useState(false);
+  return (
+    <div className="mt-6">
+      <div className="max-h-[45vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/60 p-5 text-sm leading-6 text-slate-300">
+        <p>
+          İşvereniniz, devam (giriş/çıkış) takibini yürütmek amacıyla, giriş/çıkış
+          anında cihazınızın <b>konumunu</b> işler. Konum yalnızca o anda atanmış
+          şantiyeye olan <b>mesafenin</b> hesaplanmasında kullanılır.
+        </p>
+        <ul className="mt-3 list-disc space-y-1 pl-5">
+          <li>Ham koordinatlarınız varsayılan olarak <b>saklanmaz</b>; yalnızca mesafe ve doğruluk değeri tutulur.</li>
+          <li>Veriler, işveren tarafından yalnızca puantaj/devam amacıyla görüntülenir.</li>
+          <li>Konum yalnızca siz giriş/çıkış butonuna bastığınızda, tek seferlik alınır; arka planda takip yapılmaz.</li>
+          <li>KVKK kapsamındaki haklarınız (erişim, düzeltme, silme) için işvereninize başvurabilirsiniz.</li>
+        </ul>
+        <p className="mt-3">
+          Aşağıdaki kutuyu işaretleyerek bu aydınlatma metnini okuduğunuzu ve konum
+          verinizin belirtilen amaçla işlenmesine <b>açık rıza</b> verdiğinizi beyan edersiniz.
+        </p>
+      </div>
+
+      <label className="mt-4 flex items-start gap-3 text-sm text-slate-200">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-1"
+        />
+        <span>Aydınlatma metnini okudum, konum verimin işlenmesine açık rıza veriyorum.</span>
+      </label>
+
+      <button
+        onClick={onAccept}
+        disabled={!agreed || busy}
+        className="mt-6 w-full rounded-xl bg-sky-600 py-3 text-lg font-semibold disabled:opacity-50"
+      >
+        {busy ? "Kaydediliyor…" : "Onaylıyorum ve devam et"}
+      </button>
+    </div>
   );
 }
 

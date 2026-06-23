@@ -19,7 +19,7 @@ export default async function PdksPage() {
       }),
       prismaPdks.pdksPersonnel.findUnique({ where: { id: session.personnelId } }),
     ]);
-    return { rec, name: me?.fullName ?? "" };
+    return { rec, name: me?.fullName ?? "", consented: !!me?.kvkkConsentAt };
   });
 
   return (
@@ -28,6 +28,7 @@ export default async function PdksPage() {
         authed: true,
         role: session.role,
         name: data?.name ?? "",
+        consented: data?.consented ?? false,
         status: data?.rec?.status ?? null,
         checkInAt: data?.rec?.checkInAt?.toISOString() ?? null,
         checkOutAt: data?.rec?.checkOutAt?.toISOString() ?? null,

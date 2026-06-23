@@ -19,6 +19,7 @@ type Person = {
   phone: string | null;
   expectedCheckIn: string | null;
   isActive: boolean;
+  consented: boolean;
 };
 
 const inputCls =
@@ -189,9 +190,12 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge tone={p.isActive ? "success" : "danger"}>
-                      {p.isActive ? "Aktif" : "Pasif"}
-                    </Badge>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge tone={p.isActive ? "success" : "danger"}>
+                        {p.isActive ? "Aktif" : "Pasif"}
+                      </Badge>
+                      {!p.consented && <Badge tone="warning">KVKK bekliyor</Badge>}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap items-center justify-end gap-2">

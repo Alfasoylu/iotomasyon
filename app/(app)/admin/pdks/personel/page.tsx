@@ -22,9 +22,13 @@ export default async function PdksPersonnelPage() {
         phone: true,
         expectedCheckIn: true,
         isActive: true,
+        kvkkConsentAt: true,
       },
     });
-    return list;
+    return list.map(({ kvkkConsentAt, ...rest }) => ({
+      ...rest,
+      consented: !!kvkkConsentAt,
+    }));
   });
 
   return (
