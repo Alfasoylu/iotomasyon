@@ -45,11 +45,14 @@ function parseLocation(input: string): { lat: number; lng: number } | null {
   };
   let m = s.match(/^(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)$/);
   if (m) return tryPair(m[1], m[2]);
-  m = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-  if (m) return tryPair(m[1], m[2]);
+  // Google Maps yer pini (!3d=lat !4d=lng) — işletmenin GERÇEK konumu; @ (harita
+  // merkezi/viewport) yerine bu önceliklidir.
   m = s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
   if (m) return tryPair(m[1], m[2]);
   m = s.match(/[?&](?:q|query|ll|center|destination)=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) return tryPair(m[1], m[2]);
+  // @lat,lng yalnızca harita merkezidir (en az kesin) → en sona bırak.
+  m = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
   if (m) return tryPair(m[1], m[2]);
   return null;
 }
