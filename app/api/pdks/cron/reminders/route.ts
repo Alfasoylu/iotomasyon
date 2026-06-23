@@ -31,8 +31,8 @@ function toMinutes(hhmm: string): number | null {
  *
  * TETİKLEME: Vercel Hobby planı yalnızca GÜNLÜK cron'a izin verdiğinden bu uç nokta
  * vercel.json'da DEĞİL. Harici bir zamanlayıcı (cron-job.org / GitHub Actions) ile
- * her 5 dk'da bir `Authorization: Bearer $CRON_SECRET` başlığıyla çağırın. (Vercel
- * Pro'ya geçilirse vercel.json'a `*/5 * * * *` cron olarak da eklenebilir.)
+ * her 5 dakikada bir `Authorization: Bearer $CRON_SECRET` başlığıyla çağırın.
+ * (Vercel Pro'ya geçilirse vercel.json'a 5 dakikalık cron olarak da eklenebilir.)
  */
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
