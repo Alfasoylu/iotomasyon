@@ -29,6 +29,108 @@ type Employee = { id: string; fullName: string };
 const inputCls =
   "w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--border-strong)] focus:outline-none";
 
+/**
+ * "enlem, boylam" ya da bir Google Maps linkinden koordinat ayıklar.
+ * Desteklenen: "41.0082, 28.9784" · ...@41.0082,28.9784,17z · ?q=lat,lng ·
+ * !3dlat!4dlng. Kısaltılmış (maps.app.goo.gl) linkler koordinat içermez → null.
+ */
+function parseLocation(input: string): { lat: number; lng: number } | null {
+  const s = input.trim();
+  const tryPair = (a: string, b: string): { lat: number; lng: number } | null => {
+    const lat = Number(a);
+    const lng = Number(b);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+    return { lat, lng };
+  };
+  let m = s.match(/^(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)$/);
+  if (m) return tryPair(m[1], m[2]);
+  m = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) return tryPair(m[1], m[2]);
+  m = s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if (m) return tryPair(m[1], m[2]);
+  m = s.match(/[?&](?:q|query|ll|center|destination)=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) return tryPair(m[1], m[2]);
+  return null;
+}
+
+/** Konum yapıştırma + canlı harita önizleme (OpenStreetMap embed — anahtar gerekmez). */
+function LocationPicker({
+  lat,
+  lng,
+  onPick,
+}: {
+  lat: string;
+  lng: string;
+  onPick: (lat: string, lng: string) => void;
+}) {
+  const [paste, setPaste] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const latN = Number(lat);
+  const lngN = Number(lng);
+  const valid =
+    lat !== "" && lng !== "" && Number.isFinite(latN) && Number.isFinite(lngN) &&
+    Math.abs(latN) <= 90 && Math.abs(lngN) <= 180;
+
+  function apply() {
+    const p = parseLocation(paste);
+    if (!p) {
+      setErr("Konum bulunamadı. 'enlem, boylam' yazın veya tam Google Maps linkini yapıştırın.");
+      return;
+    }
+    setErr(null);
+    setPaste("");
+    onPick(p.lat.toFixed(6), p.lng.toFixed(6));
+  }
+
+  const d = 0.003; // ~300 m'lik görüş penceresi
+  const bbox = `${lngN - d},${latN - d},${lngN + d},${latN + d}`;
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-[var(--text-secondary)]">
+        Konum yapıştır (Google Maps linki veya &quot;enlem, boylam&quot;)
+      </label>
+      <div className="flex gap-2">
+        <input
+          className={inputCls}
+          value={paste}
+          onChange={(e) => setPaste(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              apply();
+            }
+          }}
+          placeholder="41.0082, 28.9784  veya  https://maps.google.com/...@41.0082,28.9784,17z"
+        />
+        <Button type="button" variant="secondary" onClick={apply}>
+          Uygula
+        </Button>
+      </div>
+      {err && <p className="text-xs text-[var(--danger)]">{err}</p>}
+      {valid && (
+        <div className="space-y-1">
+          <iframe
+            title="Şantiye konumu"
+            className="h-48 w-full rounded-lg border border-[var(--border-default)]"
+            loading="lazy"
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latN},${lngN}`}
+          />
+          <a
+            href={`https://www.google.com/maps?q=${latN},${lngN}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-[var(--accent)] underline"
+          >
+            Google Maps&apos;te aç / doğrula →
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function WorksiteManager({
   initial,
   employees,
@@ -177,10 +279,13 @@ export function WorksiteManager({
               <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Azami doğruluk (m)</label>
               <input className={inputCls} type="number" value={maxAcc} onChange={(e) => setMaxAcc(e.target.value)} required />
             </div>
-            <div className="md:col-span-3 flex items-end">
+            <div className="md:col-span-1 flex items-end">
               <Button type="button" variant="secondary" onClick={() => fillMyLocation(setLat, setLng)}>
                 📍 Konumumu kullan
               </Button>
+            </div>
+            <div className="md:col-span-4">
+              <LocationPicker lat={lat} lng={lng} onPick={(la, ln) => { setLat(la); setLng(ln); }} />
             </div>
             <div className="md:col-span-4 flex justify-end">
               <Button type="submit" disabled={pending}>
@@ -228,6 +333,9 @@ export function WorksiteManager({
                   <Button type="button" variant="secondary" onClick={() => fillMyLocation(setELat, setELng)}>
                     📍 Konumumu kullan
                   </Button>
+                </div>
+                <div className="md:col-span-4">
+                  <LocationPicker lat={eLat} lng={eLng} onPick={(la, ln) => { setELat(la); setELng(ln); }} />
                 </div>
                 <div className="md:col-span-4 flex justify-end gap-2">
                   <Button variant="secondary" onClick={() => setEditId(null)} disabled={pending}>
