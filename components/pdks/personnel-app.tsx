@@ -23,6 +23,16 @@ function fmtTime(iso: string | null): string {
   });
 }
 
+/** VAPID base64url anahtarını PushManager için Uint8Array'e çevirir. */
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i += 1) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
 /** Tarayıcı konumunu yüksek doğrulukla alır. */
 function getPosition(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
@@ -44,18 +54,74 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
+  // Push bildirim durumu
+  const [pushSupported, setPushSupported] = useState(true);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+
   // Service worker kaydı + iOS ana-ekran ipucu
   const [iosHint, setIosHint] = useState(false);
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/pdks/sw.js", { scope: "/pdks" }).catch(() => {});
     }
-    const ua = window.navigator.userAgent;
-    const isIOS = /iphone|ipad|ipod/i.test(ua);
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    if (isIOS && !standalone) setIosHint(true);
+    // Yetenek/kurulum tespiti — setState'ler mikrotask içinde (cascading-render uyarısı).
+    void Promise.resolve().then(() => {
+      const ua = window.navigator.userAgent;
+      const isIOS = /iphone|ipad|ipod/i.test(ua);
+      const standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+      if (isIOS && !standalone) setIosHint(true);
+
+      if (!("Notification" in window) || !("PushManager" in window) || !("serviceWorker" in navigator)) {
+        setPushSupported(false);
+        return;
+      }
+      navigator.serviceWorker.ready
+        .then((reg) => reg.pushManager.getSubscription())
+        .then((sub) => setPushEnabled(!!sub && Notification.permission === "granted"))
+        .catch(() => {});
+    });
+  }, []);
+
+  const enablePush = useCallback(async () => {
+    setPushBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setError("Bildirim izni verilmedi");
+        return;
+      }
+      const keyRes = await fetch("/api/pdks/push/public-key");
+      if (!keyRes.ok) {
+        setError("Bildirim sunucusu hazır değil");
+        return;
+      }
+      const { key } = await keyRes.json();
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
+      });
+      const saveRes = await fetch("/api/pdks/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      if (!saveRes.ok) {
+        setError("Abonelik kaydedilemedi");
+        return;
+      }
+      setPushEnabled(true);
+      setInfo("Bildirimler açıldı");
+    } catch {
+      setError("Bildirim açılamadı");
+    } finally {
+      setPushBusy(false);
+    }
   }, []);
 
   // ── Login formu ────────────────────────────────────────────────────────────
@@ -227,6 +293,22 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
 
       {info && <p className="mt-4 text-center text-sm text-emerald-400">{info}</p>}
       {error && <p className="mt-4 text-center text-sm text-red-400">{error}</p>}
+
+      {pushSupported && (
+        <div className="mt-6 text-center">
+          {pushEnabled ? (
+            <p className="text-sm text-slate-400">🔔 Bildirimler açık</p>
+          ) : (
+            <button
+              onClick={enablePush}
+              disabled={pushBusy}
+              className="text-sm text-sky-400 underline disabled:opacity-50"
+            >
+              {pushBusy ? "Açılıyor…" : "🔔 Bildirimleri Aç"}
+            </button>
+          )}
+        </div>
+      )}
 
       {iosHint && <IosHint />}
     </Shell>
