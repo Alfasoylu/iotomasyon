@@ -1687,6 +1687,8 @@ model PdksPersonnel {
   email           String?
   role            String     @default("employee") // 'tenant_admin' | 'employee'
   expectedCheckIn String? // "08:30" — hatırlatma eşiği
+  // Geç-kalan hatırlatması en son hangi TR gününde gönderildi (cron idempotency).
+  lastLateReminderOn DateTime? @db.Date
   isActive        Boolean    @default(true)
   createdAt       DateTime   @default(now())
 

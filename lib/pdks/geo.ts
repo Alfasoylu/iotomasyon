@@ -29,3 +29,13 @@ export function workDateTR(now: Date = new Date()): Date {
   const ymd = now.toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" });
   return new Date(`${ymd}T00:00:00.000Z`);
 }
+
+/** Şu anki Türkiye saatini "HH:MM" (24s) olarak döndürür — hatırlatma eşiği için. */
+export function currentTimeTR(now: Date = new Date()): string {
+  return now.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Istanbul",
+  });
+}

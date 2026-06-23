@@ -24,6 +24,35 @@ export function getVapidPublicKey(): string | null {
 
 export type PushPayload = { title: string; body: string; url?: string };
 
+export type RawPushSub = { endpoint: string; p256dh: string; auth: string };
+
+/**
+ * Verilen aboneliklere push gönderir; ölü (404/410) endpoint listesini döner.
+ * Cron gibi tenant bağlamı OLMAYAN, çok-tenant'lı işler için (çağıran prismaPdks
+ * yerine unscoped prisma ile abonelikleri çeker ve dönen ölü endpoint'leri siler).
+ */
+export async function sendPushToSubs(
+  subs: RawPushSub[],
+  payload: PushPayload,
+): Promise<string[]> {
+  if (!configured) return [];
+  const dead: string[] = [];
+  await Promise.all(
+    subs.map(async (s) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          JSON.stringify(payload),
+        );
+      } catch (err) {
+        const code = (err as { statusCode?: number }).statusCode;
+        if (code === 404 || code === 410) dead.push(s.endpoint);
+      }
+    }),
+  );
+  return dead;
+}
+
 /**
  * Bir personelin tüm cihazlarına push gönderir; ölü abonelikleri (404/410) temizler.
  * Tenant bağlamı içinde çağrılmalı (prismaPdks scoped → yalnızca aktif tenant'ın
