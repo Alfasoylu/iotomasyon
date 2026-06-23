@@ -15,7 +15,18 @@ export interface PdksTenantContext {
   role: string; // 'tenant_admin' | 'employee'
 }
 
-export const tenantContext = new AsyncLocalStorage<PdksTenantContext>();
+// Next.js + Turbopack, Server Action'ları Server Component'lerden AYRI bir modül
+// grafiğinde derleyebilir; bu durumda modül-düzeyi `new AsyncLocalStorage()` ÇOĞALIR
+// (action bir örnekte bağlam kurar, scoped prisma başka örnekten okur → "bağlam yok").
+// globalThis üzerinde tek örnek tutarak tüm grafiklerde AYNI ALS'i paylaşırız.
+const globalForPdks = globalThis as unknown as {
+  __pdksTenantContext?: AsyncLocalStorage<PdksTenantContext>;
+};
+
+export const tenantContext: AsyncLocalStorage<PdksTenantContext> =
+  globalForPdks.__pdksTenantContext ?? new AsyncLocalStorage<PdksTenantContext>();
+
+globalForPdks.__pdksTenantContext = tenantContext;
 
 /** Bağlamı zorunlu okur — yoksa fail-closed (scoped sorgu bağlamsız çalışmasın). */
 export function getTenantContext(): PdksTenantContext {

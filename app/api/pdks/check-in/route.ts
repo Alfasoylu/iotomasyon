@@ -46,7 +46,10 @@ export async function POST(req: NextRequest) {
     });
     const sites = links.map((l) => l.worksite).filter((w) => w.isActive);
     if (sites.length === 0) {
-      return NextResponse.json({ error: "Atanmış aktif şantiye yok" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Henüz bir şantiyeye atanmadınız. Lütfen yöneticinize bildirin." },
+        { status: 400 },
+      );
     }
 
     let nearest = sites[0];
@@ -70,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     if (best > nearest.radiusMeters) {
       return NextResponse.json(
-        { error: `İşyeri sınırının dışındasınız: ~${Math.round(best)}m uzakta` },
+        { error: `Henüz işyeri konumunda değilsiniz (~${Math.round(best)} m uzaktasınız).` },
         { status: 422 },
       );
     }
