@@ -7,7 +7,12 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prismaPdks } from "@/lib/pdks/prisma";
 import { issueLoginCode, normalizePhone } from "@/lib/pdks/auth";
-import { personnelSchema, type PersonnelInput } from "@/lib/validations/pdks";
+import {
+  personnelSchema,
+  type PersonnelInput,
+  worksiteSchema,
+  type WorksiteInput,
+} from "@/lib/validations/pdks";
 import type { ActionResult } from "@/types/actions";
 import type { ResolvedUser } from "@/lib/permissions";
 
@@ -124,4 +129,125 @@ export async function issueLoginCodeAction(personnelId: string): Promise<IssueCo
     const { code, expiresAt } = await issueLoginCode(personnelId, tenantId);
     return { ok: true, code, expiresAt: expiresAt.toISOString() };
   });
+}
+
+// ── Şantiye (worksite) ───────────────────────────────────────────────────────
+
+type WorksiteField = keyof WorksiteInput;
+
+function revalidateWorksites() {
+  revalidatePath("/admin/pdks");
+  revalidatePath("/admin/pdks/santiye");
+}
+
+export async function createWorksiteAction(
+  values: WorksiteInput,
+): Promise<ActionResult<WorksiteField>> {
+  const parsed = worksiteSchema.safeParse(values);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Form alanlarını kontrol edin.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  await runWithPdksAdmin(user, async (tenantId) => {
+    await prismaPdks.pdksWorksite.create({
+      data: {
+        tenantId,
+        name: parsed.data.name,
+        latitude: parsed.data.latitude,
+        longitude: parsed.data.longitude,
+        radiusMeters: parsed.data.radiusMeters,
+      },
+    });
+  });
+
+  revalidateWorksites();
+  return { ok: true };
+}
+
+export async function updateWorksiteAction(
+  id: string,
+  values: WorksiteInput,
+): Promise<ActionResult<WorksiteField>> {
+  const parsed = worksiteSchema.safeParse(values);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Form alanlarını kontrol edin.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  await runWithPdksAdmin(user, async () => {
+    await prismaPdks.pdksWorksite.updateMany({
+      where: { id },
+      data: {
+        name: parsed.data.name,
+        latitude: parsed.data.latitude,
+        longitude: parsed.data.longitude,
+        radiusMeters: parsed.data.radiusMeters,
+      },
+    });
+  });
+
+  revalidateWorksites();
+  return { ok: true };
+}
+
+export async function setWorksiteActiveAction(
+  id: string,
+  isActive: boolean,
+): Promise<ActionResult> {
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  await runWithPdksAdmin(user, async () => {
+    await prismaPdks.pdksWorksite.updateMany({ where: { id }, data: { isActive } });
+  });
+
+  revalidateWorksites();
+  return { ok: true };
+}
+
+/**
+ * Bir şantiyeye atanan personel kümesini (tam liste ile) günceller.
+ * Yalnızca aktif bağlamdaki tenant'a ait personel atanabilir (cross-tenant engeli).
+ */
+export async function setWorksiteAssignmentsAction(
+  worksiteId: string,
+  personnelIds: string[],
+): Promise<ActionResult> {
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  const result = await runWithPdksAdmin(user, async (tenantId): Promise<ActionResult> => {
+    const ws = await prismaPdks.pdksWorksite.findFirst({ where: { id: worksiteId } });
+    if (!ws) return { ok: false, message: "Şantiye bulunamadı." };
+
+    // Yalnızca bu tenant'a ait personel id'leri geçerli.
+    const valid = await prismaPdks.pdksPersonnel.findMany({
+      where: { id: { in: personnelIds } },
+      select: { id: true },
+    });
+    const validIds = valid.map((v) => v.id);
+
+    await prismaPdks.pdksPersonnelWorksite.deleteMany({ where: { worksiteId } });
+    if (validIds.length > 0) {
+      await prismaPdks.pdksPersonnelWorksite.createMany({
+        data: validIds.map((pid) => ({ tenantId, worksiteId, personnelId: pid })),
+        skipDuplicates: true,
+      });
+    }
+    return { ok: true };
+  });
+
+  revalidateWorksites();
+  return result;
 }
