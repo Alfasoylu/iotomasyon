@@ -1,7 +1,8 @@
 # PDKS — Personel Devam Kontrol Sistemi
 
 Çok-kiracılı (multi-tenant), konum-doğrulamalı personel giriş/çıkış (devam takip)
-modülü. iotomasyon ana uygulamasının içinde, ayrı bir personel PWA'sı (`/pdks`) ve
+modülü. iotomasyon ana uygulamasının içinde, ayrı bir personel PWA'sı (`/personel`,
+eski `/pdks` buraya yönlenir) ve
 yönetici paneli (`/admin/pdks`) olarak yaşar.
 
 > Durum (2026-06-23): temel akış gerçek telefonla uçtan uca doğrulandı. Kod
@@ -59,7 +60,7 @@ yönetici paneli (`/admin/pdks`) olarak yaşar.
 
 ## PWA & bildirim
 
-- `public/pdks/manifest.webmanifest` + `sw.js` + ikonlar (192/512). "Ana Ekrana Ekle"
+- `public/personel/manifest.webmanifest` + `sw.js` + ikonlar (192/512). "Ana Ekrana Ekle"
   ile uygulama gibi yüklenir.
 - **Web Push (VAPID):** `PDKS_VAPID_PUBLIC_KEY`, `PDKS_VAPID_PRIVATE_KEY`,
   `PDKS_VAPID_SUBJECT` env'leri gerekir (`npx web-push generate-vapid-keys`).
@@ -77,7 +78,7 @@ yönetici paneli (`/admin/pdks`) olarak yaşar.
    `prisma migrate deploy`.
 2. Push için VAPID env'leri (Vercel). Giriş/çıkış testi için zorunlu değil.
 3. `/admin/pdks` → şantiye (konum + yarıçap + doğruluk) ve personel ekle, giriş kodu üret.
-4. Telefonda `/pdks` → telefon + kod → KVKK onayı → GPS check-in/out.
+4. Telefonda `/personel` → telefon + şifre → KVKK onayı → GPS check-in/out.
 
 Hızlı test verisi (sabit kod): `scripts/pdks/test_seed.sql`.
 

@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  title: "PDKS — Devam Takip",
-  manifest: "/pdks/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "PDKS" },
+  title: "Personel Devam Takip",
+  manifest: "/personel/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Devam Takip" },
 };
 
 export const viewport: Viewport = {

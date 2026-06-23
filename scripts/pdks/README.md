@@ -32,7 +32,7 @@ checksum'la kaydeder; böylece ileride `prisma migrate deploy` yeniden çalışt
    Artan geç-bildirim cron'u (`*/5`) **Vercel Pro** ister; Hobby'de harici
    zamanlayıcı ile `/api/pdks/cron/reminders`'ı `Bearer $CRON_SECRET` ile çağırın.
 
-6. **Telefonda test** — `/pdks` aç → Telefon `05551112233`, Şifre `1234` →
+6. **Telefonda test** — `/personel` aç → Telefon `05551112233`, Şifre `1234` →
    KVKK onayla → Giriş yap (konum izni) → check-in / check-out.
 
 ## Doğrulama (bu kod tabanında yapıldı)

@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
       {
         title: "⏰ Geç kaldınız",
         body: `${bucket} dakika geç kaldınız. Şantiyeye ulaştıysanız lütfen giriş yapın.`,
-        url: "/pdks",
+        url: "/personel",
       },
     );
     deadEndpoints.push(...dead);
@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
         const dead = await sendPushToSubs(subs, {
           title: "Otomatik çıkış yapıldı",
           body: `Beklenen çıkış saatinizde (${rec.personnel.expectedCheckOut}) otomatik çıkış yapıldı.`,
-          url: "/pdks",
+          url: "/personel",
         });
         deadEndpoints.push(...dead);
       }
@@ -159,7 +159,7 @@ export async function GET(req: NextRequest) {
       const dead = await sendPushToSubs(subs, {
         title: "🏁 Çıkış hatırlatması",
         body: "Mesai bitti. Çıkış yapmayı unutmayın (15 dk içinde otomatik çıkış yapılır).",
-        url: "/pdks",
+        url: "/personel",
       });
       deadEndpoints.push(...dead);
       checkoutReminded += 1;

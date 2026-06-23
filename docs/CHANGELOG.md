@@ -9,6 +9,14 @@
 
 ## 2026-06
 
+### PDKS — Personel ekranı /pdks → /personel taşındı (2026-06-23)
+
+Kısa, anlamlı adres: personel girişi artık `iotomasyon.com/personel`. PWA (manifest,
+service worker, ikonlar) `public/personel/`'e taşındı; `start_url`/`scope` `/personel`,
+sw kaydı `/personel/sw.js`, push payload url'leri `/personel`. API yolları `/api/pdks`
+olarak korundu (değişmedi). Eski `/pdks` → `/personel` kalıcı redirect (next.config).
+`tsc --noEmit` 0 hata, eslint temiz.
+
 ### PDKS — Personel self-servis geçmiş görünümü (2026-06-23)
 
 Personel `/pdks` ekranında "📋 Geçmiş kayıtlarım" (son 14 kayıt) açılır bölümü:
