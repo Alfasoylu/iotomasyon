@@ -175,6 +175,21 @@ function revalidateWorksites() {
   revalidatePath("/admin/pdks/santiye");
 }
 
+// Doğrulama hatasında hangi alanın sorunlu olduğunu Türkçe göstermek için.
+const WS_LABELS: Record<string, string> = {
+  name: "Şantiye adı",
+  latitude: "Enlem",
+  longitude: "Boylam",
+  radiusMeters: "Yarıçap",
+  maxAccuracyMeters: "Azami doğruluk",
+};
+function worksiteErrorMessage(parsed: { error: import("zod").ZodError }): string {
+  const i = parsed.error.issues[0];
+  if (!i) return "Form alanlarını kontrol edin.";
+  const label = WS_LABELS[String(i.path[0])];
+  return label ? `${label}: ${i.message}` : i.message;
+}
+
 export async function createWorksiteAction(
   values: WorksiteInput,
 ): Promise<ActionResult<WorksiteField>> {
@@ -182,7 +197,7 @@ export async function createWorksiteAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarını kontrol edin.",
+      message: worksiteErrorMessage(parsed),
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -214,7 +229,7 @@ export async function updateWorksiteAction(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "Form alanlarını kontrol edin.",
+      message: worksiteErrorMessage(parsed),
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
