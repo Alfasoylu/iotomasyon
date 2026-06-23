@@ -18,6 +18,18 @@ export type PdksSession = PdksTenantContext;
 const CODE_TTL_MIN = 15;
 const CODE_HASH_ROUNDS = 10;
 
+/**
+ * Telefonu kanonik biçime indirger: yalnızca rakamlar, ülke kodu (90) ve baştaki
+ * 0 atılır → "5XXXXXXXXX". Hem personel kaydında hem girişte AYNI normalize
+ * kullanılır ki birebir eşleşme tutarlı olsun.
+ */
+export function normalizePhone(raw: string): string {
+  let d = (raw ?? "").replace(/\D/g, "");
+  if (d.startsWith("90")) d = d.slice(2);
+  if (d.startsWith("0")) d = d.slice(1);
+  return d;
+}
+
 /** Aktif PDKS personel oturumunu cookie'den okur (yoksa null). */
 export async function getPdksSession(): Promise<PdksSession | null> {
   const token = (await cookies()).get(PDKS_SESSION_COOKIE)?.value;
@@ -67,7 +79,7 @@ export async function loginWithCode(
   code: string,
 ): Promise<PdksSession | null> {
   const candidates = await prisma.pdksPersonnel.findMany({
-    where: { phone, isActive: true },
+    where: { phone: normalizePhone(phone), isActive: true },
     select: { id: true, tenantId: true, role: true },
   });
 
