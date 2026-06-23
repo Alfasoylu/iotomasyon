@@ -9,6 +9,22 @@
 
 ## 2026-06
 
+### PDKS — Çıkış hatırlatması + otomatik çıkış + fazla mesai hesabı (2026-06-23)
+
+- **Çıkış hatırlatması:** beklenen çıkış (`expectedCheckOut`) geçince açık kayıt
+  sahibine tek sefer push ("çıkış yapmayı unutmayın"). `checkoutReminderAt` ile dedup.
+- **Otomatik çıkış:** beklenen çıkıştan **+15 dk** sonra hâlâ açıksa sistem kaydı kapatır
+  (`checkOutAt` = beklenen çıkış saati, `autoCheckout=true`). `overtime=true` kayıtlar muaf.
+- **Fazla mesai hesabı:** `overtimeHours` = çalışılan saat − beklenen mesai süresi
+  (giriş/çıkış beklentisi tanımlıysa). Puantaj: "Fazla mesai" metriği + özet sütunu +
+  satırda `+N FM` ve otomatik çıkışta "Oto" rozeti. CSV'ye Fazla mesai + Otomatik çıkış.
+- Şema (migration `20260623220000_pdks_checkout_auto_overtime`, additive):
+  `pdks_attendance_records.autoCheckout / checkoutReminderAt / overtime`.
+- Tetikleme aynı cron uç noktası (`/api/pdks/cron/reminders`, GitHub Actions her 5 dk).
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
+- NOT: Fazla mesai BEYANI (girişte "mesai var mı?" veya buton) UX'i henüz eklenmedi —
+  `overtime` bayrağı altyapısı hazır; UX kullanıcı kararına bırakıldı.
+
 ### PDKS — Puantaj düzeltme (admin: düzenle / sil / manuel ekle) (2026-06-23)
 
 Yönetici artık devam kayıtlarını düzeltebiliyor (gerçek kullanımda zorunlu).

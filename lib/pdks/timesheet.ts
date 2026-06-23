@@ -16,6 +16,8 @@ export type TimesheetRow = {
   expectedCheckIn: string | null; // "HH:MM" — personelin beklenen giriş saati
   late: boolean; // giriş, beklenen saatten sonra mı (beklenen tanımlıysa)
   missingCheckout: boolean; // giriş var ama çıkış yok
+  autoCheckout: boolean; // çıkış sistem tarafından otomatik mi kapatıldı
+  overtimeHours: number | null; // beklenen mesai süresini aşan saat (her ikisi tanımlıysa)
 };
 
 /** Personel-bazlı dönem özeti (geç giriş / eksik çıkış / toplam saat). */
@@ -24,6 +26,7 @@ export type TimesheetSummary = {
   personnelName: string;
   days: number; // giriş yapılan ayrı gün sayısı
   totalHours: number;
+  overtimeHours: number;
   lateCount: number;
   missingCheckoutCount: number;
 };
@@ -90,7 +93,7 @@ export async function fetchTimesheet(from: Date, to: Date): Promise<TimesheetRow
   const records = await prismaPdks.pdksAttendanceRecord.findMany({
     where: { workDate: { gte: from, lte: to } },
     include: {
-      personnel: { select: { fullName: true, expectedCheckIn: true } },
+      personnel: { select: { fullName: true, expectedCheckIn: true, expectedCheckOut: true } },
       worksite: { select: { name: true } },
     },
     orderBy: [{ workDate: "asc" }, { createdAt: "asc" }],
@@ -98,8 +101,20 @@ export async function fetchTimesheet(from: Date, to: Date): Promise<TimesheetRow
 
   return records.map((r) => {
     const expectedMin = hhmmToMinutes(r.personnel.expectedCheckIn);
+    const expectedOutMin = hhmmToMinutes(r.personnel.expectedCheckOut);
     const late =
       r.checkInAt != null && expectedMin != null && trMinutes(r.checkInAt) > expectedMin;
+    const hours =
+      r.checkInAt && r.checkOutAt
+        ? (r.checkOutAt.getTime() - r.checkInAt.getTime()) / 3_600_000
+        : null;
+    // Fazla mesai: çalışılan saat, beklenen mesai süresini (çıkış−giriş) aşan kısım.
+    const expectedDurH =
+      expectedMin != null && expectedOutMin != null && expectedOutMin > expectedMin
+        ? (expectedOutMin - expectedMin) / 60
+        : null;
+    const overtimeHours =
+      hours != null && expectedDurH != null ? Math.max(0, hours - expectedDurH) : null;
     return {
       id: r.id,
       personnelId: r.personnelId,
@@ -110,13 +125,12 @@ export async function fetchTimesheet(from: Date, to: Date): Promise<TimesheetRow
       worksiteName: r.worksite?.name ?? null,
       checkInDistanceM: r.checkInDistanceM,
       checkOutDistanceM: r.checkOutDistanceM,
-      hours:
-        r.checkInAt && r.checkOutAt
-          ? (r.checkOutAt.getTime() - r.checkInAt.getTime()) / 3_600_000
-          : null,
+      hours,
       expectedCheckIn: r.personnel.expectedCheckIn,
       late,
       missingCheckout: r.checkInAt != null && r.checkOutAt == null,
+      autoCheckout: r.autoCheckout,
+      overtimeHours,
     };
   });
 }
@@ -132,6 +146,7 @@ export function buildTimesheetSummary(rows: TimesheetRow[]): TimesheetSummary[] 
         personnelName: r.personnelName,
         days: 0,
         totalHours: 0,
+        overtimeHours: 0,
         lateCount: 0,
         missingCheckoutCount: 0,
         _days: new Set<string>(),
@@ -140,6 +155,7 @@ export function buildTimesheetSummary(rows: TimesheetRow[]): TimesheetSummary[] 
     }
     if (r.checkInAt) s._days.add(r.workDate.toISOString().slice(0, 10));
     s.totalHours += r.hours ?? 0;
+    s.overtimeHours += r.overtimeHours ?? 0;
     if (r.late) s.lateCount += 1;
     if (r.missingCheckout) s.missingCheckoutCount += 1;
   }

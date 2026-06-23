@@ -21,8 +21,10 @@ export type EditableRow = {
   checkOutTR: string; // "HH:MM" | ""
   worksiteName: string | null;
   hours: number | null;
+  overtimeHours: number | null;
   late: boolean;
   missingCheckout: boolean;
+  autoCheckout: boolean;
 };
 
 type Employee = { id: string; fullName: string };
@@ -182,11 +184,15 @@ export function TimesheetTable({
                       <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]">
                         {r.checkOutTR || "—"}
                         {r.missingCheckout && <Badge tone="danger">Eksik</Badge>}
+                        {r.autoCheckout && <Badge tone="default">Oto</Badge>}
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums">
                     {r.hours != null ? `${r.hours.toFixed(2)} s` : "—"}
+                    {r.overtimeHours != null && r.overtimeHours > 0 && (
+                      <span className="ml-1 text-[var(--accent)]">+{r.overtimeHours.toFixed(1)} FM</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-[var(--text-secondary)]">{r.worksiteName ?? "—"}</td>
                   <td className="px-4 py-3">

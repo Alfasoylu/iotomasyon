@@ -54,6 +54,7 @@ export default async function PdksTimesheetPage({
   });
 
   const totalHours = rows.reduce((acc, r) => acc + (r.hours ?? 0), 0);
+  const totalOvertime = rows.reduce((acc, r) => acc + (r.overtimeHours ?? 0), 0);
   const distinctPersonnel = new Set(rows.map((r) => r.personnelId)).size;
   const lateCount = rows.filter((r) => r.late).length;
   const missingCount = rows.filter((r) => r.missingCheckout).length;
@@ -68,8 +69,10 @@ export default async function PdksTimesheetPage({
     checkOutTR: trTimeOrEmpty(r.checkOutAt),
     worksiteName: r.worksiteName,
     hours: r.hours,
+    overtimeHours: r.overtimeHours,
     late: r.late,
     missingCheckout: r.missingCheckout,
+    autoCheckout: r.autoCheckout,
   }));
 
   return (
@@ -111,10 +114,11 @@ export default async function PdksTimesheetPage({
         </form>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
         <MetricCard label="Kayıt sayısı" value={String(rows.length)} />
         <MetricCard label="Personel" value={String(distinctPersonnel)} />
         <MetricCard label="Toplam saat" value={totalHours.toFixed(1)} />
+        <MetricCard label="Fazla mesai" value={totalOvertime.toFixed(1)} />
         <MetricCard label="Geç giriş" value={String(lateCount)} />
         <MetricCard label="Eksik çıkış" value={String(missingCount)} />
       </div>
@@ -135,6 +139,7 @@ export default async function PdksTimesheetPage({
                 <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Personel</th>
                 <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Gün</th>
                 <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Toplam saat</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Fazla mesai</th>
                 <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Geç giriş</th>
                 <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Eksik çıkış</th>
               </tr>
@@ -145,6 +150,9 @@ export default async function PdksTimesheetPage({
                   <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{s.personnelName}</td>
                   <td className="px-4 py-2.5 tabular-nums text-[var(--text-secondary)]">{s.days}</td>
                   <td className="px-4 py-2.5 tabular-nums text-[var(--text-secondary)]">{s.totalHours.toFixed(1)} s</td>
+                  <td className="px-4 py-2.5 tabular-nums text-[var(--text-secondary)]">
+                    {s.overtimeHours > 0 ? `${s.overtimeHours.toFixed(1)} s` : "—"}
+                  </td>
                   <td className="px-4 py-2.5 tabular-nums">
                     {s.lateCount > 0 ? <Badge tone="warning">{s.lateCount}</Badge> : <span className="text-[var(--text-muted)]">—</span>}
                   </td>

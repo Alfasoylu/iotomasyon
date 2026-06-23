@@ -1764,6 +1764,13 @@ model PdksAttendanceRecord {
   checkInLat        Float? // OPSİYONEL (KVKK) — varsayılan kapalı
   checkInLng        Float?
   status            String        @default("open") // 'open' | 'closed'
+  // Otomatik çıkış: personel beklenen çıkıştan +15 dk sonra çıkış yapmamışsa
+  // sistem kaydı kapatır (checkOutAt = beklenen çıkış saati). true = elle değil.
+  autoCheckout      Boolean       @default(false)
+  // Çıkış hatırlatması en son ne zaman gönderildi (gün içi tekrar göndermemek için).
+  checkoutReminderAt DateTime?
+  // Fazla mesai: true ise otomatik çıkış uygulanmaz (kişi geç çıkacak).
+  overtime          Boolean       @default(false)
   createdAt         DateTime      @default(now())
 
   @@index([tenantId, workDate])
