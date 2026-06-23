@@ -411,6 +411,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Sistem",
   },
   {
+    href: "/admin/pdks",
+    label: "Devam Takip (PDKS)",
+    iconKey: "activity",
+    permission: PERMISSIONS.PDKS_MANAGE,
+    section: "Sistem",
+  },
+  {
     href: "/orders",
     label: "Siparişler",
     iconKey: "archive",

@@ -135,6 +135,9 @@ export const PERMISSIONS = {
   CATALOGS_WHOLESALE_MODE:      "catalogs.wholesaleMode",  // Sadece ADMIN — bayi fiyat sızıntısı engeli
   CATALOGS_PRICING_WRITE:       "catalogs.pricingWrite",   // Faz 2 — USD net fiyat doldurma
 
+  // PDKS — Personel Devam Kontrol (tenant-admin paneli)
+  PDKS_MANAGE:                  "pdks.manage",
+
   // Dangerous — require explicit UserPermission grant even for ADMIN
   MIGRATIONS_APPROVE:           "migrations.approve",
   DESTRUCTIVE_ACTIONS_APPROVE:  "destructiveActions.approve",
