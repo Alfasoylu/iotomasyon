@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         const dist = distanceMeters(lat, lng, w.latitude, w.longitude);
         if (dist > w.radiusMeters) {
           return NextResponse.json(
-            { error: `İşyeri sınırının dışındasınız: ~${Math.round(dist)}m uzakta` },
+            { error: `Henüz işyeri konumunda değilsiniz (~${Math.round(dist)} m uzaktasınız).` },
             { status: 422 },
           );
         }
