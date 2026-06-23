@@ -66,9 +66,10 @@ yönetici paneli (`/admin/pdks`) olarak yaşar.
 - **Artan geç-kalma hatırlatması:** `/api/pdks/cron/reminders` her 5 dk çalışır;
   giriş yapmamış personele "5/10/…/60 dakika geç kaldınız" gönderir, 60 dk'da durur.
   `lateReminderLastMin` + `lastLateReminderOn` ile aynı dilim tekrar edilmez.
-  `vercel.json`'da `*/5 * * * *` — **Vercel Pro gerektirir**; Hobby plandaysanız bu
-  uç noktayı harici bir zamanlayıcı (cron-job.org / GitHub Actions) ile
-  `Authorization: Bearer $CRON_SECRET` başlığıyla her 5 dk çağırın.
+  **Tetikleme:** Vercel Hobby yalnızca günlük cron'a izin verdiğinden bu uç nokta
+  `vercel.json`'da değil; harici bir zamanlayıcı (cron-job.org / GitHub Actions) ile
+  her 5 dk `Authorization: Bearer $CRON_SECRET` başlığıyla çağrılır. (Vercel Pro'da
+  `vercel.json`'a `*/5 * * * *` cron eklenebilir.)
 
 ## Kurulum / test
 

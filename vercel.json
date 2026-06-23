@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/trendyol-sync",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/pdks/cron/reminders",
-      "schedule": "*/5 * * * *"
     }
   ]
 }

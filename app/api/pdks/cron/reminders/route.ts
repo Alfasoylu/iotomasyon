@@ -21,17 +21,18 @@ function toMinutes(hhmm: string): number | null {
 }
 
 /**
- * GET /api/pdks/cron/reminders  (Vercel Cron — vercel.json, her 5 dk)
+ * GET /api/pdks/cron/reminders  (her 5 dk'da bir çağrılmalı)
  *
  * Geç-kalan hatırlatması. Çok-tenant'lı iş olduğundan KASITLI olarak unscoped
- * `prisma` kullanır (oturum/tenant bağlamı yok). Her 5 dk'da bir çağrılır ve
- * giriş yapmamış personele gecikme dilimine göre ("5/10/…/60 dakika geç kaldınız")
- * bildirim gönderir. `lateReminderLastMin` ile aynı 5-dk dilimini tekrar göndermez;
+ * `prisma` kullanır (oturum/tenant bağlamı yok). Her çağrıda giriş yapmamış
+ * personele gecikme dilimine göre ("5/10/…/60 dakika geç kaldınız") bildirim
+ * gönderir. `lateReminderLastMin` ile aynı 5-dk dilimini tekrar göndermez;
  * `lastLateReminderOn` ile gün değişince sayaç sıfırlanır. 60 dk'da durur.
  *
- * NOT: 5 dk'lık cron Vercel Pro plan gerektirir. Hobby plandaysanız bu uç noktayı
- * harici bir zamanlayıcı (cron-job.org / GitHub Actions) ile CRON_SECRET Bearer
- * başlığıyla her 5 dk'da bir çağırın.
+ * TETİKLEME: Vercel Hobby planı yalnızca GÜNLÜK cron'a izin verdiğinden bu uç nokta
+ * vercel.json'da DEĞİL. Harici bir zamanlayıcı (cron-job.org / GitHub Actions) ile
+ * her 5 dk'da bir `Authorization: Bearer $CRON_SECRET` başlığıyla çağırın. (Vercel
+ * Pro'ya geçilirse vercel.json'a `*/5 * * * *` cron olarak da eklenebilir.)
  */
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
