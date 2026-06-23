@@ -164,6 +164,7 @@ export async function createWorksiteAction(
         latitude: parsed.data.latitude,
         longitude: parsed.data.longitude,
         radiusMeters: parsed.data.radiusMeters,
+        maxAccuracyMeters: parsed.data.maxAccuracyMeters,
       },
     });
   });
@@ -195,6 +196,7 @@ export async function updateWorksiteAction(
         latitude: parsed.data.latitude,
         longitude: parsed.data.longitude,
         radiusMeters: parsed.data.radiusMeters,
+        maxAccuracyMeters: parsed.data.maxAccuracyMeters,
       },
     }),
   );

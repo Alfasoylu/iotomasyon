@@ -6,8 +6,6 @@ import { distanceMeters, workDateTR } from "@/lib/pdks/geo";
 
 export const dynamic = "force-dynamic";
 
-const MAX_ACCURACY_M = 100;
-
 /**
  * POST /api/pdks/check-in  body: { latitude, longitude, accuracy }
  * Geofence kararını SUNUCU verir (spec §7). KVKK: yalnızca mesafe saklanır,
@@ -28,12 +26,6 @@ export async function POST(req: NextRequest) {
 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return NextResponse.json({ error: "Konum bilgisi gerekli" }, { status: 400 });
-    }
-    if (Number.isFinite(accuracy) && accuracy > MAX_ACCURACY_M) {
-      return NextResponse.json(
-        { error: `Konum doğruluğu yetersiz (~${Math.round(accuracy)}m). Açık alana çıkın.` },
-        { status: 422 },
-      );
     }
 
     // KVKK: konum işleme için açık rıza zorunlu (sunucu tarafı kapı).
@@ -65,6 +57,15 @@ export async function POST(req: NextRequest) {
         best = d;
         nearest = w;
       }
+    }
+
+    // Doğruluk kapısı: en yakın şantiyenin kendi toleransına göre (spec §7).
+    // Cihazın bildirdiği accuracy bu eşiği aşarsa konum güvenilmez kabul edilir.
+    if (Number.isFinite(accuracy) && accuracy > nearest.maxAccuracyMeters) {
+      return NextResponse.json(
+        { error: `Konum doğruluğu yetersiz (~${Math.round(accuracy)}m). Açık alana çıkın.` },
+        { status: 422 },
+      );
     }
 
     if (best > nearest.radiusMeters) {

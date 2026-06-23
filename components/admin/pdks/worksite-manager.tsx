@@ -19,6 +19,7 @@ type Worksite = {
   latitude: number;
   longitude: number;
   radiusMeters: number;
+  maxAccuracyMeters: number;
   isActive: boolean;
   assigned: string[];
 };
@@ -44,12 +45,14 @@ export function WorksiteManager({
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [radius, setRadius] = useState("150");
+  const [maxAcc, setMaxAcc] = useState("100");
 
   const [editId, setEditId] = useState<string | null>(null);
   const [eName, setEName] = useState("");
   const [eLat, setELat] = useState("");
   const [eLng, setELng] = useState("");
   const [eRadius, setERadius] = useState("");
+  const [eMaxAcc, setEMaxAcc] = useState("");
 
   // Atama paneli: açık olan şantiye + seçili personel kümesi
   const [assignFor, setAssignFor] = useState<string | null>(null);
@@ -99,12 +102,14 @@ export function WorksiteManager({
           latitude: Number(lat),
           longitude: Number(lng),
           radiusMeters: Number(radius),
+          maxAccuracyMeters: Number(maxAcc),
         }),
       () => {
         setName("");
         setLat("");
         setLng("");
         setRadius("150");
+        setMaxAcc("100");
         setShowAdd(false);
       },
     );
@@ -116,6 +121,7 @@ export function WorksiteManager({
     setELat(String(w.latitude));
     setELng(String(w.longitude));
     setERadius(String(w.radiusMeters));
+    setEMaxAcc(String(w.maxAccuracyMeters));
     setError(null);
   }
 
@@ -167,6 +173,10 @@ export function WorksiteManager({
               <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Yarıçap (m)</label>
               <input className={inputCls} type="number" value={radius} onChange={(e) => setRadius(e.target.value)} required />
             </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Azami doğruluk (m)</label>
+              <input className={inputCls} type="number" value={maxAcc} onChange={(e) => setMaxAcc(e.target.value)} required />
+            </div>
             <div className="md:col-span-3 flex items-end">
               <Button type="button" variant="secondary" onClick={() => fillMyLocation(setLat, setLng)}>
                 📍 Konumumu kullan
@@ -210,7 +220,11 @@ export function WorksiteManager({
                   <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Yarıçap (m)</label>
                   <input className={inputCls} type="number" value={eRadius} onChange={(e) => setERadius(e.target.value)} />
                 </div>
-                <div className="md:col-span-2 flex items-end">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Azami doğruluk (m)</label>
+                  <input className={inputCls} type="number" value={eMaxAcc} onChange={(e) => setEMaxAcc(e.target.value)} />
+                </div>
+                <div className="md:col-span-1 flex items-end">
                   <Button type="button" variant="secondary" onClick={() => fillMyLocation(setELat, setELng)}>
                     📍 Konumumu kullan
                   </Button>
@@ -228,6 +242,7 @@ export function WorksiteManager({
                             latitude: Number(eLat),
                             longitude: Number(eLng),
                             radiusMeters: Number(eRadius),
+                            maxAccuracyMeters: Number(eMaxAcc),
                           }),
                         () => setEditId(null),
                       )
@@ -248,8 +263,8 @@ export function WorksiteManager({
                     </Badge>
                   </div>
                   <p className="mt-1 font-mono text-xs text-[var(--text-muted)] tabular-nums">
-                    {w.latitude.toFixed(6)}, {w.longitude.toFixed(6)} · {w.radiusMeters} m ·{" "}
-                    {w.assigned.length} personel
+                    {w.latitude.toFixed(6)}, {w.longitude.toFixed(6)} · {w.radiusMeters} m · doğ. ≤{" "}
+                    {w.maxAccuracyMeters} m · {w.assigned.length} personel
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

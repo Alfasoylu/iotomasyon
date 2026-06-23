@@ -31,6 +31,7 @@ export default async function PdksWorksitePage() {
         latitude: w.latitude,
         longitude: w.longitude,
         radiusMeters: w.radiusMeters,
+        maxAccuracyMeters: w.maxAccuracyMeters,
         isActive: w.isActive,
         assigned: w.personnel.map((p) => p.personnelId),
       })),

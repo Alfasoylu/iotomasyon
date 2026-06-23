@@ -24,6 +24,13 @@ export const worksiteSchema = z.object({
   latitude: z.coerce.number().min(-90).max(90),
   longitude: z.coerce.number().min(-180).max(180),
   radiusMeters: z.coerce.number().int().min(20, "En az 20 m.").max(5000, "En fazla 5000 m."),
+  // Kabul edilen azami GPS doğruluğu. Boş bırakılırsa 100 m varsayılır.
+  maxAccuracyMeters: z.coerce
+    .number()
+    .int()
+    .min(20, "En az 20 m.")
+    .max(1000, "En fazla 1000 m.")
+    .default(100),
 });
 
 export type WorksiteInput = z.infer<typeof worksiteSchema>;

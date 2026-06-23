@@ -9,6 +9,25 @@
 
 ## 2026-06
 
+### PDKS — Şantiye-başına konum doğruluk eşiği (2026-06-23)
+
+Geofence check-in'de kabul edilen azami GPS doğruluğu önceden `MAX_ACCURACY_M = 100`
+olarak koda gömülüydü ve tüm şantiyeler için tek değerdi. Saha testinde şehir içi/kapalı
+alan GPS'i ~102m doğruluk verdiğinde check-in reddediliyordu. Bu değer artık
+**şantiye-başına** ayarlanabilir (`PdksWorksite.maxAccuracyMeters`, varsayılan 100).
+
+- Şema: `pdks_worksites.maxAccuracyMeters` (additive, default 100, geriye dönük güvenli) —
+  migration `20260623200000_pdks_worksite_max_accuracy`.
+- `check-in` API: doğruluk kapısı artık en yakın şantiye belirlendikten sonra o şantiyenin
+  kendi eşiğine göre uygulanıyor (önce global sabit kontrol ediliyordu).
+- Admin şantiye formu (ekle/düzenle): "Azami doğruluk (m)" alanı (20–1000); şantiye
+  kartında `doğ. ≤ N m` rozeti.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz. PDKS temel akışı (giriş kodu → oturum →
+  KVKK rızası → GPS check-in → check-out) Vercel preview üzerinde gerçek telefonla
+  uçtan uca doğrulandı (2026-06-23).
+
+PDKS modülünün genel mimarisi ve kurulumu: `docs/PDKS.md`.
+
 ### GÜVENLİK — Supabase RLS tüm public tablolarda açıldı (2026-06-13)
 
 **Açık (kritik):** iotomasyon Supabase projesinde (`frbxpodiostxuwlrubkt`) 58 public

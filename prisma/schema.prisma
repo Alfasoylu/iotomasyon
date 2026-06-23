@@ -1711,6 +1711,10 @@ model PdksWorksite {
   latitude     Float
   longitude    Float
   radiusMeters Int        @default(150)
+  // Kabul edilen azami konum doğruluğu (GPS accuracy, metre). Cihazın bildirdiği
+  // accuracy bunu aşarsa check-in reddedilir. Şehir içi/yoğun yapı sahalarında
+  // GPS zayıf olabileceğinden şantiye-başına ayarlanabilir (spec §7).
+  maxAccuracyMeters Int    @default(100)
   isActive     Boolean    @default(true)
   createdAt    DateTime   @default(now())
 
