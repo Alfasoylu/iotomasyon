@@ -9,6 +9,13 @@
 
 ## 2026-06
 
+### PDKS — Personel self-servis geçmiş görünümü (2026-06-23)
+
+Personel `/pdks` ekranında "📋 Geçmiş kayıtlarım" (son 14 kayıt) açılır bölümü:
+tarih, giriş, çıkış, süre; otomatik çıkış "oto" / açık kayıt "açık" işaretiyle.
+Şema değişikliği yok; tenant-scoped, yalnızca kişinin kendi kayıtları.
+`tsc --noEmit` 0 hata, eslint temiz.
+
 ### PDKS — Çıkış hatırlatması + otomatik çıkış + fazla mesai hesabı (2026-06-23)
 
 - **Çıkış hatırlatması:** beklenen çıkış (`expectedCheckOut`) geçince açık kayıt

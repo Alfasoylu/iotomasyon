@@ -3,6 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+export type HistoryRow = {
+  id: string;
+  dateLabel: string;
+  checkIn: string;
+  checkOut: string;
+  hours: string;
+  auto: boolean;
+  open: boolean;
+};
+
 type Initial =
   | { authed: false }
   | {
@@ -50,8 +60,15 @@ function getPosition(): Promise<GeolocationPosition> {
   });
 }
 
-export function PersonnelApp({ initial }: { initial: Initial }) {
+export function PersonnelApp({
+  initial,
+  history = [],
+}: {
+  initial: Initial;
+  history?: HistoryRow[];
+}) {
   const router = useRouter();
+  const [showHistory, setShowHistory] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -395,6 +412,46 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
             >
               {pushBusy ? "Açılıyor…" : "🔔 Bildirimleri Aç"}
             </button>
+          )}
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="mt-6">
+          <button
+            onClick={() => setShowHistory((s) => !s)}
+            className="flex w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-300"
+          >
+            <span>📋 Geçmiş kayıtlarım</span>
+            <span className="text-slate-500">{showHistory ? "▲" : "▼"}</span>
+          </button>
+          {showHistory && (
+            <div className="mt-2 overflow-hidden rounded-xl border border-slate-800">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-900/60 text-slate-500">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">Tarih</th>
+                    <th className="px-3 py-2 text-left font-medium">Giriş</th>
+                    <th className="px-3 py-2 text-left font-medium">Çıkış</th>
+                    <th className="px-3 py-2 text-right font-medium">Süre</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {history.map((h) => (
+                    <tr key={h.id}>
+                      <td className="px-3 py-2 tabular-nums text-slate-300">{h.dateLabel}</td>
+                      <td className="px-3 py-2 font-mono tabular-nums text-slate-400">{h.checkIn}</td>
+                      <td className="px-3 py-2 font-mono tabular-nums text-slate-400">
+                        {h.checkOut}
+                        {h.auto && <span className="ml-1 text-[10px] text-amber-400">oto</span>}
+                        {h.open && <span className="ml-1 text-[10px] text-emerald-400">açık</span>}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums text-slate-300">{h.hours}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
