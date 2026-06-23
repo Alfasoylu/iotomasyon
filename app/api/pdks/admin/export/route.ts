@@ -21,7 +21,7 @@ function trTime(d: Date | null): string {
 
 /** CSV alanı kaçışı (; ayraç, TR Excel uyumlu). */
 function csv(value: string): string {
-  if (/[";\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  if (/[";\r\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
 }
 

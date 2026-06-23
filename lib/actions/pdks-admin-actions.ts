@@ -77,17 +77,18 @@ export async function updatePersonnelAction(
   const user = await guard();
   if (!user) return PERM_DENIED;
 
-  await runWithPdksAdmin(user, async () => {
+  const { count } = await runWithPdksAdmin(user, () =>
     // updateMany: scoped extension where'e tenantId ekler → başka tenant'ı etkilemez.
-    await prismaPdks.pdksPersonnel.updateMany({
+    prismaPdks.pdksPersonnel.updateMany({
       where: { id },
       data: {
         fullName: parsed.data.fullName,
         phone: normalizePhone(parsed.data.phone),
         expectedCheckIn: parsed.data.expectedCheckIn || null,
       },
-    });
-  });
+    }),
+  );
+  if (count === 0) return { ok: false, message: "Personel bulunamadı." };
 
   revalidatePdks();
   return { ok: true };
@@ -100,9 +101,10 @@ export async function setPersonnelActiveAction(
   const user = await guard();
   if (!user) return PERM_DENIED;
 
-  await runWithPdksAdmin(user, async () => {
-    await prismaPdks.pdksPersonnel.updateMany({ where: { id }, data: { isActive } });
-  });
+  const { count } = await runWithPdksAdmin(user, () =>
+    prismaPdks.pdksPersonnel.updateMany({ where: { id }, data: { isActive } }),
+  );
+  if (count === 0) return { ok: false, message: "Personel bulunamadı." };
 
   revalidatePdks();
   return { ok: true };
@@ -185,8 +187,8 @@ export async function updateWorksiteAction(
   const user = await guard();
   if (!user) return PERM_DENIED;
 
-  await runWithPdksAdmin(user, async () => {
-    await prismaPdks.pdksWorksite.updateMany({
+  const { count } = await runWithPdksAdmin(user, () =>
+    prismaPdks.pdksWorksite.updateMany({
       where: { id },
       data: {
         name: parsed.data.name,
@@ -194,8 +196,9 @@ export async function updateWorksiteAction(
         longitude: parsed.data.longitude,
         radiusMeters: parsed.data.radiusMeters,
       },
-    });
-  });
+    }),
+  );
+  if (count === 0) return { ok: false, message: "Şantiye bulunamadı." };
 
   revalidateWorksites();
   return { ok: true };
@@ -208,9 +211,10 @@ export async function setWorksiteActiveAction(
   const user = await guard();
   if (!user) return PERM_DENIED;
 
-  await runWithPdksAdmin(user, async () => {
-    await prismaPdks.pdksWorksite.updateMany({ where: { id }, data: { isActive } });
-  });
+  const { count } = await runWithPdksAdmin(user, () =>
+    prismaPdks.pdksWorksite.updateMany({ where: { id }, data: { isActive } }),
+  );
+  if (count === 0) return { ok: false, message: "Şantiye bulunamadı." };
 
   revalidateWorksites();
   return { ok: true };

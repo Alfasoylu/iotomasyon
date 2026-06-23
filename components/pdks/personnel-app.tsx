@@ -185,7 +185,13 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
         );
         router.refresh();
       } catch (err) {
-        const msg = err instanceof GeolocationPositionError || (err as { code?: number })?.code != null
+        // GeolocationPositionError her tarayıcıda global değil (eski iOS Safari);
+        // instanceof ReferenceError atabilir → `code` alanına göre ayırt et.
+        const isGeoError =
+          typeof err === "object" &&
+          err !== null &&
+          typeof (err as { code?: unknown }).code === "number";
+        const msg = isGeoError
           ? "Konum alınamadı. Konum iznini açın ve tekrar deneyin."
           : err instanceof Error
             ? err.message
