@@ -13,6 +13,7 @@ type Initial =
       status: string | null; // 'open' | 'closed' | null
       checkInAt: string | null;
       checkOutAt: string | null;
+      overtime: boolean; // bugünün kaydında fazla mesai işaretli mi
     };
 
 function fmtTime(iso: string | null): string {
@@ -209,6 +210,37 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
     router.refresh();
   }, [router]);
 
+  const toggleOvertime = useCallback(
+    async (next: boolean) => {
+      setBusy(true);
+      setError(null);
+      setInfo(null);
+      try {
+        const res = await fetch("/api/pdks/overtime", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ overtime: next }),
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          setError(j.error ?? "İşlem başarısız");
+          return;
+        }
+        setInfo(
+          next
+            ? "Fazla mesai açıldı — otomatik çıkış yapılmayacak. İşiniz bitince çıkış yapın."
+            : "Fazla mesai kapatıldı.",
+        );
+        router.refresh();
+      } catch {
+        setError("Ağ hatası");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [router],
+  );
+
   const submitConsent = useCallback(async () => {
     setBusy(true);
     setError(null);
@@ -331,6 +363,22 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
           </button>
         )}
       </div>
+
+      {isOpen && (
+        <button
+          onClick={() => toggleOvertime(!initial.overtime)}
+          disabled={busy}
+          className={`mt-4 w-full rounded-xl border py-2.5 text-sm font-medium transition disabled:opacity-50 ${
+            initial.overtime
+              ? "border-amber-600 bg-amber-950/40 text-amber-300"
+              : "border-slate-700 text-slate-300 hover:border-slate-500"
+          }`}
+        >
+          {initial.overtime
+            ? "🌙 Fazla mesai açık — kapatmak için dokun"
+            : "🌙 Bugün fazla mesai (otomatik çıkışı kapat)"}
+        </button>
+      )}
 
       {info && <p className="mt-4 text-center text-sm text-emerald-400">{info}</p>}
       {error && <p className="mt-4 text-center text-sm text-red-400">{error}</p>}

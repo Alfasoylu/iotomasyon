@@ -32,6 +32,7 @@ export default async function PdksPage() {
         status: data?.rec?.status ?? null,
         checkInAt: data?.rec?.checkInAt?.toISOString() ?? null,
         checkOutAt: data?.rec?.checkOutAt?.toISOString() ?? null,
+        overtime: data?.rec?.overtime ?? false,
       }}
     />
   );

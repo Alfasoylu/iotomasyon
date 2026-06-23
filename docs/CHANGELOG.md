@@ -21,9 +21,10 @@
 - Şema (migration `20260623220000_pdks_checkout_auto_overtime`, additive):
   `pdks_attendance_records.autoCheckout / checkoutReminderAt / overtime`.
 - Tetikleme aynı cron uç noktası (`/api/pdks/cron/reminders`, GitHub Actions her 5 dk).
+- **Fazla mesai beyanı (buton):** personel ekranında açık kayıt varken "🌙 Bugün
+  fazla mesai" aç/kapa butonu; `POST /api/pdks/overtime` bugünün açık kaydının
+  `overtime` bayrağını ayarlar → açıkken otomatik çıkış uygulanmaz, kişi çıkışı kendi yapar.
 - Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
-- NOT: Fazla mesai BEYANI (girişte "mesai var mı?" veya buton) UX'i henüz eklenmedi —
-  `overtime` bayrağı altyapısı hazır; UX kullanıcı kararına bırakıldı.
 
 ### PDKS — Puantaj düzeltme (admin: düzenle / sil / manuel ekle) (2026-06-23)
 
