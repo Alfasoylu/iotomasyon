@@ -9,6 +9,101 @@
 
 ## 2026-06
 
+### PDKS — Personel self-servis geçmiş görünümü (2026-06-23)
+
+Personel `/pdks` ekranında "📋 Geçmiş kayıtlarım" (son 14 kayıt) açılır bölümü:
+tarih, giriş, çıkış, süre; otomatik çıkış "oto" / açık kayıt "açık" işaretiyle.
+Şema değişikliği yok; tenant-scoped, yalnızca kişinin kendi kayıtları.
+`tsc --noEmit` 0 hata, eslint temiz.
+
+### PDKS — Çıkış hatırlatması + otomatik çıkış + fazla mesai hesabı (2026-06-23)
+
+- **Çıkış hatırlatması:** beklenen çıkış (`expectedCheckOut`) geçince açık kayıt
+  sahibine tek sefer push ("çıkış yapmayı unutmayın"). `checkoutReminderAt` ile dedup.
+- **Otomatik çıkış:** beklenen çıkıştan **+15 dk** sonra hâlâ açıksa sistem kaydı kapatır
+  (`checkOutAt` = beklenen çıkış saati, `autoCheckout=true`). `overtime=true` kayıtlar muaf.
+- **Fazla mesai hesabı:** `overtimeHours` = çalışılan saat − beklenen mesai süresi
+  (giriş/çıkış beklentisi tanımlıysa). Puantaj: "Fazla mesai" metriği + özet sütunu +
+  satırda `+N FM` ve otomatik çıkışta "Oto" rozeti. CSV'ye Fazla mesai + Otomatik çıkış.
+- Şema (migration `20260623220000_pdks_checkout_auto_overtime`, additive):
+  `pdks_attendance_records.autoCheckout / checkoutReminderAt / overtime`.
+- Tetikleme aynı cron uç noktası (`/api/pdks/cron/reminders`, GitHub Actions her 5 dk).
+- **Fazla mesai beyanı (buton):** personel ekranında açık kayıt varken "🌙 Bugün
+  fazla mesai" aç/kapa butonu; `POST /api/pdks/overtime` bugünün açık kaydının
+  `overtime` bayrağını ayarlar → açıkken otomatik çıkış uygulanmaz, kişi çıkışı kendi yapar.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
+
+### PDKS — Puantaj düzeltme (admin: düzenle / sil / manuel ekle) (2026-06-23)
+
+Yönetici artık devam kayıtlarını düzeltebiliyor (gerçek kullanımda zorunlu).
+Şema değişikliği yok.
+
+- `lib/actions/pdks-admin-actions.ts`: `updateAttendanceAction` (giriş/çıkış saatini
+  TR olarak düzeltir), `deleteAttendanceAction` (yanlış kaydı siler),
+  `createManualAttendanceAction` (unutulan gün için elle kayıt). Hepsi `PDKS_MANAGE`
+  + tenant-scoped.
+- `lib/pdks/timesheet.ts`: `TimesheetRow.id` eklendi; `trTimeOnDateToUtc()` (TR
+  wall-clock saat → UTC, sabit +3).
+- `components/admin/pdks/timesheet-table.tsx`: satır içi düzenle/sil + "Manuel kayıt
+  ekle" formu (personel/tarih/giriş/çıkış). `/admin/pdks/puantaj` statik tablo bu
+  client bileşenle değiştirildi; metrik + personel özeti sunucuda kalır.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
+
+### PDKS — Şifre/PIN girişi + cihaz bağlama + çıkış saati + artan geç-bildirim (2026-06-23)
+
+Saha kullanımı için giriş ve güvenlik modeli güncellendi. Tek migration
+(`20260623210000_pdks_password_device_reminders`, additive).
+
+- **Giriş:** Tek kullanımlık kod kaldırıldı → **telefon + kalıcı şifre/PIN** (bcrypt).
+  Admin oluşturur (`createPersonnelAction`) ve sıfırlar (`resetPasswordAction`).
+  `loginWithCode` → `loginWithPassword`; `issueLoginCodeAction` kaldırıldı.
+- **Cihaz bağlama:** İlk giriş personelin cihazına bağlanır (`pdks_device` cookie +
+  `deviceIdHash` SHA-256). Başka cihaz `device_mismatch` ile reddedilir (403).
+  Admin `resetDeviceAction` ile cihaz bağını sıfırlar. IP'ye değil cihaza bağlıdır
+  (mobil IP değişiminden etkilenmez).
+- **Çıkış saati:** `expectedCheckOut` alanı; admin formunda giriş+çıkış saati.
+- **Artan geç-bildirim:** cron 5 dk'da bir çalışıp giriş yapmamış personele
+  "5/10/…/60 dakika geç kaldınız" gönderir; `lateReminderLastMin` ile dilim tekrar
+  edilmez, **60 dk'da durur**. Tetikleme: Vercel Hobby yalnızca günlük cron'a izin
+  verdiğinden uç nokta vercel.json'da DEĞİL; harici zamanlayıcı (cron-job.org /
+  GitHub Actions) ile her 5 dk `Bearer $CRON_SECRET` çağrısı. (Pro'da vercel.json
+  cron eklenebilir.)
+- **Geofence çıkışta da:** check-out artık girişle aynı sunucu-tarafı kontrole tabi
+  (konum zorunlu, doğruluk + yarıçap reddi). Şantiye varsayılan yarıçapı 100 m.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
+
+### PDKS — Puantaj raporu zenginleştirme (2026-06-23)
+
+Puantaj sayfası ham giriş/çıkış listesinden öteye geçti; bordro için anlamlı sinyaller eklendi.
+Şema değişikliği yok — mevcut `pdksAttendanceRecord` + `pdksPersonnel.expectedCheckIn`'den hesaplanır.
+
+- `lib/pdks/timesheet.ts`: satırlara `late` (giriş, beklenen saatten sonra mı) ve
+  `missingCheckout` (giriş var, çıkış yok) bayrakları; yeni `buildTimesheetSummary()`
+  personel-bazlı dönem özeti (gün, toplam saat, geç giriş, eksik çıkış).
+- `/admin/pdks/puantaj`: "Geç giriş" + "Eksik çıkış" metrik kartları, **Personel özeti**
+  tablosu, detay tablosunda "Geç"/"Eksik" rozetleri.
+- CSV export: Beklenen giriş, Geç, Eksik çıkış kolonları eklendi.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
+
+### PDKS — Şantiye-başına konum doğruluk eşiği (2026-06-23)
+
+Geofence check-in'de kabul edilen azami GPS doğruluğu önceden `MAX_ACCURACY_M = 100`
+olarak koda gömülüydü ve tüm şantiyeler için tek değerdi. Saha testinde şehir içi/kapalı
+alan GPS'i ~102m doğruluk verdiğinde check-in reddediliyordu. Bu değer artık
+**şantiye-başına** ayarlanabilir (`PdksWorksite.maxAccuracyMeters`, varsayılan 100).
+
+- Şema: `pdks_worksites.maxAccuracyMeters` (additive, default 100, geriye dönük güvenli) —
+  migration `20260623200000_pdks_worksite_max_accuracy`.
+- `check-in` API: doğruluk kapısı artık en yakın şantiye belirlendikten sonra o şantiyenin
+  kendi eşiğine göre uygulanıyor (önce global sabit kontrol ediliyordu).
+- Admin şantiye formu (ekle/düzenle): "Azami doğruluk (m)" alanı (20–1000); şantiye
+  kartında `doğ. ≤ N m` rozeti.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz. PDKS temel akışı (giriş kodu → oturum →
+  KVKK rızası → GPS check-in → check-out) Vercel preview üzerinde gerçek telefonla
+  uçtan uca doğrulandı (2026-06-23).
+
+PDKS modülünün genel mimarisi ve kurulumu: `docs/PDKS.md`.
+
 ### GÜVENLİK — Supabase RLS tüm public tablolarda açıldı (2026-06-13)
 
 **Açık (kritik):** iotomasyon Supabase projesinde (`frbxpodiostxuwlrubkt`) 58 public

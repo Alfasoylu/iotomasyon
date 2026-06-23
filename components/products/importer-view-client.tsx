@@ -20,6 +20,9 @@ import {
   calcProfit,
   calcStockDays,
   calcHealthScore,
+  rmbToUsd,
+  trendyolPriceInclVat,
+  isDropshipStock,
   type BudgetParams,
   DEFAULT_BUDGET_PARAMS,
   type DecisionLabel,
@@ -414,7 +417,9 @@ export function ImporterViewClient() {
   // Phase 90: Aylık talep sinyali = effectiveMonthlyUnits = max(Trendyol t30g, manuel onlineSalesPotential).
   // sipariş hesaplayıcı (allocateBudget) ile aynı semantik; özet kartı da aynı kaynağı kullanmalı.
   const summary = useMemo(() => {
-    const withCost = enriched.filter((p) => p.totalCostUsd != null);
+    // Dropship/sipariş-üzerine (stok ≥ 1000) placeholder'ları stok maliyetine KATMA —
+    // gerçek elde tutulan mal değiller, aksi halde envanter değeri yapay şişer.
+    const withCost = enriched.filter((p) => p.totalCostUsd != null && !isDropshipStock(p.stockQuantity));
     const totalStockCostUsd = withCost.reduce((s, p) => s + (p.totalCostUsd ?? 0) * p.stockQuantity, 0);
     const totalPotentialProfit = enriched.reduce(
       (s, p) => s + Math.max(0, (p.netProfitUsd ?? 0) * p.effectiveMonthlyUnits),
@@ -521,7 +526,7 @@ export function ImporterViewClient() {
       {/* ── Summary cards ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
-          { label: "Stok Maliyeti", value: fmtUsd(summary.totalStockCostUsd, 0), sub: "toplam envanter", color: "slate" },
+          { label: "Stok Maliyeti", value: fmtUsd(summary.totalStockCostUsd, 0), sub: "envanter (dropship hariç)", color: "slate" },
           { label: "Aylık Potansiyel Kâr", value: fmtUsd(summary.totalPotentialProfit, 0), sub: "max(T30G, manuel aylık)", color: "emerald" },
           { label: "Önerilen Bütçe", value: fmtUsd(summary.recommendedBudget, 0), sub: "sipariş için", color: "blue" },
           { label: "İlk 10 Ürün Kârı", value: fmtUsd(summary.top10Profit, 0), sub: "aylık · max(T30G, manuel)", color: "teal" },
@@ -674,7 +679,7 @@ export function ImporterViewClient() {
                 <th className="w-12 px-2 py-3" />
                 <th className="px-3 py-3 min-w-[200px]">Ürün</th>
                 <th className="px-3 py-3 text-left whitespace-nowrap">1688</th>
-                <th className="px-3 py-3 text-right whitespace-nowrap">T. Fiyat (₺)</th>
+                <th className="px-3 py-3 text-right whitespace-nowrap" title="Entegra'dan KDV hariç gelir; gösterilen = net × 1.20 (KDV dahil gerçek satış fiyatı)">Satış (₺ KDV dahil)</th>
                 <th className="px-3 py-3 text-right whitespace-nowrap">Bayi ($)</th>
                 <th className="px-3 py-3 text-right">Stok</th>
                 <th
@@ -808,12 +813,17 @@ export function ImporterViewClient() {
                         </div>
                       </td>
 
-                      {/* Trendyol price TRY */}
+                      {/* Trendyol price TRY — KDV dahil (Entegra net × 1.20) */}
                       <td className="px-3 py-2 text-right">
                         {p.trendyolPriceTry != null ? (
-                          <span className="font-mono text-xs font-medium text-slate-700">
-                            {fmtTry(p.trendyolPriceTry)}
-                          </span>
+                          <div className="text-right">
+                            <span className="font-mono text-xs font-medium text-slate-700">
+                              {fmtTry(trendyolPriceInclVat(p.trendyolPriceTry))}
+                            </span>
+                            <p className="text-[9px] text-slate-400" title="Entegra'dan gelen KDV hariç net fiyat">
+                              net {fmtTry(p.trendyolPriceTry)}
+                            </p>
+                          </div>
                         ) : (
                           <span className="text-[10px] text-red-400">Fiyat yok</span>
                         )}
@@ -830,11 +840,20 @@ export function ImporterViewClient() {
                         )}
                       </td>
 
-                      {/* Stock */}
+                      {/* Stock — dropship (≥1000) gerçek stok değil, "Sipariş üzerine" göster */}
                       <td className="px-3 py-2 text-right">
-                        <span className={`font-mono text-xs font-semibold ${p.stockQuantity <= p.minimumStock ? "text-amber-600" : "text-slate-800"}`}>
-                          {p.stockQuantity}
-                        </span>
+                        {isDropshipStock(p.stockQuantity) ? (
+                          <span
+                            className="inline-block rounded bg-violet-50 px-1.5 py-0.5 text-[9px] font-medium text-violet-600 border border-violet-100"
+                            title={`Entegra placeholder stok (${p.stockQuantity}) — sipariş üzerine temin, elde tutulan mal değil`}
+                          >
+                            Sipariş üzerine
+                          </span>
+                        ) : (
+                          <span className={`font-mono text-xs font-semibold ${p.stockQuantity <= p.minimumStock ? "text-amber-600" : "text-slate-800"}`}>
+                            {p.stockQuantity}
+                          </span>
+                        )}
                       </td>
 
                       {/* Lifetime total satış (Trendyol) */}
@@ -879,7 +898,7 @@ export function ImporterViewClient() {
                         />
                       </td>
 
-                      {/* RMB cost — inline editable */}
+                      {/* RMB cost — inline editable (+ USD karşılığı) */}
                       <td className="px-3 py-2 text-right">
                         <InlineEditNumber
                           value={p.sourceCostRmb}
@@ -893,6 +912,11 @@ export function ImporterViewClient() {
                           onSave={saveInlineField}
                           isSaving={inlineSaving === `${p.id}:rmb`}
                         />
+                        {p.sourceCostRmb != null && (
+                          <p className="text-[9px] text-slate-400" title="RMB ÷ RMB/USD kuru">
+                            {fmtUsd(rmbToUsd(p.sourceCostRmb, rates.rmbUsdRate))}
+                          </p>
+                        )}
                       </td>
 
                       {/* Weight (kg) — inline editable */}
@@ -1100,7 +1124,7 @@ export function ImporterViewClient() {
 
       {/* Footer note */}
       <p className="text-[10px] text-slate-400 text-center">
-        Kur: Veritabanındaki en son aylık kur · Komisyon %20 · Kargo dilimi (Pazaryeri kanonik): &lt;$5→$1.2, $5–7.5→$2, &gt;$7.5→$3.3
+        Kur: Veritabanındaki en son aylık kur · Satış fiyatı KDV dahil (Entegra net × 1.20) · Komisyon %20 (KDV dahil matrah üzerinden) · Stok maliyeti dropship (≥1000) hariç · Kargo dilimi (Pazaryeri kanonik): &lt;$5→$1.2, $5–7.5→$2, &gt;$7.5→$3.3
         · Aylık talep: max(Sistem tahmini, manuel). Tahmin = recency-weighted (90d×0.5 + 365d×0.3 + lifetime×0.2) × mevsimsel. Tüm 14 kanal × 5 yıl.
         · AIR döngüsü 150g · SEA döngüsü 210g · Kargo seçimi ROI bazlı
       </p>

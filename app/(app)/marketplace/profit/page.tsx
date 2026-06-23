@@ -23,7 +23,6 @@ import { Settings, AlertTriangle, ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { calculateProfitability } from "@/lib/profitability";
 import {
   policySourceLabel,
   type PolicySource,
@@ -356,23 +355,19 @@ export default async function MarketplaceProfitPage() {
       usdTryRate,
     });
 
-    const effectivePrice = pricing.effectivePriceTry ?? 0;
+    const effectivePrice = pricing.effectivePriceTry ?? 0; // KDV hariç gelir tabanı
 
-    const profit = calculateProfitability({
-      unitCostTry:                    toNum(p.unitCostTry),
-      marketplacePriceTry:            effectivePrice,
-      shippingCost:                   pricing.shippingTry,
-      shippingCostOverride:           null, // already resolved
-      marketplaceCommission:          pricing.commissionPct,
-      marketplaceCommissionOverride:  null, // already resolved
-      packagingCost:                  toNum(p.packagingCost),
-      vatRate:                        0,    // absorbed into commissionPct by resolver
-      paymentFeeRate:                 0,
-      returnReserveRate:              0,
-    });
-
-    const ch = profit.marketplace;
-    const hasData = pricing.hasData && toNum(p.unitCostTry) > 0;
+    // Kanonik motor (marketplace-pricing) netRevenueTry'i kullan — komisyon KDV
+    // dahil matrahtan, elde kalan gelir KDV hariç. Maliyet + ambalaj düşülür.
+    const unitCostTry = toNum(p.unitCostTry);
+    const packagingCost = toNum(p.packagingCost);
+    const hasData = pricing.hasData && pricing.netRevenueTry != null && unitCostTry > 0;
+    const netProfitVal = hasData ? pricing.netRevenueTry! - unitCostTry - packagingCost : null;
+    const marginVal =
+      netProfitVal != null && effectivePrice > 0 ? (netProfitVal / effectivePrice) * 100 : null;
+    const roiVal =
+      netProfitVal != null && unitCostTry > 0 ? (netProfitVal / unitCostTry) * 100 : null;
+    const profitableVal = netProfitVal != null ? netProfitVal > 0 : null;
 
     return {
       id:               l.id,
@@ -380,12 +375,12 @@ export default async function MarketplaceProfitPage() {
       productSku:       p.sku,
       productName:      p.name,
       platform:         l.platform,
-      marketplacePrice: effectivePrice,
+      marketplacePrice: pricing.priceInclVatTry ?? effectivePrice, // KDV dahil göster
       priceSource:      pricing.priceSource,
-      netProfit:        hasData ? ch!.netProfit : null,
-      margin:           hasData ? ch!.margin : null,
-      roi:              hasData ? (ch!.roi ?? null) : null,
-      profitable:       hasData ? ch!.profitable : null,
+      netProfit:        netProfitVal,
+      margin:           marginVal,
+      roi:              roiVal,
+      profitable:       profitableVal,
       hasData,
       stockQuantity:    p.stockQuantity ?? 0,
       salesPotential:   p.onlineSalesPotential ?? 0,

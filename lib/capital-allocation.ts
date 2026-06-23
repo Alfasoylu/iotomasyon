@@ -21,6 +21,8 @@
  *  - products with missing cost OR zero demand are excluded
  */
 
+import { isDropshipStock } from "./importer-cost";
+
 export type ProductForAllocation = {
   id: string;
   name: string;
@@ -73,7 +75,10 @@ export function calculateCapitalAllocation(
   desiredTurnoverMonths: number,
 ): CapitalAllocationResult {
   // Step 1: locked capital
+  // Dropship/sipariş-üzerine (stok ≥ 1000) placeholder'ları kilitli sermayeye
+  // KATMA — gerçekte elde tutulan mal değiller, aksi halde değer yapay şişer.
   const lockedCapital = products.reduce((sum, p) => {
+    if (isDropshipStock(p.stockQuantity)) return sum;
     return sum + p.stockQuantity * n(p.unitCostTry);
   }, 0);
 

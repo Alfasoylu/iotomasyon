@@ -14,6 +14,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { isDropshipStock } from "@/lib/importer-cost";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StockAdjustmentType } from "@prisma/client";
@@ -92,6 +93,10 @@ export default async function StockHealthPage() {
   const healthy: typeof products = [];
 
   for (const p of products) {
+    // Dropship/sipariş-üzerine (stok ≥ 1000) gerçek elde stok değil — stok sağlığı
+    // sınıflandırmasına (kritik/düşük/sağlıklı) dahil etme.
+    if (isDropshipStock(p.stockQuantity)) continue;
+
     const s = sales30d.get(p.id) ?? 0;
 
     if (p.stockQuantity <= 0) {

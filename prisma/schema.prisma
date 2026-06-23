@@ -1651,3 +1651,161 @@ model CatalogProductInterest {
   @@index([catalogShareId])
   @@index([productId])
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PDKS (Personel Devam Kontrol Sistemi) — Faz 1
+// Multi-tenant devam takip modülü. Tenant izolasyonu UYGULAMA katmanındadır
+// (lib/pdks: AsyncLocalStorage + Prisma client extension); DB-seviyesi RLS yok.
+// Tablolar public şemada, "pdks_" önekli (ayrı Postgres şeması yerine — mevcut
+// modellere @@schema eklememek için). Model adları "Pdks" önekli.
+// ═══════════════════════════════════════════════════════════════════════════
+
+model PdksTenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  personnel PdksPersonnel[]
+  worksites PdksWorksite[]
+  records   PdksAttendanceRecord[]
+  subs      PdksPushSubscription[]
+
+  @@map("pdks_tenants")
+}
+
+model PdksPersonnel {
+  id              String     @id @default(cuid())
+  tenantId        String
+  tenant          PdksTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // CRM kullanıcısıyla opsiyonel bağ (yalnızca CRM'e de giren adminler); saha
+  // çalışanları CRM User'ı olmak zorunda değil — OTP ile kimliklenir.
+  crmUserId       String?
+  fullName        String
+  phone           String?
+  email           String?
+  role            String     @default("employee") // 'tenant_admin' | 'employee'
+  // Kalıcı giriş şifresi/PIN (bcrypt). null = henüz şifre atanmamış → giriş yapamaz.
+  passwordHash    String?
+  // Cihaz bağlama: ilk girişte üretilen cihaz token'ının SHA-256 hash'i. null =
+  // henüz cihaza bağlı değil (ilk giriş bağlar). Admin "cihazı sıfırla" ile null'lar.
+  deviceIdHash    String?
+  deviceBoundAt   DateTime?
+  expectedCheckIn String? // "08:30" — hatırlatma eşiği
+  expectedCheckOut String? // "18:00" — beklenen çıkış saati
+  // Geç-kalan hatırlatması en son hangi TR gününde gönderildi (cron idempotency).
+  lastLateReminderOn DateTime? @db.Date
+  // O gün gönderilen son "geç kalma" eşiği (dakika); aynı 5-dk dilimini tekrar göndermez.
+  lateReminderLastMin Int      @default(0)
+  // KVKK açık rıza zamanı (konum işleme). null = rıza yok → giriş/çıkış engellenir.
+  kvkkConsentAt   DateTime?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+
+  worksites  PdksPersonnelWorksite[]
+  records    PdksAttendanceRecord[]
+  subs       PdksPushSubscription[]
+  loginCodes PdksLoginCode[]
+
+  @@index([tenantId])
+  @@map("pdks_personnel")
+}
+
+model PdksWorksite {
+  id           String     @id @default(cuid())
+  tenantId     String
+  tenant       PdksTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  latitude     Float
+  longitude    Float
+  radiusMeters Int        @default(100)
+  // Kabul edilen azami konum doğruluğu (GPS accuracy, metre). Cihazın bildirdiği
+  // accuracy bunu aşarsa check-in reddedilir. Şehir içi/yoğun yapı sahalarında
+  // GPS zayıf olabileceğinden şantiye-başına ayarlanabilir (spec §7).
+  maxAccuracyMeters Int    @default(100)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+
+  personnel PdksPersonnelWorksite[]
+  records   PdksAttendanceRecord[]
+
+  @@index([tenantId])
+  @@map("pdks_worksites")
+}
+
+model PdksPersonnelWorksite {
+  tenantId    String
+  personnelId String
+  worksiteId  String
+  personnel   PdksPersonnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  worksite    PdksWorksite  @relation(fields: [worksiteId], references: [id], onDelete: Cascade)
+
+  @@id([personnelId, worksiteId])
+  @@index([tenantId])
+  @@map("pdks_personnel_worksites")
+}
+
+model PdksAttendanceRecord {
+  id                String        @id @default(cuid())
+  tenantId          String
+  tenant            PdksTenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  personnelId       String
+  personnel         PdksPersonnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  worksiteId        String?
+  worksite          PdksWorksite? @relation(fields: [worksiteId], references: [id])
+  workDate          DateTime      @db.Date
+  checkInAt         DateTime?
+  checkOutAt        DateTime?
+  checkInDistanceM  Int? // mesafe HER ZAMAN saklanır
+  checkOutDistanceM Int?
+  checkInAccuracyM  Int?
+  checkOutAccuracyM Int?
+  checkInLat        Float? // OPSİYONEL (KVKK) — varsayılan kapalı
+  checkInLng        Float?
+  status            String        @default("open") // 'open' | 'closed'
+  // Otomatik çıkış: personel beklenen çıkıştan +15 dk sonra çıkış yapmamışsa
+  // sistem kaydı kapatır (checkOutAt = beklenen çıkış saati). true = elle değil.
+  autoCheckout      Boolean       @default(false)
+  // Çıkış hatırlatması en son ne zaman gönderildi (gün içi tekrar göndermemek için).
+  checkoutReminderAt DateTime?
+  // Fazla mesai: true ise otomatik çıkış uygulanmaz (kişi geç çıkacak).
+  overtime          Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+
+  @@index([tenantId, workDate])
+  @@index([personnelId, workDate])
+  @@map("pdks_attendance_records")
+}
+
+model PdksPushSubscription {
+  id          String        @id @default(cuid())
+  tenantId    String
+  tenant      PdksTenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  personnelId String
+  personnel   PdksPersonnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  endpoint    String        @unique
+  p256dh      String
+  auth        String
+  createdAt   DateTime      @default(now())
+
+  @@index([tenantId])
+  @@map("pdks_push_subscriptions")
+}
+
+// PDKS — Admin-üretimli tek kullanımlık giriş kodu (SMS yok; tenant_admin üretir).
+// Login bağlam OLUŞMADAN çalışır → SCOPED değildir, unscoped prisma ile sorgulanır.
+model PdksLoginCode {
+  id          String        @id @default(cuid())
+  tenantId    String
+  personnelId String
+  personnel   PdksPersonnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  codeHash    String // kodun bcrypt hash'i (düz kod saklanmaz)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([personnelId])
+  @@index([tenantId])
+  @@map("pdks_login_codes")
+}
