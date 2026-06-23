@@ -1690,9 +1690,10 @@ model PdksPersonnel {
   isActive        Boolean    @default(true)
   createdAt       DateTime   @default(now())
 
-  worksites PdksPersonnelWorksite[]
-  records   PdksAttendanceRecord[]
-  subs      PdksPushSubscription[]
+  worksites  PdksPersonnelWorksite[]
+  records    PdksAttendanceRecord[]
+  subs       PdksPushSubscription[]
+  loginCodes PdksLoginCode[]
 
   @@index([tenantId])
   @@map("pdks_personnel")
@@ -1766,4 +1767,21 @@ model PdksPushSubscription {
 
   @@index([tenantId])
   @@map("pdks_push_subscriptions")
+}
+
+// PDKS — Admin-üretimli tek kullanımlık giriş kodu (SMS yok; tenant_admin üretir).
+// Login bağlam OLUŞMADAN çalışır → SCOPED değildir, unscoped prisma ile sorgulanır.
+model PdksLoginCode {
+  id          String        @id @default(cuid())
+  tenantId    String
+  personnelId String
+  personnel   PdksPersonnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  codeHash    String // kodun bcrypt hash'i (düz kod saklanmaz)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([personnelId])
+  @@index([tenantId])
+  @@map("pdks_login_codes")
 }
