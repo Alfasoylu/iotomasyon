@@ -57,3 +57,18 @@ export const pdksSessionCookieOptions = {
   path: "/",
   maxAge: 60 * 60 * 24 * 7,
 };
+
+/**
+ * Cihaz bağlama cookie'si — oturumdan bağımsız, uzun ömürlü (1 yıl). İlk girişte
+ * üretilip bu cihaza yazılır; sonraki girişlerde sunucu bu token'ı personelin
+ * deviceIdHash'i ile karşılaştırır. Çıkış (logout) bunu SİLMEZ; cihaz bağlı kalır.
+ */
+export const PDKS_DEVICE_COOKIE = "pdks_device";
+
+export const pdksDeviceCookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: isProduction,
+  path: "/",
+  maxAge: 60 * 60 * 24 * 365,
+};

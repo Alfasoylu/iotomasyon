@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomInt } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { compare, hash } from "bcryptjs";
 
@@ -8,15 +8,16 @@ import { prisma } from "@/lib/prisma";
 import { runWithTenant, type PdksTenantContext } from "./context";
 import {
   PDKS_SESSION_COOKIE,
+  PDKS_DEVICE_COOKIE,
   createPdksSessionToken,
   verifyPdksSessionToken,
   pdksSessionCookieOptions,
+  pdksDeviceCookieOptions,
 } from "./session";
 
 export type PdksSession = PdksTenantContext;
 
-const CODE_TTL_MIN = 15;
-const CODE_HASH_ROUNDS = 10;
+const PASSWORD_HASH_ROUNDS = 10;
 
 /**
  * Telefonu kanonik biçime indirger: yalnızca rakamlar, ülke kodu (90) ve baştaki
@@ -51,62 +52,64 @@ export async function withPdksSession<T>(
   return runWithTenant(session, () => fn(session));
 }
 
-/**
- * tenant_admin tarafından (scoped bağlam içinde) çağrılır: bir personel için
- * 6 haneli tek kullanımlık giriş kodu üretir, hash'ini saklar, düz kodu döner
- * (admin personele iletir). SMS yok.
- */
-export async function issueLoginCode(
-  personnelId: string,
-  tenantId: string,
-): Promise<{ code: string; expiresAt: Date }> {
-  const code = String(randomInt(100000, 1000000)); // 6 hane, kriptografik
-  const codeHash = await hash(code, CODE_HASH_ROUNDS);
-  const expiresAt = new Date(Date.now() + CODE_TTL_MIN * 60 * 1000);
-  await prisma.pdksLoginCode.create({
-    data: { tenantId, personnelId, codeHash, expiresAt },
-  });
-  return { code, expiresAt };
+/** Şifre/PIN hash'ler (admin: oluşturma + sıfırlama). */
+export async function hashPassword(plain: string): Promise<string> {
+  return hash(plain, PASSWORD_HASH_ROUNDS);
 }
 
+/** Cihaz token'ının saklanabilir hash'i (yüksek entropili token → SHA-256 yeterli). */
+function hashDeviceToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export type PdksLoginResult =
+  | { ok: true; session: PdksSession }
+  | { ok: false; reason: "invalid" | "device_mismatch" };
+
 /**
- * Personel girişi: telefon + kod. Oturum HENÜZ yok → unscoped `prisma` kullanılır
- * (tenant bağlamı bu adımda kurulur). Başarılıysa cookie set edilir.
- * Telefon birden çok tenant'ta olabilir; kod (bcrypt) disambiguator'dır.
+ * Personel girişi: telefon + kalıcı şifre/PIN + cihaz bağlama.
+ * Oturum HENÜZ yok → unscoped `prisma` (tenant bağlamı burada kurulur). Telefon
+ * birden çok tenant'ta olabilir; şifre (bcrypt) disambiguator'dır.
+ *
+ * Cihaz kilidi:
+ * - deviceIdHash null → bu cihaza BAĞLA (yeni token üret, hash'ini sakla, cookie yaz).
+ * - deviceIdHash dolu → sunulan cihaz token'ı eşleşmezse reddet (device_mismatch).
  */
-export async function loginWithCode(
+export async function loginWithPassword(
   phone: string,
-  code: string,
-): Promise<PdksSession | null> {
+  password: string,
+  deviceToken: string | undefined,
+): Promise<PdksLoginResult> {
   const candidates = await prisma.pdksPersonnel.findMany({
-    where: { phone: normalizePhone(phone), isActive: true },
-    select: { id: true, tenantId: true, role: true },
+    where: { phone: normalizePhone(phone), isActive: true, passwordHash: { not: null } },
+    select: { id: true, tenantId: true, role: true, passwordHash: true, deviceIdHash: true },
   });
 
   for (const p of candidates) {
-    const codes = await prisma.pdksLoginCode.findMany({
-      where: { personnelId: p.id, usedAt: null, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
-    for (const c of codes) {
-      if (await compare(code, c.codeHash)) {
-        await prisma.pdksLoginCode.update({
-          where: { id: c.id },
-          data: { usedAt: new Date() },
-        });
-        const session: PdksSession = {
-          personnelId: p.id,
-          tenantId: p.tenantId,
-          role: p.role,
-        };
-        const token = await createPdksSessionToken(session);
-        (await cookies()).set(PDKS_SESSION_COOKIE, token, pdksSessionCookieOptions);
-        return session;
+    if (!p.passwordHash) continue;
+    if (!(await compare(password, p.passwordHash))) continue;
+
+    const jar = await cookies();
+    if (p.deviceIdHash) {
+      if (!deviceToken || hashDeviceToken(deviceToken) !== p.deviceIdHash) {
+        return { ok: false, reason: "device_mismatch" };
       }
+    } else {
+      // İlk giriş → bu cihaza bağla.
+      const token = randomBytes(32).toString("hex");
+      await prisma.pdksPersonnel.update({
+        where: { id: p.id },
+        data: { deviceIdHash: hashDeviceToken(token), deviceBoundAt: new Date() },
+      });
+      jar.set(PDKS_DEVICE_COOKIE, token, pdksDeviceCookieOptions);
     }
+
+    const session: PdksSession = { personnelId: p.id, tenantId: p.tenantId, role: p.role };
+    const sessionToken = await createPdksSessionToken(session);
+    jar.set(PDKS_SESSION_COOKIE, sessionToken, pdksSessionCookieOptions);
+    return { ok: true, session };
   }
-  return null;
+  return { ok: false, reason: "invalid" };
 }
 
 export async function logoutPdks(): Promise<void> {

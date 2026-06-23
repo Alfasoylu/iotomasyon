@@ -9,6 +9,27 @@
 
 ## 2026-06
 
+### PDKS — Şifre/PIN girişi + cihaz bağlama + çıkış saati + artan geç-bildirim (2026-06-23)
+
+Saha kullanımı için giriş ve güvenlik modeli güncellendi. Tek migration
+(`20260623210000_pdks_password_device_reminders`, additive).
+
+- **Giriş:** Tek kullanımlık kod kaldırıldı → **telefon + kalıcı şifre/PIN** (bcrypt).
+  Admin oluşturur (`createPersonnelAction`) ve sıfırlar (`resetPasswordAction`).
+  `loginWithCode` → `loginWithPassword`; `issueLoginCodeAction` kaldırıldı.
+- **Cihaz bağlama:** İlk giriş personelin cihazına bağlanır (`pdks_device` cookie +
+  `deviceIdHash` SHA-256). Başka cihaz `device_mismatch` ile reddedilir (403).
+  Admin `resetDeviceAction` ile cihaz bağını sıfırlar. IP'ye değil cihaza bağlıdır
+  (mobil IP değişiminden etkilenmez).
+- **Çıkış saati:** `expectedCheckOut` alanı; admin formunda giriş+çıkış saati.
+- **Artan geç-bildirim:** cron 5 dk'da bir çalışıp giriş yapmamış personele
+  "5/10/…/60 dakika geç kaldınız" gönderir; `lateReminderLastMin` ile dilim tekrar
+  edilmez, **60 dk'da durur**. `vercel.json` reminders cron'u `*/5 * * * *`
+  (Vercel Pro gerektirir; Hobby'de harici zamanlayıcı ile CRON_SECRET'lı çağrı).
+- **Geofence çıkışta da:** check-out artık girişle aynı sunucu-tarafı kontrole tabi
+  (konum zorunlu, doğruluk + yarıçap reddi). Şantiye varsayılan yarıçapı 100 m.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
+
 ### PDKS — Puantaj raporu zenginleştirme (2026-06-23)
 
 Puantaj sayfası ham giriş/çıkış listesinden öteye geçti; bordro için anlamlı sinyaller eklendi.

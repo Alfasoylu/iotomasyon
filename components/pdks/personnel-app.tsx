@@ -127,7 +127,7 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
 
   // ── Login formu ────────────────────────────────────────────────────────────
   const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const submitLogin = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -137,7 +137,7 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
         const res = await fetch("/api/pdks/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: phone.trim(), code: code.trim() }),
+          body: JSON.stringify({ phone: phone.trim(), password: password.trim() }),
         });
         const json = await res.json();
         if (!res.ok) {
@@ -151,7 +151,7 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
         setBusy(false);
       }
     },
-    [phone, code, router],
+    [phone, password, router],
   );
 
   // ── Check-in / out ───────────────────────────────────────────────────────────
@@ -232,7 +232,8 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
       <Shell>
         <h1 className="text-2xl font-semibold">PDKS — Giriş</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Telefon numaranız ve yöneticinizin verdiği tek kullanımlık kod ile giriş yapın.
+          Telefon numaranız ve yöneticinizin verdiği şifre ile giriş yapın. İlk giriş
+          bu cihaza tanımlanır; başka cihazdan giriş yapılamaz.
         </p>
         <form onSubmit={submitLogin} className="mt-6 space-y-4">
           <Field label="Telefon">
@@ -246,13 +247,13 @@ export function PersonnelApp({ initial }: { initial: Initial }) {
               className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-lg outline-none focus:border-sky-500"
             />
           </Field>
-          <Field label="Giriş Kodu">
+          <Field label="Şifre">
             <input
-              type="text"
-              inputMode="numeric"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="6 haneli kod"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Şifreniz / PIN"
               className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-lg tracking-widest outline-none focus:border-sky-500"
             />
           </Field>

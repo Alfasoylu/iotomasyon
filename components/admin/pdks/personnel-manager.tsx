@@ -10,7 +10,8 @@ import {
   createPersonnelAction,
   updatePersonnelAction,
   setPersonnelActiveAction,
-  issueLoginCodeAction,
+  resetPasswordAction,
+  resetDeviceAction,
 } from "@/lib/actions/pdks-admin-actions";
 
 type Person = {
@@ -18,37 +19,33 @@ type Person = {
   fullName: string;
   phone: string | null;
   expectedCheckIn: string | null;
+  expectedCheckOut: string | null;
   isActive: boolean;
   consented: boolean;
+  deviceBound: boolean;
 };
 
 const inputCls =
   "w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--border-strong)] focus:outline-none";
 
-function fmtExpiry(iso: string): string {
-  return new Date(iso).toLocaleTimeString("tr-TR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Istanbul",
-  });
-}
-
 export function PersonnelManager({ initial }: { initial: Person[] }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   const [showAdd, setShowAdd] = useState(false);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [expected, setExpected] = useState("");
+  const [password, setPassword] = useState("");
+  const [expectedIn, setExpectedIn] = useState("");
+  const [expectedOut, setExpectedOut] = useState("");
 
   const [editId, setEditId] = useState<string | null>(null);
   const [eName, setEName] = useState("");
   const [ePhone, setEPhone] = useState("");
-  const [eExpected, setEExpected] = useState("");
-
-  const [codes, setCodes] = useState<Record<string, { code: string; expiresAt: string }>>({});
+  const [eExpectedIn, setEExpectedIn] = useState("");
+  const [eExpectedOut, setEExpectedOut] = useState("");
 
   function run(
     fn: () => Promise<{ ok: boolean; message?: string }>,
@@ -56,6 +53,7 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
   ) {
     setPending(true);
     setError(null);
+    setInfo(null);
     startTransition(async () => {
       const r = await fn();
       if (!r.ok) {
@@ -72,11 +70,20 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
   function submitAdd(e: React.FormEvent) {
     e.preventDefault();
     run(
-      () => createPersonnelAction({ fullName, phone, expectedCheckIn: expected }),
+      () =>
+        createPersonnelAction({
+          fullName,
+          phone,
+          expectedCheckIn: expectedIn,
+          expectedCheckOut: expectedOut,
+          password,
+        }),
       () => {
         setFullName("");
         setPhone("");
-        setExpected("");
+        setPassword("");
+        setExpectedIn("");
+        setExpectedOut("");
         setShowAdd(false);
       },
     );
@@ -86,24 +93,20 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
     setEditId(p.id);
     setEName(p.fullName);
     setEPhone(p.phone ?? "");
-    setEExpected(p.expectedCheckIn ?? "");
+    setEExpectedIn(p.expectedCheckIn ?? "");
+    setEExpectedOut(p.expectedCheckOut ?? "");
     setError(null);
   }
 
-  function genCode(id: string) {
-    setPending(true);
-    setError(null);
-    startTransition(async () => {
-      const r = await issueLoginCodeAction(id);
-      const code = r.code;
-      if (!r.ok || !code) {
-        setError(r.message ?? "Kod üretilemedi.");
-        setPending(false);
-        return;
-      }
-      setCodes((c) => ({ ...c, [id]: { code, expiresAt: r.expiresAt ?? "" } }));
-      setPending(false);
-    });
+  function resetPassword(p: Person) {
+    const pw = window.prompt(`${p.fullName} için yeni şifre/PIN (en az 4 karakter):`);
+    if (pw == null) return; // iptal
+    run(() => resetPasswordAction(p.id, pw.trim()), () => setInfo(`${p.fullName}: şifre güncellendi.`));
+  }
+
+  function resetDevice(p: Person) {
+    if (!window.confirm(`${p.fullName} için cihaz bağı sıfırlansın mı? Sonraki giriş yeni cihaza bağlanır.`)) return;
+    run(() => resetDeviceAction(p.id), () => setInfo(`${p.fullName}: cihaz bağı sıfırlandı.`));
   }
 
   return (
@@ -111,6 +114,11 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
       {error && (
         <p className="rounded-lg bg-[var(--danger-dim)] px-4 py-2 text-sm text-[var(--danger)]">
           {error}
+        </p>
+      )}
+      {info && (
+        <p className="rounded-lg bg-[var(--success-dim)] px-4 py-2 text-sm text-[var(--success)]">
+          {info}
         </p>
       )}
 
@@ -123,7 +131,7 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
       {showAdd && (
         <Card className="p-5">
           <form onSubmit={submitAdd} className="grid gap-4 md:grid-cols-3">
-            <div className="md:col-span-1">
+            <div>
               <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Ad Soyad</label>
               <input className={inputCls} value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Ali Veli" />
             </div>
@@ -132,10 +140,18 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
               <input className={inputCls} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="05XX XXX XX XX" />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Beklenen giriş (ops.)</label>
-              <input className={inputCls} value={expected} onChange={(e) => setExpected(e.target.value)} placeholder="08:30" />
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Şifre / PIN</label>
+              <input className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="En az 4 karakter" />
             </div>
-            <div className="md:col-span-3 flex justify-end">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Beklenen giriş (ops.)</label>
+              <input className={inputCls} value={expectedIn} onChange={(e) => setExpectedIn(e.target.value)} placeholder="08:30" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Beklenen çıkış (ops.)</label>
+              <input className={inputCls} value={expectedOut} onChange={(e) => setExpectedOut(e.target.value)} placeholder="18:00" />
+            </div>
+            <div className="flex items-end justify-end">
               <Button type="submit" disabled={pending}>
                 {pending ? "Kaydediliyor…" : "Ekle"}
               </Button>
@@ -150,7 +166,8 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
             <tr>
               <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Ad Soyad</th>
               <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Telefon</th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Beklenen giriş</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Giriş</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Çıkış</th>
               <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Durum</th>
               <th className="px-4 py-3 text-right text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İşlemler</th>
             </tr>
@@ -158,14 +175,13 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
           <tbody className="divide-y divide-[var(--border-subtle)]">
             {initial.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-[var(--text-muted)]">
+                <td colSpan={6} className="px-4 py-8 text-center text-[var(--text-muted)]">
                   Henüz personel yok. &quot;Yeni personel&quot; ile ekleyin.
                 </td>
               </tr>
             )}
             {initial.map((p) => {
               const editing = editId === p.id;
-              const code = codes[p.id];
               return (
                 <tr key={p.id} className="align-top hover:bg-[var(--surface-1)]">
                   <td className="px-4 py-3 font-medium text-[var(--text-primary)]">
@@ -184,9 +200,16 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
                   </td>
                   <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums">
                     {editing ? (
-                      <input className={inputCls} value={eExpected} onChange={(e) => setEExpected(e.target.value)} placeholder="08:30" />
+                      <input className={inputCls} value={eExpectedIn} onChange={(e) => setEExpectedIn(e.target.value)} placeholder="08:30" />
                     ) : (
                       p.expectedCheckIn ?? "—"
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums">
+                    {editing ? (
+                      <input className={inputCls} value={eExpectedOut} onChange={(e) => setEExpectedOut(e.target.value)} placeholder="18:00" />
+                    ) : (
+                      p.expectedCheckOut ?? "—"
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -194,6 +217,7 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
                       <Badge tone={p.isActive ? "success" : "danger"}>
                         {p.isActive ? "Aktif" : "Pasif"}
                       </Badge>
+                      {p.deviceBound && <Badge tone="default">Cihaz bağlı</Badge>}
                       {!p.consented && <Badge tone="warning">KVKK bekliyor</Badge>}
                     </div>
                   </td>
@@ -211,7 +235,8 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
                                   updatePersonnelAction(p.id, {
                                     fullName: eName,
                                     phone: ePhone,
-                                    expectedCheckIn: eExpected,
+                                    expectedCheckIn: eExpectedIn,
+                                    expectedCheckOut: eExpectedOut,
                                   }),
                                 () => setEditId(null),
                               )
@@ -223,8 +248,11 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
                         </>
                       ) : (
                         <>
-                          <Button variant="secondary" onClick={() => genCode(p.id)} disabled={pending}>
-                            Kod üret
+                          <Button variant="secondary" onClick={() => resetPassword(p)} disabled={pending}>
+                            Şifre sıfırla
+                          </Button>
+                          <Button variant="secondary" onClick={() => resetDevice(p)} disabled={pending || !p.deviceBound}>
+                            Cihazı sıfırla
                           </Button>
                           <Button variant="secondary" onClick={() => startEdit(p)} disabled={pending}>
                             Düzenle
@@ -239,16 +267,6 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
                         </>
                       )}
                     </div>
-                    {code && (
-                      <div className="mt-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-2 text-right">
-                        <span className="font-mono text-lg font-bold tracking-widest text-[var(--text-primary)]">
-                          {code.code}
-                        </span>
-                        <span className="ml-2 text-xs text-[var(--text-muted)]">
-                          {code.expiresAt ? `${fmtExpiry(code.expiresAt)}'e kadar geçerli` : ""}
-                        </span>
-                      </div>
-                    )}
                   </td>
                 </tr>
               );

@@ -6,10 +6,11 @@ import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prismaPdks } from "@/lib/pdks/prisma";
-import { issueLoginCode, normalizePhone } from "@/lib/pdks/auth";
+import { hashPassword, normalizePhone } from "@/lib/pdks/auth";
 import {
   personnelSchema,
   type PersonnelInput,
+  passwordSchema,
   worksiteSchema,
   type WorksiteInput,
 } from "@/lib/validations/pdks";
@@ -33,8 +34,8 @@ function revalidatePdks() {
 }
 
 export async function createPersonnelAction(
-  values: PersonnelInput,
-): Promise<ActionResult<PersonnelField>> {
+  values: PersonnelInput & { password: string },
+): Promise<ActionResult<PersonnelField | "password">> {
   const parsed = personnelSchema.safeParse(values);
   if (!parsed.success) {
     return {
@@ -43,9 +44,18 @@ export async function createPersonnelAction(
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
+  const pw = passwordSchema.safeParse(values.password);
+  if (!pw.success) {
+    return {
+      ok: false,
+      message: pw.error.issues[0]?.message ?? "Şifre geçersiz.",
+      fieldErrors: { password: [pw.error.issues[0]?.message ?? "Şifre geçersiz."] },
+    };
+  }
   const user = await guard();
   if (!user) return PERM_DENIED;
 
+  const passwordHash = await hashPassword(pw.data);
   await runWithPdksAdmin(user, async (tenantId) => {
     await prismaPdks.pdksPersonnel.create({
       data: {
@@ -53,6 +63,8 @@ export async function createPersonnelAction(
         fullName: parsed.data.fullName,
         phone: normalizePhone(parsed.data.phone),
         expectedCheckIn: parsed.data.expectedCheckIn || null,
+        expectedCheckOut: parsed.data.expectedCheckOut || null,
+        passwordHash,
         role: "employee",
       },
     });
@@ -85,6 +97,7 @@ export async function updatePersonnelAction(
         fullName: parsed.data.fullName,
         phone: normalizePhone(parsed.data.phone),
         expectedCheckIn: parsed.data.expectedCheckIn || null,
+        expectedCheckOut: parsed.data.expectedCheckOut || null,
       },
     }),
   );
@@ -110,27 +123,46 @@ export async function setPersonnelActiveAction(
   return { ok: true };
 }
 
-export type IssueCodeResult = {
-  ok: boolean;
-  message?: string;
-  code?: string;
-  expiresAt?: string;
-};
-
-/** Personel için tek kullanımlık 6 haneli giriş kodu üretir; düz kodu döner. */
-export async function issueLoginCodeAction(personnelId: string): Promise<IssueCodeResult> {
+/** Personelin şifresini/PIN'ini sıfırlar (admin yeni şifreyi belirler). */
+export async function resetPasswordAction(
+  personnelId: string,
+  newPassword: string,
+): Promise<ActionResult> {
+  const pw = passwordSchema.safeParse(newPassword);
+  if (!pw.success) {
+    return { ok: false, message: pw.error.issues[0]?.message ?? "Şifre geçersiz." };
+  }
   const user = await guard();
   if (!user) return PERM_DENIED;
 
-  return runWithPdksAdmin(user, async (tenantId) => {
-    const p = await prismaPdks.pdksPersonnel.findFirst({ where: { id: personnelId } });
-    if (!p) return { ok: false, message: "Personel bulunamadı." };
-    if (!p.phone) {
-      return { ok: false, message: "Önce telefon numarası ekleyin (giriş telefonla yapılır)." };
-    }
-    const { code, expiresAt } = await issueLoginCode(personnelId, tenantId);
-    return { ok: true, code, expiresAt: expiresAt.toISOString() };
-  });
+  const passwordHash = await hashPassword(pw.data);
+  const { count } = await runWithPdksAdmin(user, () =>
+    prismaPdks.pdksPersonnel.updateMany({ where: { id: personnelId }, data: { passwordHash } }),
+  );
+  if (count === 0) return { ok: false, message: "Personel bulunamadı." };
+
+  revalidatePdks();
+  return { ok: true };
+}
+
+/**
+ * Personelin cihaz bağını kaldırır; bir sonraki giriş yeni cihaza bağlanır.
+ * (Telefon değişimi / cihaz kaybı durumunda kullanılır.)
+ */
+export async function resetDeviceAction(personnelId: string): Promise<ActionResult> {
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  const { count } = await runWithPdksAdmin(user, () =>
+    prismaPdks.pdksPersonnel.updateMany({
+      where: { id: personnelId },
+      data: { deviceIdHash: null, deviceBoundAt: null },
+    }),
+  );
+  if (count === 0) return { ok: false, message: "Personel bulunamadı." };
+
+  revalidatePdks();
+  return { ok: true };
 }
 
 // ── Şantiye (worksite) ───────────────────────────────────────────────────────

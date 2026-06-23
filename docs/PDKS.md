@@ -36,17 +36,23 @@ yönetici paneli (`/admin/pdks`) olarak yaşar.
 
 ## Kimlik doğrulama
 
-- **Personel girişi:** telefon + yöneticinin ürettiği **tek kullanımlık 6 haneli kod**
-  (bcrypt, 15 dk geçerli, SMS yok). Kod tüketilince tekrar kullanılamaz.
+- **Personel girişi:** telefon + **kalıcı şifre/PIN** (bcrypt). Admin oluşturur ve
+  sıfırlar; SMS yok. Personel kendi telefonunda bir kez girer, oturum 7 gün kalır.
+- **Cihaz bağlama (tek cihaz kilidi):** İlk başarılı giriş, personelin cihazına
+  uzun ömürlü `pdks_device` cookie token'ı yazar ve hash'ini (`deviceIdHash`,
+  SHA-256) saklar. Sonraki girişlerde token eşleşmezse `device_mismatch` (403).
+  Cihaz/telefon değişiminde admin **"cihazı sıfırla"** (`resetDeviceAction`) der.
+  IP'ye değil cihaza bağlıdır → mobil IP değişiminden etkilenmez.
 - Telefon kanonik normalize edilir (`5XXXXXXXXX`); giriş ve kayıt aynı normalize'i
   kullanır. Oturum imzalı cookie ile taşınır (`lib/pdks/session.ts`).
 - **Yönetici:** ana uygulama kullanıcısı; `/admin/pdks` `PERMISSIONS.PDKS_MANAGE`
-  ile korunur. Personel/şantiye CRUD, kod üretimi, puantaj/CSV.
+  ile korunur. Personel/şantiye CRUD, şifre/cihaz sıfırlama, puantaj/CSV.
 
 ## Geofence ve doğruluk
 
-- Check-in: en yakın atanmış aktif şantiye haversine ile bulunur.
-- **Yarıçap kapısı:** mesafe `worksite.radiusMeters`'i aşarsa reddedilir.
+- **Check-in ve check-out** aynı sunucu-tarafı kontrole tabidir; ikisinde de konum zorunlu.
+- En yakın atanmış aktif şantiye haversine ile bulunur (check-out'ta kaydın şantiyesi).
+- **Yarıçap kapısı:** mesafe `worksite.radiusMeters`'i (varsayılan 100 m) aşarsa reddedilir.
 - **Doğruluk kapısı:** cihaz `accuracy` değeri `worksite.maxAccuracyMeters`'i
   (varsayılan 100 m) aşarsa reddedilir — şantiye-başına ayarlanır (şehir içi/kapalı
   alan GPS'i için gevşetilebilir).
@@ -57,8 +63,12 @@ yönetici paneli (`/admin/pdks`) olarak yaşar.
   ile uygulama gibi yüklenir.
 - **Web Push (VAPID):** `PDKS_VAPID_PUBLIC_KEY`, `PDKS_VAPID_PRIVATE_KEY`,
   `PDKS_VAPID_SUBJECT` env'leri gerekir (`npx web-push generate-vapid-keys`).
-- **Geç-kalan hatırlatma cron'u:** `/api/pdks/cron/reminders` (Vercel cron);
-  `lastLateReminderOn` ile günde bir kez (idempotent).
+- **Artan geç-kalma hatırlatması:** `/api/pdks/cron/reminders` her 5 dk çalışır;
+  giriş yapmamış personele "5/10/…/60 dakika geç kaldınız" gönderir, 60 dk'da durur.
+  `lateReminderLastMin` + `lastLateReminderOn` ile aynı dilim tekrar edilmez.
+  `vercel.json`'da `*/5 * * * *` — **Vercel Pro gerektirir**; Hobby plandaysanız bu
+  uç noktayı harici bir zamanlayıcı (cron-job.org / GitHub Actions) ile
+  `Authorization: Bearer $CRON_SECRET` başlığıyla her 5 dk çağırın.
 
 ## Kurulum / test
 

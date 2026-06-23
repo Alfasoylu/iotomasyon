@@ -9,23 +9,30 @@ Proje: **iotomasyon** · ref `frbxpodiostxuwlrubkt`
 
 ## Adımlar
 
-1. **Şema** — `apply_migrations_combined.sql`
-   4 PDKS migration'ını (Faz 1 tablolar + giriş kodları + geç-hatırlatma + KVKK)
-   tek transaction'da uygular ve `_prisma_migrations`'a doğru checksum'larla kaydeder
-   (böylece ileride `prisma migrate deploy` bunları yeniden çalıştırmaz).
+Migration'ları **sırayla** uygulayın (her biri `_prisma_migrations`'a doğru
+checksum'la kaydeder; böylece ileride `prisma migrate deploy` yeniden çalıştırmaz):
 
-2. **Test verisi** — `test_seed.sql` *(opsiyonel, sadece test için)*
+1. **Temel şema** — `apply_migrations_combined.sql`
+   İlk 4 PDKS migration'ı (tablolar + giriş kodları + geç-hatırlatma + KVKK).
+2. **Şantiye doğruluk eşiği** — `apply_max_accuracy.sql`
+   `pdks_worksites.maxAccuracyMeters`.
+3. **Şifre/cihaz/çıkış/bildirim** — `apply_password_device_reminders.sql`
+   Şifre+cihaz bağlama+çıkış saati+artan geç-bildirim; varsayılan yarıçap 100 m.
+   (Mevcut test personeline `1234` PIN'ini de atar.)
+
+4. **Test verisi** — `test_seed.sql` *(opsiyonel; tabloları ilk kez kuruyorsanız)*
    - Tenant: "Test Şirketi" / Şantiye: radius 100.000 km (geofence testte her konumu kabul eder)
-   - Personel: telefon `5551112233`, giriş kodu `123456` (2035'e kadar geçerli)
+   - Personel: telefon `5551112233`, **şifre/PIN `1234`**
    - KVKK rızası verilmedi → uygulamada önce onay akışı denenir.
    - Test bitince sonundaki `DELETE` satırını çalıştırıp temizleyin.
 
-3. **Ortam değişkenleri (Vercel)** — Web Push için:
+5. **Ortam değişkenleri (Vercel)** — Web Push için:
    `npx web-push generate-vapid-keys` →
-   `PDKS_VAPID_PUBLIC_KEY`, `PDKS_VAPID_PRIVATE_KEY`, `PDKS_VAPID_SUBJECT`
-   (yalnızca push test edilecekse gerekli; giriş/çıkış testi için şart değil).
+   `PDKS_VAPID_PUBLIC_KEY`, `PDKS_VAPID_PRIVATE_KEY`, `PDKS_VAPID_SUBJECT`.
+   Artan geç-bildirim cron'u (`*/5`) **Vercel Pro** ister; Hobby'de harici
+   zamanlayıcı ile `/api/pdks/cron/reminders`'ı `Bearer $CRON_SECRET` ile çağırın.
 
-4. **Telefonda test** — `/pdks` aç → Telefon `5551112233`, Kod `123456` →
+6. **Telefonda test** — `/pdks` aç → Telefon `05551112233`, Şifre `1234` →
    KVKK onayla → Giriş yap (konum izni) → check-in / check-out.
 
 ## Doğrulama (bu kod tabanında yapıldı)

@@ -109,10 +109,11 @@ Implemented modules:
 - activity timeline
 - Turkish location layer
 - PDKS (Personel Devam Kontrol Sistemi) — çok-kiracılı konum-doğrulamalı personel
-  giriş/çıkış: personel PWA (`/pdks`, tek kullanımlık kod girişi, KVKK rızası,
-  sunucu-tarafı geofence + şantiye-başına doğruluk eşiği), yönetici paneli
-  (`/admin/pdks` canlı pano + personel/şantiye CRUD + kod üretimi + puantaj/CSV),
-  Web Push (VAPID) + geç-kalan hatırlatma cron'u. Tenant izolasyonu uygulama
+  giriş/çıkış: personel PWA (`/pdks`, telefon+şifre/PIN girişi, tek-cihaz kilidi,
+  KVKK rızası, giriş/çıkışta sunucu-tarafı geofence + şantiye-başına doğruluk eşiği),
+  yönetici paneli (`/admin/pdks` canlı pano + personel/şantiye CRUD + şifre/cihaz
+  sıfırlama + puantaj/CSV + geç-giriş/eksik-çıkış özeti), Web Push (VAPID) + 5 dk'da
+  bir artan geç-kalma hatırlatması (1 saatte durur). Tenant izolasyonu uygulama
   katmanında (AsyncLocalStorage + scoped Prisma). Detay: `docs/PDKS.md`.
 
 Important constraint:

@@ -1686,9 +1686,18 @@ model PdksPersonnel {
   phone           String?
   email           String?
   role            String     @default("employee") // 'tenant_admin' | 'employee'
+  // Kalıcı giriş şifresi/PIN (bcrypt). null = henüz şifre atanmamış → giriş yapamaz.
+  passwordHash    String?
+  // Cihaz bağlama: ilk girişte üretilen cihaz token'ının SHA-256 hash'i. null =
+  // henüz cihaza bağlı değil (ilk giriş bağlar). Admin "cihazı sıfırla" ile null'lar.
+  deviceIdHash    String?
+  deviceBoundAt   DateTime?
   expectedCheckIn String? // "08:30" — hatırlatma eşiği
+  expectedCheckOut String? // "18:00" — beklenen çıkış saati
   // Geç-kalan hatırlatması en son hangi TR gününde gönderildi (cron idempotency).
   lastLateReminderOn DateTime? @db.Date
+  // O gün gönderilen son "geç kalma" eşiği (dakika); aynı 5-dk dilimini tekrar göndermez.
+  lateReminderLastMin Int      @default(0)
   // KVKK açık rıza zamanı (konum işleme). null = rıza yok → giriş/çıkış engellenir.
   kvkkConsentAt   DateTime?
   isActive        Boolean    @default(true)
@@ -1710,7 +1719,7 @@ model PdksWorksite {
   name         String
   latitude     Float
   longitude    Float
-  radiusMeters Int        @default(150)
+  radiusMeters Int        @default(100)
   // Kabul edilen azami konum doğruluğu (GPS accuracy, metre). Cihazın bildirdiği
   // accuracy bunu aşarsa check-in reddedilir. Şehir içi/yoğun yapı sahalarında
   // GPS zayıf olabileceğinden şantiye-başına ayarlanabilir (spec §7).

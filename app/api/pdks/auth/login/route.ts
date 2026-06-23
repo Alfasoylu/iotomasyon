@@ -1,12 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
 
-import { loginWithCode } from "@/lib/pdks/auth";
+import { loginWithPassword } from "@/lib/pdks/auth";
+import { PDKS_DEVICE_COOKIE } from "@/lib/pdks/session";
 
 export const dynamic = "force-dynamic";
 
-/** POST /api/pdks/auth/login  body: { phone, code } */
+/** POST /api/pdks/auth/login  body: { phone, password } */
 export async function POST(req: NextRequest) {
-  let body: { phone?: unknown; code?: unknown };
+  let body: { phone?: unknown; password?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -14,18 +16,26 @@ export async function POST(req: NextRequest) {
   }
 
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-  const code = typeof body.code === "string" ? body.code.trim() : "";
-  if (!phone || !code) {
-    return NextResponse.json({ error: "Telefon ve kod gerekli" }, { status: 400 });
+  const password = typeof body.password === "string" ? body.password.trim() : "";
+  if (!phone || !password) {
+    return NextResponse.json({ error: "Telefon ve şifre gerekli" }, { status: 400 });
   }
 
-  const session = await loginWithCode(phone, code);
-  if (!session) {
-    return NextResponse.json(
-      { error: "Telefon veya kod hatalı ya da kodun süresi dolmuş" },
-      { status: 401 },
-    );
+  const deviceToken = (await cookies()).get(PDKS_DEVICE_COOKIE)?.value;
+  const result = await loginWithPassword(phone, password, deviceToken);
+
+  if (!result.ok) {
+    if (result.reason === "device_mismatch") {
+      return NextResponse.json(
+        {
+          error:
+            "Bu hesap başka bir cihaza tanımlı. Yöneticinizden cihaz sıfırlaması isteyin.",
+        },
+        { status: 403 },
+      );
+    }
+    return NextResponse.json({ error: "Telefon veya şifre hatalı" }, { status: 401 });
   }
 
-  return NextResponse.json({ ok: true, role: session.role });
+  return NextResponse.json({ ok: true, role: result.session.role });
 }

@@ -7,8 +7,9 @@ import { currentTimeTR, workDateTR } from "@/lib/pdks/geo";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Beklenen giriş saatinden bu kadar dakika sonra "geç kaldı" sayılır.
-const GRACE_MIN = 30;
+// İlk hatırlatma kaç dakika gecikmeden sonra; ve en geç kaç dakikaya kadar (üst sınır).
+const FIRST_REMINDER_MIN = 5;
+const MAX_REMINDER_MIN = 60; // 1 saat → en fazla 12 bildirim (5,10,…,60)
 
 function toMinutes(hhmm: string): number | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
@@ -20,14 +21,17 @@ function toMinutes(hhmm: string): number | null {
 }
 
 /**
- * GET /api/pdks/cron/reminders  (Vercel Cron — vercel.json)
+ * GET /api/pdks/cron/reminders  (Vercel Cron — vercel.json, her 5 dk)
  *
- * Geç-kalan hatırlatması. Çok-tenant'lı bir iş olduğundan KASITLI olarak unscoped
- * `prisma` kullanır (oturum/tenant bağlamı yok; prismaPdks burada fail-closed atardı).
- * `lastLateReminderOn` ile gün içinde tekrar göndermez (idempotent).
+ * Geç-kalan hatırlatması. Çok-tenant'lı iş olduğundan KASITLI olarak unscoped
+ * `prisma` kullanır (oturum/tenant bağlamı yok). Her 5 dk'da bir çağrılır ve
+ * giriş yapmamış personele gecikme dilimine göre ("5/10/…/60 dakika geç kaldınız")
+ * bildirim gönderir. `lateReminderLastMin` ile aynı 5-dk dilimini tekrar göndermez;
+ * `lastLateReminderOn` ile gün değişince sayaç sıfırlanır. 60 dk'da durur.
  *
- * Hobby plan cron limiti (günde 1) nedeniyle hafta içi tek sefer çalışır; bu yüzden
- * çalıştığı saatte eşiği (beklenen + GRACE) henüz geçmemiş personel atlanır.
+ * NOT: 5 dk'lık cron Vercel Pro plan gerektirir. Hobby plandaysanız bu uç noktayı
+ * harici bir zamanlayıcı (cron-job.org / GitHub Actions) ile CRON_SECRET Bearer
+ * başlığıyla her 5 dk'da bir çağırın.
  */
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
@@ -45,11 +49,7 @@ export async function GET(req: NextRequest) {
   }
 
   const candidates = await prisma.pdksPersonnel.findMany({
-    where: {
-      isActive: true,
-      expectedCheckIn: { not: null },
-      OR: [{ lastLateReminderOn: null }, { lastLateReminderOn: { not: today } }],
-    },
+    where: { isActive: true, expectedCheckIn: { not: null } },
     include: { subs: true },
   });
 
@@ -59,31 +59,42 @@ export async function GET(req: NextRequest) {
   for (const p of candidates) {
     const expected = toMinutes(p.expectedCheckIn ?? "");
     if (expected == null) continue;
-    if (nowMin < expected + GRACE_MIN) continue; // eşik henüz geçmedi
 
+    const minutesLate = nowMin - expected;
+    if (minutesLate < FIRST_REMINDER_MIN) continue; // henüz geç değil
+    if (minutesLate > MAX_REMINDER_MIN) continue; // 1 saat üst sınırı geçti
+
+    // 5'in katına yuvarla: 5, 10, 15, … 60
+    const bucket = Math.floor(minutesLate / 5) * 5;
+
+    // Gün değiştiyse sayaç sıfır; aynı/daha düşük dilim zaten gönderildiyse atla.
+    const sameDay = p.lastLateReminderOn != null && p.lastLateReminderOn.getTime() === today.getTime();
+    const lastMin = sameDay ? p.lateReminderLastMin : 0;
+    if (bucket <= lastMin) continue;
+
+    // Giriş yapmışsa hatırlatma yok.
     const rec = await prisma.pdksAttendanceRecord.findFirst({
       where: { personnelId: p.id, workDate: today, checkInAt: { not: null } },
       select: { id: true },
     });
-    if (rec) continue; // giriş yapmış — hatırlatma yok
+    if (rec) continue;
 
-    if (p.subs.length > 0) {
-      const dead = await sendPushToSubs(
-        p.subs.map((s) => ({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth })),
-        {
-          title: "Giriş hatırlatması",
-          body: "Bugün henüz giriş yapmadınız. Şantiyeye ulaştıysanız lütfen giriş yapın.",
-          url: "/pdks",
-        },
-      );
-      deadEndpoints.push(...dead);
-      reminded += 1;
-    }
+    if (p.subs.length === 0) continue; // gönderilecek cihaz yok
 
-    // Push olmasa bile işaretle ki aynı gün tekrar taranmasın.
+    const dead = await sendPushToSubs(
+      p.subs.map((s) => ({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth })),
+      {
+        title: "⏰ Geç kaldınız",
+        body: `${bucket} dakika geç kaldınız. Şantiyeye ulaştıysanız lütfen giriş yapın.`,
+        url: "/pdks",
+      },
+    );
+    deadEndpoints.push(...dead);
+    reminded += 1;
+
     await prisma.pdksPersonnel.update({
       where: { id: p.id },
-      data: { lastLateReminderOn: today },
+      data: { lastLateReminderOn: today, lateReminderLastMin: bucket },
     });
   }
 

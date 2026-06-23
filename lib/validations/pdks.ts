@@ -14,9 +14,22 @@ export const personnelSchema = z.object({
     .trim()
     .regex(/^([01]?\d|2[0-3]):[0-5]\d$/, "Saat HH:MM biçiminde olmalı.")
     .or(z.literal("")),
+  // "18:00" — beklenen çıkış saati (ops.).
+  expectedCheckOut: z
+    .string()
+    .trim()
+    .regex(/^([01]?\d|2[0-3]):[0-5]\d$/, "Saat HH:MM biçiminde olmalı.")
+    .or(z.literal("")),
 });
 
 export type PersonnelInput = z.infer<typeof personnelSchema>;
+
+/** Personel giriş şifresi/PIN — en az 4 karakter (sayısal PIN de olabilir). */
+export const passwordSchema = z
+  .string()
+  .trim()
+  .min(4, "Şifre en az 4 karakter olmalı.")
+  .max(64, "Şifre çok uzun.");
 
 /** PDKS şantiye formu (Step 9c). */
 export const worksiteSchema = z.object({

@@ -21,13 +21,16 @@ export default async function PdksPersonnelPage() {
         fullName: true,
         phone: true,
         expectedCheckIn: true,
+        expectedCheckOut: true,
         isActive: true,
         kvkkConsentAt: true,
+        deviceBoundAt: true,
       },
     });
-    return list.map(({ kvkkConsentAt, ...rest }) => ({
+    return list.map(({ kvkkConsentAt, deviceBoundAt, ...rest }) => ({
       ...rest,
       consented: !!kvkkConsentAt,
+      deviceBound: !!deviceBoundAt,
     }));
   });
 
@@ -42,8 +45,8 @@ export default async function PdksPersonnelPage() {
             Personel
           </h1>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-            Personel ekleyin, telefon/beklenen giriş saatini düzenleyin, tek kullanımlık
-            giriş kodu üretin.
+            Personel ekleyin, telefon ve giriş/çıkış saatlerini düzenleyin, şifre
+            oluşturun/sıfırlayın, gerekirse cihaz bağını sıfırlayın.
           </p>
         </div>
         <Link href="/admin/pdks">
