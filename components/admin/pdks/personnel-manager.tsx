@@ -141,7 +141,8 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Şifre / PIN</label>
-              <input className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="En az 4 karakter" />
+              <input className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="En az 4 karakter" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off" />
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Tavsiye: 4-6 rakamlı PIN (örn. 1234). Yazdığınız aynen kaydolur.</p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Beklenen giriş (ops.)</label>
