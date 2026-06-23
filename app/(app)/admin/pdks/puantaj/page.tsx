@@ -1,12 +1,13 @@
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MetricCard } from "@/components/ui/metric-card";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
-import { fetchTimesheet, parseRange } from "@/lib/pdks/timesheet";
+import { fetchTimesheet, parseRange, buildTimesheetSummary } from "@/lib/pdks/timesheet";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,9 @@ export default async function PdksTimesheetPage({
 
   const totalHours = rows.reduce((acc, r) => acc + (r.hours ?? 0), 0);
   const distinctPersonnel = new Set(rows.map((r) => r.personnelId)).size;
+  const lateCount = rows.filter((r) => r.late).length;
+  const missingCount = rows.filter((r) => r.missingCheckout).length;
+  const summary = buildTimesheetSummary(rows);
 
   return (
     <div className="space-y-6">
@@ -78,11 +82,52 @@ export default async function PdksTimesheetPage({
         </form>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         <MetricCard label="Kayıt sayısı" value={String(rows.length)} />
         <MetricCard label="Personel" value={String(distinctPersonnel)} />
         <MetricCard label="Toplam saat" value={totalHours.toFixed(1)} />
+        <MetricCard label="Geç giriş" value={String(lateCount)} />
+        <MetricCard label="Eksik çıkış" value={String(missingCount)} />
       </div>
+
+      {summary.length > 0 && (
+        <Card className="overflow-hidden p-0 rounded-lg">
+          <div className="border-b border-[var(--border-default)] bg-[var(--surface-1)] px-4 py-3">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              Personel özeti
+            </h2>
+            <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+              Seçili dönemde personel başına gün, toplam mesai, geç giriş ve eksik çıkış.
+            </p>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)]">
+              <tr>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Personel</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Gün</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Toplam saat</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Geç giriş</th>
+                <th className="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Eksik çıkış</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border-subtle)]">
+              {summary.map((s) => (
+                <tr key={s.personnelId} className="hover:bg-[var(--surface-1)]">
+                  <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{s.personnelName}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-[var(--text-secondary)]">{s.days}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-[var(--text-secondary)]">{s.totalHours.toFixed(1)} s</td>
+                  <td className="px-4 py-2.5 tabular-nums">
+                    {s.lateCount > 0 ? <Badge tone="warning">{s.lateCount}</Badge> : <span className="text-[var(--text-muted)]">—</span>}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums">
+                    {s.missingCheckoutCount > 0 ? <Badge tone="danger">{s.missingCheckoutCount}</Badge> : <span className="text-[var(--text-muted)]">—</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
 
       <Card className="overflow-hidden p-0 rounded-lg">
         <table className="w-full text-sm">
@@ -109,8 +154,18 @@ export default async function PdksTimesheetPage({
               <tr key={`${r.personnelId}-${i}`} className="hover:bg-[var(--surface-1)]">
                 <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{r.personnelName}</td>
                 <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums">{trDate(r.workDate)}</td>
-                <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums font-mono">{trTime(r.checkInAt)}</td>
-                <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums font-mono">{trTime(r.checkOutAt)}</td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums font-mono">
+                  <span className="inline-flex items-center gap-1.5">
+                    {trTime(r.checkInAt)}
+                    {r.late && <Badge tone="warning">Geç</Badge>}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums font-mono">
+                  <span className="inline-flex items-center gap-1.5">
+                    {trTime(r.checkOutAt)}
+                    {r.missingCheckout && <Badge tone="danger">Eksik</Badge>}
+                  </span>
+                </td>
                 <td className="px-4 py-3 text-[var(--text-secondary)] tabular-nums">
                   {r.hours != null ? `${r.hours.toFixed(2)} s` : "—"}
                 </td>

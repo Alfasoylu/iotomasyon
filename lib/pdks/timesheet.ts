@@ -12,9 +12,42 @@ export type TimesheetRow = {
   checkInDistanceM: number | null;
   checkOutDistanceM: number | null;
   hours: number | null; // çalışılan saat (giriş+çıkış varsa)
+  expectedCheckIn: string | null; // "HH:MM" — personelin beklenen giriş saati
+  late: boolean; // giriş, beklenen saatten sonra mı (beklenen tanımlıysa)
+  missingCheckout: boolean; // giriş var ama çıkış yok
+};
+
+/** Personel-bazlı dönem özeti (geç giriş / eksik çıkış / toplam saat). */
+export type TimesheetSummary = {
+  personnelId: string;
+  personnelName: string;
+  days: number; // giriş yapılan ayrı gün sayısı
+  totalHours: number;
+  lateCount: number;
+  missingCheckoutCount: number;
 };
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Date → Europe/Istanbul gününde dakika (0-1439). */
+function trMinutes(d: Date): number {
+  const hm = d.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Istanbul",
+  });
+  const [h, m] = hm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** "H:MM" / "HH:MM" → dakika; geçersizse null. */
+function hhmmToMinutes(s: string | null): number | null {
+  if (!s) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
 
 /**
  * Tarih aralığını çözer. workDate (@db.Date) TR gününün UTC gece-yarısı olarak
@@ -42,24 +75,59 @@ export async function fetchTimesheet(from: Date, to: Date): Promise<TimesheetRow
   const records = await prismaPdks.pdksAttendanceRecord.findMany({
     where: { workDate: { gte: from, lte: to } },
     include: {
-      personnel: { select: { fullName: true } },
+      personnel: { select: { fullName: true, expectedCheckIn: true } },
       worksite: { select: { name: true } },
     },
     orderBy: [{ workDate: "asc" }, { createdAt: "asc" }],
   });
 
-  return records.map((r) => ({
-    personnelId: r.personnelId,
-    personnelName: r.personnel.fullName,
-    workDate: r.workDate,
-    checkInAt: r.checkInAt,
-    checkOutAt: r.checkOutAt,
-    worksiteName: r.worksite?.name ?? null,
-    checkInDistanceM: r.checkInDistanceM,
-    checkOutDistanceM: r.checkOutDistanceM,
-    hours:
-      r.checkInAt && r.checkOutAt
-        ? (r.checkOutAt.getTime() - r.checkInAt.getTime()) / 3_600_000
-        : null,
-  }));
+  return records.map((r) => {
+    const expectedMin = hhmmToMinutes(r.personnel.expectedCheckIn);
+    const late =
+      r.checkInAt != null && expectedMin != null && trMinutes(r.checkInAt) > expectedMin;
+    return {
+      personnelId: r.personnelId,
+      personnelName: r.personnel.fullName,
+      workDate: r.workDate,
+      checkInAt: r.checkInAt,
+      checkOutAt: r.checkOutAt,
+      worksiteName: r.worksite?.name ?? null,
+      checkInDistanceM: r.checkInDistanceM,
+      checkOutDistanceM: r.checkOutDistanceM,
+      hours:
+        r.checkInAt && r.checkOutAt
+          ? (r.checkOutAt.getTime() - r.checkInAt.getTime()) / 3_600_000
+          : null,
+      expectedCheckIn: r.personnel.expectedCheckIn,
+      late,
+      missingCheckout: r.checkInAt != null && r.checkOutAt == null,
+    };
+  });
+}
+
+/** Puantaj satırlarını personel-bazlı döneme özetler (ada göre sıralı). */
+export function buildTimesheetSummary(rows: TimesheetRow[]): TimesheetSummary[] {
+  const byPersonnel = new Map<string, TimesheetSummary & { _days: Set<string> }>();
+  for (const r of rows) {
+    let s = byPersonnel.get(r.personnelId);
+    if (!s) {
+      s = {
+        personnelId: r.personnelId,
+        personnelName: r.personnelName,
+        days: 0,
+        totalHours: 0,
+        lateCount: 0,
+        missingCheckoutCount: 0,
+        _days: new Set<string>(),
+      };
+      byPersonnel.set(r.personnelId, s);
+    }
+    if (r.checkInAt) s._days.add(r.workDate.toISOString().slice(0, 10));
+    s.totalHours += r.hours ?? 0;
+    if (r.late) s.lateCount += 1;
+    if (r.missingCheckout) s.missingCheckoutCount += 1;
+  }
+  return Array.from(byPersonnel.values())
+    .map(({ _days, ...rest }) => ({ ...rest, days: _days.size }))
+    .sort((a, b) => a.personnelName.localeCompare(b.personnelName, "tr"));
 }

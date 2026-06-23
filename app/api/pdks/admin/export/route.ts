@@ -29,8 +29,11 @@ function buildCsv(rows: TimesheetRow[]): string {
   const header = [
     "Personel",
     "Tarih",
+    "Beklenen giriş",
     "Giriş",
+    "Geç",
     "Çıkış",
+    "Eksik çıkış",
     "Süre (saat)",
     "Şantiye",
     "Giriş mesafe (m)",
@@ -42,8 +45,11 @@ function buildCsv(rows: TimesheetRow[]): string {
       [
         csv(r.personnelName),
         csv(trDate(r.workDate)),
+        csv(r.expectedCheckIn ?? ""),
         csv(trTime(r.checkInAt)),
+        csv(r.late ? "Evet" : ""),
         csv(trTime(r.checkOutAt)),
+        csv(r.missingCheckout ? "Evet" : ""),
         csv(r.hours != null ? r.hours.toFixed(2).replace(".", ",") : ""),
         csv(r.worksiteName ?? ""),
         csv(r.checkInDistanceM != null ? String(r.checkInDistanceM) : ""),

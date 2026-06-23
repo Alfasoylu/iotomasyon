@@ -9,6 +9,19 @@
 
 ## 2026-06
 
+### PDKS — Puantaj raporu zenginleştirme (2026-06-23)
+
+Puantaj sayfası ham giriş/çıkış listesinden öteye geçti; bordro için anlamlı sinyaller eklendi.
+Şema değişikliği yok — mevcut `pdksAttendanceRecord` + `pdksPersonnel.expectedCheckIn`'den hesaplanır.
+
+- `lib/pdks/timesheet.ts`: satırlara `late` (giriş, beklenen saatten sonra mı) ve
+  `missingCheckout` (giriş var, çıkış yok) bayrakları; yeni `buildTimesheetSummary()`
+  personel-bazlı dönem özeti (gün, toplam saat, geç giriş, eksik çıkış).
+- `/admin/pdks/puantaj`: "Geç giriş" + "Eksik çıkış" metrik kartları, **Personel özeti**
+  tablosu, detay tablosunda "Geç"/"Eksik" rozetleri.
+- CSV export: Beklenen giriş, Geç, Eksik çıkış kolonları eklendi.
+- Doğrulama: `tsc --noEmit` 0 hata, eslint temiz.
+
 ### PDKS — Şantiye-başına konum doğruluk eşiği (2026-06-23)
 
 Geofence check-in'de kabul edilen azami GPS doğruluğu önceden `MAX_ACCURACY_M = 100`
