@@ -10,7 +10,7 @@
 --   • Cihaz: bağlı değil → ilk giriş bu cihaza bağlanır
 --   • KVKK rızası: VERİLMEDİ → uygulamada önce aydınlatma onayını test edersiniz
 --
--- Telefonda /pdks aç → Telefon: 05551112233, Şifre: 1234 → KVKK onayla → Giriş yap.
+-- Telefonda /personel aç → Telefon: 05551112233, Şifre: 1234 → KVKK onayla → Giriş yap.
 -- NOT: Gerçek geofence'i denemek için sonradan radiusMeters'ı düşürüp (örn. 100)
 --      latitude/longitude'u şantiyenizin gerçek koordinatına çekin.
 -- ============================================================================

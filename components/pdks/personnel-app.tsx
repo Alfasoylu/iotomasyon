@@ -82,7 +82,7 @@ export function PersonnelApp({
   const [iosHint, setIosHint] = useState(false);
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/pdks/sw.js", { scope: "/pdks" }).catch(() => {});
+      navigator.serviceWorker.register("/personel/sw.js", { scope: "/personel" }).catch(() => {});
     }
     // Yetenek/kurulum tespiti — setState'ler mikrotask içinde (cascading-render uyarısı).
     void Promise.resolve().then(() => {
