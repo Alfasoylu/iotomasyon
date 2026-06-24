@@ -11,12 +11,15 @@ import { hashPassword, normalizePhone } from "@/lib/pdks/auth";
 import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
 import { isValidWeekSchedule } from "@/lib/pdks/schedule";
 import { isPushConfigured, sendPushToPersonnel } from "@/lib/pdks/push";
+import { ymdToDate } from "@/lib/pdks/leave";
 import {
   personnelSchema,
   type PersonnelInput,
   passwordSchema,
   worksiteSchema,
   type WorksiteInput,
+  leaveSchema,
+  type LeaveInput,
 } from "@/lib/validations/pdks";
 import type { ActionResult } from "@/types/actions";
 import type { ResolvedUser } from "@/lib/permissions";
@@ -470,4 +473,85 @@ export async function sendTestPushAction(
     };
   }
   return { ok: true, message: `${sent} cihaza test bildirimi gönderildi.` };
+}
+
+// ── İzin (leave) ──────────────────────────────────────────────────────────────
+
+function revalidateLeaves() {
+  revalidatePath("/admin/pdks");
+  revalidatePath("/admin/pdks/izinler");
+}
+
+/** Yönetici doğrudan izin tanımlar (onaylı olarak kaydedilir). */
+export async function createLeaveAction(
+  personnelId: string,
+  values: LeaveInput,
+): Promise<ActionResult> {
+  const parsed = leaveSchema.safeParse(values);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Form alanlarını kontrol edin." };
+  }
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  const result = await runWithPdksAdmin(user, async (tenantId): Promise<ActionResult> => {
+    const p = await prismaPdks.pdksPersonnel.findFirst({ where: { id: personnelId } });
+    if (!p) return { ok: false, message: "Personel bulunamadı." };
+    await prismaPdks.pdksLeave.create({
+      data: {
+        tenantId,
+        personnelId,
+        startDate: ymdToDate(parsed.data.startDate),
+        endDate: ymdToDate(parsed.data.endDate),
+        type: parsed.data.type,
+        reason: parsed.data.reason || null,
+        status: "approved",
+        requestedBy: "admin",
+        decidedBy: user.id,
+        decidedAt: new Date(),
+      },
+    });
+    return { ok: true };
+  });
+
+  revalidateLeaves();
+  return result;
+}
+
+/** Bekleyen izin talebini onaylar veya reddeder. */
+export async function decideLeaveAction(
+  leaveId: string,
+  approve: boolean,
+): Promise<ActionResult> {
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  const { count } = await runWithPdksAdmin(user, () =>
+    prismaPdks.pdksLeave.updateMany({
+      where: { id: leaveId },
+      data: {
+        status: approve ? "approved" : "rejected",
+        decidedBy: user.id,
+        decidedAt: new Date(),
+      },
+    }),
+  );
+  if (count === 0) return { ok: false, message: "İzin kaydı bulunamadı." };
+
+  revalidateLeaves();
+  return { ok: true };
+}
+
+/** Bir izin kaydını siler. */
+export async function deleteLeaveAction(leaveId: string): Promise<ActionResult> {
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  const { count } = await runWithPdksAdmin(user, () =>
+    prismaPdks.pdksLeave.deleteMany({ where: { id: leaveId } }),
+  );
+  if (count === 0) return { ok: false, message: "İzin kaydı bulunamadı." };
+
+  revalidateLeaves();
+  return { ok: true };
 }

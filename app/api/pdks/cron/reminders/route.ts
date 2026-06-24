@@ -98,6 +98,18 @@ export async function GET(req: NextRequest) {
     });
     if (rec) continue;
 
+    // Onaylı izinde ise geç-kalma uyarısı gönderme.
+    const onLeave = await prisma.pdksLeave.findFirst({
+      where: {
+        personnelId: p.id,
+        status: "approved",
+        startDate: { lte: today },
+        endDate: { gte: today },
+      },
+      select: { id: true },
+    });
+    if (onLeave) continue;
+
     if (p.subs.length === 0) continue; // gönderilecek cihaz yok
 
     const dead = await sendPushToSubs(

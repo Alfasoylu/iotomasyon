@@ -1,10 +1,13 @@
 import { getPdksSession, withPdksSession } from "@/lib/pdks/auth";
 import { prismaPdks } from "@/lib/pdks/prisma";
 import { workDateTR } from "@/lib/pdks/geo";
-import { PersonnelApp, type HistoryRow } from "@/components/pdks/personnel-app";
+import { PersonnelApp, type HistoryRow, type LeaveItem } from "@/components/pdks/personnel-app";
 
 export const dynamic = "force-dynamic";
 
+function ymd(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
 function trDateShort(d: Date): string {
   return d.toLocaleDateString("tr-TR", {
     day: "2-digit",
@@ -28,7 +31,7 @@ export default async function PdksPage() {
   }
 
   const data = await withPdksSession(async () => {
-    const [rec, me, recent] = await Promise.all([
+    const [rec, me, recent, leaveRows] = await Promise.all([
       prismaPdks.pdksAttendanceRecord.findFirst({
         where: { personnelId: session.personnelId, workDate: workDateTR() },
         orderBy: { createdAt: "desc" },
@@ -39,9 +42,22 @@ export default async function PdksPage() {
         orderBy: [{ workDate: "desc" }, { createdAt: "desc" }],
         take: 14,
       }),
+      prismaPdks.pdksLeave.findMany({
+        where: { personnelId: session.personnelId },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
     ]);
-    return { rec, name: me?.fullName ?? "", consented: !!me?.kvkkConsentAt, recent };
+    return { rec, name: me?.fullName ?? "", consented: !!me?.kvkkConsentAt, recent, leaveRows };
   });
+
+  const leaves: LeaveItem[] = (data?.leaveRows ?? []).map((l) => ({
+    id: l.id,
+    startDate: ymd(l.startDate),
+    endDate: ymd(l.endDate),
+    type: l.type,
+    status: l.status,
+  }));
 
   const history: HistoryRow[] = (data?.recent ?? []).map((r) => ({
     id: r.id,
@@ -69,6 +85,7 @@ export default async function PdksPage() {
         overtime: data?.rec?.overtime ?? false,
       }}
       history={history}
+      leaves={leaves}
     />
   );
 }

@@ -97,6 +97,9 @@ export default async function PdksAdminPage() {
           <Link href="/admin/pdks/calisma-saatleri">
             <Button variant="secondary">Çalışma Saatleri</Button>
           </Link>
+          <Link href="/admin/pdks/izinler">
+            <Button variant="secondary">İzinler</Button>
+          </Link>
           <Link href="/admin/pdks/puantaj">
             <Button variant="secondary">Puantaj</Button>
           </Link>
