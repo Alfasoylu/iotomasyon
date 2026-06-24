@@ -1674,8 +1674,30 @@ model PdksTenant {
   worksites PdksWorksite[]
   records   PdksAttendanceRecord[]
   subs      PdksPushSubscription[]
+  leaves    PdksLeave[]
 
   @@map("pdks_tenants")
+}
+
+model PdksLeave {
+  id          String        @id @default(cuid())
+  tenantId    String
+  tenant      PdksTenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  personnelId String
+  personnel   PdksPersonnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  startDate   DateTime      @db.Date
+  endDate     DateTime      @db.Date // dahil
+  type        String        @default("annual") // annual | sick | unpaid | other
+  reason      String?
+  status      String        @default("pending") // pending | approved | rejected
+  requestedBy String        @default("personnel") // 'personnel' | 'admin'
+  decidedBy   String? // karar veren CRM kullanıcı id
+  decidedAt   DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([tenantId])
+  @@index([personnelId])
+  @@map("pdks_leaves")
 }
 
 model PdksPersonnel {
@@ -1710,6 +1732,7 @@ model PdksPersonnel {
   records    PdksAttendanceRecord[]
   subs       PdksPushSubscription[]
   loginCodes PdksLoginCode[]
+  leaves     PdksLeave[]
 
   @@index([tenantId])
   @@map("pdks_personnel")

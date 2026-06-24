@@ -9,6 +9,17 @@
 
 ## 2026-06
 
+### PDKS — İzin yönetimi (talep → onay) (2026-06-24)
+
+- Şema: `PdksLeave` tablosu (migration `20260624140000`, DB'ye uygulandı; scoped model).
+- **Personel** `/personel` ekranında "📅 İzinlerim": izin talebi oluşturur (tarih
+  aralığı + tür + açıklama → `POST /api/pdks/leave`, status=pending) ve durumunu görür.
+- **Yönetici** `/admin/pdks/izinler`: bekleyen talepleri Onayla/Reddet; doğrudan
+  (onaylı) izin tanımlama; tüm izinler listesi + sil. `createLeaveAction` /
+  `decideLeaveAction` / `deleteLeaveAction`.
+- **Cron:** onaylı izin gününde geç-kalma uyarısı gönderilmez.
+- Panoya "İzinler" linki. `tsc --noEmit` 0 hata, eslint temiz.
+
 ### PDKS — Aylık puantaj/bordro raporu + push test (2026-06-24)
 
 - **Aylık rapor** (`/admin/pdks/rapor`): ay seçici; personel başına çalışılan gün

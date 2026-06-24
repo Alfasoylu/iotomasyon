@@ -23,6 +23,7 @@ const SCOPED_MODELS = new Set([
   "PdksPersonnelWorksite",
   "PdksAttendanceRecord",
   "PdksPushSubscription",
+  "PdksLeave",
 ]);
 
 const WHERE_OPS = new Set([

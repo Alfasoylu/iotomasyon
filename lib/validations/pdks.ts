@@ -47,3 +47,19 @@ export const worksiteSchema = z.object({
 });
 
 export type WorksiteInput = z.infer<typeof worksiteSchema>;
+
+/** İzin talebi/tanımı formu. */
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+export const leaveSchema = z
+  .object({
+    startDate: z.string().regex(YMD_RE, "Tarih YYYY-AA-GG olmalı."),
+    endDate: z.string().regex(YMD_RE, "Tarih YYYY-AA-GG olmalı."),
+    type: z.enum(["annual", "sick", "unpaid", "other"]).default("annual"),
+    reason: z.string().trim().max(300, "Açıklama çok uzun.").optional().or(z.literal("")),
+  })
+  .refine((d) => d.endDate >= d.startDate, {
+    message: "Bitiş tarihi başlangıçtan önce olamaz.",
+    path: ["endDate"],
+  });
+
+export type LeaveInput = z.infer<typeof leaveSchema>;

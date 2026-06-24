@@ -13,6 +13,21 @@ export type HistoryRow = {
   open: boolean;
 };
 
+export type LeaveItem = {
+  id: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;
+  type: string;
+  status: string; // pending | approved | rejected
+};
+
+const LEAVE_TYPE_LABELS: Record<string, string> = {
+  annual: "Yıllık izin",
+  sick: "Hastalık / rapor",
+  unpaid: "Ücretsiz izin",
+  other: "Diğer",
+};
+
 type Initial =
   | { authed: false }
   | {
@@ -63,12 +78,20 @@ function getPosition(): Promise<GeolocationPosition> {
 export function PersonnelApp({
   initial,
   history = [],
+  leaves = [],
 }: {
   initial: Initial;
   history?: HistoryRow[];
+  leaves?: LeaveItem[];
 }) {
   const router = useRouter();
   const [showHistory, setShowHistory] = useState(false);
+  const [showLeave, setShowLeave] = useState(false);
+  const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [lvStart, setLvStart] = useState("");
+  const [lvEnd, setLvEnd] = useState("");
+  const [lvType, setLvType] = useState("annual");
+  const [lvReason, setLvReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -255,6 +278,38 @@ export function PersonnelApp({
     await fetch("/api/pdks/auth/logout", { method: "POST" });
     router.refresh();
   }, [router]);
+
+  const requestLeave = useCallback(async () => {
+    if (!lvStart || !lvEnd) {
+      setError("Başlangıç ve bitiş tarihi gerekli.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const res = await fetch("/api/pdks/leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: lvStart, endDate: lvEnd, type: lvType, reason: lvReason }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "İzin talebi gönderilemedi");
+        return;
+      }
+      setInfo("İzin talebiniz alındı — yönetici onayı bekleniyor.");
+      setShowLeaveForm(false);
+      setLvStart("");
+      setLvEnd("");
+      setLvReason("");
+      router.refresh();
+    } catch {
+      setError("Ağ hatası");
+    } finally {
+      setBusy(false);
+    }
+  }, [lvStart, lvEnd, lvType, lvReason, router]);
 
   const toggleOvertime = useCallback(
     async (next: boolean) => {
@@ -487,6 +542,77 @@ export function PersonnelApp({
           )}
         </div>
       )}
+
+      {/* İzinler */}
+      <div className="mt-3">
+        <button
+          onClick={() => setShowLeave((s) => !s)}
+          className="flex w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-300"
+        >
+          <span>📅 İzinlerim</span>
+          <span className="text-slate-500">{showLeave ? "▲" : "▼"}</span>
+        </button>
+        {showLeave && (
+          <div className="mt-2 space-y-2">
+            {leaves.length === 0 && <p className="px-1 text-sm text-slate-500">Kayıtlı izin yok.</p>}
+            {leaves.map((l) => (
+              <div key={l.id} className="flex items-center justify-between rounded-lg border border-slate-800 px-3 py-2 text-sm">
+                <span className="text-slate-300">
+                  {l.startDate} – {l.endDate}
+                  <span className="ml-1 text-slate-500">· {LEAVE_TYPE_LABELS[l.type] ?? l.type}</span>
+                </span>
+                <span
+                  className={
+                    l.status === "approved"
+                      ? "text-emerald-400"
+                      : l.status === "rejected"
+                        ? "text-red-400"
+                        : "text-amber-400"
+                  }
+                >
+                  {l.status === "approved" ? "Onaylandı" : l.status === "rejected" ? "Reddedildi" : "Onay bekliyor"}
+                </span>
+              </div>
+            ))}
+
+            {showLeaveForm ? (
+              <div className="space-y-2 rounded-xl border border-slate-800 p-3">
+                <div className="flex gap-2">
+                  <label className="flex-1 text-xs text-slate-400">
+                    Başlangıç
+                    <input type="date" value={lvStart} onChange={(e) => setLvStart(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-slate-100" />
+                  </label>
+                  <label className="flex-1 text-xs text-slate-400">
+                    Bitiş
+                    <input type="date" value={lvEnd} onChange={(e) => setLvEnd(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-slate-100" />
+                  </label>
+                </div>
+                <label className="block text-xs text-slate-400">
+                  Tür
+                  <select value={lvType} onChange={(e) => setLvType(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-slate-100">
+                    {Object.entries(LEAVE_TYPE_LABELS).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </label>
+                <input value={lvReason} onChange={(e) => setLvReason(e.target.value)} placeholder="Açıklama (ops.)" className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-slate-100" />
+                <div className="flex gap-2">
+                  <button onClick={() => setShowLeaveForm(false)} disabled={busy} className="flex-1 rounded-lg border border-slate-700 py-2 text-sm text-slate-300 disabled:opacity-50">
+                    Vazgeç
+                  </button>
+                  <button onClick={requestLeave} disabled={busy} className="flex-1 rounded-lg bg-sky-600 py-2 text-sm font-semibold disabled:opacity-50">
+                    {busy ? "Gönderiliyor…" : "Talep gönder"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setShowLeaveForm(true)} className="w-full rounded-xl border border-slate-700 py-2 text-sm text-sky-400">
+                + İzin iste
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       {iosHint && <IosHint />}
     </Shell>
