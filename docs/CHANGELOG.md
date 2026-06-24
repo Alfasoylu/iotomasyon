@@ -9,6 +9,18 @@
 
 ## 2026-06
 
+### PDKS — Çalışma saatleri kuralları (haftalık program + olağandışı saat) (2026-06-24)
+
+- **Haftalık program** (`lib/pdks/schedule.ts`, kod-içi varsayılan): Pzt–Cuma
+  08:30–18:30, Cumartesi 08:30–13:00, Pazar tatil. Cron geç-kalma hatırlatması ve
+  otomatik çıkış artık o günün programına göre çalışır (Pazar/tatil → işlem yok).
+  Personelin `expectedCheckIn/expectedCheckOut` alanı doluysa o gün için override.
+  (Panelden düzenlenebilir program ileride eklenebilir.)
+- **Olağandışı saat (18:00–05:00) girişi:** normal mesai başlangıcı sayılmaz →
+  check-in `needsOvertimeConfirm` döner; personel onaylarsa giriş `overtime=true`
+  (otomatik çıkıştan muaf), onaylamazsa giriş yapılmaz.
+- `tsc --noEmit` 0 hata, eslint temiz. Şema değişikliği yok.
+
 ### PDKS — Şantiye konumu için harita/link seçici (2026-06-23)
 
 Admin şantiye formuna (ekle + düzenle) "Google Maps linki veya 'enlem, boylam'

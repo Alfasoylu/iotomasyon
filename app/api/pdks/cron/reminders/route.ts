@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isPushConfigured, sendPushToSubs } from "@/lib/pdks/push";
 import { currentTimeTR, workDateTR } from "@/lib/pdks/geo";
 import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
+import { DEFAULT_WEEK_SCHEDULE, resolveExpected } from "@/lib/pdks/schedule";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
   }
 
   const candidates = await prisma.pdksPersonnel.findMany({
-    where: { isActive: true, expectedCheckIn: { not: null } },
+    where: { isActive: true },
     include: { subs: true },
   });
 
@@ -62,7 +63,10 @@ export async function GET(req: NextRequest) {
   const deadEndpoints: string[] = [];
 
   for (const p of candidates) {
-    const expected = toMinutes(p.expectedCheckIn ?? "");
+    // Bugünün beklenen giriş saati: haftalık program (override > program). Tatilse atla.
+    const exp = resolveExpected(DEFAULT_WEEK_SCHEDULE, today, p.expectedCheckIn, p.expectedCheckOut);
+    if (!exp) continue; // tatil günü → geç-kalma yok
+    const expected = toMinutes(exp.in);
     if (expected == null) continue;
 
     const minutesLate = nowMin - expected;
@@ -115,8 +119,16 @@ export async function GET(req: NextRequest) {
   });
 
   for (const rec of openRecs) {
-    const expectedOut = toMinutes(rec.personnel.expectedCheckOut ?? "");
-    if (expectedOut == null) continue; // çıkış saati tanımsız → otomatik işlem yok
+    // Kaydın ait olduğu günün beklenen çıkışı (haftalık program; override > program).
+    const exp = resolveExpected(
+      DEFAULT_WEEK_SCHEDULE,
+      rec.workDate,
+      rec.personnel.expectedCheckIn,
+      rec.personnel.expectedCheckOut,
+    );
+    if (!exp) continue; // o gün tatil → otomatik çıkış yok
+    const expectedOut = toMinutes(exp.out);
+    if (expectedOut == null) continue;
 
     const subs = rec.personnel.subs.map((s) => ({
       endpoint: s.endpoint,
@@ -126,7 +138,7 @@ export async function GET(req: NextRequest) {
 
     // Geçmiş güne ait açık kayıt → kesin gecikmiş; sessizce otomatik kapat (bildirim yok).
     if (rec.workDate.getTime() < today.getTime()) {
-      const checkOutAt = trTimeOnDateToUtc(rec.workDate, rec.personnel.expectedCheckOut ?? "");
+      const checkOutAt = trTimeOnDateToUtc(rec.workDate, exp.out);
       await prisma.pdksAttendanceRecord.update({
         where: { id: rec.id },
         data: { checkOutAt, status: "closed", autoCheckout: true },
@@ -140,7 +152,7 @@ export async function GET(req: NextRequest) {
 
     if (minutesAfter >= AUTO_CHECKOUT_DELAY_MIN) {
       // Otomatik çıkış: çıkış saatini beklenen çıkışa sabitle (adil; admin düzeltebilir).
-      const checkOutAt = trTimeOnDateToUtc(rec.workDate, rec.personnel.expectedCheckOut ?? "");
+      const checkOutAt = trTimeOnDateToUtc(rec.workDate, exp.out);
       await prisma.pdksAttendanceRecord.update({
         where: { id: rec.id },
         data: { checkOutAt, status: "closed", autoCheckout: true },
@@ -149,7 +161,7 @@ export async function GET(req: NextRequest) {
       if (subs.length > 0) {
         const dead = await sendPushToSubs(subs, {
           title: "Otomatik çıkış yapıldı",
-          body: `Beklenen çıkış saatinizde (${rec.personnel.expectedCheckOut}) otomatik çıkış yapıldı.`,
+          body: `Beklenen çıkış saatinizde (${exp.out}) otomatik çıkış yapıldı.`,
           url: "/personel",
         });
         deadEndpoints.push(...dead);
