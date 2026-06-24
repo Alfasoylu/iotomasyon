@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentSession, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
-import { fetchTimesheet, parseRange, type TimesheetRow } from "@/lib/pdks/timesheet";
+import { fetchTimesheet, parseRange, buildTimesheetSummary, type TimesheetRow } from "@/lib/pdks/timesheet";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +64,36 @@ function buildCsv(rows: TimesheetRow[]): string {
   return lines.join("\r\n");
 }
 
-/** GET /api/pdks/admin/export?from=YYYY-MM-DD&to=YYYY-MM-DD → CSV (puantaj). */
+/** Özet CSV: personel başına tek satır (bordro). */
+function buildSummaryCsv(rows: TimesheetRow[]): string {
+  const header = [
+    "Personel",
+    "Çalışılan gün",
+    "Toplam saat",
+    "Fazla mesai (saat)",
+    "Geç giriş",
+    "Eksik çıkış",
+  ];
+  const lines = [header.join(";")];
+  for (const s of buildTimesheetSummary(rows)) {
+    lines.push(
+      [
+        csv(s.personnelName),
+        csv(String(s.days)),
+        csv(s.totalHours.toFixed(2).replace(".", ",")),
+        csv(s.overtimeHours.toFixed(2).replace(".", ",")),
+        csv(String(s.lateCount)),
+        csv(String(s.missingCheckoutCount)),
+      ].join(";"),
+    );
+  }
+  return lines.join("\r\n");
+}
+
+/**
+ * GET /api/pdks/admin/export?from=YYYY-MM-DD&to=YYYY-MM-DD[&summary=1] → CSV.
+ * summary=1 → personel başına özet (bordro); aksi halde günlük detay.
+ */
 export async function GET(req: NextRequest) {
   const user = await getCurrentSession();
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
@@ -74,14 +103,16 @@ export async function GET(req: NextRequest) {
 
   const sp = req.nextUrl.searchParams;
   const { from, to, fromYmd, toYmd } = parseRange(sp.get("from") ?? undefined, sp.get("to") ?? undefined);
+  const summary = sp.get("summary") === "1";
 
   const rows = await runWithPdksAdmin(user, () => fetchTimesheet(from, to));
-  const body = "﻿" + buildCsv(rows); // UTF-8 BOM → Excel Türkçe karakter
+  const body = "﻿" + (summary ? buildSummaryCsv(rows) : buildCsv(rows)); // UTF-8 BOM
 
+  const name = summary ? "pdks-ozet" : "pdks-puantaj";
   return new NextResponse(body, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="pdks-puantaj-${fromYmd}_${toYmd}.csv"`,
+      "Content-Disposition": `attachment; filename="${name}-${fromYmd}_${toYmd}.csv"`,
       "Cache-Control": "no-store",
     },
   });

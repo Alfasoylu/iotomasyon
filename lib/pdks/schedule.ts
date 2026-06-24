@@ -28,6 +28,17 @@ export function trWeekday(date: Date): number {
   return date.getUTCDay();
 }
 
+/** [from, to] (UTC gece-yarısı, dahil) aralığındaki çalışma (tatil olmayan) günü sayısı. */
+export function countWorkingDays(week: WeekSchedule, from: Date, to: Date): number {
+  let n = 0;
+  const cur = new Date(from.getTime());
+  while (cur.getTime() <= to.getTime()) {
+    if (week[cur.getUTCDay()]) n += 1;
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return n;
+}
+
 const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
 function isDaySchedule(d: unknown): d is DaySchedule {

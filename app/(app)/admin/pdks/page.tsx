@@ -100,6 +100,9 @@ export default async function PdksAdminPage() {
           <Link href="/admin/pdks/puantaj">
             <Button variant="secondary">Puantaj</Button>
           </Link>
+          <Link href="/admin/pdks/rapor">
+            <Button variant="secondary">Aylık Rapor</Button>
+          </Link>
         </div>
       </div>
 
