@@ -43,9 +43,9 @@ export async function GET(req: NextRequest) {
   if (cronSecret && req.headers.get("Authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!isPushConfigured()) {
-    return NextResponse.json({ ok: true, skipped: "push yapılandırılmamış" });
-  }
+  // NOT: push yapılandırılmamış olsa bile DEVAM ederiz — otomatik çıkış (gün sonu /
+  // geçmiş gün kapanışı) bir DB işlemidir, push'tan bağımsızdır. Push gönderimleri
+  // sendPushToSubs içinde zaten no-op'tur (configured değilse boş döner).
 
   const today = workDateTR();
   const nowMin = toMinutes(currentTimeTR());
@@ -178,6 +178,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    pushConfigured: isPushConfigured(),
     candidates: candidates.length,
     reminded,
     checkoutReminded,
