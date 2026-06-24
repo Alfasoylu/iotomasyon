@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isPushConfigured, sendPushToSubs } from "@/lib/pdks/push";
 import { currentTimeTR, workDateTR } from "@/lib/pdks/geo";
 import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
-import { DEFAULT_WEEK_SCHEDULE, resolveExpected } from "@/lib/pdks/schedule";
+import { DEFAULT_WEEK_SCHEDULE, parseWeekSchedule, resolveExpected } from "@/lib/pdks/schedule";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -54,6 +54,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Zaman hesaplanamadı" }, { status: 500 });
   }
 
+  // Tenant'ların haftalık programı (panelden düzenlenebilir; yoksa kod varsayılanı).
+  const tenants = await prisma.pdksTenant.findMany({
+    select: { id: true, workScheduleJson: true },
+  });
+  const scheduleByTenant = new Map(
+    tenants.map((t) => [t.id, parseWeekSchedule(t.workScheduleJson)]),
+  );
+  const scheduleFor = (tenantId: string) =>
+    scheduleByTenant.get(tenantId) ?? DEFAULT_WEEK_SCHEDULE;
+
   const candidates = await prisma.pdksPersonnel.findMany({
     where: { isActive: true },
     include: { subs: true },
@@ -64,7 +74,7 @@ export async function GET(req: NextRequest) {
 
   for (const p of candidates) {
     // Bugünün beklenen giriş saati: haftalık program (override > program). Tatilse atla.
-    const exp = resolveExpected(DEFAULT_WEEK_SCHEDULE, today, p.expectedCheckIn, p.expectedCheckOut);
+    const exp = resolveExpected(scheduleFor(p.tenantId), today, p.expectedCheckIn, p.expectedCheckOut);
     if (!exp) continue; // tatil günü → geç-kalma yok
     const expected = toMinutes(exp.in);
     if (expected == null) continue;
@@ -121,7 +131,7 @@ export async function GET(req: NextRequest) {
   for (const rec of openRecs) {
     // Kaydın ait olduğu günün beklenen çıkışı (haftalık program; override > program).
     const exp = resolveExpected(
-      DEFAULT_WEEK_SCHEDULE,
+      scheduleFor(rec.personnel.tenantId),
       rec.workDate,
       rec.personnel.expectedCheckIn,
       rec.personnel.expectedCheckOut,
