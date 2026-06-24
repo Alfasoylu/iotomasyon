@@ -145,12 +145,12 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
               <p className="mt-1 text-xs text-[var(--text-muted)]">Tavsiye: 4-6 rakamlı PIN (örn. 1234). Yazdığınız aynen kaydolur.</p>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Beklenen giriş (ops.)</label>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Giriş saati (boş = program)</label>
               <input className={inputCls} value={expectedIn} onChange={(e) => setExpectedIn(e.target.value)} placeholder="08:30" />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Beklenen çıkış (ops.)</label>
-              <input className={inputCls} value={expectedOut} onChange={(e) => setExpectedOut(e.target.value)} placeholder="18:00" />
+              <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Çıkış saati (boş = program)</label>
+              <input className={inputCls} value={expectedOut} onChange={(e) => setExpectedOut(e.target.value)} placeholder="18:30" />
             </div>
             <div className="flex items-end justify-end">
               <Button type="submit" disabled={pending}>
