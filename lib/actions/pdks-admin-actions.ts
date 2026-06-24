@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword, normalizePhone } from "@/lib/pdks/auth";
 import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
 import { isValidWeekSchedule } from "@/lib/pdks/schedule";
+import { isPushConfigured, sendPushToPersonnel } from "@/lib/pdks/push";
 import {
   personnelSchema,
   type PersonnelInput,
@@ -439,4 +440,34 @@ export async function updateWorkScheduleAction(week: unknown): Promise<ActionRes
   revalidatePath("/admin/pdks");
   revalidatePath("/admin/pdks/calisma-saatleri");
   return { ok: true };
+}
+
+// ── Push test/teşhis ──────────────────────────────────────────────────────────
+
+/** Bir personelin abone cihazlarına test bildirimi gönderir (kurulum doğrulaması). */
+export async function sendTestPushAction(
+  personnelId: string,
+): Promise<{ ok: boolean; message: string }> {
+  const user = await guard();
+  if (!user) return { ok: false, message: "Bu işlem için yetkiniz yok." };
+  if (!isPushConfigured()) {
+    return {
+      ok: false,
+      message: "Push yapılandırılmamış. Vercel'de PDKS_VAPID_* değişkenlerini ekleyip redeploy edin.",
+    };
+  }
+  const sent = await runWithPdksAdmin(user, () =>
+    sendPushToPersonnel(personnelId, {
+      title: "Test bildirimi",
+      body: "PDKS bildirimleri çalışıyor ✓",
+      url: "/personel",
+    }),
+  );
+  if (sent === 0) {
+    return {
+      ok: false,
+      message: "Gönderilecek cihaz yok — personel uygulamada 'Bildirimleri Aç' demeli.",
+    };
+  }
+  return { ok: true, message: `${sent} cihaza test bildirimi gönderildi.` };
 }

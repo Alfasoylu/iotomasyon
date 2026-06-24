@@ -12,6 +12,7 @@ import {
   setPersonnelActiveAction,
   resetPasswordAction,
   resetDeviceAction,
+  sendTestPushAction,
 } from "@/lib/actions/pdks-admin-actions";
 
 type Person = {
@@ -107,6 +108,18 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
   function resetDevice(p: Person) {
     if (!window.confirm(`${p.fullName} için cihaz bağı sıfırlansın mı? Sonraki giriş yeni cihaza bağlanır.`)) return;
     run(() => resetDeviceAction(p.id), () => setInfo(`${p.fullName}: cihaz bağı sıfırlandı.`));
+  }
+
+  function testPush(p: Person) {
+    setPending(true);
+    setError(null);
+    setInfo(null);
+    startTransition(async () => {
+      const r = await sendTestPushAction(p.id);
+      if (r.ok) setInfo(`${p.fullName}: ${r.message}`);
+      else setError(`${p.fullName}: ${r.message}`);
+      setPending(false);
+    });
   }
 
   return (
@@ -249,6 +262,9 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
                         </>
                       ) : (
                         <>
+                          <Button variant="secondary" onClick={() => testPush(p)} disabled={pending}>
+                            🔔 Test
+                          </Button>
                           <Button variant="secondary" onClick={() => resetPassword(p)} disabled={pending}>
                             Şifre sıfırla
                           </Button>
