@@ -9,6 +9,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prismaPdks } from "@/lib/pdks/prisma";
 import { workDateTR } from "@/lib/pdks/geo";
+import { isPushConfigured } from "@/lib/pdks/push";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,15 @@ export default async function PdksAdminPage() {
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             {todayLabel} — bugünün canlı durumu.
           </p>
+          <div className="mt-2">
+            {isPushConfigured() ? (
+              <Badge tone="success">🔔 Bildirimler aktif</Badge>
+            ) : (
+              <Badge tone="warning">
+                🔕 Bildirimler kapalı — Vercel&apos;de PDKS_VAPID_* ekleyin
+              </Badge>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/pdks/personel">
