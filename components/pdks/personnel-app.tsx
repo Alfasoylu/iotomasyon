@@ -195,28 +195,42 @@ export function PersonnelApp({
       setInfo(null);
       try {
         const pos = await getPosition();
-        const res = await fetch(`/api/pdks/${kind}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          }),
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          setError(json.error ?? "İşlem başarısız");
-          return;
-        }
-        setInfo(
-          kind === "check-in"
-            ? `Giriş yapıldı${json.worksite ? ` — ${json.worksite}` : ""}${
-                json.distanceM != null ? ` (~${json.distanceM}m)` : ""
-              }`
-            : "Çıkış yapıldı",
-        );
-        router.refresh();
+        const coords = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        };
+        const submit = async (overtimeConfirmed: boolean): Promise<void> => {
+          const res = await fetch(`/api/pdks/${kind}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              overtimeConfirmed ? { ...coords, overtimeConfirmed: true } : coords,
+            ),
+          });
+          const json = await res.json();
+          if (!res.ok) {
+            // Olağandışı saatte (18:00–05:00) giriş → fazla mesai onayı iste.
+            if (kind === "check-in" && json.needsOvertimeConfirm && !overtimeConfirmed) {
+              const ok = window.confirm(
+                `${json.error}\n\n"Tamam" → giriş FAZLA MESAİ olarak kaydedilir.\n"İptal" → giriş yapılmaz.`,
+              );
+              if (ok) return submit(true);
+              return;
+            }
+            setError(json.error ?? "İşlem başarısız");
+            return;
+          }
+          setInfo(
+            kind === "check-in"
+              ? `Giriş yapıldı${json.worksite ? ` — ${json.worksite}` : ""}${
+                  json.distanceM != null ? ` (~${json.distanceM}m)` : ""
+                }`
+              : "Çıkış yapıldı",
+          );
+          router.refresh();
+        };
+        await submit(false);
       } catch (err) {
         // GeolocationPositionError her tarayıcıda global değil (eski iOS Safari);
         // instanceof ReferenceError atabilir → `code` alanına göre ayırt et.

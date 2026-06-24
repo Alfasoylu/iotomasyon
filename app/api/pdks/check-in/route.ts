@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { withPdksSession } from "@/lib/pdks/auth";
 import { prismaPdks } from "@/lib/pdks/prisma";
-import { distanceMeters, workDateTR } from "@/lib/pdks/geo";
+import { distanceMeters, workDateTR, currentTimeTR } from "@/lib/pdks/geo";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +78,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Olağandışı saat kuralı: 18:00–05:00 arası normal mesai başlangıcı değildir →
+    // ya yanlışlık ya fazla mesai. Personelden onay istenir; onaylarsa kayıt fazla
+    // mesai olarak işaretlenir (otomatik çıkıştan muaf). Onaylamazsa giriş yapılmaz.
+    const trHour = Number(currentTimeTR().slice(0, 2));
+    const abnormalHour = trHour >= 18 || trHour < 5;
+    const overtimeConfirmed = body.overtimeConfirmed === true;
+    if (abnormalHour && !overtimeConfirmed) {
+      return NextResponse.json(
+        {
+          needsOvertimeConfirm: true,
+          error:
+            "Şu an normal mesai başlangıç saati değil (18:00–05:00). Bu bir fazla mesai / özel durum mu?",
+        },
+        { status: 409 },
+      );
+    }
+
     const workDate = workDateTR();
     const existing = await prismaPdks.pdksAttendanceRecord.findFirst({
       where: { personnelId: session.personnelId, workDate, status: "open" },
@@ -96,6 +113,7 @@ export async function POST(req: NextRequest) {
         checkInDistanceM: Math.round(best),
         checkInAccuracyM: Number.isFinite(accuracy) ? Math.round(accuracy) : null,
         status: "open",
+        overtime: abnormalHour, // olağandışı saatte onaylanan giriş = fazla mesai
       },
     });
 
