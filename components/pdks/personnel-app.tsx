@@ -104,6 +104,21 @@ export function PersonnelApp({
     });
   }, []);
 
+  // Uygulama (özellikle ana-ekrana eklenmiş PWA) arka planda açık kaldığında React
+  // durumu donar; ertesi gün öne geldiğinde hâlâ dünkü "mesai tamamlandı" görünür.
+  // Görünür olunca / odak alınca sunucu verisini tazele → o günün doğru durumu gelir.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [router]);
+
   const enablePush = useCallback(async () => {
     setPushBusy(true);
     setError(null);
