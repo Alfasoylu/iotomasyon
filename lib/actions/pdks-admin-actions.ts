@@ -6,8 +6,10 @@ import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prismaPdks } from "@/lib/pdks/prisma";
+import { prisma } from "@/lib/prisma";
 import { hashPassword, normalizePhone } from "@/lib/pdks/auth";
 import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
+import { isValidWeekSchedule } from "@/lib/pdks/schedule";
 import {
   personnelSchema,
   type PersonnelInput,
@@ -406,4 +408,35 @@ export async function createManualAttendanceAction(
     revalidatePuantaj();
     return { ok: true };
   });
+}
+
+// ── Çalışma saatleri (haftalık program) ───────────────────────────────────────
+
+/** Tenant'ın haftalık çalışma programını günceller (7 elemanlı dizi; null=tatil). */
+export async function updateWorkScheduleAction(week: unknown): Promise<ActionResult> {
+  if (!isValidWeekSchedule(week)) {
+    return { ok: false, message: "Program biçimi geçersiz (her gün: tatil ya da HH:MM giriş/çıkış)." };
+  }
+  for (const d of week) {
+    if (d) {
+      const [ih, im] = d.in.split(":").map(Number);
+      const [oh, om] = d.out.split(":").map(Number);
+      if (oh * 60 + om <= ih * 60 + im) {
+        return { ok: false, message: "Çıkış saati giriş saatinden sonra olmalı." };
+      }
+    }
+  }
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  await runWithPdksAdmin(user, async (tenantId) => {
+    await prisma.pdksTenant.update({
+      where: { id: tenantId },
+      data: { workScheduleJson: JSON.stringify(week) },
+    });
+  });
+
+  revalidatePath("/admin/pdks");
+  revalidatePath("/admin/pdks/calisma-saatleri");
+  return { ok: true };
 }

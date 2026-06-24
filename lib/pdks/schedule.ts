@@ -28,6 +28,35 @@ export function trWeekday(date: Date): number {
   return date.getUTCDay();
 }
 
+const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
+
+function isDaySchedule(d: unknown): d is DaySchedule {
+  if (d === null) return true;
+  if (typeof d !== "object" || d === null) return false;
+  const o = d as Record<string, unknown>;
+  return (
+    typeof o.in === "string" && TIME_RE.test(o.in) &&
+    typeof o.out === "string" && TIME_RE.test(o.out)
+  );
+}
+
+/** 7 elemanlı, her biri null veya geçerli {in,out} olan dizi mi? */
+export function isValidWeekSchedule(v: unknown): v is WeekSchedule {
+  return Array.isArray(v) && v.length === 7 && v.every(isDaySchedule);
+}
+
+/** Tenant'ın saklı programını çözer; yoksa/bozuksa kod-içi varsayılana düşer. */
+export function parseWeekSchedule(json: string | null | undefined): WeekSchedule {
+  if (!json) return DEFAULT_WEEK_SCHEDULE;
+  try {
+    const v = JSON.parse(json);
+    if (isValidWeekSchedule(v)) return v;
+  } catch {
+    // bozuk JSON → varsayılan
+  }
+  return DEFAULT_WEEK_SCHEDULE;
+}
+
 /**
  * Verilen gün ve personel için beklenen giriş/çıkış saatini çözer.
  * Öncelik: personel override → program. Tatil gününde null döner.
