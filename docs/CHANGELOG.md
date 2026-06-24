@@ -9,6 +9,16 @@
 
 ## 2026-06
 
+### PDKS — Aylık puantaj/bordro raporu + push test (2026-06-24)
+
+- **Aylık rapor** (`/admin/pdks/rapor`): ay seçici; personel başına çalışılan gün
+  (/ beklenen iş günü), toplam saat, fazla mesai, geç giriş, eksik çıkış. Beklenen
+  iş günü haftalık programdan (`countWorkingDays`). **Özet CSV** (personel başına tek
+  satır, bordro) + detay CSV (`/api/pdks/admin/export?summary=1`).
+- **Push test/teşhis:** admin panosunda bildirim durum rozeti; personel kartında
+  "🔔 Test" → `sendTestPushAction` (VAPID/abonelik yoksa net mesaj, varsa test gönderir).
+- `tsc --noEmit` 0 hata, eslint temiz. Şema değişikliği yok.
+
 ### PDKS — Çalışma saatleri kuralları (haftalık program + olağandışı saat) (2026-06-24)
 
 - **Haftalık program** (`lib/pdks/schedule.ts`, kod-içi varsayılan): Pzt–Cuma
