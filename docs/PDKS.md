@@ -5,8 +5,35 @@ modülü. iotomasyon ana uygulamasının içinde, ayrı bir personel PWA'sı (`/
 eski `/pdks` buraya yönlenir) ve
 yönetici paneli (`/admin/pdks`) olarak yaşar.
 
-> Durum (2026-06-23): temel akış gerçek telefonla uçtan uca doğrulandı. Kod
-> Step 1–10 + PWA ikonları tamamlanmış durumda.
+> Durum (2026-06-25): Temel PDKS akışı canlıda ve gerçek telefonla doğrulandı.
+> Ürün, Alfa Soylu CRM'inden ayrışıp **aylık/yıllık abonelikli, çok-kiracılı bir
+> SaaS**'a dönüştürülüyor. Anasayfa (`iotomasyon.com`) PDKS satış landing'i oldu;
+> Alfa Soylu CRM `/alfas`'a taşındı (Faz 1 tamam). Sıradaki: self-servis kayıt +
+> tenant-bazlı yönetici paneli + ödeme (Faz 2).
+
+---
+
+## 🎯 Hedef & İş Modeli
+
+PDKS'i, küçük/orta saha işletmelerine **aylık abonelikle satılan** bağımsız bir
+SaaS ürününe dönüştürmek.
+
+- **Ürün:** Konum doğrulamalı personel devam takip (geofence check-in/out, otomatik
+  çıkış, izin, puantaj, push) — kurulum gerektirmeyen PWA.
+- **Fiyatlandırma:** 30 gün ücretsiz deneme · **Aylık ₺499** · **Yıllık ₺4.000**
+  (≈%33 tasarruf). Tek paket, tüm özellikler dahil. (KDV hariç.)
+- **Hedef müşteri:** şantiye/saha ekibi olan KOBİ'ler; her müşteri = bir **tenant**.
+- **Dağıtım:** her müşteriye özel link → çalışanlar PWA'yı ana ekrana ekler; tenant
+  yöneticisi kendi panelinden yönetir.
+
+## 🧭 Fazlar
+
+| Faz | Kapsam | Durum |
+|---|---|---|
+| **Faz 0 — Çekirdek PDKS** | Geofence giriş/çıkış, otomatik çıkış, geç-kalma bildirimi, izin, haftalık program + tatiller, aylık puantaj/CSV, cihaz kilidi, KVKK | ✅ DONE |
+| **Faz 1 — Satış sitesi & rota ayrımı** | Anasayfa → PDKS landing (fiyat/SSS/CTA), Alfa Soylu → `/alfas`, SEO (landing index; özel rotalar noindex; robots+sitemap) | ✅ DONE |
+| **Faz 2 — Self-servis SaaS** | Müşteri kayıt (kullanıcı adı/slug) → tenant + tenant-admin oluşturma; tenant-bazlı yönetici login & PWA linki; varsayılan değerlerle gelip kişiselleştirilebilen panel; ödeme entegrasyonu (deneme→ücretli), erişim kapısı, yasal sayfalar | 🔜 NOT STARTED |
+| **Faz 3 — Kurumsal** | Vardiya yönetimi, onay hiyerarşisi, ERP/bordro entegrasyonu, SSO/2FA, denetim kaydı, gelişmiş raporlama, çoklu lokasyon | 🔭 PLANNED |
 
 ## Mimari
 
@@ -87,3 +114,87 @@ Hızlı test verisi (sabit kod): `scripts/pdks/test_seed.sql`.
 - Çıkıştan sonra aynı gün ikinci giriş **yeni** kayıt açar (çok-vardiya senaryosu için
   kasıtlı). Pano/puantaj aynı günün en son kaydını gösterir.
 - Ham koordinatlar varsayılan olarak DB'ye yazılmaz (KVKK); yalnızca mesafe + doğruluk.
+
+---
+
+## Faz 2 — Self-servis SaaS gereksinimleri (detay)
+
+Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef davranış:
+
+- **R1 — Müşteri kullanıcı adı (slug):** Kayıt sırasında her müşteri benzersiz bir
+  kullanıcı adı/slug seçer (`pdks_tenants.slug` zaten var). Bu, tenant'ın kalıcı
+  kimliği ve URL'sidir.
+- **R2 — Tenant'a ait login profili:** Slug ile müşterinin **kendi yönetici hesabı**
+  oluşur. (Mevcut model: yönetici = global CRM `User` + `PDKS_MANAGE`; SaaS'ta her
+  tenant'ın kendi yöneticisi olmalı → tenant-admin kimliği. Mevcut `pdks_personnel.role
+  = 'tenant_admin'` bu role temel olabilir.)
+- **R3 — Müşteriye özel link:** Tenant-bazlı URL (örn. `iotomasyon.com/t/{slug}` ya da
+  `{slug}.iotomasyon.com`). Çalışanlar bu linkten PWA'yı "ana ekrana ekler". Bugün
+  `/personel` global/tek-tenant (`resolveAdminTenantId` ilk aktif tenant'ı seçer);
+  tenant'a göre çözülecek hâle gelmeli (manifest `start_url`/`scope` slug'a göre).
+- **R4 — Linkte yönetici login:** Aynı tenant URL'sinde yönetici giriş ekranı; tenant
+  yöneticisi kendi slug'lı adresinden panele girer (global `/login`'den ayrı, tenant-scoped).
+- **R5 — Varsayılan + kişiselleştirme:** Yeni tenant makul **default'larla** açılır
+  (haftalık program Pzt–Cuma 08:30–18:30 / Cmt 08:30–13:00, geofence yarıçapı 100 m,
+  doğruluk 100 m, TR resmi tatilleri) ve yönetici bunları **kendine göre optimize eder**.
+  Default tohumlama tenant oluşturma anında yapılmalı.
+
+**Mimari etkiler / kararlar (Faz 2 başlarken netleşecek):**
+1. Tenant routing: path (`/t/{slug}`) mi subdomain mi? (path daha basit; subdomain daha "kurumsal".)
+2. Tenant-admin auth: ayrı oturum mu, mevcut JWT'ye `tenantId` + `tenant_admin` rolü mü?
+3. Kayıt akışı: form → slug doğrulama (benzersiz/serbest) → tenant + tenant-admin + default seed → deneme başlatma.
+4. Ödeme sağlayıcısı: **henüz seçilmedi** (öneri: iyzico — TL tekrarlayan tahsilat). Seçilince abonelik yaşam döngüsü + erişim kapısı + webhook.
+5. Erişim kapısı: deneme/abonelik aktif değilse `/personel` ve yönetici paneli kilitlenir.
+6. Zorunlu yasal sayfalar: Mesafeli Satış Sözleşmesi, Gizlilik/KVKK, İptal & İade, Ön Bilgilendirme.
+
+---
+
+## Backlog & Hedefler
+
+> Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
+> Tamamlanan madde "Yapılanlar"a taşınır.
+
+### Faz 2 (öncelik)
+- [ ] R1–R5: self-servis kayıt + tenant slug + tenant-admin login + tenant-bazlı PWA linki + default seed
+- [ ] Ödeme sağlayıcısı seçimi → abonelik modeli (`PdksPlan`, `PdksSubscription`) + erişim kapısı
+- [ ] Yasal sayfalar (Mesafeli Satış, KVKK, İptal/İade, Ön Bilgilendirme)
+- [ ] Landing CTA'larını gerçek kayıt akışına bağla (şu an `#iletisim`/mailto)
+- [ ] İletişim e-postası/WhatsApp'ı gerçek değerle güncelle (şu an `info@iotomasyon.com`)
+
+### Güvenlik (analiz D*)
+- [ ] **D1 (Kritik):** cron endpoint fail-closed — `CRON_SECRET` yoksa 503/throw (`app/api/pdks/cron/reminders/route.ts:44-47`)
+- [ ] **D2 (Yüksek):** push subscribe `deleteMany`'ye açık `tenantId` ekle (`push/subscribe/route.ts:30`)
+- [ ] **D3 (Orta):** cihaz kilidi logout'ta sıfırlama seçeneği ("bu cihazı çıkar")
+- [ ] **D4 (Orta):** manuel saat düzeltmelerine audit log
+- [ ] **D5 (Düşük):** GPS spoofing'e karşı ek sinyaller (kabul: mobil sınırı)
+
+### Ürün eksikleri (analiz C*)
+- [ ] **C1:** offline check-in kuyruğu (Service Worker + IndexedDB)
+- [ ] **C2:** audit log modeli (`PdksAuditLog`) + manuel düzeltme izleri
+- [ ] **C3:** `PdksLoginCode` ile ilk kurulum/şifre belirleme akışı (şu an kullanılmıyor)
+- [ ] **C4:** güvenilir cron tetikleyici (cron-job.org / Vercel Pro) — 5 dk kesinliği
+- [ ] **C5:** kritik mantığa test (timezone, geofence, otomatik çıkış, izin çakışması)
+- [ ] **C6:** hata telemetrisi (Sentry) — sessiz arızaları yakala
+- [ ] **C7:** yıllık izin bakiyesi/hakediş (`PdksLeaveBalance`)
+- [ ] PDF/Excel rapor (şu an yalnızca CSV)
+- [ ] Tekrarlı kod birleştirme: `lib/pdks/time.ts` (zaman parse) + `format.ts` (TR tarih/saat)
+
+---
+
+## Yapılanlar (delta günlüğü)
+
+> Append-only. Her görevden sonra en yeni en üste eklenir (AGENTS.md "Dokümantasyon disiplini").
+
+### 2026-06-25
+- **Dokümantasyon:** PDKS.md'ye hedef/iş modeli, fazlar, Faz 2 gereksinimleri, backlog
+  ve bu günlük eklendi. AGENTS.md'ye "her görevden sonra MD güncelle" kuralı eklendi.
+- **Faz 1 — Satış sitesi & rota ayrımı (main'de):**
+  - `app/page.tsx` → PDKS satış landing'i (hero, 8 özellik, fiyat, SSS, iletişim).
+  - `app/alfas/page.tsx` → eski Alfa Soylu Depo Arama + panel girişi taşındı (noindex).
+  - Fiyatlandırma: 30 gün deneme · Aylık ₺499 · Yıllık ₺4.000 (≈%33 tasarruf).
+  - SEO: kök global noindex kaldırıldı (landing index); `/alfas`, `/personel`, `/login`,
+    panel `(app)`, `/c/*` noindex; `app/robots.ts` + `app/sitemap.ts` eklendi.
+  - `tsc` 0 hata, eslint temiz. Commit'ler: `253672f`, `b6510f4` (main).
+- **Cron 308 düzeltmesi (main):** GitHub Actions hatırlatma workflow'u `HTTP 308`'e
+  takılıp otomatik çıkışı hiç çalıştırmıyordu; `curl -L --location-trusted` eklendi.
+  Takılı kalan açık kayıtlar manuel kapatıldı. Commit `bf3da26`.
