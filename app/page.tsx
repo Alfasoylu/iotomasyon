@@ -78,35 +78,41 @@ const FEATURES: Array<{ icon: string; title: string; desc: string }> = [
   },
 ];
 
+// Tek ürün, iki faturalandırma seçeneği. Tüm özellikler her planda dahildir;
+// fark yalnızca ödeme periyodu. Yıllık ≈ %33 tasarruf (4 ay bedava).
+const PLAN_FEATURES: string[] = [
+  "Sınırsız personel",
+  "Sınırsız iş yeri / şantiye",
+  "Konum doğrulamalı giriş + otomatik çıkış",
+  "İzin yönetimi + push bildirim",
+  "Aylık puantaj & CSV bordro ihracı",
+  "Haftalık program + resmi tatiller",
+];
+
 const PLANS: Array<{
   name: string;
   price: string;
   unit: string;
+  note?: string;
+  badge?: string;
   highlight?: boolean;
-  features: string[];
   cta: string;
 }> = [
   {
-    name: "Başlangıç",
+    name: "Aylık",
     price: "₺499",
     unit: "/ay",
-    features: ["10 personele kadar", "1 iş yeri/şantiye", "Konum doğrulama + otomatik çıkış", "Aylık puantaj raporu"],
-    cta: "Başla",
+    note: "Her ay yenilenir, istediğiniz zaman iptal",
+    cta: "Denemeyi başlat",
   },
   {
-    name: "Profesyonel",
-    price: "₺999",
-    unit: "/ay",
+    name: "Yıllık",
+    price: "₺4.000",
+    unit: "/yıl",
+    note: "Aylığa göre ≈4 ay bedava",
+    badge: "%33 tasarruf",
     highlight: true,
-    features: ["50 personele kadar", "Sınırsız iş yeri", "İzin yönetimi + push bildirim", "CSV bordro ihracı", "Öncelikli destek"],
-    cta: "Başla",
-  },
-  {
-    name: "Kurumsal",
-    price: "Özel",
-    unit: "fiyat",
-    features: ["Sınırsız personel", "Vardiya & onay hiyerarşisi", "ERP/bordro entegrasyonu", "SSO + denetim kaydı", "Özel SLA"],
-    cta: "İletişime geç",
+    cta: "Denemeyi başlat",
   },
 ];
 
@@ -190,7 +196,7 @@ export default function PdksLandingPage() {
               Özellikleri Gör
             </a>
           </div>
-          <p className="mt-4 text-xs text-slate-400">Kredi kartı gerekmez · Dakikalar içinde kurulum</p>
+          <p className="mt-4 text-xs text-slate-400">30 gün ücretsiz deneme · Kredi kartı gerekmez · Dakikalar içinde kurulum</p>
         </div>
       </section>
 
@@ -213,12 +219,18 @@ export default function PdksLandingPage() {
 
       {/* Pricing */}
       <section id="fiyatlar" className="bg-slate-50 py-20">
-        <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto max-w-5xl px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight">Basit, aylık fiyatlandırma</h2>
-            <p className="mt-3 text-slate-600">Taahhüt yok. İstediğiniz zaman iptal edin.</p>
+            <h2 className="text-3xl font-bold tracking-tight">Basit fiyatlandırma</h2>
+            <p className="mt-3 text-slate-600">Tek paket, tüm özellikler. Aylık veya yıllık ödeyin.</p>
           </div>
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+
+          {/* 30 gün ücretsiz deneme banner */}
+          <div className="mx-auto mt-8 flex max-w-2xl items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-center text-sm font-medium text-emerald-800">
+            🎁 <span><b>30 gün ücretsiz deneme</b> — kredi kartı gerekmez, dilediğiniz zaman iptal edin.</span>
+          </div>
+
+          <div className="mx-auto mt-10 grid max-w-3xl gap-6 sm:grid-cols-2">
             {PLANS.map((p) => (
               <div
                 key={p.name}
@@ -226,9 +238,9 @@ export default function PdksLandingPage() {
                   p.highlight ? "border-blue-600 shadow-lg ring-1 ring-blue-600" : "border-slate-200"
                 }`}
               >
-                {p.highlight && (
+                {p.badge && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
-                    En popüler
+                    {p.badge}
                   </span>
                 )}
                 <h3 className="text-lg font-semibold">{p.name}</h3>
@@ -236,8 +248,9 @@ export default function PdksLandingPage() {
                   <span className="text-4xl font-bold tracking-tight">{p.price}</span>
                   <span className="text-sm text-slate-500">{p.unit}</span>
                 </div>
+                {p.note && <p className="mt-2 text-xs text-slate-500">{p.note}</p>}
                 <ul className="mt-6 space-y-3 text-sm">
-                  {p.features.map((feat) => (
+                  {PLAN_FEATURES.map((feat) => (
                     <li key={feat} className="flex items-start gap-2 text-slate-600">
                       <span className="mt-0.5 text-blue-600">✓</span>
                       {feat}
@@ -258,7 +271,7 @@ export default function PdksLandingPage() {
             ))}
           </div>
           <p className="mt-6 text-center text-xs text-slate-400">
-            Fiyatlara KDV dahil değildir. Tutarlar bilgilendirme amaçlıdır; kesin fiyat için iletişime geçin.
+            Fiyatlara KDV dahil değildir.
           </p>
         </div>
       </section>
