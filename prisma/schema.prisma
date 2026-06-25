@@ -1668,6 +1668,9 @@ model PdksTenant {
   // Haftalık çalışma programı (JSON: 7 elemanlı dizi, 0=Pazar..6=Cmt; null=tatil,
   // dolu={in,out}). null kolon = kod-içi varsayılan program kullanılır.
   workScheduleJson String?
+  // Resmi tatiller (JSON: [{date:"YYYY-MM-DD", name}]). Bu günlerde hatırlatma/
+  // otomatik çıkış yapılmaz ve rapor beklenen iş gününden düşülür.
+  holidaysJson String?
   createdAt DateTime @default(now())
 
   personnel PdksPersonnel[]

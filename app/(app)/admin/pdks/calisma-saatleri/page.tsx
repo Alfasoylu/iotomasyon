@@ -6,19 +6,21 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prisma } from "@/lib/prisma";
 import { parseWeekSchedule } from "@/lib/pdks/schedule";
+import { parseHolidays } from "@/lib/pdks/holidays";
 import { WorkScheduleEditor } from "@/components/admin/pdks/work-schedule-editor";
+import { HolidaysEditor } from "@/components/admin/pdks/holidays-editor";
 
 export const dynamic = "force-dynamic";
 
 export default async function PdksWorkSchedulePage() {
   const user = await requirePermission(PERMISSIONS.PDKS_MANAGE);
 
-  const week = await runWithPdksAdmin(user, async (tenantId) => {
+  const { week, holidays } = await runWithPdksAdmin(user, async (tenantId) => {
     const t = await prisma.pdksTenant.findUnique({
       where: { id: tenantId },
-      select: { workScheduleJson: true },
+      select: { workScheduleJson: true, holidaysJson: true },
     });
-    return parseWeekSchedule(t?.workScheduleJson);
+    return { week: parseWeekSchedule(t?.workScheduleJson), holidays: parseHolidays(t?.holidaysJson) };
   });
 
   return (
@@ -43,6 +45,15 @@ export default async function PdksWorkSchedulePage() {
       </div>
 
       <WorkScheduleEditor initial={week} />
+
+      <div>
+        <h2 className="mb-2 text-base font-semibold text-[var(--text-primary)]">Resmi Tatiller</h2>
+        <p className="mb-3 text-sm text-[var(--text-secondary)]">
+          Bu günlerde geç-kalma/otomatik-çıkış işlemi yapılmaz ve aylık raporda beklenen iş
+          gününden düşülür. &quot;2026 Türkiye tatillerini yükle&quot; ile hazır listeyi ekleyin.
+        </p>
+        <HolidaysEditor initial={holidays} />
+      </div>
     </div>
   );
 }

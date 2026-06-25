@@ -5,6 +5,7 @@ import { isPushConfigured, sendPushToSubs } from "@/lib/pdks/push";
 import { currentTimeTR, workDateTR } from "@/lib/pdks/geo";
 import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
 import { DEFAULT_WEEK_SCHEDULE, parseWeekSchedule, resolveExpected } from "@/lib/pdks/schedule";
+import { parseHolidays, holidaySet } from "@/lib/pdks/holidays";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -56,13 +57,17 @@ export async function GET(req: NextRequest) {
 
   // Tenant'ların haftalık programı (panelden düzenlenebilir; yoksa kod varsayılanı).
   const tenants = await prisma.pdksTenant.findMany({
-    select: { id: true, workScheduleJson: true },
+    select: { id: true, workScheduleJson: true, holidaysJson: true },
   });
   const scheduleByTenant = new Map(
     tenants.map((t) => [t.id, parseWeekSchedule(t.workScheduleJson)]),
   );
+  const holidaysByTenant = new Map(
+    tenants.map((t) => [t.id, holidaySet(parseHolidays(t.holidaysJson))]),
+  );
   const scheduleFor = (tenantId: string) =>
     scheduleByTenant.get(tenantId) ?? DEFAULT_WEEK_SCHEDULE;
+  const holidaysFor = (tenantId: string) => holidaysByTenant.get(tenantId);
 
   const candidates = await prisma.pdksPersonnel.findMany({
     where: { isActive: true },
@@ -74,7 +79,7 @@ export async function GET(req: NextRequest) {
 
   for (const p of candidates) {
     // Bugünün beklenen giriş saati: haftalık program (override > program). Tatilse atla.
-    const exp = resolveExpected(scheduleFor(p.tenantId), today, p.expectedCheckIn, p.expectedCheckOut);
+    const exp = resolveExpected(scheduleFor(p.tenantId), today, p.expectedCheckIn, p.expectedCheckOut, holidaysFor(p.tenantId));
     if (!exp) continue; // tatil günü → geç-kalma yok
     const expected = toMinutes(exp.in);
     if (expected == null) continue;
@@ -147,6 +152,7 @@ export async function GET(req: NextRequest) {
       rec.workDate,
       rec.personnel.expectedCheckIn,
       rec.personnel.expectedCheckOut,
+      holidaysFor(rec.personnel.tenantId),
     );
     if (!exp) continue; // o gün tatil → otomatik çıkış yok
     const expectedOut = toMinutes(exp.out);
