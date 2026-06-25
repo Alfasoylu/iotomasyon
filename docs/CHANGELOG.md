@@ -9,6 +9,17 @@
 
 ## 2026-06
 
+### PDKS — Resmi tatil takvimi (2026 yüklü) (2026-06-24)
+
+- Şema: `PdksTenant.holidaysJson` (migration `20260624160000`, DB'ye uygulandı).
+- `lib/pdks/holidays.ts`: `TR_HOLIDAYS_2026` (14 tam gün — Diyanet 2026: Ramazan B.
+  20–22 Mart, Kurban B. 27–30 Mayıs dahil), `parseHolidays`/`holidaySet`.
+- Entegrasyon: `resolveExpected` ve `countWorkingDays` resmi tatilleri "kapalı gün"
+  sayar → cron geç/çıkış/otomatik-çıkış yapmaz, aylık raporda beklenen iş gününden düşülür.
+- Admin `/admin/pdks/calisma-saatleri` → "Resmi Tatiller" editörü (liste + ekle/sil +
+  "2026 Türkiye tatillerini yükle"); `updateHolidaysAction`. 2026 listesi tenant'a yüklendi.
+- `tsc --noEmit` 0 hata, eslint temiz.
+
 ### PDKS — İzin yönetimi (talep → onay) (2026-06-24)
 
 - Şema: `PdksLeave` tablosu (migration `20260624140000`, DB'ye uygulandı; scoped model).

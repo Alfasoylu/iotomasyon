@@ -1,5 +1,7 @@
 import "server-only";
 
+import { ymdUTC } from "./holidays";
+
 /**
  * PDKS — Haftalık çalışma programı (şirket geneli).
  *
@@ -28,12 +30,22 @@ export function trWeekday(date: Date): number {
   return date.getUTCDay();
 }
 
-/** [from, to] (UTC gece-yarısı, dahil) aralığındaki çalışma (tatil olmayan) günü sayısı. */
-export function countWorkingDays(week: WeekSchedule, from: Date, to: Date): number {
+/**
+ * [from, to] (UTC gece-yarısı, dahil) aralığındaki çalışma günü sayısı.
+ * Haftalık programda kapalı günler ve (verilirse) resmi tatiller hariç tutulur.
+ */
+export function countWorkingDays(
+  week: WeekSchedule,
+  from: Date,
+  to: Date,
+  holidays?: Set<string>,
+): number {
   let n = 0;
   const cur = new Date(from.getTime());
   while (cur.getTime() <= to.getTime()) {
-    if (week[cur.getUTCDay()]) n += 1;
+    const isWorkday = !!week[cur.getUTCDay()];
+    const isHoliday = holidays ? holidays.has(ymdUTC(cur)) : false;
+    if (isWorkday && !isHoliday) n += 1;
     cur.setUTCDate(cur.getUTCDate() + 1);
   }
   return n;
@@ -77,9 +89,11 @@ export function resolveExpected(
   date: Date,
   overrideIn?: string | null,
   overrideOut?: string | null,
+  holidays?: Set<string>,
 ): { in: string; out: string } | null {
+  if (holidays && holidays.has(ymdUTC(date))) return null; // resmi tatil
   const day = week[trWeekday(date)] ?? null;
-  if (!day) return null; // tatil → beklenti yok
+  if (!day) return null; // haftalık programda kapalı (örn. Pazar)
   return {
     in: overrideIn && overrideIn.length > 0 ? overrideIn : day.in,
     out: overrideOut && overrideOut.length > 0 ? overrideOut : day.out,

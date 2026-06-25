@@ -555,3 +555,43 @@ export async function deleteLeaveAction(leaveId: string): Promise<ActionResult> 
   revalidateLeaves();
   return { ok: true };
 }
+
+// ── Resmi tatiller ────────────────────────────────────────────────────────────
+
+/** Tenant'ın resmi tatil listesini günceller ([{date:"YYYY-MM-DD", name}]). */
+export async function updateHolidaysAction(list: unknown): Promise<ActionResult> {
+  const arr = Array.isArray(list) ? (list as Array<{ date?: unknown; name?: unknown }>) : null;
+  if (
+    !arr ||
+    arr.some(
+      (h) =>
+        !h ||
+        typeof h.date !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(h.date) ||
+        typeof h.name !== "string" ||
+        !h.name.trim(),
+    )
+  ) {
+    return { ok: false, message: "Tatil listesi biçimi geçersiz (her satır: tarih + ad)." };
+  }
+  const user = await guard();
+  if (!user) return PERM_DENIED;
+
+  // Tarihe göre tekille + sırala.
+  const norm = Array.from(
+    new Map(
+      arr.map((h) => [h.date as string, { date: h.date as string, name: (h.name as string).trim() }]),
+    ).values(),
+  ).sort((a, b) => a.date.localeCompare(b.date));
+
+  await runWithPdksAdmin(user, async (tenantId) => {
+    await prisma.pdksTenant.update({
+      where: { id: tenantId },
+      data: { holidaysJson: JSON.stringify(norm) },
+    });
+  });
+
+  revalidatePath("/admin/pdks");
+  revalidatePath("/admin/pdks/calisma-saatleri");
+  return { ok: true };
+}

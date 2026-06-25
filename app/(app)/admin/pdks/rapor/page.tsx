@@ -9,6 +9,7 @@ import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prisma } from "@/lib/prisma";
 import { fetchTimesheet, buildTimesheetSummary } from "@/lib/pdks/timesheet";
 import { parseWeekSchedule, countWorkingDays } from "@/lib/pdks/schedule";
+import { parseHolidays, holidaySet } from "@/lib/pdks/holidays";
 
 export const dynamic = "force-dynamic";
 
@@ -42,10 +43,17 @@ export default async function PdksReportPage({
   const { summary, workingDays } = await runWithPdksAdmin(user, async (tenantId) => {
     const [rows, tenant] = await Promise.all([
       fetchTimesheet(from, to),
-      prisma.pdksTenant.findUnique({ where: { id: tenantId }, select: { workScheduleJson: true } }),
+      prisma.pdksTenant.findUnique({
+        where: { id: tenantId },
+        select: { workScheduleJson: true, holidaysJson: true },
+      }),
     ]);
     const week = parseWeekSchedule(tenant?.workScheduleJson);
-    return { summary: buildTimesheetSummary(rows), workingDays: countWorkingDays(week, from, to) };
+    const holidays = holidaySet(parseHolidays(tenant?.holidaysJson));
+    return {
+      summary: buildTimesheetSummary(rows),
+      workingDays: countWorkingDays(week, from, to, holidays),
+    };
   });
 
   const totalHours = summary.reduce((a, s) => a + s.totalHours, 0);
