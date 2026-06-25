@@ -9,7 +9,10 @@ name: PDKS geç-kalma hatırlatması
 #   bu PR main'e merge edilene kadar otomatik tetiklenmez.
 # - Gerekli repo secret'ları (Settings → Secrets and variables → Actions):
 #     • CRON_SECRET    : Vercel'deki CRON_SECRET ile AYNI değer
-#     • PDKS_BASE_URL  : production taban URL (örn. https://iotomasyon.vercel.app)
+#     • PDKS_BASE_URL  : production KANONİK taban URL — https://iotomasyon.com
+#       (DİKKAT: .vercel.app adresi kanonik alana 308 ile yönlenir. Aşağıdaki curl
+#        -L ile yönlendirmeyi takip eder, yine de kanonik URL'i kullanın ki
+#        gereksiz round-trip olmasın.)
 # - Saat penceresi TR mesai saatlerine (≈ 06:00–19:59) daraltıldı; minutes
 #   tasarrufu için. Daha geniş istiyorsanız cron'u değiştirin.
 # - GitHub cron best-effort'tur; yoğunlukta birkaç dakika gecikebilir.
@@ -38,7 +41,10 @@ jobs:
             echo "PDKS_BASE_URL veya CRON_SECRET secret'ı tanımlı değil; atlanıyor."
             exit 0
           fi
-          code=$(curl -sS -m 60 -o /tmp/out.txt -w "%{http_code}" \
+          # -L: 308/301 yönlendirmeyi takip et (ör. .vercel.app → iotomasyon.com).
+          # --location-trusted: yönlendirme başka host'a gitse bile Authorization
+          # başlığını koru (her iki host da bize ait; Bearer düşmesin → 401 olmasın).
+          code=$(curl -sS -m 60 -L --location-trusted -o /tmp/out.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "${BASE_URL%/}/api/pdks/cron/reminders")
           echo "HTTP ${code}"
