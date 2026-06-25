@@ -16,29 +16,32 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://iotomasyon.com"),
   title: {
-    default: "Alfa Soylu Elektronik — B2B Toptan Katalog",
-    template: "%s | iotomasyon",
+    default: "iotomasyon PDKS — Konum Doğrulamalı Personel Devam Takip",
+    template: "%s | iotomasyon PDKS",
   },
   description:
-    "Güvenlik kameraları, elektronik sistemler ve montaj çözümleri. B2B toptan katalog, fiyat teklifi ve dijital sipariş yönetimi.",
-  applicationName: "iotomasyon",
+    "Sahada personel giriş/çıkış takibi: konum doğrulamalı check-in, otomatik çıkış, izin yönetimi ve aylık puantaj. Kurulum gerektirmeyen PWA. Aylık abonelik.",
+  applicationName: "iotomasyon PDKS",
   openGraph: {
     type: "website",
     locale: "tr_TR",
-    siteName: "Alfa Soylu Elektronik",
-    title: "Alfa Soylu Elektronik — B2B Toptan Katalog",
+    siteName: "iotomasyon PDKS",
+    title: "iotomasyon PDKS — Konum Doğrulamalı Personel Devam Takip",
     description:
-      "Güvenlik kameraları, elektronik sistemler ve montaj çözümleri. B2B toptan katalog ve fiyat teklifi.",
+      "Konum doğrulamalı check-in, otomatik çıkış, izin yönetimi ve aylık puantaj. Kurulum gerektirmeyen PWA.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Alfa Soylu Elektronik — B2B Toptan Katalog",
+    title: "iotomasyon PDKS — Personel Devam Takip",
     description:
-      "Güvenlik kameraları ve elektronik sistemler. B2B toptan + montaj.",
+      "Konum doğrulamalı giriş/çıkış, otomatik çıkış, izin ve puantaj. Kurulum gerektirmez.",
   },
+  // NOT: Kök (landing) artık Google'a AÇIK. Özel/auth-arkası rotalar
+  // (/alfas, /personel, /login, panel, /c/*) kendi metadata'larında
+  // noindex ile işaretlenmiştir.
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
   },
 };
 

@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "Personel Devam Takip",
   manifest: "/personel/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Devam Takip" },
+  robots: { index: false, follow: false },
 };
 
 export const viewport: Viewport = {

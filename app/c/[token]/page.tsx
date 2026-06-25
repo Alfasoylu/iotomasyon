@@ -10,6 +10,7 @@
  * Açılma + ilgi event'leri sales rep'e 24 saat içinde otomatik takip görevi oluşturur.
  */
 
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Phone, MessageCircle, Mail, MapPin } from "lucide-react";
 
@@ -26,6 +27,11 @@ import { prisma } from "@/lib/prisma";
 import { CatalogInterestButton } from "@/components/catalog/catalog-interest-button";
 
 export const dynamic = "force-dynamic";
+
+// Kişiye özel paylaşım linki — arama motorlarına kapalı.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function PublicCatalogPage({
   params,

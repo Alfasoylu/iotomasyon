@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+// Dahili CRM paneli — arama motorlarına kapalı (auth arkasında).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 import { LogoutButton } from "@/components/dashboard/logout-button";
 import { MobileNavButton } from "@/components/dashboard/mobile-nav-button";

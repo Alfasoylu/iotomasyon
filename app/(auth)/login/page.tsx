@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
@@ -5,6 +6,11 @@ import { LoginForm } from "@/components/auth/login-form";
 import { Card } from "@/components/ui/card";
 import { getCurrentSession } from "@/lib/auth";
 import { COMPANY_SETTINGS } from "@/lib/company-settings";
+
+export const metadata: Metadata = {
+  title: "Yönetici Girişi",
+  robots: { index: false, follow: false },
+};
 
 export default async function LoginPage() {
   const user = await getCurrentSession();
