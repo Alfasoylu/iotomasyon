@@ -9,6 +9,29 @@
 
 ## 2026-06
 
+### Site — Anasayfa PDKS satış landing'i, Alfa Soylu `/alfas`'a taşındı (2026-06-25)
+
+- `app/page.tsx` → PDKS SaaS satış landing'i (hero, 8 özellik, fiyat tablosu, SSS,
+  iletişim CTA). Fiyatlandırma: 30 gün ücretsiz deneme · Aylık ₺499 · Yıllık ₺4.000
+  (≈%33 tasarruf, tek paket). CTA'lar şimdilik `#iletisim`/mailto (self-servis kayıt
+  Faz 2).
+- `app/alfas/page.tsx` → eski kök (Alfa Soylu Depo Arama + panel header) buraya taşındı.
+- SEO: kök `layout.tsx` global `noindex` KALDIRILDI → landing artık indexlenir. `/alfas`,
+  `/personel`, `/login`, panel (`(app)/layout.tsx`), `/c/[token]` `noindex,nofollow`
+  ile işaretlendi. `app/robots.ts` (yalnızca kök allow) + `app/sitemap.ts` eklendi.
+- Panel/auth/personel davranışı route-grupları sayesinde değişmedi; yalnızca
+  arama-motoru görünürlüğü ayarlandı. `tsc --noEmit` 0 hata, eslint temiz. main'de.
+
+### PDKS — Cron 308 düzeltmesi: otomatik çıkış artık çalışıyor (2026-06-25)
+
+- GitHub Actions `pdks-reminders.yml` her çalışmada `HTTP 308` alıp `exit 1` ile
+  düşüyordu: `PDKS_BASE_URL` (`.vercel.app`) kanonik `iotomasyon.com`'a 308 ile
+  yönleniyor, `curl` `-L` olmadığı için takip etmiyordu → `/api/pdks/cron/reminders`
+  uç noktasına hiç ulaşılmıyordu (ne hatırlatma ne otomatik çıkış).
+- Düzeltme: `curl -L --location-trusted` (yönlendirmeyi takip et, host değişse de
+  Bearer'ı koru). Düzeltme main'e alındı (`bf3da26`). Takılı kalan açık kayıtlar
+  manuel kapatıldı.
+
 ### PDKS — Resmi tatil takvimi (2026 yüklü) (2026-06-24)
 
 - Şema: `PdksTenant.holidaysJson` (migration `20260624160000`, DB'ye uygulandı).
