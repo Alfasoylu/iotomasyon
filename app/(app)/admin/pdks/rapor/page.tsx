@@ -7,6 +7,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prisma } from "@/lib/prisma";
+import { prismaPdks } from "@/lib/pdks/prisma";
 import { fetchTimesheet, buildTimesheetSummary } from "@/lib/pdks/timesheet";
 import { parseWeekSchedule, countWorkingDays } from "@/lib/pdks/schedule";
 import { parseHolidays, holidaySet } from "@/lib/pdks/holidays";
@@ -40,19 +41,32 @@ export default async function PdksReportPage({
   const fromYmd = from.toISOString().slice(0, 10);
   const toYmd = to.toISOString().slice(0, 10);
 
-  const { summary, workingDays } = await runWithPdksAdmin(user, async (tenantId) => {
-    const [rows, tenant] = await Promise.all([
+  const { summary, workingDays, leaveDays } = await runWithPdksAdmin(user, async (tenantId) => {
+    const [rows, tenant, leaves] = await Promise.all([
       fetchTimesheet(from, to),
       prisma.pdksTenant.findUnique({
         where: { id: tenantId },
         select: { workScheduleJson: true, holidaysJson: true },
       }),
+      prismaPdks.pdksLeave.findMany({
+        where: { status: "approved", startDate: { lte: to }, endDate: { gte: from } },
+        select: { personnelId: true, startDate: true, endDate: true },
+      }),
     ]);
     const week = parseWeekSchedule(tenant?.workScheduleJson);
     const holidays = holidaySet(parseHolidays(tenant?.holidaysJson));
+    // Kişi başına dönem içindeki onaylı izin iş-günü (hafta tatili + resmi tatil hariç).
+    const leaveDays: Record<string, number> = {};
+    for (const lv of leaves) {
+      const s = lv.startDate.getTime() > from.getTime() ? lv.startDate : from;
+      const e = lv.endDate.getTime() < to.getTime() ? lv.endDate : to;
+      leaveDays[lv.personnelId] =
+        (leaveDays[lv.personnelId] ?? 0) + countWorkingDays(week, s, e, holidays);
+    }
     return {
       summary: buildTimesheetSummary(rows),
       workingDays: countWorkingDays(week, from, to, holidays),
+      leaveDays,
     };
   });
 
@@ -116,6 +130,8 @@ export default async function PdksReportPage({
               <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Çalışılan gün</th>
               <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Toplam saat</th>
               <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Fazla mesai</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">İzin</th>
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Devamsız</th>
               <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Geç giriş</th>
               <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Eksik çıkış</th>
             </tr>
@@ -123,12 +139,15 @@ export default async function PdksReportPage({
           <tbody className="divide-y divide-[var(--border-subtle)]">
             {summary.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-[var(--text-muted)]">
+                <td colSpan={8} className="px-4 py-8 text-center text-[var(--text-muted)]">
                   Bu ayda kayıt yok.
                 </td>
               </tr>
             )}
-            {summary.map((s) => (
+            {summary.map((s) => {
+              const leave = leaveDays[s.personnelId] ?? 0;
+              const absent = Math.max(0, workingDays - s.days - leave);
+              return (
               <tr key={s.personnelId} className="hover:bg-[var(--surface-1)]">
                 <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{s.personnelName}</td>
                 <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">
@@ -139,17 +158,20 @@ export default async function PdksReportPage({
                 <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">
                   {s.overtimeHours > 0 ? `${s.overtimeHours.toFixed(1)} s` : "—"}
                 </td>
+                <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">{leave || "—"}</td>
+                <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">{absent || "—"}</td>
                 <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">{s.lateCount || "—"}</td>
                 <td className="px-4 py-3 tabular-nums text-[var(--text-secondary)]">{s.missingCheckoutCount || "—"}</td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </Card>
 
       <p className="text-xs text-[var(--text-muted)]">
-        Not: &quot;Çalışılan gün / beklenen iş günü&quot; oranında izin/rapor günleri henüz
-        ayrı tutulmuyor (izin & resmi tatil modülüyle iyileştirilecek).
+        Beklenen iş günü hafta tatili + resmi tatilleri dışlar. Devamsız = beklenen − çalışılan −
+        onaylı izin. (Dönem boyunca hiç kaydı olmayan personel bu listede görünmez.)
       </p>
     </div>
   );
