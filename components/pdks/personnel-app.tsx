@@ -147,19 +147,30 @@ export function PersonnelApp({
     setError(null);
     setInfo(null);
     try {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+        setError("Bu cihaz/tarayıcı bildirimi desteklemiyor. iPhone'da uygulamayı önce 'Ana Ekrana Ekle' ile kurun.");
+        return;
+      }
       const perm = await Notification.requestPermission();
       if (perm !== "granted") {
-        setError("Bildirim izni verilmedi");
+        setError("Bildirim izni verilmedi.");
         return;
       }
       const keyRes = await fetch("/api/pdks/push/public-key");
       if (!keyRes.ok) {
-        setError("Bildirim sunucusu hazır değil");
+        setError("Bildirim sunucusu hazır değil (VAPID).");
         return;
       }
       const { key } = await keyRes.json();
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
+      // Service worker'ı garanti kaydet ve aktif olmasını ZAMAN AŞIMIYLA bekle.
+      // (serviceWorker.ready aktif SW yoksa sonsuza dek askıda kalabiliyordu.)
+      const reg = await navigator.serviceWorker.register("/personel/sw.js", { scope: "/personel" });
+      const ready = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+      ]);
+      const activeReg = ready ?? reg;
+      const sub = await activeReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
       });
@@ -169,13 +180,13 @@ export function PersonnelApp({
         body: JSON.stringify(sub.toJSON()),
       });
       if (!saveRes.ok) {
-        setError("Abonelik kaydedilemedi");
+        setError("Abonelik kaydedilemedi.");
         return;
       }
       setPushEnabled(true);
-      setInfo("Bildirimler açıldı");
-    } catch {
-      setError("Bildirim açılamadı");
+      setInfo("Bildirimler açıldı ✓");
+    } catch (e) {
+      setError("Bildirim açılamadı: " + (e instanceof Error ? e.message : "bilinmeyen hata"));
     } finally {
       setPushBusy(false);
     }
