@@ -164,9 +164,11 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
 ### Faz 2 (öncelik)
-- [~] R1–R5 (Artım 1 yapıldı): self-servis kayıt (`/kayit`) + tenant slug + default
-  seed (program/tatil) + 30 gün deneme + tenant-admin oluşturma **tamam (feature dalı)**.
-  Kalan: tenant-bazlı yönetim paneli + `/t/{slug}` PWA linki + erişim kapısı bağlama (Artım 2).
+- [~] R1–R5 (Artım 1 + 2 yapıldı): self-servis kayıt (`/kayit`) + tenant slug + default
+  seed (program/tatil) + 30 gün deneme + tenant-admin oluşturma **tamam (main, migration canlıda)**;
+  müşteriye özel link **`/t/{slug}` + tenant-scope'lu PWA (manifest+SW) tamam**.
+  Kalan: tenant-admin self-servis yönetim paneli (Artım 3). Erişim kapısı iş kararı
+  gereği bağlanmayacak (10 müşteriye kadar).
 - [ ] Ödeme sağlayıcısı seçimi → abonelik modeli (`PdksPlan`, `PdksSubscription`) + erişim kapısı
 - [ ] Yasal sayfalar (Mesafeli Satış, KVKK, İptal/İade, Ön Bilgilendirme)
 - [ ] Landing CTA'larını gerçek kayıt akışına bağla (şu an `#iletisim`/mailto)
@@ -195,6 +197,22 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ## Yapılanlar (delta günlüğü)
 
 > Append-only. Her görevden sonra en yeni en üste eklenir (AGENTS.md "Dokümantasyon disiplini").
+
+### 2026-06-26 (devam 2)
+- **Faz 2 / Artım 2 — Müşteriye özel link `/t/{slug}` (R3):**
+  - `app/t/[slug]/page.tsx`: tenant-branded personel giriş/çalışma ekranı (slug→tenant,
+    yoksa 404). Mevcut `PersonnelApp` yeniden kullanıldı.
+  - Tenant-scope'lu PWA: `app/t/[slug]/manifest.webmanifest/route.ts` (şirket adıyla
+    branded, start_url/scope=`/t/{slug}`) + `app/t/[slug]/sw.js/route.ts`
+    (`Service-Worker-Allowed: /t/{slug}` ile push çalışır) + `layout.tsx`.
+  - `PersonnelApp`'e opsiyonel `swUrl`/`swScope`/`brand` prop'ları eklendi; varsayılanlar
+    `/personel` davranışını AYNEN korur (mevcut canlı akış bozulmadı).
+  - Kayıt başarı ekranı çalışan linkini (`iotomasyon.com/t/{slug}`) gösterir.
+  - `robots.ts`'e `/t/` disallow. `tsc` 0 hata, eslint temiz.
+  - **Migration CANLIDA** (`apply_migration` başarılı): `pdks_tenants` 5 abonelik kolonu.
+  - Erişim kapısı iş kararı gereği BAĞLANMADI.
+  - **Sıradaki (Artım 3):** tenant-admin self-servis yönetim paneli (personel/şantiye/
+    program CRUD, pdks_session tenantId ile scoped).
 
 ### 2026-06-26 (devam)
 - **İş kararı:** 10 müşteriye kadar ödeme sistemi yok; erişim kapısı bilinçli kapalı

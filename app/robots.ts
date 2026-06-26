@@ -12,6 +12,7 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         "/alfas",
         "/personel",
+        "/t/",
         "/login",
         "/c/",
         "/api/",
