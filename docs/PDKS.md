@@ -155,7 +155,9 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
 ### Faz 2 (öncelik)
-- [ ] R1–R5: self-servis kayıt + tenant slug + tenant-admin login + tenant-bazlı PWA linki + default seed
+- [~] R1–R5 (Artım 1 yapıldı): self-servis kayıt (`/kayit`) + tenant slug + default
+  seed (program/tatil) + 30 gün deneme + tenant-admin oluşturma **tamam (feature dalı)**.
+  Kalan: tenant-bazlı yönetim paneli + `/t/{slug}` PWA linki + erişim kapısı bağlama (Artım 2).
 - [ ] Ödeme sağlayıcısı seçimi → abonelik modeli (`PdksPlan`, `PdksSubscription`) + erişim kapısı
 - [ ] Yasal sayfalar (Mesafeli Satış, KVKK, İptal/İade, Ön Bilgilendirme)
 - [ ] Landing CTA'larını gerçek kayıt akışına bağla (şu an `#iletisim`/mailto)
@@ -184,6 +186,26 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ## Yapılanlar (delta günlüğü)
 
 > Append-only. Her görevden sonra en yeni en üste eklenir (AGENTS.md "Dokümantasyon disiplini").
+
+### 2026-06-26
+- **Faz 2 / Artım 1 — Tenant provizyon temeli (feature dalı; prod migration bekliyor):**
+  - Şema: `PdksTenant`'a abonelik/deneme alanları eklendi — `subscriptionStatus`
+    (default `trial`), `plan`, `trialEndsAt`, `currentPeriodEnd`, `ownerEmail`
+    (migration `20260625230000_pdks_tenant_subscription` + idempotent
+    `scripts/pdks/apply_tenant_subscription.sql`). **Not:** MCP onay aksaklığı
+    nedeniyle canlı DB'ye HENÜZ uygulanmadı; uygulanınca main'e promote edilecek.
+  - `lib/pdks/tenant-provision.ts`: `createTenantWithDefaults` (tenant + tenant-admin
+    + 30 gün deneme + varsayılan haftalık program + 2026 tatilleri), `slugify`,
+    `isSlugAvailable`, `tenantAccessStatus` (erişim kapısı kararı).
+  - Self-servis kayıt: `/kayit` sayfası + `components/pdks/register-form.tsx` +
+    `lib/actions/pdks-register-actions.ts` (zod doğrulama, slug benzersizlik).
+  - Landing CTA'ları (`Ücretsiz Deneyin` + plan butonları) `/kayit`'e bağlandı.
+  - `tsc` 0 hata, eslint temiz. Karar (tam yetki): tenant routing **path tabanlı
+    `/t/{slug}`**, erişim **deneme-öncelikli** (ödeme sağlayıcı seçilince), tenant-admin
+    mevcut personel auth'u `role='tenant_admin'` ile.
+  - **Sıradaki (Artım 2):** tenant-bazlı yönetim paneli + `/t/{slug}` PWA linki +
+    erişim kapısının `/personel`'e bağlanması.
+- **Dokümantasyon kuralı:** AGENTS.md'ye "her görevden sonra MD güncelle" disiplini.
 
 ### 2026-06-25
 - **Dokümantasyon:** PDKS.md'ye hedef/iş modeli, fazlar, Faz 2 gereksinimleri, backlog
