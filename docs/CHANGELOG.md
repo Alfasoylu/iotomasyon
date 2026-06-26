@@ -9,6 +9,24 @@
 
 ## 2026-06
 
+### PDKS — Faz 2: self-servis kayıt + müşteriye özel link `/t/{slug}` (2026-06-26)
+
+- Şema (CANLIDA): `pdks_tenants`'a abonelik/deneme kolonları —
+  `subscriptionStatus` (default `trial`), `plan`, `trialEndsAt`, `currentPeriodEnd`,
+  `ownerEmail` (migration `20260625230000_pdks_tenant_subscription`,
+  `apply_migration` ile remote'a uygulandı; idempotent script repoda).
+- Self-servis kayıt: `/kayit` + `registerTenantAction` (zod, slug benzersizlik) +
+  `lib/pdks/tenant-provision.ts` → yeni tenant makul VARSAYILANLARLA açılır (haftalık
+  program + 2026 tatilleri), tenant-admin personeli oluşturulur, 30 gün deneme başlar.
+- Müşteriye özel link: `/t/{slug}` tenant-branded personel ekranı (mevcut `PersonnelApp`
+  yeniden kullanıldı) + tenant-scope'lu PWA: dinamik `manifest.webmanifest` ve
+  `sw.js` route handler'ları (`Service-Worker-Allowed: /t/{slug}`). `PersonnelApp`'e
+  geriye-uyumlu `swUrl`/`swScope`/`brand` prop'ları; `/personel` davranışı değişmedi.
+- SEO: `robots.ts`'e `/t/` disallow. Landing CTA'ları `/kayit`'e bağlandı.
+- İŞ KARARI (dahili): erişim kapısı (abonelik/deneme lockout) bilinçli olarak
+  ETKİNLEŞTİRİLMEDİ — sistem 10 müşteriye ulaşana kadar ücretsiz çalışır.
+- `tsc --noEmit` 0 hata, eslint temiz. main'de.
+
 ### Site — Anasayfa PDKS satış landing'i, Alfa Soylu `/alfas`'a taşındı (2026-06-25)
 
 - `app/page.tsx` → PDKS SaaS satış landing'i (hero, 8 özellik, fiyat tablosu, SSS,

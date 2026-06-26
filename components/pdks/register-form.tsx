@@ -55,12 +55,18 @@ export function RegisterForm() {
           <b>30 günlük ücretsiz denemeniz</b> başladı. Kullanıcı adınız:{" "}
           <code className="rounded bg-white px-1.5 py-0.5 font-mono">{doneSlug}</code>
         </p>
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-white p-3 text-sm">
+          <p className="font-medium text-slate-700">Çalışan giriş linkiniz:</p>
+          <p className="mt-1 break-all font-mono text-emerald-700">iotomasyon.com/t/{doneSlug}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Bu linki çalışanlarınızla paylaşın; telefonlarına &quot;Ana Ekrana Ekle&quot; ile kurarlar.
+          </p>
+        </div>
         <p className="mt-3 text-sm leading-6">
-          Yönetici telefon ve şifrenizle giriş yapın; personelinizi ekleyip onlara çalışma
-          linkini paylaşabilirsiniz.
+          Yönetici telefon ve şifrenizle giriş yapın; personelinizi ekleyip yönetin.
         </p>
         <a
-          href="/personel"
+          href={`/t/${doneSlug}`}
           className="mt-4 inline-block rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
         >
           Girişe git

@@ -79,10 +79,19 @@ export function PersonnelApp({
   initial,
   history = [],
   leaves = [],
+  swUrl = "/personel/sw.js",
+  swScope = "/personel",
+  brand,
 }: {
   initial: Initial;
   history?: HistoryRow[];
   leaves?: LeaveItem[];
+  // Service worker yolu/scope'u — tenant-bazlı giriş (`/t/{slug}`) kendi SW'sini
+  // verir. Varsayılanlar global `/personel` davranışını korur.
+  swUrl?: string;
+  swScope?: string;
+  // Tenant-bazlı girişte gösterilen şirket adı (opsiyonel).
+  brand?: string;
 }) {
   const router = useRouter();
   const [showHistory, setShowHistory] = useState(false);
@@ -105,7 +114,7 @@ export function PersonnelApp({
   const [iosHint, setIosHint] = useState(false);
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/personel/sw.js", { scope: "/personel" }).catch(() => {});
+      navigator.serviceWorker.register(swUrl, { scope: swScope }).catch(() => {});
     }
     // Yetenek/kurulum tespiti — setState'ler mikrotask içinde (cascading-render uyarısı).
     void Promise.resolve().then(() => {
@@ -125,7 +134,7 @@ export function PersonnelApp({
         .then((sub) => setPushEnabled(!!sub && Notification.permission === "granted"))
         .catch(() => {});
     });
-  }, []);
+  }, [swUrl, swScope]);
 
   // Uygulama (özellikle ana-ekrana eklenmiş PWA) arka planda açık kaldığında React
   // durumu donar; ertesi gün öne geldiğinde hâlâ dünkü "mesai tamamlandı" görünür.
@@ -164,7 +173,7 @@ export function PersonnelApp({
       const { key } = await keyRes.json();
       // Service worker'ı garanti kaydet ve aktif olmasını ZAMAN AŞIMIYLA bekle.
       // (serviceWorker.ready aktif SW yoksa sonsuza dek askıda kalabiliyordu.)
-      const reg = await navigator.serviceWorker.register("/personel/sw.js", { scope: "/personel" });
+      const reg = await navigator.serviceWorker.register(swUrl, { scope: swScope });
       const ready = await Promise.race([
         navigator.serviceWorker.ready,
         new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
@@ -190,7 +199,7 @@ export function PersonnelApp({
     } finally {
       setPushBusy(false);
     }
-  }, []);
+  }, [swUrl, swScope]);
 
   // ── Login formu ────────────────────────────────────────────────────────────
   const [phone, setPhone] = useState("");
@@ -374,7 +383,10 @@ export function PersonnelApp({
   if (!initial.authed) {
     return (
       <Shell>
-        <h1 className="text-2xl font-semibold">PDKS — Giriş</h1>
+        {brand && (
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-400">{brand}</p>
+        )}
+        <h1 className="mt-1 text-2xl font-semibold">{brand ? "Personel Girişi" : "PDKS — Giriş"}</h1>
         <p className="mt-1 text-sm text-slate-400">
           Telefon numaranız ve yöneticinizin verdiği şifre ile giriş yapın. İlk giriş
           bu cihaza tanımlanır; başka cihazdan giriş yapılamaz.
