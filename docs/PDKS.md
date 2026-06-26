@@ -164,11 +164,12 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
 ### Faz 2 (öncelik)
-- [~] R1–R5 (Artım 1 + 2 yapıldı): self-servis kayıt (`/kayit`) + tenant slug + default
-  seed (program/tatil) + 30 gün deneme + tenant-admin oluşturma **tamam (main, migration canlıda)**;
-  müşteriye özel link **`/t/{slug}` + tenant-scope'lu PWA (manifest+SW) tamam**.
-  Kalan: tenant-admin self-servis yönetim paneli (Artım 3). Erişim kapısı iş kararı
-  gereği bağlanmayacak (10 müşteriye kadar).
+- [x] **R1–R5 TAMAM** (Artım 1+2+3, main, migration canlıda): self-servis kayıt
+  (`/kayit`) + tenant slug + default seed + 30 gün deneme; müşteriye özel link
+  `/t/{slug}` + tenant-scope'lu PWA; tenant-admin yönetim paneli `/t/{slug}/yonetim`
+  (personel + şantiye + atama). Erişim kapısı iş kararı gereği bağlanmadı (10 müşteriye kadar).
+  Kalan iyileştirmeler: tenant panelde program/izin/rapor sekmeleri (CRM'de var, tenant
+  yüzeyine taşınabilir); push url'sini tenant-aware yapma.
 - [ ] Ödeme sağlayıcısı seçimi → abonelik modeli (`PdksPlan`, `PdksSubscription`) + erişim kapısı
 - [ ] Yasal sayfalar (Mesafeli Satış, KVKK, İptal/İade, Ön Bilgilendirme)
 - [ ] Landing CTA'larını gerçek kayıt akışına bağla (şu an `#iletisim`/mailto)
@@ -197,6 +198,19 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ## Yapılanlar (delta günlüğü)
 
 > Append-only. Her görevden sonra en yeni en üste eklenir (AGENTS.md "Dokümantasyon disiplini").
+
+### 2026-06-26 (devam 3)
+- **Faz 2 / Artım 3 — Tenant-admin self-servis yönetim paneli (R4, R5):**
+  - `app/t/[slug]/yonetim/page.tsx`: tenant-admin paneli. Yetki: `requireTenantAdminFor`
+    (pdks_session role=`tenant_admin` + slug↔tenantId eşleşmesi); yoksa `/t/{slug}`'a redirect.
+  - `lib/pdks/tenant-admin.ts` (`requireTenantAdminFor`, `runAsTenantAdmin`) +
+    `lib/actions/pdks-tenant-actions.ts`: tenant-scope'lu personel (ekle/şifre/cihaz/
+    aktif) ve şantiye (ekle/aktif/personel atama) action'ları. Mevcut CRM admin kodu
+    (`pdks-admin-actions.ts`) hiç değişmedi — ayrı yüzey.
+  - `components/pdks/tenant/admin-panel.tsx`: personel + şantiye yönetimi (konum
+    "Konumumu kullan" ile otomatik). Şantiyeye personel atama (geofence için gerekli).
+  - `PersonnelApp`'e `adminHref` prop'u: tenant-admin uygulamada "⚙ Yönetim" linki görür.
+  - `tsc` 0 hata, eslint temiz. **R1–R5 tamam** (erişim kapısı iş kararı gereği bağlı değil).
 
 ### 2026-06-26 (devam 2)
 - **Faz 2 / Artım 2 — Müşteriye özel link `/t/{slug}` (R3):**

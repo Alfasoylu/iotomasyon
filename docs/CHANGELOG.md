@@ -9,6 +9,18 @@
 
 ## 2026-06
 
+### PDKS — Faz 2: tenant-admin self-servis yönetim paneli `/t/{slug}/yonetim` (2026-06-26)
+
+- `app/t/[slug]/yonetim`: tenant yöneticisi kendi personel ve şantiyelerini yönetir.
+  Yetki `requireTenantAdminFor` (pdks_session role=`tenant_admin` + slug↔tenantId).
+- `lib/pdks/tenant-admin.ts` + `lib/actions/pdks-tenant-actions.ts`: tenant-scope'lu
+  personel (ekle/şifre sıfırla/cihaz sıfırla/aktif) ve şantiye (ekle/aktif/personel
+  atama) işlemleri. Mevcut CRM admin action'ları (`pdks-admin-actions.ts`) değişmedi.
+- `components/pdks/tenant/admin-panel.tsx`: koyu temalı panel; şantiye eklerken
+  "Konumumu kullan" (geolocation), şantiyeye personel atama (geofence için gerekli).
+- `PersonnelApp`'e `adminHref` prop'u → tenant-admin "⚙ Yönetim" linkini görür.
+- `tsc --noEmit` 0 hata, eslint temiz. main'de. (Faz 2 R1–R5 tamam.)
+
 ### PDKS — Faz 2: self-servis kayıt + müşteriye özel link `/t/{slug}` (2026-06-26)
 
 - Şema (CANLIDA): `pdks_tenants`'a abonelik/deneme kolonları —

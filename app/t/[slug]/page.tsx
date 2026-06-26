@@ -119,6 +119,7 @@ export default async function TenantPersonnelPage({
       brand={tenant.name}
       swUrl={swUrl}
       swScope={swScope}
+      adminHref={session.role === "tenant_admin" ? `/t/${slug}/yonetim` : undefined}
       initial={{
         authed: true,
         role: session.role,
