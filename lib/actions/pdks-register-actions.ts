@@ -40,14 +40,22 @@ export async function registerTenantAction(input: {
   }
 
   const data = parsed.data;
-  const result = await createTenantWithDefaults({
-    companyName: data.companyName,
-    slug: data.slug,
-    adminFullName: data.adminFullName,
-    adminPhone: data.adminPhone,
-    password: data.password,
-    ownerEmail: data.ownerEmail || null,
-  });
+  let result;
+  try {
+    result = await createTenantWithDefaults({
+      companyName: data.companyName,
+      slug: data.slug,
+      adminFullName: data.adminFullName,
+      adminPhone: data.adminPhone,
+      password: data.password,
+      ownerEmail: data.ownerEmail || null,
+    });
+  } catch (e) {
+    // Beklenmeyen DB hatası (ör. migration henüz uygulanmadıysa kolon eksikliği,
+    // yarış durumunda slug çakışması). Kullanıcıya 500 yerine nazik mesaj.
+    console.error("registerTenantAction failed:", e);
+    return { ok: false, message: "Kayıt şu an tamamlanamadı, lütfen birazdan tekrar deneyin." };
+  }
 
   if (!result.ok) {
     if (result.reason === "slug_taken") {
