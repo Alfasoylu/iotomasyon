@@ -183,12 +183,12 @@ export default function PdksLandingPage() {
             Kurulum gerektirmez — telefondan açın, çalışmaya başlayın.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a
-              href="#iletisim"
+            <Link
+              href="/kayit"
               className="w-full rounded-xl bg-blue-600 px-7 py-3.5 text-center text-base font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
             >
               Ücretsiz Deneyin
-            </a>
+            </Link>
             <a
               href="#ozellikler"
               className="w-full rounded-xl border border-slate-300 px-7 py-3.5 text-center text-base font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
@@ -257,8 +257,8 @@ export default function PdksLandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="#iletisim"
+                <Link
+                  href="/kayit"
                   className={`mt-8 block rounded-xl px-5 py-3 text-center text-sm font-semibold transition ${
                     p.highlight
                       ? "bg-blue-600 text-white hover:bg-blue-700"
@@ -266,7 +266,7 @@ export default function PdksLandingPage() {
                   }`}
                 >
                   {p.cta}
-                </a>
+                </Link>
               </div>
             ))}
           </div>

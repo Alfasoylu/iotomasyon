@@ -1671,6 +1671,15 @@ model PdksTenant {
   // Resmi tatiller (JSON: [{date:"YYYY-MM-DD", name}]). Bu günlerde hatırlatma/
   // otomatik çıkış yapılmaz ve rapor beklenen iş gününden düşülür.
   holidaysJson String?
+
+  // ── Abonelik / SaaS (Faz 2) ──────────────────────────────────────────────
+  // Self-servis kayıt + aylık/yıllık abonelik. Erişim kapısı bu alanlara bakar.
+  subscriptionStatus String    @default("trial") // trial | active | past_due | canceled
+  plan               String? // 'monthly' | 'yearly' | null (deneme)
+  trialEndsAt        DateTime? // deneme bitişi (UTC); kayıt anında +30 gün
+  currentPeriodEnd   DateTime? // ödenmiş dönemin bitişi (UTC)
+  ownerEmail         String? // kaydı yapan müşteri e-postası (bildirim/fatura)
+
   createdAt DateTime @default(now())
 
   personnel PdksPersonnel[]
