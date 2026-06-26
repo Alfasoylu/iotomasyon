@@ -82,6 +82,7 @@ export function PersonnelApp({
   swUrl = "/personel/sw.js",
   swScope = "/personel",
   brand,
+  adminHref,
 }: {
   initial: Initial;
   history?: HistoryRow[];
@@ -92,6 +93,8 @@ export function PersonnelApp({
   swScope?: string;
   // Tenant-bazlı girişte gösterilen şirket adı (opsiyonel).
   brand?: string;
+  // Tenant-admin ise yönetim paneli linki (opsiyonel) → header'da "Yönetim".
+  adminHref?: string;
 }) {
   const router = useRouter();
   const [showHistory, setShowHistory] = useState(false);
@@ -456,9 +459,16 @@ export function PersonnelApp({
           <p className="text-sm text-slate-400">Merhaba</p>
           <h1 className="text-2xl font-semibold">{initial.name || "Personel"}</h1>
         </div>
-        <button onClick={logout} className="text-sm text-slate-400 underline">
-          Çıkış
-        </button>
+        <div className="flex items-center gap-3">
+          {adminHref && (
+            <a href={adminHref} className="text-sm font-medium text-sky-400 underline">
+              ⚙ Yönetim
+            </a>
+          )}
+          <button onClick={logout} className="text-sm text-slate-400 underline">
+            Çıkış
+          </button>
+        </div>
       </div>
 
       <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
