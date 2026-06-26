@@ -26,6 +26,15 @@ SaaS ürününe dönüştürmek.
 - **Dağıtım:** her müşteriye özel link → çalışanlar PWA'yı ana ekrana ekler; tenant
   yöneticisi kendi panelinden yönetir.
 
+> **🔒 DAHİLİ İŞ KARARI (public'e yansıtılmaz) — 2026-06-26:**
+> **10 müşteri bandına ulaşana kadar ödeme sistemi KURULMAYACAK.** Sistem o ana
+> kadar herkese sessizce **ücretsiz** çalışmaya devam eder: deneme süresi bitse bile
+> **erişim kapısı (lockout) ETKİNLEŞTİRİLMEZ**. Public tarafta (landing/`/kayit`)
+> "30 gün deneme" + fiyat mesajı normal görünür; müşteriler ücretsiz devam ettiğini
+> bilmez. `tenantAccessStatus` yardımcı fonksiyonu mevcut ama HİÇBİR yere bağlı değil
+> (kasıtlı). 10 müşteriye ulaşınca: ödeme sağlayıcı (öneri iyzico) + erişim kapısı
+> devreye alınır. Bayrak fikri: `PDKS_BILLING_ENFORCED` (default false).
+
 ## 🧭 Fazlar
 
 | Faz | Kapsam | Durum |
@@ -186,6 +195,21 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ## Yapılanlar (delta günlüğü)
 
 > Append-only. Her görevden sonra en yeni en üste eklenir (AGENTS.md "Dokümantasyon disiplini").
+
+### 2026-06-26 (devam)
+- **İş kararı:** 10 müşteriye kadar ödeme sistemi yok; erişim kapısı bilinçli kapalı
+  (sistem sessizce ücretsiz). Dahili not "Hedef & İş Modeli"ne eklendi.
+- **Kayıt akışı sağlamlaştırma:** `registerTenantAction` DB hatalarını yakalayıp
+  (ör. migration henüz uygulanmadıysa) 500 yerine nazik mesaj döner → Artım 1
+  main'e güvenle promote edilebilir.
+- **Promote:** Artım 1 main'e alındı.
+- **Cron teşhisi (bildirim gelmedi):** Fix çalışıyor (06:57 UTC run `HTTP 200`,
+  `pushConfigured:true`, `candidates:3`, `reminded:0`). Sorun GitHub cron throttling —
+  sabah hatırlatma penceresinde (08:35–09:30 TR) hiç tetiklenmedi; tek run 09:57 TR'de
+  oldu (60 dk üst sınırı aşıldı → gönderim yok). Kalıcı çözüm: cron-job.org (backlog C4).
+- **Canlı DB migration:** MCP onay aksaklığı + ortamda DB kimliği olmaması nedeniyle
+  AJAN TARAFINDAN UYGULANAMADI; idempotent SQL kullanıcıya verildi
+  (`scripts/pdks/apply_tenant_subscription.sql`).
 
 ### 2026-06-26
 - **Faz 2 / Artım 1 — Tenant provizyon temeli (feature dalı; prod migration bekliyor):**
