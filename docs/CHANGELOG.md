@@ -7,6 +7,22 @@
 - If a change is inferred from documentation but not independently verified in code, avoid wording it as fully implemented.
 - ROADMAP items must not appear here unless implemented.
 
+## 2026-07
+
+### Analiz — Satış / ciro düşüşü kök-neden analizi (2026-07-16)
+
+- `docs/SATIS-DUSUS-ANALIZI.md`: `docs/urunler.xlsx` / `raw_ciro` (3.643 ürün,
+  tüm-zaman + ürün-başı ilk/son satış tarihi) üzerinden yapısal analiz.
+- Doğrulanan bulgular (dosyadan hesaplanmış): ciro top-100'de %68,9 yoğunlaşmış;
+  top-20 hero cironun %52'si (15,2M TL) 60+ gündür sessiz ve çoğu stok 0; tüm-zaman
+  cironun %62,9'u 60+ gündür satmıyor; yeni ürün girişi ayda ~30'dan (2025) 2026-04'te
+  1'e düşmüş; kanal payı Trendyol %68,1 + HB %19,1 (%87).
+- Kök neden: eski hero'lar stok 0'a düşüp ikmal edilmemiş + yeni-ürün pipeline'ı
+  kurumuş. Öneriler ve erken-uyarı paneli önerisi raporda.
+- Sınır (belgelendi): kesin aylık ciro serisi xlsx'te yok; kesin karşılaştırma DB
+  `MarketplaceSalesRecord.orderDate` gerektirir (bu oturumda DB `execute_sql` onayı
+  alınamadı).
+
 ## 2026-06
 
 ### PDKS — Faz 2: tenant-admin self-servis yönetim paneli `/t/{slug}/yonetim` (2026-06-26)

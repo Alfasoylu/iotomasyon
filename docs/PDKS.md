@@ -199,6 +199,20 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 > Append-only. Her görevden sonra en yeni en üste eklenir (AGENTS.md "Dokümantasyon disiplini").
 
+### 2026-07-16
+- **Satış / ciro düşüşü analizi (`docs/SATIS-DUSUS-ANALIZI.md`):**
+  - Kaynak `docs/urunler.xlsx` → `raw_ciro` (3.643 ürün, tüm-zaman + ürün-başı son
+    satış tarihi). Bulgu: düşüşün kök nedeni **(a)** tarihi hero ürünlerin stok 0'a
+    düşüp yeniden alınmaması (top-20 cironun %52'si / 15,2M TL sessiz) ve **(b)** yeni
+    ürün girişinin çökmesi (ayda ~30 → 2026-04'te 1).
+  - Ek bulgular: ciro top-100'de %69 yoğunlaşmış; kanal Trendyol+HB %87; tüm-zaman
+    cironun %63'ü 60+ gündür satmıyor.
+  - Öneriler: ölü hero'ları ikmal, yeni-ürün motorunu yeniden çalıştır, kanal
+    çeşitlendir, ölü stok erit, "hero stok 0 / 30+ gün satış yok" erken-uyarı paneli.
+  - **Veri sınırı belgelendi:** kesin aylık ciro serisi xlsx'te yok (`Malidurum` boş);
+    kesin "bu ay vs geçen yıl" için DB `MarketplaceSalesRecord.orderDate` gerekli —
+    bu oturumda `execute_sql` onayı alınamadı, DB açılınca seri eklenecek.
+
 ### 2026-06-26 (devam 3)
 - **Faz 2 / Artım 3 — Tenant-admin self-servis yönetim paneli (R4, R5):**
   - `app/t/[slug]/yonetim/page.tsx`: tenant-admin paneli. Yetki: `requireTenantAdminFor`
