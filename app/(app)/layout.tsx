@@ -350,6 +350,58 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat",
   },
 
+  // ── CFO (Faz 90) ────────────────────────────────────────────────────────
+  // Finansal sır: yalnız cfo.read izni olanlar görür (varsayılan ADMIN/OWNER).
+  {
+    href: "/cfo",
+    label: "CFO Kokpiti",
+    iconKey: "wallet",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/borclar",
+    label: "Borçlar",
+    iconKey: "creditCard",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/nakit-akisi",
+    label: "Nakit Akışı",
+    iconKey: "trendingUp",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/alacaklar",
+    label: "Alacaklar",
+    iconKey: "dollar",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/gumruk",
+    label: "Gümrük Rezervi",
+    iconKey: "ship",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/sermaye",
+    label: "Sermaye Tahsisi",
+    iconKey: "scale",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/ayarlar",
+    label: "CFO Ayarları",
+    iconKey: "settings",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+
   // ── FİNANS ──────────────────────────────────────────────────────────────
   {
     href: "/admin/capital",
@@ -460,7 +512,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   // P6/D2-05: SALES rolündeki kullanıcılar yönetim/ithalat/finans menülerini görmesin
   if (user.role === "SALES") {
-    const SALES_HIDDEN_SECTIONS = new Set(["Günlük Durum", "İthalat", "Finans", "Sistem", "Pazaryerleri"]);
+    const SALES_HIDDEN_SECTIONS = new Set(["Günlük Durum", "İthalat", "Finans", "CFO", "Sistem", "Pazaryerleri"]);
     const SALES_HIDDEN_HREFS = new Set([
       "/admin/sales-performance",
       "/admin/lead-source-roi",

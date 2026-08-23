@@ -138,6 +138,11 @@ export const PERMISSIONS = {
   // PDKS — Personel Devam Kontrol (tenant-admin paneli)
   PDKS_MANAGE:                  "pdks.manage",
 
+  // CFO (Faz 90) — Alacak/verecek, nakit akışı, borç yönetimi.
+  // Finansal sır niteliğinde: yalnız ADMIN/OWNER. RolePermission ile SALES'e verilmez.
+  CFO_READ:                     "cfo.read",
+  CFO_WRITE:                    "cfo.write",
+
   // Dangerous — require explicit UserPermission grant even for ADMIN
   MIGRATIONS_APPROVE:           "migrations.approve",
   DESTRUCTIVE_ACTIONS_APPROVE:  "destructiveActions.approve",

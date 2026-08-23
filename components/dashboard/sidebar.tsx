@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Home,
+  Wallet,
+  CreditCard,
+  Scale,
   Activity,
   Heart,
   Users,
@@ -66,6 +69,9 @@ interface SidebarProps {
 // ── Icon registry ─────────────────────────────────────────────────────────
 const ICONS: Record<string, LucideIcon> = {
   home: Home,
+  wallet: Wallet,
+  creditCard: CreditCard,
+  scale: Scale,
   activity: Activity,
   heart: Heart,
   users: Users,
@@ -116,6 +122,7 @@ const SECTION_META: Array<{ key: string; icon: LucideIcon; desc: string }> = [
   { key: "Pazaryerleri", icon: ShoppingCart, desc: "Trendyol, kârlılık" },
   { key: "İthalat", icon: Ship, desc: "Karar kokpiti, tedarikçi" },
   { key: "Finans", icon: DollarSign, desc: "Sermaye, döviz" },
+  { key: "CFO", icon: Wallet, desc: "Nakit, borç, alacak, hedef" },
   { key: "Sistem", icon: Settings, desc: "Kullanıcılar, arşiv" },
 ];
 const SECTION_ORDER = SECTION_META.map((s) => s.key);

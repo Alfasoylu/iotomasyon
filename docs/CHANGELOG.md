@@ -7,6 +7,32 @@
 - If a change is inferred from documentation but not independently verified in code, avoid wording it as fully implemented.
 - ROADMAP items must not appear here unless implemented.
 
+## 2026-08
+
+### CFO Modülü — Faz 90: nakit/borç/alacak kontrol merkezi `/cfo` (2026-08-24)
+
+- **Şema:** 10 yeni tablo (`cfo_settings`, `cfo_bank_account`, `cfo_credit_card`,
+  `cfo_loan`, `cfo_fixed_expense`, `cfo_receivable`, `cfo_cash_event`,
+  `cfo_import_project`, `cfo_snapshot`, `cfo_change_log`) + 6 enum.
+  Migration `20260824000000_add_cfo_module`; hepsinde RLS enable (deny-all invariant).
+  Mevcut tablolara dokunulmadı, veri silinmedi.
+- **Motor:** `lib/cfo/engine.ts` — saf fonksiyonlar. KPI'lar, 7/30/60/90 gün rolling
+  forecast, haftalık çift-sayım korumalı tahsilat tahmini, gümrük rezerv açığı,
+  net ticari servet (dar/geniş) ve sermaye tahsisi sıralaması.
+  Sayfalar hesap yapmaz — motorun çıktısını basar.
+- **Sayfalar:** `/cfo` (kokpit), `/cfo/borclar`, `/cfo/nakit-akisi`, `/cfo/alacaklar`,
+  `/cfo/gumruk`, `/cfo/sermaye`, `/cfo/ayarlar`. Hepsi server component +
+  `requirePermission(PERMISSIONS.CFO_READ)` + `dynamic = "force-dynamic"`.
+- **Yetki:** `cfo.read` / `cfo.write`. Finansal sır kabul edildi — `ROLE_DEFAULT_PERMISSIONS`
+  içine EKLENMEDİ (ADMIN bypass ile erişilir, başka role UserPermission ile açıkça verilir).
+  `SALES_HIDDEN_SECTIONS`'a "CFO" eklendi. `proxy.ts` `protectedPrefixes`'e `/cfo`.
+- **Veri kalitesi:** her satırda `dataTag` (Kesin/Tahmini/Eski/Güncelleme gerekli/Teyit edilmeli).
+  Ödeme günü geçmiş ancak bilgi gelmemiş kalem otomatik "gecikmiş" sayılmaz.
+  Tüm mutasyonlar `cfo_change_log`'a yazar; eski değer silinmez.
+- **Seed:** `npm run db:seed:cfo` — 24.08.2026 itibarıyla bilinen kesin veriler
+  (6 banka, 5 kart, 6 kredi, 12 sabit gider, 15 hakediş, 1 ithalat partisi, 37 nakit olayı).
+- `tsc --noEmit` 0 hata, eslint temiz.
+
 ## 2026-06
 
 ### PDKS — Faz 2: tenant-admin self-servis yönetim paneli `/t/{slug}/yonetim` (2026-06-26)

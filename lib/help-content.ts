@@ -32,6 +32,28 @@ export interface PageHelp {
 }
 
 export const PAGE_HELP: Record<string, PageHelp> = {
+  cfo: {
+    title: "CFO Kokpiti",
+    purpose:
+      "Günde 1 kez aç: bugün ne ödenecek, ne gelecek, nakit nerede duruyor ve servet hedefine göre neredeyiz. Tüm rakamlar son bilinen veriden hesaplanır — hiçbir sayı uydurulmaz. Ödeme günü geçmiş ancak bilgi gelmemiş kalemler otomatik gecikmiş sayılmaz, teyit bekler. Pazaryeri tahsilat tahmini aynı haftadaki gerçek hakedişlerden düşülür; aynı para iki kez sayılmaz. Yoldaki ve bloke stok satılabilir stoğa dahil değildir.",
+    fields: [
+      { label: "Bugün yapılacaklar", desc: "En yakın zorunlu ödeme, en yakın tahsilat ve o tahsilatın nereye yönlendirileceği." },
+      { label: "Boş KMH kapasitesi", desc: "Toplam KMH limiti − kullanılan. Bakiyesi bilinmeyen hesap muhafazakâr davranılarak sayılmaz." },
+      { label: "Rolling forecast", desc: "7/30/60/90 gün. SARI = açık boş KMH ile kapanır, KIRMIZI = kapasite yetmiyor." },
+      { label: "Net ticari servet", desc: "Dar: nakit + alacak + satılabilir stok − borçlar. Geniş: yoldaki ve bloke stok da dahil." },
+    ],
+    tasks: [
+      {
+        title: "Günlük kontrol",
+        steps: ["Bugün yapılacaklar bloğunu oku", "60 günlük satır kırmızıysa Gümrük Rezervi sayfasına git", "Teyit bekleyen kalemleri kapat"],
+      },
+      {
+        title: "Eline para geçtiğinde",
+        steps: ["Sermaye Tahsisi sayfasını aç", "Yıllık ROI sütununa göre en üstteki seçeneği uygula", "Gümrük açığı varsa her zaman rezerv önceliklidir"],
+      },
+    ],
+    relatedTerms: ["KMH", "Net ticari servet", "Gümrük rezervi", "Borç servis oranı"],
+  },
   dashboard: {
     title: "Pano (Dashboard)",
     purpose:
