@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { registerTenantAction } from "@/lib/actions/pdks-register-actions";
-import { slugify } from "@/lib/pdks/tenant-provision";
+import { slugify } from "@/lib/pdks/slug";
 
 export function RegisterForm() {
   const [companyName, setCompanyName] = useState("");
