@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { SLUG_RE } from "./slug";
 import { hashPassword, normalizePhone } from "./auth";
 import { DEFAULT_WEEK_SCHEDULE } from "./schedule";
 import { TR_HOLIDAYS_2026 } from "./holidays";
@@ -8,24 +9,10 @@ import { TR_HOLIDAYS_2026 } from "./holidays";
 /** Deneme süresi (gün). */
 export const TRIAL_DAYS = 30;
 
-/** Slug regex: 3-30, küçük harf/rakam/tire; baş-son tire yok. */
-export const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])$/;
-
-/** Serbest metni slug adayına indirger (kullanıcıya öneri için). */
-export function slugify(raw: string): string {
-  return (raw ?? "")
-    .toLowerCase()
-    .trim()
-    .replace(/ı/g, "i")
-    .replace(/ş/g, "s")
-    .replace(/ğ/g, "g")
-    .replace(/ü/g, "u")
-    .replace(/ö/g, "o")
-    .replace(/ç/g, "c")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 30);
-}
+// Slug yardımcıları saf modüle taşındı (lib/pdks/slug.ts) — client bileşenleri
+// oradan import eder, böylece Prisma zinciri client bundle'ına girmez.
+// Geriye dönük uyumluluk için buradan yeniden dışa aktarılır.
+export { SLUG_RE, slugify } from "./slug";
 
 /** Slug DB'de boşta mı? (büyük/küçük duyarsız değil — slug zaten küçük harf.) */
 export async function isSlugAvailable(slug: string): Promise<boolean> {

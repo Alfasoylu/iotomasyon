@@ -9,6 +9,28 @@
 
 ## 2026-08
 
+### Fix — production build 59 gündür kırıktı: client bundle'a Prisma sızıntısı (2026-08-24)
+
+- **Belirti:** 25.06.2026 23:57'den (commit `7c03dbe`) beri Vercel'de HİÇBİR
+  deployment başarılı olmadı. Üç production denemesi (`afc4c1a`, `0a03b1c`,
+  `92993d2`) ve tüm preview'lar ERROR. Canlı site 25.06 tarihli son başarılı
+  build'i sunmaya devam ettiği için sorun fark edilmedi; o tarihten sonra
+  merge edilen hiçbir iş yayına çıkmadı.
+- **Kök neden:** `components/pdks/register-form.tsx` bir `"use client"`
+  bileşeni ve sırf `slugify` için `@/lib/pdks/tenant-provision`'ı **değer olarak**
+  import ediyordu. O modül `server-only` + `@/lib/prisma` import ediyor →
+  `@prisma/adapter-pg` → `pg` → `dns/fs/net/tls/node:async_hooks` tarayıcı
+  hedefinde çözülemiyor. Sızıntı, `1959b52e` (PDKS Faz 2/Artım 1, 26.06 00:15)
+  ile girdi — ilk hatalı deployment tam o commit.
+- **Düzeltme:** `lib/pdks/slug.ts` — hiçbir şey import etmeyen saf modül.
+  `SLUG_RE` + `slugify` oraya taşındı; `tenant-provision.ts` geriye dönük
+  uyumluluk için yeniden dışa aktarıyor; `register-form.tsx` artık saf modülden
+  import ediyor. Davranış değişikliği yok.
+- **Kapsam doğrulaması:** tüm `"use client"` dosyalarından import zinciri
+  taranarak server-only/Prisma'ya değer-import ile ulaşan başka dosya olmadığı
+  doğrulandı. Diğer 10 aday yalnızca `import type` kullanıyor (derlemede silinir).
+- `tsc --noEmit` 0 hata.
+
 ### CFO Modülü — Faz 90: nakit/borç/alacak kontrol merkezi `/cfo` (2026-08-24)
 
 - **Şema:** 10 yeni tablo (`cfo_settings`, `cfo_bank_account`, `cfo_credit_card`,
