@@ -144,6 +144,11 @@ const PERMISSIONS = [
   // Executive
   { key: "executive.read",              name: "Yönetici Paneli",                 category: "executive" },
 
+  // CFO (Faz 90) — finansal sır. ROLE_DEFAULT_PERMISSIONS'a EKLENMEZ; ADMIN bypass ile erişilir,
+  // başka bir role verilecekse UserPermission ile açıkça grant edilir.
+  { key: "cfo.read",                    name: "CFO Paneli Görüntüleme",          category: "cfo" },
+  { key: "cfo.write",                   name: "CFO Veri Girişi",                 category: "cfo" },
+
   // Catalogs (Faz 1-6)
   { key: "catalogs.read",               name: "Katalog Görüntüleme",             category: "catalogs" },
   { key: "catalogs.create",             name: "Katalog Üretme",                  category: "catalogs" },

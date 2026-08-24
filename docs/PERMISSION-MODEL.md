@@ -763,3 +763,23 @@ documented as `ADMIN / OWNER only`.
 | WAREHOUSE | ❌ No role exists | ❌ Uses OPERATIONS | ❌ No visual-first screen | 20% |
 | SALES | ✅ CRM/quotes | ✅ No cost access | ❌ No opportunity engine | 65% |
 | MARKETPLACE_OPERATOR | ✅ Listings/orders/returns | ✅ No financial access | ⚠️ Shared nav | 75% |
+
+
+---
+
+## CFO Modülü (Faz 90)
+
+| Permission | Key | Varsayılan rol | Not |
+|---|---|---|---|
+| CFO Paneli Görüntüleme | `cfo.read` | **Hiçbiri** | ADMIN bypass ile erişilir |
+| CFO Veri Girişi | `cfo.write` | **Hiçbiri** | ADMIN bypass ile erişilir |
+
+**Finansal sır kuralı:** `cfo.*` izinleri `ROLE_DEFAULT_PERMISSIONS` içine
+bilinçli olarak eklenmemiştir. Banka bakiyesi, borç tutarları ve kâr marjları
+personelde görünmemelidir. Başka bir kullanıcıya verilecekse
+`UserPermission(granted=true)` ile tek tek açılır.
+
+**Route koruması:** `/cfo` ve tüm alt sayfaları `requirePermission(PERMISSIONS.CFO_READ)`
+ile korunur (ilk satır). `proxy.ts` `protectedPrefixes` içinde `/cfo` vardır.
+`app/(app)/layout.tsx` içindeki `SALES_HIDDEN_SECTIONS` "CFO" bölümünü SALES
+rolünden ayrıca gizler (ikinci savunma hattı).

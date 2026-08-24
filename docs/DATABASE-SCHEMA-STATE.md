@@ -711,3 +711,27 @@ Schema safety notes:
 - destructive migrations should never be assumed safe
 - schema-heavy roadmap phases require explicit migration discipline
 - backup, rollback, and production write governance are not optional for future phases
+
+
+---
+
+## CFO Modülü tabloları (Faz 90, migration `20260824000000_add_cfo_module`)
+
+| Tablo | Amaç |
+|---|---|
+| `cfo_settings` | Tekil parametre kaydı: kur, KMH faizi, kart asgari oranı, gümrük rezerv hedefi, servet hedefi, son 14 gün cirosu |
+| `cfo_bank_account` | Banka hesapları + KMH limitleri. Negatif bakiye = kullanılan KMH |
+| `cfo_credit_card` | Kredi kartları, kesim/son ödeme günü, bu ayki ödeme durumu |
+| `cfo_loan` | Krediler, erken kapama tutarı, faiz oranı, AKTİF/KAPANDI durumu |
+| `cfo_fixed_expense` | Aylık sabit giderler (kredi/kart ödemesi hariç) |
+| `cfo_receivable` | Pazaryeri hakediş takvimi (gerçek tarih + kesin tutar) |
+| `cfo_cash_event` | Nakit akışı olay tablosu — forecast'in kaynağı |
+| `cfo_import_project` | İthalat partileri, gümrük yükümlülüğü, beklenen ROI |
+| `cfo_snapshot` | Net ticari servet snapshot'ı (trend) |
+| `cfo_change_log` | Değişim logu — eski değer asla silinmez |
+
+Enumlar: `CfoDataTag`, `CfoCertainty`, `CfoLoanStatus`, `CfoPaymentStatus`,
+`CfoEventKind`, `CfoImportStatus`.
+
+Tüm tablolarda RLS **enable** (policy yok — deny-all kasıtlı, erişim yalnız Prisma).
+Hiçbir mevcut tabloya kolon eklenmedi/silinmedi; migration tamamen additive.

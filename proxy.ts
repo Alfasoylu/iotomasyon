@@ -14,6 +14,7 @@ const protectedPrefixes = [
   "/categories",
   "/search",
   "/activity",
+  "/cfo",
 ];
 
 export async function proxy(request: NextRequest) {

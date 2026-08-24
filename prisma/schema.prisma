@@ -1847,3 +1847,280 @@ model PdksLoginCode {
   @@index([tenantId])
   @@map("pdks_login_codes")
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CFO MODÜLÜ — Faz 90
+// Alacak/verecek, KMH, kredi kartı, kredi, sabit gider, nakit akışı, gümrük
+// rezervi ve net ticari servet takibi.
+//
+// Tasarım kuralları:
+//  - Her finansal veri bir "dataTag" taşır. Rakam asla uydurulmaz; veri yoksa
+//    GUNCELLEME_GEREKLI, ödeme günü geçmiş ama bilgi yoksa TEYIT_EDILMELI.
+//  - Eski değerler silinmez → CfoChangeLog'a yazılır.
+//  - Tablolar cfo_ prefixi ile map'lenir (PDKS modülüyle aynı yaklaşım).
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum CfoDataTag {
+  KESIN
+  TAHMINI
+  ESKI
+  GUNCELLEME_GEREKLI
+  TEYIT_EDILMELI
+}
+
+enum CfoCertainty {
+  KESIN
+  TAHMINI
+}
+
+enum CfoLoanStatus {
+  AKTIF
+  KAPANDI
+  BEKLEMEDE
+}
+
+enum CfoPaymentStatus {
+  ODENDI
+  ODENMEDI
+  TEYIT_EDILMELI
+  KISMI_ODENDI
+}
+
+enum CfoEventKind {
+  TAHSILAT
+  KREDI_TAKSITI
+  KART_ODEMESI
+  SABIT_GIDER
+  KMH
+  VERGI_GUMRUK
+  DIGER
+}
+
+enum CfoImportStatus {
+  PLANLANDI
+  YOLDA
+  GUMRUKTE
+  TESLIM_ALINDI
+  IPTAL
+}
+
+/// Tekil ayar kaydı — tüm CFO hesaplarının parametreleri buradan gelir.
+model CfoSettings {
+  id                    String   @id @default(cuid())
+  usdTryRate            Decimal  @default(45) @db.Decimal(10, 4)
+  usdRmbRate            Decimal  @default(7) @db.Decimal(10, 4)
+  kmhMonthlyRatePct     Decimal  @default(4.5) @db.Decimal(6, 3) // KMH + kart taşıma maliyeti
+  cardMinPct            Decimal  @default(20) @db.Decimal(6, 3) // asgari ödeme oranı varsayımı
+  marketplaceTermDays   Int      @default(30)
+  cashConversionPct     Decimal  @default(70) @db.Decimal(6, 3) // ciro → nakit oranı
+  customsReserveTarget  Decimal? @db.Decimal(14, 2)
+  customsReserveDate    DateTime?
+  customsReserveSaved   Decimal  @default(0) @db.Decimal(14, 2)
+  usdWealthTarget       Decimal? @db.Decimal(14, 2) // ana hedef (örn 300.000 USD)
+  wealthTargetDate      DateTime?
+  last14dRevenueTry     Decimal? @db.Decimal(14, 2)
+  last14dRevenueDate    DateTime?
+  monthlyRevenueTarget1 Decimal? @db.Decimal(14, 2)
+  monthlyRevenueTarget2 Decimal? @db.Decimal(14, 2)
+  stockCostUsd          Decimal? @db.Decimal(14, 2) // satılabilir stok maliyeti
+  blockedStockUsd       Decimal? @db.Decimal(14, 2) // Romanya bloke stok
+  stockCoverMonths      Decimal? @db.Decimal(6, 2)
+  updatedAt             DateTime @updatedAt
+  updatedByEmail        String?
+
+  @@map("cfo_settings")
+}
+
+/// Banka hesapları ve KMH limitleri. Negatif bakiye = kullanılan KMH.
+model CfoBankAccount {
+  id             String     @id @default(cuid())
+  name           String
+  accountType    String     @default("Vadesiz + KMH")
+  balanceTry     Decimal?   @db.Decimal(14, 2)
+  kmhLimitTry    Decimal    @default(0) @db.Decimal(14, 2)
+  monthlyRatePct Decimal?   @db.Decimal(6, 3) // boşsa CfoSettings.kmhMonthlyRatePct
+  dataTag        CfoDataTag @default(KESIN)
+  sortOrder      Int        @default(0)
+  isActive       Boolean    @default(true)
+  note           String?
+  lastUpdatedAt  DateTime   @default(now())
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([isActive])
+  @@map("cfo_bank_account")
+}
+
+/// Kredi kartları. Asgari tutar borç × CfoSettings.cardMinPct ile TAHMİNİ hesaplanır;
+/// gerçek ekstre asgarisi biliniyorsa minOverrideTry doldurulur.
+model CfoCreditCard {
+  id                String           @id @default(cuid())
+  bank              String
+  holder            String?
+  statementDebtTry  Decimal?         @db.Decimal(14, 2)
+  totalDebtTry      Decimal?         @db.Decimal(14, 2)
+  fxDebtUsd         Decimal?         @db.Decimal(12, 2)
+  statementDay      Int? // ayın kaçında kesim
+  dueDay            Int? // ayın kaçında son ödeme
+  minOverrideTry    Decimal?         @db.Decimal(14, 2)
+  currentMonthState CfoPaymentStatus @default(TEYIT_EDILMELI)
+  nextDueDate       DateTime?
+  dataTag           CfoDataTag       @default(KESIN)
+  sortOrder         Int              @default(0)
+  isActive          Boolean          @default(true)
+  note              String?
+  lastUpdatedAt     DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([isActive])
+  @@map("cfo_credit_card")
+}
+
+/// Krediler. KAPANDI olanlar borç servisi toplamına dahil edilmez.
+model CfoLoan {
+  id                  String           @id @default(cuid())
+  bank                String
+  name                String
+  principalTry        Decimal?         @db.Decimal(14, 2)
+  remainingTry        Decimal?         @db.Decimal(14, 2)
+  earlyPayoffTry      Decimal?         @db.Decimal(14, 2)
+  monthlyPaymentTry   Decimal?         @db.Decimal(14, 2)
+  paymentDay          Int?
+  lastInstallmentDate DateTime?
+  nextPaymentDate     DateTime?
+  interestRatePct     Decimal?         @db.Decimal(6, 3) // aylık faiz — boşsa erken kapama ROI'si hesaplanamaz
+  currentMonthState   CfoPaymentStatus @default(TEYIT_EDILMELI)
+  status              CfoLoanStatus    @default(AKTIF)
+  priority            String? // Yüksek | Orta | Düşük
+  strategy            String?
+  dataTag             CfoDataTag       @default(KESIN)
+  sortOrder           Int              @default(0)
+  note                String?
+  lastUpdatedAt       DateTime         @default(now())
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([status])
+  @@map("cfo_loan")
+}
+
+/// Aylık sabit giderler. Kredi taksiti ve kart ödemesi BURAYA GİRMEZ (çift sayım).
+model CfoFixedExpense {
+  id            String     @id @default(cuid())
+  name          String
+  category      String?
+  monthlyTry    Decimal    @db.Decimal(14, 2)
+  paymentDay    Int?
+  isActive      Boolean    @default(true)
+  dataTag       CfoDataTag @default(KESIN)
+  sortOrder     Int        @default(0)
+  note          String?
+  lastUpdatedAt DateTime   @default(now())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([isActive])
+  @@map("cfo_fixed_expense")
+}
+
+/// Pazaryeri hakediş takvimi — gerçek tarihli, kesin tutarlı alacaklar.
+/// Haftalık (ciro/4) tahmini bu kayıtlarla ÇAKIŞMAZ: motor aynı haftadaki
+/// gerçek hakedişi brüt tahminden düşer.
+model CfoReceivable {
+  id          String       @id @default(cuid())
+  channel     String
+  dueDate     DateTime
+  amountTry   Decimal      @db.Decimal(14, 2)
+  certainty   CfoCertainty @default(KESIN)
+  isCollected Boolean      @default(false)
+  source      String? // örn "Trendyol ödemeler ekranı 24.08.2026"
+  note        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([dueDate])
+  @@index([channel])
+  @@index([isCollected])
+  @@map("cfo_receivable")
+}
+
+/// Nakit akışı olay tablosu — 7/30/60/90 gün rolling forecast bunun üzerinden.
+model CfoCashEvent {
+  id             String       @id @default(cuid())
+  eventDate      DateTime
+  kind           CfoEventKind
+  description    String
+  bank           String?
+  inflowTry      Decimal?     @db.Decimal(14, 2)
+  outflowTry     Decimal?     @db.Decimal(14, 2)
+  certainty      CfoCertainty @default(TAHMINI)
+  relatedDebt    String?
+  relatedImport  String?
+  relatedChannel String?
+  isSettled      Boolean      @default(false)
+  autoGenerated  Boolean      @default(false) // tekrarlayan üreticiden geldiyse
+  note           String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([eventDate])
+  @@index([kind])
+  @@map("cfo_cash_event")
+}
+
+/// İthalat partileri — yoldaki stok ve gümrük yükümlülüğü.
+model CfoImportProject {
+  id                 String          @id @default(cuid())
+  code               String          @unique
+  status             CfoImportStatus @default(YOLDA)
+  etaDate            DateTime?
+  totalCostUsd       Decimal?        @db.Decimal(14, 2)
+  paidUsd            Decimal?        @db.Decimal(14, 2)
+  customsEstimateTry Decimal?        @db.Decimal(14, 2)
+  expectedRevenueTry Decimal?        @db.Decimal(14, 2)
+  expectedProfitTry  Decimal?        @db.Decimal(14, 2)
+  salesMonths        Decimal?        @db.Decimal(6, 2)
+  dataTag            CfoDataTag      @default(TAHMINI)
+  note               String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([status])
+  @@map("cfo_import_project")
+}
+
+/// Günlük/olay bazlı net ticari servet snapshot'ı — trend buradan çıkar.
+model CfoSnapshot {
+  id             String   @id @default(cuid())
+  takenAt        DateTime @default(now())
+  netWorthTry    Decimal  @db.Decimal(14, 2)
+  netWorthUsd    Decimal  @db.Decimal(14, 2)
+  wideWorthTry   Decimal? @db.Decimal(14, 2)
+  wideWorthUsd   Decimal? @db.Decimal(14, 2)
+  cashTry        Decimal? @db.Decimal(14, 2)
+  receivablesTry Decimal? @db.Decimal(14, 2)
+  stockTry       Decimal? @db.Decimal(14, 2)
+  debtTry        Decimal? @db.Decimal(14, 2)
+  usdTryRate     Decimal? @db.Decimal(10, 4)
+  note           String?
+
+  @@index([takenAt])
+  @@map("cfo_snapshot")
+}
+
+/// Değişim logu — eski değer asla silinmez.
+model CfoChangeLog {
+  id        String   @id @default(cuid())
+  changedAt DateTime @default(now())
+  area      String // örn "cfo_bank_account"
+  item      String // örn "Akbank Alp KMH limiti"
+  oldValue  String?
+  newValue  String?
+  source    String? // "Kullanıcı", "Trendyol ekran görüntüsü", "Sistem"
+  note      String?
+
+  @@index([changedAt])
+  @@index([area])
+  @@map("cfo_change_log")
+}

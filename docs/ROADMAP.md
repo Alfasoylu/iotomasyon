@@ -1615,3 +1615,47 @@ A phase is complete only if:
 - no critical regressions
 - documentation updated
 - production-safe migration plan approved
+
+
+---
+
+## Faz 90 — CFO Modülü (2026-08-24, sahibi onayıyla)
+
+### Onaylı kural istisnası
+
+`CODEX_INSTRUCTIONS.md` "Absolute Rules" listesi **"No accounting"** ve
+**"Do not add features unless explicitly approved"** diyor. Bu modül sahibinin
+(Alperen) 24.08.2026 tarihli açık talebiyle eklenmiştir. İstisnanın sınırları:
+
+- Bu bir **muhasebe/fatura sistemi değildir**. Yevmiye kaydı, mizan, KDV beyanı,
+  fatura kesimi YOKTUR ve eklenmeyecektir.
+- Kapsam: **nakit ve borç yönetimi** — banka/KMH pozisyonu, kredi kartı ve kredi
+  takibi, sabit gider listesi, pazaryeri hakediş takvimi, nakit akışı projeksiyonu,
+  gümrük rezervi ve sermaye tahsisi kararı.
+- Amaç: "elimdeki parayı borca mı, mala mı, reklama mı vereyim" sorusuna
+  veriyle cevap vermek ve USD bazında net ticari serveti büyütmek.
+
+### Hedef
+
+31.12.2027'de **300.000 USD net ticari servet**. Modül bu hedefe göre ilerleme
+ölçer ve gereken aylık artışı gösterir.
+
+### Yapıldı (Faz 90.1)
+
+- Şema + migration + RLS
+- Hesap motoru (`lib/cfo/engine.ts`)
+- 7 sayfa + sidebar "CFO" bölümü
+- `cfo.read` / `cfo.write` izinleri
+- Seed (24.08.2026 gerçek verisi)
+
+### Sonraki adımlar (Faz 90.2+)
+
+1. **Pazaryeri satış importunu ayağa kaldırmak.** `MarketplaceSalesRecord` içindeki
+   son sipariş tarihi **2026-06-04** — 81 gündür satış verisi akmıyor
+   (XML/stok senkronu sağlıklı, sorun satış importunda). CFO'nun ciro ve SKU
+   kârlılık hesapları bu düzelene kadar elle girilen veriye bağlı kalır.
+2. Ekran içi veri giriş formları (şu an okuma + server action altyapısı hazır).
+3. SKU bazlı kârlılık: `MarketplaceSalesRecord` + `Product.unitCostTry` üzerinden
+   ürün başına katkı marjı ve sermaye getirisi.
+4. Günlük otomatik snapshot (cron) — servet trendi.
+5. Sabah raporu endpoint'i — `buildDailyActions()` çıktısını push/e-posta ile gönderme.
