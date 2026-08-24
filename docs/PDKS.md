@@ -197,6 +197,17 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-08-25 — CFO/Borçlar: kalan taksit, bitiş tarihi, YKB şahsi hesap
+- `app/(app)/cfo/borclar/page.tsx` — Krediler tablosuna "Kalan taksit" ve
+  "Bitiş tarihi" kolonları; TOPLAM satırına aktif kredilerin en geç bitiş tarihi.
+- `lib/cfo/engine.ts` — `remainingInstallments()` yardımcısı; `LoanRow`'a
+  `totalInstallments` + `remainingOverride`.
+- `prisma/schema.prisma` + `prisma/migrations/20260825000000_cfo_loan_installments`
+  — iki nullable INTEGER kolon (additive).
+- `prisma/seed-cfo.ts` — banka ve kredi listeleri canlı veriyle hizalandı;
+  seed'in kopya kayıt üretme ve KMH limitlerini geri alma riski giderildi.
+- DB: Yapı Kredi Alperen (şahsi) hesabı eklendi (KMH 150.000, bakiye bilinmiyor).
+
 > Append-only. Her görevden sonra en yeni en üste eklenir (AGENTS.md "Dokümantasyon disiplini").
 
 ### 2026-06-26 (devam 3)

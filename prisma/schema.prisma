@@ -1987,7 +1987,9 @@ model CfoLoan {
   earlyPayoffTry      Decimal?         @db.Decimal(14, 2)
   monthlyPaymentTry   Decimal?         @db.Decimal(14, 2)
   paymentDay          Int?
-  lastInstallmentDate DateTime?
+  totalInstallments   Int? // toplam taksit sayısı (ör. 24)
+  remainingOverride   Int? // düzensiz ödeme planlarında kalan taksit elle girilir; boşsa tarihlerden hesaplanır
+  lastInstallmentDate DateTime? // = kredi bitiş tarihi
   nextPaymentDate     DateTime?
   interestRatePct     Decimal?         @db.Decimal(6, 3) // aylık faiz — boşsa erken kapama ROI'si hesaplanamaz
   currentMonthState   CfoPaymentStatus @default(TEYIT_EDILMELI)

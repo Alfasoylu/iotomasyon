@@ -9,6 +9,33 @@
 
 ## 2026-08
 
+### CFO — Krediler: kalan taksit + bitiş tarihi, ve Yapı Kredi şahsi hesabı (2026-08-25)
+
+- **Krediler tablosuna iki kolon eklendi:** "Kalan taksit" (kalan / toplam) ve
+  "Bitiş tarihi". `lastInstallmentDate` alanı zaten vardı ama hiçbir sayfada
+  gösterilmiyordu — kredinin ne zaman biteceği yalnızca DB'de duruyordu.
+- **Kalan taksit HESAPLANIR, elle girilmez:** `remainingInstallments()`
+  (lib/cfo/engine.ts) `nextPaymentDate` ile `lastInstallmentDate` arasındaki ay
+  farkını alır. Böylece her ay kendiliğinden azalır ve bakım gerektirmez.
+  Düzensiz ödeme planları için `remainingOverride` alanı öncelik kazanır —
+  kredi kartındaki `minOverrideTry` ile aynı desen.
+- **TOPLAM satırına "son: <tarih>"** eklendi: aktif kredilerin en geç biten
+  taksiti, yani "borçtan ne zaman çıkılır" sorusunun tek satırlık cevabı.
+- **Migration** `20260825000000_cfo_loan_installments` — additive, iki nullable
+  INTEGER kolon (`totalInstallments`, `remainingOverride`). Veri silmez.
+- **Doğrulanan değerler:** Ziraat KGF 23/36 (21.07.2028), Ziraat Kredi 2 46/48
+  (10.06.2030), Garanti 9/24 (14.05.2027), Fibabanka 19/24 (25.03.2028),
+  Yapı Kredi 11/24 (28.06.2027).
+- **Yeni banka hesabı:** Yapı Kredi Alperen (şahsi), KMH limiti 150.000 TL.
+  Bakiye bilinmediği için `balanceTry = null` ve `dataTag = TEYIT_EDILMELI` —
+  boş limit toplamına DAHİL EDİLMEDİ (muhafazakâr davranış).
+- **`prisma/seed-cfo.ts` gerçekle hizalandı.** Seed, canlı veriden sapmıştı:
+  Ziraat kredisinin adı ("Ziraat KGF / Kredi 1" vs "…/ TOBB Nefes Kredisi")
+  farklı olduğu için yeniden çalıştırılsa **kopya kayıt** üretecekti; Enpara
+  (109.300) ve Garanti (500.000) KMH limitleri ise eski, yüksek değerlere
+  **geri dönecekti**. İsimler, limitler, faiz oranları ve bitiş tarihleri
+  düzeltildi.
+
 ### Fix — production build 59 gündür kırıktı: client bundle'a Prisma sızıntısı (2026-08-24)
 
 - **Belirti:** 25.06.2026 23:57'den (commit `7c03dbe`) beri Vercel'de HİÇBİR

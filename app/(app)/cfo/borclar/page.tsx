@@ -3,7 +3,7 @@ import { CreditCard } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
-import { num, numOrNull } from "@/lib/cfo/engine";
+import { num, numOrNull, remainingInstallments } from "@/lib/cfo/engine";
 import { fmtTry, fmtPct, fmtDate } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,11 @@ export default async function CfoDebtsPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
   const { raw, overview: o } = await loadCfoData();
   const minPct = raw.settings ? num(raw.settings.cardMinPct) / 100 : 0.2;
+  // Aktif kredilerin en geç biten taksit tarihi — "borçtan ne zaman çıkılır" sorusunun cevabı.
+  const lastLoanEnd = raw.loans
+    .filter((l) => l.status === "AKTIF" && l.lastInstallmentDate)
+    .map((l) => new Date(l.lastInstallmentDate as Date).getTime())
+    .reduce<number | null>((a, b) => (a == null || b > a ? b : a), null);
 
   return (
     <>
@@ -115,14 +120,29 @@ export default async function CfoDebtsPage() {
         <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Krediler</h2>
         <CfoTable head={
           <tr>
-            <Th>Kredi</Th><Th right>Aylık taksit</Th><Th right>Erken kapama</Th><Th right>Faiz</Th>
+            <Th>Kredi</Th><Th right>Aylık taksit</Th><Th right>Kalan taksit</Th><Th>Bitiş tarihi</Th>
+            <Th right>Erken kapama</Th><Th right>Faiz</Th>
             <Th>Sonraki ödeme</Th><Th>Bu ay</Th><Th>Öncelik</Th><Th>Durum</Th>
           </tr>
         }>
-          {raw.loans.map((l) => (
+          {raw.loans.map((l) => {
+            const left = remainingInstallments(l);
+            const total = l.totalInstallments;
+            return (
             <tr key={l.id} className={l.status !== "AKTIF" ? "opacity-60" : ""}>
               <Td strong>{l.bank} — {l.name}</Td>
               <Td right>{fmtTry(num(l.monthlyPaymentTry))}</Td>
+              <Td right>
+                {l.status !== "AKTIF" ? "—" : left == null ? (
+                  <span className="text-[var(--danger)]">girilmeli</span>
+                ) : (
+                  <>
+                    <span className="tabular-nums">{left}</span>
+                    {total != null && <span className="text-[var(--text-muted)]"> / {total}</span>}
+                  </>
+                )}
+              </Td>
+              <Td muted>{l.status === "AKTIF" ? fmtDate(l.lastInstallmentDate) : "—"}</Td>
               <Td right>{fmtTry(num(l.earlyPayoffTry))}</Td>
               <Td right>
                 {numOrNull(l.interestRatePct) == null
@@ -134,10 +154,13 @@ export default async function CfoDebtsPage() {
               <Td muted>{l.priority ?? "—"}</Td>
               <Td><Badge variant={l.status === "AKTIF" ? "info" : "ok"}>{l.status === "AKTIF" ? "Aktif" : "Kapandı"}</Badge></Td>
             </tr>
-          ))}
+            );
+          })}
           <tr className="bg-[var(--surface-1)] font-semibold">
             <Td strong>TOPLAM (aktif)</Td>
             <Td right strong>{fmtTry(o.loanMonthlyServiceTry)}</Td>
+            <Td right strong>—</Td>
+            <Td muted>son: {lastLoanEnd == null ? "—" : fmtDate(new Date(lastLoanEnd))}</Td>
             <Td right strong>{fmtTry(o.loanEarlyPayoffTry)}</Td>
             <Td>—</Td><Td>—</Td><Td>—</Td><Td>—</Td><Td>—</Td>
           </tr>

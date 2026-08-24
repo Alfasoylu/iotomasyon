@@ -52,6 +52,7 @@ export interface LoanRow {
   id: string; bank: string; name: string;
   earlyPayoffTry: Dec; monthlyPaymentTry: Dec; interestRatePct: Dec;
   paymentDay: number | null; nextPaymentDate: Date | null; lastInstallmentDate: Date | null;
+  totalInstallments: number | null; remainingOverride: number | null;
   currentMonthState: string; status: string; priority: string | null;
   strategy: string | null; dataTag: string; note: string | null;
 }
@@ -93,6 +94,24 @@ export interface CfoInput {
 
 function startOfDay(d: Date) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+
+/**
+ * Kalan taksit sayısı. Elle girilmiş `remainingOverride` varsa o kazanır
+ * (düzensiz ödeme planları için). Yoksa sonraki ödeme ile son taksit tarihi
+ * arasındaki ay farkından hesaplanır — böylece zamanla kendiliğinden azalır
+ * ve elle güncelleme gerektirmez. Kapanan kredide 0, tarih eksikse null.
+ */
+export function remainingInstallments(l: Pick<LoanRow, "nextPaymentDate" | "lastInstallmentDate" | "remainingOverride" | "status">): number | null {
+  if (l.status !== "AKTIF") return 0;
+  if (l.remainingOverride != null) return l.remainingOverride;
+  const from = l.nextPaymentDate;
+  const to = l.lastInstallmentDate;
+  if (!from || !to) return null;
+  const f = from instanceof Date ? from : new Date(from);
+  const t = to instanceof Date ? to : new Date(to);
+  const n = (t.getFullYear() - f.getFullYear()) * 12 + (t.getMonth() - f.getMonth()) + 1;
+  return n > 0 ? n : 0;
+}
 
 export function trafficForGap(gap: number, freeCapacity: number): Traffic {
   if (gap <= 0) return "YESIL";
