@@ -15,6 +15,9 @@
  * Usage:
  *   DATABASE_URL=... DIRECT_URL=... npx tsx scripts/import-entegra-sales.ts          # dry-run
  *   DATABASE_URL=... DIRECT_URL=... npx tsx scripts/import-entegra-sales.ts --apply
+ *
+ * Artımlı (yeni Entegra export'u) yükleme:
+ *   npx tsx scripts/import-entegra-sales.ts --file=... --no-platform-dedup --apply
  */
 import { config as loadEnv } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -32,6 +35,17 @@ const adapter = new PrismaPg({ connectionString: cs });
 const prisma = new PrismaClient({ adapter });
 
 const APPLY = process.argv.includes("--apply");
+// Trendyol/Hepsiburada satırlarını platform tablolarına (TrendyolSalesRecord /
+// HepsiburadaSalesRecord) bakarak atlamayı kapatır.
+//
+// Neden gerekli: MarketplaceSalesRecord ile TrendyolSalesRecord aynı siparişi
+// paralel tutuyor (2026-07 kontrolü: 2058 Trendyol MSR satırının 2058'i
+// TrendyolSalesRecord'da da var). Yani platform tablosunda olmak "MSR'de zaten
+// var" demek değil. Artımlı Entegra yüklemelerinde bu dedup açık kalırsa
+// Trendyol satırları sessizce düşer ve aylar eksik görünür.
+// Gerçek idempotency zaten (channel, orderNumber, externalLineId) unique
+// key'inden geliyor; bu bayrak onu devre dışı bırakmaz.
+const NO_PLATFORM_DEDUP = process.argv.includes("--no-platform-dedup");
 
 // --file=path/to/xlsx override; varsayılan docs/son-5-yil-siparisler.xlsx
 function parseFileArg(): string {
@@ -189,6 +203,7 @@ function matchProduct(
 // ── Ana akış ─────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`Mode: ${APPLY ? "APPLY (write)" : "DRY-RUN"}`);
+  console.log(`Platform-tablosu dedup: ${NO_PLATFORM_DEDUP ? "KAPALI (--no-platform-dedup)" : "açık"}`);
   console.log(`Reading Excel: ${EXCEL_PATH}`);
   const wb = XLSX.readFile(EXCEL_PATH);
   const ws = wb.Sheets["sayfa"];
@@ -296,7 +311,7 @@ async function main() {
 
     // Trendyol dedup: orderNumber composite "platformRef-apiOrderId" — match the
     // second part against TrendyolSalesRecord.orderId (API order ID).
-    if (channel === "TRENDYOL") {
+    if (channel === "TRENDYOL" && !NO_PLATFORM_DEDUP) {
       const apiOrderId = orderNumber.includes("-") ? orderNumber.split("-").pop() : null;
       if (apiOrderId && existingTrendyolOrders.has(apiOrderId)) {
         stats.skipped++;
@@ -305,7 +320,7 @@ async function main() {
       }
     }
     // Hepsiburada dedup (existing table empty for now — defensive)
-    if (channel === "HEPSIBURADA" && platformRef && existingHbOrders.has(platformRef)) {
+    if (channel === "HEPSIBURADA" && !NO_PLATFORM_DEDUP && platformRef && existingHbOrders.has(platformRef)) {
       stats.skipped++;
       channelStats.set(channel, stats);
       continue;
