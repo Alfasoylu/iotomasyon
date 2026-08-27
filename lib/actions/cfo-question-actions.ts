@@ -89,38 +89,64 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
   if (!existing) return { ok: false, message: "Soru bulunamadı." };
 
   const uploaded: Array<{ url: string; fileName: string; mimeType: string; sizeBytes: number }> = [];
+  const failures: string[] = [];
+
   if (files.length > 0) {
     const supabaseUrl = process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
     if (!supabaseUrl || !serviceKey) {
-      return { ok: false, message: "Depolama yapılandırması eksik (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)." };
-    }
-    for (const file of files) {
-      if (file.size > MAX_FILE_BYTES) {
-        return { ok: false, message: `"${file.name}" 10 MB sınırını aşıyor.` };
+      // Depolama yapilandirilmamis olabilir. Bu durumda dosyalar eklenemez AMA
+      // cevap metni YINE DE kaydedilir. Kullanicinin yazdigi cevabi bir ortam
+      // degiskeni eksikligi yuzunden cope atmak kabul edilemez (27.08.2026 hatasi).
+      failures.push(
+        "Depolama yapılandırması eksik (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY) — dosyalar eklenemedi.",
+      );
+    } else {
+      for (const file of files) {
+        if (file.size > MAX_FILE_BYTES) {
+          failures.push(`"${file.name}" 10 MB sınırını aşıyor.`);
+          continue;
+        }
+        const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(-80);
+        const path = `${id}/${Date.now()}_${safe}`;
+        try {
+          const res = await fetch(`${supabaseUrl}/storage/v1/object/${BUCKET}/${path}`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${serviceKey}`,
+              "Content-Type": file.type || "application/octet-stream",
+              "x-upsert": "false",
+            },
+            body: Buffer.from(await file.arrayBuffer()),
+          });
+          if (!res.ok) {
+            const body = await res.text().catch(() => "");
+            failures.push(`"${file.name}" yüklenemedi (${res.status}): ${body.slice(0, 120)}`);
+            continue;
+          }
+        } catch (err) {
+          failures.push(
+            `"${file.name}" yüklenemedi: ${err instanceof Error ? err.message : "bilinmeyen hata"}`,
+          );
+          continue;
+        }
+        uploaded.push({
+          url: `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${path}`,
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          sizeBytes: file.size,
+        });
       }
-      const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(-80);
-      const path = `${id}/${Date.now()}_${safe}`;
-      const res = await fetch(`${supabaseUrl}/storage/v1/object/${BUCKET}/${path}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${serviceKey}`,
-          "Content-Type": file.type || "application/octet-stream",
-          "x-upsert": "false",
-        },
-        body: Buffer.from(await file.arrayBuffer()),
-      });
-      if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        return { ok: false, message: `Dosya yüklenemedi (${res.status}): ${body.slice(0, 160)}` };
-      }
-      uploaded.push({
-        url: `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${path}`,
-        fileName: file.name,
-        mimeType: file.type || "application/octet-stream",
-        sizeBytes: file.size,
-      });
     }
+  }
+
+  // Metin de yok, basarili yukleme de yoksa kaydedilecek bir sey kalmaz.
+  if (!answer && uploaded.length === 0) {
+    return {
+      ok: false,
+      message: ["Kaydedilecek bir şey yok.", ...failures].join(" "),
+    };
   }
 
   await prisma.$transaction(async (tx) => {
@@ -147,12 +173,20 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
         oldValue: existing.answer ?? "(cevapsız)",
         newValue: (answer || "(sadece dosya)") + (uploaded.length ? ` [+${uploaded.length} dosya]` : ""),
         source: user.email ?? "kullanıcı",
-        note: "CFO Sorular sayfasından cevaplandı.",
+        note:
+          "CFO Sorular sayfasından cevaplandı." +
+          (failures.length ? ` | EKLENEMEYEN DOSYALAR: ${failures.join(" ")}` : ""),
       },
     });
   });
 
   revalidateQ();
+  if (failures.length > 0) {
+    return {
+      ok: true,
+      message: `Cevap metni kaydedildi, ancak dosyalar eklenemedi. ${failures.join(" ")}`,
+    };
+  }
   return { ok: true, message: "Cevap kaydedildi." };
 }
 

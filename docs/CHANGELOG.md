@@ -2245,3 +2245,18 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
   - Consistent with product detail Pazar Yeri Fiyatlandırması card
 - tsc clean, Vercel deploy READY (commit f975093)
 - Browser-verified 2026-05-17: profit page renders correctly, per-platform XML prices feed effective price ✓
+
+## 2026-08-27 — CFO Sorular: dosya yüklenemezse cevap metni artık kaybolmuyor
+
+- `lib/actions/cfo-question-actions.ts` — `answerQuestionAction` dosya yükleme
+  hatalarında artık **erken dönmüyor**. Depolama yapılandırması eksikse
+  (`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`), dosya 10 MB'ı aşıyorsa veya
+  Storage isteği hata dönerse: hata `failures[]` listesine yazılır, döngü devam
+  eder ve **cevap metni yine de kaydedilir**. Kullanıcıya `ok: true` +
+  "dosyalar eklenemedi" uyarısı döner; eklenemeyen dosyalar `CfoChangeLog`
+  notuna da yazılır. Sadece hem metin hem başarılı yükleme yoksa hata dönülür.
+- Sebep: 27.08.2026'da production'da `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`
+  tanımlı olmadığı için ilk gerçek cevap denemesi tamamen reddedildi ve yazılan
+  metin de çöpe gitti. Ortam değişkeni eksikliği veri kaybettirmemeli.
+- NOT: bu iki değişken Vercel production'da HÂLÂ tanımlanmalı — Faz 27 ürün
+  görseli yükleme (`product-image-actions.ts`) de aynı sebeple çalışmıyor.
