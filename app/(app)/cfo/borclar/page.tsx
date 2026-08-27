@@ -4,12 +4,21 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
 import { num, numOrNull, remainingInstallments } from "@/lib/cfo/engine";
-import { fmtTry, fmtPct, fmtDate } from "@/lib/cfo/format";
+import { fmtTry, fmtPct, fmtDate, daysFromNow } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DataTagBadge, PaymentStateBadge } from "@/components/cfo/badges";
+import { DataTagBadge, PaymentStateBadge, TrafficBadge } from "@/components/cfo/badges";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
+
+
+const KIND_TR: Record<string, string> = {
+  VERGI_GUMRUK: "Vergi / Gümrük",
+  KREDI_TAKSITI: "Kredi taksiti",
+  KART_ODEMESI: "Kart ödemesi",
+  SABIT_GIDER: "Sabit gider",
+  DIGER: "Diğer",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +27,12 @@ export default async function CfoDebtsPage() {
   const { raw, overview: o } = await loadCfoData();
   const minPct = raw.settings ? num(raw.settings.cardMinPct) / 100 : 0.2;
   // Aktif kredilerin en geç biten taksit tarihi — "borçtan ne zaman çıkılır" sorusunun cevabı.
+  // Planlanmış ödemeler: kredi/kart/sabit gider dışındaki tek seferlik taahhütler.
+  const planned = raw.cashEvents
+    .filter((e) => !e.isSettled && num(e.outflowTry) > 0 && (e.kind === "VERGI_GUMRUK" || e.kind === "DIGER"))
+    .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+  const plannedTotal = planned.reduce((a, e) => a + num(e.outflowTry), 0);
+
   const lastLoanEnd = raw.loans
     .filter((l) => l.status === "AKTIF" && l.lastInstallmentDate)
     .map((l) => new Date(l.lastInstallmentDate as Date).getTime())
@@ -170,6 +185,76 @@ export default async function CfoDebtsPage() {
             {o.loansMissingRate} kredinin faiz oranı girilmemiş — erken kapamanın gerçek getirisi hesaplanamıyor.
           </p>
         )}
+      </Card>
+
+      {/* Planlanmış ödemeler — kredi/kart dışındaki taahhütler (navlun, gümrük, ithalat masrafı). */}
+      <Card className="mb-6 p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Planlanmış ödemeler</h2>
+          <Badge variant={plannedTotal > 0 ? "warn" : "neutral"}>{fmtTry(plannedTotal)} toplam</Badge>
+        </div>
+        {planned.length === 0 ? (
+          <p className="text-xs text-[var(--text-muted)]">Planlanmış ödeme yok.</p>
+        ) : (
+          <CfoTable head={
+            <tr><Th>Tarih</Th><Th>Kalan</Th><Th>Tür</Th><Th>Açıklama</Th><Th right>Tutar</Th><Th>Veri</Th></tr>
+          }>
+            {planned.map((e) => {
+              const d = daysFromNow(e.eventDate);
+              return (
+                <tr key={e.id}>
+                  <Td strong>{fmtDate(e.eventDate)}</Td>
+                  <Td muted>{d == null ? "—" : d <= 0 ? "bugün/geçti" : `${d} gün`}</Td>
+                  <Td muted>{KIND_TR[e.kind] ?? e.kind}</Td>
+                  <Td>{e.description}</Td>
+                  <Td right danger>{fmtTry(num(e.outflowTry))}</Td>
+                  <Td><DataTagBadge tag={e.certainty} /></Td>
+                </tr>
+              );
+            })}
+            <tr className="bg-[var(--surface-1)] font-semibold">
+              <Td strong>TOPLAM</Td><Td>—</Td><Td>—</Td><Td>—</Td>
+              <Td right strong danger>{fmtTry(plannedTotal)}</Td><Td>—</Td>
+            </tr>
+          </CfoTable>
+        )}
+        <p className="mt-2 text-xs text-[var(--text-muted)]">
+          Bu liste kredi taksiti, kart ödemesi ve sabit giderleri KAPSAMAZ — onlar yukarıdaki tablolarda.
+          Buradaki kalemler tek seferlik taahhütlerdir (navlun, gümrük vergisi, ithalat masrafı).
+        </p>
+      </Card>
+
+      {/* Ay sonu nakit tahminleri — bankaların gördüğü bakiye ay sonu bakiyesidir. */}
+      <Card className="mb-6 p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">3 aylık ay sonu nakit tahmini</h2>
+          <Badge variant="neutral">bugün: {fmtTry(o.netCashTry)}</Badge>
+        </div>
+        <CfoTable head={
+          <tr>
+            <Th>Ay sonu</Th><Th right>Gün</Th><Th right>Tahsilat</Th><Th right>Ödeme</Th>
+            <Th right>Net</Th><Th right>Nakit pozisyonu</Th><Th right>Kalan KMH kapasitesi</Th><Th>Durum</Th>
+          </tr>
+        }>
+          {o.monthEnds.map((m) => (
+            <tr key={m.label}>
+              <Td strong>{m.label}</Td>
+              <Td right muted>{m.days}</Td>
+              <Td right>{fmtTry(m.inflow)}</Td>
+              <Td right danger>{fmtTry(m.outflow)}</Td>
+              <Td right danger={m.net < 0}>{fmtTry(m.net)}</Td>
+              <Td right strong danger={m.position < 0}>{fmtTry(m.position)}</Td>
+              <Td right danger={m.freeCapacityAfter < 0}>{fmtTry(m.freeCapacityAfter)}</Td>
+              <Td><TrafficBadge value={m.traffic} /></Td>
+            </tr>
+          ))}
+        </CfoTable>
+        <p className="mt-2 text-xs text-[var(--text-muted)]">
+          Ay sonu bilerek seçildi: <strong>bankaların gördüğü bakiye ay sonu bakiyesidir</strong>, o yüzden ay sonlarında KMH kullanılmaz.
+          Tahsilat = vadesi gelen alacaklar + haftalık satış tahmini; ödeme = takvimdeki tüm nakit çıkışları
+          (sabit gider, kredi taksiti, kart ödemesi, gümrük, navlun). Nakit pozisyonu negatifse KMH’den karşılanır;
+          “kalan KMH kapasitesi” o karşılamadan sonra elde ne kaldığını gösterir.
+        </p>
       </Card>
 
       <Card className="p-5">

@@ -9,6 +9,26 @@
 
 ## 2026-08
 
+### CFO — Borçlar: planlanmış ödemeler ve 3 aylık ay sonu nakit tahmini (2026-08-27)
+
+- **"Planlanmış ödemeler" kartı eklendi** (Borçlar sayfası). `cfo_cash_event`
+  tablosundan, ödenmemiş ve `kind ∈ {VERGI_GUMRUK, DIGER}` olan tek seferlik
+  taahhütleri listeler: navlun, gümrük vergisi, ithalat masrafı. Kredi taksiti,
+  kart ödemesi ve sabit gider bilerek HARİÇ — onlar zaten kendi tablolarında ve
+  aynı kalemi iki kez göstermek borç servisini şişirirdi.
+  Kolonlar: tarih, kalan gün, tür, açıklama, tutar, veri etiketi + TOPLAM satırı.
+- **"3 aylık ay sonu nakit tahmini" kartı eklendi.** Ay sonu bilerek seçildi:
+  bankaların gördüğü bakiye ay sonu bakiyesidir, o yüzden ay sonlarında KMH
+  kullanılmaz (Alperen kuralı, 2026-08-24).
+- **`monthEnds` hesabı engine'e eklendi** (`lib/cfo/engine.ts`, `MonthEndRow`).
+  Mevcut `windowSums()` yeniden kullanıldı; böylece rolling forecast ile ay sonu
+  tahmini aynı kaynaktan beslenir ve iki sayfa arasında tutarsızlık oluşmaz.
+  Her satır: kümülatif tahsilat, kümülatif ödeme, net, nakit pozisyonu,
+  pozisyon negatifse KMH'den karşılandıktan sonra kalan kapasite ve trafik ışığı.
+- Çift sayım koruması korundu: tahsilat = vadesi gelen gerçek alacaklar +
+  haftalık satış tahmininin ÜSTÜ (`Math.max(0, tahmin - gerçek)`).
+
+
 ### CFO — Krediler: kalan taksit + bitiş tarihi, ve Yapı Kredi şahsi hesabı (2026-08-25)
 
 - **Krediler tablosuna iki kolon eklendi:** "Kalan taksit" (kalan / toplam) ve

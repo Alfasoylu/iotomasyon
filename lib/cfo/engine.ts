@@ -127,6 +127,19 @@ export interface HorizonRow {
   inflow: number; outflow: number; net: number;
   position: number; gap: number; traffic: Traffic;
 }
+/** Ay sonu nakit tahmini — "ay kapanışında bankada ne görünür" sorusunun cevabı. */
+export interface MonthEndRow {
+  label: string;          // "Eylül 2026"
+  date: Date;             // ayın son günü
+  days: number;           // bugünden kaç gün sonra
+  inflow: number;         // bugünden ay sonuna kümülatif tahsilat
+  outflow: number;        // bugünden ay sonuna kümülatif ödeme
+  net: number;
+  position: number;       // netCash + net  → ay sonu nakit pozisyonu
+  freeCapacityAfter: number; // pozisyon negatifse KMH'den ne kadar kalır
+  traffic: Traffic;
+}
+
 export interface CfoOverview {
   today: Date;
   usdTry: number;
@@ -169,6 +182,7 @@ export interface CfoOverview {
   // Forecast
   weeks: WeekBucket[];
   horizons: HorizonRow[];
+  monthEnds: MonthEndRow[];
 
   // Gümrük rezervi
   customs: {
@@ -304,6 +318,24 @@ export function computeCfo(input: CfoInput): CfoOverview {
     };
   });
 
+  // ── Ay sonu nakit tahminleri (3 ay) ──
+  // Ay sonu bilerek seçildi: bankaların gördüğü bakiye ay sonu bakiyesidir (Alperen kuralı, 24.08).
+  const TR_AY = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+  const monthEnds: MonthEndRow[] = [0, 1, 2].map((i) => {
+    const eom = startOfDay(new Date(today.getFullYear(), today.getMonth() + i + 1, 0));
+    const days = Math.max(0, Math.round((eom.getTime() - today.getTime()) / 86400000));
+    const { inflow, outflow } = windowSums(days);
+    const net = inflow - outflow;
+    const position = netCashTry + net;
+    const gap = position < 0 ? -position : 0;
+    return {
+      label: `${TR_AY[eom.getMonth()]} ${eom.getFullYear()}`,
+      date: eom, days, inflow, outflow, net, position,
+      freeCapacityAfter: freeKmhTry - gap,
+      traffic: trafficForGap(gap, freeKmhTry),
+    };
+  });
+
   // ── Gümrük rezervi ──
   let customs: CfoOverview["customs"] = null;
   if (s && numOrNull(s.customsReserveTarget) != null && s.customsReserveDate) {
@@ -382,7 +414,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     receivablesPendingTry, receivablesByChannel,
     sellableStockTry, blockedStockTry, inTransitStockTry,
     last14dRevenueTry: last14, monthlyRunRateTry, monthlyCashCollectionTry, weeklyEstimateGrossTry, revenueDataAgeDays,
-    weeks, horizons, customs,
+    weeks, horizons, monthEnds, customs,
     narrowWorthTry, narrowWorthUsd, wideWorthTry, wideWorthUsd, target,
     monthlyOperatingCashTry, needsAttention,
   };
