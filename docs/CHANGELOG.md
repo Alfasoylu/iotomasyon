@@ -2286,3 +2286,27 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
   `sb_…` anahtarı, ortasında satır sonu olan JWT ve eksik değişkenler ayrı ayrı
   doğru mesajla yakalanıyor. tsc 0 hata, eslint temiz, `next build` başarılı.
 
+## 2026-08-27 — CFO Not Defteri + soru limitinin kaldırılması
+
+- **Soru limiti kaldırıldı.** `MAX_OPEN_QUESTIONS = 20` ve buna bağlı kontrol
+  `lib/actions/cfo-question-actions.ts` ve `app/(app)/cfo/sorular/page.tsx`
+  dosyalarından çıkarıldı. CFO artık gerektiği kadar soru sorabiliyor; disiplin
+  adet sınırından değil, `priority` sıralamasından geliyor (1 = en acil, en üstte).
+  Sayfada limit rozeti yerine "N açık soru / M acil-yüksek / K CFO işlemedi"
+  rozetleri var.
+- **Yeni sayfa `/cfo/defter` — CFO Not Defteri.** Cevaplardan çıkan KALICI
+  bilgilerin yeri. Soru defteri işlemsel, bu kalıcı: amaç aynı şeyi ikinci kez
+  sormamak. Sol menüye "CFO Not Defteri" girişi eklendi (`iconKey: "book"`).
+  - Her notta güvenilirlik etiketi zorunlu: Kesin / Tahmini / Eski / Teyit edilmeli.
+  - `pinned` notlar en üstte ("her rapor öncesi okunur"), gerisi kategoriye göre gruplu.
+  - `reviewBy` — kur/limit/fiyat gibi bayatlayan bilgiler için gözden geçirme tarihi;
+    tarih geçince not "bayat" rozetiyle işaretleniyor.
+  - `sourceQuestionId` — notun hangi cevaptan çıktığı izlenebiliyor.
+  - Not güncellenince eski gövde `CfoChangeLog`'a yazılıyor; gereksizleşen not
+    ARŞİVLENİYOR, silinmiyor.
+- Yeni dosyalar: `prisma/migrations/20260827210000_cfo_note/migration.sql`,
+  `lib/actions/cfo-note-actions.ts`, `app/(app)/cfo/defter/page.tsx`,
+  `app/(app)/cfo/defter/note-form.tsx`. `lib/cfo/questions.ts` yeniden yazıldı
+  (NOTE_CATEGORIES, NOTE_TAGS, CATEGORY_TR eklendi).
+- Migration production'a uygulandı ve `_prisma_migrations`'a kaydedildi;
+  defter 30 kayıtla dolduruldu (12 sabitlenmiş).

@@ -7,9 +7,11 @@
  * kalması ve bir sonraki oturumda kaybolması demekti. Sorular artık burada durur,
  * cevaplar veritabanında kalıcı olur.
  *
- * Kural: aynı anda en fazla MAX_OPEN açık soru. Liste doluysa yeni soru eklenemez —
- * önce mevcutlar cevaplanmalı. Bu, soru enflasyonunu ve "cevaplanmayan 50 soru"
- * çöplüğünü engeller.
+ * Soru sayısında LİMİT YOKTUR (27.08.2026, Alperen kararı). Önceden 20 açık soru
+ * sınırı vardı; kaldırıldı. Disiplin artık iki yerden geliyor:
+ *   1) priority — en önemli soru en üstte, liste uzasa da sıra bozulmuyor,
+ *   2) Not Defteri (cfo_note) — cevaplanan bilgi kalıcı nota dönüşür, aynı şey
+ *      bir daha sorulmaz.
  */
 
 import { revalidatePath } from "next/cache";
@@ -17,7 +19,6 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { ActionResult } from "@/types/actions";
-import { MAX_OPEN_QUESTIONS } from "@/lib/cfo/questions";
 import { getStorageConfig, uploadObject } from "@/lib/storage/supabase-storage";
 
 const BUCKET = "cfo-files";
@@ -33,12 +34,12 @@ async function guardWrite() {
   return (await checkPermission(user, PERMISSIONS.CFO_WRITE)) ? user : null;
 }
 
-/** Açık soru sayısı — limit kontrolü ve rozet için. */
+/** Açık soru sayısı — rozet için. Limit kontrolü YOK. */
 export async function openQuestionCount(): Promise<number> {
   return prisma.cfoQuestion.count({ where: { status: "ACIK" } });
 }
 
-/** Soru sorar (CFO tarafı). Limit dolu ise reddeder. */
+/** Soru sorar (CFO tarafı). Adet limiti yok; sıralamayı priority belirler. */
 export async function askQuestionAction(input: {
   question: string;
   why?: string | null;
@@ -51,14 +52,6 @@ export async function askQuestionAction(input: {
   const q = input.question.trim();
   if (q.length < 5) return { ok: false, message: "Soru çok kısa." };
 
-  const open = await openQuestionCount();
-  if (open >= MAX_OPEN_QUESTIONS) {
-    return {
-      ok: false,
-      message: `Açık soru limiti dolu (${MAX_OPEN_QUESTIONS}). Yeni soru eklemeden önce mevcut sorular cevaplanmalı.`,
-    };
-  }
-
   await prisma.cfoQuestion.create({
     data: {
       question: q,
@@ -69,7 +62,8 @@ export async function askQuestionAction(input: {
   });
 
   revalidateQ();
-  return { ok: true, message: `Soru eklendi. Açık soru: ${open + 1}/${MAX_OPEN_QUESTIONS}` };
+  const open = await openQuestionCount();
+  return { ok: true, message: `Soru eklendi. Açık soru: ${open}` };
 }
 
 /** Cevaplar (Alperen tarafı). Metin ve/veya dosya. */

@@ -205,6 +205,14 @@ değer temizleme (tırnak/boşluk), biçim doğrulama, anlaşılır hata çeviri
 CFO soru ekleri + ürün görselleri aynı modüle bağlandı. Kalıcı düzeltme için
 Vercel'e Legacy API keys altındaki `service_role` JWT'si (`eyJ…`) girilmeli.
 
+### 27.08.2026 — CFO Not Defteri (`/cfo/defter`) + soru limiti kaldırıldı
+- Soru defterindeki 20 açık soru limiti kaldırıldı; sıralama `priority` ile yapılıyor.
+- Yeni `cfo_note` tablosu ve `/cfo/defter` sayfası: cevaplardan çıkan kalıcı bilgiler,
+  güvenilirlik etiketi, sabitleme, gözden geçirme tarihi, arşivleme (silme yok).
+- Etki: `lib/cfo/questions.ts`, `lib/actions/cfo-question-actions.ts`,
+  `lib/actions/cfo-note-actions.ts`, `app/(app)/cfo/sorular/page.tsx`,
+  `app/(app)/cfo/defter/*`, `app/(app)/layout.tsx`, `prisma/schema.prisma`.
+
 ### 2026-08-25 — CFO/Borçlar: kalan taksit, bitiş tarihi, YKB şahsi hesap
 - `app/(app)/cfo/borclar/page.tsx` — Krediler tablosuna "Kalan taksit" ve
   "Bitiş tarihi" kolonları; TOPLAM satırına aktif kredilerin en geç bitiş tarihi.

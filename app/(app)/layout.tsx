@@ -402,6 +402,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "CFO",
   },
   {
+    href: "/cfo/defter",
+    label: "CFO Not Defteri",
+    iconKey: "book",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
     href: "/cfo/ayarlar",
     label: "CFO Ayarları",
     iconKey: "settings",

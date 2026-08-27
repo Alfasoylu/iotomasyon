@@ -5,13 +5,14 @@
  * kalması demekti. Artık sorular burada durur, cevaplar veritabanında kalıcı olur
  * ve sonraki analizlere girdi olarak akar.
  *
- * Limit: aynı anda en fazla 20 AÇIK soru (lib/actions/cfo-question-actions.ts).
+ * Adet limiti YOKTUR (27.08.2026, Alperen kararı). Sıralamayı priority belirler:
+ * en önemli soru en üstte. Cevaplardan çıkan kalıcı bilgiler /cfo/defter'e yazılır.
  */
+import Link from "next/link";
 import { MessageCircleQuestion, Paperclip } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { MAX_OPEN_QUESTIONS } from "@/lib/cfo/questions";
 import { fmtDate } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
@@ -50,28 +51,31 @@ export default async function CfoQuestionsPage() {
 
   const open = all.filter((q) => q.status === "ACIK");
   const answered = all.filter((q) => q.status === "CEVAPLANDI");
-  const full = open.length >= MAX_OPEN_QUESTIONS;
+  const urgent = open.filter((q) => q.priority <= 2).length;
+  const unprocessed = answered.filter((q) => !q.processedAt).length;
 
   return (
     <>
       <PageHeader
         icon={MessageCircleQuestion}
         title="CFO Soruları"
-        subtitle="CFO'nun cevap bekleyen soruları. Yazıyla cevapla, gerekiyorsa dosya ekle. Cevaplar sistemde kalır."
+        subtitle="CFO'nun cevap bekleyen soruları, önem sırasına göre. Yazıyla cevapla, gerekiyorsa dosya ekle."
       />
 
       <Card className="mb-6 p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <Badge variant={full ? "danger" : open.length > 12 ? "warn" : "info"}>
-            {open.length} / {MAX_OPEN_QUESTIONS} açık soru
-          </Badge>
+          <Badge variant={urgent > 0 ? "danger" : "info"}>{open.length} açık soru</Badge>
+          {urgent > 0 && <Badge variant="warn">{urgent} tanesi acil/yüksek</Badge>}
           <Badge variant="neutral">{answered.length} cevaplanmış</Badge>
-          <span className="text-xs text-[var(--text-muted)]">
-            {full
-              ? "Liste dolu — CFO yeni soru ekleyemez, önce mevcutlar cevaplanmalı."
-              : `CFO en fazla ${MAX_OPEN_QUESTIONS} açık soru tutabilir; liste dolarsa yeni soru eklenemez.`}
-          </span>
+          {unprocessed > 0 && <Badge variant="warn">{unprocessed} CFO işlemedi</Badge>}
+          <Link href="/cfo/defter" className="ml-auto text-xs text-[var(--accent)] hover:underline">
+            Not Defteri →
+          </Link>
         </div>
+        <p className="mt-2 text-xs text-[var(--text-muted)]">
+          Adet limiti yok — en önemli soru her zaman en üstte. Cevabın yeterliyse CFO onu
+          Not Defteri&apos;ne kalıcı bilgi olarak yazar ve aynı şeyi bir daha sormaz.
+        </p>
       </Card>
 
       <Card className="mb-6 p-5">

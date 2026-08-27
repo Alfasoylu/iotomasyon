@@ -2155,6 +2155,8 @@ model CfoQuestion {
   processNote String?
 
   attachments CfoQuestionFile[]
+  /// Bu cevaptan çıkarılan kalıcı bilgiler (not defteri).
+  notes       CfoNote[]
 
   @@index([status, priority])
   @@index([askedAt])
@@ -2175,4 +2177,42 @@ model CfoQuestionFile {
 
   @@index([questionId])
   @@map("cfo_question_file")
+}
+
+/// CFO Not Defteri — cevaplardan çıkan KALICI bilgiler.
+///
+/// Soru defteri işlemsel: "şunu sordum, şöyle cevap geldi". Not defteri kalıcı:
+/// "Ziraat kartın aylık faizi %4,50". Amaç, aynı şeyi ikinci kez sormamak.
+/// Bir bilgi değişirse not GÜNCELLENİR ve eski değeri CfoChangeLog'a yazılır;
+/// gereksizleşirse arşivlenir, SİLİNMEZ.
+model CfoNote {
+  id       String @id @default(cuid())
+  /// Kısa başlık — "Ziraat kart aylık faiz oranı" gibi, aranabilir olmalı.
+  title    String
+  /// Bilginin kendisi + nasıl elde edildiği. Rakam varsa hesabı da burada durur.
+  body     String
+  /// nakit | marj | stok | siparis | gumruk | urun | banka | seo | kural | diger
+  category String @default("diger")
+  /// KESIN | TAHMINI | ESKI | TEYIT_EDILMELI — "rakam uydurma" kuralının defterdeki karşılığı.
+  dataTag  String @default("KESIN")
+  /// Bilgi nereden geldi: ekran görüntüsü, fatura, hesap hareketi, Alperen beyanı...
+  source   String?
+
+  /// Bu not hangi cevaptan çıktı (varsa).
+  sourceQuestionId String?
+  sourceQuestion   CfoQuestion? @relation(fields: [sourceQuestionId], references: [id], onDelete: SetNull)
+
+  /// Üstte sabitlenir — her rapor öncesi mutlaka okunacak bilgiler.
+  pinned   Boolean @default(false)
+  /// Bu tarihten sonra bilgi bayat sayılır ve teyit istenir (kur, fiyat, limit gibi).
+  reviewBy DateTime?
+  /// Arşivlenen not listede görünmez ama silinmez.
+  archivedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([archivedAt, pinned, category])
+  @@index([sourceQuestionId])
+  @@map("cfo_note")
 }
