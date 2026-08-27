@@ -18,6 +18,7 @@ import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { ActionResult } from "@/types/actions";
 import { MAX_OPEN_QUESTIONS } from "@/lib/cfo/questions";
+import { getStorageConfig, uploadObject } from "@/lib/storage/supabase-storage";
 
 const BUCKET = "cfo-files";
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -92,16 +93,13 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
   const failures: string[] = [];
 
   if (files.length > 0) {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const storage = getStorageConfig();
 
-    if (!supabaseUrl || !serviceKey) {
-      // Depolama yapilandirilmamis olabilir. Bu durumda dosyalar eklenemez AMA
-      // cevap metni YINE DE kaydedilir. Kullanicinin yazdigi cevabi bir ortam
-      // degiskeni eksikligi yuzunden cope atmak kabul edilemez (27.08.2026 hatasi).
-      failures.push(
-        "Depolama yapılandırması eksik (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY) — dosyalar eklenemedi.",
-      );
+    if (!storage.ok) {
+      // Depolama kullanilamiyor. Dosyalar eklenemez AMA cevap metni YINE DE
+      // kaydedilir. Kullanicinin yazdigi cevabi bir yapilandirma hatasi
+      // yuzunden cope atmak kabul edilemez (27.08.2026 hatasi).
+      failures.push(storage.reason);
     } else {
       for (const file of files) {
         if (file.size > MAX_FILE_BYTES) {
@@ -110,29 +108,13 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
         }
         const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(-80);
         const path = `${id}/${Date.now()}_${safe}`;
-        try {
-          const res = await fetch(`${supabaseUrl}/storage/v1/object/${BUCKET}/${path}`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${serviceKey}`,
-              "Content-Type": file.type || "application/octet-stream",
-              "x-upsert": "false",
-            },
-            body: Buffer.from(await file.arrayBuffer()),
-          });
-          if (!res.ok) {
-            const body = await res.text().catch(() => "");
-            failures.push(`"${file.name}" yüklenemedi (${res.status}): ${body.slice(0, 120)}`);
-            continue;
-          }
-        } catch (err) {
-          failures.push(
-            `"${file.name}" yüklenemedi: ${err instanceof Error ? err.message : "bilinmeyen hata"}`,
-          );
+        const res = await uploadObject(storage.config, BUCKET, path, file);
+        if (!res.ok) {
+          failures.push(`"${file.name}" yüklenemedi: ${res.reason}`);
           continue;
         }
         uploaded.push({
-          url: `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${path}`,
+          url: res.publicUrl,
           fileName: file.name,
           mimeType: file.type || "application/octet-stream",
           sizeBytes: file.size,

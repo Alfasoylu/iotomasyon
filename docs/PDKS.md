@@ -197,6 +197,14 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 27.08.2026 — Storage "Invalid Compact JWS" çözümü
+Production'a `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` eklendi ama Storage
+`Invalid Compact JWS` döndü: yeni format (`sb_secret_…`) anahtar, Storage'ın
+beklediği JWT değil. Ortak `lib/storage/supabase-storage.ts` modülü yazıldı —
+değer temizleme (tırnak/boşluk), biçim doğrulama, anlaşılır hata çevirisi.
+CFO soru ekleri + ürün görselleri aynı modüle bağlandı. Kalıcı düzeltme için
+Vercel'e Legacy API keys altındaki `service_role` JWT'si (`eyJ…`) girilmeli.
+
 ### 2026-08-25 — CFO/Borçlar: kalan taksit, bitiş tarihi, YKB şahsi hesap
 - `app/(app)/cfo/borclar/page.tsx` — Krediler tablosuna "Kalan taksit" ve
   "Bitiş tarihi" kolonları; TOPLAM satırına aktif kredilerin en geç bitiş tarihi.

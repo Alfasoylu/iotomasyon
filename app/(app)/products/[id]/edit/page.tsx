@@ -11,6 +11,7 @@ import { listAttributes } from "@/services/attribute-service";
 import { requirePermission, checkPermission, requireUser, isOwner } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { getStorageConfig } from "@/lib/storage/supabase-storage";
 import { SupplierProductSection } from "@/components/suppliers/supplier-product-section";
 import { ProductSourceLinkSection } from "@/components/products/product-source-link-section";
 
@@ -211,7 +212,7 @@ export default async function EditProductPage({
               source: img.source,
               altText: img.altText,
             }))}
-            canUpload={!!(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)}
+            canUpload={getStorageConfig().ok}
           />
         </div>
       </Card>

@@ -14,6 +14,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PERMISSIONS } from "@/lib/permissions";
+import { getStorageConfig, uploadObject } from "@/lib/storage/supabase-storage";
 
 export type ImageActionResult =
   | { ok: true; message: string }
@@ -128,11 +129,9 @@ export async function uploadProductImageAction(
     return { ok: false, error: "Dosya seçilmedi" };
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
-    return { ok: false, error: "Depolama yapılandırması eksik (SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY)" };
+  const storage = getStorageConfig();
+  if (!storage.ok) {
+    return { ok: false, error: storage.reason };
   }
 
   const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -147,25 +146,12 @@ export async function uploadProductImageAction(
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const path = `${productId}/${Date.now()}.${ext}`;
 
-  const res = await fetch(
-    `${supabaseUrl}/storage/v1/object/product-images/${path}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        "Content-Type": file.type,
-        "x-upsert": "false",
-      },
-      body: Buffer.from(await file.arrayBuffer()),
-    },
-  );
-
+  const res = await uploadObject(storage.config, "product-images", path, file);
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    return { ok: false, error: `Yükleme başarısız (${res.status}): ${body}` };
+    return { ok: false, error: res.reason };
   }
 
-  const publicUrl = `${supabaseUrl}/storage/v1/object/public/product-images/${path}`;
+  const publicUrl = res.publicUrl;
 
   const existingCount = await prisma.productImage.count({ where: { productId } });
   await prisma.productImage.create({

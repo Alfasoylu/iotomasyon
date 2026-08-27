@@ -2260,3 +2260,29 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
   metin de çöpe gitti. Ortam değişkeni eksikliği veri kaybettirmemeli.
 - NOT: bu iki değişken Vercel production'da HÂLÂ tanımlanmalı — Faz 27 ürün
   görseli yükleme (`product-image-actions.ts`) de aynı sebeple çalışmıyor.
+
+## 2026-08-27 — Depolama: "Invalid Compact JWS" teşhisi ve ortak Storage modülü
+
+- `lib/storage/supabase-storage.ts` (yeni) — Supabase Storage yapılandırmasını
+  doğrulayan ve yükleme yapan ortak modül. İki çağrı yeri (CFO soru ekleri,
+  ürün görselleri) artık aynı mantığı kullanır; kopyala-yapıştır env okuması bitti.
+- Sebep: `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` production'a eklendikten
+  sonra Storage `{"statusCode":"403","message":"Invalid Compact JWS"}` döndü.
+  Anahtar yanlış değil, BİÇİMİ yanlıştı — Storage'ın REST ucu Authorization
+  başlığını JWT olarak ayrıştırıyor, Supabase'in yeni format anahtarlarını
+  (`sb_secret_…`) kabul etmiyor. Proje her iki anahtar sistemini de açık tutuyor.
+- Modül artık:
+  - değeri `trim()`'ler ve sarmalayan tırnakları atar (yapıştırma hatası kendiliğinden düzelir)
+  - `SUPABASE_URL` sonundaki `/` karakterlerini temizler
+  - `sb_publishable_` / `sb_secret_` önekini tanır ve Legacy API keys yönlendirmesi verir
+  - JWT biçimini (üç base64url parça) önceden doğrular — istek gönderilmeden hata verir
+  - Supabase'in ham hata gövdesini ("Invalid Compact JWS", "Bucket not found", 401/403/409)
+    ne yapılacağını söyleyen Türkçe cümleye çevirir
+  - `apikey` başlığını da gönderir (supabase-js davranışı)
+- `lib/actions/cfo-question-actions.ts`, `lib/actions/product-image-actions.ts`,
+  `app/(app)/products/[id]/edit/page.tsx` bu modüle bağlandı. Ürün görseli
+  ekranındaki "yükleme kapalı" uyarısı artık gerçek yapılandırma durumunu yansıtır.
+- 8 senaryoluk doğrulama çalıştırıldı: tırnaklı ve satır sonlu değerler onarılıyor;
+  `sb_…` anahtarı, ortasında satır sonu olan JWT ve eksik değişkenler ayrı ayrı
+  doğru mesajla yakalanıyor. tsc 0 hata, eslint temiz, `next build` başarılı.
+
