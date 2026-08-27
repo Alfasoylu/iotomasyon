@@ -197,6 +197,13 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 27.08.2026 — Storage anahtar rolü doğrulaması (anon ≠ service_role)
+`Invalid Compact JWS` düzeltildikten sonra yükleme RLS'e takıldı: girilen anahtar
+`anon` rolündeydi. `getStorageConfig()` artık JWT payload'ından `role` okuyup
+`service_role` değilse isteği göndermeden açıklayıcı hata veriyor.
+Etki: `lib/storage/supabase-storage.ts`.
+
+
 ### 27.08.2026 — Storage "Invalid Compact JWS" çözümü
 Production'a `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` eklendi ama Storage
 `Invalid Compact JWS` döndü: yeni format (`sb_secret_…`) anahtar, Storage'ın

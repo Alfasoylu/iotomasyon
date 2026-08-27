@@ -38,6 +38,33 @@ function looksLikeJwt(key: string): boolean {
   return /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(key);
 }
 
+/**
+ * JWT'nin payload'ındaki `role` iddiasını okur.
+ *
+ * İmza DOĞRULANMAZ ve doğrulanmamalı: bu bir kimlik doğrulama adımı değil, kendi
+ * yapılandırmamızın doğru anahtarı taşıyıp taşımadığının kontrolü. Supabase'in
+ * Legacy API keys bölümünde İKİ JWT var ve ikisi de eyJ… ile başlıyor:
+ * `anon` (public) ve `service_role` (secret). Yanlışlıkla anon anahtarı
+ * girilirse Storage isteği RLS'e takılıyor ve şu hata dönüyor:
+ *   {"message":"new row violates row-level security policy"}
+ * Bu 27.08.2026'da yaşandı. Rolü önceden okuyup söylemek, o hatayı aramaktan iyi.
+ */
+function jwtRole(key: string): string | null {
+  try {
+    const payload = key.split(".")[1];
+    if (!payload) return null;
+    const json = Buffer.from(
+      payload.replace(/-/g, "+").replace(/_/g, "/"),
+      "base64",
+    ).toString("utf8");
+    const parsed: unknown = JSON.parse(json);
+    const role = (parsed as { role?: unknown })?.role;
+    return typeof role === "string" ? role : null;
+  } catch {
+    return null;
+  }
+}
+
 const LEGACY_KEY_HINT =
   "Supabase panelinde Settings → API → Legacy API keys altındaki service_role " +
   "anahtarını kullanın (eyJ… ile başlar).";
@@ -81,6 +108,17 @@ export function getStorageConfig(): StorageConfigResult {
     };
   }
 
+  const role = jwtRole(key);
+  if (role && role !== "service_role") {
+    return {
+      ok: false,
+      reason:
+        `SUPABASE_SERVICE_ROLE_KEY "${role}" rolüne ait bir anahtar; yazma işlemi ` +
+        'RLS\'e takılır ("new row violates row-level security policy"). Legacy API keys ' +
+        "altında iki anahtar var — \"anon public\" değil, \"service_role secret\" olanı kullanın.",
+    };
+  }
+
   return { ok: true, config: { url, key } };
 }
 
@@ -92,6 +130,12 @@ export type UploadResult =
 function describeFailure(status: number, body: string): string {
   if (body.includes("Invalid Compact JWS")) {
     return `Anahtar JWT olarak ayrıştırılamadı (${status}). ${LEGACY_KEY_HINT}`;
+  }
+  if (body.includes("row-level security")) {
+    return (
+      `Yazma RLS'e takıldı (${status}). Kullanılan anahtar service_role değil — ` +
+      "Legacy API keys altındaki \"service_role secret\" anahtarını kullanın."
+    );
   }
   if (body.includes("Bucket not found")) {
     return `Bucket bulunamadı (${status}). Supabase → Storage bölümünde bucket'ı oluşturun.`;

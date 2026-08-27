@@ -2310,3 +2310,23 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
   (NOTE_CATEGORIES, NOTE_TAGS, CATEGORY_TR eklendi).
 - Migration production'a uygulandı ve `_prisma_migrations`'a kaydedildi;
   defter 30 kayıtla dolduruldu (12 sabitlenmiş).
+
+## 2026-08-27 — Storage: anahtarın ROLÜ de doğrulanıyor (anon ≠ service_role)
+
+- `lib/storage/supabase-storage.ts` — `getStorageConfig()` artık JWT'nin
+  payload'ındaki `role` iddiasını okuyor ve `service_role` değilse isteği
+  göndermeden reddediyor. İmza doğrulanmıyor (bu kimlik doğrulama değil, kendi
+  yapılandırmamızın kontrolü).
+- Sebep: `Invalid Compact JWS` düzeltildikten sonra yükleme bu kez
+  `{"message":"new row violates row-level security policy"}` ile düştü.
+  Legacy API keys altında İKİ JWT var ve ikisi de `eyJ…` ile başlıyor —
+  `anon` (public) ve `service_role` (secret). Girilen anon anahtarıydı;
+  `service_role` RLS'i atlar, `anon` atlamaz. `storage.objects` üzerinde hiç
+  politika olmadığı için anon'un her INSERT'i reddediliyor.
+- `describeFailure()` ham `row-level security` hatasını da aynı yönlendirmeye çeviriyor.
+- ÇÖZÜM RLS politikası eklemek DEĞİL: bucket'a anon yazma izni vermek güvenlik
+  açığı olurdu. Doğru anahtar kullanılmalı.
+- Doğrulandı: gerçek anon anahtarı `role="anon"` olarak yakalanıyor;
+  `service_role` geçiyor; `authenticated` ve `sb_secret_…` reddediliyor.
+  tsc 0 hata, eslint temiz, `next build` başarılı.
+
