@@ -9,6 +9,27 @@
 
 ## 2026-08
 
+### CFO — Sorular sayfası: soru-cevap defteri (2026-08-27)
+
+- **`/cfo/sorular` eklendi.** CFO'nun cevap bekleyen soruları burada durur; Alperen
+  yazıyla ve/veya **dosya ekleyerek** cevaplar. Cevaplar veritabanında kalıcı olur.
+  Neden: sorular her sabah sohbetten soruluyordu, cevaplar sohbet geçmişinde kalıyor
+  ve bir sonraki oturumda kayboluyordu.
+- **Açık soru limiti 20.** Liste doluysa `askQuestionAction` yeni soru eklemeyi
+  REDDEDER — önce mevcutlar cevaplanmalı. Soru enflasyonunu ve "cevaplanmayan 50
+  soru" çöplüğünü engeller.
+- **Yeni modeller:** `CfoQuestion` (soru, neden gerekiyor, alan, öncelik 1-5, durum,
+  cevap, CFO işledi mi) ve `CfoQuestionFile` (Supabase Storage `cfo-files` bucket'ı;
+  DB'de sadece URL + metadata, dosya başına 10 MB).
+- **`processedAt` alanı bilinçli:** cevap geldi ≠ CFO işledi. Cevap deftere/hesaba
+  yansıyınca "İşlendi" işaretlenir; yansımayan cevap ekranda sarı rozetle durur.
+  Cevap güncellenirse `processedAt` sıfırlanır — CFO tekrar işlemek zorunda kalır.
+- Her cevap `CfoChangeLog`'a bir satır yazar; eski cevap silinmez.
+- ⚠️ **Build notu:** `"use server"` modülünden sabit export edilemez (sadece async
+  fonksiyon). `MAX_OPEN_QUESTIONS` bu yüzden `lib/cfo/questions.ts`'te durur —
+  ilk denemede build bu yüzden kırıldı, aynı hataya düşülmesin.
+
+
 ### CFO — Borçlar: planlanmış ödemeler ve 3 aylık ay sonu nakit tahmini (2026-08-27)
 
 - **"Planlanmış ödemeler" kartı eklendi** (Borçlar sayfası). `cfo_cash_event`
