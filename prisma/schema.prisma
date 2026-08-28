@@ -2115,16 +2115,76 @@ model CfoSnapshot {
 model CfoChangeLog {
   id        String   @id @default(cuid())
   changedAt DateTime @default(now())
-  area      String // örn "cfo_bank_account"
+  /// KONU. Sabit sözlük (DB'de CHECK ile zorlanır): nakit | banka | kart | kredi |
+  /// alacak | gumruk | maliyet | marj | fiyat | satis | stok | olu_stok | urun |
+  /// siparis | alfashome | iotomasyon | veri | strateji | soru | kural | risk |
+  /// erisim | guvenlik | not | diger
+  area      String
   item      String // örn "Akbank Alp KMH limiti"
   oldValue  String?
   newValue  String?
   source    String? // "Kullanıcı", "Trendyol ekran görüntüsü", "Sistem"
   note      String?
+  /// KAYIT TÜRÜ — konudan ayrı eksen. 27.08'e kadar ikisi de area'ya yazılıyordu,
+  /// bu yüzden area 63 farklı değere ulaşmış ve log sorgulanamaz hâle gelmişti.
+  /// bulgu | duzeltme | karar | aksiyon | analiz | teyit | celiski | arastirma |
+  /// senaryo | onay | model | plan | cfo_oz_elestiri
+  kind      String?
 
   @@index([changedAt])
   @@index([area])
+  @@index([kind])
   @@map("cfo_change_log")
+}
+
+/// 100.000 USD hedefine aday ürünler. Liste birikir; verdict ile süzülür.
+/// 3 gün "inceleniyor" kalan aday karara zorlanır (bkz. cfo_gecikmis_karar view).
+model CfoProductCandidate {
+  id                  BigInt    @id @default(autoincrement())
+  foundAt             DateTime  @default(now()) @map("found_at") @db.Date
+  source              String?
+  productName         String    @map("product_name")
+  category            String?
+  sku                 String?
+  salePriceTry        Decimal?  @map("sale_price_try") @db.Decimal
+  unitCostTry         Decimal?  @map("unit_cost_try") @db.Decimal
+  grossMarginPct      Decimal?  @map("gross_margin_pct") @db.Decimal
+  unitsNeededMonthly  Decimal?  @map("units_needed_monthly") @db.Decimal
+  marketEvidence      String?   @map("market_evidence")
+  competition         String?
+  entryCapitalTry     Decimal?  @map("entry_capital_try") @db.Decimal
+  concentrationRisk   String?   @map("concentration_risk")
+  /// inceleniyor | maliyet_bekliyor | sermaye_planinda | reddedildi
+  verdict             String    @default("inceleniyor")
+  verdictReason       String?   @map("verdict_reason")
+  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("cfo_product_candidate")
+}
+
+/// Ölü stok bulguları. "Satmıyor" sebep değildir — reason_code kanıtıyla dolar.
+model CfoDeadStockFinding {
+  id                 BigInt    @id @default(autoincrement())
+  foundAt            DateTime  @default(now()) @map("found_at") @db.Date
+  sku                String?
+  productName        String?   @map("product_name")
+  stockQty           Int?      @map("stock_qty")
+  daysIdle           Int?      @map("days_idle")
+  tiedCapitalTry     Decimal?  @map("tied_capital_try") @db.Decimal
+  /// fiyat_yuksek | listeleme_kotu | eski_model | sezon_disi | talep_yok |
+  /// yanlis_alim | yasal_kisit | bilinmiyor
+  reasonCode         String?   @map("reason_code")
+  reasonEvidence     String?   @map("reason_evidence")
+  actionTaken        String?   @map("action_taken")
+  actionAppliedAt    DateTime? @map("action_applied_at") @db.Timestamptz(6)
+  releasedCapitalTry Decimal?  @map("released_capital_try") @db.Decimal
+  /// acik | izleniyor | kapandi | gecersiz
+  status             String    @default("acik")
+  updatedAt          DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("cfo_dead_stock_finding")
 }
 
 /// CFO ↔ Alperen soru-cevap defteri.

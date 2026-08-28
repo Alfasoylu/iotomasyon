@@ -2330,3 +2330,37 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
   `service_role` geçiyor; `authenticated` ve `sb_secret_…` reddediliyor.
   tsc 0 hata, eslint temiz, `next build` başarılı.
 
+## 2026-08-28 — CFO disiplin altyapısı: snapshot, karar kuyruğu, log taksonomisi
+
+27.08 incelemesi CFO günlük görevinde üç yapısal boşluk gösterdi. Üçü de kapatıldı.
+
+- **`cfo_snapshot` artık dolduruluyor.** `cfo_take_snapshot(note)` fonksiyonu tek
+  komutla servet fotoğrafı alıyor; tanımlar `lib/cfo/engine.ts:364` ile birebir aynı
+  (narrow/wide worth, nakit, alacak, stok, borç, kur). `cfo_snapshot_gunluk` ve
+  `cfo_snapshot_delta` görünümleri "düne göre / haftaya göre" farkı veriyor.
+  Önceden tablo 0 satırdı — zaman serisi yoktu, "geçen haftaya göre iyi miyiz"
+  sorulamıyordu. İlk fotoğraf alındı: net 10.186 USD, geniş 180.917 USD.
+- **Karar kuyruğu.** `cfo_bekleyen_karar` (aday + ölü stok bulgusu + açık soru + bayat
+  not) ve `cfo_gecikmis_karar` (3 günü geçenler). Sebep: 31 aday ürünün 29'u
+  `inceleniyor` durumundaydı, **onaylanmış 0, reddedilmiş 0** — listeler birikiyor,
+  süzülmüyordu. Görünüm sabah raporunda boş olmak zorunda.
+- **Log taksonomisi ikiye ayrıldı.** `cfo_change_log.area` KONU (24 değerlik sabit
+  sözlük), yeni `kind` kolonu KAYIT TÜRÜ (13 değer). İkisi de DB'de CHECK ile zorlanıyor.
+  Önceden ikisi aynı kolona yazıldığı için `area` 63 farklı değere ulaşmıştı
+  (`nakit`/`NAKIT`, `satis`/`SATIS`/`satış`, `bulgu`, `duzeltme`…) ve log
+  sorgulanamaz hâldeydi. 472 satırın orijinal değeri `cfo_change_log_area_yedek`'e
+  yedeklendi — geri dönülebilir.
+- `lib/actions/cfo-actions.ts` — `logChange()` tablo adını konuya çeviriyor
+  (`cfo_bank_account` → `banka` vb.) ve `kind: "duzeltme"` yazıyor. Bu olmadan CFO
+  panosundaki her düzenleme yeni CHECK'e takılıp hata verecekti.
+- **Repo↔DB kayması kapandı:** ajanın Supabase'de doğrudan açtığı
+  `cfo_product_candidate` ve `cfo_dead_stock_finding` tabloları migration'a ve
+  `schema.prisma`'ya alındı. Sıfırdan kurulan bir ortamda artık oluşuyorlar.
+- **`docs/CFO-GOREV.md` (yeni)** — CFO'nun operasyon el kitabı. Görev tanımı 17 KB'lık
+  Cowork trigger config'inden repoya taşındı: artık sürüm geçmişi var, diff alınabiliyor.
+  Günlük 12 bölümlük liste, "her gün zorunlu üçlü + haftalık rotasyon"a dönüştürüldü;
+  sorular sohbet yerine `cfo_question`/`cfo_note` üzerinden yürüyor.
+- Doğrulandı: fonksiyon çalıştırıldı ve rakam üretti; CHECK 8 geçerli değeri kabul
+  edip sözlük dışını reddetti (test kayıtları silindi); `area` 63→24, `kind` 13.
+  tsc 0 hata, eslint temiz, `next build` başarılı.
+

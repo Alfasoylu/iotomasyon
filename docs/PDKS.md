@@ -197,6 +197,17 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 28.08.2026 — CFO disiplin altyapısı + görev tanımı repoya taşındı
+Günlük CFO Routine'i incelendi: çok iş üretiyor (4 günde 470 log, maliyet kapsamı
+1→76) ama üç yerde tıkalıydı — snapshot tablosu boş (zaman serisi yok), 31 adayın
+0'ı karara bağlanmış, log `area`'sında 63 değer. Üçü için altyapı kuruldu:
+`cfo_take_snapshot()` + delta görünümleri, `cfo_gecikmis_karar` kuyruğu, iki eksenli
+log taksonomisi (`area` konu + `kind` tür, ikisi de CHECK'li). Ajanın elle açtığı iki
+tablo migration'a alındı. Görev tanımı `docs/CFO-GOREV.md`'ye taşındı.
+Etki: `prisma/migrations/20260828000000_cfo_disiplin/`, `prisma/schema.prisma`,
+`lib/actions/cfo-actions.ts`, `docs/CFO-GOREV.md`.
+
+
 ### 27.08.2026 — Storage anahtar rolü doğrulaması (anon ≠ service_role)
 `Invalid Compact JWS` düzeltildikten sonra yükleme RLS'e takıldı: girilen anahtar
 `anon` rolündeydi. `getStorageConfig()` artık JWT payload'ından `role` okuyup

@@ -29,10 +29,28 @@ async function guard() {
   return ok ? user : null;
 }
 
+/**
+ * Çağrı yerleri tablo adı geçiriyor (okunur ve yerel olarak doğru). Ama
+ * `cfo_change_log.area` artık KONU sözlüğüyle sınırlı — DB'de CHECK var, sözlük
+ * dışı değer INSERT'i reddeder. Tablo adını burada konuya çeviriyoruz; böylece
+ * çağrı yerleri sade kalıyor ve log sorgulanabilir oluyor.
+ * Sözlüğün tamamı: docs/CFO-GOREV.md §7
+ */
+const AREA_BY_TABLE: Record<string, string> = {
+  cfo_bank_account: "banka",
+  cfo_cash_event: "nakit",
+  cfo_credit_card: "kart",
+  cfo_loan: "kredi",
+  cfo_receivable: "alacak",
+  cfo_settings: "veri",
+};
+
 async function logChange(area: string, item: string, oldValue: unknown, newValue: unknown, source: string, note?: string) {
   await prisma.cfoChangeLog.create({
     data: {
-      area, item,
+      area: AREA_BY_TABLE[area] ?? area,
+      kind: "duzeltme",
+      item,
       oldValue: oldValue == null ? null : String(oldValue),
       newValue: newValue == null ? null : String(newValue),
       source, note: note ?? null,
