@@ -73,7 +73,7 @@ navlun **birlikte** güncellenir.
 
 ---
 
-## 4) GÜNLÜK ZORUNLU ÜÇLÜ
+## 4) GÜNLÜK ZORUNLU DÖRTLÜ
 
 Bunlar her sabah, istisnasız. Geri kalan her şey rotasyonda (§5).
 
@@ -92,7 +92,28 @@ fonksiyonu da değiştir — ayrışırlarsa pano ile zaman serisi sessizce çel
 **Rakam değil yön raporla.** "Servet 180.916 USD" değil, "180.916 USD — düne göre
 +2.140, haftaya göre −8.900". Yön yoksa rapor bir fotoğraftır, film değil.
 
-### 4.2 — Karar kuyruğunu boşalt
+### 4.2 — NAKİT KAPISI — raporun atlayamayacağı bölüm
+
+```sql
+select * from cfo_nakit_kapisi;
+```
+
+Bu dört rakam **her raporda** olmak zorunda: nakit · 10 günde girecek · 10 günde
+çıkacak · boş KMH. Açık negatifse (`nakit + girecek − cikacak < 0`) bu **raporun ilk
+maddesidir** — alfashome'dan da, marjdan da, ölü stoktan da önce gelir.
+
+Ardından `📅 BU HAFTA` tablosu: `cfo_cash_event`'ten önümüzdeki 10 günün tarihli
+ödeme takvimi, her satırda tutar ve kaynağı.
+
+> **28.08 dersi.** O günün raporunda `💰 NAKİT` ve `📅 BU HAFTA` bölümleri **hiç
+> yazılmadı**. Oysa bankada 11.900 TL vardı ve 10 gün içinde 1.610.129 TL çıkıyordu:
+> 01.09 sabit gider 303.400 + hava sipariş ödemesi 402.017, 05.09 Akbank 112.079,
+> 06.09 Enpara 292.633, 07.09 Romanya gümrük vergisi 500.000 (**nakit, kart kabul
+> edilmiyor**). Açık −1.030.144 TL, boş KMH 3.308.232 TL. Rapor bunun yerine
+> alfashome fiyat politikasını 1. madde yaptı — kendi analizinde "alfashome
+> Eylül–Ekim nakit açığına cevap olamaz" yazdığı hâlde. Bir daha olmayacak.
+
+### 4.3 — Karar kuyruğunu boşalt
 
 ```sql
 select * from cfo_gecikmis_karar;
@@ -101,9 +122,18 @@ select * from cfo_gecikmis_karar;
 **Bu görünüm sabah raporunda boş olmak zorunda.** Dolu çıkan her satır bugün karara
 bağlanır:
 
+**Karar sözlüğü sabittir — DB'de CHECK var.** Yeni isim uydurarak kuyruk boşaltılmaz.
+Açık sayılan değerler: `inceleniyor` · `maliyet_bekliyor` · `izle`.
+Kapanış kararları: `sermaye_planinda` · `cekirdek_tut` · `paket_ici` · `ele` · `reddedildi`.
+
+> **28.08 dersi.** 31 adayın hepsi `inceleniyor`dan çıkarıldı ama sözlükte olmayan
+> değerlere gitti; görünüm onları göremedi ve rapora "geciken karar 0" yazıldı.
+> `izle` bir karar değil, "inceliyorum"un yeni adıdır — 3 aday görünmez oldu.
+> Görünüm artık **beyaz liste** kullanıyor: yalnız kapanış kararları kuyruktan çıkarır.
+
 | Tür | Karar seçenekleri |
 |---|---|
-| `aday` | `sermaye_planinda` · `reddedildi` (gerekçesiyle) · `maliyet_bekliyor` → soru aç |
+| `aday` | `cekirdek_tut` · `paket_ici` · `ele` · `sermaye_planinda` · `reddedildi` (gerekçesiyle) |
 | `olu_stok` | `kapandi` (aksiyon uygulandı) · `gecersiz` (yanlış tespit) · likidasyon fiyatı hesapla |
 | `soru` | 3 gündür cevapsızsa öncelik yükselt, tek cümleye indir |
 | `bayat_not` | teyit et → `dataTag`+`reviewBy` güncelle, ya da arşivle |
@@ -115,7 +145,7 @@ adı konur.
 > 28.08 durumu: 31 adayın 29'u `inceleniyor`, **onaylanmış 0, reddedilmiş 0**. Liste
 > birikiyor ama süzülmüyordu. Bu kural onun için var.
 
-### 4.3 — Maliyet avı (3 ürün)
+### 4.4 — Maliyet avı (3 ürün)
 
 En çok satan 50 ürün içinden `unitCostTry` boş olan 3'ünü doldur. Sıra: alış faturası →
 tedarikçi listesi → benzer ürün oranı (Tahmini etiketle) → soru aç.
@@ -277,9 +307,9 @@ kalsın.
 
 ⚡ BUGÜN SENİN YAPACAKLARIN   en fazla 5, tek satır, net emir
 ✅ BEN NE YAPTIM              bu sabah kendi yaptıklarım
-📈 YÖN                        servet USD + düne/haftaya göre fark (snapshot)
-💰 NAKİT                      giren/çıkan · KMH · boş kapasite · ay sonu projeksiyonu
-📅 BU HAFTA                   tarihli ödeme takvimi
+💰 NAKİT                      ZORUNLU — cfo_nakit_kapisi: nakit · 10g girecek/çıkacak · boş KMH
+📅 BU HAFTA                   ZORUNLU — 10 günlük tarihli ödeme takvimi
+📈 YÖN                        servet USD + bir önceki fotoğrafa göre fark
 🛒 SATIŞ & STOK               dünkü ciro · en çok satan 3 · stok/tükenme · fiyat sapması
 🔁 GÜNÜN DERİN İŞİ            rotasyondaki konu + çıkan karar
 ⏳ KARAR KUYRUĞU              bekleyen N · bugün kapattığım M  (gecikmiş 0 olmalı)
@@ -287,6 +317,8 @@ kalsın.
 🎯 HEDEF                      hedefin neresindeyiz + bu ay ne yapmalı
 ⚠️ RİSK                       en fazla 2, sadece acil
 ```
+
+💰 ve 📅 bölümleri **boş geçilemez**. Veri yoksa "veri yok" yaz — bölümü silme.
 
 Tablo kullan, paragraf yazma. Rakamı olan her cümlede rakam olsun.
 
