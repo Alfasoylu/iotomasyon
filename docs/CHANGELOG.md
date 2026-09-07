@@ -2364,3 +2364,29 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
   edip sözlük dışını reddetti (test kayıtları silindi); `area` 63→24, `kind` 13.
   tsc 0 hata, eslint temiz, `next build` başarılı.
 
+## 2026-08-29 — CFO / Ölü Stok sayfası (`/cfo/olu-stok`)
+
+- Yeni sayfa: hapsolmuş sermaye ve onu serbest bırakma kuyruğu. Veri kaynağı CFO'nun
+  kurduğu `cfo_olu_stok` görünümü (30 günde sıfır VEYA örtü > 180 gün; kukla stok
+  hariç, AMAZON_FBA dahil, çift sayımsız SKU eşleşmesi). **Sayfa hesap yapmaz** —
+  kural görünümde yaşıyor ki sabah raporu ile ekran aynı rakamı göstersin.
+- Üst şerit 4 kart: bağlı sermaye · kırmızı · 90 gündür sıfır · temizlenen sermaye.
+- Tablo `bagli_sermaye desc`; **kontrol vakti geçenler en üstte, kırmızı kenarlıklı**.
+  FBA rozeti, alarm sebebi, kontrol notu ve uygulanan aksiyon satırda görünür.
+- Her satırda üç eylem — `lib/actions/cfo-dead-stock-actions.ts`:
+  - **Kontrol ettim** → `last_checked_at` bugüne, `next_review_at` KIRMIZI için +14,
+    SARI için +30 gün
+  - **Aksiyon aldım** → `status='aksiyon_alindi'`, uygulanan iş yazılır, etki 14 gün
+    sonra ölçülmek üzere kontrole alınır
+  - **Kapat** → `status='kapandi'`, `released_capital_try` yazılır (boş bırakılırsa
+    bağlı sermayenin tamamı serbest sayılır)
+  Üçü de `cfo_change_log`'a yazar (`area='olu_stok'`, `kind` teyit/aksiyon/karar).
+- Altta **"Temizlenen sermaye"** tablosu: kapatılan bulguların serbest bıraktığı para
+  ay ay. Hedef bu sayının büyümesi.
+- Sol menüye "Ölü Stok" girişi eklendi (`iconKey: "package"`, `cfo.read`).
+- Doğrulama: üç UPDATE ve change log yazımı canlı veriye karşı geri alınabilir
+  transaction içinde çalıştırıldı, kalıntı 0. tsc 0 hata, eslint temiz,
+  `next build` başarılı.
+- Bugünkü tablo: 64 SKU / 3.693.739 ₺ bağlı; 6 kırmızı / 2.930.556 ₺;
+  7 SKU 90 gündür hiç satmadı (800.030 ₺).
+

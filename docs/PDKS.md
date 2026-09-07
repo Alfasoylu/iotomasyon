@@ -197,6 +197,15 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 29.08.2026 — CFO / Ölü Stok sayfası
+CFO veri katmanını kurmuştu (`cfo_olu_stok`, `cfo_olu_stok_ozet` görünümleri +
+`cfo_dead_stock_finding`'e alarm/kontrol kolonları) ama deploy edemiyordu. Sayfa
+yazıldı ve canlıya alındı: üst şerit, bağlı sermayeye göre sıralı tablo, satır
+başına üç aksiyon (kontrol/aksiyon/kapat) ve aylık "temizlenen sermaye" tablosu.
+Etki: `app/(app)/cfo/olu-stok/*`, `lib/actions/cfo-dead-stock-actions.ts`,
+`app/(app)/layout.tsx`.
+
+
 ### 28.08.2026 — CFO disiplin altyapısı + görev tanımı repoya taşındı
 Günlük CFO Routine'i incelendi: çok iş üretiyor (4 günde 470 log, maliyet kapsamı
 1→76) ama üç yerde tıkalıydı — snapshot tablosu boş (zaman serisi yok), 31 adayın
