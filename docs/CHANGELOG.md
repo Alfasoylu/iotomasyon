@@ -2390,3 +2390,15 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - Bugünkü tablo: 64 SKU / 3.693.739 ₺ bağlı; 6 kırmızı / 2.930.556 ₺;
   7 SKU 90 gündür hiç satmadı (800.030 ₺).
 
+## 2026-08-29 — Ölü stok kendi takvimine geçti, karar kuyruğu temizlendi
+
+- Ölü stok sayfası açılınca 64 bulgu birden `cfo_bekleyen_karar`'a doldu, 12'si
+  3 günü geçmişti. "Sabah raporunda boş olmak zorunda" denen bir kuyruk asla
+  boşalamıyorsa kural ölür — ajan onu görmezden gelmeyi öğrenir.
+- Düzeltme: bulgu kuyruğa yalnız **kontrol vakti geçtiğinde** girer
+  (`next_review_at < current_date`). Takvimi ilerideyse `/cfo/olu-stok`
+  sayfasında durur, günlük kuyruğu kirletmez. Bekleme günü de açılış tarihinden
+  değil, kaçırılan kontrol tarihinden sayılır.
+- Sonuç: kuyruk 76 → 10 (9 soru + 1 bayat not), gecikmiş 2. 64 bulgu kendi
+  sayfasında; kırmızılar 14.09'da kuyruğa dönecek.
+
