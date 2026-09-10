@@ -61,6 +61,11 @@ create index if not exists urun_aday_gorsel_aday_idx on urun_aday_gorsel (aday_i
 
 comment on column urun_aday_gorsel.tur is
   'CINCE_BILGI ilana ASLA girmez. İlan/Excel çıktısı yalnız URUN, INFO_TR, PAKET alır.';
+-- Sıra aday GENELİNDE tek tutulur, tür bazında değil. Sebep: pazaryerleri
+-- "Görsel 1"i ana görsel sayar, dolayısıyla ANA GÖRSEL = ilan sırasının ilki.
+-- Ayrı bir `ana_gorsel` bayrağı tutsaydık bayrak ile sıra çelişebilirdi.
+comment on column urun_aday_gorsel.sira is
+  'Aday içinde TEK sıra. İlan sırası = CINCE_BILGI hariç, sira artan. Ana görsel = ilki.';
 
 -- Puanlama: ağırlıklar "ilanı fiilen ne bloke ediyor"a göre. Görselsiz ilan hiç
 -- açılmaz (15), barkodsuz açılmaz (8), marjı hesaplanamayan ürün fiyatlanamaz (10).

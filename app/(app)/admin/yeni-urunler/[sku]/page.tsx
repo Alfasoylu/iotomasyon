@@ -52,10 +52,12 @@ export default async function AdayPage({ params }: { params: Promise<{ sku: stri
     select * from urun_aday_skor where sku = ${cozulmus}`;
   if (!aday) notFound();
 
+  // Tek `sira` sütununa göre — tür bazlı ikinci bir sıralama uygulasaydık
+  // kullanıcının seçtiği ana görsel ekranda başka yere düşerdi.
   const gorseller = await prisma.$queryRaw<Gorsel[]>`
     select id, url, tur, sira, dosya_adi
       from urun_aday_gorsel where aday_id = ${aday.id}
-     order by case tur when 'URUN' then 0 when 'PAKET' then 1 when 'INFO_TR' then 2 else 3 end, sira`;
+     order by sira, id`;
 
   const girdi = {
     sku: aday.sku,

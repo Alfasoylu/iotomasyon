@@ -114,9 +114,11 @@ export async function uploadCandidateImageAction(
     const res = await uploadObject(storage.config, BUCKET, path, file);
     if (!res.ok) return { ok: false, message: res.reason };
 
+    // Sıra aday GENELİNDE tek: ana görsel bu sıranın ilki olduğu için tür
+    // bazında saymak iki farklı "birinci" üretirdi.
     const [{ sira }] = await prisma.$queryRaw<{ sira: number }[]>`
       select coalesce(max(sira), -1) + 1 as sira
-        from urun_aday_gorsel where aday_id = ${adayId} and tur = ${tur}`;
+        from urun_aday_gorsel where aday_id = ${adayId}`;
 
     await prisma.$executeRaw`
       insert into urun_aday_gorsel (aday_id, url, tur, sira, dosya_adi, boyut_bayt)
@@ -208,5 +210,92 @@ export async function setCandidateStatusAction(
   } catch (e) {
     console.error("setCandidateStatusAction", sku, e);
     return { ok: false, message: "Durum güncellenemedi." };
+  }
+}
+
+// ── Sıralama ─────────────────────────────────────────────────────────────────
+//
+// ANA GÖRSEL AYRI BİR ALAN DEĞİL: pazaryerleri "Görsel 1"i ana görsel sayar,
+// dolayısıyla ana görsel = ilan sırasının ilki. Ayrı bir `ana_gorsel` bayrağı
+// tutsaydık, bayrak ile sıra çelişebilirdi ve hangisinin geçerli olduğu
+// belirsizleşirdi.
+//
+// Çince bilgi görselleri kendi aralarında sıralanır; ilan sırasına karışmazlar
+// ve ana görsel olamazlar.
+
+type GorselSira = { id: number; tur: string; sira: number };
+
+/** Bir görselin ait olduğu sıralama grubu: ilan görselleri mi, Çince mi. */
+const ayniGrup = (a: string, b: string) =>
+  (a === "CINCE_BILGI") === (b === "CINCE_BILGI");
+
+async function grubuOku(adayId: string) {
+  return prisma.$queryRaw<GorselSira[]>`
+    select id, tur, sira from urun_aday_gorsel
+     where aday_id = ${adayId} order by sira, id`;
+}
+
+/** Verilen id sırasına göre sira sütununu 0..n-1 olarak yeniden yazar. */
+async function sirayiYaz(sirali: GorselSira[]) {
+  await prisma.$transaction(
+    sirali.map((g, i) =>
+      prisma.$executeRaw`update urun_aday_gorsel set sira = ${i} where id = ${g.id}`,
+    ),
+  );
+}
+
+/** Görseli kendi grubunda bir yukarı/aşağı taşı. */
+export async function moveCandidateImageAction(
+  adayId: string,
+  sku: string,
+  gorselId: number,
+  yon: "yukari" | "asagi",
+): Promise<Sonuc> {
+  await requirePermission(PERMISSIONS.PRODUCTS_UPDATE);
+  try {
+    const hepsi = await grubuOku(adayId);
+    const i = hepsi.findIndex((g) => g.id === gorselId);
+    if (i < 0) return { ok: false, message: "Görsel bulunamadı." };
+
+    // Aynı gruptaki komşuyu bul — arada farklı gruptan görsel varsa atlanır,
+    // yoksa ürün görseli Çince görselin üstünden "zıplamış" gibi görünürdü.
+    const adim = yon === "yukari" ? -1 : 1;
+    let j = i + adim;
+    while (j >= 0 && j < hepsi.length && !ayniGrup(hepsi[i].tur, hepsi[j].tur)) j += adim;
+    if (j < 0 || j >= hepsi.length) return { ok: true, message: "Zaten uçta." };
+
+    [hepsi[i], hepsi[j]] = [hepsi[j], hepsi[i]];
+    await sirayiYaz(hepsi);
+    yenile(sku);
+    return { ok: true, message: "Sıra değişti." };
+  } catch (e) {
+    console.error("moveCandidateImageAction", gorselId, e);
+    return { ok: false, message: "Sıra değiştirilemedi." };
+  }
+}
+
+/** Ana görsel yap = ilan sırasının başına al. */
+export async function setMainImageAction(
+  adayId: string,
+  sku: string,
+  gorselId: number,
+): Promise<Sonuc> {
+  await requirePermission(PERMISSIONS.PRODUCTS_UPDATE);
+  try {
+    const hepsi = await grubuOku(adayId);
+    const secili = hepsi.find((g) => g.id === gorselId);
+    if (!secili) return { ok: false, message: "Görsel bulunamadı." };
+    // Çince bilgi görseli ilana girmediği için ana görsel de olamaz.
+    if (secili.tur === "CINCE_BILGI") {
+      return { ok: false, message: "Çince bilgi görseli ana görsel olamaz — ilana girmiyor." };
+    }
+
+    const kalan = hepsi.filter((g) => g.id !== gorselId);
+    await sirayiYaz([secili, ...kalan]);
+    yenile(sku);
+    return { ok: true, message: "Ana görsel seçildi." };
+  } catch (e) {
+    console.error("setMainImageAction", gorselId, e);
+    return { ok: false, message: "Ana görsel seçilemedi." };
   }
 }

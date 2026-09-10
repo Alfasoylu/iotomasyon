@@ -17,6 +17,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Upload, Trash2, Copy, Check, Loader2, Ban, CircleCheck, TriangleAlert,
+  ChevronUp, ChevronDown, Star,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,8 @@ import {
   setImageKindAction,
   deleteCandidateImageAction,
   setCandidateStatusAction,
+  moveCandidateImageAction,
+  setMainImageAction,
 } from "@/lib/actions/urun-aday-actions";
 import { PUAN_ESIGI } from "@/lib/urun-aday/sabitler";
 
@@ -196,6 +199,22 @@ export function AdayEditor({
     });
   }
 
+  function tasi(id: number, yon: "yukari" | "asagi") {
+    start(async () => {
+      const r = await moveCandidateImageAction(aday.id, aday.sku, id, yon);
+      setMesaj(r.message ?? null);
+      if (r.ok) router.refresh();
+    });
+  }
+
+  function anaYap(id: number) {
+    start(async () => {
+      const r = await setMainImageAction(aday.id, aday.sku, id);
+      setMesaj(r.message ?? null);
+      if (r.ok) router.refresh();
+    });
+  }
+
   function gorselSil(id: number) {
     start(async () => {
       const r = await deleteCandidateImageAction(id, aday.sku);
@@ -213,9 +232,10 @@ export function AdayEditor({
   }
 
   // Excel şablonlarına giren görseller: Çince bilgi görseli BURADA YOK.
-  const ilanGorselleri = gorseller
-    .filter((g) => g.tur !== "CINCE_BILGI")
-    .sort((a, b) => (a.tur === "URUN" ? -1 : 1) - (b.tur === "URUN" ? -1 : 1) || a.sira - b.sira);
+  // Sıra sunucudan geliyor (tek `sira` sütunu) — burada yeniden sıralamıyoruz ki
+  // ekranda gördüğün sıra ile Excel'e giden sıra aynı olsun.
+  const ilanGorselleri = gorseller.filter((g) => g.tur !== "CINCE_BILGI");
+  const anaGorselId = ilanGorselleri[0]?.id ?? null;
   const linkBloku = ilanGorselleri.map((g) => g.url).join("\n");
   const cinceSayi = gorseller.filter((g) => g.tur === "CINCE_BILGI").length;
 
@@ -316,7 +336,8 @@ export function AdayEditor({
         <p className="mb-3 text-[11px] leading-snug text-[var(--text-muted)]">
           Tür seçmeden yükleme yapılamaz. <strong>Çince bilgi görselleri ilana girmez</strong> —
           yüklenebilir ve saklanır (ölçü, montaj şeması çoğu zaman yalnız orada), ama Excel
-          çıktısına ve ilana çıkmazlar.
+          çıktısına ve ilana çıkmazlar. Sol üstteki numara ilandaki sırayı gösterir;{" "}
+          <strong>1 numara ana görseldir</strong>. Ok tuşlarıyla sırayı değiştirin.
         </p>
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -353,24 +374,75 @@ export function AdayEditor({
             {gorseller.map((g) => {
               const meta = TUR_ETIKET[g.tur] ?? { ad: g.tur, aciklama: "", v: "neutral" as const };
               const cince = g.tur === "CINCE_BILGI";
+              const ana = g.id === anaGorselId;
+              // İlan sırası: Çince olanlar bu numaralandırmaya girmez.
+              const ilanSira = cince ? null : ilanGorselleri.findIndex((x) => x.id === g.id) + 1;
               return (
                 <div
                   key={g.id}
                   className={`overflow-hidden rounded-lg border ${
-                    cince ? "border-[var(--danger-border)]" : "border-[var(--border-default)]"
+                    ana
+                      ? "border-[var(--accent-border)] ring-1 ring-[var(--accent-border)]"
+                      : cince
+                        ? "border-[var(--danger-border)]"
+                        : "border-[var(--border-default)]"
                   }`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={g.url}
-                    alt={g.dosya_adi ?? ""}
-                    className={`h-32 w-full bg-[var(--surface-1)] object-contain ${cince ? "opacity-70" : ""}`}
-                  />
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={g.url}
+                      alt={g.dosya_adi ?? ""}
+                      className={`h-32 w-full bg-[var(--surface-1)] object-contain ${cince ? "opacity-70" : ""}`}
+                    />
+                    {ilanSira != null && (
+                      <span className="absolute left-1.5 top-1.5 rounded bg-[var(--surface-3)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-primary)]">
+                        {ilanSira}
+                      </span>
+                    )}
+                    {ana && (
+                      <span className="absolute right-1.5 top-1.5 inline-flex items-center gap-1 rounded bg-[var(--accent)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--accent-fg)]">
+                        <Star size={9} /> Ana
+                      </span>
+                    )}
+                  </div>
+
                   <div className="space-y-1.5 p-2">
                     <Badge variant={meta.v}>{meta.ad}</Badge>
                     {cince && (
                       <p className="text-[10px] leading-snug text-[var(--danger)]">İlana girmez</p>
                     )}
+
+                    {/* Sıralama: yukarı = ilanda öne, aşağı = geriye */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        className={`${btnCls} px-2`}
+                        disabled={pending}
+                        onClick={() => tasi(g.id, "yukari")}
+                        title="Sırada öne al"
+                      >
+                        <ChevronUp size={12} />
+                      </button>
+                      <button
+                        className={`${btnCls} px-2`}
+                        disabled={pending}
+                        onClick={() => tasi(g.id, "asagi")}
+                        title="Sırada geriye al"
+                      >
+                        <ChevronDown size={12} />
+                      </button>
+                      {!cince && !ana && (
+                        <button
+                          className={`${btnCls} px-2`}
+                          disabled={pending}
+                          onClick={() => anaYap(g.id)}
+                          title="Ana görsel yap (sıranın başına al)"
+                        >
+                          <Star size={12} /> Ana yap
+                        </button>
+                      )}
+                    </div>
+
                     <select
                       className={`${inputCls} py-1 text-[11px]`}
                       value={g.tur}
