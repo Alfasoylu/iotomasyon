@@ -197,6 +197,15 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — Ödeme Takvimi: defter denetimi rozeti
+CFO `cfo_defter_denetim()` fonksiyonunu kurdu (10 kontrol) ama yalnız sabah
+koşusunda çalışıyordu. Sayfaya bağlandı: en üstte, rakamlardan önce. Temizse tek
+satır, bulgu varsa açılır liste + ne yapılacağı. Sadece `YESIL` temiz sayılıyor;
+bilinmeyen seviye kırmızı muamelesi görür. Sayfadaki ayrı bayat-bakiye uyarısı
+kaldırıldı (denetimin `BAYAT_BAKIYE` kontrolüyle mükerrerdi); bakiyenin yaşı alt
+notta her durumda yazıyor — eskiden "bugün itibarıyla" diyordu, bu yanlıştı.
+Etki: `app/(app)/cfo/odemeler/audit-panel.tsx`, `app/(app)/cfo/odemeler/page.tsx`.
+
 ### 10.09.2026 — Ödeme Takvimi: işaretleme parayı yok ediyordu
 Alperen bildirdi: "tahsil edildi"ye tıklayınca o günün ve sonraki günlerin gün sonu
 bakiyesi düşüyor. Doğruydu. Görünüm `where odendi = false` filtresiyle çalıştığı için

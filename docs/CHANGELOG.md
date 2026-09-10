@@ -30,8 +30,18 @@
   değildir; boş ticari limitle kapanıyorsa değildir. Gün kartı negatifken "ticari KMH
   ile kapanır / KMH yetmiyor, açık X TL" satırı çıkar. Şahsi limitler ayrı rozette,
   son çare olarak işaretli.
+- **Defter denetimi rozeti.** CFO'nun kurduğu `cfo_defter_denetim()` (mükerrer kayıt,
+  eksik kredi taksiti/kart/sabit gider/hakediş, bayat bakiye, işaretsiz geçmiş kalem,
+  tutarsız kayıt, takvim ufku) yalnız sabah koşusunda çalışıyordu; sayfaya gün içinde
+  bakıldığında defterdeki eksik görünmüyordu. Artık sayfanın en üstünde, rakamlardan
+  ÖNCE: temizse tek satır, bulgu varsa açılıp ne yapılacağını söylüyor. Fonksiyon
+  STABLE olduğu için render'da çağrılması güvenli. Sadece `YESIL` temiz sayılır —
+  ileride yeni bir seviye eklenirse sessizce gizlenmesin diye.
 - **Bayat bakiye uyarısı.** Yürüyen bakiyenin tamamı açılış bakiyesine dayandığı için,
-  7 günden eski bakiyesi olan hesap varsa sayfa başında uyarı çıkar.
+  7 günden eski bakiyesi olan hesap varsa uyarı çıkar. (Bu uyarı sonradan defter
+  denetimindeki `BAYAT_BAKIYE` kontrolüne devredildi — aynı şeyi iki yerde söylemek
+  çelişki riski yaratıyordu. Alt notta bakiyenin kaç gün önce güncellendiği her
+  durumda yazıyor.)
 - **İşaretleme parayı yok ediyordu — düzeltildi (aynı gün).** Görünüm
   `where odendi = false` ile çalışıyordu: bir tahsilat "tahsil edildi" işaretlenince
   satır projeksiyondan siliniyor ama o para banka bakiyesine eklenmiyordu, dolayısıyla

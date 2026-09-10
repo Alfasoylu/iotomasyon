@@ -19,11 +19,12 @@ import { CalendarClock, ArrowRight, ArrowUpRight, ArrowDownRight } from "lucide-
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { fmtTry, fmtDate } from "@/lib/cfo/format";
+import { fmtTry } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SettleButton } from "./row-actions";
+import { AuditPanel, type DenetimSatiri } from "./audit-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,6 @@ type Kapasite = {
   sahsi_kmh: unknown;
   amac_kmh: unknown;
   en_bayat_gun: number | null;
-  bayat_hesap: bigint;
 };
 
 const n = (v: unknown) => (v == null ? 0 : Number(v));
@@ -87,7 +87,7 @@ export default async function CfoPaymentsPage({
   const secili = UFUKLAR.find((u) => u.key === ufuk) ?? UFUKLAR[0];
   const gun = secili.days;
 
-  const [gunler, hareketler, dipler, kapasiteRows] = await Promise.all([
+  const [gunler, hareketler, dipler, kapasiteRows, denetim] = await Promise.all([
     prisma.$queryRaw<Gun[]>`
       select tarih, kalan_gun, tarih_str, gun_adi, odeme_adet, cikacak, girecek,
              gun_sonu_nakit, gun_ici_dip, kesin_odeme_var, tumu_islendi
@@ -103,9 +103,10 @@ export default async function CfoPaymentsPage({
              coalesce(sum("kmhLimitTry") filter (where "accountType" not like '%ŞAHSİ%'), 0) as ticari_kmh,
              coalesce(sum("kmhLimitTry") filter (where "accountType" like '%ŞAHSİ%'), 0) as sahsi_kmh,
              coalesce(sum("purposeLimitTry"), 0) as amac_kmh,
-             max(current_date - "lastUpdatedAt"::date) as en_bayat_gun,
-             count(*) filter (where current_date - "lastUpdatedAt"::date > 7) as bayat_hesap
+             max(current_date - "lastUpdatedAt"::date) as en_bayat_gun
         from cfo_bank_account where "isActive"`,
+    // Denetim STABLE (salt-okunur) — sayfa render'ında çağrılması güvenli.
+    prisma.$queryRaw<DenetimSatiri[]>`select * from cfo_defter_denetim() order by sira`,
   ]);
 
   const k = kapasiteRows[0];
@@ -161,6 +162,9 @@ export default async function CfoPaymentsPage({
         subtitle="Gelen ve giden para tarih sırasında. Her günün sonunda kasada ne kalıyor?"
       />
 
+      {/* Defter bozuksa aşağıdaki her rakam bozuktur — uyarı rakamlardan önce gelir. */}
+      <AuditPanel satirlar={denetim} />
+
       {/* ── Üst şerit ─────────────────────────────────────────────── */}
       <Card className="mb-6 p-5">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -194,14 +198,6 @@ export default async function CfoPaymentsPage({
           </Link>
         </div>
 
-        {/* Yürüyen bakiyenin tamamı açılış bakiyesine dayanır — yaşı gizlenmez. */}
-        {Number(k?.bayat_hesap ?? 0) > 0 && (
-          <p className="mt-3 rounded-md border border-[var(--warn-border,var(--border-default))] bg-[var(--warn-dim,var(--surface-1))] px-3 py-2 text-[11px] text-[var(--warn)]">
-            Dikkat: {Number(k?.bayat_hesap)} hesabın bakiyesi 7 günden eski (en eskisi{" "}
-            {k?.en_bayat_gun} gün). Aşağıdaki tüm gün sonu rakamları bu açılış bakiyesinden
-            yürüdüğü için aynı ölçüde belirsizdir.
-          </p>
-        )}
       </Card>
 
       {/* ── Ufuk seçimi ───────────────────────────────────────────── */}
@@ -344,7 +340,8 @@ export default async function CfoPaymentsPage({
 
       <p className="mt-6 text-[11px] text-[var(--text-muted)]">
         Kaynak: <code>cfo_yaklasan_odeme</code> görünümü. Açılış bakiyesi{" "}
-        {fmtTry(n(k?.acilis))} ({fmtDate(new Date())} itibarıyla aktif hesap toplamı).{" "}
+        {fmtTry(n(k?.acilis))} — aktif hesapların toplamı, en eskisi{" "}
+        {k?.en_bayat_gun === 0 ? "bugün" : `${k?.en_bayat_gun} gün önce`} güncellenmiş.{" "}
         <strong>İşaretleme yürüyen bakiyeyi değiştirmez</strong> — yalnızca &quot;bu hareket
         oldu&quot; kaydıdır ve değişiklik günlüğüne yazılır. Rakamlar ancak gerçek banka bakiyesi
         güncellenince değişir.
