@@ -9,6 +9,35 @@
 
 ## 2026-09
 
+### CFO — 07.26sea içeriği yüklendi, ilk mükerrer sipariş yakalandı (2026-09-10)
+
+- **Panel "Cevap kaydedilemedi" diyordu ama cevap KAYDEDİLMİŞTİ.** `cfo_change_log.kind`
+  DB'de CHECK ile sınırlı; ben izinli listede olmayan `"cevap"` değerini yazmıştım.
+  Soru satırı yazıldıktan sonra log INSERT'i patlıyor, kullanıcı veriyi girmediğini
+  sanıyordu. `kind` → `"teyit"`, ikisi tek transaction'a alındı (log patlarsa cevap da
+  yazılmaz) ve `catch` artık hatayı `console.error` ile sunucuya yazıyor.
+- **07.26sea faturası yüklendi.** `İthalatlar.xlsx` → `07.26sea` sayfası:
+  **152 kalem · 29.420 adet · 59.147 USD · 8.646 kg** — dördü de kayıtlı rakamlarla
+  birebir tuttu. `cfo_yoldaki_kalem` tablosuna girildi, kapsam %0 → **%100**.
+- **148 SKU katalogda yok — doğrulandı.** Boşluk kırpma ve büyük/küçük harf
+  normalizasyonu denendi, sonuç değişmedi (3 eşleşme). CFO'nun 31.08 tespiti gerçek,
+  biçim sorunu değil.
+- **`yolda_yeterli` kuralı düzeltildi — ilk kural yanlıştı.** "Tükenişten önce gelsin"
+  diyordu; `470764214647`'de tükeniş 29.08'de geçmiş olduğu için false dönüyordu. Oysa
+  doğru kıyas tükenişle değil **yeni siparişin varışıyla** yapılır: yoldaki mal yeni
+  siparişten önce geliyorsa ve aradaki boşluğun talebini karşılıyorsa yeni sipariş
+  gereksizdir.
+- **İlk gerçek mükerrer sipariş yakalandı.** `470764214647` Klozet & Banyo Taharet
+  Musluk Spiral, konteynerde **80 adet**, 05.10'da rafta:
+  - DENİZ siparişi (80 adet) **elendi** — bugün verilse 16.11'de varırdı, aradaki 42
+    günün talebi 25,2 adet, yolda 80 adet var. Deniz partisi
+    **17 → 16 kalem, 12.998,60 → 11.882,60 USD**.
+  - HAVA siparişi (16 adet) **korundu** — hava 02.10'da varıyor, konteynerden 3 gün
+    önce. Hava köprüsü hâlâ gerekli.
+- **`katalogda` sütunu kaldırıldı.** `(sku is not null)` diye tanımlanmıştı; bu "SKU
+  alanı dolu" demek, "katalogda var" demek değil. Generated column başka tabloya
+  bakamadığı için eşleşme `cfo_yoldaki_kapsam` içinde `Product` join'iyle hesaplanıyor.
+
 ### CFO — Sipariş önerisi artık yoldaki malı biliyor (2026-09-10)
 
 - **Bulunan hata (Alperen bildirdi):** `/cfo/kazananlar` 500 veriyordu.

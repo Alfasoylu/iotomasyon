@@ -36,9 +36,9 @@ create table if not exists cfo_yoldaki_kalem (
   adet              integer not null check (adet > 0),
   birim_maliyet_usd numeric(12,4),
   gtip              text,
-  -- Faturadaki SKU kataloğumuzda olmayabilir (07.26sea'da 152'nin 148'i yoktu).
-  -- Eşleşmeyen satır da tutulur; sku boş kalır, urun_adi ile aranır.
-  katalogda         boolean generated always as (sku is not null) stored,
+  -- Faturadaki SKU kataloğumuzda olmayabilir (07.26sea'da 152'nin çoğu yok).
+  -- Eşleşmeyen satır da tutulur; katalog eşleşmesi view'de Product ile join
+  -- edilerek hesaplanır (generated column başka tabloya bakamaz).
   note              text,
   created_at        timestamptz not null default now()
 );
@@ -83,13 +83,14 @@ select
   m.adet_toplam                                              as beklenen_adet,
   count(k.id)::int                                           as girilen_kalem,
   coalesce(sum(k.adet), 0)::int                              as girilen_adet,
-  count(k.id) filter (where k.sku is not null)::int          as eslesen_kalem,
+  count(pr.id)::int                                          as eslesen_kalem,
   case
     when coalesce(m.kalem_sayisi, 0) = 0 then null
     else round(count(k.id)::numeric / m.kalem_sayisi * 100, 1)
   end                                                        as kapsam_pct
 from cfo_yoldaki_mal m
 left join cfo_yoldaki_kalem k on k.kod = m.kod
+left join "Product" pr on pr.sku = k.sku
 left join cfo_import_project p on p.code = m.kod
 group by m.kod, m.aciklama, m.durum, m.risk, p."etaDate", m.kalem_sayisi, m.adet_toplam;
 
@@ -177,17 +178,23 @@ select
   coalesce(y.yolda_adet, 0)                               as yolda_adet,
   y.en_yakin_eta                                          as yolda_eta,
   y.partiler                                              as yolda_parti,
-  -- Yoldaki mal stoksuzluğu KAPATIYOR mu? İki koşul birden gerekir:
-  -- (a) tükenişten önce rafa girecek, (b) adedi en az bir aylık satışı karşılıyor.
-  -- Sadece "yolda bir şeyler var" demek yetmez; 3 adet gelen 40 adet/ay satan
-  -- ürünü kurtarmaz.
+  -- Yoldaki mal yeni siparişi GEREKSİZ kılıyor mu?
+  --
+  -- İlk kural "tükenişten önce gelsin" diyordu ve yanlıştı: 470764214647'de
+  -- tükeniş 29.08'de GEÇMİŞTİ, konteyner 05.10'da geliyor — kural false diyordu.
+  -- Oysa bugün verilecek DENİZ siparişi ancak 16.11'de varır; 05.10'da 80 adet
+  -- rafa girerken o siparişi vermek gereksiz.
+  --
+  -- Doğru kıyas tükenişle değil, YENİ SİPARİŞİN VARIŞIYLA yapılır:
+  --   (a) yoldaki mal yeni siparişten önce geliyor mu,
+  --   (b) aradaki boşluğun talebini karşılıyor mu.
   (
     y.yolda_adet is not null
     and y.en_yakin_eta is not null
-    and y.en_yakin_eta <= coalesce(
-          t.stockout_date,
-          current_date + ((coalesce(t.stock_now, 0) / nullif(t.monthly_sales, 0)) * 30)::int)
+    and y.en_yakin_eta <= current_date + (case when t.mod = 'HAVA' then k.air_lead else k.sea_lead end)
     and y.yolda_adet >= coalesce(t.monthly_sales, 0)
+        * ((current_date + (case when t.mod = 'HAVA' then k.air_lead else k.sea_lead end)
+            - y.en_yakin_eta)::numeric / 30)
   )                                                       as yolda_yeterli,
   row_number() over (
     partition by t.mod

@@ -197,6 +197,25 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — Kayıt hatası + 07.26sea içeriği yüklendi
+Alperen: "cevap veriyorum ama kaydedilemedi diyor". Sebep bendendi:
+`cfo_change_log.kind` CHECK ile sınırlı ve ben listede olmayan "cevap" değerini
+yazmıştım. Cevap `cfo_question`'a YAZILMIŞTI; patlayan yalnız log satırıydı — yani
+kullanıcı veriyi girmediğini sandı. En kötü hata türü. kind→"teyit", ikisi tek
+transaction'a alındı, catch artık hatayı yutmuyor.
+
+`İthalatlar.xlsx`'teki `07.26sea` sayfası yüklendi: 152 kalem / 29.420 adet /
+59.147 USD / 8.646 kg — dördü de kayıtlı rakamlarla birebir. Kapsam %0 → %100.
+SKU'ları kırpmadan yazmışım, düzeltildi; ama kırpma sonrası da 148 SKU katalogda
+yok — CFO'nun tespiti biçim sorunu değil, gerçek.
+
+`yolda_yeterli` kuralı YANLIŞTI ve veri gelince ortaya çıktı: "tükenişten önce
+gelsin" diyordu, oysa doğru kıyas yeni siparişin varışıyla yapılır. Düzeltildi ve
+ilk mükerrer sipariş yakalandı — 470764214647 konteynerde 80 adet, deniz siparişi
+elendi (17→16 kalem, 12.998,60→11.882,60 USD), hava köprüsü korundu çünkü hava
+konteynerden 3 gün önce varıyor.
+Etki: `lib/actions/cfo-row-qa.ts`, `prisma/migrations/20260911000000_cfo_yoldaki_kalem/`.
+
 ### 10.09.2026 — Kazananlar 500 hatası + yoldaki mal öneriye dahil
 İki bildirim: sayfa açılmıyor, ve "ekim başı gelecek ürünler yok sayılıyor".
 
