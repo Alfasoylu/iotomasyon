@@ -306,6 +306,14 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     subGroup: "Yapılandırma",
   },
 
+  {
+    href: "/admin/yeni-urunler",
+    label: "Yeni Ürünler",
+    iconKey: "packagePlus",
+    permission: PERMISSIONS.PRODUCTS_UPDATE,
+    section: "Ürünler & Stok",
+  },
+
   // ── İTHALAT ─────────────────────────────────────────────────────────────
   // Sıradaki sipariş kararı /cfo/kazananlar'da toplandı (10.09.2026). Kullanıcı
   // o listeyi İthalat başlığı altında aradığı için kısayol burada da duruyor.
