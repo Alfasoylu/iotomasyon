@@ -197,6 +197,25 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — CFO / Ödeme Takvimi + gün sonu bakiye hatası
+CFO üç görünüm kurmuştu (`cfo_yaklasan_odeme`, `cfo_odeme_gunluk`, `cfo_nakit_dibi`)
+ama bunlar yalnız canlı veritabanındaydı, repoda karşılığı yoktu. Üçü de migration'a
+alındı ve **`cfo_odeme_gunluk.gun_sonu_nakit` hesap hatası düzeltildi**: gün sonu
+bakiyesi `min(kalan_nakit)` ile hesaplanıyordu; bu gün içi en dip noktayı verir, gün
+sonunu değil. Günün son hareketi giriş olan her günde bakiye olduğundan düşük
+görünüyordu (17.09.2026 gerçek +51.560 TL iken görünüm −90.705 TL diyordu). Doğru
+formül: açılış bakiyesi + kümülatif net. Gün içi dip bilgisi `gun_ici_dip` sütununa
+alındı, silinmedi.
+Sayfa yazıldı: gün gün kartlar, yürüyen bakiye, çıkış/giriş ayrımı, tahmini kayıtlar
+soluk, satır başına tek dokunuş "Ödendi/Tahsil edildi" (geri alınabilir, ikisi de
+`cfo_change_log`'a yazar), 30/60/90/tümü ufku. Şartnameye üç ekleme yapıldı:
+kullanılabilir KMH kapasitesi (nakit tek başına yanlış alarm veriyor), bayat bakiye
+uyarısı (yürüyen bakiyenin tamamı açılış bakiyesine dayanır) ve geri alma.
+Etki: `prisma/migrations/20260910000000_cfo_odeme_takvimi/`,
+`app/(app)/cfo/odemeler/*`, `lib/actions/cfo-payment-actions.ts`,
+`app/(app)/layout.tsx`, `components/dashboard/sidebar.tsx`.
+
+
 ### 29.08.2026 — CFO / Ölü Stok sayfası
 CFO veri katmanını kurmuştu (`cfo_olu_stok`, `cfo_olu_stok_ozet` görünümleri +
 `cfo_dead_stock_finding`'e alarm/kontrol kolonları) ama deploy edemiyordu. Sayfa
