@@ -32,10 +32,18 @@ async function guardWrite() {
   return (await checkPermission(user, PERMISSIONS.CFO_WRITE)) ? user : null;
 }
 
+/**
+ * `cfo_change_log.kind` ve `.area` DB'de CHECK ile sınırlı. İzinli kind değerleri:
+ * bulgu, duzeltme, karar, aksiyon, analiz, teyit, celiski, arastirma, senaryo,
+ * onay, model, plan, cfo_oz_elestiri. Buraya listede olmayan bir değer yazmak
+ * (ilk sürümde "cevap" yazılmıştı) INSERT'i patlatır.
+ */
+type LogKind = "teyit" | "karar" | "duzeltme";
+
 async function log(
   user: { email: string | null; name: string | null },
   area: string,
-  kind: string,
+  kind: LogKind,
   item: string,
   oldValue: string,
   newValue: string,
@@ -78,33 +86,49 @@ export async function answerRowQuestionAction(input: {
        where scope = ${input.scope} and entity_key = ${input.entityKey} and code = ${input.code}
        order by "askedAt" desc limit 1`;
 
-    if (mevcut) {
-      // Cevap güncellenirken eskisi log'a geçer; soru metni de tazelenir çünkü
-      // türetilmiş sorunun ifadesi veriyle birlikte değişmiş olabilir.
-      await prisma.$executeRaw`
-        update cfo_question
-           set answer = ${cevap}, "answeredAt" = now(), "answeredBy" = ${kim},
-               status = 'CEVAPLANDI', question = ${input.question}, why = ${input.why},
-               "processedAt" = null, "processNote" = null
-         where id = ${mevcut.id}`;
-      await log(user, input.area, "cevap", `${input.entityKey} · ${input.code}`,
-        mevcut.answer ?? "(boş)", cevap, input.question);
-    } else {
-      await prisma.$executeRaw`
-        insert into cfo_question
-          (id, "askedAt", question, why, area, priority, status,
-           answer, "answeredAt", "answeredBy", scope, entity_key, code)
-        values
-          (gen_random_uuid()::text, now(), ${input.question}, ${input.why}, ${input.area}, 2,
-           'CEVAPLANDI', ${cevap}, now(), ${kim},
-           ${input.scope}, ${input.entityKey}, ${input.code})`;
-      await log(user, input.area, "cevap", `${input.entityKey} · ${input.code}`,
-        "(soru açıktı)", cevap, input.question);
-    }
+    // Tek transaction: log CHECK'e takılırsa cevap da yazılmasın. İlk sürümde
+    // ayrı ayrı çalışıyorlardı; log patlayınca cevap KAYDEDİLMİŞ olmasına rağmen
+    // kullanıcıya "kaydedilemedi" deniyordu — en kötü hata türü.
+    await prisma.$transaction(async (tx) => {
+      if (mevcut) {
+        // Cevap güncellenirken eskisi log'a geçer; soru metni de tazelenir çünkü
+        // türetilmiş sorunun ifadesi veriyle birlikte değişmiş olabilir.
+        await tx.$executeRaw`
+          update cfo_question
+             set answer = ${cevap}, "answeredAt" = now(), "answeredBy" = ${kim},
+                 status = 'CEVAPLANDI', question = ${input.question}, why = ${input.why},
+                 "processedAt" = null, "processNote" = null
+           where id = ${mevcut.id}`;
+      } else {
+        await tx.$executeRaw`
+          insert into cfo_question
+            (id, "askedAt", question, why, area, priority, status,
+             answer, "answeredAt", "answeredBy", scope, entity_key, code)
+          values
+            (gen_random_uuid()::text, now(), ${input.question}, ${input.why}, ${input.area}, 2,
+             'CEVAPLANDI', ${cevap}, now(), ${kim},
+             ${input.scope}, ${input.entityKey}, ${input.code})`;
+      }
+
+      await tx.cfoChangeLog.create({
+        data: {
+          area: input.area,
+          kind: "teyit",
+          item: `${input.entityKey} · ${input.code}`.slice(0, 120),
+          oldValue: (mevcut?.answer ?? "(soru açıktı)").slice(0, 2000),
+          newValue: cevap.slice(0, 2000),
+          source: kim,
+          note: input.question.slice(0, 2000),
+        },
+      });
+    });
 
     revalidateQa();
     return { ok: true, message: "Cevap kaydedildi." };
-  } catch {
+  } catch (e) {
+    // Sessiz yutma yasak: ilk sürümde gerçek sebep (CHECK ihlali) görünmüyordu
+    // ve hatayı bulmak canlı log okumayı gerektirdi.
+    console.error("answerRowQuestionAction", input.entityKey, input.code, e);
     return { ok: false, message: "Cevap kaydedilemedi." };
   }
 }
@@ -149,7 +173,8 @@ export async function setProductDecisionAction(input: {
 
     revalidateQa();
     return { ok: true, message: "Karar kaydedildi." };
-  } catch {
+  } catch (e) {
+    console.error("setProductDecisionAction", input.sku, e);
     return { ok: false, message: "Karar kaydedilemedi." };
   }
 }
@@ -169,7 +194,8 @@ export async function clearProductDecisionAction(sku: string): Promise<ActionRes
 
     revalidateQa();
     return { ok: true, message: "Karar kaldırıldı." };
-  } catch {
+  } catch (e) {
+    console.error("clearProductDecisionAction", sku, e);
     return { ok: false, message: "Karar kaldırılamadı." };
   }
 }
