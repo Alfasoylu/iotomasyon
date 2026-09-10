@@ -197,6 +197,41 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — İthalat sipariş önerisi tek sayfada toplandı
+"Sıradaki siparişte ne alalım?" sorusu panelde **sekiz** ayrı yerde, sekiz ayrı
+hesapla cevaplanıyordu (import-cockpit, import-decisions, procurement, capital,
+ithalatçı görünümü, sermaye-sağlık, executive, dashboard). Hepsi Trendyol
+satışından kendi başına türetiyordu; hiçbiri CFO'nun fiilen karar verdiği parti
+defterini (`cfo_order_batch` / `cfo_order_line`) okumuyordu — sayfa başına farklı
+cevap çıkıyordu.
+
+Karar tek yere alındı: `/cfo/kazananlar` → "İthalat sipariş önerisi". Üç yeni view
+(`cfo_ithalat_oneri`, `cfo_ithalat_oneri_ozet`, `cfo_ciro_hedef`) ve kurallar
+`cfo_settings`'e taşındı (hava termini 22 gün, deniz 67 gün, min ithalat 10.000 USD,
+min satır adedi 5, hedef aylık ciro 100.000 USD).
+
+Kaldırılanlar: `/admin/procurement` ve `/admin/import-decisions` emekliye ayrıldı
+(yönlendirme sayfası bırakıldı, menüden çıkarıldı); `/admin/capital` "Satın alma
+önerileri" tablosu, `/admin/executive` "Tedarik Aciliyeti" kartı,
+`/admin/sermaye-saglik` "Acil Sipariş" listesi ve `lib/smart-recommendations.ts`
+"acil sipariş" satırları kaldırıldı. `/admin/import-cockpit` ve ithalatçı görünümü
+KALDI — onlar ürün bazında maliyet/navlun analizi, sipariş listesi değil; kokpite
+bu ayrımı yazan bir açıklama şeridi eklendi.
+
+Şartnamenin ötesinde eklenenler: (1) **nakit kapısı** — tavsiye tarihi stok
+ihtiyacı ile nakdin oluştuğu tarihin geç olanıdır; kapı hiç açılmıyorsa tarih
+uydurulmaz, açık yazılır (bugün her iki parti de böyle: hava 491.489 TL / deniz
+630.432 TL gerekiyor, 28.12'ye kadarki en yüksek projeksiyon 305.098 TL).
+(2) **hava köprüsü** rozeti — 4 SKU hem hava hem deniz listesinde; bu mükerrer
+değil, kasıtlı. (3) **gecikme** sayacı — 29 kalemin 28'inde en geç sipariş tarihi
+geçmiş. (4) **maliyet eksik** rozeti — 2 deniz kaleminde birim maliyet yok, parti
+toplamı olduğundan düşük görünüyor. (5) Ciro hedefi paneli, bu partilerin ciroyu
+büyütmediğini, mevcut 17.694 USD/ay'lık kısmı koruduğunu açıkça yazıyor.
+Etki: `prisma/migrations/20260910120000_cfo_ithalat_oneri/`, `prisma/schema.prisma`,
+`app/(app)/cfo/kazananlar/{page,import-order}.tsx`,
+`components/cfo/import-order-pointer.tsx`, `app/(app)/layout.tsx`, ve yukarıdaki
+6 sayfa + `lib/smart-recommendations.ts`.
+
 ### 10.09.2026 — CFO / Ayın Kazananları sayfası
 CFO veri katmanını kurdu (`cfo_ay_kazanan` dondurulmuş tablo + `cfo_ay_kazanan_ozet`,
 20 ay geriye doldurulmuş) ama ekran yoktu. Sayfa yazıldı: ay seçici, ilk 10 tablosu,

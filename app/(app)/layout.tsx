@@ -307,6 +307,15 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
   },
 
   // ── İTHALAT ─────────────────────────────────────────────────────────────
+  // Sıradaki sipariş kararı /cfo/kazananlar'da toplandı (10.09.2026). Kullanıcı
+  // o listeyi İthalat başlığı altında aradığı için kısayol burada da duruyor.
+  {
+    href: "/cfo/kazananlar#ithalat",
+    label: "Sıradaki Sipariş",
+    iconKey: "ship",
+    permission: PERMISSIONS.CFO_READ,
+    section: "İthalat",
+  },
   {
     href: "/admin/import-cockpit",
     label: "Karar Kokpiti",
@@ -315,23 +324,9 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat",
   },
   {
-    href: "/admin/import-decisions",
-    label: "İthalat Kararları",
-    iconKey: "fileSearch",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat",
-  },
-  {
     href: "/admin/import-calculator",
     label: "İthalat Hesaplayıcı",
     iconKey: "calculator",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat",
-  },
-  {
-    href: "/admin/procurement",
-    label: "Tedarik Asistanı",
-    iconKey: "handshake",
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "İthalat",
   },

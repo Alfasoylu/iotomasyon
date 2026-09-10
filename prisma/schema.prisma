@@ -1925,6 +1925,15 @@ model CfoSettings {
   stockCostUsd          Decimal?  @db.Decimal(14, 2) // satılabilir stok maliyeti
   blockedStockUsd       Decimal?  @db.Decimal(14, 2) // Romanya bloke stok
   stockCoverMonths      Decimal?  @db.Decimal(6, 2)
+  netPositionFloorTry   Decimal?  @db.Decimal(14, 2) // net pozisyon tabanı (uyarı eşiği)
+
+  // İthalat sipariş kuralları (Alperen 10.09.2026) — /cfo/kazananlar önerisi bunları okur.
+  importAirLeadDays       Int     @default(22) // hava kargo tedarik termini (gün)
+  importSeaLeadDays       Int     @default(67) // deniz kargo tedarik termini (gün)
+  importMinOrderUsd       Decimal @default(10000) @db.Decimal(14, 2) // parti başına min tutar
+  importMinLineQty        Int     @default(5) // satır başına min adet
+  monthlyRevenueTargetUsd Decimal @default(100000) @db.Decimal(14, 2) // hedef aylık ciro
+
   updatedAt             DateTime  @updatedAt
   updatedByEmail        String?
 

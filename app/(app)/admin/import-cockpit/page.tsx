@@ -591,15 +591,31 @@ export default async function ImportCockpitPage({
                 Sipariş Oluştur ({orderCandidates.length})
               </Link>
             )}
+            {/* "v1 Görünüm" (/admin/import-decisions) 10.09.2026'da emekliye ayrıldı. */}
             <Link
-              href="/admin/import-decisions"
+              href="/cfo/kazananlar#ithalat"
               className="inline-flex h-8 items-center rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[12px] font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)]"
             >
-              v1 Görünüm →
+              Sıradaki Sipariş →
             </Link>
           </>
         }
       />
+
+      {/* Bu sayfa ÜRÜN BAZINDA maliyet/navlun analizidir; bağlayıcı sipariş listesi değildir.
+          Sıradaki siparişin ne olduğu 10.09.2026'dan beri tek yerde: /cfo/kazananlar.
+          Buradaki sinyal Trendyol satış hızından türer, oradaki liste CFO'nun parti
+          defterinden gelir — ikisi farklı şeyler olduğu için ayrım yazılı duruyor. */}
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3 text-[11px] leading-snug text-[var(--text-muted)]">
+        Bu sayfa <strong className="text-[var(--text-secondary)]">ürün bazında ithalat
+        ekonomisi</strong> gösterir: hangi ürün hangi navlunla kâr ediyor. Bir sonraki
+        partide fiilen NE alınacağı ayrı bir karardır ve tek yerde durur —{" "}
+        <Link href="/cfo/kazananlar#ithalat" className="text-[var(--accent)] hover:underline">
+          Ayın Kazananları / İthalat sipariş önerisi
+        </Link>
+        . Aşağıdaki &quot;Sipariş Oluştur&quot; düğmesi karar vermez, seçili sinyalden satın
+        alma formunu doldurur.
+      </div>
 
       {/* Eşleşmemiş ürünler uyarısı */}
       {unmatchedCount > 0 && (

@@ -140,10 +140,10 @@ export default async function StockHealthPage() {
           </p>
         </div>
         <Link
-          href="/admin/procurement"
+          href="/cfo/kazananlar#ithalat"
           className="inline-flex h-8 items-center rounded-md border border-[var(--border-default)] bg-[var(--surface-3)] px-3 text-[12px] font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)]"
         >
-          Tedarik Asistanı →
+          Sıradaki Sipariş →
         </Link>
       </div>
 

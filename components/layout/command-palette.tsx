@@ -38,7 +38,8 @@ const ACTIONS: ActionResult[] = [
   { id: "a-products", kind: "action", title: "Ürün Listesi", hint: "katalog", href: "/products", icon: Package },
   { id: "a-marketplace", kind: "action", title: "Pazaryerleri", hint: "14 kanal performansı", href: "/marketplace", icon: ShoppingCart },
   { id: "a-sermaye", kind: "action", title: "Sermaye Sağlığı", hint: "günlük karar panosu", href: "/admin/sermaye-saglik", icon: Heart },
-  { id: "a-import", kind: "action", title: "Karar Kokpiti", hint: "ithalat kararı", href: "/admin/import-cockpit", icon: Ship },
+  { id: "a-siradaki-siparis", kind: "action", title: "Sıradaki Sipariş", hint: "hava/deniz ithalat önerisi", href: "/cfo/kazananlar#ithalat", icon: Ship },
+  { id: "a-import", kind: "action", title: "Karar Kokpiti", hint: "ürün bazında ithalat ekonomisi", href: "/admin/import-cockpit", icon: Ship },
   { id: "a-capital", kind: "action", title: "Sermaye Dağılımı", hint: "yatırım önerisi", href: "/admin/capital", icon: DollarSign },
   { id: "a-glosari", kind: "action", title: "Glosari", hint: "terimler sözlüğü", href: "/yardim/glosari", icon: BookOpen },
 ];

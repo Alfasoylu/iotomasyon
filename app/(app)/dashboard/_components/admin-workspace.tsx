@@ -199,13 +199,15 @@ export async function AdminWorkspace({
 
       {/* ── 4) Bugün için manşet KPI'lar ──────────────────────────────── */}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        {/* Sayı kalıyor (bir ölçü), ama tıklayınca artık sıradaki sipariş kararının
+            tek sayfasına gidiyor — eskiden sermaye-sağlıktaki kopya listeye gidiyordu. */}
         <MetricCard
           label="Acil Sipariş"
           value={String(capital.urgentReorderCount)}
           icon={CircleAlert}
           status={capital.urgentReorderCount > 0 ? "danger" : "neutral"}
           hint="14 günden az stoklu ürün"
-          href="/admin/sermaye-saglik"
+          href="/cfo/kazananlar#ithalat"
         />
         <MetricCard
           label="Bugün Görev"
@@ -355,7 +357,7 @@ export async function AdminWorkspace({
             value={String(enhanced.belowReorderCount)}
             tone={enhanced.belowReorderCount > 0 ? "warning" : "neutral"}
             hint="reorder eşiğine ulaşmış"
-            href="/admin/procurement"
+            href="/cfo/kazananlar#ithalat"
           />
           <KpiCard
             label="İthalat Kararı"

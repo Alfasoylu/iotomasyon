@@ -25,6 +25,12 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
+import {
+  ImportOrderSection,
+  type OneriSatiri,
+  type OneriOzeti,
+  type CiroHedefi,
+} from "./import-order";
 
 export const dynamic = "force-dynamic";
 
@@ -101,10 +107,17 @@ export default async function CfoWinnersPage({
 
   const secili = aylar.find((a) => a.ay_str === ay) ?? aylar[0];
 
-  const satirlar = await prisma.$queryRaw<Satir[]>`
-    select sira, sku, ad, category, adet, brut_ciro, kargo_pct, net_kar, marj_pct,
-           kar_payi_pct, oran_guveni, kanal_sayisi, siparis_satiri
-      from cfo_ay_kazanan where ay = ${secili.ay} order by sira`;
+  // Kazanan listesi ile ithalat önerisi aynı ekranda: kârı getiren ürünün stoğu
+  // bitiyorsa kazanan liste bir sonraki ay küçülür. Üç sorgu da salt-okunur view.
+  const [satirlar, oneriOzet, oneriSatir, ciroHedef] = await Promise.all([
+    prisma.$queryRaw<Satir[]>`
+      select sira, sku, ad, category, adet, brut_ciro, kargo_pct, net_kar, marj_pct,
+             kar_payi_pct, oran_guveni, kanal_sayisi, siparis_satiri
+        from cfo_ay_kazanan where ay = ${secili.ay} order by sira`,
+    prisma.$queryRaw<OneriOzeti[]>`select * from cfo_ithalat_oneri_ozet order by mod`,
+    prisma.$queryRaw<OneriSatiri[]>`select * from cfo_ithalat_oneri order by mod, sira`,
+    prisma.$queryRaw<CiroHedefi[]>`select * from cfo_ciro_hedef`,
+  ]);
 
   const toplam = n(secili.ay_toplam_kar);
   const top10 = n(secili.top10_kar);
@@ -330,6 +343,12 @@ export default async function CfoWinnersPage({
           })}
         </CfoTable>
       </Card>
+
+      {/* ── İthalat sipariş önerisi ───────────────────────────────── */}
+      {/* Diğer sayfalardan kaldırılan listeler buraya bağlanıyor (#ithalat). */}
+      <div id="ithalat" className="scroll-mt-20">
+        <ImportOrderSection ozet={oneriOzet} satirlar={oneriSatir} hedef={ciroHedef[0] ?? null} />
+      </div>
 
       {/* ── Aylık seyir ───────────────────────────────────────────── */}
       <Card className="p-5">

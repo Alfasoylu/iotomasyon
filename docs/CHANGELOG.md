@@ -9,6 +9,41 @@
 
 ## 2026-09
 
+### CFO — İthalat sipariş önerisi tek sayfada toplandı (2026-09-10)
+
+- **`/cfo/kazananlar` → "İthalat sipariş önerisi" bölümü eklendi.** Hava ve deniz için
+  ayrı parti önerisi: tutar, adet, tavsiye edilen sipariş tarihi, tahmini raf tarihi,
+  kalem tabloları.
+- **Kaynak değişti.** Öneri artık Trendyol satış hızından değil, CFO'nun karar defteri
+  `cfo_order_batch` / `cfo_order_line` üzerinden geliyor. Üç view eklendi:
+  `cfo_ithalat_oneri` (satır), `cfo_ithalat_oneri_ozet` (parti + nakit kapısı),
+  `cfo_ciro_hedef`.
+- **Kurallar `cfo_settings`'e taşındı** ve elle değiştirilebilir: `importAirLeadDays` 22,
+  `importSeaLeadDays` 67, `importMinOrderUsd` 10.000, `importMinLineQty` 5,
+  `monthlyRevenueTargetUsd` 100.000. Şemadaki `netPositionFloorTry` drift'i de kapatıldı.
+- **Sekiz kopya yüzeyden altısı kaldırıldı.** `/admin/procurement` ve
+  `/admin/import-decisions` emekliye ayrıldı (yönlendirme sayfası kaldı, menüden
+  çıkarıldı); `/admin/capital` satın alma önerileri tablosu, `/admin/executive` tedarik
+  aciliyeti kartı, `/admin/sermaye-saglik` acil sipariş listesi ve
+  `lib/smart-recommendations.ts` acil sipariş satırları silindi.
+  `/admin/import-cockpit` ve ithalatçı görünümü korundu — ürün bazında maliyet/navlun
+  analizi sipariş listesi değildir; kokpite bu ayrımı yazan açıklama şeridi eklendi.
+- **Nakit kapısı tavsiye tarihine dâhil.** Tavsiye edilen tarih, stok ihtiyacı ile nakdin
+  oluştuğu tarihin geç olanıdır. Kapı projeksiyon boyunca açılmıyorsa tarih üretilmiyor;
+  açık yazılıyor. Bugün her iki parti de bu durumda: hava 491.489 TL, deniz 630.432 TL
+  gerekiyor; 28.12'ye kadarki en yüksek gün sonu projeksiyonu 305.098 TL.
+- **Hava köprüsü ayrımı.** 4 SKU hem hava hem deniz listesinde; bu mükerrer kayıt değil,
+  kasıtlı köprüdür (hava şimdi yetiştirir, deniz asıl stoğu getirir). Rozetle işaretlendi
+  ki biri yanlışlıkla iptal edilmesin.
+- **Veri kalitesi görünür.** 29 kalemin 28'inde en geç sipariş tarihi geçmiş; 2 deniz
+  kaleminde birim maliyet yok, yani parti toplamı olduğundan düşük görünüyor. Minimum
+  ithalat tutarı kararı bu eksik toplam üzerinden veriliyor — uyarı olarak yazılı.
+- **Ciro hedefi bağlamı.** Son tam ay 42.730 USD / hedef 100.000 USD (%42,7). Bu iki
+  parti hedefe yaklaştırmıyor; mevcut cironun 17.694 USD/ay'lık kısmını stoksuz
+  kalmaktan koruyor. Sayfa bunu "katkı" diye değil "savunma" diye yazıyor.
+- **Minimum adet kuralı bağlayıcı değil.** En küçük kalem 8 adet olduğu için 5 adetlik
+  eşik şu an hiçbir satırı değiştirmiyor; kural yürürlükte ama sayfa bunu saklamıyor.
+
 ### CFO — Ayın Kazananları: kârı hangi ürün getirdi (2026-09-10)
 
 - **`/cfo/kazananlar` eklendi.** CFO'nun kurduğu `cfo_ay_kazanan` (ay kapanışında
