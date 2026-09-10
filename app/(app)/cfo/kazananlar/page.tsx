@@ -126,12 +126,15 @@ export default async function CfoWinnersPage({
     prisma.$queryRaw<OneriSatiri[]>`select * from cfo_ithalat_oneri order by mod, sira`,
     prisma.$queryRaw<CiroHedefi[]>`select * from cfo_ciro_hedef`,
     // Hangi ürün, oranı ÖLÇÜLMEMİŞ hangi kanalda satmış? Soru bunu adıyla sorabilsin diye.
+    // Kanal bilgisi satır düzeyinde `cfo_satis_birim`de; `cfo_aylik_urun_kar` ürün×ay
+    // düzeyinde toplandığı için orada kanal ADI yok (yalnız kanal_sayisi var).
     prisma.$queryRaw<{ sku: string; kanallar: string[] }[]>`
-      select k.sku, array_agg(distinct k.channel) as kanallar
-        from cfo_aylik_urun_kar k
-        join cfo_kanal_net_oran o on o.channel = k.channel
-       where k.ay = ${secili.ay} and o.guven = 'DUSUK'
-       group by k.sku`,
+      select p.sku, array_agg(distinct s.channel order by s.channel) as kanallar
+        from cfo_satis_birim s
+        join "Product" p on p.id = s."productId"
+        join cfo_kanal_net_oran o on o.channel = s.channel
+       where date_trunc('month', s."orderDate") = ${secili.ay} and o.guven = 'DUSUK'
+       group by p.sku`,
   ]);
 
   // ── Satır bazında soru-cevap ────────────────────────────────────
