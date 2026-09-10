@@ -32,6 +32,18 @@
   son çare olarak işaretli.
 - **Bayat bakiye uyarısı.** Yürüyen bakiyenin tamamı açılış bakiyesine dayandığı için,
   7 günden eski bakiyesi olan hesap varsa sayfa başında uyarı çıkar.
+- **İşaretleme parayı yok ediyordu — düzeltildi (aynı gün).** Görünüm
+  `where odendi = false` ile çalışıyordu: bir tahsilat "tahsil edildi" işaretlenince
+  satır projeksiyondan siliniyor ama o para banka bakiyesine eklenmiyordu, dolayısıyla
+  sonraki tüm günlerin gün sonu bakiyesi o tutar kadar DÜŞÜYORDU (143.212 TL'lik bir
+  tahsilatta gözlendi). Ödemede tersi olurdu: nakit yanlışlıkla artardı.
+  Artık yürüyen bakiye `odendi` alanına hiç bakmıyor; işaretleme yalnızca "bu hareket
+  oldu" kaydı. Geçmiş tarihli hareketler listede kalır ama bakiyeye 0 katkı verir —
+  geçmişte olan zaten banka bakiyesinin içindedir. Gerçek satırda test edildi:
+  işaretleme öncesi/sonrası 7 günün 7'sinde de fark 0.
+  Banka bakiyesini otomatik güncellemek bilinçli olarak yapılmadı; veri modeli
+  tahsilatın hangi hesaba düştüğünü bilmiyor (`cfo_receivable`'da banka değil
+  pazaryeri kanalı var). Yanlış hesaba yazmaktansa hiç yazmamak doğru.
 - **"Ödendi / Tahsil edildi" tek dokunuş, geri alınabilir.** Kaynak tabloyu (`cfo_cash_event`
   ya da `cfo_receivable`) satırın türü belirler; her iki yön de `cfo_change_log`'a
   `area=nakit, kind=teyit` olarak yazılır. CFO kuralı gereği eski değer silinmez.

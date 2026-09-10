@@ -1,8 +1,11 @@
 "use client";
 
 /**
- * Ödeme takvimi satır aksiyonu — tek dokunuşla "gerçekleşti".
- * Onay istemez ama geri alınabilir; ikisi de deftere yazılır.
+ * Ödeme takvimi satır aksiyonu — tek dokunuşla "gerçekleşti", geri alınabilir.
+ *
+ * İşaretleme yürüyen bakiyeyi DEĞİŞTİRMEZ; sadece "bu hareket oldu" kaydıdır.
+ * Bakiye yalnız gerçek banka bakiyesi güncellenince değişir. (Önceden işaretlenen
+ * satır projeksiyondan siliniyordu ve para ortadan kayboluyordu.)
  */
 
 import { useState, useTransition } from "react";
@@ -23,14 +26,15 @@ export function SettleButton({
   tur,
   aciklama,
   giris,
+  islendi,
 }: {
   id: string;
   tur: string;
   aciklama: string;
   giris: boolean;
+  islendi: boolean;
 }) {
   const router = useRouter();
-  const [done, setDone] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -40,26 +44,21 @@ export function SettleButton({
         ? await undoMovementSettledAction(id, tur, aciklama)
         : await markMovementSettledAction(id, tur, aciklama);
       setMsg(r.ok ? null : (r.message ?? "Hata"));
-      if (r.ok) {
-        setDone(!geri);
-        router.refresh();
-      }
+      if (r.ok) router.refresh();
     });
   }
 
-  if (done) {
-    return (
-      <button className={btn} disabled={pending} onClick={() => run(true)}>
-        <Undo2 size={11} /> Geri al
-      </button>
-    );
-  }
-
   return (
-    <div className="flex items-center gap-1.5">
-      <button className={btn} disabled={pending} onClick={() => run(false)}>
-        <Check size={11} /> {giris ? "Tahsil edildi" : "Ödendi"}
-      </button>
+    <div className="flex shrink-0 items-center gap-1.5">
+      {islendi ? (
+        <button className={btn} disabled={pending} onClick={() => run(true)}>
+          <Undo2 size={11} /> Geri al
+        </button>
+      ) : (
+        <button className={btn} disabled={pending} onClick={() => run(false)}>
+          <Check size={11} /> {giris ? "Tahsil edildi" : "Ödendi"}
+        </button>
+      )}
       {msg && <span className="text-[11px] text-[var(--danger)]">{msg}</span>}
     </div>
   );

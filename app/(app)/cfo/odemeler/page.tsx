@@ -38,6 +38,7 @@ type Gun = {
   gun_sonu_nakit: unknown;
   gun_ici_dip: unknown;
   kesin_odeme_var: boolean;
+  tumu_islendi: boolean;
 };
 
 type Hareket = {
@@ -49,6 +50,7 @@ type Hareket = {
   banka: string | null;
   tutar: unknown;
   kesinlik: string;
+  odendi: boolean;
   kalan_gun: number;
   aciliyet: string;
 };
@@ -88,11 +90,11 @@ export default async function CfoPaymentsPage({
   const [gunler, hareketler, dipler, kapasiteRows] = await Promise.all([
     prisma.$queryRaw<Gun[]>`
       select tarih, kalan_gun, tarih_str, gun_adi, odeme_adet, cikacak, girecek,
-             gun_sonu_nakit, gun_ici_dip, kesin_odeme_var
+             gun_sonu_nakit, gun_ici_dip, kesin_odeme_var, tumu_islendi
         from cfo_odeme_gunluk
        where kalan_gun <= ${gun} order by tarih`,
     prisma.$queryRaw<Hareket[]>`
-      select id, tarih, yon, tur, aciklama, banka, tutar, kesinlik, kalan_gun, aciliyet
+      select id, tarih, yon, tur, aciklama, banka, tutar, kesinlik, odendi, kalan_gun, aciliyet
         from cfo_yaklasan_odeme
        where kalan_gun <= ${gun} order by tarih, yon desc, tutar desc`,
     prisma.$queryRaw<Dip[]>`select tarih_str, kalan_nakit, kalan_gun from cfo_nakit_dibi`,
@@ -254,6 +256,7 @@ export default async function CfoPaymentsPage({
                         : `${g.kalan_gun} gün sonra`}
                   </span>
                   {g.kesin_odeme_var && <Badge variant="danger">kesin ödeme</Badge>}
+                  {g.tumu_islendi && <Badge variant="ok">tamamlandı</Badge>}
 
                   <span className="ml-auto text-right">
                     <span className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
@@ -282,11 +285,12 @@ export default async function CfoPaymentsPage({
                   {satirlar.map((h) => {
                     const giris = h.yon === "GIRIS";
                     const tahmini = h.kesinlik !== "KESIN";
+                    const islendi = h.odendi;
                     return (
                       <li
                         key={`${h.id}-${h.yon}`}
                         className={`flex flex-wrap items-start gap-x-3 gap-y-2 px-5 py-3 ${
-                          tahmini ? "opacity-70" : ""
+                          islendi ? "opacity-45" : tahmini ? "opacity-70" : ""
                         }`}
                       >
                         {giris ? (
@@ -310,7 +314,8 @@ export default async function CfoPaymentsPage({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {tahmini && <Badge variant="warn">Tahmini</Badge>}
+                          {islendi && <Badge variant="ok">Gerçekleşti</Badge>}
+                          {!islendi && tahmini && <Badge variant="warn">Tahmini</Badge>}
                           <span
                             className={`min-w-[110px] text-right text-[14px] font-semibold tabular-nums ${
                               giris ? "text-[var(--ok)]" : "text-[var(--danger)]"
@@ -324,6 +329,7 @@ export default async function CfoPaymentsPage({
                             tur={h.tur}
                             aciklama={h.aciklama ?? ""}
                             giris={giris}
+                            islendi={islendi}
                           />
                         </div>
                       </li>
@@ -338,9 +344,10 @@ export default async function CfoPaymentsPage({
 
       <p className="mt-6 text-[11px] text-[var(--text-muted)]">
         Kaynak: <code>cfo_yaklasan_odeme</code> görünümü. Açılış bakiyesi{" "}
-        {fmtTry(n(k?.acilis))} ({fmtDate(new Date())} itibarıyla aktif hesap toplamı). Bir hareketi
-        işaretlediğinizde takvimden düşer ve tüm gün sonu rakamları yeniden hesaplanır; işlem
-        değişiklik günlüğüne yazılır.
+        {fmtTry(n(k?.acilis))} ({fmtDate(new Date())} itibarıyla aktif hesap toplamı).{" "}
+        <strong>İşaretleme yürüyen bakiyeyi değiştirmez</strong> — yalnızca &quot;bu hareket
+        oldu&quot; kaydıdır ve değişiklik günlüğüne yazılır. Rakamlar ancak gerçek banka bakiyesi
+        güncellenince değişir.
       </p>
     </>
   );

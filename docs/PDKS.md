@@ -197,6 +197,16 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — Ödeme Takvimi: işaretleme parayı yok ediyordu
+Alperen bildirdi: "tahsil edildi"ye tıklayınca o günün ve sonraki günlerin gün sonu
+bakiyesi düşüyor. Doğruydu. Görünüm `where odendi = false` filtresiyle çalıştığı için
+işaretlenen satır projeksiyondan siliniyor, ama karşılığı banka bakiyesine
+eklenmediği için para ortadan kayboluyordu. Yürüyen bakiye artık `odendi` alanına
+bakmıyor; işaretleme salt muhasebe kaydı. Gerçek satırda toggle edilip 7 günün
+7'sinde farkın 0 olduğu doğrulandı, test satırı geri alındı.
+Etki: `prisma/migrations/20260910000000_cfo_odeme_takvimi/migration.sql` (4. bölüm),
+`app/(app)/cfo/odemeler/*`.
+
 ### 10.09.2026 — CFO / Ödeme Takvimi + gün sonu bakiye hatası
 CFO üç görünüm kurmuştu (`cfo_yaklasan_odeme`, `cfo_odeme_gunluk`, `cfo_nakit_dibi`)
 ama bunlar yalnız canlı veritabanındaydı, repoda karşılığı yoktu. Üçü de migration'a
