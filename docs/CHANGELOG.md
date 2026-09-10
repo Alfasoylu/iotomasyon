@@ -9,6 +9,37 @@
 
 ## 2026-09
 
+### CFO — Satır bazında soru-cevap ve ürün kararı (2026-09-10)
+
+- **Her satırın sonunda açılır bilgi alanı.** `/cfo/kazananlar` içindeki ithalat öneri
+  tablolarında ve ilk-10 kâr tablosunda satır sonundaki **Bilgi** rozeti, o satır
+  hakkında panelin cevabını bilmediği soruları açıyor. Cevap kaydediliyor.
+- **Yeni tablo açılmadı.** Cevaplar mevcut `cfo_question` tablosuna düşüyor; CFO zaten
+  bu tabloyu okuyor ve `/cfo/sorular` ekranı buna bağlı. Eksik olan tek şey "hangi satır
+  hakkında" bilgisiydi: `scope` + `entity_key` + `code` sütunları eklendi.
+- **Sorular türetilmiş, kayıtlı değil.** Eksik veriden hesaplanıyor ve eksik kapanınca
+  kendiliğinden kayboluyor; tabloyu ölü kayıtla doldurmuyor. Kullanıcı cevaplayınca soru
+  metni + gerekçesi + cevap birlikte yazılıyor — altı ay sonra "bu cevap neyin cevabıydı"
+  sorusu cevapsız kalmasın diye.
+- **Üç soru türü:** `MALIYET_YOK` (birim alış fiyatı + kg — bugün 2 deniz kaleminde),
+  `KAPSAM_UZUN` (6 aydan uzun rafta kalacak adet — bugün 3 kalem),
+  `ORAN_GUVENI_DUSUK` (kanalın ölçülmemiş net tahsilat oranı — Ağustos'ta 7 satır).
+  Soru, ürünün hangi ölçülmemiş kanalda sattığını **adıyla** yazıyor.
+- **`cfo_urun_karar` tablosu.** "Bu ürünü getirmeyelim" kararı gerekçesiyle birlikte
+  kalıcı olarak saklanıyor; parti değişse de yaşıyor. Gerekçe zorunlu. `gecerli_bitis`
+  ile "bu sefer alma" ile "bir daha alma" ayrılabiliyor.
+- **Karar öneriyi gerçekten değiştiriyor.** `cfo_ithalat_oneri` kararı okuyor,
+  `cfo_ithalat_oneri_ozet` hariç tutulan kalemi tutara ve minimum 10.000 USD eşiğine
+  KATMIYOR. Canlıda doğrulandı: bir kalem "alma" yapılınca deniz partisi
+  17 kalem / 12.998,60 USD → 16 kalem / 12.894,87 USD oldu, karar kaldırılınca geri döndü.
+- **Hariç tutulanlar gizlenmiyor.** Tabloda soluk kalıyorlar ve ayrı bir uyarı kaç
+  kalemin çıkarıldığını söylüyor — eşiği bunu görmeden okumak yanıltıcı olurdu.
+- **CFO el kitabına §6.1 ve §6.2 eklendi.** Oturum başında `status='CEVAPLANDI' and
+  processedAt is null` sorgusu zorunlu; her `code` için cevabın nereye işleneceği yazılı.
+  `ORAN_GUVENI_DUSUK` cevabı `cfo_kanal_net_oran`'ı düzeltiyor — tek cevap o kanalda satan
+  bütün ürünlerin kârını düzelttiği için en yüksek getirili cevap türü. Ayrıca
+  `karar='ALMA'` olan ürüne yeni `cfo_order_line` açmak yasaklandı.
+
 ### CFO — Servet gerçek stoktan hesaplanıyor (2026-09-10)
 
 - **Kokpitteki servet rakamı yanlıştı.** Formül (`nakit + alacak + stok − borç`) doğruydu;

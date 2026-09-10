@@ -197,6 +197,31 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — Satır bazında soru-cevap: bilgi iki yönlü akıyor
+Alperen'in isteği: "eksik bilgilerinle ilgili soruları satır sonundan sor, ben de neden
+bu ürünü yazmamak gerektiğini aynı yerden yazayım, bilgilerimiz bütünleşsin".
+
+Yeni tablo açmadım: `cfo_question` zaten CFO'nun okuduğu kanal, eksik olan satır
+kimliğiydi (`scope` + `entity_key` + `code`). Sorular türetilmiş — eksik kapanınca
+kendiliğinden kayboluyor; cevap gelince soru metni + gerekçesi + cevap birlikte
+kaydediliyor. Ürün vetosu için `cfo_urun_karar` açıldı (gerekçe zorunlu, süreli olabilir)
+ve `cfo_ithalat_oneri` bunu okuyor.
+
+Kurarken bir hata yaptım ve yakaladım: `haric` sütununu `(ka.karar = 'ALMA')` diye
+yazmıştım; karar satırı olmayan ürünlerde bu NULL dönüyor ve özetteki `where not haric`
+TÜM satırları eliyordu — öneri bölümü tamamen boşalmıştı. `coalesce(..., false)` ile
+düzeltildi. Canlıda uçtan uca test edildi: bir kaleme "alma" denince deniz partisi
+17→16 kalem, 12.998,60→12.894,87 USD oldu; karar silinince geri döndü.
+
+`KAPSAM_UZUN` eşiğini 12 aydan 6 aya indirdim: 12 ayda bugünkü listede hiçbir satır
+yakalanmıyordu (en uzun kapsam 8,0 ay) ve hiç tetiklenmeyen soru olmayan sorudur.
+
+CFO el kitabına §6.1/§6.2 yazıldı; oturum başında işlenmemiş cevapları çekmek zorunlu
+ve `karar='ALMA'` olan ürüne yeni sipariş satırı açmak yasak.
+Etki: `prisma/migrations/20260910230000_cfo_satir_bilgi/`, `lib/cfo/row-qa.ts`,
+`lib/actions/cfo-row-qa.ts`, `components/cfo/row-qa-panel.tsx`,
+`app/(app)/cfo/kazananlar/{page,import-order}.tsx`, `docs/CFO-GOREV.md`.
+
 ### 10.09.2026 — Servet gerçek stoktan hesaplanıyor, kokpit bağlandı
 CFO servet veri katmanını kurdu (`cfo_servet`, `cfo_servet_kalem`, `cfo_stok_deger`,
 `cfo_yoldaki_mal`, `cfo_servet_likidite`); kokpite bağlama işi bu tarafa verilmişti.

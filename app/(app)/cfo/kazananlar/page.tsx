@@ -31,6 +31,14 @@ import {
   type OneriOzeti,
   type CiroHedefi,
 } from "./import-order";
+import { QaRow, type PanelSorusu, type PanelKarari } from "@/components/cfo/row-qa-panel";
+import {
+  loadRowQa,
+  ithalatSorulari,
+  kazananSorulari,
+  birlestir,
+  anahtar,
+} from "@/lib/cfo/row-qa";
 
 export const dynamic = "force-dynamic";
 
@@ -109,7 +117,7 @@ export default async function CfoWinnersPage({
 
   // Kazanan listesi ile ithalat önerisi aynı ekranda: kârı getiren ürünün stoğu
   // bitiyorsa kazanan liste bir sonraki ay küçülür. Üç sorgu da salt-okunur view.
-  const [satirlar, oneriOzet, oneriSatir, ciroHedef] = await Promise.all([
+  const [satirlar, oneriOzet, oneriSatir, ciroHedef, dusukKanal] = await Promise.all([
     prisma.$queryRaw<Satir[]>`
       select sira, sku, ad, category, adet, brut_ciro, kargo_pct, net_kar, marj_pct,
              kar_payi_pct, oran_guveni, kanal_sayisi, siparis_satiri
@@ -117,7 +125,56 @@ export default async function CfoWinnersPage({
     prisma.$queryRaw<OneriOzeti[]>`select * from cfo_ithalat_oneri_ozet order by mod`,
     prisma.$queryRaw<OneriSatiri[]>`select * from cfo_ithalat_oneri order by mod, sira`,
     prisma.$queryRaw<CiroHedefi[]>`select * from cfo_ciro_hedef`,
+    // Hangi ürün, oranı ÖLÇÜLMEMİŞ hangi kanalda satmış? Soru bunu adıyla sorabilsin diye.
+    prisma.$queryRaw<{ sku: string; kanallar: string[] }[]>`
+      select k.sku, array_agg(distinct k.channel) as kanallar
+        from cfo_aylik_urun_kar k
+        join cfo_kanal_net_oran o on o.channel = k.channel
+       where k.ay = ${secili.ay} and o.guven = 'DUSUK'
+       group by k.sku`,
   ]);
+
+  // ── Satır bazında soru-cevap ────────────────────────────────────
+  // İki ekran da aynı depoyu kullanıyor: cevaplar cfo_question'a düşüyor,
+  // oradan hem /cfo/sorular hem Cowork'teki CFO ajanı okuyor.
+  const ithalatAnahtarlari = oneriSatir.map((s) => anahtar(s.mod, s.sku));
+  const kazananAnahtarlari = satirlar.filter((s) => s.sku).map((s) => anahtar(secili.ay_str, s.sku!));
+
+  const [ithalatQa, kazananQa] = await Promise.all([
+    loadRowQa("ITHALAT_SATIRI", ithalatAnahtarlari),
+    loadRowQa("KAZANAN_SATIRI", kazananAnahtarlari),
+  ]);
+
+  const ithalatSoru = new Map<string, PanelSorusu[]>();
+  for (const r of oneriSatir) {
+    const key = anahtar(r.mod, r.sku);
+    ithalatSoru.set(key, birlestir(ithalatSorulari(r), ithalatQa.kayitli.get(key)));
+  }
+
+  const urunKarar = new Map<string, PanelKarari>();
+  for (const [sku, k] of ithalatQa.kararlar) {
+    urunKarar.set(sku, {
+      karar: k.karar, sebep: k.sebep,
+      gecerli_bitis: k.gecerli_bitis, karar_veren: k.karar_veren,
+    });
+  }
+
+  const kanalMap = new Map(dusukKanal.map((d) => [d.sku, d.kanallar]));
+  const kazananSoru = new Map<string, PanelSorusu[]>();
+  for (const r of satirlar) {
+    if (!r.sku) continue;
+    const key = anahtar(secili.ay_str, r.sku);
+    kazananSoru.set(
+      key,
+      birlestir(
+        kazananSorulari({
+          sku: r.sku, ad: r.ad, oran_guveni: r.oran_guveni,
+          ay: secili.ay_str, dusukKanallar: kanalMap.get(r.sku) ?? [],
+        }),
+        kazananQa.kayitli.get(key),
+      ),
+    );
+  }
 
   const toplam = n(secili.ay_toplam_kar);
   const top10 = n(secili.top10_kar);
@@ -277,7 +334,8 @@ export default async function CfoWinnersPage({
             uyari(
               `İlk 10'un kârının %${dusukPay.toFixed(0)}'i (${fmtTry(dusukKar)}) net tahsilat oranı ` +
                 `ÖLÇÜLMEMİŞ kanallara dayanıyor. O kanalların gerçek kesintisi varsayımdan yüksekse ` +
-                `bu kâr olduğundan büyük görünür. Ekstre gelince ölçülmeli.`,
+                `bu kâr olduğundan büyük görünür. Tablodaki "düşük güven" satırlarının sonundaki ` +
+                `soru rozetine tıklayıp o kanalın ekstredeki gerçek oranını yazarsanız bu belirsizlik kapanır.`,
               "warn",
             )}
         </div>
@@ -291,6 +349,8 @@ export default async function CfoWinnersPage({
         <p className="mb-4 text-[11px] text-[var(--text-muted)]">
           Net kâra göre sıralı. Kargo sütunu ayrı duruyor çünkü düşük fiyatlı üründe kâr
           orada eriyor — düz kanal oranıyla hesaplanan kâr o ürünlerde %43&apos;e kadar abartılıyordu.
+          Satır sonundaki <strong>Bilgi</strong> rozeti, o satır hakkında cevabını bilmediğim
+          soruları açar; cevabınız kaydedilir ve hem panel hem CFO aynı yerden okur.
         </p>
 
         <CfoTable
@@ -306,14 +366,26 @@ export default async function CfoWinnersPage({
               <Th right>Marj</Th>
               {payOkunur && <Th right>Pay</Th>}
               <Th>Oran güveni</Th>
+              <Th right>Bilgi</Th>
             </tr>
           }
         >
           {satirlar.map((s) => {
             const kargo = n(s.kargo_pct);
             const kar = n(s.net_kar);
+            const key = s.sku ? anahtar(secili.ay_str, s.sku) : "";
             return (
-              <tr key={`${s.sira}-${s.sku}`}>
+              <QaRow
+                key={`${s.sira}-${s.sku}`}
+                colSpan={payOkunur ? 9 : 8}
+                scope="KAZANAN_SATIRI"
+                entityKey={key}
+                sku={s.sku ?? ""}
+                urunAdi={s.ad ?? s.sku ?? "—"}
+                sorular={kazananSoru.get(key) ?? []}
+                karar={null}
+                kararGoster={false}
+              >
                 <Td muted>{s.sira}</Td>
                 <Td>
                   <p className="font-medium text-[var(--text-primary)]">{s.ad ?? "—"}</p>
@@ -338,7 +410,7 @@ export default async function CfoWinnersPage({
                     {GUVEN_LABEL[s.oran_guveni ?? ""] ?? s.oran_guveni ?? "—"}
                   </Badge>
                 </Td>
-              </tr>
+              </QaRow>
             );
           })}
         </CfoTable>
@@ -347,7 +419,13 @@ export default async function CfoWinnersPage({
       {/* ── İthalat sipariş önerisi ───────────────────────────────── */}
       {/* Diğer sayfalardan kaldırılan listeler buraya bağlanıyor (#ithalat). */}
       <div id="ithalat" className="scroll-mt-20">
-        <ImportOrderSection ozet={oneriOzet} satirlar={oneriSatir} hedef={ciroHedef[0] ?? null} />
+        <ImportOrderSection
+          ozet={oneriOzet}
+          satirlar={oneriSatir}
+          hedef={ciroHedef[0] ?? null}
+          sorular={ithalatSoru}
+          kararlar={urunKarar}
+        />
       </div>
 
       {/* ── Aylık seyir ───────────────────────────────────────────── */}

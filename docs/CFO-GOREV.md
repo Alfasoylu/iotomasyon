@@ -4,7 +4,7 @@
 > "bu dosyayı oku ve uygula" der; kurallar burada, sürüm geçmişiyle birlikte durur.
 > Değişiklik yaparken tarih ve gerekçe yaz — bu dosyanın geçmişi kararların geçmişidir.
 >
-> Son güncelleme: 28.08.2026
+> Son güncelleme: 10.09.2026
 
 ---
 
@@ -237,6 +237,62 @@ sayılmaz.
 > 28.08: 47 notun yalnız 4'ünde `reviewBy` var. Bu az.
 
 **Aynı şeyi ikinci kez sorma.** Sormadan önce `cfo_note`'ta ara.
+
+---
+
+### 6.1 — SATIR BAZLI SORU-CEVAP (10.09.2026)
+
+`/cfo/kazananlar` sayfasındaki her satırın sonunda bir **Bilgi** rozeti var. Alperen
+oradan hem senin sorularını cevaplıyor hem de "bu ürünü getirmeyelim" kararını
+gerekçesiyle yazıyor. Bu iki kanal da veritabanına düşüyor — **oturum başında oku.**
+
+`cfo_question` tablosuna üç kolon eklendi:
+
+| kolon | ne | örnek |
+|---|---|---|
+| `scope` | hangi ekran/satır türü | `ITHALAT_SATIRI`, `KAZANAN_SATIRI` |
+| `entity_key` | satırın kimliği | `HAVA\|T-MD3010`, `2026-08\|M-BANYOMİX` |
+| `code` | sorunun türü | `MALIYET_YOK`, `KAPSAM_UZUN`, `ORAN_GUVENI_DUSUK` |
+
+**Oturum başında çalıştır:**
+
+```sql
+-- Panelden cevaplanmış ama senin işlemediğin bilgiler
+select scope, entity_key, code, question, answer, "answeredAt"
+  from cfo_question
+ where status = 'CEVAPLANDI' and "processedAt" is null
+ order by "answeredAt";
+```
+
+Her biri için normal §6 akışını uygula: `cfo_note`'a yaz, sonra `processedAt` +
+`processNote` doldur. **İşlemeden bırakma** — panel o cevabın yanında
+"CFO'nun işlemesi bekleniyor" yazıyor, Alperen bunu görüyor.
+
+Cevabın nereye işleneceği `code`'a göre değişir:
+
+- `MALIYET_YOK` → `cfo_import_cost`'a rmb/kg gir, `cfo_order_line.unit_cost_usd`'yi
+  hesapla. Bu satır şu an parti toplamına **girmiyor**; girince minimum 10.000 USD
+  eşiği yeniden değerlendirilmeli.
+- `KAPSAM_UZUN` → adet onaylandıysa not düş; azaltılacaksa `cfo_order_line.qty` güncelle.
+- `ORAN_GUVENI_DUSUK` → `cfo_kanal_net_oran`'da o kanalın `net_oran` / `guven` /
+  `kaynak` alanlarını güncelle, sonra `cfo_ay_kazanan_yaz()` ile etkilenen ayları
+  tazele. Tek satır bir kanalı düzeltir ve o kanalda satan **bütün** ürünlerin kârını
+  düzeltir — en yüksek getirili cevap türü budur.
+
+### 6.2 — ÜRÜN KARARI: `cfo_urun_karar`
+
+Alperen bir ürün için "alma" dediyse kaydı buradadır:
+
+```sql
+select sku, karar, sebep, gecerli_bitis, karar_veren, updated_at from cfo_urun_karar;
+```
+
+- `karar = 'ALMA'` → **o ürünü bir daha sipariş önerisine koyma.** `cfo_ithalat_oneri`
+  görünümü zaten eliyor; sen de yeni `cfo_order_line` satırı **açma**.
+- `gecerli_bitis` doluysa karar o tarihte düşer; sonrasında ürün tekrar önerilebilir.
+- `sebep` alanını oku ve saygı göster. Aynı ürünü "ama kârlı görünüyor" diye tekrar
+  önermek, Alperen'in bildiği bir şeyi (tedarikçi sorunu, iade oranı, garanti yükü)
+  yok saymaktır. Karara katılmıyorsan **öneri açma, soru sor**.
 
 ---
 

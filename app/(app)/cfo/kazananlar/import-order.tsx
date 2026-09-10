@@ -32,6 +32,7 @@ import { fmtTry, fmtUsd, fmtNum, fmtDate, relDays } from "@/lib/cfo/format";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
+import { QaRow, type PanelSorusu, type PanelKarari } from "@/components/cfo/row-qa-panel";
 
 export type OneriSatiri = {
   mod: string;
@@ -59,6 +60,10 @@ export type OneriSatiri = {
   birim_fiyat_try: unknown;
   aylik_ciro_usd: unknown;
   kopru: boolean;
+  karar: string | null;
+  karar_sebep: string | null;
+  karar_bitis: Date | null;
+  haric: boolean;
   sira: number;
 };
 
@@ -71,6 +76,7 @@ export type OneriOzeti = {
   maliyet_eksik_satir: number;
   gecikmis_satir: number;
   kopru_satir: number;
+  haric_satir: number;
   termin_gun: number;
   en_erken_tukenis: Date | null;
   en_erken_son_siparis: Date | null;
@@ -267,7 +273,17 @@ function ModKarti({ o }: { o: OneriOzeti }) {
   );
 }
 
-function ModTablosu({ mod, satirlar }: { mod: string; satirlar: OneriSatiri[] }) {
+function ModTablosu({
+  mod,
+  satirlar,
+  sorular,
+  kararlar,
+}: {
+  mod: string;
+  satirlar: OneriSatiri[];
+  sorular: Map<string, PanelSorusu[]>;
+  kararlar: Map<string, PanelKarari>;
+}) {
   const meta = MOD_META[mod] ?? { ad: mod, Icon: Ship, aciklama: "" };
   const { Icon } = meta;
   return (
@@ -291,11 +307,22 @@ function ModTablosu({ mod, satirlar }: { mod: string; satirlar: OneriSatiri[] })
             <Th right>En geç sipariş</Th>
             <Th right>Kapsam</Th>
             <Th right>Risk ₺/ay</Th>
+            <Th right>Bilgi</Th>
           </tr>
         }
       >
         {satirlar.map((s) => (
-          <tr key={`${s.mod}-${s.sku}`}>
+          <QaRow
+            key={`${s.mod}-${s.sku}`}
+            colSpan={11}
+            scope="ITHALAT_SATIRI"
+            entityKey={`${s.mod}|${s.sku}`}
+            sku={s.sku}
+            urunAdi={s.product_name ?? s.sku}
+            sorular={sorular.get(`${s.mod}|${s.sku}`) ?? []}
+            karar={kararlar.get(s.sku) ?? null}
+            vurgu={s.haric}
+          >
             <Td muted>{s.sira}</Td>
             <Td>
               <p className="font-medium text-[var(--text-primary)]">{s.product_name ?? "—"}</p>
@@ -330,7 +357,7 @@ function ModTablosu({ mod, satirlar }: { mod: string; satirlar: OneriSatiri[] })
             </Td>
             <Td right muted>{s.kapsam_ay == null ? "—" : `${n(s.kapsam_ay).toFixed(1)} ay`}</Td>
             <Td right>{fmtTry(n(s.aylik_risk_kar_try))}</Td>
-          </tr>
+          </QaRow>
         ))}
       </CfoTable>
     </div>
@@ -341,10 +368,16 @@ export function ImportOrderSection({
   ozet,
   satirlar,
   hedef,
+  sorular,
+  kararlar,
 }: {
   ozet: OneriOzeti[];
   satirlar: OneriSatiri[];
   hedef: CiroHedefi | null;
+  /** entity_key ("MOD|SKU") → o satırın soruları. */
+  sorular: Map<string, PanelSorusu[]>;
+  /** SKU → kalıcı ürün kararı. */
+  kararlar: Map<string, PanelKarari>;
 }) {
   const hava = ozet.find((o) => o.mod === "HAVA");
   const deniz = ozet.find((o) => o.mod === "DENIZ");
@@ -358,6 +391,8 @@ export function ImportOrderSection({
   const maliyetEksik = ozet.reduce((a, o) => a + o.maliyet_eksik_satir, 0);
   // Hava köprüsü satırları iki listede birden görünür; benzersiz SKU sayısı için tekilleştirilir.
   const kopruSku = new Set(satirlar.filter((s) => s.kopru).map((s) => s.sku));
+  const haricSatirlar = satirlar.filter((s) => s.haric);
+  const cevapsizSoru = [...sorular.values()].flat().filter((q) => !q.cevap).length;
   const minAdet = ozet[0]?.min_adet_kural ?? 5;
   const enKucukAdet = satirlar.length > 0 ? Math.min(...satirlar.map((s) => s.onerilen_adet)) : 0;
 
@@ -459,6 +494,23 @@ export function ImportOrderSection({
           </Uyari>
         )}
 
+        {haricSatirlar.length > 0 && (
+          <Uyari ton="info">
+            {haricSatirlar.length} kalem sizin &quot;alma&quot; kararınızla öneriden çıkarıldı ve
+            tutara girmiyor. Tabloda soluk duruyorlar — gizlenmiyorlar, çünkü minimum ithalat
+            eşiği bu kalemler olmadan hesaplanıyor ve bunu görmeden eşiği okumak yanıltıcı olur.
+            Kararı satırın sonundaki alandan kaldırabilirsiniz.
+          </Uyari>
+        )}
+
+        {cevapsizSoru > 0 && (
+          <Uyari ton="warn">
+            {cevapsizSoru} satırda cevabını bilmediğim soru var (satır sonundaki
+            &quot;soru&quot; rozeti). Bunlar cevaplanınca tutarlar ve öneriler doğrulanır —
+            özellikle birim maliyeti olmayan kalemler parti toplamına hiç girmiyor.
+          </Uyari>
+        )}
+
         {maliyetEksik > 0 && (
           <Uyari ton="warn">
             {maliyetEksik} kalemin birim maliyeti girilmemiş; o satırlar tutara dâhil değil.
@@ -477,8 +529,8 @@ export function ImportOrderSection({
       </div>
 
       {/* ── Kalem tabloları ─────────────────────────────────────────── */}
-      <ModTablosu mod="HAVA" satirlar={havaSatir} />
-      <ModTablosu mod="DENIZ" satirlar={denizSatir} />
+      <ModTablosu mod="HAVA" satirlar={havaSatir} sorular={sorular} kararlar={kararlar} />
+      <ModTablosu mod="DENIZ" satirlar={denizSatir} sorular={sorular} kararlar={kararlar} />
 
       <p className="mt-4 text-[11px] leading-relaxed text-[var(--text-muted)]">
         Kurallar <code>cfo_settings</code> içinde: hava termini {hava?.termin_gun ?? 22} gün,
