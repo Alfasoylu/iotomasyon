@@ -361,7 +361,8 @@ export function ImportOrderSection({
   const minAdet = ozet[0]?.min_adet_kural ?? 5;
   const enKucukAdet = satirlar.length > 0 ? Math.min(...satirlar.map((s) => s.onerilen_adet)) : 0;
 
-  const hedefUsd = n(hedef?.hedef_usd) || 100_000;
+  // Hedef ayarlardan gelir; henüz tam ay yoksa (hedef null) varsayılan gösterilir.
+  const hedefUsd = hedef ? n(hedef.hedef_usd) : 100_000;
   const ciroUsd = n(hedef?.ciro_usd);
   const gerekenKat = n(hedef?.gereken_kat);
   // Bu siparişler ciroyu BÜYÜTMEZ, mevcut ciroyu korur. Hedefle ilişkisi bu yüzden
