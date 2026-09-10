@@ -50,6 +50,7 @@ import {
   MessageSquare,
   ChevronRight,
   type LucideIcon,
+  CalendarClock,
 } from "lucide-react";
 
 import { useSidebarStore } from "@/hooks/use-sidebar-store";
@@ -83,6 +84,7 @@ const ICONS: Record<string, LucideIcon> = {
   megaphone: Megaphone,
   target: Target,
   package: Package,
+  calendar: CalendarClock,
   folderTree: FolderTree,
   search: Search,
   warehouse: Warehouse,

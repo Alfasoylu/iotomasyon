@@ -7,6 +7,35 @@
 - If a change is inferred from documentation but not independently verified in code, avoid wording it as fully implemented.
 - ROADMAP items must not appear here unless implemented.
 
+## 2026-09
+
+### CFO — Ödeme Takvimi: gelen/giden para tek listede (2026-09-10)
+
+- **`/cfo/odemeler` eklendi.** Kredi taksiti, kart ödemesi, sabit gider, vergi/gümrük
+  ve pazaryeri tahsilatları dört ayrı tablodan tek takvime toplandı. Gün gün kartlar,
+  her günün sonunda kalan nakit, çıkış/giriş ayrımı, tahmini kayıtlar soluk.
+  Neden: ödemeler dağınık durduğu için "hangi gün para bitiyor" sorusu
+  cevaplanamıyordu; açık yalnız "10 günde −46.123 TL" gibi tarihsiz duruyordu.
+- **Tahsilatlar da ekranda.** Yalnız ödemeler listelenirse yürüyen bakiye
+  hesaplanamaz. Ekranın cevapladığı soru "ödemelerim neler" değil,
+  **"ödeyebilecek miyim"**.
+- **`cfo_odeme_gunluk.gun_sonu_nakit` hesap hatası düzeltildi.** Gün sonu bakiyesi
+  `min(kalan_nakit)` ile hesaplanıyordu; bu gün içi en dip noktadır, gün sonu değil.
+  Son hareketi giriş olan günlerde bakiye olduğundan düşük çıkıyordu — 17.09.2026
+  için gerçek +51.560 TL yerine −90.705 TL. Doğrusu açılış + kümülatif net.
+  Gün içi dip `gun_ici_dip` sütununda korunuyor.
+- **Üç görünüm repoya alındı.** `cfo_yaklasan_odeme`, `cfo_odeme_gunluk`,
+  `cfo_nakit_dibi` yalnız canlı veritabanında duruyordu; migration'a taşındı.
+- **Kullanılabilir KMH gösteriliyor.** Bir günün eksiye düşmesi tek başına kriz
+  değildir; boş ticari limitle kapanıyorsa değildir. Gün kartı negatifken "ticari KMH
+  ile kapanır / KMH yetmiyor, açık X TL" satırı çıkar. Şahsi limitler ayrı rozette,
+  son çare olarak işaretli.
+- **Bayat bakiye uyarısı.** Yürüyen bakiyenin tamamı açılış bakiyesine dayandığı için,
+  7 günden eski bakiyesi olan hesap varsa sayfa başında uyarı çıkar.
+- **"Ödendi / Tahsil edildi" tek dokunuş, geri alınabilir.** Kaynak tabloyu (`cfo_cash_event`
+  ya da `cfo_receivable`) satırın türü belirler; her iki yön de `cfo_change_log`'a
+  `area=nakit, kind=teyit` olarak yazılır. CFO kuralı gereği eski değer silinmez.
+
 ## 2026-08
 
 ### CFO — Sorular sayfası: soru-cevap defteri (2026-08-27)
