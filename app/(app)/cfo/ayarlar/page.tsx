@@ -39,8 +39,12 @@ export default async function CfoSettingsPage() {
             <P label="Aylık ciro run-rate" value={fmtTry(o.monthlyRunRateTry)} note="Son 14 günden türetilir" />
             <P label="Gümrük rezerv hedefi" value={fmtTry(num(s.customsReserveTarget))} note={`İhtiyaç tarihi: ${fmtDate(s.customsReserveDate)}`} />
             <P label="Ayrılmış rezerv" value={fmtTry(num(s.customsReserveSaved))} note="Serbest nakde dahil edilmez" />
-            <P label="Satılabilir stok" value={fmtUsd(num(s.stockCostUsd))} note={fmtTry(o.sellableStockTry)} />
-            <P label="Bloke stok" value={fmtUsd(num(s.blockedStockUsd))} note="Satış projeksiyonunda kullanılmaz" />
+            {/* Bu iki sabit 10.09.2026'dan beri SERVETE GİRMİYOR — servet cfo_servet
+                görünümünden, gerçek stoktan hesaplanıyor. Kayıt olarak duruyorlar. */}
+            <P label="Satılabilir stok (eski sabit)" value={fmtUsd(num(s.stockCostUsd))}
+               note="Artık servete girmiyor — servet gerçek stoktan hesaplanır" />
+            <P label="Bloke stok (eski sabit)" value={fmtUsd(num(s.blockedStockUsd))}
+               note="Artık servete girmiyor" />
             <P label="Servet hedefi" value={fmtUsd(num(s.usdWealthTarget))} note={`Hedef tarihi: ${fmtDate(s.wealthTargetDate)}`} />
           </CfoTable>
         ) : (

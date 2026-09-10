@@ -9,6 +9,41 @@
 
 ## 2026-09
 
+### CFO — Servet gerçek stoktan hesaplanıyor (2026-09-10)
+
+- **Kokpitteki servet rakamı yanlıştı.** Formül (`nakit + alacak + stok − borç`) doğruydu;
+  hata stok satırındaydı. `lib/cfo/engine.ts` stoğu iki ELLE GİRİLMİŞ USD sabitinden
+  türetiyordu: `cfo_settings.stockCostUsd` (100.000) ve `blockedStockUsd` (40.000).
+- **Sabit donmuştu.** `cfo_snapshot.stockTry` 31.08–10.09 arası **on bir ardışık
+  snapshot boyunca kuruşu kuruşuna 13.130.432,65 TL** kaldı — o günlerde nakit ve alacak
+  her gün değişti, satış yapıldı, mal çıktı, stok satırı kıpırdamadı.
+- **Yeni kaynak: `cfo_servet`.** Stok artık net gerçekleşebilir değerle ölçülüyor —
+  her SKU'nun son 90 günde GERÇEKLEŞEN satış fiyatı × kanal net oranı − kargo. Liste
+  fiyatı kullanılmıyor (223 stoklu üründen yalnız 35'inde dolu).
+- **Aynı gün, eski yöntem 8.970.674 TL / yeni yöntem 5.946.316 TL — fark −3.024.358 TL
+  (−%33,7).** Servet küçülmedi, yanlış ölçülüyordu.
+- **Kokpit yeniden bağlandı.** "Net ticari servet hedefi" kartı kaldırıldı; yerine
+  `cfo_servet`'ten okuyan servet bölümü geldi: manşet, kalem dökümü (her satır kendi
+  güven etiketiyle), likidite dilimleri ve yoğunlaşma tablosu.
+- **Snapshot da kaynağa bağlandı.** `takeCfoSnapshotAction` artık sabitleri değil
+  `cfo_servet` + `cfo_servet_kalem`'i yazıyor; görünüm boş dönerse snapshot ALINMIYOR
+  (yanlış rakamı tarihe yazmaktansa hiç yazmamak doğru). Stok satırı çıkarma ile değil,
+  iki stok kaleminin toplamından geliyor; dar tanım = manşet − yoldaki malın net katkısı.
+- **Sabitler işaretlendi.** `engine.ts`'teki `sellableStockTry` / `blockedStockTry` /
+  `narrowWorth*` / `wideWorth*` alanları artık hiçbir ekrana basılmıyor; başlarına neden
+  güvenilmemesi gerektiğini yazan uyarı eklendi. Ayarlar sayfasında iki sabit
+  "eski sabit — artık servete girmiyor" olarak etiketlendi.
+- **Likidite ilk kez görünür.** Stok değerinin **%45,8'i (3.073.033 TL) bir yıl içinde
+  hiç nakde dönmüyor**; 12 ay+ dilimi tek başına net gerçekleşebilir değerin %57'si
+  (3.350.141 TL). Kokpit bunu manşetin yanında uyarı olarak gösteriyor: servet doğru
+  ama likit değil.
+- **Yoğunlaşma uyarısı.** `40005100051` Krom Banyo Bataryası tek başına 2.778 adet /
+  1.981.236 TL / **1.220 gün (3,3 yıl) örtü süresi** — stok değerinin %29,5'i. Sayfa
+  bunu "servet kalemi değil, tek ürüne yapılmış bahis" olarak yazıyor.
+- **Kukla stok elenmesi doğrulandı.** 47 SKU yer tutucu adetle (999 / 1.000 / 10.000)
+  duruyor; değerlemeye alınsalardı tek bir kamera seti kaydı
+  (`MUK-8LI-IP-KAMERA-SETI-SESLI`, 999 adet) **tek başına 14,6 M TL** üretiyordu.
+
 ### CFO — İthalat sipariş önerisi tek sayfada toplandı (2026-09-10)
 
 - **`/cfo/kazananlar` → "İthalat sipariş önerisi" bölümü eklendi.** Hava ve deniz için

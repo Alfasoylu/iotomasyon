@@ -197,6 +197,33 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — Servet gerçek stoktan hesaplanıyor, kokpit bağlandı
+CFO servet veri katmanını kurdu (`cfo_servet`, `cfo_servet_kalem`, `cfo_stok_deger`,
+`cfo_yoldaki_mal`, `cfo_servet_likidite`); kokpite bağlama işi bu tarafa verilmişti.
+
+Önce doğrulama: kokpitteki 13.130.432,65 TL'lik stok satırının **on bir ardışık
+snapshot boyunca kuruşu kuruşuna sabit** kaldığı `cfo_snapshot` üzerinden teyit
+edildi. Kök neden `lib/cfo/engine.ts`: stok = `cfo_settings.stockCostUsd` (elle
+girilmiş 100.000 USD) × kur. CFO'nun bütün rakamları tek tek doğrulandı ve tuttu —
+aynı gün eski yöntem 8.970.674 TL, yeni yöntem 5.946.316 TL, fark −%33,7.
+
+Yapılanlar: `lib/cfo/wealth.ts` (tek yükleyici), `app/(app)/cfo/wealth-section.tsx`
+(manşet + kalem dökümü + likidite + yoğunlaşma), kokpitin eski servet kartı ve
+sabit-tabanlı stok KPI'si kaldırıldı, `takeCfoSnapshotAction` görünüme bağlandı,
+engine'in sabit-tabanlı alanlarına uyarı yazıldı, ayarlar sayfasında sabitler
+"eski" olarak etiketlendi.
+
+Şartnamenin ötesinde bulunan: (1) **AL-CAM03**, "satış kanıtı yok, maliyetle"
+satırının **%91,1'i** (726.045 / 797.342 TL) — ve bu ürün zaten ölü stok olarak
+biliniyor (Amazon kamera seti ilanı bunu eritmek için açılmıştı). Yani servetin bu
+satırı fiilen tek bir ölü stok kalemi. (2) Likidite dilimlerinde 66 ürün "satmıyor"
+sayılıyor ama yalnız 7'sinde maliyet var; kalan 59 ürün (317 adet) sıfır değerle
+duruyor — kalem açıklamasındaki "7 SKU" ile likidite tablosundaki "66 ürün" aynı
+tutarı anlatıyor, arayüzde bu ayrım yazıldı.
+Etki: `lib/cfo/wealth.ts`, `app/(app)/cfo/{page,wealth-section}.tsx`,
+`lib/actions/cfo-actions.ts`, `lib/cfo/engine.ts`, `app/(app)/cfo/ayarlar/page.tsx`,
+`prisma/migrations/20260910200000_cfo_servet/`.
+
 ### 10.09.2026 — İthalat sipariş önerisi tek sayfada toplandı
 "Sıradaki siparişte ne alalım?" sorusu panelde **sekiz** ayrı yerde, sekiz ayrı
 hesapla cevaplanıyordu (import-cockpit, import-decisions, procurement, capital,

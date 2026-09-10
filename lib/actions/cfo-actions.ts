@@ -258,20 +258,65 @@ export async function updateCfoSettingsAction(input: {
 
 // ── Snapshot ─────────────────────────────────────────────────────────────────
 
-/** Anlık net ticari serveti hesaplayıp snapshot olarak kaydeder (trend için). */
+/**
+ * Anlık serveti snapshot olarak kaydeder (trend için).
+ *
+ * 10.09.2026 ÖNCESİ HATA: stockTry olarak `o.sellableStockTry` yazılıyordu; o da
+ * `cfo_settings.stockCostUsd` (elle girilmiş 100.000 USD sabiti) × kur idi. Kimse
+ * sabiti güncellemediği için ardışık on bir snapshot'ta stok satırı kuruşu kuruşuna
+ * aynı kaldı (13.130.432,65 TL) — satış yapılırken, mal çıkarken. Servetin yarısından
+ * fazlası donmuş bir sayıydı.
+ *
+ * Artık snapshot da `cfo_servet` görünümünden okunuyor: stok, gerçekleşen satış
+ * fiyatından hesaplanan net gerçekleşebilir değer. Görünüm boş dönerse snapshot
+ * ALINMAZ — yanlış bir rakamı tarihe yazmaktansa hiç yazmamak doğru.
+ */
 export async function takeCfoSnapshotAction(note?: string): Promise<ActionResult> {
   const user = await guard();
   if (!user) return PERM_DENIED;
   try {
     const { raw } = await loadCfoData();
     const o = computeCfo(raw);
+
+    const [servet] = await prisma.$queryRaw<
+      { varlik: unknown; borc: unknown; servet_try: unknown; servet_usd: unknown; kur: unknown }[]
+    >`select varlik, borc, servet_try, servet_usd, kur from cfo_servet`;
+
+    const kalemler = await prisma.$queryRaw<{ tur: string; kalem: string; tutar: unknown }[]>`
+      select tur, kalem, tutar from cfo_servet_kalem order by sira`;
+
+    if (!servet || kalemler.length === 0) {
+      return {
+        ok: false,
+        message: "Servet görünümü (cfo_servet) boş — snapshot alınmadı. Stok değerlemesi kontrol edilmeli.",
+      };
+    }
+
+    const num = (v: unknown) => (v == null ? 0 : Number(v));
+    const topla = (esle: (k: { tur: string; kalem: string }) => boolean) =>
+      kalemler.filter((k) => k.tur !== "RISKLI" && esle(k)).reduce((a, k) => a + num(k.tutar), 0);
+
+    // Stok = iki stok satırının toplamı. Çıkarma ile türetmiyoruz ki ikinci bir
+    // stok tanımı doğmasın.
+    const stockTry = topla((k) => k.kalem.startsWith("Stok"));
+    // Dar tanım = manşet − yoldaki malın net katkısı (varlık satırları + borç satırı).
+    const yoldakiNet = topla((k) => k.kalem.startsWith("Yoldaki"));
+    const kur = num(servet.kur) || 1;
+    const wideTry = num(servet.servet_try);
+    const narrowTry = wideTry - yoldakiNet;
+
     await prisma.cfoSnapshot.create({
       data: {
-        netWorthTry: o.narrowWorthTry, netWorthUsd: o.narrowWorthUsd,
-        wideWorthTry: o.wideWorthTry, wideWorthUsd: o.wideWorthUsd,
-        cashTry: o.netCashTry, receivablesTry: o.receivablesPendingTry,
-        stockTry: o.sellableStockTry, debtTry: o.totalFinancialDebtTry,
-        usdTryRate: o.usdTry, note: note ?? null,
+        netWorthTry: narrowTry,
+        netWorthUsd: narrowTry / kur,
+        wideWorthTry: wideTry,
+        wideWorthUsd: num(servet.servet_usd),
+        cashTry: o.netCashTry,
+        receivablesTry: o.receivablesPendingTry,
+        stockTry,
+        debtTry: num(servet.borc),
+        usdTryRate: kur,
+        note: note ?? null,
       },
     });
     revalidateCfo();

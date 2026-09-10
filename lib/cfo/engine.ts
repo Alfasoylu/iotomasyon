@@ -263,6 +263,14 @@ export function computeCfo(input: CfoInput): CfoOverview {
     .sort((a, b) => b.amount - a.amount);
 
   // ── Stok ──
+  // DİKKAT (10.09.2026): bu üç alan ELLE GİRİLMİŞ USD sabitlerinden türer
+  // (cfo_settings.stockCostUsd / blockedStockUsd). Kimse güncellemediği için
+  // aylarca donuk kaldılar ve serveti yanlış gösterdiler. Artık ekrana
+  // BASILMIYORLAR ve snapshot'a YAZILMIYORLAR.
+  //
+  // Gerçek stok değeri: `cfo_stok_deger` → `cfo_servet` (lib/cfo/wealth.ts).
+  // Buradaki alanlar yalnız geriye dönük uyumluluk için duruyor; yeni bir yerde
+  // kullanmadan önce wealth.ts'e bak.
   const sellableStockTry = s ? num(s.stockCostUsd) * usdTry : 0;
   const blockedStockTry = s ? num(s.blockedStockUsd) * usdTry : 0;
   const inTransitStockTry = input.imports
@@ -361,6 +369,10 @@ export function computeCfo(input: CfoInput): CfoOverview {
   }
 
   // ── Net ticari servet ──
+  // DİKKAT: aşağıdaki dört alan yukarıdaki sabit-tabanlı stok rakamını kullanır,
+  // dolayısıyla GERÇEK servet DEĞİLDİR. Kokpit ve snapshot artık cfo_servet
+  // görünümünü okuyor. Bu alanlar silinmedi çünkü target/progress hesabı hâlâ
+  // burada; ama hiçbir ekran bunları basmıyor.
   const narrowWorthTry = netCashTry + receivablesPendingTry + sellableStockTry - cardDebtTry - loanEarlyPayoffTry;
   const wideWorthTry = narrowWorthTry + inTransitStockTry + blockedStockTry;
   const narrowWorthUsd = narrowWorthTry / usdTry;

@@ -9,20 +9,22 @@
 
 import Link from "next/link";
 import {
-  Wallet, CreditCard, Landmark, Ship, Target, AlertTriangle,
+  Wallet, CreditCard, Landmark, Ship, AlertTriangle,
   TrendingUp, ArrowRight, PiggyBank,
 } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
+import { loadWealth } from "@/lib/cfo/wealth";
 import { buildDailyActions } from "@/lib/cfo/engine";
-import { fmtTry, fmtUsd, fmtPct, fmtDate, fmtNum } from "@/lib/cfo/format";
+import { fmtTry, fmtPct, fmtDate, fmtNum } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrafficBadge } from "@/components/cfo/badges";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
+import { WealthSection } from "./wealth-section";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +39,8 @@ export default async function CfoPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
 
   const { raw, overview: o } = await loadCfoData();
+  // Hedef tarihi ayarlardan geldiği için servet yüklemesi buna bağlı; sıralı.
+  const servet = await loadWealth(raw.settings?.wealthTargetDate ?? null);
 
   if (!raw.settings) {
     return (
@@ -55,6 +59,12 @@ export default async function CfoPage() {
   }
 
   const actions = buildDailyActions(o, raw);
+  // Stok KPI'si servet görünümünden okunur — engine'in sabitinden değil.
+  const num = (v: unknown) => (v == null ? 0 : Number(v));
+  const stokNrv = num(servet.kalemler.find((k) => k.kalem.startsWith("Stok — net"))?.tutar);
+  const yoldaki = servet.kalemler
+    .filter((k) => k.tur === "VARLIK" && k.kalem.startsWith("Yoldaki"))
+    .reduce((a, k) => a + num(k.tutar), 0);
   const h30 = o.horizons.find((h) => h.days === 30);
   const h60 = o.horizons.find((h) => h.days === 60);
 
@@ -125,8 +135,10 @@ export default async function CfoPage() {
       <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard label="Pazaryeri alacağı" value={fmtTry(o.receivablesPendingTry)} icon={Wallet} href="/cfo/alacaklar"
           hint={`${o.receivablesByChannel.length} kanal`} />
-        <MetricCard label="Satılabilir stok" value={fmtTry(o.sellableStockTry)} icon={Ship}
-          hint={`Yoldaki ${fmtTry(o.inTransitStockTry)} · Bloke ${fmtTry(o.blockedStockTry)}`} />
+        {/* Eskiden cfo_settings.stockCostUsd sabitini basıyordu (100.000 USD, kimse
+            güncellemiyordu). Artık gerçek stoktan: net gerçekleşebilir değer. */}
+        <MetricCard label="Satılabilir stok" value={fmtTry(stokNrv)} icon={Ship}
+          hint={`Net gerçekleşebilir · yoldaki ${fmtTry(yoldaki)} ayrı satırda`} />
         <MetricCard label="Aylık borç servisi" value={fmtTry(o.loanMonthlyServiceTry + o.cardMinTotalTry)} icon={CreditCard}
           status={o.debtServiceRatio == null ? "neutral" : o.debtServiceRatio <= 0.4 ? "ok" : o.debtServiceRatio <= 0.6 ? "warn" : "danger"}
           hint={o.debtServiceRatio != null ? `Tahsilatın ${fmtPct(o.debtServiceRatio)}'i` : "Ciro verisi gerekli"} />
@@ -135,31 +147,13 @@ export default async function CfoPage() {
           hint="Tahsilat − sabit gider − borç servisi" />
       </section>
 
-      {/* ── Hedef ── */}
-      {o.target && (
-        <Card className="mb-6 p-5">
-          <div className="mb-3 flex items-center gap-2">
-            <Target size={16} className="text-[var(--accent)]" />
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-              Net ticari servet hedefi — {fmtUsd(o.target.usd)}
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-            <Field label="Bugünkü servet (geniş)" value={fmtUsd(o.wideWorthUsd)} sub={fmtTry(o.wideWorthTry)} />
-            <Field label="Dar tanım" value={fmtUsd(o.narrowWorthUsd)} sub="Yoldaki + bloke stok hariç" />
-            <Field label="Hedefe kalan" value={fmtUsd(o.target.remainingUsd)} />
-            <Field label="Kalan süre" value={o.target.monthsLeft != null ? `${o.target.monthsLeft.toFixed(1)} ay` : "—"} />
-            <Field label="Gereken aylık artış" value={o.target.requiredMonthlyUsd != null ? fmtUsd(o.target.requiredMonthlyUsd) : "—"} />
-          </div>
-          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-3)]">
-            <div
-              className="h-full rounded-full bg-[var(--accent)]"
-              style={{ width: `${Math.max(0, Math.min(100, o.target.progress * 100))}%` }}
-            />
-          </div>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">Gerçekleşme {fmtPct(o.target.progress)}</p>
-        </Card>
-      )}
+      {/* ── Servet ── */}
+      {/* 10.09.2026: servet artık engine'in elle girilmiş USD sabitlerinden değil,
+          cfo_servet görünümünden geliyor. Eski kart wideWorthUsd basıyordu. */}
+      <WealthSection
+        veri={servet}
+        hedefUsd={raw.settings?.usdWealthTarget != null ? Number(raw.settings.usdWealthTarget) : null}
+      />
 
       {/* ── Forecast ── */}
       <Card className="mb-6 p-5">
