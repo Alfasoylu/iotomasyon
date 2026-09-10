@@ -197,6 +197,18 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — CFO / Ayın Kazananları sayfası
+CFO veri katmanını kurdu (`cfo_ay_kazanan` dondurulmuş tablo + `cfo_ay_kazanan_ozet`,
+20 ay geriye doldurulmuş) ama ekran yoktu. Sayfa yazıldı: ay seçici, ilk 10 tablosu,
+aylık seyir. Şartnameye üç ekleme yapıldı — CFO raporunda olmayan bulgular:
+(1) `oran_guveni` satır bazında gösteriliyor; Ağustos'ta ilk 10 kârının %76,8'i
+ölçülmemiş kanal oranına dayanıyor (Mayıs'ta %23,4 idi — ölçüm kalitesi düşmüş).
+(2) Kapsam %14,9→%98,6 arasında değiştiği için aylar karşılaştırılamaz; zayıf aylar
+soluk ve uyarı metni bunu açıkça söylüyor. (3) Toplam kâr negatif olan aylarda "pay"
+yüzdesi anlamsız olduğu için sütun gizleniyor.
+Etki: `app/(app)/cfo/kazananlar/page.tsx`, `app/(app)/layout.tsx`,
+`components/dashboard/sidebar.tsx`.
+
 ### 10.09.2026 — Ödeme Takvimi: defter denetimi rozeti
 CFO `cfo_defter_denetim()` fonksiyonunu kurdu (10 kontrol) ama yalnız sabah
 koşusunda çalışıyordu. Sayfaya bağlandı: en üstte, rakamlardan önce. Temizse tek

@@ -51,6 +51,7 @@ import {
   ChevronRight,
   type LucideIcon,
   CalendarClock,
+  Trophy,
 } from "lucide-react";
 
 import { useSidebarStore } from "@/hooks/use-sidebar-store";
@@ -85,6 +86,7 @@ const ICONS: Record<string, LucideIcon> = {
   target: Target,
   package: Package,
   calendar: CalendarClock,
+  trophy: Trophy,
   folderTree: FolderTree,
   search: Search,
   warehouse: Warehouse,

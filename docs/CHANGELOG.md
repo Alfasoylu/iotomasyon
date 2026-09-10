@@ -9,6 +9,30 @@
 
 ## 2026-09
 
+### CFO — Ayın Kazananları: kârı hangi ürün getirdi (2026-09-10)
+
+- **`/cfo/kazananlar` eklendi.** CFO'nun kurduğu `cfo_ay_kazanan` (ay kapanışında
+  dondurulan tablo, 20 ay geriye doldurulmuş) ve `cfo_ay_kazanan_ozet` görünümü
+  ekrana bağlandı: ay seçici, ilk 10 ürün tablosu ve aylık seyir.
+- **Dondurulmuş tablo bilinçli.** `Product.unitCostTry` bugünkü maliyet; geçmiş ayın
+  kârını bugünkü maliyetle hesaplamak rakamı her ay değiştirirdi. Ay kapanınca donuyor.
+- **Kargo yüzdesi ayrı sütun.** Düz kanal net oranıyla hesaplanan kâr, düşük fiyatlı
+  ürünlerde %43'e kadar abartılıyordu (Bluetooth Dongle 39.888 → 22.934, sıralaması
+  2. → 4.). Kargonun kârı nerede yediği artık doğrudan görünüyor.
+- **Oran güveni satır bazında.** `oran_guveni` o ürünün satıldığı kanallar içindeki EN
+  KÖTÜ net-oran güvenidir. Ağustos'ta ilk 10'un kârının **%76,8'i (225.636 TL)** oranı
+  ölçülmemiş kanallara dayanıyor (Pazarama, Temu %65 varsayıldı) — Mayıs'ta bu oran
+  %23,4'tü. Ölçüm kalitesi düşmüş; sayfa %40'ı aşınca uyarıyor.
+- **Kapsam < %85 olan aylar karşılaştırılamaz.** Kapsam 20 ayda %14,9'dan %98,6'ya
+  çıkmış; bu aralıkta "kâr 5 kat arttı" demek ölçüm iyileşmesini kâr artışı saymak olur.
+  Zayıf aylar hem ay seçicide hem seyir tablosunda soluk, uyarı metni açıkça
+  "karşılaştırılamaz" diyor.
+- **Top-10 payı > %100 bir bulgudur.** 2025-12'de %183,2 — ilk 10 dışındaki ürünler
+  44.125 TL zarar yazmış. Kırmızı uyarı olarak çıkıyor.
+- **Toplam kâr negatifse pay sütunu gizleniyor.** 2025-02 (−79.267 TL) ve 2025-03
+  (−42.002 TL) aylarında "pay" negatif bir bütünün yüzdesiydi; okunamaz bir sayıyı
+  göstermek yerine sütun kaldırılıp durum yazıyla anlatılıyor.
+
 ### CFO — Ödeme Takvimi: gelen/giden para tek listede (2026-09-10)
 
 - **`/cfo/odemeler` eklendi.** Kredi taksiti, kart ödemesi, sabit gider, vergi/gümrük
