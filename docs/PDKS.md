@@ -197,6 +197,25 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 10.09.2026 — Kazananlar 500 hatası + yoldaki mal öneriye dahil
+İki bildirim: sayfa açılmıyor, ve "ekim başı gelecek ürünler yok sayılıyor".
+
+(1) 500 hatası bendendi: `cfo_aylik_urun_kar`'da `channel` sütunu olduğunu varsaymışım.
+Sütun listesini iki tabloyu birleşik okuyup yanlış çıkarım yapmıştım; o view ürün×ay
+düzeyinde ve yalnız `kanal_sayisi` tutuyor. Kanal adı `cfo_satis_birim`de. Düzeltildi.
+
+(2) Asıl eksik yapısaldı: `cfo_yoldaki_mal` yalnız para tutuyordu, içerik hiçbir
+tabloda yoktu. `cfo_yoldaki_kalem` + `cfo_yolda_sku` + `cfo_yoldaki_kapsam` kuruldu;
+`cfo_ithalat_oneri` artık yoldaki malı düşüyor. `yolda_yeterli` bilerek iki koşullu:
+tükenişten önce varış VE en az bir aylık satışı karşılayan adet.
+
+07.26sea'nın faturası (`30062601_COMMERCIAL_INVOICE_40GP.xlsx`) 07.09'da cfo-files
+kovasında bulundu ama proxy supabase.co'ya çıkışı kestiği için indirilemedi. Kapsam
+şu an 0/152 ve sayfa bunu kırmızı uyarıyla yazıyor — eksikliği gizlemek, düzeltilen
+hatanın aynısını yapmak olurdu.
+Etki: `prisma/migrations/20260911000000_cfo_yoldaki_kalem/`,
+`app/(app)/cfo/kazananlar/{page,import-order}.tsx`.
+
 ### 10.09.2026 — Satır bazında soru-cevap: bilgi iki yönlü akıyor
 Alperen'in isteği: "eksik bilgilerinle ilgili soruları satır sonundan sor, ben de neden
 bu ürünü yazmamak gerektiğini aynı yerden yazayım, bilgilerimiz bütünleşsin".

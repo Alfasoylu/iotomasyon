@@ -30,6 +30,7 @@ import {
   type OneriSatiri,
   type OneriOzeti,
   type CiroHedefi,
+  type YoldakiKapsam,
 } from "./import-order";
 import { QaRow, type PanelSorusu, type PanelKarari } from "@/components/cfo/row-qa-panel";
 import {
@@ -117,7 +118,7 @@ export default async function CfoWinnersPage({
 
   // Kazanan listesi ile ithalat önerisi aynı ekranda: kârı getiren ürünün stoğu
   // bitiyorsa kazanan liste bir sonraki ay küçülür. Üç sorgu da salt-okunur view.
-  const [satirlar, oneriOzet, oneriSatir, ciroHedef, dusukKanal] = await Promise.all([
+  const [satirlar, oneriOzet, oneriSatir, ciroHedef, yoldakiKapsam, dusukKanal] = await Promise.all([
     prisma.$queryRaw<Satir[]>`
       select sira, sku, ad, category, adet, brut_ciro, kargo_pct, net_kar, marj_pct,
              kar_payi_pct, oran_guveni, kanal_sayisi, siparis_satiri
@@ -125,6 +126,7 @@ export default async function CfoWinnersPage({
     prisma.$queryRaw<OneriOzeti[]>`select * from cfo_ithalat_oneri_ozet order by mod`,
     prisma.$queryRaw<OneriSatiri[]>`select * from cfo_ithalat_oneri order by mod, sira`,
     prisma.$queryRaw<CiroHedefi[]>`select * from cfo_ciro_hedef`,
+    prisma.$queryRaw<YoldakiKapsam[]>`select * from cfo_yoldaki_kapsam order by eta nulls last, kod`,
     // Hangi ürün, oranı ÖLÇÜLMEMİŞ hangi kanalda satmış? Soru bunu adıyla sorabilsin diye.
     // Kanal bilgisi satır düzeyinde `cfo_satis_birim`de; `cfo_aylik_urun_kar` ürün×ay
     // düzeyinde toplandığı için orada kanal ADI yok (yalnız kanal_sayisi var).
@@ -426,6 +428,7 @@ export default async function CfoWinnersPage({
           ozet={oneriOzet}
           satirlar={oneriSatir}
           hedef={ciroHedef[0] ?? null}
+          yoldaki={yoldakiKapsam}
           sorular={ithalatSoru}
           kararlar={urunKarar}
         />

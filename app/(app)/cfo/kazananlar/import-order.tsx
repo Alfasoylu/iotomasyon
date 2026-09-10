@@ -64,7 +64,25 @@ export type OneriSatiri = {
   karar_sebep: string | null;
   karar_bitis: Date | null;
   haric: boolean;
+  yolda_adet: number;
+  yolda_eta: Date | null;
+  yolda_parti: string | null;
+  yolda_yeterli: boolean;
   sira: number;
+};
+
+/** Yoldaki partinin içeriğinin ne kadarı sisteme girilmiş. */
+export type YoldakiKapsam = {
+  kod: string;
+  aciklama: string | null;
+  durum: string;
+  risk: string;
+  eta: Date | null;
+  beklenen_kalem: number | null;
+  beklenen_adet: number | null;
+  girilen_kalem: number;
+  girilen_adet: number;
+  kapsam_pct: unknown;
 };
 
 export type OneriOzeti = {
@@ -77,6 +95,7 @@ export type OneriOzeti = {
   gecikmis_satir: number;
   kopru_satir: number;
   haric_satir: number;
+  yolda_satir: number;
   termin_gun: number;
   en_erken_tukenis: Date | null;
   en_erken_son_siparis: Date | null;
@@ -343,6 +362,12 @@ function ModTablosu({
                     min adet
                   </Badge>
                 )}
+                {s.yolda_adet > 0 && (
+                  <Badge variant={s.yolda_yeterli ? "ok" : "info"} className="font-sans">
+                    yolda {fmtNum(s.yolda_adet)} adet
+                    {s.yolda_eta ? ` · ${fmtDate(s.yolda_eta)}` : ""}
+                  </Badge>
+                )}
               </p>
             </Td>
             <Td right strong>{fmtNum(s.onerilen_adet)}</Td>
@@ -368,12 +393,15 @@ export function ImportOrderSection({
   ozet,
   satirlar,
   hedef,
+  yoldaki,
   sorular,
   kararlar,
 }: {
   ozet: OneriOzeti[];
   satirlar: OneriSatiri[];
   hedef: CiroHedefi | null;
+  /** Yoldaki partiler ve içeriklerinin kapsama oranı. */
+  yoldaki: YoldakiKapsam[];
   /** entity_key ("MOD|SKU") → o satırın soruları. */
   sorular: Map<string, PanelSorusu[]>;
   /** SKU → kalıcı ürün kararı. */
@@ -392,6 +420,15 @@ export function ImportOrderSection({
   // Hava köprüsü satırları iki listede birden görünür; benzersiz SKU sayısı için tekilleştirilir.
   const kopruSku = new Set(satirlar.filter((s) => s.kopru).map((s) => s.sku));
   const haricSatirlar = satirlar.filter((s) => s.haric);
+  const yoldaSatirlar = satirlar.filter((s) => s.yolda_yeterli);
+  // İçeriği girilmemiş, riskli olmayan, yolda duran partiler: bunların malı
+  // öneriden düşülemiyor demektir.
+  const eksikYoldaki = yoldaki.filter(
+    (y) => y.risk !== "RISKLI" && (y.beklenen_kalem ?? 0) > y.girilen_kalem,
+  );
+  const icerigiYokYoldaki = yoldaki.filter(
+    (y) => y.risk !== "RISKLI" && y.beklenen_kalem == null && y.girilen_kalem === 0,
+  );
   const cevapsizSoru = [...sorular.values()].flat().filter((q) => !q.cevap).length;
   const minAdet = ozet[0]?.min_adet_kural ?? 5;
   const enKucukAdet = satirlar.length > 0 ? Math.min(...satirlar.map((s) => s.onerilen_adet)) : 0;
@@ -491,6 +528,34 @@ export function ImportOrderSection({
             hava köprüsüdür: hava partisi stoku şimdi yetiştirir, deniz partisi asıl stoku
             getirir. İkisi de verilecekse adetler toplanır — tek sipariş sanıp birini iptal
             etmeyin.
+          </Uyari>
+        )}
+
+        {eksikYoldaki.map((y) => (
+          <Uyari ton="danger" key={y.kod}>
+            <strong>{y.kod}</strong> partisi
+            {y.eta ? ` ${fmtDate(y.eta)} tarihinde` : " yolda ve"} geliyor —{" "}
+            {fmtNum(y.beklenen_kalem ?? 0)} kalem, {fmtNum(y.beklenen_adet ?? 0)} adet. Ama
+            içeriğinin yalnız <strong>{fmtNum(y.girilen_kalem)} kalemi</strong> sisteme
+            girilmiş (%{n(y.kapsam_pct).toFixed(0)}). Yani aşağıdaki öneriler bu malı{" "}
+            <strong>yok sayıyor</strong>: rafa girecek bir ürün yeniden sipariş listesinde
+            duruyor olabilir. Faturayı (kalem · adet · SKU) girmeden bu parti için
+            &quot;alalım mı&quot; sorusu güvenilir cevaplanamaz.
+          </Uyari>
+        ))}
+
+        {icerigiYokYoldaki.map((y) => (
+          <Uyari ton="warn" key={y.kod}>
+            <strong>{y.kod}</strong> partisi yolda ama ne kaç kalem olduğu ne de içeriği
+            biliniyor. Öneriler bu partiyi de yok sayıyor.
+          </Uyari>
+        ))}
+
+        {yoldaSatirlar.length > 0 && (
+          <Uyari ton="info">
+            {yoldaSatirlar.length} kalem zaten yolda ve tükenişten önce rafa gireceği için
+            öneriden çıkarıldı; tutara girmiyorlar. Tabloda &quot;yolda&quot; rozetiyle
+            duruyorlar.
           </Uyari>
         )}
 

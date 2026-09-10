@@ -9,6 +9,34 @@
 
 ## 2026-09
 
+### CFO — Sipariş önerisi artık yoldaki malı biliyor (2026-09-10)
+
+- **Bulunan hata (Alperen bildirdi):** `/cfo/kazananlar` 500 veriyordu.
+  `cfo_aylik_urun_kar`'da `channel` sütunu yok — sütun listesini iki tabloyu birleşik
+  okuyup yanlış çıkarım yapmıştım. O view ürün×ay düzeyinde toplanıyor ve yalnız
+  `kanal_sayisi` tutuyor. Kanal adı satır düzeyinde `cfo_satis_birim`de; sorgu oraya
+  alındı (`Product` üzerinden sku join'i ile).
+- **Yapısal eksik:** `cfo_yoldaki_mal` yalnız PARA tutuyordu; konteynerin içinde ne
+  olduğu hiçbir tabloda yoktu — yalnız serbest metin notta ve orada da sadece ciro
+  bakımından ilk 7 kalem adıyla geçiyordu. Sonuç: sipariş önerisi 05.10'da rafa
+  girecek malı yok sayıyor, aynı ürünü yeniden sipariş etmeyi önerebiliyordu.
+- **`cfo_yoldaki_kalem` tablosu** eklendi: parti içeriği kalem kalem (sku, ad, adet,
+  birim maliyet, GTİP). SKU kataloğumuzda olmayabilir (07.26sea'da 152'nin 148'i yoktu),
+  o satırlar da tutuluyor.
+- **`cfo_yolda_sku`** görünümü SKU bazında yoldaki adedi ve en yakın varışı veriyor.
+  Adli süreçteki parti (Romanya 1.) hariç: mülkiyeti bizde değil, "gelecek mal" sayılmaz.
+- **Öneri görünümü düşüyor.** `yolda_yeterli` iki koşul birden arıyor: (a) tükenişten
+  önce rafa girecek, (b) adedi en az bir aylık satışı karşılıyor. "Yolda bir şeyler var"
+  demek yetmez — 3 adet gelen, 40 adet/ay satan ürünü kurtarmaz. Yeterli olan kalem
+  tutara ve minimum 10.000 USD eşiğine GİRMİYOR, tabloda "yolda" rozetiyle duruyor.
+- **`cfo_yoldaki_kapsam`** görünümü içeriğin ne kadarının girildiğini ölçüyor ve sayfa
+  bunu SAKLAMIYOR: bugün 07.26sea için **0/152 kalem (%0)**. Kırmızı uyarı, önerilerin
+  bu malı yok saydığını açıkça yazıyor — "yoldaki mal yok" ile "yoldaki mal bilinmiyor"
+  farklı şeylerdir.
+- **Fatura bulundu ama okunamadı.** `30062601_COMMERCIAL_INVOICE_40GP.xlsx` 07.09'da
+  `cfo-files` kovasına yüklenmiş; ajan proxy'si supabase.co'ya çıkışı kestiği için
+  indirilemedi. Mekanizma kuruldu, liste girilmeyi bekliyor.
+
 ### CFO — Satır bazında soru-cevap ve ürün kararı (2026-09-10)
 
 - **Her satırın sonunda açılır bilgi alanı.** `/cfo/kazananlar` içindeki ithalat öneri
