@@ -9,6 +9,26 @@
 
 ## 2026-09
 
+### Yeni Ürünler — marka faturadan dolduruldu, Flextail başlıkları düzeltildi (2026-09-11)
+
+- **İki marka var, hepsine "Alfas" yazmak hataydı.** Ürettiğim 147 başlığın
+  hepsine "Alfas" öneki koymuştum; oysa 4 ürün **Flextail**. Hepsiburada başlığın
+  MARKA ile başlamasını istediği için bu üçü (dördüncüsünün başlığı yok) yanlış
+  markayla listelenecekti.
+- **Marka kanıttan dolduruldu, başlıktan değil.** Başlıklar zaten benim koyduğum
+  öneki taşıdığı için kanıt olamazdı; faturadaki orijinal metne bakıldı.
+  Sonuç: **83 Alfas** (faturada "ALFAS" geçiyor), **4 Flextail** (2'si faturadan,
+  2'si katalog adından), **64 boş** — ikisi de yazmıyor, marka uydurulmadı.
+- Flextail ürünlerinin başlığındaki yanlış "Alfas" öneki söküldü
+  (`Alfas Flextail 4 Fonksiyonlu…` → `Flextail 4 Fonksiyonlu…`).
+- **Üretici artık markayı faturadan okuyor** (`marka_bul`), başta hangi marka
+  yazıyorsa söküp doğrusunu koyuyor — çift önek üretmiyor.
+- **Panelde uyarı:** marka yazılı ve başlık onunla başlamıyorsa alan sarıya
+  dönüyor ve ipucu bunu söylüyor. Bu hatanın tekrarını yakalar.
+- `AS304179` inox olarak teyit edildi; başlık zaten "… 304 Paslanmaz Çelik inox"
+  olduğu için değişiklik gerekmedi.
+- Yeni ürünlerin puan ortalaması 32,1 → **35,6**.
+
 ### Yeni Ürünler — katalogda olan 24 ürün "yeni" sayılıyordu (2026-09-11)
 
 - **Hata:** Liste, 07.26sea konteynerindeki 151 kalemin hepsini yeni ürün

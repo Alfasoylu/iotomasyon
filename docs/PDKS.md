@@ -197,6 +197,30 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 11.09.2026 — Marka faturadan dolduruldu, Flextail başlıkları düzeltildi
+Alperen: "marka bazılarında alfas bazılarında flextail olmalı / ikisinden biri
+yazıyorsa yazanla doldur" + "AS304179 inox".
+
+Marka dolduracakken bir hatamı buldum: ürettiğim 147 başlığın **hepsine** "Alfas"
+öneki koymuştum, oysa 4 ürün Flextail. Hepsiburada başlığın MARKA ile başlamasını
+istediği için bu ürünler yanlış markayla listelenecekti.
+
+Bu yüzden markayı başlıktan okumak olmazdı — başlık zaten benim koyduğum öneki
+taşıyor, kendi hatamı kanıt sayardım. Faturadaki orijinal metne bakıldı:
+83 Alfas, 4 Flextail (2'si faturadan, 2'si katalog adından), 64 boş. Boş kalan
+64'e marka uydurulmadı; Alperen'in kuralı "yazıyorsa yazanla doldur"du.
+
+Flextail başlıklarındaki yanlış önek söküldü. Üretici de düzeltildi: markayı
+faturadan okuyor, baştaki yanlış markayı söküp doğrusunu koyuyor. Panelde de
+uyarı var — marka yazılıysa ve başlık onunla başlamıyorsa alan sarıya dönüyor.
+
+AS304179 inox olarak teyit edildi; başlık zaten inox diyordu, değişmedi.
+Yeni ürünlerin puan ortalaması 32,1 → 35,6.
+
+**Açık kalan:** 64 üründe marka yazmıyor. Hepsi kendi üretimimiz olduğuna göre
+muhtemelen Alfas ama bu tahmin; Alperen'e soruldu.
+Etki: `scripts/urun-basligi-uret.py`, `app/(app)/admin/yeni-urunler/[sku]/editor.tsx`.
+
 ### 11.09.2026 — "Yeni Ürünler"in 24'ü aslında yeni değilmiş
 Alperen: "4902837173724 ve 4267192047364 bizim zaten sattığımız ürün ama yeni
 gibi koymuşsun buraya."

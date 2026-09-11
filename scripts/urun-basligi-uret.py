@@ -25,7 +25,11 @@ Uydurma yok: hiçbir bilgi faturada yoksa başlığa girmez; veri yoksa None dö
 """
 import re, json
 
+# İKİ MARKA VAR. Hepsine "Alfas" yazmak hataydı: Flextail ürünlerinin başlığı
+# da "Alfas …" oluyordu, oysa Hepsiburada başlığın MARKA ile başlamasını istiyor.
+# Marka faturadaki metinden okunur; yazmıyorsa uydurulmaz, varsayılan kullanılır.
 BRAND = "Alfas"
+MARKALAR = ["Flextail", "Alfas"]  # sırası önemli: önce daha özel olan aranır
 # Trendyol 100 karakterde kesiyor — üç pazaryerinin en dar sınırı o, hedef odur.
 MAX = 100
 
@@ -244,12 +248,27 @@ def buyuk_harf_duzelt(s):
     return " ".join(kelime(w) for w in s.split())
 
 
-def markala(s):
+def marka_bul(invoice, katalog_ad=None):
+    """Faturada (ya da katalog adında) hangi marka geçiyorsa odur.
+
+    Yazmıyorsa None döner — marka uydurulmaz. Çağıran varsayılanı seçer.
+    """
+    metin = f"{invoice or ''} {katalog_ad or ''}"
+    metin = kucuk(metin).replace("flextaıl", "flextail")
+    for m in MARKALAR:
+        if kucuk(m) in metin:
+            return m
+    return None
+
+
+def markala(s, marka=None):
+    """Başlığı marka ile başlatır. Başta zaten marka varsa çoğaltmaz."""
     if not s:
         return None
-    if re.match(r"^\s*alfas\b", s, re.I):
-        return re.sub(r"^\s*alfas\b", BRAND, s, flags=re.I)
-    return f"{BRAND} {s}"
+    m = marka or BRAND
+    # Başta hangi marka yazıyorsa (yanlış olan da dahil) sök, doğrusunu koy.
+    s = re.sub(r"^\s*(?:" + "|".join(MARKALAR) + r")\b[\s,-]*", "", s, flags=re.I)
+    return f"{m} {s}".strip()
 
 
 # Varyantı ayırt eden renk/kaplama — başlığın SONUNDA olur ve kırpmada ilk
@@ -315,14 +334,15 @@ def _kirp_govde(t, sinir):
     return aday
 
 
-def baslik(sku, invoice):
+def baslik(sku, invoice, katalog_ad=None):
+    marka = marka_bul(invoice, katalog_ad) or BRAND
     if sku in CEVIRI:
-        return CEVIRI[sku], "ceviri"
+        return markala(CEVIRI[sku], marka), "ceviri"
     t = temizle(invoice)
     if not t or len(t) < 8:
         return None, "yetersiz"
     t = buyuk_harf_duzelt(t)
-    t = markala(t)
+    t = markala(t, marka)
     t = _tekrari_at(re.sub(r"\s+", " ", t).strip())
     t = _kirp(t)
     return (t, "temiz") if len(t) >= 20 else (t, "kisa")

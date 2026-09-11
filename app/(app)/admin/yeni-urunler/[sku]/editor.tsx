@@ -283,6 +283,13 @@ export function AdayEditor({
     });
   }
 
+  // Marka yazılıysa başlık onunla başlamalı (Hepsiburada kuralı). Flextail
+  // ürünlerinin başlığına yanlışlıkla "Alfas" öneki konmuştu; bu uyarı onu yakalar.
+  const markaUyumsuz =
+    form.marka.trim().length > 0 &&
+    form.ad_tr.trim().length > 0 &&
+    !form.ad_tr.trim().toLocaleLowerCase("tr").startsWith(form.marka.trim().toLocaleLowerCase("tr"));
+
   // Excel şablonlarına giren görseller: Çince bilgi görseli BURADA YOK.
   // Sıra sunucudan geliyor (tek `sira` sütunu) — burada yeniden sıralamıyoruz ki
   // ekranda gördüğün sıra ile Excel'e giden sıra aynı olsun.
@@ -323,12 +330,20 @@ export function AdayEditor({
           <div className="sm:col-span-2">
             <Alan
               etiket="Türkçe ürün adı"
-              ipucu="Hepsiburada kuralı: MARKA ile başlamalı. Trendyol 100 karakterde kesiyor."
+              ipucu={
+                markaUyumsuz
+                  ? `Başlık "${form.marka}" ile başlamıyor — Hepsiburada başlığın MARKA ile başlamasını istiyor.`
+                  : "Hepsiburada kuralı: MARKA ile başlamalı. Trendyol 100 karakterde kesiyor."
+              }
               sayac={<BaslikSayaci uzunluk={form.ad_tr.length} />}
             >
               <input
                 className={`${inputCls} ${
-                  form.ad_tr.length > BASLIK_TRENDYOL ? "border-[var(--danger-border)]" : ""
+                  form.ad_tr.length > BASLIK_TRENDYOL
+                    ? "border-[var(--danger-border)]"
+                    : markaUyumsuz
+                      ? "border-[var(--warn-border)]"
+                      : ""
                 }`}
                 value={form.ad_tr}
                 onChange={(e) => set("ad_tr", e.target.value)}
