@@ -197,6 +197,19 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 11.09.2026 — Görsel yüklemede 404: sunucu eylemi gövde sınırı
+Alperen: "yükleme limiti mi var, yeni görsel yüklediğimde site 404 veriyor."
+Vardı ama benim koyduğum limit değil: Next.js sunucu eylemlerinde gövde sınırı
+varsayılan 1 MB ve aşan istek sunucu koduna ULAŞMADAN reddediliyor — runtime
+log'da POST kaydı olmaması teşhisi verdi. Eyleme yazdığım 10 MB anlamsızdı.
+
+Sınırı yükseltmek tek başına yanlış çözüm olurdu (Vercel ~4,5 MB'ta keser).
+Asıl çözüm istemcide küçültme: 2000 piksel + JPEG, ~300-800 KB. Pazaryerleri
+zaten 2000'den fazlasını kullanmıyor. EXIF dönüklüğü, saydam PNG ve GIF
+animasyonu için ayrı ayrı önlem alındı.
+Etki: `next.config.ts`, `lib/urun-aday/gorsel-kucult.ts`,
+`app/(app)/admin/yeni-urunler/[sku]/editor.tsx`, `lib/actions/urun-aday-actions.ts`.
+
 ### 10.09.2026 — Kayıt hatası + 07.26sea içeriği yüklendi
 Alperen: "cevap veriyorum ama kaydedilemedi diyor". Sebep bendendi:
 `cfo_change_log.kind` CHECK ile sınırlı ve ben listede olmayan "cevap" değerini

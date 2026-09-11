@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Varsayılan 1 MB. Aşan istek sunucu koduna ULAŞMADAN reddediliyor ve
+      // tarayıcı 404 görüyor — log'a hiçbir şey düşmediği için teşhisi zor.
+      // 4 MB seçildi çünkü Vercel'de istek gövdesi ~4,5 MB'ta zaten duvara
+      // çarpıyor; daha yükseği yazmak sınırı taşımaz, sadece gizler.
+      // Asıl çözüm istemcide küçültme: lib/urun-aday/gorsel-kucult.ts
+      bodySizeLimit: "4mb",
+    },
+  },
   async redirects() {
     return [
       // Personel ekranı /pdks'ten /personel'e taşındı; eski linkler/QR çalışsın.

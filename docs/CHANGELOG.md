@@ -9,6 +9,28 @@
 
 ## 2026-09
 
+### Ürün görseli yüklemede 404 — sunucu eylemi gövde sınırı (2026-09-11)
+
+- **Belirti:** `/admin/yeni-urunler/AS304167`'ye yeni görsel yüklenince site 404
+  veriyordu. Runtime log'da POST kaydı YOKTU — istek sunucu koduna hiç ulaşmıyordu.
+- **Sebep:** Next.js sunucu eylemlerinde gövde sınırı varsayılan **1 MB**
+  (`experimental.serverActions.bodySizeLimit`). Aşan istek çerçeve tarafından
+  reddediliyor ve tarayıcıya 404 dönüyor. Eylemdeki 10 MB kontrolü anlamsızdı;
+  istek oraya varmadan kesiliyordu. İlk 7 görsel 1 MB altında olduğu için geçmişti.
+- **Çözüm — asıl olan istemcide küçültme.** Sınırı yükseltmek tek başına yetmez:
+  Vercel'de istek gövdesi ~4,5 MB'ta zaten duvara çarpar. Telefon fotoğrafı 3-8 MB
+  ama pazaryerleri 1200-2000 piksel kullanıyor; tam boy yüklemenin faydası yok.
+  `lib/urun-aday/gorsel-kucult.ts` yüklemeden önce 2000 piksele indirip JPEG'e
+  çeviriyor — dosya ~300-800 KB'a düşüyor.
+- **Üç tuzak karşılandı:** EXIF dönüklüğü (`imageOrientation: "from-image"` —
+  yoksa dikey telefon fotoğrafı yan yatıyor), saydam PNG (beyaz doldurulmazsa
+  saydam alanlar siyah çıkıyor), GIF (canvas animasyonu tek kareye indirdiği için
+  hiç dokunulmuyor).
+- **Emniyet payı:** `bodySizeLimit` 4 MB'a çıkarıldı ve eylemdeki sınır da 4 MB'a
+  indirildi — ikisi artık uyumlu, sessiz 404 yerine anlaşılır hata dönüyor.
+- Küçültme başarısız olursa (eski tarayıcı) yükleme engellenmiyor; orijinal
+  gönderiliyor ve sınırı sunucu yakalıyor.
+
 ### CFO — 07.26sea içeriği yüklendi, ilk mükerrer sipariş yakalandı (2026-09-10)
 
 - **Panel "Cevap kaydedilemedi" diyordu ama cevap KAYDEDİLMİŞTİ.** `cfo_change_log.kind`

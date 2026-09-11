@@ -31,6 +31,7 @@ import {
   setMainImageAction,
 } from "@/lib/actions/urun-aday-actions";
 import { PUAN_ESIGI } from "@/lib/urun-aday/sabitler";
+import { gorseliKucult, boyutYaz } from "@/lib/urun-aday/gorsel-kucult";
 
 export type Gorsel = {
   id: number;
@@ -181,12 +182,22 @@ export function AdayEditor({
       setMesaj("Önce görsel türünü seçin.");
       return;
     }
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("tur", tur);
     start(async () => {
+      // Yüklemeden ÖNCE küçült: sunucu eyleminin gövde sınırı 4 MB ve aşan
+      // istek sunucuya hiç ulaşmadan 404 dönüyor. Ayrıca pazaryerleri zaten
+      // 2000 pikselden fazlasını kullanmıyor.
+      setMesaj("Görsel hazırlanıyor…");
+      const k = await gorseliKucult(file);
+
+      const fd = new FormData();
+      fd.append("file", k.dosya);
+      fd.append("tur", tur);
+
       const r = await uploadCandidateImageAction(aday.id, aday.sku, fd);
-      setMesaj(r.message ?? null);
+      const bilgi = k.kucultuldu
+        ? ` (${boyutYaz(k.eskiBayt)} → ${boyutYaz(k.yeniBayt)}${k.not ? `, ${k.not}` : ""})`
+        : "";
+      setMesaj((r.message ?? "") + (r.ok ? bilgi : ""));
       if (r.ok) router.refresh();
     });
   }
@@ -364,7 +375,9 @@ export function AdayEditor({
               onChange={yukle}
             />
           </label>
-          <span className="text-[11px] text-[var(--text-muted)]">JPEG/PNG/WebP/GIF · max 10 MB</span>
+          <span className="text-[11px] text-[var(--text-muted)]">
+            JPEG/PNG/WebP/GIF · büyük görseller otomatik 2000 piksele küçültülür
+          </span>
         </div>
 
         {gorseller.length === 0 ? (

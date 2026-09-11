@@ -21,7 +21,9 @@ import { getStorageConfig, uploadObject } from "@/lib/storage/supabase-storage";
 import { GORSEL_TURLERI, PUAN_ESIGI, type GorselTuru } from "@/lib/urun-aday/sabitler";
 
 const BUCKET = "urun-gorsel";
-const MAX_BYTES = 10 * 1024 * 1024;
+// Next.js sunucu eylemi sınırıyla (next.config.ts: 4mb) UYUMLU olmalı. Daha
+// büyük yazarsak istek buraya hiç gelmez ve kullanıcı sebepsiz 404 görür.
+const MAX_BYTES = 4 * 1024 * 1024;
 const MIME = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 type Sonuc = { ok: boolean; message?: string; url?: string };
@@ -98,7 +100,12 @@ export async function uploadCandidateImageAction(
     return { ok: false, message: "Sadece JPEG, PNG, WebP veya GIF." };
   }
   if (file.size > MAX_BYTES) {
-    return { ok: false, message: "Maksimum 10 MB." };
+    return {
+      ok: false,
+      message:
+        `Dosya ${(file.size / 1024 / 1024).toFixed(1)} MB — sınır 4 MB. ` +
+        `Normalde tarayıcı otomatik küçültür; küçülmediyse görseli 2000 piksele indirip tekrar deneyin.`,
+    };
   }
 
   const storage = getStorageConfig();
