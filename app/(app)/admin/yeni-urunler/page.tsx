@@ -24,7 +24,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
-import { PUAN_ESIGI } from "@/lib/urun-aday/sabitler";
+import { PUAN_ESIGI, BASLIK_TRENDYOL } from "@/lib/urun-aday/sabitler";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +84,9 @@ export default async function YeniUrunlerPage({
   const dusuk = satirlar.filter((s) => s.puan < 60);
   const gorselsiz = satirlar.filter((s) => s.urun_gorsel === 0);
   const cinceli = satirlar.filter((s) => s.cince_gorsel > 0);
+  // Trendyol 100'de kesiyor; faturadan üretilen başlıklar 120'ye kadar çıkabildiği
+  // için bir kısmı sınırın üstünde kaldı. Elle kısaltılacaklar bu filtrede.
+  const uzunBaslik = satirlar.filter((s) => (s.ad_tr?.length ?? 0) > BASLIK_TRENDYOL);
 
   // Potansiyel ciro: bu adayların hepsi listelenirse gelen maldan ne kadar ciro çıkar.
   const potansiyel = satirlar.reduce((a, s) => a + n(s.satis_try) * (s.adet ?? 0), 0);
@@ -92,7 +95,17 @@ export default async function YeniUrunlerPage({
     .reduce((a, s) => a + n(s.satis_try) * (s.adet ?? 0), 0);
 
   const gosterilen =
-    f === "hazir" ? hazir : f === "orta" ? orta : f === "dusuk" ? dusuk : f === "gorselsiz" ? gorselsiz : satirlar;
+    f === "hazir"
+      ? hazir
+      : f === "orta"
+        ? orta
+        : f === "dusuk"
+          ? dusuk
+          : f === "gorselsiz"
+            ? gorselsiz
+            : f === "uzun"
+              ? uzunBaslik
+              : satirlar;
 
   const filtre = (key: string, etiket: string, adet: number) => (
     <Link
@@ -150,6 +163,17 @@ export default async function YeniUrunlerPage({
               </span>
             </p>
           )}
+          {uzunBaslik.length > 0 && (
+            <p className="flex items-start gap-2 rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-3 py-2 text-[11px] leading-snug text-[var(--warn)]">
+              <TriangleAlert size={13} className="mt-px shrink-0" />
+              <span>
+                {uzunBaslik.length} başlık {BASLIK_TRENDYOL} karakteri aşıyor — Trendyol bu sınırda
+                kesiyor. En uzunu{" "}
+                {Math.max(...uzunBaslik.map((s) => s.ad_tr?.length ?? 0))} karakter. Ürün sayfasındaki
+                sayaç kısaltırken kaç karakter fazla olduğunu yazıyor.
+              </span>
+            </p>
+          )}
           {cinceli.length > 0 && (
             <p className="flex items-start gap-2 rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-3 py-2 text-[11px] leading-snug text-[var(--warn)]">
               <TriangleAlert size={13} className="mt-px shrink-0" />
@@ -170,6 +194,7 @@ export default async function YeniUrunlerPage({
         {filtre("orta", "Eksiği var", orta.length)}
         {filtre("dusuk", "Başlanmadı", dusuk.length)}
         {filtre("gorselsiz", "Görselsiz", gorselsiz.length)}
+        {filtre("uzun", "Başlık 100+ karakter", uzunBaslik.length)}
       </div>
 
       {/* ── Tablo ─────────────────────────────────────────────────── */}
@@ -208,6 +233,19 @@ export default async function YeniUrunlerPage({
                     {s.sku}
                     {!s.ad_tr && s.invoice_ad ? " · Türkçe adı yok" : ""}
                     {s.link_1688 ? " · 1688 linki var" : ""}
+                    {s.ad_tr && (
+                      <span
+                        className={
+                          s.ad_tr.length > BASLIK_TRENDYOL ? "text-[var(--danger)]" : undefined
+                        }
+                      >
+                        {" · "}
+                        {s.ad_tr.length} krk
+                        {s.ad_tr.length > BASLIK_TRENDYOL
+                          ? ` (${s.ad_tr.length - BASLIK_TRENDYOL} fazla)`
+                          : ""}
+                      </span>
+                    )}
                   </p>
                 </Td>
                 <Td right muted>{fmtNum(s.adet ?? 0)}</Td>

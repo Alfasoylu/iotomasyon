@@ -30,7 +30,7 @@ import {
   moveCandidateImageAction,
   setMainImageAction,
 } from "@/lib/actions/urun-aday-actions";
-import { PUAN_ESIGI } from "@/lib/urun-aday/sabitler";
+import { PUAN_ESIGI, BASLIK_MIN, BASLIK_TRENDYOL } from "@/lib/urun-aday/sabitler";
 import { gorseliKucult, boyutYaz } from "@/lib/urun-aday/gorsel-kucult";
 
 export type Gorsel = {
@@ -92,18 +92,51 @@ const btnCls =
 function Alan({
   etiket,
   ipucu,
+  sayac,
   children,
 }: {
   etiket: string;
   ipucu?: string;
+  sayac?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-[var(--text-secondary)]">{etiket}</span>
+      <span className="mb-1 flex items-baseline justify-between gap-2">
+        <span className="text-[11px] font-medium text-[var(--text-secondary)]">{etiket}</span>
+        {sayac}
+      </span>
       {children}
       {ipucu && <span className="mt-0.5 block text-[10px] leading-snug text-[var(--text-muted)]">{ipucu}</span>}
     </label>
+  );
+}
+
+/**
+ * Başlık karakter sayacı.
+ *
+ * Trendyol 100'de kesiyor — en dar sınır o, o yüzden ölçüt odur. Sayaç
+ * yazarken canlı güncellensin ki kısaltırken kaç karakter atman gerektiğini
+ * kaydetmeden göresin: 100'ü aşınca kaç fazla olduğunu da yazıyor.
+ */
+function BaslikSayaci({ uzunluk }: { uzunluk: number }) {
+  const asan = uzunluk - BASLIK_TRENDYOL;
+  const renk =
+    asan > 0
+      ? "text-[var(--danger)]"
+      : uzunluk < BASLIK_MIN
+        ? "text-[var(--warn)]"
+        : uzunluk > BASLIK_TRENDYOL - 10
+          ? "text-[var(--warn)]"
+          : "text-[var(--text-muted)]";
+  return (
+    <span className={`text-[11px] font-medium tabular-nums ${renk}`}>
+      {uzunluk}/{BASLIK_TRENDYOL}
+      {asan > 0 && <span className="ml-1 font-normal">· {asan} fazla</span>}
+      {uzunluk > 0 && uzunluk < BASLIK_MIN && (
+        <span className="ml-1 font-normal">· en az {BASLIK_MIN}</span>
+      )}
+    </span>
   );
 }
 
@@ -290,9 +323,16 @@ export function AdayEditor({
           <div className="sm:col-span-2">
             <Alan
               etiket="Türkçe ürün adı"
-              ipucu="Hepsiburada kuralı: MARKA ile başlamalı. En az 20 karakter."
+              ipucu="Hepsiburada kuralı: MARKA ile başlamalı. Trendyol 100 karakterde kesiyor."
+              sayac={<BaslikSayaci uzunluk={form.ad_tr.length} />}
             >
-              <input className={inputCls} value={form.ad_tr} onChange={(e) => set("ad_tr", e.target.value)} />
+              <input
+                className={`${inputCls} ${
+                  form.ad_tr.length > BASLIK_TRENDYOL ? "border-[var(--danger-border)]" : ""
+                }`}
+                value={form.ad_tr}
+                onChange={(e) => set("ad_tr", e.target.value)}
+              />
             </Alan>
           </div>
           <Alan etiket="Marka">

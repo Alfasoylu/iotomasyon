@@ -14,3 +14,14 @@ export const ILANA_GIREN: GorselTuru[] = ["URUN", "PAKET", "INFO_TR"];
 
 /** İlan açma eşiği. Alperen'in kuralı: altında ilan oluşturulmaz. */
 export const PUAN_ESIGI = 90;
+
+/**
+ * Başlık uzunluğu sınırları.
+ *
+ * TRENDYOL 100 karakterde kesiyor — en dar sınır o, bu yüzden hedef odur.
+ * Puanlamanın aradığı en az 20 karakter ayrı bir şey: 20 "yeterince tanımlayıcı",
+ * 100 "pazaryerine sığıyor" demek. Faturadan üretilen başlıklar 120'ye kadar
+ * çıkabildiği için 147 başlığın 40'ı bu sınırın üstünde kaldı; elle kısaltılıyor.
+ */
+export const BASLIK_MIN = 20;
+export const BASLIK_TRENDYOL = 100;

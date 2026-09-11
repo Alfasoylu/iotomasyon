@@ -197,6 +197,26 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 11.09.2026 — Başlık karakter sayacı, 100 karakter sınırı
+Alperen: "başlık alanına karakter sayacı koy / Trendyol'da 100 karakter limit
+olduğundan 100'ü geçen başlıkları kısaltacağım."
+
+Sayaç `72/100` yazıyor, sınır aşılınca kaç fazla olduğunu da söylüyor. Tek başına
+yetmezdi: 147 başlığın **40'ı** sınırın üstünde ve hangileri olduğunu bulmak için
+tek tek açmak gerekirdi. Listeye "Başlık 100+ karakter" filtresi, satırlara
+karakter sayısı ve üst şeride uyarı eklendi.
+
+Üreticinin hedefi 120'den 100'e indirildi. Bunu yaparken **kırpmanın 100'de
+mükerrer başlık ürettiği** çıktı: `AS304168` "… Düz Gaga 29x10cm" ile `AS304170`
+"… Kavisli Gaga 29x11.5cm" aynı başlığa iniyordu. Daha önce yalnız sondaki RENGİ
+koruyordum; ayırt edici renk değil biçim+ölçüymüş. Kural genişletildi — elle
+kısaltırken de aynı tuzak var, ayırt eden ek atılmamalı.
+
+Mevcut 40 başlık ELLE kısaltılacak (Alperen'in tercihi); üretilmiş 100 karakterlik
+sürümleri toplu basmak tek komut, istenirse yapılır.
+Etki: `lib/urun-aday/sabitler.ts`, `app/(app)/admin/yeni-urunler/`,
+`scripts/urun-basligi-uret.py`.
+
 ### 11.09.2026 — SKU düzenlenebilir, barkod puanlamadan çıktı, başlıklar dolduruldu
 Alperen: "sku alanı ekle değiştirebileyim / hiçbir üründe barkod yok puanlamadan
 çıkart / excelden ürün başlıklarını otomatik doldur, ben kontrol ederim."

@@ -26,7 +26,8 @@ Uydurma yok: hiçbir bilgi faturada yoksa başlığa girmez; veri yoksa None dö
 import re, json
 
 BRAND = "Alfas"
-MAX = 120
+# Trendyol 100 karakterde kesiyor — üç pazaryerinin en dar sınırı o, hedef odur.
+MAX = 100
 
 # --- Türkçe duyarlı harf dönüşümü ------------------------------------------
 # Python'un varsayılanı Türkçeyi bilmez: "İ".lower() → "i̇" (birleşik
@@ -253,25 +254,39 @@ def markala(s):
 
 # Varyantı ayırt eden renk/kaplama — başlığın SONUNDA olur ve kırpmada ilk
 # düşen odur. Düşerse iki varyant aynı başlığa iner (pazaryerinde mükerrer ilan).
-RENK_SON = re.compile(
-    r"[\s,;-]+((?:mat\s+|parlak\s+)?(?:antrasit|krom|siyah|beyaz|gold|gri|bronz|"
-    r"antik|inox|nikel|bakır|bakir|rose|altın|altin))\s*$", re.I)
+# Varyantı ayırt eden ek — başlığın SONUNDA durur ve kırpmada ilk düşen odur.
+# Düşerse iki varyant aynı başlığa iner (pazaryerinde mükerrer ilan).
+#
+# Yalnız renk yetmiyor: AS304168 "… Düz Gaga" ile AS304170 "… Kavisli" 100
+# karaktere kırpılınca birbirinin aynısı oluyordu. Ayırt edici ne ise korunur —
+# renk, kaplama ya da gaga/gövde biçimi.
+_RENK = (r"(?:mat\s+|parlak\s+|fırçalı\s+|firçali\s+)?"
+         r"(?:antrasit|krom|siyah|beyaz|gold|gri|bronz|antik|inox|nikel|"
+         r"bakır|bakir|rose|altın|altin)")
+_BICIM = (r"(?:düz|duz|kavisli|kısa|kisa|uzun|yüksek|yuksek|eğimli|egimli)"
+          r"(?:\s+(?:gaga|gövde|govde|tip|tipi|model))?")
+# Ölçü de ayırt edici olabilir: AS304168 "29x10cm", AS304170 "29x11.5cm".
+_OLCU = r"\d+(?:[.,]\d+)?\s*[x×]\s*\d+(?:[.,]\d+)?(?:\s*(?:cm|mm))?"
+
+AYIRT_EDICI_SON = re.compile(
+    r"[\s,;-]+((?:(?:" + _RENK + r"|" + _BICIM + r")(?:\s+" + _OLCU + r")?)"
+    r"|" + _OLCU + r")\s*$", re.I)
 
 
 def _kirp(t):
     """MAX'ı aşan başlığı kelime ortasından değil, anlam sınırından keser.
 
-    Sondaki renk korunur: varyantı ayırt eden tek şey o.
+    Sondaki ayırt edici ek (renk / biçim) korunur: varyantı ayıran tek şey o.
     """
     if len(t) <= MAX:
         return t
 
-    # Renk varsa kenara ayır, gövdeyi ona yer bırakacak şekilde kırp, geri ekle.
-    m = RENK_SON.search(t)
+    # Ayırt ediciyi kenara al, gövdeyi ona yer bırakacak şekilde kır, geri ekle.
+    m = AYIRT_EDICI_SON.search(t)
     if m:
-        renk = m.group(1)
+        ek = m.group(1)
         govde = t[: m.start()]
-        return (_kirp_govde(govde, MAX - len(renk) - 1) + " " + renk).strip()
+        return (_kirp_govde(govde, MAX - len(ek) - 1) + " " + ek).strip()
     return _kirp_govde(t, MAX)
 
 
@@ -288,7 +303,12 @@ def _kirp_govde(t, sinir):
     while True:
         aday = aday.strip(" -–—,;.")
         son = aday.rsplit(" ", 1)[-1] if " " in aday else aday
-        if kucuk(son) in {"ve", "ile", "için", "icin", "ya", "veya", "da", "de"}:
+        # Bağlaçlar ve ardındaki ismi kaybetmiş niteleyiciler ("Tek Kollu"dan
+        # kalan "Tek" gibi) sarkar; ikisi de atılır.
+        if kucuk(son) in {
+            "ve", "ile", "için", "icin", "ya", "veya", "da", "de",
+            "tek", "çift", "cift", "çok", "cok", "adet",
+        }:
             aday = aday[: -len(son)].strip()
             continue
         break

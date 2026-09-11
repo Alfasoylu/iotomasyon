@@ -9,6 +9,25 @@
 
 ## 2026-09
 
+### Yeni Ürünler — başlık karakter sayacı ve 100+ filtresi (2026-09-11)
+
+- **Başlık alanına canlı karakter sayacı eklendi.** Trendyol 100 karakterde
+  kesiyor — üç pazaryerinin en dar sınırı o, ölçüt odur. Sayaç `72/100` biçiminde
+  yazıyor; sınır aşılınca kaç karakter fazla olduğunu da söylüyor ve alanın
+  çerçevesi kırmızıya dönüyor. 20 karakterin altında "en az 20" uyarısı çıkıyor
+  (puanlamanın aradığı alt sınır).
+- **Listeye "Başlık 100+ karakter" filtresi** ve her satıra karakter sayısı
+  eklendi; sınırı aşanlar kırmızı. Üst şeritte kaç başlığın aştığı ve en uzununun
+  kaç karakter olduğu yazıyor. Faturadan üretilen 147 başlığın 40'ı sınırın
+  üstünde kaldı.
+- **Üretici artık 100'ü hedefliyor** (önceden 120). Kırpma kuralı genişletildi:
+  önceden yalnız sondaki RENK korunuyordu, artık biçim ve ölçü de korunuyor.
+  Gerekliydi — 100'e kırpınca `AS304168` ("… Düz Gaga 29x10cm") ile `AS304170`
+  ("… Kavisli Gaga 29x11.5cm") birbirinin aynısı oluyordu. Ayrıca ismini
+  kaybetmiş niteleyiciler ("Tek Kollu"dan kalan "Tek") sarkmıyor.
+- Doğrulandı: 100 karakter sınırında 147 başlık üretiliyor, hiçbiri sınırı
+  aşmıyor, mükerrer yok, 20 karakterin altında kalan yok.
+
 ### Yeni Ürünler — SKU düzenlenebilir, barkod puanlamadan çıktı, 147 başlık dolduruldu (2026-09-11)
 
 - **SKU artık panelden değiştirilebilir.** Faturadaki kod `fatura_sku` sütununda
