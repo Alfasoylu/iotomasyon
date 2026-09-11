@@ -197,6 +197,31 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 11.09.2026 — Ödeme Takvimi'ne toplam alacak/borç
+Alperen: "ödeme takvimi üst kısımda alacakların ve borçların toplamı da yazılsın
+… alt toplamlar yazsın / Cowork defterine buraya toplamları işlemeyi unutmaması
+için görev not düşülsün."
+
+Takvim gün gün AKIŞI gösteriyordu; STOK sorusu ("toplamda kime ne borcum var")
+cevapsızdı. Üst şeride kalem kalem tablo eklendi, iki tarafta alt toplam ve altta
+net pozisyon: alacak 1.201.163, borç 9.401.291, net −8.200.128.
+
+İki tuzağa dikkat ettim:
+- **Mükerrer sayım.** `cfo_cash_event`'teki kredi taksiti (1,12 M) ve kart ödemesi
+  (1,20 M) takvimde duruyor ama borç toplamına eklemedim — bunlar kredi
+  bakiyesinin (3,53 M) ve kart borcunun (2,03 M) İÇİNDEN ödenecek taksitler.
+  Eklemek aynı borcu iki kez yazmak olurdu. Sabit gider de borç değil.
+- **İkinci bir borç modeli kurmamak.** Borç kalemleri `cfo_servet_kalem`'den
+  okunuyor; orası kural el kitabında tek doğru kaynak (§4E). Ayrı hesap kursaydım
+  servet ekranıyla çelişirdi.
+
+Veri bayatlığı ortaya çıktı: kredi ve kart bakiyeleri **18 gündür** elle
+güncellenmemiş — yani 5,5 M TL'lik borç üç haftadır doğrulanmamış. Ekranda
+gösteriliyor (7 günü aşınca sarı) ve CFO ajanına günlük görev olarak yazıldı:
+`docs/CFO-GOREV.md` §4.5 + panoya sabitlenmiş `cfo_note`.
+Etki: `prisma/migrations/20260911140000_cfo_alacak_borc/`,
+`app/(app)/cfo/odemeler/page.tsx`, `docs/CFO-GOREV.md`.
+
 ### 11.09.2026 — Marka faturadan dolduruldu, Flextail başlıkları düzeltildi
 Alperen: "marka bazılarında alfas bazılarında flextail olmalı / ikisinden biri
 yazıyorsa yazanla doldur" + "AS304179 inox".

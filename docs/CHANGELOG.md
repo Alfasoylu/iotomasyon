@@ -9,6 +9,32 @@
 
 ## 2026-09
 
+### Ödeme Takvimi — toplam alacak ve borç, kalem kalem (2026-09-11)
+
+- Takvim gün gün **akışı** gösteriyordu; "toplamda kimden ne alacağım, kime ne
+  borcum var" sorusunun cevabı hiçbir yerde tek bakışta yoktu. Üst şeride
+  **stok** tablosu eklendi: alacaklar kanal kanal, borçlar kalem kalem, her iki
+  tarafta alt toplam ve altta net pozisyon.
+- Alacak 1.201.163 ₺ (8 kanal, Trendyol 695.110 başta) · Borç 9.401.291 ₺
+  (gümrük/navlun 3.839.500 + krediler 3.530.019 + kartlar 2.031.772) ·
+  net −8.200.128 ₺.
+- **Borç tarafı `cfo_servet_kalem`'den okunuyor**, yeniden hesaplanmıyor. Borç
+  modelini ikinci kez kurmak iki ekranın çelişmesi demekti; servet görünümü
+  kural el kitabında tek doğru kaynak (§4E).
+- **Mükerrer sayım engellendi:** `cfo_cash_event`'teki kredi taksiti (1,12 M) ve
+  kart ödemesi (1,20 M) takvimde görünür ama borç toplamına girmez — kredi
+  bakiyesinin ve kart borcunun içinden ödenirler. Sabit gider de borç sayılmadı
+  (gelecekte doğacak gider); ekranda ayrıca not olarak yazılıyor.
+- **Bayatlık görünür:** kredi ve kart bakiyeleri elle giriliyor. En eskisinin kaç
+  gün önce güncellendiği tablonun altında yazıyor ve 7 günü aşarsa sarıya
+  dönüyor — bugün 18 gündü, yani 5,5 M TL'lik borç üç haftadır doğrulanmamıştı.
+- Alacak satırlarında hakediş sayısı, ilk vade ve (tahmini olanlarda) kesin kısım
+  ayrıca yazılıyor — tek rakam ne zaman geleceğini söylemiyor.
+- Yeni görünüm: `cfo_alacak_borc`.
+- **CFO ajanına görev:** `docs/CFO-GOREV.md` §4.5 ve panoya sabitlenmiş bir
+  `cfo_note` — kaynakların yaşı her sabah kontrol edilir, 7 günü aşarsa o gün
+  güncellenir; güncellenemiyorsa rapora "borç toplamı X gün bayat" yazılır.
+
 ### Yeni Ürünler — marka faturadan dolduruldu, Flextail başlıkları düzeltildi (2026-09-11)
 
 - **İki marka var, hepsine "Alfas" yazmak hataydı.** Ürettiğim 147 başlığın

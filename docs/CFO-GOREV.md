@@ -156,6 +156,46 @@ tablosu gelir.
 
 > 28.08: 1.299 üründe 76 dolu (24.08'de 1'di). Marj körlüğü **1 numaralı engel**.
 
+### 4.5 — ALACAK/BORÇ TOPLAMLARINI TAZE TUT (11.09.2026)
+
+Ödeme Takvimi sayfasının üstünde artık **toplam alacak ve toplam borç** kalem kalem
+duruyor (`/cfo/odemeler`). Panel bu rakamları hesaplamıyor, **kaynak tablolardan
+okuyor** — kaynak bayatsa ekrandaki toplam da bayat, üstelik bayat olduğu belli
+olmadan. Bu yüzden her sabah:
+
+```sql
+select * from cfo_alacak_borc order by tur, tutar desc;
+
+-- Kaynakların yaşı: kredi ve kart bakiyesi ELLE giriliyor, kendiliğinden tazelenmez.
+select 'kredi' as kaynak, max(current_date - "lastUpdatedAt"::date) as bayat_gun
+  from cfo_loan where status::text not in ('KAPANDI','CLOSED')
+union all
+select 'kart', max(current_date - "lastUpdatedAt"::date)
+  from cfo_credit_card where "isActive";
+```
+
+**Kural: bayat_gun > 7 ise o gün güncellenir.** Güncelleyemiyorsan (ekstre elinde
+yok, bankaya giremedin) rapora **"borç toplamı X gün bayat"** diye yaz — sessizce
+geçme. 11.09'da ikisi de 18 gündü; bu, 5,5 milyon TL'lik borcun üç haftadır
+doğrulanmadığı anlamına geliyordu.
+
+Güncellenecek kaynaklar ve ne oldukları:
+
+| Kalem | Kaynak | Ne yazılır |
+|---|---|---|
+| Alacaklar | `cfo_receivable` | Kanal hakedişleri; tahsil edilen satır `isCollected` işaretlenir |
+| Krediler | `cfo_loan.remainingTry` | Kalan **anapara** (taksit değil) |
+| Kredi kartları | `cfo_credit_card.totalDebtTry` | Ekstre + dönem içi **toplam** borç |
+| Gümrük/navlun | `cfo_yoldaki_mal` | Yoldaki malın ödenmemiş vergi ve navlunu |
+
+**MÜKERRER SAYMA.** `cfo_cash_event`'teki KREDI_TAKSITI ve KART_ODEMESI satırları
+takvimde görünür ama borç toplamına **girmez** — onlar kredi bakiyesinin ve kart
+borcunun içinden ödenecek taksitlerdir. Toplama eklersen aynı borcu iki kez yazarsın.
+Sabit gider de borç değildir: gelecekte doğacak gider, bugünün yükümlülüğü değil.
+
+Borç kalemleri `cfo_servet_kalem`'den okunur (§4E) — servet ekranıyla aynı kaynak.
+Borç tanımını değiştireceksen orada değiştir, panelde ayrı bir hesap kurma.
+
 ---
 
 ## 5) HAFTALIK ROTASYON — her gün bir derin iş
