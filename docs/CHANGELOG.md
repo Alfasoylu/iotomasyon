@@ -9,6 +9,31 @@
 
 ## 2026-09
 
+### Yeni Ürünler — katalogda olan 24 ürün "yeni" sayılıyordu (2026-09-11)
+
+- **Hata:** Liste, 07.26sea konteynerindeki 151 kalemin hepsini yeni ürün
+  sayıyordu. Katalog kontrolü hiç uygulanmamıştı — SKU'su **birebir aynı** olan
+  3 ürün bile listede duruyordu. Alperen fark etti (`4902837173724`,
+  `4267192047364`). Gerçek sayı: **151 adayın 24'ü katalogda ve hepsi aktif**
+  (730 adet). Gerçekten yeni olan 127 kalem, 28.330 adet.
+- **Eşleştirme SKU'nun rakam çekirdeğinden yapılıyor.** Faturadaki kod katalog
+  kodunun önüne harf alıyor (`426M-4267192047364` ↔ `4267192047364`), birebir
+  karşılaştırma bu yüzden yetmiyor. Eşleşen 24 kaydın rakam dizisi 9-13 haneli;
+  rastlantısal çakışma söz konusu değil.
+- **Sütun değil görünüm:** eşleşme `urun_aday_katalog` görünümünde her okumada
+  yeniden hesaplanıyor. Sütuna yazılsaydı katalog değişince bayatlardı — asıl
+  hata da zaten bir kez bakılıp bir daha bakılmamasıydı.
+- **İsim benzerliği bilerek kullanılmadı.** "Spiralli Mutfak Eviye Bataryası
+  Siyah" iki ayrı SKU'da geçiyor ve bunlar aynı ürün değil, varyant. İsimden
+  eşleştirmek yanlış pozitif üretir.
+- **Panel:** katalogdaki kalemler hazırlık sayılarının dışında; "Katalogda var"
+  filtresi, satırda rozet ve katalog kodu, ürün sayfasında açıklayıcı kart.
+  Puan ve eksik listesi bunlar için gösterilmiyor — yapılacak iş ilan açmak
+  değil, gelen malı mevcut ilana stok olarak eklemek.
+- **Sunucu kapısı:** `setCandidateStatusAction` katalogda olan ürünü artık
+  HAZIR/LISTELENDI yapmıyor. Mükerrer ilan pazaryerlerinde cezalandırılıyor;
+  ekrandaki rozet uyarı, kapı sunucuda.
+
 ### Yeni Ürünler — başlık karakter sayacı ve 100+ filtresi (2026-09-11)
 
 - **Başlık alanına canlı karakter sayacı eklendi.** Trendyol 100 karakterde

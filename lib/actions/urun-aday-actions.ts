@@ -215,9 +215,21 @@ export async function setCandidateStatusAction(
 
   try {
     if (durum === "HAZIR" || durum === "LISTELENDI") {
-      const [row] = await prisma.$queryRaw<{ puan: number; eksikler: string[] }[]>`
-        select puan, eksikler from urun_aday_skor where id = ${id}`;
+      const [row] = await prisma.$queryRaw<
+        { puan: number; eksikler: string[]; katalogda_var: boolean; katalog_sku: string | null }[]
+      >`select puan, eksikler, katalogda_var, katalog_sku
+          from urun_aday_skor where id = ${id}`;
       if (!row) return { ok: false, message: "Ürün bulunamadı." };
+      // Katalogdaki ürüne ikinci ilan açmak mükerrer listeleme demek; pazaryerleri
+      // bunu cezalandırıyor. Ekrandaki rozet uyarı, kapı burası.
+      if (row.katalogda_var) {
+        return {
+          ok: false,
+          message:
+            `Bu ürün katalogda zaten var (${row.katalog_sku}) — yeni ilan açılmaz. ` +
+            "Gelen mal mevcut ilanın stoğudur. Eşleşme yanlışsa SKU'yu düzeltin.",
+        };
+      }
       if (row.puan < PUAN_ESIGI) {
         return {
           ok: false,

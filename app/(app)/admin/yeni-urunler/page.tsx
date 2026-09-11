@@ -15,7 +15,7 @@
  * yalnız gösterge, kapı değil.
  */
 import Link from "next/link";
-import { PackagePlus, ArrowRight, TriangleAlert } from "lucide-react";
+import { PackagePlus, ArrowRight, TriangleAlert, PackageCheck } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -34,6 +34,9 @@ type Satir = {
   kaynak: string | null;
   invoice_ad: string | null;
   ad_tr: string | null;
+  katalogda_var: boolean;
+  katalog_sku: string | null;
+  katalog_ad: string | null;
   marka: string | null;
   kategori: string | null;
   adet: number | null;
@@ -75,22 +78,29 @@ export default async function YeniUrunlerPage({
   const satirlar = await prisma.$queryRaw<Satir[]>`
     select id, sku, kaynak, invoice_ad, ad_tr, marka, kategori, adet, satis_try,
            birim_usd, agirlik_kg, link_1688, durum,
-           urun_gorsel, cince_gorsel, info_gorsel, puan, eksikler
+           urun_gorsel, cince_gorsel, info_gorsel, puan, eksikler,
+           katalogda_var, katalog_sku, katalog_ad
       from urun_aday_skor
-     order by puan desc, coalesce(satis_try, 0) * coalesce(adet, 0) desc, sku`;
+     order by katalogda_var, puan desc, coalesce(satis_try, 0) * coalesce(adet, 0) desc, sku`;
 
-  const hazir = satirlar.filter((s) => s.puan >= PUAN_ESIGI);
-  const orta = satirlar.filter((s) => s.puan >= 60 && s.puan < PUAN_ESIGI);
-  const dusuk = satirlar.filter((s) => s.puan < 60);
-  const gorselsiz = satirlar.filter((s) => s.urun_gorsel === 0);
-  const cinceli = satirlar.filter((s) => s.cince_gorsel > 0);
+  // KATALOGDA OLANLAR AYRI TUTULUR: bunlar için yapılacak iş yeni ilan açmak
+  // değil, gelen malı mevcut ilana stok olarak eklemek. Hazırlık sayıları
+  // bunları içerirse "kaç ilan açılacak" sorusu yanlış cevaplanır.
+  const mevcut = satirlar.filter((s) => s.katalogda_var);
+  const yeniler = satirlar.filter((s) => !s.katalogda_var);
+
+  const hazir = yeniler.filter((s) => s.puan >= PUAN_ESIGI);
+  const orta = yeniler.filter((s) => s.puan >= 60 && s.puan < PUAN_ESIGI);
+  const dusuk = yeniler.filter((s) => s.puan < 60);
+  const gorselsiz = yeniler.filter((s) => s.urun_gorsel === 0);
+  const cinceli = yeniler.filter((s) => s.cince_gorsel > 0);
   // Trendyol 100'de kesiyor; faturadan üretilen başlıklar 120'ye kadar çıkabildiği
   // için bir kısmı sınırın üstünde kaldı. Elle kısaltılacaklar bu filtrede.
-  const uzunBaslik = satirlar.filter((s) => (s.ad_tr?.length ?? 0) > BASLIK_TRENDYOL);
+  const uzunBaslik = yeniler.filter((s) => (s.ad_tr?.length ?? 0) > BASLIK_TRENDYOL);
 
   // Potansiyel ciro: bu adayların hepsi listelenirse gelen maldan ne kadar ciro çıkar.
-  const potansiyel = satirlar.reduce((a, s) => a + n(s.satis_try) * (s.adet ?? 0), 0);
-  const kilitli = satirlar
+  const potansiyel = yeniler.reduce((a, s) => a + n(s.satis_try) * (s.adet ?? 0), 0);
+  const kilitli = yeniler
     .filter((s) => s.puan < PUAN_ESIGI)
     .reduce((a, s) => a + n(s.satis_try) * (s.adet ?? 0), 0);
 
@@ -105,7 +115,9 @@ export default async function YeniUrunlerPage({
             ? gorselsiz
             : f === "uzun"
               ? uzunBaslik
-              : satirlar;
+              : f === "mevcut"
+                ? mevcut
+                : yeniler;
 
   const filtre = (key: string, etiket: string, adet: number) => (
     <Link
@@ -126,7 +138,12 @@ export default async function YeniUrunlerPage({
         icon={PackagePlus}
         title="Yeni Ürünler"
         subtitle="İlan açılacak adaylar. 90 puanın altında ilan oluşturulmaz."
-        meta={<Badge variant="neutral">{satirlar.length} aday</Badge>}
+        meta={
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="neutral">{yeniler.length} yeni ürün</Badge>
+            {mevcut.length > 0 && <Badge variant="info">{mevcut.length} katalogda var</Badge>}
+          </div>
+        }
       />
 
       {/* ── Üst şerit ─────────────────────────────────────────────── */}
@@ -153,6 +170,17 @@ export default async function YeniUrunlerPage({
         </div>
 
         <div className="mt-4 space-y-2">
+          {mevcut.length > 0 && (
+            <p className="flex items-start gap-2 rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-3 py-2 text-[11px] leading-snug text-[var(--text-secondary)]">
+              <PackageCheck size={13} className="mt-px shrink-0" />
+              <span>
+                Konteynerdeki {mevcut.length} kalem <strong>katalogda zaten var</strong> (
+                {fmtNum(mevcut.reduce((a, s) => a + (s.adet ?? 0), 0))} adet). Bunlara yeni ilan
+                açılmaz — gelen mal mevcut ilanın stoğudur. Hazırlık sayıları bu {mevcut.length}{" "}
+                kalemi içermiyor; &laquo;Katalogda var&raquo; filtresinden görebilirsiniz.
+              </span>
+            </p>
+          )}
           {gorselsiz.length > 0 && (
             <p className="flex items-start gap-2 rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2 text-[11px] leading-snug text-[var(--danger)]">
               <TriangleAlert size={13} className="mt-px shrink-0" />
@@ -189,7 +217,8 @@ export default async function YeniUrunlerPage({
 
       {/* ── Filtre ────────────────────────────────────────────────── */}
       <div className="mb-3 flex flex-wrap gap-1.5">
-        {filtre("hepsi", "Hepsi", satirlar.length)}
+        {filtre("hepsi", "Yeni ürünler", yeniler.length)}
+        {filtre("mevcut", "Katalogda var", mevcut.length)}
         {filtre("hazir", "İlana hazır", hazir.length)}
         {filtre("orta", "Eksiği var", orta.length)}
         {filtre("dusuk", "Başlanmadı", dusuk.length)}
@@ -218,9 +247,14 @@ export default async function YeniUrunlerPage({
             return (
               <tr key={s.id}>
                 <Td right>
-                  <span className={`text-[15px] font-semibold tabular-nums ${puanRengi(s.puan)}`}>
-                    {s.puan}
-                  </span>
+                  {/* Katalogdaki ürünün hazırlık puanı anlamsız — ilan zaten açık. */}
+                  {s.katalogda_var ? (
+                    <span className="text-[13px] text-[var(--text-muted)]">—</span>
+                  ) : (
+                    <span className={`text-[15px] font-semibold tabular-nums ${puanRengi(s.puan)}`}>
+                      {s.puan}
+                    </span>
+                  )}
                 </Td>
                 <Td>
                   <Link
@@ -259,13 +293,24 @@ export default async function YeniUrunlerPage({
                   )}
                 </Td>
                 <Td muted>
-                  <span className="text-[11px] leading-snug">
-                    {(s.eksikler ?? []).slice(0, 3).join(" · ") || "—"}
-                    {(s.eksikler ?? []).length > 3 ? ` +${(s.eksikler ?? []).length - 3}` : ""}
-                  </span>
+                  {s.katalogda_var ? (
+                    <span className="text-[11px] leading-snug">
+                      Katalog: <span className="font-mono">{s.katalog_sku}</span>
+                      {s.katalog_ad ? ` · ${s.katalog_ad.slice(0, 40)}` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] leading-snug">
+                      {(s.eksikler ?? []).slice(0, 3).join(" · ") || "—"}
+                      {(s.eksikler ?? []).length > 3 ? ` +${(s.eksikler ?? []).length - 3}` : ""}
+                    </span>
+                  )}
                 </Td>
                 <Td>
-                  <Badge variant={d.v}>{d.t}</Badge>
+                  {s.katalogda_var ? (
+                    <Badge variant="info">Katalogda var</Badge>
+                  ) : (
+                    <Badge variant={d.v}>{d.t}</Badge>
+                  )}
                 </Td>
               </tr>
             );

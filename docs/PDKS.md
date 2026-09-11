@@ -197,6 +197,30 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 11.09.2026 — "Yeni Ürünler"in 24'ü aslında yeni değilmiş
+Alperen: "4902837173724 ve 4267192047364 bizim zaten sattığımız ürün ama yeni
+gibi koymuşsun buraya."
+
+Haklıydı ve iki üründen ibaret değildi. Katalog kontrolü **hiç uygulanmamış** —
+SKU'su birebir aynı olan 3 ürün bile listede duruyordu. Doğru sayı: 151 adayın
+**24'ü katalogda**, hepsi aktif, 730 adet. Gerçekten yeni olan 127 kalem.
+
+Daha önce "148 SKU katalogda yok"u doğruladığımı yazmışım; o doğrulama yanlıştı.
+Eşleştirmeyi SKU'nun rakam çekirdeğinden kurmak gerekiyormuş: faturadaki kod
+katalog kodunun önüne harf alıyor (`426M-4267192047364` ↔ `4267192047364`).
+Eşleşenlerin rakam dizisi 9-13 haneli, rastlantı değil.
+
+Eşleşmeyi sütuna yazmadım, görünümde tutuyorum — sütun olsa katalog değişince
+bayatlardı ve asıl hata da bir kez bakıp bir daha bakmamaktı. İsim benzerliğini
+bilerek kullanmadım: "Spiralli Mutfak Eviye Bataryası Siyah" iki ayrı SKU'da
+geçiyor ve bunlar varyant, aynı ürün değil.
+
+Katalogdakiler artık hazırlık sayılarının dışında; ayrı filtre, rozet ve ürün
+sayfasında açıklama var. Sunucu tarafında da kapı kondu: katalogdaki ürün
+HAZIR/LISTELENDI yapılamıyor, çünkü mükerrer ilan pazaryerinde cezalandırılıyor.
+Etki: `prisma/migrations/20260911120000_urun_aday_katalog/`,
+`app/(app)/admin/yeni-urunler/`, `lib/actions/urun-aday-actions.ts`.
+
 ### 11.09.2026 — Başlık karakter sayacı, 100 karakter sınırı
 Alperen: "başlık alanına karakter sayacı koy / Trendyol'da 100 karakter limit
 olduğundan 100'ü geçen başlıkları kısaltacağım."

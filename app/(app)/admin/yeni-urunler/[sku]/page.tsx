@@ -40,6 +40,7 @@ type PuanSatiri = Aday & {
   p_ana_gorsel: number; p_gorsel3: number; p_fiyat: number; p_maliyet: number;
   p_kutu: number; p_mensei: number;
   urun_gorsel: number; cince_gorsel: number; info_gorsel: number;
+  katalogda_var: boolean; katalog_sku: string | null; katalog_ad: string | null;
 };
 
 export default async function AdayPage({ params }: { params: Promise<{ sku: string }> }) {
@@ -88,9 +89,13 @@ export default async function AdayPage({ params }: { params: Promise<{ sku: stri
         subtitle={`${aday.sku}${aday.kaynak ? ` · ${aday.kaynak} partisi` : ""}`}
         meta={
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={aday.puan >= PUAN_ESIGI ? "ok" : aday.puan >= 60 ? "warn" : "danger"}>
-              {aday.puan}/100
-            </Badge>
+            {aday.katalogda_var ? (
+              <Badge variant="info">Katalogda var</Badge>
+            ) : (
+              <Badge variant={aday.puan >= PUAN_ESIGI ? "ok" : aday.puan >= 60 ? "warn" : "danger"}>
+                {aday.puan}/100
+              </Badge>
+            )}
             <Badge variant="neutral">{aday.durum}</Badge>
           </div>
         }
@@ -100,6 +105,25 @@ export default async function AdayPage({ params }: { params: Promise<{ sku: stri
           </Link>
         }
       />
+
+      {/* Katalogda olan üründe yapılacak iş ilan açmak değil, stok eklemek. */}
+      {aday.katalogda_var && (
+        <Card className="mb-4 border-[var(--accent-border)] p-5">
+          <h2 className="mb-1.5 text-sm font-semibold text-[var(--text-primary)]">
+            Bu ürün katalogda zaten var
+          </h2>
+          <p className="text-[12px] leading-relaxed text-[var(--text-secondary)]">
+            Katalog kodu <span className="font-mono">{aday.katalog_sku}</span>
+            {aday.katalog_ad ? ` — ${aday.katalog_ad}` : ""}. Yeni ilan
+            açılmaz; konteynerden gelen {fmtNum(aday.adet ?? 0)} adet mevcut ilanın{" "}
+            <strong>stoğudur</strong>. Aşağıdaki hazırlık alanları yalnız referans için duruyor.
+          </p>
+          <p className="mt-2 text-[11px] leading-snug text-[var(--text-muted)]">
+            Eşleşme SKU&apos;nun rakam çekirdeğinden kuruldu ({aday.sku} ↔ {aday.katalog_sku}).
+            Yanlışsa SKU&apos;yu düzeltin; eşleşme her açılışta yeniden hesaplanıyor.
+          </p>
+        </Card>
+      )}
 
       {/* ── Puan kırılımı + gelen mal ─────────────────────────────── */}
       <Card className="mb-4 p-5">
