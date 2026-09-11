@@ -25,21 +25,20 @@ const n = (v: unknown) => (v == null ? 0 : Number(v));
 const PUAN_KIRILIM: [string, keyof PuanSatiri, number][] = [
   ["Türkçe ad", "p_ad", 12],
   ["Marka", "p_marka", 5],
-  ["Kategori", "p_kategori", 8],
-  ["Açıklama", "p_aciklama", 12],
-  ["Ürün görseli", "p_ana_gorsel", 15],
-  ["3+ görsel", "p_gorsel3", 8],
+  ["Kategori", "p_kategori", 9],
+  ["Açıklama", "p_aciklama", 15],
+  ["Ürün görseli", "p_ana_gorsel", 17],
+  ["3+ görsel", "p_gorsel3", 10],
   ["Satış fiyatı", "p_fiyat", 10],
   ["Maliyet + ağırlık", "p_maliyet", 10],
   ["Kutu ölçüsü", "p_kutu", 6],
-  ["Barkod", "p_barkod", 8],
   ["Menşei + garanti", "p_mensei", 6],
 ];
 
 type PuanSatiri = Aday & {
   p_ad: number; p_marka: number; p_kategori: number; p_aciklama: number;
   p_ana_gorsel: number; p_gorsel3: number; p_fiyat: number; p_maliyet: number;
-  p_kutu: number; p_barkod: number; p_mensei: number;
+  p_kutu: number; p_mensei: number;
   urun_gorsel: number; cince_gorsel: number; info_gorsel: number;
 };
 

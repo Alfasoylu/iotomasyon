@@ -235,10 +235,10 @@ export default async function YeniUrunlerPage({
         </CfoTable>
 
         <p className="mt-4 text-[11px] leading-relaxed text-[var(--text-muted)]">
-          Puan 100 üzerinden: Türkçe ad 12 · marka 5 · kategori 8 · açıklama 12 · ürün görseli 15 ·
-          3+ görsel 8 · fiyat 10 · maliyet+ağırlık 10 · kutu ölçüsü 6 · barkod 8 · menşei+garanti 6.
-          Ağırlıklar &quot;ilanı fiilen ne bloke ediyor&quot;a göre seçildi; görselsiz veya barkodsuz
-          ilan hiç açılamıyor.{" "}
+          Puan 100 üzerinden: Türkçe ad 12 · marka 5 · kategori 9 · açıklama 15 · ürün görseli 17 ·
+          3+ görsel 10 · fiyat 10 · maliyet+ağırlık 10 · kutu ölçüsü 6 · menşei+garanti 6.
+          Barkod puanlanmıyor — hiçbir üründe yok, kimsenin sağlayamadığı şart herkesi eşit
+          bloke eder. O 8 puan görsel ve açıklamaya dağıtıldı.{" "}
           <Link href="/cfo/kazananlar#ithalat" className="text-[var(--accent)] hover:underline">
             Yoldaki parti <ArrowRight size={11} className="inline" />
           </Link>

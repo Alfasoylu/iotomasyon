@@ -12,7 +12,11 @@
 
 create table if not exists urun_aday (
   id              text primary key default gen_random_uuid()::text,
+  -- Bizim katalog SKU'muz — düzenlenebilir. Faturadaki orijinal kod
+  -- `fatura_sku`da sabit kalır; parti bağı (cfo_yoldaki_kalem.sku) oradan kurulur,
+  -- yeniden adlandırma o bağı koparmaz.
   sku             text not null unique,
+  fatura_sku      text,
   kaynak          text,
   invoice_ad      text,
   ad_tr           text,
@@ -68,7 +72,9 @@ comment on column urun_aday_gorsel.sira is
   'Aday içinde TEK sıra. İlan sırası = CINCE_BILGI hariç, sira artan. Ana görsel = ilki.';
 
 -- Puanlama: ağırlıklar "ilanı fiilen ne bloke ediyor"a göre. Görselsiz ilan hiç
--- açılmaz (15), barkodsuz açılmaz (8), marjı hesaplanamayan ürün fiyatlanamaz (10).
+-- açılmaz (17), marjı hesaplanamayan ürün fiyatlanamaz (10).
+-- BARKOD PUANLANMAZ: 151 ürünün hiçbirinde yok; kimsenin sağlayamadığı bir şart
+-- herkesi eşit bloke eder, ayırt etmez. Alan formda durur, sadece puana girmez.
 -- Toplam 100; eşik 90 — en çok 10 puanlık eksik affedilir.
 drop view if exists urun_aday_skor;
 drop view if exists urun_aday_puan;
@@ -88,17 +94,16 @@ select
   coalesce(g.info_gorsel, 0)   as info_gorsel,
   (case when length(coalesce(a.ad_tr, '')) >= 20 then 12 else 0 end)          as p_ad,
   (case when coalesce(a.marka, '') <> '' then 5 else 0 end)                   as p_marka,
-  (case when coalesce(a.kategori, '') <> '' then 8 else 0 end)                as p_kategori,
-  (case when length(coalesce(a.aciklama, '')) >= 400 then 12
-        when length(coalesce(a.aciklama, '')) >= 150 then 6 else 0 end)       as p_aciklama,
-  (case when coalesce(g.urun_gorsel, 0) >= 1 then 15 else 0 end)              as p_ana_gorsel,
-  (case when coalesce(g.urun_gorsel, 0) >= 3 then 8 else 0 end)               as p_gorsel3,
+  (case when coalesce(a.kategori, '') <> '' then 9 else 0 end)                as p_kategori,
+  (case when length(coalesce(a.aciklama, '')) >= 400 then 15
+        when length(coalesce(a.aciklama, '')) >= 150 then 7 else 0 end)       as p_aciklama,
+  (case when coalesce(g.urun_gorsel, 0) >= 1 then 17 else 0 end)              as p_ana_gorsel,
+  (case when coalesce(g.urun_gorsel, 0) >= 3 then 10 else 0 end)              as p_gorsel3,
   (case when coalesce(a.satis_try, 0) > 0 then 10 else 0 end)                 as p_fiyat,
   (case when coalesce(a.birim_usd, 0) > 0 and coalesce(a.agirlik_kg, 0) > 0
         then 10 else 0 end)                                                   as p_maliyet,
   (case when coalesce(a.kutu_en_cm, 0) > 0 and coalesce(a.kutu_boy_cm, 0) > 0
          and coalesce(a.kutu_yuk_cm, 0) > 0 then 6 else 0 end)                as p_kutu,
-  (case when coalesce(a.barkod, '') <> '' then 8 else 0 end)                  as p_barkod,
   (case when coalesce(a.mensei, '') <> '' and coalesce(a.garanti_ay, 0) > 0
         then 6 else 0 end)                                                    as p_mensei
 from urun_aday a
@@ -108,19 +113,18 @@ create view urun_aday_skor as
 select
   p.*,
   (p.p_ad + p.p_marka + p.p_kategori + p.p_aciklama + p.p_ana_gorsel + p.p_gorsel3
-   + p.p_fiyat + p.p_maliyet + p.p_kutu + p.p_barkod + p.p_mensei)::int as puan,
+   + p.p_fiyat + p.p_maliyet + p.p_kutu + p.p_mensei)::int as puan,
   -- Eksikler adıyla listelenir: "puan 62" tek başına ne yapılacağını söylemez.
   array_remove(array[
     case when p.p_ad = 0        then 'Türkçe ad (en az 20 karakter)' end,
     case when p.p_marka = 0     then 'Marka' end,
     case when p.p_kategori = 0  then 'Kategori' end,
-    case when p.p_aciklama < 12 then 'Açıklama (400+ karakter)' end,
+    case when p.p_aciklama < 15 then 'Açıklama (400+ karakter)' end,
     case when p.p_ana_gorsel = 0 then 'Ürün görseli' end,
     case when p.p_gorsel3 = 0   then 'En az 3 ürün görseli' end,
     case when p.p_fiyat = 0     then 'Satış fiyatı' end,
     case when p.p_maliyet = 0   then 'Birim maliyet + ağırlık' end,
     case when p.p_kutu = 0      then 'Kutu ölçüsü (desi)' end,
-    case when p.p_barkod = 0    then 'Barkod' end,
     case when p.p_mensei = 0    then 'Menşei + garanti süresi' end
   ], null) as eksikler
 from urun_aday_puan p;

@@ -33,12 +33,19 @@ function yenile(sku?: string) {
   if (sku) revalidatePath(`/admin/yeni-urunler/${encodeURIComponent(sku)}`);
 }
 
-/** Serbest alanları kaydet. Boş string null'a çevrilir ki puanlama şaşmasın. */
+/**
+ * Serbest alanları kaydet. Boş string null'a çevrilir ki puanlama şaşmasın.
+ *
+ * SKU DEĞİŞTİRİLEBİLİR: faturadaki kod bizim katalog kodumuz olmak zorunda değil.
+ * Değişirse `fatura_sku` sabit kaldığı için konteyner kalemiyle olan bağ kopmaz.
+ * Benzersizlik DB'de unique ile zorlanıyor; burada anlaşılır mesaja çevriliyor.
+ * Yeni sku dönülür çünkü sayfa adresi sku'ya bağlı — istemci oraya taşınmalı.
+ */
 export async function saveCandidateAction(
   id: string,
   sku: string,
   alanlar: Record<string, string>,
-): Promise<Sonuc> {
+): Promise<Sonuc & { yeniSku?: string }> {
   await requirePermission(PERMISSIONS.PRODUCTS_UPDATE);
 
   const metin = (k: string) => {
@@ -52,9 +59,23 @@ export async function saveCandidateAction(
     return Number.isFinite(n) ? n : null;
   };
 
+  // SKU boş bırakılamaz: kaydın kimliği ve görsel yolunun kökü.
+  const yeniSku = (alanlar.sku ?? "").trim();
+  if (yeniSku.length === 0) return { ok: false, message: "SKU boş olamaz." };
+  if (yeniSku.length > 80) return { ok: false, message: "SKU en fazla 80 karakter." };
+
   try {
+    if (yeniSku !== sku) {
+      const [cakisan] = await prisma.$queryRaw<{ id: string }[]>`
+        select id from urun_aday where sku = ${yeniSku} and id <> ${id}`;
+      if (cakisan) {
+        return { ok: false, message: `"${yeniSku}" başka bir üründe kullanılıyor.` };
+      }
+    }
+
     await prisma.$executeRaw`
       update urun_aday set
+        sku = ${yeniSku},
         ad_tr = ${metin("ad_tr")},
         marka = ${metin("marka")},
         kategori = ${metin("kategori")},
@@ -72,7 +93,12 @@ export async function saveCandidateAction(
         updated_at = now()
       where id = ${id}`;
     yenile(sku);
-    return { ok: true, message: "Kaydedildi." };
+    if (yeniSku !== sku) yenile(yeniSku);
+    return {
+      ok: true,
+      message: yeniSku !== sku ? `Kaydedildi. SKU "${sku}" → "${yeniSku}".` : "Kaydedildi.",
+      yeniSku,
+    };
   } catch (e) {
     console.error("saveCandidateAction", sku, e);
     return { ok: false, message: "Kaydedilemedi." };

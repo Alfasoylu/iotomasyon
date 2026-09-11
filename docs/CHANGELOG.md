@@ -9,6 +9,35 @@
 
 ## 2026-09
 
+### Yeni Ürünler — SKU düzenlenebilir, barkod puanlamadan çıktı, 147 başlık dolduruldu (2026-09-11)
+
+- **SKU artık panelden değiştirilebilir.** Faturadaki kod `fatura_sku` sütununda
+  sabit kalıyor; konteyner kalemiyle bağ oradan kurulduğu için yeniden adlandırma
+  bağı koparmıyor. Benzersizlik DB'de unique ile zorlanıyor, panelde anlaşılır
+  mesaja çevriliyor ("… başka bir üründe kullanılıyor"). SKU değişince sayfa
+  adresi de değiştiği için istemci yeni adrese taşınıyor.
+- **Barkod puanlamadan çıkarıldı.** 151 ürünün hiçbirinde barkod yok; kimsenin
+  sağlayamadığı bir şart herkesi eşit bloke eder, ayırt etmez. Alan formda duruyor,
+  puana girmiyor. Boşalan 8 puan ilanı fiilen bloke eden yerlere dağıtıldı:
+  kategori 8→9, açıklama 12→15, ana görsel 15→17, 3+ görsel 8→10. Toplam 100,
+  eşik 90 korundu.
+- **147 ürün başlığı fatura adlarından üretilip yüklendi.** İç notlar (1688,
+  video, ödendi, koli, GTİP, CJ linki, Çince paket ölçüsü) temizleniyor; TAMAMI
+  BÜYÜK yazımlar kelime bazında düzeltiliyor; Hepsiburada kuralı gereği başlık
+  "Alfas" ile başlıyor. Faturada hiç metin olmayan 4 kayıt **boş bırakıldı** —
+  başlık uydurulmadı.
+- **Kırpma artık varyant rengini koruyor.** 120 karakter sınırı sondaki rengi
+  düşürdüğü için iki varyant aynı başlığa iniyordu (TD1 Antrasit/Beyaz,
+  4903046045 inox/Siyah) — pazaryerinde mükerrer ilan demek. Renk kenara alınıp
+  gövde ona yer bırakacak şekilde kırpılıyor.
+- **Türkçe harf dönüşümü düzeltildi.** Python'da `"İ".lower()` "i" + U+0307
+  veriyor ve ~20 başlıkta "Evi̇ye", "Si̇yah" gibi bozuk yazımlar oluşmuştu.
+- **Faturadaki satır sarması** ("… BATARYASI 4" / "FONKSİYONLU … ANTRASİT")
+  yüzünden üç CSF satırı aynı başlığa iniyordu; yalnız sarkan sayı durumunda
+  satırlar birleştiriliyor.
+- Doğrulandı: 147 başlığın hepsi "Alfas" ile başlıyor, hiçbiri 120 karakteri
+  aşmıyor, mükerrer başlık yok, birleşik nokta artığı yok.
+
 ### Ürün görseli yüklemede 404 — sunucu eylemi gövde sınırı (2026-09-11)
 
 - **Belirti:** `/admin/yeni-urunler/AS304167`'ye yeni görsel yüklenince site 404

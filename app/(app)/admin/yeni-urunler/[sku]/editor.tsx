@@ -44,6 +44,7 @@ export type Gorsel = {
 export type Aday = {
   id: string;
   sku: string;
+  fatura_sku: string | null;
   kaynak: string | null;
   invoice_ad: string | null;
   ad_tr: string | null;
@@ -149,6 +150,7 @@ export function AdayEditor({
 
   const s = (v: unknown) => (v == null ? "" : String(v));
   const [form, setForm] = useState<Record<string, string>>({
+    sku: s(aday.sku),
     ad_tr: s(aday.ad_tr),
     marka: s(aday.marka),
     kategori: s(aday.kategori),
@@ -170,7 +172,13 @@ export function AdayEditor({
     start(async () => {
       const r = await saveCandidateAction(aday.id, aday.sku, form);
       setMesaj(r.message ?? null);
-      if (r.ok) router.refresh();
+      if (!r.ok) return;
+      // Sayfa adresi sku'ya bağlı; değiştiyse eski adres 404 olur.
+      if (r.yeniSku && r.yeniSku !== aday.sku) {
+        router.replace(`/admin/yeni-urunler/${encodeURIComponent(r.yeniSku)}`);
+      } else {
+        router.refresh();
+      }
     });
   }
 
@@ -262,6 +270,23 @@ export function AdayEditor({
       <Card className="p-5">
         <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">İlan bilgileri</h2>
         <div className="grid gap-3 sm:grid-cols-2">
+          <Alan
+            etiket="SKU"
+            ipucu={
+              aday.fatura_sku && aday.fatura_sku !== form.sku
+                ? `Faturadaki kod: ${aday.fatura_sku} — parti bağı o koddan kuruluyor, bozulmaz.`
+                : "Faturadan geldi. Kendi katalog kodunuzla değiştirebilirsiniz."
+            }
+          >
+            <input
+              className={`${inputCls} font-mono`}
+              value={form.sku}
+              onChange={(e) => set("sku", e.target.value)}
+            />
+          </Alan>
+          <Alan etiket="Barkod / GTIN" ipucu="Puanlamaya girmiyor — girilirse saklanır.">
+            <input className={inputCls} value={form.barkod} onChange={(e) => set("barkod", e.target.value)} />
+          </Alan>
           <div className="sm:col-span-2">
             <Alan
               etiket="Türkçe ürün adı"
@@ -275,9 +300,6 @@ export function AdayEditor({
           </Alan>
           <Alan etiket="Kategori">
             <input className={inputCls} value={form.kategori} onChange={(e) => set("kategori", e.target.value)} />
-          </Alan>
-          <Alan etiket="Barkod / GTIN" ipucu="Uydurma barkod ilan kapatır. Yoksa boş bırakın.">
-            <input className={inputCls} value={form.barkod} onChange={(e) => set("barkod", e.target.value)} />
           </Alan>
           <Alan etiket="Satış fiyatı (₺)">
             <input className={inputCls} value={form.satis_try} onChange={(e) => set("satis_try", e.target.value)} />

@@ -197,6 +197,48 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 11.09.2026 — SKU düzenlenebilir, barkod puanlamadan çıktı, başlıklar dolduruldu
+Alperen: "sku alanı ekle değiştirebileyim / hiçbir üründe barkod yok puanlamadan
+çıkart / excelden ürün başlıklarını otomatik doldur, ben kontrol ederim."
+
+**SKU artık düzenlenebilir.** Faturadaki kod bizim katalog kodumuz olmak zorunda
+değil. Orijinal kod `fatura_sku`ya kopyalandı ve orada sabit duruyor; konteyner
+kalemiyle (`cfo_yoldaki_kalem.sku`) bağ oradan kurulduğu için yeniden adlandırma
+bağı koparmıyor. Benzersizlik DB'de unique, panelde anlaşılır mesaja çevriliyor.
+
+**Barkod puanlamadan çıkarıldı.** 151 ürünün hiçbirinde barkod yok — kimsenin
+sağlayamadığı bir şart herkesi eşit bloke eder, ayırt etmez. Alan formda duruyor,
+sadece puana girmiyor. Boşalan 8 puan gerçekten ilanı bloke eden yerlere dağıtıldı:
+kategori 8→9, açıklama 12→15, ana görsel 15→17, 3+ görsel 8→10. Toplam 100, eşik 90.
+
+**147 başlık faturadan üretildi** (4'ünde faturada hiç metin yok — uydurulmadı,
+boş bırakıldı). Üretici önce temizliyor, çeviri son çare: iç notlar (1688/video/
+ödendi/koli/GTİP/CJ linki/Çince paket ölçüsü) atılıyor, TAMAMI BÜYÜK yazımlar
+düzeltiliyor, Hepsiburada kuralı gereği başa "Alfas" geliyor.
+
+İlk turda üretilenler yüklendi ama **kontrolde dört gerçek kusur çıktı ve düzeltildi**:
+- `"İ".lower()` Python'da "i"+U+0307 veriyor → "Evi̇ye", "Si̇yah" gibi ~20 bozuk
+  başlık. Türkçeye duyarlı dönüşüm yazıldı. (Yazarken bir de tersini yaptım:
+  İ→ı, I→i. "ANTRASİT"→"Antrasıt" çıkınca yakalandı.)
+- Caps düzeltmesi başlığın %75'i büyükse çalışıyordu; karışık yazımlar eşiğin
+  altında kalıyordu. Artık kelime bazında.
+- **120 karakterde kırpma rengi düşürüyordu** ve iki varyant AYNI başlığa iniyordu
+  (TD1 Antrasit/Beyaz, 4903046045 inox/Siyah). Pazaryerinde mükerrer ilan demek.
+  Kırpma artık sondaki rengi koruyor.
+- Faturada satır sarması var ("… BATARYASI 4" / "FONKSİYONLU … ANTRASİT"); 2. satır
+  not sayılıp atılınca üç CSF satırı aynı başlığa iniyordu. Yalnız sarkan sayı
+  durumunda birleştiriliyor — diğer 7 çok satırlı kayıtta 2. satır gerçekten not.
+
+Doğrulandı: 147 başlık, hepsi "Alfas" ile başlıyor, hiçbiri 120'yi aşmıyor,
+mükerrer yok, birleşik nokta yok.
+
+**Sırada:** puan ortalaması hâlâ 32,1 ve yalnız 1 ürün 90+. Başlık darboğaz
+değilmiş. 150 üründe marka, kategori, açıklama, görsel, kutu ölçüsü ve menşei
+boş. En ucuz kazanç marka (hepsi Alfas, 5 puan) ve kategori (başlıktan türetilir,
+9 puan); menşei+garanti için garanti süresi şirket kararı — sorulacak.
+Etki: `lib/actions/urun-aday-actions.ts`, `app/(app)/admin/yeni-urunler/`,
+`prisma/migrations/20260911100000_urun_aday/migration.sql`.
+
 ### 11.09.2026 — Görsel yüklemede 404: sunucu eylemi gövde sınırı
 Alperen: "yükleme limiti mi var, yeni görsel yüklediğimde site 404 veriyor."
 Vardı ama benim koyduğum limit değil: Next.js sunucu eylemlerinde gövde sınırı
