@@ -220,10 +220,43 @@ işini atlama, ertesi güne devret ve raporda söyle.
 **Ölü stok (Sal).** "Satmıyor" bir sebep değildir. `cfo_dead_stock_finding`'e kanıtla
 yaz: rakip fiyatı, yorum sayısı, listeleme durumu, kaynak URL. Kanıtsız `reason_code`
 yazma. `bilinmiyor` kodu 2 günden fazla kalamaz.
-Tespit: `stockQuantity` 51–999 (1.000/10.000 dropship dummy hariç), 30 gün Trendyol'da
-satış yok. Sırala: **bağlı sermaye = stok × birim değer**.
+Tespit `cfo_olu_stok` görünümünden okunur; elle kriter kurma. Sırala: **bağlı sermaye**.
 > 28.08 ölçümü: bu kritere uyan **39 ürün, ≈506.000 TL** bağlı sermaye — 26'sının
 > maliyeti bilinmiyor. Bulgu tablosunda 3 kayıt vardı. Kaynak duruyor, ara.
+
+**ÜÇ KURAL — her ölü stok turunda üçü de kontrol edilir (11.09.2026):**
+
+1. 30 günde hiç satmadı
+2. Stok örtüsü > 180 gün
+3. **90 günlük satış, stok değerinin %20'sinden düşük** ← Alperen kuralı
+
+```sql
+select * from cfo_olu_stok order by bagli_sermaye desc nulls last;
+select * from cfo_olu_stok_ozet;   -- sadece_oran_kurali: 3. kuralın tek başına getirdiği
+```
+
+Eşik `cfo_settings.deadStockSalesRatioPct` (şu an 20). Değiştirmek istersen orada
+değiştir — görünüm oradan okur, SQL'e sabit sayı gömme.
+
+> **11.09 ölçümü — kuralı yazarken çıktı, atlanmasın.** 3. kural %20 eşiğinde
+> **tek başına hiçbir ürün eklemiyor**: yakaladığı 20 ürünün hepsi zaten 1. veya
+> 2. kuralda. Sebep matematiksel — satış stok değerinin %20'sinden düşükse örtü
+> zaten 180 günü çoktan aşmış oluyor. Listenin dışındaki en yavaş ürünün oranı
+> **%72**; yani kural ancak eşik ~%72'nin üstüne çıkarsa ısırmaya başlar.
+> `sadece_oran_kurali` sütunu bunu her turda ölçer: **0 ise kural o gün boşa
+> çalışmıştır, raporda söyle.** Alperen eşiği yükseltmek isteyebilir.
+
+> **Asıl kazanç kuralda değil, kapsamdaydı.** Kuralı değerlendirebilmek için stok
+> değeri gerekti; eski görünüm bağlı sermayeyi yalnız `unitCostTry`den hesapladığı
+> için **maliyeti girilmemiş ürünü hiç görmüyordu**. Değer artık maliyet yoksa 90
+> günde gerçekleşen satış fiyatından türetiliyor ve liste 64 → 75 SKU'ya çıktı;
+> gelen 11 ürünün hepsinin maliyeti boştu (126.878 TL bağlı sermaye).
+
+> **İSTİSNA LİSTESİ ÇİĞNENMEZ.** `cfo_stok_istisna`daki SKU listeye girmez. Oran
+> kuralının yakaladığı en büyük kalem (`40005100051`, 2.769 adet, 1,98 M TL)
+> oradaydı: stok **sanal**, gerçek bağlı sermaye 9.700 TL — Alperen 31.08'de
+> beyan etti, 07.09'da uygulamada teyit edildi. İstisnayı çiğnemek, insanın
+> cevapladığı soruyu yeniden sormaktır.
 
 **100K adayı (Pzt).** Hedef 100.000 USD × kur = aylık TL. `gerekli aylık adet =
 hedef / satış fiyatı`. Bu sayı pazarın gerçekleşen hacminden büyükse **adayı reddet**

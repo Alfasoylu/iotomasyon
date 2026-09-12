@@ -9,6 +9,32 @@
 
 ## 2026-09
 
+### Ölü stok — üçüncü kural: 90g satış / stok değeri < %20 (2026-09-12)
+
+- Alperen'in kuralı eklendi: son 90 günlük satış, stok değerinin %20'sinden
+  düşükse ürün ölü stok listesine girer. Eşik `cfo_settings.deadStockSalesRatioPct`
+  — ayarlanabilir, SQL'e gömülü değil.
+- **Kural %20'de tek başına hiçbir ürün eklemiyor** ve bu ölçüldü, varsayılmadı:
+  yakaladığı 20 ürünün hepsi zaten "30 günde sıfır" veya "örtü > 180 gün"
+  kuralında. Sebep matematiksel — satış, stok değerinin %20'sinden düşükse örtü
+  zaten 180 günü çoktan aşıyor. Listenin dışındaki en yavaş ürünün oranı **%72**;
+  kural ancak eşik ~%72 üstüne çıkarsa ısırmaya başlar. `cfo_olu_stok_ozet`'e
+  `sadece_oran_kurali` sütunu eklendi ki katkı her turda ölçülebilsin.
+- **Asıl kazanç kapsam düzeltmesinde.** Kuralı değerlendirmek için stok değeri
+  gerekti; eski görünüm bağlı sermayeyi yalnız `unitCostTry`den hesapladığı için
+  **maliyeti girilmemiş ürünü hiç görmüyordu** (1.299 üründe maliyet 76'sında
+  dolu). Değer artık maliyet yoksa 90 günde gerçekleşen satış fiyatından
+  türetiliyor: liste **64 → 75 SKU**, gelen 11 ürünün hepsinin maliyeti boştu
+  (126.878 TL bağlı sermaye).
+- **İstisna listesine dokunulmadı.** Oran kuralının yakaladığı en büyük kalem
+  (`40005100051`, 2.769 adet, 1,98 M TL) `cfo_stok_istisna`daydı: stok sanal,
+  gerçek bağlı sermaye 9.700 TL — Alperen 31.08 beyanı, 07.09 teyidi. İstisnayı
+  çiğnemek insanın cevapladığı soruyu yeniden sormak olurdu.
+- Sayfaya "90g satış / stok" sütunu eklendi; eşiğin altındaki oran kırmızı.
+- **CFO ajanına görev:** `docs/CFO-GOREV.md` §5 "Ölü stok (Sal)" ve panoya
+  sabitlenmiş `cfo_note` — her turda üç kural da kontrol edilir,
+  `sadece_oran_kurali` 0 ise kuralın o gün boşa çalıştığı raporda söylenir.
+
 ### Ödeme Takvimi — toplam alacak ve borç, kalem kalem (2026-09-11)
 
 - Takvim gün gün **akışı** gösteriyordu; "toplamda kimden ne alacağım, kime ne

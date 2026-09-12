@@ -5,9 +5,14 @@
  * cevaplar: hangi üründe ne kadar param duruyor ve onu çıkarmak için bugün ne
  * yapmam gerekiyor.
  *
- * Veri kaynağı `cfo_olu_stok` görünümü (30 günde sıfır VEYA örtü > 180 gün;
- * kukla stok hariç, AMAZON_FBA dahil, çift sayımsız SKU eşleşmesi). Sayfa hesap
- * yapmaz — kural görünümde yaşar ki rapor ile ekran aynı rakamı göstersin.
+ * Veri kaynağı `cfo_olu_stok` görünümü. Üç kural: 30 günde sıfır · örtü > 180 gün ·
+ * 90 günlük satış stok değerinin %20'sinden düşük (eşik `cfo_settings`). Kukla stok
+ * hariç, AMAZON_FBA dahil, çift sayımsız SKU eşleşmesi. Sayfa hesap yapmaz — kural
+ * görünümde yaşar ki rapor ile ekran aynı rakamı göstersin.
+ *
+ * Stok değeri maliyet öncelikli, maliyet yoksa 90 günde gerçekleşen satış
+ * fiyatından türetiliyor. Bu önemli: 1.299 ürünün yalnız 76'sında birim maliyet
+ * var, eskiden maliyeti olmayan ürün bu listede HİÇ görünmüyordu.
  *
  * Kontrol vakti geçmiş bulgular en üstte ve kırmızı kenarlıklı: takip kişiye
  * değil sisteme bağlı.
@@ -37,6 +42,10 @@ type Row = {
   son_satis: Date | null;
   gecen_gun: number | null;
   ortu_gun: unknown;
+  stok_deger: unknown;
+  deger_kaynagi: string | null;
+  satis_90g_try: unknown;
+  satis_stok_orani: unknown;
   alarm: string | null;
   alarm_sebep: string | null;
   bulgu_id: bigint | null;
@@ -62,6 +71,13 @@ type Ozet = {
 type Released = { ay: Date; tutar: unknown; adet: bigint };
 
 const n = (v: unknown) => (v == null ? null : Number(v));
+
+/**
+ * Ölü stok oran kuralı eşiği — 90 günlük satış, stok değerinin bu oranından
+ * düşükse ürün listeye girer. Gerçek eşik `cfo_settings.deadStockSalesRatioPct`;
+ * buradaki yalnız boyamak için, kapı veritabanındaki görünümde.
+ */
+const ORAN_ESIGI = 0.2;
 
 const DURUM_TR: Record<string, string> = {
   acik: "Açık",
@@ -177,6 +193,7 @@ export default async function CfoDeadStockPage() {
               <Th right>Stok</Th>
               <Th right>Bağlı sermaye</Th>
               <Th right>30g / 90g</Th>
+              <Th right>90g satış / stok</Th>
               <Th right>Örtü</Th>
               <Th>Durum</Th>
               <Th>Aksiyon</Th>
@@ -186,6 +203,7 @@ export default async function CfoDeadStockPage() {
           {rows.map((r) => {
             const gecikti = !!r.kontrol_gecikti;
             const kirmizi = r.alarm === "KIRMIZI";
+            const oran = n(r.satis_stok_orani);
             return (
               <tr
                 key={r.sku ?? String(r.bulgu_id)}
@@ -213,6 +231,23 @@ export default async function CfoDeadStockPage() {
                   <span className="text-[11px]">
                     {r.gecen_gun == null ? "hiç satmadı" : `${r.gecen_gun} gün önce`}
                   </span>
+                </Td>
+                {/* 90 günde bağlı sermayenin ne kadarı ciroya döndü. Eşiğin
+                    altındaysa kırmızı — ürün yavaş değil, sıkışmış demektir. */}
+                <Td right muted>
+                  {oran == null ? (
+                    "—"
+                  ) : (
+                    <>
+                      <span className={oran < ORAN_ESIGI ? "text-[var(--danger)]" : undefined}>
+                        %{(oran * 100).toFixed(1)}
+                      </span>
+                      <br />
+                      <span className="text-[11px]">
+                        {fmtTry(n(r.satis_90g_try))} / {fmtTry(n(r.stok_deger))}
+                      </span>
+                    </>
+                  )}
                 </Td>
                 <Td right muted>
                   {r.ortu_gun == null ? "—" : `${fmtNum(n(r.ortu_gun))} gün`}

@@ -197,6 +197,33 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 12.09.2026 — Ölü stoka oran kuralı: 90g satış / stok değeri < %20
+Alperen: "son 90 günlük satış stok değerinin %20'sinden düşükse o ürün bu listeye
+alınsın / bunu cowork her bu görevi yaptığında kontrol etsin."
+
+Kural kuruldu, eşik `cfo_settings.deadStockSalesRatioPct`'te ayarlanabilir.
+Ama uygulamadan önce ölçtüm ve **%20'de tek başına hiçbir ürün eklemiyor**:
+yakaladığı 20 ürünün hepsi zaten "30 günde sıfır" ya da "örtü > 180 gün"
+kuralında. Sebep matematiksel — satış stok değerinin %20'sinden düşükse örtü
+zaten 180 günü çoktan aşıyor. Listenin dışındaki en yavaş ürünün oranı %72; kural
+ancak eşik ~%72 üstüne çıkarsa ısırır. `cfo_olu_stok_ozet`'e `sadece_oran_kurali`
+sütunu koydum ki bu her turda ölçülsün, benim bir kerelik tespitim olarak kalmasın.
+
+Asıl kazanç başka yerden geldi: kuralı değerlendirmek için stok değeri gerekiyordu
+ve eski görünüm bağlı sermayeyi yalnız `unitCostTry`den hesaplıyordu — yani
+**maliyeti girilmemiş ürünü hiç görmüyordu**. 1.299 üründe maliyet 76'sında dolu
+olduğuna göre kör nokta kuralın kendisinden büyüktü. Değer artık maliyet yoksa
+90 günde gerçekleşen satış fiyatından türetiliyor: liste 64 → 75 SKU.
+
+`cfo_stok_istisna`ya dokunmadım. Oran kuralının yakaladığı en büyük kalem
+(`40005100051`, 1,98 M TL) oradaydı — stok sanal, gerçek bağlı sermaye 9.700 TL,
+Alperen 31.08'de beyan etmiş 07.09'da teyit edilmiş. İstisnayı çiğnemek insanın
+cevapladığı soruyu yeniden sormak olurdu.
+
+Cowork görevi: `docs/CFO-GOREV.md` §5 "Ölü stok (Sal)" + sabitlenmiş `cfo_note`.
+Etki: `prisma/migrations/20260912090000_olu_stok_satis_orani/`,
+`app/(app)/cfo/olu-stok/page.tsx`, `docs/CFO-GOREV.md`.
+
 ### 11.09.2026 — Ödeme Takvimi'ne toplam alacak/borç
 Alperen: "ödeme takvimi üst kısımda alacakların ve borçların toplamı da yazılsın
 … alt toplamlar yazsın / Cowork defterine buraya toplamları işlemeyi unutmaması
