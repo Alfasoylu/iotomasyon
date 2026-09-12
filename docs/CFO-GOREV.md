@@ -156,6 +156,63 @@ tablosu gelir.
 
 > 28.08: 1.299 üründe 76 dolu (24.08'de 1'di). Marj körlüğü **1 numaralı engel**.
 
+### 4.4b — SATIŞ VERİSİ HAFTALIK GELİR. İSTEME. (12.09.2026)
+
+**Alperen satış listesini Entegra'dan HAFTADA BİR, elle yüklüyor. Bu böyle
+kararlaştırıldı. Her raporda "satış verisi güncel değil, yükler misin" DEME.**
+
+İki yükleme arasında satış tablosu sessizdir; bu bir arıza değil, bilinen tempodur.
+Boşluğu XML stok hareketi kapatır (aşağıda). Yalnızca şu iki durumda söz et:
+
+- Son yüklemenin üzerinden **10 günden fazla** geçtiyse (haftalık tempo kaçmış demektir)
+- `cfo_xml_kalibrasyon.guvenilir = false` ise (vekil ölçü de çalışmıyor, artık körsün)
+
+```sql
+select max(gun) filter (where satis_verisi_var) as son_satis_verisi,
+       current_date - max(gun) filter (where satis_verisi_var) as gun_once
+  from cfo_satis_kapsam;
+```
+
+### 4.4c — XML HAREKETİ = SATIŞ SİNYALİ (12.09.2026)
+
+Entegra XML'i her gece **02:31**'de stok sayılarını çeker, farkları
+`XmlStockChangeLog`'a yazar. Satış verisi olmayan günlerde satışı buradan okursun:
+
+| hareket | anlamı |
+|---|---|
+| Stok **azaldı** (1–100 adet) | **satış** |
+| Stok azaldı (>100) | toplu düzeltme — satış sayılmaz |
+| Stok **arttı** (1–5) | iade ya da küçük giriş |
+| Stok arttı (>5) | stok girişi / konteyner |
+
+```sql
+select * from cfo_satis_kapsam order by gun desc limit 14;  -- hangi gün hangi kaynak
+select * from cfo_xml_kalibrasyon;                          -- vekil ölçü hâlâ doğru mu
+select * from cfo_xml_urun_hareket where sku = '...';       -- ürün bazında
+```
+
+**BİR GÜN KAYDIRMA ZORUNLU.** Senkron 02:31'de çalışır, gördüğü hareket bir önceki
+güne aittir. Ölçüldü: kaydırmasız korelasyon 0,19 · kaydırmalı 0,56.
+`cfo_xml_hareket.is_gunu` bunu zaten uygular; ham `syncedAt` ile iş günü eşleme.
+
+**DOĞRULUK — ölçüldü, varsayılmadı.** Son 30 günün örtüşen günlerinde gerçek satış
+1.877 adet, XML 1.872 adet → **%99,7**. Ama günlük korelasyon 0,26: **bu araç GÜNLÜK
+DEĞİL, HAFTALIK/TOPLAM kullanım içindir.** Bir günün XML rakamını "o günün satışı"
+diye rapora yazma; haftalık toplam güvenilir, günlük değil.
+
+> **13.07–02.08 anomalisi.** O üç hafta senkron çalıştığı hâlde XML neredeyse hiç
+> hareket kaydetmedi (haftada 11-16 ürün, normalde 60-114) ve vekil ölçü gerçeğin
+> %7-12'sini gösterdi. Kalibrasyon penceresi bu yüzden 30 gün — daha geniş pencere
+> o dönemi içine alıp yanıltıcı düşük oran verir. Benzer bir çöküş tekrarlarsa
+> `guvenilir` false'a düşer; o zaman XML'e de güvenme.
+
+**XML NE VERMEZ: PARA.** Adet verir, ciro vermez. XML gününden ciro üretme.
+
+**XML HER ÜRÜNÜ GÖRMEZ.** Stoğu elle/sanal tutulan SKU'larda XML kıpırdamaz.
+Örnek: `AL-CAM03` 07.09'da Trendyol'da gerçekten satıldı (teslim edildi, 1.900 TL)
+ama Entegra stoğu 90 gündür 1.940'ta sabit — XML bu satışı görmedi. Böyle bir SKU'da
+"hiç satmadı" alarmı hâlâ yanlış olabilir; `TrendyolSalesRecord`'a bak.
+
 ### 4.5 — ALACAK/BORÇ TOPLAMLARINI TAZE TUT (11.09.2026)
 
 Ödeme Takvimi sayfasının üstünde artık **toplam alacak ve toplam borç** kalem kalem

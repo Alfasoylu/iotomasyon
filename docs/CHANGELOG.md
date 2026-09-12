@@ -9,6 +9,36 @@
 
 ## 2026-09
 
+### XML stok hareketi = satış sinyali; satış verisi haftalık gelir (2026-09-12)
+
+- **Kural yazıldı:** satış listesi Entegra'dan haftada bir, elle yükleniyor. CFO
+  ajanı bunu her raporda istemeyecek (`docs/CFO-GOREV.md` §4.4b + sabitlenmiş
+  `cfo_note`); yalnız 10 günü aşarsa ya da vekil ölçü bozulursa söz edecek.
+- **Boşluğu XML kapatıyor.** Entegra XML'i her gece 02:31'de stok çekiyor;
+  azalış = satış, artış = iade/stok girişi. Yeni görünümler: `cfo_xml_hareket`,
+  `cfo_satis_kapsam`, `cfo_xml_urun_hareket`, `cfo_xml_kalibrasyon`.
+- **Bir gün kaydırma ölçülerek doğrulandı:** senkron 02:31'de çalıştığı için
+  gördüğü hareket önceki güne ait. Kaydırmasız korelasyon 0,19 → kaydırmalı 0,56.
+- **Eşikler veriden seçildi:** 2.485 hareketin dağılımında 100'de net kopuş var
+  (>100 azalış sadece 4 kayıt). Üstü toplu düzeltme sayılıyor, satış değil.
+- **Doğruluk ölçüldü:** son 30 günün örtüşen günlerinde gerçek 1.877 adet, XML
+  1.872 adet → **%99,7**. Günlük korelasyon 0,26 olduğu için araç haftalık/toplam
+  kullanım için; `cfo_xml_kalibrasyon` bunu her okumada yeniden ölçüyor ve
+  %80–120 bandından çıkarsa `guvenilir=false` veriyor.
+- **13.07–02.08 anomalisi bulundu:** o üç hafta senkron çalıştığı hâlde XML
+  neredeyse hiç hareket kaydetmemiş (haftada 11-16 ürün, normalde 60-114) ve
+  vekil ölçü gerçeğin %7-12'sini göstermiş. Kalibrasyon penceresi bu yüzden 30
+  gün — 60 günlük pencere o dönemi içine alıp %67 gibi yanıltıcı oran veriyordu.
+- **Ölü stok yanlış alarmları kesildi.** XML hareket gösteriyorsa "hiç satmadı"
+  iddiası kurulmuyor. Liste 75 → 73 SKU; **6 üründe** yanlış alarm engellendi,
+  en büyüğü `AL-PTZ04` (292.968 ₺ bağlı sermaye, 11.09'da satmış).
+- **XML'in görmediği durum da belgelendi:** `AL-CAM03` 07.09'da Trendyol'da
+  gerçekten satıldı (teslim, 1.900 ₺) ama Entegra stoğu 90 gündür 1.940'ta sabit
+  — stoğu elle/sanal tutulan SKU'larda XML kıpırdamıyor. O tür SKU için
+  `TrendyolSalesRecord`'a bakmak gerekiyor.
+- Panelde bayat dönem artık gizlenmiyor: üst şeritte kaç gün geriden gelindiği ve
+  XML'in kaç ürünü yanlış alarmdan kurtardığı yazıyor; satırda XML hareketi var.
+
 ### Ölü stok — üçüncü kural: 90g satış / stok değeri < %20 (2026-09-12)
 
 - Alperen'in kuralı eklendi: son 90 günlük satış, stok değerinin %20'sinden

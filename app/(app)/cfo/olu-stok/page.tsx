@@ -14,11 +14,18 @@
  * fiyatından türetiliyor. Bu önemli: 1.299 ürünün yalnız 76'sında birim maliyet
  * var, eskiden maliyeti olmayan ürün bu listede HİÇ görünmüyordu.
  *
+ * SATIŞ VERİSİ HAFTALIK YÜKLENİYOR. İki yükleme arasında satış tablosu sessiz
+ * kalıyor ve bu, "30 günde hiç satmadı" gibi YANLIŞ alarmlar üretiyordu. Artık
+ * Entegra XML stok hareketi (her gece 02:31) vekil ölçü: stok azalması doğrudan
+ * satış kanıtıdır, o dönemde "hiç satmadı" iddiası kurulmaz. Ölçülen doğruluk
+ * son 30 günde %99,7 — ama günlük korelasyon düşük, bu araç haftalık/toplam
+ * kullanım içindir. Kalibrasyon: `cfo_xml_kalibrasyon`.
+ *
  * Kontrol vakti geçmiş bulgular en üstte ve kırmızı kenarlıklı: takip kişiye
  * değil sisteme bağlı.
  */
 import Link from "next/link";
-import { PackageX, ArrowRight } from "lucide-react";
+import { PackageX, ArrowRight, Database } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -46,6 +53,10 @@ type Row = {
   deger_kaynagi: string | null;
   satis_90g_try: unknown;
   satis_stok_orani: unknown;
+  xml_30g: number | null;
+  xml_90g: number | null;
+  xml_son_satis: Date | null;
+  veri_durumu: string | null;
   alarm: string | null;
   alarm_sebep: string | null;
   bulgu_id: bigint | null;
@@ -66,6 +77,8 @@ type Ozet = {
   doksan_gun_sifir: bigint;
   doksan_gun_sifir_bagli: unknown;
   kontrol_gecikti: bigint;
+  xml_kurtardi: bigint;
+  satis_verisi_bayat_gun: number | null;
 };
 
 type Released = { ay: Date; tutar: unknown; adet: bigint };
@@ -132,6 +145,28 @@ export default async function CfoDeadStockPage() {
         title="Ölü Stok"
         subtitle="Satmayan ürün değil, çalışmayan para. Bağlı sermayeyi serbest bırakma kuyruğu."
       />
+
+      {/* Satış verisi haftalık yükleniyor; boşluk gizlenmez, XML'in kapattığı
+          söylenir. Sessiz boşluk yanlış "hiç satmadı" alarmı üretiyordu. */}
+      {Number(o?.satis_verisi_bayat_gun ?? 0) > 2 && (
+        <Card className="mb-4 p-4">
+          <p className="flex items-start gap-2 text-[12px] leading-snug text-[var(--text-secondary)]">
+            <Database size={14} className="mt-px shrink-0 text-[var(--text-muted)]" />
+            <span>
+              Satış listesi <strong>{Number(o?.satis_verisi_bayat_gun)} gün</strong> önceye kadar
+              yüklü (haftalık tempo). Aradaki günlerde satış sinyali Entegra XML stok
+              hareketinden okunuyor — son 30 günde ölçülen doğruluk <strong>%99,7</strong>.
+              {Number(o?.xml_kurtardi ?? 0) > 0 && (
+                <>
+                  {" "}
+                  <strong>{Number(o?.xml_kurtardi)} üründe</strong> &laquo;hiç satmadı&raquo;
+                  alarmı bu sayede kurulmadı: satış verisi sessiz ama ürün hareket etmiş.
+                </>
+              )}
+            </span>
+          </p>
+        </Card>
+      )}
 
       {/* ── Üst şerit ─────────────────────────────────────────────── */}
       <Card className="mb-6 p-5">
@@ -231,6 +266,12 @@ export default async function CfoDeadStockPage() {
                   <span className="text-[11px]">
                     {r.gecen_gun == null ? "hiç satmadı" : `${r.gecen_gun} gün önce`}
                   </span>
+                  {/* XML hareketi satış verisiyle çelişiyorsa görünür olsun. */}
+                  {Number(r.xml_30g ?? 0) > 0 && Number(r.adet_30g ?? 0) === 0 && (
+                    <span className="block text-[11px] text-[var(--ok)]">
+                      XML: {fmtNum(Number(r.xml_30g))} adet hareket
+                    </span>
+                  )}
                 </Td>
                 {/* 90 günde bağlı sermayenin ne kadarı ciroya döndü. Eşiğin
                     altındaysa kırmızı — ürün yavaş değil, sıkışmış demektir. */}

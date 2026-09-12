@@ -197,6 +197,44 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 12.09.2026 — Genel tarama + XML hareketinden satış sinyali
+Alperen genel denetim istedi. Çıkanlar ve yapılanlar:
+
+**En büyük bulgu — Trendyol verisi kullanılmıyor.** Günlük cron `TrendyolSalesRecord`'a
+yazıyor ve bugüne kadar güncel, ama CFO görünümlerinin hepsi yalnız
+`MarketplaceSalesRecord`'u okuyor. **1.245 sipariş / 1.255.234 ₺ hiçbir analizde
+görünmüyor.** Çift sayım riski var (7.255 sipariş ikisinde de), doğru anahtar
+`split_part(orderNumber,'-',2) = orderId`. **Henüz bağlanmadı, sırada.**
+
+**Satış verisi haftalık geliyormuş** — Alperen söyledi, deftere yazıldı (§4.4b).
+Ajan artık her raporda istemeyecek. İki yükleme arası sessizlik arıza değil.
+
+**Boşluğu XML kapattım.** Entegra XML'i her gece 02:31'de stok çekiyor; azalış
+satış demek. Kurmadan önce kalibre ettim: son 30 günde gerçek 1.877, XML 1.872 →
+%99,7. Bir gün kaydırma gerektiğini de ölçtüm (korelasyon 0,19 → 0,56), eşikleri
+(±100) hareket dağılımındaki kopuştan seçtim.
+
+İlk kalibrasyonu 60 gün yapmıştım, %67,4 çıktı ve `guvenilir=false` dedi. Kovalayınca
+13.07–02.08 arası XML'in neredeyse hiç hareket kaydetmediğini buldum (haftada 11-16
+ürün, normalde 60-114). Pencereyi 30 güne çektim — uyduruk bir daraltma değil, o
+dönem kaynağın kendisi çalışmamış.
+
+**Sonuç:** ölü stokta 6 yanlış alarm engellendi. En büyüğü `AL-PTZ04` (292.968 ₺)
+"30 günde hiç satmadı" diyordu, 11.09'da satmış.
+
+**XML her şeyi görmüyor:** `AL-CAM03` (940.900 ₺) 07.09'da Trendyol'da gerçekten
+satılmış ama Entegra stoğu 90 gündür sabit — stoğu sanal tutulan SKU'larda XML
+kıpırdamıyor. Bunu da deftere yazdım; o tür ürün için Trendyol tablosuna bakılacak.
+
+**Taramanın diğer bulguları (henüz yapılmadı):** kredi/kart 19 gün bayat ·
+`cfo_settings` 11 gün (kur oradan) · `cfo_defter_denetim()` bayatlık kontrolü
+yalnız bankaya bakıyor · `cfo_stok_deger` ölü `Product.category` sütununu okuyor
+(gerçek kategori `categoryId`'de, %98 dolu) · 1.093/1.285 üründe maliyet yok ·
+CRM boş (teklif 9, timeline notu 32, mesaj şablonu 0).
+Etki: `prisma/migrations/20260912140000_xml_satis_sinyali/`,
+`20260912150000_olu_stok_xml_sinyali/`, `app/(app)/cfo/olu-stok/page.tsx`,
+`docs/CFO-GOREV.md`.
+
 ### 12.09.2026 — Ölü stoka oran kuralı: 90g satış / stok değeri < %20
 Alperen: "son 90 günlük satış stok değerinin %20'sinden düşükse o ürün bu listeye
 alınsın / bunu cowork her bu görevi yaptığında kontrol etsin."
