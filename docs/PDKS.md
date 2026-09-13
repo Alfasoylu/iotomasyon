@@ -193,9 +193,61 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 - [ ] PDF/Excel rapor (şu an yalnızca CSV)
 - [ ] Tekrarlı kod birleştirme: `lib/pdks/time.ts` (zaman parse) + `format.ts` (TR tarih/saat)
 
+### Yeni Ürünler (pazaryeri hazırlığı)
+- [ ] **16 ürünün kutusu elle ölçülecek** — 10 çanak lavabo + 6 yerden montajlı
+  küvet bataryası. Yalnız bu 16'da desi ağırlığı aşıyor, yani kargo faturasını
+  kutu ölçüsü belirliyor; kalan 131 tahminin faturaya etkisi yok. Panel bunları
+  işaretliyor, ölçü girilince `kutu_kaynak = 'OLCULDU'` yapılmalı.
+- [ ] **Görsel** — 127 yeni üründen 126'sında ürün görseli yok. Puandaki en büyük
+  tek kalem (17 + 10 = 27 puan) ve kalan tek ciddi darboğaz.
+- [ ] Kategori boş (9 puan) — pazaryeri kategori ağacına eşleme kararı Alperen'de.
+- [ ] 64 üründe marka boş; "kalanların hepsi Alfas" denirse tek UPDATE.
+- [ ] 40 başlık 100 karakteri aşıyor (Trendyol sınırı) — Alperen elle kısaltacak,
+  üreticinin 100 karakterlik sürümleri istenirse hazır.
+- [ ] 1688 açıklamalarının panele yapıştırılması — üretilen açıklamaların 58'i
+  150-399 bandında kaldı, gerçek çözüm bu.
+
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+### 13.09.2026 — Menşei CN, garanti 24 ay, kutu ölçüleri
+Alperen: "hepsine menşei cn ve kutu ölçüleri ekle / ayrıca garanti 24 ay ekle."
+
+Menşei ve garanti tek UPDATE: 151/151 → CN / 24 ay. Tartışılacak bir şey yok,
+karar Alperen'in.
+
+**Kutu ölçüsü başka bir şey ve bunu ayırmak gerekiyordu.** Beyan edilen desi
+pazaryerinin keseceği kargo ücretini belirliyor: az beyan edersen ürünü yeniden
+tartıp fark kesiyorlar, çok beyan edersen her gönderide fazla ödüyorsun. Yani
+oraya yazılan sayı doğrudan para. Elimde gerçek ölçü **yalnız 6 üründe** vardı
+(1 elle ölçülmüş, 5'i faturada yazıyordu).
+
+Kalan 141'i boş bırakmak da uydurmak da yanlıştı. Türettim ve **türettiğimi
+kaydettim**: yeni `kutu_kaynak` sütunu OLCULDU / FATURADAN / TAHMINI taşıyor.
+İşaretsiz bıraksaydım bir sonraki pazaryeri ihracı tahmini ölçülmüş gibi
+gönderirdi — ve hata ortaya ancak kargo faturası gelince çıkardı.
+
+Tahmin kuralını (`urun_kutu_tahmin`) elimdeki tek gerçek kayda çapaladım:
+AS304167 0,80 kg → 20×10×10. Kural o kaydı birebir üretiyor. Çanak lavaboda
+ölçü zaten başlıkta yazıyor, kutu = ürün + 5 cm pay.
+
+**Asıl iş şuydu: hangi tahmin paraya dönüyor?** Kargo `max(desi, ağırlık)`
+kesiliyor, yani ağırlığın baskın olduğu üründe kutu ölçüsünün faturaya etkisi
+yok. Saydım: 147 kutulu üründen 21'inde desi belirleyici, 5'inin ölçüsü zaten
+gerçek. Geriye **elle ölçülmesi gereken 16 ürün** kalıyor (10 çanak lavabo,
+6 yerden montajlı küvet bataryası). Panel 147 ürün için değil, tam o 16 için
+uyarı veriyor — listede sayıyı yazıyor, editörde kutu alanını kırmızıya alıyor.
+Kalan 131'de rozet gri: "tahmini, ama faturanı değiştirmez."
+
+Bir de deploy öncesi yakalanan hata: `urun_aday_skor` sütun listesini
+donduruyor (`select *` değil), panel sorgusu `kutu_kaynak` istiyordu →
+"column does not exist". Görünümler yeniden kuruldu.
+
+Puan ortalaması 46,4 → **58,2**; 60+ puanlı ürün 1 → **46**. Kalan tek büyük
+darboğaz görsel: 127 yeni üründen 126'sında ürün görseli yok (27 puan).
+Etki: `prisma/migrations/20260913120000_urun_mensei_garanti_kutu/`,
+`app/(app)/admin/yeni-urunler/` (liste + editör).
 
 ### 13.09.2026 — 124 ürün açıklaması başlıktan üretildi
 Alperen: "yeni ürünlerde açıklamaları doldur."

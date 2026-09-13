@@ -9,6 +9,30 @@
 
 ## 2026-09
 
+### Yeni Ürünler — menşei CN, garanti 24 ay, kutu ölçüsü + kaynak etiketi (2026-09-13)
+
+- 151 adayın tamamında `mensei = 'CN'` ve `garanti_ay = 24` (bir kayıttaki "Çin"
+  de CN'e normalize edildi). Menşei+garanti puanda 6 puanlık kalem.
+- **Kutu ölçüsü uydurulmadı, türetildi ve türetildiği kaydedildi.** Yeni
+  `urun_aday.kutu_kaynak` sütunu `OLCULDU` / `FATURADAN` / `TAHMINI` taşıyor:
+  1 ölçülmüş, 5 faturadan (Qunzh ×2 = 41,5×21,5×5,5; AURA5939 ×3 = 64×44×15),
+  141 tahmini, 4 başlıksız kayıt boş. Etiketsiz bıraksaydık bir sonraki pazaryeri
+  ihracı tahmini ölçülmüş gibi gönderirdi.
+- `urun_kutu_tahmin(ad, kg)` fonksiyonu: çanak lavaboda başlıktaki ürün ölçüsü
+  + 5 cm pay; diğerlerinde paketli yoğunluk 0,4 kg/L ve aileye göre kenar oranı.
+  Çapası gerçek kayıt — AS304167 0,80 kg → 20×10×10'u birebir üretiyor.
+- **Hangi tahminin paraya döndüğü ölçüldü.** Kargo `max(desi, ağırlık)` kesildiği
+  için ağırlığın baskın olduğu üründe kutu ölçüsü faturayı değiştirmiyor.
+  147 kutulu üründen 21'inde desi belirleyici, 5'inin ölçüsü zaten gerçek →
+  **elle ölçülmesi gereken 16 ürün**. Panel (liste uyarısı + editörde kırmızı
+  çerçeve) tam olarak o 16'yı işaretliyor; kalan 131'de rozet gri.
+- `urun_aday_puan` / `urun_aday_skor` görünümlerine `kutu_kaynak` eklendi.
+  Görünüm sütun listesini donduruyordu; eklemeden panel sorgusu
+  "column does not exist" ile patlıyordu — deploy öncesi yakalandı.
+- Yeni ürünlerin puan ortalaması **46,4 → 58,2**; 60+ puanlı ürün **1 → 46**.
+  Kalan tek büyük darboğaz görsel: 127 yeni üründen 126'sında ürün görseli yok
+  (27 puan).
+
 ### Yeni Ürünler — 124 açıklama başlıktan üretildi (2026-09-13)
 
 - Açıklama puanda 15 puanlık tek kalem ve 151 adayın **150'sinde boştu**. Yeni

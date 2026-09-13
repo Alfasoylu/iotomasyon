@@ -63,6 +63,7 @@ export type Aday = {
   kutu_en_cm: unknown;
   kutu_boy_cm: unknown;
   kutu_yuk_cm: unknown;
+  kutu_kaynak: string | null;
   satis_try: unknown;
   kargo_try: unknown;
   link_1688: string | null;
@@ -283,6 +284,15 @@ export function AdayEditor({
     });
   }
 
+  // Kargo ücreti max(desi, ağırlık) üzerinden kesilir. Desi ağırlığı aşıyorsa
+  // kutu ölçüsü doğrudan faturaya dönüyor demektir — tahmin orada tehlikeli,
+  // ağırlığın belirlediği üründe ise tahminin bedeli yok.
+  const desi =
+    [form.kutu_en_cm, form.kutu_boy_cm, form.kutu_yuk_cm].every((v) => Number(v) > 0)
+      ? (Number(form.kutu_en_cm) * Number(form.kutu_boy_cm) * Number(form.kutu_yuk_cm)) / 3000
+      : null;
+  const desiBelirleyici = desi != null && desi > Number(form.agirlik_kg || 0);
+
   // Marka yazılıysa başlık onunla başlamalı (Hepsiburada kuralı). Flextail
   // ürünlerinin başlığına yanlışlıkla "Alfas" öneki konmuştu; bu uyarı onu yakalar.
   const markaUyumsuz =
@@ -366,10 +376,45 @@ export function AdayEditor({
             <input className={inputCls} value={form.garanti_ay} onChange={(e) => set("garanti_ay", e.target.value)} />
           </Alan>
           <div className="sm:col-span-2">
-            <Alan etiket="Kutu ölçüsü (cm) — en × boy × yükseklik" ipucu="Desi hesabı ve kargo maliyeti buna bağlı.">
+            <Alan
+              etiket="Kutu ölçüsü (cm) — en × boy × yükseklik"
+              ipucu={
+                aday.kutu_kaynak === "TAHMINI"
+                  ? desiBelirleyici
+                    ? `TAHMİNİ ölçü — desi ${desi?.toFixed(1)}, ağırlık ${form.agirlik_kg} kg. Kargo ücretini DESİ belirliyor, yani bu tahmin doğrudan paraya dönüyor. İlan açmadan önce ölçün.`
+                    : `TAHMİNİ ölçü — desi ${desi?.toFixed(1)}, ağırlık ${form.agirlik_kg} kg. Kargo ücretini ağırlık belirlediği için bu tahminin faturaya etkisi yok.`
+                  : aday.kutu_kaynak === "FATURADAN"
+                    ? "Faturadaki ölçüden alındı."
+                    : "Desi hesabı ve kargo maliyeti buna bağlı."
+              }
+              sayac={
+                aday.kutu_kaynak === "TAHMINI" ? (
+                  <span
+                    className={`text-[11px] font-medium ${
+                      desiBelirleyici ? "text-[var(--danger)]" : "text-[var(--warn)]"
+                    }`}
+                  >
+                    tahmini
+                  </span>
+                ) : aday.kutu_kaynak ? (
+                  <span className="text-[11px] text-[var(--ok)]">
+                    {aday.kutu_kaynak === "OLCULDU" ? "ölçüldü" : "faturadan"}
+                  </span>
+                ) : null
+              }
+            >
               <div className="flex gap-2">
                 {(["kutu_en_cm", "kutu_boy_cm", "kutu_yuk_cm"] as const).map((k) => (
-                  <input key={k} className={inputCls} value={form[k]} onChange={(e) => set(k, e.target.value)} />
+                  <input
+                    key={k}
+                    className={`${inputCls} ${
+                      aday.kutu_kaynak === "TAHMINI" && desiBelirleyici
+                        ? "border-[var(--danger-border)]"
+                        : ""
+                    }`}
+                    value={form[k]}
+                    onChange={(e) => set(k, e.target.value)}
+                  />
                 ))}
               </div>
             </Alan>
