@@ -31,6 +31,10 @@
 - **Şema:** `WhatsAppSchedule` + `WhatsAppScheduleRecipient`; `WhatsAppMessage`'a
   `scheduleId`, `awaitingReply`, `replyToId`. Migration salt ekleme, RLS açık,
   CASCADE yok (RESTRICT/SET NULL — mesaj geçmişi görev silinince durur).
+- **Formlar:** kişi ve zamanlanmış mesaj ekle/düzenle/sil, panel içinde
+  (`whatsapp.manage` gerektirir). Görev formu şablon adı boşken uyarıyor:
+  serbest metin yalnız 24 saatlik pencerede gider, sabah yoklamasında o pencere
+  kapalıdır ve mesaj hiç ulaşmaz.
 - **Testler:** `npm run check:wa` 30 kontrol (17'den). Doğrulama: check:wa 30/30,
   check:rbac 22/22, `tsc --noEmit` temiz, eslint temiz, `npm run build` başarılı.
 

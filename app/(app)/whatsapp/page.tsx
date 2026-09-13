@@ -16,6 +16,8 @@ import {
   listRecentThreads,
   listSchedules,
 } from "@/services/whatsapp-service";
+import { AddContactButton } from "./_components/contact-form";
+import { AddScheduleButton } from "./_components/schedule-form";
 import { RunSchedulesButton } from "./_components/run-schedules-button";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +35,7 @@ export default async function WhatsAppPage() {
   }
 
   const gonderebilir = await checkPermission(user, PERMISSIONS.WHATSAPP_SEND);
+  const yonetebilir = await checkPermission(user, PERMISSIONS.WHATSAPP_MANAGE);
 
   const [stats, bekleyenler, gorevler, kisiler, akis] = await Promise.all([
     getWhatsAppStats(),
@@ -128,9 +131,16 @@ export default async function WhatsAppPage() {
 
       {/* ── Zamanlanmış görevler ───────────────────────────────────────── */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
-          Zamanlanmış mesajlar
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+            Zamanlanmış mesajlar
+          </h2>
+          {yonetebilir && (
+            <AddScheduleButton
+              contacts={kisiler.map((k) => ({ id: k.id, name: k.name, isActive: k.isActive }))}
+            />
+          )}
+        </div>
         {gorevler.length === 0 ? (
           <EmptyState
             icon={Clock}
@@ -231,14 +241,18 @@ export default async function WhatsAppPage() {
 
       {/* ── Kişiler ────────────────────────────────────────────────────── */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
-          Kişiler
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+            Kişiler
+          </h2>
+          {yonetebilir && <AddContactButton />}
+        </div>
         {kisiler.length === 0 ? (
           <EmptyState
             icon={MessageSquare}
             title="Kayıtlı kişi yok"
             hint="Tanımadığı numaradan gelen mesaj kaydedilmez — önce kişi eklenmeli."
+            action={yonetebilir ? <AddContactButton /> : undefined}
           />
         ) : (
           <Card className="divide-y divide-[var(--border-subtle)]">
