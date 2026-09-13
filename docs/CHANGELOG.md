@@ -64,6 +64,43 @@
   reklam izinleri ile rol varsayılanları yazıldı.
 - Soru↔cevap zinciri canlı şemada uçtan uca doğrulandı (test verisi geri alındı).
 
+### Faz 91 — Trendyol Finans modülü: fatura, kesinti ve hakediş takibi (2026-09-09)
+
+- **Ne yapıldı:** Trendyol partner panelinden indirilen finans dosyalarının panele
+  yüklendiği ve biriktiği yeni bir modül. Komisyon, kargo, platform/işlem bedeli,
+  reklam, ceza ve tazmin kalemleri tek ekranda toplanıp net maliyet olarak raporlanıyor.
+- **Ekranlar:**
+  - `/marketplace/trendyol/finans` — kokpit: sürükle-bırak yükleme alanı, gider grubu
+    kırılımı, aylık seyir, en çok kesen fatura tipleri, ülke kırılımı, yükleme günlüğü.
+  - `/marketplace/trendyol/finans/faturalar` — gruba/aya/ülkeye/metne göre filtreli liste.
+  - `/marketplace/trendyol/finans/siparisler` — sipariş bazında kesinti dökümü, hakediş
+    verisi yüklüyse komisyon ve satıcı payıyla birleşik.
+- **Desteklenen dosyalar (9 varyant, tür otomatik tanınır):** fatura listesi
+  (`Faturalar_*.xlsx`), tekil e-fatura (`SaticiFatura_*.pdf`), hakediş
+  (`SaticiFatura_<no>_*.xlsx`), kargo/işlem bedeli/kesinti/ceza detayları ve mikro
+  ihracat bedelleri (`prod_*_detaylar.xlsx`, `*_Kesintiler.xlsx`).
+- **Tanıma sütun başlıklarından yapılır**, dosya adından değil — tarayıcının eklediği
+  " (1)" eki ve dosya adına yapışan rakamlar tanımayı bozmuyor.
+- **PDF okuma bağımlılıksız:** Trendyol e-faturaları gömülü subset CID font kullandığı
+  için metin doğrudan okunamıyor. `pdf-parse`/`pdfjs-dist` eklemek yerine `/ToUnicode`
+  CMap'lerini çözen kendi okuyucumuz yazıldı (`lib/trendyol-finance/pdf-text.ts`).
+  KDV kırılımı (net / KDV / brüt) buradan geliyor; KDV indirilebilir olduğu için
+  "gerçek maliyet" hesabı bu ayrıma dayanıyor.
+- **Fatura ↔ detay eşleştirmesi:** Detay dosyaları fatura numarası içermiyor; detay
+  satırlarının toplamı fatura tutarına kuruşu kuruşuna eşit olduğu için eşleştirme bu
+  toplam üzerinden yapılıyor. Birden fazla aday çıkarsa bağlantı kurulmuyor.
+- **Idempotent yükleme:** Her kayıt doğal anahtarıyla yazılır (fatura no / kayıt no /
+  sourceRef+rowHash); aynı dosya tekrar yüklendiğinde satır çoğalmaz. Her yükleme
+  `trendyol_finance_import` günlüğüne yazılır (hatalılar dahil).
+- **Şema:** `20260909220000_trendyol_finance` — 4 tablo + 2 enum, additive, hepsinde
+  RLS açık.
+- **Doğrulama:** 50 gerçek dosyanın 49'u ayrıştırıldı (tanınmayan tek dosya 2021 tarihli
+  eski şablon). Detay toplamları fatura tutarlarıyla birebir tuttu. `tsc` temiz, eslint
+  temiz, `npm run build` başarılı.
+- **Not:** Migration production'a uygulandı (2026-09-14 `prisma migrate status`: güncel).
+
+## 2026-08
+
 ### Meta reklam paneli — `/reklamlar` (2026-09-13)
 
 - **Kampanya bazında harcama, ciro, ROAS, satış, CTR, CPC, satış başı maliyet.**

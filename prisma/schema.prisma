@@ -2146,6 +2146,202 @@ model CfoChangeLog {
   @@map("cfo_change_log")
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Faz 91 — Trendyol Finans (fatura, kesinti, hakediş)
+//
+// Trendyol partner panelindeki "Finans → Faturalar" ekranından indirilen
+// dosyalar panele yüklenir ve burada birikir. Amaç: pazaryerinin bizden
+// kestiği her kalemi (komisyon, kargo, işlem bedeli, reklam, ceza) tek yerde
+// toplayıp gerçek net maliyeti görebilmek.
+//
+// Desteklenen dosya türleri lib/trendyol-finance/detect.ts içinde tanımlı.
+// Her model kendi doğal anahtarıyla idempotent — aynı dosya iki kez
+// yüklenirse satır çoğalmaz.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Fatura tipini (40+ serbest metin) analiz edilebilir gider grubuna indirger.
+/// Eşleme lib/trendyol-finance/cost-groups.ts içinde; oradaki tablo tek kaynaktır.
+enum TrendyolCostGroup {
+  KOMISYON // Komisyon Faturası, Komisyon Fark Faturası
+  KARGO // Kargo Fatura(sı), MP Kargo İade
+  HIZMET // Platform Hizmet Bedeli, Uluslararası Hizmet, İşlem/Ek ücret
+  REKLAM // Reklam Bedeli, Influencer Reklam, Müşteri Duyuruları
+  CEZA // Kusurlu/Eksik/Yanlış Ürün, Termin Gecikme, Tedarik Edememe
+  KAMPANYA // Kurumsal Kampanya Yansıtma, Trendyol Promosyon
+  ERKEN_ODEME // Erken Ödeme Kesinti Faturası
+  IADE_ALACAK // Lehimize kesilen (pozitif tutarlı) tedarikçi faturaları
+  DIGER
+}
+
+/// Detay/kesinti dosyalarındaki satırın hangi belge türünden geldiği.
+enum TrendyolInvoiceLineKind {
+  KARGO // "Kargo fatura detay"      — prod_cargo-invoice_*_detaylar.xlsx
+  ISLEM_BEDELI // "İşlem Bedeli Detay"      — prod_service-fee_*_detaylar.xlsx
+  KESINTI // "Kesinti_Detay"           — prod_deduction-invoices_*_Kesintiler.xlsx
+  CEZA // "Ceza faturası detay"     — prod_*_{DamagedItem,MissingItem}_*_detaylar.xlsx
+  MIKRO_IHRACAT // "Micro Export Fees"       — prod_<satıcı>_<butik>-<ts>.xlsx
+  IADE_BEDELI // "fee"                     — prod_*_RETURN_FEE_*_detaylar.xlsx
+}
+
+/// Fatura başlığı. Ana kaynak "Faturalar_*.xlsx" listesi; tekil PDF yüklenirse
+/// aynı kayıt KDV kırılımıyla zenginleştirilir (netTry/vatTry/grossTry).
+model TrendyolInvoice {
+  id        String @id @default(cuid())
+  /// "Fatura No" (liste) == PDF'teki "Belge No". Doğal anahtar.
+  invoiceNo String @unique
+
+  invoiceDate DateTime
+  /// Trendyol'un serbest metin fatura tipi — orijinali korunur.
+  invoiceType String
+  /// "Kesinti Faturası" / "Komisyon Faturası" / "Tedarikçi Faturası"
+  category    String?
+  costGroup   TrendyolCostGroup @default(DIGER)
+  country     String?
+  status      String?
+
+  /// Liste dosyasındaki işaretli tutar: gider negatif, lehimize olan pozitif.
+  amountTry  Decimal @db.Decimal(15, 2)
+  /// Mutlak gider tutarı — toplamlarda kullanılır (amountTry < 0 ise -amountTry).
+  expenseTry Decimal @default(0) @db.Decimal(15, 2)
+
+  // ── PDF'ten gelen kırılım (yalnız PDF yüklendiyse dolu) ──
+  netTry      Decimal? @db.Decimal(15, 2) // Mal/Hizmet Toplam Tutarı (KDV hariç)
+  vatTry      Decimal? @db.Decimal(15, 2) // Hesaplanan KDV
+  grossTry    Decimal? @db.Decimal(15, 2) // Vergiler Dahil Toplam Tutar
+  vatRatePct  Decimal? @db.Decimal(5, 2)
+  ettn        String?
+  /// PDF "Genel Açıklamalar" bloğu / kalem adı.
+  description String?
+  pdfParsed   Boolean  @default(false)
+
+  /// Detay dosyalarını başlığa bağlamak için Trendyol'un iç belge numarası
+  /// (dosya adından gelir, örn. prod_cargo-invoice_..._85005834_detaylar.xlsx).
+  sourceRef String?
+
+  lines TrendyolInvoiceLine[]
+
+  firstSeenFile String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([invoiceDate])
+  @@index([costGroup])
+  @@index([invoiceType])
+  @@index([country])
+  @@index([costGroup, invoiceDate])
+  // Detay dosyaları fatura no içermez; eşleştirme toplam tutar üzerinden yapılır
+  // (lib/trendyol-finance/import.ts → linkLinesToInvoice).
+  @@index([expenseTry])
+  @@map("trendyol_invoice")
+}
+
+/// Kesinti/kargo/işlem bedeli detay satırı — sipariş bazında maliyet.
+/// Detay dosyaları fatura numarasını içermez; dosya adındaki iç belge id'si
+/// `sourceRef` olarak saklanır, başlık eşleşirse invoiceId doldurulur.
+model TrendyolInvoiceLine {
+  id        String                  @id @default(cuid())
+  lineKind  TrendyolInvoiceLineKind
+  /// Dosya adından çıkarılan Trendyol belge id'si.
+  sourceRef String
+  /// Satır içeriğinin deterministik özeti — aynı dosyanın tekrar yüklenmesinde dedup.
+  rowHash   String
+
+  invoiceId String?
+  invoice   TrendyolInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  orderNumber  String?
+  shipmentType String? // Gönderi / İade / Değişim Gönderisi
+  shipmentCode String?
+  cargoCompany String?
+  orderDate    DateTime?
+  shipDate     DateTime?
+
+  /// Kesilen tutar — daima pozitif (gider).
+  amountTry      Decimal  @db.Decimal(15, 2)
+  orderAmountTry Decimal? @db.Decimal(15, 2)
+  desi           Decimal? @db.Decimal(8, 2)
+  quantity       Int?
+  description    String?
+
+  sourceFile String?
+  createdAt  DateTime @default(now())
+
+  @@unique([sourceRef, rowHash])
+  @@index([orderNumber])
+  @@index([lineKind])
+  @@index([orderDate])
+  @@index([invoiceId])
+  @@map("trendyol_invoice_line")
+}
+
+/// Hakediş (settlement) satırı — SaticiFatura_<id>_*.xlsx "Settlements" sayfası.
+/// Gelir tarafı: Satıcı Hakediş = bize ödenecek, Trendyol Hakediş = komisyon.
+model TrendyolSettlementLine {
+  id            String  @id @default(cuid())
+  /// "Kayıt No" — Trendyol'un tekil işlem numarası.
+  recordNo      String  @unique
+  /// Dosya adındaki hakediş belge id'si.
+  settlementRef String?
+
+  transactionType String // Satış / İndirim / İade / Kupon / Kesinti
+  orderNumber     String
+  orderDate       DateTime?
+  transactionDate DateTime?
+  country         String?
+
+  productName String?
+  barcode     String?
+
+  commissionPct    Decimal? @db.Decimal(6, 2)
+  /// Trendyol Hakediş — komisyon tutarı (gider).
+  trendyolShareTry Decimal? @db.Decimal(15, 2)
+  /// Satıcı Hakediş — bize kalan tutar.
+  sellerShareTry   Decimal? @db.Decimal(15, 2)
+  totalTry         Decimal? @db.Decimal(15, 2)
+
+  termDays     Int?
+  deliveryDate DateTime?
+  dueDate      DateTime?
+
+  sourceFile String?
+  createdAt  DateTime @default(now())
+
+  @@index([orderNumber])
+  @@index([transactionDate])
+  @@index([dueDate])
+  @@index([settlementRef])
+  @@map("trendyol_settlement_line")
+}
+
+/// Yükleme günlüğü — hangi dosya ne zaman işlendi, kaç satır girdi.
+/// Kullanıcı "bu dosyayı atmış mıydım" sorusunu buradan yanıtlar.
+model TrendyolFinanceImport {
+  id       String @id @default(cuid())
+  fileName String
+  /// lib/trendyol-finance/detect.ts → TrendyolFileKind değeri.
+  fileKind String
+  fileSize Int
+
+  rowsTotal   Int @default(0)
+  rowsNew     Int @default(0)
+  rowsUpdated Int @default(0)
+  rowsSkipped Int @default(0)
+
+  amountTotalTry Decimal?  @db.Decimal(15, 2)
+  periodStart    DateTime?
+  periodEnd      DateTime?
+
+  ok    Boolean @default(true)
+  error String?
+
+  importedAt      DateTime @default(now())
+  importedByEmail String?
+
+  @@index([importedAt])
+  @@index([fileKind])
+  @@map("trendyol_finance_import")
+}
+
 /// 100.000 USD hedefine aday ürünler. Liste birikir; verdict ile süzülür.
 /// 3 gün "inceleniyor" kalan aday karara zorlanır (bkz. cfo_gecikmis_karar view).
 model CfoProductCandidate {

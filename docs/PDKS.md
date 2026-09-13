@@ -897,6 +897,40 @@ Vercel'e Legacy API keys altındaki `service_role` JWT'si (`eyJ…`) girilmeli.
   `lib/actions/cfo-note-actions.ts`, `app/(app)/cfo/sorular/page.tsx`,
   `app/(app)/cfo/defter/*`, `app/(app)/layout.tsx`, `prisma/schema.prisma`.
 
+### 2026-09-09 — Faz 91: Trendyol Finans modülü (fatura/kesinti/hakediş)
+
+- **Amaç:** Trendyol partner panelindeki Finans → Faturalar ekranından indirilen
+  dosyalar panele yüklensin, komisyon/kargo/hizmet/reklam/ceza kesintileri tek
+  yerde biriksin, net maliyet görülebilsin. API entegrasyonu değil — dosya beslemesi.
+- **Şema (`prisma/migrations/20260909220000_trendyol_finance`):** 4 yeni tablo
+  (`trendyol_invoice`, `trendyol_invoice_line`, `trendyol_settlement_line`,
+  `trendyol_finance_import`) + 2 enum (`TrendyolCostGroup`, `TrendyolInvoiceLineKind`).
+  Hepsinde RLS açık (MIGRATION-SAFETY invariantı). Additive, veri silmez.
+- **Ayrıştırıcı (`lib/trendyol-finance/parse.ts`):** 9 dosya varyantı tanınır.
+  Tanıma **sütun başlıklarından** yapılır, dosya adından değil — tarayıcı
+  " (1)" ekliyor, kullanıcı başına rakam yapıştırabiliyor. Dosya adı yalnız
+  Trendyol'un iç belge numarasını (`sourceRef`) vermek için kullanılır.
+- **PDF okuma (`lib/trendyol-finance/pdf-text.ts`):** Trendyol e-faturaları gömülü
+  subset CID font kullanıyor; `Tj` dizileri glyph id. Yeni bağımlılık eklemek
+  yerine `/ToUnicode` CMap'lerini çözen ~120 satırlık okuyucu yazıldı. Kritik
+  ayrıntı: `Td` boşluk üretmez (yalnız kerning), gerçek boşluk glyph `0x0003`.
+- **Fatura ↔ detay eşleştirme:** Detay dosyaları fatura numarası taşımıyor. Detay
+  satırlarının toplamı ilgili faturanın tutarına kuruşu kuruşuna eşit çıktığı
+  görüldü (20 dosyada doğrulandı: kargo 22.014,30 ₺ → DDF2026020280150 vb.), bu
+  yüzden eşleştirme toplam tutar üzerinden yapılıyor. Birden fazla aday varsa
+  bağlanmıyor — yanlış bağlamak, bağlamamaktan kötü.
+- **Ekranlar:** `/marketplace/trendyol/finans` (kokpit + sürükle-bırak yükleme),
+  `…/finans/faturalar` (filtreli liste), `…/finans/siparisler` (sipariş bazında
+  maliyet, hakediş ile birleşik). Menüde "Pazaryerleri" bölümünde.
+- **API:** `POST /api/marketplace/trendyol-finance/import` (çoklu dosya,
+  `EXECUTIVE_READ` izni). Yazıcı idempotent — aynı dosya tekrar yüklenirse satır
+  çoğalmaz.
+- **Doğrulama:** 50 gerçek dosyanın 49'u ayrıştırıldı (tanınmayan tek dosya 2021
+  tarihli, ToUnicode taşımayan eski şablon). `scripts/trendyol-finance-parse-check.ts`
+  ile tekrarlanabilir. `tsc` 0 hata (mevcut `web-push` hatası hariç), eslint temiz,
+  `npm run build` başarılı.
+- **Bekleyen:** migration production'a **uygulanmadı** — kullanıcı onayı bekliyor.
+
 ### 2026-08-25 — CFO/Borçlar: kalan taksit, bitiş tarihi, YKB şahsi hesap
 - `app/(app)/cfo/borclar/page.tsx` — Krediler tablosuna "Kalan taksit" ve
   "Bitiş tarihi" kolonları; TOPLAM satırına aktif kredilerin en geç bitiş tarihi.

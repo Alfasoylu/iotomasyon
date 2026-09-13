@@ -48,6 +48,7 @@ import {
   ShieldCheck,
   Sparkles,
   MessageSquare,
+  Receipt,
   ChevronRight,
   type LucideIcon,
   CalendarClock,
@@ -118,6 +119,7 @@ const ICONS: Record<string, LucideIcon> = {
   shield: ShieldCheck,
   sparkles: Sparkles,
   messageSquare: MessageSquare,
+  receipt: Receipt,
 };
 
 // Section meta — order + icon + short description (tooltip).

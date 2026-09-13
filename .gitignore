@@ -61,3 +61,6 @@ test-quote-faz4-*.pdf
 
 # gecici bakim scripti (DB dump) — commit edilmemeli
 scripts/.dump.ts
+
+# is verisi — repoya girmez
+docs/son-5-yil-siparisler.xlsx
