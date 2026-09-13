@@ -9,6 +9,26 @@
 
 ## 2026-09
 
+### Yeni Ürünler — 124 açıklama başlıktan üretildi (2026-09-13)
+
+- Açıklama puanda 15 puanlık tek kalem ve 151 adayın **150'sinde boştu**. Yeni
+  `urun_aciklama_uret(ad, marka, kg)` fonksiyonu açıklamayı **başlıktan** üretiyor;
+  fonksiyon olduğu için gelecek partilerde de tek UPDATE ile çalışıyor.
+- **Uydurma yok — tasarımın özü bu.** Yalnız başlıkta geçen nitelikler yazılıyor
+  (malzeme, kaplama, montaj tipi, fonksiyonlar, ölçü) ve veritabanında olan
+  ağırlık. Garanti, menşei, sertifika, su basıncı, kutu içeriği, kartuş markası —
+  hiçbiri yazılmıyor. Marka bile boşsa cümlede geçmiyor.
+- **Dolgu yapılmadı.** 124 üründen **66'sı 400 karakteri geçiyor** (tam 15 puan),
+  58'i 150–399 bandında (7 puan). Kalanları 400'e tamamlamak için genel pazarlama
+  cümlesi eklemek mümkündü, eklenmedi: o ürünlerin başlığı çıplak
+  ("Alfas Çanak Lavabo Bataryası"), anlatacak nitelik yok. Gerçek çözüm 1688
+  açıklamalarının panele yapıştırılması.
+- **Yedek parça ayrıldı:** somun, rakor, gövde aksamı pazaryeri ürünü değil
+  (16.000 ve 4.000 adetlik üretim kalemleri). Kapanış cümleleri farklı, kısa
+  kalmaları normal.
+- Elle yazılmış açıklamaya ve katalogdaki ürünlere dokunulmadı.
+- Yeni ürünlerin puan ortalaması **35,6 → 46,4**.
+
 ### XML stok hareketi = satış sinyali; satış verisi haftalık gelir (2026-09-12)
 
 - **Kural yazıldı:** satış listesi Entegra'dan haftada bir, elle yükleniyor. CFO

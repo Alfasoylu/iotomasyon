@@ -197,6 +197,36 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 13.09.2026 — 124 ürün açıklaması başlıktan üretildi
+Alperen: "yeni ürünlerde açıklamaları doldur."
+
+Açıklama 15 puanlık tek kalem ve 151 adayın 150'sinde boştu. Elde ne olduğuna
+baktım: başlık (147), ağırlık (151), marka (87). Kategori, menşei, garanti, kutu
+ölçüsü **hepsi boş** — yani açıklama ancak başlıktan üretilebilirdi.
+
+Başlıklar şansıma nitelik dolu: malzeme (304 çelik / pirinç / zamak), kaplama
+(PVD, krom), montaj (tezgah üstü, sıva altı, duvara monte), fonksiyon (termostatik,
+fotoselli, spiralli, arıtmalı, N fonksiyonlu), ölçü. Bunları ayrıştırıp madde
+madde yazan bir SQL fonksiyonu kurdum — script değil fonksiyon, çünkü gelecek
+partilerde de gerekecek.
+
+**Hiçbir şey uydurmadım.** Garanti, menşei, sertifika, su basıncı, kutu içeriği
+yazılmıyor; bilinmiyor. Marka boşsa cümlede geçmiyor.
+
+**Dolgu da yapmadım.** 124 üründen 66'sı 400 karakteri geçti (15 puan), 58'i
+150-399'da kaldı (7 puan). O 58'i 400'e çıkarmak için genel pazarlama cümlesi
+eklemek mümkündü — eklemedim. Başlıkları çıplak ("Alfas Çanak Lavabo Bataryası"),
+anlatacak nitelik yok. Uzatmak dolgu olurdu, pazaryerinde de işe yaramaz.
+Gerçek çözüm 1688 açıklamalarının yapıştırılması.
+
+Yedek parçaları (somun, rakor, gövde aksamı) ayırdım: 16.000 ve 4.000 adetlik
+üretim kalemleri, pazaryeri ürünü değil. Onlara "yüzeyi bezle silin" demek saçma
+olurdu.
+
+Puan ortalaması 35,6 → **46,4**. Kalan darboğaz görsel (27 puan) ve
+kategori/menşei/garanti/kutu — hepsi Alperen'de.
+Etki: `prisma/migrations/20260913090000_urun_aciklama_uret/`.
+
 ### 12.09.2026 — Genel tarama + XML hareketinden satış sinyali
 Alperen genel denetim istedi. Çıkanlar ve yapılanlar:
 
