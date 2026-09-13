@@ -50,6 +50,19 @@
   öncelik sırasıyla backlog'a (`docs/PDKS.md` → Güvenlik) işlendi.
 - **Test:** `__tests__/login-rate-limit.test.ts` (6 senaryo); dev sunucuda uçtan uca
   doğrulandı (widget, token, sıfırlama, 6. denemede engel, header'lar).
+### RLS açığı kapatıldı + WhatsApp/reklam canlıya alındı (2026-09-13)
+
+- **Güvenlik:** 22 public tabloda RLS kapalıydı ve `anon` rolünün SELECT yetkisi
+  vardı (banka/ödeme/maliyet verisi taşıyanlar dahil). 20260613000000 yalnız o
+  gün var olan tabloları kapatmış; sonradan SQL editöründen elle açılanlar
+  korumasız kalmıştı. `20260913235000_rls_eksik_tablolar` ile kapatıldı —
+  politika eklenmedi, deny-all kasıtlı. Doğrulama: RLS'siz public tablo sayısı
+  **0**. Uygulama etkilenmiyor (repoda Supabase istemcisi/anon anahtar yok;
+  erişim Prisma → `postgres`, RLS bypass).
+- **Canlıya alındı:** `whatsapp_messaging` + `whatsapp_schedules` migration'ları
+  uygulandı ve `_prisma_migrations`'a doğru checksum ile işlendi; WhatsApp ve
+  reklam izinleri ile rol varsayılanları yazıldı.
+- Soru↔cevap zinciri canlı şemada uçtan uca doğrulandı (test verisi geri alındı).
 
 ### Meta reklam paneli — `/reklamlar` (2026-09-13)
 

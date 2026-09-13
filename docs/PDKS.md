@@ -222,6 +222,38 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 13.09.2026 — Canlıya alma + RLS açığı kapatıldı
+WhatsApp ve reklam işi canlıya alındı; sırasında **güvenlik açığı bulundu ve
+kapatıldı**.
+
+**Uygulananlar (Supabase, proje `frbxpodiostxuwlrubkt`):**
+`20260913210000_whatsapp_messaging`, `20260913230000_whatsapp_schedules`,
+`20260913235000_rls_eksik_tablolar`. Üçü de `_prisma_migrations`'a **doğru
+checksum ile** işlendi — yöntem, uygulanmış bir migration'ın checksum'ı
+dosyanın sha256'sıyla karşılaştırılarak önce doğrulandı. Bu adım atlanırsa
+`prisma migrate deploy` aynı tabloları yeniden kurmaya çalışıp patlardı.
+İzinler (`ads.read`, `whatsapp.read/send/manage`) ve rol varsayılanları
+seed.ts ile birebir aynı şekilde, idempotent olarak yazıldı.
+
+⚠️ **BULGU 1 — canlı DB 16 migration geride.** `20260828000000_cfo_disiplin`
+ve sonrasındaki 16 migration hiç uygulanmamış; `UrunAday` ve `CfoAlacakBorc`
+tabloları canlıda **yok**. Yani o özellikler canlıda çalışmıyor. Bunlara
+DOKUNULMADI — başka oturumların işi, gözden geçirilmeden production'a
+uygulanmaz. Sıra dışı değil: benim migration'larım daha sonraki tarihli
+olduğu için `migrate deploy` o 16'sını yine de uygular.
+
+⚠️ **BULGU 2 — RLS değişmezi kırılmıştı (kapatıldı).** 22 public tabloda RLS
+kapalı VE `anon` SELECT yetkisi vardı. Sebep: 20260613000000 yalnız o gün var
+olan tabloları kapatmış; sonradan **SQL editöründen elle** açılan tablolar
+korumasız kalmış. Düzeltmeden önce uygulamanın bu tabloları Supabase
+istemcisiyle okumadığı doğrulandı (repoda `createClient` ve anon anahtar
+referansı **yok**; erişim Prisma → `postgres`, o da RLS'i bypass eder), yani
+kapatmak hiçbir sayfayı bozmuyor. Sonuç: RLS'siz public tablo **sıfır**.
+
+**Duman testi:** kişi → görev → alıcı bağı → soru → cevap → `replyToId` zinciri
+canlı şemada uçtan uca çalıştırıldı ve `ROLLBACK` ile geri alındı; canlı veriye
+hiçbir satır eklenmedi.
+
 ### 13.09.2026 — Meta reklam paneli (`/reklamlar`)
 alfashome'un 50 ₺/gün katalog kampanyası Meta panelinden izleniyordu; artık
 kampanya bazında harcama/ciro/ROAS iotomasyon'dan görülüyor.
