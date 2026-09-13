@@ -36,6 +36,19 @@ export function getAdminPassword() {
   return adminPasswordSchema.parse(readRequiredEnv("ADMIN_PASSWORD"));
 }
 
+// ── Cloudflare Turnstile (opsiyonel) ─────────────────────────────────────────
+// İkisi de tanımlıysa /login CAPTCHA'sı devreye girer. Bkz. lib/turnstile.ts.
+
+export function getTurnstileSiteKey(): string | undefined {
+  const value = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+  return value ? value : undefined;
+}
+
+export function getTurnstileSecretKey(): string | undefined {
+  const value = process.env.TURNSTILE_SECRET_KEY?.trim();
+  return value ? value : undefined;
+}
+
 export function getNodeEnv() {
   return nodeEnvSchema.parse(process.env.NODE_ENV ?? "development");
 }

@@ -22,6 +22,7 @@ import { checkPermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { StockAdjustmentType } from "@prisma/client";
+import { userFacingMessage } from "@/lib/safe-error-message";
 import type { ActionResult } from "@/types/actions";
 
 const countSchema = z.object({
@@ -103,7 +104,23 @@ export async function createInventoryCountAction(values: {
 
     return { ok: true, message: "Fiziksel sayım kaydedildi." };
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Beklenmeyen hata.";
-    return { ok: false, message: msg };
+    // findUniqueOrThrow → P2025: ürün yok (kullanıcıya anlamlı). Diğer
+    // Prisma/DB hataları teknik detay içerir; genel mesaj dönülür, loglanır.
+    if (isPrismaNotFound(error)) {
+      return { ok: false, message: "Ürün bulunamadı." };
+    }
+    return {
+      ok: false,
+      message: userFacingMessage(error, "Sayım kaydedilemedi. Lütfen tekrar deneyin.", "inventory-count"),
+    };
   }
+}
+
+function isPrismaNotFound(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "P2025"
+  );
 }

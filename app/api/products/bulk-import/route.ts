@@ -140,7 +140,9 @@ export async function POST(req: NextRequest) {
         updated++;
       }
     } catch (err) {
-      errors.push(`SKU ${sku}: güncelleme hatası — ${err instanceof Error ? err.message : String(err)}`);
+      // Prisma hata detayı (sütun/kısıt adı vb.) istemciye sızdırılmaz.
+      console.error(`[bulk-import] SKU ${sku} güncelleme hatası:`, err);
+      errors.push(`SKU ${sku}: güncelleme hatası (sunucu loguna bakın)`);
     }
   }
 

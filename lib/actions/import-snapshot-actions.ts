@@ -173,6 +173,10 @@ export async function createImportDecisionSnapshotAction(
 
 /** Fetch recent import decision snapshots for a product (latest first, limit 10) */
 export async function getProductImportSnapshotsAction(productId: string) {
+  // "use server" export'u anonim çağrılabilir → yetki şart (S-Y2).
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return [];
+
   return prisma.importDecisionSnapshot.findMany({
     where: { productId },
     orderBy: { createdAt: "desc" },

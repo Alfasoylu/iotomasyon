@@ -119,8 +119,9 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-    const msg = err instanceof Error ? err.message : "Görsel işlenemedi.";
-    return NextResponse.json({ error: msg.slice(0, 200) }, { status: 500 });
+    // Upstream (HF) veya beklenmedik hata: detay istemciye sızdırılmaz.
+    console.error("[image-search] embed hatası:", err);
+    return NextResponse.json({ error: "Görsel işlenemedi." }, { status: 500 });
   }
 
   // ── Cosine search ──────────────────────────────────────────────────────────

@@ -7,6 +7,86 @@
 - If a change is inferred from documentation but not independently verified in code, avoid wording it as fully implemented.
 - ROADMAP items must not appear here unless implemented.
 
+## 2026-09
+
+### Güvenlik — tarama bulgularının kapatılması (2026-09-14)
+
+- **Next.js 16.3.5:** 16.2.6'daki kimlik doğrulamasız RCE ve proxy bypass advisory'leri
+  kapandı. `sharp` 0.35.4, `xlsx` 0.20.3, tiptap 3.31.x; runtime'da kritik/orta açık kalmadı.
+- **Server action sızıntıları:** XML senkron çekirdeği `lib/xml-sync-runner.ts`'e taşındı
+  (artık anonim çağrılamaz). Dört okuma action'ı oturum ister.
+- **Cron uçları fail-closed:** `CRON_SECRET` yoksa 503, sabit zamanlı karşılaştırma
+  (`lib/cron-auth.ts`). Vercel'de `CRON_SECRET` tanımlı olmalı.
+- **PDKS:** giriş hız sınırı (telefon/IP, 429), cihaz kontrolü şifre kontrolünden önce
+  (oracle kapandı), oturum her istekte DB ile doğrulanır, yeni PIN min 6, `/kayit`'a
+  Turnstile + hız sınırı, push unsubscribe kişi kapsamı, `sw.js` slug doğrulama.
+- **JWT issuer/audience:** CRM ve PDKS token'ları artık birbirinin yerine geçemez.
+  Mevcut oturumlar bir kez düşer; kullanıcılar yeniden giriş yapar.
+- **Yerleşik CAPTCHA:** `/login` ve `/kayit` artık dış servis gerektirmeyen, sunucuda
+  üretilen rakam resmi CAPTCHA'sı kullanıyor (HMAC imzalı, 5 dk, tek kullanımlık, "Yenile"
+  düğmesi). Cloudflare Turnstile opsiyonel kaldı; anahtar tanımlanırsa onu kullanır.
+- **XSS:** ürün açıklaması render'da allowlist ile temizlenir (`sanitize-html`).
+- **Hijyen:** görsel yüklemede magic-byte doğrulaması ve SVG reddi; ham DB/upstream hata
+  mesajları istemciye gitmiyor (`lib/safe-error-message.ts`); katalog ilgi ucu hız sınırı
+  + kapsam kontrolü; `/no-access` yönlendirme döngüsü giderildi; gömülü şifreli
+  `scripts/hepsiburada-probe.ts` silindi.
+- **Doğrulama:** `next build` başarılı, tsc temiz, birim testleri geçti, dev sunucuda
+  uçtan uca kontrol edildi. Rapor: `docs/SECURITY-AUDIT-2026-09-14.md`.
+
+### Güvenlik — /login CAPTCHA, brute-force sınırı, güvenlik header'ları (2026-09-14)
+
+- **CAPTCHA:** Yönetici girişine Cloudflare Turnstile eklendi. Token sunucuda
+  Cloudflare siteverify ile doğrulanır; ağ hatasında giriş reddedilir (fail-closed).
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` ve `TURNSTILE_SECRET_KEY` tanımlıysa devrede,
+  değilse kapalı (production'da uyarı loglanır). Her başarısız denemede widget sıfırlanır.
+- **Brute-force sınırı:** E-posta başına 5, IP başına 20 başarısız deneme / 15 dakika;
+  bcrypt karşılaştırmasından önce uygulanır. Başarılı giriş e-posta sayacını sıfırlar.
+  Bellek içi (Vercel örneği başına) — CAPTCHA'nın yedeği olarak konumlandırıldı.
+- **HTTP güvenlik header'ları:** HSTS (2 yıl, preload), `X-Frame-Options: DENY`,
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+  `Permissions-Policy` (kamera/mikrofon/ödeme kapalı, konum yalnız kendi origin);
+  `X-Powered-By` kaldırıldı.
+- **Güvenlik taraması raporu:** `docs/SECURITY-AUDIT-2026-09-14.md` — açık bulgular
+  öncelik sırasıyla backlog'a (`docs/PDKS.md` → Güvenlik) işlendi.
+- **Test:** `__tests__/login-rate-limit.test.ts` (6 senaryo); dev sunucuda uçtan uca
+  doğrulandı (widget, token, sıfırlama, 6. denemede engel, header'lar).
+
+### Faz 91 — Trendyol Finans modülü: fatura, kesinti ve hakediş takibi (2026-09-09)
+
+- **Ne yapıldı:** Trendyol partner panelinden indirilen finans dosyalarının panele
+  yüklendiği ve biriktiği yeni bir modül. Komisyon, kargo, platform/işlem bedeli,
+  reklam, ceza ve tazmin kalemleri tek ekranda toplanıp net maliyet olarak raporlanıyor.
+- **Ekranlar:**
+  - `/marketplace/trendyol/finans` — kokpit: sürükle-bırak yükleme alanı, gider grubu
+    kırılımı, aylık seyir, en çok kesen fatura tipleri, ülke kırılımı, yükleme günlüğü.
+  - `/marketplace/trendyol/finans/faturalar` — gruba/aya/ülkeye/metne göre filtreli liste.
+  - `/marketplace/trendyol/finans/siparisler` — sipariş bazında kesinti dökümü, hakediş
+    verisi yüklüyse komisyon ve satıcı payıyla birleşik.
+- **Desteklenen dosyalar (9 varyant, tür otomatik tanınır):** fatura listesi
+  (`Faturalar_*.xlsx`), tekil e-fatura (`SaticiFatura_*.pdf`), hakediş
+  (`SaticiFatura_<no>_*.xlsx`), kargo/işlem bedeli/kesinti/ceza detayları ve mikro
+  ihracat bedelleri (`prod_*_detaylar.xlsx`, `*_Kesintiler.xlsx`).
+- **Tanıma sütun başlıklarından yapılır**, dosya adından değil — tarayıcının eklediği
+  " (1)" eki ve dosya adına yapışan rakamlar tanımayı bozmuyor.
+- **PDF okuma bağımlılıksız:** Trendyol e-faturaları gömülü subset CID font kullandığı
+  için metin doğrudan okunamıyor. `pdf-parse`/`pdfjs-dist` eklemek yerine `/ToUnicode`
+  CMap'lerini çözen kendi okuyucumuz yazıldı (`lib/trendyol-finance/pdf-text.ts`).
+  KDV kırılımı (net / KDV / brüt) buradan geliyor; KDV indirilebilir olduğu için
+  "gerçek maliyet" hesabı bu ayrıma dayanıyor.
+- **Fatura ↔ detay eşleştirmesi:** Detay dosyaları fatura numarası içermiyor; detay
+  satırlarının toplamı fatura tutarına kuruşu kuruşuna eşit olduğu için eşleştirme bu
+  toplam üzerinden yapılıyor. Birden fazla aday çıkarsa bağlantı kurulmuyor.
+- **Idempotent yükleme:** Her kayıt doğal anahtarıyla yazılır (fatura no / kayıt no /
+  sourceRef+rowHash); aynı dosya tekrar yüklendiğinde satır çoğalmaz. Her yükleme
+  `trendyol_finance_import` günlüğüne yazılır (hatalılar dahil).
+- **Şema:** `20260909220000_trendyol_finance` — 4 tablo + 2 enum, additive, hepsinde
+  RLS açık.
+- **Doğrulama:** 50 gerçek dosyanın 49'u ayrıştırıldı (tanınmayan tek dosya 2021 tarihli
+  eski şablon). Detay toplamları fatura tutarlarıyla birebir tuttu. `tsc` temiz, eslint
+  temiz, `npm run build` başarılı.
+- **Not:** Migration bu tarih itibarıyla production'a **uygulanmadı**; uygulanana kadar
+  ekranlar veri gösteremez.
+
 ## 2026-08
 
 ### Fix — production build 59 gündür kırıktı: client bundle'a Prisma sızıntısı (2026-08-24)
