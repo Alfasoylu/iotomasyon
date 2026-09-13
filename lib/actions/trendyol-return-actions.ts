@@ -45,7 +45,10 @@ export async function approveTrendyolClaimAction(
     );
   } catch (err) {
     responseStatus = "ERROR";
+    // Gerçek mesaj (Trendyol yanıt gövdesi dahil) yalnız audit log'a yazılır;
+    // kullanıcıya genel mesaj döner.
     errorMessage = err instanceof Error ? err.message : "Bilinmeyen hata";
+    console.error("[trendyol-return/approve] Trendyol API hatası:", err);
   }
 
   await prisma.marketplaceReturnActionLog.create({
@@ -62,7 +65,7 @@ export async function approveTrendyolClaimAction(
   });
 
   if (responseStatus === "ERROR") {
-    return { ok: false, message: `İade onaylanamadı: ${errorMessage}` };
+    return { ok: false, message: "İade onaylanamadı. Trendyol yanıt vermedi veya isteği reddetti; detay işlem günlüğünde." };
   }
   return { ok: true };
 }
@@ -110,7 +113,9 @@ export async function createTrendyolClaimIssueAction(
     );
   } catch (err) {
     responseStatus = "ERROR";
+    // Gerçek mesaj yalnız audit log'a; kullanıcıya genel mesaj.
     errorMessage = err instanceof Error ? err.message : "Bilinmeyen hata";
+    console.error("[trendyol-return/create-issue] Trendyol API hatası:", err);
   }
 
   await prisma.marketplaceReturnActionLog.create({
@@ -128,7 +133,7 @@ export async function createTrendyolClaimIssueAction(
   });
 
   if (responseStatus === "ERROR") {
-    return { ok: false, message: `İşlem gönderilemedi: ${errorMessage}` };
+    return { ok: false, message: "İşlem gönderilemedi. Trendyol yanıt vermedi veya isteği reddetti; detay işlem günlüğünde." };
   }
   return { ok: true };
 }

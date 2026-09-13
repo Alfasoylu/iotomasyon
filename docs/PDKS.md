@@ -176,7 +176,18 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 - [ ] İletişim e-postası/WhatsApp'ı gerçek değerle güncelle (şu an `info@iotomasyon.com`)
 
 ### Güvenlik (analiz D*)
-- [ ] **D1 (Kritik):** cron endpoint fail-closed — `CRON_SECRET` yoksa 503/throw (`app/api/pdks/cron/reminders/route.ts:44-47`)
+> 2026-09-14 taraması: ayrıntı ve satır numaraları `docs/SECURITY-AUDIT-2026-09-14.md`.
+- [x] **S-K1 (Kritik):** `next@16.3.5` yükselt — 16.2.6'da kimlik doğrulamasız RCE (image optimization/AVIF + Windows)
+- [ ] **S-K2 (Kritik):** Hepsiburada şifresini değiştir (dosya repodan silindi 2026-09-14; **rotasyon + geçmiş temizliği kullanıcıda**)
+- [x] **S-Y1 (Yüksek):** `runSync`'i `"use server"` modülünden çıkar (auth'suz SSRF + DB yazma)
+- [x] **S-Y2 (Yüksek):** auth'suz okuma action'ları: `getProductImportSnapshotsAction`, `getProductStockAdjustments`, exchange-rate okuyucuları
+- [x] **S-Y3 (Yüksek):** PDKS login rate limit + PIN min 6 + tek tip 401 (cihaz kontrolü bcrypt'ten bağımsız)
+- [x] **S-Y4 (Yüksek):** `sharp@0.35.4`, `npm audit fix` (tiptap/fast-uri/nanoid); `xlsx` için alternatif değerlendir
+- [x] **S-O2 (Orta):** `product.description` sanitize (tedarikçi XML → stored XSS)
+- [x] **S-O3 (Orta):** PDKS oturumunu her istekte DB ile doğrula (isActive/rol/cihaz)
+- [x] **S-O4 (Orta):** `/kayit`'a Turnstile + rate limit
+- [x] **S-O5 (Orta):** `getCurrentSession` fallback'ini yalnız P2021'e daralt (deny override kaybı)
+- [x] **D1 (Kritik):** cron endpoint fail-closed — `CRON_SECRET` yoksa 503/throw (`app/api/pdks/cron/reminders/route.ts:44-47`; aynı desen `api/cron/xml-sync`, `api/cron/trendyol-sync`)
 - [ ] **D2 (Yüksek):** push subscribe `deleteMany`'ye açık `tenantId` ekle (`push/subscribe/route.ts:30`)
 - [ ] **D3 (Orta):** cihaz kilidi logout'ta sıfırlama seçeneği ("bu cihazı çıkar")
 - [ ] **D4 (Orta):** manuel saat düzeltmelerine audit log
@@ -846,7 +857,6 @@ Etki: `prisma/migrations/20260910000000_cfo_odeme_takvimi/`,
 `app/(app)/cfo/odemeler/*`, `lib/actions/cfo-payment-actions.ts`,
 `app/(app)/layout.tsx`, `components/dashboard/sidebar.tsx`.
 
-
 ### 29.08.2026 — CFO / Ölü Stok sayfası
 CFO veri katmanını kurmuştu (`cfo_olu_stok`, `cfo_olu_stok_ozet` görünümleri +
 `cfo_dead_stock_finding`'e alarm/kontrol kolonları) ama deploy edemiyordu. Sayfa
@@ -854,7 +864,6 @@ yazıldı ve canlıya alındı: üst şerit, bağlı sermayeye göre sıralı ta
 başına üç aksiyon (kontrol/aksiyon/kapat) ve aylık "temizlenen sermaye" tablosu.
 Etki: `app/(app)/cfo/olu-stok/*`, `lib/actions/cfo-dead-stock-actions.ts`,
 `app/(app)/layout.tsx`.
-
 
 ### 28.08.2026 — CFO disiplin altyapısı + görev tanımı repoya taşındı
 Günlük CFO Routine'i incelendi: çok iş üretiyor (4 günde 470 log, maliyet kapsamı
@@ -866,13 +875,11 @@ tablo migration'a alındı. Görev tanımı `docs/CFO-GOREV.md`'ye taşındı.
 Etki: `prisma/migrations/20260828000000_cfo_disiplin/`, `prisma/schema.prisma`,
 `lib/actions/cfo-actions.ts`, `docs/CFO-GOREV.md`.
 
-
 ### 27.08.2026 — Storage anahtar rolü doğrulaması (anon ≠ service_role)
 `Invalid Compact JWS` düzeltildikten sonra yükleme RLS'e takıldı: girilen anahtar
 `anon` rolündeydi. `getStorageConfig()` artık JWT payload'ından `role` okuyup
 `service_role` değilse isteği göndermeden açıklayıcı hata veriyor.
 Etki: `lib/storage/supabase-storage.ts`.
-
 
 ### 27.08.2026 — Storage "Invalid Compact JWS" çözümü
 Production'a `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` eklendi ama Storage
@@ -902,6 +909,63 @@ Vercel'e Legacy API keys altındaki `service_role` JWT'si (`eyJ…`) girilmeli.
 - DB: Yapı Kredi Alperen (şahsi) hesabı eklendi (KMH 150.000, bakiye bilinmiyor).
 
 > Append-only. Her görevden sonra en yeni en üste eklenir (AGENTS.md "Dokümantasyon disiplini").
+
+### 2026-09-14 (devam) — Güvenlik taraması bulgularının düzeltilmesi
+
+- **Kritik:** `next` 16.2.6 → **16.3.5** (RCE advisory'leri kapandı; production build
+  doğrulandı). `scripts/hepsiburada-probe.ts` (gömülü şifre) repodan silindi —
+  **şifre rotasyonu ve git geçmişi temizliği kullanıcıda.**
+- **Yüksek:** `runSync` → `lib/xml-sync-runner.ts` ("use server" DEĞİL; anonim SSRF/DB
+  yazma kapandı). `getProductImportSnapshotsAction`, `getProductStockAdjustments`,
+  `getExchangeRateForDate`, `getLatestRmbUsdRate` artık `requireUser` ister. PDKS login:
+  `lib/pdks/rate-limit.ts` (telefon 5 / IP 20 / 15 dk, 429 + Retry-After), cihaz kontrolü
+  bcrypt'ten ÖNCE (şifre oracle'ı kapandı), tüm hatalar 401; yeni PIN min 6 (giriş
+  etkilenmez). Bağımlılıklar: `sharp` 0.35.4, `xlsx` 0.20.3 (SheetJS CDN), tiptap 3.31.x.
+- **Orta:** `lib/cron-auth.ts` — üç cron ucu fail-closed (secret yoksa 503) + sabit
+  zamanlı karşılaştırma. `lib/sanitize-rich-text.ts` (sanitize-html allowlist) ürün
+  açıklaması render'ında. PDKS oturumu her istekte DB ile doğrulanıyor (isActive/tenant/
+  rol/cihaz). `/kayit`: Turnstile + IP başına 5/saat + admin şifresi min 8.
+  `getCurrentSession` fallback yalnız P2021/P2022. CRM JWT `iss=iotomasyon, aud=crm`;
+  PDKS JWT `aud=pdks` — **mevcut oturumlar bir kez düşer, yeniden giriş gerekir.**
+- **Düşük:** görsel yükleme magic-byte doğrulaması (SVG reddi, ext sabit haritadan,
+  productId varlık kontrolü); `lib/safe-error-message.ts` ile 7 uçta ham hata mesajı
+  gizlendi; `/c/[token]/interest` rate limit + ürün kapsam kontrolü; `sw.js` slug
+  doğrulama + bilinmeyen tenant 404; push unsubscribe `personnelId` kapsamı;
+  `/no-access` `(app)` dışına taşındı (redirect döngüsü).
+- **Yerleşik CAPTCHA (kullanıcı kararı: dış servis/anahtar istenmedi):** `lib/captcha.ts`
+  5 rakamı SVG çizgi yolu olarak çizer (metin öğesi yok), cevap istemciye gitmez; HMAC
+  imzalı token (SESSION_SECRET, opsiyonel CAPTCHA_SECRET), 5 dk TTL, tek kullanımlık.
+  `components/auth/image-captcha.tsx` + `lib/actions/captcha-actions.ts` (yenile).
+  `/login` ve `/kayit` varsayılan olarak bunu kullanır; Turnstile anahtarları tanımlıysa
+  o öne geçer. Doğrulama: PNG'ye çevrilen resim okunup doğru cevapla giriş akışı geçti,
+  yanlış cevap/süresi dolmuş/kurcalanmış/tekrar kullanılan token reddedildi.
+- **Genel `lib/rate-limit.ts`** fabrikası; `lib/login-rate-limit.ts` ona devredildi.
+- **Doğrulama:** `tsc` temiz, `next build` başarılı, testler 6/6 + 22/22; dev sunucuda
+  cron 503, sw.js 404, PDKS login 4×401 → 429, `/kayit` Turnstile, sanitizer XSS
+  vektörlerini temizliyor. `npm run lint`'teki 35 hata dokunulmayan eski dosyalarda
+  (eslint-config-next 16.3.5'in yeni react-hooks kuralları) — ayrı iş.
+- **Kalan:** `npm audit` 4 yüksek — hepsi `prisma` CLI'ın dev-only bağımlılıkları
+  (hono/mysql2/deepmerge-ts), runtime'a girmiyor. Bellek içi limiter'lar örnek başına
+  (kalıcı çözüm: Vercel Firewall kuralı / KV).
+
+### 2026-09-14 — Güvenlik taraması + /login CAPTCHA + brute-force sınırı + güvenlik header'ları
+
+- **Tarama:** Tüm API rotaları, 150 server action, PDKS auth, ham SQL, sır taraması
+  (git geçmişi dahil) ve `npm audit`. Rapor: `docs/SECURITY-AUDIT-2026-09-14.md`.
+  En kritik iki açık bulgu: **Next.js 16.2.6'da kimlik doğrulamasız RCE** (→ 16.3.5)
+  ve `scripts/hepsiburada-probe.ts` içinde git'e işlenmiş canlı Hepsiburada şifresi.
+- **CAPTCHA (Cloudflare Turnstile):** `lib/turnstile.ts` (siteverify, fail-closed),
+  `components/auth/turnstile-widget.tsx` (explicit render, dark tema, `key` ile reset),
+  `components/auth/login-form.tsx` + `app/(auth)/login/page.tsx`. Env:
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` (ikisi de tanımlıysa açık;
+  yoksa kapalı + production'da uyarı). Test anahtarları `.env.example`'da.
+- **Brute-force sınırı:** `lib/login-rate-limit.ts` — e-posta başına 5, IP başına 20
+  başarısız deneme / 15 dk; bcrypt'ten önce kontrol. Bellek içi (örnek başına), CAPTCHA'nın
+  yedeği. Test: `npx tsx __tests__/login-rate-limit.test.ts` (6/6).
+- **Header'lar (`next.config.ts`):** HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy,
+  Permissions-Policy (geolocation=self — PDKS check-in için), `poweredByHeader: false`.
+- **Doğrulama:** Dev sunucuda widget render + token üretimi, yanlış şifrede widget
+  sıfırlanması, 6. denemede "Çok fazla başarısız deneme" mesajı, header'lar `fetch` ile.
 
 ### 2026-06-26 (devam 3)
 - **Faz 2 / Artım 3 — Tenant-admin self-servis yönetim paneli (R4, R5):**

@@ -46,6 +46,7 @@ import { ImportSnapshotButton } from "@/components/products/import-snapshot-butt
 import { getProductImportSnapshotsAction } from "@/lib/actions/import-snapshot-actions";
 import { StockAdjustmentCard } from "@/components/products/stock-adjustment-card";
 import { getProductStockAdjustments } from "@/lib/actions/stock-adjustment-actions";
+import { sanitizeRichText } from "@/lib/sanitize-rich-text";
 import {
   calcMarketplacePricingRow,
   priceSourceLabel,
@@ -516,7 +517,8 @@ export default async function ProductDetailPage({
             product.description.trimStart().startsWith("<") ? (
               <div
                 className="mt-6 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 text-[13px] leading-6 text-[var(--text-secondary)] [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-[14px] [&_h2]:font-semibold [&_h2]:text-[var(--text-primary)] [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:text-[var(--text-primary)] [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-0.5 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[var(--info)] [&_a]:underline"
-                dangerouslySetInnerHTML={{ __html: product.description }}
+                // Tedarikçi XML'den gelebilir → allowlist sanitize (S-O2)
+                dangerouslySetInnerHTML={{ __html: sanitizeRichText(product.description) }}
               />
             ) : (
               <div className="mt-6 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 text-[13px] leading-6 text-[var(--text-secondary)]">

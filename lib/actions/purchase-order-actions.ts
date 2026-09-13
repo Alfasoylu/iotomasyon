@@ -11,6 +11,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { userFacingMessage } from "@/lib/safe-error-message";
 import type { ActionResult } from "@/types/actions";
 
 const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
@@ -99,8 +100,10 @@ export async function createPurchaseOrderAction(
     revalidatePath("/admin/purchase-orders");
     return { ok: true, orderId: order.id };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Bilinmeyen hata";
-    return { ok: false, message: msg };
+    return {
+      ok: false,
+      message: userFacingMessage(err, "Sipariş oluşturulamadı. Lütfen tekrar deneyin.", "purchase-order/create"),
+    };
   }
 }
 

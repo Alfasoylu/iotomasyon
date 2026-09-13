@@ -11,6 +11,7 @@
 
 import { getCurrentSession, isOwner } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { userFacingMessage } from "@/lib/safe-error-message";
 
 export type RematchResult =
   | {
@@ -99,7 +100,7 @@ export async function rematchTrendyolSalesAction(): Promise<RematchResult> {
   } catch (e) {
     return {
       success: false,
-      error: e instanceof Error ? e.message : "Bilinmeyen hata",
+      error: userFacingMessage(e, "Yeniden eşleştirme başarısız oldu. Sunucu loguna bakın.", "trendyol-rematch"),
     };
   }
 }

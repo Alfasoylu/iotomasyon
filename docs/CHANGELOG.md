@@ -9,6 +9,47 @@
 
 ## 2026-09
 
+### Güvenlik — tarama bulgularının kapatılması (2026-09-14)
+
+- **Next.js 16.3.5:** 16.2.6'daki kimlik doğrulamasız RCE ve proxy bypass advisory'leri
+  kapandı. `sharp` 0.35.4, `xlsx` 0.20.3, tiptap 3.31.x; runtime'da kritik/orta açık kalmadı.
+- **Server action sızıntıları:** XML senkron çekirdeği `lib/xml-sync-runner.ts`'e taşındı
+  (artık anonim çağrılamaz). Dört okuma action'ı oturum ister.
+- **Cron uçları fail-closed:** `CRON_SECRET` yoksa 503, sabit zamanlı karşılaştırma
+  (`lib/cron-auth.ts`). Vercel'de `CRON_SECRET` tanımlı olmalı.
+- **PDKS:** giriş hız sınırı (telefon/IP, 429), cihaz kontrolü şifre kontrolünden önce
+  (oracle kapandı), oturum her istekte DB ile doğrulanır, yeni PIN min 6, `/kayit`'a
+  Turnstile + hız sınırı, push unsubscribe kişi kapsamı, `sw.js` slug doğrulama.
+- **JWT issuer/audience:** CRM ve PDKS token'ları artık birbirinin yerine geçemez.
+  Mevcut oturumlar bir kez düşer; kullanıcılar yeniden giriş yapar.
+- **Yerleşik CAPTCHA:** `/login` ve `/kayit` artık dış servis gerektirmeyen, sunucuda
+  üretilen rakam resmi CAPTCHA'sı kullanıyor (HMAC imzalı, 5 dk, tek kullanımlık, "Yenile"
+  düğmesi). Cloudflare Turnstile opsiyonel kaldı; anahtar tanımlanırsa onu kullanır.
+- **XSS:** ürün açıklaması render'da allowlist ile temizlenir (`sanitize-html`).
+- **Hijyen:** görsel yüklemede magic-byte doğrulaması ve SVG reddi; ham DB/upstream hata
+  mesajları istemciye gitmiyor (`lib/safe-error-message.ts`); katalog ilgi ucu hız sınırı
+  + kapsam kontrolü; `/no-access` yönlendirme döngüsü giderildi; gömülü şifreli
+  `scripts/hepsiburada-probe.ts` silindi.
+- **Doğrulama:** `next build` başarılı, tsc temiz, birim testleri geçti, dev sunucuda
+  uçtan uca kontrol edildi. Rapor: `docs/SECURITY-AUDIT-2026-09-14.md`.
+
+### Güvenlik — /login CAPTCHA, brute-force sınırı, güvenlik header'ları (2026-09-14)
+
+- **CAPTCHA:** Yönetici girişine Cloudflare Turnstile eklendi. Token sunucuda
+  Cloudflare siteverify ile doğrulanır; ağ hatasında giriş reddedilir (fail-closed).
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` ve `TURNSTILE_SECRET_KEY` tanımlıysa devrede,
+  değilse kapalı (production'da uyarı loglanır). Her başarısız denemede widget sıfırlanır.
+- **Brute-force sınırı:** E-posta başına 5, IP başına 20 başarısız deneme / 15 dakika;
+  bcrypt karşılaştırmasından önce uygulanır. Başarılı giriş e-posta sayacını sıfırlar.
+  Bellek içi (Vercel örneği başına) — CAPTCHA'nın yedeği olarak konumlandırıldı.
+- **HTTP güvenlik header'ları:** HSTS (2 yıl, preload), `X-Frame-Options: DENY`,
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+  `Permissions-Policy` (kamera/mikrofon/ödeme kapalı, konum yalnız kendi origin);
+  `X-Powered-By` kaldırıldı.
+- **Güvenlik taraması raporu:** `docs/SECURITY-AUDIT-2026-09-14.md` — açık bulgular
+  öncelik sırasıyla backlog'a (`docs/PDKS.md` → Güvenlik) işlendi.
+- **Test:** `__tests__/login-rate-limit.test.ts` (6 senaryo); dev sunucuda uçtan uca
+  doğrulandı (widget, token, sıfırlama, 6. denemede engel, header'lar).
 ### RLS açığı kapatıldı + WhatsApp/reklam canlıya alındı (2026-09-13)
 
 - **Güvenlik:** 22 public tabloda RLS kapalıydı ve `anon` rolünün SELECT yetkisi

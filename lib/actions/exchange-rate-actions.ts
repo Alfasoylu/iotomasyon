@@ -78,6 +78,7 @@ export async function deleteExchangeRateAction(id: string): Promise<ActionResult
 
 /** Utility: look up USD/TRY rate for a given epoch-ms timestamp. Returns null if not found. */
 export async function getExchangeRateForDate(epochMs: number): Promise<number | null> {
+  await requireUser(); // "use server" export'u anonim çağrılabilir (S-Y2)
   const d = new Date(epochMs);
   const year = d.getFullYear();
   const month = d.getMonth() + 1; // 1-indexed
@@ -91,6 +92,7 @@ export async function getExchangeRateForDate(epochMs: number): Promise<number | 
 
 /** Utility: get the most recent RMB/USD rate, or null if none entered. */
 export async function getLatestRmbUsdRate(): Promise<number | null> {
+  await requireUser(); // "use server" export'u anonim çağrılabilir (S-Y2)
   const row = await prisma.monthlyExchangeRate.findFirst({
     where: { rmbUsdRate: { not: null } },
     orderBy: [{ year: "desc" }, { month: "desc" }],

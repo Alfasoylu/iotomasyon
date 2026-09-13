@@ -17,21 +17,18 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { authorizeCron } from "@/lib/cron-auth";
 import { runDueSchedules } from "@/lib/whatsapp/runner";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-function isAuthorized(req: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) return true; // dev: secret yoksa serbest (mevcut cron'larla aynı davranış)
-  return req.headers.get("Authorization") === `Bearer ${cronSecret}`;
-}
-
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // FAIL-CLOSED (lib/cron-auth.ts): CRON_SECRET yoksa 503, eşleşmiyorsa 401.
+  // Bu uç MESAJ GÖNDERİR ve her mesaj ücretlidir; secret tanımsızken açık
+  // bırakmak, isteyenin depo ekibine istediği kadar mesaj attırması demekti.
+  const denied = authorizeCron(req);
+  if (denied) return denied;
 
   try {
     const rapor = await runDueSchedules();

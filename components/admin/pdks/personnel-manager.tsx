@@ -100,7 +100,7 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
   }
 
   function resetPassword(p: Person) {
-    const pw = window.prompt(`${p.fullName} için yeni şifre/PIN (en az 4 karakter):`);
+    const pw = window.prompt(`${p.fullName} için yeni şifre/PIN (en az 6 karakter):`);
     if (pw == null) return; // iptal
     run(() => resetPasswordAction(p.id, pw.trim()), () => setInfo(`${p.fullName}: şifre güncellendi.`));
   }
@@ -154,7 +154,7 @@ export function PersonnelManager({ initial }: { initial: Person[] }) {
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-[var(--text-secondary)]">Şifre / PIN</label>
-              <input className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="En az 4 karakter" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off" />
+              <input className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="En az 6 karakter" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="off" />
               <p className="mt-1 text-xs text-[var(--text-muted)]">Tavsiye: 4-6 rakamlı PIN (örn. 1234). Yazdığınız aynen kaydolur.</p>
             </div>
             <div>

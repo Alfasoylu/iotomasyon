@@ -2,10 +2,20 @@
 
 import { useState, useTransition } from "react";
 
+import { ImageCaptcha } from "@/components/auth/image-captcha";
+import { TurnstileWidget } from "@/components/auth/turnstile-widget";
+import type { CaptchaChallenge } from "@/lib/captcha";
 import { registerTenantAction } from "@/lib/actions/pdks-register-actions";
 import { slugify } from "@/lib/pdks/slug";
 
-export function RegisterForm() {
+type Props = {
+  /** Tanımlıysa Cloudflare Turnstile CAPTCHA'sı gösterilir ve zorunlu olur. */
+  captchaSiteKey?: string;
+  /** Turnstile yoksa yerleşik resim CAPTCHA'sı (sunucuda üretilir). */
+  imageCaptcha?: CaptchaChallenge;
+};
+
+export function RegisterForm({ captchaSiteKey, imageCaptcha }: Props) {
   const [companyName, setCompanyName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -13,6 +23,12 @@ export function RegisterForm() {
   const [adminPhone, setAdminPhone] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(imageCaptcha?.token ?? null);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  // Token tek kullanımlık: sunucu tüketmişse widget/resim yenilenir.
+  const [captchaEpoch, setCaptchaEpoch] = useState(0);
+  const useTurnstile = Boolean(captchaSiteKey);
+  const useImage = !useTurnstile && Boolean(imageCaptcha);
 
   const [error, setError] = useState<string | null>(null);
   const [errorField, setErrorField] = useState<string | null>(null);
@@ -29,6 +45,16 @@ export function RegisterForm() {
     e.preventDefault();
     setError(null);
     setErrorField(null);
+    if (useTurnstile && !captchaToken) {
+      setError("Lütfen robot olmadığınızı doğrulayın.");
+      setErrorField("captchaToken");
+      return;
+    }
+    if (useImage && captchaAnswer.length !== 5) {
+      setError("Lütfen resimdeki 5 rakamı girin.");
+      setErrorField("captchaAnswer");
+      return;
+    }
     startTransition(async () => {
       const r = await registerTenantAction({
         companyName,
@@ -37,10 +63,16 @@ export function RegisterForm() {
         adminPhone,
         ownerEmail: ownerEmail || undefined,
         password,
+        captchaToken: captchaToken ?? undefined,
+        captchaAnswer: useImage ? captchaAnswer : undefined,
       });
       if (!r.ok) {
         setError(r.message);
         setErrorField(r.field ?? null);
+        // Token tek kullanımlık: sunucu tüketmiş olabilir → her başarısız denemede widget sıfırlanır.
+        if (useTurnstile) setCaptchaToken(null);
+        setCaptchaAnswer("");
+        setCaptchaEpoch((n) => n + 1);
         return;
       }
       setDoneSlug(r.slug);
@@ -122,8 +154,38 @@ export function RegisterForm() {
 
       <div>
         <label className="text-sm font-medium text-slate-700">Şifre</label>
-        <input type="password" className={errCls("password")} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+        <input type="password" className={errCls("password")} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" placeholder="En az 8 karakter" />
       </div>
+
+      {useImage && imageCaptcha ? (
+        <div>
+          <label htmlFor="captcha" className="text-sm font-medium text-slate-700">Güvenlik doğrulaması</label>
+          <div className="mt-1">
+            <ImageCaptcha
+              initial={imageCaptcha}
+              refreshSignal={captchaEpoch}
+              tone="light"
+              inputId="captcha"
+              onChange={({ token, answer }) => {
+                setCaptchaToken(token);
+                setCaptchaAnswer(answer);
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {useTurnstile && captchaSiteKey ? (
+        <div>
+          <label className="text-sm font-medium text-slate-700">Güvenlik doğrulaması</label>
+          <TurnstileWidget
+            key={captchaEpoch}
+            siteKey={captchaSiteKey}
+            onToken={setCaptchaToken}
+            className="mt-1 min-h-[65px]"
+          />
+        </div>
+      ) : null}
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
