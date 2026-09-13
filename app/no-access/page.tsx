@@ -1,8 +1,26 @@
+import type { Metadata } from "next";
 import { Lock } from "lucide-react";
 
 import { LogoutButton } from "@/components/dashboard/logout-button";
+import { requireUser } from "@/lib/auth";
 
-export default function NoAccessPage() {
+/**
+ * /no-access — hiçbir modüle erişim izni olmayan kullanıcılar için bekleme
+ * sayfası.
+ *
+ * Bilinçli olarak `(app)` route group'unun DIŞINDA: `(app)/layout.tsx`
+ * erişimi olmayan kullanıcıyı buraya yönlendirir; sayfa aynı layout altında
+ * olsaydı layout yeniden çalışıp tekrar yönlendirir ve sonsuz redirect
+ * döngüsü oluşurdu. Bu yüzden auth (requireUser) ve noindex burada ayrıca
+ * uygulanır.
+ */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
+export default async function NoAccessPage() {
+  await requireUser();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[var(--surface-0)] px-4">
       <div className="flex h-14 w-14 items-center justify-center rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)]">

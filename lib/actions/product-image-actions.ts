@@ -14,6 +14,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PERMISSIONS } from "@/lib/permissions";
+import { getStorageConfig, uploadObject } from "@/lib/storage/supabase-storage";
 
 export type ImageActionResult =
   | { ok: true; message: string }
@@ -117,6 +118,35 @@ export async function setPrimaryImageAction(
 
 // ── Upload image to Supabase Storage ─────────────────────────────────────────
 
+type DetectedImage = { mime: "image/jpeg" | "image/png" | "image/webp" | "image/gif"; ext: "jpg" | "png" | "webp" | "gif" };
+
+/**
+ * Dosyanın gerçek türünü magic byte'lardan tespit eder. SVG ve diğer her tür
+ * reddedilir (public bucket'ta script içeren SVG barındırmamak için).
+ *
+ *   JPEG : FF D8 FF
+ *   PNG  : 89 50 4E 47
+ *   WebP : "RIFF" .... "WEBP"
+ *   GIF  : "GIF8"
+ */
+function detectImageType(buf: Buffer): DetectedImage | null {
+  if (buf.length < 12) return null;
+
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+    return { mime: "image/jpeg", ext: "jpg" };
+  }
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+    return { mime: "image/png", ext: "png" };
+  }
+  if (buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") {
+    return { mime: "image/webp", ext: "webp" };
+  }
+  if (buf.toString("ascii", 0, 4) === "GIF8") {
+    return { mime: "image/gif", ext: "gif" };
+  }
+  return null;
+}
+
 export async function uploadProductImageAction(
   productId: string,
   formData: FormData,
@@ -128,44 +158,49 @@ export async function uploadProductImageAction(
     return { ok: false, error: "Dosya seçilmedi" };
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
-    return { ok: false, error: "Depolama yapılandırması eksik (SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY)" };
-  }
-
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowed.includes(file.type)) {
-    return { ok: false, error: "Sadece JPEG, PNG, WebP veya GIF yükleyebilirsiniz" };
+  const storage = getStorageConfig();
+  if (!storage.ok) {
+    return { ok: false, error: storage.reason };
   }
 
   if (file.size > 5 * 1024 * 1024) {
     return { ok: false, error: "Maksimum dosya boyutu 5 MB'dir" };
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const path = `${productId}/${Date.now()}.${ext}`;
-
-  const res = await fetch(
-    `${supabaseUrl}/storage/v1/object/product-images/${path}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        "Content-Type": file.type,
-        "x-upsert": "false",
-      },
-      body: Buffer.from(await file.arrayBuffer()),
-    },
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    return { ok: false, error: `Yükleme başarısız (${res.status}): ${body}` };
+  // Güvenlik: istemcinin bildirdiği `file.type` ve dosya adındaki uzantıya
+  // güvenilmez — gerçek tür dosyanın ilk baytlarından (magic bytes) tespit
+  // edilir; uzantı da tespit edilen türden sabit haritayla türetilir.
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const detected = detectImageType(bytes);
+  if (!detected) {
+    return { ok: false, error: "Sadece JPEG, PNG, WebP veya GIF yükleyebilirsiniz" };
   }
 
-  const publicUrl = `${supabaseUrl}/storage/v1/object/public/product-images/${path}`;
+  // Ürün gerçekten var mı? (storage anahtarı productId ile başlıyor — sahte
+  // id ile public bucket'a rastgele yol yazılmasın)
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true },
+  });
+  if (!product) {
+    return { ok: false, error: "Ürün bulunamadı" };
+  }
+
+  const path = `${productId}/${Date.now()}.${detected.ext}`;
+
+  // Yükleme main'deki ortak yardımcıyla; Content-Type istemcinin bildirdiği değil,
+  // magic byte'lardan tespit edilen tür.
+  const res = await uploadObject(
+    storage.config,
+    "product-images",
+    path,
+    new File([bytes], `upload.${detected.ext}`, { type: detected.mime }),
+  );
+  if (!res.ok) {
+    return { ok: false, error: res.reason };
+  }
+
+  const publicUrl = res.publicUrl;
 
   const existingCount = await prisma.productImage.count({ where: { productId } });
   await prisma.productImage.create({

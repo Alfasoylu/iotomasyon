@@ -106,6 +106,9 @@ export async function createStockAdjustmentAction(
 }
 
 export async function getProductStockAdjustments(productId: string) {
+  // "use server" export'u anonim çağrılabilir → oturum şart (S-Y2).
+  await requireUser();
+
   return prisma.stockAdjustmentLog.findMany({
     where: { productId },
     include: { createdBy: { select: { name: true } } },

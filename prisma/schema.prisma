@@ -543,10 +543,10 @@ model Customer {
   customerNotes           String?                      @map("notes")
   customerType            CustomerType?
   segment                 CustomerSegment? // Phase 98 — B2B / Installation / Marketplace çatısı
-  industryId              String?          // Phase 99 — alt sektör (Industry.id)
-  industry                Industry?        @relation(fields: [industryId], references: [id], onDelete: SetNull)
-  usedTech                String[]         @default([]) // IP, AHD, PoE, NVR, Alarm, vb.
-  currentSupplier         String?          // Şu an aldığı marka/firma — rakip bilgisi
+  industryId              String? // Phase 99 — alt sektör (Industry.id)
+  industry                Industry?                    @relation(fields: [industryId], references: [id], onDelete: SetNull)
+  usedTech                String[]                     @default([]) // IP, AHD, PoE, NVR, Alarm, vb.
+  currentSupplier         String? // Şu an aldığı marka/firma — rakip bilgisi
   monthlySalesPotential   Decimal?
   platformNotes           String?
   city                    String?
@@ -1190,36 +1190,36 @@ model SupplierProduct {
 // bu tabloya bakar. İlk yaratımda `lib/company-settings.ts`'teki defaults seed olur.
 // Tek satır beklenir (id = "default"). UI: /admin/company-settings
 model CompanySettings {
-  id                 String   @id @default("default")
+  id                String   @id @default("default")
   // Marka
-  companyName        String
-  legalName          String
-  tagline            String
-  salesContact       String
+  companyName       String
+  legalName         String
+  tagline           String
+  salesContact      String
   // İletişim
-  website            String
-  email              String
-  phone              String
-  phoneSecondary     String
+  website           String
+  email             String
+  phone             String
+  phoneSecondary    String
   // Adresler
-  address            String   @db.Text
-  perpaAddress       String   @db.Text
-  city               String
-  district           String
-  country            String
+  address           String   @db.Text
+  perpaAddress      String   @db.Text
+  city              String
+  district          String
+  country           String
   // Vergi
-  taxOffice          String
-  taxNumber          String
+  taxOffice         String
+  taxNumber         String
   // Banka
-  bankName           String
-  bankIban           String
-  bankAccountHolder  String
-  bankAccountType    String
+  bankName          String
+  bankIban          String
+  bankAccountHolder String
+  bankAccountType   String
   // Default ticari koşullar (PDF'te bunlar fallback; quote başına override mümkün)
-  paymentTerms       String   @db.Text
-  deliveryTerms      String   @db.Text
-  warrantyTerms      String   @db.Text
-  updatedAt          DateTime @updatedAt
+  paymentTerms      String   @db.Text
+  deliveryTerms     String   @db.Text
+  warrantyTerms     String   @db.Text
+  updatedAt         DateTime @updatedAt
 }
 
 // Catalog profilleri — Industry.slug ile join edilir, müşteriye gönderilecek
@@ -1231,11 +1231,11 @@ model CompanySettings {
 // fallback (lib/catalog-mapping-fallback.ts) devreye girer.
 model CatalogProfile {
   id               String   @id @default(cuid())
-  slug             String   @unique  // Industry.slug ile eşleşir, "general" özel fallback
-  title            String   // PDF kapak başlığı
-  subtitle         String   // PDF kapak alt başlığı
+  slug             String   @unique // Industry.slug ile eşleşir, "general" özel fallback
+  title            String // PDF kapak başlığı
+  subtitle         String // PDF kapak alt başlığı
   categorySlugs    String[] // ProductCategory.slug listesi (Postgres text[])
-  defaultPriceMode String   // "wholesale" | "retail" | "hidden"
+  defaultPriceMode String // "wholesale" | "retail" | "hidden"
   enabled          Boolean  @default(true)
   sortOrder        Int      @default(100)
   updatedAt        DateTime @updatedAt
@@ -1612,23 +1612,23 @@ model PurchaseOrderItem {
 // Sales rep "Katalog Gönder" yaptığında oluşturulur. Müşteri /c/[token] üzerinden
 // (login gerektirmeden) açar. Açılma + ürün ilgi olayları takip edilir.
 model CatalogShare {
-  id                  String                  @id @default(cuid())
-  token               String                  @unique // /c/{token} public route
+  id                  String                   @id @default(cuid())
+  token               String                   @unique // /c/{token} public route
   customerId          String
   sentById            String?
-  profileSlug         String                  // CatalogProfile.slug
-  priceMode           String                  // "wholesale" | "retail" | "hidden"
-  brandFilter         String?                 // CSV — modal'da seçilen markalar
-  onlyStock           Boolean                 @default(true)
-  coverNote           String?                 @db.Text
-  expiresAt           DateTime                // 30 gün varsayılan
-  viewCount           Int                     @default(0)
+  profileSlug         String // CatalogProfile.slug
+  priceMode           String // "wholesale" | "retail" | "hidden"
+  brandFilter         String? // CSV — modal'da seçilen markalar
+  onlyStock           Boolean                  @default(true)
+  coverNote           String?                  @db.Text
+  expiresAt           DateTime // 30 gün varsayılan
+  viewCount           Int                      @default(0)
   firstViewedAt       DateTime?
   lastViewedAt        DateTime?
-  followUpTaskCreated Boolean                 @default(false) // 24h sonra task spawn flag
-  createdAt           DateTime                @default(now())
-  customer            Customer                @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  sentBy              User?                   @relation("CatalogSharesSentBy", fields: [sentById], references: [id], onDelete: SetNull)
+  followUpTaskCreated Boolean                  @default(false) // 24h sonra task spawn flag
+  createdAt           DateTime                 @default(now())
+  customer            Customer                 @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sentBy              User?                    @relation("CatalogSharesSentBy", fields: [sentById], references: [id], onDelete: SetNull)
   productInterests    CatalogProductInterest[]
 
   @@index([token])
@@ -1643,7 +1643,7 @@ model CatalogProductInterest {
   id             String       @id @default(cuid())
   catalogShareId String
   productId      String
-  action         String       // "INTERESTED" | "ADD_TO_CART" | "VIEWED_LONG"
+  action         String // "INTERESTED" | "ADD_TO_CART" | "VIEWED_LONG"
   createdAt      DateTime     @default(now())
   share          CatalogShare @relation(fields: [catalogShareId], references: [id], onDelete: Cascade)
   product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -1661,16 +1661,16 @@ model CatalogProductInterest {
 // ═══════════════════════════════════════════════════════════════════════════
 
 model PdksTenant {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  isActive  Boolean  @default(true)
+  id               String  @id @default(cuid())
+  name             String
+  slug             String  @unique
+  isActive         Boolean @default(true)
   // Haftalık çalışma programı (JSON: 7 elemanlı dizi, 0=Pazar..6=Cmt; null=tatil,
   // dolu={in,out}). null kolon = kod-içi varsayılan program kullanılır.
   workScheduleJson String?
   // Resmi tatiller (JSON: [{date:"YYYY-MM-DD", name}]). Bu günlerde hatırlatma/
   // otomatik çıkış yapılmaz ve rapor beklenen iş gününden düşülür.
-  holidaysJson String?
+  holidaysJson     String?
 
   // ── Abonelik / SaaS (Faz 2) ──────────────────────────────────────────────
   // Self-servis kayıt + aylık/yıllık abonelik. Erişim kapısı bu alanlara bakar.
@@ -1713,32 +1713,32 @@ model PdksLeave {
 }
 
 model PdksPersonnel {
-  id              String     @id @default(cuid())
-  tenantId        String
-  tenant          PdksTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id                  String     @id @default(cuid())
+  tenantId            String
+  tenant              PdksTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   // CRM kullanıcısıyla opsiyonel bağ (yalnızca CRM'e de giren adminler); saha
   // çalışanları CRM User'ı olmak zorunda değil — OTP ile kimliklenir.
-  crmUserId       String?
-  fullName        String
-  phone           String?
-  email           String?
-  role            String     @default("employee") // 'tenant_admin' | 'employee'
+  crmUserId           String?
+  fullName            String
+  phone               String?
+  email               String?
+  role                String     @default("employee") // 'tenant_admin' | 'employee'
   // Kalıcı giriş şifresi/PIN (bcrypt). null = henüz şifre atanmamış → giriş yapamaz.
-  passwordHash    String?
+  passwordHash        String?
   // Cihaz bağlama: ilk girişte üretilen cihaz token'ının SHA-256 hash'i. null =
   // henüz cihaza bağlı değil (ilk giriş bağlar). Admin "cihazı sıfırla" ile null'lar.
-  deviceIdHash    String?
-  deviceBoundAt   DateTime?
-  expectedCheckIn String? // "08:30" — hatırlatma eşiği
-  expectedCheckOut String? // "18:00" — beklenen çıkış saati
+  deviceIdHash        String?
+  deviceBoundAt       DateTime?
+  expectedCheckIn     String? // "08:30" — hatırlatma eşiği
+  expectedCheckOut    String? // "18:00" — beklenen çıkış saati
   // Geç-kalan hatırlatması en son hangi TR gününde gönderildi (cron idempotency).
-  lastLateReminderOn DateTime? @db.Date
+  lastLateReminderOn  DateTime?  @db.Date
   // O gün gönderilen son "geç kalma" eşiği (dakika); aynı 5-dk dilimini tekrar göndermez.
-  lateReminderLastMin Int      @default(0)
+  lateReminderLastMin Int        @default(0)
   // KVKK açık rıza zamanı (konum işleme). null = rıza yok → giriş/çıkış engellenir.
-  kvkkConsentAt   DateTime?
-  isActive        Boolean    @default(true)
-  createdAt       DateTime   @default(now())
+  kvkkConsentAt       DateTime?
+  isActive            Boolean    @default(true)
+  createdAt           DateTime   @default(now())
 
   worksites  PdksPersonnelWorksite[]
   records    PdksAttendanceRecord[]
@@ -1751,19 +1751,19 @@ model PdksPersonnel {
 }
 
 model PdksWorksite {
-  id           String     @id @default(cuid())
-  tenantId     String
-  tenant       PdksTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name         String
-  latitude     Float
-  longitude    Float
-  radiusMeters Int        @default(100)
+  id                String     @id @default(cuid())
+  tenantId          String
+  tenant            PdksTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name              String
+  latitude          Float
+  longitude         Float
+  radiusMeters      Int        @default(100)
   // Kabul edilen azami konum doğruluğu (GPS accuracy, metre). Cihazın bildirdiği
   // accuracy bunu aşarsa check-in reddedilir. Şehir içi/yoğun yapı sahalarında
   // GPS zayıf olabileceğinden şantiye-başına ayarlanabilir (spec §7).
-  maxAccuracyMeters Int    @default(100)
-  isActive     Boolean    @default(true)
-  createdAt    DateTime   @default(now())
+  maxAccuracyMeters Int        @default(100)
+  isActive          Boolean    @default(true)
+  createdAt         DateTime   @default(now())
 
   personnel PdksPersonnelWorksite[]
   records   PdksAttendanceRecord[]
@@ -1785,31 +1785,31 @@ model PdksPersonnelWorksite {
 }
 
 model PdksAttendanceRecord {
-  id                String        @id @default(cuid())
-  tenantId          String
-  tenant            PdksTenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  personnelId       String
-  personnel         PdksPersonnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
-  worksiteId        String?
-  worksite          PdksWorksite? @relation(fields: [worksiteId], references: [id])
-  workDate          DateTime      @db.Date
-  checkInAt         DateTime?
-  checkOutAt        DateTime?
-  checkInDistanceM  Int? // mesafe HER ZAMAN saklanır
-  checkOutDistanceM Int?
-  checkInAccuracyM  Int?
-  checkOutAccuracyM Int?
-  checkInLat        Float? // OPSİYONEL (KVKK) — varsayılan kapalı
-  checkInLng        Float?
-  status            String        @default("open") // 'open' | 'closed'
+  id                 String        @id @default(cuid())
+  tenantId           String
+  tenant             PdksTenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  personnelId        String
+  personnel          PdksPersonnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  worksiteId         String?
+  worksite           PdksWorksite? @relation(fields: [worksiteId], references: [id])
+  workDate           DateTime      @db.Date
+  checkInAt          DateTime?
+  checkOutAt         DateTime?
+  checkInDistanceM   Int? // mesafe HER ZAMAN saklanır
+  checkOutDistanceM  Int?
+  checkInAccuracyM   Int?
+  checkOutAccuracyM  Int?
+  checkInLat         Float? // OPSİYONEL (KVKK) — varsayılan kapalı
+  checkInLng         Float?
+  status             String        @default("open") // 'open' | 'closed'
   // Otomatik çıkış: personel beklenen çıkıştan +15 dk sonra çıkış yapmamışsa
   // sistem kaydı kapatır (checkOutAt = beklenen çıkış saati). true = elle değil.
-  autoCheckout      Boolean       @default(false)
+  autoCheckout       Boolean       @default(false)
   // Çıkış hatırlatması en son ne zaman gönderildi (gün içi tekrar göndermemek için).
   checkoutReminderAt DateTime?
   // Fazla mesai: true ise otomatik çıkış uygulanmaz (kişi geç çıkacak).
-  overtime          Boolean       @default(false)
-  createdAt         DateTime      @default(now())
+  overtime           Boolean       @default(false)
+  createdAt          DateTime      @default(now())
 
   @@index([tenantId, workDate])
   @@index([personnelId, workDate])
@@ -1906,26 +1906,26 @@ enum CfoImportStatus {
 
 /// Tekil ayar kaydı — tüm CFO hesaplarının parametreleri buradan gelir.
 model CfoSettings {
-  id                    String   @id @default(cuid())
-  usdTryRate            Decimal  @default(45) @db.Decimal(10, 4)
-  usdRmbRate            Decimal  @default(7) @db.Decimal(10, 4)
-  kmhMonthlyRatePct     Decimal  @default(4.5) @db.Decimal(6, 3) // KMH + kart taşıma maliyeti
-  cardMinPct            Decimal  @default(20) @db.Decimal(6, 3) // asgari ödeme oranı varsayımı
-  marketplaceTermDays   Int      @default(30)
-  cashConversionPct     Decimal  @default(70) @db.Decimal(6, 3) // ciro → nakit oranı
-  customsReserveTarget  Decimal? @db.Decimal(14, 2)
+  id                    String    @id @default(cuid())
+  usdTryRate            Decimal   @default(45) @db.Decimal(10, 4)
+  usdRmbRate            Decimal   @default(7) @db.Decimal(10, 4)
+  kmhMonthlyRatePct     Decimal   @default(4.5) @db.Decimal(6, 3) // KMH + kart taşıma maliyeti
+  cardMinPct            Decimal   @default(20) @db.Decimal(6, 3) // asgari ödeme oranı varsayımı
+  marketplaceTermDays   Int       @default(30)
+  cashConversionPct     Decimal   @default(70) @db.Decimal(6, 3) // ciro → nakit oranı
+  customsReserveTarget  Decimal?  @db.Decimal(14, 2)
   customsReserveDate    DateTime?
-  customsReserveSaved   Decimal  @default(0) @db.Decimal(14, 2)
-  usdWealthTarget       Decimal? @db.Decimal(14, 2) // ana hedef (örn 300.000 USD)
+  customsReserveSaved   Decimal   @default(0) @db.Decimal(14, 2)
+  usdWealthTarget       Decimal?  @db.Decimal(14, 2) // ana hedef (örn 300.000 USD)
   wealthTargetDate      DateTime?
-  last14dRevenueTry     Decimal? @db.Decimal(14, 2)
+  last14dRevenueTry     Decimal?  @db.Decimal(14, 2)
   last14dRevenueDate    DateTime?
-  monthlyRevenueTarget1 Decimal? @db.Decimal(14, 2)
-  monthlyRevenueTarget2 Decimal? @db.Decimal(14, 2)
-  stockCostUsd          Decimal? @db.Decimal(14, 2) // satılabilir stok maliyeti
-  blockedStockUsd       Decimal? @db.Decimal(14, 2) // Romanya bloke stok
-  stockCoverMonths      Decimal? @db.Decimal(6, 2)
-  updatedAt             DateTime @updatedAt
+  monthlyRevenueTarget1 Decimal?  @db.Decimal(14, 2)
+  monthlyRevenueTarget2 Decimal?  @db.Decimal(14, 2)
+  stockCostUsd          Decimal?  @db.Decimal(14, 2) // satılabilir stok maliyeti
+  blockedStockUsd       Decimal?  @db.Decimal(14, 2) // Romanya bloke stok
+  stockCoverMonths      Decimal?  @db.Decimal(6, 2)
+  updatedAt             DateTime  @updatedAt
   updatedByEmail        String?
 
   @@map("cfo_settings")
@@ -2123,4 +2123,200 @@ model CfoChangeLog {
   @@index([changedAt])
   @@index([area])
   @@map("cfo_change_log")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Faz 91 — Trendyol Finans (fatura, kesinti, hakediş)
+//
+// Trendyol partner panelindeki "Finans → Faturalar" ekranından indirilen
+// dosyalar panele yüklenir ve burada birikir. Amaç: pazaryerinin bizden
+// kestiği her kalemi (komisyon, kargo, işlem bedeli, reklam, ceza) tek yerde
+// toplayıp gerçek net maliyeti görebilmek.
+//
+// Desteklenen dosya türleri lib/trendyol-finance/detect.ts içinde tanımlı.
+// Her model kendi doğal anahtarıyla idempotent — aynı dosya iki kez
+// yüklenirse satır çoğalmaz.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Fatura tipini (40+ serbest metin) analiz edilebilir gider grubuna indirger.
+/// Eşleme lib/trendyol-finance/cost-groups.ts içinde; oradaki tablo tek kaynaktır.
+enum TrendyolCostGroup {
+  KOMISYON // Komisyon Faturası, Komisyon Fark Faturası
+  KARGO // Kargo Fatura(sı), MP Kargo İade
+  HIZMET // Platform Hizmet Bedeli, Uluslararası Hizmet, İşlem/Ek ücret
+  REKLAM // Reklam Bedeli, Influencer Reklam, Müşteri Duyuruları
+  CEZA // Kusurlu/Eksik/Yanlış Ürün, Termin Gecikme, Tedarik Edememe
+  KAMPANYA // Kurumsal Kampanya Yansıtma, Trendyol Promosyon
+  ERKEN_ODEME // Erken Ödeme Kesinti Faturası
+  IADE_ALACAK // Lehimize kesilen (pozitif tutarlı) tedarikçi faturaları
+  DIGER
+}
+
+/// Detay/kesinti dosyalarındaki satırın hangi belge türünden geldiği.
+enum TrendyolInvoiceLineKind {
+  KARGO // "Kargo fatura detay"      — prod_cargo-invoice_*_detaylar.xlsx
+  ISLEM_BEDELI // "İşlem Bedeli Detay"      — prod_service-fee_*_detaylar.xlsx
+  KESINTI // "Kesinti_Detay"           — prod_deduction-invoices_*_Kesintiler.xlsx
+  CEZA // "Ceza faturası detay"     — prod_*_{DamagedItem,MissingItem}_*_detaylar.xlsx
+  MIKRO_IHRACAT // "Micro Export Fees"       — prod_<satıcı>_<butik>-<ts>.xlsx
+  IADE_BEDELI // "fee"                     — prod_*_RETURN_FEE_*_detaylar.xlsx
+}
+
+/// Fatura başlığı. Ana kaynak "Faturalar_*.xlsx" listesi; tekil PDF yüklenirse
+/// aynı kayıt KDV kırılımıyla zenginleştirilir (netTry/vatTry/grossTry).
+model TrendyolInvoice {
+  id        String @id @default(cuid())
+  /// "Fatura No" (liste) == PDF'teki "Belge No". Doğal anahtar.
+  invoiceNo String @unique
+
+  invoiceDate DateTime
+  /// Trendyol'un serbest metin fatura tipi — orijinali korunur.
+  invoiceType String
+  /// "Kesinti Faturası" / "Komisyon Faturası" / "Tedarikçi Faturası"
+  category    String?
+  costGroup   TrendyolCostGroup @default(DIGER)
+  country     String?
+  status      String?
+
+  /// Liste dosyasındaki işaretli tutar: gider negatif, lehimize olan pozitif.
+  amountTry  Decimal @db.Decimal(15, 2)
+  /// Mutlak gider tutarı — toplamlarda kullanılır (amountTry < 0 ise -amountTry).
+  expenseTry Decimal @default(0) @db.Decimal(15, 2)
+
+  // ── PDF'ten gelen kırılım (yalnız PDF yüklendiyse dolu) ──
+  netTry      Decimal? @db.Decimal(15, 2) // Mal/Hizmet Toplam Tutarı (KDV hariç)
+  vatTry      Decimal? @db.Decimal(15, 2) // Hesaplanan KDV
+  grossTry    Decimal? @db.Decimal(15, 2) // Vergiler Dahil Toplam Tutar
+  vatRatePct  Decimal? @db.Decimal(5, 2)
+  ettn        String?
+  /// PDF "Genel Açıklamalar" bloğu / kalem adı.
+  description String?
+  pdfParsed   Boolean  @default(false)
+
+  /// Detay dosyalarını başlığa bağlamak için Trendyol'un iç belge numarası
+  /// (dosya adından gelir, örn. prod_cargo-invoice_..._85005834_detaylar.xlsx).
+  sourceRef String?
+
+  lines TrendyolInvoiceLine[]
+
+  firstSeenFile String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([invoiceDate])
+  @@index([costGroup])
+  @@index([invoiceType])
+  @@index([country])
+  @@index([costGroup, invoiceDate])
+  // Detay dosyaları fatura no içermez; eşleştirme toplam tutar üzerinden yapılır
+  // (lib/trendyol-finance/import.ts → linkLinesToInvoice).
+  @@index([expenseTry])
+  @@map("trendyol_invoice")
+}
+
+/// Kesinti/kargo/işlem bedeli detay satırı — sipariş bazında maliyet.
+/// Detay dosyaları fatura numarasını içermez; dosya adındaki iç belge id'si
+/// `sourceRef` olarak saklanır, başlık eşleşirse invoiceId doldurulur.
+model TrendyolInvoiceLine {
+  id        String                  @id @default(cuid())
+  lineKind  TrendyolInvoiceLineKind
+  /// Dosya adından çıkarılan Trendyol belge id'si.
+  sourceRef String
+  /// Satır içeriğinin deterministik özeti — aynı dosyanın tekrar yüklenmesinde dedup.
+  rowHash   String
+
+  invoiceId String?
+  invoice   TrendyolInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  orderNumber  String?
+  shipmentType String? // Gönderi / İade / Değişim Gönderisi
+  shipmentCode String?
+  cargoCompany String?
+  orderDate    DateTime?
+  shipDate     DateTime?
+
+  /// Kesilen tutar — daima pozitif (gider).
+  amountTry      Decimal  @db.Decimal(15, 2)
+  orderAmountTry Decimal? @db.Decimal(15, 2)
+  desi           Decimal? @db.Decimal(8, 2)
+  quantity       Int?
+  description    String?
+
+  sourceFile String?
+  createdAt  DateTime @default(now())
+
+  @@unique([sourceRef, rowHash])
+  @@index([orderNumber])
+  @@index([lineKind])
+  @@index([orderDate])
+  @@index([invoiceId])
+  @@map("trendyol_invoice_line")
+}
+
+/// Hakediş (settlement) satırı — SaticiFatura_<id>_*.xlsx "Settlements" sayfası.
+/// Gelir tarafı: Satıcı Hakediş = bize ödenecek, Trendyol Hakediş = komisyon.
+model TrendyolSettlementLine {
+  id            String  @id @default(cuid())
+  /// "Kayıt No" — Trendyol'un tekil işlem numarası.
+  recordNo      String  @unique
+  /// Dosya adındaki hakediş belge id'si.
+  settlementRef String?
+
+  transactionType String // Satış / İndirim / İade / Kupon / Kesinti
+  orderNumber     String
+  orderDate       DateTime?
+  transactionDate DateTime?
+  country         String?
+
+  productName String?
+  barcode     String?
+
+  commissionPct    Decimal? @db.Decimal(6, 2)
+  /// Trendyol Hakediş — komisyon tutarı (gider).
+  trendyolShareTry Decimal? @db.Decimal(15, 2)
+  /// Satıcı Hakediş — bize kalan tutar.
+  sellerShareTry   Decimal? @db.Decimal(15, 2)
+  totalTry         Decimal? @db.Decimal(15, 2)
+
+  termDays     Int?
+  deliveryDate DateTime?
+  dueDate      DateTime?
+
+  sourceFile String?
+  createdAt  DateTime @default(now())
+
+  @@index([orderNumber])
+  @@index([transactionDate])
+  @@index([dueDate])
+  @@index([settlementRef])
+  @@map("trendyol_settlement_line")
+}
+
+/// Yükleme günlüğü — hangi dosya ne zaman işlendi, kaç satır girdi.
+/// Kullanıcı "bu dosyayı atmış mıydım" sorusunu buradan yanıtlar.
+model TrendyolFinanceImport {
+  id       String @id @default(cuid())
+  fileName String
+  /// lib/trendyol-finance/detect.ts → TrendyolFileKind değeri.
+  fileKind String
+  fileSize Int
+
+  rowsTotal   Int @default(0)
+  rowsNew     Int @default(0)
+  rowsUpdated Int @default(0)
+  rowsSkipped Int @default(0)
+
+  amountTotalTry Decimal?  @db.Decimal(15, 2)
+  periodStart    DateTime?
+  periodEnd      DateTime?
+
+  ok    Boolean @default(true)
+  error String?
+
+  importedAt      DateTime @default(now())
+  importedByEmail String?
+
+  @@index([importedAt])
+  @@index([fileKind])
+  @@map("trendyol_finance_import")
 }

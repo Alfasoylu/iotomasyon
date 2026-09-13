@@ -24,11 +24,16 @@ export const personnelSchema = z.object({
 
 export type PersonnelInput = z.infer<typeof personnelSchema>;
 
-/** Personel giriş şifresi/PIN — en az 4 karakter (sayısal PIN de olabilir). */
+/**
+ * Personel giriş şifresi/PIN — yeni ATANAN şifreler için en az 6 karakter (sayısal
+ * PIN de olabilir; 4 hane = 10k deneme, brute-force'a açık). Bu şema YALNIZ şifre
+ * oluşturma/sıfırlama akışlarında kullanılır; giriş (login) tarafında uzunluk
+ * doğrulanmaz, mevcut 4 haneli PIN'ler değiştirilene kadar çalışmaya devam eder.
+ */
 export const passwordSchema = z
   .string()
   .trim()
-  .min(4, "Şifre en az 4 karakter olmalı.")
+  .min(6, "Şifre en az 6 karakter olmalı.")
   .max(64, "Şifre çok uzun.");
 
 /** PDKS şantiye formu (Step 9c). */

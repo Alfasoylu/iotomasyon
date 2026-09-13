@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 /** POST /api/pdks/push/unsubscribe  body: { endpoint } */
 export async function POST(req: NextRequest) {
-  const result = await withPdksSession(async () => {
+  const result = await withPdksSession(async (session) => {
     let body: { endpoint?: unknown };
     try {
       body = await req.json();
@@ -16,7 +16,12 @@ export async function POST(req: NextRequest) {
     }
     const endpoint = typeof body.endpoint === "string" ? body.endpoint : "";
     if (endpoint) {
-      await prismaPdks.pdksPushSubscription.deleteMany({ where: { endpoint } });
+      // Yalnız oturum sahibinin kendi aboneliği silinebilir (tenantId scoped
+      // client tarafından eklenir; personnelId aynı tenant'taki başka personelin
+      // endpoint'ini silmeyi engeller).
+      await prismaPdks.pdksPushSubscription.deleteMany({
+        where: { endpoint, personnelId: session.personnelId },
+      });
     }
     return NextResponse.json({ ok: true });
   });

@@ -244,6 +244,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Pazaryerleri",
   },
   {
+    href: "/marketplace/trendyol/finans",
+    label: "Trendyol Finans",
+    iconKey: "receipt",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Pazaryerleri",
+  },
+  {
     href: "/marketplace/profit",
     label: "Kârlılık & Marj",
     iconKey: "pieChart",
@@ -527,6 +534,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
 
   const hasAccess = allowedNav.some((item) => item.href !== "/dashboard");
+  // /no-access sayfası bu layout'un DIŞINDA (app/no-access) — aksi halde
+  // layout yeniden çalışıp tekrar yönlendirir ve redirect döngüsü oluşur.
   if (!hasAccess) redirect("/no-access");
 
   return (

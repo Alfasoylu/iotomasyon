@@ -6,6 +6,9 @@ import { LoginForm } from "@/components/auth/login-form";
 import { Card } from "@/components/ui/card";
 import { getCurrentSession } from "@/lib/auth";
 import { COMPANY_SETTINGS } from "@/lib/company-settings";
+import { createCaptchaChallenge } from "@/lib/captcha";
+import { getTurnstileSiteKey } from "@/lib/env";
+import { isTurnstileEnabled } from "@/lib/turnstile";
 
 export const metadata: Metadata = {
   title: "Yönetici Girişi",
@@ -18,6 +21,11 @@ export default async function LoginPage() {
   if (user) {
     redirect("/dashboard");
   }
+
+  // Site key yalnız secret de tanımlıysa istemciye gider; aksi halde CAPTCHA kapalı.
+  const captchaSiteKey = isTurnstileEnabled() ? getTurnstileSiteKey() : undefined;
+  // Turnstile yoksa yerleşik resim CAPTCHA'sı — dış servis gerektirmez.
+  const imageCaptcha = captchaSiteKey ? undefined : createCaptchaChallenge();
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-10 bg-[var(--surface-0)]">
@@ -55,7 +63,7 @@ export default async function LoginPage() {
             İlk girişte sistem <code className="rounded bg-[var(--surface-3)] px-1 py-0.5 text-[12px] font-mono text-[var(--text-primary)]">ADMIN_EMAIL</code> ve <code className="rounded bg-[var(--surface-3)] px-1 py-0.5 text-[12px] font-mono text-[var(--text-primary)]">ADMIN_PASSWORD</code> ile admin hesabını otomatik oluşturur.
           </p>
           <div className="mt-6">
-            <LoginForm />
+            <LoginForm captchaSiteKey={captchaSiteKey} imageCaptcha={imageCaptcha} />
           </div>
         </Card>
       </div>
