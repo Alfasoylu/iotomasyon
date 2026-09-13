@@ -39,6 +39,49 @@
   orada da düzeltildi ve regresyon testi eklendi.
 - **Mevcut RBAC testi de betiklendi:** `npm run check:rbac` (22 test).
 - `.env.example` WhatsApp bölümüyle güncellendi.
+### Yeni Ürünler — menşei CN, garanti 24 ay, kutu ölçüsü + kaynak etiketi (2026-09-13)
+
+- 151 adayın tamamında `mensei = 'CN'` ve `garanti_ay = 24` (bir kayıttaki "Çin"
+  de CN'e normalize edildi). Menşei+garanti puanda 6 puanlık kalem.
+- **Kutu ölçüsü uydurulmadı, türetildi ve türetildiği kaydedildi.** Yeni
+  `urun_aday.kutu_kaynak` sütunu `OLCULDU` / `FATURADAN` / `TAHMINI` taşıyor:
+  1 ölçülmüş, 5 faturadan (Qunzh ×2 = 41,5×21,5×5,5; AURA5939 ×3 = 64×44×15),
+  141 tahmini, 4 başlıksız kayıt boş. Etiketsiz bıraksaydık bir sonraki pazaryeri
+  ihracı tahmini ölçülmüş gibi gönderirdi.
+- `urun_kutu_tahmin(ad, kg)` fonksiyonu: çanak lavaboda başlıktaki ürün ölçüsü
+  + 5 cm pay; diğerlerinde paketli yoğunluk 0,4 kg/L ve aileye göre kenar oranı.
+  Çapası gerçek kayıt — AS304167 0,80 kg → 20×10×10'u birebir üretiyor.
+- **Hangi tahminin paraya döndüğü ölçüldü.** Kargo `max(desi, ağırlık)` kesildiği
+  için ağırlığın baskın olduğu üründe kutu ölçüsü faturayı değiştirmiyor.
+  147 kutulu üründen 21'inde desi belirleyici, 5'inin ölçüsü zaten gerçek →
+  **elle ölçülmesi gereken 16 ürün**. Panel (liste uyarısı + editörde kırmızı
+  çerçeve) tam olarak o 16'yı işaretliyor; kalan 131'de rozet gri.
+- `urun_aday_puan` / `urun_aday_skor` görünümlerine `kutu_kaynak` eklendi.
+  Görünüm sütun listesini donduruyordu; eklemeden panel sorgusu
+  "column does not exist" ile patlıyordu — deploy öncesi yakalandı.
+- Yeni ürünlerin puan ortalaması **46,4 → 58,2**; 60+ puanlı ürün **1 → 46**.
+  Kalan tek büyük darboğaz görsel: 127 yeni üründen 126'sında ürün görseli yok
+  (27 puan).
+
+### Yeni Ürünler — 124 açıklama başlıktan üretildi (2026-09-13)
+
+- Açıklama puanda 15 puanlık tek kalem ve 151 adayın **150'sinde boştu**. Yeni
+  `urun_aciklama_uret(ad, marka, kg)` fonksiyonu açıklamayı **başlıktan** üretiyor;
+  fonksiyon olduğu için gelecek partilerde de tek UPDATE ile çalışıyor.
+- **Uydurma yok — tasarımın özü bu.** Yalnız başlıkta geçen nitelikler yazılıyor
+  (malzeme, kaplama, montaj tipi, fonksiyonlar, ölçü) ve veritabanında olan
+  ağırlık. Garanti, menşei, sertifika, su basıncı, kutu içeriği, kartuş markası —
+  hiçbiri yazılmıyor. Marka bile boşsa cümlede geçmiyor.
+- **Dolgu yapılmadı.** 124 üründen **66'sı 400 karakteri geçiyor** (tam 15 puan),
+  58'i 150–399 bandında (7 puan). Kalanları 400'e tamamlamak için genel pazarlama
+  cümlesi eklemek mümkündü, eklenmedi: o ürünlerin başlığı çıplak
+  ("Alfas Çanak Lavabo Bataryası"), anlatacak nitelik yok. Gerçek çözüm 1688
+  açıklamalarının panele yapıştırılması.
+- **Yedek parça ayrıldı:** somun, rakor, gövde aksamı pazaryeri ürünü değil
+  (16.000 ve 4.000 adetlik üretim kalemleri). Kapanış cümleleri farklı, kısa
+  kalmaları normal.
+- Elle yazılmış açıklamaya ve katalogdaki ürünlere dokunulmadı.
+- Yeni ürünlerin puan ortalaması **35,6 → 46,4**.
 
 ### XML stok hareketi = satış sinyali; satış verisi haftalık gelir (2026-09-12)
 

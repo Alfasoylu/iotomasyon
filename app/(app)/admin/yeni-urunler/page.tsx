@@ -50,6 +50,8 @@ type Satir = {
   info_gorsel: number;
   puan: number;
   eksikler: string[] | null;
+  kutu_kaynak: string | null;
+  desi: unknown;
 };
 
 const n = (v: unknown) => (v == null ? 0 : Number(v));
@@ -79,7 +81,8 @@ export default async function YeniUrunlerPage({
     select id, sku, kaynak, invoice_ad, ad_tr, marka, kategori, adet, satis_try,
            birim_usd, agirlik_kg, link_1688, durum,
            urun_gorsel, cince_gorsel, info_gorsel, puan, eksikler,
-           katalogda_var, katalog_sku, katalog_ad
+           katalogda_var, katalog_sku, katalog_ad, kutu_kaynak,
+           round((kutu_en_cm * kutu_boy_cm * kutu_yuk_cm / 3000.0)::numeric, 1) as desi
       from urun_aday_skor
      order by katalogda_var, puan desc, coalesce(satis_try, 0) * coalesce(adet, 0) desc, sku`;
 
@@ -97,6 +100,11 @@ export default async function YeniUrunlerPage({
   // Trendyol 100'de kesiyor; faturadan üretilen başlıklar 120'ye kadar çıkabildiği
   // için bir kısmı sınırın üstünde kaldı. Elle kısaltılacaklar bu filtrede.
   const uzunBaslik = yeniler.filter((s) => (s.ad_tr?.length ?? 0) > BASLIK_TRENDYOL);
+  // Kargo ücreti max(desi, ağırlık) üzerinden kesilir. Tahmini kutu ölçüsü yalnız
+  // desi ağırlığı aşan üründe paraya dönüşür — ölçülmesi gereken kalem odur.
+  const olculmeli = yeniler.filter(
+    (s) => s.kutu_kaynak === "TAHMINI" && n(s.desi) > n(s.agirlik_kg),
+  );
 
   // Potansiyel ciro: bu adayların hepsi listelenirse gelen maldan ne kadar ciro çıkar.
   const potansiyel = yeniler.reduce((a, s) => a + n(s.satis_try) * (s.adet ?? 0), 0);
@@ -188,6 +196,17 @@ export default async function YeniUrunlerPage({
                 {gorselsiz.length} üründe hiç ürün görseli yok. Görselsiz ilan açılamaz — bu tek
                 başına {fmtTry(gorselsiz.reduce((a, s) => a + n(s.satis_try) * (s.adet ?? 0), 0))}{" "}
                 ciroyu bekletiyor.
+              </span>
+            </p>
+          )}
+          {olculmeli.length > 0 && (
+            <p className="flex items-start gap-2 rounded-md border border-[var(--warn-border)] bg-[var(--warn-dim)] px-3 py-2 text-[11px] leading-snug text-[var(--warn)]">
+              <TriangleAlert size={13} className="mt-px shrink-0" />
+              <span>
+                {olculmeli.length} üründe kutu ölçüsü <strong>tahmini</strong> ve desi
+                ağırlığı aşıyor — kargo ücretini desi belirlediği için bu tahmin doğrudan
+                faturaya dönüyor. İlan açmadan önce ölçün. (Diğer tahminlerde ağırlık
+                belirleyici, bedeli yok.)
               </span>
             </p>
           )}
