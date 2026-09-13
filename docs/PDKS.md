@@ -263,9 +263,14 @@ kararını sınıyor: yerel saat dönüşümü, gece yarısı `24 → 0` düzelt
 00:30'da hiçbir görev tetiklenmezdi), yerel günün UTC gününden ayrışması, gün
 filtresi, mükerrer freni, geç kalan tetikleme.
 
-**Henüz YOK:** kişi/görev ekleme formları (şu an sayfa okuma + elle tetikleme;
-kayıt eylemleri `lib/actions/whatsapp-actions.ts`'te hazır ama forma bağlı
-değil), reklam paneli.
+**Formlar da eklendi:** kişi ekle/düzenle/sil ve zamanlanmış mesaj
+ekle/düzenle/sil, panelin içinde. Görev formunda şablon adı boş bırakılırsa
+ekran **uyarıyor** — serbest metin yalnız 24 saatlik pencerede gider ve sabah
+yoklamasında o pencere kapalıdır; uyarı olmasa görev "aktif" görünür ve hiçbir
+mesaj ulaşmazdı. Kişi formu numarayı serbest biçimde kabul eder (boşluklu,
+`+90`'lı, `0`'lı) ve kaydederken tek biçime çevirir.
+
+**Henüz YOK:** reklam paneli (`ads_read` ile Meta kampanya özeti).
 
 ### 13.09.2026 — WhatsApp mesaj merkezi: temel katman (Faz 1)
 Sipariş bildirimleri alfashome backend'inden gidiyor ama **cevaplar hiçbir yere
