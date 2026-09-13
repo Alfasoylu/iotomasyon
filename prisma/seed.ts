@@ -121,6 +121,7 @@ const PERMISSIONS = [
   { key: "marketplaceReturns.read",     name: "İade Görüntüleme",               category: "marketplace" },
 
   // Marketplace Operations (Phase 16)
+  { key: "ads.read",                    name: "Reklam Performansı Görüntüleme",  category: "ads" },
   { key: "whatsapp.read",               name: "WhatsApp Mesajları Görüntüleme",  category: "whatsapp" },
   { key: "whatsapp.send",               name: "WhatsApp Mesaj Gönderme",         category: "whatsapp" },
   { key: "whatsapp.manage",             name: "WhatsApp Kişi/Görev Yönetimi",    category: "whatsapp" },
