@@ -13,7 +13,9 @@
     "db:seed": "prisma db seed",
     "db:seed:cfo": "tsx prisma/seed-cfo.ts",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:wa": "tsx __tests__/whatsapp.test.ts",
+    "check:rbac": "tsx __tests__/resolve-permission.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -152,8 +152,10 @@ For all production writes outside normal application CRUD:
 | 20260517020000 | phase16_marketplace_ops |
 | 20260517030000 | phase11a_xml_product_foundation |
 | 20260517040000 | phase20_supplier_intelligence |
+| 20260913210000 | whatsapp_messaging |
 
-Total applied migrations: 25
+Not: yukarıdaki liste elle tutuluyor ve eksik kalabilir — kesin kaynak
+`prisma/migrations/` dizini ve `_prisma_migrations` tablosudur.
 
 ---
 

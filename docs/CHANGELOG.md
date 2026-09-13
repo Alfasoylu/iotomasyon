@@ -9,6 +9,35 @@
 
 ## 2026-09
 
+### WhatsApp mesaj merkezi — temel katman (2026-09-13)
+
+- **Webhook kuruldu:** `app/api/whatsapp/webhook/route.ts`. GET Meta'nın
+  doğrulama el sıkışmasını (`hub.challenge`) karşılıyor, POST gelen mesajları ve
+  durum güncellemelerini kaydediyor. Meta her numara için TEK callback adresi
+  kabul ettiği için gelen cevapların tek toplandığı yer burası; alfashome
+  backend'i yalnız gönderiyor.
+- **İmza doğrulaması zorunlu:** `lib/whatsapp/signature.ts` — HMAC-SHA256, ham
+  gövde üzerinden, `timingSafeEqual` ile. `WHATSAPP_APP_SECRET` tanımlı değilse
+  webhook 503 döner; imzasız istek 401. Doğrulama olmadan bu açık adresten
+  isteyen istediği "cevabı" sisteme yazdırabilirdi.
+- **Şema:** `WhatsAppContact` + `WhatsAppMessage` (migration
+  `20260913210000_whatsapp_messaging`). Yalnız ekleme yapan migration; iki
+  tabloda da RLS açık (public tablo değişmezi), FK `ON DELETE RESTRICT`.
+  `waMessageId` tekil — Meta webhook'u yeniden gönderdiğinde aynı cevap iki kez
+  kaydedilmiyor.
+- **Gönderim istemcisi:** `lib/whatsapp/client.ts`. `sendText` 24 saatlik pencere
+  kapalıyken göndermeyi DENEMİYOR (denemek Meta tarafında hata üretip sebebi
+  log'da kaybediyordu); şablon dili `WHATSAPP_TEMPLATE_LANG`'dan okunuyor.
+- **16 birim testi eklendi** (`npm run check:wa`, DB/ağ gerektirmez). Testler iki
+  gerçek hata buldu ve ikisi düzeltildi: (1) alıcı listesi boşlukta da bölünüyor,
+  `0532 111 22 33` gibi yazılmış bir numarayı dört parçaya ayırıp eliyor ve liste
+  **sessizce boşalıyordu**; (2) numarada üst sınır yoktu, yapışan iki numara
+  24 haneye çıkıp geçerli sayılıyor ve var olmayan bir numaraya mesaj gidiyordu.
+  Ayırıcı virgül/noktalı virgül/satır sonu ile sınırlandı, E.164 15 hane sınırı
+  eklendi.
+- **Mevcut RBAC testi de betiklendi:** `npm run check:rbac` (22 test).
+- `.env.example` WhatsApp bölümüyle güncellendi.
+
 ### XML stok hareketi = satış sinyali; satış verisi haftalık gelir (2026-09-12)
 
 - **Kural yazıldı:** satış listesi Entegra'dan haftada bir, elle yükleniyor. CFO

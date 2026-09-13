@@ -2285,3 +2285,52 @@ model CfoNote {
   @@index([sourceQuestionId])
   @@map("cfo_note")
 }
+
+// ─── WhatsApp mesajlaşma (Faz 3) ────────────────────────────────────────────
+//
+// Neden ayrı kişi tablosu: mesaj alıcısı her zaman personel veya kullanıcı
+// olmayabilir (depocu, tedarikçi, kurye). pdks_personnel'i bu iş için
+// genişletmek o modeli bulanıklaştırırdı.
+//
+// ⚠️ WhatsApp Cloud API GRUBA MESAJ ATAMAZ — yalnız birebir. Depo ekibine
+// bildirim, herkese ayrı ayrı gönderilerek çözülür.
+
+model WhatsAppContact {
+  id     String  @id @default(cuid())
+  name   String
+  /// Normalleştirilmiş, ülke kodlu, rakam-only: 905321112233
+  phone  String  @unique
+  /// Serbest etiket: "depocu" | "mudur" | "kurye" ...
+  label  String?
+  isActive Boolean @default(true)
+  /// Son GELEN mesaj anı. 24 saatlik serbest metin penceresi buradan hesaplanır;
+  /// pencere kapalıyken yalnız onaylı şablon gönderilebilir.
+  lastInboundAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages WhatsAppMessage[]
+
+  @@index([isActive])
+}
+
+model WhatsAppMessage {
+  id        String  @id @default(cuid())
+  contactId String
+  /// "OUT" (biz gönderdik) | "IN" (karşıdan geldi)
+  direction String
+  /// Meta'nın mesaj kimliği. TEKİL: Meta webhook'u yeniden gönderir; bu kısıt
+  /// olmasa aynı cevap defalarca kaydedilirdi.
+  waMessageId  String? @unique
+  templateName String?
+  body      String  @db.Text
+  /// queued | sent | delivered | read | failed
+  status    String  @default("queued")
+  error     String?
+  createdAt DateTime @default(now())
+
+  contact WhatsAppContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@index([contactId, createdAt])
+  @@index([direction, createdAt])
+}
