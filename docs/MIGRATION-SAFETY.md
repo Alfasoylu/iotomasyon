@@ -17,6 +17,20 @@ intentional: it denies the Supabase Data API roles (`anon`, `authenticated` via 
 by default. The app is unaffected because it connects only via Prisma as the `postgres`
 role (`rolbypassrls = true`) and via Storage with the `service_role` key — both bypass RLS.
 
+⚠️ **13.09.2026 — değişmez KIRILMIŞTI.** 22 public tabloda RLS kapalıydı **ve**
+`anon` rolünün SELECT yetkisi vardı; içlerinde banka/ödeme/maliyet verisi
+taşıyanlar da (`cfo_order_line`, `cfo_import_cost`, `cfo_statement_import`,
+`cfo_set_fiyat`…). Sebep: 20260613000000 yalnız O GÜN var olan tabloları
+kapattı; sonradan **Supabase SQL editöründen elle** oluşturulan tablolar
+korumayı almadı ve Supabase'in varsayılan yetkileri anon'a SELECT verdi.
+Hata sessizdi — tablo çalışır, uygulama çalışır, yalnız dışarı açıktır.
+`20260913235000_rls_eksik_tablolar` ile kapatıldı.
+
+**Ders: tabloyu SQL editöründen oluşturmak bu değişmezi atlar.** Migration
+dosyası yazmadan tablo açılmamalı; açıldıysa aynı migration içinde RLS de
+açılmalı. Denetim komutu: `get_advisors(security)` → `rls_disabled_in_public`
+**sıfır** olmalı.
+
 Rules for future schema work:
 - **Every new `public` table must have RLS enabled** in the same migration that creates it
   (`ALTER TABLE "NewTable" ENABLE ROW LEVEL SECURITY;`). Run `get_advisors(security)` after
@@ -154,6 +168,7 @@ For all production writes outside normal application CRUD:
 | 20260517040000 | phase20_supplier_intelligence |
 | 20260913210000 | whatsapp_messaging |
 | 20260913230000 | whatsapp_schedules |
+| 20260913235000 | rls_eksik_tablolar |
 
 Not: yukarıdaki liste elle tutuluyor ve eksik kalabilir — kesin kaynak
 `prisma/migrations/` dizini ve `_prisma_migrations` tablosudur.
