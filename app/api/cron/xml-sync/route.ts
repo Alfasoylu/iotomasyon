@@ -5,24 +5,20 @@
  * Iterates all enabled XmlSyncSource rows and runs sync for each.
  *
  * Security: Vercel sets `Authorization: Bearer <CRON_SECRET>` on cron calls.
- * We validate it to prevent public triggering.
+ * lib/cron-auth.ts validates it (fail-closed: secret yoksa 503).
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { runSync } from "@/lib/actions/xml-sync-actions";
+import { authorizeCron } from "@/lib/cron-auth";
+import { runSync } from "@/lib/xml-sync-runner";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 min
 
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = req.headers.get("Authorization");
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const denied = authorizeCron(req);
+  if (denied) return denied;
 
   const sources = await prisma.xmlSyncSource.findMany({
     where: { isEnabled: true },

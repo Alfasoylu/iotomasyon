@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { RegisterForm } from "@/components/pdks/register-form";
+import { createCaptchaChallenge } from "@/lib/captcha";
+import { getTurnstileSiteKey } from "@/lib/env";
+import { isTurnstileEnabled } from "@/lib/turnstile";
 
 export const metadata: Metadata = {
   title: "Ücretsiz Deneme Başlat",
@@ -11,6 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default function KayitPage() {
+  // Site key yalnız secret de tanımlıysa istemciye gider; aksi halde CAPTCHA kapalı.
+  const captchaSiteKey = isTurnstileEnabled() ? getTurnstileSiteKey() : undefined;
+  const imageCaptcha = captchaSiteKey ? undefined : createCaptchaChallenge();
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
@@ -47,7 +54,7 @@ export default function KayitPage() {
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
           <h2 className="text-xl font-semibold tracking-tight text-slate-950 lg:hidden">30 gün ücretsiz deneyin</h2>
-          <RegisterForm />
+          <RegisterForm captchaSiteKey={captchaSiteKey} imageCaptcha={imageCaptcha} />
         </section>
       </main>
     </div>

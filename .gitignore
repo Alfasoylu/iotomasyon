@@ -58,3 +58,6 @@ adresler/mahalle.csv
 docs/aranacak firmalar.xlsx
 test-quote-*.pdf
 test-quote-faz4-*.pdf
+
+# gecici bakim scripti (DB dump) — commit edilmemeli
+scripts/.dump.ts

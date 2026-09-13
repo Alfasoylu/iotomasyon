@@ -16,26 +16,18 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { authorizeCron } from "@/lib/cron-auth";
 import { prisma } from "@/lib/prisma";
 import { fetchTrendyolOrders, fetchTrendyolReturns } from "@/lib/trendyol-api";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 min
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-
-function isAuthorized(req: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) return true; // dev: no secret set
-  return req.headers.get("Authorization") === `Bearer ${cronSecret}`;
-}
-
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = authorizeCron(req);
+  if (denied) return denied;
 
   const config = await prisma.trendyolConfig.findFirst();
   if (!config || !config.isEnabled) {

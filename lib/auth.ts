@@ -1,5 +1,6 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
 import { compare, hash } from "bcryptjs";
 import { cache } from "react";
 import { cookies } from "next/headers";
@@ -120,8 +121,15 @@ export const getCurrentSession = cache(async (): Promise<ResolvedUser | null> =>
     if (row) {
       user = { ...row, role: row.role as string };
     }
-  } catch {
-    // Phase 5 tables not yet migrated — load user without permission overrides.
+  } catch (error) {
+    // Yalnız "tablo/sütun yok" (P2021/P2022 — Phase 5 migration henüz uygulanmamış)
+    // durumunda override'sız devam edilir. Başka her hata yukarı fırlatılır; aksi
+    // halde geçici bir DB hatası kullanıcıya özel DENY kayıtlarını yok sayardı (S-O5).
+    const isMissingSchema =
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2021" || error.code === "P2022");
+    if (!isMissingSchema) throw error;
+
     const row = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: { id: true, email: true, name: true, role: true, isActive: true },

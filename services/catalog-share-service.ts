@@ -8,8 +8,12 @@ import "server-only";
 
 import { randomBytes } from "node:crypto";
 
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 import type { CatalogPriceMode } from "@/lib/catalog-mapping";
+import { catalogPriceFilter } from "@/lib/catalog-price";
+import { getCatalogProfile } from "@/lib/get-catalog-profile";
 
 export interface CreateShareInput {
   customerId: string;
@@ -144,25 +148,71 @@ export async function recordShareView(shareId: string): Promise<void> {
 }
 
 /**
+ * Ürün, paylaşılan kataloğun kapsamında mı?
+ *
+ * Public route'tan gelen productId'ye güvenilmez: ürün var olmalı, aktif
+ * olmalı ve /c/[token] sayfasının listelediği kümede (profil kategorileri +
+ * onlyStock + brandFilter + priceMode filtresi) yer almalı. Aksi halde
+ * herhangi bir ürün id'si ile ilgi kaydı / takip görevi üretilebilirdi.
+ */
+async function isProductInShareScope(
+  share: { profileSlug: string; onlyStock: boolean; brandFilter: string | null; priceMode: string },
+  productId: string,
+): Promise<boolean> {
+  const profile = await getCatalogProfile(share.profileSlug);
+  if (profile.categorySlugs.length === 0) return false;
+
+  const where: Prisma.ProductWhereInput = {
+    id: productId,
+    isActive: true,
+    productCategory: { is: { slug: { in: profile.categorySlugs } } },
+  };
+  if (share.onlyStock) where.stockQuantity = { gt: 0 };
+  const brands = share.brandFilter ? share.brandFilter.split(",").filter(Boolean) : [];
+  if (brands.length > 0) where.brand = { in: brands };
+  const priceFilter = catalogPriceFilter(share.priceMode as CatalogPriceMode);
+  if (priceFilter) Object.assign(where, priceFilter);
+
+  const product = await prisma.product.findFirst({ where, select: { id: true } });
+  return product !== null;
+}
+
+/**
  * Müşteri katalog içinde "İlgilendim" butonuna bastığında:
  *   1. CatalogProductInterest event kaydı
  *   2. Ana sistemde ProductInterest oluştur (varsa skip)
  *   3. Sales rep'e takip görevi oluştur (24h sonra)
+ *
+ * `created: false` → paylaşım yok, productId boş ya da ürün kataloğun
+ * kapsamında değil (hiçbir kayıt yazılmaz).
  */
 export async function recordCatalogInterest(
   shareId: string,
   productId: string,
   action: "INTERESTED" | "ADD_TO_CART" | "VIEWED_LONG" = "INTERESTED",
 ): Promise<{ created: boolean }> {
+  if (typeof productId !== "string" || productId.trim().length === 0) {
+    return { created: false };
+  }
+
   const share = await prisma.catalogShare.findUnique({
     where: { id: shareId },
     select: {
       customerId: true,
       sentById: true,
       followUpTaskCreated: true,
+      profileSlug: true,
+      onlyStock: true,
+      brandFilter: true,
+      priceMode: true,
     },
   });
   if (!share) return { created: false };
+
+  // 0. Ürün gerçekten var mı ve bu kataloğa dahil mi?
+  if (!(await isProductInShareScope(share, productId))) {
+    return { created: false };
+  }
 
   // 1. Event kaydı
   await prisma.catalogProductInterest.create({

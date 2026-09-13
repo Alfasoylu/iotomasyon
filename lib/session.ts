@@ -11,6 +11,12 @@ function getSecret(): Uint8Array {
 
 export const SESSION_COOKIE_NAME = "iotomasyon_session";
 
+// iss/aud (2026-09-14, S-O6): CRM ve PDKS aynı SESSION_SECRET'ı paylaşıyor; audience
+// ayrımı bir sistemin token'ının diğerinde geçmesini imkânsız kılar. PDKS tarafı
+// lib/pdks/session.ts'de "pdks" audience kullanır.
+export const SESSION_ISSUER = "iotomasyon";
+export const SESSION_AUDIENCE = "crm";
+
 export type SessionPayload = JWTPayload & {
   userId: string;
   email: string;
@@ -22,6 +28,8 @@ export type SessionPayload = JWTPayload & {
 export async function createSessionToken(payload: SessionPayload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
+    .setIssuer(SESSION_ISSUER)
+    .setAudience(SESSION_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(getSecret());
@@ -35,6 +43,8 @@ export async function verifySessionToken(token: string | undefined) {
   try {
     const result = await jwtVerify<SessionPayload>(token, getSecret(), {
       algorithms: ["HS256"],
+      issuer: SESSION_ISSUER,
+      audience: SESSION_AUDIENCE,
     });
 
     return result.payload;

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { authorizeCron } from "@/lib/cron-auth";
 
 import { prisma } from "@/lib/prisma";
 import { isPushConfigured, sendPushToSubs } from "@/lib/pdks/push";
@@ -41,10 +42,8 @@ function toMinutes(hhmm: string): number | null {
  * (Vercel Pro'ya geçilirse vercel.json'a 5 dakikalık cron olarak da eklenebilir.)
  */
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && req.headers.get("Authorization") !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = authorizeCron(req);
+  if (denied) return denied;
   // NOT: push yapılandırılmamış olsa bile DEVAM ederiz — otomatik çıkış (gün sonu /
   // geçmiş gün kapanışı) bir DB işlemidir, push'tan bağımsızdır. Push gönderimleri
   // sendPushToSubs içinde zaten no-op'tur (configured değilse boş döner).
