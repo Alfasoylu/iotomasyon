@@ -33,8 +33,10 @@
   `0532 111 22 33` gibi yazılmış bir numarayı dört parçaya ayırıp eliyor ve liste
   **sessizce boşalıyordu**; (2) numarada üst sınır yoktu, yapışan iki numara
   24 haneye çıkıp geçerli sayılıyor ve var olmayan bir numaraya mesaj gidiyordu.
-  Ayırıcı virgül/noktalı virgül/satır sonu ile sınırlandı, E.164 15 hane sınırı
-  eklendi.
+  Ayrıştırıcı artık önce parçanın tamamını tek numara olarak deniyor (boşluk
+  ancak o okunamazsa ayırıcı) ve E.164 15 hane sınırı uygulanıyor. **Aynı iki
+  hata alfashome backend'inde de vardı** (`backend/src/lib/whatsapp-notify.ts`),
+  orada da düzeltildi ve regresyon testi eklendi.
 - **Mevcut RBAC testi de betiklendi:** `npm run check:rbac` (22 test).
 - `.env.example` WhatsApp bölümüyle güncellendi.
 

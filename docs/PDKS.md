@@ -223,8 +223,9 @@ Eklenenler:
 **Testin bulduğu iki gerçek hata:**
 1. Alıcı listesi **boşlukta da bölünüyordu**. Türkiye'de numara `0532 111 22 33`
    diye yazılır; liste dört parçaya ayrılıp dördü de eleniyor ve **sessizce
-   boşalıyordu** — hiç mesaj gitmezdi, hata da dönmezdi. Ayırıcı artık yalnız
-   virgül / noktalı virgül / satır sonu.
+   boşalıyordu** — hiç mesaj gitmezdi, hata da dönmezdi. Artık önce parçanın
+   tamamı tek numara olarak denenir; boşluk ancak o okunamazsa ayırıcı sayılır,
+   böylece boşlukla ayrılmış liste de çalışmaya devam eder.
 2. Numarada **üst sınır yoktu**. Boşlukla ayrılmış iki numara tek diziye yapışıp
    24 haneye çıkıyor, "10+ hane" kuralını geçiyor ve **var olmayan bir numaraya**
    mesaj gidiyordu (Meta böyle bir durumda hata döndürmez). Artık E.164 üst

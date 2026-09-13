@@ -38,19 +38,29 @@ export function normalizePhone(raw: string, defaultCountry = "90"): string {
  * boşalır, hiç mesaj gitmez. Ayırıcı yerine numaranın içi temizlenir
  * (`normalizePhone` rakam dışını atar).
  *
- * Boşlukla ayrılmış iki numara ("9053… 9053…") tek diziye yapışır; o dizi 15
- * haneyi aştığı için `normalizePhone` tarafından REDDEDİLİR — yanlış numaraya
- * mesaj gitmesindense hiç gitmemesi yeğdir.
+ * Boşlukla ayrılmış iki numara ("9053… 9053…") da çalışır: parçanın tamamı
+ * tek numara olarak geçmezse (yapışınca 15 haneyi aşar ve elenir) boşluktan
+ * bölünüp yeniden denenir. Yani ayırıcı olarak boşluk yalnız BAŞKA TÜRLÜ
+ * OKUNAMADIĞINDA devreye girer.
  */
 export function parseRecipients(raw: string): string[] {
-  return Array.from(
-    new Set(
-      (raw ?? "")
-        .split(/[,;\n\r]+/)
-        .map((x) => normalizePhone(x))
-        .filter(Boolean)
-    )
-  );
+  const out: string[] = [];
+  for (const parca of (raw ?? "").split(/[,;\n\r]+/)) {
+    // ÖNCE parçanın TAMAMI denenir — "0532 111 22 33" tek numaradır.
+    const tek = normalizePhone(parca);
+    if (tek) {
+      out.push(tek);
+      continue;
+    }
+    // Tek numara olarak geçerli değil: ya çöp, ya boşlukla ayrılmış birden
+    // fazla numara (yapıştıklarında 15 haneyi aşıp elenirler). İkincisini
+    // kurtarmak için boşluktan bölüp yeniden dene.
+    for (const p of parca.split(/\s+/)) {
+      const n = normalizePhone(p);
+      if (n) out.push(n);
+    }
+  }
+  return Array.from(new Set(out));
 }
 
 /**

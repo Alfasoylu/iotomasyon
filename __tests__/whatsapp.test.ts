@@ -60,13 +60,17 @@ check("Numara İÇİNDEKİ boşluk listeyi bölmez", () => {
   assert.deepEqual(parseRecipients("+90 (532) 111-22-33"), ["905321112233"]);
 });
 
-check("Birbirine yapışan iki numara REDDEDİLİR (uydurma numaraya gitmez)", () => {
-  // Bosluk ayirici olmadigi icin bunlar tek diziye yapisir; 15 haneyi astigi
-  // icin elenir. Elenmeseydi mesaj var olmayan bir numaraya giderdi ve Meta
-  // hata donmezdi.
-  assert.deepEqual(parseRecipients("905321112233 905334445566"), []);
+check("Boşlukla ayrılmış iki numara da okunur (tek numara olarak geçmezse)", () => {
+  assert.deepEqual(parseRecipients("905321112233 905334445566"), ["905321112233", "905334445566"]);
+  assert.deepEqual(parseRecipients("05321112233 05334445566"), ["905321112233", "905334445566"]);
+});
+
+check("15 haneden uzun rakam dizisi REDDEDİLİR (uydurma numaraya gitmez)", () => {
+  // Yapisan iki numara 24 haneye cikip "10+ hane" kuralini geciyordu; mesaj
+  // var olmayan bir numaraya giderdi ve Meta hata donmezdi.
   assert.equal(normalizePhone("9053211122339053344455"), "", "15 haneden uzun kabul edilmemeli");
   assert.equal(normalizePhone("905321112233").length, 12, "gercek numara hala gecerli");
+  assert.deepEqual(parseRecipients("9053211122339053344455"), [], "tek parca olarak da elenmeli");
 });
 
 // ── Şablon parametresi ────────────────────────────────────────────────────
