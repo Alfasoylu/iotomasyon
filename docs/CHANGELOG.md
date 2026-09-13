@@ -51,6 +51,24 @@
 - **Test:** `__tests__/login-rate-limit.test.ts` (6 senaryo); dev sunucuda uçtan uca
   doğrulandı (widget, token, sıfırlama, 6. denemede engel, header'lar).
 
+### Meta reklam paneli — `/reklamlar` (2026-09-13)
+
+- **Kampanya bazında harcama, ciro, ROAS, satış, CTR, CPC, satış başı maliyet.**
+  Dönem seçimi: bugün / dün / 7 / 14 / 30 gün / tümü.
+- **Salt okunur.** `ads.read` izni; yazma izni yok. Modül yalnız `insights` ve
+  para birimi çeker — bütçe değiştirmez, kampanya durdurmaz.
+- **Graph API'nin sessiz tuzakları kapatıldı:** sayılar string geliyor; satın
+  alma üç ayrı `action_type` altında aynı anda raporlanıyor (toplamak ciroyu
+  üçe katlardı — kod tek tip seçiyor, `omni_purchase` öncelikli); dönüşüm
+  yokken alan hiç gelmiyor. `npm run check:ads` 15 kontrol.
+- **Özet oranları toplam paydan hesaplanıyor**, kampanya oranlarının ortalaması
+  alınmıyor. Tanımsız ölçüler `—` gösteriliyor, 0 değil.
+- **Hata görünür:** anahtar süresi dolduğunda panel boşalmıyor, sebep ve gerekli
+  env değişkenleri ekranda yazılı.
+- Doğrulama: check:ads 15/15, check:wa 30/30, check:rbac 22/22, `tsc --noEmit`
+  temiz, eslint temiz, `npm run build` başarılı. **Canlı Graph API'ye karşı
+  doğrulanmadı** — bu ortamdan egress kapalı.
+
 ### WhatsApp Faz 2 — zamanlanmış mesajlar + soru/cevap takibi (2026-09-13)
 
 - **`/whatsapp` paneli** (Sistem menüsü): cevap bekleyenler en üstte, ardından

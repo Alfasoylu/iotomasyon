@@ -15,6 +15,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:wa": "tsx __tests__/whatsapp.test.ts",
+    "check:ads": "tsx __tests__/meta-ads.test.ts",
     "check:rbac": "tsx __tests__/resolve-permission.test.ts"
   },
   "prisma": {
