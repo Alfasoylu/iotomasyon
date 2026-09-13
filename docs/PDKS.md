@@ -211,6 +211,50 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 13.09.2026 — Meta reklam paneli (`/reklamlar`)
+alfashome'un 50 ₺/gün katalog kampanyası Meta panelinden izleniyordu; artık
+kampanya bazında harcama/ciro/ROAS iotomasyon'dan görülüyor.
+
+**SALT OKUNUR — bilerek.** Modül yalnız `insights` ve para birimi çeker; bütçe
+değiştirmez, kampanya durdurmaz. Reklam harcaması geri alınamaz bir işlem ve
+panelden yanlışlıkla tetiklenmemeli; bütçe kararı Meta panelinden, bilerek
+verilir. `ads.read` izni var, yazma izni YOK.
+
+**Biçim kararı: grafik yok.** Manşet sayılar KPI kartı, kampanyalar tablo.
+Birkaç kampanyayı çubuk grafiğe dökmek okunurluğu artırmaz; tablo hem
+sıralanabilir hem tüm sütunları aynı anda gösterir. Renk yalnız **durum**
+bildiriyor (ROAS 1×'in altı kırmızı), seri kimliği için değil.
+
+**Graph API'nin üç sessiz tuzağı** `lib/meta/insights.ts`'te saf fonksiyonlarla
+çözüldü ve 15 testle sabitlendi (`npm run check:ads`):
+
+1. **Tüm sayılar STRING gelir.** Çevrilmezse `"12" + "34" = "1234"`.
+2. **Satın alma üç ayrı `action_type` altında AYNI ANDA raporlanır**
+   (`omni_purchase`, `offsite_conversion.fb_pixel_purchase`, `purchase`).
+   Toplamak **ciroyu üçe katlar** ve ROAS'ı uydurur. Kod tek tip seçer,
+   toplamaz; öncelik `omni_purchase` (Meta'nın tekilleştirilmiş ölçüsü).
+3. **Hiç dönüşüm yoksa alan boş dizi değil, HİÇ YOKTUR.**
+
+**Özet oranları toplam paydan hesaplanır, kampanya oranlarının ortalaması
+alınmaz.** Ortalama almak 1 ₺ harcayan kampanyayı 1.000 ₺ harcayanla eşit
+ağırlığa sokar; testte bu fark 51× ile 2,1× arasında.
+
+**Tanımsız ölçü `—` gösterilir, 0 değil.** Satış yokken CPA "0" demek "satın
+alma bedavaya geldi", harcama yokken ROAS "0" demek "hiç getirisi yok"
+demekti — ikisi de yanlış.
+
+**Hata SESSİZ KALMIYOR.** Anahtar süresi dolduğunda panel boşalırdı ve bu
+"kampanya durmuş" diye okunurdu; artık sebep ve çözüm ekranda yazılı. Veri
+DB'ye yazılıp bayatı sunulmuyor (bilerek): eski sayıya bakıp bütçe kararı
+vermek en tehlikeli durum. Yalnız 60 saniyelik bellek önbelleği var, hızlı
+yenilemeleri yumuşatmak için.
+
+⚠️ **Canlı API'ye bu ortamdan erişilemiyor** (egress kapalı). Kod gerçek yanıt
+biçimleri taklit edilerek test edildi; ilk çalıştırmada anahtar/hesap kimliği
+doğrulaması kullanıcı tarafında yapılmalı.
+
+**Gerekli env:** `META_ADS_TOKEN` (ads_read, süresiz), `META_AD_ACCOUNT_ID`.
+
 ### 13.09.2026 — WhatsApp Faz 2: zamanlanmış mesajlar + soru/cevap takibi
 Faz 1 borular döşemişti (webhook, şema, gönderim). Bu delta kullanıcının asıl
 istediğini kuruyor: *"depocuya her sabah işe başladınız mı diye mesaj attıracağım,

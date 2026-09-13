@@ -521,6 +521,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Sistem",
   },
   {
+    href: "/reklamlar",
+    label: "Meta Reklamları",
+    iconKey: "megaphone",
+    permission: PERMISSIONS.ADS_READ,
+    section: "Sistem",
+  },
+  {
     href: "/orders",
     label: "Siparişler",
     iconKey: "archive",
