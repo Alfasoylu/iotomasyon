@@ -52,6 +52,7 @@ export interface LoanRow {
   id: string; bank: string; name: string;
   earlyPayoffTry: Dec; monthlyPaymentTry: Dec; interestRatePct: Dec;
   paymentDay: number | null; nextPaymentDate: Date | null; lastInstallmentDate: Date | null;
+  totalInstallments: number | null; remainingOverride: number | null;
   currentMonthState: string; status: string; priority: string | null;
   strategy: string | null; dataTag: string; note: string | null;
 }
@@ -94,6 +95,24 @@ export interface CfoInput {
 function startOfDay(d: Date) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 
+/**
+ * Kalan taksit sayısı. Elle girilmiş `remainingOverride` varsa o kazanır
+ * (düzensiz ödeme planları için). Yoksa sonraki ödeme ile son taksit tarihi
+ * arasındaki ay farkından hesaplanır — böylece zamanla kendiliğinden azalır
+ * ve elle güncelleme gerektirmez. Kapanan kredide 0, tarih eksikse null.
+ */
+export function remainingInstallments(l: Pick<LoanRow, "nextPaymentDate" | "lastInstallmentDate" | "remainingOverride" | "status">): number | null {
+  if (l.status !== "AKTIF") return 0;
+  if (l.remainingOverride != null) return l.remainingOverride;
+  const from = l.nextPaymentDate;
+  const to = l.lastInstallmentDate;
+  if (!from || !to) return null;
+  const f = from instanceof Date ? from : new Date(from);
+  const t = to instanceof Date ? to : new Date(to);
+  const n = (t.getFullYear() - f.getFullYear()) * 12 + (t.getMonth() - f.getMonth()) + 1;
+  return n > 0 ? n : 0;
+}
+
 export function trafficForGap(gap: number, freeCapacity: number): Traffic {
   if (gap <= 0) return "YESIL";
   if (gap <= freeCapacity) return "SARI";
@@ -108,6 +127,19 @@ export interface HorizonRow {
   inflow: number; outflow: number; net: number;
   position: number; gap: number; traffic: Traffic;
 }
+/** Ay sonu nakit tahmini — "ay kapanışında bankada ne görünür" sorusunun cevabı. */
+export interface MonthEndRow {
+  label: string;          // "Eylül 2026"
+  date: Date;             // ayın son günü
+  days: number;           // bugünden kaç gün sonra
+  inflow: number;         // bugünden ay sonuna kümülatif tahsilat
+  outflow: number;        // bugünden ay sonuna kümülatif ödeme
+  net: number;
+  position: number;       // netCash + net  → ay sonu nakit pozisyonu
+  freeCapacityAfter: number; // pozisyon negatifse KMH'den ne kadar kalır
+  traffic: Traffic;
+}
+
 export interface CfoOverview {
   today: Date;
   usdTry: number;
@@ -150,6 +182,7 @@ export interface CfoOverview {
   // Forecast
   weeks: WeekBucket[];
   horizons: HorizonRow[];
+  monthEnds: MonthEndRow[];
 
   // Gümrük rezervi
   customs: {
@@ -230,6 +263,14 @@ export function computeCfo(input: CfoInput): CfoOverview {
     .sort((a, b) => b.amount - a.amount);
 
   // ── Stok ──
+  // DİKKAT (10.09.2026): bu üç alan ELLE GİRİLMİŞ USD sabitlerinden türer
+  // (cfo_settings.stockCostUsd / blockedStockUsd). Kimse güncellemediği için
+  // aylarca donuk kaldılar ve serveti yanlış gösterdiler. Artık ekrana
+  // BASILMIYORLAR ve snapshot'a YAZILMIYORLAR.
+  //
+  // Gerçek stok değeri: `cfo_stok_deger` → `cfo_servet` (lib/cfo/wealth.ts).
+  // Buradaki alanlar yalnız geriye dönük uyumluluk için duruyor; yeni bir yerde
+  // kullanmadan önce wealth.ts'e bak.
   const sellableStockTry = s ? num(s.stockCostUsd) * usdTry : 0;
   const blockedStockTry = s ? num(s.blockedStockUsd) * usdTry : 0;
   const inTransitStockTry = input.imports
@@ -285,6 +326,24 @@ export function computeCfo(input: CfoInput): CfoOverview {
     };
   });
 
+  // ── Ay sonu nakit tahminleri (3 ay) ──
+  // Ay sonu bilerek seçildi: bankaların gördüğü bakiye ay sonu bakiyesidir (Alperen kuralı, 24.08).
+  const TR_AY = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+  const monthEnds: MonthEndRow[] = [0, 1, 2].map((i) => {
+    const eom = startOfDay(new Date(today.getFullYear(), today.getMonth() + i + 1, 0));
+    const days = Math.max(0, Math.round((eom.getTime() - today.getTime()) / 86400000));
+    const { inflow, outflow } = windowSums(days);
+    const net = inflow - outflow;
+    const position = netCashTry + net;
+    const gap = position < 0 ? -position : 0;
+    return {
+      label: `${TR_AY[eom.getMonth()]} ${eom.getFullYear()}`,
+      date: eom, days, inflow, outflow, net, position,
+      freeCapacityAfter: freeKmhTry - gap,
+      traffic: trafficForGap(gap, freeKmhTry),
+    };
+  });
+
   // ── Gümrük rezervi ──
   let customs: CfoOverview["customs"] = null;
   if (s && numOrNull(s.customsReserveTarget) != null && s.customsReserveDate) {
@@ -310,6 +369,10 @@ export function computeCfo(input: CfoInput): CfoOverview {
   }
 
   // ── Net ticari servet ──
+  // DİKKAT: aşağıdaki dört alan yukarıdaki sabit-tabanlı stok rakamını kullanır,
+  // dolayısıyla GERÇEK servet DEĞİLDİR. Kokpit ve snapshot artık cfo_servet
+  // görünümünü okuyor. Bu alanlar silinmedi çünkü target/progress hesabı hâlâ
+  // burada; ama hiçbir ekran bunları basmıyor.
   const narrowWorthTry = netCashTry + receivablesPendingTry + sellableStockTry - cardDebtTry - loanEarlyPayoffTry;
   const wideWorthTry = narrowWorthTry + inTransitStockTry + blockedStockTry;
   const narrowWorthUsd = narrowWorthTry / usdTry;
@@ -363,7 +426,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     receivablesPendingTry, receivablesByChannel,
     sellableStockTry, blockedStockTry, inTransitStockTry,
     last14dRevenueTry: last14, monthlyRunRateTry, monthlyCashCollectionTry, weeklyEstimateGrossTry, revenueDataAgeDays,
-    weeks, horizons, customs,
+    weeks, horizons, monthEnds, customs,
     narrowWorthTry, narrowWorthUsd, wideWorthTry, wideWorthUsd, target,
     monthlyOperatingCashTry, needsAttention,
   };

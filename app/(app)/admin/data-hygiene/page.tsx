@@ -390,10 +390,10 @@ export default async function DataHygienePage() {
           Yönetici Paneli →
         </Link>
         <Link
-          href="/admin/procurement"
+          href="/cfo/kazananlar#ithalat"
           className="transition-colors hover:text-[var(--text-primary)]"
         >
-          Tedarik Asistanı →
+          Sıradaki Sipariş →
         </Link>
       </div>
     </div>

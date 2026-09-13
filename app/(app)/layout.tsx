@@ -306,7 +306,24 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     subGroup: "Yapılandırma",
   },
 
+  {
+    href: "/admin/yeni-urunler",
+    label: "Yeni Ürünler",
+    iconKey: "packagePlus",
+    permission: PERMISSIONS.PRODUCTS_UPDATE,
+    section: "Ürünler & Stok",
+  },
+
   // ── İTHALAT ─────────────────────────────────────────────────────────────
+  // Sıradaki sipariş kararı /cfo/kazananlar'da toplandı (10.09.2026). Kullanıcı
+  // o listeyi İthalat başlığı altında aradığı için kısayol burada da duruyor.
+  {
+    href: "/cfo/kazananlar#ithalat",
+    label: "Sıradaki Sipariş",
+    iconKey: "ship",
+    permission: PERMISSIONS.CFO_READ,
+    section: "İthalat",
+  },
   {
     href: "/admin/import-cockpit",
     label: "Karar Kokpiti",
@@ -315,23 +332,9 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat",
   },
   {
-    href: "/admin/import-decisions",
-    label: "İthalat Kararları",
-    iconKey: "fileSearch",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat",
-  },
-  {
     href: "/admin/import-calculator",
     label: "İthalat Hesaplayıcı",
     iconKey: "calculator",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "İthalat",
-  },
-  {
-    href: "/admin/procurement",
-    label: "Tedarik Asistanı",
-    iconKey: "handshake",
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "İthalat",
   },
@@ -391,6 +394,41 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     href: "/cfo/sermaye",
     label: "Sermaye Tahsisi",
     iconKey: "scale",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/sorular",
+    label: "CFO Soruları",
+    iconKey: "help",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/kazananlar",
+    label: "Ayın Kazananları",
+    iconKey: "trophy",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/odemeler",
+    label: "Ödeme Takvimi",
+    iconKey: "calendar",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/olu-stok",
+    label: "Ölü Stok",
+    iconKey: "package",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
+    href: "/cfo/defter",
+    label: "CFO Not Defteri",
+    iconKey: "book",
     permission: PERMISSIONS.CFO_READ,
     section: "CFO",
   },
@@ -473,6 +511,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     label: "Devam Takip (PDKS)",
     iconKey: "activity",
     permission: PERMISSIONS.PDKS_MANAGE,
+    section: "Sistem",
+  },
+  {
+    href: "/whatsapp",
+    label: "WhatsApp",
+    iconKey: "messageSquare",
+    permission: PERMISSIONS.WHATSAPP_READ,
     section: "Sistem",
   },
   {

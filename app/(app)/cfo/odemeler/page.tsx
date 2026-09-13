@@ -1,0 +1,535 @@
+/**
+ * CFO / Ödeme Takvimi — "ödeyebilecek miyim?" sorusunun tek ekranda cevabı.
+ *
+ * Ödemeler dört ayrı tabloda (kredi, kart, sabit gider, vergi) duruyordu; tahsilatlar
+ * bir beşincisinde. `cfo_yaklasan_odeme` görünümü hepsini tarih sırasına dizer ve her
+ * hareketten sonra kalan nakdi yürütür. Bu sayfa o yürüyen bakiyeyi gün gün gösterir.
+ *
+ * Tahsilatlar da ekranda — çünkü yalnız ödemeler listelenirse yürüyen bakiye
+ * hesaplanamaz ve "hangi gün para bitiyor" sorusu cevapsız kalır.
+ *
+ * İki şey bilinçli olarak nakit rakamının yanında duruyor:
+ *   • Kullanılabilir KMH — bir gün eksiye düşmesi tek başına kriz demek değildir,
+ *     boş limitle kapanıyorsa değildir. Kapasiteyi göstermeyen ekran yanlış alarm verir.
+ *   • Bakiye yaşı — yürüyen bakiyenin tamamı açılış bakiyesine dayanır. Açılış bayatsa
+ *     tüm sütun bayattır; ekran bunu saklarsa olmayan bir kesinlik hissi yaratır.
+ */
+import Link from "next/link";
+import { CalendarClock, ArrowRight, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
+import { fmtTry } from "@/lib/cfo/format";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { SettleButton } from "./row-actions";
+import { AuditPanel, type DenetimSatiri } from "./audit-panel";
+
+export const dynamic = "force-dynamic";
+
+type Gun = {
+  tarih: Date;
+  kalan_gun: number;
+  tarih_str: string;
+  gun_adi: string;
+  odeme_adet: bigint;
+  cikacak: unknown;
+  girecek: unknown;
+  gun_sonu_nakit: unknown;
+  gun_ici_dip: unknown;
+  kesin_odeme_var: boolean;
+  tumu_islendi: boolean;
+};
+
+type Hareket = {
+  id: string;
+  tarih: Date;
+  yon: string;
+  tur: string;
+  aciklama: string | null;
+  banka: string | null;
+  tutar: unknown;
+  kesinlik: string;
+  odendi: boolean;
+  kalan_gun: number;
+  aciliyet: string;
+};
+
+type Dip = { tarih_str: string; kalan_nakit: unknown; kalan_gun: number };
+
+type Kapasite = {
+  acilis: unknown;
+  ticari_kmh: unknown;
+  sahsi_kmh: unknown;
+  amac_kmh: unknown;
+  en_bayat_gun: number | null;
+};
+
+type AlacakBorc = {
+  tur: string;
+  kalem: string;
+  tutar: unknown;
+  adet: number | null;
+  kesin_tutar: unknown;
+  en_yakin: Date | null;
+  kaynak: string;
+  guven: string;
+};
+
+const n = (v: unknown) => (v == null ? 0 : Number(v));
+
+const gunAy = (d: Date | null) =>
+  d == null
+    ? null
+    : new Date(d).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" });
+
+/**
+ * Alacak ya da borç kalemlerini alt toplamla birlikte listeler.
+ *
+ * Kalem adının yanında kaç parçadan oluştuğu ve en yakın vade yazılıyor: tek
+ * rakam "Trendyol 695.110" ne zaman geleceğini söylemez, karar için tarih lazım.
+ */
+function KalemListesi({
+  baslik,
+  kalemler,
+  toplam,
+  yon,
+}: {
+  baslik: string;
+  kalemler: AlacakBorc[];
+  toplam: number;
+  yon: "alacak" | "borc";
+}) {
+  const renk = yon === "alacak" ? "text-[var(--ok)]" : "text-[var(--danger)]";
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between gap-2 border-b border-[var(--border-subtle)] pb-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
+          {baslik}
+        </span>
+        <span className="text-[11px] text-[var(--text-muted)]">{kalemler.length} kalem</span>
+      </div>
+
+      {kalemler.length === 0 ? (
+        <p className="py-2 text-[12px] text-[var(--text-muted)]">Kayıt yok.</p>
+      ) : (
+        <ul className="divide-y divide-[var(--border-subtle)]">
+          {kalemler.map((r) => {
+            const tutar = n(r.tutar);
+            const kesin = n(r.kesin_tutar);
+            const vade = gunAy(r.en_yakin);
+            return (
+              <li key={`${r.tur}-${r.kalem}`} className="flex items-baseline gap-3 py-1.5">
+                <span className="min-w-0 flex-1">
+                  <span className="text-[13px] text-[var(--text-primary)]">{r.kalem}</span>
+                  <span className="ml-1.5 text-[10px] text-[var(--text-muted)]">
+                    {r.adet != null && `${r.adet} hakediş`}
+                    {r.adet != null && vade && " · "}
+                    {vade && `ilk vade ${vade}`}
+                    {r.adet == null && r.guven !== "YUKSEK" && `${r.guven.toLowerCase()} güven`}
+                  </span>
+                  {/* Tahmini alacakta kesin olan kısım ayrıca yazılır: tahsilat
+                      planı yalnız kesin kısma güvenle dayanabilir. */}
+                  {r.adet != null && kesin > 0 && kesin < tutar && (
+                    <span className="block text-[10px] text-[var(--text-muted)]">
+                      {fmtTry(kesin)} kesin, kalanı tahmini
+                    </span>
+                  )}
+                </span>
+                <span className={`shrink-0 text-[13px] font-medium tabular-nums ${renk}`}>
+                  {fmtTry(tutar)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-[var(--border-default)] pt-2">
+        <span className="text-[12px] font-medium text-[var(--text-secondary)]">
+          {baslik} toplamı
+        </span>
+        <span className={`text-[16px] font-semibold tabular-nums ${renk}`}>{fmtTry(toplam)}</span>
+      </div>
+    </div>
+  );
+}
+
+/** Ufuk seçenekleri — varsayılan 30 gün. */
+const UFUKLAR = [
+  { key: "30", label: "30 gün", days: 30 },
+  { key: "60", label: "60 gün", days: 60 },
+  { key: "90", label: "90 gün", days: 90 },
+  { key: "tum", label: "Tümü", days: 3650 },
+] as const;
+
+export default async function CfoPaymentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ufuk?: string }>;
+}) {
+  await requirePermission(PERMISSIONS.CFO_READ);
+
+  const { ufuk } = await searchParams;
+  const secili = UFUKLAR.find((u) => u.key === ufuk) ?? UFUKLAR[0];
+  const gun = secili.days;
+
+  const [gunler, hareketler, dipler, kapasiteRows, denetim, alacakBorc, bakiyeYasi] = await Promise.all([
+    prisma.$queryRaw<Gun[]>`
+      select tarih, kalan_gun, tarih_str, gun_adi, odeme_adet, cikacak, girecek,
+             gun_sonu_nakit, gun_ici_dip, kesin_odeme_var, tumu_islendi
+        from cfo_odeme_gunluk
+       where kalan_gun <= ${gun} order by tarih`,
+    prisma.$queryRaw<Hareket[]>`
+      select id, tarih, yon, tur, aciklama, banka, tutar, kesinlik, odendi, kalan_gun, aciliyet
+        from cfo_yaklasan_odeme
+       where kalan_gun <= ${gun} order by tarih, yon desc, tutar desc`,
+    prisma.$queryRaw<Dip[]>`select tarih_str, kalan_nakit, kalan_gun from cfo_nakit_dibi`,
+    prisma.$queryRaw<Kapasite[]>`
+      select coalesce(sum("balanceTry"), 0) as acilis,
+             coalesce(sum("kmhLimitTry") filter (where "accountType" not like '%ŞAHSİ%'), 0) as ticari_kmh,
+             coalesce(sum("kmhLimitTry") filter (where "accountType" like '%ŞAHSİ%'), 0) as sahsi_kmh,
+             coalesce(sum("purposeLimitTry"), 0) as amac_kmh,
+             max(current_date - "lastUpdatedAt"::date) as en_bayat_gun
+        from cfo_bank_account where "isActive"`,
+    // Denetim STABLE (salt-okunur) — sayfa render'ında çağrılması güvenli.
+    prisma.$queryRaw<DenetimSatiri[]>`select * from cfo_defter_denetim() order by sira`,
+    prisma.$queryRaw<AlacakBorc[]>`
+      select tur, kalem, tutar, adet, kesin_tutar, en_yakin, kaynak, guven
+        from cfo_alacak_borc order by tur, tutar desc`,
+    // Kredi ve kart bakiyesi elle güncelleniyor; bayatsa borç toplamı da bayattır.
+    prisma.$queryRaw<{ en_bayat_gun: number | null }[]>`
+      select max(g)::int as en_bayat_gun from (
+        select current_date - "lastUpdatedAt"::date as g from cfo_loan
+         where status::text not in ('KAPANDI', 'CLOSED')
+        union all
+        select current_date - "lastUpdatedAt"::date from cfo_credit_card where "isActive"
+      ) t`,
+  ]);
+
+  const k = kapasiteRows[0];
+  const ticariKmh = n(k?.ticari_kmh);
+  const sahsiKmh = n(k?.sahsi_kmh);
+  const dip = dipler[0];
+
+  const alacaklar = alacakBorc.filter((a) => a.tur === "ALACAK");
+  const borclar = alacakBorc.filter((a) => a.tur === "BORC");
+  const alacakToplam = alacaklar.reduce((a, r) => a + n(r.tutar), 0);
+  const borcToplam = borclar.reduce((a, r) => a + n(r.tutar), 0);
+  const netPozisyon = alacakToplam - borcToplam;
+  const borcBayatGun = bakiyeYasi[0]?.en_bayat_gun ?? null;
+
+  // Takvimde görünen ama borç toplamına GİRMEYEN kalem: gelecekte doğacak gider,
+  // bugün itibarıyla yükümlülük değil. Gizlemek yerine ayrıca yazılıyor.
+  const sabitGiderler = hareketler
+    .filter((h) => h.yon === "CIKIS" && h.tur === "Sabit gider" && !h.odendi)
+    .reduce((a, h) => a + n(h.tutar), 0);
+
+  // Bu hafta = bugün dahil 7 gün.
+  const buHafta = gunler.filter((g) => g.kalan_gun >= 0 && g.kalan_gun <= 7);
+  const haftaCikis = buHafta.reduce((a, g) => a + n(g.cikacak), 0);
+  const haftaGiris = buHafta.reduce((a, g) => a + n(g.girecek), 0);
+
+  const gecikmis = gunler.filter((g) => g.kalan_gun < 0);
+  const gecikmisTutar = gecikmis.reduce((a, g) => a + n(g.cikacak), 0);
+
+  const hareketByGun = new Map<string, Hareket[]>();
+  for (const h of hareketler) {
+    const key = h.tarih.toISOString().slice(0, 10);
+    const list = hareketByGun.get(key);
+    if (list) list.push(h);
+    else hareketByGun.set(key, [h]);
+  }
+
+  /** Nakit negatifse: ticari limitle kapanıyor mu, şahsiye mi iniyor mu? */
+  function nakitRengi(nakit: number) {
+    if (nakit < 0 && Math.abs(nakit) > ticariKmh) return "danger" as const;
+    if (nakit < 0) return "warn" as const;
+    if (nakit < 50_000) return "warn" as const;
+    return "ok" as const;
+  }
+
+  const RENK = {
+    danger: "text-[var(--danger)]",
+    warn: "text-[var(--warn)]",
+    ok: "text-[var(--text-primary)]",
+  };
+
+  const kart = (baslik: string, deger: string, alt: string, renk?: "danger" | "warn" | "ok") => (
+    <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-4">
+      <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">{baslik}</p>
+      <p className={`mt-1.5 text-[20px] font-semibold tabular-nums ${renk ? RENK[renk] : RENK.ok}`}>
+        {deger}
+      </p>
+      <p className="mt-1 text-[11px] text-[var(--text-muted)]">{alt}</p>
+    </div>
+  );
+
+  return (
+    <>
+      <PageHeader
+        icon={CalendarClock}
+        title="Ödeme Takvimi"
+        subtitle="Gelen ve giden para tarih sırasında. Her günün sonunda kasada ne kalıyor?"
+      />
+
+      {/* Defter bozuksa aşağıdaki her rakam bozuktur — uyarı rakamlardan önce gelir. */}
+      <AuditPanel satirlar={denetim} />
+
+      {/* ── Üst şerit ─────────────────────────────────────────────── */}
+      <Card className="mb-6 p-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {kart("Bu hafta çıkacak", fmtTry(haftaCikis), `${buHafta.reduce((a, g) => a + Number(g.odeme_adet), 0)} ödeme · 7 gün`)}
+          {kart("Bu hafta girecek", fmtTry(haftaGiris), "beklenen tahsilat", "ok")}
+          {kart(
+            "Nakit dibi",
+            dip ? fmtTry(n(dip.kalan_nakit)) : "—",
+            dip ? `${dip.tarih_str} · ${dip.kalan_gun} gün sonra` : "90 günde negatif nokta yok",
+            dip && n(dip.kalan_nakit) < 0 ? "danger" : "ok",
+          )}
+          {kart(
+            "Kullanılabilir kapasite",
+            fmtTry(n(k?.acilis) + ticariKmh),
+            `nakit ${fmtTry(n(k?.acilis))} + ticari KMH ${fmtTry(ticariKmh)}`,
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {gecikmis.length > 0 && (
+            <Badge variant="danger">
+              {gecikmis.length} gün gecikmiş · {fmtTry(gecikmisTutar)}
+            </Badge>
+          )}
+          <Badge variant="neutral">Şahsi KMH {fmtTry(sahsiKmh)} (son çare)</Badge>
+          {n(k?.amac_kmh) > 0 && (
+            <Badge variant="neutral">Amaca bağlı limit {fmtTry(n(k?.amac_kmh))}</Badge>
+          )}
+          <Link href="/cfo/nakit-akisi" className="ml-auto text-xs text-[var(--accent)] hover:underline">
+            Nakit akışı <ArrowRight size={11} className="inline" />
+          </Link>
+        </div>
+
+      </Card>
+
+      {/* ── Toplam alacak / toplam borç ───────────────────────────── */}
+      <Card className="mb-6 p-5">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            Toplam alacak ve borç
+          </h2>
+          <p className="text-[11px] text-[var(--text-muted)]">
+            Takvim gün gün akışı gösterir; bu tablo <strong>stok</strong> — bugün
+            itibarıyla kimden ne alacağım, kime ne borcum var.
+          </p>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          <KalemListesi
+            baslik="Alacaklar"
+            kalemler={alacaklar}
+            toplam={alacakToplam}
+            yon="alacak"
+          />
+          <KalemListesi baslik="Borçlar" kalemler={borclar} toplam={borcToplam} yon="borc" />
+        </div>
+
+        {/* Net pozisyon */}
+        <div className="mt-5 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+              Net pozisyon
+            </p>
+            <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">
+              alacak {fmtTry(alacakToplam)} − borç {fmtTry(borcToplam)}
+            </p>
+          </div>
+          <p
+            className={`text-[22px] font-semibold tabular-nums ${
+              netPozisyon < 0 ? "text-[var(--danger)]" : "text-[var(--ok)]"
+            }`}
+          >
+            {fmtTry(netPozisyon)}
+          </p>
+        </div>
+
+        <div className="mt-3 space-y-1.5 text-[11px] leading-snug text-[var(--text-muted)]">
+          <p>
+            <strong>Kredi ve kart taksitleri borç toplamına ayrıca eklenmez</strong> — aşağıdaki
+            takvimde görünürler ama kredi bakiyesinin ve kart borcunun içinden ödenirler. Ayrıca
+            saymak aynı borcu iki kez yazmak olurdu.
+          </p>
+          {sabitGiderler > 0 && (
+            <p>
+              Takvimdeki {fmtTry(sabitGiderler)} sabit gider borç sayılmadı: gelecekte doğacak
+              gider, bugün itibarıyla yükümlülük değil.
+            </p>
+          )}
+          <p>
+            Borç kalemleri <code>cfo_servet_kalem</code> görünümünden okunuyor — servet ekranıyla
+            aynı kaynak, ikisi çelişemez.
+            {borcBayatGun != null && borcBayatGun > 0 && (
+              <>
+                {" "}
+                Kredi/kart bakiyeleri elle güncelleniyor; en eskisi{" "}
+                <strong
+                  className={borcBayatGun > 7 ? "text-[var(--warn)]" : undefined}
+                >
+                  {borcBayatGun} gün önce
+                </strong>{" "}
+                girilmiş.
+              </>
+            )}
+          </p>
+        </div>
+      </Card>
+
+      {/* ── Ufuk seçimi ───────────────────────────────────────────── */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {UFUKLAR.map((u) => (
+          <Link
+            key={u.key}
+            href={`/cfo/odemeler?ufuk=${u.key}`}
+            className={`rounded-md border px-3 py-1.5 text-xs transition ${
+              u.key === secili.key
+                ? "border-[var(--accent-border)] bg-[var(--accent-dim,var(--surface-2))] text-[var(--accent)]"
+                : "border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            {u.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* ── Gün gün ───────────────────────────────────────────────── */}
+      {gunler.length === 0 ? (
+        <Card className="p-8">
+          <p className="text-center text-sm text-[var(--text-muted)]">
+            Seçilen dönemde bekleyen hareket yok.
+          </p>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {gunler.map((g) => {
+            const nakit = n(g.gun_sonu_nakit);
+            const dipIci = n(g.gun_ici_dip);
+            const renk = nakitRengi(nakit);
+            const satirlar = hareketByGun.get(g.tarih.toISOString().slice(0, 10)) ?? [];
+            const gecikti = g.kalan_gun < 0;
+
+            return (
+              <Card
+                key={g.tarih_str}
+                className={`p-0 ${gecikti ? "border-l-2 border-l-[var(--danger)]" : ""}`}
+              >
+                {/* Gün başlığı */}
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-[var(--border-subtle)] px-5 py-3">
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">
+                    {g.tarih_str}
+                  </span>
+                  <span className="text-xs text-[var(--text-secondary)]">{g.gun_adi}</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">
+                    {g.kalan_gun === 0
+                      ? "bugün"
+                      : g.kalan_gun < 0
+                        ? `${Math.abs(g.kalan_gun)} gün gecikti`
+                        : `${g.kalan_gun} gün sonra`}
+                  </span>
+                  {g.kesin_odeme_var && <Badge variant="danger">kesin ödeme</Badge>}
+                  {g.tumu_islendi && <Badge variant="ok">tamamlandı</Badge>}
+
+                  <span className="ml-auto text-right">
+                    <span className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+                      gün sonu nakit
+                    </span>
+                    <span className={`text-[17px] font-semibold tabular-nums ${RENK[renk]}`}>
+                      {fmtTry(nakit)}
+                    </span>
+                    {nakit < 0 && (
+                      <span className="block text-[11px] text-[var(--text-muted)]">
+                        {Math.abs(nakit) <= ticariKmh
+                          ? `ticari KMH ile kapanır · kalan kapasite ${fmtTry(ticariKmh + nakit)}`
+                          : `ticari KMH yetmiyor · açık ${fmtTry(Math.abs(nakit) - ticariKmh)}`}
+                      </span>
+                    )}
+                    {nakit >= 0 && dipIci < 0 && (
+                      <span className="block text-[11px] text-[var(--warn)]">
+                        gün içi dip {fmtTry(dipIci)}
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                {/* Hareketler */}
+                <ul className="divide-y divide-[var(--border-subtle)]">
+                  {satirlar.map((h) => {
+                    const giris = h.yon === "GIRIS";
+                    const tahmini = h.kesinlik !== "KESIN";
+                    const islendi = h.odendi;
+                    return (
+                      <li
+                        key={`${h.id}-${h.yon}`}
+                        className={`flex flex-wrap items-start gap-x-3 gap-y-2 px-5 py-3 ${
+                          islendi ? "opacity-45" : tahmini ? "opacity-70" : ""
+                        }`}
+                      >
+                        {giris ? (
+                          <ArrowDownRight size={15} className="mt-0.5 shrink-0 text-[var(--ok)]" />
+                        ) : (
+                          <ArrowUpRight size={15} className="mt-0.5 shrink-0 text-[var(--danger)]" />
+                        )}
+
+                        <div className="min-w-[180px] flex-1">
+                          <p className="text-[13px] font-medium text-[var(--text-primary)]">
+                            {h.tur}
+                            {h.banka ? (
+                              <span className="font-normal text-[var(--text-muted)]"> · {h.banka}</span>
+                            ) : null}
+                          </p>
+                          {h.aciklama && (
+                            <p className="mt-0.5 text-[11px] leading-snug text-[var(--text-muted)]">
+                              {h.aciklama}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {islendi && <Badge variant="ok">Gerçekleşti</Badge>}
+                          {!islendi && tahmini && <Badge variant="warn">Tahmini</Badge>}
+                          <span
+                            className={`min-w-[110px] text-right text-[14px] font-semibold tabular-nums ${
+                              giris ? "text-[var(--ok)]" : "text-[var(--danger)]"
+                            }`}
+                          >
+                            {giris ? "+" : "−"}
+                            {fmtTry(n(h.tutar))}
+                          </span>
+                          <SettleButton
+                            id={h.id}
+                            tur={h.tur}
+                            aciklama={h.aciklama ?? ""}
+                            giris={giris}
+                            islendi={islendi}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <p className="mt-6 text-[11px] text-[var(--text-muted)]">
+        Kaynak: <code>cfo_yaklasan_odeme</code> görünümü. Açılış bakiyesi{" "}
+        {fmtTry(n(k?.acilis))} — aktif hesapların toplamı, en eskisi{" "}
+        {k?.en_bayat_gun === 0 ? "bugün" : `${k?.en_bayat_gun} gün önce`} güncellenmiş.{" "}
+        <strong>İşaretleme yürüyen bakiyeyi değiştirmez</strong> — yalnızca &quot;bu hareket
+        oldu&quot; kaydıdır ve değişiklik günlüğüne yazılır. Rakamlar ancak gerçek banka bakiyesi
+        güncellenince değişir.
+      </p>
+    </>
+  );
+}

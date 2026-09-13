@@ -735,3 +735,64 @@ Enumlar: `CfoDataTag`, `CfoCertainty`, `CfoLoanStatus`, `CfoPaymentStatus`,
 
 Tüm tablolarda RLS **enable** (policy yok — deny-all kasıtlı, erişim yalnız Prisma).
 Hiçbir mevcut tabloya kolon eklenmedi/silinmedi; migration tamamen additive.
+
+---
+
+## WhatsApp mesaj tabloları (migration `20260913210000_whatsapp_messaging`)
+
+| Tablo | Amaç |
+|---|---|
+| `WhatsAppContact` | Mesajlaşılan kişi. `phone` normalleştirilmiş (`905321112233`) ve **tekil** — aynı numara iki kayıt açamaz. `lastInboundAt` 24 saatlik serbest metin penceresinin tek kaynağı |
+| `WhatsAppMessage` | Giden/gelen mesaj kaydı. `direction` = `OUT`/`IN`, `status` = queued/sent/delivered/read/failed |
+
+Önemli alanlar ve nedenleri:
+- `WhatsAppMessage.waMessageId` **tekil (nullable)** — Meta webhook'u aynı olayı
+  yeniden gönderir; tekillik olmadan aynı cevap defalarca kaydedilirdi. Giden
+  mesajda Meta kimlik dönene kadar `null` olabilir, bu yüzden zorunlu değil.
+- FK `WhatsAppMessage.contactId → WhatsAppContact.id` **`ON DELETE RESTRICT`**
+  (cascade DEĞİL, bkz. `docs/AI-RULES.md`): kişi silindiğinde mesaj geçmişinin
+  sessizce yok olması, kimin ne yanıtladığının kaybolması demekti.
+- `WhatsAppContact.isActive` — kişi listeden çıkarılırken silinmiyor, pasife
+  alınıyor; geçmiş mesajları ayakta kalıyor.
+
+İki tabloda da RLS **enable** (policy yok — deny-all kasıtlı, public tablo
+değişmezi). Migration tamamen additive; mevcut hiçbir tabloya dokunulmadı.
+
+---
+
+## WhatsApp zamanlanmış mesajlar (migration `20260913230000_whatsapp_schedules`)
+
+| Tablo | Amaç |
+|---|---|
+| `WhatsAppSchedule` | Zamanlanmış görev: "depoya her sabah 08:30'da işe başladınız mı?" |
+| `WhatsAppScheduleRecipient` | Görev ↔ kişi bağı (Cloud API gruba mesaj atamaz, herkese ayrı gider) |
+
+`WhatsAppMessage`'a eklenen kolonlar: `scheduleId`, `awaitingReply`, `replyToId`.
+Hepsi nullable ya da DEFAULT'lu — **backfill gerekmedi**.
+
+Önemli alanlar ve nedenleri:
+- `hour` / `minute` **Europe/Istanbul yerel saati**. UTC saklamak yaz saati
+  değişiminde mesajı bir saat kaydırırdı; "her sabah 08:30" kullanıcı için
+  yerel bir vaattir.
+- `lastRunOn` (yerel gün, `"2026-09-14"`) **mükerrer freni**. Harici zamanlayıcı
+  saat başı çağırdığı için bu damga olmasa aynı yoklama gün içinde defalarca
+  gider ve her biri ayrıca ücretlenirdi. Damga gün bazlı olduğundan saati geçen
+  görev gün içinde hâlâ gönderilir (zamanlayıcı 08:30'u kaçırırsa 09:00'da).
+- `daysOfWeek` boş dizi = her gün (0=Pazar … 6=Cumartesi).
+- `WhatsAppMessage.replyToId` **TEKİL**: bir soruya yalnız bir cevap bağlanır.
+  Tekillik olmasa aynı soru birden çok cevaba bağlanır ve "cevaplandı mı"
+  sorusu belirsizleşirdi.
+- `WhatsAppMessage.awaitingReply` yalnız **gönderilebilen** mesajda `true`.
+  Gönderilemeyeni "cevap bekliyor" saymak, olmayan bir soruyu cevapsız
+  göstererek iş listesini çöpe çevirirdi.
+
+FK davranışları — **CASCADE YOK** (`docs/AI-RULES.md` + `MIGRATION-SAFETY.md`
+açık onay istiyor):
+- `WhatsAppScheduleRecipient` → görev/kişi: `RESTRICT`. Bağın kaldırılması
+  silme işleminin parçası olduğu için uygulama tek transaction'da yapar.
+- `WhatsAppMessage.scheduleId` → `SET NULL`: görev silinince mesaj **geçmişi
+  durur**, yalnız bağı kopar. Geçmişi silmek "o soruyu sormuştuk, cevabı neydi"
+  sorusunu cevapsız bırakırdı.
+- `WhatsAppMessage.replyToId` → `SET NULL`.
+
+İki yeni tabloda da RLS **enable** (policy yok — deny-all kasıtlı).

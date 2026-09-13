@@ -31,7 +31,7 @@ import {
 
 export type RecKind =
   | "star"          // yıldız ürün
-  | "urgent"        // acil sipariş
+  | "urgent"        // acil sipariş — 10.09.2026'dan beri üretilmiyor, tek yeri /cfo/kazananlar
   | "dead"          // ölü stok
   | "liquidation"   // likidasyon
   | "dormant"       // uyuyan müşteri
@@ -225,21 +225,11 @@ export async function getSmartRecommendations(): Promise<SmartRecsResult> {
       });
     }
 
-    // ── 2) Acil sipariş — stockDays < 14 ──
-    const urgent = enriched
-      .filter((p) => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14)
-      .sort((a, b) => (a.stockDays ?? 0) - (b.stockDays ?? 0))
-      .slice(0, 3);
-    for (const p of urgent) {
-      recs.push({
-        id: `urgent-${p.id}`,
-        kind: "urgent",
-        severity: "danger",
-        title: `${truncate(p.name, 55)} stoku ${p.stockDays} gün kaldı`,
-        detail: `T30G ${p.t30g} · Stok ${p.stockQuantity} · Hemen sipariş ver`,
-        href: `/products/${p.id}`,
-      });
-    }
+    // ── 2) Acil sipariş listesi 10.09.2026'da kaldırıldı ──
+    // "Şu ürünün stoku bitiyor, hemen sipariş ver" panelde sekiz ayrı yerde
+    // çıkıyordu ve her biri farklı ürün öneriyordu. Sıradaki sipariş kararının
+    // tek yeri /cfo/kazananlar; orası Trendyol hızından değil CFO'nun parti
+    // defterinden (cfo_order_line) okuyor. Burada üretilmiyor.
 
     // ── 3) Ölü stok — lifetime=0 + bağlı sermaye yüksek ──
     const dead = enriched

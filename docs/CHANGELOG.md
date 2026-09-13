@@ -51,43 +51,606 @@
 - **Test:** `__tests__/login-rate-limit.test.ts` (6 senaryo); dev sunucuda uçtan uca
   doğrulandı (widget, token, sıfırlama, 6. denemede engel, header'lar).
 
-### Faz 91 — Trendyol Finans modülü: fatura, kesinti ve hakediş takibi (2026-09-09)
+### WhatsApp Faz 2 — zamanlanmış mesajlar + soru/cevap takibi (2026-09-13)
 
-- **Ne yapıldı:** Trendyol partner panelinden indirilen finans dosyalarının panele
-  yüklendiği ve biriktiği yeni bir modül. Komisyon, kargo, platform/işlem bedeli,
-  reklam, ceza ve tazmin kalemleri tek ekranda toplanıp net maliyet olarak raporlanıyor.
-- **Ekranlar:**
-  - `/marketplace/trendyol/finans` — kokpit: sürükle-bırak yükleme alanı, gider grubu
-    kırılımı, aylık seyir, en çok kesen fatura tipleri, ülke kırılımı, yükleme günlüğü.
-  - `/marketplace/trendyol/finans/faturalar` — gruba/aya/ülkeye/metne göre filtreli liste.
-  - `/marketplace/trendyol/finans/siparisler` — sipariş bazında kesinti dökümü, hakediş
-    verisi yüklüyse komisyon ve satıcı payıyla birleşik.
-- **Desteklenen dosyalar (9 varyant, tür otomatik tanınır):** fatura listesi
-  (`Faturalar_*.xlsx`), tekil e-fatura (`SaticiFatura_*.pdf`), hakediş
-  (`SaticiFatura_<no>_*.xlsx`), kargo/işlem bedeli/kesinti/ceza detayları ve mikro
-  ihracat bedelleri (`prod_*_detaylar.xlsx`, `*_Kesintiler.xlsx`).
-- **Tanıma sütun başlıklarından yapılır**, dosya adından değil — tarayıcının eklediği
-  " (1)" eki ve dosya adına yapışan rakamlar tanımayı bozmuyor.
-- **PDF okuma bağımlılıksız:** Trendyol e-faturaları gömülü subset CID font kullandığı
-  için metin doğrudan okunamıyor. `pdf-parse`/`pdfjs-dist` eklemek yerine `/ToUnicode`
-  CMap'lerini çözen kendi okuyucumuz yazıldı (`lib/trendyol-finance/pdf-text.ts`).
-  KDV kırılımı (net / KDV / brüt) buradan geliyor; KDV indirilebilir olduğu için
-  "gerçek maliyet" hesabı bu ayrıma dayanıyor.
-- **Fatura ↔ detay eşleştirmesi:** Detay dosyaları fatura numarası içermiyor; detay
-  satırlarının toplamı fatura tutarına kuruşu kuruşuna eşit olduğu için eşleştirme bu
-  toplam üzerinden yapılıyor. Birden fazla aday çıkarsa bağlantı kurulmuyor.
-- **Idempotent yükleme:** Her kayıt doğal anahtarıyla yazılır (fatura no / kayıt no /
-  sourceRef+rowHash); aynı dosya tekrar yüklendiğinde satır çoğalmaz. Her yükleme
-  `trendyol_finance_import` günlüğüne yazılır (hatalılar dahil).
-- **Şema:** `20260909220000_trendyol_finance` — 4 tablo + 2 enum, additive, hepsinde
-  RLS açık.
-- **Doğrulama:** 50 gerçek dosyanın 49'u ayrıştırıldı (tanınmayan tek dosya 2021 tarihli
-  eski şablon). Detay toplamları fatura tutarlarıyla birebir tuttu. `tsc` temiz, eslint
-  temiz, `npm run build` başarılı.
-- **Not:** Migration bu tarih itibarıyla production'a **uygulanmadı**; uygulanana kadar
-  ekranlar veri gösteremez.
+- **`/whatsapp` paneli** (Sistem menüsü): cevap bekleyenler en üstte, ardından
+  zamanlanmış görevler, son gönderilenler (cevap mesajın içine gömülü),
+  bağımsız gelen mesajlar, kişiler. Kurulum eksikse sayfa bunu açıkça uyarıyor —
+  anahtarsız hâlde sayfa normal görünür ve hiçbir mesaj gitmezdi.
+- **Soru↔cevap bağı:** gelen mesaj, son 48 saatte sorulmuş ve cevapsız bekleyen
+  son soruya bağlanır (`replyToId` TEKİL, bir soruya bir cevap). Webhook artık
+  tekrar gelen bildirimi kesin olarak ayırt ediyor; tekrar, ikinci bir soruyu
+  kapatmıyor.
+- **Zamanlama Europe/Istanbul yerel saatine göre**, mükerrer freni `lastRunOn`
+  yerel gün damgası. Saati geçen görev gün içinde hâlâ gider, ama günde bir kez;
+  damga gönderimden önce atılır.
+- **Cron:** `/api/cron/whatsapp-schedules`, `CRON_SECRET` korumalı.
+  `vercel.json`'a eklenmedi — Hobby yalnız günlük cron'a izin veriyor ve görev
+  saat başı kontrol edilmeli; PDKS hatırlatmalarıyla aynı harici zamanlayıcı
+  yolu. Panelde elle tetikleme düğmesi var.
+- **İzinler:** `whatsapp.read` / `whatsapp.send` / `whatsapp.manage`. WAREHOUSE
+  okur, OPERATIONS okur+gönderir, görev/kişi tanımı ADMIN'de.
+- **Şema:** `WhatsAppSchedule` + `WhatsAppScheduleRecipient`; `WhatsAppMessage`'a
+  `scheduleId`, `awaitingReply`, `replyToId`. Migration salt ekleme, RLS açık,
+  CASCADE yok (RESTRICT/SET NULL — mesaj geçmişi görev silinince durur).
+- **Formlar:** kişi ve zamanlanmış mesaj ekle/düzenle/sil, panel içinde
+  (`whatsapp.manage` gerektirir). Görev formu şablon adı boşken uyarıyor:
+  serbest metin yalnız 24 saatlik pencerede gider, sabah yoklamasında o pencere
+  kapalıdır ve mesaj hiç ulaşmaz.
+- **Testler:** `npm run check:wa` 30 kontrol (17'den). Doğrulama: check:wa 30/30,
+  check:rbac 22/22, `tsc --noEmit` temiz, eslint temiz, `npm run build` başarılı.
+
+### WhatsApp mesaj merkezi — temel katman (2026-09-13)
+
+- **Webhook kuruldu:** `app/api/whatsapp/webhook/route.ts`. GET Meta'nın
+  doğrulama el sıkışmasını (`hub.challenge`) karşılıyor, POST gelen mesajları ve
+  durum güncellemelerini kaydediyor. Meta her numara için TEK callback adresi
+  kabul ettiği için gelen cevapların tek toplandığı yer burası; alfashome
+  backend'i yalnız gönderiyor.
+- **İmza doğrulaması zorunlu:** `lib/whatsapp/signature.ts` — HMAC-SHA256, ham
+  gövde üzerinden, `timingSafeEqual` ile. `WHATSAPP_APP_SECRET` tanımlı değilse
+  webhook 503 döner; imzasız istek 401. Doğrulama olmadan bu açık adresten
+  isteyen istediği "cevabı" sisteme yazdırabilirdi.
+- **Şema:** `WhatsAppContact` + `WhatsAppMessage` (migration
+  `20260913210000_whatsapp_messaging`). Yalnız ekleme yapan migration; iki
+  tabloda da RLS açık (public tablo değişmezi), FK `ON DELETE RESTRICT`.
+  `waMessageId` tekil — Meta webhook'u yeniden gönderdiğinde aynı cevap iki kez
+  kaydedilmiyor.
+- **Gönderim istemcisi:** `lib/whatsapp/client.ts`. `sendText` 24 saatlik pencere
+  kapalıyken göndermeyi DENEMİYOR (denemek Meta tarafında hata üretip sebebi
+  log'da kaybediyordu); şablon dili `WHATSAPP_TEMPLATE_LANG`'dan okunuyor.
+- **16 birim testi eklendi** (`npm run check:wa`, DB/ağ gerektirmez). Testler iki
+  gerçek hata buldu ve ikisi düzeltildi: (1) alıcı listesi boşlukta da bölünüyor,
+  `0532 111 22 33` gibi yazılmış bir numarayı dört parçaya ayırıp eliyor ve liste
+  **sessizce boşalıyordu**; (2) numarada üst sınır yoktu, yapışan iki numara
+  24 haneye çıkıp geçerli sayılıyor ve var olmayan bir numaraya mesaj gidiyordu.
+  Ayrıştırıcı artık önce parçanın tamamını tek numara olarak deniyor (boşluk
+  ancak o okunamazsa ayırıcı) ve E.164 15 hane sınırı uygulanıyor. **Aynı iki
+  hata alfashome backend'inde de vardı** (`backend/src/lib/whatsapp-notify.ts`),
+  orada da düzeltildi ve regresyon testi eklendi.
+- **Mevcut RBAC testi de betiklendi:** `npm run check:rbac` (22 test).
+- `.env.example` WhatsApp bölümüyle güncellendi.
+### Yeni Ürünler — menşei CN, garanti 24 ay, kutu ölçüsü + kaynak etiketi (2026-09-13)
+
+- 151 adayın tamamında `mensei = 'CN'` ve `garanti_ay = 24` (bir kayıttaki "Çin"
+  de CN'e normalize edildi). Menşei+garanti puanda 6 puanlık kalem.
+- **Kutu ölçüsü uydurulmadı, türetildi ve türetildiği kaydedildi.** Yeni
+  `urun_aday.kutu_kaynak` sütunu `OLCULDU` / `FATURADAN` / `TAHMINI` taşıyor:
+  1 ölçülmüş, 5 faturadan (Qunzh ×2 = 41,5×21,5×5,5; AURA5939 ×3 = 64×44×15),
+  141 tahmini, 4 başlıksız kayıt boş. Etiketsiz bıraksaydık bir sonraki pazaryeri
+  ihracı tahmini ölçülmüş gibi gönderirdi.
+- `urun_kutu_tahmin(ad, kg)` fonksiyonu: çanak lavaboda başlıktaki ürün ölçüsü
+  + 5 cm pay; diğerlerinde paketli yoğunluk 0,4 kg/L ve aileye göre kenar oranı.
+  Çapası gerçek kayıt — AS304167 0,80 kg → 20×10×10'u birebir üretiyor.
+- **Hangi tahminin paraya döndüğü ölçüldü.** Kargo `max(desi, ağırlık)` kesildiği
+  için ağırlığın baskın olduğu üründe kutu ölçüsü faturayı değiştirmiyor.
+  147 kutulu üründen 21'inde desi belirleyici, 5'inin ölçüsü zaten gerçek →
+  **elle ölçülmesi gereken 16 ürün**. Panel (liste uyarısı + editörde kırmızı
+  çerçeve) tam olarak o 16'yı işaretliyor; kalan 131'de rozet gri.
+- `urun_aday_puan` / `urun_aday_skor` görünümlerine `kutu_kaynak` eklendi.
+  Görünüm sütun listesini donduruyordu; eklemeden panel sorgusu
+  "column does not exist" ile patlıyordu — deploy öncesi yakalandı.
+- Yeni ürünlerin puan ortalaması **46,4 → 58,2**; 60+ puanlı ürün **1 → 46**.
+  Kalan tek büyük darboğaz görsel: 127 yeni üründen 126'sında ürün görseli yok
+  (27 puan).
+
+### Yeni Ürünler — 124 açıklama başlıktan üretildi (2026-09-13)
+
+- Açıklama puanda 15 puanlık tek kalem ve 151 adayın **150'sinde boştu**. Yeni
+  `urun_aciklama_uret(ad, marka, kg)` fonksiyonu açıklamayı **başlıktan** üretiyor;
+  fonksiyon olduğu için gelecek partilerde de tek UPDATE ile çalışıyor.
+- **Uydurma yok — tasarımın özü bu.** Yalnız başlıkta geçen nitelikler yazılıyor
+  (malzeme, kaplama, montaj tipi, fonksiyonlar, ölçü) ve veritabanında olan
+  ağırlık. Garanti, menşei, sertifika, su basıncı, kutu içeriği, kartuş markası —
+  hiçbiri yazılmıyor. Marka bile boşsa cümlede geçmiyor.
+- **Dolgu yapılmadı.** 124 üründen **66'sı 400 karakteri geçiyor** (tam 15 puan),
+  58'i 150–399 bandında (7 puan). Kalanları 400'e tamamlamak için genel pazarlama
+  cümlesi eklemek mümkündü, eklenmedi: o ürünlerin başlığı çıplak
+  ("Alfas Çanak Lavabo Bataryası"), anlatacak nitelik yok. Gerçek çözüm 1688
+  açıklamalarının panele yapıştırılması.
+- **Yedek parça ayrıldı:** somun, rakor, gövde aksamı pazaryeri ürünü değil
+  (16.000 ve 4.000 adetlik üretim kalemleri). Kapanış cümleleri farklı, kısa
+  kalmaları normal.
+- Elle yazılmış açıklamaya ve katalogdaki ürünlere dokunulmadı.
+- Yeni ürünlerin puan ortalaması **35,6 → 46,4**.
+
+### XML stok hareketi = satış sinyali; satış verisi haftalık gelir (2026-09-12)
+
+- **Kural yazıldı:** satış listesi Entegra'dan haftada bir, elle yükleniyor. CFO
+  ajanı bunu her raporda istemeyecek (`docs/CFO-GOREV.md` §4.4b + sabitlenmiş
+  `cfo_note`); yalnız 10 günü aşarsa ya da vekil ölçü bozulursa söz edecek.
+- **Boşluğu XML kapatıyor.** Entegra XML'i her gece 02:31'de stok çekiyor;
+  azalış = satış, artış = iade/stok girişi. Yeni görünümler: `cfo_xml_hareket`,
+  `cfo_satis_kapsam`, `cfo_xml_urun_hareket`, `cfo_xml_kalibrasyon`.
+- **Bir gün kaydırma ölçülerek doğrulandı:** senkron 02:31'de çalıştığı için
+  gördüğü hareket önceki güne ait. Kaydırmasız korelasyon 0,19 → kaydırmalı 0,56.
+- **Eşikler veriden seçildi:** 2.485 hareketin dağılımında 100'de net kopuş var
+  (>100 azalış sadece 4 kayıt). Üstü toplu düzeltme sayılıyor, satış değil.
+- **Doğruluk ölçüldü:** son 30 günün örtüşen günlerinde gerçek 1.877 adet, XML
+  1.872 adet → **%99,7**. Günlük korelasyon 0,26 olduğu için araç haftalık/toplam
+  kullanım için; `cfo_xml_kalibrasyon` bunu her okumada yeniden ölçüyor ve
+  %80–120 bandından çıkarsa `guvenilir=false` veriyor.
+- **13.07–02.08 anomalisi bulundu:** o üç hafta senkron çalıştığı hâlde XML
+  neredeyse hiç hareket kaydetmemiş (haftada 11-16 ürün, normalde 60-114) ve
+  vekil ölçü gerçeğin %7-12'sini göstermiş. Kalibrasyon penceresi bu yüzden 30
+  gün — 60 günlük pencere o dönemi içine alıp %67 gibi yanıltıcı oran veriyordu.
+- **Ölü stok yanlış alarmları kesildi.** XML hareket gösteriyorsa "hiç satmadı"
+  iddiası kurulmuyor. Liste 75 → 73 SKU; **6 üründe** yanlış alarm engellendi,
+  en büyüğü `AL-PTZ04` (292.968 ₺ bağlı sermaye, 11.09'da satmış).
+- **XML'in görmediği durum da belgelendi:** `AL-CAM03` 07.09'da Trendyol'da
+  gerçekten satıldı (teslim, 1.900 ₺) ama Entegra stoğu 90 gündür 1.940'ta sabit
+  — stoğu elle/sanal tutulan SKU'larda XML kıpırdamıyor. O tür SKU için
+  `TrendyolSalesRecord`'a bakmak gerekiyor.
+- Panelde bayat dönem artık gizlenmiyor: üst şeritte kaç gün geriden gelindiği ve
+  XML'in kaç ürünü yanlış alarmdan kurtardığı yazıyor; satırda XML hareketi var.
+
+### Ölü stok — üçüncü kural: 90g satış / stok değeri < %20 (2026-09-12)
+
+- Alperen'in kuralı eklendi: son 90 günlük satış, stok değerinin %20'sinden
+  düşükse ürün ölü stok listesine girer. Eşik `cfo_settings.deadStockSalesRatioPct`
+  — ayarlanabilir, SQL'e gömülü değil.
+- **Kural %20'de tek başına hiçbir ürün eklemiyor** ve bu ölçüldü, varsayılmadı:
+  yakaladığı 20 ürünün hepsi zaten "30 günde sıfır" veya "örtü > 180 gün"
+  kuralında. Sebep matematiksel — satış, stok değerinin %20'sinden düşükse örtü
+  zaten 180 günü çoktan aşıyor. Listenin dışındaki en yavaş ürünün oranı **%72**;
+  kural ancak eşik ~%72 üstüne çıkarsa ısırmaya başlar. `cfo_olu_stok_ozet`'e
+  `sadece_oran_kurali` sütunu eklendi ki katkı her turda ölçülebilsin.
+- **Asıl kazanç kapsam düzeltmesinde.** Kuralı değerlendirmek için stok değeri
+  gerekti; eski görünüm bağlı sermayeyi yalnız `unitCostTry`den hesapladığı için
+  **maliyeti girilmemiş ürünü hiç görmüyordu** (1.299 üründe maliyet 76'sında
+  dolu). Değer artık maliyet yoksa 90 günde gerçekleşen satış fiyatından
+  türetiliyor: liste **64 → 75 SKU**, gelen 11 ürünün hepsinin maliyeti boştu
+  (126.878 TL bağlı sermaye).
+- **İstisna listesine dokunulmadı.** Oran kuralının yakaladığı en büyük kalem
+  (`40005100051`, 2.769 adet, 1,98 M TL) `cfo_stok_istisna`daydı: stok sanal,
+  gerçek bağlı sermaye 9.700 TL — Alperen 31.08 beyanı, 07.09 teyidi. İstisnayı
+  çiğnemek insanın cevapladığı soruyu yeniden sormak olurdu.
+- Sayfaya "90g satış / stok" sütunu eklendi; eşiğin altındaki oran kırmızı.
+- **CFO ajanına görev:** `docs/CFO-GOREV.md` §5 "Ölü stok (Sal)" ve panoya
+  sabitlenmiş `cfo_note` — her turda üç kural da kontrol edilir,
+  `sadece_oran_kurali` 0 ise kuralın o gün boşa çalıştığı raporda söylenir.
+
+### Ödeme Takvimi — toplam alacak ve borç, kalem kalem (2026-09-11)
+
+- Takvim gün gün **akışı** gösteriyordu; "toplamda kimden ne alacağım, kime ne
+  borcum var" sorusunun cevabı hiçbir yerde tek bakışta yoktu. Üst şeride
+  **stok** tablosu eklendi: alacaklar kanal kanal, borçlar kalem kalem, her iki
+  tarafta alt toplam ve altta net pozisyon.
+- Alacak 1.201.163 ₺ (8 kanal, Trendyol 695.110 başta) · Borç 9.401.291 ₺
+  (gümrük/navlun 3.839.500 + krediler 3.530.019 + kartlar 2.031.772) ·
+  net −8.200.128 ₺.
+- **Borç tarafı `cfo_servet_kalem`'den okunuyor**, yeniden hesaplanmıyor. Borç
+  modelini ikinci kez kurmak iki ekranın çelişmesi demekti; servet görünümü
+  kural el kitabında tek doğru kaynak (§4E).
+- **Mükerrer sayım engellendi:** `cfo_cash_event`'teki kredi taksiti (1,12 M) ve
+  kart ödemesi (1,20 M) takvimde görünür ama borç toplamına girmez — kredi
+  bakiyesinin ve kart borcunun içinden ödenirler. Sabit gider de borç sayılmadı
+  (gelecekte doğacak gider); ekranda ayrıca not olarak yazılıyor.
+- **Bayatlık görünür:** kredi ve kart bakiyeleri elle giriliyor. En eskisinin kaç
+  gün önce güncellendiği tablonun altında yazıyor ve 7 günü aşarsa sarıya
+  dönüyor — bugün 18 gündü, yani 5,5 M TL'lik borç üç haftadır doğrulanmamıştı.
+- Alacak satırlarında hakediş sayısı, ilk vade ve (tahmini olanlarda) kesin kısım
+  ayrıca yazılıyor — tek rakam ne zaman geleceğini söylemiyor.
+- Yeni görünüm: `cfo_alacak_borc`.
+- **CFO ajanına görev:** `docs/CFO-GOREV.md` §4.5 ve panoya sabitlenmiş bir
+  `cfo_note` — kaynakların yaşı her sabah kontrol edilir, 7 günü aşarsa o gün
+  güncellenir; güncellenemiyorsa rapora "borç toplamı X gün bayat" yazılır.
+
+### Yeni Ürünler — marka faturadan dolduruldu, Flextail başlıkları düzeltildi (2026-09-11)
+
+- **İki marka var, hepsine "Alfas" yazmak hataydı.** Ürettiğim 147 başlığın
+  hepsine "Alfas" öneki koymuştum; oysa 4 ürün **Flextail**. Hepsiburada başlığın
+  MARKA ile başlamasını istediği için bu üçü (dördüncüsünün başlığı yok) yanlış
+  markayla listelenecekti.
+- **Marka kanıttan dolduruldu, başlıktan değil.** Başlıklar zaten benim koyduğum
+  öneki taşıdığı için kanıt olamazdı; faturadaki orijinal metne bakıldı.
+  Sonuç: **83 Alfas** (faturada "ALFAS" geçiyor), **4 Flextail** (2'si faturadan,
+  2'si katalog adından), **64 boş** — ikisi de yazmıyor, marka uydurulmadı.
+- Flextail ürünlerinin başlığındaki yanlış "Alfas" öneki söküldü
+  (`Alfas Flextail 4 Fonksiyonlu…` → `Flextail 4 Fonksiyonlu…`).
+- **Üretici artık markayı faturadan okuyor** (`marka_bul`), başta hangi marka
+  yazıyorsa söküp doğrusunu koyuyor — çift önek üretmiyor.
+- **Panelde uyarı:** marka yazılı ve başlık onunla başlamıyorsa alan sarıya
+  dönüyor ve ipucu bunu söylüyor. Bu hatanın tekrarını yakalar.
+- `AS304179` inox olarak teyit edildi; başlık zaten "… 304 Paslanmaz Çelik inox"
+  olduğu için değişiklik gerekmedi.
+- Yeni ürünlerin puan ortalaması 32,1 → **35,6**.
+
+### Yeni Ürünler — katalogda olan 24 ürün "yeni" sayılıyordu (2026-09-11)
+
+- **Hata:** Liste, 07.26sea konteynerindeki 151 kalemin hepsini yeni ürün
+  sayıyordu. Katalog kontrolü hiç uygulanmamıştı — SKU'su **birebir aynı** olan
+  3 ürün bile listede duruyordu. Alperen fark etti (`4902837173724`,
+  `4267192047364`). Gerçek sayı: **151 adayın 24'ü katalogda ve hepsi aktif**
+  (730 adet). Gerçekten yeni olan 127 kalem, 28.330 adet.
+- **Eşleştirme SKU'nun rakam çekirdeğinden yapılıyor.** Faturadaki kod katalog
+  kodunun önüne harf alıyor (`426M-4267192047364` ↔ `4267192047364`), birebir
+  karşılaştırma bu yüzden yetmiyor. Eşleşen 24 kaydın rakam dizisi 9-13 haneli;
+  rastlantısal çakışma söz konusu değil.
+- **Sütun değil görünüm:** eşleşme `urun_aday_katalog` görünümünde her okumada
+  yeniden hesaplanıyor. Sütuna yazılsaydı katalog değişince bayatlardı — asıl
+  hata da zaten bir kez bakılıp bir daha bakılmamasıydı.
+- **İsim benzerliği bilerek kullanılmadı.** "Spiralli Mutfak Eviye Bataryası
+  Siyah" iki ayrı SKU'da geçiyor ve bunlar aynı ürün değil, varyant. İsimden
+  eşleştirmek yanlış pozitif üretir.
+- **Panel:** katalogdaki kalemler hazırlık sayılarının dışında; "Katalogda var"
+  filtresi, satırda rozet ve katalog kodu, ürün sayfasında açıklayıcı kart.
+  Puan ve eksik listesi bunlar için gösterilmiyor — yapılacak iş ilan açmak
+  değil, gelen malı mevcut ilana stok olarak eklemek.
+- **Sunucu kapısı:** `setCandidateStatusAction` katalogda olan ürünü artık
+  HAZIR/LISTELENDI yapmıyor. Mükerrer ilan pazaryerlerinde cezalandırılıyor;
+  ekrandaki rozet uyarı, kapı sunucuda.
+
+### Yeni Ürünler — başlık karakter sayacı ve 100+ filtresi (2026-09-11)
+
+- **Başlık alanına canlı karakter sayacı eklendi.** Trendyol 100 karakterde
+  kesiyor — üç pazaryerinin en dar sınırı o, ölçüt odur. Sayaç `72/100` biçiminde
+  yazıyor; sınır aşılınca kaç karakter fazla olduğunu da söylüyor ve alanın
+  çerçevesi kırmızıya dönüyor. 20 karakterin altında "en az 20" uyarısı çıkıyor
+  (puanlamanın aradığı alt sınır).
+- **Listeye "Başlık 100+ karakter" filtresi** ve her satıra karakter sayısı
+  eklendi; sınırı aşanlar kırmızı. Üst şeritte kaç başlığın aştığı ve en uzununun
+  kaç karakter olduğu yazıyor. Faturadan üretilen 147 başlığın 40'ı sınırın
+  üstünde kaldı.
+- **Üretici artık 100'ü hedefliyor** (önceden 120). Kırpma kuralı genişletildi:
+  önceden yalnız sondaki RENK korunuyordu, artık biçim ve ölçü de korunuyor.
+  Gerekliydi — 100'e kırpınca `AS304168` ("… Düz Gaga 29x10cm") ile `AS304170`
+  ("… Kavisli Gaga 29x11.5cm") birbirinin aynısı oluyordu. Ayrıca ismini
+  kaybetmiş niteleyiciler ("Tek Kollu"dan kalan "Tek") sarkmıyor.
+- Doğrulandı: 100 karakter sınırında 147 başlık üretiliyor, hiçbiri sınırı
+  aşmıyor, mükerrer yok, 20 karakterin altında kalan yok.
+
+### Yeni Ürünler — SKU düzenlenebilir, barkod puanlamadan çıktı, 147 başlık dolduruldu (2026-09-11)
+
+- **SKU artık panelden değiştirilebilir.** Faturadaki kod `fatura_sku` sütununda
+  sabit kalıyor; konteyner kalemiyle bağ oradan kurulduğu için yeniden adlandırma
+  bağı koparmıyor. Benzersizlik DB'de unique ile zorlanıyor, panelde anlaşılır
+  mesaja çevriliyor ("… başka bir üründe kullanılıyor"). SKU değişince sayfa
+  adresi de değiştiği için istemci yeni adrese taşınıyor.
+- **Barkod puanlamadan çıkarıldı.** 151 ürünün hiçbirinde barkod yok; kimsenin
+  sağlayamadığı bir şart herkesi eşit bloke eder, ayırt etmez. Alan formda duruyor,
+  puana girmiyor. Boşalan 8 puan ilanı fiilen bloke eden yerlere dağıtıldı:
+  kategori 8→9, açıklama 12→15, ana görsel 15→17, 3+ görsel 8→10. Toplam 100,
+  eşik 90 korundu.
+- **147 ürün başlığı fatura adlarından üretilip yüklendi.** İç notlar (1688,
+  video, ödendi, koli, GTİP, CJ linki, Çince paket ölçüsü) temizleniyor; TAMAMI
+  BÜYÜK yazımlar kelime bazında düzeltiliyor; Hepsiburada kuralı gereği başlık
+  "Alfas" ile başlıyor. Faturada hiç metin olmayan 4 kayıt **boş bırakıldı** —
+  başlık uydurulmadı.
+- **Kırpma artık varyant rengini koruyor.** 120 karakter sınırı sondaki rengi
+  düşürdüğü için iki varyant aynı başlığa iniyordu (TD1 Antrasit/Beyaz,
+  4903046045 inox/Siyah) — pazaryerinde mükerrer ilan demek. Renk kenara alınıp
+  gövde ona yer bırakacak şekilde kırpılıyor.
+- **Türkçe harf dönüşümü düzeltildi.** Python'da `"İ".lower()` "i" + U+0307
+  veriyor ve ~20 başlıkta "Evi̇ye", "Si̇yah" gibi bozuk yazımlar oluşmuştu.
+- **Faturadaki satır sarması** ("… BATARYASI 4" / "FONKSİYONLU … ANTRASİT")
+  yüzünden üç CSF satırı aynı başlığa iniyordu; yalnız sarkan sayı durumunda
+  satırlar birleştiriliyor.
+- Doğrulandı: 147 başlığın hepsi "Alfas" ile başlıyor, hiçbiri 120 karakteri
+  aşmıyor, mükerrer başlık yok, birleşik nokta artığı yok.
+
+### Ürün görseli yüklemede 404 — sunucu eylemi gövde sınırı (2026-09-11)
+
+- **Belirti:** `/admin/yeni-urunler/AS304167`'ye yeni görsel yüklenince site 404
+  veriyordu. Runtime log'da POST kaydı YOKTU — istek sunucu koduna hiç ulaşmıyordu.
+- **Sebep:** Next.js sunucu eylemlerinde gövde sınırı varsayılan **1 MB**
+  (`experimental.serverActions.bodySizeLimit`). Aşan istek çerçeve tarafından
+  reddediliyor ve tarayıcıya 404 dönüyor. Eylemdeki 10 MB kontrolü anlamsızdı;
+  istek oraya varmadan kesiliyordu. İlk 7 görsel 1 MB altında olduğu için geçmişti.
+- **Çözüm — asıl olan istemcide küçültme.** Sınırı yükseltmek tek başına yetmez:
+  Vercel'de istek gövdesi ~4,5 MB'ta zaten duvara çarpar. Telefon fotoğrafı 3-8 MB
+  ama pazaryerleri 1200-2000 piksel kullanıyor; tam boy yüklemenin faydası yok.
+  `lib/urun-aday/gorsel-kucult.ts` yüklemeden önce 2000 piksele indirip JPEG'e
+  çeviriyor — dosya ~300-800 KB'a düşüyor.
+- **Üç tuzak karşılandı:** EXIF dönüklüğü (`imageOrientation: "from-image"` —
+  yoksa dikey telefon fotoğrafı yan yatıyor), saydam PNG (beyaz doldurulmazsa
+  saydam alanlar siyah çıkıyor), GIF (canvas animasyonu tek kareye indirdiği için
+  hiç dokunulmuyor).
+- **Emniyet payı:** `bodySizeLimit` 4 MB'a çıkarıldı ve eylemdeki sınır da 4 MB'a
+  indirildi — ikisi artık uyumlu, sessiz 404 yerine anlaşılır hata dönüyor.
+- Küçültme başarısız olursa (eski tarayıcı) yükleme engellenmiyor; orijinal
+  gönderiliyor ve sınırı sunucu yakalıyor.
+
+### CFO — 07.26sea içeriği yüklendi, ilk mükerrer sipariş yakalandı (2026-09-10)
+
+- **Panel "Cevap kaydedilemedi" diyordu ama cevap KAYDEDİLMİŞTİ.** `cfo_change_log.kind`
+  DB'de CHECK ile sınırlı; ben izinli listede olmayan `"cevap"` değerini yazmıştım.
+  Soru satırı yazıldıktan sonra log INSERT'i patlıyor, kullanıcı veriyi girmediğini
+  sanıyordu. `kind` → `"teyit"`, ikisi tek transaction'a alındı (log patlarsa cevap da
+  yazılmaz) ve `catch` artık hatayı `console.error` ile sunucuya yazıyor.
+- **07.26sea faturası yüklendi.** `İthalatlar.xlsx` → `07.26sea` sayfası:
+  **152 kalem · 29.420 adet · 59.147 USD · 8.646 kg** — dördü de kayıtlı rakamlarla
+  birebir tuttu. `cfo_yoldaki_kalem` tablosuna girildi, kapsam %0 → **%100**.
+- **148 SKU katalogda yok — doğrulandı.** Boşluk kırpma ve büyük/küçük harf
+  normalizasyonu denendi, sonuç değişmedi (3 eşleşme). CFO'nun 31.08 tespiti gerçek,
+  biçim sorunu değil.
+- **`yolda_yeterli` kuralı düzeltildi — ilk kural yanlıştı.** "Tükenişten önce gelsin"
+  diyordu; `470764214647`'de tükeniş 29.08'de geçmiş olduğu için false dönüyordu. Oysa
+  doğru kıyas tükenişle değil **yeni siparişin varışıyla** yapılır: yoldaki mal yeni
+  siparişten önce geliyorsa ve aradaki boşluğun talebini karşılıyorsa yeni sipariş
+  gereksizdir.
+- **İlk gerçek mükerrer sipariş yakalandı.** `470764214647` Klozet & Banyo Taharet
+  Musluk Spiral, konteynerde **80 adet**, 05.10'da rafta:
+  - DENİZ siparişi (80 adet) **elendi** — bugün verilse 16.11'de varırdı, aradaki 42
+    günün talebi 25,2 adet, yolda 80 adet var. Deniz partisi
+    **17 → 16 kalem, 12.998,60 → 11.882,60 USD**.
+  - HAVA siparişi (16 adet) **korundu** — hava 02.10'da varıyor, konteynerden 3 gün
+    önce. Hava köprüsü hâlâ gerekli.
+- **`katalogda` sütunu kaldırıldı.** `(sku is not null)` diye tanımlanmıştı; bu "SKU
+  alanı dolu" demek, "katalogda var" demek değil. Generated column başka tabloya
+  bakamadığı için eşleşme `cfo_yoldaki_kapsam` içinde `Product` join'iyle hesaplanıyor.
+
+### CFO — Sipariş önerisi artık yoldaki malı biliyor (2026-09-10)
+
+- **Bulunan hata (Alperen bildirdi):** `/cfo/kazananlar` 500 veriyordu.
+  `cfo_aylik_urun_kar`'da `channel` sütunu yok — sütun listesini iki tabloyu birleşik
+  okuyup yanlış çıkarım yapmıştım. O view ürün×ay düzeyinde toplanıyor ve yalnız
+  `kanal_sayisi` tutuyor. Kanal adı satır düzeyinde `cfo_satis_birim`de; sorgu oraya
+  alındı (`Product` üzerinden sku join'i ile).
+- **Yapısal eksik:** `cfo_yoldaki_mal` yalnız PARA tutuyordu; konteynerin içinde ne
+  olduğu hiçbir tabloda yoktu — yalnız serbest metin notta ve orada da sadece ciro
+  bakımından ilk 7 kalem adıyla geçiyordu. Sonuç: sipariş önerisi 05.10'da rafa
+  girecek malı yok sayıyor, aynı ürünü yeniden sipariş etmeyi önerebiliyordu.
+- **`cfo_yoldaki_kalem` tablosu** eklendi: parti içeriği kalem kalem (sku, ad, adet,
+  birim maliyet, GTİP). SKU kataloğumuzda olmayabilir (07.26sea'da 152'nin 148'i yoktu),
+  o satırlar da tutuluyor.
+- **`cfo_yolda_sku`** görünümü SKU bazında yoldaki adedi ve en yakın varışı veriyor.
+  Adli süreçteki parti (Romanya 1.) hariç: mülkiyeti bizde değil, "gelecek mal" sayılmaz.
+- **Öneri görünümü düşüyor.** `yolda_yeterli` iki koşul birden arıyor: (a) tükenişten
+  önce rafa girecek, (b) adedi en az bir aylık satışı karşılıyor. "Yolda bir şeyler var"
+  demek yetmez — 3 adet gelen, 40 adet/ay satan ürünü kurtarmaz. Yeterli olan kalem
+  tutara ve minimum 10.000 USD eşiğine GİRMİYOR, tabloda "yolda" rozetiyle duruyor.
+- **`cfo_yoldaki_kapsam`** görünümü içeriğin ne kadarının girildiğini ölçüyor ve sayfa
+  bunu SAKLAMIYOR: bugün 07.26sea için **0/152 kalem (%0)**. Kırmızı uyarı, önerilerin
+  bu malı yok saydığını açıkça yazıyor — "yoldaki mal yok" ile "yoldaki mal bilinmiyor"
+  farklı şeylerdir.
+- **Fatura bulundu ama okunamadı.** `30062601_COMMERCIAL_INVOICE_40GP.xlsx` 07.09'da
+  `cfo-files` kovasına yüklenmiş; ajan proxy'si supabase.co'ya çıkışı kestiği için
+  indirilemedi. Mekanizma kuruldu, liste girilmeyi bekliyor.
+
+### CFO — Satır bazında soru-cevap ve ürün kararı (2026-09-10)
+
+- **Her satırın sonunda açılır bilgi alanı.** `/cfo/kazananlar` içindeki ithalat öneri
+  tablolarında ve ilk-10 kâr tablosunda satır sonundaki **Bilgi** rozeti, o satır
+  hakkında panelin cevabını bilmediği soruları açıyor. Cevap kaydediliyor.
+- **Yeni tablo açılmadı.** Cevaplar mevcut `cfo_question` tablosuna düşüyor; CFO zaten
+  bu tabloyu okuyor ve `/cfo/sorular` ekranı buna bağlı. Eksik olan tek şey "hangi satır
+  hakkında" bilgisiydi: `scope` + `entity_key` + `code` sütunları eklendi.
+- **Sorular türetilmiş, kayıtlı değil.** Eksik veriden hesaplanıyor ve eksik kapanınca
+  kendiliğinden kayboluyor; tabloyu ölü kayıtla doldurmuyor. Kullanıcı cevaplayınca soru
+  metni + gerekçesi + cevap birlikte yazılıyor — altı ay sonra "bu cevap neyin cevabıydı"
+  sorusu cevapsız kalmasın diye.
+- **Üç soru türü:** `MALIYET_YOK` (birim alış fiyatı + kg — bugün 2 deniz kaleminde),
+  `KAPSAM_UZUN` (6 aydan uzun rafta kalacak adet — bugün 3 kalem),
+  `ORAN_GUVENI_DUSUK` (kanalın ölçülmemiş net tahsilat oranı — Ağustos'ta 7 satır).
+  Soru, ürünün hangi ölçülmemiş kanalda sattığını **adıyla** yazıyor.
+- **`cfo_urun_karar` tablosu.** "Bu ürünü getirmeyelim" kararı gerekçesiyle birlikte
+  kalıcı olarak saklanıyor; parti değişse de yaşıyor. Gerekçe zorunlu. `gecerli_bitis`
+  ile "bu sefer alma" ile "bir daha alma" ayrılabiliyor.
+- **Karar öneriyi gerçekten değiştiriyor.** `cfo_ithalat_oneri` kararı okuyor,
+  `cfo_ithalat_oneri_ozet` hariç tutulan kalemi tutara ve minimum 10.000 USD eşiğine
+  KATMIYOR. Canlıda doğrulandı: bir kalem "alma" yapılınca deniz partisi
+  17 kalem / 12.998,60 USD → 16 kalem / 12.894,87 USD oldu, karar kaldırılınca geri döndü.
+- **Hariç tutulanlar gizlenmiyor.** Tabloda soluk kalıyorlar ve ayrı bir uyarı kaç
+  kalemin çıkarıldığını söylüyor — eşiği bunu görmeden okumak yanıltıcı olurdu.
+- **CFO el kitabına §6.1 ve §6.2 eklendi.** Oturum başında `status='CEVAPLANDI' and
+  processedAt is null` sorgusu zorunlu; her `code` için cevabın nereye işleneceği yazılı.
+  `ORAN_GUVENI_DUSUK` cevabı `cfo_kanal_net_oran`'ı düzeltiyor — tek cevap o kanalda satan
+  bütün ürünlerin kârını düzelttiği için en yüksek getirili cevap türü. Ayrıca
+  `karar='ALMA'` olan ürüne yeni `cfo_order_line` açmak yasaklandı.
+
+### CFO — Servet gerçek stoktan hesaplanıyor (2026-09-10)
+
+- **Kokpitteki servet rakamı yanlıştı.** Formül (`nakit + alacak + stok − borç`) doğruydu;
+  hata stok satırındaydı. `lib/cfo/engine.ts` stoğu iki ELLE GİRİLMİŞ USD sabitinden
+  türetiyordu: `cfo_settings.stockCostUsd` (100.000) ve `blockedStockUsd` (40.000).
+- **Sabit donmuştu.** `cfo_snapshot.stockTry` 31.08–10.09 arası **on bir ardışık
+  snapshot boyunca kuruşu kuruşuna 13.130.432,65 TL** kaldı — o günlerde nakit ve alacak
+  her gün değişti, satış yapıldı, mal çıktı, stok satırı kıpırdamadı.
+- **Yeni kaynak: `cfo_servet`.** Stok artık net gerçekleşebilir değerle ölçülüyor —
+  her SKU'nun son 90 günde GERÇEKLEŞEN satış fiyatı × kanal net oranı − kargo. Liste
+  fiyatı kullanılmıyor (223 stoklu üründen yalnız 35'inde dolu).
+- **Aynı gün, eski yöntem 8.970.674 TL / yeni yöntem 5.946.316 TL — fark −3.024.358 TL
+  (−%33,7).** Servet küçülmedi, yanlış ölçülüyordu.
+- **Kokpit yeniden bağlandı.** "Net ticari servet hedefi" kartı kaldırıldı; yerine
+  `cfo_servet`'ten okuyan servet bölümü geldi: manşet, kalem dökümü (her satır kendi
+  güven etiketiyle), likidite dilimleri ve yoğunlaşma tablosu.
+- **Snapshot da kaynağa bağlandı.** `takeCfoSnapshotAction` artık sabitleri değil
+  `cfo_servet` + `cfo_servet_kalem`'i yazıyor; görünüm boş dönerse snapshot ALINMIYOR
+  (yanlış rakamı tarihe yazmaktansa hiç yazmamak doğru). Stok satırı çıkarma ile değil,
+  iki stok kaleminin toplamından geliyor; dar tanım = manşet − yoldaki malın net katkısı.
+- **Sabitler işaretlendi.** `engine.ts`'teki `sellableStockTry` / `blockedStockTry` /
+  `narrowWorth*` / `wideWorth*` alanları artık hiçbir ekrana basılmıyor; başlarına neden
+  güvenilmemesi gerektiğini yazan uyarı eklendi. Ayarlar sayfasında iki sabit
+  "eski sabit — artık servete girmiyor" olarak etiketlendi.
+- **Likidite ilk kez görünür.** Stok değerinin **%45,8'i (3.073.033 TL) bir yıl içinde
+  hiç nakde dönmüyor**; 12 ay+ dilimi tek başına net gerçekleşebilir değerin %57'si
+  (3.350.141 TL). Kokpit bunu manşetin yanında uyarı olarak gösteriyor: servet doğru
+  ama likit değil.
+- **Yoğunlaşma uyarısı.** `40005100051` Krom Banyo Bataryası tek başına 2.778 adet /
+  1.981.236 TL / **1.220 gün (3,3 yıl) örtü süresi** — stok değerinin %29,5'i. Sayfa
+  bunu "servet kalemi değil, tek ürüne yapılmış bahis" olarak yazıyor.
+- **Kukla stok elenmesi doğrulandı.** 47 SKU yer tutucu adetle (999 / 1.000 / 10.000)
+  duruyor; değerlemeye alınsalardı tek bir kamera seti kaydı
+  (`MUK-8LI-IP-KAMERA-SETI-SESLI`, 999 adet) **tek başına 14,6 M TL** üretiyordu.
+
+### CFO — İthalat sipariş önerisi tek sayfada toplandı (2026-09-10)
+
+- **`/cfo/kazananlar` → "İthalat sipariş önerisi" bölümü eklendi.** Hava ve deniz için
+  ayrı parti önerisi: tutar, adet, tavsiye edilen sipariş tarihi, tahmini raf tarihi,
+  kalem tabloları.
+- **Kaynak değişti.** Öneri artık Trendyol satış hızından değil, CFO'nun karar defteri
+  `cfo_order_batch` / `cfo_order_line` üzerinden geliyor. Üç view eklendi:
+  `cfo_ithalat_oneri` (satır), `cfo_ithalat_oneri_ozet` (parti + nakit kapısı),
+  `cfo_ciro_hedef`.
+- **Kurallar `cfo_settings`'e taşındı** ve elle değiştirilebilir: `importAirLeadDays` 22,
+  `importSeaLeadDays` 67, `importMinOrderUsd` 10.000, `importMinLineQty` 5,
+  `monthlyRevenueTargetUsd` 100.000. Şemadaki `netPositionFloorTry` drift'i de kapatıldı.
+- **Sekiz kopya yüzeyden altısı kaldırıldı.** `/admin/procurement` ve
+  `/admin/import-decisions` emekliye ayrıldı (yönlendirme sayfası kaldı, menüden
+  çıkarıldı); `/admin/capital` satın alma önerileri tablosu, `/admin/executive` tedarik
+  aciliyeti kartı, `/admin/sermaye-saglik` acil sipariş listesi ve
+  `lib/smart-recommendations.ts` acil sipariş satırları silindi.
+  `/admin/import-cockpit` ve ithalatçı görünümü korundu — ürün bazında maliyet/navlun
+  analizi sipariş listesi değildir; kokpite bu ayrımı yazan açıklama şeridi eklendi.
+- **Nakit kapısı tavsiye tarihine dâhil.** Tavsiye edilen tarih, stok ihtiyacı ile nakdin
+  oluştuğu tarihin geç olanıdır. Kapı projeksiyon boyunca açılmıyorsa tarih üretilmiyor;
+  açık yazılıyor. Bugün her iki parti de bu durumda: hava 491.489 TL, deniz 630.432 TL
+  gerekiyor; 28.12'ye kadarki en yüksek gün sonu projeksiyonu 305.098 TL.
+- **Hava köprüsü ayrımı.** 4 SKU hem hava hem deniz listesinde; bu mükerrer kayıt değil,
+  kasıtlı köprüdür (hava şimdi yetiştirir, deniz asıl stoğu getirir). Rozetle işaretlendi
+  ki biri yanlışlıkla iptal edilmesin.
+- **Veri kalitesi görünür.** 29 kalemin 28'inde en geç sipariş tarihi geçmiş; 2 deniz
+  kaleminde birim maliyet yok, yani parti toplamı olduğundan düşük görünüyor. Minimum
+  ithalat tutarı kararı bu eksik toplam üzerinden veriliyor — uyarı olarak yazılı.
+- **Ciro hedefi bağlamı.** Son tam ay 42.730 USD / hedef 100.000 USD (%42,7). Bu iki
+  parti hedefe yaklaştırmıyor; mevcut cironun 17.694 USD/ay'lık kısmını stoksuz
+  kalmaktan koruyor. Sayfa bunu "katkı" diye değil "savunma" diye yazıyor.
+- **Minimum adet kuralı bağlayıcı değil.** En küçük kalem 8 adet olduğu için 5 adetlik
+  eşik şu an hiçbir satırı değiştirmiyor; kural yürürlükte ama sayfa bunu saklamıyor.
+
+### CFO — Ayın Kazananları: kârı hangi ürün getirdi (2026-09-10)
+
+- **`/cfo/kazananlar` eklendi.** CFO'nun kurduğu `cfo_ay_kazanan` (ay kapanışında
+  dondurulan tablo, 20 ay geriye doldurulmuş) ve `cfo_ay_kazanan_ozet` görünümü
+  ekrana bağlandı: ay seçici, ilk 10 ürün tablosu ve aylık seyir.
+- **Dondurulmuş tablo bilinçli.** `Product.unitCostTry` bugünkü maliyet; geçmiş ayın
+  kârını bugünkü maliyetle hesaplamak rakamı her ay değiştirirdi. Ay kapanınca donuyor.
+- **Kargo yüzdesi ayrı sütun.** Düz kanal net oranıyla hesaplanan kâr, düşük fiyatlı
+  ürünlerde %43'e kadar abartılıyordu (Bluetooth Dongle 39.888 → 22.934, sıralaması
+  2. → 4.). Kargonun kârı nerede yediği artık doğrudan görünüyor.
+- **Oran güveni satır bazında.** `oran_guveni` o ürünün satıldığı kanallar içindeki EN
+  KÖTÜ net-oran güvenidir. Ağustos'ta ilk 10'un kârının **%76,8'i (225.636 TL)** oranı
+  ölçülmemiş kanallara dayanıyor (Pazarama, Temu %65 varsayıldı) — Mayıs'ta bu oran
+  %23,4'tü. Ölçüm kalitesi düşmüş; sayfa %40'ı aşınca uyarıyor.
+- **Kapsam < %85 olan aylar karşılaştırılamaz.** Kapsam 20 ayda %14,9'dan %98,6'ya
+  çıkmış; bu aralıkta "kâr 5 kat arttı" demek ölçüm iyileşmesini kâr artışı saymak olur.
+  Zayıf aylar hem ay seçicide hem seyir tablosunda soluk, uyarı metni açıkça
+  "karşılaştırılamaz" diyor.
+- **Top-10 payı > %100 bir bulgudur.** 2025-12'de %183,2 — ilk 10 dışındaki ürünler
+  44.125 TL zarar yazmış. Kırmızı uyarı olarak çıkıyor.
+- **Toplam kâr negatifse pay sütunu gizleniyor.** 2025-02 (−79.267 TL) ve 2025-03
+  (−42.002 TL) aylarında "pay" negatif bir bütünün yüzdesiydi; okunamaz bir sayıyı
+  göstermek yerine sütun kaldırılıp durum yazıyla anlatılıyor.
+
+### CFO — Ödeme Takvimi: gelen/giden para tek listede (2026-09-10)
+
+- **`/cfo/odemeler` eklendi.** Kredi taksiti, kart ödemesi, sabit gider, vergi/gümrük
+  ve pazaryeri tahsilatları dört ayrı tablodan tek takvime toplandı. Gün gün kartlar,
+  her günün sonunda kalan nakit, çıkış/giriş ayrımı, tahmini kayıtlar soluk.
+  Neden: ödemeler dağınık durduğu için "hangi gün para bitiyor" sorusu
+  cevaplanamıyordu; açık yalnız "10 günde −46.123 TL" gibi tarihsiz duruyordu.
+- **Tahsilatlar da ekranda.** Yalnız ödemeler listelenirse yürüyen bakiye
+  hesaplanamaz. Ekranın cevapladığı soru "ödemelerim neler" değil,
+  **"ödeyebilecek miyim"**.
+- **`cfo_odeme_gunluk.gun_sonu_nakit` hesap hatası düzeltildi.** Gün sonu bakiyesi
+  `min(kalan_nakit)` ile hesaplanıyordu; bu gün içi en dip noktadır, gün sonu değil.
+  Son hareketi giriş olan günlerde bakiye olduğundan düşük çıkıyordu — 17.09.2026
+  için gerçek +51.560 TL yerine −90.705 TL. Doğrusu açılış + kümülatif net.
+  Gün içi dip `gun_ici_dip` sütununda korunuyor.
+- **Üç görünüm repoya alındı.** `cfo_yaklasan_odeme`, `cfo_odeme_gunluk`,
+  `cfo_nakit_dibi` yalnız canlı veritabanında duruyordu; migration'a taşındı.
+- **Kullanılabilir KMH gösteriliyor.** Bir günün eksiye düşmesi tek başına kriz
+  değildir; boş ticari limitle kapanıyorsa değildir. Gün kartı negatifken "ticari KMH
+  ile kapanır / KMH yetmiyor, açık X TL" satırı çıkar. Şahsi limitler ayrı rozette,
+  son çare olarak işaretli.
+- **Defter denetimi rozeti.** CFO'nun kurduğu `cfo_defter_denetim()` (mükerrer kayıt,
+  eksik kredi taksiti/kart/sabit gider/hakediş, bayat bakiye, işaretsiz geçmiş kalem,
+  tutarsız kayıt, takvim ufku) yalnız sabah koşusunda çalışıyordu; sayfaya gün içinde
+  bakıldığında defterdeki eksik görünmüyordu. Artık sayfanın en üstünde, rakamlardan
+  ÖNCE: temizse tek satır, bulgu varsa açılıp ne yapılacağını söylüyor. Fonksiyon
+  STABLE olduğu için render'da çağrılması güvenli. Sadece `YESIL` temiz sayılır —
+  ileride yeni bir seviye eklenirse sessizce gizlenmesin diye.
+- **Bayat bakiye uyarısı.** Yürüyen bakiyenin tamamı açılış bakiyesine dayandığı için,
+  7 günden eski bakiyesi olan hesap varsa uyarı çıkar. (Bu uyarı sonradan defter
+  denetimindeki `BAYAT_BAKIYE` kontrolüne devredildi — aynı şeyi iki yerde söylemek
+  çelişki riski yaratıyordu. Alt notta bakiyenin kaç gün önce güncellendiği her
+  durumda yazıyor.)
+- **İşaretleme parayı yok ediyordu — düzeltildi (aynı gün).** Görünüm
+  `where odendi = false` ile çalışıyordu: bir tahsilat "tahsil edildi" işaretlenince
+  satır projeksiyondan siliniyor ama o para banka bakiyesine eklenmiyordu, dolayısıyla
+  sonraki tüm günlerin gün sonu bakiyesi o tutar kadar DÜŞÜYORDU (143.212 TL'lik bir
+  tahsilatta gözlendi). Ödemede tersi olurdu: nakit yanlışlıkla artardı.
+  Artık yürüyen bakiye `odendi` alanına hiç bakmıyor; işaretleme yalnızca "bu hareket
+  oldu" kaydı. Geçmiş tarihli hareketler listede kalır ama bakiyeye 0 katkı verir —
+  geçmişte olan zaten banka bakiyesinin içindedir. Gerçek satırda test edildi:
+  işaretleme öncesi/sonrası 7 günün 7'sinde de fark 0.
+  Banka bakiyesini otomatik güncellemek bilinçli olarak yapılmadı; veri modeli
+  tahsilatın hangi hesaba düştüğünü bilmiyor (`cfo_receivable`'da banka değil
+  pazaryeri kanalı var). Yanlış hesaba yazmaktansa hiç yazmamak doğru.
+- **"Ödendi / Tahsil edildi" tek dokunuş, geri alınabilir.** Kaynak tabloyu (`cfo_cash_event`
+  ya da `cfo_receivable`) satırın türü belirler; her iki yön de `cfo_change_log`'a
+  `area=nakit, kind=teyit` olarak yazılır. CFO kuralı gereği eski değer silinmez.
 
 ## 2026-08
+
+### CFO — Sorular sayfası: soru-cevap defteri (2026-08-27)
+
+- **`/cfo/sorular` eklendi.** CFO'nun cevap bekleyen soruları burada durur; Alperen
+  yazıyla ve/veya **dosya ekleyerek** cevaplar. Cevaplar veritabanında kalıcı olur.
+  Neden: sorular her sabah sohbetten soruluyordu, cevaplar sohbet geçmişinde kalıyor
+  ve bir sonraki oturumda kayboluyordu.
+- **Açık soru limiti 20.** Liste doluysa `askQuestionAction` yeni soru eklemeyi
+  REDDEDER — önce mevcutlar cevaplanmalı. Soru enflasyonunu ve "cevaplanmayan 50
+  soru" çöplüğünü engeller.
+- **Yeni modeller:** `CfoQuestion` (soru, neden gerekiyor, alan, öncelik 1-5, durum,
+  cevap, CFO işledi mi) ve `CfoQuestionFile` (Supabase Storage `cfo-files` bucket'ı;
+  DB'de sadece URL + metadata, dosya başına 10 MB).
+- **`processedAt` alanı bilinçli:** cevap geldi ≠ CFO işledi. Cevap deftere/hesaba
+  yansıyınca "İşlendi" işaretlenir; yansımayan cevap ekranda sarı rozetle durur.
+  Cevap güncellenirse `processedAt` sıfırlanır — CFO tekrar işlemek zorunda kalır.
+- Her cevap `CfoChangeLog`'a bir satır yazar; eski cevap silinmez.
+- ⚠️ **Build notu:** `"use server"` modülünden sabit export edilemez (sadece async
+  fonksiyon). `MAX_OPEN_QUESTIONS` bu yüzden `lib/cfo/questions.ts`'te durur —
+  ilk denemede build bu yüzden kırıldı, aynı hataya düşülmesin.
+
+
+### CFO — Borçlar: planlanmış ödemeler ve 3 aylık ay sonu nakit tahmini (2026-08-27)
+
+- **"Planlanmış ödemeler" kartı eklendi** (Borçlar sayfası). `cfo_cash_event`
+  tablosundan, ödenmemiş ve `kind ∈ {VERGI_GUMRUK, DIGER}` olan tek seferlik
+  taahhütleri listeler: navlun, gümrük vergisi, ithalat masrafı. Kredi taksiti,
+  kart ödemesi ve sabit gider bilerek HARİÇ — onlar zaten kendi tablolarında ve
+  aynı kalemi iki kez göstermek borç servisini şişirirdi.
+  Kolonlar: tarih, kalan gün, tür, açıklama, tutar, veri etiketi + TOPLAM satırı.
+- **"3 aylık ay sonu nakit tahmini" kartı eklendi.** Ay sonu bilerek seçildi:
+  bankaların gördüğü bakiye ay sonu bakiyesidir, o yüzden ay sonlarında KMH
+  kullanılmaz (Alperen kuralı, 2026-08-24).
+- **`monthEnds` hesabı engine'e eklendi** (`lib/cfo/engine.ts`, `MonthEndRow`).
+  Mevcut `windowSums()` yeniden kullanıldı; böylece rolling forecast ile ay sonu
+  tahmini aynı kaynaktan beslenir ve iki sayfa arasında tutarsızlık oluşmaz.
+  Her satır: kümülatif tahsilat, kümülatif ödeme, net, nakit pozisyonu,
+  pozisyon negatifse KMH'den karşılandıktan sonra kalan kapasite ve trafik ışığı.
+- Çift sayım koruması korundu: tahsilat = vadesi gelen gerçek alacaklar +
+  haftalık satış tahmininin ÜSTÜ (`Math.max(0, tahmin - gerçek)`).
+
+
+### CFO — Krediler: kalan taksit + bitiş tarihi, ve Yapı Kredi şahsi hesabı (2026-08-25)
+
+- **Krediler tablosuna iki kolon eklendi:** "Kalan taksit" (kalan / toplam) ve
+  "Bitiş tarihi". `lastInstallmentDate` alanı zaten vardı ama hiçbir sayfada
+  gösterilmiyordu — kredinin ne zaman biteceği yalnızca DB'de duruyordu.
+- **Kalan taksit HESAPLANIR, elle girilmez:** `remainingInstallments()`
+  (lib/cfo/engine.ts) `nextPaymentDate` ile `lastInstallmentDate` arasındaki ay
+  farkını alır. Böylece her ay kendiliğinden azalır ve bakım gerektirmez.
+  Düzensiz ödeme planları için `remainingOverride` alanı öncelik kazanır —
+  kredi kartındaki `minOverrideTry` ile aynı desen.
+- **TOPLAM satırına "son: <tarih>"** eklendi: aktif kredilerin en geç biten
+  taksiti, yani "borçtan ne zaman çıkılır" sorusunun tek satırlık cevabı.
+- **Migration** `20260825000000_cfo_loan_installments` — additive, iki nullable
+  INTEGER kolon (`totalInstallments`, `remainingOverride`). Veri silmez.
+- **Doğrulanan değerler:** Ziraat KGF 23/36 (21.07.2028), Ziraat Kredi 2 46/48
+  (10.06.2030), Garanti 9/24 (14.05.2027), Fibabanka 19/24 (25.03.2028),
+  Yapı Kredi 11/24 (28.06.2027).
+- **Yeni banka hesabı:** Yapı Kredi Alperen (şahsi), KMH limiti 150.000 TL.
+  Bakiye bilinmediği için `balanceTry = null` ve `dataTag = TEYIT_EDILMELI` —
+  boş limit toplamına DAHİL EDİLMEDİ (muhafazakâr davranış).
+- **`prisma/seed-cfo.ts` gerçekle hizalandı.** Seed, canlı veriden sapmıştı:
+  Ziraat kredisinin adı ("Ziraat KGF / Kredi 1" vs "…/ TOBB Nefes Kredisi")
+  farklı olduğu için yeniden çalıştırılsa **kopya kayıt** üretecekti; Enpara
+  (109.300) ve Garanti (500.000) KMH limitleri ise eski, yüksek değerlere
+  **geri dönecekti**. İsimler, limitler, faiz oranları ve bitiş tarihleri
+  düzeltildi.
 
 ### Fix — production build 59 gündür kırıktı: client bundle'a Prisma sızıntısı (2026-08-24)
 
@@ -2257,3 +2820,160 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
   - Consistent with product detail Pazar Yeri Fiyatlandırması card
 - tsc clean, Vercel deploy READY (commit f975093)
 - Browser-verified 2026-05-17: profit page renders correctly, per-platform XML prices feed effective price ✓
+
+## 2026-08-27 — CFO Sorular: dosya yüklenemezse cevap metni artık kaybolmuyor
+
+- `lib/actions/cfo-question-actions.ts` — `answerQuestionAction` dosya yükleme
+  hatalarında artık **erken dönmüyor**. Depolama yapılandırması eksikse
+  (`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`), dosya 10 MB'ı aşıyorsa veya
+  Storage isteği hata dönerse: hata `failures[]` listesine yazılır, döngü devam
+  eder ve **cevap metni yine de kaydedilir**. Kullanıcıya `ok: true` +
+  "dosyalar eklenemedi" uyarısı döner; eklenemeyen dosyalar `CfoChangeLog`
+  notuna da yazılır. Sadece hem metin hem başarılı yükleme yoksa hata dönülür.
+- Sebep: 27.08.2026'da production'da `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`
+  tanımlı olmadığı için ilk gerçek cevap denemesi tamamen reddedildi ve yazılan
+  metin de çöpe gitti. Ortam değişkeni eksikliği veri kaybettirmemeli.
+- NOT: bu iki değişken Vercel production'da HÂLÂ tanımlanmalı — Faz 27 ürün
+  görseli yükleme (`product-image-actions.ts`) de aynı sebeple çalışmıyor.
+
+## 2026-08-27 — Depolama: "Invalid Compact JWS" teşhisi ve ortak Storage modülü
+
+- `lib/storage/supabase-storage.ts` (yeni) — Supabase Storage yapılandırmasını
+  doğrulayan ve yükleme yapan ortak modül. İki çağrı yeri (CFO soru ekleri,
+  ürün görselleri) artık aynı mantığı kullanır; kopyala-yapıştır env okuması bitti.
+- Sebep: `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` production'a eklendikten
+  sonra Storage `{"statusCode":"403","message":"Invalid Compact JWS"}` döndü.
+  Anahtar yanlış değil, BİÇİMİ yanlıştı — Storage'ın REST ucu Authorization
+  başlığını JWT olarak ayrıştırıyor, Supabase'in yeni format anahtarlarını
+  (`sb_secret_…`) kabul etmiyor. Proje her iki anahtar sistemini de açık tutuyor.
+- Modül artık:
+  - değeri `trim()`'ler ve sarmalayan tırnakları atar (yapıştırma hatası kendiliğinden düzelir)
+  - `SUPABASE_URL` sonundaki `/` karakterlerini temizler
+  - `sb_publishable_` / `sb_secret_` önekini tanır ve Legacy API keys yönlendirmesi verir
+  - JWT biçimini (üç base64url parça) önceden doğrular — istek gönderilmeden hata verir
+  - Supabase'in ham hata gövdesini ("Invalid Compact JWS", "Bucket not found", 401/403/409)
+    ne yapılacağını söyleyen Türkçe cümleye çevirir
+  - `apikey` başlığını da gönderir (supabase-js davranışı)
+- `lib/actions/cfo-question-actions.ts`, `lib/actions/product-image-actions.ts`,
+  `app/(app)/products/[id]/edit/page.tsx` bu modüle bağlandı. Ürün görseli
+  ekranındaki "yükleme kapalı" uyarısı artık gerçek yapılandırma durumunu yansıtır.
+- 8 senaryoluk doğrulama çalıştırıldı: tırnaklı ve satır sonlu değerler onarılıyor;
+  `sb_…` anahtarı, ortasında satır sonu olan JWT ve eksik değişkenler ayrı ayrı
+  doğru mesajla yakalanıyor. tsc 0 hata, eslint temiz, `next build` başarılı.
+
+## 2026-08-27 — CFO Not Defteri + soru limitinin kaldırılması
+
+- **Soru limiti kaldırıldı.** `MAX_OPEN_QUESTIONS = 20` ve buna bağlı kontrol
+  `lib/actions/cfo-question-actions.ts` ve `app/(app)/cfo/sorular/page.tsx`
+  dosyalarından çıkarıldı. CFO artık gerektiği kadar soru sorabiliyor; disiplin
+  adet sınırından değil, `priority` sıralamasından geliyor (1 = en acil, en üstte).
+  Sayfada limit rozeti yerine "N açık soru / M acil-yüksek / K CFO işlemedi"
+  rozetleri var.
+- **Yeni sayfa `/cfo/defter` — CFO Not Defteri.** Cevaplardan çıkan KALICI
+  bilgilerin yeri. Soru defteri işlemsel, bu kalıcı: amaç aynı şeyi ikinci kez
+  sormamak. Sol menüye "CFO Not Defteri" girişi eklendi (`iconKey: "book"`).
+  - Her notta güvenilirlik etiketi zorunlu: Kesin / Tahmini / Eski / Teyit edilmeli.
+  - `pinned` notlar en üstte ("her rapor öncesi okunur"), gerisi kategoriye göre gruplu.
+  - `reviewBy` — kur/limit/fiyat gibi bayatlayan bilgiler için gözden geçirme tarihi;
+    tarih geçince not "bayat" rozetiyle işaretleniyor.
+  - `sourceQuestionId` — notun hangi cevaptan çıktığı izlenebiliyor.
+  - Not güncellenince eski gövde `CfoChangeLog`'a yazılıyor; gereksizleşen not
+    ARŞİVLENİYOR, silinmiyor.
+- Yeni dosyalar: `prisma/migrations/20260827210000_cfo_note/migration.sql`,
+  `lib/actions/cfo-note-actions.ts`, `app/(app)/cfo/defter/page.tsx`,
+  `app/(app)/cfo/defter/note-form.tsx`. `lib/cfo/questions.ts` yeniden yazıldı
+  (NOTE_CATEGORIES, NOTE_TAGS, CATEGORY_TR eklendi).
+- Migration production'a uygulandı ve `_prisma_migrations`'a kaydedildi;
+  defter 30 kayıtla dolduruldu (12 sabitlenmiş).
+
+## 2026-08-27 — Storage: anahtarın ROLÜ de doğrulanıyor (anon ≠ service_role)
+
+- `lib/storage/supabase-storage.ts` — `getStorageConfig()` artık JWT'nin
+  payload'ındaki `role` iddiasını okuyor ve `service_role` değilse isteği
+  göndermeden reddediyor. İmza doğrulanmıyor (bu kimlik doğrulama değil, kendi
+  yapılandırmamızın kontrolü).
+- Sebep: `Invalid Compact JWS` düzeltildikten sonra yükleme bu kez
+  `{"message":"new row violates row-level security policy"}` ile düştü.
+  Legacy API keys altında İKİ JWT var ve ikisi de `eyJ…` ile başlıyor —
+  `anon` (public) ve `service_role` (secret). Girilen anon anahtarıydı;
+  `service_role` RLS'i atlar, `anon` atlamaz. `storage.objects` üzerinde hiç
+  politika olmadığı için anon'un her INSERT'i reddediliyor.
+- `describeFailure()` ham `row-level security` hatasını da aynı yönlendirmeye çeviriyor.
+- ÇÖZÜM RLS politikası eklemek DEĞİL: bucket'a anon yazma izni vermek güvenlik
+  açığı olurdu. Doğru anahtar kullanılmalı.
+- Doğrulandı: gerçek anon anahtarı `role="anon"` olarak yakalanıyor;
+  `service_role` geçiyor; `authenticated` ve `sb_secret_…` reddediliyor.
+  tsc 0 hata, eslint temiz, `next build` başarılı.
+
+## 2026-08-28 — CFO disiplin altyapısı: snapshot, karar kuyruğu, log taksonomisi
+
+27.08 incelemesi CFO günlük görevinde üç yapısal boşluk gösterdi. Üçü de kapatıldı.
+
+- **`cfo_snapshot` artık dolduruluyor.** `cfo_take_snapshot(note)` fonksiyonu tek
+  komutla servet fotoğrafı alıyor; tanımlar `lib/cfo/engine.ts:364` ile birebir aynı
+  (narrow/wide worth, nakit, alacak, stok, borç, kur). `cfo_snapshot_gunluk` ve
+  `cfo_snapshot_delta` görünümleri "düne göre / haftaya göre" farkı veriyor.
+  Önceden tablo 0 satırdı — zaman serisi yoktu, "geçen haftaya göre iyi miyiz"
+  sorulamıyordu. İlk fotoğraf alındı: net 10.186 USD, geniş 180.917 USD.
+- **Karar kuyruğu.** `cfo_bekleyen_karar` (aday + ölü stok bulgusu + açık soru + bayat
+  not) ve `cfo_gecikmis_karar` (3 günü geçenler). Sebep: 31 aday ürünün 29'u
+  `inceleniyor` durumundaydı, **onaylanmış 0, reddedilmiş 0** — listeler birikiyor,
+  süzülmüyordu. Görünüm sabah raporunda boş olmak zorunda.
+- **Log taksonomisi ikiye ayrıldı.** `cfo_change_log.area` KONU (24 değerlik sabit
+  sözlük), yeni `kind` kolonu KAYIT TÜRÜ (13 değer). İkisi de DB'de CHECK ile zorlanıyor.
+  Önceden ikisi aynı kolona yazıldığı için `area` 63 farklı değere ulaşmıştı
+  (`nakit`/`NAKIT`, `satis`/`SATIS`/`satış`, `bulgu`, `duzeltme`…) ve log
+  sorgulanamaz hâldeydi. 472 satırın orijinal değeri `cfo_change_log_area_yedek`'e
+  yedeklendi — geri dönülebilir.
+- `lib/actions/cfo-actions.ts` — `logChange()` tablo adını konuya çeviriyor
+  (`cfo_bank_account` → `banka` vb.) ve `kind: "duzeltme"` yazıyor. Bu olmadan CFO
+  panosundaki her düzenleme yeni CHECK'e takılıp hata verecekti.
+- **Repo↔DB kayması kapandı:** ajanın Supabase'de doğrudan açtığı
+  `cfo_product_candidate` ve `cfo_dead_stock_finding` tabloları migration'a ve
+  `schema.prisma`'ya alındı. Sıfırdan kurulan bir ortamda artık oluşuyorlar.
+- **`docs/CFO-GOREV.md` (yeni)** — CFO'nun operasyon el kitabı. Görev tanımı 17 KB'lık
+  Cowork trigger config'inden repoya taşındı: artık sürüm geçmişi var, diff alınabiliyor.
+  Günlük 12 bölümlük liste, "her gün zorunlu üçlü + haftalık rotasyon"a dönüştürüldü;
+  sorular sohbet yerine `cfo_question`/`cfo_note` üzerinden yürüyor.
+- Doğrulandı: fonksiyon çalıştırıldı ve rakam üretti; CHECK 8 geçerli değeri kabul
+  edip sözlük dışını reddetti (test kayıtları silindi); `area` 63→24, `kind` 13.
+  tsc 0 hata, eslint temiz, `next build` başarılı.
+
+## 2026-08-29 — CFO / Ölü Stok sayfası (`/cfo/olu-stok`)
+
+- Yeni sayfa: hapsolmuş sermaye ve onu serbest bırakma kuyruğu. Veri kaynağı CFO'nun
+  kurduğu `cfo_olu_stok` görünümü (30 günde sıfır VEYA örtü > 180 gün; kukla stok
+  hariç, AMAZON_FBA dahil, çift sayımsız SKU eşleşmesi). **Sayfa hesap yapmaz** —
+  kural görünümde yaşıyor ki sabah raporu ile ekran aynı rakamı göstersin.
+- Üst şerit 4 kart: bağlı sermaye · kırmızı · 90 gündür sıfır · temizlenen sermaye.
+- Tablo `bagli_sermaye desc`; **kontrol vakti geçenler en üstte, kırmızı kenarlıklı**.
+  FBA rozeti, alarm sebebi, kontrol notu ve uygulanan aksiyon satırda görünür.
+- Her satırda üç eylem — `lib/actions/cfo-dead-stock-actions.ts`:
+  - **Kontrol ettim** → `last_checked_at` bugüne, `next_review_at` KIRMIZI için +14,
+    SARI için +30 gün
+  - **Aksiyon aldım** → `status='aksiyon_alindi'`, uygulanan iş yazılır, etki 14 gün
+    sonra ölçülmek üzere kontrole alınır
+  - **Kapat** → `status='kapandi'`, `released_capital_try` yazılır (boş bırakılırsa
+    bağlı sermayenin tamamı serbest sayılır)
+  Üçü de `cfo_change_log`'a yazar (`area='olu_stok'`, `kind` teyit/aksiyon/karar).
+- Altta **"Temizlenen sermaye"** tablosu: kapatılan bulguların serbest bıraktığı para
+  ay ay. Hedef bu sayının büyümesi.
+- Sol menüye "Ölü Stok" girişi eklendi (`iconKey: "package"`, `cfo.read`).
+- Doğrulama: üç UPDATE ve change log yazımı canlı veriye karşı geri alınabilir
+  transaction içinde çalıştırıldı, kalıntı 0. tsc 0 hata, eslint temiz,
+  `next build` başarılı.
+- Bugünkü tablo: 64 SKU / 3.693.739 ₺ bağlı; 6 kırmızı / 2.930.556 ₺;
+  7 SKU 90 gündür hiç satmadı (800.030 ₺).
+
+## 2026-08-29 — Ölü stok kendi takvimine geçti, karar kuyruğu temizlendi
+
+- Ölü stok sayfası açılınca 64 bulgu birden `cfo_bekleyen_karar`'a doldu, 12'si
+  3 günü geçmişti. "Sabah raporunda boş olmak zorunda" denen bir kuyruk asla
+  boşalamıyorsa kural ölür — ajan onu görmezden gelmeyi öğrenir.
+- Düzeltme: bulgu kuyruğa yalnız **kontrol vakti geçtiğinde** girer
+  (`next_review_at < current_date`). Takvimi ilerideyse `/cfo/olu-stok`
+  sayfasında durur, günlük kuyruğu kirletmez. Bekleme günü de açılış tarihinden
+  değil, kaçırılan kontrol tarihinden sayılır.
+- Sonuç: kuyruk 76 → 10 (9 soru + 1 bayat not), gecikmiş 2. 64 bulgu kendi
+  sayfasında; kırmızılar 14.09'da kuyruğa dönecek.
+
