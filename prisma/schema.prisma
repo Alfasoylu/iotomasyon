@@ -2309,7 +2309,8 @@ model WhatsAppContact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  messages WhatsAppMessage[]
+  messages  WhatsAppMessage[]
+  schedules WhatsAppScheduleRecipient[]
 
   @@index([isActive])
 }
@@ -2329,8 +2330,87 @@ model WhatsAppMessage {
   error     String?
   createdAt DateTime @default(now())
 
-  contact WhatsAppContact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  /// Bu mesajı doğuran zamanlanmış görev (elle gönderimde null).
+  scheduleId String?
+  /// Bu mesaj bir CEVAP bekliyor mu? Yalnız giden mesajlarda anlamlı.
+  /// Cevap gelince false'a çekilir; "soruldu ama cevap yok" listesi buradan.
+  awaitingReply Boolean @default(false)
+  /// GELEN mesaj hangi giden soruya cevap? Kullanıcının asıl istediği bu bağ:
+  /// "stok kaç adet?" sorusuyla gelen "12" yan yana görünsün.
+  replyToId String? @unique
+
+  contact  WhatsAppContact   @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  schedule WhatsAppSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  /// Kendine referans: cevap → soru.
+  replyTo  WhatsAppMessage?  @relation("SoruCevap", fields: [replyToId], references: [id], onDelete: SetNull)
+  reply    WhatsAppMessage?  @relation("SoruCevap")
 
   @@index([contactId, createdAt])
   @@index([direction, createdAt])
+  @@index([scheduleId, createdAt])
+  /// "Cevap bekleyenler" sorgusu — webhook her gelen mesajda çalıştırır.
+  @@index([contactId, awaitingReply])
+}
+
+/// Zamanlanmış mesaj: "depoya her sabah 08:30'da işe başladınız mı?"
+///
+/// Tetikleme vercel.json'da DEĞİL — Vercel Hobby yalnız günlük cron'a izin
+/// veriyor ve bu görev gün içinde saat başı kontrol edilmeli. PDKS
+/// hatırlatmalarıyla aynı yol: harici zamanlayıcı `/api/cron/whatsapp-schedules`
+/// adresini `Authorization: Bearer $CRON_SECRET` ile çağırır.
+model WhatsAppSchedule {
+  id   String @id @default(cuid())
+  name String
+
+  /// Onaylı şablon adı. BOŞSA serbest metin gönderilir ve bu yalnız alıcı son
+  /// 24 saatte yazmışsa çalışır — sabah yoklaması gibi işletme başlatımlı
+  /// mesajlarda pencere KAPALIDIR, yani şablon zorunludur.
+  templateName String?
+  templateLang String?
+  /// Şablon parametreleri ({{1}}, {{2}}…) sırasıyla; serbest metinde boş.
+  templateParams String[] @default([])
+  /// Serbest metin gövdesi ve panelde gösterilen önizleme.
+  body String @db.Text
+
+  /// Europe/Istanbul yerel saati. UTC saklamak yaz saati değişiminde mesajı
+  /// bir saat kaydırırdı; "her sabah 08:30" kullanıcı için yerel bir vaattir.
+  hour   Int
+  minute Int @default(0)
+  /// Haftanın günleri, 0=Pazar … 6=Cumartesi. Boş dizi = her gün.
+  daysOfWeek Int[] @default([])
+
+  /// Gönderilen mesaj cevap bekliyor mu (yoklama/stok sorusu = evet).
+  expectsReply Boolean @default(true)
+  isActive     Boolean @default(true)
+
+  /// En son çalıştığı Istanbul yerel günü ("2026-09-14"). Mükerrer gönderim
+  /// freni: harici zamanlayıcı saat başı çağırdığı için bu damga olmasa aynı
+  /// yoklama gün içinde defalarca giderdi.
+  lastRunOn String?
+  lastRunAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipients WhatsAppScheduleRecipient[]
+  messages   WhatsAppMessage[]
+
+  @@index([isActive])
+}
+
+/// Zamanlanmış görev ↔ alıcı bağı. Cloud API gruba mesaj atamadığı için
+/// herkese AYRI mesaj gider (ve ayrı ücretlenir).
+///
+/// CASCADE DEĞİL, RESTRICT: docs/AI-RULES.md + MIGRATION-SAFETY.md cascade için
+/// açık onay istiyor. Bağı silmek görevi/kişiyi silmenin parçası olduğundan
+/// kaldırma işlemi tek transaction'da yapılır (bkz. lib/actions/whatsapp-actions.ts).
+model WhatsAppScheduleRecipient {
+  scheduleId String
+  contactId  String
+
+  schedule WhatsAppSchedule @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  contact  WhatsAppContact  @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@id([scheduleId, contactId])
+  @@index([contactId])
 }

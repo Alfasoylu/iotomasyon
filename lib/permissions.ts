@@ -143,6 +143,14 @@ export const PERMISSIONS = {
   CFO_READ:                     "cfo.read",
   CFO_WRITE:                    "cfo.write",
 
+  // WhatsApp mesaj merkezi — kişiler, zamanlanmış mesajlar, gelen cevaplar.
+  // SEND ayrı tutuldu: mesaj göndermek para harcar ve alıcıyı rahatsız eder;
+  // geçmişi okumak zararsızdır. İkisini tek izinde birleştirmek, listeyi
+  // görmesi gereken herkese gönderim yetkisi vermek olurdu.
+  WHATSAPP_READ:                "whatsapp.read",
+  WHATSAPP_SEND:                "whatsapp.send",
+  WHATSAPP_MANAGE:              "whatsapp.manage",
+
   // Dangerous — require explicit UserPermission grant even for ADMIN
   MIGRATIONS_APPROVE:           "migrations.approve",
   DESTRUCTIVE_ACTIONS_APPROVE:  "destructiveActions.approve",

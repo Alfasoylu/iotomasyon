@@ -514,6 +514,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Sistem",
   },
   {
+    href: "/whatsapp",
+    label: "WhatsApp",
+    iconKey: "messageSquare",
+    permission: PERMISSIONS.WHATSAPP_READ,
+    section: "Sistem",
+  },
+  {
     href: "/orders",
     label: "Siparişler",
     iconKey: "archive",

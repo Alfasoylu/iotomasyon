@@ -211,6 +211,62 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 13.09.2026 — WhatsApp Faz 2: zamanlanmış mesajlar + soru/cevap takibi
+Faz 1 borular döşemişti (webhook, şema, gönderim). Bu delta kullanıcının asıl
+istediğini kuruyor: *"depocuya her sabah işe başladınız mı diye mesaj attıracağım,
+cevabını da iotomasyon üzerinden takip edeceğim."*
+
+**Panel:** `/whatsapp` (Sistem menüsü). En üstte **cevap bekleyenler** —
+sorulmuş ama cevabı gelmemiş mesajlar. Altında zamanlanmış görevler, son
+gönderilenler (her mesajın cevabı **kendi içine gömülü**, ayrı satır açmaz),
+bağımsız gelen mesajlar ve kişi listesi.
+
+**Soru↔cevap bağı:** gelen mesaj, son 48 saatte sorulmuş ve hâlâ cevapsız
+bekleyen SON soruya bağlanır (`WhatsAppMessage.replyToId`, TEKİL). Bağlamamak
+kesin kayıptı; yanlış bağlama riski var ama 48 saat sınırı onu tutuyor —
+üç gün önceki soruya bağlanan bir "tamam" yanlış kayıt olurdu ve **yanlış
+kayıt, kayıt olmamasından kötüdür**.
+
+**Zamanlama Europe/Istanbul yereline göre.** UTC saklamak yaz saati değişiminde
+mesajı bir saat kaydırırdı; "her sabah 08:30" kullanıcı için yerel bir vaat.
+
+**Mükerrer freni `lastRunOn` damgası** (yerel gün), "şu kadar dakika önce"
+penceresi değil. Harici zamanlayıcı gecikirse pencere tabanlı kural mesajı
+kaçırır, iki kez çağırırsa iki kez gönderirdi. Damga ile: saati geçen görev gün
+içinde **hâlâ** gider (08:30 kaçarsa 09:00'da gider), ama günde bir kez.
+Damga gönderimden ÖNCE atılır — yarıda çökersek eksik gönderim olur, mükerrer
+olmaz; mükerrer olan hem ücretli hem güven kırıcı.
+
+**Tetikleme `vercel.json`'da DEĞİL.** Hobby yalnız günlük cron'a izin veriyor ve
+iki günlük cron zaten dolu; bu görev saat başı kontrol edilmeli. PDKS
+hatırlatmalarındaki yolun aynısı: harici zamanlayıcı
+`/api/cron/whatsapp-schedules` adresini `Authorization: Bearer $CRON_SECRET`
+ile çağırır. Panelde **"Görevleri şimdi çalıştır"** düğmesi var — *"görev
+tanımlı" olması mesajın gittiğini KANITLAMAZ*, bu düğme kurulumu beklemeden
+boru hattını doğrular.
+
+**İzinler ayrı tutuldu:** `whatsapp.read` / `whatsapp.send` / `whatsapp.manage`.
+Gönderim para harcar ve alıcıyı rahatsız eder; geçmişi okumak zararsızdır.
+DEPO **okur, gönderemez**; OPERASYON okur ve gönderir; görev/kişi tanımı
+(`manage`) ADMIN'de — yanlış tanımlanmış bir görev her gün yanlış kişiye mesaj
+atar ve bunu kimse fark etmez.
+
+**Şema:** `WhatsAppSchedule`, `WhatsAppScheduleRecipient`; `WhatsAppMessage`'a
+`scheduleId` + `awaitingReply` + `replyToId`. Migration
+`20260913230000_whatsapp_schedules` salt ekleme, yeni kolonlar nullable/DEFAULT'lu
+(backfill gerekmez), iki yeni tabloda RLS açık, FK'ler RESTRICT/SET NULL —
+**CASCADE yok** (repo kuralı açık onay istiyor), görev silinince mesaj geçmişi
+durur.
+
+**Testler:** `npm run check:wa` 17 → **30 kontrol**. Yeni 13'ü zamanlama
+kararını sınıyor: yerel saat dönüşümü, gece yarısı `24 → 0` düzeltmesi (olmasa
+00:30'da hiçbir görev tetiklenmezdi), yerel günün UTC gününden ayrışması, gün
+filtresi, mükerrer freni, geç kalan tetikleme.
+
+**Henüz YOK:** kişi/görev ekleme formları (şu an sayfa okuma + elle tetikleme;
+kayıt eylemleri `lib/actions/whatsapp-actions.ts`'te hazır ama forma bağlı
+değil), reklam paneli.
+
 ### 13.09.2026 — WhatsApp mesaj merkezi: temel katman (Faz 1)
 Sipariş bildirimleri alfashome backend'inden gidiyor ama **cevaplar hiçbir yere
 düşmüyordu**. Amaç: depoya/ekibe düzenli mesaj atmak ve gelen cevabı iotomasyon
