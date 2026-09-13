@@ -39,8 +39,8 @@ export default async function SuppliersPage() {
             Tedarikçileri tanımlayın, ürünlerle ilişkilendirin ve tedarik koşullarını kaydedin.
           </p>
         </div>
-        <Link href="/admin/procurement" className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-          ← Tedarik Asistanı
+        <Link href="/cfo/kazananlar#ithalat" className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+          ← Sıradaki Sipariş
         </Link>
       </div>
 

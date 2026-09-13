@@ -21,6 +21,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { CsvDownloadButton } from "@/components/admin/csv-download-button";
+import { ImportOrderPointer } from "@/components/cfo/import-order-pointer";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageHelp } from "@/components/layout/page-help";
 import {
@@ -288,11 +289,6 @@ export default async function SermayeSaglikPage() {
     .sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0))
     .slice(0, 10);
 
-  const urgentReorder = enriched
-    .filter((p) => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14 && p.effectiveMonthlyUnits > 0)
-    .sort((a, b) => (a.stockDays ?? 0) - (b.stockDays ?? 0))
-    .slice(0, 10);
-
   const liquidation = enriched
     .filter((p) => p.stockQuantity > 0 && (p.totalCostUsd ?? 0) > 0 && p.t30g === 0 && p.lifetimeSold > 0)
     .sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0))
@@ -307,7 +303,7 @@ export default async function SermayeSaglikPage() {
   const roiScore = Math.min(50, Math.max(0, (annualRoiPct / 60) * 50));
   const deadRatio = totalLockedUsd > 0 ? deadStockUsd / totalLockedUsd : 0;
   const deadScore = Math.max(0, (1 - Math.min(1, deadRatio * 2)) * 25);
-  // urgentReorder filtered to top 10 — use full count for score
+  // Liste kaldırıldı; skor için tam sayı hâlâ gerekiyor.
   const urgentCount = enriched.filter(
     (p) => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14 && p.effectiveMonthlyUnits > 0,
   ).length;
@@ -552,44 +548,11 @@ export default async function SermayeSaglikPage() {
           emptyMsg="Ölü stok yok"
         />
 
-        <ActionList
-          title="Acil Sipariş"
-          subtitle="14 günden az stoku kalan ürünler — hemen sipariş ver"
-          color="red"
-          csv={{
-            filename: "acil-siparis.csv",
-            columns: [
-              { header: "Ürün", key: "name" },
-              { header: "Marka", key: "brand" },
-              { header: "SKU", key: "sku" },
-              { header: "Kalan Gün", key: "stockDays" },
-              { header: "Stok", key: "stockQuantity" },
-              { header: "Aylık Satış", key: "effectiveMonthlyUnits" },
-            ],
-            rows: enriched
-              .filter(
-                (p) => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14 && p.effectiveMonthlyUnits > 0,
-              )
-              .sort((a, b) => (a.stockDays ?? 0) - (b.stockDays ?? 0))
-              .map((p) => ({
-                name: p.name,
-                brand: p.brand ?? "",
-                sku: p.sku,
-                stockDays: p.stockDays ?? 0,
-                stockQuantity: p.stockQuantity,
-                effectiveMonthlyUnits: p.effectiveMonthlyUnits,
-              })),
-          }}
-          rows={urgentReorder.map((p) => ({
-            id: p.id,
-            primary: p.name,
-            secondary: `${p.brand ?? "—"} · ${p.sku}`,
-            valueLabel: "kalan",
-            value: `${p.stockDays}g`,
-            meta: `stok ${p.stockQuantity} · aylık ${p.effectiveMonthlyUnits}`,
-          }))}
-          emptyMsg="Acil sipariş yok"
-        />
+        {/* "Acil Sipariş" listesi 10.09.2026'da kaldırıldı — tek yeri /cfo/kazananlar.
+            14 günlük eşik burada Trendyol hızından türetiliyordu; konsolide sayfa
+            CFO'nun parti defterini ve gerçek terminleri okuyor. Sağlık skorundaki
+            "acil sipariş" puanı (urgentCount) kalıyor: o bir liste değil, ölçü. */}
+        <ImportOrderPointer neydi="Acil Sipariş listesi" className="self-start" />
 
         <ActionList
           title="Likidasyon Adayı"

@@ -51,6 +51,9 @@ import {
   Receipt,
   ChevronRight,
   type LucideIcon,
+  CalendarClock,
+  Trophy,
+  PackagePlus,
 } from "lucide-react";
 
 import { useSidebarStore } from "@/hooks/use-sidebar-store";
@@ -84,6 +87,9 @@ const ICONS: Record<string, LucideIcon> = {
   megaphone: Megaphone,
   target: Target,
   package: Package,
+  packagePlus: PackagePlus,
+  calendar: CalendarClock,
+  trophy: Trophy,
   folderTree: FolderTree,
   search: Search,
   warehouse: Warehouse,

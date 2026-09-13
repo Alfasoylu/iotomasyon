@@ -18,9 +18,9 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { calculateProfitability } from "@/lib/profitability";
-import { calculateProcurement } from "@/lib/procurement";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ImportOrderPointer } from "@/components/cfo/import-order-pointer";
 import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
@@ -68,35 +68,6 @@ function KpiCard({
         {value}
       </p>
       {sub && <p className="mt-1 text-xs text-[var(--text-muted)]">{sub}</p>}
-    </div>
-  );
-}
-
-// ─── Urgency Pill ─────────────────────────────────────────────────────────────
-
-function UrgencyPill({
-  label,
-  count,
-  tone,
-}: {
-  label: string;
-  count: number;
-  tone: "red" | "orange" | "amber" | "blue" | "green" | "slate";
-}) {
-  const valueColor: Record<string, string> = {
-    red: "text-[var(--danger)]",
-    orange: "text-[var(--warn)]",
-    amber: "text-[var(--warn)]",
-    blue: "text-[var(--info)]",
-    green: "text-[var(--ok)]",
-    slate: "text-[var(--text-secondary)]",
-  };
-  return (
-    <div className="flex items-center justify-between rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] px-4 py-3">
-      <span className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
-        {label}
-      </span>
-      <span className={`text-lg font-semibold tabular-nums ${valueColor[tone]}`}>{count}</span>
     </div>
   );
 }
@@ -217,27 +188,6 @@ export default async function ExecutivePage() {
     .filter((p) => p.marketplaceMargin != null)
     .sort((a, b) => (b.marketplaceMargin ?? 0) - (a.marketplaceMargin ?? 0))
     .slice(0, 5);
-
-  // ── Procurement Urgency ───────────────────────────────────────────────────
-  const urgencyCounts = {
-    CRITICAL: 0,
-    HIGH: 0,
-    MEDIUM: 0,
-    LOW: 0,
-    OK: 0,
-    UNKNOWN: 0,
-  };
-  let totalReorderCost = 0;
-
-  for (const p of prods) {
-    const result = calculateProcurement(p);
-    urgencyCounts[result.reorderUrgency]++;
-    if (result.reorderUrgency === "CRITICAL" || result.reorderUrgency === "HIGH") {
-      totalReorderCost += result.suggestedOrderCost;
-    }
-  }
-
-  const urgentCount = urgencyCounts.CRITICAL + urgencyCounts.HIGH;
 
   // ── Capital Status ────────────────────────────────────────────────────────
   const totalCapital = capitalConfig ? Number(capitalConfig.totalCapitalTry) : null;
@@ -434,43 +384,11 @@ export default async function ExecutivePage() {
         )}
       </Card>
 
-      {/* ── Section 4: Procurement Urgency ── */}
-      <Card className="p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
-              Tedarik Aciliyeti
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">Stok Uyarıları</h2>
-          </div>
-          <div className="flex items-center gap-3">
-            {urgentCount > 0 && (
-              <div className="rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-4 py-2 text-right">
-                <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
-                  Tahmini acil alım maliyeti
-                </p>
-                <p className="text-base font-semibold tabular-nums text-[var(--danger)]">
-                  {fmt(totalReorderCost)}
-                </p>
-              </div>
-            )}
-            <Link
-              href="/admin/procurement"
-              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-            >
-              Tedarik Asistanı →
-            </Link>
-          </div>
-        </div>
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <UrgencyPill label="KRİTİK" count={urgencyCounts.CRITICAL} tone="red" />
-          <UrgencyPill label="YÜKSEK" count={urgencyCounts.HIGH} tone="orange" />
-          <UrgencyPill label="ORTA" count={urgencyCounts.MEDIUM} tone="amber" />
-          <UrgencyPill label="DÜŞÜK" count={urgencyCounts.LOW} tone="blue" />
-          <UrgencyPill label="YETERLİ" count={urgencyCounts.OK} tone="green" />
-          <UrgencyPill label="VERİ YOK" count={urgencyCounts.UNKNOWN} tone="slate" />
-        </div>
-      </Card>
+      {/* ── Section 4: sıradaki sipariş listesi /cfo/kazananlar'a taşındı ── */}
+      {/* Aciliyet sayıları ve "tahmini acil alım maliyeti" burada Trendyol 30 günlük
+          satışından türetiliyordu; konsolide sayfa CFO'nun parti defterini okuyor.
+          İki rakam aynı ekranda farklı çıktığı için kopya olan bu kart kaldırıldı. */}
+      <ImportOrderPointer neydi="Tedarik Aciliyeti / Stok Uyarıları" />
 
       {/* ── Section 5: Profitability Top 5 ── */}
       <Card className="overflow-hidden">
@@ -561,8 +479,8 @@ export default async function ExecutivePage() {
         <Link href="/admin/capital" className="hover:text-[var(--text-primary)]">
           Sermaye Dağılımı →
         </Link>
-        <Link href="/admin/procurement" className="hover:text-[var(--text-primary)]">
-          Tedarik Asistanı →
+        <Link href="/cfo/kazananlar#ithalat" className="hover:text-[var(--text-primary)]">
+          Sıradaki Sipariş →
         </Link>
         <Link href="/admin/import-calculator" className="hover:text-[var(--text-primary)]">
           İthalat Hesaplayıcısı →

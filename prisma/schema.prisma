@@ -1925,6 +1925,15 @@ model CfoSettings {
   stockCostUsd          Decimal?  @db.Decimal(14, 2) // satılabilir stok maliyeti
   blockedStockUsd       Decimal?  @db.Decimal(14, 2) // Romanya bloke stok
   stockCoverMonths      Decimal?  @db.Decimal(6, 2)
+  netPositionFloorTry   Decimal?  @db.Decimal(14, 2) // net pozisyon tabanı (uyarı eşiği)
+
+  // İthalat sipariş kuralları (Alperen 10.09.2026) — /cfo/kazananlar önerisi bunları okur.
+  importAirLeadDays       Int     @default(22) // hava kargo tedarik termini (gün)
+  importSeaLeadDays       Int     @default(67) // deniz kargo tedarik termini (gün)
+  importMinOrderUsd       Decimal @default(10000) @db.Decimal(14, 2) // parti başına min tutar
+  importMinLineQty        Int     @default(5) // satır başına min adet
+  monthlyRevenueTargetUsd Decimal @default(100000) @db.Decimal(14, 2) // hedef aylık ciro
+
   updatedAt             DateTime  @updatedAt
   updatedByEmail        String?
 
@@ -1987,7 +1996,9 @@ model CfoLoan {
   earlyPayoffTry      Decimal?         @db.Decimal(14, 2)
   monthlyPaymentTry   Decimal?         @db.Decimal(14, 2)
   paymentDay          Int?
-  lastInstallmentDate DateTime?
+  totalInstallments   Int? // toplam taksit sayısı (ör. 24)
+  remainingOverride   Int? // düzensiz ödeme planlarında kalan taksit elle girilir; boşsa tarihlerden hesaplanır
+  lastInstallmentDate DateTime? // = kredi bitiş tarihi
   nextPaymentDate     DateTime?
   interestRatePct     Decimal?         @db.Decimal(6, 3) // aylık faiz — boşsa erken kapama ROI'si hesaplanamaz
   currentMonthState   CfoPaymentStatus @default(TEYIT_EDILMELI)
@@ -2113,15 +2124,25 @@ model CfoSnapshot {
 model CfoChangeLog {
   id        String   @id @default(cuid())
   changedAt DateTime @default(now())
-  area      String // örn "cfo_bank_account"
+  /// KONU. Sabit sözlük (DB'de CHECK ile zorlanır): nakit | banka | kart | kredi |
+  /// alacak | gumruk | maliyet | marj | fiyat | satis | stok | olu_stok | urun |
+  /// siparis | alfashome | iotomasyon | veri | strateji | soru | kural | risk |
+  /// erisim | guvenlik | not | diger
+  area      String
   item      String // örn "Akbank Alp KMH limiti"
   oldValue  String?
   newValue  String?
   source    String? // "Kullanıcı", "Trendyol ekran görüntüsü", "Sistem"
   note      String?
+  /// KAYIT TÜRÜ — konudan ayrı eksen. 27.08'e kadar ikisi de area'ya yazılıyordu,
+  /// bu yüzden area 63 farklı değere ulaşmış ve log sorgulanamaz hâle gelmişti.
+  /// bulgu | duzeltme | karar | aksiyon | analiz | teyit | celiski | arastirma |
+  /// senaryo | onay | model | plan | cfo_oz_elestiri
+  kind      String?
 
   @@index([changedAt])
   @@index([area])
+  @@index([kind])
   @@map("cfo_change_log")
 }
 
@@ -2319,4 +2340,273 @@ model TrendyolFinanceImport {
   @@index([importedAt])
   @@index([fileKind])
   @@map("trendyol_finance_import")
+}
+
+/// 100.000 USD hedefine aday ürünler. Liste birikir; verdict ile süzülür.
+/// 3 gün "inceleniyor" kalan aday karara zorlanır (bkz. cfo_gecikmis_karar view).
+model CfoProductCandidate {
+  id                  BigInt    @id @default(autoincrement())
+  foundAt             DateTime  @default(now()) @map("found_at") @db.Date
+  source              String?
+  productName         String    @map("product_name")
+  category            String?
+  sku                 String?
+  salePriceTry        Decimal?  @map("sale_price_try") @db.Decimal
+  unitCostTry         Decimal?  @map("unit_cost_try") @db.Decimal
+  grossMarginPct      Decimal?  @map("gross_margin_pct") @db.Decimal
+  unitsNeededMonthly  Decimal?  @map("units_needed_monthly") @db.Decimal
+  marketEvidence      String?   @map("market_evidence")
+  competition         String?
+  entryCapitalTry     Decimal?  @map("entry_capital_try") @db.Decimal
+  concentrationRisk   String?   @map("concentration_risk")
+  /// inceleniyor | maliyet_bekliyor | sermaye_planinda | reddedildi
+  verdict             String    @default("inceleniyor")
+  verdictReason       String?   @map("verdict_reason")
+  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("cfo_product_candidate")
+}
+
+/// Ölü stok bulguları. "Satmıyor" sebep değildir — reason_code kanıtıyla dolar.
+model CfoDeadStockFinding {
+  id                 BigInt    @id @default(autoincrement())
+  foundAt            DateTime  @default(now()) @map("found_at") @db.Date
+  sku                String?
+  productName        String?   @map("product_name")
+  stockQty           Int?      @map("stock_qty")
+  daysIdle           Int?      @map("days_idle")
+  tiedCapitalTry     Decimal?  @map("tied_capital_try") @db.Decimal
+  /// fiyat_yuksek | listeleme_kotu | eski_model | sezon_disi | talep_yok |
+  /// yanlis_alim | yasal_kisit | bilinmiyor
+  reasonCode         String?   @map("reason_code")
+  reasonEvidence     String?   @map("reason_evidence")
+  actionTaken        String?   @map("action_taken")
+  actionAppliedAt    DateTime? @map("action_applied_at") @db.Timestamptz(6)
+  releasedCapitalTry Decimal?  @map("released_capital_try") @db.Decimal
+  /// acik | izleniyor | kapandi | gecersiz
+  status             String    @default("acik")
+  updatedAt          DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("cfo_dead_stock_finding")
+}
+
+/// CFO ↔ Alperen soru-cevap defteri.
+/// Amaç: CFO'nun her sabah sohbetten soru sormasını bitirmek. Sorular buraya düşer,
+/// cevaplar sistemde KALICI olur ve sonraki analizlere girdi olur.
+/// Aynı anda en fazla 20 AÇIK soru olabilir (kod tarafında zorlanır) — liste dolmuşsa
+/// CFO yeni soru ekleyemez, önce mevcutlar cevaplanmalı. Bu, soru enflasyonunu engeller.
+model CfoQuestion {
+  id       String   @id @default(cuid())
+  askedAt  DateTime @default(now())
+  /// Soru metni — tek bir net soru. Birden fazla şey soruluyorsa ayrı kayıt açılır.
+  question String
+  /// Neden soruluyor: hangi karar/hesap bu cevaba bağlı.
+  why      String?
+  /// nakit | marj | stok | siparis | gumruk | urun | banka | seo | diger
+  area     String   @default("diger")
+  /// 1 = en acil (bir kararı bloke ediyor) … 5 = bilgi amaçlı
+  priority Int      @default(3)
+  /// ACIK | CEVAPLANDI | IPTAL
+  status   String   @default("ACIK")
+
+  answer     String?
+  answeredAt DateTime?
+  answeredBy String?
+
+  /// CFO cevabı okuyup işledi mi (deftere/hesaba yansıdı mı).
+  processedAt DateTime?
+  processNote String?
+
+  attachments CfoQuestionFile[]
+  /// Bu cevaptan çıkarılan kalıcı bilgiler (not defteri).
+  notes       CfoNote[]
+
+  @@index([status, priority])
+  @@index([askedAt])
+  @@map("cfo_question")
+}
+
+/// Cevaba eklenen dosyalar (ekran görüntüsü, ekstre, tedarik tablosu…).
+/// Supabase Storage'da `cfo-files` bucket'ında tutulur; burada sadece URL ve metadata.
+model CfoQuestionFile {
+  id         String      @id @default(cuid())
+  questionId String
+  question   CfoQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  url        String
+  fileName   String
+  mimeType   String?
+  sizeBytes  Int?
+  uploadedAt DateTime    @default(now())
+
+  @@index([questionId])
+  @@map("cfo_question_file")
+}
+
+/// CFO Not Defteri — cevaplardan çıkan KALICI bilgiler.
+///
+/// Soru defteri işlemsel: "şunu sordum, şöyle cevap geldi". Not defteri kalıcı:
+/// "Ziraat kartın aylık faizi %4,50". Amaç, aynı şeyi ikinci kez sormamak.
+/// Bir bilgi değişirse not GÜNCELLENİR ve eski değeri CfoChangeLog'a yazılır;
+/// gereksizleşirse arşivlenir, SİLİNMEZ.
+model CfoNote {
+  id       String @id @default(cuid())
+  /// Kısa başlık — "Ziraat kart aylık faiz oranı" gibi, aranabilir olmalı.
+  title    String
+  /// Bilginin kendisi + nasıl elde edildiği. Rakam varsa hesabı da burada durur.
+  body     String
+  /// nakit | marj | stok | siparis | gumruk | urun | banka | seo | kural | diger
+  category String @default("diger")
+  /// KESIN | TAHMINI | ESKI | TEYIT_EDILMELI — "rakam uydurma" kuralının defterdeki karşılığı.
+  dataTag  String @default("KESIN")
+  /// Bilgi nereden geldi: ekran görüntüsü, fatura, hesap hareketi, Alperen beyanı...
+  source   String?
+
+  /// Bu not hangi cevaptan çıktı (varsa).
+  sourceQuestionId String?
+  sourceQuestion   CfoQuestion? @relation(fields: [sourceQuestionId], references: [id], onDelete: SetNull)
+
+  /// Üstte sabitlenir — her rapor öncesi mutlaka okunacak bilgiler.
+  pinned   Boolean @default(false)
+  /// Bu tarihten sonra bilgi bayat sayılır ve teyit istenir (kur, fiyat, limit gibi).
+  reviewBy DateTime?
+  /// Arşivlenen not listede görünmez ama silinmez.
+  archivedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([archivedAt, pinned, category])
+  @@index([sourceQuestionId])
+  @@map("cfo_note")
+}
+
+// ─── WhatsApp mesajlaşma (Faz 3) ────────────────────────────────────────────
+//
+// Neden ayrı kişi tablosu: mesaj alıcısı her zaman personel veya kullanıcı
+// olmayabilir (depocu, tedarikçi, kurye). pdks_personnel'i bu iş için
+// genişletmek o modeli bulanıklaştırırdı.
+//
+// ⚠️ WhatsApp Cloud API GRUBA MESAJ ATAMAZ — yalnız birebir. Depo ekibine
+// bildirim, herkese ayrı ayrı gönderilerek çözülür.
+
+model WhatsAppContact {
+  id     String  @id @default(cuid())
+  name   String
+  /// Normalleştirilmiş, ülke kodlu, rakam-only: 905321112233
+  phone  String  @unique
+  /// Serbest etiket: "depocu" | "mudur" | "kurye" ...
+  label  String?
+  isActive Boolean @default(true)
+  /// Son GELEN mesaj anı. 24 saatlik serbest metin penceresi buradan hesaplanır;
+  /// pencere kapalıyken yalnız onaylı şablon gönderilebilir.
+  lastInboundAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages  WhatsAppMessage[]
+  schedules WhatsAppScheduleRecipient[]
+
+  @@index([isActive])
+}
+
+model WhatsAppMessage {
+  id        String  @id @default(cuid())
+  contactId String
+  /// "OUT" (biz gönderdik) | "IN" (karşıdan geldi)
+  direction String
+  /// Meta'nın mesaj kimliği. TEKİL: Meta webhook'u yeniden gönderir; bu kısıt
+  /// olmasa aynı cevap defalarca kaydedilirdi.
+  waMessageId  String? @unique
+  templateName String?
+  body      String  @db.Text
+  /// queued | sent | delivered | read | failed
+  status    String  @default("queued")
+  error     String?
+  createdAt DateTime @default(now())
+
+  /// Bu mesajı doğuran zamanlanmış görev (elle gönderimde null).
+  scheduleId String?
+  /// Bu mesaj bir CEVAP bekliyor mu? Yalnız giden mesajlarda anlamlı.
+  /// Cevap gelince false'a çekilir; "soruldu ama cevap yok" listesi buradan.
+  awaitingReply Boolean @default(false)
+  /// GELEN mesaj hangi giden soruya cevap? Kullanıcının asıl istediği bu bağ:
+  /// "stok kaç adet?" sorusuyla gelen "12" yan yana görünsün.
+  replyToId String? @unique
+
+  contact  WhatsAppContact   @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  schedule WhatsAppSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  /// Kendine referans: cevap → soru.
+  replyTo  WhatsAppMessage?  @relation("SoruCevap", fields: [replyToId], references: [id], onDelete: SetNull)
+  reply    WhatsAppMessage?  @relation("SoruCevap")
+
+  @@index([contactId, createdAt])
+  @@index([direction, createdAt])
+  @@index([scheduleId, createdAt])
+  /// "Cevap bekleyenler" sorgusu — webhook her gelen mesajda çalıştırır.
+  @@index([contactId, awaitingReply])
+}
+
+/// Zamanlanmış mesaj: "depoya her sabah 08:30'da işe başladınız mı?"
+///
+/// Tetikleme vercel.json'da DEĞİL — Vercel Hobby yalnız günlük cron'a izin
+/// veriyor ve bu görev gün içinde saat başı kontrol edilmeli. PDKS
+/// hatırlatmalarıyla aynı yol: harici zamanlayıcı `/api/cron/whatsapp-schedules`
+/// adresini `Authorization: Bearer $CRON_SECRET` ile çağırır.
+model WhatsAppSchedule {
+  id   String @id @default(cuid())
+  name String
+
+  /// Onaylı şablon adı. BOŞSA serbest metin gönderilir ve bu yalnız alıcı son
+  /// 24 saatte yazmışsa çalışır — sabah yoklaması gibi işletme başlatımlı
+  /// mesajlarda pencere KAPALIDIR, yani şablon zorunludur.
+  templateName String?
+  templateLang String?
+  /// Şablon parametreleri ({{1}}, {{2}}…) sırasıyla; serbest metinde boş.
+  templateParams String[] @default([])
+  /// Serbest metin gövdesi ve panelde gösterilen önizleme.
+  body String @db.Text
+
+  /// Europe/Istanbul yerel saati. UTC saklamak yaz saati değişiminde mesajı
+  /// bir saat kaydırırdı; "her sabah 08:30" kullanıcı için yerel bir vaattir.
+  hour   Int
+  minute Int @default(0)
+  /// Haftanın günleri, 0=Pazar … 6=Cumartesi. Boş dizi = her gün.
+  daysOfWeek Int[] @default([])
+
+  /// Gönderilen mesaj cevap bekliyor mu (yoklama/stok sorusu = evet).
+  expectsReply Boolean @default(true)
+  isActive     Boolean @default(true)
+
+  /// En son çalıştığı Istanbul yerel günü ("2026-09-14"). Mükerrer gönderim
+  /// freni: harici zamanlayıcı saat başı çağırdığı için bu damga olmasa aynı
+  /// yoklama gün içinde defalarca giderdi.
+  lastRunOn String?
+  lastRunAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipients WhatsAppScheduleRecipient[]
+  messages   WhatsAppMessage[]
+
+  @@index([isActive])
+}
+
+/// Zamanlanmış görev ↔ alıcı bağı. Cloud API gruba mesaj atamadığı için
+/// herkese AYRI mesaj gider (ve ayrı ücretlenir).
+///
+/// CASCADE DEĞİL, RESTRICT: docs/AI-RULES.md + MIGRATION-SAFETY.md cascade için
+/// açık onay istiyor. Bağı silmek görevi/kişiyi silmenin parçası olduğundan
+/// kaldırma işlemi tek transaction'da yapılır (bkz. lib/actions/whatsapp-actions.ts).
+model WhatsAppScheduleRecipient {
+  scheduleId String
+  contactId  String
+
+  schedule WhatsAppSchedule @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  contact  WhatsAppContact  @relation(fields: [contactId], references: [id], onDelete: Restrict)
+
+  @@id([scheduleId, contactId])
+  @@index([contactId])
 }

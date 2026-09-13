@@ -12,7 +12,7 @@
  * No schema change — reads existing TrendyolSalesRecord (Phase 26).
  */
 
-import { DollarSign, AlertTriangle, Package } from "lucide-react";
+import { DollarSign, AlertTriangle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -22,6 +22,7 @@ import { calculateSalesPotential } from "@/lib/sales-potential";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CapitalConfigForm } from "@/components/capital/capital-config-form";
+import { ImportOrderPointer } from "@/components/cfo/import-order-pointer";
 import { PageHeader } from "@/components/layout/page-header";
 
 export const dynamic = "force-dynamic";
@@ -254,100 +255,10 @@ export default async function CapitalPage() {
             </p>
           </Card>
 
-          {/* Suggestions table */}
-          {allocation.suggestions.length > 0 ? (
-            <Card className="overflow-hidden p-0">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Satın alma önerileri</h2>
-                  <Badge>{allocation.suggestions.length} ürün</Badge>
-                </div>
-                {/* Phase 77: direct link to create purchase order pre-filled from capital */}
-                <a
-                  href="/admin/purchase-orders/new?from=capital"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 text-[12px] font-medium text-[var(--accent-fg)] transition-all hover:brightness-110"
-                >
-                  <Package size={14} strokeWidth={1.5} />
-                  Satın Alma Siparişi Oluştur
-                </a>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-1)] text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
-                      <th className="px-6 py-3 text-left">Ürün</th>
-                      <th className="px-4 py-3 text-right">Skor</th>
-                      <th className="px-4 py-3 text-center">Hız</th>
-                      <th className="px-4 py-3 text-right">Mevcut stok</th>
-                      <th className="px-4 py-3 text-right">Hedef stok</th>
-                      <th className="px-4 py-3 text-right">Öneri adet</th>
-                      <th className="px-4 py-3 text-right">Stok değeri</th>
-                      <th className="px-4 py-3 text-right">Birim maliyet</th>
-                      <th className="px-4 py-3 text-right">Tahsis</th>
-                      <th className="px-4 py-3 text-right">Tahmini aylık ROI</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
-                    {allocation.suggestions.map((s) => (
-                      <tr key={s.product.id} className="hover:bg-[var(--surface-3)]">
-                        <td className="px-6 py-3">
-                          <p className="font-medium text-[var(--text-primary)]">{s.product.name}</p>
-                          <p className="font-mono text-xs text-[var(--text-muted)]">{s.product.sku}</p>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">{s.product.investmentScore}</span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          {(s.product as { velocitySource?: string }).velocitySource === "actual" ? (
-                            <Badge variant="ok">Gerçek</Badge>
-                          ) : (
-                            <Badge variant="neutral">Tahmin</Badge>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">{s.product.stockQuantity}</td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">{s.targetStock}</td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">{s.allocatedQty}</span>
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
-                          {fmt(s.currentStockValue)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
-                          {s.product.unitCostTry != null ? fmt(s.product.unitCostTry) : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">
-                          {fmt(s.allocatedAmount)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums">
-                          {s.expectedMonthlyROI != null ? (
-                            <span className={s.expectedMonthlyROI >= 0 ? "font-medium text-[var(--ok)]" : "font-medium text-[var(--danger)]"}>
-                              {fmtPct(s.expectedMonthlyROI)}
-                            </span>
-                          ) : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t border-[var(--border-default)] bg-[var(--surface-1)]">
-                      <td colSpan={8} className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">Toplam tahsis</td>
-                      <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-[var(--text-primary)]">{fmt(allocation.allocatedTotal)}</td>
-                      <td />
-                    </tr>
-                    <tr className="bg-[var(--surface-1)]">
-                      <td colSpan={8} className="px-6 py-2 text-xs text-[var(--text-muted)]">Tahsis sonrası kalan kullanılabilir sermaye</td>
-                      <td className="px-4 py-2 text-right font-mono text-xs font-semibold tabular-nums text-[var(--ok)]">{fmt(allocation.remainingAfterAllocation)}</td>
-                      <td />
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </Card>
-          ) : (
-            <Card className="p-6 text-center text-sm text-[var(--text-muted)]">
-              Şu an satın alma önerisi oluşturulamadı. Ürünlere maliyet, fiyat ve aylık talep bilgisi girildiğinde öneriler burada görünür.
-            </Card>
-          )}
+          {/* Satın alma önerileri listesi 10.09.2026'da kaldırıldı — tek yeri
+              /cfo/kazananlar. Sermaye toplamları ve kilitli sermaye dağılımı burada
+              kalıyor; kaldırılan şey yalnızca "hangi ürünü alalım" kopyasıydı. */}
+          <ImportOrderPointer neydi="Satın alma önerileri" />
 
           {allocation.skippedCount > 0 ? (
             <p className="text-xs text-[var(--text-muted)]">
