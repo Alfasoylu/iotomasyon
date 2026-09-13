@@ -9,6 +9,31 @@
 
 ## 2026-09
 
+### WhatsApp Faz 2 — zamanlanmış mesajlar + soru/cevap takibi (2026-09-13)
+
+- **`/whatsapp` paneli** (Sistem menüsü): cevap bekleyenler en üstte, ardından
+  zamanlanmış görevler, son gönderilenler (cevap mesajın içine gömülü),
+  bağımsız gelen mesajlar, kişiler. Kurulum eksikse sayfa bunu açıkça uyarıyor —
+  anahtarsız hâlde sayfa normal görünür ve hiçbir mesaj gitmezdi.
+- **Soru↔cevap bağı:** gelen mesaj, son 48 saatte sorulmuş ve cevapsız bekleyen
+  son soruya bağlanır (`replyToId` TEKİL, bir soruya bir cevap). Webhook artık
+  tekrar gelen bildirimi kesin olarak ayırt ediyor; tekrar, ikinci bir soruyu
+  kapatmıyor.
+- **Zamanlama Europe/Istanbul yerel saatine göre**, mükerrer freni `lastRunOn`
+  yerel gün damgası. Saati geçen görev gün içinde hâlâ gider, ama günde bir kez;
+  damga gönderimden önce atılır.
+- **Cron:** `/api/cron/whatsapp-schedules`, `CRON_SECRET` korumalı.
+  `vercel.json`'a eklenmedi — Hobby yalnız günlük cron'a izin veriyor ve görev
+  saat başı kontrol edilmeli; PDKS hatırlatmalarıyla aynı harici zamanlayıcı
+  yolu. Panelde elle tetikleme düğmesi var.
+- **İzinler:** `whatsapp.read` / `whatsapp.send` / `whatsapp.manage`. WAREHOUSE
+  okur, OPERATIONS okur+gönderir, görev/kişi tanımı ADMIN'de.
+- **Şema:** `WhatsAppSchedule` + `WhatsAppScheduleRecipient`; `WhatsAppMessage`'a
+  `scheduleId`, `awaitingReply`, `replyToId`. Migration salt ekleme, RLS açık,
+  CASCADE yok (RESTRICT/SET NULL — mesaj geçmişi görev silinince durur).
+- **Testler:** `npm run check:wa` 30 kontrol (17'den). Doğrulama: check:wa 30/30,
+  check:rbac 22/22, `tsc --noEmit` temiz, eslint temiz, `npm run build` başarılı.
+
 ### WhatsApp mesaj merkezi — temel katman (2026-09-13)
 
 - **Webhook kuruldu:** `app/api/whatsapp/webhook/route.ts`. GET Meta'nın

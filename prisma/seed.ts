@@ -121,6 +121,9 @@ const PERMISSIONS = [
   { key: "marketplaceReturns.read",     name: "İade Görüntüleme",               category: "marketplace" },
 
   // Marketplace Operations (Phase 16)
+  { key: "whatsapp.read",               name: "WhatsApp Mesajları Görüntüleme",  category: "whatsapp" },
+  { key: "whatsapp.send",               name: "WhatsApp Mesaj Gönderme",         category: "whatsapp" },
+  { key: "whatsapp.manage",             name: "WhatsApp Kişi/Görev Yönetimi",    category: "whatsapp" },
   { key: "marketplaceQuestions.read",   name: "Müşteri Soruları Görüntüleme",    category: "marketplace" },
   { key: "marketplaceQuestions.answer", name: "Müşteri Soruları Yanıtlama",      category: "marketplace" },
   { key: "marketplaceReturns.action",   name: "İade İşlem Yetkisi",              category: "marketplace" },
@@ -191,6 +194,11 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
     "catalogs.create",
   ],
   OPERATIONS: [
+    // Operasyon depo ile yazışır: hem görür hem gönderir. Kişi/görev tanımı
+    // (whatsapp.manage) ADMIN'de kalır — yanlış tanımlanmış bir görev her gün
+    // yanlış kişiye mesaj atar ve bunu kimse fark etmez.
+    "whatsapp.read",
+    "whatsapp.send",
     "products.read",
     "products.update",
     "inventory.read",
@@ -205,6 +213,9 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, string[]> = {
     "search.read",
   ],
   WAREHOUSE: [
+    // Depo ekibi kendi sorularını ve cevaplarını GÖRÜR ama gönderemez:
+    // gönderim para harcar ve toplu mesaj yanlış kişiye giderse geri alınamaz.
+    "whatsapp.read",
     // Warehouse staff can view and count stock — no financial data
     "products.read",
     "inventory.read",

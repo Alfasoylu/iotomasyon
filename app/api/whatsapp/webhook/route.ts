@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePhone } from "@/lib/whatsapp/phone";
 import { signatureValid } from "@/lib/whatsapp/signature";
+import { linkReply } from "@/lib/whatsapp/runner";
 
 export const dynamic = "force-dynamic";
 
@@ -81,19 +82,33 @@ export async function POST(req: NextRequest) {
 
         const body = m.type === "text" ? (m.text?.body ?? "") : `[${m.type ?? "bilinmeyen"}]`;
 
-        // waMessageId TEKIL: Meta webhook'u yeniden gonderir, ayni cevap
-        // iki kez kaydedilmemeli. Catch ile degil, upsert ile cozulur.
-        await prisma.whatsAppMessage.upsert({
+        // Meta webhook'u AYNI olayi yeniden gonderir. Tekrar mi, yeni mi:
+        // once bakiyoruz. Bu ayrim sart, cunku asagidaki cevap baglama islemi
+        // tekrar edilirse ayni cevap ikinci bir soruyu da kapatirdi.
+        const onceden = await prisma.whatsAppMessage.findUnique({
+          where: { waMessageId: m.id },
+          select: { id: true },
+        });
+
+        // upsert (create degil): iki webhook ayni anda gelirse create tekillik
+        // ihlaliyle patlar ve Meta 500 gorup saatlerce yeniden dener.
+        const kayit = await prisma.whatsAppMessage.upsert({
           where: { waMessageId: m.id },
           create: { contactId: contact.id, direction: "IN", waMessageId: m.id, body, status: "delivered" },
           update: {},
         });
+
+        if (onceden) continue;
 
         // 24 saatlik serbest metin penceresi bu andan itibaren isler.
         await prisma.whatsAppContact.update({
           where: { id: contact.id },
           data: { lastInboundAt: new Date() },
         });
+
+        // Cevabi bekleyen soruya bagla — kullanicinin asil istedigi bu:
+        // "stok kac adet?" sorusu ile gelen "12" panelde yan yana dursun.
+        await linkReply(contact.id, kayit.id);
         kaydedilen++;
       }
 
