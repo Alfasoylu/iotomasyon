@@ -735,3 +735,25 @@ Enumlar: `CfoDataTag`, `CfoCertainty`, `CfoLoanStatus`, `CfoPaymentStatus`,
 
 Tüm tablolarda RLS **enable** (policy yok — deny-all kasıtlı, erişim yalnız Prisma).
 Hiçbir mevcut tabloya kolon eklenmedi/silinmedi; migration tamamen additive.
+
+---
+
+## WhatsApp mesaj tabloları (migration `20260913210000_whatsapp_messaging`)
+
+| Tablo | Amaç |
+|---|---|
+| `WhatsAppContact` | Mesajlaşılan kişi. `phone` normalleştirilmiş (`905321112233`) ve **tekil** — aynı numara iki kayıt açamaz. `lastInboundAt` 24 saatlik serbest metin penceresinin tek kaynağı |
+| `WhatsAppMessage` | Giden/gelen mesaj kaydı. `direction` = `OUT`/`IN`, `status` = queued/sent/delivered/read/failed |
+
+Önemli alanlar ve nedenleri:
+- `WhatsAppMessage.waMessageId` **tekil (nullable)** — Meta webhook'u aynı olayı
+  yeniden gönderir; tekillik olmadan aynı cevap defalarca kaydedilirdi. Giden
+  mesajda Meta kimlik dönene kadar `null` olabilir, bu yüzden zorunlu değil.
+- FK `WhatsAppMessage.contactId → WhatsAppContact.id` **`ON DELETE RESTRICT`**
+  (cascade DEĞİL, bkz. `docs/AI-RULES.md`): kişi silindiğinde mesaj geçmişinin
+  sessizce yok olması, kimin ne yanıtladığının kaybolması demekti.
+- `WhatsAppContact.isActive` — kişi listeden çıkarılırken silinmiyor, pasife
+  alınıyor; geçmiş mesajları ayakta kalıyor.
+
+İki tabloda da RLS **enable** (policy yok — deny-all kasıtlı, public tablo
+değişmezi). Migration tamamen additive; mevcut hiçbir tabloya dokunulmadı.

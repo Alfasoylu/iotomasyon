@@ -211,6 +211,49 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 13.09.2026 — WhatsApp mesaj merkezi: temel katman (Faz 1)
+Sipariş bildirimleri alfashome backend'inden gidiyor ama **cevaplar hiçbir yere
+düşmüyordu**. Amaç: depoya/ekibe düzenli mesaj atmak ve gelen cevabı iotomasyon
+üzerinden takip etmek. Bu delta o işin taşıyıcı katmanı.
+
+**Neden burada, alfashome'da değil:** Meta her WhatsApp numarası için **TEK**
+callback adresi kabul eder. Gönderim iki sistemden de yapılabilir, **alma tek
+yerden** olmak zorunda — o yer iotomasyon (`/api/whatsapp/webhook`). alfashome
+yalnız gönderir, cevapları göremez.
+
+Eklenenler:
+- `lib/whatsapp/phone.ts` — numara normalleştirme, alıcı listesi, şablon
+  parametresi temizliği, 24 saatlik pencere hesabı.
+- `lib/whatsapp/signature.ts` — Meta webhook imzası (HMAC-SHA256, `timingSafeEqual`).
+- `lib/whatsapp/client.ts` — `sendTemplate` / `sendText` (Cloud API v21).
+- `app/api/whatsapp/webhook/route.ts` — GET doğrulama el sıkışması, POST gelen
+  mesaj + durum kaydı.
+- `prisma/schema.prisma` + migration `20260913210000_whatsapp_messaging` —
+  `WhatsAppContact`, `WhatsAppMessage`. İkisinde de RLS açık (public tablo
+  değişmezi), FK `ON DELETE RESTRICT`.
+- `__tests__/whatsapp.test.ts` (16 kontrol) → `npm run check:wa`.
+  Mevcut RBAC testi de betiklendi: `npm run check:rbac`.
+
+**Testin bulduğu iki gerçek hata:**
+1. Alıcı listesi **boşlukta da bölünüyordu**. Türkiye'de numara `0532 111 22 33`
+   diye yazılır; liste dört parçaya ayrılıp dördü de eleniyor ve **sessizce
+   boşalıyordu** — hiç mesaj gitmezdi, hata da dönmezdi. Artık önce parçanın
+   tamamı tek numara olarak denenir; boşluk ancak o okunamazsa ayırıcı sayılır,
+   böylece boşlukla ayrılmış liste de çalışmaya devam eder.
+2. Numarada **üst sınır yoktu**. Boşlukla ayrılmış iki numara tek diziye yapışıp
+   24 haneye çıkıyor, "10+ hane" kuralını geçiyor ve **var olmayan bir numaraya**
+   mesaj gidiyordu (Meta böyle bir durumda hata döndürmez). Artık E.164 üst
+   sınırı 15 hane uygulanıyor.
+
+**İmza doğrulaması neden ayrı dosyaya taşındı:** route içindeyken `@/lib/prisma`
+→ `server-only` zinciri yüzünden Next bağlamı dışında import edilemiyordu, yani
+**güvenliğin tek kritik noktası test edilemiyordu**. `lib/whatsapp/signature.ts`
+saf `node:crypto`; artık `npx tsx` ile doğrulanıyor.
+
+**Henüz YOK (Faz 2-3):** kişi yönetim ekranı, zamanlanmış mesajlar (Vercel cron),
+soru↔cevap eşleştirme, reklam paneli. Webhook Meta paneline de bağlanmadı —
+`WHATSAPP_APP_SECRET` + `WHATSAPP_VERIFY_TOKEN` Vercel'e girilmeden çalışmaz
+(imzasız istek 401, anahtarsız kurulum 503 döner — sessiz kabul YOK).
 ### 13.09.2026 — Menşei CN, garanti 24 ay, kutu ölçüleri
 Alperen: "hepsine menşei cn ve kutu ölçüleri ekle / ayrıca garanti 24 ay ekle."
 
