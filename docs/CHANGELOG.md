@@ -9,6 +9,18 @@
 
 ## 2026-09
 
+### WhatsApp zamanlanmış mesajlar — GitHub Actions tetiklemesi (2026-09-15)
+
+- `.github/workflows/whatsapp-schedules.yml`: saat başı
+  `/api/cron/whatsapp-schedules`'ı `CRON_SECRET` ile çağırır. `pdks-reminders.yml`
+  ile aynı kalıp (`-L --location-trusted` — yönlendirme sonrası Authorization
+  korunmazsa uç 401 verir; secret yokken sessiz atlama; `concurrency`).
+- Gün boyu çalışır (PDKS'deki 06:00–19:59 penceresi burada YOK): akşam saatine
+  kurulmuş bir görev, o saatte çağrı yapılmazsa yerel gün damgası yüzünden
+  ertesi güne kayar.
+- `PDKS_BASE_URL` zaten tanımlıysa yeni secret gerekmiyor; `SITE_BASE_URL`
+  öncelikli okunur.
+
 ### `/api/durum` — kurulumu uzaktan ölçen teşhis ucu (2026-09-15)
 
 - **`GET /api/durum`** hangi env değişkeninin canlıda tanımlı olduğunu döndürür:

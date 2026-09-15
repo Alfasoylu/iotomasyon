@@ -222,6 +222,28 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 15.09.2026 — WhatsApp zamanlanmış mesaj tetiklemesi (GitHub Actions)
+5. kurulum adımı (harici zamanlayıcı) elle cron-job.org kurmak yerine repoya
+yazıldı: `.github/workflows/whatsapp-schedules.yml`, saat başı
+`/api/cron/whatsapp-schedules`'ı `CRON_SECRET` ile çağırıyor. PDKS
+hatırlatmalarındaki (`pdks-reminders.yml`) kalıbın aynısı — yönlendirme takibi
+(`-L --location-trusted`, yoksa Bearer düşer ve uç 401 verir), secret yokken
+sessiz atlama, `concurrency` ile üst üste binmeme.
+
+**Neden repoda, panelde değil:** cron-job.org'da kurulan bir zamanlayıcı hiçbir
+yerde iz bırakmaz; kim kurdu, hangi başlıkla çağırıyor, ne zaman bozuldu
+görünmez. Workflow sürüm kontrolünde, çalışma geçmişi GitHub'da ve başarısız
+çağrı kırmızı yanıyor.
+
+⚠️ **Gün boyu çalışır, mesai saatine daraltılmadı.** PDKS'de pencere 06:00–19:59
+çünkü mesai dışı anlamsız. Burada öyle değil: 21:00'e kurulmuş bir görev, o
+saatte çağrı yapılmazsa `lastRunOn` damgası yüzünden ertesi sabaha kayar ve
+YANLIŞ GÜNDE gider. Saatte bir çağrı ~10 saniye.
+
+**Yeni secret gerekmiyor:** `PDKS_BASE_URL` zaten tanımlıysa o kullanılıyor
+(aynı sitenin taban adresi, yalnız adı PDKS'ye özel kalmış). `SITE_BASE_URL`
+ileride o adı düzeltmek için öncelikli okunuyor.
+
 ### 15.09.2026 — `/api/durum`: kurulumu uzaktan ölçen teşhis ucu
 Kurulum adımlarını doğrularken duvara çarpıldı: panel sayfaları kimlik
 doğrulaması arkasında, canlı siteye bu ortamdan egress kapalı. "Vercel'e
