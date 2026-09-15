@@ -222,6 +222,32 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 15.09.2026 — `/api/durum`: kurulumu uzaktan ölçen teşhis ucu
+Kurulum adımlarını doğrularken duvara çarpıldı: panel sayfaları kimlik
+doğrulaması arkasında, canlı siteye bu ortamdan egress kapalı. "Vercel'e
+değişkeni kaydettim" bir şey KANITLAMIYOR — env değişikliği yeniden deploy
+edilene kadar etkisiz ve bu sessiz: sayfa normal görünür, entegrasyon çalışmaz.
+
+`GET /api/durum` hangi değişkenin canlıda TANIMLI olduğunu söyler. alfashome'daki
+`/api/capi` ile aynı desen; herkese açık olması kasıtlı, çünkü var olma sebebi
+uzaktan ölçüm. **Değer döndürmez:** yalnız boolean + biçim geçerliliği.
+
+Kapsam: WhatsApp gönderim ikilisi (`WHATSAPP_TOKEN`, `PHONE_NUMBER_ID`), webhook
+ikilisi (`APP_SECRET`, `VERIFY_TOKEN`), `TEMPLATE_LANG` (değeri görünür — gizli
+değil ve `tr_TR` gibi yanlış yazım Meta'da `132001` üretiyor), reklam
+(`META_ADS_TOKEN` + hesap kimliği **biçim** geçerliliği), `CRON_SECRET`.
+
+**Sızdırma testi** (`npm run check:durum`, 5 kontrol) uçtan değer dönmediğini
+sabitler: gizli değişkenler yalnız `tanimli()` içinden okunabilir; doğrudan
+atama, `slice`/`substring` ile kırpma ve `.length` ile uzunluk sızdırma yasak.
+Bir gün "teşhisi kolaylaştırmak için" anahtarın ilk 4 hanesini eklemek cazip
+gelir — test onu kırar. Ayrıca uca auth eklenmediğini de test ediyor, çünkü
+auth eklenirse ucun amacı yok olur.
+
+**Bu delta sırasında doğrulananlar:** `WHATSAPP_VERIFY_TOKEN` canlıda tanımlı
+(webhook GET'i 403 döndü — tanımsız olsa 503 dönerdi) ve 08:02–08:03 arası yeni
+bir production deployment canlıya geçti.
+
 ### 13.09.2026 — Canlıya alma + RLS açığı kapatıldı
 WhatsApp ve reklam işi canlıya alındı; sırasında **güvenlik açığı bulundu ve
 kapatıldı**.

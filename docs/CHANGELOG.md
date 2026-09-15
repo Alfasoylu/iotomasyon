@@ -9,6 +9,18 @@
 
 ## 2026-09
 
+### `/api/durum` — kurulumu uzaktan ölçen teşhis ucu (2026-09-15)
+
+- **`GET /api/durum`** hangi env değişkeninin canlıda tanımlı olduğunu döndürür:
+  WhatsApp gönderim + webhook ikilileri, `TEMPLATE_LANG`, Meta reklam anahtarı ve
+  hesap kimliği **biçim** geçerliliği, `CRON_SECRET`.
+- **Değer döndürmez** — yalnız boolean. `npm run check:durum` (5 kontrol) bunu
+  sabitler: doğrudan atama, kırpma (`slice`/`substring`) ve uzunluk sızdırma
+  (`.length`) yasak; uca auth eklenmesi de testi kırar (amacı uzaktan ölçüm).
+- Neden gerekli: panel sayfaları auth arkasında ve "Vercel'e kaydettim" env'in
+  canlıya geçtiğini kanıtlamıyor — env değişikliği yeniden deploy edilene kadar
+  etkisiz ve bu sessiz. alfashome'daki `/api/capi` ile aynı desen.
+
 ### Güvenlik — tarama bulgularının kapatılması (2026-09-14)
 
 - **Next.js 16.3.5:** 16.2.6'daki kimlik doğrulamasız RCE ve proxy bypass advisory'leri
