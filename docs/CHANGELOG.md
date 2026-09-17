@@ -9,6 +9,18 @@
 
 ## 2026-09
 
+### PDKS kritik mantık testleri — C5 (2026-09-17)
+
+- Karar mantığı saf modüllere çıkarıldı: `lib/pdks/tr-time.ts`,
+  `geofence.ts`, `checkout-rules.ts`, `leave-overlap.ts`. Kopya kurallar
+  birleştirildi (geofence iki uçta ayrıydı; `toMinutes` üç yerdeydi ve bir
+  kopyası "25:99"u kabul ediyordu).
+- `lib/pdks/schedule.ts`'ten `server-only` kaldırıldı (saf takvim matematiği).
+- **İzin çakışması kontrolü eklendi** (personel talebi + admin oluşturma):
+  uçlar dahil kesişen, bekleyen veya onaylı izin varsa yeni kayıt reddedilir.
+- `__tests__/pdks-logic.test.ts` / `npm run check:pdks`: 32 kontrol. Testler
+  mutasyonla doğrulandı (eşik, çakışma sınırı, kapı sırası).
+
 ### Push aboneliğinde tenant izolasyonu — D2 (2026-09-17)
 
 - `app/api/pdks/push/subscribe/route.ts`: tenant'sız `deleteMany` kaldırıldı,

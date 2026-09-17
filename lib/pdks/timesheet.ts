@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prismaPdks } from "./prisma";
+import { toMinutes } from "./tr-time";
 
 export type TimesheetRow = {
   id: string;
@@ -45,27 +46,15 @@ function trMinutes(d: Date): number {
   return h * 60 + m;
 }
 
-/** "H:MM" / "HH:MM" → dakika; geçersizse null. */
-function hhmmToMinutes(s: string | null): number | null {
-  if (!s) return null;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
-  if (!m) return null;
-  return Number(m[1]) * 60 + Number(m[2]);
-}
+// "HH:MM" → dakika: tek kaynak lib/pdks/tr-time.ts (kopya, saat sınırı
+// kontrolünü de kaybetmişti: "25:99" geçerli sayılıyordu).
+const hhmmToMinutes = toMinutes;
 
-/**
- * workDate (@db.Date → TR takvim gününün UTC gece-yarısı) + "HH:MM" TR saati → UTC Date.
- * TR sabit UTC+3 olduğundan: UTC = gün-başı + (saat:dk − 180dk). Manuel puantaj
- * düzeltmesinde admin'in girdiği yerel saati doğru UTC instant'a çevirir.
- */
-export function trTimeOnDateToUtc(workDate: Date, hhmm: string): Date | null {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return null;
-  return new Date(workDate.getTime() + (h * 60 + min - 180) * 60_000);
-}
+// Zaman dönüşümü buradan TAŞINDI → lib/pdks/tr-time.ts (saf, test edilebilir).
+// Bu dosya `server-only` + prisma taşıdığı için içindeki zaman mantığı hiç
+// sınanamıyordu; puantajın en kırılgan yeri de tam orası.
+// Mevcut çağıranlar kırılmasın diye yeniden dışa veriliyor.
+export { trTimeOnDateToUtc, TR_OFFSET_MIN } from "./tr-time";
 
 /**
  * Tarih aralığını çözer. workDate (@db.Date) TR gününün UTC gece-yarısı olarak

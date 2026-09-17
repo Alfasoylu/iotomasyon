@@ -198,7 +198,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 - [ ] **C2:** audit log modeli (`PdksAuditLog`) + manuel düzeltme izleri
 - [ ] **C3:** `PdksLoginCode` ile ilk kurulum/şifre belirleme akışı (şu an kullanılmıyor)
 - [ ] **C4:** güvenilir cron tetikleyici (cron-job.org / Vercel Pro) — 5 dk kesinliği
-- [ ] **C5:** kritik mantığa test (timezone, geofence, otomatik çıkış, izin çakışması)
+- [x] **C5:** kritik mantığa test (timezone, geofence, otomatik çıkış, izin çakışması) — `npm run check:pdks`, 32 kontrol
 - [ ] **C6:** hata telemetrisi (Sentry) — sessiz arızaları yakala
 - [ ] **C7:** yıllık izin bakiyesi/hakediş (`PdksLeaveBalance`)
 - [ ] PDF/Excel rapor (şu an yalnızca CSV)
@@ -221,6 +221,40 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+### 2026-09-17 — C5: kritik mantık testleri (+ izin çakışması kuralı eklendi)
+
+Testlerin önündeki engel mantığın YERİ idi: karar kodu DB çağrılarının arasına
+gömülü ya da `import "server-only"` taşıyan dosyalardaydı (tsx altında o import
+anında patlar). Önce mantık saf modüllere çıkarıldı, sonra sınandı.
+
+- **Yeni saf modüller:** `lib/pdks/tr-time.ts` (TR↔UTC, `toMinutes`),
+  `lib/pdks/geofence.ts` (en yakın şantiye + doğruluk/yarıçap kararı + olağandışı
+  saat), `lib/pdks/checkout-rules.ts` (otomatik çıkış kararı),
+  `lib/pdks/leave-overlap.ts` (izin çakışması).
+- **Kopya mantık kalktı:** geofence kuralı check-in ve check-out'ta AYRI
+  yazılıydı (biri değişince öbürü sessizce eski kuralda kalıyordu); `toMinutes`
+  üç yerde vardı ve `timesheet.ts`'teki kopya saat sınırını kontrol etmiyordu
+  ("25:99" geçerli sayılıyordu). Otomatik çıkış eşiği hem sabitte hem bildirim
+  metninde yazılıydı — metin artık sabitten okunuyor.
+- **`lib/pdks/schedule.ts`'ten `server-only` kaldırıldı** (saf takvim matematiği,
+  `holidays.ts` gibi). Test, bu dosyalara prisma/server-only sızmasını yasaklıyor.
+- **İzin çakışması kontrolü EKLENDİ — daha önce YOKTU.** Aynı personel için üst
+  üste binen izinler oluşturulabiliyordu (hem personel talebi hem admin'in elle
+  eklediği izin). Artık iki yolda da engelleniyor (409 / hata mesajı); uçlar
+  dahil kesişim çakışma sayılır.
+- **`__tests__/pdks-logic.test.ts` + `npm run check:pdks` (32 kontrol):**
+  gece yarısı gün dönümü (21:00 UTC'de TR ertesi gün), `currentTimeTR`'nin
+  "24:xx" dönmemesi, yaz saati yokluğu, TR→UTC dönüşümü, geçersiz saat reddi,
+  haversine (bilinen mesafe + simetri), en yakın şantiye seçimi, doğruluk
+  kapısının mesafeden önce gelmesi, sınır değerleri, otomatik çıkışın beş hâli,
+  program override/tatil/bozuk JSON, izin çakışmasının bütün geometrileri ve
+  uçların bu mantığı gerçekten kullandığı.
+- **Testler mutasyonla denendi:** eşiği 15→30 yapmak, çakışmayı yarı-açık
+  yapmak ve doğruluk/mesafe sırasını değiştirmek testleri kırıyor. İlk sürümde
+  sıra mutasyonu KAÇIYORDU (nokta şantiyenin üstündeydi, mesafe kapısı zaten
+  geçiyordu); senaryo "hem uzak hem doğruluğu kötü" hâline çevrildi.
+
 
 ### 2026-09-17 — D2 kapandı: push aboneliğinde tenant sızdırma
 

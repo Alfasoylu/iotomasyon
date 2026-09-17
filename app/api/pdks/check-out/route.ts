@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { withPdksSession } from "@/lib/pdks/auth";
 import { prismaPdks } from "@/lib/pdks/prisma";
-import { distanceMeters, workDateTR } from "@/lib/pdks/geo";
+import { workDateTR } from "@/lib/pdks/geo";
+import { geofenceVerdict } from "@/lib/pdks/geofence";
 
 export const dynamic = "force-dynamic";
 
@@ -43,20 +44,23 @@ export async function POST(req: NextRequest) {
     if (open.worksiteId) {
       const w = await prismaPdks.pdksWorksite.findUnique({ where: { id: open.worksiteId } });
       if (w) {
-        if (Number.isFinite(accuracy) && accuracy > w.maxAccuracyMeters) {
+        // GİRİŞLE AYNI karar fonksiyonu (lib/pdks/geofence.ts) — tek şantiyeli
+        // liste. Kuralın kopyası burada duruyordu; giriş tarafı değişince
+        // çıkış sessizce eski kuralda kalıyordu.
+        const karar = geofenceVerdict({ lat, lng, accuracy, sites: [w] });
+        if (!karar.ok) {
+          if (karar.reason === "dogruluk-yetersiz") {
+            return NextResponse.json(
+              { error: `Konum doğruluğu yetersiz (~${Math.round(Number(accuracy))}m). Açık alana çıkın.` },
+              { status: 422 },
+            );
+          }
           return NextResponse.json(
-            { error: `Konum doğruluğu yetersiz (~${Math.round(accuracy)}m). Açık alana çıkın.` },
+            { error: `Henüz işyeri konumunda değilsiniz (~${Math.round(karar.distance ?? 0)} m uzaktasınız).` },
             { status: 422 },
           );
         }
-        const dist = distanceMeters(lat, lng, w.latitude, w.longitude);
-        if (dist > w.radiusMeters) {
-          return NextResponse.json(
-            { error: `Henüz işyeri konumunda değilsiniz (~${Math.round(dist)} m uzaktasınız).` },
-            { status: 422 },
-          );
-        }
-        checkOutDistanceM = Math.round(dist);
+        checkOutDistanceM = Math.round(karar.distance);
       }
     }
 

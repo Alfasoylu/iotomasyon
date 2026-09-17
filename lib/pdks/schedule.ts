@@ -1,4 +1,9 @@
-import "server-only";
+// `server-only` BİLEREK YOK: bu dosya saf takvim/saat matematiği (DB, secret,
+// ağ yok) ve TEST EDİLEBİLİR olması gerekiyor — `server-only` import'u test
+// çalıştırıcısında anında patlıyor ve otomatik çıkış/program mantığı bu yüzden
+// hiç sınanamıyordu. `holidays.ts` de aynı gerekçeyle server-only değil.
+// ⚠️ Bu dosyaya prisma/secret erişimi EKLENMEZ; eklenirse server-only geri
+// gelmeli. `npm run check:pdks` bu dosyada prisma import'unu yasaklıyor.
 
 import { ymdUTC } from "./holidays";
 

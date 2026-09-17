@@ -8,7 +8,12 @@ import { runWithPdksAdmin } from "@/lib/pdks/admin";
 import { prismaPdks } from "@/lib/pdks/prisma";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, normalizePhone } from "@/lib/pdks/auth";
-import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
+import { trTimeOnDateToUtc } from "@/lib/pdks/tr-time";
+import {
+  BLOCKING_STATUSES,
+  findOverlappingLeave,
+  overlapMessage,
+} from "@/lib/pdks/leave-overlap";
 import { isValidWeekSchedule } from "@/lib/pdks/schedule";
 import { isPushConfigured, sendPushToPersonnel } from "@/lib/pdks/push";
 import { ymdToDate } from "@/lib/pdks/leave";
@@ -497,12 +502,31 @@ export async function createLeaveAction(
   const result = await runWithPdksAdmin(user, async (tenantId): Promise<ActionResult> => {
     const p = await prismaPdks.pdksPersonnel.findFirst({ where: { id: personnelId } });
     if (!p) return { ok: false, message: "Personel bulunamadı." };
+
+    const startDate = ymdToDate(parsed.data.startDate);
+    const endDate = ymdToDate(parsed.data.endDate);
+
+    // Çakışma kontrolü personel talebiyle AYNI kaynaktan
+    // (lib/pdks/leave-overlap.ts). Admin yolunda atlanırsa kural yarım kalır:
+    // personel çakışan izin açamaz ama yönetici farkında olmadan açabilir.
+    const mevcut = await prismaPdks.pdksLeave.findMany({
+      where: {
+        personnelId,
+        status: { in: [...BLOCKING_STATUSES] },
+        startDate: { lte: endDate },
+        endDate: { gte: startDate },
+      },
+      select: { id: true, startDate: true, endDate: true, status: true },
+    });
+    const cakisan = findOverlappingLeave(mevcut, { startDate, endDate });
+    if (cakisan) return { ok: false, message: overlapMessage(cakisan) };
+
     await prismaPdks.pdksLeave.create({
       data: {
         tenantId,
         personnelId,
-        startDate: ymdToDate(parsed.data.startDate),
-        endDate: ymdToDate(parsed.data.endDate),
+        startDate,
+        endDate,
         type: parsed.data.type,
         reason: parsed.data.reason || null,
         status: "approved",
