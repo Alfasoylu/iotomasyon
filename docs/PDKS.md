@@ -188,7 +188,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 - [x] **S-O4 (Orta):** `/kayit`'a Turnstile + rate limit
 - [x] **S-O5 (Orta):** `getCurrentSession` fallback'ini yalnız P2021'e daralt (deny override kaybı)
 - [x] **D1 (Kritik):** cron endpoint fail-closed — `CRON_SECRET` yoksa 503/throw (`app/api/pdks/cron/reminders/route.ts:44-47`; aynı desen `api/cron/xml-sync`, `api/cron/trendyol-sync`)
-- [ ] **D2 (Yüksek):** push subscribe `deleteMany`'ye açık `tenantId` ekle (`push/subscribe/route.ts:30`)
+- [x] **D2 (Yüksek):** push subscribe artık `upsert` (tenant'sız `deleteMany` kaldırıldı) — `npm run check:push` sabitliyor
 - [ ] **D3 (Orta):** cihaz kilidi logout'ta sıfırlama seçeneği ("bu cihazı çıkar")
 - [ ] **D4 (Orta):** manuel saat düzeltmelerine audit log
 - [ ] **D5 (Düşük):** GPS spoofing'e karşı ek sinyaller (kabul: mobil sınırı)
@@ -221,6 +221,26 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+### 2026-09-17 — D2 kapandı: push aboneliğinde tenant sızdırma
+
+- `app/api/pdks/push/subscribe/route.ts`: abonelik yazma **atomik upsert**
+  oldu. Eski kod `deleteMany({ where: { endpoint } })` çağırıyordu ve
+  `tenantId` YOKTU — `endpoint` global unique olduğu için kayıt başka bir
+  tenant'a aitse onu da siliyordu; ayrıca `create`'in catch'i sessiz olduğu
+  için araya giren herhangi bir hata aboneliği tamamen yok edip cihazı
+  bildirimsiz bırakıyordu. İkisi de sessiz arızaydı.
+- `upsert` sahipliği oturumun tenant'ına taşır (endpoint'i tarayıcı üretir ve
+  tahmin edilemez; aynı endpoint'i gönderen taraf o cihazın kendisidir) ve
+  `p256dh`/`auth` döndüğünde tazeler — eski kodun delete+create ile yapmaya
+  çalıştığı da buydu, ama yıkıcı ve atomik olmayan biçimde.
+- `__tests__/push-subscribe.test.ts` + `npm run check:push` (5 kontrol):
+  `deleteMany` yasak, upsert'te create+update'in ikisinde de `tenantId`,
+  anahtar tazeleme, oturum zorunluluğu, hatayı yutan boş catch yasağı.
+  Test eski kod metnine karşı denendi: üç eksende de kırılıyor.
+  Yorumlar testte AYIKLANIYOR — dosyadaki açıklama eski hatalı deseni birebir
+  yazdığı için yorumlara bakan test yanlış alarm veriyordu.
+
 
 ### 15.09.2026 — WhatsApp zamanlanmış mesaj tetiklemesi (GitHub Actions)
 5. kurulum adımı (harici zamanlayıcı) elle cron-job.org kurmak yerine repoya
