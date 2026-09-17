@@ -4,7 +4,8 @@ import { authorizeCron } from "@/lib/cron-auth";
 import { prisma } from "@/lib/prisma";
 import { isPushConfigured, sendPushToSubs } from "@/lib/pdks/push";
 import { currentTimeTR, workDateTR } from "@/lib/pdks/geo";
-import { trTimeOnDateToUtc } from "@/lib/pdks/timesheet";
+import { toMinutes, trTimeOnDateToUtc } from "@/lib/pdks/tr-time";
+import { AUTO_CHECKOUT_DELAY_MIN, checkoutAction } from "@/lib/pdks/checkout-rules";
 import { DEFAULT_WEEK_SCHEDULE, parseWeekSchedule, resolveExpected } from "@/lib/pdks/schedule";
 import { parseHolidays, holidaySet } from "@/lib/pdks/holidays";
 
@@ -14,17 +15,9 @@ export const maxDuration = 60;
 // İlk hatırlatma kaç dakika gecikmeden sonra; ve en geç kaç dakikaya kadar (üst sınır).
 const FIRST_REMINDER_MIN = 5;
 const MAX_REMINDER_MIN = 60; // 1 saat → en fazla 12 bildirim (5,10,…,60)
-// Beklenen çıkıştan bu kadar dakika sonra hâlâ açıksa sistem otomatik çıkış yapar.
-const AUTO_CHECKOUT_DELAY_MIN = 15;
-
-function toMinutes(hhmm: string): number | null {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return null;
-  return h * 60 + min;
-}
+// Otomatik çıkış eşiği ve kararı lib/pdks/checkout-rules.ts'te (test edilebilir):
+// karar DB çağrılarının arasına gömülü olduğu sürece sınanamıyordu ve yanlış
+// karar doğrudan maaşa yazılıyor.
 
 /**
  * GET /api/pdks/cron/reminders  (her 5 dk'da bir çağrılmalı)
@@ -153,9 +146,7 @@ export async function GET(req: NextRequest) {
       rec.personnel.expectedCheckOut,
       holidaysFor(rec.personnel.tenantId),
     );
-    if (!exp) continue; // o gün tatil → otomatik çıkış yok
-    const expectedOut = toMinutes(exp.out);
-    if (expectedOut == null) continue;
+    const expectedOut = exp ? toMinutes(exp.out) : null;
 
     const subs = rec.personnel.subs.map((s) => ({
       endpoint: s.endpoint,
@@ -163,9 +154,18 @@ export async function GET(req: NextRequest) {
       auth: s.auth,
     }));
 
-    // Geçmiş güne ait açık kayıt → kesin gecikmiş; sessizce otomatik kapat (bildirim yok).
-    if (rec.workDate.getTime() < today.getTime()) {
-      const checkOutAt = trTimeOnDateToUtc(rec.workDate, exp.out);
+    const aksiyon = checkoutAction({
+      workDate: rec.workDate,
+      today,
+      expectedOutMin: expectedOut,
+      nowMinTR: nowMin,
+      reminded: Boolean(rec.checkoutReminderAt),
+    });
+    if (aksiyon === "tatil" || aksiyon === "bekle" || aksiyon === "hatirlatildi") continue;
+
+    // Geçmiş güne ait açık kayıt → kesin gecikmiş; sessizce kapat (bildirim yok).
+    if (aksiyon === "gecmis-gun-kapat") {
+      const checkOutAt = trTimeOnDateToUtc(rec.workDate, exp!.out);
       await prisma.pdksAttendanceRecord.update({
         where: { id: rec.id },
         data: { checkOutAt, status: "closed", autoCheckout: true },
@@ -174,12 +174,9 @@ export async function GET(req: NextRequest) {
       continue;
     }
 
-    const minutesAfter = nowMin - expectedOut;
-    if (minutesAfter < 0) continue; // çıkış saati henüz gelmedi
-
-    if (minutesAfter >= AUTO_CHECKOUT_DELAY_MIN) {
-      // Otomatik çıkış: çıkış saatini beklenen çıkışa sabitle (adil; admin düzeltebilir).
-      const checkOutAt = trTimeOnDateToUtc(rec.workDate, exp.out);
+    if (aksiyon === "otomatik-cikis") {
+      // Çıkış saatini beklenen çıkışa sabitle (adil; admin düzeltebilir).
+      const checkOutAt = trTimeOnDateToUtc(rec.workDate, exp!.out);
       await prisma.pdksAttendanceRecord.update({
         where: { id: rec.id },
         data: { checkOutAt, status: "closed", autoCheckout: true },
@@ -188,16 +185,17 @@ export async function GET(req: NextRequest) {
       if (subs.length > 0) {
         const dead = await sendPushToSubs(subs, {
           title: "Otomatik çıkış yapıldı",
-          body: `Beklenen çıkış saatinizde (${exp.out}) otomatik çıkış yapıldı.`,
+          body: `Beklenen çıkış saatinizde (${exp!.out}) otomatik çıkış yapıldı.`,
           url: "/personel",
         });
         deadEndpoints.push(...dead);
       }
-    } else if (!rec.checkoutReminderAt && subs.length > 0) {
-      // Beklenen çıkış geçti ama +15 dk dolmadı → tek sefer hatırlat.
+    } else if (subs.length > 0) {
+      // aksiyon === "hatirlat": beklenen çıkış geçti, süre dolmadı → tek sefer.
       const dead = await sendPushToSubs(subs, {
         title: "🏁 Çıkış hatırlatması",
-        body: "Mesai bitti. Çıkış yapmayı unutmayın (15 dk içinde otomatik çıkış yapılır).",
+        // Süre SABİTTEN okunur: metne "15 dk" yazmak eşik değişince yalan olur.
+        body: `Mesai bitti. Çıkış yapmayı unutmayın (${AUTO_CHECKOUT_DELAY_MIN} dk içinde otomatik çıkış yapılır).`,
         url: "/personel",
       });
       deadEndpoints.push(...dead);

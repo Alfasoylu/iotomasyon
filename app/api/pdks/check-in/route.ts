@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { withPdksSession } from "@/lib/pdks/auth";
 import { prismaPdks } from "@/lib/pdks/prisma";
-import { distanceMeters, workDateTR, currentTimeTR } from "@/lib/pdks/geo";
+import { workDateTR, currentTimeTR } from "@/lib/pdks/geo";
+import { geofenceVerdict, isAbnormalCheckInHour } from "@/lib/pdks/geofence";
 
 export const dynamic = "force-dynamic";
 
@@ -52,37 +53,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let nearest = sites[0];
-    let best = Infinity;
-    for (const w of sites) {
-      const d = distanceMeters(lat, lng, w.latitude, w.longitude);
-      if (d < best) {
-        best = d;
-        nearest = w;
+    // Karar TEK KAYNAKTAN: lib/pdks/geofence.ts (çıkış ucu da aynısını kullanır).
+    // Kural iki uçta ayrı yazılıydı; biri güncellenip öbürü unutulduğunda
+    // çıkışta kabul edilen konum girişte reddediliyordu ve fark sessizdi.
+    const karar = geofenceVerdict({ lat, lng, accuracy, sites });
+    if (!karar.ok) {
+      if (karar.reason === "dogruluk-yetersiz") {
+        return NextResponse.json(
+          { error: `Konum doğruluğu yetersiz (~${Math.round(Number(accuracy))}m). Açık alana çıkın.` },
+          { status: 422 },
+        );
       }
-    }
-
-    // Doğruluk kapısı: en yakın şantiyenin kendi toleransına göre (spec §7).
-    // Cihazın bildirdiği accuracy bu eşiği aşarsa konum güvenilmez kabul edilir.
-    if (Number.isFinite(accuracy) && accuracy > nearest.maxAccuracyMeters) {
       return NextResponse.json(
-        { error: `Konum doğruluğu yetersiz (~${Math.round(accuracy)}m). Açık alana çıkın.` },
+        { error: `Henüz işyeri konumunda değilsiniz (~${Math.round(karar.distance ?? 0)} m uzaktasınız).` },
         { status: 422 },
       );
     }
-
-    if (best > nearest.radiusMeters) {
-      return NextResponse.json(
-        { error: `Henüz işyeri konumunda değilsiniz (~${Math.round(best)} m uzaktasınız).` },
-        { status: 422 },
-      );
-    }
+    const nearest = karar.site;
+    const best = karar.distance;
 
     // Olağandışı saat kuralı: 18:00–05:00 arası normal mesai başlangıcı değildir →
     // ya yanlışlık ya fazla mesai. Personelden onay istenir; onaylarsa kayıt fazla
     // mesai olarak işaretlenir (otomatik çıkıştan muaf). Onaylamazsa giriş yapılmaz.
-    const trHour = Number(currentTimeTR().slice(0, 2));
-    const abnormalHour = trHour >= 18 || trHour < 5;
+    const abnormalHour = isAbnormalCheckInHour(currentTimeTR());
     const overtimeConfirmed = body.overtimeConfirmed === true;
     if (abnormalHour && !overtimeConfirmed) {
       return NextResponse.json(
