@@ -9,6 +9,15 @@
 
 ## 2026-09
 
+### Push aboneliğinde tenant izolasyonu — D2 (2026-09-17)
+
+- `app/api/pdks/push/subscribe/route.ts`: tenant'sız `deleteMany` kaldırıldı,
+  yazma atomik `upsert` oldu (create ve update'in ikisinde de açık `tenantId`).
+  Eski desen başka tenant'ın aboneliğini silebiliyor ve sessiz `catch` yüzünden
+  aboneliği tamamen kaybedebiliyordu.
+- `__tests__/push-subscribe.test.ts` (`npm run check:push`, 5 kontrol) deseni
+  sabitliyor; testin eski kodu yakaladığı doğrulandı.
+
 ### WhatsApp zamanlanmış mesajlar — GitHub Actions tetiklemesi (2026-09-15)
 
 - `.github/workflows/whatsapp-schedules.yml`: saat başı

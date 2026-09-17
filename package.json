@@ -16,6 +16,7 @@
     "lint": "eslint",
     "check:wa": "tsx __tests__/whatsapp.test.ts",
     "check:ads": "tsx __tests__/meta-ads.test.ts",
+    "check:push": "tsx __tests__/push-subscribe.test.ts",
     "check:durum": "tsx __tests__/durum.test.ts",
     "check:rbac": "tsx __tests__/resolve-permission.test.ts"
   },
