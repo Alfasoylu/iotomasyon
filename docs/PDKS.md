@@ -192,6 +192,26 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 - [ ] **D3 (Orta):** cihaz kilidi logout'ta sıfırlama seçeneği ("bu cihazı çıkar")
 - [ ] **D4 (Orta):** manuel saat düzeltmelerine audit log
 - [ ] **D5 (Düşük):** GPS spoofing'e karşı ek sinyaller (kabul: mobil sınırı)
+- [ ] **D6 (Orta) — RLS'i yeni tabloda otomatik kapat.** İki kez aynı açık
+  oluştu (13.09: 22 tablo, 18.09: 5 tablo): SQL editöründen elle açılan tablo
+  RLS'siz doğuyor ve tek seferlik süpürme migration'ı bunu çözmüyor.
+  Kalıcı çözüm `CREATE TABLE` üzerine event trigger (`ddl_command_end`) →
+  `public` şemasındaki yeni tabloya deny-all RLS. Süpürme migration'ı
+  yazmaya devam etmek, sorunu her defasında **bulunduktan sonra** kapatmak demek.
+- [ ] **D7 (Orta):** 39 view `SECURITY DEFINER` (advisor ERROR). `anon` yetkisi
+  20260613000100 ile alındığı için sömürülebilir değil; doğru düzeltme
+  `ALTER VIEW … SET (security_invoker = on)`. Tek tek doğrulanmalı — uygulama
+  `postgres` rolüyle sorguladığı için davranış değişmemeli ama 39 view'da
+  "değişmemeli" varsayımla geçilmez.
+- [ ] **D8 (Düşük):** 18 fonksiyonda değişken `search_path` (advisor WARN) →
+  `SET search_path = public, pg_temp`.
+- [ ] **D9 (Düşük):** `vector` eklentisi `public` şemasında (advisor WARN).
+  Taşımak index/tip referanslarını kırabilir; ayrı bir bakım penceresi işi.
+- [ ] **D10 (Orta) — DDL disiplini.** Canlıya SQL editöründen uygulanan her DDL
+  **aynı gün** bir migration dosyasına ve `_prisma_migrations` defterine
+  yazılmalı. 18.09'da 16 migration'ın şeması canlıdaydı ama defterde yoktu; bu
+  hem "canlı geride" diye yanlış rapor edilmesine hem de 11 dosyada checksum
+  kaymasının fark edilmemesine yol açtı (`migrate deploy` o hâlde durur).
 
 ### Ürün eksikleri (analiz C*)
 - [ ] **C1:** offline check-in kuyruğu (Service Worker + IndexedDB)
@@ -221,6 +241,61 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+### 2026-09-18 — Migration defteri gerçekle hizalandı + RLS açığı (tekrar) kapatıldı
+
+"16 migration canlıya uygulanacak" diye duran iş, **uygulama işi değil defter
+işi** çıktı. Sıra: önce ölç, sonra yaz.
+
+**① Şema geride değildi.** 16 "bekleyen" migration'ın ürettiği **her** nesne
+canlıda mevcut: 8 tablo, 13 kolon, 27 view, 4 fonksiyon — tek tek `to_regclass` /
+`information_schema` / `pg_proc` ile sorgulandı, eksik **0**. Üstüne 27 view'ın
+hepsi `select … limit 5` ile okundu ve 4 fonksiyon çağrıldı; hiçbiri hata
+vermedi. DDL Supabase SQL editöründen elle uygulanmış, `_prisma_migrations`'a
+yazılmamıştı. 13.09'daki "tablolar canlıda yok" bulgusu **camelCase Prisma model
+adıyla** arandığı için yanlış çıkmıştı (`UrunAday` yok, `urun_aday` var —
+bu nesneler Prisma şemasında hiç geçmiyor).
+
+**Neden migration'ları yeniden çalıştırmadım:** DDL'in tamamı idempotent
+(`IF NOT EXISTS` / `CREATE OR REPLACE`), yani yeniden koşmak nesneler için
+no-op'tu; ama dosyalar veri geri doldurma UPDATE'leri de taşıyor ve `urun_aday`
+17.09'da elle düzenlenmiş (151 satır, son `updated_at` 17.09 18:52). Kazancı
+sıfır, riski gerçek olan bir işlem: **defter yazıldı, DDL'e dokunulmadı.**
+
+**② Defterin kendisi de bozuktu — 11 eski migration'da checksum kayması.**
+Dosyalar uygulandıktan sonra düzenlenmiş (yorum/açıklama eklenmiş) ve
+`prisma migrate deploy` bu durumda "migration modified after applied" ile
+**durur**. Yani 16'yı yazmak tek başına yetmezdi. Kaymayı bulmak için
+dosya tarafında ve DB tarafında aynı biçimde toplu sha256 alınıp
+ay → gün → satır diye daraltıldı. Checksum'ları dosyayla hizalamadan önce
+o 11 dosyanın **tüm** DDL nesneleri canlıda arandı (11 tablo, 6 enum tipi,
+16 kolon, 42 index, `vector` eklentisi, 3 enum değeri) — eksik **0**, yani
+düzenlemeler yalnız yorum. Uygulanmamış DDL'i checksum'la gizleme riski
+böylece elendi.
+
+**Sonuç:** 95/95 migration `finished_at` dolu, `rolled_back_at` boş ve
+**dosya tarafının toplu hash'i DB tarafıyla birebir aynı** →
+`prisma migrate deploy` artık temiz no-op. Yöntem 13.09'daki desenle aynı
+(checksum = `migration.sql`'in sha256'sı; önce uygulanmış bir migration
+üzerinde doğrulandı).
+
+**③ RLS değişmezi yine kırılmıştı.** 13.09'da "RLS'siz public tablo sıfır"
+denmişti; Supabase security advisor bugün **5 tabloda** RLS kapalı buldu
+(`cfo_hamle`, `cfo_hamle_olcum`, `cfo_kart_taksit`, `cfo_kilometre_tasi`,
+`cfo_kur`). Sebep aynı: bu tablolar 13.09'dan **sonra** SQL editöründen elle
+açıldı. Bu bir unutulmuş düzeltme değil, **tekrarlayan bir sınıf** — bu yüzden
+backlog'a event trigger maddesi girdi. Migration
+`20260918190000_rls_eksik_tablolar_2` (20260613000000 + 20260913235000 ile
+birebir aynı deny-all deseni, tablo yoksa atlar) canlıya uygulandı ve deftere
+yazıldı. RLS'siz public tablo: **0**.
+
+Beşi de TypeScript kodunda hiç geçmiyor (grep: sıfır eşleşme) ve tüm erişim
+Prisma → `postgres` rolüyle, o da `rolbypassrls` taşıyor — kapatmak hiçbir
+sayfayı bozmuyor. Advisor'ın kalan bulguları (39 view `SECURITY DEFINER`,
+18 fonksiyonda değişken `search_path`, `vector` eklentisi `public` şemasında)
+**bilerek bu deltaya alınmadı**: hiçbiri bu oturumun işi değil, üçü de
+davranış değiştirebilir ve `anon` yetkisi zaten 20260613000100 ile alınmış.
+Backlog'a madde olarak girdiler.
 
 ### 2026-09-17 — C5: kritik mantık testleri (+ izin çakışması kuralı eklendi)
 
@@ -343,6 +418,16 @@ tabloları canlıda **yok**. Yani o özellikler canlıda çalışmıyor. Bunlara
 DOKUNULMADI — başka oturumların işi, gözden geçirilmeden production'a
 uygulanmaz. Sıra dışı değil: benim migration'larım daha sonraki tarihli
 olduğu için `migrate deploy` o 16'sını yine de uygular.
+
+> ❌ **BU BULGU YANLIŞTI (18.09.2026'da düzeltildi).** Şema geride DEĞİLDİ:
+> 16 migration'ın ürettiği tabloların, kolonların, view'ların ve
+> fonksiyonların **tamamı canlıda mevcut** — DDL Supabase SQL editöründen
+> elle uygulanmış, yalnız `_prisma_migrations` defterine yazılmamıştı.
+> "Tablo yok" sonucu **camelCase Prisma model adıyla** (`UrunAday`,
+> `CfoAlacakBorc`) arandığı için çıktı; gerçek nesneler snake_case
+> (`urun_aday` tablosu, `cfo_alacak_borc` view'ı) ve bu adlar Prisma
+> şemasında hiç geçmiyor (SQL-only nesneler). Ayrıntı ve yapılan düzeltme:
+> aşağıdaki **18.09.2026 — Migration defteri** deltası.
 
 ⚠️ **BULGU 2 — RLS değişmezi kırılmıştı (kapatıldı).** 22 public tabloda RLS
 kapalı VE `anon` SELECT yetkisi vardı. Sebep: 20260613000000 yalnız o gün var
@@ -1031,7 +1116,9 @@ Vercel'e Legacy API keys altındaki `service_role` JWT'si (`eyJ…`) girilmeli.
   tarihli, ToUnicode taşımayan eski şablon). `scripts/trendyol-finance-parse-check.ts`
   ile tekrarlanabilir. `tsc` 0 hata (mevcut `web-push` hatası hariç), eslint temiz,
   `npm run build` başarılı.
-- **Bekleyen:** migration production'a **uygulanmadı** — kullanıcı onayı bekliyor.
+- ~~**Bekleyen:** migration production'a **uygulanmadı** — kullanıcı onayı bekliyor.~~
+  **Güncel (18.09.2026):** uygulandı. `_prisma_migrations` kaydı
+  `20260909220000_trendyol_finance`, `finished_at = 2026-09-09 19:12`.
 
 ### 2026-08-25 — CFO/Borçlar: kalan taksit, bitiş tarihi, YKB şahsi hesap
 - `app/(app)/cfo/borclar/page.tsx` — Krediler tablosuna "Kalan taksit" ve
@@ -1166,8 +1253,10 @@ Vercel'e Legacy API keys altındaki `service_role` JWT'si (`eyJ…`) girilmeli.
   - Şema: `PdksTenant`'a abonelik/deneme alanları eklendi — `subscriptionStatus`
     (default `trial`), `plan`, `trialEndsAt`, `currentPeriodEnd`, `ownerEmail`
     (migration `20260625230000_pdks_tenant_subscription` + idempotent
-    `scripts/pdks/apply_tenant_subscription.sql`). **Not:** MCP onay aksaklığı
-    nedeniyle canlı DB'ye HENÜZ uygulanmadı; uygulanınca main'e promote edilecek.
+    `scripts/pdks/apply_tenant_subscription.sql`). ~~**Not:** MCP onay aksaklığı
+    nedeniyle canlı DB'ye HENÜZ uygulanmadı; uygulanınca main'e promote edilecek.~~
+    **Güncel (18.09.2026):** uygulandı — defter kaydı
+    `20260625230000_pdks_tenant_subscription` mevcut.
   - `lib/pdks/tenant-provision.ts`: `createTenantWithDefaults` (tenant + tenant-admin
     + 30 gün deneme + varsayılan haftalık program + 2026 tatilleri), `slugify`,
     `isSlugAvailable`, `tenantAccessStatus` (erişim kapısı kararı).
