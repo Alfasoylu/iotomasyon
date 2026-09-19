@@ -21,6 +21,8 @@
  * ⚠️ TUTARLAR ONDALIK PARA BİRİMİ (Medusa v2): 1518 = 1.518 ₺. 100'e BÖLÜNMEZ.
  */
 
+import { alfasBaglanti } from "./config";
+
 export type AlfasHata = {
   /** Kullanıcıya gösterilecek Türkçe açıklama. */
   mesaj: string;
@@ -82,32 +84,35 @@ export type UyeSonuc =
     }
   | { ok: false; hata: AlfasHata };
 
-/** Gerekli iki değişken de dolu mu. */
-export function alfashomeConfigured(): boolean {
-  return Boolean(alfasUrl() && (process.env.ALFASHOME_API_TOKEN ?? "").trim());
-}
-
-function alfasUrl(): string {
-  // Sondaki `/` temizlenir; `.../crm` ile birleştirirken çift slash olmasın.
-  return (process.env.ALFASHOME_API_URL ?? "").trim().replace(/\/+$/, "");
+/**
+ * Adres + jeton var mı (panel ayarı ya da env).
+ *
+ * ⚠️ ASENKRON: değer artık **veritabanından** da gelebiliyor (panelden girilen
+ * ayar, bkz. ./config.ts). Senkron kalsaydı yalnız env'i görür ve panelden
+ * kaydedilmiş bağlantıyı "yok" sayardı.
+ */
+export async function alfashomeConfigured(): Promise<boolean> {
+  const b = await alfasBaglanti();
+  return Boolean(b.baseUrl && b.token);
 }
 
 const YAPILANDIRMA_HATASI: AlfasHata = {
   mesaj: "ALFAS bağlantısı yapılandırılmadı.",
   detay:
-    "Vercel → Environment Variables: ALFASHOME_API_URL (ör. https://api.alfashome.com) ve ALFASHOME_API_TOKEN gerekli. Aynı jeton ALFAS tarafında Railway → CRM_API_TOKEN olarak tanımlı olmalı.",
+    "Panel → ALFAS Home → Ayarlar sayfasından adres ve jetonu girin (ALFAS tarafında Railway → CRM_API_TOKEN ile AYNI değer). Alternatif: Vercel ortam değişkenleri ALFASHOME_API_URL + ALFASHOME_API_TOKEN.",
 };
 
 /** Ağ isteği için üst sınır: panel, arka uç yanıt vermezse takılı kalmasın. */
 const TIMEOUT_MS = 12_000;
 
 async function cek<T>(yol: string, limit: number): Promise<{ ok: true; veri: T } | { ok: false; hata: AlfasHata }> {
-  if (!alfashomeConfigured()) return { ok: false, hata: YAPILANDIRMA_HATASI };
+  const baglanti = await alfasBaglanti();
+  if (!baglanti.baseUrl || !baglanti.token) return { ok: false, hata: YAPILANDIRMA_HATASI };
 
-  const url = `${alfasUrl()}/crm/${yol}?limit=${limit}`;
+  const url = `${baglanti.baseUrl}/crm/${yol}?limit=${limit}`;
   try {
     const r = await fetch(url, {
-      headers: { Authorization: `Bearer ${(process.env.ALFASHOME_API_TOKEN ?? "").trim()}` },
+      headers: { Authorization: `Bearer ${baglanti.token}` },
       // Sipariş listesi bayat gösterilmez: panelde eski sayı, "sipariş gelmemiş"
       // sanılmasına yol açar.
       cache: "no-store",

@@ -242,6 +242,55 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-09-19 — ALFAS bağlantısı PANELDEN yapılandırılır oldu (env zorunluluğu kalktı)
+
+ALFAS Home sayfaları adres + jetonu Vercel ortam değişkeninden okuyordu. Sorun:
+değişkeni yazmak Vercel paneline girmeyi **ve yeniden dağıtım beklemeyi**
+gerektiriyor; bu ortamdan Vercel bağlayıcısının `projectEnvVars` yetkisi de yok
+(list/create ikisi de 403). Yani özellik "kurulum kullanıcıda" diye yarı bitmiş
+kalıyordu.
+
+**Çözüm, projenin kendi deseni:** Trendyol ve Hepsiburada kimlik bilgileri
+zaten veritabanında singleton satırda tutuluyor ve panelden giriliyor. ALFAS
+bağlantısı da aynı yola alındı:
+
+- `AlfashomeConfig` (id=`singleton`, `baseUrl`/`token`/`isEnabled`/`lastOkAt`) —
+  migration `20260919180000_alfashome_config`, canlıya uygulandı ve
+  `_prisma_migrations` defterine doğru checksum'la yazıldı (13.09/18.09'daki
+  "DDL elle uygulandı, defter geride kaldı" hatası tekrarlanmasın).
+  Tabloda **RLS açık** (deny-all) — tablo bir SIR tutuyor ve public şemadaki
+  RLS'siz tablo bu projede iki kez advisor hatası oldu.
+- `lib/alfashome/config.ts` — kaynak sırası **panel ayarı → env**. Env desteği
+  kaldırılmadı; mevcut kurulum bozulmasın. `isEnabled=false` ise DB kaydı
+  yok sayılıp env'e düşülür ("kapat" gerçekten kapatmalı).
+- `/alfashome/ayarlar` sayfası + `saveAlfashomeConfigAction` /
+  `testAlfashomeConnectionAction`.
+
+**Kararlar:**
+
+- **Kayıtlı jeton tarayıcıya GERİ BASILMIYOR.** Sayfa yalnız "kayıtlı" ve son 4
+  haneyi geçiriyor (`tokenIpucu`), alan boş başlıyor ve **boş = dokunmadım**
+  (mevcut jeton korunur). Trendyol formu kayıtlı anahtarı `initialValues` ile
+  geri basıyor; o desen bilerek tekrarlanmadı — sırrı her sayfa
+  görüntülemesinde HTML'e gömmek gereksiz sızıntı yüzeyi.
+- **`https` zorunlu:** jeton `Authorization` başlığında gidiyor, şifresiz
+  bağlantıda ağı dinleyen okur.
+- **Jeton alt sınırı 24** — ALFAS tarafındaki sınırın aynısı. Panel kısa jetonu
+  kabul edip kaydetse, ALFAS 503 dönerdi ve kullanıcı sebebini göremezdi.
+- **"Kaydettim" ≠ "çalışıyor":** ayrı "Bağlantıyı dene" düğmesi
+  `/crm/orders?limit=1` çağırıp sonucu söylüyor; başarı damgası (`lastOkAt`)
+  yalnız gerçekten 200 alındığında yazılıyor. 401/503 için ne yapılacağı
+  mesajda yazılı.
+
+**Canlı durum:** bağlantı kaydı veritabanına yazıldı (adres = Railway servis
+adresi, jeton = Railway'deki `CRM_API_TOKEN` ile aynı, aktif). Dağıtım bitince
+panel → ALFAS Home → Ayarlar sayfasındaki "Bağlantıyı dene" ile teyit edilir;
+bu ortamdan Railway'e ağ çıkışı kapalı olduğu için uç canlıda denenemedi.
+
+Testler: `npm run check:alfashome` 18 → **23 kontrol** (jeton ipucu sızdırmıyor,
+boş jeton mevcut değeri korumuyorsa kırılır — mutasyonla doğrulandı, https
+zorunluluğu, alt sınır 24, menü). `tsc --noEmit`, `eslint`, `next build` temiz.
+
 ### 2026-09-19 — ALFAS Home bölümü: Meta Reklamları + Siparişler + Üyeler
 
 Panelde **ALFAS Home** adlı yeni bir menü grubu açıldı ve mağazaya ait üç sayfa
