@@ -518,6 +518,15 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "ALFAS Home",
   },
+  {
+    // Bağlantı ayarı (adres + salt okunur CRM jetonu). Env yerine burada:
+    // Vercel'e girip yeniden dağıtım beklemeye gerek kalmasın.
+    href: "/alfashome/ayarlar",
+    label: "Ayarlar",
+    iconKey: "settings",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "ALFAS Home",
+  },
 
   // ── SİSTEM ──────────────────────────────────────────────────────────────
   {

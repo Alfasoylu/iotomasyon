@@ -1028,6 +1028,26 @@ model TrendyolConfig {
   updatedAt  DateTime  @updatedAt
 }
 
+// ALFAS Home (alfashome.com) bağlantısı — singleton satır.
+//
+// NEDEN VERİTABANINDA, ENV'DE DEĞİL: Trendyol/Hepsiburada kimlik bilgileri de
+// böyle tutuluyor (aynı mimari). Env'e yazmak Vercel paneline girmeyi ve her
+// değişiklikte yeniden dağıtım beklemeyi gerektiriyordu; buradan kaydedilen
+// değer ANINDA geçerli oluyor. Env desteği KALDIRILMADI: ALFASHOME_API_URL /
+// ALFASHOME_API_TOKEN doluysa ve burada kayıt yoksa onlar kullanılır.
+//
+// ⚠️ SALT OKUNUR BAĞLANTI: bu jeton ALFAS'ta yalnız /crm/orders ve
+// /crm/members uçlarını açar (sipariş/üye OKUMA). Medusa admin anahtarı
+// DEĞİLDİR; ürün silme/fiyat değiştirme/iade yetkisi vermez.
+model AlfashomeConfig {
+  id         String    @id @default("singleton")
+  baseUrl    String    @default("")
+  token      String    @default("")
+  isEnabled  Boolean   @default(false)
+  lastOkAt   DateTime?
+  updatedAt  DateTime  @updatedAt
+}
+
 // Hepsiburada Marketplace API config (singleton row, paralel mimari Trendyol'a)
 // READ-ONLY: katalog/sipariş/iade çekiyoruz; push işlemi Entegra'nın işi.
 model HepsiburadaConfig {

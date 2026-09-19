@@ -9,6 +9,22 @@
 
 ## 2026-09
 
+### ALFAS bağlantısı panelden yapılandırılır (2026-09-19)
+
+- **`AlfashomeConfig` singleton tablosu** (migration `20260919180000_alfashome_config`,
+  canlıya uygulandı, `_prisma_migrations` defterine doğru checksum'la yazıldı,
+  RLS deny-all açık) + **`/alfashome/ayarlar`** sayfası: adres ve salt okunur CRM
+  jetonu artık panelden giriliyor, anında geçerli oluyor. Env desteği
+  (`ALFASHOME_API_URL`/`ALFASHOME_API_TOKEN`) yedek kaynak olarak korundu.
+- Kaynak sırası panel → env; `isEnabled=false` DB kaydını yok sayıyor.
+- **Kayıtlı jeton tarayıcıya geri basılmıyor** (yalnız "kayıtlı" + son 4 hane);
+  boş bırakılan alan mevcut jetona dokunmuyor.
+- `https` zorunlu (jeton başlıkta gidiyor), jeton alt sınırı ALFAS tarafıyla
+  aynı (24 karakter), ayrı "Bağlantıyı dene" düğmesi `/crm/orders?limit=1` ile
+  sonucu doğruluyor ve `lastOkAt` yalnız gerçek 200'de yazılıyor.
+- Testler: `npm run check:alfashome` 23 kontrol; `tsc --noEmit`, `eslint`,
+  `next build` temiz.
+
 ### ALFAS Home bölümü — siparişler, üyeler, reklamlar (2026-09-19)
 
 - **Yeni menü grubu "ALFAS Home":** Meta Reklamları (mevcut `/reklamlar`, yol

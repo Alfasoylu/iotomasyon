@@ -19,6 +19,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
+import { tokenIpucu } from "../lib/alfashome/config";
 import {
   alfasPara,
   alfashomeConfigured,
@@ -57,6 +58,9 @@ const uyeSayfa = dosya("app/(app)/alfashome/uyeler/page.tsx");
 const layout = dosya("app/(app)/layout.tsx");
 const sidebar = dosya("components/dashboard/sidebar.tsx");
 const reklamSayfa = dosya("app/(app)/reklamlar/page.tsx");
+const ayarSayfa = dosya("app/(app)/alfashome/ayarlar/page.tsx");
+const form = dosya("components/alfashome/ayar-formu.tsx");
+const aksiyon = dosya("lib/actions/alfashome-actions.ts");
 const paket = JSON.parse(dosya("package.json"));
 
 console.log("\nALFAS Home bolumu testleri\n");
@@ -72,22 +76,27 @@ const ayarla = (u?: string, t?: string) => {
   else process.env.ALFASHOME_API_TOKEN = t;
 };
 
-check("env eksikken yapılandırılmamış sayılır", () => {
-  ayarla(undefined, undefined);
-  assert.equal(alfashomeConfigured(), false);
-  ayarla("https://api.alfashome.com", undefined);
-  assert.equal(alfashomeConfigured(), false, "jeton olmadan yapılandırılmış sayılıyor");
-  ayarla(undefined, "jeton");
-  assert.equal(alfashomeConfigured(), false, "URL olmadan yapılandırılmış sayılıyor");
-  ayarla("  ", "  ");
-  assert.equal(alfashomeConfigured(), false, "boşluk dolu değer geçerli sayılıyor");
-  ayarla("https://api.alfashome.com", "jeton");
-  assert.equal(alfashomeConfigured(), true);
-});
 
 // tsx bu repoda CJS'e çeviriyor → top-level await YOK. Ağ/env davranış
 // kontrolleri tek async fonksiyonda toplanıp en sonda çalıştırılıyor.
 async function asenkronKontroller() {
+  await checkAsync("yapılandırma yoksa 'kurulu' sayılmaz (DB yok → env yedeği)", async () => {
+    // ⚠️ Bu kontrol artık ASENKRON: bağlantı önce VERİTABANINDAN okunuyor
+    // (panelden girilen ayar), yoksa env'e düşüyor. Testte DB olmadığı için
+    // env dalı çalışır — config.ts prisma'yı geç import edip hatayı yutuyor,
+    // yoksa test DB'ye bağımlı olurdu.
+    ayarla(undefined, undefined);
+    assert.equal(await alfashomeConfigured(), false);
+    ayarla("https://api.alfashome.com", undefined);
+    assert.equal(await alfashomeConfigured(), false, "jeton olmadan kurulu sayılıyor");
+    ayarla(undefined, "jeton");
+    assert.equal(await alfashomeConfigured(), false, "adres olmadan kurulu sayılıyor");
+    ayarla("  ", "  ");
+    assert.equal(await alfashomeConfigured(), false, "boşluk dolu değer geçerli sayılıyor");
+    ayarla("https://api.alfashome.com", "jeton");
+    assert.equal(await alfashomeConfigured(), true);
+  });
+
   await checkAsync("B) env eksikken sipariş çağrısı HATA döner (boş liste değil)", async () => {
     ayarla(undefined, undefined);
     const r = await fetchAlfasOrders();
@@ -95,6 +104,8 @@ async function asenkronKontroller() {
     if (!r.ok) {
       assert.match(r.hata.mesaj, /yapılandırılmadı/i);
       // Ne yapılacağını söylemeli: iki değişkenin adı geçsin.
+      // Ne yapılacağını söylemeli: önce PANEL yolu, sonra env alternatifi.
+      assert.match(String(r.hata.detay), /Ayarlar/, "panel ayar sayfası yazılmamış");
       assert.match(String(r.hata.detay), /ALFASHOME_API_URL/);
       assert.match(String(r.hata.detay), /ALFASHOME_API_TOKEN/);
       assert.match(String(r.hata.detay), /CRM_API_TOKEN/, "ALFAS tarafındaki değişken yazılmamış");
@@ -256,7 +267,7 @@ check("ALFAS Home bölümü menüde ve üç sayfa da içinde", () => {
     assert.ok(layout.includes(yol), `menüde eksik: ${yol}`);
   }
   const bolum = (layout.match(/section: "ALFAS Home"/g) ?? []).length;
-  assert.equal(bolum, 3, `ALFAS Home bölümünde 3 sayfa beklenir, ${bolum} var`);
+  assert.ok(bolum >= 3, `ALFAS Home bölümünde en az 3 sayfa beklenir, ${bolum} var`);
   // Reklam sayfası artık "Sistem" altında DEĞİL.
   assert.doesNotMatch(
     layout,
@@ -271,6 +282,43 @@ check("bölüm sidebar sırasında tanımlı (yoksa en sona düşer)", () => {
 
 check("reklam sayfasının kırıntısı da güncellendi", () => {
   assert.match(reklamSayfa, /label: "ALFAS Home"/, "breadcrumb hâlâ Sistem diyor");
+});
+
+check("kayıtlı jeton EKRANA BASILMIYOR — yalnız son 4 hane", () => {
+  // Sır her sayfa görüntülemesinde HTML'e gömülmesin.
+  assert.equal(tokenIpucu("cok-gizli-jeton-1234"), "••••1234");
+  assert.equal(tokenIpucu("kisa"), "••••", "kısa değerde bile içerik sızmamalı");
+  const ipucu = tokenIpucu("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+  assert.ok(!ipucu.includes("ABCDEFGHIJ"), "jetonun başı ipucunda görünüyor");
+  // Ayar sayfası ham jetonu forma geçirmiyor (yalnız var/yok + ipucu).
+  assert.match(ayarSayfa, /tokenVar: Boolean\(kayit\?\.token\)/, "sayfa tokenVar hesaplamıyor");
+  assert.doesNotMatch(
+    ayarSayfa,
+    /token: kayit\?\.token/,
+    "ham jeton forma geçiriliyor — HTML'e gömülür"
+  );
+  assert.match(form, /type="password"/, "jeton alanı düz metin");
+});
+
+check("boş jeton MEVCUT değeri korur (kazara silme yok)", () => {
+  // Form kayıtlı jetonu geri basmadığı için "boş" = "dokunmadım".
+  assert.match(aksiyon, /token \|\| mevcut\?\.token \|\| ""/, "boş jeton mevcut değeri silebilir");
+});
+
+check("HTTP adresi reddediliyor (jeton başlıkta gidiyor)", () => {
+  assert.match(aksiyon, /\^https:\\\/\\\//, "https zorunluluğu yok");
+});
+
+check("jeton alt sınırı ALFAS tarafıyla AYNI (24)", () => {
+  // ALFAS 24 karakterden kısa jetonu 503 ile reddediyor; panel sebebi
+  // göstermeden kaydetse kullanıcı neden çalışmadığını anlamazdı.
+  assert.match(aksiyon, /MIN_TOKEN = 24/, "alt sınır değişmiş ya da kaldırılmış");
+});
+
+check("ayar sayfası ALFAS Home bölümünde", () => {
+  assert.ok(layout.includes('"/alfashome/ayarlar"'), "menüde ayarlar yok");
+  const bolum = (layout.match(/section: "ALFAS Home"/g) ?? []).length;
+  assert.equal(bolum, 4, `ALFAS Home bölümünde 4 sayfa beklenir, ${bolum} var`);
 });
 
 check("npm betikleri tanımlı", () => {
