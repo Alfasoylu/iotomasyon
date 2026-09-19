@@ -19,7 +19,8 @@
     "check:pdks": "tsx __tests__/pdks-logic.test.ts",
     "check:push": "tsx __tests__/push-subscribe.test.ts",
     "check:durum": "tsx __tests__/durum.test.ts",
-    "check:rbac": "tsx __tests__/resolve-permission.test.ts"
+    "check:rbac": "tsx __tests__/resolve-permission.test.ts",
+    "check:alfashome": "tsx __tests__/alfashome.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

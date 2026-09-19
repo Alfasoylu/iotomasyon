@@ -491,6 +491,34 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Finans",
   },
 
+  // ── ALFAS HOME ───────────────────────────────────────────────────────────
+  // alfashome.com (kendi e-ticaret mağazamız) tek grupta. Sipariş ve üye
+  // sayfaları ALFAS'ın Medusa arka ucundaki SALT OKUNUR /crm uçlarından
+  // besleniyor (bkz. lib/alfashome/client.ts); panel mağazada hiçbir şey
+  // değiştirmez. "Meta Reklamları" eskiden tek başına "Sistem" altındaydı —
+  // aynı mağazanın üç sayfası üç ayrı yere dağılmasın.
+  {
+    href: "/reklamlar",
+    label: "Meta Reklamları",
+    iconKey: "megaphone",
+    permission: PERMISSIONS.ADS_READ,
+    section: "ALFAS Home",
+  },
+  {
+    href: "/alfashome/siparisler",
+    label: "Siparişler",
+    iconKey: "cart",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "ALFAS Home",
+  },
+  {
+    href: "/alfashome/uyeler",
+    label: "Üyeler",
+    iconKey: "users",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "ALFAS Home",
+  },
+
   // ── SİSTEM ──────────────────────────────────────────────────────────────
   {
     href: "/admin/company-settings",
@@ -525,13 +553,6 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     label: "WhatsApp",
     iconKey: "messageSquare",
     permission: PERMISSIONS.WHATSAPP_READ,
-    section: "Sistem",
-  },
-  {
-    href: "/reklamlar",
-    label: "Meta Reklamları",
-    iconKey: "megaphone",
-    permission: PERMISSIONS.ADS_READ,
     section: "Sistem",
   },
   {

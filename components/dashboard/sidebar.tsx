@@ -49,6 +49,7 @@ import {
   Sparkles,
   MessageSquare,
   Receipt,
+  Store,
   ChevronRight,
   type LucideIcon,
   CalendarClock,
@@ -128,6 +129,10 @@ const SECTION_META: Array<{ key: string; icon: LucideIcon; desc: string }> = [
   { key: "Satış", icon: Users, desc: "Müşteri, teklif, görev" },
   { key: "Ürünler & Stok", icon: Package, desc: "Ürünler, kategoriler" },
   { key: "Pazaryerleri", icon: ShoppingCart, desc: "Trendyol, kârlılık" },
+  // ALFAS Home kendi satış kanalı: reklam, sipariş ve üye sayfaları burada
+  // toplanıyor. Eskiden "Meta Reklamları" tek başına "Sistem" altındaydı ve
+  // mağazaya ait üç sayfa üç ayrı yere dağılmış olurdu.
+  { key: "ALFAS Home", icon: Store, desc: "Reklam, sipariş, üye" },
   { key: "İthalat", icon: Ship, desc: "Karar kokpiti, tedarikçi" },
   { key: "Finans", icon: DollarSign, desc: "Sermaye, döviz" },
   { key: "CFO", icon: Wallet, desc: "Nakit, borç, alacak, hedef" },

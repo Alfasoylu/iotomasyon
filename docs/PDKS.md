@@ -242,6 +242,57 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-09-19 — ALFAS Home bölümü: Meta Reklamları + Siparişler + Üyeler
+
+Panelde **ALFAS Home** adlı yeni bir menü grubu açıldı ve mağazaya ait üç sayfa
+tek yerde toplandı. "Meta Reklamları" eskiden tek başına *Sistem* altındaydı;
+aynı mağazanın reklamı, siparişi ve üyesi üç ayrı yere dağılmasın diye taşındı
+(yol `/reklamlar` KORUNDU — adres değiştirmek kayıtlı bağlantıları ve komut
+paletini kırardı).
+
+**Yeni sayfalar** (`app/(app)/alfashome/siparisler`, `.../uyeler`): son 50
+sipariş (müşteri, ürünler, tutar, ödeme durumu; KPI: sipariş, ciro, ortalama
+sepet) ve son 200 üye kaydı (tür, sipariş sayısı, harcama, son sipariş).
+İkisi de `executive.read` izniyle korunuyor ve `force-dynamic` — bayat sipariş
+listesi "sipariş gelmemiş" diye okunur ve sevkiyatı geciktirir.
+
+**Veri nereden:** ALFAS'ın Medusa arka ucuna eklenen **salt okunur** `/crm/orders`
+ve `/crm/members` uçları (alfashome repo: `backend/src/api/crm/*`), panel tarafında
+`lib/alfashome/client.ts`.
+
+**Medusa admin anahtarı BİLEREK kullanılmadı.** O anahtar ürün silmeye, fiyat
+değiştirmeye, iade yapmaya da yetiyor; panelin ihtiyacı yalnız okumak. Dar
+kapsamlı iki uç açıldı, jetonu yalnız onlar tanıyor (en az yetki).
+
+**Uçlar fail-closed:** `CRM_API_TOKEN` yoksa **ya da 24 karakterden kısaysa**
+uç 503 döner ve hiçbir veri vermez. Medusa'da `/admin` ile `/store` dışındaki
+yollar kimlik doğrulamasızdır — yapılandırma yoksa açık kalsaydı müşteri adı,
+e-postası ve telefonu internete açık olurdu. Jeton karşılaştırması SHA-256
+özetleri üzerinden `timingSafeEqual` ile: ham karşılaştırma jetonun uzunluğunu
+sızdırır. Jeton ne yanıta ne log'a yazılır (Railway log'u açıktır).
+
+**Panelde hata SESSİZ KALMAZ:** env eksik, jeton yanlış (401) ya da uç kapalıysa
+(503) tablo boş görünmez; sebep ve iki taraftaki kurulum adımı ekranda yazılı.
+Boş tablo "hiç sipariş yok" diye okunup yanlış karara yol açardı (reklam
+panelindeki aynı ilke).
+
+**Tuzak — "üye" sayısı:** ALFAS'ta müşteri kaydı üç yoldan oluşuyor (hesap açan,
+misafir sipariş veren, **e-posta katmanına abone olan**). Bu yüzden tabloda
+"Tür" kolonu ve KPI'da hesaplı üye / alıcı ayrı sayılıyor; hepsini "üye" diye
+tek sayıda göstermek listeyi olduğundan değerli gösterirdi.
+
+**Tuzak — tutar birimi:** Medusa v2 fiyatı ondalık para birimidir (1518 = 1.518 ₺).
+100'e bölmek tutarı yüz kat küçük gösterirdi; iki taraftaki testler bölmeyi
+yasaklıyor.
+
+**Kurulum (kullanıcıda):** Railway → `CRM_API_TOKEN` (rastgele 32+ karakter),
+Vercel → `ALFASHOME_API_URL` + `ALFASHOME_API_TOKEN` (aynı jeton).
+
+Testler: `npm run check:alfashome` (18 kontrol; sözleşme kayması, env eksikken
+hata, jeton sızıntısı, tutar birimi, salt okunurluk, menü) ve alfashome tarafında
+`npm run check:crm` (17 kontrol; fail-closed, kısa jeton reddi, sabit zamanlı
+karşılaştırma, yazma ucu yokluğu).
+
 ### 2026-09-18 — Migration defteri gerçekle hizalandı + RLS açığı (tekrar) kapatıldı
 
 "16 migration canlıya uygulanacak" diye duran iş, **uygulama işi değil defter

@@ -9,6 +9,28 @@
 
 ## 2026-09
 
+### ALFAS Home bölümü — siparişler, üyeler, reklamlar (2026-09-19)
+
+- **Yeni menü grubu "ALFAS Home":** Meta Reklamları (mevcut `/reklamlar`, yol
+  korunarak *Sistem*'den taşındı), **Siparişler** (`/alfashome/siparisler`) ve
+  **Üyeler** (`/alfashome/uyeler`). İkisi de `executive.read` izinli, salt
+  okunur ve her istekte taze (`force-dynamic` + `no-store`).
+- **Veri kaynağı:** ALFAS Medusa arka ucuna eklenen salt okunur `/crm/orders`
+  ve `/crm/members` uçları. Medusa **admin** anahtarı kullanılmadı (o anahtar
+  silme/fiyat/iade yetkisi de verir); dar kapsamlı iki uç açıldı.
+- **Uçlar fail-closed:** `CRM_API_TOKEN` yok ya da 24 karakterden kısaysa 503,
+  veri yok. Jeton karşılaştırması SHA-256 özeti üzerinden `timingSafeEqual`
+  (ham karşılaştırma uzunluğu sızdırır); jeton yanıta ve log'a yazılmıyor.
+- **Hata sessiz kalmıyor:** yapılandırma eksik / 401 / 503 durumlarında panel
+  boş tablo değil, sebebi ve iki taraftaki kurulum adımını gösteriyor.
+- **Üye türü ayrımı:** hesaplı üye, misafir alıcı ve e-posta abonesi ayrı
+  sayılıyor (ALFAS'ta bülten aboneliği de müşteri kaydı oluşturuyor).
+- Testler: `npm run check:alfashome` (18 kontrol), alfashome tarafında
+  `npm run check:crm` (17 kontrol). `tsc --noEmit`, `eslint` ve `next build`
+  temiz (yeni iki rota dinamik).
+- Kurulum kullanıcıda: Railway `CRM_API_TOKEN`, Vercel `ALFASHOME_API_URL` +
+  `ALFASHOME_API_TOKEN`.
+
 ### Migration defteri hizalandı + RLS açığı kapatıldı (2026-09-18)
 
 - **16 "bekleyen" migration gerçekte uygulanmıştı.** Ürettikleri 8 tablo,
