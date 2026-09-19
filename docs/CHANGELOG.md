@@ -9,6 +9,31 @@
 
 ## 2026-09
 
+### Migration defteri hizalandı + RLS açığı kapatıldı (2026-09-18)
+
+- **16 "bekleyen" migration gerçekte uygulanmıştı.** Ürettikleri 8 tablo,
+  13 kolon, 27 view ve 4 fonksiyonun tamamı canlıda doğrulandı (eksik 0; view'lar
+  okunarak, fonksiyonlar çağrılarak); DDL SQL editöründen elle uygulanmış,
+  `_prisma_migrations`'a yazılmamıştı. Defter kayıtları doğru checksum
+  (`migration.sql` sha256) ile yazıldı; DDL yeniden çalıştırılmadı (dosyalar veri
+  geri doldurma UPDATE'i de taşıyor, `urun_aday` 17.09'da elle düzenlenmiş).
+- **11 eski migration'da checksum kayması giderildi.** Dosyalar uygulandıktan
+  sonra yorum eklenerek düzenlenmiş; bu hâlde `prisma migrate deploy`
+  "modified after applied" ile durur. Hizalamadan önce o 11 dosyanın tüm DDL
+  nesneleri (11 tablo, 6 enum tipi, 16 kolon, 42 index, `vector` eklentisi,
+  3 enum değeri) canlıda arandı — eksik 0, yani düzenlemeler yalnız yorum.
+- **Sonuç:** 95/95 migration uygulanmış durumda ve dosya tarafının toplu
+  sha256'sı DB tarafıyla birebir aynı.
+- **`20260918190000_rls_eksik_tablolar_2`:** `cfo_hamle`, `cfo_hamle_olcum`,
+  `cfo_kart_taksit`, `cfo_kilometre_tasi`, `cfo_kur` tablolarında RLS kapalıydı
+  (Supabase advisor ERROR; 13.09 süpürmesinden sonra elle açılmış tablolar).
+  Deny-all RLS açıldı — RLS'siz public tablo: 0. Beş tablo da TypeScript
+  kodunda geçmiyor; erişim Prisma → `postgres` (rolbypassrls).
+- Eskimiş doküman satırları düzeltildi: 13.09'un "canlı DB 16 migration geride /
+  `UrunAday` tablosu yok" bulgusu (camelCase model adıyla arandığı için yanlış),
+  `20260909220000_trendyol_finance` ve `20260625230000_pdks_tenant_subscription`
+  için "uygulanmadı" notları.
+
 ### PDKS kritik mantık testleri — C5 (2026-09-17)
 
 - Karar mantığı saf modüllere çıkarıldı: `lib/pdks/tr-time.ts`,
