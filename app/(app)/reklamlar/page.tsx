@@ -47,7 +47,7 @@ export default async function ReklamlarPage({
     <div className="space-y-6">
       <PageHeader
         icon={Megaphone}
-        breadcrumb={[{ label: "Sistem" }, { label: "Meta Reklamları" }]}
+        breadcrumb={[{ label: "ALFAS Home" }, { label: "Meta Reklamları" }]}
         title="Meta Reklam Performansı"
         subtitle="Kampanya bazında harcama, satış ve ROAS. Yalnız okuma — bütçe ve durum Meta panelinden yönetilir."
       />
