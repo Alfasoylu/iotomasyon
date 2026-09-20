@@ -9,6 +9,13 @@
 
 ## 2026-09
 
+### ALFAS bağlantısı canlıda doğrulandı (2026-09-20)
+
+- Panel → ALFAS Home → Ayarlar → "Bağlantıyı dene" çalıştırıldı;
+  `AlfashomeConfig.lastOkAt` = `2026-09-20 15:34:42` yazıldı, yani
+  `/crm/orders` uçundan gerçek 200 alındı. Adres, jeton ve ALFAS tarafındaki
+  24 karakter alt sınırı birlikte doğrulandı. Kod değişikliği yok.
+
 ### ALFAS bağlantısı panelden yapılandırılır (2026-09-19)
 
 - **`AlfashomeConfig` singleton tablosu** (migration `20260919180000_alfashome_config`,
