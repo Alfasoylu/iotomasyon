@@ -242,6 +242,20 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-09-20 — ALFAS bağlantısı CANLIDA doğrulandı (lastOkAt yazıldı)
+
+Panel → ALFAS Home → Ayarlar → "Bağlantıyı dene" çalıştırıldı ve
+`AlfashomeConfig.lastOkAt` = **2026-09-20 15:34:42** olarak yazıldı. Yani
+`/crm/orders` uçundan gerçek bir **200** alındı: adres, jeton ve ALFAS
+tarafındaki 24 karakter alt sınırı birlikte doğrulanmış oldu.
+
+⚠️ **Bu damga neden önemli:** `lastOkAt` yalnız gerçek 200'de yazılıyor
+(`testAlfashomeConnectionAction`). Boş kalması "kaydedildi ama hiç
+denenmedi" demek — kurulum bitmiş görünürken sayfalar veri getirmeyebilir.
+Kayıt 19.09'da girilmişti ama damga boştu; bu turda kapandı.
+
+Etki: yalnız doğrulama, kod değişikliği yok.
+
 ### 2026-09-19 — ALFAS bağlantısı PANELDEN yapılandırılır oldu (env zorunluluğu kalktı)
 
 ALFAS Home sayfaları adres + jetonu Vercel ortam değişkeninden okuyordu. Sorun:
