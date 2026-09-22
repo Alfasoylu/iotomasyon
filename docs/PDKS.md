@@ -242,6 +242,71 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-09-22 — Entegra satış yükleme ekranı + iki menü girişi
+
+**İŞ 1 — Menü.** `/admin/stok-sicrama` → **Ürünler & Stok** altında "Stok
+Sıçramaları" (`CFO_READ`), `/admin/entegra-yukleme` → **Pazaryerleri ›
+Yapılandırma** altında "Entegra Satış Yükleme" (`CFO_WRITE`). Menü zaten
+yetkiye göre süzüyor; girişler sayfaların GERÇEK yetkisiyle yazıldı, aksi
+hâlde görünür ama açılmayan satır olurdu. `fileUp` ikonu ICONS haritasına
+eklendi.
+
+**İŞ 2 — Entegra satış yükleme.** Akış: yükle → **önizleme** → onayla → yaz.
+Önizleme ucu hiçbir şey yazmaz; yazma ucu önizlemeden dönen `fileHash`'i
+zorunlu tutar ve dosyayı **yeniden hash'leyip** karşılaştırır — eşleşmezse
+409 döner ve tek satır yazılmaz. Böylece "önizlediğim dosya ile yazılan dosya
+aynı mı?" sorusu kullanıcının sözüne değil sunucuya bağlanır.
+
+Önizleme şunları ayrı ayrı gösterir: toplam · yeni · güncellenecek · **durumu
+değişecek** · **iadeye dönecek** (kırmızı kutu + listede üstte) · tutarı
+değişecek · adedi değişecek · ürünle eşleşmeyen (ilk 10 model) · tarih aralığı
+· atlanan · dosya içi mükerrer.
+
+**productId türetme — sıra kritik.** (1) `lower(sku)=lower(Model)` birebir,
+(2) bulunamazsa `cfo_norm(sku)=cfo_norm(Model)` (SQL fonksiyonu, SALT OKUNUR),
+(3) yoksa null. Bir model birden çok ürüne çözülüyorsa **eşleştirme yapılmaz**.
+Canlıda doğrulandı: `cfo_norm` alfanümerik dışını siliyor ve katalogda tam bir
+çakışan çift var — `ANUNNAKI-POINTER` / `ANUNNAKIPOINTER`. Birebir aşama ikisini
+de KENDİ ürününe çözüyor; norm aşaması ikisini de `n=2` görüp reddediyor.
+Çifte koruma.
+
+**Yazma.** Benzersiz anahtar `(channel, orderNumber, externalLineId)`; id
+deterministik `'ent' || md5(channel|orderNumber|externalLineId)` (md5 kabuk
+ile doğrulandı). Önce UPDATE, sonra `INSERT ... ON CONFLICT DO NOTHING`,
+250'lik gruplar. UPDATE'te **customerId'ye dokunulmaz** (başka akış bağlamış
+olabilir) ve **productId COALESCE** ile korunur — yeni türetme null diye
+mevcut iyi bir bağ silinmesin. SQL sütun listesi tek kaynakta
+(`lib/entegra/sql.ts`): `unnest` sütunları KONUMA göre eşlediği için iki ayrı
+liste bir gün kaysa veri sessizce yanlış kolona giderdi.
+
+🔴 **CSV'de iki gerçek tuzak bulundu ve düzeltildi.** (1) UTF-8 **BOM'lu** CSV,
+`codepage 65001` ile okunduğunda SheetJS ilk başlığı kırpıyor ve Türkçe
+harfleri bozuyordu: `Entegrasyon`→`tegrasyon`, `Sipariş Numarası`→
+`Sipari_ Numaras1` — dosya "eksik sütun" diye reddedilirdi. Excel Türkçe
+Windows'ta CSV'yi tam da BOM ile kaydeder. (2) Dosya geçerli UTF-8 değilse
+windows-1254 (Türkçe ANSI) olabiliyor; 65001 zorlanırsa harfler yine bozulur.
+Artık BOM atılıyor ve kodlama tur-atma sınamasıyla seçiliyor. Üç senaryo da
+(BOM'lu / BOM'suz / 1254) birebir aynı sonucu veriyor.
+
+**Sınırlar (şart).** Yalnız `MarketplaceSalesRecord` + `EntegraImportLog`
+yazılır; `cfo_*` tablolarına yazılmaz. Dosyadaki TÜM satırlar işlenir.
+`ID` boş satır **atlanır** (NULL içeren anahtar Postgres'te benzersizliği
+zorlamaz, aynı satır tekrar tekrar eklenirdi); `Durum Adı` boş satır da
+atlanır (uydurulmuş durum iade/satış ayrımını bozardı).
+
+**Doğrulama.** `next build` → `Compiled successfully`, **sıfır TS hatası**,
+eslint temiz (kalan tek hata `sidebar.tsx`'te önceden var). UPDATE ve INSERT
+SQL'i canlı şemaya karşı `PREPARE` ile sınandı — ayrıştırıldı ve planlandı,
+**tek satır yazılmadı**. Ayrıştırıcı sentetik Entegra dosyasıyla uçtan uca
+test edildi (kanal, tarih biçimleri, `"153936.0"→"153936"`, ondalık/yuvarlama,
+dosya içi mükerrer, atlama sebepleri).
+⚠️ Ekran gerçek Entegra dosyasıyla ve giriş yapmış kullanıcıyla **denenmedi**.
+
+⚠️ **Migration canlıya UYGULANMALI:** `20260922160000_entegra_import_log`.
+Vercel `prisma migrate deploy` çalıştırmıyor; uygulanmadan `/admin/entegra-yukleme`
+açılışta hata verir (`EntegraImportLog` yok).
+
+
 ### 2026-09-22 — Stok sıçrama paneli DERLENMİYORDU, düzeltildi
 
 Panel ilk yazıldığında hiç derlenmemişti (`npm install` sheetjs CDN 403'ü

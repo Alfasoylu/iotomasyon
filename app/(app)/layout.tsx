@@ -192,6 +192,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "Ürünler & Stok",
   },
   {
+    href: "/admin/stok-sicrama",
+    label: "Stok Sıçramaları",
+    iconKey: "trendingDown",
+    permission: PERMISSIONS.CFO_READ,
+    section: "Ürünler & Stok",
+  },
+  {
     href: "/admin/product-pricing",
     label: "Katalog Fiyatları (USD)",
     iconKey: "dollar",
@@ -309,6 +316,14 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     label: "XML Senkron",
     iconKey: "refresh",
     permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "Pazaryerleri",
+    subGroup: "Yapılandırma",
+  },
+  {
+    href: "/admin/entegra-yukleme",
+    label: "Entegra Satış Yükleme",
+    iconKey: "fileUp",
+    permission: PERMISSIONS.CFO_WRITE,
     section: "Pazaryerleri",
     subGroup: "Yapılandırma",
   },

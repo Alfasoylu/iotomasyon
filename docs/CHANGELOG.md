@@ -9,6 +9,28 @@
 
 ## 2026-09
 
+### Entegra satış yükleme ekranı (2026-09-22)
+
+- `/admin/entegra-yukleme`: Entegra sipariş dışa aktarımını (.xlsx/.csv)
+  `MarketplaceSalesRecord`'a yazar. Akış **yükle → önizleme → onayla → yaz**;
+  onay olmadan tek satır yazılmaz. Onay adımı önizlemenin `fileHash`'ini geri
+  gönderir, sunucu dosyayı yeniden hash'leyip doğrular.
+- Önizleme durumu değişecek ve **iadeye dönecek** satırları ayrı gösterir.
+- Benzersiz anahtar `(channel, orderNumber, externalLineId)`, id deterministik
+  (`ent` + md5); aynı dosya iki kez yüklenirse mükerrer oluşmaz.
+- productId: birebir SKU → `cfo_norm` → null. Belirsiz eşleşmede null.
+- CSV'de UTF-8 BOM ve windows-1254 kodlaması düzeltildi (BOM'lu dosya
+  başlıkları bozuluyor ve dosya reddediliyordu).
+- Yeni tablo `EntegraImportLog` (migration `20260922160000_entegra_import_log`,
+  `IF NOT EXISTS`, RLS deny-all).
+
+### Menüye iki giriş (2026-09-22)
+
+- "Stok Sıçramaları" (`/admin/stok-sicrama`, Ürünler & Stok, `CFO_READ`) ve
+  "Entegra Satış Yükleme" (`/admin/entegra-yukleme`, Pazaryerleri ›
+  Yapılandırma, `CFO_WRITE`). Yetkisi olmayana görünmez.
+
+
 ### Stok sıçrama paneli derlenir hâle getirildi (2026-09-22)
 
 - Panel ilk yazımında hiç derlenmemişti; merge edilseydi `next build` hata verip
