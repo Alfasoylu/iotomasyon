@@ -234,21 +234,44 @@ export async function runSync(
     }
 
     // Write stock change logs (batch insert, chunked)
+    // ⚠️ xmlDateChange ve xmlSku migration'ı yapılmamışsa atlanır (Vercel db:migrate çalıştırmıyor)
     if (stockChanges.length > 0) {
       for (const batch of chunks(stockChanges, 200)) {
-        await prisma.xmlStockChangeLog.createMany({
-          data: batch.map(({ productId, previousQty, newQty, delta, xmlDateChange, xmlSku }) => ({
-            productId,
-            syncLogId: log.id,
-            sourceId,
-            previousQty,
-            newQty,
-            delta,
-            syncedAt: now,
-            xmlDateChange: xmlDateChange || null,
-            xmlSku: xmlSku || null,
-          })),
-        });
+        try {
+          await prisma.xmlStockChangeLog.createMany({
+            data: batch.map(({ productId, previousQty, newQty, delta, xmlDateChange, xmlSku }) => ({
+              productId,
+              syncLogId: log.id,
+              sourceId,
+              previousQty,
+              newQty,
+              delta,
+              syncedAt: now,
+              xmlDateChange: xmlDateChange || null,
+              xmlSku: xmlSku || null,
+            })),
+          });
+        } catch (err: any) {
+          // Kolon olmadığında migration yapılmamış anlamı → eski format ile yeniden dene
+          if (err.code === "42703" || err.message?.includes("column")) {
+            console.warn(
+              "[xml-sync] xmlDateChange/xmlSku migration'ı yapılmamış, eski format ile devam ediliyor"
+            );
+            await prisma.xmlStockChangeLog.createMany({
+              data: batch.map(({ productId, previousQty, newQty, delta }) => ({
+                productId,
+                syncLogId: log.id,
+                sourceId,
+                previousQty,
+                newQty,
+                delta,
+                syncedAt: now,
+              })),
+            });
+          } else {
+            throw err;
+          }
+        }
       }
     }
 

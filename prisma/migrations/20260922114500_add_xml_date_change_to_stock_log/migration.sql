@@ -1,8 +1,8 @@
 -- İş 3: XML senkronunda değişim anını yakala
 -- XmlStockChangeLog tablosuna XML feed'deki değişim zamanı ve SKU bilgisi ekle
 
-ALTER TABLE "XmlStockChangeLog" ADD COLUMN "xmlDateChange" TEXT;
-ALTER TABLE "XmlStockChangeLog" ADD COLUMN "xmlSku" TEXT;
+ALTER TABLE "XmlStockChangeLog" ADD COLUMN IF NOT EXISTS "xmlDateChange" TEXT;
+ALTER TABLE "XmlStockChangeLog" ADD COLUMN IF NOT EXISTS "xmlSku" TEXT;
 
 -- Comment'ler
 COMMENT ON COLUMN "XmlStockChangeLog"."xmlDateChange" IS 'XML feed''de kaydedilen değişim tarihi/zamanı (Entegra xmlDateChange alanından)';

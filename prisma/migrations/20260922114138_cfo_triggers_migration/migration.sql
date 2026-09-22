@@ -1,50 +1,54 @@
 -- CFO Stok Sıçrama & XML Ürün Değişim Triggers
 -- Veritabanı: Supabase Postgres
 -- Amacı: Stok değişimlerini ve XML feed değişimlerini otomatik olarak yakalamak
+-- ⚠️  Bu migration yalnız trigger ve fonksiyonları dokümante eder.
+-- Veritabanında zaten mevcut olan cfo_* nesnelerini PROTECT eder.
 
 -- ============================================================================
--- 1. Helper Function: cfo_stok_sicrama_kaydet()
--- Stok değişimlerini cfo_stok_sicrama tablosuna kaydeder
+-- 1. Helper Function: cfo_stok_sicrama_kaydet(p_log_id)
+-- Stok değişimlerini cfo_stok_sicrama tablosuna kaydeder (medyan-tabanlı eşik)
 -- ============================================================================
-CREATE OR REPLACE FUNCTION public.cfo_stok_sicrama_kaydet(p_xml_log_id text)
+CREATE OR REPLACE FUNCTION public.cfo_stok_sicrama_kaydet(p_log_id text)
 RETURNS void
 LANGUAGE plpgsql
-SECURITY DEFINER
 AS $function$
-DECLARE
-  v_product_id text;
-  v_sku text;
-  v_urun text;
-  v_synced_at timestamp;
-  v_onceki integer;
-  v_yeni integer;
-  v_delta integer;
-  v_medyan_dusus numeric;
+DECLARE r record; v_med numeric; v_neden text;
 BEGIN
-  -- XmlStockChangeLog'dan bilgileri al
-  SELECT id, "productId", "xmlSku", "xmlName", "syncedAt", "oldQuantity", "newQuantity"
-  INTO p_xml_log_id, v_product_id, v_sku, v_urun, v_synced_at, v_onceki, v_yeni
-  FROM "XmlStockChangeLog"
-  WHERE id = p_xml_log_id;
+  SELECT l.id, l."productId", l."previousQty", l."newQty", l.delta, l."syncedAt", p.sku, p.name
+    INTO r
+  FROM "XmlStockChangeLog" l JOIN "Product" p ON p.id = l."productId"
+  WHERE l.id = p_log_id;
 
-  IF NOT FOUND THEN
+  IF r.id IS NULL OR r.delta > -5 THEN
     RETURN;
   END IF;
 
-  v_delta := v_yeni - v_onceki;
+  -- Son 90 günün medyan günlük stok kaybını hesapla
+  SELECT GREATEST(COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY -x.delta), 1), 1)
+    INTO v_med
+  FROM "XmlStockChangeLog" x
+  WHERE x."productId" = r."productId" AND x.delta < 0 AND x.delta >= -100 AND x.id <> r.id
+    AND x."syncedAt" BETWEEN r."syncedAt" - INTERVAL '90 days' AND r."syncedAt";
 
-  -- Eğer delta -5'ten küçük veya eşitse, sıçrama kaydı oluştur
-  IF v_delta <= -5 THEN
-    INSERT INTO cfo_stok_sicrama (
-      xml_log_id, product_id, sku, urun, synced_at, onceki, yeni, delta,
-      esik_nedeni, durum, created_at
-    )
-    VALUES (
-      p_xml_log_id, v_product_id, v_sku, v_urun, v_synced_at, v_onceki, v_yeni, v_delta,
-      'XML_SICRAMA_TESPIT', 'ACIK', now()
-    )
-    ON CONFLICT DO NOTHING;
+  -- Eşik nedeni: normalin katı, stokun yüzdesi, toplu değişim
+  v_neden := CONCAT_WS(' + ',
+    CASE WHEN -r.delta >= 3 * v_med THEN 'normalin ' || ROUND(-r.delta / v_med, 1) || ' kati' END,
+    CASE WHEN r."previousQty" > 0 AND -r.delta >= 0.5 * r."previousQty" THEN 'stogun %' || ROUND(100.0 * -r.delta / r."previousQty") || 'i' END,
+    CASE WHEN r.delta < -100 THEN 'TOPLU (>100)' END);
+
+  IF v_neden IS NULL OR v_neden = '' THEN
+    RETURN;
   END IF;
+
+  -- Sıçrama kaydını oluştur
+  INSERT INTO cfo_stok_sicrama(
+    xml_log_id, product_id, sku, urun, synced_at, onceki, yeni, delta,
+    esik_nedeni, medyan_dusus, entegra_degisim_zamani
+  )
+  SELECT r.id, r."productId", r.sku, r.name, r."syncedAt", r."previousQty", r."newQty", r.delta,
+         v_neden, v_med,
+         (SELECT d."xmlDateChange" FROM "XmlProductData" d WHERE d."productId" = r."productId" LIMIT 1)
+  ON CONFLICT (xml_log_id) DO NOTHING;
 END;
 $function$;
 
@@ -241,7 +245,6 @@ CREATE OR REPLACE FUNCTION public.cfo_sicrama_kapat(
 )
 RETURNS text
 LANGUAGE plpgsql
-SECURITY DEFINER
 AS $function$
 BEGIN
   -- Stok sıçrama kaydını güncelle

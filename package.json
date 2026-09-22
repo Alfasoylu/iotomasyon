@@ -14,6 +14,7 @@
     "db:seed:cfo": "tsx prisma/seed-cfo.ts",
     "start": "next start",
     "lint": "eslint",
+    "backfill:trendyol": "tsx scripts/backfill-trendyol-productid.ts",
     "check:wa": "tsx __tests__/whatsapp.test.ts",
     "check:ads": "tsx __tests__/meta-ads.test.ts",
     "check:pdks": "tsx __tests__/pdks-logic.test.ts",
