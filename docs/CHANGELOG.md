@@ -9,6 +9,28 @@
 
 ## 2026-09
 
+### Belirsiz barkod artık eşleştirilmiyor (2026-09-22)
+
+- `lib/trendyol-product-matching.ts`: bir barkod `MarketplaceProductMapping`'te
+  birden fazla **farklı** `productId`'ye bağlıysa eşleştirme yapılmıyor, kayıt
+  NULL bırakılıyor ve alt yöntemlere de düşülmüyor. Eski `findFirst` rastgele
+  birini seçiyor, satışı yanlış ürüne yazıyordu.
+- Canlı ölçüm: 1 barkod (`14112021000001`) 2 ayrı ürüne bağlı; bu barkodu
+  taşıyan 245 satış kaydının 28'i NULL, 217'si dolu.
+- Batch sürümündeki `in` + `mode: "insensitive"` bozukluğu (Prisma `in`
+  filtresinde `mode`'u yok sayar) `OR + equals` ile düzeltildi; batch artık
+  tekil çağrıyla aynı kararı veriyor.
+
+### CFO trigger migration'ı canlıyla doğrulandı (2026-09-22)
+
+- `20260922114138_cfo_triggers_migration` içindeki 4 fonksiyon ve 2 trigger,
+  `pg_get_functiondef` / `pg_get_triggerdef` ile canlı veritabanına karşı
+  karşılaştırıldı. İmzalar ve trigger tanımları birebir.
+- `cfo_sicrama_kapat`'taki fazladan `IF EXISTS (information_schema...)` koşulu
+  kaldırıldı (canlıda INSERT koşulsuz). Kalan farklar yalnız biçimsel.
+- Dosyada veriye dokunan ifade olmadığı doğrulandı: üst seviyede yalnız
+  4× CREATE OR REPLACE FUNCTION, 2× DROP TRIGGER IF EXISTS, 2× CREATE TRIGGER.
+
 ### ALFAS bağlantısı canlıda doğrulandı (2026-09-20)
 
 - Panel → ALFAS Home → Ayarlar → "Bağlantıyı dene" çalıştırıldı;

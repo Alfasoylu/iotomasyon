@@ -2,7 +2,18 @@
 -- Veritabanı: Supabase Postgres
 -- Amacı: Stok değişimlerini ve XML feed değişimlerini otomatik olarak yakalamak
 -- ⚠️  Bu migration yalnız trigger ve fonksiyonları dokümante eder.
--- Veritabanında zaten mevcut olan cfo_* nesnelerini PROTECT eder.
+-- Canlıda ZATEN MEVCUT; `prisma migrate resolve --applied` ile kayıtlıdır.
+--
+-- ⚠️  BİÇİM canlıdan farklı, MANTIK aynı (22.09.2026'da pg_get_functiondef ile
+-- doğrulandı). Canlı gövdeler küçük harf anahtar kelime kullanıyor ve tek
+-- satırlık IF/VALUES yazımında; buradaki sürüm okunurluk için büyük harfe
+-- çevrildi, satırlara bölündü ve Türkçe açıklama satırları eklendi.
+-- Gövde md5'leri bu yüzden tutmaz — davranış farkı DEĞİLDİR.
+--
+-- ⛔ Bu dosyada VERİYE DOKUNAN ifade YOKTUR. Üst seviyede yalnız 8 ifade var:
+--    4× CREATE OR REPLACE FUNCTION, 2× DROP TRIGGER IF EXISTS, 2× CREATE TRIGGER.
+--    Fonksiyon gövdelerindeki INSERT'ler trigger anında çalışır, migration
+--    anında DEĞİL. Hiçbir DELETE/UPDATE/TRUNCATE ve veri dolduran SELECT yok.
 
 -- ============================================================================
 -- 1. Helper Function: cfo_stok_sicrama_kaydet(p_log_id)
@@ -255,23 +266,21 @@ BEGIN
     kapandi_at = now()
   WHERE id = p_id;
 
-  -- Değişimi cfo_change_log'a kaydet (eğer tablo varsa)
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'cfo_change_log') THEN
-    INSERT INTO cfo_change_log(
-      id, area, kind, item, "oldValue", "newValue", note, "changedAt"
-    )
-    SELECT
-      gen_random_uuid()::text,
-      'stok',
-      'teyit',
-      'Stok sicramasi kapandi: ' || sku || ' ' || delta,
-      'ACIK',
-      p_durum,
-      p_aciklama,
-      now()
-    FROM cfo_stok_sicrama
-    WHERE id = p_id;
-  END IF;
+  -- Değişimi cfo_change_log'a kaydet
+  INSERT INTO cfo_change_log(
+    id, area, kind, item, "oldValue", "newValue", note, "changedAt"
+  )
+  SELECT
+    gen_random_uuid()::text,
+    'stok',
+    'teyit',
+    'Stok sicramasi kapandi: ' || sku || ' ' || delta,
+    'ACIK',
+    p_durum,
+    p_aciklama,
+    now()
+  FROM cfo_stok_sicrama
+  WHERE id = p_id;
 
   RETURN 'ok';
 END;

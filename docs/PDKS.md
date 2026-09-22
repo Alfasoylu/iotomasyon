@@ -242,6 +242,39 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-09-22 — Belirsiz barkod eşleştirilmiyor + migration canlıyla doğrulandı
+
+**1) `lib/trendyol-product-matching.ts` — belirsiz barkod artık NULL kalır.**
+Eski kod `findFirst` ile **rastgele** bir eşleşme seçiyordu. Bir barkod
+`MarketplaceProductMapping`'te birden fazla FARKLI `productId`'ye bağlıysa
+hangisinin doğru olduğu bilinemez; rastgele seçim satışı yanlış ürüne yazar ve
+ciro/stok/kâr sessizce kayar. Artık `distinct` ile tüm farklı ürünler sayılıyor,
+>1 ise eşleştirme yapılmıyor ve **alt yöntemlere de düşülmüyor**. Batch sürümü
+tek tek çağrıyla aynı kararı veriyor.
+Canlı ölçüm: **1 barkod** (`14112021000001`) 2 ayrı ürüne bağlı, bu barkodu
+taşıyan **245** satış kaydı var; **28**'i NULL (CFO'nun SQL backfill'i doğru
+davranıp bırakmış), 217'si daha önceden dolu.
+Yan düzeltme: batch'teki `sku: { in: [...], mode: "insensitive" }` — Prisma `in`
+filtresinde `mode`'u **sessizce yok sayar**, yani batch büyük/küçük harf
+duyarlıydı ve tekil sürümden farklı sonuç veriyordu. `OR + equals` ile (200'lük
+parçalar hâlinde) düzeltildi.
+
+**2) `20260922114138_cfo_triggers_migration` canlıyla karşılaştırıldı.**
+`pg_get_functiondef` / `pg_get_triggerdef` ile 4 fonksiyon + 2 trigger tek tek
+doğrulandı. İmzalar ve trigger tanımları **birebir**. Tek gerçek sapma
+`cfo_sicrama_kapat`'taydı: dosyada `cfo_change_log` INSERT'i
+`IF EXISTS (information_schema...)` koşuluna sarılıydı, canlıda koşulsuz —
+**kaldırıldı**. Kalan farklar yalnız biçim (küçük→BÜYÜK harf anahtar kelime,
+tek satırlık IF/VALUES'ın satırlara bölünmesi, eklenen Türkçe açıklamalar);
+gövde md5'leri bu yüzden tutmuyor, davranış farkı değil. Dosya başına bu not
+yazıldı. Dosyada üst seviyede **yalnız 8 ifade** var (4× CREATE OR REPLACE
+FUNCTION, 2× DROP TRIGGER IF EXISTS, 2× CREATE TRIGGER); **veriye dokunan
+hiçbir ifade yok**.
+
+**3) Vercel `prisma migrate deploy` ÇALIŞTIRMIYOR** (`package.json` → `build:
+next build`, `postinstall: prisma generate`; `vercel.json`'da yalnız cron var).
+Bu yüzden `lib/xml-sync-runner.ts` kolon yokluğuna (42703) karşı korumalı.
+
 ### 2026-09-20 — ALFAS bağlantısı CANLIDA doğrulandı (lastOkAt yazıldı)
 
 Panel → ALFAS Home → Ayarlar → "Bağlantıyı dene" çalıştırıldı ve
