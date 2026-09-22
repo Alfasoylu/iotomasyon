@@ -1557,20 +1557,23 @@ model StockAdjustmentLog {
 // delta = newQty - previousQty (positive = restock/increase, negative = depletion)
 
 model XmlStockChangeLog {
-  id          String   @id @default(cuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  syncLogId   String
-  sourceId    String
-  previousQty Int
-  newQty      Int
-  delta       Int
-  syncedAt    DateTime @default(now())
+  id               String   @id @default(cuid())
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  syncLogId        String
+  sourceId         String
+  previousQty      Int
+  newQty           Int
+  delta            Int
+  syncedAt         DateTime @default(now())
+  xmlDateChange    String?  // XML feed'deki değişim tarihi/zamanı
+  xmlSku           String?  // XML feed'deki SKU (product.sku ile eşleşmiyor ise)
 
   @@index([productId])
   @@index([syncLogId])
   @@index([sourceId])
   @@index([syncedAt])
+  @@map("XmlStockChangeLog")
 }
 
 // ─── Phase 77 — Satın Alma Siparişi (Purchase Order) ────────────────────────

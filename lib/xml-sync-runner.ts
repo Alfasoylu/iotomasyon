@@ -185,7 +185,14 @@ export async function runSync(
     const stockUpdates: StockUpdate[] = [];
 
     // Capture stock changes for XmlStockChangeLog
-    const stockChanges: Array<{ productId: string; previousQty: number; newQty: number; delta: number }> = [];
+    const stockChanges: Array<{
+      productId: string;
+      previousQty: number;
+      newQty: number;
+      delta: number;
+      xmlDateChange?: string;
+      xmlSku?: string;
+    }> = [];
 
     for (const rec of existingRecords) {
       const p = existingBySku.get(rec.sku)!;
@@ -206,6 +213,8 @@ export async function runSync(
             previousQty: p.stockQuantity,
             newQty: rec.stock,
             delta: rec.stock - p.stockQuantity,
+            xmlDateChange: rec.dateChange,
+            xmlSku: rec.sku,
           });
         }
       }
@@ -228,7 +237,7 @@ export async function runSync(
     if (stockChanges.length > 0) {
       for (const batch of chunks(stockChanges, 200)) {
         await prisma.xmlStockChangeLog.createMany({
-          data: batch.map(({ productId, previousQty, newQty, delta }) => ({
+          data: batch.map(({ productId, previousQty, newQty, delta, xmlDateChange, xmlSku }) => ({
             productId,
             syncLogId: log.id,
             sourceId,
@@ -236,6 +245,8 @@ export async function runSync(
             newQty,
             delta,
             syncedAt: now,
+            xmlDateChange: xmlDateChange || null,
+            xmlSku: xmlSku || null,
           })),
         });
       }
