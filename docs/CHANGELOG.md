@@ -9,6 +9,21 @@
 
 ## 2026-09
 
+### Stok sıçrama paneli derlenir hâle getirildi (2026-09-22)
+
+- Panel ilk yazımında hiç derlenmemişti; merge edilseydi `next build` hata verip
+  production deploy'u kırardı. Sekiz kırık düzeltildi: olmayan `select`/`dialog`
+  bileşenleri, bağımlılık olmayan (ve kullanılmayan) `date-fns`, eksik `React`
+  import'u, geçersiz Button/Badge variant'ları, olmayan `EXECUTIVE_WRITE` izni.
+- **`bigint`/`numeric` kolonlar SQL'de text/int/float'a çevriliyor**:
+  `NextResponse.json()` BigInt'i serialize edemiyor, iki GET ucu da çalışma
+  anında 500 dönerdi (tip denetiminin yakalamadığı bir hata).
+- İzinler `CFO_READ` (okuma) / `CFO_WRITE` (kapatma) olarak düzeltildi.
+- `lib/cfo/sicrama.ts`: kapatma durumları tek kaynakta, veritabanındaki
+  `cfo_stok_sicrama_durum_check` CHECK constraint'i ile birebir aynı.
+- Doğrulama: `next build` → `✓ Compiled successfully`, `eslint` temiz, `main`'e
+  göre fazladan sıfır tip hatası. Panel gerçek veriyle elle test edilmedi.
+
 ### Belirsiz barkod artık eşleştirilmiyor (2026-09-22)
 
 - `lib/trendyol-product-matching.ts`: bir barkod `MarketplaceProductMapping`'te

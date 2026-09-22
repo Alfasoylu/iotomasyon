@@ -251,9 +251,10 @@ export async function runSync(
               xmlSku: xmlSku || null,
             })),
           });
-        } catch (err: any) {
+        } catch (err) {
           // Kolon olmadığında migration yapılmamış anlamı → eski format ile yeniden dene
-          if (err.code === "42703" || err.message?.includes("column")) {
+          const { code, message } = err as { code?: string; message?: string };
+          if (code === "42703" || message?.includes("column")) {
             console.warn(
               "[xml-sync] xmlDateChange/xmlSku migration'ı yapılmamış, eski format ile devam ediliyor"
             );

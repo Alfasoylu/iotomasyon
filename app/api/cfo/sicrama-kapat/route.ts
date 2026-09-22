@@ -1,44 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/auth";
+import { getCurrentSession, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { gecerliKapatmaDurumu } from "@/lib/cfo/sicrama";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 /**
  * POST /api/cfo/sicrama-kapat
  *
- * Stok sıçramasını kapatan ve açıklamasını kaydeden endpoint.
- * Request body:
- *   - id: bigint
- *   - durum: string (SATIS, TOPLU_SATIS, FBA_GONDERIM, SAYIM_DUZELTME, IADE_IPTAL, TRANSFER_BASKA_SKU, DIGER)
- *   - aciklama: string
+ * Stok sıçramasını kapatır ve açıklamasını cfo_change_log'a yazar.
+ * Body: { id: string|number, durum: SicramaKapatmaDurumu, aciklama?: string }
  */
 export async function POST(req: NextRequest) {
+  const user = await getCurrentSession();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await checkPermission(user, PERMISSIONS.CFO_WRITE))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
-    await requirePermission(PERMISSIONS.EXECUTIVE_WRITE);
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Geçersiz istek gövdesi" }, { status: 400 });
+    }
+    const { id, durum, aciklama } = body as {
+      id?: unknown;
+      durum?: unknown;
+      aciklama?: unknown;
+    };
 
-    const { id, durum, aciklama } = await req.json();
-
-    if (!id || !durum) {
-      return NextResponse.json(
-        { error: "id ve durum gerekli" },
-        { status: 400 }
-      );
+    // id bigint: JS number'ın güvenli aralığına güvenmek yerine metin olarak
+    // doğrulanıp SQL'de ::bigint'e çevrilir.
+    const idStr = typeof id === "string" || typeof id === "number" ? String(id) : "";
+    if (!/^\d+$/.test(idStr)) {
+      return NextResponse.json({ error: "Geçersiz id" }, { status: 400 });
     }
 
-    // cfo_sicrama_kapat() fonksiyonunu çağır
-    const result = await prisma.$queryRawUnsafe(
-      `SELECT cfo_sicrama_kapat($1, $2, $3) as result`,
-      BigInt(id),
+    // Geçersiz durum DB'deki CHECK constraint'ine takılıp 500 dönerdi.
+    if (!gecerliKapatmaDurumu(durum)) {
+      return NextResponse.json({ error: "Geçersiz durum" }, { status: 400 });
+    }
+
+    const not = typeof aciklama === "string" ? aciklama.slice(0, 2000) : "";
+
+    const rows = await prisma.$queryRawUnsafe<{ result: string }[]>(
+      `SELECT cfo_sicrama_kapat($1::bigint, $2::text, $3::text) AS result`,
+      idStr,
       durum,
-      aciklama || ""
+      not
     );
 
-    return NextResponse.json({ success: true, result });
+    return NextResponse.json({ ok: true, result: rows?.[0]?.result ?? null });
   } catch (error) {
     console.error("[sicrama-kapat] Hata:", error);
-    return NextResponse.json(
-      { error: "İşlem başarısız oldu" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "İşlem başarısız oldu" }, { status: 500 });
   }
 }

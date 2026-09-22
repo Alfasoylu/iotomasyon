@@ -242,6 +242,33 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-09-22 — Stok sıçrama paneli DERLENMİYORDU, düzeltildi
+
+Panel ilk yazıldığında hiç derlenmemişti (`npm install` sheetjs CDN 403'ü
+yüzünden çalışmıyordu). Derleme ortamı kurulunca **üç bağımsız kırık** çıktı;
+merge edilseydi `next build` **hata verip** production deploy'u kırardı
+(`next.config.ts` TS hatalarını yok saymıyor).
+
+| # | Sorun | Düzeltme |
+|---|---|---|
+| 1 | `@/components/ui/select` ve `dialog` **yok** (uydurulmuş) | yerel `<select>` + tek modal |
+| 2 | `date-fns` bağımlılık değil — üstelik import'lar **hiç kullanılmıyordu** | kaldırıldı, `Intl` kullanılıyor |
+| 3 | `React.useEffect` — `React` import edilmemiş | `useEffect` |
+| 4 | `variant="outline"` (Button) / `"secondary"` (Badge) — geçersiz | `secondary`/`ghost`, Badge `danger/warn/info/ok/neutral` |
+| 5 | **`PERMISSIONS.EXECUTIVE_WRITE` yok** | GET'ler `CFO_READ`, POST `CFO_WRITE` |
+| 6 | **`bigint`/`numeric` JSON'a serialize EDİLEMEZ** — iki GET de çalışma anında 500 dönerdi, tip denetimi yakalamaz | SQL'de `id::text`, adetler `::int`, tutarlar `::float8` |
+| 7 | Kapatma durumu doğrulanmıyordu — geçersiz değer DB CHECK'ine takılıp 500 dönerdi | `lib/cfo/sicrama.ts` tek kaynak, uçta 400 |
+| 8 | Effect'te senkron `setState` + yarış koşulu | `iptal` bayrağı, geç yanıt yenisini ezmiyor |
+
+`lib/cfo/sicrama.ts` kapatma durumlarını **tek kaynakta** tutuyor ve
+veritabanındaki `cfo_stok_sicrama_durum_check` CHECK constraint'i ile birebir
+aynı (doğrulandı). Ayrı yazılsalardı uç geçerli sanıp yazmayı dener, Postgres
+reddeder, kullanıcı sebebi anlaşılmayan hata görürdü.
+
+**Doğrulama:** `next build` → `✓ Compiled successfully`, `eslint` temiz. Aynı
+xlsx stub'ıyla `main` derlenip karşılaştırıldı: bu dal **fazladan sıfır hata**
+üretiyor. ⚠️ Panel gerçek veriyle **elle test EDİLMEDİ** (derleniyor ≠ çalışıyor).
+
 ### 2026-09-22 — Belirsiz barkod eşleştirilmiyor + migration canlıyla doğrulandı
 
 **1) `lib/trendyol-product-matching.ts` — belirsiz barkod artık NULL kalır.**
