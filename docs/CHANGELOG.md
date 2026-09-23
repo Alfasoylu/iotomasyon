@@ -9,6 +9,19 @@
 
 ## 2026-09
 
+### Türkçe "İ" hatası: iade sayacı düzeltildi (2026-09-23)
+
+- `lib/entegra/import.ts` → `iadeMi`: `/iade|iptal/i` Türkçe büyük İ'yi (U+0130)
+  yakalamıyordu, yani `İade-İptal` durumundaki siparişler iade sayılmıyordu ve
+  önizlemedeki "iadeye dönecek" uyarısı **her zaman 0** gösteriyordu. Gerçek
+  Entegra dosyasında yakalandı (14 iade görünmezdi).
+- Düzeltme NFD normalize + birleşen nokta temizliği + noktasız `ı` → `i`;
+  böylece `İade-İptal`, `IPTAL` ve `ıptal` yazımları birlikte yakalanıyor.
+- Regresyon testi eklendi: `npm run check:entegra` (12 kontrol).
+- Aynı tuzağın Postgres tarafında da olduğu doğrulandı (`~*` İ'yi kaçırıyor);
+  kodda SQL ile iade sınıflandırması yapılmıyor.
+
+
 ### Entegra satış yükleme ekranı (2026-09-22)
 
 - `/admin/entegra-yukleme`: Entegra sipariş dışa aktarımını (.xlsx/.csv)

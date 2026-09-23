@@ -106,9 +106,26 @@ export interface Onizleme {
   dosyaIciMukerrer: number;
 }
 
-/** Bir durumun iade/iptal olup olmadığı (Entegra metni serbest yazım). */
+/**
+ * Bir durumun iade/iptal olup olmadığı (Entegra metni serbest yazım).
+ *
+ * 🔴 TÜRKÇE 'i' TUZAĞI — 23.09.2026'da gerçek dosyada yakalandı.
+ * `/iade|iptal/i.test("İade-İptal")` **false** döner: Türkçe büyük İ (U+0130)
+ * JS regex'inin basit harf katlamasında ASCII 'i'ye katlanmaz. Entegra durumu
+ * tam olarak "İade-İptal" yazdığı için "iadeye dönecek" sayacı HER gerçek
+ * iadede 0 gösterirdi — yani ekranın en kritik uyarısı sessizce çalışmazdı.
+ *
+ * Yalnız `toLocaleLowerCase("tr")` de yetmez: tr yerelinde ASCII 'I' harfi
+ * NOKTASIZ 'ı'ya iner, bu kez "IPTAL" yazımı kaçardı. Bu yüzden önce birleşen
+ * noktalar ayrıştırılıp atılıyor, sonra noktasız ı da i'ye çekiliyor.
+ */
 function iadeMi(s: string): boolean {
-  return /iade|iptal/i.test(s);
+  const n = s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\u0131/g, "i");
+  return n.includes("iade") || n.includes("iptal");
 }
 
 export async function buildOnizleme(

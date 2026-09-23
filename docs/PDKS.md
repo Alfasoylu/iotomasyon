@@ -242,6 +242,50 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-09-23 — 🔴 Türkçe "İ" tuzağı: iade sayacı her zaman 0 gösteriyordu
+
+Gerçek Entegra dosyası (500 satır, 17–23.09) ilk kez ayrıştırıldı ve **ekranın
+en kritik uyarısının sessizce çalışmadığı** ortaya çıktı.
+
+**Hata:** `/iade|iptal/i.test("İade-İptal")` → **`false`**. Türkçe büyük İ
+(U+0130) JS regex'inin basit harf katlamasında ASCII `i`'ye katlanmıyor.
+Entegra durumu tam olarak `İade-İptal` yazdığı için `iadeMi()` her gerçek iadeyi
+kaçırıyordu: önizlemedeki **"İADEYE DÖNECEK"** sayacı ve kırmızı uyarı kutusu
+hiç görünmezdi. Bu dosyadaki **14 iade** sıfır olarak raporlanırdı — yani
+"21 iade 12 gün satış sayıldı" vakasının tekrarına karşı konan frenin kendisi
+çalışmıyordu. Ekran hata vermiyor, sayı sıfır çıkıyor, kimse fark etmiyor.
+
+⚠️ **Aynı tuzak Postgres'te de var:** `'İade-İptal' ~* 'iade|iptal'` de `false`
+döner (canlıda doğrulandı). Kodda iade tespiti JS tarafında olduğu için
+düzeltme oraya yapıldı; SQL'de iade sınıflandırması YOK.
+
+**Düzeltme** (`lib/entegra/import.ts` → `iadeMi`): NFD ayrıştırıp birleşen
+noktaları atıyor, küçük harfe indiriyor, sonra noktasız `ı`'yı `i`'ye çekiyor.
+Yalnız `toLocaleLowerCase("tr")` yetmezdi: tr yerelinde ASCII `I` noktasız
+`ı`'ya iner ve bu kez `IPTAL` yazımı kaçardı.
+
+**Regresyon testi:** `npm run check:entegra` (12 kontrol) — ham regex'in
+kullanılmadığını, `İade-İptal`/`IPTAL`/`ıptal` yazımlarının yakalandığını,
+satış durumlarının iade SAYILMADIĞINI, birebir eşleşmenin cfo_norm'dan önce
+geldiğini ve cfo_* tablolarına yazılmadığını sabitliyor.
+
+**Gerçek dosyayla ölçümler (hiçbir şey yazılmadı):**
+- 500/500 satır ayrıştırıldı, **0 atlandı**, 0 dosya içi mükerrer, eksik sütun yok.
+- 8 kanal doğru normalize: TRENDYOL 333, HEPSIBURADA 75, EPTT 41, N11 23,
+  AMAZON 14, PAZARAMA 11, IDEFIX 2, IDEASOFT 1.
+- 71 benzersiz model → **70 eşleşti**, 0 belirsiz. 68'i birebir, **2'si
+  cfo_norm** ile: `grı-60w-…` → `GRI-60W-…` ve `AY-Balıkgözlens` →
+  `AY-BALIKGÖZLENS` — ikisi de **Türkçe noktasız ı** yüzünden `lower()` ile
+  eşleşmiyor. Yani ikinci aşama gerçek bir işe yarıyor. Eşleşmeyen tek model:
+  `MB600Eldusu` (katalogda yok).
+- **`anunnaki-pointer` aşama 1'de `ANUNNAKI-POINTER`'a çözüldü (n=1).** Sıra
+  kuralı canlı veride işe yaradı; norm önce koşsaydı yanlış ürüne yazılacaktı.
+- Dosyadaki 500 satırın **500'ü veritabanında zaten var**; durum+adet+tutar
+  parmak izi iki tarafta da `e438ffa7…` — yani bu dosyanın yeniden yüklenmesi
+  gerçek bir **no-op**. Önizleme "0 yeni, 500 güncellenecek, 0 durum değişimi"
+  der. İdempotentlik gerçek veriyle doğrulanmış oldu.
+
+
 ### 2026-09-22 — Entegra satış yükleme ekranı + iki menü girişi
 
 **İŞ 1 — Menü.** `/admin/stok-sicrama` → **Ürünler & Stok** altında "Stok
