@@ -9,6 +9,28 @@
 
 ## 2026-09
 
+### ALFAS Home → Sepetler sayfası (2026-09-28)
+
+- `/alfashome/sepetler` (menü: ALFAS Home → Sepetler): terk edilen ve sepette
+  bekleyen ürünler; **kayıtlı / kayıtsız** ayrımı; **hatırlatma maili durumu**
+  (gitti · bekliyor · gecikti · gönderilemez + sebep); WhatsApp / Ara / E-posta
+  bağlantıları; KPI kartları, süzgeç, sıralama, en çok sepette kalan ürünler ve
+  "mail sonrası satın alınan" (korelasyon). Salt okunur.
+- Veri: ALFAS `GET /crm/carts` (yeni, salt okunur, mevcut `CRM_API_TOKEN` kapısı).
+  Mail kararı ALFAS'ta mail gönderen job ile **aynı** fonksiyonlardan geliyor;
+  panel yeniden hesaplamıyor.
+- "Kayıtlı" = şifreli hesabı olan (misafir müşteri kaydı kayıtlı sayılmaz);
+  müşteri sorgusu başarısızsa "bilinmiyor". Başarısız mail denemesi kaydedilmediği
+  için "Gecikti" sebep uydurmadan Railway log'una yönlendirir.
+- ALFAS'ta RESEND kapalıysa üstte uyarı bandı; "Mail bekliyor" gösterilmez.
+- Mobilde kart düzeni (tablo mobilde mail kolonunu ekran dışına itiyordu).
+- `npm run check:alfashome` genişletildi (ALFAS Home sayfa sayısı 4 → 5; sepet
+  sözleşmesi, etiketler, süzgeç, fetch taklidiyle istemci davranışı, XSS/yazma/
+  otomatik yenileme yasakları).
+- Doğrulama: gerçek backend uç kodu + panelin gerçek istemcisi/bileşeni tarayıcıda
+  ölçüldü. **Gerçek Medusa veritabanına karşı doğrulanmadı** (ilk canlı çağrıda
+  görülecek).
+
 ### Türkçe "İ" hatası: iade sayacı düzeltildi (2026-09-23)
 
 - `lib/entegra/import.ts` → `iadeMi`: `/iade|iptal/i` Türkçe büyük İ'yi (U+0130)

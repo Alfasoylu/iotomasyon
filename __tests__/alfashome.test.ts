@@ -14,6 +14,10 @@
  *    tutarı yüz kat küçük gösterir (1.518 ₺ → 15 ₺).
  * E) YAZMA — panelin ALFAS'ta değişiklik yapması. Uçlar salt okunur;
  *    istemci GET dışında bir şey yapmamalı.
+ * F) SEPETLER — kararı ALFAS verir (mail gönderen job ile AYNI fonksiyonlar);
+ *    panel yalnız gösterir. Riskler: "kayıtlı" ile "e-posta bırakmış misafir"i
+ *    karıştırmak, gecikmiş maili "bekliyor" göstermek, bilinmeyen kodu gizlemek,
+ *    eksik yanıtı "0 sepet, sorun yok" diye çizmek.
  */
 
 import assert from "node:assert/strict";
@@ -23,12 +27,28 @@ import { tokenIpucu } from "../lib/alfashome/config";
 import {
   alfasPara,
   alfashomeConfigured,
+  fetchAlfasCarts,
   fetchAlfasMembers,
   fetchAlfasOrders,
   odemeEtiketi,
+  type AlfasSepet,
   type AlfasSiparis,
   type AlfasUye,
 } from "../lib/alfashome/client";
+import {
+  bostaMetni,
+  enCokSepettekiUrunler,
+  fazEtiketi,
+  gosterParam,
+  kalemOzeti,
+  mailEtiketi,
+  mailSebepMetni,
+  sepetFiltrele,
+  sepetSirala,
+  siralaParam,
+  sureMetni,
+  uyelikEtiketi,
+} from "../lib/alfashome/sepetler";
 
 let failed = 0;
 function check(name: string, fn: () => void | Promise<void>) {
@@ -55,6 +75,11 @@ const dosya = (rel: string) => readFileSync(new URL(`../${rel}`, import.meta.url
 const client = dosya("lib/alfashome/client.ts");
 const siparisSayfa = dosya("app/(app)/alfashome/siparisler/page.tsx");
 const uyeSayfa = dosya("app/(app)/alfashome/uyeler/page.tsx");
+const sepetSayfa = dosya("app/(app)/alfashome/sepetler/page.tsx");
+const sepetYardimci = dosya("lib/alfashome/sepetler.ts");
+const sepetGovde = dosya("components/alfashome/sepet-govdesi.tsx");
+// Çizim kodu bileşende, izin/veri çekme sayfada: güvenlik/çizim kontrolleri İKİSİNE bakar.
+const sepetTum = sepetSayfa + "\n" + sepetGovde;
 const layout = dosya("app/(app)/layout.tsx");
 const sidebar = dosya("components/dashboard/sidebar.tsx");
 const reklamSayfa = dosya("app/(app)/reklamlar/page.tsx");
@@ -129,6 +154,123 @@ async function asenkronKontroller() {
       assert.ok(!hepsi.includes(JETON), "jeton hata metnine sızmış");
     }
   });
+
+  // ── F) Sepetler: fetch taklidiyle GERÇEK istemci davranışı ──────────────────
+  const gercekFetch = globalThis.fetch;
+  const cagrilar: { url: string; auth: string | null; method: string }[] = [];
+  const taklit = (durum: number, govde: unknown) => {
+    globalThis.fetch = (async (girdi: unknown, init?: RequestInit) => {
+      cagrilar.push({
+        url: String(girdi),
+        auth: new Headers(init?.headers).get("authorization"),
+        method: init?.method ?? "GET",
+      });
+      return new Response(typeof govde === "string" ? govde : JSON.stringify(govde), {
+        status: durum,
+        headers: { "content-type": "application/json" },
+      });
+    }) as typeof fetch;
+  };
+
+  const tamYanit = {
+    ok: true,
+    adet: 1,
+    toplam: 3,
+    kesildi: false,
+    pencere_gun: 30,
+    mail_yapilandirildi: true,
+    esikler: ESIK,
+    ozet: {
+      toplam: 3, bekleyen: 1, terk: 2, eski: 0, kayitli: 1, kayitsiz: 1, anonim: 1, bilinmiyor: 0,
+      tutar_bekleyen: 100, tutar_terk: 200, mail_gitti: 1, mail_bekliyor: 1, mail_gecikti: 0,
+      mail_gonderilemez: 1,
+    },
+    kurtarilan: { adet: 1, tutar: 900 },
+    sepetler: [sepet()],
+  };
+
+  try {
+    await checkAsync("F) istemci: doğru adres, Bearer başlığı, yalnız GET, `gun` iletilir", async () => {
+      ayarla("https://api.alfashome.com", "j".repeat(30));
+      cagrilar.length = 0;
+      taklit(200, tamYanit);
+      const r = await fetchAlfasCarts(150, 14);
+      assert.equal(r.ok, true);
+      assert.equal(cagrilar.length, 1);
+      const c = cagrilar[0];
+      assert.ok(c.url.startsWith("https://api.alfashome.com/crm/carts?"), c.url);
+      const q = new URL(c.url).searchParams;
+      assert.equal(q.get("limit"), "150");
+      assert.equal(q.get("gun"), "14");
+      assert.equal(c.auth, `Bearer ${"j".repeat(30)}`);
+      assert.equal(c.method, "GET");
+      assert.ok(!c.url.includes("j".repeat(30)), "jeton URL'ye yazılmış — log'a düşer");
+    });
+
+    await checkAsync("F) istemci: yanıt alanları eksiksiz taşınır (tutar 100'e bölünmez)", async () => {
+      taklit(200, tamYanit);
+      const r = await fetchAlfasCarts();
+      assert.equal(r.ok, true);
+      if (r.ok) {
+        assert.equal(r.sepetler[0].tutar, 5300);
+        assert.equal(r.toplam, 3);
+        assert.equal(r.ozet.terk, 2);
+        assert.equal(r.kurtarilan.tutar, 900);
+        assert.equal(r.mail_yapilandirildi, true);
+        assert.deepEqual(r.esikler, ESIK);
+      }
+    });
+
+    await checkAsync("F) ozet/esikler EKSİK yanıt → HATA (0 sepet gibi çizilmez)", async () => {
+      taklit(200, { ok: true, sepetler: [] });
+      const r = await fetchAlfasCarts();
+      assert.equal(r.ok, false, "eksik yanıt başarı sayılmış — panel 'sepet yok' diye çizer");
+      if (!r.ok) assert.match(r.hata.mesaj, /beklenen biçimde değil/);
+    });
+
+    await checkAsync("F) `sepetler` dizi değilse HATA", async () => {
+      taklit(200, { ...tamYanit, sepetler: "yok" });
+      assert.equal((await fetchAlfasCarts()).ok, false);
+    });
+
+    await checkAsync("F) mail_yapilandirildi eksikse KAPALI sayılır (varsayılan güvenli yön)", async () => {
+      const { mail_yapilandirildi: _, ...eksik } = tamYanit;
+      taklit(200, eksik);
+      const r = await fetchAlfasCarts();
+      assert.equal(r.ok, true);
+      if (r.ok) assert.equal(r.mail_yapilandirildi, false, "bilinmeyen durum 'açık' gösterilmemeli");
+    });
+
+    await checkAsync("F) HTTP hataları anlamlı: 401 jeton, 503 kapalı, 404 uç yok, gövde JSON olmasa da", async () => {
+      taklit(401, { ok: false, message: "Geçersiz jeton." });
+      let r = await fetchAlfasCarts();
+      assert.equal(r.ok, false);
+      if (!r.ok) assert.match(r.hata.mesaj, /jetonu geçersiz/);
+
+      taklit(503, { ok: false, message: "yapılandırılmadı" });
+      r = await fetchAlfasCarts();
+      if (!r.ok) assert.match(r.hata.mesaj, /kapalı \(503\)/);
+
+      taklit(404, "<html>Not Found</html>");
+      r = await fetchAlfasCarts();
+      assert.equal(r.ok, false);
+      if (!r.ok) {
+        assert.match(r.hata.mesaj, /bu uç yok \(404\)/);
+        assert.ok(!/jeton/i.test(r.hata.mesaj), "404 jeton sorunu gibi anlatılmış");
+      }
+    });
+
+    await checkAsync("F) hata metni JETONU İÇERMEZ (sepet ucu)", async () => {
+      const JETON = "cok-gizli-sepet-jetonu-12345";
+      ayarla("https://api.alfashome.com", JETON);
+      taklit(500, `iç hata ${JETON}`.replace(JETON, "***"));
+      const r = await fetchAlfasCarts();
+      assert.equal(r.ok, false);
+      if (!r.ok) assert.ok(!`${r.hata.mesaj} ${r.hata.detay ?? ""}`.includes(JETON));
+    });
+  } finally {
+    globalThis.fetch = gercekFetch;
+  }
   ayarla(eskiUrl, eskiToken);
 }
 
@@ -197,6 +339,7 @@ check("D) tutar 100'e BÖLÜNMÜYOR (Medusa v2 ondalık para birimi)", () => {
     ["client", client],
     ["siparişler", siparisSayfa],
     ["üyeler", uyeSayfa],
+    ["sepetler", sepetSayfa],
   ] as const) {
     assert.doesNotMatch(s, /\/\s*100\b/, `${ad}: tutar 100'e bölünmüş`);
   }
@@ -229,6 +372,7 @@ check("sayfalar taze veri okuyor (force-dynamic + no-store)", () => {
   for (const [ad, s] of [
     ["siparişler", siparisSayfa],
     ["üyeler", uyeSayfa],
+    ["sepetler", sepetSayfa],
   ] as const) {
     assert.match(s, /export const dynamic = "force-dynamic"/, `${ad}: force-dynamic yok`);
   }
@@ -240,6 +384,7 @@ check("sayfalar izin kontrolünden geçiyor", () => {
   for (const [ad, s] of [
     ["siparişler", siparisSayfa],
     ["üyeler", uyeSayfa],
+    ["sepetler", sepetSayfa],
   ] as const) {
     assert.match(s, /await requireUser\(\)/, `${ad}: requireUser yok`);
     assert.match(
@@ -254,10 +399,290 @@ check("hata durumunda ORTAK hata kartı gösteriliyor", () => {
   for (const [ad, s] of [
     ["siparişler", siparisSayfa],
     ["üyeler", uyeSayfa],
+    ["sepetler", sepetSayfa],
   ] as const) {
     assert.match(s, /AlfasBaglantiHatasi/, `${ad}: hata kartı kullanılmıyor`);
     assert.match(s, /!sonuc\.ok \?/, `${ad}: hata dalı yok`);
   }
+});
+
+// ── F) Sepetler ────────────────────────────────────────────────────────────
+
+const ESIK = { ilk_saat: 1, ikinci_saat: 24, max_gun: 7 };
+const tarihF = (iso: string) => `<${iso}>`;
+
+const mailBase = {
+  gonderilen: 0 as 0 | 1 | 2,
+  mail1: null,
+  mail2: null,
+  sonraki: null as 1 | 2 | null,
+  sonraki_dk: null as number | null,
+  sebep: null as string | null,
+};
+const sepet = (o: Partial<AlfasSepet> = {}): AlfasSepet => ({
+  id: "cart_1",
+  olusturma: "2026-09-28T09:00:00.000Z",
+  guncelleme: "2026-09-28T10:00:00.000Z",
+  bosta_saat: 2,
+  bosta_belirsiz: false,
+  faz: "terk",
+  uyelik: "kayitli",
+  eposta: "a@b.com",
+  ad: "Ayşe Yılmaz",
+  telefon: "0532 111 22 33",
+  musteri_id: "cus_1",
+  kalemler: [{ ad: "Batarya", adet: 2 }],
+  kalem_adet: 2,
+  tutar: 5300,
+  para: "try",
+  mail: { durum: "bekliyor", ...mailBase, sonraki: 1, sonraki_dk: 30 },
+  ...o,
+});
+
+check("F) sepet alan adları sözleşmeyle aynı (tip + istemci)", () => {
+  // Tip atamasıyla sabitlenir: alan adı değişirse `sepet()` derlenmez.
+  const s = sepet();
+  assert.equal(s.kalem_adet, 2);
+  assert.equal(s.mail.durum, "bekliyor");
+  for (const alan of [
+    "sepetler",
+    "toplam",
+    "kesildi",
+    "pencere_gun",
+    "mail_yapilandirildi",
+    "esikler",
+    "ozet",
+    "kurtarilan",
+  ]) {
+    assert.ok(client.includes(`${alan}:`), `istemci ${alan} alanını okumuyor`);
+  }
+});
+
+check("F) istek /crm/carts adresine gidiyor, `gun` parametresiyle", () => {
+  assert.match(client, /"carts"/);
+  assert.match(client, /URLSearchParams/, "sorgu dizesi güvenli kurulmuyor");
+  assert.match(client, /\{ gun \}/, "gun parametresi iletilmiyor");
+});
+
+check("F) eksik yanıt 'sorun yok' diye ÇİZİLMEZ (ozet/esikler/sepetler zorunlu)", () => {
+  assert.match(client, /!Array\.isArray\(v\.sepetler\) \|\| !v\.ozet \|\| !v\.esikler/);
+});
+
+check("F) 404 → uç yok mesajı (panel ALFAS'tan önce yayına girerse jeton sanılmasın)", () => {
+  assert.match(client, /r\.status === 404/);
+  assert.match(client, /bu uç yok \(404\)/);
+});
+
+check("F) TUZAK: 'kayıtlı' yalnız hesabı olana denir; kayıtsız iki türlü yazılır", () => {
+  assert.equal(uyelikEtiketi("kayitli").etiket, "Kayıtlı üye");
+  assert.match(uyelikEtiketi("kayitsiz").etiket, /^Kayıtsız/);
+  assert.match(uyelikEtiketi("anonim").etiket, /^Kayıtsız/);
+  assert.notEqual(uyelikEtiketi("kayitsiz").etiket, uyelikEtiketi("anonim").etiket);
+  // Sorgu başarısızsa "kayıtsız" DENMEZ.
+  assert.doesNotMatch(uyelikEtiketi("bilinmiyor").etiket, /Kayıtsız|Kayıtlı/);
+  assert.equal(uyelikEtiketi("yeni_kod").etiket, "yeni_kod", "bilinmeyen kod gizlenmemeli");
+});
+
+check("F) faz etiketleri + bilinmeyen kod olduğu gibi", () => {
+  assert.equal(fazEtiketi("bekliyor", ESIK).etiket, "Sepette bekliyor");
+  assert.equal(fazEtiketi("terk", ESIK).etiket, "Terk edildi");
+  assert.match(fazEtiketi("eski", ESIK).etiket, /7 gün/, "eşik ALFAS'tan gelmeli");
+  assert.equal(fazEtiketi("ya_bu", ESIK).etiket, "ya_bu");
+});
+
+check("F) mail: gitti / bekliyor / gecikti / gönderilemez okunur ve doğru tonda", () => {
+  const gitti1 = mailEtiketi(
+    { durum: "gitti", ...mailBase, gonderilen: 1, mail1: "2026-09-28T10:30:00Z", sonraki: 2, sonraki_dk: 840 },
+    ESIK,
+    tarihF
+  );
+  assert.equal(gitti1.etiket, "1. mail gitti");
+  assert.equal(gitti1.ton, "success");
+  assert.ok(gitti1.ayrinti.some((a) => a.includes("<2026-09-28T10:30:00Z>")), "gönderim tarihi yok");
+  assert.ok(gitti1.ayrinti.some((a) => a.includes("2. mail") && a.includes("14 sa")), "2. mail süresi yok");
+
+  const iki = mailEtiketi(
+    { durum: "gitti", ...mailBase, gonderilen: 2, mail1: "a", mail2: "b" },
+    ESIK,
+    tarihF
+  );
+  assert.equal(iki.etiket, "2 mail de gitti");
+
+  const bekle = mailEtiketi({ durum: "bekliyor", ...mailBase, sonraki: 1, sonraki_dk: 30 }, ESIK, tarihF);
+  assert.equal(bekle.etiket, "Mail bekliyor");
+  assert.ok(bekle.ayrinti[0].includes("30 dk"));
+  const simdi = mailEtiketi({ durum: "bekliyor", ...mailBase, sonraki: 1, sonraki_dk: 0 }, ESIK, tarihF);
+  assert.match(simdi.ayrinti[0], /sonraki saat başı turunda/);
+
+  const gec = mailEtiketi({ durum: "gecikti", ...mailBase, sonraki: 1 }, ESIK, tarihF);
+  assert.equal(gec.ton, "danger");
+  assert.ok(gec.ayrinti.join(" ").includes("Railway log"), "gecikme sebebi için yön gösterilmeli");
+
+  const yok = mailEtiketi({ durum: "gonderilemez", ...mailBase, sebep: "eposta_yok" }, ESIK, tarihF);
+  assert.equal(yok.etiket, "Gönderilemez");
+  assert.match(yok.ayrinti.join(" "), /E-posta adresi yok/);
+});
+
+check("F) 'gecikti' sebep UYDURMAZ ve mail kapalıyken kırmızı", () => {
+  const gec = mailEtiketi({ durum: "gecikti", ...mailBase, sonraki: 2 }, ESIK, tarihF);
+  // Başarısız deneme kaydedilmiyor → "Resend reddetti" gibi kesin bir sebep yazılamaz.
+  assert.match(gec.ayrinti.join(" "), /Sebep kayıtlı değil/);
+  assert.doesNotMatch(gec.ayrinti.join(" "), /reddetti|kota doldu/i);
+  const kapali = mailEtiketi({ durum: "gonderilemez", ...mailBase, sebep: "mail_kapali" }, ESIK, tarihF);
+  assert.equal(kapali.ton, "danger", "hiçbir mail gitmiyorsa bu 'nötr' bir bilgi değil");
+  assert.equal(mailSebepMetni("yeni_sebep", ESIK), "yeni_sebep", "bilinmeyen sebep gizlenmemeli");
+  assert.match(mailSebepMetni("cok_eski", ESIK), /7 gün/);
+});
+
+check("F) 1. mail gitmiş ama sebep var (çok eski): gitti + sebep gösterilir", () => {
+  const m = mailEtiketi(
+    { durum: "gitti", ...mailBase, gonderilen: 1, mail1: "x", sebep: "cok_eski" },
+    ESIK,
+    tarihF
+  );
+  assert.equal(m.etiket, "1. mail gitti");
+  assert.ok(m.ayrinti.some((a) => a.includes("günden eski")), "2. mailin neden gitmeyeceği yazılmalı");
+});
+
+check("F) süre metinleri", () => {
+  assert.equal(sureMetni(0.4), "1 dk'dan az");
+  assert.equal(sureMetni(45), "45 dk");
+  assert.equal(sureMetni(135), "2 sa 15 dk");
+  assert.equal(sureMetni(120), "2 sa");
+  assert.equal(sureMetni(3000), "2 gün");
+  assert.equal(sureMetni(null), "—");
+  assert.equal(sureMetni(-5), "—");
+  assert.equal(bostaMetni(3, true), "en az 3 sa", "alt sınır 'en az' ile gösterilmeli");
+  assert.equal(bostaMetni(null), "—");
+});
+
+check("F) süzgeç: kayıtsız = misafir + anonim; bilinmiyor yalnız Tümü'nde", () => {
+  const l = [
+    sepet({ id: "a", uyelik: "kayitli" }),
+    sepet({ id: "b", uyelik: "kayitsiz", faz: "bekliyor" }),
+    sepet({ id: "c", uyelik: "anonim" }),
+    sepet({ id: "d", uyelik: "bilinmiyor" }),
+    sepet({ id: "e", mail: { durum: "gecikti", ...mailBase, sonraki: 1 } }),
+    sepet({ id: "f", mail: { durum: "gonderilemez", ...mailBase, sebep: "eposta_yok" } }),
+  ];
+  const ids = (g: Parameters<typeof sepetFiltrele>[1]) => sepetFiltrele(l, g).map((s) => s.id);
+  assert.deepEqual(ids("tumu"), ["a", "b", "c", "d", "e", "f"]);
+  assert.deepEqual(ids("kayitli"), ["a", "e", "f"]);
+  assert.deepEqual(ids("kayitsiz"), ["b", "c"]);
+  assert.deepEqual(ids("bekleyen"), ["b"]);
+  assert.deepEqual(ids("terk"), ["a", "c", "d", "e", "f"]);
+  assert.deepEqual(ids("gecikti"), ["e"]);
+  assert.deepEqual(ids("gonderilemez"), ["f"]);
+});
+
+check("F) sıralama: tutar büyükten küçüğe, girdi değişmez", () => {
+  const l = [sepet({ id: "a", tutar: 100 }), sepet({ id: "b", tutar: 900 }), sepet({ id: "c", tutar: 500 })];
+  assert.deepEqual(sepetSirala(l, "tutar").map((s) => s.id), ["b", "c", "a"]);
+  assert.deepEqual(l.map((s) => s.id), ["a", "b", "c"], "girdi dizisi değiştirilmiş");
+  assert.deepEqual(sepetSirala(l, "yeni").map((s) => s.id), ["a", "b", "c"]);
+});
+
+check("F) adres çubuğu değerleri uydurulamaz (geçersiz → varsayılan)", () => {
+  assert.equal(gosterParam("terk"), "terk");
+  assert.equal(gosterParam("<script>"), "tumu");
+  assert.equal(gosterParam(undefined), "tumu");
+  assert.equal(siralaParam("tutar"), "tutar");
+  assert.equal(siralaParam("'; drop table"), "yeni");
+});
+
+check("F) en çok sepette kalan ürünler: farklı sepet sayısı, eski sepetler hariç", () => {
+  const l = [
+    sepet({ id: "1", kalemler: [{ ad: "A", adet: 5 }] }), // tek sepette 5 adet
+    sepet({ id: "2", kalemler: [{ ad: "B", adet: 1 }] }),
+    sepet({ id: "3", kalemler: [{ ad: "B", adet: 1 }, { ad: "B", adet: 1 }] }), // aynı sepette iki satır
+    sepet({ id: "4", kalemler: [{ ad: "B", adet: 1 }], faz: "eski" }), // sayılmaz
+  ];
+  const u = enCokSepettekiUrunler(l);
+  assert.equal(u[0].ad, "B", "5 adetlik tek sepet, 2 sepette bırakılan ürünü geçmemeli");
+  assert.equal(u[0].sepet, 2, "aynı sepette iki satır tek sepet sayılmalı; eski sepet hariç");
+  assert.equal(u[0].adet, 3);
+  assert.equal(u[1].ad, "A");
+  assert.equal(enCokSepettekiUrunler([], 5).length, 0);
+});
+
+check("F) kalem özeti: en çok 2 satır + kalan sayısı", () => {
+  const s = sepet({
+    kalemler: [
+      { ad: "A", adet: 2 },
+      { ad: "B", adet: 1 },
+      { ad: "C", adet: 1 },
+      { ad: "D", adet: 1 },
+    ],
+  });
+  assert.deepEqual(kalemOzeti(s), { satirlar: ["2× A", "B"], fazla: 2 });
+  assert.deepEqual(kalemOzeti(sepet({ kalemler: [] })), { satirlar: [], fazla: 0 });
+});
+
+check("F) sayfa: taze veri, izin, ortak hata kartı, salt okunur", () => {
+  assert.match(sepetSayfa, /export const dynamic = "force-dynamic"/);
+  assert.match(sepetSayfa, /await requireUser\(\)/);
+  assert.match(sepetSayfa, /checkPermission\(user, PERMISSIONS\.EXECUTIVE_READ\)/);
+  assert.match(sepetSayfa, /AlfasBaglantiHatasi/);
+  assert.match(sepetSayfa, /!sonuc\.ok \?/);
+  assert.doesNotMatch(sepetTum, /method:\s*"(POST|PUT|PATCH|DELETE)"|<form|"use server"/, "sayfa yazıyor");
+});
+
+check("F) sayfa kendini YENİLEMEZ (her açılış ALFAS DB'sini uyandırır — 25.09 dersi)", () => {
+  assert.doesNotMatch(sepetTum, /setInterval|setTimeout|router\.refresh|revalidate|"use client"/);
+  assert.match(sepetSayfa, /fetchAlfasCarts\(200, 30\)/, "istek boyutu/pencere değişmiş");
+});
+
+check("F) sayfa müşteri metnini HTML olarak basmıyor (ad/ürün başlığı dış veri)", () => {
+  assert.doesNotMatch(sepetTum, /dangerouslySetInnerHTML/);
+  assert.doesNotMatch(sepetYardimci, /dangerouslySetInnerHTML/);
+});
+
+check("F) eşikler ekrana ALFAS'ın verdiği değerden basılır (metne gömülü rakam yok)", () => {
+  // Job eşikleri env ile değişiyor; ekranda gömülü "24 saat"/"7 gün" olursa
+  // değer değişince panel SESSİZCE yanlış söyler.
+  // Yorum satırları hariç (açıklama metninde "1 saat" geçebilir); KOD/JSX metni denetlenir.
+  const kodSatirlari = (src: string) =>
+    src
+      .split("\n")
+      .filter((l) => {
+        const t = l.trim();
+        return !(t.startsWith("//") || t.startsWith("/*") || t.startsWith("*"));
+      })
+      .join("\n");
+  for (const [ad, s] of [["sayfa", sepetSayfa], ["bileşen", sepetGovde], ["yardımcı", sepetYardimci]] as const) {
+    assert.doesNotMatch(
+      kodSatirlari(s),
+      /\b24 saat\b|\b7 gün\b|\b1 saat\b/,
+      `${ad}: gömülü eşik metni`
+    );
+  }
+  assert.match(sepetGovde, /esikler\.ilk_saat/);
+  assert.match(sepetGovde, /esikler\.max_gun/);
+});
+
+check("F) WhatsApp bağlantısı numarayı normalize ediyor ve güvenli açılıyor", () => {
+  assert.match(sepetGovde, /normalizePhone\(s\.telefon\)/);
+  assert.match(sepetGovde, /https:\/\/wa\.me\/\$\{tel\}/);
+  assert.match(sepetGovde, /rel="noopener noreferrer"/);
+  // Otomatik mesaj metni EKLENMEZ: müşteri adına pazarlama metni yazmak operatörün kararı.
+  assert.doesNotMatch(sepetTum, /wa\.me\/[^`"]*\?text=/, "hazır WhatsApp metni eklenmiş");
+});
+
+check("F) mail kapalıyken sayfa bunu YÜKSEK SESLE söylüyor", () => {
+  assert.match(sepetGovde, /!sonuc\.mail_yapilandirildi/);
+  assert.match(sepetGovde, /RESEND_API_KEY/);
+});
+
+check("F) taranan liste eksikse sayfa söylüyor (kesildi + limit)", () => {
+  assert.match(sepetGovde, /sonuc\.kesildi/);
+  assert.match(sepetGovde, /sonuc\.toplam > sonuc\.adet/);
+});
+
+check("F) Sepetler menüde, ikonu sidebar'da tanımlı", () => {
+  assert.ok(layout.includes('"/alfashome/sepetler"'), "menüde sepetler yok");
+  assert.match(layout, /href: "\/alfashome\/sepetler"[\s\S]{0,200}iconKey: "basket"/);
+  assert.match(sidebar, /basket: ShoppingBasket/, "ikon anahtarı sidebar'da yok — ikonsuz kalır");
+  assert.match(layout, /href: "\/alfashome\/sepetler"[\s\S]{0,260}section: "ALFAS Home"/);
 });
 
 // ── Menü ───────────────────────────────────────────────────────────────────
@@ -318,7 +743,7 @@ check("jeton alt sınırı ALFAS tarafıyla AYNI (24)", () => {
 check("ayar sayfası ALFAS Home bölümünde", () => {
   assert.ok(layout.includes('"/alfashome/ayarlar"'), "menüde ayarlar yok");
   const bolum = (layout.match(/section: "ALFAS Home"/g) ?? []).length;
-  assert.equal(bolum, 4, `ALFAS Home bölümünde 4 sayfa beklenir, ${bolum} var`);
+  assert.equal(bolum, 5, `ALFAS Home bölümünde 5 sayfa beklenir, ${bolum} var`);
 });
 
 check("npm betikleri tanımlı", () => {

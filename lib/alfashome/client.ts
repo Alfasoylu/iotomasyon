@@ -1,5 +1,5 @@
 /**
- * ALFAS Home (alfashome.com) okuma istemcisi — SİPARİŞLER ve ÜYELER.
+ * ALFAS Home (alfashome.com) okuma istemcisi — SİPARİŞLER, ÜYELER ve SEPETLER.
  *
  * NEREDEN OKUR: ALFAS mağazasının Medusa arka ucundaki salt okunur `/crm/*`
  * uçları (kaynak: alfashome `backend/src/api/crm/*`). Medusa **admin**
@@ -7,7 +7,7 @@
  * değiştirmeye, iade yapmaya da yetiyor; panelin ihtiyacı yalnız okumak.
  *
  * ⚠️ ALAN ADLARI İKİ REPO ARASINDA SÖZLEŞMEDİR. Yazan taraf alfashome
- * `backend/src/api/crm/orders|members/route.ts`. Bir alan yeniden
+ * `backend/src/api/crm/orders|members|carts/route.ts`. Bir alan yeniden
  * adlandırılırsa panel SESSİZCE boşalır: `undefined` ekranda "veri yok" gibi
  * görünür, hiçbir hata çıkmaz. Bu yüzden iki tarafta da alan adlarını
  * sabitleyen test var:
@@ -84,6 +84,88 @@ export type UyeSonuc =
     }
   | { ok: false; hata: AlfasHata };
 
+export type AlfasSepetKalemi = { ad: string; adet: number };
+
+/**
+ * Sepetin hatırlatma maili durumu — kararı ALFAS verir (`lib/cart-recovery.ts`,
+ * mail gönderen job ile AYNI fonksiyonlar); panel yalnız gösterir.
+ *
+ * ⚠️ BAŞARISIZ DENEME KAYDEDİLMİYOR: job damgayı yalnız başarılı gönderimden
+ * sonra atar. "Gönderilemedi" doğrudan bilinemez; bilinen şey `gecikti` = sırası
+ * geldi ama damga yok (sebep: Resend hatası / job durdu / kota — Railway log'u).
+ */
+export type AlfasSepetMail = {
+  durum: "bekliyor" | "gitti" | "gecikti" | "gonderilemez";
+  gonderilen: 0 | 1 | 2;
+  mail1: string | null;
+  mail2: string | null;
+  sonraki: 1 | 2 | null;
+  sonraki_dk: number | null;
+  sebep: string | null;
+};
+
+export type AlfasSepet = {
+  id: string;
+  olusturma: string | null;
+  guncelleme: string | null;
+  bosta_saat: number | null;
+  /** true → `bosta_saat` alt sınırdır (mail damgası `updated_at`'i ezmiş). */
+  bosta_belirsiz: boolean;
+  faz: "bekliyor" | "terk" | "eski";
+  /** kayitli = ŞİFRELİ HESABI olan. `customer_id` dolu olması yetmez (misafir kaydı da açılır). */
+  uyelik: "kayitli" | "kayitsiz" | "anonim" | "bilinmiyor";
+  eposta: string | null;
+  ad: string | null;
+  telefon: string | null;
+  musteri_id: string | null;
+  kalemler: AlfasSepetKalemi[];
+  /** ADETLERİN toplamı (siparişlerdeki `kalem_adet` ile aynı anlam). */
+  kalem_adet: number;
+  tutar: number;
+  para: string;
+  mail: AlfasSepetMail;
+};
+
+export type AlfasSepetOzet = {
+  toplam: number;
+  bekleyen: number;
+  terk: number;
+  eski: number;
+  kayitli: number;
+  kayitsiz: number;
+  anonim: number;
+  bilinmiyor: number;
+  tutar_bekleyen: number;
+  tutar_terk: number;
+  mail_gitti: number;
+  mail_bekliyor: number;
+  mail_gecikti: number;
+  mail_gonderilemez: number;
+};
+
+export type AlfasSepetEsikler = { ilk_saat: number; ikinci_saat: number; max_gun: number };
+
+export type SepetSonuc =
+  | {
+      ok: true;
+      sepetler: AlfasSepet[];
+      /** Listelenen sepet sayısı. */
+      adet: number;
+      /** Pencere içindeki TÜM aktif sepet (limit kırpsa da). */
+      toplam: number;
+      /** true → ALFAS tarama tavanına takıldı; liste eksik olabilir. */
+      kesildi: boolean;
+      pencere_gun: number;
+      /** false → ALFAS'ta RESEND yapılandırılmamış: HİÇBİR sepete mail gitmez. */
+      mail_yapilandirildi: boolean;
+      esikler: AlfasSepetEsikler;
+      ozet: AlfasSepetOzet;
+      /** Mail SONRASI tamamlanan sepetler — korelasyon, kanıt değil. */
+      kurtarilan: { adet: number; tutar: number };
+      guncellendi: Date;
+    }
+  | { ok: false; hata: AlfasHata };
+
 /**
  * Adres + jeton var mı (panel ayarı ya da env).
  *
@@ -105,11 +187,17 @@ const YAPILANDIRMA_HATASI: AlfasHata = {
 /** Ağ isteği için üst sınır: panel, arka uç yanıt vermezse takılı kalmasın. */
 const TIMEOUT_MS = 12_000;
 
-async function cek<T>(yol: string, limit: number): Promise<{ ok: true; veri: T } | { ok: false; hata: AlfasHata }> {
+async function cek<T>(
+  yol: string,
+  limit: number,
+  ek: Record<string, number> = {}
+): Promise<{ ok: true; veri: T } | { ok: false; hata: AlfasHata }> {
   const baglanti = await alfasBaglanti();
   if (!baglanti.baseUrl || !baglanti.token) return { ok: false, hata: YAPILANDIRMA_HATASI };
 
-  const url = `${baglanti.baseUrl}/crm/${yol}?limit=${limit}`;
+  const sorgu = new URLSearchParams({ limit: String(limit) });
+  for (const [k, v] of Object.entries(ek)) sorgu.set(k, String(v));
+  const url = `${baglanti.baseUrl}/crm/${yol}?${sorgu.toString()}`;
   try {
     const r = await fetch(url, {
       headers: { Authorization: `Bearer ${baglanti.token}` },
@@ -137,7 +225,11 @@ async function cek<T>(yol: string, limit: number): Promise<{ ok: true; veri: T }
           ? "ALFAS jetonu geçersiz (401)."
           : r.status === 503
             ? "ALFAS tarafında CRM okuma ucu kapalı (503)."
-            : "ALFAS verisi alınamadı.";
+            : r.status === 404
+              ? // Panel, ALFAS'tan ÖNCE yayına girerse yeni uç henüz yoktur. Jeton/adres
+                // sorunu sanılmasın: 401/503 değil, uç bulunamıyor.
+                "ALFAS tarafında bu uç yok (404) — alfashome'un son sürümü henüz yayında olmayabilir."
+              : "ALFAS verisi alınamadı.";
       return { ok: false, hata: { mesaj, detay } };
     }
 
@@ -189,6 +281,50 @@ export async function fetchAlfasMembers(limit = 200): Promise<UyeSonuc> {
     adet: r.veri.adet ?? 0,
     hesapli: r.veri.hesapli ?? 0,
     alici: r.veri.alici ?? 0,
+    guncellendi: new Date(),
+  };
+}
+
+/**
+ * Terk edilen / bekleyen sepetler. `gun`: kaç gün geriye bakılacağı (ALFAS
+ * tarafında 1-90 aralığına sıkıştırılır). Uç mail GÖNDERMEZ ve hiçbir şey yazmaz.
+ */
+export async function fetchAlfasCarts(limit = 200, gun = 30): Promise<SepetSonuc> {
+  const r = await cek<{
+    sepetler: AlfasSepet[];
+    adet: number;
+    toplam: number;
+    kesildi: boolean;
+    pencere_gun: number;
+    mail_yapilandirildi: boolean;
+    esikler: AlfasSepetEsikler;
+    ozet: AlfasSepetOzet;
+    kurtarilan: { adet: number; tutar: number };
+  }>("carts", limit, { gun });
+  if (!r.ok) return { ok: false, hata: r.hata };
+  const v = r.veri;
+  // ⚠️ Beklenen alanlar yoksa VERİ KULLANILMAZ: eksik `ozet`/`esikler` ile sayfayı
+  // çizmek "0 sepet, sorun yok" gibi okunurdu (alan adı kaymasının sessiz yüzü).
+  if (!Array.isArray(v.sepetler) || !v.ozet || !v.esikler) {
+    return {
+      ok: false,
+      hata: {
+        mesaj: "ALFAS sepet yanıtı beklenen biçimde değil.",
+        detay: "sepetler / ozet / esikler alanlarından biri eksik — iki repo sözleşmesi kaymış olabilir.",
+      },
+    };
+  }
+  return {
+    ok: true,
+    sepetler: v.sepetler,
+    adet: v.adet ?? v.sepetler.length,
+    toplam: v.toplam ?? v.sepetler.length,
+    kesildi: Boolean(v.kesildi),
+    pencere_gun: v.pencere_gun ?? gun,
+    mail_yapilandirildi: Boolean(v.mail_yapilandirildi),
+    esikler: v.esikler,
+    ozet: v.ozet,
+    kurtarilan: v.kurtarilan ?? { adet: 0, tutar: 0 },
     guncellendi: new Date(),
   };
 }

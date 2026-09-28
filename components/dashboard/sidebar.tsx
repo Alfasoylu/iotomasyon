@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Home,
+  ShoppingBasket,
   Wallet,
   CreditCard,
   Scale,
@@ -97,6 +98,7 @@ const ICONS: Record<string, LucideIcon> = {
   warehouse: Warehouse,
   box: Box,
   cart: ShoppingCart,
+  basket: ShoppingBasket,
   help: HelpCircle,
   undo: Undo2,
   pieChart: PieChart,
