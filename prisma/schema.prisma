@@ -1457,6 +1457,30 @@ model MarketplaceSalesRecord {
   @@index([productId, orderDate])
 }
 
+/// Banka hareketleri yükleme günlüğü — kim, ne zaman, hangi banka/dosya, ne yazıldı.
+/// Yalnız ONAYLANAN yüklemeler kayıt açar; önizleme adımı yazmaz.
+///
+/// `id` BİLEREK bigint: `cfo_banka_hareket.import_id` bu değere referans verir
+/// (gerçek FK değil — cfo_* şemasına dokunulmaz, yalnız değer olarak taşınır).
+model BankaImportLog {
+  id             BigInt   @id @default(autoincrement())
+  banka          String
+  fileName       String
+  rowCount       Int
+  addedCount     Int
+  skippedCount   Int
+  dateFrom       DateTime?
+  dateTo         DateTime?
+  fileBalanceTry Decimal? @db.Decimal(14, 2)
+  /// User'a ilişki YOK: kullanıcı silinse de denetim izi durmalı.
+  userId         String?
+  userEmail      String?
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([banka])
+}
+
 /// Entegra satış yükleme günlüğü — kim, ne zaman, hangi dosya, ne yazıldı.
 /// Yalnız ONAYLANAN yüklemeler kayıt açar; önizleme adımı yazmaz.
 model EntegraImportLog {

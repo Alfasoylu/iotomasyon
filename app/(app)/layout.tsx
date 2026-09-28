@@ -455,6 +455,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "CFO",
   },
   {
+    href: "/admin/banka-yukleme",
+    label: "Banka Hareketleri",
+    iconKey: "fileUp",
+    permission: PERMISSIONS.CFO_WRITE,
+    section: "CFO",
+  },
+  {
     href: "/cfo/ayarlar",
     label: "CFO Ayarları",
     iconKey: "settings",
