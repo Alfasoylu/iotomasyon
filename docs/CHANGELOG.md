@@ -9,6 +9,46 @@
 
 ## 2026-09
 
+### Banka hesap hareketleri yükleme ekranı (2026-09-28)
+
+- `/admin/banka-yukleme`: banka ekstresini (.xlsx/.xls/.csv) `cfo_banka_hareket`'e
+  yazar. Akış Entegra yüklemesiyle aynı desen — **yükle → önizleme → onayla →
+  yaz**; onay olmadan tek satır yazılmaz.
+- Sütunlar sabit varsayılmaz: başlık satırı ilk satır olmayabilir (ilk 25 satır
+  taranarak bulunur), başlıklar Türkçe/büyük-küçük harf bağımsız adaylarla
+  eşlenir; otomatik eşleşmezse ilk 5 satır gösterilip elle eşleme istenir.
+  "Valör" yalnız başka bir tarih sütunu YOKSA tarih için kullanılır.
+- Tarih **gün-önce** (`dd/MM/yyyy`) okunur — Entegra ayrıştırıcısının Amerikan
+  (`M/d/yy`) varsayımı burada bilerek KULLANILMADI.
+- Benzersiz anahtar: banka + tarih + tutar + normalize açıklama + referans +
+  **aynı gün içindeki sıra** (aynı gün/tutar/açıklamalı iki GERÇEK işlem
+  sıra ile ayrışır, mükerrer sayılmaz). Yazma `INSERT ... ON CONFLICT
+  (satir_hash) DO NOTHING`, tek transaction, 500'lük gruplar.
+- Onay anahtarı yalnız dosya hash'ini değil, **banka seçimini ve sütun
+  eşlemesini de** kapsar — önizleme sonrası ikisinden biri değişirse yazma
+  409 ile reddedilir (Entegra'nın yalnız `fileHash` doğrulayan deseninden
+  bilerek daha geniş, çünkü burada banka/eşleme de satır hash'ini etkiler).
+- `cfo_banka_hareket` şemasına migration ile DOKUNULMADI (CFO tarafından
+  Supabase'de zaten açıldı) — yazma yalnız ham SQL `INSERT`, Prisma modeli
+  yok. `cfo_bank_account.balanceTry` yalnız karşılaştırma için okunur, bu
+  ekrandan hiç güncellenmez.
+- Önizleme: toplam giriş/çıkış/net, dosyanın son satırındaki bakiye ile
+  defterdeki bakiye farkı (yalnız bilgi), ≥25.000 ₺ yeni büyük hareketler
+  (ilk 20), bu bankanın defterdeki en yeni tarihiyle dosyanın en eski tarihi
+  arasında boşluk uyarısı.
+- Yeni `BankaImportLog` tablosu (migration `20260928190000_banka_import_log`,
+  `IF NOT EXISTS`, RLS deny-all) — kim/ne zaman/hangi banka-dosya/kaç satır
+  eklendi-atlandı.
+- `lib/entegra/parse.ts` → `metinHazirla` (BOM/kodlama tespiti) export edildi;
+  banka ayrıştırıcısı aynı mantığı kopyalamadan kullanıyor.
+- Testler: `npm run check:banka` (29 kontrol; Türkçe başlık normalize, gün-önce
+  tarih, Türkçe tutar biçimi, hash idempotency/ikiz-işlem ayrımı, onay anahtarı
+  — ağ/DB gerektirmez). `tsc --noEmit`, `eslint` ve `next build` ile de
+  doğrulandı (xlsx paketi bu depoda `cdn.sheetjs.com`'dan geldiği için yerel
+  doğrulamada geçici olarak npm registry'deki 0.18.5 sürümüyle test edildi,
+  ardından `package.json`/`package-lock.json` orijinal `0.20.3` CDN pinine
+  geri alındı — commit edilen bağımlılık değişmedi).
+
 ### Türkçe "İ" hatası: iade sayacı düzeltildi (2026-09-23)
 
 - `lib/entegra/import.ts` → `iadeMi`: `/iade|iptal/i` Türkçe büyük İ'yi (U+0130)
