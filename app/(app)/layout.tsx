@@ -527,6 +527,15 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "ALFAS Home",
   },
   {
+    // Terk edilen / bekleyen sepetler + hatırlatma maili durumu (salt okunur
+    // /crm/carts; kararı mail gönderen job ile AYNI kod verir).
+    href: "/alfashome/sepetler",
+    label: "Sepetler",
+    iconKey: "basket",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "ALFAS Home",
+  },
+  {
     href: "/alfashome/uyeler",
     label: "Üyeler",
     iconKey: "users",

@@ -242,6 +242,63 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-09-28 — ALFAS Home → Sepetler (terk edilen / bekleyen sepetler + mail durumu)
+
+`/alfashome/sepetler`: alfashome.com'da ürünü olup siparişe dönmemiş sepetleri
+gösterir — **kayıtlı / kayıtsız** ayrımı, **hatırlatma maili gitti mi / ne zaman
+gidecek / gecikti mi** ve iletişim bağlantıları (WhatsApp, Ara, E-posta). Salt
+okunur: mail göndermez, sepete dokunmaz.
+
+**Nereden okur:** ALFAS backend'inde yeni salt okunur `GET /crm/carts`
+(alfashome `backend/src/api/crm/carts/route.ts`; aynı `CRM_API_TOKEN` kapısı,
+yeni env yok). Panelde `lib/alfashome/client.ts` → `fetchAlfasCarts`.
+
+**Karar panelde verilmiyor:** "mail gitti mi / ne zaman gidecek" kararı ALFAS'ta
+`backend/src/lib/cart-recovery.ts` içinde ve **mail gönderen job ile AYNI
+fonksiyonlar**. Panel yalnız Türkçeye çevirir (`lib/alfashome/sepetler.ts`).
+Panel kendi eşiğini yazsaydı "1 saat sonra gidecek" derken job başka eşikle
+çalışırdı ve operatör müşteriye yanlış şey söylerdi.
+
+⚠️ **"Kayıtlı" = şifreli hesabı olan.** ALFAS sepete e-posta yazılınca misafir bir
+müşteri kaydı da açar (`customer_id` dolar, `has_account=false`); `customer_id`
+dolu diye kayıtlı sayılamaz. Sorgu başarısız olursa "bilinmiyor" gösterilir,
+tahmin edilmez.
+
+⚠️ **Başarısız mail denemesi KAYDEDİLMİYOR** (job damgayı yalnız başarılı
+gönderimden sonra atar). "Gönderilemedi" doğrudan bilinemez; bilinen şey
+"sırası geldi ama gitmedi" → **Gecikti** (sebep: Resend hatası / job durmuş —
+Railway log'u). Sayfa sebep uydurmaz.
+
+⚠️ **ALFAS'ta RESEND kapalıysa** sayfa üstte kırmızı bant basar ve hiçbir sepete
+"Mail bekliyor" demez (hepsi "Gönderilemez · Mail servisi kapalı").
+
+**Eklenenler (öneri):** KPI kartları (bekleyen/terk ₺, kayıtlı/kayıtsız, mail
+durumu), süzgeç + sıralama, **en çok sepette kalan ürünler**, **mail sonrası
+satın alınan** adet/₺ (korelasyon — "mailin kurtardığı" DEĞİL, sayfada öyle yazıyor).
+
+**Mobil:** dar ekranda tablo yerine kart düzeni. İlk sürümde tablo mobilde yatay
+kayıyor ve sayfanın asıl amacı olan "Hatırlatma maili" kolonu ekran dışında
+kalıyordu (tarayıcıda ölçülüp düzeltildi).
+
+**Dosyalar:** `lib/alfashome/client.ts` (tipler + `fetchAlfasCarts`, `cek`'e ek
+sorgu parametresi, 404 için "uç yok" mesajı), `lib/alfashome/sepetler.ts` (saf
+etiket/süzgeç/sıralama), `components/alfashome/sepet-govdesi.tsx`,
+`app/(app)/alfashome/sepetler/page.tsx`, menü (`app/(app)/layout.tsx`) +
+`basket` ikonu (`components/dashboard/sidebar.tsx`),
+`__tests__/alfashome.test.ts` (ALFAS Home 4 → 5 sayfa; +sepet kontrolleri).
+
+**Doğrulama:** `npm run check:alfashome`. Ayrıca gerçek backend uç kodu sahte
+sepet verisiyle (tüm durumlar: kayıtlı/misafir/anonim, 1 mail/2 mail/gecikti/eski,
+HTML enjeksiyonlu ad+ürün) HTTP üzerinden sunulup panelin gerçek istemcisi ve
+bileşeniyle `next dev` + Playwright ile ölçüldü (masaüstü + 390 px, süzgeçler,
+sıralama, WhatsApp/tel/mailto bağlantıları, XSS kaçışı, RESEND-kapalı bandı).
+
+⚠️ **Doğrulanmadı:** `/crm/carts`'ın **gerçek Medusa veritabanına** karşı davranışı
+(özellikle `query.graph` `filters: { email: [...] }` ve `updated_at` sıralaması).
+Ölçülenler sahte `query` ile mantıktır. İlk canlı açılışta sayfa hata kartı
+gösterirse Railway log'unda `[crm] sepet…` satırlarına bakın. Bkz. alfashome
+`CLAUDE.md` → "CRM Sepet Ucu".
+
 ### 2026-09-23 — 🔴 Türkçe "İ" tuzağı: iade sayacı her zaman 0 gösteriyordu
 
 Gerçek Entegra dosyası (500 satır, 17–23.09) ilk kez ayrıştırıldı ve **ekranın
