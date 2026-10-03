@@ -4,6 +4,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { getCfoConfig } from "../lib/cfo-agent/config";
 import { allocateOrderCost, cautiousDemand, contribution, financialImpact, isDummyStock, measuredCommission, metric, priceFloor, unknown } from "../lib/cfo-agent/calculations";
 import { evaluateCfoAcceptance } from "../lib/cfo-agent/acceptance";
+import { cfoAcceptanceDiagnostics } from "../lib/cfo-agent/acceptance-diagnostics";
 import { evaluateShadowWeek } from "../lib/cfo-agent/shadow";
 import { detectCfoAnomalies, shouldReopen } from "../lib/cfo-agent/anomalies";
 import { budgetBlock, istanbulPeriod } from "../lib/cfo-agent/budget";
@@ -293,6 +294,16 @@ async function main(){
     await db.exec(`delete from cfo_satis_siparis where "orderNumber"='boundary';delete from cfo_satis_birim_duz where "orderNumber"='boundary';
       alter table cfo_satis_siparis alter column "orderDate" type timestamptz using "orderDate" at time zone 'UTC';
       alter table cfo_satis_birim_duz alter column "orderDate" type timestamptz using "orderDate" at time zone 'UTC'`);
+  });
+  await check("acceptance commission diagnostics separate native/trusted means and expose no order IDs",async()=>{
+    await db.exec(`insert into cfo_satis_birim_duz values
+      ('TRENDYOL','MD-3003B1','diagnostic-1','2026-10-02',1,1000,'KESIN',100,1000,100,0,0,0),
+      ('TRENDYOL','MD-3003B1','diagnostic-2','2026-10-02',1,1000,'KARMA',200,1000,100,0,0,0)`);
+    const d=await cfoAcceptanceDiagnostics(source,now.toISOString());assert.equal(d.available,true);
+    assert.equal(d.summary![0].records,2);assert.equal(d.summary![0].untrusted,1);
+    assert.equal(Number(d.summary![0].native_weighted_pct),15);assert.equal(Number(d.summary![0].trusted_weighted_pct),10);
+    assert(!JSON.stringify(d).includes('diagnostic-1'));assert(!JSON.stringify(d).includes('orderNumber'));
+    await db.exec(`delete from cfo_satis_birim_duz where "orderNumber" in ('diagnostic-1','diagnostic-2')`);
   });
   await check("frozen 12-check acceptance evaluator detects wrong values and missing Koctas",()=>{
     const x=clone(s);x.cash.cash=metric(72483.62);x.cash.generalUnusedOverdraft=metric(1809300);x.cash.purposeLimit=metric(750000);x.cash.totalCardDebt=metric(2366017.3);x.cash.activeCards=6;

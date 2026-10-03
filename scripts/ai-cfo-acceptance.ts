@@ -6,6 +6,7 @@ import { evaluateCfoAcceptance } from "../lib/cfo-agent/acceptance";
 import { hashSnapshot } from "../lib/cfo-agent/evidence";
 import { cfoReaderOptions, checkCfoReaderAccess, cfoAccessFailure } from "../lib/cfo-agent/access-check";
 import { assertReviewedCfoDefinitions, cfoAcceptanceContext, REVIEWED_CFO_SOURCE_BINDINGS } from "../lib/cfo-agent/acceptance-profile";
+import { cfoAcceptanceDiagnostics } from "../lib/cfo-agent/acceptance-diagnostics";
 import type { ReadSource,Row } from "../lib/cfo-agent/sources";
 
 async function main() {
@@ -29,13 +30,16 @@ async function main() {
     const snapshot=await buildCfoAgentSnapshot({db,now:new Date(asOf),config,compact:false,
       ...(profile?{bindings:REVIEWED_CFO_SOURCE_BINDINGS}:{})});
     const checks=evaluateCfoAcceptance(snapshot),passed=checks.filter(c=>c.passed).length;
+    const diagnostics=isCurrentComparison?await cfoAcceptanceDiagnostics(db,asOf):undefined;
     const report={mode,reference:"ALFAS-2026-10-03",testedAt:new Date().toISOString(),asOf,snapshotHash:hashSnapshot(snapshot),calculationVersion:snapshot.calculationVersion,passed,total:12,checks,
       productionApproval:false,
+      ...(diagnostics?{diagnostics}:{}),
       dataQuality:snapshot.dataQuality,limitations:"Current mutable balances/inventory cannot reconstruct a historical ledger. Run against the reference database snapshot."};
     const output=process.env.AI_CFO_ACCEPTANCE_REPORT_PATH??"/tmp/ai-cfo-acceptance.json";
     await writeFile(output,JSON.stringify(report,null,2),{mode:0o600});
     console.log(`${isCurrentComparison?"Current ledger comparison (NOT release acceptance)":"Live acceptance"}: ${passed}/12. No migration, flag, AI or business data changed.`);
     for(const c of checks)console.log(`${c.passed?"MATCH":"DIFFERENCE"} ${JSON.stringify(c)}`);
+    if(diagnostics)console.log(`AGGREGATE_DIAGNOSTICS ${JSON.stringify(diagnostics)}`);
     if(!isCurrentComparison&&passed!==12)process.exitCode=1;
     await client.query("ROLLBACK");
   } finally {await client.end();}

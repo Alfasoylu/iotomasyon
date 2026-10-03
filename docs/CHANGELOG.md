@@ -3322,3 +3322,8 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - [Canlı güncel defter karşılaştırması](https://github.com/Alfasoylu/iotomasyon/actions/runs/37142425088) 7/12 eşleşti; nakit/KMH/kart ve stok sayacı referansları doğrulandı. Finansal kabul veya production onayı verilmedi.
 - Agent komisyon ayıklaması kanal+SKU medyanı/MAD ile çalışır; farklı SKU'nun meşru düşük oranı kanal merkezi nedeniyle elenmez. Tarih tipi katalogdan doğrulanır, UTC saklanan naive timestamp İstanbul dönem sınırına doğru çevrilir; kaynak taraması tam gün sınırına hizalanır. Calculation/financial contract v3; mevcut motor/dashboard korunur.
 - %12,88/%20,04 meşru SKU farkı + %34,80 aykırı kayıt ve naive UTC 30 günlük sınır regresyonları dahil 38 PostgreSQL/CFO testi, typecheck ve lint geçti. Kabul raporuna ek kayıt/stok şartları actual/expected olarak eklendi; canlı tekrar ölçüm bekleniyor.
+
+## 03.10.2026 — V3 canlı karşılaştırma ve aggregate komisyon kanıtı
+
+- [d6e290e CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37143777603) build/typecheck/tüm kontrolleri geçti. Güncel ölçüm 8/12: Entegra MD adedi 81 düzeldi, native XML/hız, komisyon/kayıt şartı ve ANUNNAKI stok şartı farklı kaldı. Production kabulü verilmedi.
+- Diagnostik rapora yalnız MD/TRENDYOL aggregate oran/güven dağılımı eklendi; kimlik veya ham sipariş satırı içermez. Native/trusted ortalama ayrımı ve kimlik dışlama gerçek PostgreSQL testinde doğrulandı. Komisyon doğrulanmış sayılmadı; referanslar ve feature flag'ler değişmedi.
