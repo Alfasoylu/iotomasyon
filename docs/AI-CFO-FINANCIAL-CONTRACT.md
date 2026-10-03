@@ -72,3 +72,16 @@ tarafından pg_get_viewdef/information_schema üzerinden doğrulanmalıdır.
 cfo_kanal_net_oran yalnız YÜKSEK güvenli, 0<oran<1 banka-ekstresi ölçümlerinde TAHMİNİ net tahsilat=gross×net_oran üretir. Net oran komisyon değildir. Kesintilerin kapsamı (kargo/iade/işlem/hizmet/ambalaj/reklam) doğrulanmadan bu tahsilattan contribution türetilmez; aksi halde giderler iki kere düşülebilir. Koçtaş contribution kabul gereği null kalır. Oranların sayısal referansları koda sabitlenmez; kaynak görünümü okunur.
 
 Kabul referansları yalnız 03.10.2026 ledger snapshot'ı içindir; mevcut mutable bakiye/stok alanlarıyla geçmiş gün yeniden oluşturulamaz.
+
+## 03.10.2026 — CFO dönem kararı: son 120 gün
+
+İşletme sahibi komisyonların kampanyalarla değişmesi nedeniyle **son 120 gün**
+penceresini seçti. Aktif v3 hesap bu pencereyi zaten kullanır; tüm geçmişe
+fallback yapılmaz, sabit oran eklenmez. Bu ölçüm güncel kampanyanın garanti
+komisyonu değil, dönem içindeki gerçekleşmiş ağırlıklı orandır.
+
+03.10.2026 18:47 UTC ölçümünde MD-3003B1/TRENDYOL son 120 gün: 37 kayıt,
+%10,4710; tarihsiz tüm geçmiş: 43 kayıt, %12,8758. Dönem seçimi eski altın
+referansı kendiliğinden değiştirmez. Dönem, asOf ve örneklem aynı olan bağımsız
+referansla kabul doğrulanmalıdır; canlı çıktının beklenen değer olarak kopyalanması
+kabul testi değildir. XML/hız/mevcut stok referanslarının zamanı ayrıca uzlaştırılır.

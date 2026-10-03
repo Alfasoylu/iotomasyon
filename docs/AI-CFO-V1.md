@@ -2,6 +2,8 @@
 
 Mevcut CFO tabloları, SQL motoru ve dashboard hesapları değiştirilmez. Yeni katman yalnız işletme verilerini okur ve `cfo_run`, `cfo_insight`, `cfo_usage` yazar. Finansal sözleşme: [AI-CFO-FINANCIAL-CONTRACT.md](AI-CFO-FINANCIAL-CONTRACT.md).
 
+Güncel geçiş durumu ve 120 günlük dönem kararı: [production hazırlık incelemesi](AI-CFO-PRODUCTION-READINESS.md). Bu incelemede canlıya geçiş koşulları henüz tamamlanmamıştır.
+
 ## Varsayılanlar
 
 `AI_CFO_ENABLED=false`, `AI_CFO_MONITOR_ENABLED=false`, `AI_CFO_PROVIDER=disabled`. Credential eksikliği uygulamayı çökertmez. Monitor açılıp AI kapalı bırakılabilir. `/admin/ai-cfo` CFO_READ ve EXECUTIVE_READ ister. Cron endpointleri mevcut authorizeCron kullanır. V1 push göndermez; uyarılar Control Center'da gösterilir.
@@ -66,7 +68,7 @@ Trusted feature push'ı `alfas_2026_10_03` diagnostik profilini kullanır. 03.10
 
 [V3 güncel ölçümü](https://github.com/Alfasoylu/iotomasyon/actions/runs/37143777603) 8/12: corrected MD adet81 eşleşti, XML221/hız5,3/komisyon%10,47+37 kayıt/ANUNNAKI stok169 farklı kaldı. Komisyon doğrulanmış değildir. Current comparison raporu aynı MD/TRENDYOL source'un native ve trusted ağırlıklı komisyon ortalamasını, yalnız toplu oran/güven dağılımını da saklar. Bu kanıt finansal anomaly veya AI payload'ına yeni güvenilir sayı olarak eklenmez; gold değerleri değiştirmez ve kimlik/ham satır loglamaz.
 
-[Canlı diagnostik](https://github.com/Alfasoylu/iotomasyon/actions/runs/37144444910) son120gün kaynağının zaten 37 kayıt/%10,4710, tüm satırların trusted olduğunu doğruladı; v3 filtre 43 kaydı 37'ye indirmemiştir. CFO'nun orijinal tarihsiz SQL'i ile aynı all-history aggregate ve database/client dönem başlangıçları ayrıca raporlanır. Bunlar teşhis kanıtıdır; 120günlük metric'e otomatik fallback veya referans değişikliği yapılmaz. Komisyon referansı ve dönem uzlaştırılması finansal kabul için açık kapıdır.
+[Canlı diagnostik](https://github.com/Alfasoylu/iotomasyon/actions/runs/37144444910) son120gün kaynağının zaten 37 kayıt/%10,4710, tüm satırların trusted olduğunu doğruladı; v3 filtre 43 kaydı 37'ye indirmemiştir. CFO'nun orijinal tarihsiz SQL'i ile aynı all-history aggregate ve database/client dönem başlangıçları ayrıca raporlanır. İşletme sahibi kampanya değişimleri nedeniyle **120 günlük pencereyi seçti**; dönem kararı tamamdır. Tarihsiz %12,88/43 referansı aynı döneme ait değildir. Bağımsız ve aynı dönem/zaman için referans doğrulaması hâlâ açık kapıdır; diagnostik çıktı altın referans yerine otomatik kopyalanmaz.
 
 ### Gölge hafta
 

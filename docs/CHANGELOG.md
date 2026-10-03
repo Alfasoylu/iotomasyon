@@ -3332,3 +3332,9 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 
 - [ab38909 CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37144444910) build/typecheck/testleri geçti. Aggregate source son120günde native37/trusted37 ve %10,4710 gösterdi; 6 kaydın v3 filtrede kaybolduğu varsayımı doğrulanmadı.
 - Orijinal tarihsiz CFO SQL'iyle all-history aggregate ve PostgreSQL/client dönem sınırı karşılaştırması eklendi; bunlar yalnız diagnostik, hesap veya kabul referansı yerine geçmez. PostgreSQL testi ve typecheck/lint geçti; production kapıları kapalı.
+
+## 03.10.2026 — Komisyon dönemi kararı ve production hazırlık durumu
+
+- İşletme sahibinin kampanya değişimleri nedeniyle son120gün seçimi sözleşme/kurulum/teslim raporuna işlendi; mevcut uygulama hesabı ve referans değerler değiştirilmedi.
+- 896154a için CI build/typecheck ve Vercel önizleme commit status'u yeniden kontrol edildi. Güncel aggregate raporun 8/12 sonucu, dönem/stock-reference farkları, eksik kaynak eşlemeleri ve migration/deployment ön koşulları [hazırlık incelemesinde](AI-CFO-PRODUCTION-READINESS.md) kaydedildi.
+- Teslim raporunun test sayıları/canlı karşılaştırma bilgisi düzeltildi. Production migration/main merge/deploy/AI açılışı yapılmadı; bu kayıt finansal kabul onayı değildir.

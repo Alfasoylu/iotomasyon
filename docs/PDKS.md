@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — 120 günlük komisyon kararı ve production hazırlık incelemesi
+
+İşletme sahibi kampanya değişimleri nedeniyle son120gün penceresini seçti; mevcut v3 hesap korundu ve dönem kararı finansal sözleşmeye işlendi. Son uygulama commit'inde CI/build/typecheck ve Vercel önizleme status'u başarılı; canlı karşılaştırma 8/12 ve farklı dönemli komisyon referansı otomatik değiştirilmedi. Kargo/SET/projeksiyon eşlemeleri, aynı zamanlı kabul, staging/DB backup, yetkili migration bağlantısı/pending geçmişi ve production session-lock/cron eksikleri [production hazırlık incelemesinde](AI-CFO-PRODUCTION-READINESS.md) belgelendi. Eksik yoksa canlıya al koşulu sağlanmadı; migration/main merge/deploy/AI açılışı yapılmadı. Teslim raporunun eski test ve canlı ölçüm bilgileri güncellendi.
+
 ### 03.10.2026 — Komisyon 37 kaydı filtre sonucu değil, source 120 gün penceresi
 
 [Aggregate canlı teşhis](https://github.com/Alfasoylu/iotomasyon/actions/runs/37144444910) mevcut 120 günde native37, trusted37, %10,4710 ve untrusted0 gösterdi. V3 filtre 6 kayıt silmemiş; 43/%12,88 referansı aynı sorgu/dönemle uyuşmuyor. Original CFO SQL'indeki tarihsiz aggregate ve PostgreSQL/hesaplama saat sınırları diagnostik rapora eklendi; 120 gün hesabı/referans değiştirilmedi. 39 CFO testi, typecheck/lint yerelde doğrulandı. Kaynak/dönem uzlaştırılmadan komisyon veya production kabulü verilmez.
