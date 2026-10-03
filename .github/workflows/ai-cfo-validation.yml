@@ -17,6 +17,8 @@ jobs:
       NEXT_TELEMETRY_DISABLED: '1'
       AI_CFO_ENABLED: 'false'
       AI_CFO_MONITOR_ENABLED: 'false'
+      # Build imports the existing PDKS Prisma extension; use no live credentials.
+      DATABASE_URL: postgresql://localhost:5432/build_only
       DIRECT_URL: postgresql://localhost:5432/build_only
     steps:
       - uses: actions/checkout@v4

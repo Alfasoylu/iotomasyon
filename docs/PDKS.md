@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — AI CFO GitHub aktarımı ve CI ortamı
+
+Drive yedeği doğrulandı; kod `feat/ai-cfo-v1` branch'ine, patch ayrıca `handoff/ai-cfo-v1` branch'ine aktarıldı. İlk CI çalışmasında Prisma, TypeScript, 36 CFO, 22 RBAC, Entegra ve lint kontrolleri geçti; build mevcut PDKS Prisma extension import'unda eksik `DATABASE_URL` nedeniyle durdu. Validation workflow'a yalnız localhost build URL'i eklendi; production credential veya veritabanı bağlantısı kullanılmaz. Build yeniden doğrulanacak; canlı kabul ve gölge hafta bekliyor.
+
 ### 03.10.2026 — AI CFO kabul kapıları
 
 Komisyon NULL kapsamı/örneklem ve 120 günlük aykırı ayıklama, iki kaynaklı ihtiyatlı talep, 12 referanslı read-only kabul komutu, 7 günlük gölge raporu ve CI workflow eklendi. Production kapalı; canlı kabul/CI/gölge hafta henüz ölçülmedi. Detay: [AI CFO V1](AI-CFO-V1.md).
