@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — Supabase CA güven zinciri
+
+Canlı erişim denemesinde GitHub secret ulaştı; validation/build ve tüm testler geçti, bağlantı TLS certificate error'da durdu. Supabase'in resmi dashboard kaynağındaki public Root 2021 CA doğrulanıp yalnız connection-check adımına NODE_EXTRA_CA_CERTS ile eklendi. TLS/hostname doğrulaması kapatılmadı; şifre loglanmadı. Hesap giriş/finansal kabul henüz doğrulanmadı.
+
 ### 03.10.2026 — GitHub Secret ile salt okunur erişim kontrolü
 
 CFO kaynak allowlist'i reuse edilerek reader URI/TLS/rol/SELECT/RLS kontrolü eklendi. Validation workflow'da credential yalnız trusted feature push'ındaki ayrı `live_access` adımına bağlanır; PR/fork ve build job'ına verilmez. Beş PostgreSQL/güvenlik kontrolü, typecheck ve hedefli lint geçti. Kullanıcının eklediği secret ile canlı bağlantı sonucu henüz bekleniyor; 12/12 finansal kabul veya production onayı verilmedi.

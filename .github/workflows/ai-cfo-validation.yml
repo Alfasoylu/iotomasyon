@@ -65,3 +65,4 @@ jobs:
         run: node --conditions=react-server --import tsx scripts/ai-cfo-connection-check.ts
         env:
           AI_CFO_READ_DATABASE_URL: ${{ secrets.AI_CFO_READ_DATABASE_URL }}
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/lib/cfo-agent/certs/supabase-root-2021.crt

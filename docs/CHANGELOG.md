@@ -3296,3 +3296,8 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - `access-check.ts` ve connection-check CLI: session pooler/reader hesabı zorunlu, TLS doğrulaması açık, salt okunur transaction, sınırlı kaynak metadata ve RLS görünürlüğü; ham URI/driver hata mesajı loglanmaz.
 - Beş yerel PostgreSQL/güvenlik kontrolü, typecheck ve lint geçti. Gerçek bağlantı/finansal kabul başarısı henüz iddia edilmez.
 - GitHub Secret yalnız `feat/ai-cfo-v1` push sonrası ayrı live_access job'ında kullanılır; validation/build ve pull_request adımlarına aktarılmaz.
+
+## 03.10.2026 — Supabase bağlantı kontrolünde CA desteği
+
+- Son CI validation/build başarılı (d98c605); secret canlı erişim adımına ulaştı. TLS trust eksikliği nedeniyle ilk login doğrulanamadı.
+- Supabase'in public Root 2021 CA sertifikası official dashboard URL'iyle doğrulandı; yalnız connection-check process'i ek CA olarak kullanır. TLS sertifika/hostname kontrolü açık kalır; üretim runtime ayarları değişmez.
