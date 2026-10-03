@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — CFO reader bağlantısı doğrulandı, RLS kurulum sorgusu hazır
+
+[Canlı salt okunur kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37138690210/job/111251706721) TLS, reader rolü ve 25 kaynak SELECT/yazmasız erişimini doğruladı; Product satırları RLS nedeniyle görünmüyor. `scripts/ai-cfo-reader-rls.sql` yalnız mevcut SELECT yetkili CFO kaynaklarında reader'a özel SELECT politikası ekler; diğer hesaplar, RLS, şifre ve işletme kayıtları değişmez. PostgreSQL testleri görünürlük, tekrar çalıştırma, diğer rol izolasyonu, yanlış yetki/politika çatışması ve atomik rollback'i doğruladı. Sorgu production'da henüz çalıştırılmadı; 12 finansal kabul testi, migration ve gölge hafta bekliyor.
+
 ### 03.10.2026 — Supabase CA güven zinciri
 
 Canlı erişim denemesinde GitHub secret ulaştı; validation/build ve tüm testler geçti, bağlantı TLS certificate error'da durdu. Supabase'in resmi dashboard kaynağındaki public Root 2021 CA doğrulanıp yalnız connection-check adımına NODE_EXTRA_CA_CERTS ile eklendi. TLS/hostname doğrulaması kapatılmadı; şifre loglanmadı. Hesap giriş/finansal kabul henüz doğrulanmadı.

@@ -76,6 +76,12 @@ Repository Settings → Secrets and variables → Actions altında `AI_CFO_READ_
 
 Bu kontrol 12/12 finansal kabul değildir; migration/flag/provider çalıştırmaz. Bağlantıdan sonra gerçek kolon/grain anlamı ve referans timestamp ayrıca doğrulanır. Kabul tamamlandığında geçici erişim secret'ını kaldırma veya şifreyi döndürme operatörün normal credential yönetimine tabidir.
 
+#### Reader'a özel RLS okuma politikaları
+
+[03.10.2026 canlı bağlantı kontrolü](https://github.com/Alfasoylu/iotomasyon/actions/runs/37138690210/job/111251706721) başarılı; Product satırları reader'a RLS nedeniyle görünmüyor. Boş sonuç finansal olarak sıfır stok/maliyet demek değildir. Supabase SQL Editor'de yönetici rolüyle [manuel reader RLS sorgusu](../scripts/ai-cfo-reader-rls.sql) çalıştırılır. Sorguda değiştirilecek şifre/placeholder yoktur; tekrar çalıştırılabilir. Mevcut SELECT yetkili, RLS açık public CFO tablolarına ve yedi e-ticaret kaynağına yalnız `TO cfo_acceptance_reader FOR SELECT USING (true)` ekler. `cfo_run/insight/usage`, PDKS, SELECT yetkisiz kaynaklar ve mevcut politikalar değişmez. RLS devre dışı bırakılmaz, BYPASSRLS/yazma yetkisi verilmez. Farklı aynı adlı politika veya güvensiz rol/yazma yetkisi varsa tüm transaction geri alınır. Mevcut restrictive politikalar varsa aynen kalır; sorgu bunları aşmaz.
+
+Bu SQL bir Prisma migration değildir ve workflow tarafından otomatik yürütülmez. Operatör çalıştırdıktan sonra yalnız `live_access` kontrolü yeniden çalıştırılıp gerçek satır görünürlüğü doğrulanır. Sonraki kapı gerçek kaynak eşlemeleriyle 12 finansal kabul testidir; AI flag'leri kapalı kalır.
+
 #### Supabase TLS trust
 
 GitHub runner'ın varsayılan CA listesi Supabase Root 2021 CA'yı içermeyebilir. `lib/cfo-agent/certs/supabase-root-2021.crt` yalnız connection-check adımında NODE_EXTRA_CA_CERTS ile eklenir; sertifika/hostname doğrulaması açık kalır. Sertifika public CA'dır, private key/credential değildir. Resmi Supabase dashboard source: `apps/studio/hooks/custom-content/custom-content.json`, `ssl:certificate_url`; download: https://supabase-downloads.s3-ap-southeast-1.amazonaws.com/prod/ssl/prod-ca-2021.crt. PEM SHA256: `700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7`; sertifika fingerprint SHA256 `807025AD50D4ED219D2C9C7D299C004F824EB00CF7F65AFEF607D07B72E6CAFA`; geçerlilik 26.04.2031'e kadar. Rotation normal code review ile yapılır; TLS doğrulaması devre dışı bırakılmaz.

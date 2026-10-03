@@ -31,9 +31,10 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run check:cfo-agent
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-access.test.ts
+      - run: node --import tsx __tests__/ai-cfo-reader-rls.test.ts
       - run: node --import tsx __tests__/resolve-permission.test.ts
       - run: node --import tsx __tests__/entegra.test.ts
-      - run: npx eslint lib/cfo-agent __tests__/ai-cfo.test.ts __tests__/ai-cfo-access.test.ts scripts/ai-cfo-*.ts 'app/(app)/admin/ai-cfo/page.tsx' app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning
+      - run: npx eslint lib/cfo-agent __tests__/ai-cfo.test.ts __tests__/ai-cfo-access.test.ts __tests__/ai-cfo-reader-rls.test.ts scripts/ai-cfo-*.ts 'app/(app)/admin/ai-cfo/page.tsx' app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning
       - name: Generate ephemeral build-only session key
         run: |
           python - <<'PY'

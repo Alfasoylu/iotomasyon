@@ -3301,3 +3301,8 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 
 - Son CI validation/build başarılı (d98c605); secret canlı erişim adımına ulaştı. TLS trust eksikliği nedeniyle ilk login doğrulanamadı.
 - Supabase'in public Root 2021 CA sertifikası official dashboard URL'iyle doğrulandı; yalnız connection-check process'i ek CA olarak kullanır. TLS sertifika/hostname kontrolü açık kalır; üretim runtime ayarları değişmez.
+
+## 03.10.2026 — CFO reader RLS kurulumunun doğrulanması
+
+- [Canlı bağlantı kontrolü](https://github.com/Alfasoylu/iotomasyon/actions/runs/37138690210/job/111251706721) başarılı: TLS, salt okunur rol/transaction, 25 kaynak SELECT erişimi ve kontrol edilen kaynaklarda yazma yetkisi bulunmaması doğrulandı. Product satır görünürlüğü false; finansal kabul başarısı değildir.
+- Manuel `scripts/ai-cfo-reader-rls.sql` ve PostgreSQL güvenlik testi eklendi: yalnız SELECT yetkili mevcut CFO kaynakları, reader'a özel SELECT politikası, idempotency, diğer hesap erişimlerinin korunması, hatalı rol/yazma yetkisi/politika çatışmasında atomik rollback. Yerel doğrulama geçti. Canlı politika değişikliği veya production migration yapılmadı.
