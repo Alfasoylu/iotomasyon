@@ -28,6 +28,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 //   ADMIN               — her şeye erişir
 
 const ALL_NAV: Array<NavItem & { permission?: string }> = [
+  { href: "/admin/ai-cfo", label: "AI CFO", iconKey: "chart", permission: PERMISSIONS.CFO_READ, section: "CFO" },
   // ── PANO ─────────────────────────────────────────────────────────────────
   { href: "/dashboard", label: "Pano", iconKey: "home" },
 

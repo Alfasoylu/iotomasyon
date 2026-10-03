@@ -2,6 +2,84 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// AI CFO V1: isolated analysis history; existing business/CFO models unchanged.
+model CfoRun {
+  id                 String       @id @default(cuid())
+  type               String
+  status             String
+  generatedAt        DateTime     @map("generated_at") @default(now())
+  periodKey          String       @map("period_key")
+  idempotencyKey     String       @unique @map("idempotency_key")
+  snapshot           Json?
+  snapshotHash       String?      @map("snapshot_hash")
+  triggerReasons     Json         @map("trigger_reasons")
+  schemaVersion      String       @map("schema_version")
+  calculationVersion String       @map("calculation_version")
+  startedAt          DateTime     @map("started_at") @default(now())
+  finishedAt         DateTime?    @map("finished_at")
+  error              String?
+  avoidedCalls       Int          @map("avoided_calls") @default(0)
+  avoidedCostTry     Decimal?     @map("avoided_cost_try") @db.Decimal(14, 6)
+  insights           CfoInsight[]
+  usage              CfoUsage[]
+
+  @@index([generatedAt])
+  @@map("cfo_run")
+}
+
+model CfoInsight {
+  id                  String   @id @default(cuid())
+  runId               String   @map("run_id")
+  run                 CfoRun   @relation(fields: [runId], references: [id], onDelete: Restrict)
+  severity            String
+  category            String
+  entityType          String   @map("entity_type")
+  entityId            String   @map("entity_id")
+  fingerprint         String
+  cooldownKey         String   @map("cooldown_key")
+  title               String
+  observation         String
+  recommendation      String
+  riskIfIgnored       String   @map("risk_if_ignored")
+  financialImpact     Decimal? @map("financial_impact") @db.Decimal(14, 2)
+  financialImpactType String?  @map("financial_impact_type")
+  impactCalculation   Json?    @map("impact_calculation")
+  confidence          String
+  evidence            Json
+  status              String   @default("open")
+  createdAt           DateTime @map("created_at") @default(now())
+  reviewedAt          DateTime? @map("reviewed_at")
+  reviewedBy          String?  @map("reviewed_by")
+
+  @@unique([runId, fingerprint])
+  @@index([cooldownKey, createdAt])
+  @@index([createdAt])
+  @@map("cfo_insight")
+}
+
+model CfoUsage {
+  id                    String   @id @default(cuid())
+  runId                 String   @map("run_id")
+  run                   CfoRun   @relation(fields: [runId], references: [id], onDelete: Restrict)
+  provider              String
+  model                 String
+  inputTokens           Int      @map("input_tokens") @default(0)
+  outputTokens          Int      @map("output_tokens") @default(0)
+  cacheReadTokens       Int      @map("cache_read_tokens") @default(0)
+  cacheWriteTokens      Int      @map("cache_write_tokens") @default(0)
+  estimatedCost         Decimal? @map("estimated_cost") @db.Decimal(14, 6)
+  reservedCostTry       Decimal? @map("reserved_cost_try") @db.Decimal(14, 6)
+  currency              String   @default("TRY")
+  triggerReason         String   @map("trigger_reason")
+  providerRequestId     String?  @map("provider_request_id")
+  status                String
+  priceContext          Json?    @map("price_context")
+  createdAt             DateTime @map("created_at") @default(now())
+
+  @@index([createdAt, status])
+  @@map("cfo_usage")
+}
+
 datasource db {
   provider = "postgresql"
 }

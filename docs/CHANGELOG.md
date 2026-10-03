@@ -3270,3 +3270,39 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - Sonuç: kuyruk 76 → 10 (9 soru + 1 bayat not), gecikmiş 2. 64 bulgu kendi
   sayfasında; kırmızılar 14.09'da kuyruğa dönecek.
 
+
+## 03.10.2026 — AI CFO V1 (production kapalı)
+
+- Additive cfo_run/cfo_insight/cfo_usage modelleri, deterministic snapshot/anomalies, bounded Anthropic reasoning, cron ve /admin/ai-cfo eklendi. Eski CFO hesapları değiştirilmedi.
+- 30 AI CFO PostgreSQL/runner kontrolü; RBAC 22 test ve Entegra regression kontrolleri geçti. Typecheck ve hedefli eslint geçti.
+- Production build doğrulanamadı: ortam Turbopack PostCSS yerel port açılışını engelliyor; webpack alternatifi TypeScript --showConfig alt süreç çıktısında durdu. CI build zorunlu.
+- Production DB/migration/provider çağrısı/deploy yapılmadı. Kurulum: AI-CFO-V1.md.
+
+## 03.10.2026 — AI CFO kabul akışı ve komisyon düzeltmesi
+
+- 120 günlük %90 komisyon kapsamı, en az 10 SKU ölçümü ve medyan/MAD ayıklaması eklendi. Sıfır/eksik komisyon kâr olarak kullanılmıyor; net banka tahsilatı ayrı estimated metric.
+- İki kaynaklı ihtiyatlı hız ve >%30 adet farkı quality uyarısı, 12 referanslı read-only kabul değerlendirmesi, 7 günlük gölge değerlendirmesi ve üç release attestasyon kapısı eklendi.
+- 36 sentetik CFO/PostgreSQL kontrolü, 22 RBAC testi, Entegra kontrolleri, typecheck ve hedefli lint geçti. Canlı 12/12 ölçülmedi, gölge hafta yaşanmadı, CI workflow henüz çalışmadı; yerel build ortam port kısıtında durdu. Production onayı/flag değişikliği yok.
+
+## 03.10.2026 — AI CFO GitHub ve CI doğrulaması
+
+- Kod `feat/ai-cfo-v1`, patch `handoff/ai-cfo-v1` branch'inde kalıcı olarak saklandı; özel Drive yedeği doğrulandı.
+- Validation workflow mevcut PDKS import'u için localhost build DB URL'i, kayıt CAPTCHA prerender'ı için rastgele ve maskelenmiş build session anahtarı alır. Production runtime kodu/credential'ları değişmez.
+- [GitHub CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) başarılı: Prisma validate, TypeScript, 36 CFO, 22 RBAC, Entegra, hedefli lint ve production build.
+- Canlı mali doğruluk ve production onayı değildir. Detaylı [teslim raporu](AI-CFO-HANDOFF.md).
+
+## 03.10.2026 — AI CFO salt okunur bağlantı kontrolü
+
+- `access-check.ts` ve connection-check CLI: session pooler/reader hesabı zorunlu, TLS doğrulaması açık, salt okunur transaction, sınırlı kaynak metadata ve RLS görünürlüğü; ham URI/driver hata mesajı loglanmaz.
+- Beş yerel PostgreSQL/güvenlik kontrolü, typecheck ve lint geçti. Gerçek bağlantı/finansal kabul başarısı henüz iddia edilmez.
+- GitHub Secret yalnız `feat/ai-cfo-v1` push sonrası ayrı live_access job'ında kullanılır; validation/build ve pull_request adımlarına aktarılmaz.
+
+## 03.10.2026 — Supabase bağlantı kontrolünde CA desteği
+
+- Son CI validation/build başarılı (d98c605); secret canlı erişim adımına ulaştı. TLS trust eksikliği nedeniyle ilk login doğrulanamadı.
+- Supabase'in public Root 2021 CA sertifikası official dashboard URL'iyle doğrulandı; yalnız connection-check process'i ek CA olarak kullanır. TLS sertifika/hostname kontrolü açık kalır; üretim runtime ayarları değişmez.
+
+## 03.10.2026 — CFO reader RLS kurulumunun doğrulanması
+
+- [Canlı bağlantı kontrolü](https://github.com/Alfasoylu/iotomasyon/actions/runs/37138690210/job/111251706721) başarılı: TLS, salt okunur rol/transaction, 25 kaynak SELECT erişimi ve kontrol edilen kaynaklarda yazma yetkisi bulunmaması doğrulandı. Product satır görünürlüğü false; finansal kabul başarısı değildir.
+- Manuel `scripts/ai-cfo-reader-rls.sql` ve PostgreSQL güvenlik testi eklendi: yalnız SELECT yetkili mevcut CFO kaynakları, reader'a özel SELECT politikası, idempotency, diğer hesap erişimlerinin korunması, hatalı rol/yazma yetkisi/politika çatışmasında atomik rollback. Yerel doğrulama geçti. Canlı politika değişikliği veya production migration yapılmadı.

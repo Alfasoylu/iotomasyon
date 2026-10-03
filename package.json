@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:cfo-agent": "node --conditions=react-server --import tsx __tests__/ai-cfo.test.ts",
     "dev": "next dev",
     "build": "next build",
     "postinstall": "prisma generate",
@@ -22,7 +23,9 @@
     "check:push": "tsx __tests__/push-subscribe.test.ts",
     "check:durum": "tsx __tests__/durum.test.ts",
     "check:rbac": "tsx __tests__/resolve-permission.test.ts",
-    "check:alfashome": "tsx __tests__/alfashome.test.ts"
+    "check:alfashome": "tsx __tests__/alfashome.test.ts",
+    "check:cfo-acceptance": "node --conditions=react-server --import tsx scripts/ai-cfo-acceptance.ts",
+    "check:cfo-shadow": "node --conditions=react-server --import tsx scripts/ai-cfo-shadow-report.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -58,8 +61,10 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.4.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/sanitize-html": "^2.16.1",

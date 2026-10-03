@@ -1,0 +1,69 @@
+name: AI CFO validation
+on:
+  pull_request:
+  push:
+    branches: [feat/ai-cfo-v1]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ai-cfo-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      AI_CFO_ENABLED: 'false'
+      AI_CFO_MONITOR_ENABLED: 'false'
+      # Build imports the existing PDKS Prisma extension; use no live credentials.
+      DATABASE_URL: postgresql://localhost:5432/build_only
+      DIRECT_URL: postgresql://localhost:5432/build_only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma validate
+      - run: npx tsc --noEmit
+      - run: npm run check:cfo-agent
+      - run: node --conditions=react-server --import tsx __tests__/ai-cfo-access.test.ts
+      - run: node --import tsx __tests__/ai-cfo-reader-rls.test.ts
+      - run: node --import tsx __tests__/resolve-permission.test.ts
+      - run: node --import tsx __tests__/entegra.test.ts
+      - run: npx eslint lib/cfo-agent __tests__/ai-cfo.test.ts __tests__/ai-cfo-access.test.ts __tests__/ai-cfo-reader-rls.test.ts scripts/ai-cfo-*.ts 'app/(app)/admin/ai-cfo/page.tsx' app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning
+      - name: Generate ephemeral build-only session key
+        run: |
+          python - <<'PY'
+          import os, secrets
+          key = secrets.token_hex(32)
+          print(f'::add-mask::{key}')
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'SESSION_SECRET={key}\n')
+          PY
+      - run: npm run build
+  live_access:
+    # Never expose database credentials to pull_request/fork code or main deploys.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/ai-cfo-v1' && github.repository == 'Alfasoylu/iotomasyon'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AI_CFO_ENABLED: 'false'
+      AI_CFO_MONITOR_ENABLED: 'false'
+      DIRECT_URL: postgresql://localhost:5432/build_only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Check read-only Supabase access
+        run: node --conditions=react-server --import tsx scripts/ai-cfo-connection-check.ts
+        env:
+          AI_CFO_READ_DATABASE_URL: ${{ secrets.AI_CFO_READ_DATABASE_URL }}
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/lib/cfo-agent/certs/supabase-root-2021.crt

@@ -242,6 +242,35 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — CFO reader bağlantısı doğrulandı, RLS kurulum sorgusu hazır
+
+[Canlı salt okunur kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37138690210/job/111251706721) TLS, reader rolü ve 25 kaynak SELECT/yazmasız erişimini doğruladı; Product satırları RLS nedeniyle görünmüyor. `scripts/ai-cfo-reader-rls.sql` yalnız mevcut SELECT yetkili CFO kaynaklarında reader'a özel SELECT politikası ekler; diğer hesaplar, RLS, şifre ve işletme kayıtları değişmez. PostgreSQL testleri görünürlük, tekrar çalıştırma, diğer rol izolasyonu, yanlış yetki/politika çatışması ve atomik rollback'i doğruladı. Sorgu production'da henüz çalıştırılmadı; 12 finansal kabul testi, migration ve gölge hafta bekliyor.
+
+### 03.10.2026 — Supabase CA güven zinciri
+
+Canlı erişim denemesinde GitHub secret ulaştı; validation/build ve tüm testler geçti, bağlantı TLS certificate error'da durdu. Supabase'in resmi dashboard kaynağındaki public Root 2021 CA doğrulanıp yalnız connection-check adımına NODE_EXTRA_CA_CERTS ile eklendi. TLS/hostname doğrulaması kapatılmadı; şifre loglanmadı. Hesap giriş/finansal kabul henüz doğrulanmadı.
+
+### 03.10.2026 — GitHub Secret ile salt okunur erişim kontrolü
+
+CFO kaynak allowlist'i reuse edilerek reader URI/TLS/rol/SELECT/RLS kontrolü eklendi. Validation workflow'da credential yalnız trusted feature push'ındaki ayrı `live_access` adımına bağlanır; PR/fork ve build job'ına verilmez. Beş PostgreSQL/güvenlik kontrolü, typecheck ve hedefli lint geçti. Kullanıcının eklediği secret ile canlı bağlantı sonucu henüz bekleniyor; 12/12 finansal kabul veya production onayı verilmedi.
+
+### 03.10.2026 — AI CFO CI doğrulandı, kod kalıcı branch'te
+
+`feat/ai-cfo-v1` GitHub'a aktarıldı; [CI build + typecheck + Prisma + 36 CFO + 22 RBAC + Entegra + lint](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) geçti (`66b17dc`). CI yalnız localhost DB URL'i ve job'a özel rastgele session anahtarı kullanır. Teslim raporu [AI-CFO-HANDOFF.md](AI-CFO-HANDOFF.md) eklendi. Canlı 12 kabul testi, migration ve 7 günlük gölge hafta tamamlanmadı; production ve AI flag'leri açılmadı.
+
+### 03.10.2026 — CI build için geçici session anahtarı
+
+İkinci CI build'i derleme ve TypeScript aşamalarını geçti; mevcut `/kayit` CAPTCHA prerender'ı eksik `SESSION_SECRET` nedeniyle durdu. Validation workflow build öncesi rastgele, yalnız o job'a ait ve loglarda maskelenen bir session anahtarı üretir. Canlı session anahtarı kullanılmaz; üretim login/CAPTCHA kodu değiştirilmedi. CI build yeniden çalıştırılıyor.
+
+### 03.10.2026 — AI CFO GitHub aktarımı ve CI ortamı
+
+Drive yedeği doğrulandı; kod `feat/ai-cfo-v1` branch'ine, patch ayrıca `handoff/ai-cfo-v1` branch'ine aktarıldı. İlk CI çalışmasında Prisma, TypeScript, 36 CFO, 22 RBAC, Entegra ve lint kontrolleri geçti; build mevcut PDKS Prisma extension import'unda eksik `DATABASE_URL` nedeniyle durdu. Validation workflow'a yalnız localhost build URL'i eklendi; production credential veya veritabanı bağlantısı kullanılmaz. Build yeniden doğrulanacak; canlı kabul ve gölge hafta bekliyor.
+
+### 03.10.2026 — AI CFO kabul kapıları
+
+Komisyon NULL kapsamı/örneklem ve 120 günlük aykırı ayıklama, iki kaynaklı ihtiyatlı talep, 12 referanslı read-only kabul komutu, 7 günlük gölge raporu ve CI workflow eklendi. Production kapalı; canlı kabul/CI/gölge hafta henüz ölçülmedi. Detay: [AI CFO V1](AI-CFO-V1.md).
+
+
 ### 2026-09-28 — ALFAS Home → Sepetler (terk edilen / bekleyen sepetler + mail durumu)
 
 `/alfashome/sepetler`: alfashome.com'da ürünü olup siparişe dönmemiş sepetleri
@@ -1623,3 +1652,8 @@ Vercel'e Legacy API keys altındaki `service_role` JWT'si (`eyJ…`) girilmeli.
 - **Cron 308 düzeltmesi (main):** GitHub Actions hatırlatma workflow'u `HTTP 308`'e
   takılıp otomatik çıkışı hiç çalıştırmıyordu; `curl -L --location-trusted` eklendi.
   Takılı kalan açık kayıtlar manuel kapatıldı. Commit `bf3da26`.
+
+
+## 03.10.2026 — AI CFO V1
+
+Mevcut CFO motorunun üzerinde additive deterministic monitoring ve sınırlı AI reasoning katmanı eklendi. Yeni admin ekranı, cron endpointleri, üç snake_case model; AI ve monitor varsayılan kapalı. Production uygulanmadı. Canlı SQL kolon sözleşmesi, session lock bağlantısı ve scheduler operatörce doğrulanmalıdır. Ayrıntılar: [AI CFO V1](AI-CFO-V1.md).

@@ -1323,3 +1323,13 @@ Date:
 
 Alignment source:
 `ROADMAP.md`
+
+
+## 03.10.2026 — AI CFO V1
+
+Mevcut CFO motorunun üzerinde additive deterministic monitoring ve sınırlı AI reasoning katmanı eklendi. Yeni admin ekranı, cron endpointleri, üç snake_case model; AI ve monitor varsayılan kapalı. Production uygulanmadı. Canlı SQL kolon sözleşmesi, session lock bağlantısı ve scheduler operatörce doğrulanmalıdır. Ayrıntılar: [AI CFO V1](AI-CFO-V1.md).
+
+
+### 03.10.2026 — AI CFO production kapıları
+
+Read-only 12 kontrol ve gölge hafta değerlendirmesi hazır. Kod GitHub feature branch'inde; [CI build/typecheck ve testler](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) geçti. Canlı read-only bağlantı/12 kabul testi, migration ve 7 günlük CFO incelemesi bekleniyor; AI production onayı yok. [Teslim raporu](AI-CFO-HANDOFF.md).
