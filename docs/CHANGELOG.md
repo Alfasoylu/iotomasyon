@@ -3311,3 +3311,8 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 
 - Kullanıcının reader SELECT politikalarını uygulamasından sonra [canlı salt okunur kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37140728897/job/111255950876) Product satır görünürlüğü, TLS, read-only rol/transaction ve eksiksiz kaynak SELECT erişimini doğruladı. Yazma yetkileri genişletilmedi.
 - İki canonical satış view'ıyla sınırlı katalog tanımı incelemesi ve gerçek PostgreSQL testi eklendi. Ham sipariş/müşteri/finansal satır loglanmaz; canonical/release flag, AI, migration veya deploy çalıştırılmaz. Canlı 12/12 kabul başarısı iddia edilmez.
+
+## 03.10.2026 — Referans kabulü ve güncel karşılaştırma ayrımı
+
+- CLI için ayrı current_comparison modu, reader/TLS/satır görünürlüğü kontrolü, READ ONLY aggregation, doğrulanmış kolon profili ve canonical view hash koruması eklendi. Referans değerler değişmez; güncel rapor productionApproval:false taşır ve release flag yazmaz.
+- Eski/tanımsız tarih, geçersiz mod/profil, değişmiş/eksik/tekrarlı view tanımlarına karşı kontroller ve typecheck/lint yerelde geçti. Trusted push job'ına yalnız salt okunur karşılaştırma ve 7 günlük private artifact eklendi. Canlı finansal eşleşme veya production kabulü henüz doğrulanmış sayılmaz.

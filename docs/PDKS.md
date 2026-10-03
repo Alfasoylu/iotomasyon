@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — Güncel defter karşılaştırması için kontrollü kabul profili
+
+Canlı canonical view tanımları CFO'nun corrected-grain sözleşmesiyle incelendi; iki view SHA256'sı sabitlendi. `acceptance-profile.ts` güncel karşılaştırmayı tarihli referans kabulünden ayırır, view değişirse profili reddeder ve sadece katalogda doğrulanan sipariş/purpose/set-kâr kolonlarını eşler. CLI reader/TLS/satır görünürlüğünü doğrular, READ ONLY snapshot oluşturur; AI/provider kapalıdır. Trusted push job'ı 12 sabit referansa güncel karşılaştırma ve 7 günlük özel rapor artifact'i üretir; üretim onayı/flag yazmaz. Profil güvenlik kontrolleri ve typecheck/lint yerelde geçti; canlı finansal sonuç henüz bekleniyor.
+
 ### 03.10.2026 — Reader RLS sonrası gerçek ürün görünürlüğü doğrulandı
 
 Kullanıcı reader SELECT politikalarını SQL Editor'de uyguladı. [Yeni canlı kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37140728897/job/111255950876) Product satır görünürlüğünü true, TLS/read-only kontrolünü başarılı ve eksik SELECT kaynağını sıfır doğruladı. Finansal kabul hazırlığı için access-check yalnız iki canonical satış view'ının katalog tanımını okur; sipariş/müşteri satırı veya fonksiyon çalıştırmaz. Altıncı erişim testi bu metadata sorgusunu gerçek PostgreSQL'de doğrular. Referans ledger zamanı/kopyası ve 12 test henüz doğrulanmadı; AI/migration/deploy kapalı.

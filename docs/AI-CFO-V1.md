@@ -56,6 +56,12 @@ Environment'a (sohbete veya log'a değil) `AI_CFO_READ_DATABASE_URL` read-only r
 
 Nakit görünümü kolonları: nakit_try, bos_kmh_try; purpose amac_kmh mevcut doğrulanmış kolona map edilir. Kart toplamı cfo_credit_card.totalDebtTry ve 6 aktif kart şartıyla kontrol edilir. Komisyon 120 günlük robust weighted ölçümdür; XML adet30 ile canonical 30 günlük adet birlikte taşınır. Kabul komutu snapshot ürün limiti olmadan çalışır.
 
+#### Sabit referans kopyası yokken güncel karşılaştırma
+
+`AI_CFO_ACCEPTANCE_MODE=current_comparison` yalnız güncel defteri 12 sabit CFO değeriyle karşılaştırır. `AI_CFO_ACCEPTANCE_AS_OF` eski bir tarih verilse dahi bu mod güncel zamanı kullanır, geçmiş bakiyeyi yeniden oluşturduğunu iddia etmez. Rapor `mode`, gerçek/beklenen değerler, dataQuality ve `productionApproval:false` taşır. 12/12 eşleşme bile production onayı veya release attestasyonu değildir; farklı değerler altın referansı değiştirmez. Diagnostic job başarı durumu yalnız komutun rapor ürettiğini gösterir; referans modunda 12/12 dışı sonuç exit 1 davranışı korunur.
+
+Trusted feature push'ı `alfas_2026_10_03` diagnostik profilini kullanır. 03.10.2026 canlı katalog incelemesiyle `siparis_tarihi/siparis_tutari`, `amacli_kmh_try` ve set-fiyat `kar` alanları eşlendi. İki canonical view tanımı SHA256 ile sabittir; değişirse finansal aggregation başlamadan profil reddedilir. Canonical doğrulama yalnız bu offline READ ONLY komutun config kopyasında yapılır; production environment değişmez. Kargo/component eşlemesi henüz ölçümle doğrulanmadığı için bu alanlar unknown kalır. Artifact yalnız private repository workflow erişimindedir, 7 gün saklanır; ham sipariş/müşteri/snapshot loglanmaz. CLI DB hesabını/TLS'yi ve Product satır görünürlüğünü ayrıca doğrular, AI/provider/monitor kapalıdır; CfoRun/Insight/Usage veya işletme verisi yazmaz.
+
 ### Gölge hafta
 
 `AI_CFO_MONITOR_ENABLED=true`, `AI_CFO_ENABLED=false`. `AI_CFO_SHADOW_START=YYYY-MM-DD` ve read-only bağlantı ile `npm run check:cfo-shadow` çalıştırın. Migration bu adımdan önce uygulanmış olmalı. Rapor 7 İstanbul günü, her gün 24 farklı saatlik monitor slotu, başarı durumları, sıfır billable/reserved AI çağrısı ve günlük benzersiz fingerprint'leri kontrol eder. Gecikmeli/eksik cron günü kapıyı geçmez.
