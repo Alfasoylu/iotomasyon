@@ -29,6 +29,16 @@ async function main() {
     assert(result.missingOrUnreadable.includes("cfo_satis_birim_duz"));
     console.log("OK real PostgreSQL reader reports missing sources and completes READ ONLY / ROLLBACK");
     await pg.exec("set default_transaction_read_only=off; reset role;");
+    await pg.exec(`create view cfo_satis_birim_duz as select id as adet_duz, id as tutar_duz from "Product";
+      grant select on cfo_satis_birim_duz to cfo_acceptance_reader;
+      set role cfo_acceptance_reader; set default_transaction_read_only=on;`);
+    const audited = await checkCfoReaderAccess(db);
+    assert.equal(audited.canonicalDefinitions.length, 1);
+    assert.equal(audited.canonicalDefinitions[0].source, "cfo_satis_birim_duz");
+    assert.match(String(audited.canonicalDefinitions[0].definition), /adet_duz/);
+    assert.match(String(audited.canonicalDefinitions[0].definition), /tutar_duz/);
+    console.log("OK canonical view catalog audit is bounded and completes READ ONLY / ROLLBACK");
+    await pg.exec("set default_transaction_read_only=off; reset role;");
     await pg.exec(`alter table public."Product" enable row level security;
       set role cfo_acceptance_reader; set default_transaction_read_only=on;`);
     assert.equal((await checkCfoReaderAccess(db)).productRowsVisible, false);

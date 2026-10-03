@@ -71,6 +71,13 @@ export async function checkCfoReaderAccess(db: ReadSource) {
     const columns = await db.query(`select table_name as source,column_name,data_type
       from information_schema.columns where table_schema='public' and table_name=any($1::text[])
       order by table_name,ordinal_position`, names);
+    // Audit only the two canonical view definitions before financial acceptance.
+    // No order/customer rows or functions are executed by this catalog query.
+    const canonicalDefinitions = await db.query(`select c.relname::text as source,
+      pg_get_viewdef(c.oid,true) as definition
+      from pg_class c join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname='public' and c.relkind in ('v','m')
+      and c.relname=any($1::text[]) order by c.relname`, ["cfo_satis_birim_duz", "cfo_satis_siparis"]);
     const functions = await db.query(`select p.proname as source,p.provolatile::text as volatility,
       p.prosecdef as security_definer,has_function_privilege(current_user,p.oid,'EXECUTE') as executable,
       pg_get_function_result(p.oid) as result_type
@@ -85,7 +92,7 @@ export async function checkCfoReaderAccess(db: ReadSource) {
     const sources = names.map(source => ({ source, ...(relations.find(row => row.source === source) ?? { present: false }),
       columns: columns.filter(row => row.source === source).map(row => ({ name: row.column_name, type: row.data_type })) }));
     return { connected: true, readerRoleVerified: true, transactionReadOnly: true, tlsVerified: true,
-      checkedAt: new Date().toISOString(), productRowsVisible, sources, functions,
+      checkedAt: new Date().toISOString(), productRowsVisible, sources, functions, canonicalDefinitions,
       missingOrUnreadable: sources.filter(row => !(row as Row).readable).map(row => row.source),
       limitations: "Connection/schema access check only; no financial acceptance, migration, AI or business writes." };
   } finally { await db.query("ROLLBACK"); }

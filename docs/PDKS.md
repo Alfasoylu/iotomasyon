@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — Reader RLS sonrası gerçek ürün görünürlüğü doğrulandı
+
+Kullanıcı reader SELECT politikalarını SQL Editor'de uyguladı. [Yeni canlı kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37140728897/job/111255950876) Product satır görünürlüğünü true, TLS/read-only kontrolünü başarılı ve eksik SELECT kaynağını sıfır doğruladı. Finansal kabul hazırlığı için access-check yalnız iki canonical satış view'ının katalog tanımını okur; sipariş/müşteri satırı veya fonksiyon çalıştırmaz. Altıncı erişim testi bu metadata sorgusunu gerçek PostgreSQL'de doğrular. Referans ledger zamanı/kopyası ve 12 test henüz doğrulanmadı; AI/migration/deploy kapalı.
+
 ### 03.10.2026 — CFO reader bağlantısı doğrulandı, RLS kurulum sorgusu hazır
 
 [Canlı salt okunur kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37138690210/job/111251706721) TLS, reader rolü ve 25 kaynak SELECT/yazmasız erişimini doğruladı; Product satırları RLS nedeniyle görünmüyor. `scripts/ai-cfo-reader-rls.sql` yalnız mevcut SELECT yetkili CFO kaynaklarında reader'a özel SELECT politikası ekler; diğer hesaplar, RLS, şifre ve işletme kayıtları değişmez. PostgreSQL testleri görünürlük, tekrar çalıştırma, diğer rol izolasyonu, yanlış yetki/politika çatışması ve atomik rollback'i doğruladı. Sorgu production'da henüz çalıştırılmadı; 12 finansal kabul testi, migration ve gölge hafta bekliyor.

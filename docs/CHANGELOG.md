@@ -3306,3 +3306,8 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 
 - [Canlı bağlantı kontrolü](https://github.com/Alfasoylu/iotomasyon/actions/runs/37138690210/job/111251706721) başarılı: TLS, salt okunur rol/transaction, 25 kaynak SELECT erişimi ve kontrol edilen kaynaklarda yazma yetkisi bulunmaması doğrulandı. Product satır görünürlüğü false; finansal kabul başarısı değildir.
 - Manuel `scripts/ai-cfo-reader-rls.sql` ve PostgreSQL güvenlik testi eklendi: yalnız SELECT yetkili mevcut CFO kaynakları, reader'a özel SELECT politikası, idempotency, diğer hesap erişimlerinin korunması, hatalı rol/yazma yetkisi/politika çatışmasında atomik rollback. Yerel doğrulama geçti. Canlı politika değişikliği veya production migration yapılmadı.
+
+## 03.10.2026 — CFO reader ürün satırlarına erişim doğrulandı
+
+- Kullanıcının reader SELECT politikalarını uygulamasından sonra [canlı salt okunur kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37140728897/job/111255950876) Product satır görünürlüğü, TLS, read-only rol/transaction ve eksiksiz kaynak SELECT erişimini doğruladı. Yazma yetkileri genişletilmedi.
+- İki canonical satış view'ıyla sınırlı katalog tanımı incelemesi ve gerçek PostgreSQL testi eklendi. Ham sipariş/müşteri/finansal satır loglanmaz; canonical/release flag, AI, migration veya deploy çalıştırılmaz. Canlı 12/12 kabul başarısı iddia edilmez.

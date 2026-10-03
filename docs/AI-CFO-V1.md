@@ -82,6 +82,8 @@ Bu kontrol 12/12 finansal kabul değildir; migration/flag/provider çalıştırm
 
 Bu SQL bir Prisma migration değildir ve workflow tarafından otomatik yürütülmez. Operatör çalıştırdıktan sonra yalnız `live_access` kontrolü yeniden çalıştırılıp gerçek satır görünürlüğü doğrulanır. Sonraki kapı gerçek kaynak eşlemeleriyle 12 finansal kabul testidir; AI flag'leri kapalı kalır.
 
+[RLS sonrası canlı kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37140728897/job/111255950876) Product satır görünürlüğünü doğruladı. Kabul hazırlığı için connection-check çıktısı yalnız `cfo_satis_birim_duz` ve `cfo_satis_siparis` view'larının `pg_get_viewdef` katalog tanımlarını da içerir. Ham iş verisi okunup loglanmaz; bu metadata sorgusu canonical doğrulama/production flag'ini otomatik açmaz. Kesin referans zamanı veya sabit ledger kopyası olmayan ölçüm güncel veri karşılaştırmasıdır; release onayı sayılmaz.
+
 #### Supabase TLS trust
 
 GitHub runner'ın varsayılan CA listesi Supabase Root 2021 CA'yı içermeyebilir. `lib/cfo-agent/certs/supabase-root-2021.crt` yalnız connection-check adımında NODE_EXTRA_CA_CERTS ile eklenir; sertifika/hostname doğrulaması açık kalır. Sertifika public CA'dır, private key/credential değildir. Resmi Supabase dashboard source: `apps/studio/hooks/custom-content/custom-content.json`, `ssl:certificate_url`; download: https://supabase-downloads.s3-ap-southeast-1.amazonaws.com/prod/ssl/prod-ca-2021.crt. PEM SHA256: `700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7`; sertifika fingerprint SHA256 `807025AD50D4ED219D2C9C7D299C004F824EB00CF7F65AFEF607D07B72E6CAFA`; geçerlilik 26.04.2031'e kadar. Rotation normal code review ile yapılır; TLS doğrulaması devre dışı bırakılmaz.
