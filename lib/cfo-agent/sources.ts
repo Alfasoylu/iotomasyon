@@ -16,6 +16,7 @@ export const businessSource: ReadSource = { query: (sql, ...params) => prisma.$t
 const SOURCES = ["cfo_satis_siparis", "cfo_satis_birim_duz", "cfo_kargo_tarife", "cfo_stok_hareket_hiz",
   "cfo_kanal_net_oran", "cfo_set_bilesen_maliyet", "cfo_set_fiyat", "cfo_stok_istisna", "cfo_olu_stok", "cfo_yolda_sku",
   "cfo_yoldaki_kapsam", "cfo_nakit_kapisi", "cfo_odeme_gunluk", "cfo_servet", "cfo_servet_kalem", "cfo_servet_likidite"];
+export const CFO_AGENT_SOURCE_NAMES: readonly string[] = Object.freeze([...SOURCES]);
 export function quoteColumn(s: string): string {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(s)) throw new Error("invalid_source_column");
   return `"${s}"`;

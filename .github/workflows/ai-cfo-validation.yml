@@ -30,9 +30,10 @@ jobs:
       - run: npx prisma validate
       - run: npx tsc --noEmit
       - run: npm run check:cfo-agent
+      - run: node --conditions=react-server --import tsx __tests__/ai-cfo-access.test.ts
       - run: node --import tsx __tests__/resolve-permission.test.ts
       - run: node --import tsx __tests__/entegra.test.ts
-      - run: npx eslint lib/cfo-agent __tests__/ai-cfo.test.ts scripts/ai-cfo-*.ts 'app/(app)/admin/ai-cfo/page.tsx' app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning
+      - run: npx eslint lib/cfo-agent __tests__/ai-cfo.test.ts __tests__/ai-cfo-access.test.ts scripts/ai-cfo-*.ts 'app/(app)/admin/ai-cfo/page.tsx' app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning
       - name: Generate ephemeral build-only session key
         run: |
           python - <<'PY'
@@ -43,3 +44,24 @@ jobs:
               env.write(f'SESSION_SECRET={key}\n')
           PY
       - run: npm run build
+  live_access:
+    # Never expose database credentials to pull_request/fork code or main deploys.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/ai-cfo-v1' && github.repository == 'Alfasoylu/iotomasyon'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AI_CFO_ENABLED: 'false'
+      AI_CFO_MONITOR_ENABLED: 'false'
+      DIRECT_URL: postgresql://localhost:5432/build_only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Check read-only Supabase access
+        run: node --conditions=react-server --import tsx scripts/ai-cfo-connection-check.ts
+        env:
+          AI_CFO_READ_DATABASE_URL: ${{ secrets.AI_CFO_READ_DATABASE_URL }}

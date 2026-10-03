@@ -3290,3 +3290,9 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - Validation workflow mevcut PDKS import'u için localhost build DB URL'i, kayıt CAPTCHA prerender'ı için rastgele ve maskelenmiş build session anahtarı alır. Production runtime kodu/credential'ları değişmez.
 - [GitHub CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) başarılı: Prisma validate, TypeScript, 36 CFO, 22 RBAC, Entegra, hedefli lint ve production build.
 - Canlı mali doğruluk ve production onayı değildir. Detaylı [teslim raporu](AI-CFO-HANDOFF.md).
+
+## 03.10.2026 — AI CFO salt okunur bağlantı kontrolü
+
+- `access-check.ts` ve connection-check CLI: session pooler/reader hesabı zorunlu, TLS doğrulaması açık, salt okunur transaction, sınırlı kaynak metadata ve RLS görünürlüğü; ham URI/driver hata mesajı loglanmaz.
+- Beş yerel PostgreSQL/güvenlik kontrolü, typecheck ve lint geçti. Gerçek bağlantı/finansal kabul başarısı henüz iddia edilmez.
+- GitHub Secret yalnız `feat/ai-cfo-v1` push sonrası ayrı live_access job'ında kullanılır; validation/build ve pull_request adımlarına aktarılmaz.

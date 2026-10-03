@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — GitHub Secret ile salt okunur erişim kontrolü
+
+CFO kaynak allowlist'i reuse edilerek reader URI/TLS/rol/SELECT/RLS kontrolü eklendi. Validation workflow'da credential yalnız trusted feature push'ındaki ayrı `live_access` adımına bağlanır; PR/fork ve build job'ına verilmez. Beş PostgreSQL/güvenlik kontrolü, typecheck ve hedefli lint geçti. Kullanıcının eklediği secret ile canlı bağlantı sonucu henüz bekleniyor; 12/12 finansal kabul veya production onayı verilmedi.
+
 ### 03.10.2026 — AI CFO CI doğrulandı, kod kalıcı branch'te
 
 `feat/ai-cfo-v1` GitHub'a aktarıldı; [CI build + typecheck + Prisma + 36 CFO + 22 RBAC + Entegra + lint](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) geçti (`66b17dc`). CI yalnız localhost DB URL'i ve job'a özel rastgele session anahtarı kullanır. Teslim raporu [AI-CFO-HANDOFF.md](AI-CFO-HANDOFF.md) eklendi. Canlı 12 kabul testi, migration ve 7 günlük gölge hafta tamamlanmadı; production ve AI flag'leri açılmadı.
