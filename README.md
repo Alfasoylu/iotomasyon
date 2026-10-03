@@ -139,4 +139,4 @@ Architecture pass target:
 
 ### AI CFO V1
 
-Varsayılan kapalı deterministic monitor ve AI reasoning katmanı: [kurulum, cron, güvenlik ve canlı veri doğrulaması](docs/AI-CFO-V1.md). Finansal sözleşme: [ALFAS gross-basis contract](docs/AI-CFO-FINANCIAL-CONTRACT.md). Test: `npm run check:cfo-agent`.
+Varsayılan kapalı deterministic monitor ve AI reasoning katmanı: [kurulum, cron, güvenlik ve canlı veri doğrulaması](docs/AI-CFO-V1.md). Finansal sözleşme: [ALFAS gross-basis contract](docs/AI-CFO-FINANCIAL-CONTRACT.md). Test: `npm run check:cfo-agent`. [Teslim ve doğrulama raporu](docs/AI-CFO-HANDOFF.md).

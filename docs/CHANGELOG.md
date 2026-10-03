@@ -3283,3 +3283,10 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - 120 günlük %90 komisyon kapsamı, en az 10 SKU ölçümü ve medyan/MAD ayıklaması eklendi. Sıfır/eksik komisyon kâr olarak kullanılmıyor; net banka tahsilatı ayrı estimated metric.
 - İki kaynaklı ihtiyatlı hız ve >%30 adet farkı quality uyarısı, 12 referanslı read-only kabul değerlendirmesi, 7 günlük gölge değerlendirmesi ve üç release attestasyon kapısı eklendi.
 - 36 sentetik CFO/PostgreSQL kontrolü, 22 RBAC testi, Entegra kontrolleri, typecheck ve hedefli lint geçti. Canlı 12/12 ölçülmedi, gölge hafta yaşanmadı, CI workflow henüz çalışmadı; yerel build ortam port kısıtında durdu. Production onayı/flag değişikliği yok.
+
+## 03.10.2026 — AI CFO GitHub ve CI doğrulaması
+
+- Kod `feat/ai-cfo-v1`, patch `handoff/ai-cfo-v1` branch'inde kalıcı olarak saklandı; özel Drive yedeği doğrulandı.
+- Validation workflow mevcut PDKS import'u için localhost build DB URL'i, kayıt CAPTCHA prerender'ı için rastgele ve maskelenmiş build session anahtarı alır. Production runtime kodu/credential'ları değişmez.
+- [GitHub CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) başarılı: Prisma validate, TypeScript, 36 CFO, 22 RBAC, Entegra, hedefli lint ve production build.
+- Canlı mali doğruluk ve production onayı değildir. Detaylı [teslim raporu](AI-CFO-HANDOFF.md).

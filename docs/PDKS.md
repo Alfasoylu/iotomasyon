@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — AI CFO CI doğrulandı, kod kalıcı branch'te
+
+`feat/ai-cfo-v1` GitHub'a aktarıldı; [CI build + typecheck + Prisma + 36 CFO + 22 RBAC + Entegra + lint](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) geçti (`66b17dc`). CI yalnız localhost DB URL'i ve job'a özel rastgele session anahtarı kullanır. Teslim raporu [AI-CFO-HANDOFF.md](AI-CFO-HANDOFF.md) eklendi. Canlı 12 kabul testi, migration ve 7 günlük gölge hafta tamamlanmadı; production ve AI flag'leri açılmadı.
+
 ### 03.10.2026 — CI build için geçici session anahtarı
 
 İkinci CI build'i derleme ve TypeScript aşamalarını geçti; mevcut `/kayit` CAPTCHA prerender'ı eksik `SESSION_SECRET` nedeniyle durdu. Validation workflow build öncesi rastgele, yalnız o job'a ait ve loglarda maskelenen bir session anahtarı üretir. Canlı session anahtarı kullanılmaz; üretim login/CAPTCHA kodu değiştirilmedi. CI build yeniden çalıştırılıyor.

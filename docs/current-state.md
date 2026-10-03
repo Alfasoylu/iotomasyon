@@ -396,4 +396,4 @@ Mevcut CFO motorunun üzerinde additive deterministic monitoring ve sınırlı A
 
 ### 03.10.2026 — AI CFO production kapıları
 
-Read-only 12 kontrol, gölge hafta değerlendirmesi ve CI workflow hazır. Komisyon/freshness doğrulaması güçlendirildi. Canlı credential, push yetkisi, CI build ve 7 günlük CFO incelemesi bekleniyor; AI production onayı yok. [Kurulum](AI-CFO-V1.md).
+Read-only 12 kontrol ve gölge hafta değerlendirmesi hazır. Kod GitHub feature branch'inde; [CI build/typecheck ve testler](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) geçti. Canlı read-only bağlantı/12 kabul testi, migration ve 7 günlük CFO incelemesi bekleniyor; AI production onayı yok. [Teslim raporu](AI-CFO-HANDOFF.md).

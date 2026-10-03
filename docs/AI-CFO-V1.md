@@ -14,7 +14,7 @@ Mevcut CFO tabloları, SQL motoru ve dashboard hesapları değiştirilmez. Yeni 
 4. Gerçekleşmiş iade kolonunun ve reklam maliyetinin kapsamını doğrulayın. `AI_CFO_GROSS_INCLUDES_REFUNDS=true|false` yalnız canonical brütün iade dahil olup olmadığı kesinleşince girilir. Bu alanlar bilinmiyorsa contribution null kalır. Aktif ürünün bugünkü maliyeti geçmiş satışı maliyetlerken TAHMİNİ'dir; set kârı yalnız cfo_set_fiyat'tan alınır.
 5. `AI_CFO_PROJECTION_POSITION_COLUMN` mevcut 120 günlük motor çıktısındaki gerçek net nakit pozisyonu kolonuna bağlanmalıdır. Kullanılabilir limit nakit değildir. Amaca bağlı limit ayrı taşınır. SQL fonksiyonları yalnız STABLE/IMMUTABLE ise kısa READ ONLY transaction içinde çağrılır; VOLATILE tanımlar yürütülmez. Kaynak yeterliliği/kart/gümrük/denetim çıktılarında V1 serbest metin yerine kayıt sayısını taşır; bunlardan yeni nakit rakamı türetmez.
 6. `AI_CFO_LOCK_DATABASE_URL` için direct veya **session-mode** PostgreSQL bağlantısı ve `AI_CFO_LOCK_SESSION_MODE=true` ayarlayın. Transaction pool (6543) kabul edilmez. Advisory lock tek fiziksel pg bağlantısında alınır/bırakılır; LLM sırasında transaction açık değildir.
-7. Deterministic monitor'u staging'de açıp snapshot, freshness ve mevcut üç kuyrukla dedup davranışını CFO'ya doğrulatın. Sonra AI'yı açın.
+7. Deterministic monitor'u staging'de açıp snapshot, freshness ve mevcut üç kuyrukla dedup davranışını CFO'ya doğrulatın. AI yalnız canlı 12/12 kabul, migration, 7 günlük gölge hafta ve CFO onayı sonrasında açılabilir.
 
 ## AI ve maliyet
 
@@ -64,6 +64,6 @@ CFO rapordaki bulguları ayrı özel JSON dosyada şöyle işaretler: `[{"date":
 
 ### CI ve yedek
 
-`.github/workflows/ai-cfo-validation.yml` PR/feature branch push/manual tetikte npm ci, Prisma validate, typecheck, CFO/RBAC/Entegra testleri, lint ve production build çalıştırır. Production secret veya deploy adımı yoktur. GitHub push için repository Contents Read & Write gerekir; yeni workflow dosyasını push etmek için fine-grained PAT'de ilgili repo Workflows Write izni de gerekebilir. Token yalnız environment'a konur, git remote URL'e/sohbete/log'a yazılmaz.
+`.github/workflows/ai-cfo-validation.yml` PR/feature branch push/manual tetikte npm ci, Prisma validate, typecheck, CFO/RBAC/Entegra testleri, lint ve production build çalıştırır. Production secret veya deploy adımı yoktur. Mevcut modül import/prerender gereksinimleri için yalnız localhost `DATABASE_URL`/`DIRECT_URL` ve her job'da yeni üretilen, loglarda maskelenen `SESSION_SECRET` kullanılır. [03.10.2026 CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) build, typecheck ve tüm kontrolleri geçti (`66b17dc`). GitHub push için repository Contents Read & Write gerekir; yeni workflow dosyasını push etmek için fine-grained PAT'de ilgili repo Workflows Write izni de gerekebilir. Token yalnız environment'a konur, git remote URL'e/sohbete/log'a yazılmaz.
 
-Patch/bundle indirilmeli ve kullanıcının doğruladığı özel Drive klasörüne kaydedilmelidir. Sandbox dosyası kalıcı yedek sayılmaz. Bağlı Drive hedefi doğrulanmadığında otomatik onay incelemesi kaynak kod aktarımını reddeder.
+Kod `feat/ai-cfo-v1`, ilk patch ayrıca `handoff/ai-cfo-v1` branch'inde saklanır. Patch/bundle kullanıcının doğrulanmış [özel Drive klasörüne](https://drive.google.com/drive/folders/1NBGhAOtSdnkvZv82bWkMpRST4Pd4uoBo) yedeklendi. Sandbox dosyası kalıcı yedek sayılmaz. Tam [teslim raporu](AI-CFO-HANDOFF.md).
