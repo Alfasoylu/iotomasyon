@@ -3327,3 +3327,8 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 
 - [d6e290e CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37143777603) build/typecheck/tüm kontrolleri geçti. Güncel ölçüm 8/12: Entegra MD adedi 81 düzeldi, native XML/hız, komisyon/kayıt şartı ve ANUNNAKI stok şartı farklı kaldı. Production kabulü verilmedi.
 - Diagnostik rapora yalnız MD/TRENDYOL aggregate oran/güven dağılımı eklendi; kimlik veya ham sipariş satırı içermez. Native/trusted ortalama ayrımı ve kimlik dışlama gerçek PostgreSQL testinde doğrulandı. Komisyon doğrulanmış sayılmadı; referanslar ve feature flag'ler değişmedi.
+
+## 03.10.2026 — Komisyon örneklem farkı source seviyesinde ölçüldü
+
+- [ab38909 CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37144444910) build/typecheck/testleri geçti. Aggregate source son120günde native37/trusted37 ve %10,4710 gösterdi; 6 kaydın v3 filtrede kaybolduğu varsayımı doğrulanmadı.
+- Orijinal tarihsiz CFO SQL'iyle all-history aggregate ve PostgreSQL/client dönem sınırı karşılaştırması eklendi; bunlar yalnız diagnostik, hesap veya kabul referansı yerine geçmez. PostgreSQL testi ve typecheck/lint geçti; production kapıları kapalı.

@@ -23,6 +23,15 @@ export async function cfoAcceptanceDiagnostics(db: ReadSource, asOf: string) {
     round(100*commission/nullif(gross,0),2) as rate_pct,count(*)::int as records,
     sum(commission) as commission_try,sum(gross) as gross_try from base
     group by 1,2 order by 2 limit 100`, ...params);
+  // The CFO's original SQL had no period filter. Compare that exact aggregate
+  // without substituting it into the bounded 120-day calculation.
+  const fullHistory = await db.query(`select count(*)::int as records,
+    round(100*sum(s.${fields.commissionTry}::numeric)/nullif(sum(s.${fields.totalAmountTry}::numeric),0),4) as native_weighted_pct
+    from cfo_satis_birim_duz s where s.${fields.modelNumber}=$1 and s.${fields.channel}=$2`, "MD-3003B1", "TRENDYOL");
+  const clock = await db.query(`select transaction_timestamp() as database_now,
+    current_setting('TimeZone') as database_timezone,
+    (date_trunc('day',$1::timestamptz at time zone 'Europe/Istanbul')-interval '120 days')::date::text as calculation_start_day,
+    (date_trunc('day',transaction_timestamp() at time zone 'Europe/Istanbul')-interval '120 days')::date::text as database_start_day`, asOf);
   return { available: true, source: "cfo_satis_birim_duz", sku: "MD-3003B1", channel: "TRENDYOL",
-    basis: "gross_incl_vat", diagnosticOnly: true, summary, distribution };
+    basis: "gross_incl_vat", diagnosticOnly: true, summary, distribution, fullHistory, clock };
 }

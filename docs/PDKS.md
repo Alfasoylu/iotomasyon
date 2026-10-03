@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — Komisyon 37 kaydı filtre sonucu değil, source 120 gün penceresi
+
+[Aggregate canlı teşhis](https://github.com/Alfasoylu/iotomasyon/actions/runs/37144444910) mevcut 120 günde native37, trusted37, %10,4710 ve untrusted0 gösterdi. V3 filtre 6 kayıt silmemiş; 43/%12,88 referansı aynı sorgu/dönemle uyuşmuyor. Original CFO SQL'indeki tarihsiz aggregate ve PostgreSQL/hesaplama saat sınırları diagnostik rapora eklendi; 120 gün hesabı/referans değiştirilmedi. 39 CFO testi, typecheck/lint yerelde doğrulandı. Kaynak/dönem uzlaştırılmadan komisyon veya production kabulü verilmez.
+
 ### 03.10.2026 — V3 canlı 8/12 ve toplu komisyon teşhisi
 
 [V3 build/typecheck ve canlı karşılaştırma](https://github.com/Alfasoylu/iotomasyon/actions/runs/37143777603) başarılı çalıştı; 8/12 referans eşleşti. MD corrected adet 81'e düzeldi. XML221/hız5,3, komisyon%10,47+37 kabul edilen kayıt ve ANUNNAKI stok169 referanstan farklı. Komisyon oranı kabul edilmedi; yalnız aynı SKU/kanal için native/trusted ağırlıklı ortalama, güven etiketi ve oran dağılımı aggregate sorguları eklendi. Ham sipariş/müşteri kimliği yoktur. PostgreSQL testindeki native/trusted ayrımı ve kimlik dışlama doğrulandı; 39 CFO kontrolü, typecheck/lint geçti. Gold değerler/production flag değişmez; teşhis sonucu bekleniyor.

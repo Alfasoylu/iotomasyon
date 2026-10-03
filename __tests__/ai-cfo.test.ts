@@ -302,6 +302,8 @@ async function main(){
     const d=await cfoAcceptanceDiagnostics(source,now.toISOString());assert.equal(d.available,true);
     assert.equal(d.summary![0].records,2);assert.equal(d.summary![0].untrusted,1);
     assert.equal(Number(d.summary![0].native_weighted_pct),15);assert.equal(Number(d.summary![0].trusted_weighted_pct),10);
+    assert.equal(d.fullHistory![0].records,2);assert.equal(Number(d.fullHistory![0].native_weighted_pct),15);
+    assert.equal(d.clock![0].calculation_start_day,"2026-06-05");
     assert(!JSON.stringify(d).includes('diagnostic-1'));assert(!JSON.stringify(d).includes('orderNumber'));
     await db.exec(`delete from cfo_satis_birim_duz where "orderNumber" in ('diagnostic-1','diagnostic-2')`);
   });

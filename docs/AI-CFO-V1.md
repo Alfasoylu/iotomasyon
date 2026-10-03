@@ -66,6 +66,8 @@ Trusted feature push'ı `alfas_2026_10_03` diagnostik profilini kullanır. 03.10
 
 [V3 güncel ölçümü](https://github.com/Alfasoylu/iotomasyon/actions/runs/37143777603) 8/12: corrected MD adet81 eşleşti, XML221/hız5,3/komisyon%10,47+37 kayıt/ANUNNAKI stok169 farklı kaldı. Komisyon doğrulanmış değildir. Current comparison raporu aynı MD/TRENDYOL source'un native ve trusted ağırlıklı komisyon ortalamasını, yalnız toplu oran/güven dağılımını da saklar. Bu kanıt finansal anomaly veya AI payload'ına yeni güvenilir sayı olarak eklenmez; gold değerleri değiştirmez ve kimlik/ham satır loglamaz.
 
+[Canlı diagnostik](https://github.com/Alfasoylu/iotomasyon/actions/runs/37144444910) son120gün kaynağının zaten 37 kayıt/%10,4710, tüm satırların trusted olduğunu doğruladı; v3 filtre 43 kaydı 37'ye indirmemiştir. CFO'nun orijinal tarihsiz SQL'i ile aynı all-history aggregate ve database/client dönem başlangıçları ayrıca raporlanır. Bunlar teşhis kanıtıdır; 120günlük metric'e otomatik fallback veya referans değişikliği yapılmaz. Komisyon referansı ve dönem uzlaştırılması finansal kabul için açık kapıdır.
+
 ### Gölge hafta
 
 `AI_CFO_MONITOR_ENABLED=true`, `AI_CFO_ENABLED=false`. `AI_CFO_SHADOW_START=YYYY-MM-DD` ve read-only bağlantı ile `npm run check:cfo-shadow` çalıştırın. Migration bu adımdan önce uygulanmış olmalı. Rapor 7 İstanbul günü, her gün 24 farklı saatlik monitor slotu, başarı durumları, sıfır billable/reserved AI çağrısı ve günlük benzersiz fingerprint'leri kontrol eder. Gecikmeli/eksik cron günü kapıyı geçmez.
