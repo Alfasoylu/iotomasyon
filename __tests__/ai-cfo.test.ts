@@ -273,6 +273,27 @@ async function main(){
     assert(sqlCalls.some(q=>q.includes("interval '120 days'")&&q.includes("grouping sets")));
     await db.exec(`delete from cfo_satis_birim_duz where "orderNumber"='outlier'`);
   });
+  await check("legitimate SKU rates survive a different channel median; outliers stay SKU-local",async()=>{
+    const low=Array.from({length:43},(_,i)=>`('TRENDYOL','SKU-LOW','low-${i}','2026-10-02',1,1000,'KESIN',128.8,1000,100,0,0,0)`);
+    const high=Array.from({length:100},(_,i)=>`('TRENDYOL','SKU-MIX','mix-${i}','2026-10-02',1,1000,'KESIN',200.4,1000,100,0,0,0)`);
+    await db.exec(`insert into cfo_satis_birim_duz values ${[...low,...high,"('TRENDYOL','SKU-LOW','low-bad','2026-10-02',1,1000,'KESIN',348,1000,100,0,0,0)"].join(",")}`);
+    const x=await snapshot(),a=x.products.find(p=>p.sku==="SKU-LOW")!,b=x.products.find(p=>p.sku==="SKU-MIX")!;
+    assert.equal(a.commissionRate.value,.1288);assert.equal(a.commissionSamples,43);
+    assert.equal(b.commissionRate.value,.2004);assert.equal(b.commissionSamples,100);
+    await db.exec(`delete from cfo_satis_birim_duz where "modelNumber" in ('SKU-LOW','SKU-MIX')`);
+  });
+  await check("timestamp-without-zone UTC dates retain Istanbul 30-day boundary sales",async()=>{
+    const before=await snapshot(),oldUnits=product(before).salesUnits30.value!;
+    await db.exec(`alter table cfo_satis_siparis alter column "orderDate" type timestamp without time zone using "orderDate" at time zone 'UTC';
+      alter table cfo_satis_birim_duz alter column "orderDate" type timestamp without time zone using "orderDate" at time zone 'UTC';
+      insert into cfo_satis_siparis values('TRENDYOL','boundary','2026-09-03 00:00:00',1000);
+      insert into cfo_satis_birim_duz values('TRENDYOL','SKU-A','boundary','2026-09-03 00:00:00',1,1000,'KESIN',180,1000,100,0,0,0)`);
+    const x=await snapshot();assert.equal(x.sales.last30Days.orders,before.sales.last30Days.orders!+1);
+    assert.equal(product(x).salesUnits30.value,oldUnits+1);
+    await db.exec(`delete from cfo_satis_siparis where "orderNumber"='boundary';delete from cfo_satis_birim_duz where "orderNumber"='boundary';
+      alter table cfo_satis_siparis alter column "orderDate" type timestamptz using "orderDate" at time zone 'UTC';
+      alter table cfo_satis_birim_duz alter column "orderDate" type timestamptz using "orderDate" at time zone 'UTC'`);
+  });
   await check("frozen 12-check acceptance evaluator detects wrong values and missing Koctas",()=>{
     const x=clone(s);x.cash.cash=metric(72483.62);x.cash.generalUnusedOverdraft=metric(1809300);x.cash.purposeLimit=metric(750000);x.cash.totalCardDebt=metric(2366017.3);x.cash.activeCards=6;
     x.dataQuality.excludedDummyStock=47;x.dataQuality.zeroStockSkuCount=1086;
@@ -280,6 +301,9 @@ async function main(){
       {...product(x),sku:"ANUNNAKI-POINTER",stockDays:metric(124,true),stockQty:170}];
     x.channels=[{channel:"MIRAKL_KOCTAS",profitability:{...x.profitability,contributionProfit:unknown("commission_unavailable")},previousMargin:unknown("missing"),sourceFresh:true,netSettlementRatio:metric(.747,true),estimatedNetReceipts:unknown("missing")}];
     assert.equal(evaluateCfoAcceptance(x).filter(c=>c.passed).length,12);
+    x.products[1].stockQty=169;
+    const conditional=evaluateCfoAcceptance(x)[10];assert.equal(conditional.passed,false);
+    assert.equal(conditional.criteria?.stockQty.actual,169);x.products[1].stockQty=170;
     x.products[0].salesUnits30=metric(222);assert.equal(evaluateCfoAcceptance(x).filter(c=>c.passed).length,11);
     x.channels=[];assert(!evaluateCfoAcceptance(x)[11].passed);
   });

@@ -17,24 +17,39 @@ const SOURCES = ["cfo_satis_siparis", "cfo_satis_birim_duz", "cfo_kargo_tarife",
   "cfo_kanal_net_oran", "cfo_set_bilesen_maliyet", "cfo_set_fiyat", "cfo_stok_istisna", "cfo_olu_stok", "cfo_yolda_sku",
   "cfo_yoldaki_kapsam", "cfo_nakit_kapisi", "cfo_odeme_gunluk", "cfo_servet", "cfo_servet_kalem", "cfo_servet_likidite"];
 export const CFO_AGENT_SOURCE_NAMES: readonly string[] = Object.freeze([...SOURCES]);
+const WATERMARK_SOURCES = ["MarketplaceSalesRecord", "TrendyolSalesRecord", "HepsiburadaSalesRecord", "XmlStockChangeLog"];
 export function quoteColumn(s: string): string {
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(s)) throw new Error("invalid_source_column");
   return `"${s}"`;
 }
 export class SourceCatalog {
   private columns = new Map<string, Set<string>>();
+  private columnTypes = new Map<string, string>();
   readonly missing: string[] = [];
   constructor(readonly db: ReadSource, readonly bindings: Record<string, Record<string, string>> = {}) {}
   async load() {
-    const rows = await this.db.query<{table_name:string;column_name:string}>(
-      `select table_name, column_name from information_schema.columns where table_schema='public' and table_name=ANY($1::text[])`, SOURCES);
+    const rows = await this.db.query<{table_name:string;column_name:string;data_type:string}>(
+      `select table_name, column_name, data_type from information_schema.columns where table_schema='public' and table_name=ANY($1::text[])`, [...SOURCES, ...WATERMARK_SOURCES]);
     for (const r of rows) {
       const cols = this.columns.get(r.table_name) ?? new Set<string>(); cols.add(r.column_name); this.columns.set(r.table_name, cols);
+      this.columnTypes.set(`${r.table_name}.${r.column_name}`, r.data_type);
     }
   }
   column(source: string, field: string, defaultName = field): string | null {
     const name = this.bindings[source]?.[field] ?? defaultName;
     return this.columns.get(source)?.has(name) ? quoteColumn(name) : null;
+  }
+  /** Prisma/Entegra persist UTC in timestamp-without-zone; compare local times with local period bounds. */
+  localTime(source: string, field: string, alias = ""): string | null {
+    const column = this.column(source, field), name = this.bindings[source]?.[field] ?? field;
+    if (!column) return null;
+    const qualified = alias ? `${quoteColumn(alias)}.${column}` : column;
+    const type = this.columnTypes.get(`${source}.${name}`);
+    if (type === "timestamp without time zone") return `((${qualified} at time zone 'UTC') at time zone 'Europe/Istanbul')`;
+    if (type === "timestamp with time zone") return `(${qualified} at time zone 'Europe/Istanbul')`;
+    if (type === "date") return `${qualified}::timestamp`;
+    this.missing.push(`${source}.${field}:time_type_unavailable`);
+    return null;
   }
   require(source: string, fields: string[]): Record<string,string> | null {
     const out:Record<string,string> = {};

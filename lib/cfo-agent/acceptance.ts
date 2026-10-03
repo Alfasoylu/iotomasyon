@@ -22,5 +22,11 @@ export function evaluateCfoAcceptance(snapshot:CfoAgentSnapshot) {
     ["anunnaki_stock_coverage_170_units",anunnaki?.stockDays.value??null,124,anunnaki?.stockQty===170],
     ["koctas_contribution_unknown",koctas?koctas.profitability.contributionProfit.value:"channel_missing",null],
   ];
-  return values.map(([id,actual,expected,condition=true])=>({id,actual,expected,passed:actual===expected&&condition}));
+  const criteria:Record<string,Record<string,{actual:unknown;expected:unknown}>>={
+    total_card_debt_six_active_cards:{activeCards:{actual:snapshot.cash.activeCards,expected:6}},
+    md3003b1_trendyol_commission_43_records:{acceptedRecords:{actual:md?.commissionSamples??null,expected:43}},
+    anunnaki_stock_coverage_170_units:{stockQty:{actual:anunnaki?.stockQty??null,expected:170}},
+  };
+  return values.map(([id,actual,expected,condition=true])=>({id,actual,expected,passed:actual===expected&&condition,
+    ...(criteria[id]?{criteria:criteria[id]}:{})}));
 }

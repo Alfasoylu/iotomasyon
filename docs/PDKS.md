@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — Canlı 7/12 ölçümü, SKU komisyon merkezi ve UTC tarih düzeltmesi
+
+[İlk güncel karşılaştırma](https://github.com/Alfasoylu/iotomasyon/actions/runs/37142425088) 7/12 eşleşti: nakit 72.483,62, genel KMH 1.809.300, amaca bağlı 750.000, kart borcu 2.366.017,30, kukla 47, sıfır stok 1086 ve Koçtaş null. MD adet 80/XML 221/hız 5,3/komisyon %16,71; ANUNNAKI örtü 124 ama stok şartı geçmedi. Yeni agent SQL'i komisyon median/MAD merkezini kanal+SKU'ya ayıracak ve actual tarih tipini UTC/İstanbul dönemlerine doğru çevirecek şekilde düzeltildi; mevcut CFO motor/dashboard değişmedi. Kabul raporu ek kayıt/stok şartlarının actual/expected değerlerini taşır. Calculation/contract v3; 38 CFO testi, typecheck/lint yerelde geçti. Altın referanslar değiştirilmedi; canlı tekrar ölçüm bekleniyor, production onayı yok.
+
 ### 03.10.2026 — Güncel defter karşılaştırması için kontrollü kabul profili
 
 Canlı canonical view tanımları CFO'nun corrected-grain sözleşmesiyle incelendi; iki view SHA256'sı sabitlendi. `acceptance-profile.ts` güncel karşılaştırmayı tarihli referans kabulünden ayırır, view değişirse profili reddeder ve sadece katalogda doğrulanan sipariş/purpose/set-kâr kolonlarını eşler. CLI reader/TLS/satır görünürlüğünü doğrular, READ ONLY snapshot oluşturur; AI/provider kapalıdır. Trusted push job'ı 12 sabit referansa güncel karşılaştırma ve 7 günlük özel rapor artifact'i üretir; üretim onayı/flag yazmaz. Profil güvenlik kontrolleri ve typecheck/lint yerelde geçti; canlı finansal sonuç henüz bekleniyor.

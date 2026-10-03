@@ -1,4 +1,4 @@
-# AI CFO V1 finansal sözleşme — v2
+# AI CFO V1 finansal sözleşme — v3
 
 Bu sözleşme yalnız `lib/cfo-agent/` için geçerlidir. Eski dashboard, CFO motoru,
 servet defteri, Entegra stok otoritesi ve insan kararları değiştirilmez.
@@ -15,7 +15,7 @@ servet defteri, Entegra stok otoritesi ve insan kararları değiştirilmez.
 | VAT | Kaynakta açıkça ölçülmüş vergi; contribution hesabında tekrar düşülmez |
 | Refund | Gerçekleşmiş iade tutarı; gross zaten iadeyi netleştiriyorsa tekrar düşülmez. Claim açılması refund değildir |
 | Product cost | Bilinen birim maliyet × düzeltilmiş adet; güncel maliyet tarihsel maliyet olmadığı için estimated. KARMA/BILINMIYOR satırları bilinmeyen maliyet taşır |
-| Commission | 120 günlük ölçüm penceresi: kanal NULL kapsamı ≥%90, SKU ayıklama sonrası ≥10 geçerli ölçüm. Kanal medyanı + MAD ile ayıklama (eşik max(5 puan, 3×MAD)), ardından sum(commissionTry)/sum(totalAmountTry). Bugün yalnız TRENDYOL/HEPSIBURADA ölçüm kanalı kabul edilir. Küçük örneklemde kanal komisyon ortalaması kullanılmaz; diğer kanallarda null. Koçtaş contribution null kalır. HB sabit %18 de varsayılmaz; ölçülen tutar kullanılır |
+| Commission | 120 günlük ölçüm penceresi: kanal NULL kapsamı ≥%90, SKU ayıklama sonrası ≥10 geçerli ölçüm. Kanal+SKU medyanı + MAD ile ayıklama (eşik max(5 puan, 3×MAD)), ardından sum(commissionTry)/sum(totalAmountTry). Farklı SKU'ların meşru oran farkı aykırı sayılmaz. Bugün yalnız TRENDYOL/HEPSIBURADA ölçüm kanalı kabul edilir. Küçük örneklemde kanal komisyon ortalaması kullanılmaz; diğer kanallarda null. Koçtaş contribution null kalır. HB sabit %18 de varsayılmaz; ölçülen tutar kullanılır |
 | Shipping | `cfo_kargo_tarife` bandından sipariş başına; tablo/kolon eşleşmezse null, sabit kargo katsayısı yok |
 | Advertising | Aynı dönem/kanala güvenilir atfedilmiş harcama; atıf yoksa null. Meta rapor cirosu satış cirosuna eklenmez |
 | Other variable costs | Sipariş başına işlem 12,29 TL, hizmet/ceza 10 TL; ambalaj ≤0,5 kg 10 TL, üstü 18,74 TL. Bunlar ölçülmüş politika tahminidir, gerçekleşmiş gider değildir |
@@ -56,6 +56,7 @@ AI bu değerleri hesaplayamaz veya finansal etki yazamaz.
   Tek MAX senkron durdu teşhisi değildir; dakika batch'leri ve gün sürekliliği ayrıca ölçülür.
 - Satış verisi >48 saat bayat veya eşit dönem/gün kapsamı eksikse finansal alarm yok.
   Gün karşılaştırması aynı hafta günüyle, 7/30 gün karşılaştırması 7/35 gün kaydırmayla yapılır.
+- Tarih kolonunun gerçek PostgreSQL tipi katalogdan kontrol edilir. Prisma ve Entegra'nın UTC sakladığı timestamp-without-zone önce UTC anına, sonra İstanbul yerel saatine çevrilir; timestamptz doğrudan İstanbul saatine çevrilir. Yerel timestamp dönem sınırı yerel timestamp ile karşılaştırılır. 65/120 günlük kaynak taramalarının alt sınırı İstanbul gün başlangıcıdır; gün içi kesilme önceki dönemin ilk gününü eksiltmez. Desteklenmeyen tarih tipi unknown/dataQuality olur.
 - Nakit yalnız mevcut salt okunur CFO view/fonksiyonlarından okunur. Banka girdisi
   >7 gün bayatsa nakit alarmı yok. KMH ve amaca bağlı limit nakit değildir.
 - Projeksiyon net pozisyonu −3.000.000 TL altındaysa critical; kolon anlamı doğrulanamıyorsa null.

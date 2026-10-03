@@ -36,34 +36,36 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     returns:{currentRate:unknown("returns_unavailable"),previousRate:unknown("returns_unavailable"),sample:0,complete:false},evidence:[]};
   const missing=snapshot.dataQuality.missingFields;
   if(!config.canonicalValidated) missing.push("canonical_sales_semantics_not_validated");
+  const localTime=(source:string,field:string)=>catalog.localTime(source,field)??"null::timestamp";
   // Independent source event/ingestion watermarks. No raw orders are loaded.
   const watermarks=await db.query(`select 'Entegra' as source,max("orderDate") as event_at,max("importedAt") as ingest_at,
     count(distinct date_trunc('minute',"importedAt")) filter(where "importedAt">=$1::timestamptz-interval '7 days')::int as batches,
-    count(distinct ("orderDate" at time zone 'Europe/Istanbul')::date) filter(where "orderDate">=$1::timestamptz-interval '30 days')::int as coverage_days,
-    count(distinct ("importedAt" at time zone 'Europe/Istanbul')::date) filter(where "importedAt">=$1::timestamptz-interval '7 days')::int as batch_days
+    count(distinct (${localTime("MarketplaceSalesRecord","orderDate")})::date) filter(where "orderDate">=$1::timestamptz-interval '30 days')::int as coverage_days,
+    count(distinct (${localTime("MarketplaceSalesRecord","importedAt")})::date) filter(where "importedAt">=$1::timestamptz-interval '7 days')::int as batch_days
     from "MarketplaceSalesRecord" union all
     select 'Trendyol',max("orderDate"),max("syncedAt"),count(distinct date_trunc('minute',"syncedAt")) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int,
-    count(distinct ("orderDate" at time zone 'Europe/Istanbul')::date) filter(where "orderDate">=$1::timestamptz-interval '30 days')::int,
-    count(distinct ("syncedAt" at time zone 'Europe/Istanbul')::date) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int from "TrendyolSalesRecord" union all
+    count(distinct (${localTime("TrendyolSalesRecord","orderDate")})::date) filter(where "orderDate">=$1::timestamptz-interval '30 days')::int,
+    count(distinct (${localTime("TrendyolSalesRecord","syncedAt")})::date) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int from "TrendyolSalesRecord" union all
     select 'Hepsiburada',max("orderDate"),max("syncedAt"),count(distinct date_trunc('minute',"syncedAt")) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int,
-    count(distinct ("orderDate" at time zone 'Europe/Istanbul')::date) filter(where "orderDate">=$1::timestamptz-interval '30 days')::int,
-    count(distinct ("syncedAt" at time zone 'Europe/Istanbul')::date) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int from "HepsiburadaSalesRecord" union all
+    count(distinct (${localTime("HepsiburadaSalesRecord","orderDate")})::date) filter(where "orderDate">=$1::timestamptz-interval '30 days')::int,
+    count(distinct (${localTime("HepsiburadaSalesRecord","syncedAt")})::date) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int from "HepsiburadaSalesRecord" union all
     select 'XML',null,max("syncedAt"),count(distinct date_trunc('minute',"syncedAt")) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int,0,
-    count(distinct ("syncedAt" at time zone 'Europe/Istanbul')::date) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int from "XmlStockChangeLog"`,asOf);
+    count(distinct (${localTime("XmlStockChangeLog","syncedAt")})::date) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int from "XmlStockChangeLog"`,asOf);
   snapshot.dataQuality.sourceWatermarks=watermarks.map(r=>({source:String(r.source),orderDate:iso(r.event_at),syncedAt:iso(r.ingest_at),batchDays:n(r,"batch_days")??0,coverageDays:n(r,"coverage_days")??0,
     stale:stale(iso(r.source==="XML"?r.ingest_at:r.event_at),now)||stale(iso(r.ingest_at),now)} satisfies SourceWatermark));
   snapshot.dataQuality.staleSources=snapshot.dataQuality.sourceWatermarks.filter(w=>w.stale).map(w=>w.source);
   const financialFresh=snapshot.dataQuality.sourceWatermarks.find(w=>w.source==="Entegra")?.stale===false && config.canonicalValidated;
 
   const orders=catalog.require("cfo_satis_siparis",["channel","orderNumber","orderDate","totalAmountTry"]);
-  if(orders) {
+  const orderLocalTime=catalog.localTime("cfo_satis_siparis","orderDate","s");
+  if(orders&&orderLocalTime) {
     const rows=await db.query(`${PERIOD_CTE}, canonical as (select s.*,row_number() over(partition by ${orders.channel},${orders.orderNumber} order by ${orders.orderDate} desc) as rn,
       count(*) over(partition by ${orders.channel},${orders.orderNumber}) as copies from cfo_satis_siparis s)
       select p.period,count(distinct (s.${orders.channel},s.${orders.orderNumber})) filter(where s.rn=1)::int as orders,
       sum(s.${orders.totalAmountTry}::numeric) filter(where s.rn=1) as revenue,
-      count(distinct (s.${orders.orderDate} at time zone 'Europe/Istanbul')::date)::int as days,
+      count(distinct (${orderLocalTime})::date)::int as days,
       count(*) filter(where s.copies>1)::int as duplicates
-      from periods p left join canonical s on (s.${orders.orderDate} at time zone 'Europe/Istanbul')>=p.start_at and (s.${orders.orderDate} at time zone 'Europe/Istanbul')<p.end_at
+      from periods p left join canonical s on ${orderLocalTime}>=p.start_at and ${orderLocalTime}<p.end_at
       group by p.period`,asOf);
     for(const r of rows) {
       const key=String(r.period) as typeof periodKeys[number];
@@ -134,7 +136,8 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   if(!exceptionRows) {snapshot.inventory.costValue=unknown("stock_exceptions_unavailable");missing.push("inventory_exclusions_unverified");}
 
   const sales=catalog.require("cfo_satis_birim_duz",["channel","modelNumber","orderNumber","orderDate","adet_duz","tutar_duz","guven","commissionTry","totalAmountTry"]);
-  if(sales) {
+  const salesLocalTime=catalog.localTime("cfo_satis_birim_duz","orderDate","s");
+  if(sales&&salesLocalTime) {
     const vat=catalog.column("cfo_satis_birim_duz","vatAmountTry"),refund=catalog.column("cfo_satis_birim_duz","refundTry"),ads=catalog.column("cfo_satis_birim_duz","advertisingTry");
     const actualShipping=catalog.column("cfo_satis_birim_duz","allocatedShippingTry"),other=catalog.column("cfo_satis_birim_duz","allocatedOtherVariableTry");
     const returned=catalog.column("cfo_satis_birim_duz","returnedUnits");
@@ -150,13 +153,13 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       bool_and(pr."weightKg" is not null) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_weight_known,
       sum(pr."weightKg"*s.${sales.adet_duz}) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_weight
       from cfo_satis_birim_duz s left join "Product" pr on pr.sku=s.${sales.modelNumber}
-      where ${sales.orderDate}>=$1::timestamptz-interval '65 days' and ${sales.adet_duz}>0),
-      commission_samples as (select s.${sales.channel} as channel,percentile_cont(0.5) within group(order by s.${sales.commissionTry}::numeric/nullif(s.${sales.totalAmountTry}::numeric,0)) as median_rate
-      from canonical_base s where s.${sales.commissionTry}>0 and s.${sales.totalAmountTry}>0 group by 1),
-      commission_deviation as (select s.${sales.channel} as channel,c.median_rate,percentile_cont(0.5) within group(order by abs(s.${sales.commissionTry}::numeric/nullif(s.${sales.totalAmountTry}::numeric,0)-c.median_rate)) as mad
-      from canonical_base s join commission_samples c on c.channel=s.${sales.channel} where s.${sales.commissionTry}>0 and s.${sales.totalAmountTry}>0 group by 1,2),
+      where ${salesLocalTime}>=date_trunc('day',$1::timestamptz at time zone 'Europe/Istanbul')-interval '65 days' and ${sales.adet_duz}>0),
+      commission_samples as (select s.${sales.channel} as channel,s.${sales.modelNumber} as sku,percentile_cont(0.5) within group(order by s.${sales.commissionTry}::numeric/nullif(s.${sales.totalAmountTry}::numeric,0)) as median_rate
+      from canonical_base s where s.${sales.commissionTry}>0 and s.${sales.totalAmountTry}>0 group by 1,2),
+      commission_deviation as (select s.${sales.channel} as channel,s.${sales.modelNumber} as sku,c.median_rate,percentile_cont(0.5) within group(order by abs(s.${sales.commissionTry}::numeric/nullif(s.${sales.totalAmountTry}::numeric,0)-c.median_rate)) as mad
+      from canonical_base s join commission_samples c on c.channel=s.${sales.channel} and c.sku=s.${sales.modelNumber} where s.${sales.commissionTry}>0 and s.${sales.totalAmountTry}>0 group by 1,2,3),
       canonical as (select s.*,s.${sales.commissionTry}>0 and s.${sales.totalAmountTry}>0 and abs(s.${sales.commissionTry}::numeric/nullif(s.${sales.totalAmountTry}::numeric,0)-d.median_rate)<=greatest(0.05,3*d.mad) as commission_valid,${actualShipping?`s.${actualShipping}`:shippingAllocation} as agent_shipping,
-        ${other?`s.${other}`:otherAllocation} as agent_other from canonical_base s left join commission_deviation d on d.channel=s.${sales.channel}), grouped as (
+        ${other?`s.${other}`:otherAllocation} as agent_other from canonical_base s left join commission_deviation d on d.channel=s.${sales.channel} and d.sku=s.${sales.modelNumber}), grouped as (
       select ${sales.channel} as channel,${sales.modelNumber} as sku,
       case when p.period='last30Days' then 'current' when p.period='previous30' then 'previous' else p.period end as period,
       count(*)::int as records,sum(${sales.adet_duz}::numeric) as units,sum(${sales.tutar_duz}::numeric) as revenue,
@@ -169,21 +172,21 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       ${optionalSum(vat,"vat")},${optionalSum(refund,"refund")},${optionalSum(ads,"ads")},
       case when count(agent_shipping)=count(*) then sum(agent_shipping::numeric) end as shipping,
       case when count(agent_other)=count(*) then sum(agent_other::numeric) end as other,${optionalSum(returned,"returned")}
-      from canonical s join periods p on (s.${sales.orderDate} at time zone 'Europe/Istanbul')>=p.start_at and (s.${sales.orderDate} at time zone 'Europe/Istanbul')<p.end_at
+      from canonical s join periods p on ${salesLocalTime}>=p.start_at and ${salesLocalTime}<p.end_at
       where p.period in ('last30Days','previous30','today','yesterday','last7Days','monthToDate')
       group by 1,2,3) select * from grouped`,asOf);
     // Commission measurements use the audited 120-day window independently
     // of the sales periods. Revenue/quantity still use corrected canonical rows.
     const commissionRows=await db.query(`with base as (
       select s.*,count(*) over(partition by ${sales.channel},${sales.orderNumber},${sales.modelNumber}) as copies
-      from cfo_satis_birim_duz s where ${sales.orderDate}>=((date_trunc('day',$1::timestamptz at time zone 'Europe/Istanbul')-interval '120 days') at time zone 'Europe/Istanbul') and ${sales.orderDate}<=$1::timestamptz and ${sales.adet_duz}>0),
+      from cfo_satis_birim_duz s where ${salesLocalTime}>=date_trunc('day',$1::timestamptz at time zone 'Europe/Istanbul')-interval '120 days' and ${salesLocalTime}<=($1::timestamptz at time zone 'Europe/Istanbul') and ${sales.adet_duz}>0),
       valid as(select * from base where copies=1 and ${sales.guven} is not null and ${sales.guven}::text not in ('KARMA','BILINMIYOR')),
-      med as(select ${sales.channel} as channel,percentile_cont(0.5) within group(order by ${sales.commissionTry}::numeric/nullif(${sales.totalAmountTry}::numeric,0)) as mid
-        from valid where ${sales.commissionTry}>0 and ${sales.totalAmountTry}>0 group by 1),
-      deviation as(select v.${sales.channel} as channel,m.mid,percentile_cont(0.5) within group(order by abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-m.mid)) as mad
-        from valid v join med m on m.channel=v.${sales.channel} where v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 group by 1,2),
+      med as(select ${sales.channel} as channel,${sales.modelNumber} as sku,percentile_cont(0.5) within group(order by ${sales.commissionTry}::numeric/nullif(${sales.totalAmountTry}::numeric,0)) as mid
+        from valid where ${sales.commissionTry}>0 and ${sales.totalAmountTry}>0 group by 1,2),
+      deviation as(select v.${sales.channel} as channel,v.${sales.modelNumber} as sku,m.mid,percentile_cont(0.5) within group(order by abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-m.mid)) as mad
+        from valid v join med m on m.channel=v.${sales.channel} and m.sku=v.${sales.modelNumber} where v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 group by 1,2,3),
       checked as(select v.*,v.copies=1 and v.${sales.guven} is not null and v.${sales.guven}::text not in ('KARMA','BILINMIYOR') and v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 and abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-d.mid)<=greatest(0.05,3*d.mad) as ok
-        from base v left join deviation d on d.channel=v.${sales.channel})
+        from base v left join deviation d on d.channel=v.${sales.channel} and d.sku=v.${sales.modelNumber})
       select ${sales.channel} as channel,${sales.modelNumber} as sku,count(*)::int as records,count(${sales.commissionTry})::int as present,
         count(*) filter(where ok)::int as accepted,sum(${sales.commissionTry}::numeric) filter(where ok) as commission,
         sum(${sales.totalAmountTry}::numeric) filter(where ok) as gross,count(*) filter(where ${sales.commissionTry}>0 and not ok)::int as outliers

@@ -3316,3 +3316,9 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 
 - CLI için ayrı current_comparison modu, reader/TLS/satır görünürlüğü kontrolü, READ ONLY aggregation, doğrulanmış kolon profili ve canonical view hash koruması eklendi. Referans değerler değişmez; güncel rapor productionApproval:false taşır ve release flag yazmaz.
 - Eski/tanımsız tarih, geçersiz mod/profil, değişmiş/eksik/tekrarlı view tanımlarına karşı kontroller ve typecheck/lint yerelde geçti. Trusted push job'ına yalnız salt okunur karşılaştırma ve 7 günlük private artifact eklendi. Canlı finansal eşleşme veya production kabulü henüz doğrulanmış sayılmaz.
+
+## 03.10.2026 — Yeni agent'ta SKU komisyon ve dönem sınırı düzeltmesi
+
+- [Canlı güncel defter karşılaştırması](https://github.com/Alfasoylu/iotomasyon/actions/runs/37142425088) 7/12 eşleşti; nakit/KMH/kart ve stok sayacı referansları doğrulandı. Finansal kabul veya production onayı verilmedi.
+- Agent komisyon ayıklaması kanal+SKU medyanı/MAD ile çalışır; farklı SKU'nun meşru düşük oranı kanal merkezi nedeniyle elenmez. Tarih tipi katalogdan doğrulanır, UTC saklanan naive timestamp İstanbul dönem sınırına doğru çevrilir; kaynak taraması tam gün sınırına hizalanır. Calculation/financial contract v3; mevcut motor/dashboard korunur.
+- %12,88/%20,04 meşru SKU farkı + %34,80 aykırı kayıt ve naive UTC 30 günlük sınır regresyonları dahil 38 PostgreSQL/CFO testi, typecheck ve lint geçti. Kabul raporuna ek kayıt/stok şartları actual/expected olarak eklendi; canlı tekrar ölçüm bekleniyor.

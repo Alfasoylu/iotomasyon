@@ -41,7 +41,7 @@ Mevcut stok hızı ihtiyatlı XML motorundan gelir; XML düşüşü satış olar
 
 ## Doğrulama
 
-`npm run check:cfo-agent`: PGlite gerçek PostgreSQL sorguları/migration ile 36 kontrol. `npx tsc --noEmit`, hedefli eslint ve production build ayrıca çalıştırılır. Provider timeout/concurrency/bütçe testleri kontrollü fake provider/store kullanır; canlı API çağrısı veya production DB yazımı yapılmaz.
+`npm run check:cfo-agent`: PGlite gerçek PostgreSQL sorguları/migration ile 38 kontrol. `npx tsc --noEmit`, hedefli eslint ve production build ayrıca çalıştırılır. Provider timeout/concurrency/bütçe testleri kontrollü fake provider/store kullanır; canlı API çağrısı veya production DB yazımı yapılmaz.
 
 ## Kabul kapıları — 03.10.2026 güncellemesi
 
@@ -61,6 +61,8 @@ Nakit görünümü kolonları: nakit_try, bos_kmh_try; purpose amac_kmh mevcut d
 `AI_CFO_ACCEPTANCE_MODE=current_comparison` yalnız güncel defteri 12 sabit CFO değeriyle karşılaştırır. `AI_CFO_ACCEPTANCE_AS_OF` eski bir tarih verilse dahi bu mod güncel zamanı kullanır, geçmiş bakiyeyi yeniden oluşturduğunu iddia etmez. Rapor `mode`, gerçek/beklenen değerler, dataQuality ve `productionApproval:false` taşır. 12/12 eşleşme bile production onayı veya release attestasyonu değildir; farklı değerler altın referansı değiştirmez. Diagnostic job başarı durumu yalnız komutun rapor ürettiğini gösterir; referans modunda 12/12 dışı sonuç exit 1 davranışı korunur.
 
 Trusted feature push'ı `alfas_2026_10_03` diagnostik profilini kullanır. 03.10.2026 canlı katalog incelemesiyle `siparis_tarihi/siparis_tutari`, `amacli_kmh_try` ve set-fiyat `kar` alanları eşlendi. İki canonical view tanımı SHA256 ile sabittir; değişirse finansal aggregation başlamadan profil reddedilir. Canonical doğrulama yalnız bu offline READ ONLY komutun config kopyasında yapılır; production environment değişmez. Kargo/component eşlemesi henüz ölçümle doğrulanmadığı için bu alanlar unknown kalır. Artifact yalnız private repository workflow erişimindedir, 7 gün saklanır; ham sipariş/müşteri/snapshot loglanmaz. CLI DB hesabını/TLS'yi ve Product satır görünürlüğünü ayrıca doğrular, AI/provider/monitor kapalıdır; CfoRun/Insight/Usage veya işletme verisi yazmaz.
+
+İlk güncel karşılaştırma [b600412 / 37142425088](https://github.com/Alfasoylu/iotomasyon/actions/runs/37142425088) 7/12 eşleşti; bu bir kabul onayı değildir. Canlı inceleme yeni agent'ta kanal medyanının meşru SKU komisyon farkını ayıkladığını ve timestamp-without-zone değerlerinin dönem sınırında yanlış çevrildiğini gösterdi. Calculation v3 yalnız yeni aggregation'da kanal+SKU median/MAD, gerçek kolon tipine göre UTC→İstanbul karşılaştırması ve tam gün kaynak taraması kullanır. Ek şartlar (43 kayıt, 170 stok gibi) raporda actual/expected olarak görünür. XML hız/stok motoru ve eski ekran hesapları değiştirilmez; canlı referanslar otomatik güncellenmez.
 
 ### Gölge hafta
 

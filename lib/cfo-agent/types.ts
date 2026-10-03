@@ -1,5 +1,5 @@
 export const SCHEMA_VERSION = "2";
-export const CALCULATION_VERSION = "alfas-gross-v2";
+export const CALCULATION_VERSION = "alfas-gross-v3";
 export type Basis = "gross_incl_vat" | "net_ex_vat";
 export type Metric = { value: number | null; estimated: boolean; basis: Basis; reason?: string };
 export type Severity = "info" | "warning" | "critical";
