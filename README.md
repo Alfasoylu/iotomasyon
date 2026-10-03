@@ -136,3 +136,7 @@ Architecture pass target:
 - no hardcoded fallback credentials
 - fail-fast env validation
 - real migration structure
+
+### AI CFO V1
+
+Varsayılan kapalı deterministic monitor ve AI reasoning katmanı: [kurulum, cron, güvenlik ve canlı veri doğrulaması](docs/AI-CFO-V1.md). Finansal sözleşme: [ALFAS gross-basis contract](docs/AI-CFO-FINANCIAL-CONTRACT.md). Test: `npm run check:cfo-agent`.

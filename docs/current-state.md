@@ -387,3 +387,13 @@ Owner-intelligence fully implemented through Phase 22:
 - executive KPI dashboard (Phase 22) ✓
 
 Note: procurement urgency shows VERİ YOK for most products because lead-time/demand fields are not yet populated.
+
+
+## 03.10.2026 — AI CFO V1
+
+Mevcut CFO motorunun üzerinde additive deterministic monitoring ve sınırlı AI reasoning katmanı eklendi. Yeni admin ekranı, cron endpointleri, üç snake_case model; AI ve monitor varsayılan kapalı. Production uygulanmadı. Canlı SQL kolon sözleşmesi, session lock bağlantısı ve scheduler operatörce doğrulanmalıdır. Ayrıntılar: [AI CFO V1](AI-CFO-V1.md).
+
+
+### 03.10.2026 — AI CFO production kapıları
+
+Read-only 12 kontrol, gölge hafta değerlendirmesi ve CI workflow hazır. Komisyon/freshness doğrulaması güçlendirildi. Canlı credential, push yetkisi, CI build ve 7 günlük CFO incelemesi bekleniyor; AI production onayı yok. [Kurulum](AI-CFO-V1.md).

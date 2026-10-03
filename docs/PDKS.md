@@ -242,6 +242,11 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 03.10.2026 — AI CFO kabul kapıları
+
+Komisyon NULL kapsamı/örneklem ve 120 günlük aykırı ayıklama, iki kaynaklı ihtiyatlı talep, 12 referanslı read-only kabul komutu, 7 günlük gölge raporu ve CI workflow eklendi. Production kapalı; canlı kabul/CI/gölge hafta henüz ölçülmedi. Detay: [AI CFO V1](AI-CFO-V1.md).
+
+
 ### 2026-09-28 — ALFAS Home → Sepetler (terk edilen / bekleyen sepetler + mail durumu)
 
 `/alfashome/sepetler`: alfashome.com'da ürünü olup siparişe dönmemiş sepetleri
@@ -1623,3 +1628,8 @@ Vercel'e Legacy API keys altındaki `service_role` JWT'si (`eyJ…`) girilmeli.
 - **Cron 308 düzeltmesi (main):** GitHub Actions hatırlatma workflow'u `HTTP 308`'e
   takılıp otomatik çıkışı hiç çalıştırmıyordu; `curl -L --location-trusted` eklendi.
   Takılı kalan açık kayıtlar manuel kapatıldı. Commit `bf3da26`.
+
+
+## 03.10.2026 — AI CFO V1
+
+Mevcut CFO motorunun üzerinde additive deterministic monitoring ve sınırlı AI reasoning katmanı eklendi. Yeni admin ekranı, cron endpointleri, üç snake_case model; AI ve monitor varsayılan kapalı. Production uygulanmadı. Canlı SQL kolon sözleşmesi, session lock bağlantısı ve scheduler operatörce doğrulanmalıdır. Ayrıntılar: [AI CFO V1](AI-CFO-V1.md).

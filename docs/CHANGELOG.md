@@ -3270,3 +3270,16 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - Sonuç: kuyruk 76 → 10 (9 soru + 1 bayat not), gecikmiş 2. 64 bulgu kendi
   sayfasında; kırmızılar 14.09'da kuyruğa dönecek.
 
+
+## 03.10.2026 — AI CFO V1 (production kapalı)
+
+- Additive cfo_run/cfo_insight/cfo_usage modelleri, deterministic snapshot/anomalies, bounded Anthropic reasoning, cron ve /admin/ai-cfo eklendi. Eski CFO hesapları değiştirilmedi.
+- 30 AI CFO PostgreSQL/runner kontrolü; RBAC 22 test ve Entegra regression kontrolleri geçti. Typecheck ve hedefli eslint geçti.
+- Production build doğrulanamadı: ortam Turbopack PostCSS yerel port açılışını engelliyor; webpack alternatifi TypeScript --showConfig alt süreç çıktısında durdu. CI build zorunlu.
+- Production DB/migration/provider çağrısı/deploy yapılmadı. Kurulum: AI-CFO-V1.md.
+
+## 03.10.2026 — AI CFO kabul akışı ve komisyon düzeltmesi
+
+- 120 günlük %90 komisyon kapsamı, en az 10 SKU ölçümü ve medyan/MAD ayıklaması eklendi. Sıfır/eksik komisyon kâr olarak kullanılmıyor; net banka tahsilatı ayrı estimated metric.
+- İki kaynaklı ihtiyatlı hız ve >%30 adet farkı quality uyarısı, 12 referanslı read-only kabul değerlendirmesi, 7 günlük gölge değerlendirmesi ve üç release attestasyon kapısı eklendi.
+- 36 sentetik CFO/PostgreSQL kontrolü, 22 RBAC testi, Entegra kontrolleri, typecheck ve hedefli lint geçti. Canlı 12/12 ölçülmedi, gölge hafta yaşanmadı, CI workflow henüz çalışmadı; yerel build ortam port kısıtında durdu. Production onayı/flag değişikliği yok.

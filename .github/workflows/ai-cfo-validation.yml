@@ -1,0 +1,34 @@
+name: AI CFO validation
+on:
+  pull_request:
+  push:
+    branches: [feat/ai-cfo-v1]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ai-cfo-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      AI_CFO_ENABLED: 'false'
+      AI_CFO_MONITOR_ENABLED: 'false'
+      DIRECT_URL: postgresql://localhost:5432/build_only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma validate
+      - run: npx tsc --noEmit
+      - run: npm run check:cfo-agent
+      - run: node --import tsx __tests__/resolve-permission.test.ts
+      - run: node --import tsx __tests__/entegra.test.ts
+      - run: npx eslint lib/cfo-agent __tests__/ai-cfo.test.ts scripts/ai-cfo-*.ts 'app/(app)/admin/ai-cfo/page.tsx' app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning
+      - run: npm run build
