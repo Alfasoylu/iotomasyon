@@ -22,7 +22,9 @@
     "check:push": "tsx __tests__/push-subscribe.test.ts",
     "check:durum": "tsx __tests__/durum.test.ts",
     "check:rbac": "tsx __tests__/resolve-permission.test.ts",
-    "check:alfashome": "tsx __tests__/alfashome.test.ts"
+    "check:alfashome": "tsx __tests__/alfashome.test.ts",
+    "check:banka": "node --import tsx __tests__/banka.test.ts",
+    "check:banka:safety": "node --import tsx __tests__/banka-safety.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

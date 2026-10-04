@@ -1,4 +1,4 @@
-name: CFO read-only acceptance validation
+name: CFO and bank upload validation
 on:
   pull_request:
     branches: [main]
@@ -32,6 +32,9 @@ jobs:
       - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts
       - run: npm run check:rbac
       - run: npm run check:entegra
+      - run: npm run check:banka
+      - run: npm run check:banka:safety
+      - run: npx eslint lib/banka components/banka app/api/admin/banka-yukleme __tests__/banka*.test.ts 'app/(app)/admin/banka-yukleme/page.tsx'
       - run: npx eslint lib/cfo-agent app/api/admin/ai-cfo/acceptance __tests__/ai-cfo*.test.ts 'app/(app)/cfo/page.tsx'
       - name: Generate ephemeral build-only session key
         run: |
@@ -44,3 +47,4 @@ jobs:
           PY
       - run: npm run build
       - run: node scripts/check-cfo-acceptance-route.mjs
+      - run: node scripts/check-bank-upload-route.mjs
