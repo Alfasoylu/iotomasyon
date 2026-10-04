@@ -27,3 +27,11 @@ Technical delta lives here and CHANGELOG-CFO-WORKFLOW.md. The existing large PDK
 ## Question attachments
 
 Automatic review caught the legacy action storing public attachment URLs. The working-loop integration now uploads only after verifying the existing cfo-files bucket is private. It stores a private object reference and serves downloads through ADMIN/CFO_READ/EXECUTIVE_READ authentication with attachment disposition and no-store headers. An unavailable/public bucket blocks uploads; answer text remains saved. It does not create buckets, change storage permissions or publish files. Legacy references are confined to the configured project and bucket; the application no longer links directly to them. Existing exposure through a legacy public bucket is not claimed repaired by a code deployment. Synthetic tests reject public storage, arbitrary URL hosts and path traversal.
+
+## Runtime failure follow-up
+
+The first owner run failed in production; deployment checks had not established live business execution. Each failure now records only its fixed stage, Prisma code and SQLSTATE, without error messages, SQL, credentials or business values. The protected panel displays that diagnostic and refreshes the failure record after a failed manual attempt. Legacy failures retain their timestamp without inventing a cause.
+
+Replaced per-item and per-answer database round trips with bounded JSON recordset writes within the existing transaction. Stable keys are deduplicated before batching; answer markers, unverified notes, audits and heartbeat remain atomic. Answer context is written only when its observed answer timestamp still matches. A failed batch does not advance the last success or mark an answer financially applied.
+
+A new real PostgreSQL/Prisma integration test exercises the complete cycle, advisory locking, repeat runs, actual parameter encoding, rollback and recovery. The latency fixture persists 80 work items within a two-second transaction budget with no more than six simulated remote requests. CI creates an isolated synthetic localhost database; only the unrelated vector embedding fixture column is represented as text, with no production schema changes. The production cause and successful rerun must still be confirmed through the owner panel.
