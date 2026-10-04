@@ -136,9 +136,10 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     from "PurchaseOrderItem" i join "PurchaseOrder" p on p.id=i."orderId"
     where p.status::text in ('DRAFT','CONFIRMED','ORDERED','SHIPPED') group by i."productId"`);
   const pos=new Map(po.map(r=>[String(r.product_id),r])); snapshot.procurement.openOrders=po.reduce((s,r)=>s+(n(r,"open_orders")??0),0);
-  const products=await db.query(`select id,sku,"stockQuantity" as stock,"unitCostTry" as cost,"weightKg" as weight,"productKind"::text as kind,"mainProductId" as parent,"sellingPriceTry" as price from "Product" where "isActive"`);
+  const catalogProducts=await db.query(`select id,sku,"isActive" as active,"stockQuantity" as stock,"unitCostTry" as cost,"weightKg" as weight,"productKind"::text as kind,"mainProductId" as parent,"sellingPriceTry" as price from "Product"`);
+  const products=catalogProducts.filter(p=>p.active!==false);
   const bySku=new Map(products.map(r=>[String(r.sku),r]));
-  const productLookup=skuIndex(products,r=>String(r.sku));
+  const productLookup=skuIndex(catalogProducts,r=>String(r.sku));
   const velocityLookup=skuIndex(velocityRows??[],r=>String(r.sku));
   const xmlLookup=skuIndex(velocityUnits,r=>String(r.sku));
   const inboundLookup=skuIndex(inboundRows??[],r=>String(r.sku));
@@ -241,7 +242,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       snapshot.dataQuality.duplicateCanonicalRows+=n(r,"duplicates")??0;
       if(isSet&&cost.value==null)missing.push(`set_component_unknown:${sku}`);
       const v=velocityLookup.get(sku),inb=inboundLookup.get(sku),open=p?pos.get(String(p.id)):undefined;
-      const excluded=!p||(p&&isDummyStock(n(p,"stock")??0))||exceptions.has(sku)||!exceptionRows;
+      const excluded=!p||p.active===false||(p&&isDummyStock(n(p,"stock")??0))||exceptions.has(sku)||!exceptionRows;
       const stockDays=excluded?unknown("dummy_or_unverified_inventory"):metric(v?.tukenme_gun_ihtiyatli,true,"cautious_stock_movement_estimate");
       const xmlVelocity=excluded?unknown("dummy_or_unverified_inventory"):metric(v?.gunluk_30g_ihtiyatli,true,"cautious_stock_movement_estimate");
       const salesUnits30=trusted?metric(unitsBySku.get(sku)):unknown("untrusted_sku_grain"),xmlUnits30=xmlLookup.get(sku)?metric(xmlLookup.get(sku)!.units,true,"xml_movement_not_confirmed_sales"):unknown("xml_units_unavailable");
