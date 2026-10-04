@@ -1,4 +1,5 @@
 import "server-only";
+import { readCfoNotebook } from "./notebook";
 import type { CfoConfig } from "./config";
 import { getCfoConfig } from "./config";
 import { CALCULATION_VERSION, SCHEMA_VERSION, type CfoAgentSnapshot, type Metric, type ProductSignal, type SalesPeriod, type SourceWatermark } from "./types";
@@ -38,6 +39,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     cash:{generalUnusedOverdraft:unknown("general_kmh_unavailable"),totalCardDebt:unknown("card_debt_unavailable"),activeCards:0,cash:unknown("cash_source_unavailable"),minimumProjectedPosition:unknown("projection_unavailable"),purposeLimit:unknown("purpose_limit_unavailable"),banksFresh:false,summaries:[]},
     procurement:{riskySkuCount:0,openOrders:null},importPipeline:{inboundSkuCount:null,coveragePct:unknown("inbound_coverage_unknown")},
     returns:{currentRate:unknown("returns_unavailable"),previousRate:unknown("returns_unavailable"),sample:0,complete:false},evidence:[]};
+  snapshot.notebook = await readCfoNotebook(db, now);
   const missing=snapshot.dataQuality.missingFields;
   if(reviewed&&!reviewed.valid){missing.push(reviewed.reason);config.canonicalValidated=false;}
   if(!config.canonicalValidated) missing.push("canonical_sales_semantics_not_validated");

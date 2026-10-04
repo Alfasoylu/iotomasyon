@@ -60,7 +60,7 @@ export async function checkCfoReaderAccess(db: ReadSource) {
     const [mode] = await db.query("select current_setting('transaction_read_only') as mode");
     if (mode?.mode !== "on") throw new CfoAccessError("read_only_transaction_required");
     const names = [...CFO_AGENT_SOURCE_NAMES, "Product", "MarketplaceSalesRecord", "TrendyolSalesRecord",
-      "HepsiburadaSalesRecord", "XmlStockChangeLog", "PurchaseOrder", "PurchaseOrderItem", "cfo_bank_account", "cfo_credit_card"];
+      "HepsiburadaSalesRecord", "XmlStockChangeLog", "PurchaseOrder", "PurchaseOrderItem", "cfo_bank_account", "cfo_credit_card", "cfo_note", "cfo_question", "cfo_banka_hareket", "cfo_change_log"];
     const relations = await db.query(`select c.relname::text as source, c.relkind::text as kind,
       c.relrowsecurity as rls, has_table_privilege(current_user,c.oid,'SELECT') as readable,
       has_table_privilege(current_user,c.oid,'INSERT') or has_table_privilege(current_user,c.oid,'UPDATE')

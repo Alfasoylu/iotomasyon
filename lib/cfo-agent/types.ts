@@ -1,3 +1,4 @@
+import type { CfoNotebook } from "./notebook";
 export const SCHEMA_VERSION = "2";
 export const CALCULATION_VERSION = "alfas-gross-v4";
 export type Basis = "gross_incl_vat" | "net_ex_vat";
@@ -24,6 +25,7 @@ export type ProductSignal = {
   momentum: Metric; pricePeriod: string;
 };
 export type CfoAgentSnapshot = {
+  notebook?: CfoNotebook;
   schemaVersion: string; calculationVersion: string; generatedAt: string; timezone: "Europe/Istanbul";
   currency: "TRY"; accountingBasis: Basis;
   dataQuality: { staleSources: string[]; missingFields: string[]; costCoveragePct: number | null;

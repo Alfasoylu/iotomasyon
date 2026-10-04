@@ -51,3 +51,7 @@ PDF re-import reconstructs legacy identities and checks them under the account i
 Foreign-currency account selection and statement metadata are rejected by the TRY importer. The read-only review explicitly marks existing foreign-currency movement groups as unsuitable for TRY cash flows. Existing raw movement rows and account balances are preserved; no currency conversion or production-data correction is claimed. Native-currency storage/reconciliation remains necessary before those groups can enter cash-flow calculations.
 
 Validation: synthetic positioned PDFs, actual XLSX metadata/header parsing, PGlite legacy recovery/re-import, changed-amount protection, review currency flags, typecheck and lint. Private source files were inspected only locally and are excluded from the repository and CI. Live repair requires the protected production session and original file; deployment alone does not replay uploads.
+
+## 2026-10-04 — Partial CFO operating context
+
+Added a protected working-status page and JSON report on the existing application connection. Entegra/XML historical availability and active CFO notebook context are visible alongside per-SKU capabilities and suggested cost questions. Notebook confidence/expiry/truncation are explicit; inactive catalog entries are excluded without inferring inactivity from missing cost. Global cost coverage does not gate this read-only report. Synthetic SQL/scope tests and route access gates were added; provider calls, releases and business writes remain disabled.

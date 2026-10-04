@@ -30,6 +30,7 @@ jobs:
       - run: npx tsc --noEmit
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-reconciliation.test.ts
       - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts
+      - run: node --import tsx __tests__/cfo-operating-context.test.ts
       - run: npm run check:rbac
       - run: npm run check:entegra
       - run: npm run check:banka
@@ -37,7 +38,7 @@ jobs:
       - run: npm run check:banka:pdf
       - run: npm run check:banka:review
       - run: npx eslint lib/banka components/banka app/api/admin/banka-yukleme __tests__/banka*.test.ts 'app/(app)/admin/banka-yukleme/page.tsx'
-      - run: npx eslint lib/cfo-agent app/api/admin/ai-cfo/acceptance __tests__/ai-cfo*.test.ts 'app/(app)/cfo/page.tsx'
+      - run: npx eslint lib/cfo-agent app/api/admin/ai-cfo/acceptance app/api/admin/ai-cfo/context __tests__/cfo-operating-context.test.ts scripts/cfo-read-context.ts __tests__/ai-cfo*.test.ts 'app/(app)/cfo/page.tsx' 'app/(app)/cfo/calisma-durumu/page.tsx'
       - name: Generate ephemeral build-only session key
         run: |
           python - <<'PY'
