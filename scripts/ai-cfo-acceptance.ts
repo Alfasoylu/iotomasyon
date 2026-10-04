@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { writeFile } from "node:fs/promises";
+import { writeCfoDiagnostic } from "../lib/cfo-agent/diagnostic-report";
 import { buildCfoAgentSnapshot } from "../lib/cfo-agent/snapshot";
 import { getCfoConfig } from "../lib/cfo-agent/config";
 import { evaluateCfoAcceptance } from "../lib/cfo-agent/acceptance";
@@ -36,10 +36,11 @@ async function main() {
       ...(diagnostics?{diagnostics}:{}),
       dataQuality:snapshot.dataQuality,limitations:"Current mutable balances/inventory cannot reconstruct a historical ledger. Run against the reference database snapshot."};
     const output=process.env.AI_CFO_ACCEPTANCE_REPORT_PATH??"/tmp/ai-cfo-acceptance.json";
-    await writeFile(output,JSON.stringify(report,null,2),{mode:0o600});
+    await writeCfoDiagnostic(output,report);
     console.log(`${isCurrentComparison?"Current ledger comparison (NOT release acceptance)":"Live acceptance"}: ${passed}/12. No migration, flag, AI or business data changed.`);
-    for(const c of checks)console.log(`${c.passed?"MATCH":"DIFFERENCE"} ${JSON.stringify(c)}`);
-    if(diagnostics)console.log(`AGGREGATE_DIAGNOSTICS ${JSON.stringify(diagnostics)}`);
+    // Actual/expected amounts and private source diagnostics are in the report
+    // only, never public Actions logs. IDs reveal no financial values.
+    for(const c of checks)console.log(`${c.passed?"MATCH":"DIFFERENCE"} ${c.id}`);
     if(!isCurrentComparison&&passed!==12)process.exitCode=1;
     await client.query("ROLLBACK");
   } finally {await client.end();}

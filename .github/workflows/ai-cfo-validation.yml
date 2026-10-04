@@ -33,9 +33,10 @@ jobs:
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-access.test.ts
       - run: node --import tsx __tests__/ai-cfo-reader-rls.test.ts
       - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts
+      - run: node --conditions=react-server --import tsx __tests__/ai-cfo-adapter-audit.test.ts
       - run: node --import tsx __tests__/resolve-permission.test.ts
       - run: node --import tsx __tests__/entegra.test.ts
-      - run: npx eslint lib/cfo-agent __tests__/ai-cfo.test.ts __tests__/ai-cfo-access.test.ts __tests__/ai-cfo-reader-rls.test.ts __tests__/ai-cfo-acceptance-profile.test.ts scripts/ai-cfo-*.ts 'app/(app)/admin/ai-cfo/page.tsx' app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning
+      - run: npx eslint lib/cfo-agent __tests__/ai-cfo*.test.ts scripts/ai-cfo-*.ts 'app/(app)/admin/ai-cfo/page.tsx' app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning
       - name: Generate ephemeral build-only session key
         run: |
           python - <<'PY'
@@ -75,12 +76,22 @@ jobs:
           NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/lib/cfo-agent/certs/supabase-root-2021.crt
           AI_CFO_ACCEPTANCE_MODE: current_comparison
           AI_CFO_ACCEPTANCE_SOURCE_PROFILE: alfas_2026_10_03
-          AI_CFO_ACCEPTANCE_REPORT_PATH: ${{ runner.temp }}/ai-cfo-current-comparison.json
+          AI_CFO_ACCEPTANCE_REPORT_PATH: ${{ runner.temp }}/ai-cfo-current-comparison.enc.json
+          AI_CFO_DIAGNOSTIC_PUBLIC_KEY_FILE: ${{ github.workspace }}/lib/cfo-agent/certs/diagnostics-recipient.pem
+      - name: Audit adapter definitions (read-only, encrypted report only)
+        run: node --conditions=react-server --import tsx scripts/ai-cfo-adapter-audit.ts
+        env:
+          AI_CFO_READ_DATABASE_URL: ${{ secrets.AI_CFO_READ_DATABASE_URL }}
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/lib/cfo-agent/certs/supabase-root-2021.crt
+          AI_CFO_DIAGNOSTIC_PUBLIC_KEY_FILE: ${{ github.workspace }}/lib/cfo-agent/certs/diagnostics-recipient.pem
+          AI_CFO_ADAPTER_AUDIT_REPORT_PATH: ${{ runner.temp }}/ai-cfo-adapter-audit.enc.json
       - name: Save private comparison report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ai-cfo-current-comparison
-          path: ${{ runner.temp }}/ai-cfo-current-comparison.json
+          path: |
+            ${{ runner.temp }}/ai-cfo-current-comparison.enc.json
+            ${{ runner.temp }}/ai-cfo-adapter-audit.enc.json
           if-no-files-found: ignore
           retention-days: 7

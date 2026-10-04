@@ -3338,3 +3338,9 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - İşletme sahibinin kampanya değişimleri nedeniyle son120gün seçimi sözleşme/kurulum/teslim raporuna işlendi; mevcut uygulama hesabı ve referans değerler değiştirilmedi.
 - 896154a için CI build/typecheck ve Vercel önizleme commit status'u yeniden kontrol edildi. Güncel aggregate raporun 8/12 sonucu, dönem/stock-reference farkları, eksik kaynak eşlemeleri ve migration/deployment ön koşulları [hazırlık incelemesinde](AI-CFO-PRODUCTION-READINESS.md) kaydedildi.
 - Teslim raporunun test sayıları/canlı karşılaştırma bilgisi düzeltildi. Production migration/main merge/deploy/AI açılışı yapılmadı; bu kayıt finansal kabul onayı değildir.
+
+## 04.10.2026 — Public CI finansal rapor koruması ve adapter incelemesi
+
+- Public repository metadata'sı doğrulandı. Kabul CLI finansal actual/expected ve teşhisi, bağlantı CLI SQL tanımlarını loglamayı bıraktı. Yeni adapter audit READ ONLY katalog/izinli tarife/SET configuration okur; fonksiyonları veya ham sipariş/müşteri sorgularını çalıştırmaz.
+- CI raporları RSA-3072 OAEP SHA256 + AES-256-GCM ile şifrelenir; anahtar eksikliğinde plaintext fallback yoktur. Public key dışında özel materyal Git/log/artifact'e konmaz. Çıktı 0600/overwrite yasaklıdır; özel çözüm aracı uygulama/CI dışında çalışır.
+- Altı PostgreSQL/kriptografi kontrolü, typecheck ve hedefli lint yerelde geçti. Canlı inceleme, migration veya production kabul başarısı henüz iddia edilmez.

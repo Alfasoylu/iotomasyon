@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 04.10.2026 — Canlı adapter incelemesi ve public CI rapor koruması
+
+Repository'nin public görünürlüğü doğrulandı; kabul CLI finansal değer/teşhisi, bağlantı CLI SQL tanımlarını stdout'a yazmayı bıraktı. Yeni bounded adapter audit yalnız READ ONLY katalog/kargo/SET configuration okur; fonksiyonları çalıştırmaz. Raporlar RSA-OAEP/AES-GCM ile şifrelenir, CI plaintext fallback'i kapalıdır; public anahtar dışında özel materyal Git'e eklenmez. Altı PostgreSQL/kriptografi kontrolü, typecheck/lint yerelde geçti. Özel anahtarın Drive'a yüklenmesi otomatik onay incelemesinde reddedildi; anahtar ortamda kalır, yalnız kod/çözülen rapor yetkili özel Drive'a yedeklenebilir. Canlı kaynak semantiği incelemesi bekliyor; migration/deploy/AI yok.
+
 ### 03.10.2026 — 120 günlük komisyon kararı ve production hazırlık incelemesi
 
 İşletme sahibi kampanya değişimleri nedeniyle son120gün penceresini seçti; mevcut v3 hesap korundu ve dönem kararı finansal sözleşmeye işlendi. Son uygulama commit'inde CI/build/typecheck ve Vercel önizleme status'u başarılı; canlı karşılaştırma 8/12 ve farklı dönemli komisyon referansı otomatik değiştirilmedi. Kargo/SET/projeksiyon eşlemeleri, aynı zamanlı kabul, staging/DB backup, yetkili migration bağlantısı/pending geçmişi ve production session-lock/cron eksikleri [production hazırlık incelemesinde](AI-CFO-PRODUCTION-READINESS.md) belgelendi. Eksik yoksa canlıya al koşulu sağlanmadı; migration/main merge/deploy/AI açılışı yapılmadı. Teslim raporunun eski test ve canlı ölçüm bilgileri güncellendi.

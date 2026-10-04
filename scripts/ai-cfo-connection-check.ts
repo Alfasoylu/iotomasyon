@@ -9,7 +9,11 @@ async function main() {
     const db: ReadSource = { async query<T extends Row>(sql: string, ...params: unknown[]) {
       return (await client.query(sql, params)).rows as T[];
     } };
-    console.log(JSON.stringify(await checkCfoReaderAccess(db), null, 2));
+    const report = await checkCfoReaderAccess(db);
+    console.log(JSON.stringify({ connected: report.connected, readerRoleVerified: report.readerRoleVerified,
+      transactionReadOnly: report.transactionReadOnly, tlsVerified: report.tlsVerified,
+      productRowsVisible: report.productRowsVisible, missingOrUnreadable: report.missingOrUnreadable,
+      checkedAt: report.checkedAt, limitations: report.limitations }, null, 2));
   } finally { await client.end(); }
 }
 

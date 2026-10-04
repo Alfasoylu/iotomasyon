@@ -18,6 +18,26 @@ Güncel geçiş durumu ve 120 günlük dönem kararı: [production hazırlık in
 6. `AI_CFO_LOCK_DATABASE_URL` için direct veya **session-mode** PostgreSQL bağlantısı ve `AI_CFO_LOCK_SESSION_MODE=true` ayarlayın. Transaction pool (6543) kabul edilmez. Advisory lock tek fiziksel pg bağlantısında alınır/bırakılır; LLM sırasında transaction açık değildir.
 7. Deterministic monitor'u staging'de açıp snapshot, freshness ve mevcut üç kuyrukla dedup davranışını CFO'ya doğrulatın. AI yalnız canlı 12/12 kabul, migration, 7 günlük gölge hafta ve CFO onayı sonrasında açılabilir.
 
+## Canlı adapter incelemesi — 04.10.2026
+
+Repository public olduğu için Actions artifact'i özel kasa değildir. Güncel kabul
+komutu gerçek/beklenen tutarları ve aggregate teşhisi stdout'a yazmaz; connection
+komutu SQL tanımlarını loglamaz. Trusted feature push'ta aynı reader/TLS ile
+`scripts/ai-cfo-adapter-audit.ts` yalnız katalog tanımları ve bounded kargo/SET
+configuration kayıtlarını kısa READ ONLY transaction'da inceler; fonksiyonları
+çalıştırmaz, sipariş/müşteri kayıtları veya DB credential'ı rapora almaz.
+
+Yeni artifact raporları RSA-3072 OAEP SHA256 + AES-256-GCM ile şifrelenir.
+`AI_CFO_DIAGNOSTIC_PUBLIC_KEY_FILE` yalnız public alıcı anahtarıdır; CI'da eksikse
+plaintext fallback yoktur. Özel anahtar repository/log/artifact'e konmaz.
+`scripts/ai-cfo-decrypt-report.ts` yalnız operatörün özel ortamında
+`AI_CFO_ENCRYPTED_REPORT_PATH`, `AI_CFO_DECRYPTED_REPORT_PATH` ve
+`AI_CFO_DIAGNOSTIC_PRIVATE_KEY_FILE` dosya yollarıyla çalışır; veri stdout'a
+yazılmaz, çıktı 0600/overwrite yasaklıdır. Geçici anahtar kaybolursa şifreli
+artifact çözülemez; çözülen rapor yetkilendirilmiş özel Drive'da saklanabilir.
+Kalıcı yeni alıcı anahtarı için operatör güvenli credential yönetimini kullanır.
+Şifreleme/inceleme production onayı veya finansal kabul yerine geçmez.
+
 ## AI ve maliyet
 
 Anthropic V1 adapter: `AI_CFO_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, `AI_CFO_MODEL=claude-sonnet-4-6`. Model config ile değişebilir; diğer provider'lar arayüzü implemente etmelidir. Anomali taraması deterministiktir, Haiku için ikinci çağrı yapılmaz. Opus haftalık/aylık analiz V1 kapsamında değildir. System prompt ephemeral caching kullanır.
