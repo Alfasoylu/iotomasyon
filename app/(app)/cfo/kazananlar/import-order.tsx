@@ -432,7 +432,7 @@ export function ImportOrderSection({
   const icerigiYokYoldaki = yoldaki.filter(
     (y) => y.risk !== "RISKLI" && y.beklenen_kalem == null && y.girilen_kalem === 0,
   );
-  const cevapsizSoru = [...sorular.values()].flat().filter((q) => !q.cevap).length;
+  const cevapsizSoru = [...sorular.values()].flat().filter((q) => q.code !== "PLAN_NOTU" && !q.cevap).length;
   const minAdet = ozet[0]?.min_adet_kural ?? 5;
   const enKucukAdet = satirlar.length > 0 ? Math.min(...satirlar.map((s) => s.onerilen_adet)) : 0;
 
