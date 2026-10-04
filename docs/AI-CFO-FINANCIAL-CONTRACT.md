@@ -106,3 +106,5 @@ metnine göre reçete uydurulmaz. cfo_set_fiyat'tan tanınan SET, Product'ta
 MAIN_STOCK görünse de bilinmeyen bileşen maliyeti yerine Product.unitCostTry
 kullanamaz. Aynı SKU için birden çok kâr satırı da unknown olur. Eksik bileşen
 dataQuality'dir. 120 günlük komisyon ve altın referanslar değiştirilmez.
+
+SET kârı pazaryeri kapsamına bağlıdır: cfo_set_fiyat.pazaryeri içindeki + ile ayrılmış kanalların dışında kar kullanılmaz; kamera sayısı kanal alanıyla karıştırılmaz.

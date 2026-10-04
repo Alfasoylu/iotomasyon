@@ -117,13 +117,16 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     const sku=String(r.set_sku),old=sets.get(sku),cost=n(r,"maliyet_try");
     sets.set(sku,old?.value===null||cost==null?unknown("set_component_unknown"):metric(D(old?.value??0).add(cost).toNumber(),true));
   }
-  const setPrices=await catalog.rows("cfo_set_fiyat",["sku","birim_kar_try"],10000);
+  const setScopeColumn=catalog.column("cfo_set_fiyat","pazaryeri");
+  const setPrices=await catalog.rows("cfo_set_fiyat",["sku","birim_kar_try",...(setScopeColumn?["pazaryeri"]:[])],10000);
   const setSkuRows=await catalog.rows("cfo_set_fiyat",["sku"],10000);
   const setSkus=new Set((setSkuRows??[]).map(r=>String(r.sku)));
   const setProfits=new Map<string,Metric>();
+  const setScopes=new Map<string,Set<string>>();
   for(const r of setPrices??[]) {
     const sku=String(r.sku);
     setProfits.set(sku,setProfits.has(sku)?unknown("ambiguous_set_profit_rows"):metric(r.birim_kar_try,true,"set_price_view_estimate"));
+    if(setScopeColumn)setScopes.set(sku,new Set(typeof r.pazaryeri==='string'?r.pazaryeri.split('+').map(s=>s.trim()):[]));
   }
 
   const po=await db.query(`select i."productId" as product_id,count(*)::int as open_orders,sum(i.qty)::numeric as qty,min(p."estimatedArrival") as eta
@@ -241,7 +244,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       const floor=channel==="MIRAKL_KOCTAS"?unknown("commission_unavailable"):priceFloor(cost.value,commission.value,n(p??{},"weight"),bands);
       const signal:ProductSignal={sku,channel,isSet,trusted,sourceFresh:financialFresh,cost,avgPrice,commissionRate:commission,commissionSamples:n(cm??{},"accepted")??0,priceFloor:floor,
         zeroCommissionFloor:priceFloor(cost.value,0,n(p??{},"weight"),bands),
-        unitProfit:isSet?(cost.value==null?unknown("set_component_unknown"):setProfits.get(sku)??unknown("set_profit_unavailable")):metric(divide(profit.contributionProfit.value,units),profit.contributionProfit.estimated),
+        unitProfit:isSet?(cost.value==null?unknown("set_component_unknown"):setScopes.has(sku)&&!setScopes.get(sku)!.has(channel)?unknown("set_profit_channel_unavailable"):setProfits.get(sku)??unknown("set_profit_unavailable")):metric(divide(profit.contributionProfit.value,units),profit.contributionProfit.estimated),
         previousUnitProfit:isSet?unknown("set_historical_profit_unavailable"):metric(divide(prevProfit?.contributionProfit.value??null,n(prev??{},"units"))),contribution:isSet?unknown("set_profit_use_price_view"):profit.contributionProfit,
         previousMargin:prevProfit?.contributionMargin??unknown("previous_contribution_unavailable"),margin:profit.contributionMargin,
         salesUnits30,xmlUnits30,salesVelocity:demand.salesVelocity,xmlVelocity,velocityGapPct:demand.gap,velocity,stockDays,stockQty:excluded?null:n(p??{},"stock"),inboundQty:inb?n(inb,"yolda_adet"):inboundRows?0:null,inboundEta:iso(inb?.en_yakin_eta),

@@ -3350,3 +3350,8 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - Şifreli read-only adapter incelemesi ve CI build/typecheck başarılı (194a4bb / 37172250835). Kargo toplamı/kanal/tarih ve nakit motorunun pozisyon anlamı SQL kaynak tanımlarından doğrulandı.
 - Calculation/contract v4: hash doğrulamalı canlı profil, kanal/tarih seçimiyle measured toplam kargo, SET reçetesi bilinmiyorken Product maliyetine fallback yasağı ve duplicate SET kârını unknown taşıma. Mevcut CFO SQL motoru/dashboard ve komisyon120gün korunur.
 - 43 PostgreSQL/CFO regresyonu ve yerel typecheck/lint geçti. Yeni adapter için canlı tekrar doğrulaması bekleniyor; finansal kabul veya migration/deploy onayı verilmedi.
+
+## 04.10.2026 — SET kârında pazaryeri kapsamı
+
+- cfo_set_fiyat kar metriği yalnız pazaryeri kapsamına uygulanır; kamera sayısını taşıyan kanal alanı kullanılmaz. Kapsam dışı/bilinmeyen pazaryeri unknown olur.
+- 44 PostgreSQL/CFO testi, typecheck ve hedefli lint yerelde geçti. Eski motor/dashboard ve production değişmez.

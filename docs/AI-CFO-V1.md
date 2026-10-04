@@ -63,7 +63,7 @@ Mevcut stok hızı ihtiyatlı XML motorundan gelir; XML düşüşü satış olar
 
 ## Doğrulama
 
-`npm run check:cfo-agent`: PGlite gerçek PostgreSQL sorguları/migration ile 43 kontrol. `npx tsc --noEmit`, hedefli eslint ve production build ayrıca çalıştırılır. Provider timeout/concurrency/bütçe testleri kontrollü fake provider/store kullanır; canlı API çağrısı veya production DB yazımı yapılmaz.
+`npm run check:cfo-agent`: PGlite gerçek PostgreSQL sorguları/migration ile 44 kontrol. `npx tsc --noEmit`, hedefli eslint ve production build ayrıca çalıştırılır. Provider timeout/concurrency/bütçe testleri kontrollü fake provider/store kullanır; canlı API çağrısı veya production DB yazımı yapılmaz.
 
 ## Kabul kapıları — 03.10.2026 güncellemesi
 
@@ -133,3 +133,5 @@ kanala veya return/faulty banda genellenmez. SET reçetesi henüz doğrulanmadı
 için maliyeti null kalır; mevcut Product maliyetine fallback yoktur.
 Özel raporda source hash değişimleri, native projection minimumu ve agent
 minimumu, bank freshness ve floor/component coverage ayrıca kaydedilir.
+
+SET kar metriği yalnız fiyat tablosunun açık pazaryeri kapsamına uygulanır; bilinmeyen kapsam veya başka kanal unknown olur.

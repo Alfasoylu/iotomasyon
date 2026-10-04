@@ -354,6 +354,14 @@ async function main(){
     assert(x.dataQuality.missingFields.some(f=>f.startsWith('reviewed_source_changed:')));
     assert(x.products.every(p=>!p.sourceFresh));delete process.env.AI_CFO_PROJECTION_POSITION_COLUMN;
   });
+  await check("set price profit cannot cross its measured marketplace scope",async()=>{
+    await db.exec(`alter table cfo_set_fiyat add column pazaryeri text;
+      insert into cfo_set_fiyat values('SKU-A',100,'HEPSIBURADA');insert into cfo_set_bilesen_maliyet values('SKU-A',80);`);
+    let p=product(await snapshot());assert.equal(p.unitProfit.value,null);assert.equal(p.unitProfit.reason,'set_profit_channel_unavailable');
+    await db.exec(`update cfo_set_fiyat set pazaryeri='TRENDYOL+AMAZON' where sku='SKU-A'`);
+    p=product(await snapshot());assert.equal(p.unitProfit.value,100);assert(p.unitProfit.estimated);
+    await db.exec(`delete from cfo_set_fiyat where sku='SKU-A';delete from cfo_set_bilesen_maliyet where set_sku='SKU-A';alter table cfo_set_fiyat drop column pazaryeri;`);
+  });
   await check("frozen 12-check acceptance evaluator detects wrong values and missing Koctas",()=>{
     const x=clone(s);x.cash.cash=metric(72483.62);x.cash.generalUnusedOverdraft=metric(1809300);x.cash.purposeLimit=metric(750000);x.cash.totalCardDebt=metric(2366017.3);x.cash.activeCards=6;
     x.dataQuality.excludedDummyStock=47;x.dataQuality.zeroStockSkuCount=1086;
