@@ -27,6 +27,7 @@ export default async function AiCfoPage() {
     <PageHeader title="AI CFO" subtitle="Nakit, katkı kârı ve stok riskleri için analiz ve öneri merkezi."
       breadcrumb={[{label:"Yönetim"},{label:"AI CFO"}]}
       meta={<><Badge variant={config.enabled&&config.releaseApproved?"ok":"neutral"}>{config.enabled&&config.releaseApproved?"AI açık":"AI kapalı"}</Badge><Badge>{config.monitorEnabled?"Monitor açık":"Monitor kapalı"}</Badge><span className="text-xs">Son çalışma: {time(data?.run?.generatedAt)} · {data?.run?.status??"Henüz çalışmadı"}</span></>} />
+    {process.env.VERCEL_ENV==="preview"&&<Card className="p-4"><a href="/api/admin/ai-cfo/acceptance" className="underline">Güncel kabul karşılaştırmasını JSON olarak çalıştır</a><p className="mt-1 text-xs">Admin oturumu gerekir. Salt okunur; canlıya geçiş onayı değildir.</p></Card>}
     {!data&&<Card className="p-4"><p>AI CFO verisi yüklenemedi. Migration ve database bağlantısını kontrol edin.</p></Card>}
     {data&&!s&&<Card className="p-4">Henüz snapshot yok. Deterministic monitor yapılandırıldıktan sonra ilk sonuç burada görünecek.</Card>}
     {s&&<><h2 className="text-lg font-semibold">Company Pulse</h2><p className="text-xs text-[var(--text-muted)]">Snapshot: {time(s.generatedAt)}. Bilinmeyen maliyetler sıfır sayılmaz. Katkı marjı KDV dahil brüt tutar üzerinden hesaplanır.</p>

@@ -1,16 +1,12 @@
+import { cfoAcceptanceContext } from "../lib/cfo-agent/acceptance-profile";
+import { buildCfoAcceptanceReport } from "../lib/cfo-agent/acceptance-report";
 import { Client } from "pg";
 import { writeCfoDiagnostic } from "../lib/cfo-agent/diagnostic-report";
-import { buildCfoAgentSnapshot } from "../lib/cfo-agent/snapshot";
-import { getCfoConfig } from "../lib/cfo-agent/config";
-import { evaluateCfoAcceptance } from "../lib/cfo-agent/acceptance";
-import { hashSnapshot } from "../lib/cfo-agent/evidence";
 import { cfoReaderOptions, checkCfoReaderAccess, cfoAccessFailure } from "../lib/cfo-agent/access-check";
-import { assertReviewedCfoDefinitions, cfoAcceptanceContext, REVIEWED_CFO_SOURCE_BINDINGS } from "../lib/cfo-agent/acceptance-profile";
-import { cfoAcceptanceDiagnostics } from "../lib/cfo-agent/acceptance-diagnostics";
 import type { ReadSource,Row } from "../lib/cfo-agent/sources";
 
 async function main() {
-  const {mode,asOf,profile,isCurrentComparison}=cfoAcceptanceContext(process.env);
+  const {isCurrentComparison}=cfoAcceptanceContext(process.env);
   const client=new Client({...cfoReaderOptions(process.env.AI_CFO_READ_DATABASE_URL),query_timeout:30000});
   try {
     await client.connect();
@@ -19,31 +15,8 @@ async function main() {
     if(access.productRowsVisible!==true || access.missingOrUnreadable.length)throw new Error("business_sources_not_visible");
     await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
     await client.query("SET LOCAL statement_timeout='30s'");
-    if(profile) {
-      const definitions=await db.query(`select c.relname::text as source,pg_get_viewdef(c.oid,true) as definition
-        from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
-        and c.relkind in ('v','m') and c.relname=any($1::text[])`,["cfo_satis_birim_duz","cfo_satis_siparis"]);
-      assertReviewedCfoDefinitions(definitions);
-    }
-    const config=getCfoConfig({...process.env,AI_CFO_ENABLED:"false",AI_CFO_MONITOR_ENABLED:"false",AI_CFO_PROVIDER:"disabled",
-      ...(profile?{AI_CFO_CANONICAL_SALES_VALIDATED:"true"}:{})});
-    const snapshot=await buildCfoAgentSnapshot({db,now:new Date(asOf),config,compact:false,
-      ...(profile&&!process.env.AI_CFO_SOURCE_PROFILE?{bindings:REVIEWED_CFO_SOURCE_BINDINGS}:{})});
-    const checks=evaluateCfoAcceptance(snapshot),passed=checks.filter(c=>c.passed).length;
-    const diagnostics=isCurrentComparison?await cfoAcceptanceDiagnostics(db,asOf):undefined;
-    const nativeProjection=snapshot.cash.minimumProjectedPosition.value!=null&&process.env.AI_CFO_SOURCE_PROFILE==='alfas_2026_10_04'
-      ?await db.query(`select min(pozisyon) as minimum_position,count(*)::int as days from public.cfo_nakit_projeksiyon(120)`):null;
-    const adapterVerification={sourceProfile:process.env.AI_CFO_SOURCE_PROFILE??null,
-      reviewedSourceChanged:snapshot.dataQuality.missingFields.filter(f=>f.startsWith('reviewed_source_changed:')),
-      minimumProjectedPosition:snapshot.cash.minimumProjectedPosition,nativeProjection,
-      banksFresh:snapshot.cash.banksFresh,priceFloorsKnown:snapshot.products.filter(p=>p.priceFloor.value!=null).length,
-      priceFloorsUnknown:snapshot.products.filter(p=>p.priceFloor.value==null).length,
-      setsWithUnknownComponents:snapshot.dataQuality.missingFields.filter(f=>f.startsWith('set_component_unknown:')).length};
-    const report={mode,reference:"ALFAS-2026-10-03",testedAt:new Date().toISOString(),asOf,snapshotHash:hashSnapshot(snapshot),calculationVersion:snapshot.calculationVersion,passed,total:12,checks,
-      productionApproval:false,
-      ...(diagnostics?{diagnostics}:{}),
-      adapterVerification,
-      dataQuality:snapshot.dataQuality,limitations:"Current mutable balances/inventory cannot reconstruct a historical ledger. Run against the reference database snapshot."};
+    const report=await buildCfoAcceptanceReport(db,process.env);
+    const {checks,passed}=report;
     const output=process.env.AI_CFO_ACCEPTANCE_REPORT_PATH??"/tmp/ai-cfo-acceptance.json";
     await writeCfoDiagnostic(output,report);
     console.log(`${isCurrentComparison?"Current ledger comparison (NOT release acceptance)":"Live acceptance"}: ${passed}/12. No migration, flag, AI or business data changed.`);
