@@ -9,6 +9,7 @@
  * ⛔ Yazma yalnız `cfo_banka_hareket`'e INSERT'tir (ON CONFLICT DO NOTHING).
  * UPDATE/DELETE yok, `cfo_bank_account.balanceTry` bu uçtan HİÇ değişmez.
  */
+import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { verifyPreview } from "@/lib/banka/confirmation";
 import { BankPdfError } from "@/lib/banka/pdf";
 import { NextResponse } from "next/server";
@@ -18,7 +19,7 @@ import { hazirla, kayitlaraDonustur, buildOnizleme, yaz } from "@/lib/banka/impo
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   const g = await kapi(req);
@@ -77,6 +78,7 @@ export async function POST(req: Request) {
       atlananSayisi: h.atlanan.length,
     });
 
+    scheduleCfoCycle("bank_import");
     return NextResponse.json({
       ok: true,
       eklenen: sonuc.eklenen,

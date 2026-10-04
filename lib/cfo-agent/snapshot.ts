@@ -1,4 +1,5 @@
 import "server-only";
+import { skuIndex, foldedSkuSql } from "./sku";
 import { readCfoNotebook } from "./notebook";
 import type { CfoConfig } from "./config";
 import { getCfoConfig } from "./config";
@@ -135,8 +136,15 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     from "PurchaseOrderItem" i join "PurchaseOrder" p on p.id=i."orderId"
     where p.status::text in ('DRAFT','CONFIRMED','ORDERED','SHIPPED') group by i."productId"`);
   const pos=new Map(po.map(r=>[String(r.product_id),r])); snapshot.procurement.openOrders=po.reduce((s,r)=>s+(n(r,"open_orders")??0),0);
-  const products=await db.query(`select id,sku,"stockQuantity" as stock,"unitCostTry" as cost,"weightKg" as weight,"productKind"::text as kind,"mainProductId" as parent,"sellingPriceTry" as price from "Product" where "isActive"`);
+  const catalogProducts=await db.query(`select id,sku,"isActive" as active,"stockQuantity" as stock,"unitCostTry" as cost,"weightKg" as weight,"productKind"::text as kind,"mainProductId" as parent,"sellingPriceTry" as price from "Product"`);
+  const products=catalogProducts.filter(p=>p.active!==false);
   const bySku=new Map(products.map(r=>[String(r.sku),r]));
+  const productLookup=skuIndex(catalogProducts,r=>String(r.sku));
+  const velocityLookup=skuIndex(velocityRows??[],r=>String(r.sku));
+  const xmlLookup=skuIndex(velocityUnits,r=>String(r.sku));
+  const inboundLookup=skuIndex(inboundRows??[],r=>String(r.sku));
+  const xmlFresh=snapshot.dataQuality.sourceWatermarks.find(w=>w.source==="XML")?.stale===false;
+  const channelFresh=(channel:string)=>snapshot.dataQuality.sourceWatermarks.find(w=>w.source===({TRENDYOL:"Trendyol",HEPSIBURADA:"Hepsiburada",INVENTORY:"XML"}[channel]??"Entegra"))?.stale===false;
   let knownValue=D(0),retailValue=D(0),unknownCost=0,unknownRetail=0;
   for(const p of products) {
     const stock=n(p,"stock");if(stock==null)continue;
@@ -165,12 +173,12 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     const shippingAllocation=orderAllocationSql(tariff,`s.${sales.tutar_duz}`,"s.order_line_gross","s.order_complete");
     const packaging="case when s.order_weight_known then case when s.order_weight<=0.5 then 10.00 else 18.74 end + 12.29 + 10.00 end";
     const otherAllocation=orderAllocationSql(packaging,`s.${sales.tutar_duz}`,"s.order_line_gross","s.order_complete");
-    const rows=await db.query(`${PERIOD_CTE}, canonical_base as (select s.*,count(*) over(partition by ${sales.channel},${sales.orderNumber},${sales.modelNumber}) as copies,
+    const rows=await db.query(`${PERIOD_CTE}, product_keys as (select pr.*, count(*) over(partition by ${foldedSkuSql("pr.sku")}) as key_count from "Product" pr), canonical_base as (select s.*,count(*) over(partition by ${sales.channel},${sales.orderNumber},${sales.modelNumber}) as copies,
       sum(s.${sales.tutar_duz}::numeric) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_line_gross,
       bool_and(s.${sales.guven} is not null and s.${sales.guven}::text not in ('KARMA','BILINMIYOR')) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_complete,
       bool_and(pr."weightKg" is not null) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_weight_known,
       sum(pr."weightKg"*s.${sales.adet_duz}) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_weight
-      from cfo_satis_birim_duz s left join "Product" pr on pr.sku=s.${sales.modelNumber}
+      from cfo_satis_birim_duz s left join product_keys pr on pr.sku=s.${sales.modelNumber} or (pr.key_count=1 and ${foldedSkuSql("pr.sku")}= ${foldedSkuSql("s."+sales.modelNumber)} and not exists(select 1 from "Product" exact where exact.sku=s.${sales.modelNumber}))
       where ${salesLocalTime}>=date_trunc('day',$1::timestamptz at time zone 'Europe/Istanbul')-interval '65 days' and ${sales.adet_duz}>0),
       commission_samples as (select s.${sales.channel} as channel,s.${sales.modelNumber} as sku,percentile_cont(0.5) within group(order by s.${sales.commissionTry}::numeric/nullif(s.${sales.totalAmountTry}::numeric,0)) as median_rate
       from canonical_base s where s.${sales.commissionTry}>0 and s.${sales.totalAmountTry}>0 group by 1,2),
@@ -217,7 +225,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     const profits:{channel:string;sku:string;period:string;profit:ReturnType<typeof contribution>}[]=[];
     // Previous rows must be evaluated first; association is by SKU AND channel.
     for(const r of [...rows].sort((a,b)=>a.period==="previous"?-1:b.period==="previous"?1:0)) {
-      const sku=String(r.sku),p=bySku.get(sku),channel=String(r.channel),units=n(r,"units"),revenue=n(r,"revenue"),ch=channelMeasurements.get(channel),cm=skuMeasurements.get(`${channel}:${sku}`);
+      const sku=String(r.sku),p=productLookup.get(sku),channel=String(r.channel),units=n(r,"units"),revenue=n(r,"revenue"),ch=channelMeasurements.get(channel),cm=skuMeasurements.get(`${channel}:${sku}`);
       const trusted=(n(r,"untrusted")??0)===0&&(n(r,"duplicates")??0)===0&&config.canonicalValidated;
       const isSet=sets.has(sku)||p?.kind==="LISTING_PACKAGE"||setSkus.has(sku);
       const cost=isSet?(sets.get(sku)??unknown("set_components_unavailable")):metric(p?.cost,true,"current_cost_estimate");
@@ -233,18 +241,18 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       snapshot.dataQuality.excludedUntrustedRows+=n(r,"untrusted")??0;
       snapshot.dataQuality.duplicateCanonicalRows+=n(r,"duplicates")??0;
       if(isSet&&cost.value==null)missing.push(`set_component_unknown:${sku}`);
-      const v=velocities.get(sku),inb=inbound.get(sku),open=p?pos.get(String(p.id)):undefined;
-      const excluded=!p||(p&&isDummyStock(n(p,"stock")??0))||exceptions.has(sku)||!exceptionRows;
+      const v=velocityLookup.get(sku),inb=inboundLookup.get(sku),open=p?pos.get(String(p.id)):undefined;
+      const excluded=!p||p.active===false||(p&&isDummyStock(n(p,"stock")??0))||exceptions.has(sku)||!exceptionRows;
       const stockDays=excluded?unknown("dummy_or_unverified_inventory"):metric(v?.tukenme_gun_ihtiyatli,true,"cautious_stock_movement_estimate");
       const xmlVelocity=excluded?unknown("dummy_or_unverified_inventory"):metric(v?.gunluk_30g_ihtiyatli,true,"cautious_stock_movement_estimate");
-      const salesUnits30=trusted?metric(unitsBySku.get(sku)):unknown("untrusted_sku_grain"),xmlUnits30=xmlUnits.get(sku)??unknown("xml_units_unavailable");
+      const salesUnits30=trusted?metric(unitsBySku.get(sku)):unknown("untrusted_sku_grain"),xmlUnits30=xmlLookup.get(sku)?metric(xmlLookup.get(sku)!.units,true,"xml_movement_not_confirmed_sales"):unknown("xml_units_unavailable");
       const demand=cautiousDemand(salesUnits30,xmlUnits30,xmlVelocity,snapshot.sales.last30Days.complete);
       const velocity=demand.velocity;
       const prev=rows.find(x=>x.period==="previous"&&x.sku===r.sku&&x.channel===r.channel);
       const prevProfit=profits.find(x=>x.period==="previous"&&x.channel===channel&&x.sku===sku)?.profit;
       const bands=shippingBandsFor(bandsRows??[],channel,day);
       const floor=channel==="MIRAKL_KOCTAS"?unknown("commission_unavailable"):priceFloor(cost.value,commission.value,n(p??{},"weight"),bands);
-      const signal:ProductSignal={sku,channel,isSet,trusted,sourceFresh:financialFresh,cost,avgPrice,commissionRate:commission,commissionSamples:n(cm??{},"accepted")??0,priceFloor:floor,
+      const signal:ProductSignal={sku,channel,isSet,trusted,sourceFresh:channelFresh(channel),financialSourceFresh:financialFresh,inventorySourceFresh:xmlFresh,catalogSku:p?String(p.sku):undefined,cost,avgPrice,commissionRate:commission,commissionSamples:n(cm??{},"accepted")??0,priceFloor:floor,
         zeroCommissionFloor:priceFloor(cost.value,0,n(p??{},"weight"),bands),
         unitProfit:isSet?(cost.value==null?unknown("set_component_unknown"):setScopes.has(sku)&&!setScopes.get(sku)!.has(channel)?unknown("set_profit_channel_unavailable"):setProfits.get(sku)??unknown("set_profit_unavailable")):metric(divide(profit.contributionProfit.value,units),profit.contributionProfit.estimated),
         previousUnitProfit:isSet?unknown("set_historical_profit_unavailable"):metric(divide(prevProfit?.contributionProfit.value??null,n(prev??{},"units"))),contribution:isSet?unknown("set_profit_use_price_view"):profit.contributionProfit,
@@ -271,12 +279,12 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   }
   // Inventory-only SKUs also need cautious stock coverage; a missing Entegra
   // row must never make a stockout disappear from the deterministic monitor.
-  const represented=new Set(snapshot.products.map(p=>p.sku));
+  const represented=new Set(snapshot.products.map(p=>p.catalogSku??p.sku));
   for(const [sku,p] of bySku)if(!represented.has(sku)) {
     const v=velocities.get(sku),inb=inbound.get(sku),open=pos.get(String(p.id));
     if(!v||isDummyStock(n(p,"stock")??0)||exceptions.has(sku)||!exceptionRows||p.kind==="LISTING_PACKAGE"||setSkus.has(sku))continue;
     const xmlVelocity=metric(v.gunluk_30g_ihtiyatli,true,"cautious_stock_movement_estimate"),xmlUnits30=xmlUnits.get(sku)??unknown("xml_units_unavailable"),u=unknown("canonical_sku_sales_unavailable");
-    snapshot.products.push({sku,channel:"INVENTORY",isSet:false,trusted:true,sourceFresh:false,cost:metric(p.cost,true),avgPrice:u,commissionRate:u,commissionSamples:0,priceFloor:u,zeroCommissionFloor:u,
+    snapshot.products.push({sku,channel:"INVENTORY",isSet:false,trusted:true,sourceFresh:xmlFresh,financialSourceFresh:false,inventorySourceFresh:xmlFresh,catalogSku:sku,cost:metric(p.cost,true),avgPrice:u,commissionRate:u,commissionSamples:0,priceFloor:u,zeroCommissionFloor:u,
       unitProfit:u,previousUnitProfit:u,contribution:u,previousMargin:u,margin:u,salesUnits30:u,xmlUnits30,salesVelocity:u,xmlVelocity,velocityGapPct:u,velocity:xmlVelocity,
       stockDays:metric(v.tukenme_gun_ihtiyatli,true),stockQty:n(p,"stock"),inboundQty:inb?n(inb,"yolda_adet"):inboundRows?0:null,inboundEta:iso(inb?.en_yakin_eta),
       inboundBeforeStockout:n(v,"tukenme_gun_ihtiyatli")!=null&&inb?.en_yakin_eta!=null&&Date.parse(String(inb.en_yakin_eta))<=now.getTime()+n(v,"tukenme_gun_ihtiyatli")!*86400000,

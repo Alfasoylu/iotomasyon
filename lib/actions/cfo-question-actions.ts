@@ -14,14 +14,15 @@
  *      bir daha sorulmaz.
  */
 
+import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { ActionResult } from "@/types/actions";
-import { getStorageConfig, uploadObject } from "@/lib/storage/supabase-storage";
+import { getStorageConfig } from "@/lib/storage/supabase-storage";
 
-const BUCKET = "cfo-files";
+import { uploadPrivateCfoFile } from "@/lib/cfo-agent/private-files";
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 function revalidateQ() {
@@ -102,13 +103,13 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
         }
         const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(-80);
         const path = `${id}/${Date.now()}_${safe}`;
-        const res = await uploadObject(storage.config, BUCKET, path, file);
+        const res = await uploadPrivateCfoFile(storage.config, path, file);
         if (!res.ok) {
           failures.push(`"${file.name}" yüklenemedi: ${res.reason}`);
           continue;
         }
         uploaded.push({
-          url: res.publicUrl,
+          url: res.privateRef,
           fileName: file.name,
           mimeType: file.type || "application/octet-stream",
           sizeBytes: file.size,
@@ -156,6 +157,7 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
     });
   });
 
+  scheduleCfoCycle("question_answer");
   revalidateQ();
   if (failures.length > 0) {
     return {

@@ -17,6 +17,7 @@ export type SalesPeriod = { grossRevenue: Metric; orders: number | null; aov: Me
 export type Comparison = { entity: string; current: Metric; previous: Metric; complete: boolean; sourceFresh: boolean; period: string };
 export type ProductSignal = {
   sku: string; channel: string; isSet: boolean; trusted: boolean; sourceFresh: boolean;
+  financialSourceFresh?: boolean; inventorySourceFresh?: boolean; catalogSku?: string;
   cost: Metric; avgPrice: Metric; commissionRate: Metric; commissionSamples: number; priceFloor: Metric;
   zeroCommissionFloor: Metric; unitProfit: Metric; previousUnitProfit: Metric;
   contribution: Metric; previousMargin: Metric; margin: Metric;

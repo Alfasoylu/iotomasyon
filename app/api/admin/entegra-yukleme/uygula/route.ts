@@ -6,6 +6,7 @@
  * yazılmaz. Önizlenen dosya ile yazılan dosyanın aynı olduğu böyle garanti
  * edilir (kullanıcı arada başka dosya seçmiş olabilir).
  */
+import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { kapi, eksikSutunYaniti } from "@/lib/entegra/http";
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
       },
     });
 
+    scheduleCfoCycle("entegra_import");
     return NextResponse.json({
       ok: true,
       yeni: sonuc.yeni,

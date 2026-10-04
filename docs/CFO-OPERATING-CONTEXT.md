@@ -19,3 +19,7 @@ Reuse the existing database and scoped `cfo_acceptance_reader` role. Its grants 
 Configure `CFO_READER_DATABASE_URL` privately in the coding environment, using the existing Supabase session-pooler reader URI accepted by `cfoReaderOptions`. Run `node --conditions=react-server --import tsx scripts/cfo-read-context.ts`. The CLI verifies restricted role/TLS/default read-only mode, queries inside a repeatable-read/read-only transaction, and writes the business report only to a mode-0600 file in `/tmp`. Standard output contains a local path or fixed diagnostic code; no URI, password, notebook contents or financial results are logged. The tool cannot perform bank repairs; those need separately authorized application writes.
 
 Existing TRY, USD and import USD cost fields are included separately in the private context. If a cost is already recorded but absent from the financial signal, the report asks for matching/dated conversion rather than cost re-entry. USD values are never silently treated as TRY.
+
+## Working-loop integration
+
+The separate `/cfo/calisan` workflow now persists prioritized research, deduplicated questions, reviewed proposals and reported outcomes. This context endpoint remains read-only. SKU aliases are uniquely matched without punctuation/digit changes, explicit product procurement policy is separate from active status, and native-channel versus canonical-financial/XML freshness is reported separately. Notebook confidence comparison accepts case variants. See CFO-WORKFLOW.md for Hobby scheduling, authority boundaries and verification.

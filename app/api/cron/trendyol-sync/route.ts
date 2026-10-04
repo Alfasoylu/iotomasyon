@@ -14,6 +14,7 @@
  * cron calls. We validate it to prevent public triggering.
  */
 
+import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authorizeCron } from "@/lib/cron-auth";
@@ -28,6 +29,7 @@ export const maxDuration = 300; // 5 min
 export async function GET(req: NextRequest) {
   const denied = authorizeCron(req);
   if (denied) return denied;
+  scheduleCfoCycle("daily_trendyol");
 
   const config = await prisma.trendyolConfig.findFirst();
   if (!config || !config.isEnabled) {

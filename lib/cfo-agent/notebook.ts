@@ -20,7 +20,7 @@ export async function readCfoNotebook(db: ReadSource, now: Date): Promise<CfoNot
         category: String(row.category), dataTag: String(row.dataTag), source: row.source == null ? null : String(row.source),
         pinned: row.pinned === true, updatedAt: new Date(String(row.updatedAt)).toISOString(),
         reviewBy: row.reviewBy == null ? null : new Date(String(row.reviewBy)).toISOString(),
-        needsReview: row.dataTag !== 'KESIN' || (row.reviewBy != null && new Date(String(row.reviewBy)) < now),
+        needsReview: String(row.dataTag).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase() !== 'KESIN' || (row.reviewBy != null && new Date(String(row.reviewBy)) < now),
         bodyTruncated: row.truncated === true })) };
   } catch { return unavailable; }
 }
