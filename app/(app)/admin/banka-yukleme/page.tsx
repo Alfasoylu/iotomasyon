@@ -15,6 +15,7 @@ export default async function BankUploadPage() {
   return <div className="space-y-6">
     <h1 className="text-2xl font-semibold">Banka yükleme</h1>
     <p>Ekstrenizi yükleyin, hareketleri inceleyin ve banka bakiyesini ayrı bir onayla güncelleyin. Onaydan önce hiçbir kayıt değişmez.</p>
+    <p className="text-sm">Hareket aktarımı TL ekstreleri içindir. Döviz hareketleri, para birimi ve tarihli kur doğrulanmadan TL olarak kaydedilmez. Daha önce kısmen yüklenen aynı PDF, yeni önizleme alınarak tamamlanabilir.</p>
     {accounts.length ? <BankTools accounts={accounts} /> : <p>Önce aktif bir banka hesabı ekleyin.</p>}
     <a href="/api/admin/banka-yukleme/inceleme" className="inline-block rounded border border-[var(--border-default)] p-3 text-sm">Banka inceleme raporunu aç (JSON)</a>
     <h2 className="text-lg font-semibold">Son banka işlemleri</h2>

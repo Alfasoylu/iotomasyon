@@ -1,4 +1,5 @@
 /** Banka yükleme uçlarının ortak kapısı: yetki + dosya + banka + (varsa) elle eşleme okuma. */
+import { assertTryCurrency } from "./currency";
 import { NextResponse } from "next/server";
 import { getCurrentSession, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -67,8 +68,11 @@ export async function kapi(req: Request): Promise<Kapi> {
     return { ok: false, res: NextResponse.json({ error: "Banka seçilmedi." }, { status: 400 }) };
   }
 
-  const accounts = await prisma.cfoBankAccount.findMany({ where: { name: banka, isActive: true }, select: { id: true } });
+  const accounts = await prisma.cfoBankAccount.findMany({ where: { name: banka, isActive: true }, select: { id: true, accountType: true } });
   if (accounts.length !== 1) return { ok: false, res: NextResponse.json({ error: "Tek bir aktif banka hesabı seçin." }, { status: 400 }) };
+
+  try { assertTryCurrency([], banka, accounts[0].accountType); }
+  catch (error) { return { ok: false, res: NextResponse.json({ error: error instanceof Error ? error.message : "Döviz ekstresi TL olarak aktarılamaz." }, { status: 400 }) }; }
 
   let elleEsleme: Partial<Record<BankaAlan, string>> | undefined;
   const mappingRaw = form.get("mapping");

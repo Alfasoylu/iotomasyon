@@ -18,6 +18,19 @@ async function main() {
   assert.throws(() => pdfTable([[]]), BankPdfError);
   assert.throws(() => pdfTable([[positioned("Hesap detayları", 40, 750)]]), BankPdfError);
 
+  const bankHeader = [positioned("Tarih",28,750),positioned("Saat",85,750),positioned("İşlem",142,750),positioned("Kanal",205,750),positioned("Açıklama",276,750),positioned("İşlem Tutarı",452,750),positioned("Bakiye",542,750)];
+  const precise = (text:string,x:number,y:number,width:number):PdfText => ({text,x,y,width});
+  const crowded = pdfTable([[...bankHeader,
+    positioned("Description above",276,730),
+    positioned("04/10/2026",28,716),positioned("Transfer",276,716),precise("word",386,716,15),precise("-100,00",467,716,19),precise("TL",488,716,8),precise("50,00",542,716,20),
+    positioned("Next description",276,700),positioned("03/10/2026",28,686),
+    precise("-12345678",374,686,39),precise("- 20,00",467,686,19),precise("TL",488,686,8),precise("70,00",542,686,20),
+  ]]);
+  assert.equal(crowded.tumSatirlar[0][4],"Description above Transfer word");
+  assert.equal(crowded.tumSatirlar[1][4],"Next description -12345678");
+  assert.equal(crowded.tumSatirlar[0][5],"-100,00 TL");
+  assert.equal(crowded.tumSatirlar[1][5],"- 20,00 TL");
+
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
   const font = await pdf.embedFont(await readFile("node_modules/geist/dist/fonts/geist-sans/Geist-Regular.ttf"), {subset:true});

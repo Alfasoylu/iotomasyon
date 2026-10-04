@@ -34,10 +34,12 @@ function headerCells(line: PdfText[]) {
 }
 
 /** Recover positioned table columns; never guess transaction amounts from free-form text. */
-export function pdfTable(pages: PdfText[][]): HamAyristirma {
+export function pdfTable(pages: PdfText[][], legacy = false): HamAyristirma {
+  const metadata: string[] = [];
   let names: string[] = [];
   const records: string[][] = [];
   let textCount = 0;
+  let pendingDescription = "";
   let previousColumns: ReturnType<typeof headerCells> | null = null;
   for (const page of pages) {
     textCount += page.length;
@@ -51,24 +53,33 @@ export function pdfTable(pages: PdfText[][]): HamAyristirma {
         if (names.length && JSON.stringify(nextNames.map(normalizeHeader)) !== JSON.stringify(names.map(normalizeHeader))) throw new BankPdfError("PDF sayfalarında farklı tablolar var. Her hesabın ekstresini ayrı yükleyin.");
         names = nextNames; columns = candidate; previousColumns = candidate; continue;
       }
-      if (!columns) continue;
+      if (!columns) { metadata.push(line.map(item => item.text).join(" ")); continue; }
       const cells = columns.map(() => "");
       for (const item of line) {
         let col = 0;
         const numeric = /^[+\-−]?\s*[\d.,]+\s*(?:TL|TRY|₺)?-?$/i.test(item.text.trim());
         const position = numeric ? item.x + item.width : item.x;
-        while (col + 1 < columns.length && position >= (numeric ? (columns[col].right + columns[col + 1].right) / 2 : (columns[col].x + columns[col + 1].x) / 2)) col++;
+        while (col + 1 < columns.length && position >= (numeric ? (columns[col].right + columns[col + 1].right) / 2 : legacy ? (columns[col].x + columns[col + 1].x) / 2 : columns[col + 1].x - 2)) col++;
+        if (!legacy && numeric && item.x < columns[col].x && Math.abs(position - columns[col].right) > 30) {
+          col = 0;
+          while (col + 1 < columns.length && item.x >= columns[col + 1].x - 2) col++;
+        }
         cells[col] = `${cells[col]} ${item.text}`.trim();
       }
       const fields = otomatikEsle(names).eslesen;
       const dateIndex = names.indexOf(fields.tarih!);
       const date = cells[dateIndex];
+      const descriptionIndex = names.indexOf(fields.aciklama!);
+      // This table places wrapped descriptions ABOVE the transaction baseline.
+      const descriptionAbove = !legacy && names.includes("Saat") && names.includes("İşlem") && names.includes("Kanal");
       if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}(?:\s|$)/.test(date) || /^\d{4}-\d{2}-\d{2}(?:\s|$)/.test(date)) {
+        if (pendingDescription) { cells[descriptionIndex] = `${pendingDescription} ${cells[descriptionIndex]}`.trim(); pendingDescription = ""; }
         records.push(cells);
         if (records.length > 20000) throw new BankPdfError("PDF en fazla 20.000 hareket içerebilir.");
+      } else if (descriptionAbove && cells[descriptionIndex] && cells.every((cell, index) => index === descriptionIndex || !cell)) {
+        pendingDescription = `${pendingDescription} ${cells[descriptionIndex]}`.trim();
       } else if (records.length) {
         // Only an otherwise empty description column can continue a transaction.
-        const descriptionIndex = names.indexOf(fields.aciklama!);
         if (cells[descriptionIndex] && cells.every((cell, index) => index === descriptionIndex || !cell)) {
           const previous = records[records.length - 1];
           previous[descriptionIndex] += ` ${cells[descriptionIndex]}`;
@@ -78,10 +89,10 @@ export function pdfTable(pages: PdfText[][]): HamAyristirma {
   }
   if (!textCount) throw new BankPdfError("Bu PDF taranmış bir görüntü; metin okunamıyor. Bankadan metin içeren PDF, XLSX veya CSV indirin.");
   if (!names.length || !records.length) throw new BankPdfError("PDF'de okunabilir hesap hareketleri tablosu bulunamadı. Hesap hareketleri PDF'sini veya XLSX/CSV dosyasını yükleyin.");
-  return { basliklar: names, ilkSatirlar: records.slice(0, 5), tumSatirlar: records, basliklarSatiriIndex: 0 };
+  return { metadata, basliklar: names, ilkSatirlar: records.slice(0, 5), tumSatirlar: records, basliklarSatiriIndex: 0 };
 }
 
-export async function readBankPdf(buffer: Buffer): Promise<HamAyristirma> {
+export async function readBankPdf(buffer: Buffer, legacy = false): Promise<HamAyristirma> {
   if (!buffer.subarray(0, 1024).includes(Buffer.from("%PDF-"))) throw new BankPdfError("Dosya geçerli bir PDF değil.");
   let pdf: Awaited<ReturnType<typeof getDocumentProxy>> | undefined;
   try {
@@ -99,7 +110,7 @@ export async function readBankPdf(buffer: Buffer): Promise<HamAyristirma> {
       if (pages.reduce((total, p) => total + p.length, 0) + items.length > 250000) throw new BankPdfError("PDF içeriği çok büyük. Daha kısa dönemli ekstre yükleyin.");
       pages.push(items); page.cleanup();
     }
-    return pdfTable(pages);
+    return pdfTable(pages, legacy);
   } catch (error) {
     if (error instanceof BankPdfError) throw error;
     if (error instanceof Error && error.name === "PasswordException") throw new BankPdfError("PDF şifre korumalı. Bankadan şifresiz ekstre indirin veya şifreyi kaldırıp yeniden yükleyin.");

@@ -7,7 +7,10 @@ import { validateBalance } from "../lib/banka/balance";
 import { writeBalance } from "../lib/banka/write-balance";
 import { signPreview, verifyPreview } from "../lib/banka/confirmation";
 import { statementBalance } from "../lib/banka/statement-balance";
-import { insertSql } from "../lib/banka/sql";
+import { kayitlaraDonustur, filterAlreadyStored } from "../lib/banka/records";
+import { assertTryCurrency } from "../lib/banka/currency";
+import { readBankFile } from "../lib/banka/file";
+import { insertSql, INSERT_COLS } from "../lib/banka/sql";
 
 async function main() {
   assert.equal(toDateOnlyTr("31/02/2026"), null);
@@ -52,6 +55,23 @@ async function main() {
   assert.equal(parsed.satirlar[0].tutarTry, 1234.56);
   assert.equal(parsed.atlanan.length, 1);
 
+  assert.equal(toDecimalTr("- 3.000,00 TL"), -3000);
+  assert.throws(() => assertTryCurrency(["Hesap Numarası USD"]), /USD/);
+  assert.throws(() => assertTryCurrency([], "Example EUR", "Current"), /EUR/);
+  assert.throws(() => assertTryCurrency([], "Example", "Vadesiz DÖVİZ"), /Döviz/);
+  const fx = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(fx, XLSX.utils.aoa_to_sheet([
+    ["Hesap Numarası", "Example USD"], ["Tarih","Açıklama","İşlem Tutarı","Bakiye"],
+    ["04/10/2026","Synthetic transfer",10,20],
+  ]), "Hareketler");
+  await assert.rejects(() => readBankFile(XLSX.write(fx,{type:"buffer",bookType:"xlsx"}),"fx.xlsx"), /USD/);
+  const tl = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(tl, XLSX.utils.aoa_to_sheet([
+    ["Tarih","Açıklama","İşlem Tutarı (TL)","Bakiye (TL)"],
+    ["04/10/2026","Synthetic transfer",10,20],
+  ]), "Hareketler");
+  assert.equal((await readBankFile(XLSX.write(tl,{type:"buffer",bookType:"xlsx"}),"tl.xlsx")).satirlar.length,1);
+
   const db = new PGlite();
   try {
     await db.exec(`CREATE TABLE accounts (id text primary key, name text, active boolean, balance numeric, updated timestamptz, asof timestamptz);
@@ -84,6 +104,24 @@ async function main() {
     await db.query(insertSql(), values);
     await db.query(insertSql(), values);
     assert.equal((await db.query("SELECT * FROM cfo_banka_hareket")).rows.length, 1, "same statement row is not inserted twice");
+    // Missing legacy PDF rows changed daily ordinals; preserve the original stored identities.
+    const currentRows = Array.from({length:250},(_,i) => ({tarih:new Date("2026-10-04T00:00:00Z"),valor:null,
+      aciklama:`Synthetic description ${i}`,tutarTry:i+1,bakiyeTry:i+100,karsiTaraf:null,refNo:null,hesap:null,dosyaSatiri:i+1}));
+    const legacyRows = currentRows.filter((_,i)=>i%2===0 || i===1 || i===3 || i===5).map(row=>({...row,aciklama:`Old truncated ${row.dosyaSatiri}`}));
+    const oldRecords = kayitlaraDonustur(legacyRows,"Synthetic recovery","synthetic.pdf");
+    const corrected = kayitlaraDonustur(currentRows,"Synthetic recovery","synthetic.pdf",legacyRows);
+    const insert = async (rows: typeof corrected) => {
+      if(rows.length) await db.query(insertSql(),INSERT_COLS.map(c=>rows.map(row=>c.al({...row,importId:null}))));
+    };
+    await insert(oldRecords);
+    const hashes = new Set(oldRecords.map(row=>row.satirHash));
+    assert.equal(filterAlreadyStored(corrected,hashes).length,122);
+    await insert(filterAlreadyStored(corrected,hashes));
+    const stored = (await db.query<{satir_hash:string}>("SELECT satir_hash FROM cfo_banka_hareket WHERE banka='Synthetic recovery'")).rows;
+    assert.equal(stored.length,250);
+    assert.equal(filterAlreadyStored(corrected,new Set(stored.map(row=>row.satir_hash))).length,0);
+    const altered = kayitlaraDonustur([{...currentRows[0],tutarTry:999}],"Synthetic recovery","synthetic.pdf",legacyRows);
+    assert.equal(altered[0].legacyHash,undefined,"changed money must never be hidden by a legacy identity");
     console.log("Bank safety: dates, money, XLSX, confirmation, stale balances, concurrency, atomic audit and duplicate inserts passed");
   } finally { await db.close(); }
 }
