@@ -25,7 +25,8 @@
     "check:alfashome": "tsx __tests__/alfashome.test.ts",
     "check:banka": "node --import tsx __tests__/banka.test.ts",
     "check:banka:safety": "node --import tsx __tests__/banka-safety.test.ts",
-    "check:banka:pdf": "node --import tsx __tests__/banka-pdf.test.ts"
+    "check:banka:pdf": "node --import tsx __tests__/banka-pdf.test.ts",
+    "check:banka:review": "node --import tsx __tests__/banka-review.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

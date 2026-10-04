@@ -1,5 +1,16 @@
 # Banka yükleme delta günlüğü
 
+## 2026-10-04 — Salt okunur banka inceleme raporu
+
+- Ana oturumda yetkili kullanıcıya banka bazında son yüklemeler, okunamayan satır
+  sayıları, hareket tarih aralıkları, boş/mükerrer hash'ler ve bakiye güncelliği raporlanır.
+- Rapor mevcut bağlantıda READ ONLY / REPEATABLE READ transaction kullanır;
+  banka hareket açıklamaları, dosya adları, kullanıcı e-postaları ve hesap numaraları döndürülmez.
+- Son 30 gündeki en fazla 500 başarılı yükleme incelenir; kapsam sınırı ve okunamayan
+  satır ayrıntılarının saklanmadığı açıkça bildirilir.
+- Gerçek SQL ile kaynak eksikliği, güncellik, bilinmeyen/eski/gelecek bakiyeler,
+  mükerrer/eksik hash, kayıt biçimi ve mahremiyet kontrolleri doğrulandı.
+
 ## 2026-10-04 — Banka PDF desteği
 
 - Metin içeren banka PDF ekstreleri dosya seçimi, önizleme ve onaylı aktarım akışına eklendi.
