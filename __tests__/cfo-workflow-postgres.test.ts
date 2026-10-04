@@ -21,11 +21,15 @@ async function main(){
     assert.equal(first.completed,true);
     assert('answersRead' in first&&first.answersRead===1);
     const heartbeat=await prisma.cfoNote.findUniqueOrThrow({where:{id:HEARTBEAT_ID}});
+    assert.equal(JSON.parse(heartbeat.body).agenda.topic,'cash');
+    assert.equal(await prisma.cfoNote.count({where:{source:'cfo-workflow-journal'}}),1);
     const question=await prisma.cfoQuestion.findUniqueOrThrow({where:{id:'synthetic-answer'}});
     assert.equal(question.processedAt,null,'reading an answer does not financially apply it');
     assert(question.processNote?.startsWith('workflow_read:'));
     const second=await runCfoCycle('test-repeat');
     assert(second.completed&&second.newQuestions===0&&second.changedItems===0&&second.answersRead===0);
+    assert.equal(JSON.parse((await prisma.cfoNote.findUniqueOrThrow({where:{id:HEARTBEAT_ID}})).body).agenda.topic,'sales','next cycle follows saved topic');
+    assert.equal(await prisma.cfoNote.count({where:{source:'cfo-workflow-journal'}}),2);
     await prisma.$transaction(async tx=>{
       await tx.$queryRawUnsafe('select pg_try_advisory_xact_lock(712004,24) as locked');
       assert.deepEqual(await runCfoCycle('test-locked'),{completed:false,reason:'already_running'});

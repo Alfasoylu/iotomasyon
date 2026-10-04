@@ -2,6 +2,7 @@ import { createHash,randomUUID } from 'node:crypto';
 import type { planCfoWork, WorkItem } from './workflow-plan';
 import { workflowId } from './workflow-plan';
 import type { ReadSource, Row } from './sources';
+import { TOPIC_NAMES } from './workflow-memory';
 export const WORK_SOURCE='cfo-workflow-v1';
 export const HEARTBEAT_ID='cfo-workflow-heartbeat-v1';
 export type WorkState='research'|'pending_approval'|'approved'|'rejected'|'completed'|'needs_review'|'resolved'|'withdrawn';
@@ -40,10 +41,13 @@ export async function saveAnswerContext(db:WriteSource,answers:AnswerContext[]){
     source:WORK_SOURCE,kind:'arastirma',note:'Cevap bağlama alındı; maliyet ve finansal tablolar değiştirilmedi.'})));
   return rows.length;
 }
-export async function saveWorkPlan(db:WriteSource,plan:ReturnType<typeof planCfoWork>,trigger:string){
+export type CyclePlan=Omit<ReturnType<typeof planCfoWork>,'agenda'|'orderGate'|'debtForecast'>&Partial<Pick<ReturnType<typeof planCfoWork>,'agenda'|'orderGate'|'debtForecast'>>;
+export async function saveWorkPlan(db:WriteSource,plan:CyclePlan,trigger:string){
   const existing=await db.query<Row>('select id, body from cfo_note where source=$1 and "archivedAt" is null',WORK_SOURCE);
   const map=new Map(existing.map(r=>[String(r.id),r]));let changed=0;
   const writes:{id:string;title:string;body:string}[]=[];const audits:AuditRow[]=[];
+  if(plan.agenda?.questionRanks.length)await db.execute(`update cfo_question q set priority=r.priority from jsonb_to_recordset($1::jsonb) as r(id text,priority integer)
+    where q.id=r.id and q.status='ACIK' and q.id like 'cfo-work-%'`,JSON.stringify(plan.agenda.questionRanks));
   const audit=(title:string,old:unknown,value:unknown)=>audits.push({id:randomUUID(),area:'strateji',item:title,oldValue:old?JSON.stringify(old):null,newValue:JSON.stringify(value),source:WORK_SOURCE,kind:'analiz',note:trigger});
   // A SKU can occur on several channels. Write each stable key once.
   const items=[...new Map(plan.items.map(item=>[workflowId(item.key),item])).values()];
@@ -85,7 +89,24 @@ export async function saveWorkPlan(db:WriteSource,plan:ReturnType<typeof planCfo
   if(JSON.stringify(oldGoals)!==JSON.stringify(plan.goals))audits.push({id:randomUUID(),area:'strateji',item:'CFO hedef gözlemleri',oldValue:oldGoals?JSON.stringify(oldGoals):null,newValue:JSON.stringify(plan.goals),source:WORK_SOURCE,kind:'analiz',note:'Defter gözlemi; gerçekleşmiş kazanç veya tam dönem başarısı değildir.'});
   await saveAudits(db,audits);
   const asked=inserted.length;
-  const heartbeat={version:1,lastSuccessAt:new Date().toISOString(),snapshotAsOf:plan.asOf,trigger,goals:plan.goals,items:items.length,newQuestions:asked,changedItems:changed,schedule:'daily_plus_data_events',automaticFinancialExecution:false};
+  if(plan.agenda){
+    const agenda=plan.agenda;
+    const focus=items.filter(item=>agenda.focusKeys.includes(item.key));
+    const lines=[`Çalışma özeti: ${TOPIC_NAMES[agenda.topic]} · ${trigger}`,
+      `Yapılanlar: önceki çalışma kaydı ve defter okundu; ${agenda.answersReviewed.length} yeni/değişmiş cevap incelendi; ${changed} çalışma kaydı güncellendi; ${asked} yeni soru yazıldı.`,
+      'Tespitler:',...focus.map(item=>`• ${item.title}: ${item.proposal}`),
+      'Aksiyonlar:',...focus.map(item=>`• ${item.requiresApproval?'Onaya sunuldu':'Araştırma/gelecek sipariş listesine kaydedildi'}: ${item.title}`),
+      'Eksikler / beklenenler:',...agenda.waiting.map(text=>`• ${text}`),
+      `Yeni sipariş: ${plan.orderGate?.open?'borç eşiği geçildi; diğer şartlar doğrulanacak':'kapalı; adaylar yalnız gelecek sipariş listesinde'}`,
+      `Tahmini sipariş tarihi: ${plan.debtForecast?.estimatedOrderDate??'hesaplanamıyor; veri eksik veya ufukta eşiğe ulaşılamıyor'}`,
+      `Aynı girdilerle ilerlemeyen döngü sayısı: ${agenda.unchangedCycles}`,
+      `Sonraki çalışma: ${TOPIC_NAMES[agenda.nextTopic]}`,...agenda.nextSteps];
+    await db.execute(`insert into cfo_note(id,title,body,category,"dataTag",source,pinned,"createdAt","updatedAt")
+      values($1,$2,$3,'strateji','TAHMINI','cfo-workflow-journal',false,now(),now())`,
+      'cfo-run-'+randomUUID(),`CFO çalışma ${agenda.runCount} · ${TOPIC_NAMES[agenda.topic]}`,lines.join('\n'));
+  }
+  const heartbeat={version:1,lastSuccessAt:new Date().toISOString(),snapshotAsOf:plan.asOf,trigger,goals:plan.goals,items:items.length,newQuestions:asked,changedItems:changed,
+    agenda:plan.agenda,orderGate:plan.orderGate,debtForecast:plan.debtForecast,schedule:'daily_plus_data_events',automaticFinancialExecution:false};
   await db.execute(`insert into cfo_note(id,title,body,category,"dataTag",source,pinned,"createdAt","updatedAt") values($1,'CFO çalışma döngüsü', $2,'strateji','TAHMINI',$3,false,now(),now())
     on conflict(id) do update set body=excluded.body,"updatedAt"=now()`,HEARTBEAT_ID,JSON.stringify(heartbeat),WORK_SOURCE);
   return {completed:true as const,changedItems:changed,newQuestions:asked,items:items.length};

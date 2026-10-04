@@ -5,8 +5,7 @@
  * kalması demekti. Artık sorular burada durur, cevaplar veritabanında kalıcı olur
  * ve sonraki analizlere girdi olarak akar.
  *
- * Adet limiti YOKTUR (27.08.2026, Alperen kararı). Sıralamayı priority belirler:
- * en önemli soru en üstte. Cevaplardan çıkan kalıcı bilgiler /cfo/defter'e yazılır.
+ * İlk ekranda öncelikli beş soru; diğer sorular sayfalı bekleyen listesinde kalır.
  */
 import Link from "next/link";
 import { MessageCircleQuestion, Paperclip } from "lucide-react";
@@ -40,20 +39,31 @@ function fmtSize(b: number | null) {
   return b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.round(b / 1024)} KB`;
 }
 
-export default async function CfoQuestionsPage() {
+export default async function CfoQuestionsPage({searchParams}: {searchParams:Promise<{page?:string}>}) {
   await requirePermission(PERMISSIONS.CFO_READ);
 
-  const all = await prisma.cfoQuestion.findMany({
-    where: { status: { not: "IPTAL" } },
-    include: { attachments: { orderBy: { uploadedAt: "asc" } } },
-    orderBy: [{ status: "asc" }, { priority: "asc" }, { askedAt: "asc" }],
-    take: 200,
-  });
-
-  const open = all.filter((q) => q.status === "ACIK");
-  const answered = all.filter((q) => q.status === "CEVAPLANDI");
-  const urgent = open.filter((q) => q.priority <= 2).length;
-  const unprocessed = answered.filter((q) => !q.processedAt).length;
+  const params=await searchParams;
+  const parsedPage=Number(params.page??1);
+  const page=Number.isSafeInteger(parsedPage)&&parsedPage>0?Math.min(parsedPage,10000):1;
+  const [top,backlog,answered,openCount,answeredCount,urgent,unprocessed] = await Promise.all([
+    prisma.cfoQuestion.findMany({where:{status:'ACIK'},include:{attachments:true},orderBy:[{priority:'asc'},{askedAt:'asc'},{id:'asc'}],take:5}),
+    prisma.cfoQuestion.findMany({where:{status:'ACIK'},include:{attachments:true},orderBy:[{priority:'asc'},{askedAt:'asc'},{id:'asc'}],skip:5+(page-1)*20,take:20}),
+    prisma.cfoQuestion.findMany({where:{status:'CEVAPLANDI'},include:{attachments:{orderBy:{uploadedAt:'asc'}}},orderBy:{answeredAt:'desc'},take:20}),
+    prisma.cfoQuestion.count({where:{status:'ACIK'}}),
+    prisma.cfoQuestion.count({where:{status:'CEVAPLANDI'}}),
+    prisma.cfoQuestion.count({where:{status:'ACIK',priority:{lte:2}}}),
+    prisma.cfoQuestion.count({where:{status:'CEVAPLANDI',processedAt:null,OR:[{processNote:null},{NOT:{processNote:{startsWith:'workflow_read:'}}}]}}),
+  ]);
+  const questionRow=(q:(typeof top)[number])=>{
+    const p=PRIO.find(x=>x.n===q.priority)??PRIO[2];
+    return <li key={q.id} className="rounded-lg border border-[var(--border)] p-4">
+      <div className="mb-1 flex flex-wrap items-center gap-2"><Badge variant={p.variant}>{p.label}</Badge>
+        <Badge variant="neutral">{AREA_TR[q.area]??q.area}</Badge><span className="text-[11px] text-[var(--text-muted)]">{fmtDate(q.askedAt)}</span>
+        <span className="ml-auto"><CancelButton questionId={q.id}/></span></div>
+      <p className="text-sm font-medium text-[var(--text-primary)]">{q.question}</p>
+      {q.why&&<p className="mt-1 text-xs text-[var(--text-muted)]"><strong>Neden gerekiyor:</strong> {q.why}</p>}
+      <AnswerForm questionId={q.id}/></li>;
+  };
 
   return (
     <>
@@ -65,52 +75,34 @@ export default async function CfoQuestionsPage() {
 
       <Card className="mb-6 p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <Badge variant={urgent > 0 ? "danger" : "info"}>{open.length} açık soru</Badge>
+          <Badge variant={urgent > 0 ? "danger" : "info"}>{openCount} açık soru</Badge>
           {urgent > 0 && <Badge variant="warn">{urgent} tanesi acil/yüksek</Badge>}
-          <Badge variant="neutral">{answered.length} cevaplanmış</Badge>
+          <Badge variant="neutral">{answeredCount} cevaplanmış</Badge>
           {unprocessed > 0 && <Badge variant="warn">{unprocessed} CFO işlemedi</Badge>}
           <Link href="/cfo/defter" className="ml-auto text-xs text-[var(--accent)] hover:underline">
             Not Defteri →
           </Link>
         </div>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          Adet limiti yok — en önemli soru her zaman en üstte. Cevabın yeterliyse CFO onu
-          Not Defteri&apos;ne kalıcı bilgi olarak yazar ve aynı şeyi bir daha sormaz.
+          Önce aşağıdaki en önemli 5 soruyu yanıtla. Diğerleri bekleyen listesinde korunur.
+          Cevaplar sonraki çalışmada okunur; doğrulanmış bilgi için aynı soru tekrar açılmaz.
         </p>
       </Card>
 
       <Card className="mb-6 p-5">
-        <h2 className="mb-4 text-sm font-semibold text-[var(--text-primary)]">Cevap bekleyenler</h2>
-        {open.length === 0 ? (
-          <p className="text-xs text-[var(--text-muted)]">Açık soru yok. CFO şu an bir şey beklemiyor.</p>
-        ) : (
-          <ul className="space-y-4">
-            {open.map((q) => {
-              const p = PRIO.find((x) => x.n === q.priority) ?? PRIO[2];
-              return (
-                <li key={q.id} className="rounded-lg border border-[var(--border)] p-4">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <Badge variant={p.variant}>{p.label}</Badge>
-                    <Badge variant="neutral">{AREA_TR[q.area] ?? q.area}</Badge>
-                    <span className="text-[11px] text-[var(--text-muted)]">{fmtDate(q.askedAt)}</span>
-                    <span className="ml-auto"><CancelButton questionId={q.id} /></span>
-                  </div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{q.question}</p>
-                  {q.why && (
-                    <p className="mt-1 text-xs text-[var(--text-muted)]">
-                      <strong>Neden gerekiyor:</strong> {q.why}
-                    </p>
-                  )}
-                  <AnswerForm questionId={q.id} />
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <h2 className="mb-4 text-sm font-semibold text-[var(--text-primary)]">Önce yanıtla · en önemli 5 soru</h2>
+        {top.length===0?<p className="text-xs text-[var(--text-muted)]">Açık soru yok.</p>:<ul className="space-y-4">{top.map(questionRow)}</ul>}
       </Card>
+      {openCount>5&&<Card className="mb-6 p-5"><details open={page>1}>
+        <summary className="cursor-pointer">Diğer bekleyen sorular ({openCount-5}) · sayfa {page}</summary>
+        <p className="my-3 text-xs">Hepsini aynı anda yanıtlaman gerekmiyor. Öncelikler yeni cevaplar ve çalışma sonuçlarıyla güncellenir.</p>
+        <ul className="space-y-4">{backlog.map(questionRow)}</ul>
+        <div className="mt-4 flex gap-4">{page>1&&<Link href={`/cfo/sorular?page=${page-1}`}>Önceki sayfa</Link>}
+          {5+page*20<openCount&&<Link href={`/cfo/sorular?page=${page+1}`}>Sonraki sayfa</Link>}</div>
+      </details></Card>}
 
       <Card className="p-5">
-        <h2 className="mb-4 text-sm font-semibold text-[var(--text-primary)]">Cevaplananlar</h2>
+        <h2 className="mb-4 text-sm font-semibold text-[var(--text-primary)]">Son 20 cevap ({answeredCount} toplam)</h2>
         {answered.length === 0 ? (
           <p className="text-xs text-[var(--text-muted)]">Henüz cevaplanmış soru yok.</p>
         ) : (
@@ -128,7 +120,7 @@ export default async function CfoQuestionsPage() {
                       <Badge variant="ok">CFO işledi · {fmtDate(q.processedAt)}</Badge>
                     ) : (
                       <>
-                        <Badge variant="warn">CFO henüz işlemedi</Badge>
+                        <Badge variant={q.processNote?.startsWith("workflow_read:")?"info":"warn"}>{q.processNote?.startsWith("workflow_read:")?"CFO okudu · doğrulama bekliyor":"CFO henüz okumadı"}</Badge>
                         <ProcessedButton questionId={q.id} />
                       </>
                     )}

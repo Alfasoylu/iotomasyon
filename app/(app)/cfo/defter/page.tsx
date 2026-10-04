@@ -30,10 +30,15 @@ export default async function CfoNotebookPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
 
   const notes = await prisma.cfoNote.findMany({
+    where:{OR:[{source:null},{source:{not:'cfo-workflow-journal'}}]},
     include: { sourceQuestion: { select: { id: true, question: true } } },
     orderBy: [{ pinned: "desc" }, { category: "asc" }, { updatedAt: "desc" }],
     take: 500,
   });
+  const [journals,journalCount]=await Promise.all([
+    prisma.cfoNote.findMany({where:{source:'cfo-workflow-journal',archivedAt:null},orderBy:{createdAt:'desc'},take:20}),
+    prisma.cfoNote.count({where:{source:'cfo-workflow-journal',archivedAt:null}}),
+  ]);
 
   const active = notes.filter((n) => !n.archivedAt);
   const archived = notes.filter((n) => n.archivedAt);
@@ -111,6 +116,16 @@ export default async function CfoNotebookPage() {
           </Link>
         </div>
         <NewNoteForm />
+      </Card>
+
+      <Card className="mb-6 p-5">
+        <h2 className="mb-4 text-sm font-semibold">Çalışma günlüğü · son 20 çalışma ({journalCount} toplam)</h2>
+        <p className="mb-3 text-xs text-[var(--text-muted)]">Her çalışma önce kalıcı bağlamı okur. Özet, tespitler, beklenenler ve sonraki konu burada korunur.</p>
+        <ul className="space-y-3">{journals.map(note=><li key={note.id} className="rounded border border-[var(--border)] p-3"><details>
+          <summary className="cursor-pointer">{fmtDate(note.createdAt)} · {note.title}</summary>
+          <p className="mt-2 whitespace-pre-wrap text-sm">{note.body}</p>
+        </details></li>)}</ul>
+        {journals.length===0&&<p className="text-sm">İlk çalışma sonrası günlük oluşacak.</p>}
       </Card>
 
       {pinned.length > 0 && (
