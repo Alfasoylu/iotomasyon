@@ -320,7 +320,7 @@ export function BankaUpload({ bankalar, onPreview, onReset }: { bankalar: { name
             <p className="text-xs text-[var(--warn)]">
               Dosyanın son bakiyesi ({tl(sonuc.dosyaSonBakiye ?? 0)} ₺) ile defterdeki bakiye (
               {tl(sonuc.defterBakiye ?? 0)} ₺) arasında {tl(Math.abs(sonuc.bakiyeFarki))} ₺ fark var. Bakiye alanı
-              bu ekrandan güncellenmedi — karar CFO&apos;nun.
+              bu hareket aktarımıyla değişmedi. Güncel bakiyeyi aşağıdaki formdan doğrulayıp kaydedin.
             </p>
           )}
         </Card>
@@ -421,8 +421,8 @@ export function BankaUpload({ bankalar, onPreview, onReset }: { bankalar: { name
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <Sayi etiket="Toplam satır" deger={o.toplamSatir.toLocaleString("tr-TR")} />
-            <Sayi etiket="Yeni" deger={o.yeni.toLocaleString("tr-TR")} vurgu="ok" />
-            <Sayi etiket="Zaten var" deger={o.zatenVar.toLocaleString("tr-TR")} />
+            <Sayi etiket="Yeni" deger={o.canImport ? o.yeni.toLocaleString("tr-TR") : "Kontrol edilemedi"} vurgu="ok" />
+            <Sayi etiket="Zaten var" deger={o.canImport ? o.zatenVar.toLocaleString("tr-TR") : "Kontrol edilemedi"} />
             <Sayi etiket="Okunamayan" deger={o.atlanan.toLocaleString("tr-TR")} vurgu={o.atlanan ? "warn" : undefined} />
             <Sayi etiket="Toplam giriş" deger={tl(o.toplamGiris)} birim="₺" vurgu="ok" />
             <Sayi etiket="Toplam çıkış" deger={tl(o.toplamCikis)} birim="₺" vurgu="danger" />
@@ -459,7 +459,7 @@ export function BankaUpload({ bankalar, onPreview, onReset }: { bankalar: { name
             </Card>
           )}
 
-          {o.buyukHareketler.length > 0 && (
+          {o.canImport && o.buyukHareketler.length > 0 && (
             <div>
               <p className="mb-2 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Defterde karşılığı olmayan büyük hareketler (≥ 25.000 ₺, ilk {o.buyukHareketler.length})
