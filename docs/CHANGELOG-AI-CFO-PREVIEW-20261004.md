@@ -7,3 +7,9 @@
 - Yetkili admin oturumu bu ajan ortamında bulunmadığı için finansal JSON ölçümü henüz alınmadı. 12/12 kabul veya production onayı iddia edilmez. Yeni veritabanı credential'ı eklenmedi; migration/main merge/production deploy/AI açılışı yapılmadı.
 
 Bu ayrı doğrulama kaydı yalnız tamamlanmış ve doğrulanmış uygulama/erişim işini içerir. Büyük mevcut PDKS belgesinin yeniden yayını otomatik incelemede reddedildi; görev notu PDKS-DELTA-20261004-PREVIEW.md'dedir.
+
+## Doğrulanmış kaynak uzlaştırma değişikliği
+
+- 08a879a: aynı salt okunur transaction'da aggregate kaynak hizalaması ve kayan satış pencereleri eklendi. Kaynak hizalaması sabit kabul veya geçmiş defter onayı yerine geçmez.
+- Eksik aktif banka timestamp'inin güncellik kontrolünden kaçması düzeltildi.
+- [Validation 37193877841](https://github.com/Alfasoylu/iotomasyon/actions/runs/37193877841): typecheck, CFO ve yeni PostgreSQL uzlaştırma regresyonları, lint/build ve HTTP erişim kapıları geçti. Vercel önizleme success; girişsiz 401 JSON doğrulandı. Yeni finansal ölçüm iddia edilmez.

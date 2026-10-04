@@ -12,4 +12,4 @@ Preview admin kabul route'u artık ek `reconciliation` alanı üretir. Sabit 12 
 
 Geçmiş XML/stok değeri güncel view ile yeniden oluşturulmaz. Komisyon120gün kararı ve bağımsız aynı dönemli kabul referansı gereksinimi değişmez. Bu değişiklik veri senkronizasyonu, stok/maliyet/banka düzeltmesi veya migration uygulamaz; AI/release kapılarını açmaz.
 
-Yeni SQL regresyonları sentetik PostgreSQL'de çalışır; canlı finansal ölçüm yalnız Vercel admin route'undadır. Build/CI/preview sonuçları doğrulamadan sonra ayrı kayıtla eklenir. Önceki hassas PDKS yeniden yayını reddedildiğinden görev delta'sı bu küçük belgede tutulur.
+Yeni SQL regresyonları sentetik PostgreSQL'de çalışır; canlı finansal ölçüm yalnız Vercel admin route'undadır. [08a879a CI validation](https://github.com/Alfasoylu/iotomasyon/actions/runs/37193877841) başarılı: typecheck, mevcut ve yeni regresyonlar, lint, build ve HTTP erişim kapıları. Vercel önizleme commit status'u success; gerçek girişsiz HTTP isteği 401 JSON döndü. Yeni yetkili finansal JSON henüz alınmadı. Önceki hassas PDKS yeniden yayını reddedildiğinden görev delta'sı bu küçük belgede tutulur.
