@@ -5,12 +5,13 @@ import type { Row } from './sources';
 import { buildAgenda, type CycleMemory } from './workflow-memory';
 import { debtGate } from './debt-policy';
 import { forecastDebt } from './debt-forecast';
+import { importPolicy,IMPORT_PLANNER_PATH } from './import-planner';
 export type WorkingContext=Awaited<ReturnType<typeof buildOperatingContext>>;
 export type WorkItem={key:string;kind:'research'|'pricing'|'procurement'|'cash'|'liquidation';title:string;priority:number;
   sku?:string;proposal:string;evidence:string[];blockers:string[];cashRequiredTry:number|null;expectedGainTry:number|null;
-  suggestedUnits:number|null;requiresApproval:boolean;futureOrder?:boolean;estimatedOrderDate?:string|null};
+  suggestedUnits:number|null;requiresApproval:boolean;futureOrder?:boolean;estimatedOrderDate?:string|null;plannerPath?:string;plannerState?:string};
 export type PlannedQuestion={key:string;sku:string;question:string;why:string;priority:number;area:string};
-export type Knowledge={id:string;question:string;answer:string|null;status:string;area?:string;priority?:number;answerChanged?:boolean;answerReviewPending?:boolean;answerVersion?:string};
+export type Knowledge={id:string;question:string;answer:string|null;status:string;area?:string;priority?:number;answerChanged?:boolean;answerReviewPending?:boolean;answerVersion?:string;scope?:string|null;entity_key?:string|null;code?:string|null};
 export const workflowId=(key:string)=>'cfo-work-'+createHash('sha256').update(key).digest('hex').slice(0,32);
 const number=(v:unknown)=>v!=null&&Number.isFinite(Number(v))?Number(v):null;
 function knownAnswer(sku:string,context:WorkingContext,knowledge:Knowledge[]) {
@@ -19,7 +20,7 @@ function knownAnswer(sku:string,context:WorkingContext,knowledge:Knowledge[]) {
   const contains=(text:string)=>{const t=folded(text),key=folded(sku),index=t.indexOf(key);return index>=0&&!/[A-Z0-9_-]/.test(t[index-1]??'')&&!/[A-Z0-9_-]/.test(t[index+key.length]??'');};
   // Matches are context to investigate, never silently converted into financial facts.
   const note=context.notebook?.notes.find(n=>n.source!=='cfo-workflow-v1'&&contains(n.title+' '+n.body)&&costWords.test(folded(n.title+' '+n.body)));
-  const question=knowledge.find(q=>contains(q.question)&&costWords.test(folded(q.question))&&q.status!=='IPTAL');
+  const question=knowledge.find(q=>(contains(q.question)||q.scope==='ITHALAT_SATIRI'&&skuKey(q.entity_key?.split('|').slice(1).join('|')??'')===skuKey(sku))&&(q.code==='MALIYET_YOK'||costWords.test(folded(q.question)))&&q.status!=='IPTAL');
   return note?`not:${note.id}`:question?`soru:${question.id}`:null;
 }
 export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowledge[]=[],memory:CycleMemory={},priorRead=false){
@@ -45,10 +46,19 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
   for(const p of context.operating.recordedCostReconciliation)add({key:`reconcile:${skuKey(p.sku)}`,sku:p.sku,kind:'research',title:`${p.sku}: kayıtlı maliyeti eşleştir`,priority:2,proposal:'Mevcut maliyetin ürün eşleşmesini ve tarihli kur dönüşümünü doğrula; yeniden maliyet isteme.',evidence:['Product TRY/USD/ithalat maliyet kaydı'],blockers:['Maliyet eşleşmesi veya tarihli dönüşüm'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
   for(const [sku,rows] of bySku){
     const p=rows[0];if(p.excluded||p.virtual)continue;
+    const policy=importPolicy(context.importPlanner,sku,context.asOf);
+    const closed=memory.closedKeys?.includes(`stock:${skuKey(sku)}`)??false;
+    const rowAnswers=knowledge.filter(q=>q.scope==='ITHALAT_SATIRI'&&skuKey(q.entity_key?.split('|').slice(1).join('|')??'')===skuKey(sku)&&q.status==='CEVAPLANDI');
+    const plannerEvidence=[...policy.evidence,...rowAnswers.map(q=>`Planlayıcı not/cevap ${q.id}: ${q.answer??'Belge cevabı; doğrulama gerekli'}`)];
     const best=rows.find(r=>r.trusted&&r.financialSourceFresh&&r.contributionProfitTry!=null&&r.unitProfitTry!=null&&r.unitProfitTry>0);
     if(p.stockDays!=null&&p.stockDays<=21&&p.inventorySourceFresh){
       const blockers:string[]=[];
       if(p.noReorder)blockers.push('Yeniden sipariş verilmeyecek; mevcut stok eritilir');
+      if(!policy.complete)blockers.push(...(context.importPlanner?.missing??['Planlayıcı kapsamı doğrulanmalı']));
+      if(policy.rejected)blockers.push('Planlayıcıdaki ret/iptal kararı korunuyor; yeni aday oluşturulmaz');
+      if(policy.waiting)blockers.push('Planlayıcıdaki BEKLE kararı korunuyor');
+      if(policy.existing.length)blockers.push('Ürün mevcut plan/partide; ikinci aday oluşturulmaz');
+      if(closed)blockers.push('Önceki çalışma kararı korunuyor; yeniden aday açılmaz');
       if(!gate.open)blockers.push(gate.reason);
       if(!best)blockers.push('Güncel ve tam birim kâr hesabı gerekli');
       const inboundComplete=context.importPipeline?.coveragePct?.value===100;
@@ -63,14 +73,14 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
       blockers.push('Tedarikçi fiyatı, termin, navlun ve parti şartları doğrulanmalı');
       const seaLead=number(settings.importSeaLeadDays),airLead=number(settings.importAirLeadDays),minOrder=number(settings.importMinOrderUsd),minLine=number(settings.importMinLineQty);
       blockers.push(`İthalat ise yalnız öz nakit kullanılır; kayıtlı deniz/hava terminleri ${seaLead??'bilinmiyor'}/${airLead??'bilinmiyor'} gün, parti alt sınırı ${minOrder??'bilinmiyor'} USD, satır alt sınırı ${minLine??'bilinmiyor'} adet. 60 günlük örnek miktar kesin sipariş değildir.`);
-      if(!p.noReorder&&p.stockDays<=7&&!(p.openPurchaseOrders??0)&&p.inboundQty===0){
+      if(!p.noReorder&&policy.mayAdd&&!closed&&p.stockDays<=7&&!(p.openPurchaseOrders??0)&&p.inboundQty===0){
         const prior=knowledge.find(q=>q.status!=='IPTAL'&&skuKey(q.question).includes(skuKey(sku))&&/(TEDARIK|TERMİN|TERMIN|SIPARIS|SİPARİŞ)/.test(skuKey(q.question)));
         const note=context.notebook?.notes.find(n=>n.source!=='cfo-workflow-v1'&&skuKey(n.title+' '+n.body).includes(skuKey(sku))&&/(TEDARIK|TERMİN|TERMIN|SIPARIS|SİPARİŞ)/.test(skuKey(n.title+' '+n.body)));
         if(gate.open&&!prior&&!note&&context.notebook?.available!==false&&!context.notebook?.truncated)questions.push({key:`supplier:${skuKey(sku)}`,sku,question:`${sku} için bekleyen tedarik planı var mı; güncel tedarikçi fiyatı, para birimi ve teslim süresi nedir?`,why:`XML ihtiyatlı stok örtüsü ${p.stockDays} gün. Yeni taahhüt öncesinde kâr, öz nakit ve parti şartları ayrıca doğrulanacak.`,priority:2,area:'siparis'});
       }
       add({key:`stock:${skuKey(sku)}`,sku,kind:'research',title:`${sku}: ${p.stockDays} günlük stok`,priority:!gate.open?3:p.stockDays<=7?1:2,
-        proposal:p.noReorder?'Yeni sipariş oluşturma; stok bitişini ve kategori çıkışını izle.':!gate.open?'Gelecek sipariş listesine aday olarak ekle. Toplam borç 5 milyon TL altına inmeden yeni sipariş açma. Yoldaki malı ve örnek miktarı kontrol et.':'Tedarik araştırmasını başlat. 60 günlük örnek stok senaryosunu, yoldaki malı ve parti şartlarını kontrol et; kesin sipariş kararı için eksikleri tamamla.',
-        evidence:[`XML ihtiyatlı stok örtüsü: ${p.stockDays} gün`,'XML hareketi satışın kendisi değildir',...(p.policySource?[p.policySource]:[])],blockers,cashRequiredTry:required,expectedGainTry:best?.unitProfitTry!=null&&quantity!=null?Math.round(best.unitProfitTry*quantity*100)/100:null,suggestedUnits:quantity,requiresApproval:false,futureOrder:!p.noReorder,estimatedOrderDate:debtForecast.estimatedOrderDate});
+        proposal:policy.rejected?'Planlayıcıdaki ret kararını ve gerekçesini koru; yeni sipariş adayı oluşturma.':policy.waiting?'Planlayıcıdaki bekletme kararını koru; koşulları ve notları incele.':policy.existing.length?'Mevcut ithalat plan satırını incele; adet, not, yoldaki mal ve parti durumunu doğrula. Aynı ürün için ikinci aday oluşturma.':!policy.complete?'Planlayıcı kayıtları tamamlanmadan yeni aday ekleme; diğer hedef işlerine ilerle.':closed?'Önceki ret veya tamamlanma sonucunu koru; yeni aday oluşturma.':p.noReorder?'Yeni sipariş oluşturma; stok bitişini ve kategori çıkışını izle.':!gate.open?'Gelecek sipariş listesine aday olarak ekle. Toplam borç 5 milyon TL altına inmeden yeni sipariş açma. Yoldaki malı ve örnek miktarı kontrol et.':'Tedarik araştırmasını başlat. 60 günlük örnek stok senaryosunu, yoldaki malı ve parti şartlarını kontrol et; kesin sipariş kararı için eksikleri tamamla.',
+        evidence:[`XML ihtiyatlı stok örtüsü: ${p.stockDays} gün`,'XML hareketi satışın kendisi değildir',...(p.policySource?[p.policySource]:[]),...plannerEvidence],blockers,cashRequiredTry:required,expectedGainTry:best?.unitProfitTry!=null&&quantity!=null?Math.round(best.unitProfitTry*quantity*100)/100:null,suggestedUnits:quantity,requiresApproval:false,futureOrder:!p.noReorder&&policy.mayAdd&&!closed,estimatedOrderDate:debtForecast.estimatedOrderDate,plannerPath:IMPORT_PLANNER_PATH,plannerState:policy.rejected?'rejected':policy.waiting?'waiting':policy.existing.length?'existing':!policy.complete?'unavailable':closed?'closed':'candidate'});
     }
     for(const r of rows)if(r.trusted&&r.financialSourceFresh&&r.priceFloorTry!=null&&r.avgPriceTry!=null&&r.avgPriceTry<r.priceFloorTry){
       add({key:`floor:${skuKey(sku)}:${r.channel}`,sku,kind:'pricing',title:`${sku} · ${r.channel}: taban altında satış`,priority:1,
@@ -79,6 +89,8 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
     if(p.stockDays!=null&&p.stockDays>=180&&p.inventorySourceFresh)add({key:`excess:${skuKey(sku)}`,sku,kind:'liquidation',title:`${sku}: fazla stok araştırması`,priority:3,
       proposal:'Yeni sipariş verme. Mevcut satış kanallarını ve toptan teklifleri araştır; tasfiye fiyatını marjinal nakit geri kazanımıyla karşılaştır.',evidence:[`İhtiyatlı stok örtüsü ${p.stockDays} gün`],blockers:['Alıcı teklifi ve satışın değişken giderleri gerekli'],cashRequiredTry:0,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
   }
+  if(context.importPlanner)add({key:'imports:planner',kind:'research',title:'İthalat planlayıcısını ve kararları incele',priority:2,proposal:'Mevcut parti durumlarını, ret/bekletme gerekçelerini ve satır notlarını önce oku; yeni adayları aynı planlayıcıya kaydet. Retleri kaldırma veya miktarları serbest metinden değiştirme.',
+    evidence:[`Planlayıcı: ${IMPORT_PLANNER_PATH}`,`Okunan satır: ${context.importPlanner.lines.length}; ürün kararı: ${context.importPlanner.decisions.length}`,...context.importPlanner.summaries.map(s=>`${s.mod}: ${s.durum}`)],blockers:context.importPlanner.missing,cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false,plannerPath:IMPORT_PLANNER_PATH});
   const floor=number(settings.netPositionFloorTry),dip=context.cash.minimumProjectedPosition.value;
   add({key:'debt:order-gate',kind:'cash',title:'Borç hedefi ve gelecek sipariş tarihi',priority:1,proposal:gate.open?'Borç eşiği geçildi; kâr, öz nakit ve tedarik şartlarını ayrıca doğrula.':gate.reason,
     evidence:[`Toplam borç kaynağı: cfo_servet.borc`,`Sipariş eşiği: kesin olarak 5 milyon TL altı`,
@@ -97,7 +109,7 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
     totalDebtTry:number(context.financialGoals?.totalDebtTry),profitTry:null};
   if(!context.sales.last30Days.complete||context.operating.summary.skuChannelsWithContributionProfit===0)add({key:'growth:coverage',kind:'research',title:'Kârlı büyüme planının veri eksiklerini tamamla',priority:2,proposal:'Bilinen maliyetlerden ilerle; satılan ürünleri, stokta olmayan kanıtlanmış talebi ve kanal kapsamını araştır. Ciro hedefini kâr ve nakit dönüşümüyle birlikte değerlendir.',evidence:[`Maliyeti bilinen ürün: ${context.operating.summary.skusWithKnownCost}`,`Katkı kârı hesaplanabilen ürün/kanal: ${context.operating.summary.skuChannelsWithContributionProfit}`],blockers:['Eksik dönem ciro düşüşü veya hedef başarısızlığı diye yorumlanamaz','Komisyon, KDV, iadeler ve değişken giderler tamamlanmalı'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
   items.sort((a,b)=>a.priority-b.priority||a.key.localeCompare(b.key));
-  const agenda=buildAgenda(items,knowledge,memory,{goals,watermarks:context.dataQuality?.sourceWatermarks},priorRead);
+  const agenda=buildAgenda(items,knowledge,memory,{goals,watermarks:context.dataQuality?.sourceWatermarks,importPlanner:context.importPlanner},priorRead);
   // Previously generated questions remain a backlog, not an obligation to answer 100 at once.
   const open=knowledge.filter(q=>q.status==='ACIK');
   const score=(q:{question:string;priority?:number;area?:string;id?:string;sku?:string})=>{

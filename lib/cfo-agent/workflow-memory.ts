@@ -18,7 +18,7 @@ export function itemTopic(item:WorkItem):Topic {
   if(item.key.startsWith('sales:'))return 'sales';
   if(item.kind==='cash'||item.key.startsWith('debt:'))return 'cash';
   if(item.key.startsWith('cost:')||item.key.startsWith('reconcile:')||item.kind==='pricing'||item.key.startsWith('answer:'))return 'costs';
-  if(item.key.startsWith('stock:')||item.kind==='procurement'||item.kind==='liquidation')return 'stock';
+  if(item.key.startsWith('imports:')||item.key.startsWith('stock:')||item.kind==='procurement'||item.kind==='liquidation')return 'stock';
   return 'growth';
 }
 export function buildAgenda(items:WorkItem[],knowledge:Knowledge[],memory:CycleMemory,observation:unknown,priorRead:boolean):CycleAgenda {

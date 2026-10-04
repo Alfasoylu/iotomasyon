@@ -11,8 +11,16 @@ async function main(){
   assert(['127.0.0.1','localhost'].includes(url.hostname)&&/^\/cfo_workflow_test_[a-z]+$/.test(url.pathname));
   process.env.DATABASE_URL=url.toString();
   try{
+    // Legacy planner tables are outside the generated Prisma model. Only
+    // isolated synthetic fixtures are installed in this localhost test DB.
+    await prisma.$executeRawUnsafe(`create table cfo_urun_karar(sku text primary key,karar text,sebep text,gecerli_bitis date,updated_at timestamptz)`);
+    await prisma.$executeRawUnsafe(`create table cfo_order_batch(id text primary key,transport_mode text,status text,cash_gate text,decision text)`);
+    await prisma.$executeRawUnsafe(`create table cfo_order_line(id int primary key,batch_id text,sku text,status text,qty int,note text)`);
+    await prisma.$executeRawUnsafe(`create table cfo_ithalat_oneri_ozet(mod text,durum text,tavsiye_siparis_tarihi date,nakit_kapisi_tarihi date,maliyet_eksik_satir int)`);
+    await prisma.$executeRawUnsafe(`alter table cfo_question add column scope text,add column entity_key text`);
     await prisma.cfoSettings.create({data:{id:'synthetic-settings',usdTryRate:10,monthlyRevenueTargetUsd:123456}});
     await prisma.cfoQuestion.create({data:{id:'synthetic-answer',question:'Synthetic fixture cost?',answer:'Unverified synthetic answer',area:'marj',status:'CEVAPLANDI',answeredAt:new Date()}});
+    await prisma.$executeRawUnsafe(`update cfo_question set scope='ITHALAT_SATIRI',entity_key='DENIZ|SYNTHETIC' where id='synthetic-answer'`);
     process.env.VERCEL_ENV='preview';
     assert.deepEqual(await runCfoCycle('test-preview'),{completed:false,reason:'production_only'});
     assert.equal(await prisma.cfoNote.count(),0);
@@ -22,6 +30,8 @@ async function main(){
     assert('answersRead' in first&&first.answersRead===1);
     const heartbeat=await prisma.cfoNote.findUniqueOrThrow({where:{id:HEARTBEAT_ID}});
     assert.equal(JSON.parse(heartbeat.body).agenda.topic,'cash');
+    const plannerWork=await prisma.cfoNote.findFirst({where:{source:WORK_SOURCE,title:'İthalat planlayıcısını ve kararları incele'}});
+    assert(plannerWork,'real cycle reads legacy planner source and persists review context');
     assert.equal(await prisma.cfoNote.count({where:{source:'cfo-workflow-journal'}}),1);
     const question=await prisma.cfoQuestion.findUniqueOrThrow({where:{id:'synthetic-answer'}});
     assert.equal(question.processedAt,null,'reading an answer does not financially apply it');

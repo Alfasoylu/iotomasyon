@@ -4,6 +4,7 @@ import type { CfoAgentSnapshot } from "./types";
 import type { ReadSource, Row } from "./sources";
 import { readOrderDebtGate } from './debt-policy';
 import { readForecastInputs } from './debt-forecast';
+import { readImportPlanner } from './import-planner';
 
 /** Missing cost limits that SKU's calculations; it never disables all observations. */
 export function operatingCapabilities(snapshot: CfoAgentSnapshot, inactiveSkus: Set<string> = new Set(), recordedCosts: Map<string, Row> = new Map()) {
@@ -71,13 +72,14 @@ export async function buildOperatingContext(db: ReadSource, snapshot: CfoAgentSn
   catch { /* Existing cost fields may be unavailable; never pretend they are zero. */ }
   const orderGate=await readOrderDebtGate(db,new Date(snapshot.generatedAt));
   const forecastInputs=await readForecastInputs(db,snapshot);
+  const importPlanner=await readImportPlanner(db);
   const inactive = await db.query<Row>('select sku from "Product" where not "isActive"');
   return { asOf:snapshot.generatedAt, readOnly:true, execution:'existing_application_connection',
     sources, notebook:snapshot.notebook,
     catalogCosts: {available:catalogCostsAvailable,truncated:recordedCosts.length>10000,records:recordedCosts.slice(0,10000).map(({privateNote,...row})=>({...row,...productPolicy({...row,privateNote})}))},
     operating:operatingCapabilities(snapshot,new Set(inactive.map(row=>String(row.sku))),new Map(recordedCosts.slice(0,10000).map(row=>[String(row.sku),row]))),
     financialGoals:{totalDebtTry:orderGate.totalDebtTry,debtSource:"cfo_servet.borc",balancesFresh:orderGate.balancesFresh},
-    orderGate,forecastInputs,
+    orderGate,forecastInputs,importPlanner,
     importPipeline:snapshot.importPipeline,
     sales:snapshot.sales, cash:snapshot.cash, dataQuality:snapshot.dataQuality };
 }

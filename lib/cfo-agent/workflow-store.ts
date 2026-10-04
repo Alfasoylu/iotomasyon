@@ -53,7 +53,8 @@ export async function saveWorkPlan(db:WriteSource,plan:CyclePlan,trigger:string)
   const items=[...new Map(plan.items.map(item=>[workflowId(item.key),item])).values()];
   for(const item of items){
     const id=workflowId(item.key),prior=map.get(id),old=prior?readWork(String(prior.body)):null,nextRevision=revision(item);
-    if(old?.status==='rejected'&&item.priority>=old.item.priority)continue;
+    if(old?.status==='rejected'&&(item.plannerPath||item.priority>=old.item.priority))continue;
+    if(old?.status==='completed'&&item.plannerPath)continue;
     if(old?.revision===nextRevision&&old.status!=='resolved'&&old.status!=='withdrawn'){
       if(!['completed','rejected'].includes(old.status))writes.push({id,title:item.title,body:JSON.stringify({...old,observedAt:plan.asOf})});
       continue;
@@ -95,8 +96,9 @@ export async function saveWorkPlan(db:WriteSource,plan:CyclePlan,trigger:string)
     const lines=[`Çalışma özeti: ${TOPIC_NAMES[agenda.topic]} · ${trigger}`,
       `Yapılanlar: önceki çalışma kaydı ve defter okundu; ${agenda.answersReviewed.length} yeni/değişmiş cevap incelendi; ${changed} çalışma kaydı güncellendi; ${asked} yeni soru yazıldı.`,
       'Tespitler:',...focus.map(item=>`• ${item.title}: ${item.proposal}`),
-      'Aksiyonlar:',...focus.map(item=>`• ${item.requiresApproval?'Onaya sunuldu':'Araştırma/gelecek sipariş listesine kaydedildi'}: ${item.title}`),
+      'Aksiyonlar:',...focus.map(item=>`• ${item.requiresApproval?'Onaya sunuldu':item.futureOrder?'İthalat planlayıcısına aday kaydedildi':'Araştırma kaydedildi'}: ${item.title}`),
       'Eksikler / beklenenler:',...agenda.waiting.map(text=>`• ${text}`),
+      `İthalat planlayıcısı: /cfo/kazananlar#ithalat · yeni aday ${items.filter(item=>item.futureOrder&&!['rejected','completed'].includes(readWork(String(map.get(workflowId(item.key))?.body??''))?.status??'')).length}`,
       `Yeni sipariş: ${plan.orderGate?.open?'borç eşiği geçildi; diğer şartlar doğrulanacak':'kapalı; adaylar yalnız gelecek sipariş listesinde'}`,
       `Tahmini sipariş tarihi: ${plan.debtForecast?.estimatedOrderDate??'hesaplanamıyor; veri eksik veya ufukta eşiğe ulaşılamıyor'}`,
       `Aynı girdilerle ilerlemeyen döngü sayısı: ${agenda.unchangedCycles}`,

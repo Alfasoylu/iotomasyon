@@ -25,23 +25,17 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
-import {
-  ImportOrderSection,
-  type OneriSatiri,
-  type OneriOzeti,
-  type CiroHedefi,
-  type YoldakiKapsam,
-} from "./import-order";
-import { QaRow, type PanelSorusu, type PanelKarari } from "@/components/cfo/row-qa-panel";
+import ImportPlannerSection from "./import-planner";
+import { QaRow, type PanelSorusu } from "@/components/cfo/row-qa-panel";
 import {
   loadRowQa,
-  ithalatSorulari,
   kazananSorulari,
   birlestir,
   anahtar,
 } from "@/lib/cfo/row-qa";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 type Ozet = {
   ay_str: string;
@@ -110,6 +104,7 @@ export default async function CfoWinnersPage({
             <code>cfo_ay_kazanan_yaz()</code> çalıştığında burada görünür.
           </p>
         </Card>
+        <ImportPlannerSection/>
       </>
     );
   }
@@ -118,15 +113,11 @@ export default async function CfoWinnersPage({
 
   // Kazanan listesi ile ithalat önerisi aynı ekranda: kârı getiren ürünün stoğu
   // bitiyorsa kazanan liste bir sonraki ay küçülür. Üç sorgu da salt-okunur view.
-  const [satirlar, oneriOzet, oneriSatir, ciroHedef, yoldakiKapsam, dusukKanal] = await Promise.all([
+  const [satirlar, dusukKanal] = await Promise.all([
     prisma.$queryRaw<Satir[]>`
       select sira, sku, ad, category, adet, brut_ciro, kargo_pct, net_kar, marj_pct,
              kar_payi_pct, oran_guveni, kanal_sayisi, siparis_satiri
         from cfo_ay_kazanan where ay = ${secili.ay} order by sira`,
-    prisma.$queryRaw<OneriOzeti[]>`select * from cfo_ithalat_oneri_ozet order by mod`,
-    prisma.$queryRaw<OneriSatiri[]>`select * from cfo_ithalat_oneri order by mod, sira`,
-    prisma.$queryRaw<CiroHedefi[]>`select * from cfo_ciro_hedef`,
-    prisma.$queryRaw<YoldakiKapsam[]>`select * from cfo_yoldaki_kapsam order by eta nulls last, kod`,
     // Hangi ürün, oranı ÖLÇÜLMEMİŞ hangi kanalda satmış? Soru bunu adıyla sorabilsin diye.
     // Kanal bilgisi satır düzeyinde `cfo_satis_birim`de; `cfo_aylik_urun_kar` ürün×ay
     // düzeyinde toplandığı için orada kanal ADI yok (yalnız kanal_sayisi var).
@@ -142,27 +133,8 @@ export default async function CfoWinnersPage({
   // ── Satır bazında soru-cevap ────────────────────────────────────
   // İki ekran da aynı depoyu kullanıyor: cevaplar cfo_question'a düşüyor,
   // oradan hem /cfo/sorular hem Cowork'teki CFO ajanı okuyor.
-  const ithalatAnahtarlari = oneriSatir.map((s) => anahtar(s.mod, s.sku));
   const kazananAnahtarlari = satirlar.filter((s) => s.sku).map((s) => anahtar(secili.ay_str, s.sku!));
-
-  const [ithalatQa, kazananQa] = await Promise.all([
-    loadRowQa("ITHALAT_SATIRI", ithalatAnahtarlari),
-    loadRowQa("KAZANAN_SATIRI", kazananAnahtarlari),
-  ]);
-
-  const ithalatSoru = new Map<string, PanelSorusu[]>();
-  for (const r of oneriSatir) {
-    const key = anahtar(r.mod, r.sku);
-    ithalatSoru.set(key, birlestir(ithalatSorulari(r), ithalatQa.kayitli.get(key)));
-  }
-
-  const urunKarar = new Map<string, PanelKarari>();
-  for (const [sku, k] of ithalatQa.kararlar) {
-    urunKarar.set(sku, {
-      karar: k.karar, sebep: k.sebep,
-      gecerli_bitis: k.gecerli_bitis, karar_veren: k.karar_veren,
-    });
-  }
+  const kazananQa = await loadRowQa("KAZANAN_SATIRI", kazananAnahtarlari);
 
   const kanalMap = new Map(dusukKanal.map((d) => [d.sku, d.kanallar]));
   const kazananSoru = new Map<string, PanelSorusu[]>();
@@ -423,16 +395,7 @@ export default async function CfoWinnersPage({
 
       {/* ── İthalat sipariş önerisi ───────────────────────────────── */}
       {/* Diğer sayfalardan kaldırılan listeler buraya bağlanıyor (#ithalat). */}
-      <div id="ithalat" className="scroll-mt-20">
-        <ImportOrderSection
-          ozet={oneriOzet}
-          satirlar={oneriSatir}
-          hedef={ciroHedef[0] ?? null}
-          yoldaki={yoldakiKapsam}
-          sorular={ithalatSoru}
-          kararlar={urunKarar}
-        />
-      </div>
+      <ImportPlannerSection />
 
       {/* ── Aylık seyir ───────────────────────────────────────────── */}
       <Card className="p-5">

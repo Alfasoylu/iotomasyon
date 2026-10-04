@@ -40,6 +40,7 @@ export type PanelSorusu = {
 };
 
 export type PanelKarari = {
+  sku?: string;
   karar: string;
   sebep: string;
   gecerli_bitis: Date | string | null;
@@ -155,7 +156,7 @@ export function RowQaPanel({
   function kararVer(k: "ALMA" | "BEKLE") {
     start(async () => {
       const r = await setProductDecisionAction({
-        sku, karar: k, sebep, gecerliBitis: bitis || null,
+        sku: karar?.sku ?? sku, karar: k, sebep, gecerliBitis: bitis || null,
       });
       setMesaj(r.message ?? null);
       if (r.ok) {
@@ -168,7 +169,7 @@ export function RowQaPanel({
 
   function kararKaldir() {
     start(async () => {
-      const r = await clearProductDecisionAction(sku);
+      const r = await clearProductDecisionAction(karar?.sku ?? sku);
       setMesaj(r.message ?? null);
       if (r.ok) router.refresh();
     });
@@ -187,7 +188,7 @@ export function RowQaPanel({
     <div className="space-y-4 border-l-2 border-[var(--accent-border)] bg-[var(--surface-1)] px-4 py-3">
       <p className="text-[11px] text-[var(--text-muted)]">
         <span className="font-medium text-[var(--text-secondary)]">{urunAdi}</span> · buraya
-        yazdıklarınız kalıcıdır ve hem panelin hem CFO&apos;nun hesaplarında kullanılır.
+        yazdıklarınız kalıcıdır ve CFO değerlendirmesinde okunur. Bilgiler doğrulanmadan finansal hesaplara uygulanmaz.
       </p>
 
       {/* ── Sorular ─────────────────────────────────────────────── */}
@@ -200,11 +201,11 @@ export function RowQaPanel({
           {sorular.map((s) => (
             <div key={s.code} className="rounded-md border border-[var(--border-subtle)] p-3">
               <p className="text-[12px] font-medium leading-snug text-[var(--text-primary)]">
-                {s.soru}
+                {s.code === "PLAN_NOTU" ? "Plan notu (isteğe bağlı)" : s.soru}
               </p>
               {s.neden && (
                 <p className="mt-1 text-[11px] leading-snug text-[var(--text-muted)]">
-                  Neden soruluyor: {s.neden}
+                  {s.code === "PLAN_NOTU" ? "Notun kullanımı:" : "Neden soruluyor:"} {s.neden}
                 </p>
               )}
 
@@ -215,7 +216,7 @@ export function RowQaPanel({
                     {s.cevaplayan} · {tarih(s.cevapTarihi)}
                     {s.islendiTarihi
                       ? ` · CFO işledi: ${s.islemNotu ?? tarih(s.islendiTarihi)}`
-                      : " · CFO'nun işlemesi bekleniyor"}
+                      : s.islemNotu?.startsWith("workflow_read:") ? " · CFO bağlama aldı; doğrulama bekleniyor" : " · CFO'nun işlemesi bekleniyor"}
                   </p>
                 </div>
               )}
@@ -224,7 +225,7 @@ export function RowQaPanel({
                 <textarea
                   className={`${input} min-h-[38px] flex-1`}
                   rows={2}
-                  placeholder={s.cevap ? "Cevabı güncelle…" : "Cevabınız…"}
+                  placeholder={s.code === "PLAN_NOTU" ? "Planla ilgili notunuz…" : s.cevap ? "Cevabı güncelle…" : "Cevabınız…"}
                   value={taslak[s.code] ?? ""}
                   onChange={(e) => setTaslak((t) => ({ ...t, [s.code]: e.target.value }))}
                 />
@@ -336,7 +337,7 @@ export function QaRow({
   vurgu?: boolean;
 }) {
   const [acik, setAcik] = useState(false);
-  const acikSoru = sorular.filter((s) => !s.cevap).length;
+  const acikSoru = sorular.filter((s) => s.code !== "PLAN_NOTU" && !s.cevap).length;
 
   return (
     <>
