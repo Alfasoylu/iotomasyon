@@ -39,15 +39,18 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
       const blockers:string[]=[];
       if(p.noReorder)blockers.push('Yeniden sipariş verilmeyecek; mevcut stok eritilir');
       if(!best)blockers.push('Güncel ve tam birim kâr hesabı gerekli');
-      if(p.inboundQty==null)blockers.push('Yoldaki stok kapsamı bilinmiyor');
+      const inboundComplete=context.importPipeline?.coveragePct?.value===100;
+      if(p.inboundQty==null||!inboundComplete)blockers.push('Yoldaki stok kapsamı eksik; sıfır eşleşme yolda mal olmadığını kanıtlamaz');
       if(p.inboundBeforeStockout||(p.openPurchaseOrders??0)>0)blockers.push('Mevcut sipariş veya yoldaki parti önce kontrol edilmeli');
       if(!context.cash.banksFresh)blockers.push('Nakit kaynaklarının tarihli doğrulaması gerekli');
       const cash=context.cash.cash.value;
       const velocity=p.velocity;
-      const quantity=velocity!=null&&velocity>0&&p.stockQty!=null&&p.inboundQty!=null?Math.max(0,Math.ceil(velocity*60-p.stockQty-p.inboundQty)):null;
+      const quantity=inboundComplete&&velocity!=null&&velocity>0&&p.stockQty!=null&&p.inboundQty!=null?Math.max(0,Math.ceil(velocity*60-p.stockQty-p.inboundQty)):null;
       const required=quantity!=null&&p.costTry!=null?Math.round(quantity*p.costTry*100)/100:null;
       if(required==null||cash==null||required>cash)blockers.push('Öz nakit yeterliliği veya sipariş maliyeti eksik');
       blockers.push('Tedarikçi fiyatı, termin, navlun ve parti şartları doğrulanmalı');
+      const seaLead=number(settings.importSeaLeadDays),airLead=number(settings.importAirLeadDays),minOrder=number(settings.importMinOrderUsd),minLine=number(settings.importMinLineQty);
+      blockers.push(`İthalat ise yalnız öz nakit kullanılır; kayıtlı deniz/hava terminleri ${seaLead??'bilinmiyor'}/${airLead??'bilinmiyor'} gün, parti alt sınırı ${minOrder??'bilinmiyor'} USD, satır alt sınırı ${minLine??'bilinmiyor'} adet. 60 günlük örnek miktar kesin sipariş değildir.`);
       if(!p.noReorder&&p.stockDays<=7&&!(p.openPurchaseOrders??0)&&p.inboundQty===0){
         const prior=knowledge.find(q=>q.status!=='IPTAL'&&skuKey(q.question).includes(skuKey(sku))&&/(TEDARIK|TERMİN|TERMIN|SIPARIS|SİPARİŞ)/.test(skuKey(q.question)));
         const note=context.notebook?.notes.find(n=>n.source!=='cfo-workflow-v1'&&skuKey(n.title+' '+n.body).includes(skuKey(sku))&&/(TEDARIK|TERMİN|TERMIN|SIPARIS|SİPARİŞ)/.test(skuKey(n.title+' '+n.body)));

@@ -77,5 +77,6 @@ export async function buildOperatingContext(db: ReadSource, snapshot: CfoAgentSn
     catalogCosts: {available:catalogCostsAvailable,truncated:recordedCosts.length>10000,records:recordedCosts.slice(0,10000).map(({privateNote,...row})=>({...row,...productPolicy({...row,privateNote})}))},
     operating:operatingCapabilities(snapshot,new Set(inactive.map(row=>String(row.sku))),new Map(recordedCosts.slice(0,10000).map(row=>[String(row.sku),row]))),
     financialGoals:{totalDebtTry,debtSource:"cfo_servet.borc",balancesFresh:snapshot.cash?.banksFresh??false},
+    importPipeline:snapshot.importPipeline,
     sales:snapshot.sales, cash:snapshot.cash, dataQuality:snapshot.dataQuality };
 }

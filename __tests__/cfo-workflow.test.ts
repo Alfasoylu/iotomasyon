@@ -27,6 +27,7 @@ async function main(){
   assert(!plan.items.some(i=>i.sku==='VIRTUAL'));
   assert(plan.items.find(i=>i.sku==='STOP')?.proposal.includes('Yeni sipariş oluşturma'));
   assert(plan.items.find(i=>i.sku==='SYNTH-ITEM')?.blockers.includes('Güncel ve tam birim kâr hesabı gerekli'));
+  assert.equal(plan.items.find(i=>i.sku==='SYNTH-ITEM')?.suggestedUnits,null,'incomplete inbound mapping cannot justify an order quantity');
   assert(!plan.items.some(i=>i.kind==='procurement'),'unknown terms cannot become a firm order');
   const known=planCfoWork(context,{},[{id:'existing',question:'MISSING birim maliyeti nedir?',answer:'Beyan',status:'CEVAPLANDI'}]);
   assert(!known.questions.some(q=>q.key==='cost:MISSING'),'answered question is investigated instead of asked again');
