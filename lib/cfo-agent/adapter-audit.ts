@@ -22,7 +22,7 @@ export async function collectCfoAdapterAudit(db: ReadSource) {
       p.provolatile::text as volatility,p.prosecdef as security_definer,
       pg_get_function_result(p.oid) as result_type,pg_get_functiondef(p.oid) as definition
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prokind='f'
-      and p.proname=any($1::text[]) order by p.proname,p.oid`, ["cfo_nakit_projeksiyon", "cfo_kaynak_yeterliligi",
+      and (p.proname=any($1::text[]) or p.proname like 'cfo_%set%') order by p.proname,p.oid`, ["cfo_nakit_projeksiyon", "cfo_kaynak_yeterliligi",
       "cfo_kart_karari", "cfo_gumruk_dilim", "cfo_defter_denetim", "cfo_onucus"]);
     const fields: Record<string, string[]> = {
       cfo_kargo_tarife: ["pazaryeri", "band", "alt_sinir", "ust_sinir", "tarife", "ek_maliyet", "toplam", "olcum_adet", "kaynak", "gecerli_tarih"],

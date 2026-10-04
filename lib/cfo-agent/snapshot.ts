@@ -2,9 +2,12 @@ import "server-only";
 import type { CfoConfig } from "./config";
 import { getCfoConfig } from "./config";
 import { CALCULATION_VERSION, SCHEMA_VERSION, type CfoAgentSnapshot, type Metric, type ProductSignal, type SalesPeriod, type SourceWatermark } from "./types";
-import { contribution, cautiousDemand, D, divide, emptyProfitability, isDummyStock, measuredCommission, metric, numeric, orderAllocationSql, percentage, priceFloor, stale, unknown, type ShippingBand } from "./calculations";
+import { contribution, cautiousDemand, D, divide, emptyProfitability, isDummyStock, measuredCommission, metric, numeric, orderAllocationSql, percentage, priceFloor, stale, unknown } from "./calculations";
 import { evidence } from "./evidence";
 import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type ReadSource, type Row } from "./sources";
+import { reviewedCfoSources } from "./reviewed-sources";
+import { shippingBandsFor, shippingTariffSql } from "./shipping";
+import { istanbulPeriod } from "./budget";
 
 const iso = (v:unknown) => v == null || !Number.isFinite(Date.parse(String(v))) ? null : new Date(String(v)).toISOString();
 const n = (r:Row, key:string) => numeric(r[key]);
@@ -23,9 +26,10 @@ export const PERIOD_CTE = `with clock as (select $1::timestamptz at time zone 'E
 )`;
 function optionalSum(col:string|null, alias:string, table="s") {return col ? `case when count(${table}.${col})=count(*) then sum(${table}.${col}::numeric) end as "${alias}"` : `null::numeric as "${alias}"`;}
 
-export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfig;db?:ReadSource;bindings?:Record<string,Record<string,string>>;compact?:boolean} = {}): Promise<CfoAgentSnapshot> {
-  const now=options.now??new Date(), config=options.config??getCfoConfig(), db=options.db??businessSource;
-  const asOf=now.toISOString(), catalog=new SourceCatalog(db,options.bindings??sourceBindings()); await catalog.load();
+export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfig;db?:ReadSource;bindings?:Record<string,Record<string,string>>;compact?:boolean;sourceProfile?:string} = {}): Promise<CfoAgentSnapshot> {
+  const now=options.now??new Date(), config={...(options.config??getCfoConfig())}, db=options.db??businessSource;
+  const reviewed=await reviewedCfoSources(db,options.sourceProfile??process.env.AI_CFO_SOURCE_PROFILE);
+  const asOf=now.toISOString(), catalog=new SourceCatalog(db,options.bindings??(reviewed?.valid?reviewed.bindings:sourceBindings())); await catalog.load();
   const blankPeriod=():SalesPeriod=>({grossRevenue:unknown("source_unavailable"),orders:null,aov:unknown("source_unavailable"),complete:false});
   const snapshot:CfoAgentSnapshot={schemaVersion:SCHEMA_VERSION,calculationVersion:CALCULATION_VERSION,generatedAt:asOf,timezone:"Europe/Istanbul",currency:"TRY",accountingBasis:"gross_incl_vat",
     dataQuality:{staleSources:[],missingFields:[],costCoveragePct:null,matchingCoveragePct:null,sourceWatermarks:[],excludedDummyStock:0,zeroStockSkuCount:0,commissionCoverage:[],fbaInventoryUnknown:true,duplicateCanonicalRows:0,excludedUntrustedRows:0},
@@ -35,6 +39,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     procurement:{riskySkuCount:0,openOrders:null},importPipeline:{inboundSkuCount:null,coveragePct:unknown("inbound_coverage_unknown")},
     returns:{currentRate:unknown("returns_unavailable"),previousRate:unknown("returns_unavailable"),sample:0,complete:false},evidence:[]};
   const missing=snapshot.dataQuality.missingFields;
+  if(reviewed&&!reviewed.valid){missing.push(reviewed.reason);config.canonicalValidated=false;}
   if(!config.canonicalValidated) missing.push("canonical_sales_semantics_not_validated");
   const localTime=(source:string,field:string)=>catalog.localTime(source,field)??"null::timestamp";
   // Independent source event/ingestion watermarks. No raw orders are loaded.
@@ -86,8 +91,10 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
 
   // Runtime-verified adapters for the live-only sources. Missing contracts yield
   // null and a precise data-quality item, never an invented fallback table.
-  const bandsRows=await catalog.rows("cfo_kargo_tarife",["min_try","max_try","kargo_try"],100);
-  const bands:ShippingBand[]=(bandsRows??[]).filter(r=>n(r,"min_try")!=null&&n(r,"kargo_try")!=null).map(r=>({min:n(r,"min_try")!,max:n(r,"max_try"),shipping:n(r,"kargo_try")!}));
+  const shippingChannel=catalog.column("cfo_kargo_tarife","channel")??catalog.column("cfo_kargo_tarife","channel","pazaryeri"),shippingDate=catalog.column("cfo_kargo_tarife","effective_from")??catalog.column("cfo_kargo_tarife","effective_from","gecerli_tarih");
+  let bandsRows=await catalog.rows("cfo_kargo_tarife",["min_try","max_try","kargo_try",...(shippingChannel?["channel"]:[]),...(shippingDate?["effective_from"]:[])],1000);
+  if(bandsRows?.length===1000){bandsRows=null;missing.push("shipping_tariff_limit_unverified");}
+  const day=istanbulPeriod(now).date;
   const velocityRows=await catalog.rows("cfo_stok_hareket_hiz",["sku","gunluk_30g_ihtiyatli","tukenme_gun_ihtiyatli","hizlanma_katsayi"],10000);
   const velocityUnitCol=catalog.column("cfo_stok_hareket_hiz","adet30");
   const velocitySkuCol=catalog.column("cfo_stok_hareket_hiz","sku");
@@ -111,7 +118,13 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     sets.set(sku,old?.value===null||cost==null?unknown("set_component_unknown"):metric(D(old?.value??0).add(cost).toNumber(),true));
   }
   const setPrices=await catalog.rows("cfo_set_fiyat",["sku","birim_kar_try"],10000);
-  const setProfits=new Map((setPrices??[]).map(r=>[String(r.sku),metric(r.birim_kar_try,true)]));
+  const setSkuRows=await catalog.rows("cfo_set_fiyat",["sku"],10000);
+  const setSkus=new Set((setSkuRows??[]).map(r=>String(r.sku)));
+  const setProfits=new Map<string,Metric>();
+  for(const r of setPrices??[]) {
+    const sku=String(r.sku);
+    setProfits.set(sku,setProfits.has(sku)?unknown("ambiguous_set_profit_rows"):metric(r.birim_kar_try,true,"set_price_view_estimate"));
+  }
 
   const po=await db.query(`select i."productId" as product_id,count(*)::int as open_orders,sum(i.qty)::numeric as qty,min(p."estimatedArrival") as eta
     from "PurchaseOrderItem" i join "PurchaseOrder" p on p.id=i."orderId"
@@ -125,7 +138,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     if(stock===0)snapshot.dataQuality.zeroStockSkuCount++;
     if(isDummyStock(stock)){snapshot.dataQuality.excludedDummyStock++;continue;}
     if(exceptions.has(String(p.sku))||p.kind==="LISTING_PACKAGE")continue;
-    const cost=sets.has(String(p.sku))?sets.get(String(p.sku))!.value:n(p,"cost");
+    const cost=setSkus.has(String(p.sku))||sets.has(String(p.sku))?(sets.get(String(p.sku))?.value??null):n(p,"cost");
     if(stock>0&&cost==null)unknownCost++;else if(cost!=null)knownValue=knownValue.add(D(stock).mul(cost));
     if(stock>0&&n(p,"price")==null)unknownRetail++;else if(n(p,"price")!=null)retailValue=retailValue.add(D(stock).mul(n(p,"price")!));
   }
@@ -143,7 +156,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     const returned=catalog.column("cfo_satis_birim_duz","returnedUnits");
     const bandCols=bandsRows?catalog.require("cfo_kargo_tarife",["min_try","max_try","kargo_try"]):null;
     const orderTotal=orders?`(select case when count(*)=1 then max(o.${orders.totalAmountTry}::numeric) end from cfo_satis_siparis o where o.${orders.channel}=s.${sales.channel} and o.${orders.orderNumber}=s.${sales.orderNumber})`:"null::numeric";
-    const tariff=bandCols?`(select case when count(*)=1 then max(t.${bandCols.kargo_try}::numeric) end from cfo_kargo_tarife t where (${orderTotal})>=t.${bandCols.min_try} and (t.${bandCols.max_try} is null or (${orderTotal})<t.${bandCols.max_try}))`:"null::numeric";
+    const tariff=bandCols?shippingTariffSql(bandCols,orderTotal,`s.${sales.channel}`,salesLocalTime,{channel:shippingChannel,effectiveFrom:shippingDate}):"null::numeric";
     const shippingAllocation=orderAllocationSql(tariff,`s.${sales.tutar_duz}`,"s.order_line_gross","s.order_complete");
     const packaging="case when s.order_weight_known then case when s.order_weight<=0.5 then 10.00 else 18.74 end + 12.29 + 10.00 end";
     const otherAllocation=orderAllocationSql(packaging,`s.${sales.tutar_duz}`,"s.order_line_gross","s.order_complete");
@@ -201,7 +214,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     for(const r of [...rows].sort((a,b)=>a.period==="previous"?-1:b.period==="previous"?1:0)) {
       const sku=String(r.sku),p=bySku.get(sku),channel=String(r.channel),units=n(r,"units"),revenue=n(r,"revenue"),ch=channelMeasurements.get(channel),cm=skuMeasurements.get(`${channel}:${sku}`);
       const trusted=(n(r,"untrusted")??0)===0&&(n(r,"duplicates")??0)===0&&config.canonicalValidated;
-      const isSet=sets.has(sku)||p?.kind==="LISTING_PACKAGE"||setProfits.has(sku);
+      const isSet=sets.has(sku)||p?.kind==="LISTING_PACKAGE"||setSkus.has(sku);
       const cost=isSet?(sets.get(sku)??unknown("set_components_unavailable")):metric(p?.cost,true,"current_cost_estimate");
       const commission=measuredCommission(channel,n(cm??{},"accepted")??0,n(cm??{},"commission"),n(cm??{},"gross"),null,null,percentage(n(ch??{},"present"),n(ch??{},"records"))??0);
       const avgPrice=metric(trusted?divide(revenue,units):null,false,trusted?undefined:"untrusted_sku_grain");
@@ -224,6 +237,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       const velocity=demand.velocity;
       const prev=rows.find(x=>x.period==="previous"&&x.sku===r.sku&&x.channel===r.channel);
       const prevProfit=profits.find(x=>x.period==="previous"&&x.channel===channel&&x.sku===sku)?.profit;
+      const bands=shippingBandsFor(bandsRows??[],channel,day);
       const floor=channel==="MIRAKL_KOCTAS"?unknown("commission_unavailable"):priceFloor(cost.value,commission.value,n(p??{},"weight"),bands);
       const signal:ProductSignal={sku,channel,isSet,trusted,sourceFresh:financialFresh,cost,avgPrice,commissionRate:commission,commissionSamples:n(cm??{},"accepted")??0,priceFloor:floor,
         zeroCommissionFloor:priceFloor(cost.value,0,n(p??{},"weight"),bands),
@@ -255,7 +269,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   const represented=new Set(snapshot.products.map(p=>p.sku));
   for(const [sku,p] of bySku)if(!represented.has(sku)) {
     const v=velocities.get(sku),inb=inbound.get(sku),open=pos.get(String(p.id));
-    if(!v||isDummyStock(n(p,"stock")??0)||exceptions.has(sku)||!exceptionRows||p.kind==="LISTING_PACKAGE")continue;
+    if(!v||isDummyStock(n(p,"stock")??0)||exceptions.has(sku)||!exceptionRows||p.kind==="LISTING_PACKAGE"||setSkus.has(sku))continue;
     const xmlVelocity=metric(v.gunluk_30g_ihtiyatli,true,"cautious_stock_movement_estimate"),xmlUnits30=xmlUnits.get(sku)??unknown("xml_units_unavailable"),u=unknown("canonical_sku_sales_unavailable");
     snapshot.products.push({sku,channel:"INVENTORY",isSet:false,trusted:true,sourceFresh:false,cost:metric(p.cost,true),avgPrice:u,commissionRate:u,commissionSamples:0,priceFloor:u,zeroCommissionFloor:u,
       unitProfit:u,previousUnitProfit:u,contribution:u,previousMargin:u,margin:u,salesUnits30:u,xmlUnits30,salesVelocity:u,xmlVelocity,velocityGapPct:u,velocity:xmlVelocity,
@@ -283,7 +297,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   const functions=await cashFunctions(db,missing);
   // Cash output fields are explicitly configured by name; no guessed balance
   // column can silently turn borrowing capacity into cash.
-  const positionKey=process.env.AI_CFO_PROJECTION_POSITION_COLUMN;
+  const positionKey=reviewed?(reviewed.valid?reviewed.projectionPositionColumn:undefined):process.env.AI_CFO_PROJECTION_POSITION_COLUMN;
   if(positionKey&&functions.cfo_nakit_projeksiyon?.length) {
     const values=functions.cfo_nakit_projeksiyon.map(r=>numeric(r[positionKey]));
     snapshot.cash.minimumProjectedPosition=values.every(v=>v!=null)?metric(Math.min(...values as number[]),true):unknown("projection_column_unavailable");

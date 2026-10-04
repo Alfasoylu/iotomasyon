@@ -63,7 +63,7 @@ Mevcut stok hızı ihtiyatlı XML motorundan gelir; XML düşüşü satış olar
 
 ## Doğrulama
 
-`npm run check:cfo-agent`: PGlite gerçek PostgreSQL sorguları/migration ile 39 kontrol. `npx tsc --noEmit`, hedefli eslint ve production build ayrıca çalıştırılır. Provider timeout/concurrency/bütçe testleri kontrollü fake provider/store kullanır; canlı API çağrısı veya production DB yazımı yapılmaz.
+`npm run check:cfo-agent`: PGlite gerçek PostgreSQL sorguları/migration ile 43 kontrol. `npx tsc --noEmit`, hedefli eslint ve production build ayrıca çalıştırılır. Provider timeout/concurrency/bütçe testleri kontrollü fake provider/store kullanır; canlı API çağrısı veya production DB yazımı yapılmaz.
 
 ## Kabul kapıları — 03.10.2026 güncellemesi
 
@@ -121,3 +121,15 @@ Bu SQL bir Prisma migration değildir ve workflow tarafından otomatik yürütü
 #### Supabase TLS trust
 
 GitHub runner'ın varsayılan CA listesi Supabase Root 2021 CA'yı içermeyebilir. `lib/cfo-agent/certs/supabase-root-2021.crt` yalnız connection-check adımında NODE_EXTRA_CA_CERTS ile eklenir; sertifika/hostname doğrulaması açık kalır. Sertifika public CA'dır, private key/credential değildir. Resmi Supabase dashboard source: `apps/studio/hooks/custom-content/custom-content.json`, `ssl:certificate_url`; download: https://supabase-downloads.s3-ap-southeast-1.amazonaws.com/prod/ssl/prod-ca-2021.crt. PEM SHA256: `700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7`; sertifika fingerprint SHA256 `807025AD50D4ED219D2C9C7D299C004F824EB00CF7F65AFEF607D07B72E6CAFA`; geçerlilik 26.04.2031'e kadar. Rotation normal code review ile yapılır; TLS doğrulaması devre dışı bırakılmaz.
+
+## 04.10.2026 — doğrulanmış canlı source profili
+
+`AI_CFO_SOURCE_PROFILE=alfas_2026_10_04` canonical/purpose/set-profit/kargo
+kolonlarını bağlar ve nakit motorunun pozisyon alanını doğrular. Dört
+view/fonksiyon tanımının hash'i kontrol edilir; değişimde source kalite sinyali
+ve unknown oluşur, finansal sinyal engellenir. Profil canonical/release/AI
+flag'lerini açmaz. Kargo toplamı kanal ve geçerlilik tarihine göre okunur; başka
+kanala veya return/faulty banda genellenmez. SET reçetesi henüz doğrulanmadığı
+için maliyeti null kalır; mevcut Product maliyetine fallback yoktur.
+Özel raporda source hash değişimleri, native projection minimumu ve agent
+minimumu, bank freshness ve floor/component coverage ayrıca kaydedilir.

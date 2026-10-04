@@ -3344,3 +3344,9 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - Public repository metadata'sı doğrulandı. Kabul CLI finansal actual/expected ve teşhisi, bağlantı CLI SQL tanımlarını loglamayı bıraktı. Yeni adapter audit READ ONLY katalog/izinli tarife/SET configuration okur; fonksiyonları veya ham sipariş/müşteri sorgularını çalıştırmaz.
 - CI raporları RSA-3072 OAEP SHA256 + AES-256-GCM ile şifrelenir; anahtar eksikliğinde plaintext fallback yoktur. Public key dışında özel materyal Git/log/artifact'e konmaz. Çıktı 0600/overwrite yasaklıdır; özel çözüm aracı uygulama/CI dışında çalışır.
 - Altı PostgreSQL/kriptografi kontrolü, typecheck ve hedefli lint yerelde geçti. Canlı inceleme, migration veya production kabul başarısı henüz iddia edilmez.
+
+## 04.10.2026 — Canlı source profili ve finansal grain koruması
+
+- Şifreli read-only adapter incelemesi ve CI build/typecheck başarılı (194a4bb / 37172250835). Kargo toplamı/kanal/tarih ve nakit motorunun pozisyon anlamı SQL kaynak tanımlarından doğrulandı.
+- Calculation/contract v4: hash doğrulamalı canlı profil, kanal/tarih seçimiyle measured toplam kargo, SET reçetesi bilinmiyorken Product maliyetine fallback yasağı ve duplicate SET kârını unknown taşıma. Mevcut CFO SQL motoru/dashboard ve komisyon120gün korunur.
+- 43 PostgreSQL/CFO regresyonu ve yerel typecheck/lint geçti. Yeni adapter için canlı tekrar doğrulaması bekleniyor; finansal kabul veya migration/deploy onayı verilmedi.

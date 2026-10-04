@@ -17,6 +17,8 @@ import { createMonitorLock } from "../lib/cfo-agent/lock";
 import type { CfoStore, UsageWrite } from "../lib/cfo-agent/store";
 import type { Anomaly, CfoAgentSnapshot } from "../lib/cfo-agent/types";
 import type { ReadSource, Row } from "../lib/cfo-agent/sources";
+import { shippingBandsFor, shippingTariffSql } from "../lib/cfo-agent/shipping";
+import { reviewedCfoSources } from "../lib/cfo-agent/reviewed-sources";
 
 let passed=0;
 async function check(name:string,fn:()=>void|Promise<void>){await fn();passed++;console.log(`OK ${name}`);}
@@ -306,6 +308,51 @@ async function main(){
     assert.equal(d.clock![0].calculation_start_day,"2026-06-05");
     assert(!JSON.stringify(d).includes('diagnostic-1'));assert(!JSON.stringify(d).includes('orderNumber'));
     await db.exec(`delete from cfo_satis_birim_duz where "orderNumber" in ('diagnostic-1','diagnostic-2')`);
+  });
+  await check("shipping costs match channel/effective date and total includes tariff supplements",async()=>{
+    const tariffs=[
+      {min_try:0,max_try:200,kargo_try:53.61,channel:"TRENDYOL",effective_from:"2026-09-09"},
+      {min_try:0,max_try:200,kargo_try:60,channel:"TRENDYOL",effective_from:"2026-10-01"},
+      {min_try:0,max_try:200,kargo_try:99,channel:"TRENDYOL",effective_from:"2026-11-01"},
+      {min_try:0,max_try:200,kargo_try:300,channel:"HEPSIBURADA",effective_from:"2026-09-09"},
+      {min_try:null,max_try:null,kargo_try:120.77,channel:"TRENDYOL",effective_from:"2026-09-09"},
+      {min_try:0,max_try:200,kargo_try:5,channel:null,effective_from:"2026-09-09"}];
+    assert.deepEqual(shippingBandsFor(tariffs,"TRENDYOL","2026-09-20"),[{min:0,max:200,shipping:53.61}]);
+    assert.deepEqual(shippingBandsFor(tariffs,"TRENDYOL","2026-10-03"),[{min:0,max:200,shipping:60}]);
+    assert.deepEqual(shippingBandsFor(tariffs,"AMAZON","2026-10-03"),[]);
+    assert.deepEqual(shippingBandsFor([{min_try:0,max_try:200,kargo_try:5,channel:"TRENDYOL",effective_from:null}],"TRENDYOL","2026-10-03"),[]);
+    await db.exec(`alter table cfo_kargo_tarife add column channel text;alter table cfo_kargo_tarife add column effective_from date;
+      update cfo_kargo_tarife set channel='TRENDYOL',effective_from='2026-09-09';
+      insert into cfo_kargo_tarife values(0,200,60,'TRENDYOL','2026-10-01'),(0,200,99,'TRENDYOL','2026-11-01'),(0,200,300,'HEPSIBURADA','2026-09-09');`);
+    const tariff=shippingTariffSql({min_try:'"min_try"',max_try:'"max_try"',kargo_try:'"kargo_try"'},"100","'TRENDYOL'","'2026-10-03'::date",{channel:'"channel"',effectiveFrom:'"effective_from"'});
+    assert.equal(Number((await source.query(`select ${tariff} as shipping`))[0].shipping),60);
+    const x=await snapshot();assert.equal(product(x).priceFloor.estimated,true);
+    await db.exec(`delete from cfo_kargo_tarife where channel='HEPSIBURADA' or effective_from<>'2026-09-09';
+      alter table cfo_kargo_tarife drop column channel;alter table cfo_kargo_tarife drop column effective_from;`);
+  });
+  await check("set SKU cannot fall back to Product cost when component relationship is unavailable",async()=>{
+    await db.exec(`insert into cfo_set_fiyat values('SKU-A',100);`);
+    const x=await snapshot(),p=product(x);assert(p.isSet);assert.equal(p.cost.value,null);
+    assert.equal(p.unitProfit.value,null);assert.equal(p.priceFloor.value,null);
+    assert.equal(x.inventory.costValue.value,null);assert.equal(x.inventory.knownCostValue.value,250);
+    assert(x.dataQuality.missingFields.includes('set_component_unknown:SKU-A'));
+    await db.exec(`delete from cfo_set_fiyat where sku='SKU-A';`);
+  });
+  await check("ambiguous set profit rows stay unknown despite complete component cost",async()=>{
+    await db.exec(`insert into cfo_set_fiyat values('SKU-A',100),('SKU-A',200);insert into cfo_set_bilesen_maliyet values('SKU-A',80);`);
+    const p=product(await snapshot());assert.equal(p.cost.value,80);assert.equal(p.unitProfit.value,null);
+    assert.equal(p.unitProfit.reason,'ambiguous_set_profit_rows');
+    await db.exec(`delete from cfo_set_fiyat where sku='SKU-A';delete from cfo_set_bilesen_maliyet where set_sku='SKU-A';`);
+  });
+  await check("changed live source profile blocks cash interpretation and does not mutate caller config",async()=>{
+    assert.equal(await reviewedCfoSources(source,undefined),null);
+    await assert.rejects(()=>reviewedCfoSources(source,'invented'),/unknown_cfo_source_profile/);
+    const review=await reviewedCfoSources(source,'alfas_2026_10_04');assert.equal(review?.valid,false);
+    process.env.AI_CFO_PROJECTION_POSITION_COLUMN='net_pozisyon';
+    const x=await buildCfoAgentSnapshot({db:source,now,config,sourceProfile:'alfas_2026_10_04',bindings:{}});
+    assert.equal(x.cash.minimumProjectedPosition.value,null);assert.equal(config.canonicalValidated,true);
+    assert(x.dataQuality.missingFields.some(f=>f.startsWith('reviewed_source_changed:')));
+    assert(x.products.every(p=>!p.sourceFresh));delete process.env.AI_CFO_PROJECTION_POSITION_COLUMN;
   });
   await check("frozen 12-check acceptance evaluator detects wrong values and missing Koctas",()=>{
     const x=clone(s);x.cash.cash=metric(72483.62);x.cash.generalUnusedOverdraft=metric(1809300);x.cash.purposeLimit=metric(750000);x.cash.totalCardDebt=metric(2366017.3);x.cash.activeCards=6;

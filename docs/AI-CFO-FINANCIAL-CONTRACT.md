@@ -1,4 +1,4 @@
-# AI CFO V1 finansal sözleşme — v3
+# AI CFO V1 finansal sözleşme — v4
 
 Bu sözleşme yalnız `lib/cfo-agent/` için geçerlidir. Eski dashboard, CFO motoru,
 servet defteri, Entegra stok otoritesi ve insan kararları değiştirilmez.
@@ -85,3 +85,24 @@ komisyonu değil, dönem içindeki gerçekleşmiş ağırlıklı orandır.
 referansı kendiliğinden değiştirmez. Dönem, asOf ve örneklem aynı olan bağımsız
 referansla kabul doğrulanmalıdır; canlı çıktının beklenen değer olarak kopyalanması
 kabul testi değildir. XML/hız/mevcut stok referanslarının zamanı ayrıca uzlaştırılır.
+
+## 04.10.2026 — v4 canlı source sözleşmesi
+
+`AI_CFO_SOURCE_PROFILE=alfas_2026_10_04` canonical satış view'ları, nakit kapısı
+ve mevcut cfo_nakit_projeksiyon(integer) tanımlarının hash'ini kontrol eder.
+Doğrulanmış pozisyon nakit_try'den başlar; KMH/amaca bağlı kapasiteyi nakde eklemez.
+Değişmiş/eksik tanımda canonical finansal sinyal ve projeksiyon yorumu engellenir;
+mevcut SQL motoru yeniden yazılmaz. Bayat banka kapısı yine geçerlidir.
+
+Kargoda alt_sinir/ust_sinir/**toplam** kullanılır; tarife tek başına ek_maliyet'i
+dışlar. Pazaryeri ve satış tarihi için geçerli son band sürümü seçilir; fiyat
+tabanında analiz günü kullanılır. İade/kusurlu gönderilerde alt sınır yoktur ve
+normal satış kargosuna katılmaz. Başka kanalın tarifesi, gelecekteki geçerlilik
+tarihi, bilinmeyen kanal/tarih veya çakışan bantlar unknown üretir.
+
+Canlı SET bileşen tablosundaki kanal **kamera sayısıdır**; set_sku/BOM bağlantısı
+yoktur. Birden fazla disk/NVR alternatifinden SKU adına veya serbest note
+metnine göre reçete uydurulmaz. cfo_set_fiyat'tan tanınan SET, Product'ta
+MAIN_STOCK görünse de bilinmeyen bileşen maliyeti yerine Product.unitCostTry
+kullanamaz. Aynı SKU için birden çok kâr satırı da unknown olur. Eksik bileşen
+dataQuality'dir. 120 günlük komisyon ve altın referanslar değiştirilmez.

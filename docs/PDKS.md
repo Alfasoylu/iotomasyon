@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 04.10.2026 — Measured kargo/nakit profili ve SET maliyeti koruması
+
+[Salt okunur şifreli kaynak incelemesi](https://github.com/Alfasoylu/iotomasyon/actions/runs/37172250835) CI/build/typecheck ile geçti. Kargo toplam alanı ek maliyetleri içeriyor; sekiz kayıt içinde iade/kusurlu satırları normal band değildir. Kanala/tarihe göre measured toplam seçimi ve hash doğrulamalı canonical/purpose/set-profit/nakit profili eklendi. Canlı SET tablosundaki kanal kamera sayısıdır; reçete yokken Product maliyetine fallback ve aynı SKU'nun çakışan kâr satırları engellendi. Calculation/contract v4; 43 CFO regresyonu, typecheck/lint yerelde geçti. Yeni adapter canlı tekrar doğrulaması bekliyor; komisyon120gün/referans/legacy motor değişmedi, migration/deploy/AI yok.
+
 ### 04.10.2026 — Canlı adapter incelemesi ve public CI rapor koruması
 
 Repository'nin public görünürlüğü doğrulandı; kabul CLI finansal değer/teşhisi, bağlantı CLI SQL tanımlarını stdout'a yazmayı bıraktı. Yeni bounded adapter audit yalnız READ ONLY katalog/kargo/SET configuration okur; fonksiyonları çalıştırmaz. Raporlar RSA-OAEP/AES-GCM ile şifrelenir, CI plaintext fallback'i kapalıdır; public anahtar dışında özel materyal Git'e eklenmez. Altı PostgreSQL/kriptografi kontrolü, typecheck/lint yerelde geçti. Özel anahtarın Drive'a yüklenmesi otomatik onay incelemesinde reddedildi; anahtar ortamda kalır, yalnız kod/çözülen rapor yetkili özel Drive'a yedeklenebilir. Canlı kaynak semantiği incelemesi bekliyor; migration/deploy/AI yok.
