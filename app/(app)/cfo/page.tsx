@@ -87,6 +87,11 @@ export default async function CfoPage() {
         }
       />
 
+      <Card className="mb-6 p-4">
+        <a href="/api/admin/ai-cfo/acceptance" className="text-sm underline">Kabul karşılaştırmasını çalıştır (JSON)</a>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">Admin hesabıyla güncel verileri salt okunur karşılaştırır. Sonuç canlıya geçiş onayı değildir.</p>
+      </Card>
+
       {/* ── Bugün yapılacaklar ── */}
       <section className="mb-6">
         <h2 className="mb-2 text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
