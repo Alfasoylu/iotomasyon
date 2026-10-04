@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { safeCfoCycle,decideCfoWork } from '@/lib/cfo-agent/workflow';
 import { WORK_SOURCE,HEARTBEAT_ID,readWork } from '@/lib/cfo-agent/workflow-store';
 import { z } from 'zod';
+import { readCycleDiagnostic } from '@/lib/cfo-agent/workflow-diagnostics';
 export const dynamic='force-dynamic';export const runtime='nodejs';export const maxDuration=300;
 const headers={'Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin'};
 async function guard(write=false){const user=await getCurrentSession();if(!user)return null;
@@ -12,8 +13,8 @@ async function guard(write=false){const user=await getCurrentSession();if(!user)
 export async function GET(){if(!await guard())return NextResponse.json({error:'unauthorized'},{status:401,headers});
   try{const notes=await prisma.cfoNote.findMany({where:{source:WORK_SOURCE,archivedAt:null},orderBy:{updatedAt:'desc'}});
     const heartbeat=notes.find(n=>n.id===HEARTBEAT_ID);
-    const failures=await prisma.cfoChangeLog.findFirst({where:{source:WORK_SOURCE,note:'cycle_unavailable'},orderBy:{changedAt:'desc'},select:{changedAt:true}});
-    return NextResponse.json({schedule:'daily_plus_data_events',heartbeat:heartbeat?JSON.parse(heartbeat.body):null,lastFailureAt:failures?.changedAt??null,
+    const failures=await prisma.cfoChangeLog.findFirst({where:{source:WORK_SOURCE,note:'cycle_unavailable'},orderBy:{changedAt:'desc'},select:{changedAt:true,newValue:true}});
+    return NextResponse.json({schedule:'daily_plus_data_events',heartbeat:heartbeat?JSON.parse(heartbeat.body):null,lastFailureAt:failures?.changedAt??null,lastFailure:readCycleDiagnostic(failures?.newValue??null),
       items:notes.flatMap(n=>{const work=readWork(n.body);return work?[{id:n.id,...work}]:[];})},{headers});
   }catch{return NextResponse.json({error:'workflow_unavailable'},{status:503,headers});}}
 const input=z.discriminatedUnion('action',[
