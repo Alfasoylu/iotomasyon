@@ -1,0 +1,46 @@
+name: CFO read-only acceptance validation
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, fix/cfo-main-session]
+permissions:
+  contents: read
+concurrency:
+  group: cfo-readonly-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      AI_CFO_ENABLED: 'false'
+      AI_CFO_MONITOR_ENABLED: 'false'
+      DATABASE_URL: postgresql://localhost:5432/build_only
+      DIRECT_URL: postgresql://localhost:5432/build_only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma validate
+      - run: npx tsc --noEmit
+      - run: node --conditions=react-server --import tsx __tests__/ai-cfo-reconciliation.test.ts
+      - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts
+      - run: npm run check:rbac
+      - run: npm run check:entegra
+      - run: npx eslint lib/cfo-agent app/api/admin/ai-cfo/acceptance __tests__/ai-cfo*.test.ts 'app/(app)/cfo/page.tsx'
+      - name: Generate ephemeral build-only session key
+        run: |
+          python - <<'PY'
+          import os, secrets
+          key = secrets.token_hex(32)
+          print(f'::add-mask::{key}')
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'SESSION_SECRET={key}\n')
+          PY
+      - run: npm run build
+      - run: node scripts/check-cfo-acceptance-route.mjs
