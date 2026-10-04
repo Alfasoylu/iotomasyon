@@ -6,7 +6,7 @@ import { saveWorkPlan,saveAnswerContext, transitionWork, WORK_SOURCE,HEARTBEAT_I
 import { readMemory } from './workflow-memory';
 import { workflowId } from './workflow-plan';
 import type { WriteSource } from './workflow-store';
-import type { Prisma } from '@prisma/client';
+import type { Prisma,CfoQuestion } from '@prisma/client';
 import { CycleFailure,cycleDiagnostic,type CycleStage } from './workflow-diagnostics';
 function writer(tx:Prisma.TransactionClient):WriteSource{return {query: (sql,...params)=>tx.$queryRawUnsafe(sql,...params),execute:(sql,...params)=>tx.$executeRawUnsafe(sql,...params)};}
 export async function runCfoCycle(trigger:string){
@@ -24,7 +24,7 @@ export async function runCfoCycle(trigger:string){
     stage='context';const context=await loadOperatingContext();
     // Separate stages retain an actionable diagnosis without persisting query data.
     stage='settings';const settings=await prisma.cfoSettings.findFirst({orderBy:{updatedAt:'desc'}});
-    stage='questions';const records=await prisma.cfoQuestion.findMany({select:{id:true,question:true,answer:true,status:true,area:true,priority:true,answeredAt:true,processNote:true,processedAt:true},where:{status:{not:'IPTAL'}}});
+    stage='questions';const records=await prisma.$queryRawUnsafe<(Pick<CfoQuestion,'id'|'question'|'answer'|'status'|'area'|'priority'|'answeredAt'|'processNote'|'processedAt'>&{scope:string|null;entity_key:string|null;code:string|null})[]>(`select id,question,answer,status,area,priority,"answeredAt","processNote","processedAt",to_jsonb(q)->>'scope' as scope,to_jsonb(q)->>'entity_key' as entity_key,to_jsonb(q)->>'code' as code from cfo_question q where status<>'IPTAL'`);
     const knowledge=records.map(q=>({...q,answerVersion:q.answeredAt?.toISOString(),
       answerChanged:q.status==='CEVAPLANDI'&&!q.processedAt&&!q.processNote?.startsWith(`workflow_read:${q.answeredAt?.toISOString()}`),
       answerReviewPending:!q.processedAt&&!['completed','rejected'].includes(priorWork.get(workflowId('answer:'+q.id))?.status??'research')}));

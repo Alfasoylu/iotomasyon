@@ -11,3 +11,6 @@
 - Serializable total-debt gate for new procurement; future candidates remain in the notebook.
 - Stock/inbound-limited conditional debt and order dates with explicit nulls for incomplete inputs and a protected dated owner budget.
 - Synthetic queue/forecast SQL tests and real PostgreSQL/Prisma cycle regression passed; production workflow/build verification accompanies deployment.
+
+
+- 2026-10-04: Connected persistent CFO future candidates to the existing winners/import planner, read owner decisions and legacy row/batch notes/statuses every cycle, preserved rejections/waits and existing batch quantities, added row notes and after-response review triggers, applied the current total-debt gate to native readiness labels, and kept planning visible without frozen winners. Synthetic SQL and real Prisma/PostgreSQL regression checks cover this integration; no production financial fixture or schema change.

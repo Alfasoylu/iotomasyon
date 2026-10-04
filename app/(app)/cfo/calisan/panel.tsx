@@ -34,9 +34,9 @@ export default function WorkflowPanel(){const [report,setReport]=useState<Report
         <label className="block my-2"><input type="checkbox" checked={verified} onChange={e=>setVerified(e.target.checked)}/> Mevcut stok bedeli ödenmiş; bu bütçe beyanı diğer aylık çıkışları kapsıyor.</label>
         <button disabled={busy||!verified||Object.values(budget).some(v=>v.trim()===''||!Number.isFinite(Number(v))||Number(v)<0)} className="rounded border p-2" onClick={()=>act({action:'forecast-budget',...Object.fromEntries(Object.entries(budget).map(([k,v])=>[k,Number(v)])),verified:true})}>Bütçeyi kaydet ve yeniden hesapla</button>
       </details></div>}
-    <details className="rounded border p-4"><summary>Gelecek sipariş listesi ({active.filter(work=>work.item.futureOrder).length})</summary><ul>{active.filter(work=>work.item.futureOrder).map(work=><li key={work.id} className="my-2">{work.item.sku} · örnek miktar {work.item.suggestedUnits??'henüz hesaplanamıyor'} · tahmini tarih {work.item.estimatedOrderDate??'veri bekleniyor'} · yeni sipariş oluşturulmadı</li>)}</ul></details>
+    <p className="rounded border p-4"><a href="/cfo/kazananlar#ithalat" className="underline">İthalat ve gelecek sipariş planlayıcısı →</a><br/>Adaylar, parti durumları, retler ve notlar burada birlikte izlenir.</p>
     <h2 className="font-semibold">Bu çalışmanın öncelikli işleri</h2>
-    {focus.map(work=><article key={work.id} className="rounded border p-4 space-y-2"><h2 className="font-semibold">P{work.item.priority} · {work.item.title}</h2><p>{statusNames[work.status]}</p><p>{work.item.proposal}</p>
+    {focus.map(work=><article key={work.id} className="rounded border p-4 space-y-2"><h2 className="font-semibold">P{work.item.priority} · {work.item.title}</h2><p>{statusNames[work.status]}</p><p>{work.item.proposal}</p>{work.item.plannerPath&&<a href={work.item.plannerPath} className="underline">Planlayıcıdaki kayıt ve kararlar →</a>}
       <p>Gereken nakit: {money(work.item.cashRequiredTry)} · Tahmini katkı: {money(work.item.expectedGainTry)}{work.item.suggestedUnits!=null?` · 60 günlük örnek stok miktarı: ${work.item.suggestedUnits}`:''}</p>
       <details><summary>Kaynaklar ve açık noktalar</summary><ul>{work.item.evidence.map((e,i)=><li key={i}>{e}</li>)}</ul><ul>{work.item.blockers.map((e,i)=><li key={i}>{e}</li>)}</ul></details>
       {work.result&&<p>Bildirilen sonuç: {work.result}</p>}
@@ -45,6 +45,6 @@ export default function WorkflowPanel(){const [report,setReport]=useState<Report
         {work.status!=='approved'&&<button disabled={busy} className="mr-3 rounded border px-3 py-1" onClick={()=>act({action:'reject',id:work.id,revision:work.revision,result:results[work.id]??''})}>Gerekçeyle reddet</button>}
         {(work.status==='approved'||work.status==='research'&&!work.item.requiresApproval)&&<button disabled={busy} className="rounded border px-3 py-1" onClick={()=>act({action:'complete',id:work.id,revision:work.revision,result:results[work.id]??''})}>{work.status==='research'?'Araştırma sonucunu kaydet':'Uygulama sonucunu kaydet'}</button>}</div>}
     </article>)}
-    <details className="rounded border p-4"><summary>Diğer açık işler ({active.length-focus.length})</summary><ul>{active.filter(work=>!focus.includes(work)).map(work=><li key={work.id} className="my-2">P{work.item.priority} · {work.item.title}<p>{work.item.proposal}</p></li>)}</ul><p>Bu işler korunur; konu sırası geldiğinde öncelikli listeye alınır.</p></details>
+    <details className="rounded border p-4"><summary>Diğer açık işler ({active.length-focus.length})</summary><ul>{active.filter(work=>!focus.includes(work)).map(work=><li key={work.id} className="my-2">P{work.item.priority} · {work.item.title}<p>{work.item.proposal}</p>{work.item.plannerPath&&<a href={work.item.plannerPath} className="underline">Planlayıcıdaki kayıt ve kararlar →</a>}</li>)}</ul><p>Bu işler korunur; konu sırası geldiğinde öncelikli listeye alınır.</p></details>
   </div>;
 }

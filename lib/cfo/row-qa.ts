@@ -21,6 +21,7 @@ import { prisma } from "@/lib/prisma";
  */
 
 export type SoruKodu =
+  | "PLAN_NOTU"
   | "MALIYET_YOK"
   | "KAPSAM_UZUN"
   | "ORAN_GUVENI_DUSUK"
@@ -73,9 +74,6 @@ export const anahtar = (a: string, b: string) => `${a}|${b}`;
 
 /** Kayıtlı cevaplar + ürün kararları. Bir sayfa için tek çağrı. */
 export async function loadRowQa(kapsam: Kapsam, anahtarlar: string[]) {
-  if (anahtarlar.length === 0) {
-    return { kayitli: new Map<string, KayitliSoru[]>(), kararlar: new Map<string, UrunKarari>() };
-  }
 
   const [sorular, kararlar] = await Promise.all([
     prisma.$queryRaw<KayitliSoru[]>`

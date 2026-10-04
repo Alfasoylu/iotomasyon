@@ -27,6 +27,7 @@
  *     kaçınılmaz; soru "ne zaman verelim" değil, "kaç gün stoksuz kalacağız".
  */
 import Link from "next/link";
+import type { debtGate } from "@/lib/cfo-agent/debt-policy";
 import { Ship, Plane, TriangleAlert, Target, ArrowRight } from "lucide-react";
 import { fmtTry, fmtUsd, fmtNum, fmtDate, relDays } from "@/lib/cfo/format";
 import { Card } from "@/components/ui/card";
@@ -204,9 +205,9 @@ function Satir({ etiket, deger, ton }: { etiket: string; deger: string; ton?: "o
 }
 
 /** Bir taşıma modunun öneri kartı: tutar, tarih ve kuralların tek tek durumu. */
-function ModKarti({ o }: { o: OneriOzeti }) {
+function ModKarti({ o, orderGate }: { o: OneriOzeti; orderGate: ReturnType<typeof debtGate> }) {
   const meta = MOD_META[o.mod] ?? { ad: o.mod, Icon: Ship, aciklama: "" };
-  const d = DURUM[o.durum] ?? { etiket: o.durum, variant: "neutral" as const, ne: "" };
+  const d = !orderGate.open ? { etiket: "Borç eşiği bekleniyor", variant: "warn" as const, ne: orderGate.reason } : DURUM[o.durum] ?? { etiket: o.durum, variant: "neutral" as const, ne: "" };
   const { Icon } = meta;
   const usd = n(o.toplam_usd);
   const minUsd = n(o.min_tutar_usd);
@@ -236,7 +237,7 @@ function ModKarti({ o }: { o: OneriOzeti }) {
           <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
             Tavsiye edilen sipariş tarihi
           </p>
-          {o.tavsiye_siparis_tarihi ? (
+          {orderGate.open && o.tavsiye_siparis_tarihi ? (
             <>
               <p className="mt-1 text-[18px] font-semibold tabular-nums text-[var(--text-primary)]">
                 {fmtDate(o.tavsiye_siparis_tarihi)}
@@ -249,7 +250,7 @@ function ModKarti({ o }: { o: OneriOzeti }) {
             <>
               <p className="mt-1 text-[15px] font-semibold text-[var(--danger)]">Tarih verilemez</p>
               <p className="text-[10px] leading-snug text-[var(--text-muted)]">
-                Nakit projeksiyonu {fmtDate(o.projeksiyon_sonu)} tarihine kadar bu tutara ulaşmıyor.
+                {orderGate.open ? `Nakit projeksiyonu ${fmtDate(o.projeksiyon_sonu)} tarihine kadar bu tutara ulaşmıyor.` : orderGate.reason}
               </p>
             </>
           )}
@@ -396,7 +397,9 @@ export function ImportOrderSection({
   yoldaki,
   sorular,
   kararlar,
+  orderGate,
 }: {
+  orderGate: ReturnType<typeof debtGate>;
   ozet: OneriOzeti[];
   satirlar: OneriSatiri[];
   hedef: CiroHedefi | null;
@@ -441,15 +444,14 @@ export function ImportOrderSection({
   // "hedefin yüzde kaçını savunuyor" olarak yazılıyor — "hedefe katkı" değil.
   const korunanPay = hedefUsd > 0 ? (korunanCiroUsd / hedefUsd) * 100 : 0;
 
-  if (ozet.length === 0) {
+  if (ozet.length === 0 && satirlar.length === 0) {
     return (
       <Card className="mb-6 p-5">
         <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
           <Ship size={15} /> İthalat sipariş önerisi
         </h2>
         <p className="text-[12px] text-[var(--text-muted)]">
-          Açık partide bekleyen kalem yok. Kalemler <code>cfo_order_line</code> tablosuna
-          düştüğünde bu bölüm dolar.
+          Kesin partide bekleyen kalem yok. CFO araştırma adayları yukarıdaki gelecek sipariş planında izlenir.
         </p>
       </Card>
     );
@@ -461,9 +463,7 @@ export function ImportOrderSection({
         <Ship size={15} /> İthalat sipariş önerisi — sıradaki parti
       </h2>
       <p className="mb-4 text-[11px] leading-snug text-[var(--text-muted)]">
-        Sıradaki sipariş kararı artık yalnız burada. Kaynak, CFO&apos;nun parti defteri
-        (<code>cfo_order_line</code>) — sayfa kendi başına ürün seçmez, verilmiş kararları
-        gösterir. Hava ve deniz ayrı partidir: terminleri farklı olduğu için sipariş
+        Kesin parti satırları ve araştırma adayları bu planlayıcıda birlikte izlenir. Aşağıdaki satırlar mevcut parti defterinden gelir. Hava ve deniz ayrı partidir: terminleri farklı olduğu için sipariş
         tarihleri de farklıdır.
       </p>
 
@@ -496,13 +496,13 @@ export function ImportOrderSection({
 
       {/* ── Hava / Deniz kartları ───────────────────────────────────── */}
       <div className="grid gap-3 lg:grid-cols-2">
-        {hava && <ModKarti o={hava} />}
-        {deniz && <ModKarti o={deniz} />}
+        {hava && <ModKarti o={hava} orderGate={orderGate} />}
+        {deniz && <ModKarti o={deniz} orderGate={orderGate} />}
       </div>
 
       {/* ── Uyarılar ────────────────────────────────────────────────── */}
       <div className="mt-4 space-y-2">
-        {ozet.every((o) => o.durum === "KAPI_KAPALI") && (
+        {ozet.length > 0 && ozet.every((o) => o.durum === "KAPI_KAPALI") && (
           <Uyari ton="danger">
             Her iki parti de nakit kapısına takılıyor. Toplam {fmtUsd(toplamUsd)} sipariş için
             bugünkü nakit {fmtTry(n(ozet[0].bugunku_nakit_try))}; projeksiyonun{" "}
@@ -600,7 +600,7 @@ export function ImportOrderSection({
       <p className="mt-4 text-[11px] leading-relaxed text-[var(--text-muted)]">
         Kurallar <code>cfo_settings</code> içinde: hava termini {hava?.termin_gun ?? 22} gün,
         deniz termini {deniz?.termin_gun ?? 67} gün, minimum ithalat tutarı{" "}
-        {fmtUsd(n(ozet[0].min_tutar_usd))}, minimum satır adedi {minAdet}, hedef aylık ciro{" "}
+        {ozet[0] ? fmtUsd(n(ozet[0].min_tutar_usd)) : "ayarlardaki alt sınır"}, minimum satır adedi {minAdet}, hedef aylık ciro{" "}
         {fmtUsd(hedefUsd)}. Terminler 28.08 partisinde ölçülen sürelerdir; tedarikçi veya
         acente değişirse ayarlardan güncellenmelidir.{" "}
         <Link href="/cfo/odemeler" className="text-[var(--accent)] hover:underline">

@@ -13,6 +13,8 @@
  * Her iki yazma da `cfo_change_log`'a düşer — CFO kuralı: eski değer silinmez.
  */
 
+import type { Prisma } from "@prisma/client";
+import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser, checkPermission } from "@/lib/auth";
@@ -25,6 +27,7 @@ function revalidateQa() {
   revalidatePath("/cfo/kazananlar");
   revalidatePath("/cfo/sorular");
   revalidatePath("/cfo");
+  revalidatePath("/cfo/calisan");
 }
 
 async function guardWrite() {
@@ -48,8 +51,9 @@ async function log(
   oldValue: string,
   newValue: string,
   note: string,
+  tx: Prisma.TransactionClient,
 ) {
-  await prisma.cfoChangeLog.create({
+  await tx.cfoChangeLog.create({
     data: {
       area,
       kind,
@@ -76,6 +80,7 @@ export async function answerRowQuestionAction(input: {
   if (!user) return PERM_DENIED;
 
   const cevap = input.answer.trim();
+  if (cevap.length > 8000) return { ok: false, message: "Not en fazla 8000 karakter olabilir." };
   if (cevap.length < 2) return { ok: false, message: "Cevap boş olamaz." };
 
   try {
@@ -123,12 +128,13 @@ export async function answerRowQuestionAction(input: {
       });
     });
 
+    scheduleCfoCycle("import_row_answer");
     revalidateQa();
-    return { ok: true, message: "Cevap kaydedildi." };
-  } catch (e) {
+    return { ok: true, message: "Cevap kaydedildi. CFO yeniden değerlendirecek." };
+  } catch {
     // Sessiz yutma yasak: ilk sürümde gerçek sebep (CHECK ihlali) görünmüyordu
     // ve hatayı bulmak canlı log okumayı gerektirdi.
-    console.error("answerRowQuestionAction", input.entityKey, input.code, e);
+    console.error("answerRowQuestionAction failed");
     return { ok: false, message: "Cevap kaydedilemedi." };
   }
 }
@@ -146,6 +152,7 @@ export async function setProductDecisionAction(input: {
   const sebep = input.sebep.trim();
   // Gerekçe zorunlu: karar kadar nedeni de bilgidir. Gerekçesiz karar altı ay
   // sonra "neden almamıştık" sorusunu cevapsız bırakır.
+  if (sebep.length > 2000 || !input.sku.trim() || input.sku.length > 250) return { ok: false, message: "Ürün veya gerekçe geçersiz." };
   if (sebep.length < 3) return { ok: false, message: "Gerekçe yazmadan karar kaydedilemez." };
   if (!["ALMA", "AL", "BEKLE"].includes(input.karar)) {
     return { ok: false, message: "Geçersiz karar." };
@@ -155,10 +162,11 @@ export async function setProductDecisionAction(input: {
     const kim = user.email ?? user.name ?? "kullanıcı";
     const bitis = input.gecerliBitis && input.gecerliBitis.length > 0 ? input.gecerliBitis : null;
 
-    const [eski] = await prisma.$queryRaw<{ karar: string; sebep: string }[]>`
+    await prisma.$transaction(async tx=>{
+    const [eski] = await tx.$queryRaw<{ karar: string; sebep: string }[]>`
       select karar, sebep from cfo_urun_karar where sku = ${input.sku}`;
 
-    await prisma.$executeRaw`
+    await tx.$executeRaw`
       insert into cfo_urun_karar (sku, karar, sebep, gecerli_bitis, kaynak, karar_veren, updated_at)
       values (${input.sku}, ${input.karar}, ${sebep}, ${bitis}::date, 'panel', ${kim}, now())
       on conflict (sku) do update
@@ -169,12 +177,14 @@ export async function setProductDecisionAction(input: {
     await log(user, "siparis", "karar", input.sku,
       eski ? `${eski.karar} — ${eski.sebep}` : "(karar yoktu)",
       `${input.karar} — ${sebep}${bitis ? ` (${bitis} tarihine kadar)` : " (süresiz)"}`,
-      "Panelden ürün kararı");
+      "Panelden ürün kararı", tx);
 
+    });
+    scheduleCfoCycle("import_product_decision");
     revalidateQa();
     return { ok: true, message: "Karar kaydedildi." };
-  } catch (e) {
-    console.error("setProductDecisionAction", input.sku, e);
+  } catch {
+    console.error("setProductDecisionAction failed");
     return { ok: false, message: "Karar kaydedilemedi." };
   }
 }
@@ -184,18 +194,21 @@ export async function clearProductDecisionAction(sku: string): Promise<ActionRes
   const user = await guardWrite();
   if (!user) return PERM_DENIED;
   try {
-    const [eski] = await prisma.$queryRaw<{ karar: string; sebep: string }[]>`
+    await prisma.$transaction(async tx=>{
+    const [eski] = await tx.$queryRaw<{ karar: string; sebep: string }[]>`
       select karar, sebep from cfo_urun_karar where sku = ${sku}`;
-    if (!eski) return { ok: true, message: "Karar zaten yok." };
+    if (!eski) return;
 
-    await prisma.$executeRaw`delete from cfo_urun_karar where sku = ${sku}`;
+    await tx.$executeRaw`delete from cfo_urun_karar where sku = ${sku}`;
     await log(user, "siparis", "karar", sku, `${eski.karar} — ${eski.sebep}`, "(kaldırıldı)",
-      "Panelden karar kaldırıldı");
+      "Panelden karar kaldırıldı", tx);
 
+    });
+    scheduleCfoCycle("import_decision_cleared");
     revalidateQa();
     return { ok: true, message: "Karar kaldırıldı." };
-  } catch (e) {
-    console.error("clearProductDecisionAction", sku, e);
+  } catch {
+    console.error("clearProductDecisionAction failed");
     return { ok: false, message: "Karar kaldırılamadı." };
   }
 }
