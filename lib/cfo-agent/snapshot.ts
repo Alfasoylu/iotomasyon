@@ -288,8 +288,8 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   snapshot.inventory.stockoutRiskValue=metric(velocityRows&&sales&&exceptionRows&&uniqueRisks.every(p=>p.cost.value!=null&&p.stockQty!=null)?uniqueRisks.reduce((s,p)=>s.add(D(p.cost.value!).mul(p.stockQty!)),D(0)).toNumber():null,true);
   snapshot.procurement.riskySkuCount=new Set(risks.map(p=>p.sku)).size;
 
-  const banks=await db.query(`select count(*)::int as accounts,count("balanceTry")::int as balances,min("lastUpdatedAt") as oldest,max("lastUpdatedAt") as latest from cfo_bank_account where "isActive"`);
-  snapshot.cash.banksFresh=(n(banks[0]??{},"accounts")??0)>0&&n(banks[0],"accounts")===n(banks[0],"balances")&&!stale(iso(banks[0]?.oldest),now,7*24);
+  const banks=await db.query(`select count(*)::int as accounts,count("balanceTry")::int as balances,count("lastUpdatedAt")::int as timestamps,min("lastUpdatedAt") as oldest,max("lastUpdatedAt") as latest from cfo_bank_account where "isActive"`);
+  snapshot.cash.banksFresh=(n(banks[0]??{},"accounts")??0)>0&&n(banks[0],"accounts")===n(banks[0],"balances")&&n(banks[0],"accounts")===n(banks[0],"timestamps")&&!stale(iso(banks[0]?.oldest),now,7*24);
   snapshot.dataQuality.sourceWatermarks.push({source:"banks",orderDate:null,syncedAt:iso(banks[0]?.latest),batchDays:0,coverageDays:0,stale:!snapshot.cash.banksFresh});
   if(!snapshot.cash.banksFresh)snapshot.dataQuality.staleSources.push("banks");
   const gate=await catalog.rows("cfo_nakit_kapisi",["nakit_try","bos_kmh_try"],1);

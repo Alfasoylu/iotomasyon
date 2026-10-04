@@ -297,6 +297,12 @@ async function main(){
       alter table cfo_satis_siparis alter column "orderDate" type timestamptz using "orderDate" at time zone 'UTC';
       alter table cfo_satis_birim_duz alter column "orderDate" type timestamptz using "orderDate" at time zone 'UTC'`);
   });
+  await check("a fresh bank cannot hide another active bank with missing timestamp",async()=>{
+    await db.exec(`insert into cfo_bank_account values (500,null,true)`);
+    const x=await snapshot();assert.equal(x.cash.banksFresh,false);
+    assert(x.dataQuality.staleSources.includes("banks"));
+    await db.exec(`delete from cfo_bank_account where "lastUpdatedAt" is null`);
+  });
   await check("acceptance commission diagnostics separate native/trusted means and expose no order IDs",async()=>{
     await db.exec(`insert into cfo_satis_birim_duz values
       ('TRENDYOL','MD-3003B1','diagnostic-1','2026-10-02',1,1000,'KESIN',100,1000,100,0,0,0),

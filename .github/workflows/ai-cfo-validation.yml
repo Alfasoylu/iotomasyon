@@ -30,6 +30,7 @@ jobs:
       - run: npx prisma validate
       - run: npx tsc --noEmit
       - run: npm run check:cfo-agent
+      - run: node --conditions=react-server --import tsx __tests__/ai-cfo-reconciliation.test.ts
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-access.test.ts
       - run: node --import tsx __tests__/ai-cfo-reader-rls.test.ts
       - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts

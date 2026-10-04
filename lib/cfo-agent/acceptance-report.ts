@@ -4,6 +4,7 @@ import { evaluateCfoAcceptance } from "./acceptance";
 import { hashSnapshot } from "./evidence";
 import { assertReviewedCfoDefinitions, cfoAcceptanceContext, REVIEWED_CFO_SOURCE_BINDINGS } from "./acceptance-profile";
 import { cfoAcceptanceDiagnostics } from "./acceptance-diagnostics";
+import { cfoAcceptanceReconciliation } from "./acceptance-reconciliation";
 import type { ReadSource } from "./sources";
 
 
@@ -22,6 +23,7 @@ export async function buildCfoAcceptanceReport(db:ReadSource,env:Record<string,s
       ...(profile&&!env.AI_CFO_SOURCE_PROFILE?{bindings:REVIEWED_CFO_SOURCE_BINDINGS}:{})});
     const checks=evaluateCfoAcceptance(snapshot),passed=checks.filter(c=>c.passed).length;
     const diagnostics=isCurrentComparison?await cfoAcceptanceDiagnostics(db,asOf):undefined;
+    const reconciliation=isCurrentComparison?await cfoAcceptanceReconciliation(db,snapshot):undefined;
     const nativeProjection=snapshot.cash.minimumProjectedPosition.value!=null&&env.AI_CFO_SOURCE_PROFILE==='alfas_2026_10_04'
       ?await db.query(`select min(pozisyon) as minimum_position,count(*)::int as days from public.cfo_nakit_projeksiyon(120)`):null;
     const adapterVerification={sourceProfile:env.AI_CFO_SOURCE_PROFILE??null,
@@ -33,6 +35,7 @@ export async function buildCfoAcceptanceReport(db:ReadSource,env:Record<string,s
     const report={mode,reference:"ALFAS-2026-10-03",testedAt:new Date().toISOString(),asOf,snapshotHash:hashSnapshot(snapshot),calculationVersion:snapshot.calculationVersion,passed,total:12,checks,
       productionApproval:false,
       ...(diagnostics?{diagnostics}:{}),
+      ...(reconciliation?{reconciliation}:{}),
       adapterVerification,
       dataQuality:snapshot.dataQuality,limitations:"Current mutable balances/inventory cannot reconstruct a historical ledger. Run against the reference database snapshot."};
   return report;
