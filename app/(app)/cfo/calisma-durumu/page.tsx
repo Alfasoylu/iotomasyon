@@ -14,6 +14,7 @@ export default async function OperatingContextPage(){
   const summary=report.operating.summary;
   return <div className="space-y-5">
     <h1 className="text-2xl font-semibold">CFO çalışma durumu</h1>
+    <a className="underline" href="/cfo/calisan">Çalışan CFO: araştırmalar, sorular ve kararlar</a>
     <p>Mevcut verilerle analiz yapılır. Eksikler yalnız ilgili hesaplamayı sınırlar; genel maliyet oranı bütün analizi durdurmaz.</p>
     <p>{summary.skusWithKnownCost} ürünün maliyeti biliniyor · {summary.skuChannelsWithPriceFloor} ürün/kanal için fiyat alt sınırı hesaplanabiliyor · {summary.skuChannelsWithContributionProfit} ürün/kanal için katkı kârı hesaplanabiliyor.</p>
     <h2 className="text-lg font-semibold">Veri kaynakları</h2>

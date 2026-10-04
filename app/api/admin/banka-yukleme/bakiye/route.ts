@@ -1,3 +1,4 @@
+import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getCurrentSession, checkPermission } from "@/lib/auth";
@@ -8,6 +9,7 @@ import { validateBalance } from "@/lib/banka/balance";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   const user = await getCurrentSession();
@@ -21,6 +23,7 @@ export async function POST(req: Request) {
     const result = await writeBalance(prisma, input, user.email);
     if (!result) return NextResponse.json({ error: "Hesap değişmiş. Sayfayı yenileyip bakiyeyi tekrar kontrol edin." }, { status: 409 });
     for (const path of ["/cfo", "/cfo/borclar", "/cfo/nakit-akisi", "/cfo/defter", "/admin/banka-yukleme"]) revalidatePath(path);
+    scheduleCfoCycle("bank_balance");
     return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return NextResponse.json({ error: "Bakiye kaydedilemedi. Hiçbir değişiklik yapılmadı." }, { status: 500 });

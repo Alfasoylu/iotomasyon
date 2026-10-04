@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnswerForm, ProcessedButton, CancelButton } from "./answer-form";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 const AREA_TR: Record<string, string> = {
   nakit: "Nakit", marj: "Marj", stok: "Stok", siparis: "Sipariş",
@@ -144,7 +145,7 @@ export default async function CfoQuestionsPage() {
                     {q.attachments.map((f) => (
                       <a
                         key={f.id}
-                        href={f.url}
+                        href={`/api/admin/ai-cfo/files/${f.id}`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1.5 rounded border border-[var(--border)] px-2 py-1 text-[11px] text-[var(--accent)] hover:border-[var(--accent)]"

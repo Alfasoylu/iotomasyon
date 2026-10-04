@@ -24,14 +24,14 @@ async function main(){
     assert.equal((await readCfoNotebook(source,new Date(snapshot.generatedAt))).available,false);
     await db.exec(`create table cfo_note(id text,title text,body text,category text,"dataTag" text,source text,pinned boolean,"updatedAt" timestamptz,"reviewBy" timestamptz,"archivedAt" timestamptz);
       insert into cfo_note values
-      ('current','Current rule','Synthetic business context','kural','KESIN',null,true,'2026-10-03',null,null),
+      ('current','Current rule','Synthetic business context','kural','Kesin',null,true,'2026-10-03',null,null),
       ('expired','Expired','Synthetic context','urun','KESIN',null,false,'2026-10-03','2026-10-01',null),
       ('estimate','Estimate','Synthetic context','nakit','TAHMINI',null,false,'2026-10-03',null,null),
       ('archived','Archived','PRIVATE_ARCHIVED','kural','KESIN',null,true,'2026-10-03',null,'2026-10-03');
       create table "MarketplaceSalesRecord"("importedAt" timestamptz);
       insert into "MarketplaceSalesRecord" values ('2026-10-03'),('2026-10-04');
-      create table "Product"(sku text,"isActive" boolean,"unitCostTry" numeric,"unitCostUsd" numeric,"importUnitCostUsd" numeric);
-      insert into "Product" values('inactive',false,null,null,null),('usd',true,null,10,null);`);
+      create table "Product"(sku text,"isActive" boolean,"unitCostTry" numeric,"unitCostUsd" numeric,"importUnitCostUsd" numeric,"privateNote" text,"productKind" text,"stockQuantity" integer);
+      insert into "Product" values('inactive',false,null,null,null,null,'MAIN_STOCK',0),('usd',true,null,10,null,null,'MAIN_STOCK',5);`);
     const notebook=await db.transaction(async tx=>{
       await tx.exec('SET TRANSACTION READ ONLY');
       const source:ReadSource={async query<T extends Row>(sql:string,...params:unknown[]):Promise<T[]>{return(await tx.query<T>(sql,params)).rows;}};

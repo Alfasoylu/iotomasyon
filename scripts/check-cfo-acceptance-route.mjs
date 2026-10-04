@@ -30,6 +30,12 @@ for (const [environment, status, failure] of [
     const page=await fetch("http://127.0.0.1:3199/cfo/calisma-durumu",{redirect:"manual"});
     assert.equal(page.status,307);
     assert.ok(page.headers.get("location")?.includes("/login"));
+    const cycle=await fetch('http://127.0.0.1:3199/api/admin/ai-cfo/cycle');
+    assert.equal(cycle.status,401);assert.match(cycle.headers.get('cache-control')??'',/private.*no-store/);
+    assert.equal((await fetch('http://127.0.0.1:3199/api/admin/ai-cfo/cycle',{method:'POST',body:'{}'})).status,401);
+    const worker=await fetch('http://127.0.0.1:3199/cfo/calisan',{redirect:'manual'});assert.equal(worker.status,307);
+    assert.equal((await fetch('http://127.0.0.1:3199/api/admin/ai-cfo/files/example')).status,401);
+    const cron=await fetch('http://127.0.0.1:3199/api/cron/cfo-cycle');assert.ok([401,503].includes(cron.status));
     const post = await fetch(url, { method: "POST" });
     assert.equal(post.status, 405);
     console.log(`CFO acceptance route: ${environment} access gate passed`);

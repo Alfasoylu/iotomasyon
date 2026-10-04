@@ -8,6 +8,7 @@
  * lib/cron-auth.ts validates it (fail-closed: secret yoksa 503).
  */
 
+import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeCron } from "@/lib/cron-auth";
@@ -19,6 +20,7 @@ export const maxDuration = 300; // 5 min
 export async function GET(req: NextRequest) {
   const denied = authorizeCron(req);
   if (denied) return denied;
+  scheduleCfoCycle("daily_xml");
 
   const sources = await prisma.xmlSyncSource.findMany({
     where: { isEnabled: true },
