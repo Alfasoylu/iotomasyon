@@ -41,3 +41,13 @@
   derlemesi doğrulandı; kontroller CI'ya eklendi.
 
 Kullanım ve sınırlar: [BANK-UPLOAD-MAIN.md](BANK-UPLOAD-MAIN.md).
+
+## 2026-10-04 — Statement parser recovery and currency safeguards
+
+Positioned PDF text now stays in its real column. The supported bank table layout associates descriptions above a transaction with that transaction, and numeric references stay outside monetary columns. Spaced negative amounts and TL-labelled spreadsheet headers are supported.
+
+PDF re-import reconstructs legacy identities and checks them under the account import lock, preserving existing entries while inserting missing rows. New PDF identities use a separate version namespace so shifted daily ordinals cannot collide with legitimate old rows. Legacy matching also requires identical date, amount and balance. Preview tokens include the parser version.
+
+Foreign-currency account selection and statement metadata are rejected by the TRY importer. The read-only review explicitly marks existing foreign-currency movement groups as unsuitable for TRY cash flows. Existing raw movement rows and account balances are preserved; no currency conversion or production-data correction is claimed. Native-currency storage/reconciliation remains necessary before those groups can enter cash-flow calculations.
+
+Validation: synthetic positioned PDFs, actual XLSX metadata/header parsing, PGlite legacy recovery/re-import, changed-amount protection, review currency flags, typecheck and lint. Private source files were inspected only locally and are excluded from the repository and CI. Live repair requires the protected production session and original file; deployment alone does not replay uploads.

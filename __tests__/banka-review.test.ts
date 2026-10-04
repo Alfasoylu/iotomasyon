@@ -49,6 +49,12 @@ async function main() {
     const unknown = await bankReview(source);
     assert.equal(unknown.summary.unreadableRowsAcrossUploads,null);
     assert.equal(unknown.banks.filter(b=>b.bank==='Example A').every(b=>b.ambiguousName),true);
+    await db.exec(`INSERT INTO cfo_bank_account VALUES ('fx','Example USD','Vadesiz DÖVİZ',100,now(),true,9);
+      INSERT INTO cfo_banka_hareket VALUES ('Example USD',current_date,'fx-native','PRIVATE_TRANSACTION');`);
+    const fxReport = await bankReview(source);
+    assert.equal(fxReport.currencyReviewRequired[0].currency,'USD');
+    assert.equal(fxReport.banks.find(b=>b.bank==='Example USD')?.movementTryUsable,false);
+    assert.equal(fxReport.currencyReviewRequired[0].rows,1);
     console.log('Bank review: actual SQL, read-only transaction, import counts, freshness/unknown/future dates, duplicate/missing hashes, unmapped banks and privacy passed');
   } finally { await db.close(); }
 }

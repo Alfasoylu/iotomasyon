@@ -14,67 +14,14 @@ import { hareketTablosuHazir } from "./schema";
 import { prisma } from "@/lib/prisma";
 import { numOrNull } from "@/lib/cfo/engine";
 import type { BankaAlan } from "./columns";
-import { satirHash, type BankaSatir, type AtlananSatir } from "./parse";
+import { type BankaSatir, type AtlananSatir } from "./parse";
 import { insertSql, INSERT_COLS } from "./sql";
 
 export const BUYUK_HAREKET_ESIGI_TRY = 25000;
 
-export interface BankaKayit {
-  banka: string;
-  hesap: string | null;
-  tarihIso: string; // yyyy-mm-dd
-  valorIso: string | null;
-  aciklama: string;
-  tutarTry: number;
-  bakiyeTry: number | null;
-  karsiTaraf: string | null;
-  refNo: string | null;
-  kaynakDosya: string;
-  importId: string | null; // Yeni import-log tablosu gerektirmemek için boş bırakılır.
-  satirHash: string;
-  dosyaSatiri: number;
-}
-
-/** Dosyadan hazırlanan kayıt; import_id mevcut şemada nullable olmalıdır. */
-export type HazirBankaKaydi = Omit<BankaKayit, "importId">;
-
-function isoGun(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-/**
- * Ayrıştırılmış satırları yazmaya hazır kayıtlara çevirir.
- *
- * `siraAyniGun` DOSYA SIRASINA göre atanır (aynı gün içinde kaçıncı satır).
- * Aynı gün/tutar/açıklamalı iki GERÇEK işlem olabileceği için hash'e girer —
- * yoksa ikinci gerçek işlem "zaten var" sayılıp sessizce atlanırdı.
- */
-export function kayitlaraDonustur(
-  satirlar: BankaSatir[],
-  banka: string,
-  kaynakDosya: string
-): HazirBankaKaydi[] {
-  const gunSayaci = new Map<string, number>();
-  return satirlar.map((s) => {
-    const tarihIso = isoGun(s.tarih);
-    const sira = gunSayaci.get(tarihIso) ?? 0;
-    gunSayaci.set(tarihIso, sira + 1);
-    return {
-      banka,
-      hesap: s.hesap,
-      tarihIso,
-      valorIso: s.valor ? isoGun(s.valor) : null,
-      aciklama: s.aciklama,
-      tutarTry: Math.round(s.tutarTry * 100) / 100,
-      bakiyeTry: s.bakiyeTry == null ? null : Math.round(s.bakiyeTry * 100) / 100,
-      karsiTaraf: s.karsiTaraf,
-      refNo: s.refNo,
-      kaynakDosya,
-      satirHash: satirHash(banka, tarihIso, Math.round(s.tutarTry * 100) / 100, s.aciklama, s.refNo, sira),
-      dosyaSatiri: s.dosyaSatiri,
-    };
-  });
-}
+export { kayitlaraDonustur } from "./records";
+import { filterAlreadyStored, type BankaKayit, type HazirBankaKaydi } from "./records";
+export type { BankaKayit, HazirBankaKaydi } from "./records";
 
 /* ────────────────────────────────── önizleme ────────────────────────────── */
 
@@ -130,9 +77,9 @@ export async function buildOnizleme(
   atlanan: number
 ): Promise<BankaOnizleme> {
   const canImport = await hareketTablosuHazir();
-  const hashler = kayitlar.map((k) => k.satirHash);
+  const hashler = kayitlar.flatMap((k) => k.legacyHash ? [k.satirHash, k.legacyHash] : [k.satirHash]);
   const varOlan = canImport ? await varOlanHashler(hashler) : new Set<string>();
-  const yeniKayitlar = kayitlar.filter((k) => !varOlan.has(k.satirHash));
+  const yeniKayitlar = filterAlreadyStored(kayitlar, varOlan);
 
   let toplamGiris = 0;
   let toplamCikis = 0;
@@ -239,7 +186,14 @@ export async function yaz(kayitlarBase: HazirBankaKaydi[], ctx: YazBaglam): Prom
 
   return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('bank-statement-import'), hashtext(${ctx.banka}))`;
-    const kayitlar: BankaKayit[] = kayitlarBase.map((k) => ({ ...k, importId: null }));
+    const legacyHashes = kayitlarBase.flatMap(k => k.legacyHash ? [k.legacyHash] : []);
+    const legacyExisting = new Set<string>();
+    for (let i = 0; i < legacyHashes.length; i += 1000) {
+      const found = await tx.$queryRawUnsafe<{ satir_hash: string }[]>(
+        `SELECT satir_hash FROM cfo_banka_hareket WHERE satir_hash = ANY($1::text[])`, legacyHashes.slice(i, i + 1000));
+      for (const row of found) legacyExisting.add(row.satir_hash);
+    }
+    const kayitlar: BankaKayit[] = filterAlreadyStored(kayitlarBase, legacyExisting).map(k => ({ ...k, importId: null }));
 
     let eklenen = 0;
     for (let i = 0; i < kayitlar.length; i += PARCA) {
@@ -248,7 +202,7 @@ export async function yaz(kayitlarBase: HazirBankaKaydi[], ctx: YazBaglam): Prom
       eklenen += n;
     }
 
-    const atlananMukerrer = kayitlar.length - eklenen;
+    const atlananMukerrer = kayitlarBase.length - eklenen;
 
     const log = await tx.cfoChangeLog.create({ data: {
       area: "banka", kind: "aksiyon", item: `Banka dosyası: ${ctx.banka}`,
@@ -263,6 +217,7 @@ export async function yaz(kayitlarBase: HazirBankaKaydi[], ctx: YazBaglam): Prom
 /* ─────────────────────────────── ortak hazırlık ─────────────────────────── */
 
 export interface Hazirlik {
+  legacySatirlar?: BankaSatir[];
   satirlar: BankaSatir[];
   atlanan: AtlananSatir[];
   eksikZorunlu: BankaAlan[];
@@ -276,6 +231,7 @@ export async function hazirla(buffer: Buffer, elleEsleme?: Partial<Record<BankaA
   const r = await readBankFile(buffer, fileName, elleEsleme);
   return {
     satirlar: r.satirlar,
+    legacySatirlar: r.legacySatirlar,
     atlanan: r.atlanan,
     eksikZorunlu: r.eslesme.eksikZorunlu,
     eslesen: r.eslesme.eslesen,

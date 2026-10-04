@@ -43,6 +43,7 @@ export interface AtlananSatir {
 }
 
 export interface HamAyristirma {
+  metadata?: string[];
   basliklar: string[];
   ilkSatirlar: string[][]; // önizleme/elle eşleme için ham ilk 5 veri satırı
   basliklarSatiriIndex: number;
@@ -86,6 +87,7 @@ export function ayristirHam(buffer: Buffer): HamAyristirma {
   const veriSatirlari = satirlar.slice(enIyiIndex + 1).map((r) => (r as unknown[]).map((c) => String(c ?? "")));
 
   return {
+    metadata: satirlar.slice(0, enIyiIndex).map(row => row.join(" ")),
     basliklar,
     ilkSatirlar: veriSatirlari.slice(0, 5),
     basliklarSatiriIndex: enIyiIndex,
@@ -163,7 +165,7 @@ export function toDecimalTr(raw: unknown): number | null {
     negatif = true;
     s = s.replace(/-\s*$/, "");
   }
-  s = s.replace(/\s*(TRY|TL|₺)\s*/gi, "").trim();
+  s = s.replace(/\s*(TRY|TL|₺)\s*/gi, "").trim().replace(/^([+-])\s+(?=\d)/, "$1");
   if (!s) return null;
 
   // Reject partial parses and ambiguous thousands separators.
@@ -226,10 +228,11 @@ export function onayAnahtariHesapla(
     .sort()
     .map((k) => `${k}=${eslesen[k as BankaAlan]}`)
     .join("&");
-  return createHash("sha256").update(`${gercekFileHash}|${banka}|${eslemeMetni}`).digest("hex");
+  return createHash("sha256").update(`bank-parser-v2|${gercekFileHash}|${banka}|${eslemeMetni}`).digest("hex");
 }
 
 export interface AyristirmaSonucu {
+  legacySatirlar?: BankaSatir[];
   eslesme: SutunEslemesi;
   satirlar: BankaSatir[];
   atlanan: AtlananSatir[];

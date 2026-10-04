@@ -1,3 +1,4 @@
+import { foreignCurrency, isForeignAccount } from "./currency";
 export interface BankReviewSource { query<T>(sql: string, ...params: unknown[]): Promise<T[]> }
 type Account = { id: string; name: string; accountType: string; balance: string | null; balanceAt: string | null };
 type Import = { at: string; item: string; counts: string | null };
@@ -33,7 +34,12 @@ export async function bankReview(db: BankReviewSource) {
     const freshness = !balanceKnown ? 'balance_unknown' : !validDate ? 'timestamp_unknown'
       : balanceAt.getTime() > now.getTime() + 60000 ? 'future_timestamp'
       : now.getTime() - balanceAt.getTime() > 7 * 86400000 ? 'stale' : 'fresh';
-    return { id: account.id, bank: account.name, accountType: account.accountType,
+    const currency = foreignCurrency(account.name);
+    const movements = stats.find(s => s.bank === account.name) ?? null;
+    return { statementCurrency: currency ?? (isForeignAccount(account.accountType) ? "UNKNOWN_FX" : "TRY"),
+      movementTryUsable: !currency && !isForeignAccount(account.accountType),
+      nativeCurrencyReviewRequired: Boolean(movements && (currency || isForeignAccount(account.accountType))),
+      id: account.id, bank: account.name, accountType: account.accountType,
       balanceTry: balanceKnown ? account.balance : null, balanceAt: validDate ? balanceAt.toISOString() : null,
       freshness, ambiguousName: accounts.filter(a => a.name === account.name).length > 1,
       movements: stats.find(s => s.bank === account.name) ?? null,
@@ -47,9 +53,10 @@ export async function bankReview(db: BankReviewSource) {
       unreadableRowsAcrossUploads: imports.some(i => !i.countsKnown) ? null : imports.reduce((n,i) => n + (i.unreadable ?? 0),0),
       importsWithUnreadableRows: imports.filter(i => (i.unreadable ?? 0) > 0).length },
     banks, imports, statementsAvailable,
+    currencyReviewRequired: banks.filter(b => b.nativeCurrencyReviewRequired).map(b => ({ bank: b.bank, currency: b.statementCurrency, rows: b.movements?.rows ?? 0 })),
     statementsWithoutActiveAccount: stats.filter(s => !accounts.some(a => a.name === s.bank)),
     recentPeriodDays: 30, importsTruncated: logs.length > 500,
-    limitations: ["Only successful uploads are logged; rejected files are not included.",
+    limitations: ["Foreign-currency movement groups must not be used as TRY cash flows until original currency and dated FX conversion are reconciled. Existing raw rows are retained; this report does not repair them.","Only successful uploads are logged; rejected files are not included.",
       "Original files and unreadable-row details are not retained; investigating skipped rows requires the original file.",
       "Statement date ranges describe historical movements and do not verify the current bank balance.",
       "Rows are grouped by bank name; accounts with duplicate names cannot be reconciled separately."]

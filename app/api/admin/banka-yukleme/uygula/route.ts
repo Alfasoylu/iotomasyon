@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Zorunlu sütunlar eksik." }, { status: 400 });
     }
 
-    const kayitlar = kayitlaraDonustur(h.satirlar, g.banka, g.fileName);
+    const kayitlar = kayitlaraDonustur(h.satirlar, g.banka, g.fileName, h.legacySatirlar);
     // Log'a yazılacak tarih aralığı/bakiye için önizleme yeniden hesaplanır
     // (okuma). Onizleme ve yazma AYNI kayıt listesini kullanır — ayrı
     // üretilselerdi biri diğerinden sapabilirdi.

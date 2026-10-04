@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const kayitlar = kayitlaraDonustur(h.satirlar, g.banka, g.fileName);
+    const kayitlar = kayitlaraDonustur(h.satirlar, g.banka, g.fileName, h.legacySatirlar);
     const onizleme = await buildOnizleme(kayitlar, g.banka, h.atlanan.length);
     const gercekHash = fileHash(g.buffer);
 
