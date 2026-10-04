@@ -6,6 +6,7 @@ import { toDateOnlyTr, toDecimalTr, hazirlaBankaDosyasi } from "../lib/banka/par
 import { validateBalance } from "../lib/banka/balance";
 import { writeBalance } from "../lib/banka/write-balance";
 import { signPreview, verifyPreview } from "../lib/banka/confirmation";
+import { statementBalance } from "../lib/banka/statement-balance";
 import { insertSql } from "../lib/banka/sql";
 
 async function main() {
@@ -16,6 +17,11 @@ async function main() {
   assert.equal(toDecimalTr("1.234"), 1234);
   assert.equal(toDecimalTr("0"), 0);
   assert.equal(toDecimalTr("-1.234,56"), -1234.56);
+  const statementRows = [{tarihIso:"2026-09-01",bakiyeTry:100},{tarihIso:"2026-09-03",bakiyeTry:300}];
+  assert.deepEqual(statementBalance(statementRows), {date:"2026-09-03",balance:300});
+  assert.deepEqual(statementBalance([...statementRows].reverse()), {date:"2026-09-03",balance:300});
+  assert.deepEqual(statementBalance([...statementRows,{tarihIso:"2026-09-03",bakiyeTry:400}]), {date:"2026-09-03",balance:null});
+  assert.deepEqual(statementBalance([...statementRows,{tarihIso:"2026-09-04",bakiyeTry:null}]), {date:"2026-09-04",balance:null});
   const now = new Date("2026-10-04T10:00:00Z");
   const base = { id: "example", balance: "-123,45", asOf: "2026-09-30T10:00:00Z", expectedUpdatedAt: "2026-10-03T10:00:00Z", confirmed: true };
   const input = validateBalance(base, now);
