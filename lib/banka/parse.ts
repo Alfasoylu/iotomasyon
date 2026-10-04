@@ -308,7 +308,10 @@ export function hazirlaBankaDosyasi(
   buffer: Buffer,
   elleEsleme?: Partial<Record<BankaAlan, string>>
 ): AyristirmaSonucu {
-  const ham = ayristirHam(buffer);
+  return hazirlaBankaTablosu(ayristirHam(buffer), elleEsleme);
+}
+
+export function hazirlaBankaTablosu(ham: HamAyristirma, elleEsleme?: Partial<Record<BankaAlan, string>>): AyristirmaSonucu {
   const eslesen = elleEsleme ?? otomatikEsle(ham.basliklar).eslesen;
   const eksikZorunlu = zorunluEksik(eslesen);
   const eslesmeyenSutunlar = ham.basliklar.filter(

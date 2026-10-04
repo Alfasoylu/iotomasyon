@@ -9,6 +9,7 @@
  * uca `mapping` alanıyla tekrar sorar.
  */
 import { signPreview } from "@/lib/banka/confirmation";
+import { BankPdfError } from "@/lib/banka/pdf";
 import { NextResponse } from "next/server";
 import { kapi } from "@/lib/banka/http";
 import { fileHash, onayAnahtariHesapla } from "@/lib/banka/parse";
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   if (!g.ok) return g.res;
 
   try {
-    const h = hazirla(g.buffer, g.elleEsleme);
+    const h = await hazirla(g.buffer, g.elleEsleme, g.fileName);
 
     if (h.eksikZorunlu.length > 0) {
       return NextResponse.json({
@@ -54,7 +55,8 @@ export async function POST(req: Request) {
       onizleme,
       atlananOrnek: h.atlanan.slice(0, 10),
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof BankPdfError) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ error: "İşlem tamamlanamadı. Dosyayı ve hesap seçimini kontrol edip yeniden deneyin." }, { status: 400 });
   }
 }

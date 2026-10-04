@@ -271,7 +271,7 @@ export function BankaUpload({ bankalar, onPreview, onReset }: { bankalar: { name
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">Dosya</p>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Banka hesap hareketleri dosyası (.xlsx, .xls veya .csv). En fazla 4 MB. PDF desteklenmiyor.
+            Banka hesap hareketleri dosyası (.xlsx, .xls, .csv veya .pdf). En fazla 4 MB. PDF için metin içeren banka ekstresini seçin; taranmış görüntüler ve şifreli PDF desteklenmez.
           </p>
         </div>
 
@@ -279,7 +279,7 @@ export function BankaUpload({ bankalar, onPreview, onReset }: { bankalar: { name
           ref={inputRef}
           disabled={mesgul !== false}
           type="file"
-          accept=".xlsx,.xls,.csv"
+          accept=".xlsx,.xls,.csv,.pdf,application/pdf"
           onChange={(e) => dosyaSecildi(e.target.files?.[0] ?? null)}
           className="block w-full text-sm text-[var(--text-secondary)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--accent)] file:px-3 file:py-2 file:text-[13px] file:font-medium file:text-[var(--accent-fg)]"
         />
