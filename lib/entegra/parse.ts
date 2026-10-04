@@ -193,7 +193,7 @@ export function recordId(channel: string, orderNumber: string, lineId: string): 
  *
  * .xlsx bir zip'tir (PK\x03\x04) — kodlama içeride, dokunulmaz.
  */
-function metinHazirla(buffer: Buffer): { buf: Buffer; codepage: number } {
+export function metinHazirla(buffer: Buffer): { buf: Buffer; codepage: number } {
   const zip = buffer.length > 4 && buffer[0] === 0x50 && buffer[1] === 0x4b;
   if (zip) return { buf: buffer, codepage: 65001 };
 

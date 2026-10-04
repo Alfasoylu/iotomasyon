@@ -375,6 +375,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat",
   },
 
+  { href: "/admin/banka-yukleme", label: "Banka Yükleme", iconKey: "wallet", permission: PERMISSIONS.CFO_WRITE, section: "CFO" },
   // ── CFO (Faz 90) ────────────────────────────────────────────────────────
   // Finansal sır: yalnız cfo.read izni olanlar görür (varsayılan ADMIN/OWNER).
   {
