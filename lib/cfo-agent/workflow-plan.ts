@@ -70,7 +70,7 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
   const goals={monthlyRevenueTargetUsd:targetUsd,targetTry:rate!=null&&targetUsd!=null?rate*targetUsd:null,rateAsOf:settings.updatedAt??null,
     observedRevenueTry:revenue,revenueComplete:context.sales.last30Days.complete,progressPct:context.sales.last30Days.complete&&revenue!=null&&rate!=null&&targetUsd!=null?revenue/(rate*targetUsd)*100:null,
     capitalTry:context.cash.summaries.find(s=>s.source==='cfo_servet'&&s.query==='servet_try')?.value??null,cardDebtTry:context.cash.totalCardDebt.value,
-    totalDebtTry:null,profitTry:null};
+    totalDebtTry:number(context.financialGoals?.totalDebtTry),profitTry:null};
   if(!context.sales.last30Days.complete||context.operating.summary.skuChannelsWithContributionProfit===0)add({key:'growth:coverage',kind:'research',title:'Kârlı büyüme planının veri eksiklerini tamamla',priority:2,proposal:'Bilinen maliyetlerden ilerle; satılan ürünleri, stokta olmayan kanıtlanmış talebi ve kanal kapsamını araştır. Ciro hedefini kâr ve nakit dönüşümüyle birlikte değerlendir.',evidence:[`Maliyeti bilinen ürün: ${context.operating.summary.skusWithKnownCost}`,`Katkı kârı hesaplanabilen ürün/kanal: ${context.operating.summary.skuChannelsWithContributionProfit}`],blockers:['Eksik dönem ciro düşüşü veya hedef başarısızlığı diye yorumlanamaz','Komisyon, KDV, iadeler ve değişken giderler tamamlanmalı'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
   return {asOf:context.asOf,goals,items:items.sort((a,b)=>a.priority-b.priority||a.key.localeCompare(b.key)),questions};
 }

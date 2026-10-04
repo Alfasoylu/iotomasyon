@@ -1,7 +1,7 @@
 'use client';
 import { useCallback,useEffect,useState } from 'react';
 import type { StoredWork } from '@/lib/cfo-agent/workflow-store';
-type Report={schedule:string;heartbeat:{lastSuccessAt:string;trigger:string;goals:{monthlyRevenueTargetUsd:number|null;targetTry:number|null;observedRevenueTry:number|null;revenueComplete:boolean;progressPct:number|null;capitalTry:number|null;cardDebtTry:number|null}}|null;lastFailureAt:string|null;items:(StoredWork&{id:string})[]};
+type Report={schedule:string;heartbeat:{lastSuccessAt:string;trigger:string;goals:{monthlyRevenueTargetUsd:number|null;targetTry:number|null;observedRevenueTry:number|null;revenueComplete:boolean;progressPct:number|null;capitalTry:number|null;cardDebtTry:number|null;totalDebtTry:number|null}}|null;lastFailureAt:string|null;items:(StoredWork&{id:string})[]};
 const statusNames:Record<string,string>={research:'Araştırılıyor',pending_approval:'Onay bekliyor',approved:'Onaylandı · uygulama bekliyor',rejected:'Reddedildi',completed:'Sonuç bildirildi',needs_review:'Değişti · yeniden incele',resolved:'Sinyal artık görünmüyor',withdrawn:'Önceki öneri geri çekildi · doğrulama gerekli'};
 const money=(v:number|null)=>v==null?'Henüz ölçülemedi':`${v.toLocaleString('tr-TR',{maximumFractionDigits:2})} TL`;
 export default function WorkflowPanel(){const [report,setReport]=useState<Report|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[results,setResults]=useState<Record<string,string>>({});
@@ -13,7 +13,7 @@ export default function WorkflowPanel(){const [report,setReport]=useState<Report
     {report?.lastFailureAt&&<p>Son başarısız deneme: {new Date(report.lastFailureAt).toLocaleString('tr-TR')}</p>}
     {report?.heartbeat&&<div className="rounded border p-4"><p>Aylık hedef: {report.heartbeat.goals.monthlyRevenueTargetUsd?.toLocaleString('tr-TR')} USD · {money(report.heartbeat.goals.targetTry)}</p>
       <p>Gözlenen son 30 gün cirosu: {money(report.heartbeat.goals.observedRevenueTry)} · {report.heartbeat.goals.revenueComplete?'Dönem tamam':'Dönem eksik; hedef ilerleme oranı hesaplanmaz'}</p>
-      <p>Kayıtlı sermaye: {money(report.heartbeat.goals.capitalTry)} · Kart borcu: {money(report.heartbeat.goals.cardDebtTry)}</p><p>Kart borcu toplam borç değildir. Tam kâr ve toplam borç doğrulanmadan başarı iddiası üretilmez.</p></div>}
+      <p>Kayıtlı sermaye: {money(report.heartbeat.goals.capitalTry)} · Kart borcu: {money(report.heartbeat.goals.cardDebtTry)}</p><p>Defterdeki toplam borç: {money(report.heartbeat.goals.totalDebtTry)}</p><p>Bu değerler son kayıtlı kaynaklardan okunur. Kart borcu toplam borcun yerine kullanılmaz. Tam kâr ve kaynak tazeliği doğrulanmadan başarı iddiası üretilmez.</p></div>}
     <p>Öneriler hesap ve kaynaklarıyla kaydedilir. Sipariş miktarları araştırma senaryosudur. Onay bir öneriyi kabul eder; fiyatı değiştirmez, ödeme yapmaz veya satın alma taahhüdü oluşturmaz.</p>
     {report?.items.sort((a,b)=>a.item.priority-b.item.priority).map(work=><article key={work.id} className="rounded border p-4 space-y-2"><h2 className="font-semibold">P{work.item.priority} · {work.item.title}</h2><p>{statusNames[work.status]}</p><p>{work.item.proposal}</p>
       <p>Gereken nakit: {money(work.item.cashRequiredTry)} · Tahmini katkı: {money(work.item.expectedGainTry)}{work.item.suggestedUnits!=null?` · 60 günlük örnek stok miktarı: ${work.item.suggestedUnits}`:''}</p>

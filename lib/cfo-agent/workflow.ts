@@ -48,6 +48,7 @@ export async function safeCfoCycle(trigger:string){
   }
 }
 export async function decideCfoWork(id:string,rev:string,action:'approve'|'reject'|'complete',actor:string,result:string){
+  if(process.env.VERCEL_ENV&&process.env.VERCEL_ENV!=='production')throw new Error('production_only');
   // Re-read current sources before approving an old proposal. Save resets materially changed decisions.
   if(action==='approve'){const check=await runCfoCycle('approval_review');if(!check.completed)throw new Error('review_unavailable');}
   return prisma.$transaction(tx=>transitionWork(writer(tx),id,rev,action,actor,result,new Date()));

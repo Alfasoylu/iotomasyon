@@ -41,6 +41,10 @@ export async function saveWorkPlan(db:WriteSource,plan:ReturnType<typeof planCfo
     const rows=await db.query<Row>(`insert into cfo_question(id,question,why,area,priority,status) values($1,$2,$3,$4,$5,'ACIK') on conflict(id) do nothing returning id`,workflowId('question:'+q.key),q.question,q.why,q.area,q.priority);asked+=rows.length;
     if(rows.length)await db.execute(`insert into cfo_change_log(id,area,item,"newValue",source,kind) values($1,'soru',$2,$3,$4,'arastirma')`,crypto.randomUUID(),q.question, q.why,WORK_SOURCE);
   }
+  const oldHeartbeat=map.get(HEARTBEAT_ID);
+  let oldGoals:unknown=null;try{oldGoals=oldHeartbeat?JSON.parse(String(oldHeartbeat.body)).goals:null;}catch{}
+  if(JSON.stringify(oldGoals)!==JSON.stringify(plan.goals))await db.execute(`insert into cfo_change_log(id,area,item,"oldValue","newValue",source,kind,note)
+    values($1,'strateji','CFO hedef gözlemleri',$2,$3,$4,'analiz','Defter gözlemi; gerçekleşmiş kazanç veya tam dönem başarısı değildir.')`,crypto.randomUUID(),oldGoals?JSON.stringify(oldGoals):null,JSON.stringify(plan.goals),WORK_SOURCE);
   const heartbeat={version:1,lastSuccessAt:new Date().toISOString(),snapshotAsOf:plan.asOf,trigger,goals:plan.goals,items:plan.items.length,newQuestions:asked,changedItems:changed,schedule:'daily_plus_data_events',automaticFinancialExecution:false};
   await db.execute(`insert into cfo_note(id,title,body,category,"dataTag",source,pinned,"createdAt","updatedAt") values($1,'CFO çalışma döngüsü', $2,'strateji','TAHMINI',$3,false,now(),now())
     on conflict(id) do update set body=excluded.body,"updatedAt"=now()`,HEARTBEAT_ID,JSON.stringify(heartbeat),WORK_SOURCE);
