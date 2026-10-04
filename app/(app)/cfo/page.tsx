@@ -88,6 +88,7 @@ export default async function CfoPage() {
       />
 
       <Card className="mb-6 p-4">
+        <a href="/cfo/calisma-durumu" className="mr-4 text-sm underline">Mevcut verilerle çalışma durumu</a>
         <a href="/api/admin/ai-cfo/acceptance" className="text-sm underline">Kabul karşılaştırmasını çalıştır (JSON)</a>
         <p className="mt-1 text-xs text-[var(--text-muted)]">Admin hesabıyla güncel verileri salt okunur karşılaştırır. Sonuç canlıya geçiş onayı değildir.</p>
       </Card>

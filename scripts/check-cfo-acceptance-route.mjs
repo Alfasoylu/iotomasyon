@@ -23,6 +23,13 @@ for (const [environment, status, failure] of [
     assert.match(response.headers.get("cache-control") ?? "", /private.*no-store/);
     assert.ok((response.headers.get("vary") ?? "").split(",").some(value => value.trim().toLowerCase() === "cookie"));
     assert.deepEqual(await response.json(), { completed: false, failure });
+    const context = await fetch("http://127.0.0.1:3199/api/admin/ai-cfo/context");
+    assert.equal(context.status,401);
+    assert.match(context.headers.get("cache-control") ?? "",/private.*no-store/);
+    assert.equal((await fetch("http://127.0.0.1:3199/api/admin/ai-cfo/context",{method:"POST"})).status,405);
+    const page=await fetch("http://127.0.0.1:3199/cfo/calisma-durumu",{redirect:"manual"});
+    assert.equal(page.status,307);
+    assert.ok(page.headers.get("location")?.includes("/login"));
     const post = await fetch(url, { method: "POST" });
     assert.equal(post.status, 405);
     console.log(`CFO acceptance route: ${environment} access gate passed`);
