@@ -3270,3 +3270,88 @@ Ana pano sadece satış hunisi ve gelir rakamlarını gösteriyordu. Kritik stok
 - Sonuç: kuyruk 76 → 10 (9 soru + 1 bayat not), gecikmiş 2. 64 bulgu kendi
   sayfasında; kırmızılar 14.09'da kuyruğa dönecek.
 
+
+## 03.10.2026 — AI CFO V1 (production kapalı)
+
+- Additive cfo_run/cfo_insight/cfo_usage modelleri, deterministic snapshot/anomalies, bounded Anthropic reasoning, cron ve /admin/ai-cfo eklendi. Eski CFO hesapları değiştirilmedi.
+- 30 AI CFO PostgreSQL/runner kontrolü; RBAC 22 test ve Entegra regression kontrolleri geçti. Typecheck ve hedefli eslint geçti.
+- Production build doğrulanamadı: ortam Turbopack PostCSS yerel port açılışını engelliyor; webpack alternatifi TypeScript --showConfig alt süreç çıktısında durdu. CI build zorunlu.
+- Production DB/migration/provider çağrısı/deploy yapılmadı. Kurulum: AI-CFO-V1.md.
+
+## 03.10.2026 — AI CFO kabul akışı ve komisyon düzeltmesi
+
+- 120 günlük %90 komisyon kapsamı, en az 10 SKU ölçümü ve medyan/MAD ayıklaması eklendi. Sıfır/eksik komisyon kâr olarak kullanılmıyor; net banka tahsilatı ayrı estimated metric.
+- İki kaynaklı ihtiyatlı hız ve >%30 adet farkı quality uyarısı, 12 referanslı read-only kabul değerlendirmesi, 7 günlük gölge değerlendirmesi ve üç release attestasyon kapısı eklendi.
+- 36 sentetik CFO/PostgreSQL kontrolü, 22 RBAC testi, Entegra kontrolleri, typecheck ve hedefli lint geçti. Canlı 12/12 ölçülmedi, gölge hafta yaşanmadı, CI workflow henüz çalışmadı; yerel build ortam port kısıtında durdu. Production onayı/flag değişikliği yok.
+
+## 03.10.2026 — AI CFO GitHub ve CI doğrulaması
+
+- Kod `feat/ai-cfo-v1`, patch `handoff/ai-cfo-v1` branch'inde kalıcı olarak saklandı; özel Drive yedeği doğrulandı.
+- Validation workflow mevcut PDKS import'u için localhost build DB URL'i, kayıt CAPTCHA prerender'ı için rastgele ve maskelenmiş build session anahtarı alır. Production runtime kodu/credential'ları değişmez.
+- [GitHub CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37131301344) başarılı: Prisma validate, TypeScript, 36 CFO, 22 RBAC, Entegra, hedefli lint ve production build.
+- Canlı mali doğruluk ve production onayı değildir. Detaylı [teslim raporu](AI-CFO-HANDOFF.md).
+
+## 03.10.2026 — AI CFO salt okunur bağlantı kontrolü
+
+- `access-check.ts` ve connection-check CLI: session pooler/reader hesabı zorunlu, TLS doğrulaması açık, salt okunur transaction, sınırlı kaynak metadata ve RLS görünürlüğü; ham URI/driver hata mesajı loglanmaz.
+- Beş yerel PostgreSQL/güvenlik kontrolü, typecheck ve lint geçti. Gerçek bağlantı/finansal kabul başarısı henüz iddia edilmez.
+- GitHub Secret yalnız `feat/ai-cfo-v1` push sonrası ayrı live_access job'ında kullanılır; validation/build ve pull_request adımlarına aktarılmaz.
+
+## 03.10.2026 — Supabase bağlantı kontrolünde CA desteği
+
+- Son CI validation/build başarılı (d98c605); secret canlı erişim adımına ulaştı. TLS trust eksikliği nedeniyle ilk login doğrulanamadı.
+- Supabase'in public Root 2021 CA sertifikası official dashboard URL'iyle doğrulandı; yalnız connection-check process'i ek CA olarak kullanır. TLS sertifika/hostname kontrolü açık kalır; üretim runtime ayarları değişmez.
+
+## 03.10.2026 — CFO reader RLS kurulumunun doğrulanması
+
+- [Canlı bağlantı kontrolü](https://github.com/Alfasoylu/iotomasyon/actions/runs/37138690210/job/111251706721) başarılı: TLS, salt okunur rol/transaction, 25 kaynak SELECT erişimi ve kontrol edilen kaynaklarda yazma yetkisi bulunmaması doğrulandı. Product satır görünürlüğü false; finansal kabul başarısı değildir.
+- Manuel `scripts/ai-cfo-reader-rls.sql` ve PostgreSQL güvenlik testi eklendi: yalnız SELECT yetkili mevcut CFO kaynakları, reader'a özel SELECT politikası, idempotency, diğer hesap erişimlerinin korunması, hatalı rol/yazma yetkisi/politika çatışmasında atomik rollback. Yerel doğrulama geçti. Canlı politika değişikliği veya production migration yapılmadı.
+
+## 03.10.2026 — CFO reader ürün satırlarına erişim doğrulandı
+
+- Kullanıcının reader SELECT politikalarını uygulamasından sonra [canlı salt okunur kontrol](https://github.com/Alfasoylu/iotomasyon/actions/runs/37140728897/job/111255950876) Product satır görünürlüğü, TLS, read-only rol/transaction ve eksiksiz kaynak SELECT erişimini doğruladı. Yazma yetkileri genişletilmedi.
+- İki canonical satış view'ıyla sınırlı katalog tanımı incelemesi ve gerçek PostgreSQL testi eklendi. Ham sipariş/müşteri/finansal satır loglanmaz; canonical/release flag, AI, migration veya deploy çalıştırılmaz. Canlı 12/12 kabul başarısı iddia edilmez.
+
+## 03.10.2026 — Referans kabulü ve güncel karşılaştırma ayrımı
+
+- CLI için ayrı current_comparison modu, reader/TLS/satır görünürlüğü kontrolü, READ ONLY aggregation, doğrulanmış kolon profili ve canonical view hash koruması eklendi. Referans değerler değişmez; güncel rapor productionApproval:false taşır ve release flag yazmaz.
+- Eski/tanımsız tarih, geçersiz mod/profil, değişmiş/eksik/tekrarlı view tanımlarına karşı kontroller ve typecheck/lint yerelde geçti. Trusted push job'ına yalnız salt okunur karşılaştırma ve 7 günlük private artifact eklendi. Canlı finansal eşleşme veya production kabulü henüz doğrulanmış sayılmaz.
+
+## 03.10.2026 — Yeni agent'ta SKU komisyon ve dönem sınırı düzeltmesi
+
+- [Canlı güncel defter karşılaştırması](https://github.com/Alfasoylu/iotomasyon/actions/runs/37142425088) 7/12 eşleşti; nakit/KMH/kart ve stok sayacı referansları doğrulandı. Finansal kabul veya production onayı verilmedi.
+- Agent komisyon ayıklaması kanal+SKU medyanı/MAD ile çalışır; farklı SKU'nun meşru düşük oranı kanal merkezi nedeniyle elenmez. Tarih tipi katalogdan doğrulanır, UTC saklanan naive timestamp İstanbul dönem sınırına doğru çevrilir; kaynak taraması tam gün sınırına hizalanır. Calculation/financial contract v3; mevcut motor/dashboard korunur.
+- %12,88/%20,04 meşru SKU farkı + %34,80 aykırı kayıt ve naive UTC 30 günlük sınır regresyonları dahil 38 PostgreSQL/CFO testi, typecheck ve lint geçti. Kabul raporuna ek kayıt/stok şartları actual/expected olarak eklendi; canlı tekrar ölçüm bekleniyor.
+
+## 03.10.2026 — V3 canlı karşılaştırma ve aggregate komisyon kanıtı
+
+- [d6e290e CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37143777603) build/typecheck/tüm kontrolleri geçti. Güncel ölçüm 8/12: Entegra MD adedi 81 düzeldi, native XML/hız, komisyon/kayıt şartı ve ANUNNAKI stok şartı farklı kaldı. Production kabulü verilmedi.
+- Diagnostik rapora yalnız MD/TRENDYOL aggregate oran/güven dağılımı eklendi; kimlik veya ham sipariş satırı içermez. Native/trusted ortalama ayrımı ve kimlik dışlama gerçek PostgreSQL testinde doğrulandı. Komisyon doğrulanmış sayılmadı; referanslar ve feature flag'ler değişmedi.
+
+## 03.10.2026 — Komisyon örneklem farkı source seviyesinde ölçüldü
+
+- [ab38909 CI](https://github.com/Alfasoylu/iotomasyon/actions/runs/37144444910) build/typecheck/testleri geçti. Aggregate source son120günde native37/trusted37 ve %10,4710 gösterdi; 6 kaydın v3 filtrede kaybolduğu varsayımı doğrulanmadı.
+- Orijinal tarihsiz CFO SQL'iyle all-history aggregate ve PostgreSQL/client dönem sınırı karşılaştırması eklendi; bunlar yalnız diagnostik, hesap veya kabul referansı yerine geçmez. PostgreSQL testi ve typecheck/lint geçti; production kapıları kapalı.
+
+## 03.10.2026 — Komisyon dönemi kararı ve production hazırlık durumu
+
+- İşletme sahibinin kampanya değişimleri nedeniyle son120gün seçimi sözleşme/kurulum/teslim raporuna işlendi; mevcut uygulama hesabı ve referans değerler değiştirilmedi.
+- 896154a için CI build/typecheck ve Vercel önizleme commit status'u yeniden kontrol edildi. Güncel aggregate raporun 8/12 sonucu, dönem/stock-reference farkları, eksik kaynak eşlemeleri ve migration/deployment ön koşulları [hazırlık incelemesinde](AI-CFO-PRODUCTION-READINESS.md) kaydedildi.
+- Teslim raporunun test sayıları/canlı karşılaştırma bilgisi düzeltildi. Production migration/main merge/deploy/AI açılışı yapılmadı; bu kayıt finansal kabul onayı değildir.
+
+## 04.10.2026 — Public CI finansal rapor koruması ve adapter incelemesi
+
+- Public repository metadata'sı doğrulandı. Kabul CLI finansal actual/expected ve teşhisi, bağlantı CLI SQL tanımlarını loglamayı bıraktı. Yeni adapter audit READ ONLY katalog/izinli tarife/SET configuration okur; fonksiyonları veya ham sipariş/müşteri sorgularını çalıştırmaz.
+- CI raporları RSA-3072 OAEP SHA256 + AES-256-GCM ile şifrelenir; anahtar eksikliğinde plaintext fallback yoktur. Public key dışında özel materyal Git/log/artifact'e konmaz. Çıktı 0600/overwrite yasaklıdır; özel çözüm aracı uygulama/CI dışında çalışır.
+- Altı PostgreSQL/kriptografi kontrolü, typecheck ve hedefli lint yerelde geçti. Canlı inceleme, migration veya production kabul başarısı henüz iddia edilmez.
+
+## 04.10.2026 — Canlı source profili ve finansal grain koruması
+
+- Şifreli read-only adapter incelemesi ve CI build/typecheck başarılı (194a4bb / 37172250835). Kargo toplamı/kanal/tarih ve nakit motorunun pozisyon anlamı SQL kaynak tanımlarından doğrulandı.
+- Calculation/contract v4: hash doğrulamalı canlı profil, kanal/tarih seçimiyle measured toplam kargo, SET reçetesi bilinmiyorken Product maliyetine fallback yasağı ve duplicate SET kârını unknown taşıma. Mevcut CFO SQL motoru/dashboard ve komisyon120gün korunur.
+- 43 PostgreSQL/CFO regresyonu ve yerel typecheck/lint geçti. Yeni adapter için canlı tekrar doğrulaması bekleniyor; finansal kabul veya migration/deploy onayı verilmedi.
+
+## 04.10.2026 — SET kârında pazaryeri kapsamı
+
+- cfo_set_fiyat kar metriği yalnız pazaryeri kapsamına uygulanır; kamera sayısını taşıyan kanal alanı kullanılmaz. Kapsam dışı/bilinmeyen pazaryeri unknown olur.
+- 44 PostgreSQL/CFO testi, typecheck ve hedefli lint yerelde geçti. Eski motor/dashboard ve production değişmez.
