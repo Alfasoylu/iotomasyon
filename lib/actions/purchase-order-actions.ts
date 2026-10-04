@@ -13,6 +13,7 @@ import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { userFacingMessage } from "@/lib/safe-error-message";
 import type { ActionResult } from "@/types/actions";
+import { readOrderDebtGate } from '@/lib/cfo-agent/debt-policy';
 
 const PERM_DENIED = { ok: false, message: "Bu işlem için yetkiniz yok." } as const;
 
@@ -73,7 +74,10 @@ export async function createPurchaseOrderAction(
       return sum + itemTotal;
     }, 0);
 
-    const order = await prisma.purchaseOrder.create({
+    const order = await prisma.$transaction(async tx=>{
+      const gate=await readOrderDebtGate({query:(sql,...params)=>tx.$queryRawUnsafe(sql,...params)});
+      if(!gate.open)throw new Error('order_debt_gate');
+      return tx.purchaseOrder.create({
       data: {
         orderNo,
         supplierId: input.supplierId || null,
@@ -95,11 +99,13 @@ export async function createPurchaseOrderAction(
           })),
         },
       },
-    });
+      });
+    },{isolationLevel:'Serializable'});
 
     revalidatePath("/admin/purchase-orders");
     return { ok: true, orderId: order.id };
   } catch (err) {
+    if(err instanceof Error&&err.message==='order_debt_gate')return {ok:false,message:'Yeni sipariş kapalı. Toplam borç güncel kayıtlarla 5 milyon TL altına düşmeden ürünleri CFO gelecek sipariş listesinde tutun.'};
     return {
       ok: false,
       message: userFacingMessage(err, "Sipariş oluşturulamadı. Lütfen tekrar deneyin.", "purchase-order/create"),
@@ -117,13 +123,21 @@ export async function updatePurchaseOrderStatusAction(
   if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
 
   try {
-    await prisma.purchaseOrder.update({
+    await prisma.$transaction(async tx=>{
+      const current=await tx.purchaseOrder.findUniqueOrThrow({where:{id:orderId},select:{status:true}});
+      if(status!=='DRAFT'&&(current.status==='DRAFT'||current.status==='CONFIRMED'&&status!=='CONFIRMED')){
+        const gate=await readOrderDebtGate({query:(sql,...params)=>tx.$queryRawUnsafe(sql,...params)});
+        if(!gate.open)throw new Error('order_debt_gate');
+      }
+      return tx.purchaseOrder.update({
       where: { id: orderId },
       data: { status, updatedAt: new Date() },
-    });
+      });
+    },{isolationLevel:'Serializable'});
     revalidatePath("/admin/purchase-orders");
     return { ok: true };
-  } catch {
+  } catch(error) {
+    if(error instanceof Error&&error.message==='order_debt_gate')return {ok:false,message:'Taslak yeni siparişe dönüşemez: güncel toplam borç 5 milyon TL altına inmeli.'};
     return { ok: false, message: "Durum güncellenemedi." };
   }
 }

@@ -1,4 +1,4 @@
-export const CYCLE_STAGES = ['lock','context','settings','questions','answers','planning','persist','commit'] as const;
+export const CYCLE_STAGES = ['lock','notebook','context','settings','questions','answers','planning','persist','commit'] as const;
 export type CycleStage = typeof CYCLE_STAGES[number];
 export type CycleDiagnostic = {version:1;stage:CycleStage;code:string;databaseCode:string|null};
 export class CycleFailure extends Error {

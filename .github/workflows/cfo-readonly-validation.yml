@@ -45,6 +45,7 @@ jobs:
       - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts
       - run: node --import tsx __tests__/cfo-operating-context.test.ts
       - run: node --import tsx __tests__/cfo-workflow.test.ts
+      - run: node --import tsx __tests__/cfo-cycle-agenda.test.ts
       - name: Exercise CFO cycle through real Prisma and PostgreSQL
         env:
           DIRECT_URL: postgresql://postgres:synthetic-ci-only@127.0.0.1:5432/cfo_workflow_test_ci
