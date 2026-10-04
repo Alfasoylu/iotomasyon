@@ -22,6 +22,12 @@ try {
     assert.equal(typeof (await response.json()).error, "string");
     assert.equal((await fetch(url)).status, 405);
   }
+  const review = await fetch(`${base}/api/admin/banka-yukleme/inceleme`);
+  assert.equal(review.status, 401);
+  assert.match(review.headers.get("cache-control") ?? "", /private.*no-store/);
+  assert.match(review.headers.get("vary") ?? "", /Cookie/);
+  assert.deepEqual(await review.json(), { completed: false, failure: "unauthorized" });
+  assert.equal((await fetch(`${base}/api/admin/banka-yukleme/inceleme`, {method:"POST"})).status,405);
   const page = await fetch(`${base}/admin/banka-yukleme`, { redirect: "manual" });
   assert([303, 307].includes(page.status));
   assert.match(page.headers.get("location") ?? "", /\/login/);

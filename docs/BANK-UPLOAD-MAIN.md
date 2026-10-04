@@ -21,6 +21,16 @@ ardından Onayla ve bakiyeyi kaydet'e basın. Dosya yüklemeden de bu form kulla
 aktarılmaz; ekstre tarihi gösterilir ve güncel bakiye ile fark uyarısı üretilmez.
 Eski tarihli bakiyenin tarihi değiştirilmez. Gelecek tarih kabul edilmez.
 
+## Eklenen bankaları inceleme
+
+Sayfadaki Banka inceleme raporunu aç (JSON) bağlantısı `/api/admin/banka-yukleme/inceleme`
+ucunu mevcut oturumla çağırır. Rapor salt okunurdur; yeni bir bağlantı veya migration istemez.
+Son 30 gündeki en fazla 500 başarılı yüklemeyi ve aktif hesapların güncelliğini gösterir.
+Hareketlerin tarih aralıkları tarihsel bilgi olarak kalır. Okunamayan satır sayıları
+farklı yükleme denemeleri boyunca toplanır; aynı dosyanın tekrar yüklemesi aynı hatayı
+tekrar sayabilir. Asıl dosyalar ve atlanan satır ayrıntıları saklanmadığından bunların
+nedenini incelemek için orijinal dosya gerekir. Şifre, cookie veya bağlantı dizesi paylaşılmaz.
+
 ## Uygulama
 
 - Sayfa ve üç POST API ucu CFO_WRITE yetkisi ister; API'ler aynı kaynak kontrolü yapar.
