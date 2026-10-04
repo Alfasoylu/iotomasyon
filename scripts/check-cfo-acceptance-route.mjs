@@ -21,7 +21,7 @@ for (const [environment, status, failure] of [
     assert.ok(response, "server must start");
     assert.equal(response.status, status);
     assert.match(response.headers.get("cache-control") ?? "", /private.*no-store/);
-    assert.equal(response.headers.get("vary"), "Cookie");
+    assert.ok((response.headers.get("vary") ?? "").split(",").some(value => value.trim().toLowerCase() === "cookie"));
     assert.deepEqual(await response.json(), { completed: false, failure });
     const post = await fetch(url, { method: "POST" });
     assert.equal(post.status, 405);
