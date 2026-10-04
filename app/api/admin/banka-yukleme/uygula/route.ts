@@ -85,6 +85,7 @@ export async function POST(req: Request) {
       tarihBas: onizleme.dosyaTarihBas,
       tarihSon: onizleme.dosyaTarihSon,
       dosyaSonBakiye: onizleme.dosyaSonBakiye,
+      dosyaBakiyeTarihi: onizleme.dosyaBakiyeTarihi,
       defterBakiye: onizleme.defterBakiye,
       bakiyeFarki: onizleme.bakiyeFarki,
     });

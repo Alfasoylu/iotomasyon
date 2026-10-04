@@ -11,7 +11,8 @@ Dosya sınırı 4 MB / 20.000 satırdır. PDF desteklenmez. Sütunlar bulunamazs
 Hareket aktarımı ayrı onay ister ve bakiyeyi değiştirmez.
 Bakiye formundaki tutarı bankanın güncel ekranıyla karşılaştırın; ekstrede en son görünen
 satır en yeni işlem olmayabilir. Bakiye tarih ve saatini kendiniz belirtin, önizleyin,
-ardından Onayla ve bakiyeyi kaydet'e basın. Dosya yüklemeden de bu form kullanılabilir.
+ardından Onayla ve bakiyeyi kaydet'e basın. Dosya yüklemeden de bu form kullanılabilir. Tarihsel ekstre tutarı forma otomatik
+aktarılmaz; ekstre tarihi gösterilir ve güncel bakiye ile fark uyarısı üretilmez.
 Eski tarihli bakiyenin tarihi değiştirilmez. Gelecek tarih kabul edilmez.
 
 ## Uygulama

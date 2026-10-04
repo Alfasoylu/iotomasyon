@@ -63,6 +63,7 @@ interface BankaOnizleme {
   dosyaTarihBas: string | null;
   dosyaTarihSon: string | null;
   dosyaSonBakiye: number | null;
+  dosyaBakiyeTarihi: string | null;
   defterBakiye: number | null;
   bakiyeFarki: number | null;
   buyukHareketler: BuyukHareket[];
@@ -96,6 +97,7 @@ interface Sonuc {
   tarihBas: string | null;
   tarihSon: string | null;
   dosyaSonBakiye: number | null;
+  dosyaBakiyeTarihi: string | null;
   defterBakiye: number | null;
   bakiyeFarki: number | null;
 }
@@ -196,7 +198,7 @@ export function BankaUpload({ bankalar, onPreview, onReset }: { bankalar: { name
         return;
       }
       setOnizleme(body);
-      if (!body.needsMapping && body.onizleme) onPreview?.(banka, body.onizleme.dosyaSonBakiye);
+      if (!body.needsMapping && body.onizleme) onPreview?.(banka, null);
       // Otomatik bulunanları taslağa aktar — eşleme gerekiyorsa kullanıcı
       // yalnız kalanları seçer, tamsa "Onayla ve yaz" bunu geri gönderir.
       setEsleme(body.eslesen ?? {});
@@ -316,13 +318,9 @@ export function BankaUpload({ bankalar, onPreview, onReset }: { bankalar: { name
             {(sonuc.sureMs / 1000).toFixed(1)} sn
             {sonuc.tarihBas && ` · ${sonuc.tarihBas} → ${sonuc.tarihSon}`}
           </p>
-          {sonuc.bakiyeFarki != null && Math.abs(sonuc.bakiyeFarki) > 0.01 && (
-            <p className="text-xs text-[var(--warn)]">
-              Dosyanın son bakiyesi ({tl(sonuc.dosyaSonBakiye ?? 0)} ₺) ile defterdeki bakiye (
-              {tl(sonuc.defterBakiye ?? 0)} ₺) arasında {tl(Math.abs(sonuc.bakiyeFarki))} ₺ fark var. Bakiye alanı
-              bu hareket aktarımıyla değişmedi. Güncel bakiyeyi aşağıdaki formdan doğrulayıp kaydedin.
-            </p>
-          )}
+          <p className="text-xs text-[var(--text-muted)]">
+            Ekstre {sonuc.tarihSon ?? "belirsiz tarih"} tarihinde sona eriyor. Tarihsel ekstre bakiyesi güncel banka bakiyesiyle karşılaştırılmaz. Kayıtlı bakiye değişmedi.
+          </p>
         </Card>
       )}
 
@@ -431,19 +429,14 @@ export function BankaUpload({ bankalar, onPreview, onReset }: { bankalar: { name
 
           <div className="rounded-md border border-[var(--border-default)] bg-[var(--surface-2)] p-4">
             <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
-              Bakiye karşılaştırması (yalnız bilgi — otomatik düzeltme yok)
+              Ekstre bakiyesi (tarihsel bilgi)
             </p>
             {o.dosyaSonBakiye == null ? (
-              <p className="mt-1 text-sm text-[var(--text-muted)]">Dosyada bakiye sütunu bulunamadı.</p>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">Son günün kapanış bakiyesi kesin belirlenemedi. Güncel bakiyeyi banka ekranından doğrulayın.</p>
             ) : (
               <p className="mt-1 text-sm text-[var(--text-secondary)] tabular-nums">
-                Dosyada en son görünen bakiye (güncel olduğunu doğrulayın): <strong>{tl(o.dosyaSonBakiye)} ₺</strong> · Kayıtlı bakiye: {o.defterBakiye == null ? "bilinmiyor" : `${tl(o.defterBakiye)} ₺`}
-                {o.bakiyeFarki != null && (
-                  <span className={Math.abs(o.bakiyeFarki) > 0.01 ? "text-[var(--warn)]" : "text-[var(--ok)]"}>
-                    {" · fark "}
-                    {tl(o.bakiyeFarki)} ₺
-                  </span>
-                )}
+                {o.dosyaBakiyeTarihi} tarihli ekstre bakiyesi: <strong>{tl(o.dosyaSonBakiye)} ₺</strong> · Kayıtlı bakiye: {o.defterBakiye == null ? "bilinmiyor" : `${tl(o.defterBakiye)} ₺`}
+                <span className="block mt-1">Bu tutar tarihsel bilgidir; güncel banka bakiyesiyle fark hesabı yapılmaz.</span>
               </p>
             )}
           </div>

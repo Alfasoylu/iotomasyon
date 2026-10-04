@@ -8,6 +8,7 @@
  *   • Onay olmadan tek satır yazılmaz: önizleme ve yazma ayrı uçlar, aynı
  *     desen Entegra yüklemesiyle (`lib/entegra/import.ts`).
  */
+import { statementBalance } from "./statement-balance";
 import { hareketTablosuHazir } from "./schema";
 import { prisma } from "@/lib/prisma";
 import { numOrNull } from "@/lib/cfo/engine";
@@ -101,6 +102,7 @@ export interface BankaOnizleme {
   dosyaTarihBas: string | null;
   dosyaTarihSon: string | null;
   dosyaSonBakiye: number | null;
+  dosyaBakiyeTarihi: string | null;
   defterBakiye: number | null;
   bakiyeFarki: number | null;
   buyukHareketler: BuyukHareket[];
@@ -138,24 +140,17 @@ export async function buildOnizleme(
     else toplamCikis += -k.tutarTry;
   }
 
-  // Dosyanın SON satırı — dosya sırasına göre (tarihe göre DEĞİL, bazı
-  // ekstreler en yeniyi başa yazar). İlk bulunan geriye doğru taranır.
-  let dosyaSonBakiye: number | null = null;
-  for (let i = kayitlar.length - 1; i >= 0; i--) {
-    if (kayitlar[i].bakiyeTry != null) {
-      dosyaSonBakiye = kayitlar[i].bakiyeTry;
-      break;
-    }
-  }
+  const statement = statementBalance(kayitlar);
+  const dosyaSonBakiye = statement.balance;
+  const dosyaBakiyeTarihi = statement.date;
 
   const hesap = kayitlar.find((k) => k.hesap)?.hesap ?? null;
 
   const banka_ = await prisma.cfoBankAccount.findFirst({ where: { name: banka } });
   const defterBakiye = numOrNull(banka_?.balanceTry ?? null);
-  const bakiyeFarki =
-    dosyaSonBakiye != null && defterBakiye != null
-      ? Math.round((dosyaSonBakiye - defterBakiye) * 100) / 100
-      : null;
+  // Statement closing dates and the current bank snapshot are different observations.
+  // Never flag a reconciliation difference without matching effective timestamps.
+  const bakiyeFarki = null;
 
   const buyukHareketler: BuyukHareket[] = yeniKayitlar
     .filter((k) => Math.abs(k.tutarTry) >= BUYUK_HAREKET_ESIGI_TRY)
@@ -182,6 +177,7 @@ export async function buildOnizleme(
     dosyaTarihBas,
     dosyaTarihSon,
     dosyaSonBakiye,
+    dosyaBakiyeTarihi,
     defterBakiye,
     bakiyeFarki,
     buyukHareketler,

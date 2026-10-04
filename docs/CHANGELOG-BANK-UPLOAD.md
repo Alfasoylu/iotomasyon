@@ -1,5 +1,13 @@
 # Banka yükleme delta günlüğü
 
+## 2026-10-04 — Tarihsel ekstre bakiye uyarısı
+
+- Dosya son satırı yerine en yeni işlem tarihi seçilir. Aynı gün farklı bakiyeler
+  varsa kapanış bakiyesi tahmin edilmez; eksik son-gün bakiyesinde eski güne dönülmez.
+- Tarihsel ekstre ile güncel banka bakiyesi arasındaki yanıltıcı fark uyarısı kaldırıldı.
+  Ekstre tarihi gösterilir, tarihsel tutar güncel bakiye formuna otomatik aktarılmaz.
+- Artan/azalan dosya sırası, aynı gün belirsizliği ve eksik son-gün bakiyesi test edildi.
+
 ## 2026-10-04
 
 - PR #129'un banka ekstresi yükleme ekranı ana uygulamaya uyarlandı; CFO menüsüne
