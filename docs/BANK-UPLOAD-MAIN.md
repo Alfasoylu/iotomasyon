@@ -5,8 +5,14 @@ PR #129'daki yarım kalan ekstre yükleme işi ana uygulamaya uyarlanmıştır.
 ## Kullanım
 
 Ana oturumda CFO → Banka Yükleme (`/admin/banka-yukleme`) ekranını açın.
-Aktif hesabı seçin, bankadan aldığınız XLSX/XLS/CSV dosyasını yükleyin ve Önizle'ye basın.
-Dosya sınırı 4 MB / 20.000 satırdır. PDF desteklenmez. Sütunlar bulunamazsa elle eşleyin.
+Aktif hesabı seçin, bankadan aldığınız XLSX/XLS/CSV/PDF dosyasını yükleyin ve Önizle'ye basın.
+Dosya sınırı 4 MB / 20.000 satırdır. PDF en fazla 100 sayfa olabilir.
+PDF desteği bankadan indirilen metinli hesap hareketleri tabloları içindir; taranmış
+sayfalar, şifreli dosyalar ve tanınamayan tablolar açıklamalı hata ile reddedilir.
+Tablodaki tarih/açıklama ve tutar veya borç/alacak başlıkları okunabilir olmalıdır.
+PDF metni sunucuda çıkarılır; dosya başka bir servise gönderilmez. Çok sayfalı
+ekstreler, tekrarlanan başlıklar ve açıklama devam satırları okunur. Sütunlar
+bulunamazsa Excel/CSV için elle eşleyin.
 
 Hareket aktarımı ayrı onay ister ve bakiyeyi değiştirmez.
 Bakiye formundaki tutarı bankanın güncel ekranıyla karşılaştırın; ekstrede en son görünen

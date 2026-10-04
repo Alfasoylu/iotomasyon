@@ -51,12 +51,12 @@ export async function kapi(req: Request): Promise<Kapi> {
   if (file.size > MAX_BYTES) {
     return { ok: false, res: NextResponse.json({ error: "Dosya 4 MB'ı aşıyor." }, { status: 400 }) };
   }
-  const izinliUzanti = /\.(xlsx|xls|csv)$/i.test(file.name);
+  const izinliUzanti = /\.(xlsx|xls|csv|pdf)$/i.test(file.name);
   if (!izinliUzanti) {
     return {
       ok: false,
       res: NextResponse.json(
-        { error: "Yalnız .xlsx, .xls veya .csv kabul edilir. PDF bu fazda desteklenmiyor — bankadan xls/csv indirin." },
+        { error: "Yalnız .xlsx, .xls, .csv veya .pdf kabul edilir." },
         { status: 400 }
       ),
     };

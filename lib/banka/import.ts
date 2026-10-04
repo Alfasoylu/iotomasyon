@@ -8,12 +8,13 @@
  *   • Onay olmadan tek satır yazılmaz: önizleme ve yazma ayrı uçlar, aynı
  *     desen Entegra yüklemesiyle (`lib/entegra/import.ts`).
  */
+import { readBankFile } from "./file";
 import { statementBalance } from "./statement-balance";
 import { hareketTablosuHazir } from "./schema";
 import { prisma } from "@/lib/prisma";
 import { numOrNull } from "@/lib/cfo/engine";
 import type { BankaAlan } from "./columns";
-import { hazirlaBankaDosyasi, satirHash, type BankaSatir, type AtlananSatir } from "./parse";
+import { satirHash, type BankaSatir, type AtlananSatir } from "./parse";
 import { insertSql, INSERT_COLS } from "./sql";
 
 export const BUYUK_HAREKET_ESIGI_TRY = 25000;
@@ -271,8 +272,8 @@ export interface Hazirlik {
   ilkSatirlar: string[][];
 }
 
-export function hazirla(buffer: Buffer, elleEsleme?: Partial<Record<BankaAlan, string>>): Hazirlik {
-  const r = hazirlaBankaDosyasi(buffer, elleEsleme);
+export async function hazirla(buffer: Buffer, elleEsleme?: Partial<Record<BankaAlan, string>>, fileName = ""): Promise<Hazirlik> {
+  const r = await readBankFile(buffer, fileName, elleEsleme);
   return {
     satirlar: r.satirlar,
     atlanan: r.atlanan,
