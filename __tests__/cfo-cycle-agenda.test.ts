@@ -60,7 +60,7 @@ async function main(){
   const db=new PGlite();
   try{
     await db.exec(`create table cfo_note(id text primary key,title text,body text,category text,"dataTag" text,source text,pinned boolean,"createdAt" timestamptz,"updatedAt" timestamptz,"archivedAt" timestamptz);
-      create table cfo_question(id text primary key,question text,why text,area text,priority int,status text);
+      create table cfo_question(id text primary key,question text,why text,area text,priority int,status text,answer text,"askedAt" timestamptz default now(),scope text,entity_key text,code text);
       create table cfo_change_log(id text primary key,area text,item text,"oldValue" text,"newValue" text,source text,kind text,note text);`);
     const source:WriteSource={async query<T extends Row>(sql:string,...params:unknown[]):Promise<T[]>{return(await db.query<T>(sql,params)).rows;},execute:(sql,...params)=>db.query(sql,params)};
     await saveWorkPlan(source,first,'synthetic');

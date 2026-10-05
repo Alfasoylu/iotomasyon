@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { loadOperatingContext } from './load-operating-context';
 import { planCfoWork } from './workflow-plan';
 import { saveWorkPlan,saveAnswerContext, transitionWork, WORK_SOURCE,HEARTBEAT_ID,readWork } from './workflow-store';
+import { initialResearch } from './research';
 import { readMemory } from './workflow-memory';
 import { workflowId } from './workflow-plan';
 import type { WriteSource } from './workflow-store';
@@ -21,10 +22,10 @@ export async function runCfoCycle(trigger:string){
     const prior=await prisma.cfoNote.findMany({where:{source:WORK_SOURCE,archivedAt:null},select:{id:true,body:true}});
     const memory=readMemory(prior.find(note=>note.id===HEARTBEAT_ID)?.body??null);
     const priorWork=new Map(prior.map(note=>[note.id,readWork(note.body)]));
-    stage='context';const context=await loadOperatingContext();
+    stage='context';const context=await loadOperatingContext(memory.research??initialResearch());
     // Separate stages retain an actionable diagnosis without persisting query data.
     stage='settings';const settings=await prisma.cfoSettings.findFirst({orderBy:{updatedAt:'desc'}});
-    stage='questions';const records=await prisma.$queryRawUnsafe<(Pick<CfoQuestion,'id'|'question'|'answer'|'status'|'area'|'priority'|'answeredAt'|'processNote'|'processedAt'>&{scope:string|null;entity_key:string|null;code:string|null})[]>(`select id,question,answer,status,area,priority,"answeredAt","processNote","processedAt",to_jsonb(q)->>'scope' as scope,to_jsonb(q)->>'entity_key' as entity_key,to_jsonb(q)->>'code' as code from cfo_question q where status<>'IPTAL'`);
+    stage='questions';const records=await prisma.$queryRawUnsafe<(Pick<CfoQuestion,'id'|'question'|'answer'|'status'|'area'|'priority'|'answeredAt'|'processNote'|'processedAt'>&{scope:string|null;entity_key:string|null;code:string|null})[]>(`select id,question,answer,status,area,priority,"answeredAt","processNote","processedAt",to_jsonb(q)->>'scope' as scope,to_jsonb(q)->>'entity_key' as entity_key,to_jsonb(q)->>'code' as code from cfo_question q`);
     const knowledge=records.map(q=>({...q,answerVersion:q.answeredAt?.toISOString(),
       answerChanged:q.status==='CEVAPLANDI'&&!q.processedAt&&!q.processNote?.startsWith(`workflow_read:${q.answeredAt?.toISOString()}`),
       answerReviewPending:!q.processedAt&&!['completed','rejected'].includes(priorWork.get(workflowId('answer:'+q.id))?.status??'research')}));

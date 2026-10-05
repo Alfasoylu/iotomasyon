@@ -6,11 +6,12 @@ import { buildAgenda, type CycleMemory } from './workflow-memory';
 import { debtGate } from './debt-policy';
 import { forecastDebt } from './debt-forecast';
 import { importPolicy,IMPORT_PLANNER_PATH } from './import-planner';
-export type WorkingContext=Awaited<ReturnType<typeof buildOperatingContext>>;
+import type { ResearchResult } from './research';
+export type WorkingContext=Awaited<ReturnType<typeof buildOperatingContext>>&{research?:ResearchResult};
 export type WorkItem={key:string;kind:'research'|'pricing'|'procurement'|'cash'|'liquidation';title:string;priority:number;
   sku?:string;proposal:string;evidence:string[];blockers:string[];cashRequiredTry:number|null;expectedGainTry:number|null;
   suggestedUnits:number|null;requiresApproval:boolean;futureOrder?:boolean;estimatedOrderDate?:string|null;plannerPath?:string;plannerState?:string};
-export type PlannedQuestion={key:string;sku:string;question:string;why:string;priority:number;area:string};
+export type PlannedQuestion={key:string;sku:string;question:string;why:string;priority:number;area:string;scope?:string;entityKey?:string;code?:string};
 export type Knowledge={id:string;question:string;answer:string|null;status:string;area?:string;priority?:number;answerChanged?:boolean;answerReviewPending?:boolean;answerVersion?:string;scope?:string|null;entity_key?:string|null;code?:string|null};
 export const workflowId=(key:string)=>'cfo-work-'+createHash('sha256').update(key).digest('hex').slice(0,32);
 const number=(v:unknown)=>v!=null&&Number.isFinite(Number(v))?Number(v):null;
@@ -20,7 +21,7 @@ function knownAnswer(sku:string,context:WorkingContext,knowledge:Knowledge[]) {
   const contains=(text:string)=>{const t=folded(text),key=folded(sku),index=t.indexOf(key);return index>=0&&!/[A-Z0-9_-]/.test(t[index-1]??'')&&!/[A-Z0-9_-]/.test(t[index+key.length]??'');};
   // Matches are context to investigate, never silently converted into financial facts.
   const note=context.notebook?.notes.find(n=>n.source!=='cfo-workflow-v1'&&contains(n.title+' '+n.body)&&costWords.test(folded(n.title+' '+n.body)));
-  const question=knowledge.find(q=>(contains(q.question)||q.scope==='ITHALAT_SATIRI'&&skuKey(q.entity_key?.split('|').slice(1).join('|')??'')===skuKey(sku))&&(q.code==='MALIYET_YOK'||costWords.test(folded(q.question)))&&q.status!=='IPTAL');
+  const question=knowledge.find(q=>(contains(q.question)||q.scope==='ITHALAT_SATIRI'&&skuKey(q.entity_key?.split('|').slice(1).join('|')??'')===skuKey(sku))&&(q.code==='MALIYET_YOK'||costWords.test(folded(q.question))) );
   return note?`not:${note.id}`:question?`soru:${question.id}`:null;
 }
 export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowledge[]=[],memory:CycleMemory={},priorRead=false){
@@ -41,7 +42,7 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
     add({key:`cost:${skuKey(q.sku)}`,sku:q.sku,kind:'research',title:`${q.sku}: maliyet araştırması`,priority:2,
       proposal:found?'Bulunan not veya cevabı, maliyetin para birimi ve ait olduğu partiyle karşılaştır.':'Katalog, maliyet alanları, notlar ve önceki sorular tarandı; eksik maliyet bilgisi isteniyor.',
       evidence:found?[found]:['Product maliyet alanları',`Son dönem kayıtlı satış adedi: ${q.salesUnits30}`],blockers:['Doğrulanmış ürün maliyeti'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
-    if(!found&&context.notebook?.available!==false&&!context.notebook?.truncated&&!context.catalogCosts?.truncated&&context.catalogCosts?.available!==false)questions.push({key:`cost:${skuKey(q.sku)}`,sku:q.sku,question:`${q.sku} ürününün mevcut stok partisine ait birim maliyeti, para birimi ve fatura/parti tarihi nedir?`,why:'Kayıtlı maliyet, not ve önceki cevap bulunamadı. Kâr hesabı bu bilgiye bağlı.',priority:2,area:'marj'});
+    if(!found&&context.notebook?.available!==false&&!context.notebook?.truncated&&!context.catalogCosts?.truncated&&context.catalogCosts?.available!==false)questions.push({key:`cost:${skuKey(q.sku)}`,sku:q.sku,question:`${q.sku} ürününün mevcut stok partisine ait birim maliyeti, para birimi ve fatura/parti tarihi nedir?`,why:'Kayıtlı maliyet, not ve önceki cevap bulunamadı. Kâr hesabı bu bilgiye bağlı.',priority:2,area:'marj',scope:'ITHALAT_SATIRI',entityKey:'GELECEK|'+q.sku,code:'MALIYET_YOK'});
   }
   for(const p of context.operating.recordedCostReconciliation)add({key:`reconcile:${skuKey(p.sku)}`,sku:p.sku,kind:'research',title:`${p.sku}: kayıtlı maliyeti eşleştir`,priority:2,proposal:'Mevcut maliyetin ürün eşleşmesini ve tarihli kur dönüşümünü doğrula; yeniden maliyet isteme.',evidence:['Product TRY/USD/ithalat maliyet kaydı'],blockers:['Maliyet eşleşmesi veya tarihli dönüşüm'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
   for(const [sku,rows] of bySku){
@@ -108,12 +109,21 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
     capitalTry:context.cash.summaries.find(s=>s.source==='cfo_servet'&&s.query==='servet_try')?.value??null,cardDebtTry:context.cash.totalCardDebt.value,
     totalDebtTry:number(context.financialGoals?.totalDebtTry),profitTry:null};
   if(!context.sales.last30Days.complete||context.operating.summary.skuChannelsWithContributionProfit===0)add({key:'growth:coverage',kind:'research',title:'Kârlı büyüme planının veri eksiklerini tamamla',priority:2,proposal:'Bilinen maliyetlerden ilerle; satılan ürünleri, stokta olmayan kanıtlanmış talebi ve kanal kapsamını araştır. Ciro hedefini kâr ve nakit dönüşümüyle birlikte değerlendir.',evidence:[`Maliyeti bilinen ürün: ${context.operating.summary.skusWithKnownCost}`,`Katkı kârı hesaplanabilen ürün/kanal: ${context.operating.summary.skuChannelsWithContributionProfit}`],blockers:['Eksik dönem ciro düşüşü veya hedef başarısızlığı diye yorumlanamaz','Komisyon, KDV, iadeler ve değişken giderler tamamlanmalı'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
+  if(context.research){
+    items.push(...context.research.items);
+    if(context.research.missing.length)add({key:'research:access',kind:'research',title:'Araştırmanın okunamayan kaynaklarını tamamla',priority:2,proposal:'Okunamayan kaynağı tamamlandı sayma; diğer kaynaklarda araştırmaya devam et.',evidence:context.research.summaries,blockers:context.research.missing,cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
+  }
+  for(const q of context.importPlanner?.questions??[]){
+    if(!q.scope||!q.entityKey||!q.code)continue;
+    const existing=knowledge.some(k=>k.scope===q.scope&&k.code===q.code&&(skuKey(k.entity_key??'')===skuKey(q.entityKey!)||q.code==='MALIYET_YOK'&&skuKey(k.entity_key?.split('|').slice(1).join('|')??'')===skuKey(q.sku)));
+    if(!existing&&!questions.some(k=>k.code==='MALIYET_YOK'&&q.code===k.code&&skuKey(k.sku)===skuKey(q.sku)))questions.push(q);
+  }
   items.sort((a,b)=>a.priority-b.priority||a.key.localeCompare(b.key));
-  const agenda=buildAgenda(items,knowledge,memory,{goals,watermarks:context.dataQuality?.sourceWatermarks,importPlanner:context.importPlanner},priorRead);
+  const agenda=buildAgenda(items,knowledge,memory,{goals,watermarks:context.dataQuality?.sourceWatermarks,importPlanner:context.importPlanner,research:context.research?.progress},priorRead);
   // Previously generated questions remain a backlog, not an obligation to answer 100 at once.
   const open=knowledge.filter(q=>q.status==='ACIK');
   const score=(q:{question:string;priority?:number;area?:string;id?:string;sku?:string})=>{
-    if(!q.id?.startsWith('cfo-work-')&&q.id)return (q.priority??3)*1000;
+    if(!q.id?.startsWith('cfo-work-')&&!q.id?.startsWith('cfo-row-')&&q.id)return (q.priority??3)*1000;
     if(q.area==='nakit'||q.area==='banka')return 1000;
     if(q.area==='siparis'&&!gate.open)return 9000;
     const product=context.operating.questions.find(p=>skuKey(q.question).includes(skuKey(p.sku)));
@@ -122,7 +132,7 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
   const candidates=[...open,...questions.map(q=>({...q,id:workflowId('question:'+q.key),status:'ACIK'}))]
     .sort((a,b)=>score(a)-score(b)||a.id.localeCompare(b.id));
   const top=new Set(candidates.slice(0,5).map(q=>q.id));
-  agenda.questionRanks=open.filter(q=>q.id.startsWith('cfo-work-')).map(q=>({id:q.id,priority:q.area==='siparis'&&!gate.open?4:top.has(q.id)?(q.area==='nakit'||q.area==='banka'?1:2):4}));
-  const pending=questions.filter(q=>top.has(workflowId('question:'+q.key))).slice(0,5);
-  return {asOf:context.asOf,goals,items,questions:pending,agenda,orderGate:gate,debtForecast};
+  agenda.questionRanks=open.filter(q=>q.id.startsWith('cfo-work-')||q.id.startsWith('cfo-row-')).map(q=>({id:q.id,priority:q.area==='siparis'&&!gate.open?4:top.has(q.id)?(q.area==='nakit'||q.area==='banka'?1:2):4}));
+  const pending=questions.filter(q=>top.has(workflowId('question:'+q.key))&&!knowledge.some(k=>k.id===workflowId('question:'+q.key))).slice(0,5);
+  return {asOf:context.asOf,goals,items,questions:pending,agenda,orderGate:gate,debtForecast,research:context.research};
 }

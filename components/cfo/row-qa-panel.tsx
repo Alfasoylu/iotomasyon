@@ -16,6 +16,8 @@
  * karar verilmiş mi. Böylece tabloyu taramak için her satırı açmak gerekmiyor.
  */
 
+import Link from "next/link";
+import { questionHref } from "@/lib/cfo/question-links";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -23,12 +25,15 @@ import {
 } from "lucide-react";
 import {
   answerRowQuestionAction,
+  openRowQuestionAction,
   setProductDecisionAction,
   clearProductDecisionAction,
 } from "@/lib/actions/cfo-row-qa";
 
 export type PanelSorusu = {
   code: string;
+  questionId?: string;
+  status?: string;
   soru: string;
   neden: string;
   area: string;
@@ -153,6 +158,13 @@ export function RowQaPanel({
     });
   }
 
+  function sorularaGit(s:PanelSorusu){
+    start(async()=>{
+      const r=await openRowQuestionAction({scope,entityKey,code:s.code,question:s.soru,why:s.neden,area:s.area});
+      if(r.ok&&'href' in r&&r.href)router.push(r.href);else setMesaj(r.message??'Soru açılamadı.');
+    });
+  }
+
   function kararVer(k: "ALMA" | "BEKLE") {
     start(async () => {
       const r = await setProductDecisionAction({
@@ -221,19 +233,11 @@ export function RowQaPanel({
                 </div>
               )}
 
-              <div className="mt-2 flex flex-wrap items-end gap-2">
-                <textarea
-                  className={`${input} min-h-[38px] flex-1`}
-                  rows={2}
-                  placeholder={s.code === "PLAN_NOTU" ? "Planla ilgili notunuz…" : s.cevap ? "Cevabı güncelle…" : "Cevabınız…"}
-                  value={taslak[s.code] ?? ""}
-                  onChange={(e) => setTaslak((t) => ({ ...t, [s.code]: e.target.value }))}
-                />
-                <button className={btn} disabled={pending} onClick={() => cevapla(s)}>
-                  {pending ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
-                  {s.cevap ? "Güncelle" : "Kaydet"}
-                </button>
-              </div>
+              {s.code==='PLAN_NOTU'?<div className="mt-2 flex items-start gap-2">
+                <textarea className={`${input} min-h-[38px]`} rows={2} placeholder="Plan notu ekle" value={taslak[s.code]??''} onChange={e=>setTaslak({...taslak,[s.code]:e.target.value})}/>
+                <button className={btn} disabled={pending} onClick={()=>cevapla(s)}>{pending?<Loader2 size={11}/>:<Check size={11}/>} Notu kaydet</button>
+              </div>:s.questionId?<Link className={`${btn} mt-2`} href={questionHref(s.questionId)}>{s.status==='IPTAL'?'İptal edilmiş soruyu gör':s.cevap?'Sorular’da cevabı gör / güncelle':'Sorular’da yanıtla'} →</Link>:<button className={`${btn} mt-2`} disabled={pending} onClick={()=>sorularaGit(s)}>Sorular’da yanıtla →</button>}
+
             </div>
           ))}
         </div>
@@ -337,7 +341,7 @@ export function QaRow({
   vurgu?: boolean;
 }) {
   const [acik, setAcik] = useState(false);
-  const acikSoru = sorular.filter((s) => s.code !== "PLAN_NOTU" && !s.cevap).length;
+  const acikSoru = sorular.filter((s) => s.code !== "PLAN_NOTU" && s.status!=="IPTAL" && !s.cevap).length;
 
   return (
     <>

@@ -3,9 +3,11 @@ import { useCallback,useEffect,useState } from 'react';
 import type { StoredWork } from '@/lib/cfo-agent/workflow-store';
 import type { CycleDiagnostic } from '@/lib/cfo-agent/workflow-diagnostics';
 import type { CycleAgenda } from '@/lib/cfo-agent/workflow-memory';
+import type { ResearchProgress } from '@/lib/cfo-agent/research';
+import { questionHref } from '@/lib/cfo/question-links';
 import { TOPIC_NAMES } from '@/lib/cfo-agent/workflow-topics';
 import type { DebtForecast } from '@/lib/cfo-agent/debt-forecast';
-type Report={schedule:string;heartbeat:{lastSuccessAt:string;trigger:string;agenda?:CycleAgenda;orderGate?:{open:boolean};debtForecast?:DebtForecast;goals:{monthlyRevenueTargetUsd:number|null;targetTry:number|null;observedRevenueTry:number|null;revenueComplete:boolean;progressPct:number|null;capitalTry:number|null;cardDebtTry:number|null;totalDebtTry:number|null}}|null;lastFailureAt:string|null;lastFailure:CycleDiagnostic|null;items:(StoredWork&{id:string})[]};
+type Report={schedule:string;heartbeat:{research?:{progress:ResearchProgress[];rowsReviewed:number;periodsCompleted:number;summaries:string[];missing:string[]};lastSuccessAt:string;trigger:string;agenda?:CycleAgenda;orderGate?:{open:boolean};debtForecast?:DebtForecast;goals:{monthlyRevenueTargetUsd:number|null;targetTry:number|null;observedRevenueTry:number|null;revenueComplete:boolean;progressPct:number|null;capitalTry:number|null;cardDebtTry:number|null;totalDebtTry:number|null}}|null;lastFailureAt:string|null;lastFailure:CycleDiagnostic|null;items:(StoredWork&{id:string})[]};
 const statusNames:Record<string,string>={research:'Araştırılıyor',pending_approval:'Onay bekliyor',approved:'Onaylandı · uygulama bekliyor',rejected:'Reddedildi',completed:'Sonuç bildirildi',needs_review:'Değişti · yeniden incele',resolved:'Sinyal artık görünmüyor',withdrawn:'Önceki öneri geri çekildi · doğrulama gerekli'};
 const money=(v:number|null)=>v==null?'Henüz ölçülemedi':`${v.toLocaleString('tr-TR',{maximumFractionDigits:2})} TL`;
 export default function WorkflowPanel(){const [report,setReport]=useState<Report|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[results,setResults]=useState<Record<string,string>>({});
@@ -21,6 +23,13 @@ export default function WorkflowPanel(){const [report,setReport]=useState<Report
     {report?.heartbeat?.agenda&&<div className="rounded border p-4"><p>Bu çalışma: {TOPIC_NAMES[report.heartbeat.agenda.topic]}</p>
       <p>Sonraki çalışma: {TOPIC_NAMES[report.heartbeat.agenda.nextTopic]}</p><p>İncelenen yeni/değişmiş cevap: {report.heartbeat.agenda.answersReviewed.length}</p>
       {report.heartbeat.agenda.unchangedCycles>=2&&<p>Beklenen veri değişmedi; diğer hedef işlerine geçiliyor.</p>}<a href="/cfo/defter" className="underline">Çalışma özeti ve devam planı →</a></div>}
+    {report?.heartbeat?.research&&<section className="rounded border p-4 space-y-3"><h2 className="font-semibold">Geçmiş araştırması ve kaynak kapsamı</h2>
+      <p>Bu çalışmada {report.heartbeat.research.rowsReviewed.toLocaleString('tr-TR')} kayıt incelendi; {report.heartbeat.research.periodsCompleted} arşiv ayı tamamlandı.</p>
+      <ul>{report.heartbeat.research.summaries.map((s,i)=><li key={i}>{s}</li>)}</ul>
+      <details><summary>Bağlı sayfalar ve taramanın kaldığı yer</summary><ul>{report.heartbeat.research.progress.map(p=><li key={p.source} className="my-2">{p.name} · {p.pass===0?'Henüz taranmadı':!p.available?'Kaynak okunamadı; sonraki sırada yeniden denenecek':p.complete?'Bu geçiş tamamlandı':'Araştırma devam ediyor'} · {p.scanned.toLocaleString('tr-TR')}/{p.total?.toLocaleString('tr-TR')??'bilinmiyor'} kayıt{p.period&&!p.complete?' · '+p.period:''}<br/>{p.paths.map(path=><a className="mr-3 underline" key={path} href={path}>Kaynak sayfası →</a>)}</li>)}</ul></details>
+      {report.heartbeat.research.missing.length>0&&<ul>{report.heartbeat.research.missing.map((s,i)=><li key={i}>{s}</li>)}</ul>}
+      <p className="text-xs">Geçmiş ham kaynaklar ayrı incelenir; birbiriyle çakışan satışlar toplanmaz. İnceleme, yeni cevaplar ve günlük görevlerle kaldığı yerden devam eder.</p>
+    </section>}
     {report?.heartbeat&&<div className="rounded border p-4"><p>Aylık hedef: {report.heartbeat.goals.monthlyRevenueTargetUsd?.toLocaleString('tr-TR')} USD · {money(report.heartbeat.goals.targetTry)}</p>
       <p>Gözlenen son 30 gün cirosu: {money(report.heartbeat.goals.observedRevenueTry)} · {report.heartbeat.goals.revenueComplete?'Dönem tamam':'Dönem eksik; hedef ilerleme oranı hesaplanmaz'}</p>
       <p>Kayıtlı sermaye: {money(report.heartbeat.goals.capitalTry)} · Kart borcu: {money(report.heartbeat.goals.cardDebtTry)}</p><p>Defterdeki toplam borç: {money(report.heartbeat.goals.totalDebtTry)}</p><p>Bu değerler son kayıtlı kaynaklardan okunur. Kart borcu toplam borcun yerine kullanılmaz. Tam kâr ve kaynak tazeliği doğrulanmadan başarı iddiası üretilmez.</p></div>}
@@ -38,7 +47,7 @@ export default function WorkflowPanel(){const [report,setReport]=useState<Report
     <h2 className="font-semibold">Bu çalışmanın öncelikli işleri</h2>
     {focus.map(work=><article key={work.id} className="rounded border p-4 space-y-2"><h2 className="font-semibold">P{work.item.priority} · {work.item.title}</h2><p>{statusNames[work.status]}</p><p>{work.item.proposal}</p>{work.item.plannerPath&&<a href={work.item.plannerPath} className="underline">Planlayıcıdaki kayıt ve kararlar →</a>}
       <p>Gereken nakit: {money(work.item.cashRequiredTry)} · Tahmini katkı: {money(work.item.expectedGainTry)}{work.item.suggestedUnits!=null?` · 60 günlük örnek stok miktarı: ${work.item.suggestedUnits}`:''}</p>
-      <details><summary>Kaynaklar ve açık noktalar</summary><ul>{work.item.evidence.map((e,i)=><li key={i}>{e}</li>)}</ul><ul>{work.item.blockers.map((e,i)=><li key={i}>{e}</li>)}</ul></details>
+      <details><summary>Kaynaklar ve açık noktalar</summary><ul>{work.item.evidence.map((e,i)=><li key={i}>{e.startsWith('soru:')?<a className="underline" href={questionHref(e.slice(5))}>İlgili soru ve cevap →</a>:e}</li>)}</ul><ul>{work.item.blockers.map((e,i)=><li key={i}>{e}</li>)}</ul></details>
       {work.result&&<p>Bildirilen sonuç: {work.result}</p>}
       {['research','pending_approval','needs_review','approved'].includes(work.status)&&<div className="space-y-2"><textarea aria-label={`${work.item.title} sonucu veya ret gerekçesi`} className="block w-full rounded border p-2" maxLength={2000} placeholder="Uygulama sonucu veya ret gerekçesi" value={results[work.id]??''} onChange={e=>setResults({...results,[work.id]:e.target.value})}/>
         {work.item.requiresApproval&&['pending_approval','needs_review'].includes(work.status)&&<button disabled={busy} className="mr-3 rounded border px-3 py-1" onClick={()=>act({action:'approve',id:work.id,revision:work.revision,result:results[work.id]??''})}>Öneriyi onayla</button>}

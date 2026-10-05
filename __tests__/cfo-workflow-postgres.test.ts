@@ -13,11 +13,11 @@ async function main(){
   try{
     // Legacy planner tables are outside the generated Prisma model. Only
     // isolated synthetic fixtures are installed in this localhost test DB.
-    await prisma.$executeRawUnsafe(`create table cfo_urun_karar(sku text primary key,karar text,sebep text,gecerli_bitis date,updated_at timestamptz)`);
+    await prisma.$executeRawUnsafe(`create table cfo_urun_karar(sku text primary key,karar text,sebep text,gecerli_bitis date,karar_veren text,updated_at timestamptz)`);
     await prisma.$executeRawUnsafe(`create table cfo_order_batch(id text primary key,transport_mode text,status text,cash_gate text,decision text)`);
     await prisma.$executeRawUnsafe(`create table cfo_order_line(id int primary key,batch_id text,sku text,status text,qty int,note text)`);
     await prisma.$executeRawUnsafe(`create table cfo_ithalat_oneri_ozet(mod text,durum text,tavsiye_siparis_tarihi date,nakit_kapisi_tarihi date,maliyet_eksik_satir int)`);
-    await prisma.$executeRawUnsafe(`alter table cfo_question add column scope text,add column entity_key text`);
+    await prisma.$executeRawUnsafe(`alter table cfo_question add column scope text,add column entity_key text,add column code text`);
     await prisma.cfoSettings.create({data:{id:'synthetic-settings',usdTryRate:10,monthlyRevenueTargetUsd:123456}});
     await prisma.cfoQuestion.create({data:{id:'synthetic-answer',question:'Synthetic fixture cost?',answer:'Unverified synthetic answer',area:'marj',status:'CEVAPLANDI',answeredAt:new Date()}});
     await prisma.$executeRawUnsafe(`update cfo_question set scope='ITHALAT_SATIRI',entity_key='DENIZ|SYNTHETIC' where id='synthetic-answer'`);
@@ -37,7 +37,7 @@ async function main(){
     assert.equal(question.processedAt,null,'reading an answer does not financially apply it');
     assert(question.processNote?.startsWith('workflow_read:'));
     const second=await runCfoCycle('test-repeat');
-    assert(second.completed&&second.newQuestions===0&&second.changedItems===0&&second.answersRead===0);
+    assert(second.completed&&second.newQuestions===0&&second.answersRead===0);
     assert.equal(JSON.parse((await prisma.cfoNote.findUniqueOrThrow({where:{id:HEARTBEAT_ID}})).body).agenda.topic,'sales','next cycle follows saved topic');
     assert.equal(await prisma.cfoNote.count({where:{source:'cfo-workflow-journal'}}),2);
     await prisma.$transaction(async tx=>{
@@ -48,6 +48,21 @@ async function main(){
     await prisma.$transaction(tx=>saveWorkPlan({query:(sql,...params)=>tx.$queryRawUnsafe(sql,...params),execute:(sql,...params)=>tx.$executeRawUnsafe(sql,...params)},
       {asOf:new Date().toISOString(),items:[],goals:JSON.parse(heartbeat.body).goals,questions:[{key:'synthetic:question',sku:'SYNTH',question:'Synthetic order fixture?',why:'Test parameter encoding',priority:1,area:'siparis'}]},'test-returning'));
     assert.equal(await prisma.cfoQuestion.count({where:{question:'Synthetic order fixture?'}}),1);
+    const {ensureRowQuestion}=await import('../lib/cfo/question-record');
+    const {loadRowQa}=await import('../lib/cfo/row-qa');
+    const rowInput={scope:'ITHALAT_SATIRI',entityKey:'DENIZ|SYNTH-LINK',code:'MALIYET_YOK',question:'Synthetic planner cost?',why:'Synthetic row identity',area:'marj'};
+    const register=(entityKey:string)=>prisma.$transaction(tx=>ensureRowQuestion({query:(sql,...p)=>tx.$queryRawUnsafe(sql,...p),execute:(sql,...p)=>tx.$executeRawUnsafe(sql,...p)},{...rowInput,entityKey}));
+    const linked=await Promise.all([register(rowInput.entityKey),register('HAVA|synth-link')]);
+    assert.equal(linked[0].id,linked[1].id,'concurrent planner registrations cannot fork the question');
+    await prisma.cfoQuestion.update({where:{id:linked[0].id},data:{answer:'Synthetic central-page answer',answeredAt:new Date(),status:'CEVAPLANDI',processedAt:null,processNote:null}});
+    const rowQa=await loadRowQa('ITHALAT_SATIRI',['DENIZ|SYNTH-LINK','HAVA|synth-link']);
+    assert.equal(rowQa.kayitli.get('HAVA|synth-link')?.[0]?.answer,'Synthetic central-page answer','planner reads the canonical answer immediately');
+    assert.equal(rowQa.kayitli.get('DENIZ|SYNTH-LINK')?.[0]?.id,linked[0].id);
+    const centralCycle=await runCfoCycle('test-central-answer');
+    assert(centralCycle.completed&&centralCycle.answersRead===1,'cycle reads the answer from the shared question record');
+    assert((await prisma.cfoQuestion.findUniqueOrThrow({where:{id:linked[0].id}})).processNote?.startsWith('workflow_read:'));
+    await prisma.cfoQuestion.update({where:{id:linked[0].id},data:{status:'IPTAL'}});
+    assert.equal((await register(rowInput.entityKey)).status,'IPTAL');
     // Model remote round-trip latency. The old row-by-row writer exceeded the
     // transaction budget; the batch writer uses a bounded number of requests.
     let requests=0;

@@ -1,10 +1,11 @@
+import type { PlannedQuestion } from './workflow-plan';
 import { skuKey } from './sku';
 import type { ReadSource, Row } from './sources';
 
 export const IMPORT_PLANNER_PATH='/cfo/kazananlar#ithalat';
 export type ImportDecision={sku:string;decision:string;reason:string;expiresAt:string|null;updatedAt:string|null};
 export type ImportLine={sku:string;batchId:string;mode:string;status:string;batchStatus:string;qty:number|null;notes:string;batchDecision:string;cashGate:string};
-export type ImportPlanner={available:boolean;truncated:boolean;decisions:ImportDecision[];lines:ImportLine[];summaries:Row[];missing:string[]};
+export type ImportPlanner={available:boolean;truncated:boolean;decisions:ImportDecision[];lines:ImportLine[];summaries:Row[];missing:string[];questions?:PlannedQuestion[]};
 const string=(v:unknown)=>v==null?'':String(v);
 const date=(v:unknown)=>v==null?null:new Date(String(v)).toISOString();
 const object=(v:unknown):Row=>v&&typeof v==='object'?v as Row:{};
@@ -32,6 +33,16 @@ export async function readImportPlanner(db:ReadSource):Promise<ImportPlanner>{
   }catch{result.available=false;result.missing.push('Planlayıcının parti satırları ve durumları okunamadı');}
   try{result.summaries=await db.query<Row>('select mod,durum,tavsiye_siparis_tarihi,nakit_kapisi_tarihi,maliyet_eksik_satir from cfo_ithalat_oneri_ozet order by mod');}
   catch{result.available=false;result.missing.push('Planlayıcının nakit, maliyet ve tarih durumları okunamadı');}
+  try{
+    const rows=await db.query<Row>('select sku,mod,product_name,maliyet_eksik,kapsam_ay,onerilen_adet from cfo_ithalat_oneri order by mod,sira limit 10001');
+    result.questions=[];
+    for(const r of rows.slice(0,10000)){
+      const sku=string(r.sku),entityKey=string(r.mod)+'|'+sku,policy=importPolicy(result,sku,new Date().toISOString());
+      if(policy.rejected||policy.waiting)continue;
+      if(r.maliyet_eksik===true)result.questions.push({key:'row-cost:'+skuKey(sku),sku,scope:'ITHALAT_SATIRI',entityKey,code:'MALIYET_YOK',area:'marj',priority:2,question:`${sku} için mevcut parti ve yeni ithalat alış fiyatı, para birimi, fatura/parti tarihi ve birim ağırlık (kg) nedir?`,why:'İthalat planındaki satır maliyeti eksik. Kayıtlı maliyet ve önceki cevap kontrol edilir; doğrulanmadan miktar veya maliyet değiştirilmez.'});
+      if(Number(r.kapsam_ay)>=6)result.questions.push({key:'row-cover:'+skuKey(entityKey),sku,scope:'ITHALAT_SATIRI',entityKey,code:'KAPSAM_UZUN',area:'siparis',priority:3,question:`${sku} için ${r.onerilen_adet} adet öneri ${r.kapsam_ay} aylık stok oluşturuyor. Bunu destekleyen kampanya/toptan beklentisi var mı?`,why:'Uzun stok örtüsü sermayeyi bağlar. Yeni sipariş borç eşiğine ve öz nakde bağlı kalır.'});
+    }
+  }catch{result.missing.push('Planlayıcıdaki türetilmiş soruların kaynağı okunamadı');}
   if(result.truncated)result.missing.push('Planlayıcı kayıt kapsamı kesildi; yeni aday ekleme durduruldu');
   return result;
 }

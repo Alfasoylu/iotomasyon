@@ -28,6 +28,9 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 function revalidateQ() {
   revalidatePath("/cfo/sorular");
   revalidatePath("/cfo");
+  revalidatePath("/cfo/kazananlar");
+  revalidatePath("/cfo/calisan");
+  revalidatePath("/cfo/defter");
 }
 
 async function guardWrite() {
@@ -130,12 +133,13 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
     await tx.cfoQuestion.update({
       where: { id },
       data: {
-        answer: answer || existing.answer,
+        ...(answer ? {answer} : {}),
         answeredAt: new Date(),
         answeredBy: user.email ?? user.name ?? "kullanıcı",
         status: "CEVAPLANDI",
         // Yeniden cevaplanırsa CFO'nun tekrar işlemesi gerekir.
         processedAt: null,
+        processNote: null,
       },
     });
     if (uploaded.length > 0) {
@@ -176,6 +180,7 @@ export async function markQuestionProcessedAction(id: string, note?: string): Pr
     where: { id },
     data: { processedAt: new Date(), processNote: note?.trim() || null },
   });
+  scheduleCfoCycle("question_processed");
   revalidateQ();
   return { ok: true, message: "İşlendi olarak işaretlendi." };
 }
@@ -185,6 +190,7 @@ export async function cancelQuestionAction(id: string): Promise<ActionResult> {
   const user = await guardWrite();
   if (!user) return { ok: false, message: "Bu işlem için yetkiniz yok." };
   await prisma.cfoQuestion.update({ where: { id }, data: { status: "IPTAL" } });
+  scheduleCfoCycle("question_cancelled");
   revalidateQ();
   return { ok: true, message: "Soru iptal edildi." };
 }

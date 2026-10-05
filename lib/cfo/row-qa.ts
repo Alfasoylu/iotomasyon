@@ -1,4 +1,6 @@
 import "server-only";
+import { skuKey } from "../cfo-agent/sku";
+import { workflowId } from "../cfo-agent/workflow-plan";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -9,12 +11,10 @@ import { prisma } from "@/lib/prisma";
  * bir rozetle geçiştiriyordu ("oran güveni: düşük"). Oysa cevabı bilen kişi
  * ekrana bakan kişiydi; yazacak yeri yoktu.
  *
- * İKİ TÜR SORU VAR:
- *   • TÜRETİLMİŞ — satırın kendi verisinden çıkar (maliyet yok, oran güveni düşük).
- *     Bunlar veritabanında DURMAZ. Her render'da yeniden hesaplanır; çünkü eksik
- *     kapanınca soru kendiliğinden kaybolmalı ve tabloyu ölü kayıtla doldurmamalı.
- *   • KAYITLI — kullanıcı cevaplayınca soru+cevap birlikte `cfo_question`'a yazılır.
- *     Oradan hem /cfo/sorular ekranı hem Cowork'teki CFO ajanı okur.
+ * Türetilmiş sorular öncelik bütçesiyle veya kullanıcının açık isteğiyle ortak
+ * `cfo_question` kaydına bağlanır. Cevap /cfo/sorular üzerinden verilir; satır
+ * yalnız aynı kaydı, durumunu ve cevabını gösterir. Sayfa okumak soru yaratmaz.
+ * İsteğe bağlı plan notları da aynı tabloda saklanır.
  *
  * Yeni tablo açılmadı: CFO zaten `cfo_question`'ı okuyor. Eksik olan tek şey
  * "hangi satır hakkında" bilgisiydi (scope + entity_key + code).
@@ -32,6 +32,8 @@ export type Kapsam = "ITHALAT_SATIRI" | "KAZANAN_SATIRI";
 /** Ekrana çıkan soru — türetilmiş ya da kayıtlı. */
 export type SatirSorusu = {
   code: string;
+  questionId?: string;
+  status?: string;
   /** Sorunun kendisi. Cevaplanabilir olmalı: neyin, hangi birimde istendiği yazar. */
   soru: string;
   /** Neden soruyoruz — cevap vermeye değer mi, kullanıcı bunu bilmeli. */
@@ -55,7 +57,8 @@ export type UrunKarari = {
   updated_at: Date;
 };
 
-type KayitliSoru = {
+export type KayitliSoru = {
+  id: string;
   scope: string | null;
   entity_key: string | null;
   code: string | null;
@@ -77,27 +80,27 @@ export async function loadRowQa(kapsam: Kapsam, anahtarlar: string[]) {
 
   const [sorular, kararlar] = await Promise.all([
     prisma.$queryRaw<KayitliSoru[]>`
-      select scope, entity_key, code, question, why, area, status,
+      select id, scope, entity_key, code, question, why, area, status,
              answer, "answeredAt", "answeredBy", "processedAt", "processNote"
         from cfo_question
-       where scope = ${kapsam} and entity_key = any(${anahtarlar}::text[])
-       order by "askedAt" desc`,
+       where scope = ${kapsam}
+          or id = any(${anahtarlar.map(k=>workflowId('question:cost:'+skuKey(k.split('|').slice(1).join('|'))))}::text[])
+       order by "askedAt" desc,id`,
     prisma.$queryRaw<UrunKarari[]>`
       select sku, karar, sebep, gecerli_bitis, karar_veren, updated_at
         from cfo_urun_karar
        where gecerli_bitis is null or gecerli_bitis >= current_date`,
   ]);
 
+  const kararMap=new Map(kararlar.map(k=>[k.sku,k]));
   const kayitli = new Map<string, KayitliSoru[]>();
-  for (const s of sorular) {
-    if (!s.entity_key) continue;
-    const liste = kayitli.get(s.entity_key) ?? [];
-    liste.push(s);
-    kayitli.set(s.entity_key, liste);
+  for (const key of anahtarlar){
+    const sku=skuKey(key.split('|').slice(1).join('|'));
+    const relevant=sorular.filter(q=>skuKey(q.entity_key??'')===skuKey(key)||
+      q.code==='MALIYET_YOK'&&skuKey(q.entity_key?.split('|').slice(1).join('|')??'')===sku||
+      q.id===workflowId('question:cost:'+sku));
+    kayitli.set(key,relevant.map(q=>({...q,code:q.code??'MALIYET_YOK'})));
   }
-
-  const kararMap = new Map<string, UrunKarari>();
-  for (const k of kararlar) kararMap.set(k.sku, k);
 
   return { kayitli, kararlar: kararMap };
 }
@@ -194,7 +197,9 @@ export function birlestir(
     const k = bul(t.code);
     return {
       code: t.code,
-      soru: t.soru,
+      questionId: k?.id,
+      status: k?.status,
+      soru: k?.question ?? t.soru,
       neden: t.neden,
       area: t.area,
       cevap: k?.answer ?? null,
@@ -208,9 +213,11 @@ export function birlestir(
   // Türetilmiş listede olmayan ama kayıtta duran cevaplar da gösterilir: eksik
   // kapandığı için soru artık üretilmiyor olabilir, ama cevabın kendisi bilgidir.
   for (const k of kayitli) {
-    if (!k.code || turetilmis.some((t) => t.code === k.code)) continue;
+    if (!k.code || out.some((t) => t.code === k.code)) continue;
     out.push({
       code: k.code,
+      questionId: k.id,
+      status: k.status,
       soru: k.question,
       neden: k.why ?? "",
       area: k.area,
