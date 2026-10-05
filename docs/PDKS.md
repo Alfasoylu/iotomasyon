@@ -242,6 +242,42 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — Step 1 kapanışı (parity + kargo + adli analiz)
+
+Production↔repo şema parity'si (`docs/SCHEMA-DRIFT-REPORT.md`), kargo tarifeleri (`docs/KARGO-TARIFE.md`), banka adli analizi (`docs/BANK-DATA-FORENSICS.md`), final kabul raporu. Açık kararlar: RLS'siz 3 tablo + anon yetkileri, baseline-capture migration'ı, banka nakdi için YKB export'u.
+
+### 2026-10-05 — Financial Memory Step 1E: stok + bakiye hafızası
+
+`20261005250000_fm_stock_balance`, test `fm-stock-balance`. Stok zinciri 274 üründe kopuksuz; zincir toplamı 73.561 adet, `Product.stockQuantity` 74.004
+(1 üründe fark: logsuz düzeltme). Aktif 1.311 üründen yalnız 274'ünün logu var (`stock_unlogged_products_excluded`). Bakiye: v2 tanımı 21 gün (09-11 → 10-04),
+boş günler bilinmiyor. Banka hareketinden nakit türetilmedi: Ziraat'ta aynı hareketler iki kez yüklü (manuel + ekstre), alt hesaplar tek `banka` altında
+karışık, toplam snapshot nakdiyle uyuşmuyor (10-03: 232.637 vs 72.484).
+
+### 2026-10-05 — Financial Memory Step 1F: TCMB aylık USD/TRY
+
+`lib/fm/tcmb-fx.ts`, `scripts/fm-fx-tcmb.ts`, migration `20261005240000_fm_fx_monthly`, testler `fm-tcmb-fx` / `fm-fx-monthly`.
+Üretim: `fm_fx_monthly` 74 ay (2020-08 → 2026-09; 26 ay 15'i iş günü olmadığı için önceki bülten). Ekim 2026'nın 15'i gelmediği için
+eksik (U). Kalan: 1E (stok + bakiye hafızası), kabul raporu.
+
+### 2026-10-05 — Financial Memory Step 1C/1D: hafıza şeması + satış backfill
+
+Normalize hafıza şeması ve 75 aylık satış backfill'i üretimde tamamlandı; ham = canonical = hafıza (3 tane) 87.617.597,19 TL,
+ay bazında fark 0. Ayrıntı: CHANGELOG ve `docs/FINANCIAL-MEMORY.md`.
+
+### 2026-10-05 — Financial Memory Step 1B: canonical satış katmanı
+
+Tek canonical satış katmanı view olarak eklendi (`fm_sales_*`). Ham tablolar değişmez; Financial Memory (1C+)
+yalnız buradan beslenecek. Kurallar/mutabakat: `docs/FINANCIAL-MEMORY.md`. Üretimde ham = Σ disposition birebir.
+v1'e göre fark (+₺3,93M): IDEASOFT +3,05M, Şubat gap-fill +0,84M, kaynak geçişi +0,04M.
+
+### 2026-10-05 — Financial Memory Step 1A: reader güvenliği
+
+Phase 0B'de bulgu: `cfo_acceptance_reader` `cfo_secret.value` kolonunu okuyabiliyordu
+(`USING (true)` policy) ve PUBLIC üzerinden veri yazan fonksiyonları çalıştırabiliyordu.
+Migration `20261005200000_cfo_reader_security` ikisini de kapatır, eksik 11 veri tablosuna
+yalnız SELECT verir. Üretim uygulaması `postgres` rolüyle bağlandığı için etkilenmez.
+Ayrıntı ve test: CHANGELOG 2026-10 "Financial Memory Step 1A".
+
 ### 2026-10-05 — AI CFO V1 yeniden inşası, adım 3/9: Anthropic sağlayıcı katmanı
 
 `lib/cfo-agent/provider.ts` — `createCfoProvider`/`reasoningPayload`, parked

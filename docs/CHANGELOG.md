@@ -9,6 +9,57 @@
 
 ## 2026-10
 
+### Step 1 kapanışı — production↔repo parity, kargo tarifeleri, banka/stok adli analizi (2026-10-05)
+- Repo migration'ları üretim gerçeğine hizalandı (cfo_secret policy `USING (false)` korunur/DROP yok, fonksiyon gövdeleri, 1E anon/authenticated revoke, 1A policy ALTER); Step 1'in 7 migration'ı 21 parmak izi grubunda üretimle birebir doğrulanıp `_prisma_migrations`'a işlendi. CI: `migration-clean-apply` (10 bilinen out-of-band hata dondurulmuş + Step 1 parmak izi). Rapor: `docs/SCHEMA-DRIFT-REPORT.md`.
+- Trendyol desi kargo tarifeleri (3 Ocak 2025, 13 Temmuz 2026; KDV hariç) + küçük sipariş baremleri + "tüm kanallarda aynı kargo maliyeti" varsayımı: `cfo_kargo_desi_tarife/barem/kanal_varsayim`, `cfo_kargo_tahmin()`; faturalarla doğrulandı. Doküman: `docs/KARGO-TARIFE.md`.
+- Banka verisi adli analizi (`docs/BANK-DATA-FORENSICS.md`) ve AL-CAM03 +443 adet stok farkının açıklaması; nakit geçmişi bilinçli olarak hafızaya alınmadı.
+
+### Financial Memory Step 1E — stok + bakiye hafızası (2026-10-05)
+- Migration `20261005250000_fm_stock_balance`: `fm_stock_sku_day` (seyrek gün sonu seviyeleri), `fm_stock_company_day` (carry-forward toplam), `fm_balance_day` (yalnız cfo_snapshot v2, ≥2026-09-11), `fm_memory_stock_company_day` / `fm_memory_balance_day`, `fm_stock_refresh()` / `fm_balance_refresh()` (upsert, silme yok).
+- Üretim: 3.215 SKU-gün + 142 şirket-günü (2026-05-17 → 2026-10-05, zincir kopukluğu 0); 105 bakiye satırı (21 gün × 5 metrik). Test: `fm-stock-balance`.
+
+### Financial Memory Step 1F — TCMB aylık USD/TRY (2026-10-05)
+- `lib/fm/tcmb-fx.ts` + `scripts/fm-fx-tcmb.ts`: ayın 15'i (yoksa önceki TCMB bülteni) USD ForexBuying; yalnız resmî TCMB arşivi, bülten yoksa ay eksik kalır (fallback yok), ağ/ayrıştırma hatası fırlatır.
+- `fm_fx_monthly` + `fm_memory_fx_monthly` (migration `20261005240000_fm_fx_monthly`); üretimde 2020-08 → 2026-09 arası 74 ay yüklendi (26'sı önceki iş günü), politika `usd_try` bu aralıkta **A**, 2026-10+ **U**. Testler: `fm-tcmb-fx`, `fm-fx-monthly`.
+
+### Financial Memory Step 1C/1D — hafıza şeması ve satış backfill'i (2026-10-05)
+
+- 1C `20261005220000_fm_memory_schema`: normalize şema — `fm_metric`, `fm_quality_flag`, `fm_source_priority`,
+  `fm_quality_policy` (A/B/C/D/U; sayısal confidence YOK), `fm_ingest_run` (lineage), tipli satış hafızası
+  (`fm_sales_company_day`, `fm_sales_channel_month`, `fm_sales_sku_month`, `fm_sales_sku_day`), `fm_grade`/`fm_grade_month`
+  ve CFO hot-path view'ları `fm_memory_*` (değer + kalite + flag + knownAt). Politika tablosu 2020-08 → bugün her metrik için
+  boşluksuz/çakışmasız (test).
+- 1D `20261005230000_fm_sales_backfill`: `fm_backfill_sales_snapshot` / `_month` / `_run` — aylık parça, devam ettirilebilir,
+  idempotent, silmeden sürümleme (`is_current`), yazım sonrası mutabakat, hatada parça geri alma, dry-run.
+- Üretim: önce dry-run (Şubat-Mayıs 2026 toplamı bağımsız sorguyla birebir), sonra 75 ay backfill (2020-08 → 2026-10):
+  company_day 2.251, channel_month 455, sku_month 12.272, sku_day 11.812 (son 400 gün); üç tanede toplam 87.617.597,19 TL =
+  canonical; ay bazında fark 0.
+- Testler: `__tests__/fm-memory-schema.test.ts`, `__tests__/fm-sales-backfill.test.ts` (PGlite).
+
+### Financial Memory Step 1B — canonical satış katmanı (2026-10-05)
+
+- `prisma/migrations/20261005210000_fm_canonical_sales`: `fm_sales_source_rows`, `fm_sales_dispositioned`,
+  `fm_sales_canonical`, `fm_sales_reconciliation_monthly` view'ları (ham tablolar değişmedi).
+  Trendyol için dönemsel kaynak önceliği (2026-05-04 geçişi, Şubat 2026 gap-fill), sipariş-anahtarıyla dedupe,
+  iptal dışlama, Marketplace `İade-İptal` mutabakatı, set/paket adet düzeltmesi (yalnız adet),
+  IDEASOFT dahil, legacy tekstil etiketi. Kurallar ve üretim mutabakatı: `docs/FINANCIAL-MEMORY.md`.
+- Üretimde doğrulandı: ham 96.549.503,09 TL = Σ disposition; canonical gelir 87.617.597,19 TL;
+  iki kaynakta birden sipariş 0; tekrarlı anahtar 0; v1'e köprü açıklanamayan fark içermez.
+- Test: `__tests__/fm-canonical-sales.test.ts` (PGlite; her kural sentetik veriyle kilitli).
+
+### Financial Memory Step 1A — reader güvenliği (2026-10-05)
+
+- `prisma/migrations/20261005200000_cfo_reader_security/migration.sql`: `cfo_acceptance_reader`
+  için `cfo_secret` grant + RLS policy yolu kapatıldı; Step 1'in ihtiyaç duyduğu 11 veri
+  tablosuna yalnız SELECT (+ SELECT policy) verildi; veri yazan 5 SQL fonksiyonunda
+  (`cfo_take_snapshot`, `cfo_ay_kazanan_yaz`, `cfo_kilometre_yaz`, `cfo_sicrama_kapat`,
+  `cfo_stok_sicrama_kaydet`) PUBLIC EXECUTE kaldırıldı. anon/authenticated/service_role/postgres
+  açık grant'leri ve uygulamanın (postgres rolü) erişimi değişmedi. Idempotent; rol yoksa no-op.
+- `lib/cfo-agent/access-check.ts`: reader `cfo_secret` okuyabiliyorsa veya yazan fonksiyon
+  çalıştırabiliyorsa `reader_secret_access_present` / `reader_write_function_executable` ile durur.
+- Test: `__tests__/cfo-reader-security.test.ts` (PGlite = gerçek PostgreSQL motoru; önce/sonra,
+  DML/DDL/TRUNCATE/EXECUTE reddi, çift uygulama, rolsüz ortamda no-op).
+
 ### AI CFO V1 yeniden inşası — adım 3/9: Anthropic sağlayıcı katmanı (2026-10-05)
 
 - `lib/cfo-agent/provider.ts` eklendi — `createCfoProvider`/`reasoningPayload`.

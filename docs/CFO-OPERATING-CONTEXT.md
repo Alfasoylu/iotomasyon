@@ -14,7 +14,7 @@ Technical delta is kept in this dedicated document and CHANGELOG-BANK-UPLOAD.md 
 
 ## Authorized assistant reader setup
 
-Reuse the existing database and scoped `cfo_acceptance_reader` role. Its grants must cover the catalog-confirmed CFO views/functions, product/sales/XML sources and the existing `cfo_note`, `cfo_question`, bank-movement and audit tables required for inspection. Do not grant business-data write privileges. Reader access checks now list these context sources as well.
+Reuse the existing database and scoped `cfo_acceptance_reader` role. Its grants must cover the catalog-confirmed CFO views/functions, product/sales/XML sources and the existing `cfo_note`, `cfo_question`, bank-movement and audit tables required for inspection. Do not grant business-data write privileges. The reader must never read `cfo_secret` nor execute data-writing SQL functions (`cfo_take_snapshot` etc.); `checkCfoReaderAccess` fails closed if either appears (migration `20261005200000_cfo_reader_security`). Reader access checks now list these context sources as well.
 
 Configure `CFO_READER_DATABASE_URL` privately in the coding environment, using the existing Supabase session-pooler reader URI accepted by `cfoReaderOptions`. Run `node --conditions=react-server --import tsx scripts/cfo-read-context.ts`. The CLI verifies restricted role/TLS/default read-only mode, queries inside a repeatable-read/read-only transaction, and writes the business report only to a mode-0600 file in `/tmp`. Standard output contains a local path or fixed diagnostic code; no URI, password, notebook contents or financial results are logged. The tool cannot perform bank repairs; those need separately authorized application writes.
 

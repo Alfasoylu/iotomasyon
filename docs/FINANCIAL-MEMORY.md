@@ -1,0 +1,118 @@
+# Financial Memory (AI CFO V2 — Step 1)
+
+Bu belge Financial Memory'nin **kararlaştırılmış kurallarını** ve kanıtlarını tutar. Kod değişince
+bu belge ve CHANGELOG birlikte güncellenir.
+
+## İlkeler
+
+- Ham kaynak tablolar **değiştirilmez**. Hafıza yalnız canonical katmandan beslenir.
+- Aynı ekonomik satış canonical katmanda **yalnız bir kez** bulunur; iki kaynak **asla toplanmaz**.
+- Bilinmeyen = `NULL`/`U` (unknown). Bilinmeyen iade 0 sayılmaz; bugünkü maliyet geçmişe uygulanmaz.
+- Kalite = `A/B/C/D/U` + açık `quality_flags`. Sayısal "confidence" kalibre edilene kadar kullanılmaz.
+- `economicDate` (satışın gerçekleştiği gün) ile `knownAt` (CFO'nun bilgiyi bilebileceği an) ayrıdır.
+  2020–2026-04 geçmişi 2026-05-19'da toplu içe aktarılmıştır; bu yüzden geçmiş trend analizi ile
+  "o gün CFO ne bilirdi" (decision replay) aynı şey değildir.
+
+## Step 1B — Canonical Sales Layer
+
+Migration: `prisma/migrations/20261005210000_fm_canonical_sales`. Yalnız VIEW (security_invoker;
+anon/authenticated/PUBLIC yetkisiz; `cfo_acceptance_reader` SELECT).
+
+| View | Görev |
+|---|---|
+| `fm_sales_source_rows` | `MarketplaceSalesRecord` + `TrendyolSalesRecord` satırlarını ortak şekle indirger (değer değişmez) |
+| `fm_sales_dispositioned` | Kaynak önceliği, dedupe, durum sınıfı; her ham satıra TAM BİR `disposition` |
+| `fm_sales_canonical` | Dedupe edilenler çıkar; sayılan satırlarda set/paket adet düzeltmesi |
+| `fm_sales_reconciliation_monthly` | Ay × kanal × kaynak × disposition tutar dökümü (ham = Σ disposition) |
+
+### Kaynak önceliği (yalnız Trendyol kanalı; diğer kanallar `SINGLE_SOURCE`)
+
+Sipariş anahtarı: `MarketplaceSalesRecord.orderNumber` ikinci parçası = `TrendyolSalesRecord.orderId`.
+
+| Dönem | Birincil | İkincil |
+|---|---|---|
+| `economic_date < 2026-05-04` | Marketplace (`M_PRIMARY`) | Trendyol yalnız Marketplace'te **olmayan** siparişleri doldurur (`T_GAP_FILL`; Şubat 2026 Entegra deliği) |
+| `economic_date ≥ 2026-05-04` | Trendyol API (`T_PRIMARY`) | Marketplace yalnız Trendyol'da **olmayan** siparişler için yedek (`M_FALLBACK`) |
+
+Çakışan sipariş ikincil kaynaktan `DEDUP_DROPPED` olur. Gap-fill satırı Marketplace'te
+tarih+SKU+adet+tutar aynı bir satıra benziyorsa `possible_cross_source_duplicate` flag'i alır
+(silinmez; Phase 0B'de kesin anahtar eşleşmesi olmayan örtüşme kanıtlanamadı).
+
+### Disposition
+
+`COUNTED` · `EXCLUDED_CANCELLED` (Trendyol `Cancelled`, Marketplace `Tedarik Edilemedi`) ·
+`EXCLUDED_RETURN` (Marketplace `İade-İptal`/`İadesi Onaylanan`; Trendyol `UnDelivered*`; Marketplace durumu
+eşleşen Trendyol siparişine işlenir — Trendyol `Delivered` gösterse bile) · `EXCLUDED_TEST` · `DEDUP_DROPPED`.
+İade/iptal tutarı 0 kabul edilmez; ham tutar satırda kalır, gelir `revenue_incl_vat_try` yalnız `COUNTED`'da dolu.
+
+### Gelir tanımı
+
+Başlık gelir = **KDV dahil `totalAmountTry`** (`revenue_incl_vat_try`). KDV hariç (`amount_ex_vat_try`) ve KDV
+(`vat_try`) yalnız kaynakta varsa (Marketplace); Trendyol API satırlarında `NULL` + `ex_vat_unknown`.
+Gelir kâr değildir. Set/paket adet düzeltmesi (v1 `cfo_satis_birim_duz` mantığı) **yalnız adedi** değiştirir.
+
+### IDEASOFT ve legacy tekstil
+
+IDEASOFT dahildir (kontrol: sipariş no tekrarı 0, test siparişi 1 adet ₺2, çapraz kanal birebir çakışma 3 satır / ₺2,4 bin);
+fark `ideasoft_v1_excluded` flag'iyle izlenir. Armine/AlinModest tekstil satırları `legacy_business='TEXTILE_ARMINE'`
+(+`legacy_textile` flag'i) ile etiketlenir, silinmez; ALFAS ürün performansına karıştırılmaz.
+
+### Üretim mutabakatı (2026-10-05)
+
+| Kalem | TL |
+|---|---|
+| Ham `MarketplaceSalesRecord` | 89.095.225,50 |
+| Ham `TrendyolSalesRecord` | 7.454.277,59 |
+| Σ disposition (`fm_sales_dispositioned`) | **96.549.503,09** (ham toplama birebir eşit) |
+| Canonical gelir (`COUNTED`) | **87.617.597,19** |
+| İki kaynakta birden bulunan Trendyol siparişi | 0 |
+| Tekrarlı canonical anahtar | 0 |
+
+v1 (`cfo_satis_birim`, 83.691.031) → canonical köprüsü: − Trendyol'a geçen Marketplace satırları 5.707.145
++ Trendyol API (≥2026-05-04) 5.742.726 (**net +%0,04 kaynak geçişi**) + IDEASOFT 3.046.737 + Şubat gap-fill 844.816
+− canonical'ın ek dışladığı 569 = 87.617.597. Açıklanamayan fark yok.
+
+## Step 1A — Reader güvenliği
+
+`20261005200000_cfo_reader_security`: `cfo_secret` reader'a kapalı; Step 1 için eksik 11 veri tablosu yalnız SELECT;
+veri yazan 5 SQL fonksiyonunda PUBLIC EXECUTE kaldırıldı. Ayrıntı: CHANGELOG.
+
+## Step 1C — Hafıza şeması (normalize)
+
+Kalite değeri satırlara JSON olarak kopyalanmaz: `fm_quality_policy(metric, kanal, geçerlilik aralığı) → A/B/C/D/U`
+politika tablosunda tutulur; `fm_grade(metric, kanal, tarih)` en özgül politikayı döndürür, bulunamazsa **U**.
+Aylık satırlar ayın en kötü gününün kalitesini alır (`fm_grade_month`). Değer geçmişi tipli tablolarda
+(`fm_sales_company_day`, `_channel_month`, `_sku_month`, `_sku_day`); `NULL` = bilinmiyor. Lineage `fm_ingest_run`
+(değişken kısım jsonb). Sayısal confidence bilinçli olarak yoktur (kalibre değil). CFO hot-path: `fm_memory_*` view'ları
+(değer + kalite + flag + knownAt tek satırda). `economic_date` ile `known_at_*` ayrıdır (backtest için).
+
+Politika tohumu (özet): gelir 2020-08..2021-12 **C**, 2022-01..2026-05-03 **B**, 2026-05-04+ **A**; iade **U** (hep);
+geçmiş maliyet/katkı kârı 2026-08-24 öncesi **U**; stok adedi 2026-05-17+ **B**; net sermaye 2026-09-11+ **C**
+(öncesi **U**); USD/TRY **A** (TCMB yüklü 2020-08..2026-09; sonrası **U**, Step 1F).
+
+## Step 1D — Satış backfill (2026-10-05)
+
+`fm_backfill_sales_snapshot` canonical görünümün kopyasını (MATERIALIZED VIEW) yeniler; `fm_backfill_sales_run` ay ay yazar
+(tamamlananları atlar, ilk hatada durur); her ay tek transaction ve yazım sonrası toplamlar doğrulanır. Satır silinmez:
+yeniden yazımda önceki sürüm `is_current=false` olur. Dry-run: aralık raporlanır, hiçbir şey yazılmaz.
+Üretim sonucu: 75 ay (2020-08 → 2026-10), company_day 2.251 · channel_month 455 · sku_month 12.272 · sku_day 11.812
+(son 400 gün); `fm_sales_memory_reconciliation_monthly` tüm aylar için fark 0.
+
+## Step 1F — TCMB aylık USD/TRY (2026-10-05)
+
+Referans: USD **ForexBuying (Döviz Alış)**, ayın 15'i; bülten yoksa 15'inden önceki son TCMB bülteni
+(`https://www.tcmb.gov.tr/kurlar/YYYYMM/DDMMYYYY.xml`, 404 = o gün bülten yok). Başka kaynak/kazıma yok; 10 gün geriye bülten
+bulunamazsa ay `missing` kalır ve hiç yazılmaz. 5xx/ağ/bozuk içerik hata verir (tatil sanılmaz). Gelecek ayın 15'i gelmediyse `pending`.
+`node --import tsx scripts/fm-fx-tcmb.ts 2020-08 <ay>` SQL üretir (DB'ye bağlanmaz). Üretim: 74 ay, 26'sı `is_fallback_day`; 2026-10 bekliyor.
+
+## Step 1E — Stok + bakiye hafızası (2026-10-05)
+
+**Stok:** `XmlStockChangeLog` (3.215 log, 274 ürün, 2026-05-17 →) seviye zinciri: her logun `previousQty` = önceki `newQty` (0 kopukluk, delta tutarlı).
+`fm_stock_sku_day` yalnız değişiklik günlerinin gün sonu seviyesini tutar (değişmeyen gün = önceki seviye); `fm_stock_company_day` zinciri başlamış ürünlerin
+carry-forward toplamıdır. Zincir sonu toplamı 73.561 ≠ `Product.stockQuantity` toplamı 74.004 (1 üründe 443 adet logsuz değişiklik). Aktif 1.311 üründen 1.037'sinin hiç logu yok →
+toplam her zaman `stock_unlogged_products_excluded` bayrağıyla okunur; kalite B (2026-05-17+), öncesi U.
+
+**Bakiye:** `cfo_snapshot` yalnız v2 tanımından (≥2026-09-11; 09-10 akşamı yeniden kurulan satır politika başlangıcıyla hizalı kalsın diye alınmadı) gün başına son snapshot,
+5 metrik (cash/debt/receivables/net_capital/inventory_value). v1 değerleri hafızaya girmez (ham tabloda durur). Snapshot'ı olmayan gün (örn. 09-19, 09-27/28) satırsız = bilinmiyor.
+**Banka hareketinden nakit türetilmedi:** aynı Ziraat hareketleri iki kez yüklü (manuel id 53-68 ve ekstre id 1593+), kredi/vadesiz alt hesaplar tek `banka` altında karışık,
+ve 2026-10-03 toplamı snapshot nakdiyle uyuşmuyor (232.637 vs 72.484). Hesap kimliği temizlenmeden bu seri üretilmez.
