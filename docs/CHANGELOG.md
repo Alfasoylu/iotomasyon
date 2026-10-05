@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### Financial Memory Step 1E — stok + bakiye hafızası (2026-10-05)
+- Migration `20261005250000_fm_stock_balance`: `fm_stock_sku_day` (seyrek gün sonu seviyeleri), `fm_stock_company_day` (carry-forward toplam), `fm_balance_day` (yalnız cfo_snapshot v2, ≥2026-09-11), `fm_memory_stock_company_day` / `fm_memory_balance_day`, `fm_stock_refresh()` / `fm_balance_refresh()` (upsert, silme yok).
+- Üretim: 3.215 SKU-gün + 142 şirket-günü (2026-05-17 → 2026-10-05, zincir kopukluğu 0); 105 bakiye satırı (21 gün × 5 metrik). Test: `fm-stock-balance`.
+
 ### Financial Memory Step 1F — TCMB aylık USD/TRY (2026-10-05)
 - `lib/fm/tcmb-fx.ts` + `scripts/fm-fx-tcmb.ts`: ayın 15'i (yoksa önceki TCMB bülteni) USD ForexBuying; yalnız resmî TCMB arşivi, bülten yoksa ay eksik kalır (fallback yok), ağ/ayrıştırma hatası fırlatır.
 - `fm_fx_monthly` + `fm_memory_fx_monthly` (migration `20261005240000_fm_fx_monthly`); üretimde 2020-08 → 2026-09 arası 74 ay yüklendi (26'sı önceki iş günü), politika `usd_try` bu aralıkta **A**, 2026-10+ **U**. Testler: `fm-tcmb-fx`, `fm-fx-monthly`.

@@ -48,6 +48,7 @@ jobs:
       - run: node --import tsx __tests__/fm-sales-backfill.test.ts
       - run: node --import tsx __tests__/fm-tcmb-fx.test.ts
       - run: node --import tsx __tests__/fm-fx-monthly.test.ts
+      - run: node --import tsx __tests__/fm-stock-balance.test.ts
       - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts
       - run: node --import tsx __tests__/ai-cfo-anomalies.test.ts
       - run: node --import tsx __tests__/ai-cfo-provider.test.ts

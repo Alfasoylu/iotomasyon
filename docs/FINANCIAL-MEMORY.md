@@ -104,3 +104,15 @@ Referans: USD **ForexBuying (Döviz Alış)**, ayın 15'i; bülten yoksa 15'inde
 (`https://www.tcmb.gov.tr/kurlar/YYYYMM/DDMMYYYY.xml`, 404 = o gün bülten yok). Başka kaynak/kazıma yok; 10 gün geriye bülten
 bulunamazsa ay `missing` kalır ve hiç yazılmaz. 5xx/ağ/bozuk içerik hata verir (tatil sanılmaz). Gelecek ayın 15'i gelmediyse `pending`.
 `node --import tsx scripts/fm-fx-tcmb.ts 2020-08 <ay>` SQL üretir (DB'ye bağlanmaz). Üretim: 74 ay, 26'sı `is_fallback_day`; 2026-10 bekliyor.
+
+## Step 1E — Stok + bakiye hafızası (2026-10-05)
+
+**Stok:** `XmlStockChangeLog` (3.215 log, 274 ürün, 2026-05-17 →) seviye zinciri: her logun `previousQty` = önceki `newQty` (0 kopukluk, delta tutarlı).
+`fm_stock_sku_day` yalnız değişiklik günlerinin gün sonu seviyesini tutar (değişmeyen gün = önceki seviye); `fm_stock_company_day` zinciri başlamış ürünlerin
+carry-forward toplamıdır. Zincir sonu toplamı 73.561 ≠ `Product.stockQuantity` toplamı 74.004 (1 üründe 443 adet logsuz değişiklik). Aktif 1.311 üründen 1.037'sinin hiç logu yok →
+toplam her zaman `stock_unlogged_products_excluded` bayrağıyla okunur; kalite B (2026-05-17+), öncesi U.
+
+**Bakiye:** `cfo_snapshot` yalnız v2 tanımından (≥2026-09-11; 09-10 akşamı yeniden kurulan satır politika başlangıcıyla hizalı kalsın diye alınmadı) gün başına son snapshot,
+5 metrik (cash/debt/receivables/net_capital/inventory_value). v1 değerleri hafızaya girmez (ham tabloda durur). Snapshot'ı olmayan gün (örn. 09-19, 09-27/28) satırsız = bilinmiyor.
+**Banka hareketinden nakit türetilmedi:** aynı Ziraat hareketleri iki kez yüklü (manuel id 53-68 ve ekstre id 1593+), kredi/vadesiz alt hesaplar tek `banka` altında karışık,
+ve 2026-10-03 toplamı snapshot nakdiyle uyuşmuyor (232.637 vs 72.484). Hesap kimliği temizlenmeden bu seri üretilmez.
