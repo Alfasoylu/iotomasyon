@@ -9,6 +9,19 @@
 
 ## 2026-10
 
+### Financial Memory Step 1A — reader güvenliği (2026-10-05)
+
+- `prisma/migrations/20261005200000_cfo_reader_security/migration.sql`: `cfo_acceptance_reader`
+  için `cfo_secret` grant + RLS policy yolu kapatıldı; Step 1'in ihtiyaç duyduğu 11 veri
+  tablosuna yalnız SELECT (+ SELECT policy) verildi; veri yazan 5 SQL fonksiyonunda
+  (`cfo_take_snapshot`, `cfo_ay_kazanan_yaz`, `cfo_kilometre_yaz`, `cfo_sicrama_kapat`,
+  `cfo_stok_sicrama_kaydet`) PUBLIC EXECUTE kaldırıldı. anon/authenticated/service_role/postgres
+  açık grant'leri ve uygulamanın (postgres rolü) erişimi değişmedi. Idempotent; rol yoksa no-op.
+- `lib/cfo-agent/access-check.ts`: reader `cfo_secret` okuyabiliyorsa veya yazan fonksiyon
+  çalıştırabiliyorsa `reader_secret_access_present` / `reader_write_function_executable` ile durur.
+- Test: `__tests__/cfo-reader-security.test.ts` (PGlite = gerçek PostgreSQL motoru; önce/sonra,
+  DML/DDL/TRUNCATE/EXECUTE reddi, çift uygulama, rolsüz ortamda no-op).
+
 ### AI CFO V1 yeniden inşası — adım 3/9: Anthropic sağlayıcı katmanı (2026-10-05)
 
 - `lib/cfo-agent/provider.ts` eklendi — `createCfoProvider`/`reasoningPayload`.

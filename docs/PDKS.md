@@ -242,6 +242,14 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — Financial Memory Step 1A: reader güvenliği
+
+Phase 0B'de bulgu: `cfo_acceptance_reader` `cfo_secret.value` kolonunu okuyabiliyordu
+(`USING (true)` policy) ve PUBLIC üzerinden veri yazan fonksiyonları çalıştırabiliyordu.
+Migration `20261005200000_cfo_reader_security` ikisini de kapatır, eksik 11 veri tablosuna
+yalnız SELECT verir. Üretim uygulaması `postgres` rolüyle bağlandığı için etkilenmez.
+Ayrıntı ve test: CHANGELOG 2026-10 "Financial Memory Step 1A".
+
 ### 2026-10-05 — AI CFO V1 yeniden inşası, adım 3/9: Anthropic sağlayıcı katmanı
 
 `lib/cfo-agent/provider.ts` — `createCfoProvider`/`reasoningPayload`, parked

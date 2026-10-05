@@ -2,6 +2,10 @@ import "server-only";
 import type { ClientConfig } from "pg";
 import { CFO_AGENT_SOURCE_NAMES, type ReadSource, type Row } from "./sources";
 
+/** Public SQL functions that INSERT/UPDATE/DELETE; reader EXECUTE on them is a security failure. */
+export const CFO_WRITE_FUNCTIONS: readonly string[] = Object.freeze([
+  "cfo_ay_kazanan_yaz", "cfo_kilometre_yaz", "cfo_sicrama_kapat", "cfo_stok_sicrama_kaydet", "cfo_take_snapshot"]);
+
 export class CfoAccessError extends Error {
   constructor(readonly code: string) { super(code); }
 }
@@ -68,6 +72,14 @@ export async function checkCfoReaderAccess(db: ReadSource) {
       from pg_class c join pg_namespace n on n.oid=c.relnamespace
       where n.nspname='public' and c.relname=any($1::text[]) and c.relkind in ('r','p','v','m')`, names);
     if (relations.some(row => row.writable === true)) throw new CfoAccessError("business_write_privileges_present");
+    // Step 1A: the reader must never see stored secrets nor run data-writing SQL functions.
+    const [secret] = await db.query(`select to_regclass('public.cfo_secret') is not null
+      and has_table_privilege(current_user,'public.cfo_secret','SELECT') as readable`);
+    if (secret?.readable === true) throw new CfoAccessError("reader_secret_access_present");
+    const writeFunctions = await db.query(`select p.proname::text as source from pg_proc p
+      where p.pronamespace='public'::regnamespace and p.prokind='f' and p.proname=any($1::text[])
+      and has_function_privilege(current_user,p.oid,'EXECUTE')`, [...CFO_WRITE_FUNCTIONS]);
+    if (writeFunctions.length > 0) throw new CfoAccessError("reader_write_function_executable");
     const columns = await db.query(`select table_name as source,column_name,data_type
       from information_schema.columns where table_schema='public' and table_name=any($1::text[])
       order by table_name,ordinal_position`, names);
