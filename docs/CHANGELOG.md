@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### Financial Memory Step 1F — TCMB aylık USD/TRY (2026-10-05)
+- `lib/fm/tcmb-fx.ts` + `scripts/fm-fx-tcmb.ts`: ayın 15'i (yoksa önceki TCMB bülteni) USD ForexBuying; yalnız resmî TCMB arşivi, bülten yoksa ay eksik kalır (fallback yok), ağ/ayrıştırma hatası fırlatır.
+- `fm_fx_monthly` + `fm_memory_fx_monthly` (migration `20261005240000_fm_fx_monthly`); üretimde 2020-08 → 2026-09 arası 74 ay yüklendi (26'sı önceki iş günü), politika `usd_try` bu aralıkta **A**, 2026-10+ **U**. Testler: `fm-tcmb-fx`, `fm-fx-monthly`.
+
 ### Financial Memory Step 1C/1D — hafıza şeması ve satış backfill'i (2026-10-05)
 
 - 1C `20261005220000_fm_memory_schema`: normalize şema — `fm_metric`, `fm_quality_flag`, `fm_source_priority`,

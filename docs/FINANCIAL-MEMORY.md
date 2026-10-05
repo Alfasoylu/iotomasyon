@@ -88,7 +88,7 @@ Aylık satırlar ayın en kötü gününün kalitesini alır (`fm_grade_month`).
 
 Politika tohumu (özet): gelir 2020-08..2021-12 **C**, 2022-01..2026-05-03 **B**, 2026-05-04+ **A**; iade **U** (hep);
 geçmiş maliyet/katkı kârı 2026-08-24 öncesi **U**; stok adedi 2026-05-17+ **B**; net sermaye 2026-09-11+ **C**
-(öncesi **U**); USD/TRY **U** (TCMB yüklenene kadar).
+(öncesi **U**); USD/TRY **A** (TCMB yüklü 2020-08..2026-09; sonrası **U**, Step 1F).
 
 ## Step 1D — Satış backfill (2026-10-05)
 
@@ -97,3 +97,10 @@ geçmiş maliyet/katkı kârı 2026-08-24 öncesi **U**; stok adedi 2026-05-17+ 
 yeniden yazımda önceki sürüm `is_current=false` olur. Dry-run: aralık raporlanır, hiçbir şey yazılmaz.
 Üretim sonucu: 75 ay (2020-08 → 2026-10), company_day 2.251 · channel_month 455 · sku_month 12.272 · sku_day 11.812
 (son 400 gün); `fm_sales_memory_reconciliation_monthly` tüm aylar için fark 0.
+
+## Step 1F — TCMB aylık USD/TRY (2026-10-05)
+
+Referans: USD **ForexBuying (Döviz Alış)**, ayın 15'i; bülten yoksa 15'inden önceki son TCMB bülteni
+(`https://www.tcmb.gov.tr/kurlar/YYYYMM/DDMMYYYY.xml`, 404 = o gün bülten yok). Başka kaynak/kazıma yok; 10 gün geriye bülten
+bulunamazsa ay `missing` kalır ve hiç yazılmaz. 5xx/ağ/bozuk içerik hata verir (tatil sanılmaz). Gelecek ayın 15'i gelmediyse `pending`.
+`node --import tsx scripts/fm-fx-tcmb.ts 2020-08 <ay>` SQL üretir (DB'ye bağlanmaz). Üretim: 74 ay, 26'sı `is_fallback_day`; 2026-10 bekliyor.

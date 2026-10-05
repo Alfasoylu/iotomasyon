@@ -242,6 +242,12 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — Financial Memory Step 1F: TCMB aylık USD/TRY
+
+`lib/fm/tcmb-fx.ts`, `scripts/fm-fx-tcmb.ts`, migration `20261005240000_fm_fx_monthly`, testler `fm-tcmb-fx` / `fm-fx-monthly`.
+Üretim: `fm_fx_monthly` 74 ay (2020-08 → 2026-09; 26 ay 15'i iş günü olmadığı için önceki bülten). Ekim 2026'nın 15'i gelmediği için
+eksik (U). Kalan: 1E (stok + bakiye hafızası), kabul raporu.
+
 ### 2026-10-05 — Financial Memory Step 1C/1D: hafıza şeması + satış backfill
 
 Normalize hafıza şeması ve 75 aylık satış backfill'i üretimde tamamlandı; ham = canonical = hafıza (3 tane) 87.617.597,19 TL,
