@@ -9,6 +9,17 @@
 
 ## 2026-10
 
+### AI CFO V1 yeniden inşası — adım 1/9: additive migration (2026-10-05)
+
+- `cfo_run`/`cfo_insight`/`cfo_usage` tabloları eklendi (`prisma/schema.prisma`
+  + `prisma/migrations/20261005190000_ai_cfo_v1`). Yalnız şema: mevcut CFO
+  motoru ve verisi değişmedi, `AI_CFO_ENABLED` vb. flag'ler hâlâ varsayılan
+  kapalı. Diğer `cfo_*` tablolarıyla aynı RLS deny-all deseni.
+- Doğrulama: `prisma validate`, disposable Postgres'e `db push` + `tsc` +
+  `npm run build`, `migration.sql` doğrudan `psql` ile iki kez (idempotent),
+  Prisma Client ile uçtan uca yazma/okuma, mevcut `cfo-workflow-postgres`/
+  `ai-cfo-reconciliation`/`cfo-cost-answer` paketleri aynı DB'ye karşı yeşil.
+
 ### Maliyet cevabı → Product.unitCostTry otomatik yazımı (2026-10-05)
 
 - `/cfo/sorular` ve `/cfo/kazananlar` satır panelinden cevaplanan `MALIYET_YOK`

@@ -242,6 +242,26 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — AI CFO V1 yeniden inşası, adım 1/9: additive migration
+
+`feat/ai-cfo-v1` (PR #131, LLM çağrısı yapan katman) main'e mekanik rebase
+edilemediği için (derin yapısal ayrışma, `lib/cfo-agent/*`) sıfırdan, güncel
+main üzerine, tasarım korunarak ama kod kopyalanmadan yeniden inşa ediliyor.
+Her adım ayrı PR, flag'leri kapalı, test edilmiş. Bkz. `docs/CFO-WORKFLOW.md`
+→ "Deliberately not this" paragrafı (PR #145) — karar ve gerekçesi orada.
+
+**Adım 1:** `prisma/schema.prisma` + additive migration — `cfo_run` (monitor/
+morning çalışma kaydı), `cfo_insight` (AI bulguları), `cfo_usage` (token/
+maliyet). Üçü de yeni, mevcut `cfo_snapshot`/`cfo_question`/`cfo_note`/
+`cfo_change_log` ve `/cfo/calisan` deterministik döngüsü değişmedi.
+`AI_CFO_ENABLED` vb. flag'ler hâlâ varsayılan kapalı — bu adım hiçbir çalışma
+zamanı davranışını değiştirmiyor. RLS deny-all (diğer `cfo_*` tablolarıyla
+aynı desen). Doğrulama: `prisma validate`, disposable DB'ye `db push` +
+build + `tsc`, `migration.sql` doğrudan `psql` ile iki kez (idempotent),
+Prisma Client ile uçtan uca yazma/okuma, mevcut CFO regresyon paketi
+(`cfo-workflow-postgres`, `ai-cfo-reconciliation`, `cfo-cost-answer`) aynı
+DB'ye karşı yeşil. PR #146.
+
 ### 2026-09-28 — ALFAS Home → Sepetler (terk edilen / bekleyen sepetler + mail durumu)
 
 `/alfashome/sepetler`: alfashome.com'da ürünü olup siparişe dönmemiş sepetleri
