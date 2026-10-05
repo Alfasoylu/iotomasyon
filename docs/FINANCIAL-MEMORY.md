@@ -76,3 +76,24 @@ v1 (`cfo_satis_birim`, 83.691.031) → canonical köprüsü: − Trendyol'a geç
 
 `20261005200000_cfo_reader_security`: `cfo_secret` reader'a kapalı; Step 1 için eksik 11 veri tablosu yalnız SELECT;
 veri yazan 5 SQL fonksiyonunda PUBLIC EXECUTE kaldırıldı. Ayrıntı: CHANGELOG.
+
+## Step 1C — Hafıza şeması (normalize)
+
+Kalite değeri satırlara JSON olarak kopyalanmaz: `fm_quality_policy(metric, kanal, geçerlilik aralığı) → A/B/C/D/U`
+politika tablosunda tutulur; `fm_grade(metric, kanal, tarih)` en özgül politikayı döndürür, bulunamazsa **U**.
+Aylık satırlar ayın en kötü gününün kalitesini alır (`fm_grade_month`). Değer geçmişi tipli tablolarda
+(`fm_sales_company_day`, `_channel_month`, `_sku_month`, `_sku_day`); `NULL` = bilinmiyor. Lineage `fm_ingest_run`
+(değişken kısım jsonb). Sayısal confidence bilinçli olarak yoktur (kalibre değil). CFO hot-path: `fm_memory_*` view'ları
+(değer + kalite + flag + knownAt tek satırda). `economic_date` ile `known_at_*` ayrıdır (backtest için).
+
+Politika tohumu (özet): gelir 2020-08..2021-12 **C**, 2022-01..2026-05-03 **B**, 2026-05-04+ **A**; iade **U** (hep);
+geçmiş maliyet/katkı kârı 2026-08-24 öncesi **U**; stok adedi 2026-05-17+ **B**; net sermaye 2026-09-11+ **C**
+(öncesi **U**); USD/TRY **U** (TCMB yüklenene kadar).
+
+## Step 1D — Satış backfill (2026-10-05)
+
+`fm_backfill_sales_snapshot` canonical görünümün kopyasını (MATERIALIZED VIEW) yeniler; `fm_backfill_sales_run` ay ay yazar
+(tamamlananları atlar, ilk hatada durur); her ay tek transaction ve yazım sonrası toplamlar doğrulanır. Satır silinmez:
+yeniden yazımda önceki sürüm `is_current=false` olur. Dry-run: aralık raporlanır, hiçbir şey yazılmaz.
+Üretim sonucu: 75 ay (2020-08 → 2026-10), company_day 2.251 · channel_month 455 · sku_month 12.272 · sku_day 11.812
+(son 400 gün); `fm_sales_memory_reconciliation_monthly` tüm aylar için fark 0.

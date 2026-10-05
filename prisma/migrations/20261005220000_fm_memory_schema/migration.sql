@@ -309,8 +309,9 @@ BEGIN
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN EXECUTE format('REVOKE ALL ON public.%I FROM authenticated', o); END IF;
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'cfo_acceptance_reader') THEN
       EXECUTE format('GRANT SELECT ON public.%I TO cfo_acceptance_reader', o);
-      EXECUTE format('DROP POLICY IF EXISTS cfo_acceptance_reader_select ON public.%I', o);
-      EXECUTE format('CREATE POLICY cfo_acceptance_reader_select ON public.%I FOR SELECT TO cfo_acceptance_reader USING (true)', o);
+      IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = o AND policyname = 'cfo_acceptance_reader_select') THEN
+        EXECUTE format('CREATE POLICY cfo_acceptance_reader_select ON public.%I FOR SELECT TO cfo_acceptance_reader USING (true)', o);
+      END IF;
     END IF;
   END LOOP;
   FOREACH o IN ARRAY ARRAY['fm_memory_sales_company_day','fm_memory_sales_channel_month','fm_memory_sales_sku_month','fm_memory_sales_sku_day'] LOOP

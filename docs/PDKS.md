@@ -242,6 +242,11 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — Financial Memory Step 1C/1D: hafıza şeması + satış backfill
+
+Normalize hafıza şeması ve 75 aylık satış backfill'i üretimde tamamlandı; ham = canonical = hafıza (3 tane) 87.617.597,19 TL,
+ay bazında fark 0. Ayrıntı: CHANGELOG ve `docs/FINANCIAL-MEMORY.md`.
+
 ### 2026-10-05 — Financial Memory Step 1B: canonical satış katmanı
 
 Tek canonical satış katmanı view olarak eklendi (`fm_sales_*`). Ham tablolar değişmez; Financial Memory (1C+)

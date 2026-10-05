@@ -9,6 +9,20 @@
 
 ## 2026-10
 
+### Financial Memory Step 1C/1D — hafıza şeması ve satış backfill'i (2026-10-05)
+
+- 1C `20261005220000_fm_memory_schema`: normalize şema — `fm_metric`, `fm_quality_flag`, `fm_source_priority`,
+  `fm_quality_policy` (A/B/C/D/U; sayısal confidence YOK), `fm_ingest_run` (lineage), tipli satış hafızası
+  (`fm_sales_company_day`, `fm_sales_channel_month`, `fm_sales_sku_month`, `fm_sales_sku_day`), `fm_grade`/`fm_grade_month`
+  ve CFO hot-path view'ları `fm_memory_*` (değer + kalite + flag + knownAt). Politika tablosu 2020-08 → bugün her metrik için
+  boşluksuz/çakışmasız (test).
+- 1D `20261005230000_fm_sales_backfill`: `fm_backfill_sales_snapshot` / `_month` / `_run` — aylık parça, devam ettirilebilir,
+  idempotent, silmeden sürümleme (`is_current`), yazım sonrası mutabakat, hatada parça geri alma, dry-run.
+- Üretim: önce dry-run (Şubat-Mayıs 2026 toplamı bağımsız sorguyla birebir), sonra 75 ay backfill (2020-08 → 2026-10):
+  company_day 2.251, channel_month 455, sku_month 12.272, sku_day 11.812 (son 400 gün); üç tanede toplam 87.617.597,19 TL =
+  canonical; ay bazında fark 0.
+- Testler: `__tests__/fm-memory-schema.test.ts`, `__tests__/fm-sales-backfill.test.ts` (PGlite).
+
 ### Financial Memory Step 1B — canonical satış katmanı (2026-10-05)
 
 - `prisma/migrations/20261005210000_fm_canonical_sales`: `fm_sales_source_rows`, `fm_sales_dispositioned`,
