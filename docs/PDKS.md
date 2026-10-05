@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — Güvenlik: anon/authenticated daraltma
+
+`20261005270000_security_anon_lockdown` + test `security-anon-lockdown`; üretimde uygulandı, `_prisma_migrations`'a işlendi. Yeni bulgu: 40 security-definer view anon'a açık (onay bekliyor) — `docs/SCHEMA-DRIFT-REPORT.md` §6.
+
 ### 2026-10-05 — Step 1 kapanışı (parity + kargo + adli analiz)
 
 Production↔repo şema parity'si (`docs/SCHEMA-DRIFT-REPORT.md`), kargo tarifeleri (`docs/KARGO-TARIFE.md`), banka adli analizi (`docs/BANK-DATA-FORENSICS.md`), final kabul raporu. Açık kararlar: RLS'siz 3 tablo + anon yetkileri, baseline-capture migration'ı, banka nakdi için YKB export'u.
