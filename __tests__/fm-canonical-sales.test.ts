@@ -141,4 +141,4 @@ async function main() {
   assert.equal(Number((await one(`select count(*) as n from "TrendyolSalesRecord"`)).n), tSeq);
   console.log("Canonical sales: dedupe/gap-fill/transition/cancel/return/IDEASOFT/legacy/qty-correction/reconciliation passed");
 }
-main().catch(e => { console.error(e); process.exitCode = 1; });
+main().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => db.close());

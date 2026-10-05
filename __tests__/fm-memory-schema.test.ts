@@ -96,4 +96,4 @@ async function main() {
   assert.equal((await one(`select lineage->>'source' as s from fm_ingest_run`)).s, "fm_sales_canonical");
   console.log("Financial Memory schema: normalized policy/priority/flags/lineage, no numeric confidence, A/B/C/D/U coverage, hot-path views passed");
 }
-main().catch(e => { console.error(e); process.exitCode = 1; });
+main().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => db.close());

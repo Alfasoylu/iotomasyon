@@ -17,6 +17,7 @@ const KNOWN_OUT_OF_BAND = [
 
 async function main() {
   const db = new PGlite({ extensions: { vector } });
+  try {
   await db.exec(`create schema if not exists storage; create table storage.buckets(id text primary key, name text, public boolean default false, file_size_limit bigint, allowed_mime_types text[]); create table storage.objects(id text, bucket_id text, name text);
     create role anon nologin; create role authenticated nologin; create role service_role nologin; create role cfo_acceptance_reader login nosuperuser nobypassrls; grant usage on schema public to cfo_acceptance_reader;
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
@@ -33,5 +34,6 @@ async function main() {
   const expected = readFileSync("scripts/schema-drift/step1-fingerprint.expected.txt", "utf8").split("\n").filter(l => l && !l.startsWith("#"));
   assert.deepEqual(actual, expected, "Step 1 şeması üretimde doğrulanmış parmak iziyle uyuşmuyor");
   console.log(`Migration clean-apply: ${failed.length} bilinen out-of-band hata (donmuş liste), Step 1 parmak izi üretimle birebir (${actual.length} grup)`);
+  } finally { await db.close(); }
 }
 main().catch(e => { console.error(e); process.exitCode = 1; });

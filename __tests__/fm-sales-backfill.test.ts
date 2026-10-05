@@ -144,4 +144,4 @@ async function main() {
   assert.equal(num((await one(`select count(*) as n from "TrendyolSalesRecord"`)).n), tSeq);
   console.log("Financial Memory backfill: dry-run, resumable month chunks, idempotent rewrite, per-grain reconciliation, failure rollback passed");
 }
-main().catch(e => { console.error(e); process.exitCode = 1; });
+main().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => db.close());

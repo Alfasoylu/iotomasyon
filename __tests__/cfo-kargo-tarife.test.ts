@@ -56,4 +56,4 @@ async function main() {
   }
   console.log("Kargo tarifeleri: CSV=migration, plausibility, estimates, barem, channel policy, hardening passed");
 }
-main().catch(e => { console.error(e); process.exitCode = 1; });
+main().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => db.close());

@@ -65,4 +65,4 @@ async function main() {
   assert.equal((await q(`select count(*)::int n from cfo_snapshot`))[0].n, 5);
   console.log("FM stock + balance memory: EOD chain, carry-forward total, v2-only balances, gaps unknown, hardening passed");
 }
-main().catch(e => { console.error(e); process.exitCode = 1; });
+main().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => db.close());

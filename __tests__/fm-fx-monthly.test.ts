@@ -38,4 +38,4 @@ async function main() {
   assert.equal(v[1].r, null, "missing month is NULL, never filled");
   console.log("FM FX monthly schema: grades, constraints, RLS, reader SELECT-only, no fallback passed");
 }
-main().catch(e => { console.error(e); process.exitCode = 1; });
+main().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => db.close());

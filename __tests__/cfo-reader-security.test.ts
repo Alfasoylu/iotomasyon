@@ -110,6 +110,7 @@ async function main() {
   // Migration is a no-op when the role does not exist (CI / preview databases).
   const clean = new PGlite();
   await clean.exec(MIGRATION);
+  await clean.close();
   console.log("CFO reader security: secret closed, 11 SELECT-only tables, write functions revoked, idempotent, no-op without role passed");
 }
-main().catch(e => { console.error(e); process.exitCode = 1; });
+main().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => db.close());
