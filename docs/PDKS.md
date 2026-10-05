@@ -242,6 +242,31 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — AI CFO V1 yeniden inşası, adım 3/9: Anthropic sağlayıcı katmanı
+
+`lib/cfo-agent/provider.ts` — `createCfoProvider`/`reasoningPayload`, parked
+daldaki tasarımdan yeniden kuruldu. Henüz hiçbir yerden çağrılmıyor (runner
+#4'te bağlanacak); `AI_CFO_PROVIDER` zaten varsayılan `disabled`.
+
+İstek şekli (`output_config`/`json_schema` alanı, `claude-sonnet-4-6` model
+kimliği) kopyalanmadan önce 05.10.2026'da platform.claude.com/docs'tan
+doğrulandı — kod yazılırken Anthropic Messages API'sinin güncel hâline
+bakılmadan "muhtemelen doğrudur" denmedi.
+
+`reasoningPayload` sağlayıcıya giden veriyi kasıtlı bir allowlist'le sınırlar:
+yalnız ilgili anomaly'lerin `evidenceIds`'inde geçen evidence satırları (ham
+sipariş/müşteri alanı yok), anomalies 8'e, memory 5'e, missingFields 15'e
+kırpılır. Testler bu sınırı doğrudan kanıtlıyor — allowlist bozulsa (ör.
+`snapshot.evidence`nin tamamı gönderilse) ilgili test kırılır.
+
+`stop_reason==="max_tokens"` iken metin **boş** sayılır: token limitine
+takılan yanıt yarım JSON döndürür ve bunu ayrıştırmaya çalışmak uydurma
+("hallucinated") bir insight üretebilirdi; kod bunun yerine hiçbir şey
+üretmemeyi tercih ediyor.
+
+Testler: `__tests__/ai-cfo-provider.test.ts` (12 kontrol, gerçek ağ/API key
+gerektirmez — `fetch` enjekte edilip sahte Anthropic yanıtları kullanılır).
+
 ### 2026-10-05 — AI CFO V1 yeniden inşası, adım 2/9: anomali tespiti
 
 `lib/cfo-agent/anomalies.ts` — `detectCfoAnomalies` ve `shouldReopen` parked

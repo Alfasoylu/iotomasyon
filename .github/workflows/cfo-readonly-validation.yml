@@ -44,6 +44,7 @@ jobs:
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-reconciliation.test.ts
       - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts
       - run: node --import tsx __tests__/ai-cfo-anomalies.test.ts
+      - run: node --import tsx __tests__/ai-cfo-provider.test.ts
       - run: node --import tsx __tests__/cfo-operating-context.test.ts
       - run: node --import tsx __tests__/cfo-workflow.test.ts
       - run: node --import tsx __tests__/cfo-cycle-agenda.test.ts

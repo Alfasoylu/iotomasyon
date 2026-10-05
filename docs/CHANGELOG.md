@@ -9,6 +9,19 @@
 
 ## 2026-10
 
+### AI CFO V1 yeniden inşası — adım 3/9: Anthropic sağlayıcı katmanı (2026-10-05)
+
+- `lib/cfo-agent/provider.ts` eklendi — `createCfoProvider`/`reasoningPayload`.
+  Henüz hiçbir yerden çağrılmıyor; `AI_CFO_PROVIDER` varsayılan `disabled`.
+- İstek şekli (Messages API `output_config`/`json_schema`, model kimliği)
+  05.10.2026'da resmî dokümandan doğrulandı.
+- Sağlayıcıya giden veri kasıtlı allowlist'le sınırlı: yalnız anomaly'lerin
+  referans verdiği evidence, anomalies/memory/missingFields kırpılmış.
+  `stop_reason=max_tokens` kesik yanıtı boş metin sayar (yarım JSON'u
+  uydurma insight'a çevirmez).
+- Testler: `__tests__/ai-cfo-provider.test.ts` (12 kontrol, ağ/API key
+  gerektirmez — enjekte edilmiş sahte `fetch`).
+
 ### AI CFO V1 yeniden inşası — adım 2/9: anomali tespiti (2026-10-05)
 
 - `lib/cfo-agent/anomalies.ts` eklendi — `detectCfoAnomalies`/`shouldReopen`.
