@@ -9,6 +9,17 @@
 
 ## 2026-10
 
+### Financial Memory Step 1B — canonical satış katmanı (2026-10-05)
+
+- `prisma/migrations/20261005210000_fm_canonical_sales`: `fm_sales_source_rows`, `fm_sales_dispositioned`,
+  `fm_sales_canonical`, `fm_sales_reconciliation_monthly` view'ları (ham tablolar değişmedi).
+  Trendyol için dönemsel kaynak önceliği (2026-05-04 geçişi, Şubat 2026 gap-fill), sipariş-anahtarıyla dedupe,
+  iptal dışlama, Marketplace `İade-İptal` mutabakatı, set/paket adet düzeltmesi (yalnız adet),
+  IDEASOFT dahil, legacy tekstil etiketi. Kurallar ve üretim mutabakatı: `docs/FINANCIAL-MEMORY.md`.
+- Üretimde doğrulandı: ham 96.549.503,09 TL = Σ disposition; canonical gelir 87.617.597,19 TL;
+  iki kaynakta birden sipariş 0; tekrarlı anahtar 0; v1'e köprü açıklanamayan fark içermez.
+- Test: `__tests__/fm-canonical-sales.test.ts` (PGlite; her kural sentetik veriyle kilitli).
+
 ### Financial Memory Step 1A — reader güvenliği (2026-10-05)
 
 - `prisma/migrations/20261005200000_cfo_reader_security/migration.sql`: `cfo_acceptance_reader`

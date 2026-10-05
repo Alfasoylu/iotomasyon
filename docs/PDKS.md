@@ -242,6 +242,12 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — Financial Memory Step 1B: canonical satış katmanı
+
+Tek canonical satış katmanı view olarak eklendi (`fm_sales_*`). Ham tablolar değişmez; Financial Memory (1C+)
+yalnız buradan beslenecek. Kurallar/mutabakat: `docs/FINANCIAL-MEMORY.md`. Üretimde ham = Σ disposition birebir.
+v1'e göre fark (+₺3,93M): IDEASOFT +3,05M, Şubat gap-fill +0,84M, kaynak geçişi +0,04M.
+
 ### 2026-10-05 — Financial Memory Step 1A: reader güvenliği
 
 Phase 0B'de bulgu: `cfo_acceptance_reader` `cfo_secret.value` kolonunu okuyabiliyordu
