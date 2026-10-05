@@ -15,6 +15,7 @@
  */
 
 import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
+import { applyCostAnswer } from "@/lib/cfo-agent/cost-answer";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser, checkPermission } from "@/lib/auth";
@@ -87,6 +88,13 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
   const existing = await prisma.cfoQuestion.findUnique({ where: { id } });
   if (!existing) return { ok: false, message: "Soru bulunamadı." };
 
+  // scope/entity_key/code Prisma şemasında yok (CFO'nun tabloya elle eklediği
+  // kolonlar) — bkz. lib/cfo-agent/workflow.ts'teki aynı to_jsonb deseni.
+  const [identity] = await prisma.$queryRawUnsafe<{ entity_key: string | null; code: string | null }[]>(
+    `select to_jsonb(q)->>'entity_key' as entity_key, to_jsonb(q)->>'code' as code from cfo_question q where id=$1`,
+    id
+  );
+
   const uploaded: Array<{ url: string; fileName: string; mimeType: string; sizeBytes: number }> = [];
   const failures: string[] = [];
 
@@ -129,7 +137,7 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
     };
   }
 
-  await prisma.$transaction(async (tx) => {
+  const costResult = await prisma.$transaction(async (tx) => {
     await tx.cfoQuestion.update({
       where: { id },
       data: {
@@ -159,17 +167,30 @@ export async function answerQuestionAction(formData: FormData): Promise<ActionRe
           (failures.length ? ` | EKLENEMEYEN DOSYALAR: ${failures.join(" ")}` : ""),
       },
     });
+    // Maliyet sorusuna net bir TL cevabı geldiyse Product.unitCostTry'a yazar.
+    // Belirsizlikte (başka para birimi, çoklu rakam, SKU bulunamadı, maliyet
+    // zaten doluysa) hiçbir şey yapmaz — soru insan incelemesine açık kalır.
+    if (!answer) return null;
+    return applyCostAnswer(
+      tx,
+      { id, entityKey: identity?.entity_key ?? null, code: identity?.code ?? null },
+      answer,
+      { email: user.email, name: user.name }
+    );
   });
 
   scheduleCfoCycle("question_answer");
   revalidateQ();
+  const costNote = costResult?.applied
+    ? ` ${costResult.sku} birim maliyeti ${costResult.amountTry} TL olarak otomatik yazıldı.`
+    : "";
   if (failures.length > 0) {
     return {
       ok: true,
-      message: `Cevap metni kaydedildi, ancak dosyalar eklenemedi. ${failures.join(" ")}`,
+      message: `Cevap metni kaydedildi, ancak dosyalar eklenemedi. ${failures.join(" ")}${costNote}`,
     };
   }
-  return { ok: true, message: "Cevap kaydedildi." };
+  return { ok: true, message: `Cevap kaydedildi.${costNote}` };
 }
 
 /** CFO cevabı işledi — deftere/hesaba yansıdı. */

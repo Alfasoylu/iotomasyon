@@ -15,6 +15,7 @@
 
 import { ensureRowQuestion, validateRowQuestion, type RowQuestionInput } from "@/lib/cfo/question-record";
 import { questionHref } from "@/lib/cfo/question-links";
+import { applyCostAnswer } from "@/lib/cfo-agent/cost-answer";
 import type { Prisma } from "@prisma/client";
 import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { revalidatePath } from "next/cache";
@@ -104,7 +105,7 @@ export async function answerRowQuestionAction(input: {
   try {
     const kim = user.email ?? user.name ?? "kullanıcı";
 
-    await prisma.$transaction(async (tx) => {
+    const costResult = await prisma.$transaction(async (tx) => {
       const mevcut=await ensureRowQuestion({query:(sql,...params)=>tx.$queryRawUnsafe(sql,...params),execute:(sql,...params)=>tx.$executeRawUnsafe(sql,...params)},input);
       await tx.cfoQuestion.update({where:{id:mevcut.id},data:{answer:cevap,answeredAt:new Date(),answeredBy:kim,status:'CEVAPLANDI',processedAt:null,processNote:null}});
 
@@ -119,11 +120,21 @@ export async function answerRowQuestionAction(input: {
           note: input.question.slice(0, 2000),
         },
       });
+
+      // Maliyet sorusuna net bir TL cevabı geldiyse Product.unitCostTry'a
+      // yazar; belirsizlikte hiçbir şey yapmaz (bkz. lib/cfo-agent/cost-answer.ts).
+      return applyCostAnswer(tx, { id: mevcut.id, entityKey: input.entityKey, code: input.code }, cevap, {
+        email: user.email,
+        name: user.name,
+      });
     });
 
     scheduleCfoCycle("import_row_answer");
     revalidateQa();
-    return { ok: true, message: "Cevap kaydedildi. CFO yeniden değerlendirecek." };
+    const costNote = costResult.applied
+      ? ` ${costResult.sku} birim maliyeti ${costResult.amountTry} TL olarak otomatik yazıldı.`
+      : "";
+    return { ok: true, message: `Cevap kaydedildi. CFO yeniden değerlendirecek.${costNote}` };
   } catch {
     // Sessiz yutma yasak: ilk sürümde gerçek sebep (CHECK ihlali) görünmüyordu
     // ve hatayı bulmak canlı log okumayı gerektirdi.

@@ -9,7 +9,9 @@ export function validateRowQuestion(input:RowQuestionInput){
     input.question.trim().length>=5&&input.question.length<=4000&&input.why.length<=4000&&input.area.length<=40;
 }
 const hash=(key:string)=>createHash('sha256').update(key).digest('hex').slice(0,32);
-const sku=(entity:string)=>skuKey(entity.split('|').slice(1).join('|'));
+/** `scope|...|sku`'den SKU'yu çıkarır (öneki atar, skuKey ile normalize eder). */
+export const skuFromEntityKey=(entity:string)=>skuKey(entity.split('|').slice(1).join('|'));
+const sku=skuFromEntityKey;
 /** Same table and identity on the planner, question page and cycle. Caller owns the transaction. */
 export async function ensureRowQuestion(db:WriteSource,input:RowQuestionInput){
   if(!validateRowQuestion(input))throw new Error('invalid_row_question');
