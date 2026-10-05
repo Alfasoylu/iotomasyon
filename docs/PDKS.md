@@ -242,6 +242,29 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — AI CFO V1 yeniden inşası, adım 2/9: anomali tespiti
+
+`lib/cfo-agent/anomalies.ts` — `detectCfoAnomalies` ve `shouldReopen` parked
+`feat/ai-cfo-v1` dalındaki tasarımdan (kural seti, eşik mantığı) yeniden
+kuruldu. Doğrudan kopyalama denendi ve `tsc`in sessizce kabul ettiği ama
+YANLIŞ olan bir noktayı ortaya çıkardı: main'deki `snapshot.ts`, ürün
+sinyalindeki tek `sourceFresh` alanını kasıtlı olarak üçe böldü
+(`sourceFresh`=kanal satış verisi tazeliği, `financialSourceFresh`=Entegra
+maliyet + canonical doğrulama, `inventorySourceFresh`=XML stok). Eski kodda
+tek alan hem fiyat hem maliyet/kâr kurallarını kapatıyordu; yeni alan adı
+aynı (`sourceFresh`) kaldığı için derleme hatasız geçiyor ama fiyat/maliyet
+kuralları artık YANLIŞ sinyale (kanal tazeliği) bakıyor olacaktı — Entegra
+maliyet senkronu gecikse bile PRICE_BELOW_FLOOR/LOW_PRICE_STRUCTURAL_LOSS/
+FLOOR_DATA_QUALITY/PROCUREMENT/NEGATIVE_PROFIT (ürün) sessizce yanlış
+zamanda üretilir ya da bastırılırdı. Beş kuralın hepsi `financialSourceFresh`e
+çevrildi; yalnız kanal fiyatına bakan PRICE_DEAD_BAND kasıtlı olarak
+`sourceFresh`te bırakıldı (maliyet verisi gerekmiyor).
+
+Testler: `__tests__/ai-cfo-anomalies.test.ts` (16 kontrol, DB/ağ gerektirmez)
+— bu ayrımı doğrudan kanıtlayan dört test dahil (financialSourceFresh=false
+iken PRICE_BELOW_FLOOR/NEGATIVE_PROFIT üretmez, PRICE_DEAD_BAND o alandan
+bağımsız çalışır). CI'ya eklendi (`cfo-readonly-validation.yml`).
+
 ### 2026-10-05 — AI CFO V1 yeniden inşası, adım 1/9: additive migration
 
 `feat/ai-cfo-v1` (PR #131, LLM çağrısı yapan katman) main'e mekanik rebase
