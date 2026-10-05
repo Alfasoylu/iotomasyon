@@ -110,13 +110,11 @@ BEGIN
                               'units', st_units, 'orders', st_orders);
   END IF;
 
-  -- Satır silinmez: önceki sürüm is_current=false olur, aynı anahtarlar aşağıda upsert edilir.
   UPDATE public.fm_sales_company_day SET is_current = false WHERE economic_date >= p_month AND economic_date < m_end AND is_current;
   UPDATE public.fm_sales_channel_month SET is_current = false WHERE month = p_month AND is_current;
   UPDATE public.fm_sales_sku_month SET is_current = false WHERE month = p_month AND is_current;
   UPDATE public.fm_sales_sku_day SET is_current = false WHERE economic_date >= p_month AND economic_date < m_end AND is_current;
 
-  -- Şirket × gün
   WITH base AS (
     SELECT * FROM public.fm_sales_canonical_snapshot WHERE economic_date >= p_month AND economic_date < m_end
   ), flags AS (
@@ -144,7 +142,6 @@ BEGIN
   ON CONFLICT (economic_date) DO UPDATE SET revenue_incl_vat_try = EXCLUDED.revenue_incl_vat_try, revenue_ex_vat_try = EXCLUDED.revenue_ex_vat_try, vat_try = EXCLUDED.vat_try, revenue_legacy_textile_try = EXCLUDED.revenue_legacy_textile_try, units = EXCLUDED.units, orders = EXCLUDED.orders, return_signal_orders = EXCLUDED.return_signal_orders, cancel_signal_orders = EXCLUDED.cancel_signal_orders, known_at_min = EXCLUDED.known_at_min, known_at_max = EXCLUDED.known_at_max, flags = EXCLUDED.flags, ingest_run_id = EXCLUDED.ingest_run_id, is_current = true;
   GET DIAGNOSTICS w_company = ROW_COUNT;
 
-  -- Kanal × ay
   WITH base AS (
     SELECT * FROM public.fm_sales_canonical_snapshot WHERE economic_date >= p_month AND economic_date < m_end
   ), flags AS (
@@ -172,7 +169,6 @@ BEGIN
   ON CONFLICT (month, channel) DO UPDATE SET revenue_incl_vat_try = EXCLUDED.revenue_incl_vat_try, revenue_ex_vat_try = EXCLUDED.revenue_ex_vat_try, vat_try = EXCLUDED.vat_try, revenue_legacy_textile_try = EXCLUDED.revenue_legacy_textile_try, units = EXCLUDED.units, orders = EXCLUDED.orders, return_signal_orders = EXCLUDED.return_signal_orders, cancel_signal_orders = EXCLUDED.cancel_signal_orders, known_at_min = EXCLUDED.known_at_min, known_at_max = EXCLUDED.known_at_max, flags = EXCLUDED.flags, ingest_run_id = EXCLUDED.ingest_run_id, is_current = true;
   GET DIAGNOSTICS w_channel = ROW_COUNT;
 
-  -- SKU × ay (yalnız sayılan satırlar; eşleşmemiş kodlar 'R:' anahtarıyla korunur)
   WITH base AS (
     SELECT s.*, CASE WHEN s.product_id IS NOT NULL THEN 'P:' || s.product_id
                      WHEN s.sku_raw IS NOT NULL THEN 'R:' || public.cfo_norm(s.sku_raw) ELSE 'R:(none)' END AS sku_key
@@ -194,7 +190,6 @@ BEGIN
   ON CONFLICT (month, sku_key) DO UPDATE SET product_id = EXCLUDED.product_id, sku_label = EXCLUDED.sku_label, sku_mapped = EXCLUDED.sku_mapped, legacy_business = EXCLUDED.legacy_business, revenue_incl_vat_try = EXCLUDED.revenue_incl_vat_try, revenue_ex_vat_try = EXCLUDED.revenue_ex_vat_try, units = EXCLUDED.units, orders = EXCLUDED.orders, known_at_max = EXCLUDED.known_at_max, flags = EXCLUDED.flags, ingest_run_id = EXCLUDED.ingest_run_id, is_current = true;
   GET DIAGNOSTICS w_sku = ROW_COUNT;
 
-  -- SKU × gün: yalnız son ~400 gün (türetilmiş; silinip yeniden hesaplanabilir)
   IF m_end > sku_day_from THEN
     WITH base AS (
       SELECT s.*, CASE WHEN s.product_id IS NOT NULL THEN 'P:' || s.product_id
@@ -217,7 +212,6 @@ BEGIN
     GET DIAGNOSTICS w_skuday = ROW_COUNT;
   END IF;
 
-  -- Yazım sonrası doğrulama: GÜNCEL hafıza toplamları snapshot ile birebir eşit olmalı; değilse parça geri alınır.
   SELECT coalesce(sum(revenue_incl_vat_try), 0), coalesce(sum(units), 0) INTO chk_company, chk_units
     FROM public.fm_sales_company_day WHERE economic_date >= p_month AND economic_date < m_end AND is_current;
   SELECT coalesce(sum(revenue_incl_vat_try), 0) INTO chk_channel FROM public.fm_sales_channel_month WHERE month = p_month AND is_current;

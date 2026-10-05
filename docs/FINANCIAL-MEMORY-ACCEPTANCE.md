@@ -1,4 +1,4 @@
-# Financial Memory Acceptance Report — Step 1A–1F (2026-10-05)
+# Financial Memory Acceptance Report — Step 1A–1F (FİNAL, 2026-10-05)
 
 Kapsam: AI CFO V2 Step 1. Ham kaynaklar değiştirilmedi/silinmedi; üretimde yalnız yeni `fm_*` nesneleri + reader güvenlik düzeltmesi.
 
@@ -45,7 +45,7 @@ Satış 75 ay (2020-08 → 2026-10) yukarıdaki satır sayılarıyla; stok 3.215
 TCMB USD ForexBuying, 2020-08 → 2026-09: **74/74** doğrulandı (26 ay 15'i iş günü olmadığı için önceki bülten). Ekim 2026 pending (15'i gelmedi) → U. Non-TCMB fallback yok.
 
 ## 8. Stock coverage
-XmlStockChangeLog 2026-05-17 → 2026-10-05, 274 ürün, zincir kopukluğu 0, delta tutarsızlığı 0. Zincir toplamı 73.561 ≠ Product.stockQuantity 74.004 (1 üründe 443 adet logsuz değişiklik). Aktif 1.311 üründen yalnız 274'ü loglu → toplam `stock_unlogged_products_excluded` ile okunur. 2026-05-17 öncesi stok geçmişi yok (U).
+XmlStockChangeLog 2026-05-17 → 2026-10-05, 274 ürün, zincir kopukluğu 0, delta tutarsızlığı 0. 273/274 ürünün zincir sonu = `Product.stockQuantity`. **443 adetlik fark tek üründe: `AL-CAM03`** (zincir 1.497, Product 1.940) ve **zincir problemi değil, logsuz manuel düzeltme**: XML'de bu ürün için tek log var (2026-06-21 02:36, 0→1.497); `lastStockSyncAt` 2026-07-10; `Product.updatedAt` 2026-09-12 05:11; `stockSource = MANUAL`. `cfo_change_log` (2026-09-12 05:12, *"AL-CAM03 fiziki sayim: defter 1.497 → gercek 1.940"*, kaynak: Alperen fiziki sayımı 11.09.2026) 443 adedi doğrudan açıklıyor; `StockAdjustmentLog`'da kayıt yok (sayım bu loga yazılmamış). Yani fark, son XML logundan **82 gün sonra** yapılan sayım düzeltmesidir. Etki: şirket toplamı 2026-09-12'den itibaren 443 adet eksik. Kural: sayım düzeltmeleri XML zincirinde değil ayrı bir "sayım" katmanında tutulmalı (öneri; uygulanmadı). Aktif 1.311 üründen yalnız 274'ü loglu → toplam `stock_unlogged_products_excluded` ile okunur; 2026-05-17 öncesi stok geçmişi yok (U).
 
 ## 9. Balance / net-capital coverage
 cfo_snapshot v2 yalnız: 2026-09-11 → 2026-10-04, 21 gün (09-19, 09-27/28 vb. boş = bilinmiyor, carry-forward yok). v1 tanımı (≤2026-09-10 19:38) hafızaya alınmadı. Banka hareketinden nakit serisi üretilmedi (aşağıda).
@@ -54,13 +54,30 @@ cfo_snapshot v2 yalnız: 2026-09-11 → 2026-10-04, 21 gün (09-19, 09-27/28 vb.
 Gerçek iade, geçmiş birim maliyet/katkı kârı (2026-08-24 öncesi), 2026-09-11 öncesi borç/alacak/net sermaye, 2026-05-17 öncesi stok adedi/değeri, 2025-09 öncesi nakit, Ekim 2026 kuru, snapshot'sız günler.
 
 ## 11. Testler
-`cfo-reader-security`, `fm-canonical-sales`, `fm-memory-schema`, `fm-sales-backfill`, `fm-tcmb-fx`, `fm-fx-monthly`, `fm-stock-balance` (PGlite, gerçek PostgreSQL) hepsi geçti; `tsc` temiz; `npm run build` geçti (sandbox'ta DATABASE_URL/DIRECT_URL/SESSION_SECRET dummy ile); değiştirilen dosyalarda eslint temiz (repo genelinde 36 önceden var olan lint hatası bu işten bağımsız). PR #148 `validate` CI işi GitHub'da "queued" kaldı — yeşil teyit edilemedi.
+`cfo-reader-security`, `fm-canonical-sales`, `fm-memory-schema`, `fm-sales-backfill`, `fm-tcmb-fx`, `fm-fx-monthly`, `fm-stock-balance`, `cfo-kargo-tarife`, `migration-clean-apply` (PGlite, gerçek PostgreSQL) hepsi geçti; `tsc` temiz; `npm run build` geçti (sandbox'ta DATABASE_URL/DIRECT_URL/SESSION_SECRET dummy ile); değiştirilen dosyalarda eslint temiz (repo genelinde 36 önceden var olan lint hatası bu işten bağımsız). PR #148 `validate` CI işi GitHub'da "queued" kaldı — yeşil teyit edilemedi.
 
-## 12. Kalan zayıflıklar
-1. Banka nakit serisi: Ziraat hareketleri iki kez yüklü (manuel id 53-68 ve ekstre id 1593+), alt hesaplar tek `banka` altında karışık, 10-03 toplamı snapshot nakdiyle uyuşmuyor (232.637 vs 72.484) → hesap kimliği temizlenmeden üretilmedi.
-2. Stok yalnız 274/1.311 ürünü kapsıyor; 2026-05-17 öncesi yok.
-3. İade verisi yok → net gelir/katkı kârı güvenilir değil (flag `returns_unknown`).
-4. Geçmiş maliyet yok → tarihsel marj hesaplanamaz.
-5. 2020-2022 gelirleri C/B (durum snapshot'ları bayat; iptal/iade eksik yakalanmış olabilir); 2020'de SKU eşleşmesi %62.
-6. Prod/repo sapmaları: prod `cfo_secret` politikası `USING (false)` (repo migration'ı politikayı düşürür); 1C/1D/1E/1F üretimde DROP satırsız elle uygulandı (Prisma migration geçmişine işlenmedi).
-7. Tek tasarım kısıtı nedeniyle PR #148 1A–1F'yi birlikte taşıyor (küçük ayrı PR'lar yapılamadı).
+## 12. Production ↔ repo migration parity
+Ayrıntı: `docs/SCHEMA-DRIFT-REPORT.md`. Eski 99 migration ad+checksum birebir; Step 1'in 7 migration'ı (1A–1F + kargo) üretim gerçeğiyle **21 parmak izi grubunda birebir eşit** olduktan sonra `_prisma_migrations`'a işlendi; repo'da 5 sapma düzeltildi (cfo_secret policy semantiği, fonksiyon yorumları, 1E anon/authenticated revoke, 1A policy DROP→ALTER, defter kaydı). Temiz DB'ye uygulama bir CI testiyle kilitli (`migration-clean-apply`). **Açık:** repo migration'ları Step 1'den önce de boş DB'ye uygulanamıyordu (10 migration, 58 migration'sız üretim ilişkisi) — baseline-capture migration'ı için onay gerekir.
+
+## 13. Reader security verification
+`cfo_acceptance_reader` (üretim, katalog düzeyinde doğrulandı — doğrudan bağlantı bu sandbox'tan kurulamadığı için `has_*_privilege`/`pg_policies`/`pg_roles` ile): superuser/bypassrls/createrole/createdb/replication **false**, login true, hiçbir rolün üyesi değil, `default_transaction_read_only=on`, `public` şemasında CREATE yok, hiç nesne sahibi değil. 125 ilişkide SELECT; **hiçbir ilişkide INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER yok**. `cfo_secret`: tablo+kolon SELECT **yok**, policy `USING (false)`. Veri yazan 5 fonksiyonda ve fm_* yazıcılarında EXECUTE yok (yalnız trigger fonksiyonu `cfo_xml_urun_degisim_trg` görünür; doğrudan çağrılamaz). Uygulama rolleri `postgres`/`service_role` BYPASSRLS + yetkili → etkilenmedi (testte `app_like` rolüyle kanıtlı). Kabul testi: **reader → cfo_secret = erişilemez** ✔ (`__tests__/cfo-reader-security.test.ts`). ⚠ Reader'ın SELECT'i olup RLS'i kapalı 3 tablo var (bkz. drift raporu §2.2-D; anon da erişebiliyor — onay bekliyor).
+
+## 14. Banka nakdi — BLOKER
+Ham banka satırlarına dokunulmadı. `docs/BANK-DATA-FORENSICS.md`: erken import'ların %100'ü (68/68) tam-geçmiş import'un tekrarı (hash farklı); Ziraat `hesap=NULL` = `96172849-5001` (aynı hesap); ₺232.637 farkı 3 metodoloji hatasıydı (gün içi sıra: +136.150, mükerrer Ziraat serisi +35.127, USD'nin TL gibi toplanması) — düzeltilince bugünkü `cfo_bank_account` toplamıyla fark **₺16,76** (YKB ekstre sonrası hareket). 10-03 snapshot'ı (72.484) `cfo_bank_account` geçmişi tutulmadığı için ₺2.132,68 açıklanamıyor. Enpara/Garanti/Ziraat TL serileri %100 süreklilikli ve kapanışları doğru; **YKB 59/127 kopuk (₺3,75 M boşluk)**, 3 şirket hesabının ekstresi yok → şirket geneli `cash_try` geçmişi hafızaya **girmedi**.
+
+## 15. TCMB Ekim 2026 neden bekliyor
+Kural: ayın 15'i (yoksa önceki TCMB bülteni). Bugün 2026-10-05; 2026-10-15 henüz gelmedi → `pending`, satır yazılmadı, kalite **U**, sessiz fallback yok. 2026-10-15 (Perşembe) bülteni yayımlandıktan sonra `scripts/fm-fx-tcmb.ts 2026-10 2026-10` çalıştırılıp çıktı yüklenecek (politika satırı 2026-10-01+ U'dan A'ya güncellenecek).
+
+## 16. Dışlanan çift gelir (özet)
+Canonical'a **girmeyen** satırlar: DEDUP_DROPPED 8.533 satır / ₺6.000.898 (Trendyol çift kaynak), EXCLUDED_RETURN 7.694 / ₺2.627.286, EXCLUDED_CANCELLED 334 / ₺303.720, test 1 / ₺2. Ham 96.549.503,09 = canonical 87.617.597,19 + bunlar (kimlik testte kilitli).
+
+## 17. Bilinmeyen metrikler (U — 0 sayılmadı)
+Gerçek iade; 2026-08-24 öncesi geçmiş maliyet/katkı kârı; 2026-09-11 öncesi borç/alacak/net sermaye; 2026-05-17 öncesi stok adedi/değeri; 2025-09 öncesi nakit ve şirket geneli nakit geçmişi (bkz. §14); Ekim 2026 kuru; snapshot'sız günler (09-19, 09-27/28).
+
+## 18. Kalan zayıflıklar
+1. Banka nakdi (§14) — YKB eksiksiz export + 3 hesap ekstresi + `cfo_bank_account` geçmişi gerekli.
+2. Stok yalnız 274/1.311 ürünü kapsıyor; sayım düzeltmeleri zincirde yok (AL-CAM03 +443); 2026-05-17 öncesi yok.
+3. İade verisi yok → net gelir/katkı kârı güvenilir değil (`returns_unknown`); geçmiş maliyet yok → tarihsel marj hesaplanamaz.
+4. 2020–2022 gelirleri C/B (durum snapshot'ları bayat); 2020'de SKU eşleşmesi %62.
+5. Migration'sız (out-of-band) 58 üretim ilişkisi + 10 uygulanamayan migration (drift raporu §2.2); RLS'siz 3 tablo + anon yetkileri (§2.2-D) — onay bekliyor.
+6. 2025→2026 arası kargo tarifesi ara güncellemeleri bilinmiyor (`docs/KARGO-TARIFE.md`).

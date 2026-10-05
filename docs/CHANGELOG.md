@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Step 1 kapanışı — production↔repo parity, kargo tarifeleri, banka/stok adli analizi (2026-10-05)
+- Repo migration'ları üretim gerçeğine hizalandı (cfo_secret policy `USING (false)` korunur/DROP yok, fonksiyon gövdeleri, 1E anon/authenticated revoke, 1A policy ALTER); Step 1'in 7 migration'ı 21 parmak izi grubunda üretimle birebir doğrulanıp `_prisma_migrations`'a işlendi. CI: `migration-clean-apply` (10 bilinen out-of-band hata dondurulmuş + Step 1 parmak izi). Rapor: `docs/SCHEMA-DRIFT-REPORT.md`.
+- Trendyol desi kargo tarifeleri (3 Ocak 2025, 13 Temmuz 2026; KDV hariç) + küçük sipariş baremleri + "tüm kanallarda aynı kargo maliyeti" varsayımı: `cfo_kargo_desi_tarife/barem/kanal_varsayim`, `cfo_kargo_tahmin()`; faturalarla doğrulandı. Doküman: `docs/KARGO-TARIFE.md`.
+- Banka verisi adli analizi (`docs/BANK-DATA-FORENSICS.md`) ve AL-CAM03 +443 adet stok farkının açıklaması; nakit geçmişi bilinçli olarak hafızaya alınmadı.
+
 ### Financial Memory Step 1E — stok + bakiye hafızası (2026-10-05)
 - Migration `20261005250000_fm_stock_balance`: `fm_stock_sku_day` (seyrek gün sonu seviyeleri), `fm_stock_company_day` (carry-forward toplam), `fm_balance_day` (yalnız cfo_snapshot v2, ≥2026-09-11), `fm_memory_stock_company_day` / `fm_memory_balance_day`, `fm_stock_refresh()` / `fm_balance_refresh()` (upsert, silme yok).
 - Üretim: 3.215 SKU-gün + 142 şirket-günü (2026-05-17 → 2026-10-05, zincir kopukluğu 0); 105 bakiye satırı (21 gün × 5 metrik). Test: `fm-stock-balance`.

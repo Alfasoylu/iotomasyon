@@ -54,7 +54,6 @@ BEGIN
     units_open = EXCLUDED.units_open, change_count = EXCLUDED.change_count, known_at_max = EXCLUDED.known_at_max;
   GET DIAGNOSTICS a = ROW_COUNT;
 
-  -- Ürün zinciri ilk logunun gününde başlar (açılış = previousQty); sonra carry-forward ile toplam.
   INSERT INTO public.fm_stock_company_day (economic_date, units_total_logged, products_logged, products_changed)
   SELECT d.day,
          sum(coalesce(last_eod.units_eod, first_open.units_open))::bigint,
@@ -126,5 +125,13 @@ BEGIN
   END LOOP;
   REVOKE EXECUTE ON FUNCTION public.fm_stock_refresh() FROM PUBLIC;
   REVOKE EXECUTE ON FUNCTION public.fm_balance_refresh(date) FROM PUBLIC;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    REVOKE EXECUTE ON FUNCTION public.fm_stock_refresh() FROM anon;
+    REVOKE EXECUTE ON FUNCTION public.fm_balance_refresh(date) FROM anon;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    REVOKE EXECUTE ON FUNCTION public.fm_stock_refresh() FROM authenticated;
+    REVOKE EXECUTE ON FUNCTION public.fm_balance_refresh(date) FROM authenticated;
+  END IF;
 END
 $$;

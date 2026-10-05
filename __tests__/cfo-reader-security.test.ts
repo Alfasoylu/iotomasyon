@@ -93,6 +93,17 @@ async function main() {
   assert.equal(result.readerRoleVerified, true);
   assert.equal(result.transactionReadOnly, true);
 
+  // Production parity: the reader policy is kept but closed (USING false) — never dropped — and nothing grants the reader a path.
+  const pol = (await db.query<{ qual: string; n: number }>(`select max(qual) as qual, count(*)::int as n from pg_policies where tablename = 'cfo_secret'`)).rows[0];
+  assert.deepEqual(pol, { qual: "false", n: 1 }, "cfo_secret policy USING (false) olarak korunur (DROP edilmez)");
+  assert.equal((await db.query<{ p: boolean }>(`select has_table_privilege('cfo_acceptance_reader','public.cfo_secret','SELECT') as p`)).rows[0].p, false);
+
+  // Application-like roles (postgres / service_role are BYPASSRLS + privileged) are unaffected by the policy change.
+  await db.exec(`create role app_like nologin bypassrls; grant select, insert on cfo_secret to app_like;`);
+  await db.exec(`set role app_like`);
+  assert.equal((await db.query("select value from cfo_secret")).rows.length, 1, "BYPASSRLS uygulama rolü sırrı okuyabilir");
+  await db.exec(`reset role`);
+
   // The owner (production app) keeps full access to the secret table.
   assert.equal((await db.query("select value from cfo_secret")).rows.length, 1, "uygulama/owner sır erişimi bozulmadı");
 

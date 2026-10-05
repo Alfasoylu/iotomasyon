@@ -9,7 +9,7 @@
 --
 -- Geri alma (yalnız bilinçli olarak, güvenlik gevşetilecekse):
 --   GRANT SELECT ON public.cfo_secret TO cfo_acceptance_reader;   -- ÖNERİLMEZ
---   DROP POLICY cfo_acceptance_reader_select ON public.<tablo>;   -- yeni 11 tablo için
+--   ALTER POLICY cfo_acceptance_reader_select ON public.<tablo> USING (false);   -- yeni 11 tablo için
 --   REVOKE SELECT ON public.<tablo> FROM cfo_acceptance_reader;
 
 DO $$
@@ -40,7 +40,10 @@ BEGIN
 
   -- 1) Sır tablosu: grant + RLS policy yolunu kapat.
   IF to_regclass('public.cfo_secret') IS NOT NULL THEN
-    EXECUTE 'DROP POLICY IF EXISTS cfo_acceptance_reader_select ON public.cfo_secret';
+    -- Policy silinmez; varsa reader için hiçbir satır görünmeyecek şekilde kapatılır (üretimdeki gerçek durum).
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'cfo_secret' AND policyname = 'cfo_acceptance_reader_select') THEN
+      EXECUTE 'ALTER POLICY cfo_acceptance_reader_select ON public.cfo_secret USING (false)';
+    END IF;
     EXECUTE 'REVOKE ALL ON TABLE public.cfo_secret FROM cfo_acceptance_reader';
     IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.cfo_secret'::regclass) THEN
       EXECUTE 'ALTER TABLE public.cfo_secret ENABLE ROW LEVEL SECURITY';
@@ -58,8 +61,11 @@ BEGIN
       EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
     END IF;
     EXECUTE format('GRANT SELECT ON TABLE public.%I TO cfo_acceptance_reader', t);
-    EXECUTE format('DROP POLICY IF EXISTS cfo_acceptance_reader_select ON public.%I', t);
-    EXECUTE format('CREATE POLICY cfo_acceptance_reader_select ON public.%I FOR SELECT TO cfo_acceptance_reader USING (true)', t);
+    IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = t AND policyname = 'cfo_acceptance_reader_select') THEN
+      EXECUTE format('ALTER POLICY cfo_acceptance_reader_select ON public.%I TO cfo_acceptance_reader USING (true)', t);
+    ELSE
+      EXECUTE format('CREATE POLICY cfo_acceptance_reader_select ON public.%I FOR SELECT TO cfo_acceptance_reader USING (true)', t);
+    END IF;
   END LOOP;
 
   -- 3) Yazan fonksiyonlar: reader PUBLIC üzerinden çalıştırabiliyordu.

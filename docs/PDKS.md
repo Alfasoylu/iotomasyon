@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-05 — Step 1 kapanışı (parity + kargo + adli analiz)
+
+Production↔repo şema parity'si (`docs/SCHEMA-DRIFT-REPORT.md`), kargo tarifeleri (`docs/KARGO-TARIFE.md`), banka adli analizi (`docs/BANK-DATA-FORENSICS.md`), final kabul raporu. Açık kararlar: RLS'siz 3 tablo + anon yetkileri, baseline-capture migration'ı, banka nakdi için YKB export'u.
+
 ### 2026-10-05 — Financial Memory Step 1E: stok + bakiye hafızası
 
 `20261005250000_fm_stock_balance`, test `fm-stock-balance`. Stok zinciri 274 üründe kopuksuz; zincir toplamı 73.561 adet, `Product.stockQuantity` 74.004
