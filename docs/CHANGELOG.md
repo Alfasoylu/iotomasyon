@@ -7,6 +7,29 @@
 - If a change is inferred from documentation but not independently verified in code, avoid wording it as fully implemented.
 - ROADMAP items must not appear here unless implemented.
 
+## 2026-10
+
+### Maliyet cevabı → Product.unitCostTry otomatik yazımı (2026-10-05)
+
+- `/cfo/sorular` ve `/cfo/kazananlar` satır panelinden cevaplanan `MALIYET_YOK`
+  sorularında, cevap tam olarak tek ve belirsizliksiz bir TL rakamıysa (başka
+  para birimi geçmiyor, birden fazla farklı TL rakamı yok), SKU tek bir aktif
+  ürüne eşleşiyorsa ve o ürünün maliyeti hâlâ boşsa `Product.unitCostTry`'a
+  otomatik yazılır; `cfo_change_log` ve `cfo_note` kaydı düşülür, soru işlenmiş
+  sayılır. Önceden bu adım her zaman insana (CFO'ya) düşüyordu —
+  CFO-WORKFLOW.md'nin kendi tanımı "answers... does not change product costs"
+  diyordu.
+- Belirsizlikte (RMB/kg gibi başka para birimi, çoklu rakam, SKU bulunamadı/
+  birden fazla eşleşti, maliyet zaten dolu) hiçbir şey yazılmaz — soru bugünkü
+  gibi insan incelemesine açık kalır. Mevcut bir maliyet asla üzerine yazılmaz.
+- Tek paylaşılan fonksiyon (`lib/cfo-agent/cost-answer.ts`) hem `/cfo/sorular`
+  hem satır panelinden çağrılıyor — iki cevap kanalının ayrışması riskine karşı.
+- Testler: `__tests__/cfo-cost-answer.test.ts` — saf ayrıştırma kontrolleri
+  (ağ/DB gerektirmez) + gerçek Postgres/Prisma'ya karşı yazma/çakışma/
+  belirsizlik senaryoları (CI'da `CFO_WORKFLOW_TEST_DATABASE_URL` ile).
+  `npx tsc --noEmit`, hedefli `eslint`, `npm run build` ve mevcut CFO/RBAC/
+  Entegra regresyon testleriyle de doğrulandı.
+
 ## 2026-09
 
 ### ALFAS Home → Sepetler sayfası (2026-09-28)
