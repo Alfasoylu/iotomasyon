@@ -14,3 +14,6 @@
 
 
 - 2026-10-04: Connected persistent CFO future candidates to the existing winners/import planner, read owner decisions and legacy row/batch notes/statuses every cycle, preserved rejections/waits and existing batch quantities, added row notes and after-response review triggers, applied the current total-debt gate to native readiness labels, and kept planning visible without frozen winners. Synthetic SQL and real Prisma/PostgreSQL regression checks cover this integration; no production financial fixture or schema change.
+
+
+- 2026-10-05: Unified planner/work questions and answers in the existing CFO question ledger with protected direct links, serialized identity reuse, legacy linkage, cancellation preservation and cross-page refresh. Added bounded persistent research over the eight existing application page sources, oldest-first monthly sales/return archive continuation, operational keyset review, measured findings and visible notebook/source progress. Synthetic identity, source-privacy, partial-month, continuation and source-failure checks cover the behavior; full Prisma/PostgreSQL regression exercises concurrent shared registration and canonical-answer reads. Hobby scheduling and the strict total-debt order gate are retained.

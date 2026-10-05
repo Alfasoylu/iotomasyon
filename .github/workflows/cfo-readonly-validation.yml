@@ -47,6 +47,7 @@ jobs:
       - run: node --import tsx __tests__/cfo-workflow.test.ts
       - run: node --import tsx __tests__/cfo-cycle-agenda.test.ts
       - run: node --import tsx __tests__/cfo-import-planner.test.ts
+      - run: node --import tsx __tests__/cfo-question-research.test.ts
       - name: Exercise CFO cycle through real Prisma and PostgreSQL
         env:
           DIRECT_URL: postgresql://postgres:synthetic-ci-only@127.0.0.1:5432/cfo_workflow_test_ci
@@ -69,7 +70,7 @@ jobs:
       - run: npm run check:banka:pdf
       - run: npm run check:banka:review
       - run: npx eslint lib/banka components/banka app/api/admin/banka-yukleme __tests__/banka*.test.ts 'app/(app)/admin/banka-yukleme/page.tsx'
-      - run: npx eslint lib/cfo-agent app/api/admin/ai-cfo/acceptance app/api/admin/ai-cfo/context app/api/admin/ai-cfo/cycle app/api/cron/cfo-cycle 'app/(app)/cfo/calisan' __tests__/cfo-workflow.test.ts __tests__/cfo-import-planner.test.ts lib/actions/cfo-row-qa.ts lib/cfo/row-qa.ts 'app/(app)/cfo/kazananlar' __tests__/cfo-private-files.test.ts __tests__/cfo-operating-context.test.ts scripts/cfo-read-context.ts __tests__/ai-cfo*.test.ts 'app/(app)/cfo/page.tsx' 'app/(app)/cfo/calisma-durumu/page.tsx'
+      - run: npx eslint lib/cfo-agent app/api/admin/ai-cfo/acceptance app/api/admin/ai-cfo/context app/api/admin/ai-cfo/cycle app/api/cron/cfo-cycle 'app/(app)/cfo/calisan' __tests__/cfo-workflow.test.ts __tests__/cfo-import-planner.test.ts lib/actions/cfo-row-qa.ts lib/actions/cfo-question-actions.ts lib/cfo/row-qa.ts lib/cfo/question*.ts components/cfo/row-qa-panel.tsx 'app/(app)/cfo/sorular/page.tsx' __tests__/cfo-question-research.test.ts 'app/(app)/cfo/kazananlar' __tests__/cfo-private-files.test.ts __tests__/cfo-operating-context.test.ts scripts/cfo-read-context.ts __tests__/ai-cfo*.test.ts 'app/(app)/cfo/page.tsx' 'app/(app)/cfo/calisma-durumu/page.tsx'
       - name: Generate ephemeral build-only session key
         run: |
           python - <<'PY'

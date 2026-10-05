@@ -1,3 +1,4 @@
+import { ensureRowQuestion } from '../cfo/question-record';
 import { createHash,randomUUID } from 'node:crypto';
 import type { planCfoWork, WorkItem } from './workflow-plan';
 import { workflowId } from './workflow-plan';
@@ -41,13 +42,13 @@ export async function saveAnswerContext(db:WriteSource,answers:AnswerContext[]){
     source:WORK_SOURCE,kind:'arastirma',note:'Cevap bağlama alındı; maliyet ve finansal tablolar değiştirilmedi.'})));
   return rows.length;
 }
-export type CyclePlan=Omit<ReturnType<typeof planCfoWork>,'agenda'|'orderGate'|'debtForecast'>&Partial<Pick<ReturnType<typeof planCfoWork>,'agenda'|'orderGate'|'debtForecast'>>;
+export type CyclePlan=Omit<ReturnType<typeof planCfoWork>,'agenda'|'orderGate'|'debtForecast'|'research'>&Partial<Pick<ReturnType<typeof planCfoWork>,'agenda'|'orderGate'|'debtForecast'|'research'>>;
 export async function saveWorkPlan(db:WriteSource,plan:CyclePlan,trigger:string){
   const existing=await db.query<Row>('select id, body from cfo_note where source=$1 and "archivedAt" is null',WORK_SOURCE);
   const map=new Map(existing.map(r=>[String(r.id),r]));let changed=0;
   const writes:{id:string;title:string;body:string}[]=[];const audits:AuditRow[]=[];
   if(plan.agenda?.questionRanks.length)await db.execute(`update cfo_question q set priority=r.priority from jsonb_to_recordset($1::jsonb) as r(id text,priority integer)
-    where q.id=r.id and q.status='ACIK' and q.id like 'cfo-work-%'`,JSON.stringify(plan.agenda.questionRanks));
+    where q.id=r.id and q.status='ACIK' and (q.id like 'cfo-work-%' or q.id like 'cfo-row-%')`,JSON.stringify(plan.agenda.questionRanks));
   const audit=(title:string,old:unknown,value:unknown)=>audits.push({id:randomUUID(),area:'strateji',item:title,oldValue:old?JSON.stringify(old):null,newValue:JSON.stringify(value),source:WORK_SOURCE,kind:'analiz',note:trigger});
   // A SKU can occur on several channels. Write each stable key once.
   const items=[...new Map(plan.items.map(item=>[workflowId(item.key),item])).values()];
@@ -66,6 +67,8 @@ export async function saveWorkPlan(db:WriteSource,plan:CyclePlan,trigger:string)
   }
   const active=new Set(plan.items.map(i=>workflowId(i.key)));
   for(const [id,row] of map){if(id===HEARTBEAT_ID||active.has(id))continue;const old=readWork(String(row.body));
+    // A batch reads only part of the archive. Unvisited research never disappears.
+    if(old?.item.key.startsWith('research:')&&old.item.key!=='research:access'&&!plan.research?.checkedPrefixes.some(prefix=>old.item.key.startsWith(prefix)))continue;
     // Disappearing signals do not prove that an approved action was completed.
     if(!old||['completed','rejected','resolved','withdrawn'].includes(old.status))continue;
     const value={...old,status:old.status==='approved'||old.status==='needs_review'?'withdrawn':'resolved',observedAt:plan.asOf,item:{...old.item,requiresApproval:false,blockers:[...old.item.blockers,'Bu bulgu son döngüde bulunmadı; önce kaynak ve koşulları doğrula']}};
@@ -77,14 +80,16 @@ export async function saveWorkPlan(db:WriteSource,plan:CyclePlan,trigger:string)
     from jsonb_to_recordset($1::jsonb) as r(id text,title text,body text)
     on conflict(id) do update set title=excluded.title,body=excluded.body,"updatedAt"=now()`,JSON.stringify(writes),WORK_SOURCE);
   const questions=[...new Map(plan.questions.map(q=>[workflowId('question:'+q.key),{id:workflowId('question:'+q.key),...q}])).values()];
-  const inserted=questions.length?await db.query<Row>(`insert into cfo_question(id,question,why,area,priority,status)
+  const plain=questions.filter(q=>!q.scope),linked=questions.filter(q=>q.scope&&q.entityKey&&q.code);
+  const inserted=plain.length?await db.query<Row>(`insert into cfo_question(id,question,why,area,priority,status)
     select id,question,why,area,priority,'ACIK' from jsonb_to_recordset($1::jsonb)
     as r(id text,question text,why text,area text,priority integer)
-    on conflict(id) do nothing returning id`,JSON.stringify(questions)):[];
-  const newQuestionIds=new Set(inserted.map(row=>String(row.id)));
-  for(const q of questions)if(newQuestionIds.has(q.id)){
-    audits.push({id:randomUUID(),area:'soru',item:q.question,oldValue:null,newValue:q.why,source:WORK_SOURCE,kind:'arastirma',note:null});
+    on conflict(id) do nothing returning id`,JSON.stringify(plain)):[];
+  for(const q of linked){
+    const row=await ensureRowQuestion(db,{...q,scope:q.scope!,entityKey:q.entityKey!,code:q.code!});
+    if(row.created)inserted.push({id:row.id});
   }
+  if(inserted.length)audits.push({id:randomUUID(),area:'soru',item:'CFO ortak soru defteri',oldValue:null,newValue:JSON.stringify(inserted.map(q=>q.id)),source:WORK_SOURCE,kind:'arastirma',note:'Sorular /cfo/sorular üzerinden yanıtlanır; satır bağlantısı korunur.'});
   const oldHeartbeat=map.get(HEARTBEAT_ID);
   let oldGoals:unknown=null;try{oldGoals=oldHeartbeat?JSON.parse(String(oldHeartbeat.body)).goals:null;}catch{}
   if(JSON.stringify(oldGoals)!==JSON.stringify(plan.goals))audits.push({id:randomUUID(),area:'strateji',item:'CFO hedef gözlemleri',oldValue:oldGoals?JSON.stringify(oldGoals):null,newValue:JSON.stringify(plan.goals),source:WORK_SOURCE,kind:'analiz',note:'Defter gözlemi; gerçekleşmiş kazanç veya tam dönem başarısı değildir.'});
@@ -95,6 +100,7 @@ export async function saveWorkPlan(db:WriteSource,plan:CyclePlan,trigger:string)
     const focus=items.filter(item=>agenda.focusKeys.includes(item.key));
     const lines=[`Çalışma özeti: ${TOPIC_NAMES[agenda.topic]} · ${trigger}`,
       `Yapılanlar: önceki çalışma kaydı ve defter okundu; ${agenda.answersReviewed.length} yeni/değişmiş cevap incelendi; ${changed} çalışma kaydı güncellendi; ${asked} yeni soru yazıldı.`,
+      ...(plan.research?[`Geçmiş / kaynak araştırması: ${plan.research.rowsReviewed} kayıt incelendi; ${plan.research.periodsCompleted} arşiv ayı tamamlandı.`,...plan.research.summaries,...plan.research.missing]:[]),
       'Tespitler:',...focus.map(item=>`• ${item.title}: ${item.proposal}`),
       'Aksiyonlar:',...focus.map(item=>`• ${item.requiresApproval?'Onaya sunuldu':item.futureOrder?'İthalat planlayıcısına aday kaydedildi':'Araştırma kaydedildi'}: ${item.title}`),
       'Eksikler / beklenenler:',...agenda.waiting.map(text=>`• ${text}`),
@@ -108,6 +114,7 @@ export async function saveWorkPlan(db:WriteSource,plan:CyclePlan,trigger:string)
       'cfo-run-'+randomUUID(),`CFO çalışma ${agenda.runCount} · ${TOPIC_NAMES[agenda.topic]}`,lines.join('\n'));
   }
   const heartbeat={version:1,lastSuccessAt:new Date().toISOString(),snapshotAsOf:plan.asOf,trigger,goals:plan.goals,items:items.length,newQuestions:asked,changedItems:changed,
+    research:plan.research?{state:plan.research.state,progress:plan.research.progress,rowsReviewed:plan.research.rowsReviewed,periodsCompleted:plan.research.periodsCompleted,summaries:plan.research.summaries,missing:plan.research.missing}:undefined,
     agenda:plan.agenda,orderGate:plan.orderGate,debtForecast:plan.debtForecast,schedule:'daily_plus_data_events',automaticFinancialExecution:false};
   await db.execute(`insert into cfo_note(id,title,body,category,"dataTag",source,pinned,"createdAt","updatedAt") values($1,'CFO çalışma döngüsü', $2,'strateji','TAHMINI',$3,false,now(),now())
     on conflict(id) do update set body=excluded.body,"updatedAt"=now()`,HEARTBEAT_ID,JSON.stringify(heartbeat),WORK_SOURCE);

@@ -13,6 +13,8 @@
  * Her iki yazma da `cfo_change_log`'a düşer — CFO kuralı: eski değer silinmez.
  */
 
+import { ensureRowQuestion, validateRowQuestion, type RowQuestionInput } from "@/lib/cfo/question-record";
+import { questionHref } from "@/lib/cfo/question-links";
 import type { Prisma } from "@prisma/client";
 import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { revalidatePath } from "next/cache";
@@ -66,6 +68,22 @@ async function log(
   });
 }
 
+/** Explicit owner navigation registers one question; rendering a page never creates a backlog. */
+export async function openRowQuestionAction(input:RowQuestionInput){
+  const user=await guardWrite();
+  if(!user)return PERM_DENIED;
+  if(!validateRowQuestion(input)||input.code==='PLAN_NOTU')return {ok:false,message:'Soru bağlantısı geçersiz.'};
+  try{
+    const row=await prisma.$transaction(async tx=>{
+      const q=await ensureRowQuestion({query:(sql,...params)=>tx.$queryRawUnsafe(sql,...params),execute:(sql,...params)=>tx.$executeRawUnsafe(sql,...params)},input);
+      if(q.created)await tx.cfoChangeLog.create({data:{area:'soru',kind:'arastirma',item:input.question.slice(0,120),source:user.email??'kullanıcı',note:'Planlayıcı sorusu ortak soru defterine bağlandı.'}});
+      return q;
+    });
+    revalidateQa();
+    return {ok:true,href:questionHref(row.id),message:'Sorular sayfasına bağlandı.'};
+  }catch{return {ok:false,message:'Soru bağlantısı oluşturulamadı.'};}
+}
+
 /** Bir satır sorusunu cevapla. Aynı soru daha önce cevaplandıysa üzerine yazar. */
 export async function answerRowQuestionAction(input: {
   scope: string;
@@ -86,34 +104,9 @@ export async function answerRowQuestionAction(input: {
   try {
     const kim = user.email ?? user.name ?? "kullanıcı";
 
-    const [mevcut] = await prisma.$queryRaw<{ id: string; answer: string | null }[]>`
-      select id, answer from cfo_question
-       where scope = ${input.scope} and entity_key = ${input.entityKey} and code = ${input.code}
-       order by "askedAt" desc limit 1`;
-
-    // Tek transaction: log CHECK'e takılırsa cevap da yazılmasın. İlk sürümde
-    // ayrı ayrı çalışıyorlardı; log patlayınca cevap KAYDEDİLMİŞ olmasına rağmen
-    // kullanıcıya "kaydedilemedi" deniyordu — en kötü hata türü.
     await prisma.$transaction(async (tx) => {
-      if (mevcut) {
-        // Cevap güncellenirken eskisi log'a geçer; soru metni de tazelenir çünkü
-        // türetilmiş sorunun ifadesi veriyle birlikte değişmiş olabilir.
-        await tx.$executeRaw`
-          update cfo_question
-             set answer = ${cevap}, "answeredAt" = now(), "answeredBy" = ${kim},
-                 status = 'CEVAPLANDI', question = ${input.question}, why = ${input.why},
-                 "processedAt" = null, "processNote" = null
-           where id = ${mevcut.id}`;
-      } else {
-        await tx.$executeRaw`
-          insert into cfo_question
-            (id, "askedAt", question, why, area, priority, status,
-             answer, "answeredAt", "answeredBy", scope, entity_key, code)
-          values
-            (gen_random_uuid()::text, now(), ${input.question}, ${input.why}, ${input.area}, 2,
-             'CEVAPLANDI', ${cevap}, now(), ${kim},
-             ${input.scope}, ${input.entityKey}, ${input.code})`;
-      }
+      const mevcut=await ensureRowQuestion({query:(sql,...params)=>tx.$queryRawUnsafe(sql,...params),execute:(sql,...params)=>tx.$executeRawUnsafe(sql,...params)},input);
+      await tx.cfoQuestion.update({where:{id:mevcut.id},data:{answer:cevap,answeredAt:new Date(),answeredBy:kim,status:'CEVAPLANDI',processedAt:null,processNote:null}});
 
       await tx.cfoChangeLog.create({
         data: {

@@ -22,7 +22,7 @@ async function main(){
       create table cfo_order_line(id int primary key,batch_id text references cfo_order_batch(id),sku text,status text,qty int,reason text,note text);
       create table cfo_ithalat_oneri_ozet(mod text,durum text,tavsiye_siparis_tarihi date,nakit_kapisi_tarihi date,maliyet_eksik_satir int);
       create table cfo_note(id text primary key,title text,body text,category text,"dataTag" text,source text,pinned boolean,"createdAt" timestamptz,"updatedAt" timestamptz,"archivedAt" timestamptz);
-      create table cfo_question(id text primary key,question text,why text,area text,priority int,status text);
+      create table cfo_question(id text primary key,question text,why text,area text,priority int,status text,answer text,"askedAt" timestamptz default now(),scope text,entity_key text,code text);
       create table cfo_change_log(id text primary key,area text,item text,"oldValue" text,"newValue" text,source text,kind text,note text);
       insert into cfo_order_batch values('SYNTH-BATCH','DENIZ','PLANLANIYOR','KAPALI','BEKLE','Synthetic batch note');
       insert into cfo_order_line values(1,'SYNTH-BATCH','SYNTH-B','BEKLIYOR',40,'Synthetic reason','Synthetic row note'),(2,'SYNTH-BATCH','SYNTH-REJECTED','REDDEDILDI',20,'Owner rejected','Owner note');

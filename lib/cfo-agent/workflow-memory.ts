@@ -1,20 +1,22 @@
+import { readResearch, type ResearchState } from './research';
 import { createHash } from 'node:crypto';
 import type { Knowledge, WorkItem } from './workflow-plan';
 
 import { TOPICS,TOPIC_NAMES,type Topic } from './workflow-topics';
 export { TOPIC_NAMES } from './workflow-topics';
-export type CycleMemory = {nextTopic?:Topic;fingerprint?:string;unchangedCycles?:number;runCount?:number;closedKeys?:string[]};
+export type CycleMemory = {nextTopic?:Topic;fingerprint?:string;unchangedCycles?:number;runCount?:number;closedKeys?:string[];research?:ResearchState};
 export type CycleAgenda = {version:1;topic:Topic;nextTopic:Topic;fingerprint:string;unchangedCycles:number;runCount:number;
   priorRead:boolean;answersReviewed:string[];focusKeys:string[];waiting:string[];nextSteps:string[];questionRanks:{id:string;priority:number}[]};
 export function readMemory(body:string|null):CycleMemory {
   try { const value=JSON.parse(body??'');const memory=value.agenda??{};
-    return {nextTopic:TOPICS.includes(memory.nextTopic)?memory.nextTopic:undefined,
+    return {research:readResearch(value.research?.state),nextTopic:TOPICS.includes(memory.nextTopic)?memory.nextTopic:undefined,
       fingerprint:typeof memory.fingerprint==='string'?memory.fingerprint:undefined,
       unchangedCycles:Number.isSafeInteger(memory.unchangedCycles)?memory.unchangedCycles:0,
       runCount:Number.isSafeInteger(memory.runCount)?memory.runCount:0};
   } catch {return {};}
 }
 export function itemTopic(item:WorkItem):Topic {
+  if(item.key.startsWith('research:'))return item.key.includes('history')?'sales':item.key.startsWith('research:stock:')?'stock':item.key.startsWith('research:catalog:')?'costs':'growth';
   if(item.key.startsWith('sales:'))return 'sales';
   if(item.kind==='cash'||item.key.startsWith('debt:'))return 'cash';
   if(item.key.startsWith('cost:')||item.key.startsWith('reconcile:')||item.kind==='pricing'||item.key.startsWith('answer:'))return 'costs';
@@ -32,6 +34,8 @@ export function buildAgenda(items:WorkItem[],knowledge:Knowledge[],memory:CycleM
   const focusKeys=[...new Set([
     ...open.filter(item=>item.priority===1&&!item.key.startsWith('answer:')).slice(0,3),
     ...open.filter(item=>item.key.startsWith('answer:')).slice(0,2),
+    ...open.filter(item=>item.key.startsWith('research:')&&item.key.includes('history')).slice(0,2),
+    ...open.filter(item=>item.key.startsWith('research:')&&!item.key.includes('history')).slice(0,2),
     ...open.filter(item=>itemTopic(item)===topic).slice(0,3),
   ].map(item=>item.key))];
   return {version:1,topic,nextTopic,fingerprint,unchangedCycles,runCount:(memory.runCount??0)+1,priorRead,answersReviewed,focusKeys,
