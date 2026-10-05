@@ -149,7 +149,8 @@ FROM classed c;
 
 -- 3) Canonical satış: dedupe edilenler çıkar; sayılan satırlarda set/paket adet düzeltmesi (yalnız adet).
 CREATE OR REPLACE VIEW public.fm_sales_canonical WITH (security_invoker = true) AS
-WITH counted AS (SELECT * FROM public.fm_sales_dispositioned WHERE disposition = 'COUNTED'),
+WITH disp AS MATERIALIZED (SELECT * FROM public.fm_sales_dispositioned),
+counted AS (SELECT * FROM disp WHERE disposition = 'COUNTED'),
 tekli AS (
   SELECT public.cfo_norm(sku_raw) AS nsku, date_trunc('month', economic_date)::date AS ay, amount_incl_vat_try::float8 AS f
   FROM counted WHERE quantity_raw = 1 AND sku_raw IS NOT NULL AND amount_incl_vat_try > 0
@@ -183,7 +184,7 @@ qty2 AS (
       WHEN q.oran > 1.15 THEN 1
       ELSE least(d.quantity_raw, greatest(1, floor(d.amount_incl_vat_try::float8 / q.tipik)::numeric))
     END AS quantity_canonical
-  FROM public.fm_sales_dispositioned d
+  FROM disp d
   LEFT JOIN qty q ON q.source_system = d.source_system AND q.source_row_id = d.source_row_id AND d.disposition = 'COUNTED'
   WHERE d.disposition <> 'DEDUP_DROPPED'
 )
