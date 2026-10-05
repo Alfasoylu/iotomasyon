@@ -9,6 +9,30 @@
 
 ## 2026-10
 
+### AI CFO V1 yeniden inşası — adım 3/9: Anthropic sağlayıcı katmanı (2026-10-05)
+
+- `lib/cfo-agent/provider.ts` eklendi — `createCfoProvider`/`reasoningPayload`.
+  Henüz hiçbir yerden çağrılmıyor; `AI_CFO_PROVIDER` varsayılan `disabled`.
+- İstek şekli (Messages API `output_config`/`json_schema`, model kimliği)
+  05.10.2026'da resmî dokümandan doğrulandı.
+- Sağlayıcıya giden veri kasıtlı allowlist'le sınırlı: yalnız anomaly'lerin
+  referans verdiği evidence, anomalies/memory/missingFields kırpılmış.
+  `stop_reason=max_tokens` kesik yanıtı boş metin sayar (yarım JSON'u
+  uydurma insight'a çevirmez).
+- Testler: `__tests__/ai-cfo-provider.test.ts` (12 kontrol, ağ/API key
+  gerektirmez — enjekte edilmiş sahte `fetch`).
+
+### AI CFO V1 yeniden inşası — adım 2/9: anomali tespiti (2026-10-05)
+
+- `lib/cfo-agent/anomalies.ts` eklendi — `detectCfoAnomalies`/`shouldReopen`.
+  Henüz hiçbir yerden çağrılmıyor (runner #4'te bağlanacak); bu adımda
+  davranış değişikliği yok.
+- Parked `feat/ai-cfo-v1` dalındaki tasarımdan kuruldu; main'in
+  `snapshot.ts`sindeki kasıtlı `sourceFresh`/`financialSourceFresh`/
+  `inventorySourceFresh` ayrımına göre fiyat/maliyet/kâr kurallarının
+  doğru alana baktığı düzeltildi (bkz. `docs/PDKS.md` delta günlüğü).
+- Testler: `__tests__/ai-cfo-anomalies.test.ts` (16 kontrol, saf fonksiyon).
+
 ### AI CFO V1 yeniden inşası — adım 1/9: additive migration (2026-10-05)
 
 - `cfo_run`/`cfo_insight`/`cfo_usage` tabloları eklendi (`prisma/schema.prisma`
