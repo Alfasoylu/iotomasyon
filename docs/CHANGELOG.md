@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Güvenlik — SECURITY DEFINER view'lar (2026-10-06)
+- `20261005290000_security_definer_views_lockdown`: security_invoker olmayan 43 `public` view'dan anon/authenticated yetkisi kaldırıldı (tanım/sahip/semantik aynı; postgres/service_role/reader değişmedi) + `ALTER DEFAULT PRIVILEGES` ile yeni public nesneler anon/authenticated'a otomatik açılmıyor. Üretimde uygulandı ve katalogdan doğrulandı; advisor ERROR'ları kalktı. Rapor: `docs/SECURITY-DEFINER-VIEW-EXPOSURE-REPORT.md`. Test: `security-definer-views`.
+
 ### Financial Memory — XML sync → stok hafızası otomasyonu (2026-10-06)
 - XML senkronu tamamlandığında `fm_stock_refresh()` deterministik tetiklenir (`lib/fm/stock-refresh.ts` → `finalizeLog`). Yalnız `XmlSyncLog.status='SUCCESS'` yenilemeyi çalıştırır; PARTIAL/ERROR yenilemez ve `fm_ingest_run`'da `failed` (sync_not_success) olarak görünür. Aynı sync_log için idempotent; hata senkronu bozmaz. Migration `20261005300000_fm_stock_refresh_automation` (`fm_stock_refresh_after_sync`, `fm_stock_freshness`) üretime uygulandı, parmak izi üretimle birebir. Test `__tests__/xml-sync-fm-refresh.test.ts` (XML sync → refresh → reconciliation).
 
