@@ -9,7 +9,7 @@ import { validateAiOutput } from "../lib/cfo-agent/validate-ai-output";
 import { goalAnomalies } from "../lib/cfo-agent/goal-anomalies";
 import { getCfoConfig } from "../lib/cfo-agent/config";
 import { ProviderError, reasoningPayload } from "../lib/cfo-agent/provider";
-import { createMonitorLock } from "../lib/cfo-agent/lock";
+import { createMonitorLock, LockError } from "../lib/cfo-agent/lock";
 import { metric, unknown } from "../lib/cfo-agent/calculations";
 import type { CfoStore, UsageWrite } from "../lib/cfo-agent/store";
 import type { AiInsight, Anomaly, CfoAgentSnapshot, Metric } from "../lib/cfo-agent/types";
@@ -183,6 +183,15 @@ async function main() {
     assert.ok([a.status, b.status].includes("locked"));
     assert.equal((await runCfoMonitor({ ...base, store: st.store, lock: lock() })).status, "duplicate");
     await assert.rejects(createMonitorLock({}).acquire(), /session_lock_not_configured/);
+    // lock failures surface as fixed, credential-free tags instead of a generic monitor_failed
+    const tag = async (env: Record<string, string>) => { try { await createMonitorLock(env).acquire(); return "acquired"; } catch (e) { return (e as { code?: string }).code; } };
+    assert.equal(await tag({ AI_CFO_LOCK_SESSION_MODE: "true", AI_CFO_LOCK_DATABASE_URL: "postgresql://u:p@aws-0-eu-north-1.pooler.supabase.com:6543/postgres" }), "transaction_pooler_not_allowed");
+    assert.equal(await tag({ AI_CFO_LOCK_SESSION_MODE: "true", AI_CFO_LOCK_DATABASE_URL: "postgresql://u:p@db.abcdefghijklmnopqrst.supabase.co:5432/postgres" }), "lock_direct_host_not_reachable_use_session_pooler");
+    assert.equal(await tag({ AI_CFO_LOCK_SESSION_MODE: "true", AI_CFO_LOCK_DATABASE_URL: "not a url" }), "lock_invalid_database_uri");
+    assert.equal(await tag({ AI_CFO_LOCK_SESSION_MODE: "true", AI_CFO_LOCK_DATABASE_URL: "postgresql://u:secret-pw@127.0.0.1:1/postgres" }), "lock_network_connection_failed");
+    const failedRun = await runCfoMonitor({ ...base, store: fakeStore().store, lock: { async acquire() { throw new LockError("lock_tls_certificate_error"); }, async release() {} } });
+    assert.deepEqual([failedRun.status, failedRun.error, failedRun.runId], ["failed", "lock_tls_certificate_error", null], "no run row, diagnostic tag returned");
+    assert.ok(!JSON.stringify(failedRun).includes("secret-pw"));
   });
 
   await check("sabah özeti 09:30 İstanbul'dan önce çalışmaz; sonra bağlam + hedeflerle çalışır", async () => {

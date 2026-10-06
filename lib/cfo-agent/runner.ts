@@ -8,7 +8,7 @@ import { evidence, hashSnapshot } from "./evidence";
 import { goalAnomalies } from "./goal-anomalies";
 import { existingQueueRecords, retrieveRelevantMemory } from "./memory";
 import { createCfoProvider, ProviderError, reasoningPayload, type CfoReasoningProvider } from "./provider";
-import { createMonitorLock, type MonitorLock } from "./lock";
+import { createMonitorLock, LockError, type MonitorLock } from "./lock";
 import { cfoStore, type CfoStore, type UsageWrite } from "./store";
 import { budgetBlock, costTry, istanbulPeriod, reservedCost } from "./budget";
 import { validateAiOutput } from "./validate-ai-output";
@@ -111,7 +111,8 @@ async function run(type: RunType, deps: RunnerDependencies): Promise<RunnerOutco
     return { status, runId: id, insights: validated.insights.length };
   } catch (error) {
     // SDK hata gövdesi, bağlantı adresi, kimlik bilgisi veya kaynak satırı asla kaydedilmez.
-    const code = error instanceof ProviderError ? error.code : "monitor_failed";
+    // Provider and monitor-lock failures carry fixed diagnostic tags; anything else stays generic.
+    const code = error instanceof ProviderError || error instanceof LockError ? error.code : "monitor_failed";
     try {
       if (usageId && usage) await store.updateUsage(usageId, { ...usage, status: "failed" });
       if (id) await store.finish(id, "failed", new Date(), 0, null, code);
