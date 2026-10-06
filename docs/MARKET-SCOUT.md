@@ -85,7 +85,7 @@ Bu PR'de gerçek çağrı yapılmadı (üretim kimlik bilgileri okunmadı); örn
 `candidates`, `signals_daily`, `scores`, `decisions`, `candidate_board` **silinmez/deprecate edilmez/DROP edilmez**. `lib/market/legacy-scout.ts` yalnız SELECT okur ve eşler (`legacy-v1`):
 - 200 aday: `rejected` 107 → REJECTED, `saved` 93 → WATCHING (eski `buy` → COST_VERIFICATION_REQUIRED, üretimde yok).
 - 3 insan kararı (hansgrohe, reddedilmiş) → `LEGACY_HUMAN_DECISION` olayları, notlar aynen.
-- `legacy_ref`: `legacy_candidate_id`, `legacy_writer: "UNKNOWN"`, skorlar, sinyaller, karar ID'leri. İçe aktarım idempotent (`legacy_candidate_id` tekil indeks).
+- `legacy_ref`: `legacy_candidate_id`, `legacy_writer: "UNKNOWN"`, orijinal durum, skorlar, sinyaller, karar ID'leri; ayrıca her eski satır **olduğu gibi** `original_row` (`to_jsonb`, tüm kolonlar + orijinal zaman damgaları: candidates 14/14, scores 14/14, signals_daily 20/20 kolon). Karar olayında `occurred_at` = orijinal `decided_at`, `known_at` = içe aktarım anı. İçe aktarım idempotent (`legacy_candidate_id` tekil indeks).
 
 ## 8. İşletme maliyeti
 

@@ -195,6 +195,17 @@ async function main() {
     assert.deepEqual(lr, [{ state: "REJECTED", writer: "UNKNOWN", decisions: 1 }, { state: "WATCHING", writer: "UNKNOWN", decisions: 0 }, { state: "REJECTED", writer: "UNKNOWN", decisions: 2 }]);
     const ev = (await db.query<{ notes: string }>(`select evidence -> 'legacy_decision' ->> 'notes' as notes from public.market_opportunity_event where actor = 'LEGACY_HUMAN_DECISION' order by occurred_at`)).rows;
     assert.deepEqual(ev.map(e => e.notes), ["çok rekabet", "alman markası", "alman markası 2"]);
+    // provenance: every legacy column is carried verbatim (original_row = whole row, incl. columns the typed fields skip) with original ids/timestamps
+    const prov = (await db.query<{ cand: Record<string, unknown>; score: Record<string, unknown>; dec: Record<string, unknown>; known: string; occurred: string }>(`select
+      o.legacy_ref -> 'original_candidate_row' as cand, o.legacy_ref -> 'legacy_scores' -> 0 -> 'original_row' as score,
+      (select e.evidence -> 'legacy_decision' -> 'original_row' from public.market_opportunity_event e where e.opportunity_id = o.id and e.actor = 'LEGACY_HUMAN_DECISION') as dec,
+      o.created_at::text as known, (select e.occurred_at::text from public.market_opportunity_event e where e.opportunity_id = o.id and e.actor = 'LEGACY_HUMAN_DECISION') as occurred
+      from public.market_opportunity o where o.legacy_ref ->> 'legacy_candidate_id' = '00000000-0000-0000-0000-000000000001'`)).rows[0];
+    assert.equal(prov.cand.id, "00000000-0000-0000-0000-000000000001"); assert.equal(prov.cand.status, "rejected"); assert.equal(prov.cand.first_seen, "2026-06-17");
+    assert.ok("created_at" in prov.cand && "risk_flags" in prov.cand, "whole candidate row kept");
+    assert.ok(["demand_sub", "gap_sub", "source_sub", "confidence_mult", "velocity_bonus", "errors"].every(k => k in prov.score), "score columns outside the typed subset kept");
+    assert.deepEqual([prov.dec.id, prov.dec.notes, prov.dec.human_verdict], ["10000000-0000-0000-0000-000000000001", "çok rekabet", "ALMA"]);
+    assert.equal(Date.parse(prov.occurred), Date.parse("2026-06-17T22:12:38Z"), "decision keeps its original timestamp (occurred_at); known_at = import time");
 
     // 9. image similarity reuses pgvector embeddings; only allowlisted image hosts are fetched; similarity is evidence only
     const vec = (k: number) => Array.from({ length: 512 }, (_, i) => (i === k ? 1 : 0));

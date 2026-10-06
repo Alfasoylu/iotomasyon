@@ -5,25 +5,27 @@ import type { OpportunityState } from "./scoring";
 // candidate_board; 200 Amazon-BSR "armatür" candidates 2026-06-17…06-22, 3 human decisions; writer unknown). The legacy tables are only
 // SELECTed — never updated or dropped. Import is idempotent (unique legacy_candidate_id) and keeps full provenance (legacy_writer = UNKNOWN).
 // Legacy verdicts (AL / TEST ET / İZLE …) are preserved as history; they are NOT converted into new scores or into a BUY state.
+// Every legacy row is also carried VERBATIM as `original_row` (to_jsonb of the whole row: all columns, original timestamps), so no legacy
+// column is lost even where the typed fields below select only a subset.
 export const LEGACY_MAPPING_VERSION = "legacy-scout-map-v1";
 
 export interface LegacyCandidate { id: string; term: string; title_en: string | null; title_tr_terms: string[] | null; canonical_image_url: string | null;
   source_url: string | null; category: string | null; risk_flags: unknown; status: string; first_seen: string; created_at: string; asin: string | null;
-  pref_score: string | null; brand: string | null }
-export interface LegacyScore { candidate_id: string; date: string; total: string; verdict: string; coverage: string | null; reason: string | null; missing: string[] | null; subscores: unknown }
-export interface LegacySignal { candidate_id: string; date: string; [k: string]: unknown }
-export interface LegacyDecision { id: string; candidate_id: string; decided_at: string; human_verdict: string | null; bought: boolean | null; outcome: unknown; notes: string | null; rating: number | null }
+  pref_score: string | null; brand: string | null; original_row?: unknown }
+export interface LegacyScore { candidate_id: string; date: string; total: string; verdict: string; coverage: string | null; reason: string | null; missing: string[] | null; subscores: unknown; original_row?: unknown }
+export interface LegacySignal { candidate_id: string; date: string; original_row?: unknown; [k: string]: unknown }
+export interface LegacyDecision { id: string; candidate_id: string; decided_at: string; human_verdict: string | null; bought: boolean | null; outcome: unknown; notes: string | null; rating: number | null; original_row?: unknown }
 export interface LegacySnapshot { candidates: LegacyCandidate[]; scores: LegacyScore[]; signals: LegacySignal[]; decisions: LegacyDecision[] }
 
 export async function readLegacyScout(db: Db): Promise<LegacySnapshot> {
   const q = async <T,>(sql: string) => (await db.query<T>(sql)).rows;
   return {
     candidates: await q<LegacyCandidate>(`select id::text, term, title_en, title_tr_terms, canonical_image_url, source_url, category, risk_flags, status,
-      first_seen::text, created_at::text, asin, pref_score::text, brand from public.candidates order by created_at, id`),
-    scores: await q<LegacyScore>(`select candidate_id::text, date::text, total::text, verdict, coverage::text, reason, missing, subscores from public.scores order by candidate_id, date`),
+      first_seen::text, created_at::text, asin, pref_score::text, brand, to_jsonb(t) as original_row from public.candidates t order by created_at, id`),
+    scores: await q<LegacyScore>(`select candidate_id::text, date::text, total::text, verdict, coverage::text, reason, missing, subscores, to_jsonb(t) as original_row from public.scores t order by candidate_id, date`),
     signals: await q<LegacySignal>(`select candidate_id::text as candidate_id, date::text as date, amazon_bsr, amazon_bsr_delta, trends_us, trends_tr, tr_listing_count,
-      tr_review_count, tr_review_velocity, cn_unit_cost, cn_moq from public.signals_daily order by candidate_id, date`),
-    decisions: await q<LegacyDecision>(`select id::text, candidate_id::text, decided_at::text, human_verdict, bought, outcome, notes, rating from public.decisions order by decided_at, id`),
+      tr_review_count, tr_review_velocity, cn_unit_cost, cn_moq, to_jsonb(t) as original_row from public.signals_daily t order by candidate_id, date`),
+    decisions: await q<LegacyDecision>(`select id::text, candidate_id::text, decided_at::text, human_verdict, bought, outcome, notes, rating, to_jsonb(t) as original_row from public.decisions t order by decided_at, id`),
   };
 }
 
@@ -42,7 +44,7 @@ export function mapLegacyScout(s: LegacySnapshot): MappedOpportunity[] {
       legacyRef: { mapping_version: LEGACY_MAPPING_VERSION, legacy_writer: "UNKNOWN", legacy_tables: ["candidates", "scores", "signals_daily", "decisions"],
         legacy_candidate_id: c.id, legacy_status: c.status, term: c.term, asin: c.asin, brand: c.brand, category: c.category, source_url: c.source_url,
         canonical_image_url: c.canonical_image_url, title_tr_terms: c.title_tr_terms, risk_flags: c.risk_flags, pref_score: c.pref_score, created_at: c.created_at,
-        legacy_scores: scores, legacy_signals: signals, legacy_decision_ids: decisions.map(d => d.id), signal_sources: "AMAZON_BSR (legacy; not a Trendyol/Google/China observation)" },
+        original_candidate_row: c.original_row ?? null, legacy_scores: scores, legacy_signals: signals, legacy_decision_ids: decisions.map(d => d.id), signal_sources: "AMAZON_BSR (legacy; not a Trendyol/Google/China observation)" },
     };
   });
 }
