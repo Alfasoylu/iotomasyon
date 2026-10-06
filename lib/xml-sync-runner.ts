@@ -8,6 +8,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { refreshFinancialMemoryStock } from "@/lib/fm/stock-refresh";
 import { prisma } from "@/lib/prisma";
 import { parseXmlFeed, type XmlProductRecord } from "@/lib/xml-sync";
 import type { ActionResult } from "@/types/actions";
@@ -558,4 +559,6 @@ async function finalizeLog(
     where: { id: sourceId },
     data: { lastSyncAt: new Date(), lastStatus: status, updatedAt: new Date() },
   });
+  // Financial Memory: stok hafızası yalnız SUCCESS senkronundan sonra yenilenir (karar DB'de; hatalar senkronu bozmaz).
+  await refreshFinancialMemoryStock(logId);
 }

@@ -242,6 +242,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-06 — fm_stock_refresh otomasyonu:** `lib/fm/stock-refresh.ts` + `lib/xml-sync-runner.ts` (`finalizeLog` sonunda çağrı); migration `20261005300000_fm_stock_refresh_automation` (`fm_stock_refresh_after_sync(text)`, `fm_stock_freshness`) üretime uygulandı + `_prisma_migrations` kaydı; fingerprint beklenen hash'leri güncellendi. SUCCESS → yenile; PARTIAL/ERROR → `failed` run, yenileme yok; idempotent. Test: `__tests__/xml-sync-fm-refresh.test.ts` (CI'da).
+
 ### 2026-10-06 — Stok düzeltme katmanı (AL-CAM03)
 
 `20261005280000_fm_stock_adjustment`, test `fm-stock-adjustment`. Gözlenen (XML) ve düzeltilmiş stok ayrı; sayımdan öncesine geriye uygulama yok. Not: `fm_stock_refresh()` otomatik çalışmıyor — XML senkronundan sonra çağrılmazsa mutabakat `UNEXPLAINED` görünür (bayat hafıza); zamanlama ayrı iş.

@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Financial Memory — XML sync → stok hafızası otomasyonu (2026-10-06)
+- XML senkronu tamamlandığında `fm_stock_refresh()` deterministik tetiklenir (`lib/fm/stock-refresh.ts` → `finalizeLog`). Yalnız `XmlSyncLog.status='SUCCESS'` yenilemeyi çalıştırır; PARTIAL/ERROR yenilemez ve `fm_ingest_run`'da `failed` (sync_not_success) olarak görünür. Aynı sync_log için idempotent; hata senkronu bozmaz. Migration `20261005300000_fm_stock_refresh_automation` (`fm_stock_refresh_after_sync`, `fm_stock_freshness`) üretime uygulandı, parmak izi üretimle birebir. Test `__tests__/xml-sync-fm-refresh.test.ts` (XML sync → refresh → reconciliation).
+
 ### Financial Memory — belgelenmiş stok düzeltmeleri / AL-CAM03 (2026-10-06)
 - `20261005280000_fm_stock_adjustment`: `fm_stock_adjustment` (fiziki sayım/manuel düzeltme, kaynak+kanıt+zaman damgaları), `fm_memory_stock_adjusted_company_day` (gözlenen XML ↔ düzeltilmiş ayrı sütunlar, sayım gününden itibaren, `manual_count_adjustment` bayrağı), `fm_stock_reconciliation` (zincir+düzeltme ↔ `Product.stockQuantity`). `fm_memory_stock_company_day` **değişmedi** (yalnız gözlenen). AL-CAM03 +443 (sayım 2026-09-11, Product düzeltmesi 2026-09-12 05:11) EXPLAINED olarak kaydedildi. Üretim: 274 MATCH + 1 MATCH_AFTER_ADJUSTMENT, 0 açıklanamayan fark; fingerprint 21/21 üretimle birebir. Test: `fm-stock-adjustment`.
 ### Güvenlik — anon/authenticated daraltma (2026-10-05)
