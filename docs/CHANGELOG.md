@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO — karar hafızası `regclass` düzeltmesi (2026-10-07)
+- `lib/cfo-agent/memory.ts`: `to_regclass('public.cfo_urun_karar')` artık `::text` ile okunuyor; Prisma raw sorgusu `regclass` sütununu çözemediği için ilk onaylı AI koşusu (07.10.2026 01:57, `cmuxa4cc…`) snapshot sonrası `monitor_failed` ile düşüyordu (sağlayıcı çağrılmadı, maliyet yok). `__tests__/ai-cfo-store.test.ts` regresyon testi: düzeltme olmadan aynı hatayı üretiyor, düzeltmeyle geçiyor.
+
 ### AI CFO — elle çalıştırma saatte 3 (2026-10-07)
 - `/admin/ai-cfo` elle çalıştırması artık 20 dakikalık dilimlerle idempotent (`<saat>:m0|m1|m2`, saatte en çok 3); zamanlanmış koşular (cron) saatte 1 / sabah günde 1 kalır. Maliyet sınırı değişmedi: günlük çağrı limiti, aylık bütçe ve anomali başına soğuma süresi. `runner.ts` `runPeriodKey`, `ai-trigger.ts`, runner route; test `ai-cfo-runner`.
 

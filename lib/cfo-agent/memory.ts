@@ -7,7 +7,8 @@ export async function retrieveRelevantMemory(anomalies:Anomaly[],db:ReadSource=b
   const skus=[...new Set(anomalies.filter(a=>a.entityType==="sku").map(a=>a.entityId.split(":").at(-1)!))].slice(0,8);
   const memory:MemoryItem[]=[];
   if(skus.length) {
-    const present=await db.query(`select to_regclass('public.cfo_urun_karar') as source`);
+    // ::text — Prisma raw queries cannot deserialize a regclass value ("Failed to deserialize column of type 'regclass'").
+    const present=await db.query(`select to_regclass('public.cfo_urun_karar')::text as source`);
     if(present[0]?.source) {
       const rows=await db.query(`select sku,karar,left(sebep,300) as sebep,updated_at from cfo_urun_karar where sku=any($1::text[])
         and (gecerli_bitis is null or gecerli_bitis>=current_date) order by updated_at desc limit 3`,skus);

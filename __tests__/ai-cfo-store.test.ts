@@ -66,6 +66,12 @@ async function main() {
     assert.deepEqual(center.anomalies.map(a => a.id), [anomaly.id]);
     assert.equal(center.usage.callsToday, 1);
     assert.equal(center.usage.outputTokens, 200);
+    // AI-path memory through the REAL Prisma raw source: a regclass value cannot be deserialized by Prisma, so the
+    // existence probe must return text (production run 2026-10-07 failed here with monitor_failed before the provider call)
+    await pg.query(`insert into cfo_urun_karar (sku,karar,sebep,updated_at) values ('MEM-1','BEKLE','test karari',now())`);
+    const { retrieveRelevantMemory } = await import("../lib/cfo-agent/memory");
+    const mem = await retrieveRelevantMemory([{ ...anomaly, id: "a_mem", entityType: "sku", entityId: "TRENDYOL:MEM-1", cooldownKey: "mem" }]);
+    assert.ok(mem.some(m => m.source === "cfo_urun_karar" && m.entityId === "MEM-1" && m.text.startsWith("BEKLE")), JSON.stringify(mem));
     // CHECK constraint: an invalid severity can never be stored
     // (run on the engine directly: an error through the single socket connection would end the PGlite socket session)
     await assert.rejects(pg.query(`insert into cfo_insight (id,"runId",severity,category,"entityType","entityId",fingerprint,"cooldownKey",title,observation,recommendation,"riskIfIgnored",confidence,evidence)
