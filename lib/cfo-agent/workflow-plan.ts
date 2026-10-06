@@ -7,7 +7,8 @@ import { debtGate } from './debt-policy';
 import { forecastDebt } from './debt-forecast';
 import { importPolicy,IMPORT_PLANNER_PATH } from './import-planner';
 import type { ResearchResult } from './research';
-export type WorkingContext=Awaited<ReturnType<typeof buildOperatingContext>>&{research?:ResearchResult};
+import { goalObservation, type GoalEngineResult } from '@/lib/fm/goals';
+export type WorkingContext=Awaited<ReturnType<typeof buildOperatingContext>>&{research?:ResearchResult;goalEngine?:GoalEngineResult};
 export type WorkItem={key:string;kind:'research'|'pricing'|'procurement'|'cash'|'liquidation';title:string;priority:number;
   sku?:string;proposal:string;evidence:string[];blockers:string[];cashRequiredTry:number|null;expectedGainTry:number|null;
   suggestedUnits:number|null;requiresApproval:boolean;futureOrder?:boolean;estimatedOrderDate?:string|null;plannerPath?:string;plannerState?:string};
@@ -100,14 +101,12 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
   for(const q of knowledge.filter(q=>q.status==='CEVAPLANDI'&&(q.answerChanged||q.answerReviewPending)))add({key:`answer:${q.id}`,kind:'research',title:`Cevabı doğrula: ${q.question.slice(0,100)}`,priority:1,
     proposal:'Yeni veya değişmiş cevabı mevcut kaynak, parti ve tarih ile karşılaştır. Dosya varsa içeriğini incele; finansal uygulamayı kanıt olmadan tamamlandı sayma.',evidence:[`soru:${q.id}`,`Cevap revizyonu: ${q.answerVersion??'bilinmiyor'}`,q.answer?'Yazılı cevap bağlamda okunuyor':'Dosya cevabı; içerik doğrulaması gerekiyor'],blockers:['Cevabın belge/kayıt ile doğrulanması'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
   if(dip!=null&&floor!=null&&dip<floor)add({key:'cash:floor',kind:'cash',title:'Nakit projeksiyonu tabanın altında',priority:1,proposal:'Gümrük dilimi, stok tasfiyesi, tahsilat zamanlaması ve borç seçeneklerini araştır. Kesin kaynak planını onaya getir.',evidence:[`Tahmini dip: ${dip} TL`,`Ayarlardaki taban: ${floor} TL`],blockers:[...(!context.cash.banksFresh?['Banka kaynakları eski']:[]),'Dip tarihi ve yakın/uzak tahsilat kapsamı ayrılmalı','Kullanılmamış limit nakit değildir'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
-  const rate=number(settings.usdTryRate),targetUsd=number(settings.monthlyRevenueTargetUsd),revenue=context.sales.last30Days.grossRevenue.value;
+  const revenue=context.sales.last30Days.grossRevenue.value;
   add({key:'sales:coverage',kind:'research',title:'Satış ortalaması ve kanal kapsamı',priority:2,
     proposal:context.sales.last30Days.complete?'Tam dönem satış ortalamasını kanal ve stok kapsamıyla karşılaştır; kârlı büyüme adaylarına aktar.':'Eksik satış dönemini sıfır veya düşüş sayma. Son tamamlanmış geçmiş pencereyi, XML hızını ve kanal kapsamını ayrı kontrol et.',
     evidence:[`Gözlenen son 30 gün cirosu: ${revenue??'bilinmiyor'}`,`Tam geçmiş pencere: ${debtForecast.historicalComplete?'evet':'hayır'}`],blockers:context.sales.last30Days.complete?[]:['Güncel tüm-kanal satış kapsamı'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
-  const goals={monthlyRevenueTargetUsd:targetUsd,targetTry:rate!=null&&targetUsd!=null?rate*targetUsd:null,rateAsOf:settings.updatedAt??null,
-    observedRevenueTry:revenue,revenueComplete:context.sales.last30Days.complete,progressPct:context.sales.last30Days.complete&&revenue!=null&&rate!=null&&targetUsd!=null?revenue/(rate*targetUsd)*100:null,
-    capitalTry:context.cash.summaries.find(s=>s.source==='cfo_servet'&&s.query==='servet_try')?.value??null,cardDebtTry:context.cash.totalCardDebt.value,
-    totalDebtTry:number(context.financialGoals?.totalDebtTry),profitTry:null};
+  // Goal Engine (fm_goal_evaluate / fm_memory_goal) owns goal observations: TCMB FX, quality grades, UNKNOWN on stale memory.
+  const goals=goalObservation(context.goalEngine);
   if(!context.sales.last30Days.complete||context.operating.summary.skuChannelsWithContributionProfit===0)add({key:'growth:coverage',kind:'research',title:'Kârlı büyüme planının veri eksiklerini tamamla',priority:2,proposal:'Bilinen maliyetlerden ilerle; satılan ürünleri, stokta olmayan kanıtlanmış talebi ve kanal kapsamını araştır. Ciro hedefini kâr ve nakit dönüşümüyle birlikte değerlendir.',evidence:[`Maliyeti bilinen ürün: ${context.operating.summary.skusWithKnownCost}`,`Katkı kârı hesaplanabilen ürün/kanal: ${context.operating.summary.skuChannelsWithContributionProfit}`],blockers:['Eksik dönem ciro düşüşü veya hedef başarısızlığı diye yorumlanamaz','Komisyon, KDV, iadeler ve değişken giderler tamamlanmalı'],cashRequiredTry:null,expectedGainTry:null,suggestedUnits:null,requiresApproval:false});
   if(context.research){
     items.push(...context.research.items);

@@ -124,3 +124,7 @@ kaynak ve kanıtla (economic_date = sayım günü, applied_at = Product'ın gün
 (`units_observed_xml`, `units_adjustments_cum`, `units_adjusted`) ve düzeltme içeren günlerde `manual_count_adjustment` bayrağı koyar. Düzeltme sayım gününden **öncesine uygulanmaz**
 (farkın ne zaman doğduğu bilinmiyor). `fm_stock_reconciliation` ürün bazında `MATCH` / `MATCH_AFTER_ADJUSTMENT` / `UNEXPLAINED` verir. AL-CAM03: 1.497 → 1.940 (+443), sayım 2026-09-11,
 Product güncellemesi 2026-09-12 05:11:25, XML'de tek log (2026-06-21); çözüm `EXPLAINED`. Mutabakat `fm_stock_refresh()` çalıştırıldıktan sonra anlamlıdır (bayat hafıza `UNEXPLAINED` üretir).
+
+## Hafıza tazeleme ve hedefler (2026-10-06)
+
+`fm_memory_refresh_daily()` satış hafızasını (önceki + bu ay, mutabakat kontrollü) ve bakiye hafızasını CFO döngüsünde en çok 6 saatte bir yeniler; stok hafızası XML sync sonrası `fm_stock_refresh_after_sync` ile yenilenir. Hedef değerlendirmesi Financial Memory'nin üstünde çalışır: `docs/GOAL-ENGINE.md`.

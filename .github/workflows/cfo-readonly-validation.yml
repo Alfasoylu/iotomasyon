@@ -50,6 +50,7 @@ jobs:
       - run: node --import tsx __tests__/fm-fx-monthly.test.ts
       - run: node --import tsx __tests__/fm-stock-balance.test.ts
       - run: node --import tsx __tests__/fm-stock-adjustment.test.ts
+      - run: node --import tsx __tests__/fm-goal-engine.test.ts
       - run: node --conditions=react-server --import tsx __tests__/xml-sync-fm-refresh.test.ts
       - run: node --import tsx __tests__/cfo-kargo-tarife.test.ts
       - run: node --import tsx __tests__/migration-clean-apply.test.ts

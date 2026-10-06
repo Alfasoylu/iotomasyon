@@ -9,6 +9,7 @@ import { workflowId } from './workflow-plan';
 import type { WriteSource } from './workflow-store';
 import type { Prisma,CfoQuestion } from '@prisma/client';
 import { CycleFailure,cycleDiagnostic,type CycleStage } from './workflow-diagnostics';
+import { runGoalEngine } from '@/lib/fm/goal-engine';
 function writer(tx:Prisma.TransactionClient):WriteSource{return {query: (sql,...params)=>tx.$queryRawUnsafe(sql,...params),execute:(sql,...params)=>tx.$executeRawUnsafe(sql,...params)};}
 export async function runCfoCycle(trigger:string){
   if(process.env.VERCEL_ENV&&process.env.VERCEL_ENV!=='production')return {completed:false as const,reason:'production_only'};
@@ -22,7 +23,9 @@ export async function runCfoCycle(trigger:string){
     const prior=await prisma.cfoNote.findMany({where:{source:WORK_SOURCE,archivedAt:null},select:{id:true,body:true}});
     const memory=readMemory(prior.find(note=>note.id===HEARTBEAT_ID)?.body??null);
     const priorWork=new Map(prior.map(note=>[note.id,readWork(note.body)]));
-    stage='context';const context=await loadOperatingContext(memory.research??initialResearch());
+    // Goal Engine refreshes Financial Memory and evaluates goals; it never throws (failure → goals unavailable, cycle continues).
+    stage='goals';const goalEngine=await runGoalEngine();
+    stage='context';const context={...await loadOperatingContext(memory.research??initialResearch()),goalEngine};
     // Separate stages retain an actionable diagnosis without persisting query data.
     stage='settings';const settings=await prisma.cfoSettings.findFirst({orderBy:{updatedAt:'desc'}});
     stage='questions';const records=await prisma.$queryRawUnsafe<(Pick<CfoQuestion,'id'|'question'|'answer'|'status'|'area'|'priority'|'answeredAt'|'processNote'|'processedAt'>&{scope:string|null;entity_key:string|null;code:string|null})[]>(`select id,question,answer,status,area,priority,"answeredAt","processNote","processedAt",to_jsonb(q)->>'scope' as scope,to_jsonb(q)->>'entity_key' as entity_key,to_jsonb(q)->>'code' as code from cfo_question q`);

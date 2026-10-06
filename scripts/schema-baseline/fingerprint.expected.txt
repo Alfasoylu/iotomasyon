@@ -1,20 +1,20 @@
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-06, read-only catalog SELECT, after migrations 20261006100000 + 20261006110000 were applied).
 # A bootstrapped clean database (prisma/baseline/2026-10-06.sql) must produce exactly these rows from scripts/schema-baseline/fingerprint.sql.
 # Columns: kind object_count short_md5. Regenerate ONLY by re-running fingerprint.sql on production (docs/BASELINE-CAPTURE.md).
-acl 328 bf36c3970a
-con 312 6ee399cd5a
+acl 334 d35af47194
+con 321 ce4bbc3bd9
 enum 32 ac59222f85
 ext 1 56e042523e
-fn 31 131612c700
-fnacl 48 60391e698a
-idx 420 ab1a01f7e0
-pol 78 1403a43f0c
+fn 34 a3bfb3ee44
+fnacl 51 4a91d0382c
+idx 424 57da0e1411
+pol 80 32812b7f8a
 rel:m 1 0ad09bf43e
-rel:r 143 8a1ec88289
-rel:v 55 0e054e5d27
-rls 143 9d65d2604c
+rel:r 145 3eb34c2ad0
+rel:v 56 1ab6a1fb00
+rls 145 3002b81db8
 schemaacl 3 45e3344ecd
 seq 15 cda7319017
 seqacl 15 40c6ef1c15
 trg 2 90b8397906
-view 56 3a48d3b95d
+view 57 7f545a3089
