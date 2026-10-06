@@ -26,6 +26,8 @@ korumayı almadı ve Supabase'in varsayılan yetkileri anon'a SELECT verdi.
 Hata sessizdi — tablo çalışır, uygulama çalışır, yalnız dışarı açıktır.
 `20260913235000_rls_eksik_tablolar` ile kapatıldı.
 
+**05.10.2026 notu:** `cfo_xml_urun_degisim`, `cfo_stok_sicrama`, `cfo_backfill_trendyol_pid_20260922` aynı şekilde RLS'siz ve anon'a açıktı; `20261005270000_security_anon_lockdown` ile kapatıldı.
+
 **Ders: tabloyu SQL editöründen oluşturmak bu değişmezi atlar.** Migration
 dosyası yazmadan tablo açılmamalı; açıldıysa aynı migration içinde RLS de
 açılmalı. Denetim komutu: `get_advisors(security)` → `rls_disabled_in_public`
