@@ -163,8 +163,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
-- [ ] **Güvenlik backlog (baseline sonrası):** `cfo_acceptance_reader → cfo_google` EXECUTE least-privilege incelemesi; kalan çalıştırılabilir fonksiyon yetki incelemesi (`ANON-GRANTS-FUNCTIONS-AUDIT.md` §3).
-- [ ] **Güvenlik defense-in-depth (baseline sonrası):** 56 tabloda anon/authenticated grant revoke + katalog CI kapısı — tasarım `docs/ANON-GRANTS-FUNCTIONS-AUDIT.md` §5; toplu revoke onay bekliyor.
+- [ ] **Güvenlik (sonraya, kritik değil):** `cfo_secret` düz metin kimlik bilgilerini ortam değişkenlerine taşı; pgvector'ü `public` dışına taşı; `tmp-cfo-files-verify` Edge Function'ı panelden sil.
 
 - [ ] **Baseline sonrası (onay bekliyor):** `__tests__/migration-clean-apply.test.ts` kaldırılıp yerine `schema-baseline` (plan §4); `schema.prisma` ↔ üretim sürüklenme (3 tablo) hizalama migration'ı; her yeni üretim migration'ından sonra baseline yenileme politikası (`docs/BASELINE-CAPTURE.md`).
 
@@ -246,6 +245,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+- **2026-10-06 — Güvenlik defense-in-depth (faz kapanışı):** migration `20261006120000_security_defense_in_depth` üretime uygulandı + kayıtlı: anon/authenticated → 56 tablo/90 sequence ACL/19 fonksiyon = 0; `cfo_google` reader kapalı; reader 17 salt-okunur fonksiyon açık; service_role/postgres/reader tablo yetkileri değişmedi; RLS-off 0. Parmak izi (baseline + Step 1) üretimle birebir güncellendi; baseline testi artık bekleyen migration'ları uygulayıp karşılaştırıyor. Test `security-defense-in-depth` (CI). Security hardening fazı kapandı.
 
 - **2026-10-06 — Baseline capture (strateji C, adım 1-2-5):** `scripts/schema-baseline/{inventory.sql,fingerprint.sql,fingerprint.expected.txt,bootstrap.ts,build-seed.sh}`, `prisma/baseline/{2026-10-06.sql,2026-10-06.seed.sql,baseline.json}`, `npm run db:bootstrap`, test `__tests__/schema-baseline.test.ts` (CI'ya eklendi). Boş DB 0 hata; tam-şema parmak izi üretimle birebir (17 tür); 113/113 migration applied kaydı; üretime yazma 0; tarihsel migration değişmedi. Doküman: `docs/BASELINE-CAPTURE.md`. Backlog: `migration-clean-apply.test.ts` baseline kanıtlandıktan sonra kaldırılacak; MarketplaceProductMapping/MonthlyExchangeRate/SupplierProduct sürüklenmesi için `schema.prisma` hizalama migration'ı (ayrı onay).
 

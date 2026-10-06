@@ -1,4 +1,6 @@
-# ANON TABLE GRANTS & EXECUTABLE FUNCTIONS — AUDIT (yalnız denetim; toplu revoke UYGULANMADI)
+# ANON TABLE GRANTS & EXECUTABLE FUNCTIONS — AUDIT
+
+> **DURUM 2026-10-06:** denetimdeki açıklar kapatıldı (migration `20261006120000_security_defense_in_depth`). Aşağısı denetim anının tarihsel kaydıdır.
 
 Tarih: 2026-10-06 · Üretim: Supabase `frbxpodiostxuwlrubkt` · Yöntem: katalog SELECT'leri + repo taraması. Üretime yazma yok.
 
@@ -48,7 +50,7 @@ pgvector fonksiyonları (`vector_*`, `halfvec_*`, `sparsevec_*`, ~110; sahip `su
 3. 56 tablodan `anon, authenticated` grant'lerini kaldır (log doğrulamasından sonra).
 4. Kalıcılık: `ALTER DEFAULT PRIVILEGES` (#152) zaten yeni nesneleri kapatıyor; global PUBLIC EXECUTE varsayılanı için `supabase_admin`/`postgres` varsayılanları ayrı karar.
 
-## 5. Defense-in-depth migration tasarımı (BACKLOG — baseline PR'ından SONRA; şimdi uygulanmaz)
+## 5. Defense-in-depth migration tasarımı — UYGULANDI (`20261006120000_security_defense_in_depth`; kanıt `SECURITY-HARDENING-ACCEPTANCE.md`)
 Amaç: RLS yanlışlıkla kapatılır / geniş bir policy eklenirse 56 tablonun anında açığa çıkmasını engellemek.
 1. **Grant katmanı:** `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated` (+ sequences); `postgres`, `service_role`, `cfo_acceptance_reader` (policy'li SELECT) korunur. Uygulama öncesi 24 saatlik API log'unda anon/authenticated REST isteği taraması ve Data API bağımlılığı yok teyidi (repo taramasında 0).
 2. **Kalıcılık:** `ALTER DEFAULT PRIVILEGES` zaten #152 ile kapalı; global `PUBLIC EXECUTE` varsayılanı için fonksiyon başına `REVOKE EXECUTE … FROM PUBLIC` desenini her yeni fonksiyon migration'ının şablonuna ekle.

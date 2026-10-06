@@ -23,6 +23,11 @@ async function main() {
     const result = await bootstrap(client);
     await db.exec("set search_path = public");
 
+    // newer-than-baseline migrations must apply on top of the baseline without error (prisma migrate deploy semantics);
+    // baseline + pending migrations together must equal production
+    for (const m of result.pending) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    await db.exec("set search_path = public");
+
     // (b) full fingerprint vs production
     const actual = (await db.query<{ k: string; n: number; h: string }>(readFileSync("scripts/schema-baseline/fingerprint.sql", "utf8"))).rows.map(r => `${r.k} ${r.n} ${r.h}`);
     const expected = readFileSync("scripts/schema-baseline/fingerprint.expected.txt", "utf8").split("\n").filter(l => l && !l.startsWith("#"));
@@ -48,8 +53,6 @@ async function main() {
     assert.equal(rows.length, result.registered.length);
     assert.ok(rows.every(r => r.finished_at !== null && r.applied_steps_count === 1));
     for (const r of rows) assert.equal(r.checksum, migrationChecksum(".", r.migration_name), `checksum ${r.migration_name}`);
-    // newer-than-baseline migrations must apply on top of the baseline without error
-    for (const m of result.pending) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
 
     // a second bootstrap on a populated database is refused
     await assert.rejects(() => bootstrap(client), /not empty/);

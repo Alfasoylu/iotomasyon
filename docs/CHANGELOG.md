@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Güvenlik — defense-in-depth, faz kapanışı (2026-10-06)
+- anon/authenticated'ın public tablo/view/sequence yetkileri ve kendi fonksiyonlarda PUBLIC/anon/authenticated EXECUTE kaldırıldı; service_role açıkça korundu; CFO reader'ın salt-okunur fonksiyonları açıkça verildi; `cfo_google` reader'dan kapatıldı. Üretimde uygulandı ve katalogla doğrulandı (anon/auth erişimi 0, RLS-off 0, service_role/reader tablo yetkileri değişmedi, anonim REST 401). Temiz DB ↔ üretim parmak izi birebir. Migration `20261006120000_security_defense_in_depth`, test `security-defense-in-depth`.
+
 ### Baseline capture — boş DB'den üretim şeması (2026-10-06)
 - Üretim `public` şemasının (143 tablo, 55 view + 1 matview, 31 fonksiyon, 420 indeks, 312 kısıt, 78 policy, 32 enum, 2 trigger, grant'lar) salt-okunur envanterden üretilmiş döküm: `prisma/baseline/2026-10-06.sql` + migration'lardan kopyalanan tohumlar; `npm run db:bootstrap` (baseline → 113 migration `applied` → yalnız yeni migration'lar). PGlite testi `schema-baseline`: boş DB 0 hata, 17 tür tam-şema parmak izi üretimle birebir, Step 1 21 grup eşit, 113/113 migration kayıtlı. Üretime yazma yok; tarihsel migration değişmedi; `cfo_secret` verisi okunmadı. `docs/BASELINE-CAPTURE.md`.
 

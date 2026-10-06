@@ -33,7 +33,30 @@ Not: kod `public=true` bucket'ı reddeder; geri alma uygulama indirmesini de kap
 - `cfo_secret.TMP_CFO_FILES_VERIFY_TOKEN`: değeri boşaltıldı (satır duruyor).
 - `cfo_google` (#156) merge edildi; `_prisma_migrations` checksum'ları repoyla eşit (20261005290000 / 300000 / 20261006110000 doğrulandı).
 
-## Backlog (security — baseline sonrası, bu aşamada yeni iş başlatılmaz)
+## Backlog (security) — 1-3 KAPANDI (defense-in-depth bölümü)
 1. `cfo_acceptance_reader → cfo_google` EXECUTE **least-privilege incelemesi** (şu an korunuyor; fonksiyon sır döndürmez ama reader'ın Google verisini tetikleyebilmesi gerekli mi?).
 2. 56 tablo anon/authenticated grant **defense-in-depth** (`ANON-GRANTS-FUNCTIONS-AUDIT.md` §5).
 3. Kalan **çalıştırılabilir fonksiyon** yetki incelemesi (10 analiz fonksiyonu anon EXECUTE, `fm_*` 2 salt-okunur, pgvector eklenti fonksiyonları).
+
+## Defense-in-depth — UYGULANDI (2026-10-06, migration `20261006120000_security_defense_in_depth`, kullanıcı onaylı)
+Üretimde uygulandı + `_prisma_migrations` kaydı (checksum repo ile eşit). Katalog doğrulaması (öncesi → sonrası):
+
+| Kriter | Sonuç |
+|---|---|
+| anon/authenticated → public tablo/view/matview erişimi | 56 tablo → **0** |
+| anon/authenticated → sequence ACL girdisi | 90 → **0** |
+| anon/authenticated → kendi fonksiyon EXECUTE | 19 → **0** |
+| `cfo_google` reader EXECUTE | **reddedildi**; postgres + service_role **çalışıyor** (`search_console`, `ga4_accounts`) |
+| postgres (uygulama) davranışı | değişmedi: sahip rol; `cfo_nakit_projeksiyon(30)` 31 satır, `cfo_onucus()` 21 satır, `fm_stock_freshness` FRESH |
+| service_role davranışı | değişmedi: 31/31 fonksiyonda EXECUTE; service_role+reader tablo yetki özeti hash'i öncesi=sonrası (`cfc28c44…`) |
+| CFO reader salt-okunur akışı | değişmedi: 129 ilişki SELECT (öncesi=sonrası); 17 salt-okunur fonksiyon açıkça verildi; yalnız `cfo_google` + 2 trigger fonksiyonu reader'dan çıktı |
+| RLS kapalı public tablo | **0** |
+| anon/authenticated/public'e açık policy | **0** |
+| temiz DB (baseline + migration) ↔ üretim parmak izi | **17/17 grup birebir** (acl 328, fnacl 48, seqacl 15 güncellendi); Step 1 21 grup birebir |
+| finansal veri değişikliği | **0** (yalnız GRANT/REVOKE) |
+| anonim REST (anon key) | tablo/view okuma, insert ve RPC → **401 / 42501 permission denied** |
+
+CI kapısı: `__tests__/security-defense-in-depth.test.ts` (temiz DB üzerinde: anon/auth ilişki/sequence/fonksiyon = 0, RLS-off = 0, geniş policy = 0, service_role eksik = 0, reader salt-okunur kümesi korunur). Yeni bir migration anon'a açık nesne bırakırsa CI kırılır.
+
+## Faz kapanışı
+**Security hardening fazı KAPANDI (2026-10-06).** Kalan maddeler (yeni kritik açık çıkmadıkça sonraya): geçmiş cfo-files maruziyeti **bilinmiyor**; `tmp-cfo-files-verify` Edge Function (410) panelden silinebilir; `cfo_secret`'teki düz metin kimlik bilgilerinin ortam değişkenlerine taşınması (CFO-GOREV açık riski); pgvector eklentisinin `public` şemasından taşınması.
