@@ -74,7 +74,10 @@ async function main() {
     // service_role relation privileges untouched (only anon/authenticated entries removed)
     const strip = (a: string) => a.replace(/(anon|authenticated)=[a-zA-Z]*\/[a-z_]+,?/g, "").replace(/,}/g, "}");
     const svcTblAfter = await q<{ a: string }>(`select string_agg(c.relname||':'||coalesce(c.relacl::text,''),'|' order by c.relname) a from pg_class c where c.relnamespace='public'::regnamespace and c.relkind in ('r','p','v','m','S')`);
-    assert.equal(strip(svcTblAfter[0].a), strip(svcTblBefore[0].a), "non-anon relation ACLs must be unchanged");
+    // compare the relations that existed before (newer migrations may add relations of their own)
+    const acls = (a: string) => new Map(a.split("|").map(e => [e.slice(0, e.indexOf(":")), strip(e.slice(e.indexOf(":") + 1))] as const));
+    const before = acls(svcTblBefore[0].a), after = acls(svcTblAfter[0].a);
+    for (const [rel, acl] of before) assert.equal(after.get(rel), acl, `non-anon relation ACL changed: ${rel}`);
 
     // idempotent
     await db.exec(MIG);

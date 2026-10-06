@@ -163,6 +163,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
+- [ ] **AI CFO V2 Step 3 — AI runner:** Goal Engine çıktısını (fm_memory_goal) okuyan LLM katmanı; ayrı onayla başlar.
+
 - [ ] **Güvenlik (sonraya, kritik değil):** `cfo_secret` düz metin kimlik bilgilerini ortam değişkenlerine taşı; pgvector'ü `public` dışına taşı; `tmp-cfo-files-verify` Edge Function'ı panelden sil.
 
 - [ ] **Baseline sonrası (onay bekliyor):** `__tests__/migration-clean-apply.test.ts` kaldırılıp yerine `schema-baseline` (plan §4); `schema.prisma` ↔ üretim sürüklenme (3 tablo) hizalama migration'ı; her yeni üretim migration'ından sonra baseline yenileme politikası (`docs/BASELINE-CAPTURE.md`).
@@ -245,6 +247,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+- **2026-10-06 — AI CFO V2 Step 2: Goal Engine v1:** migration `20261006130000_fm_goal_engine` (üretimde + kayıtlı), `lib/fm/goal-engine.ts`, `lib/fm/goals.ts`, `lib/cfo-agent/workflow*.ts` (goals aşaması + devralma), `/cfo/calisan` paneli, test `fm-goal-engine`; `security-defense-in-depth` testi yeni ilişkilere toleranslı; parmak izleri üretimden güncellendi. İlk sonuç: ciro OFF_TRACK (B), borç NOT_MET (C), servet OFF_TRACK (C), taban OFF_TRACK (D). Belge `GOAL-ENGINE.md`.
 
 - **2026-10-06 — Güvenlik defense-in-depth (faz kapanışı):** migration `20261006120000_security_defense_in_depth` üretime uygulandı + kayıtlı: anon/authenticated → 56 tablo/90 sequence ACL/19 fonksiyon = 0; `cfo_google` reader kapalı; reader 17 salt-okunur fonksiyon açık; service_role/postgres/reader tablo yetkileri değişmedi; RLS-off 0. Parmak izi (baseline + Step 1) üretimle birebir güncellendi; baseline testi artık bekleyen migration'ları uygulayıp karşılaştırıyor. Test `security-defense-in-depth` (CI). Security hardening fazı kapandı.
 

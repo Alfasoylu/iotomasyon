@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO V2 Step 2 — Goal Engine v1 (2026-10-06)
+- Deterministik hedef motoru: aylık ciro (USD→TCMB), toplam borç < 5M TL, servet (USD, tarihli), net pozisyon tabanı. `fm_goal` (sürümlü tanım), `fm_goal_observation` (idempotent geçmiş), `fm_goal_evaluate`, `fm_memory_goal`; `fm_memory_refresh_daily` satış/bakiye hafızasını her döngüde (6 saat aralıkla) tazeler. Bilinmeyen = UNKNOWN (bayat hafıza, eksik kur); kalite = girdilerin en kötüsü; uzun ufuklu projeksiyon üretilmez. CFO iş akışı `goals` çıktısını devraldı, `/cfo/calisan` paneli gösteriyor. Migration `20261006130000_fm_goal_engine` üretimde uygulandı ve doğrulandı (mutabakat farkı 0; temiz DB ↔ üretim parmak izi birebir). Test `fm-goal-engine`. Belge `docs/GOAL-ENGINE.md`.
+
 ### Güvenlik — defense-in-depth, faz kapanışı (2026-10-06)
 - anon/authenticated'ın public tablo/view/sequence yetkileri ve kendi fonksiyonlarda PUBLIC/anon/authenticated EXECUTE kaldırıldı; service_role açıkça korundu; CFO reader'ın salt-okunur fonksiyonları açıkça verildi; `cfo_google` reader'dan kapatıldı. Üretimde uygulandı ve katalogla doğrulandı (anon/auth erişimi 0, RLS-off 0, service_role/reader tablo yetkileri değişmedi, anonim REST 401). Temiz DB ↔ üretim parmak izi birebir. Migration `20261006120000_security_defense_in_depth`, test `security-defense-in-depth`.
 

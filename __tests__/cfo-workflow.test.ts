@@ -22,7 +22,18 @@ async function main(){
   assert.deepEqual(operating.questions.map(q=>q.sku),['MISSING']);
   const context={asOf:'2026-10-04T10:00:00.000Z',operating,cash:{cash:m(5000),banksFresh:false,totalCardDebt:m(1000),minimumProjectedPosition:m(-500),summaries:[]},sales:{last30Days:{complete:false,grossRevenue:m(200)}},notebook:{notes:[]}} as unknown as WorkingContext;
   const plan=planCfoWork(context,{usdTryRate:10,monthlyRevenueTargetUsd:100000,netPositionFloorTry:-400});
-  assert.equal(plan.goals.progressPct,null);assert.equal(plan.goals.profitTry,null);assert.equal(plan.goals.totalDebtTry,null);
+  // Goals come only from the Goal Engine; without an engine result nothing is inferred from settings or partial sales.
+  assert.deepEqual(plan.goals,{engine:'fm_goal_engine',available:false,asOf:null,memoryRefresh:null,unavailable:'not_run',items:[]});
+  assert.deepEqual(planCfoWork({...context,goalEngine:{ok:false,stage:'evaluate',code:'P2010'}},{}).goals.unavailable,'evaluate:P2010');
+  const engineRow={goal_key:'revenue_month_usd',goal_version:1,kind:'revenue_month',title:'Aylık ciro hedefi',target_value:'100000.00',target_currency:'USD',deadline:null,
+    as_of:new Date('2026-10-11'),period_start:new Date('2026-10-01'),period_end:'2026-10-31',state:'ON_TRACK',observed_value_try:'1500000.00',observed_on:'2026-10-10',
+    target_value_try:'4200000.00',fx_usd_try:'42.0000',fx_month:'2026-09-01',progress_pct:'35.71',gap_try:'2700000.00',current_rate_try_per_day:'150000.00',
+    required_rate_try_per_day:'128571.43',projected_value_try:'4650000.00',projected_on:'2026-10-31',grade:'B',flags:['goal_fx_prior_month']};
+  const engineGoals=planCfoWork({...context,goalEngine:{ok:true,asOf:'2026-10-11',refresh:'recent',rows:[engineRow,{...engineRow,goal_key:'debt_below_5m_try',state:'BOGUS',grade:'X',flags:null}]}},{}).goals;
+  assert.equal(engineGoals.available,true);assert.deepEqual(engineGoals.items.map(g=>g.key),['debt_below_5m_try','revenue_month_usd']);
+  assert.equal(engineGoals.items[1].targetTry,4200000);assert.equal(engineGoals.items[1].periodStart,'2026-10-01');assert.equal(engineGoals.items[1].state,'ON_TRACK');
+  assert.equal(engineGoals.items[0].state,'UNKNOWN','unknown engine state is never promoted');assert.equal(engineGoals.items[0].grade,'U');
+  assert(!JSON.stringify(engineGoals).includes('evaluated_at'),'goal observation must stay deterministic across unchanged cycles');
   assert(plan.questions.some(q=>q.sku==='MISSING'));
   assert(!plan.items.some(i=>i.sku==='VIRTUAL'));
   assert(plan.items.find(i=>i.sku==='STOP')?.proposal.includes('Yeni sipariş oluşturma'));
