@@ -9,6 +9,8 @@
 
 ## 2026-10
 
+### Financial Memory — belgelenmiş stok düzeltmeleri / AL-CAM03 (2026-10-06)
+- `20261005280000_fm_stock_adjustment`: `fm_stock_adjustment` (fiziki sayım/manuel düzeltme, kaynak+kanıt+zaman damgaları), `fm_memory_stock_adjusted_company_day` (gözlenen XML ↔ düzeltilmiş ayrı sütunlar, sayım gününden itibaren, `manual_count_adjustment` bayrağı), `fm_stock_reconciliation` (zincir+düzeltme ↔ `Product.stockQuantity`). `fm_memory_stock_company_day` **değişmedi** (yalnız gözlenen). AL-CAM03 +443 (sayım 2026-09-11, Product düzeltmesi 2026-09-12 05:11) EXPLAINED olarak kaydedildi. Üretim: 274 MATCH + 1 MATCH_AFTER_ADJUSTMENT, 0 açıklanamayan fark; fingerprint 21/21 üretimle birebir. Test: `fm-stock-adjustment`.
 ### Güvenlik — anon/authenticated daraltma (2026-10-05)
 - `20261005270000_security_anon_lockdown`: `cfo_xml_urun_degisim`, `cfo_stok_sicrama`, `cfo_backfill_trendyol_pid_20260922` tablolarında RLS açıldı + anon/authenticated yetkileri kaldırıldı (reader SELECT korundu); `cfo_take_snapshot`, `cfo_ay_kazanan_yaz`, `cfo_kilometre_yaz`, `cfo_sicrama_kapat`, `cfo_stok_sicrama_kaydet` fonksiyonlarında anon/authenticated EXECUTE kaldırıldı. Üretimde uygulandı ve katalogdan doğrulandı (RLS'siz public tablo 0). Test: `security-anon-lockdown`.
 

@@ -116,3 +116,11 @@ toplam her zaman `stock_unlogged_products_excluded` bayrağıyla okunur; kalite 
 5 metrik (cash/debt/receivables/net_capital/inventory_value). v1 değerleri hafızaya girmez (ham tabloda durur). Snapshot'ı olmayan gün (örn. 09-19, 09-27/28) satırsız = bilinmiyor.
 **Banka hareketinden nakit türetilmedi:** aynı Ziraat hareketleri iki kez yüklü (manuel id 53-68 ve ekstre id 1593+), kredi/vadesiz alt hesaplar tek `banka` altında karışık,
 ve 2026-10-03 toplamı snapshot nakdiyle uyuşmuyor (232.637 vs 72.484). Hesap kimliği temizlenmeden bu seri üretilmez.
+
+## Stok: gözlenen ↔ düzeltilmiş (2026-10-06)
+
+`fm_stock_company_day` / `fm_memory_stock_company_day` yalnız **XML zincirinde gözlenen** stoktur ve değişmez. Fiziki sayım/manuel düzeltmeler `fm_stock_adjustment`'ta
+kaynak ve kanıtla (economic_date = sayım günü, applied_at = Product'ın güncellendiği an) tutulur; `fm_memory_stock_adjusted_company_day` iki gerçeği **ayrı sütunlarda** verir
+(`units_observed_xml`, `units_adjustments_cum`, `units_adjusted`) ve düzeltme içeren günlerde `manual_count_adjustment` bayrağı koyar. Düzeltme sayım gününden **öncesine uygulanmaz**
+(farkın ne zaman doğduğu bilinmiyor). `fm_stock_reconciliation` ürün bazında `MATCH` / `MATCH_AFTER_ADJUSTMENT` / `UNEXPLAINED` verir. AL-CAM03: 1.497 → 1.940 (+443), sayım 2026-09-11,
+Product güncellemesi 2026-09-12 05:11:25, XML'de tek log (2026-06-21); çözüm `EXPLAINED`. Mutabakat `fm_stock_refresh()` çalıştırıldıktan sonra anlamlıdır (bayat hafıza `UNEXPLAINED` üretir).
