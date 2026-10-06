@@ -245,6 +245,9 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ### 2026-10-06 — Stok düzeltme katmanı (AL-CAM03)
 
 `20261005280000_fm_stock_adjustment`, test `fm-stock-adjustment`. Gözlenen (XML) ve düzeltilmiş stok ayrı; sayımdan öncesine geriye uygulama yok. Not: `fm_stock_refresh()` otomatik çalışmıyor — XML senkronundan sonra çağrılmazsa mutabakat `UNEXPLAINED` görünür (bayat hafıza); zamanlama ayrı iş.
+### 2026-10-05 — Güvenlik: anon/authenticated daraltma
+
+`20261005270000_security_anon_lockdown` + test `security-anon-lockdown`; üretimde uygulandı, `_prisma_migrations`'a işlendi. Yeni bulgu: 40 security-definer view anon'a açık (onay bekliyor) — `docs/SCHEMA-DRIFT-REPORT.md` §6.
 
 ### 2026-10-05 — Step 1 kapanışı (parity + kargo + adli analiz)
 
