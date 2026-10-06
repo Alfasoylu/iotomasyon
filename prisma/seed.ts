@@ -147,6 +147,8 @@ const PERMISSIONS = [
 
   // Executive
   { key: "executive.read",              name: "Yönetici Paneli",                 category: "executive" },
+  { key: "marketScout.read",            name: "Market Scout Görüntüleme",        category: "marketScout" },
+  { key: "marketScout.write",           name: "Market Scout Kayıt (manuel)",     category: "marketScout" },
 
   // CFO (Faz 90) — finansal sır. ROLE_DEFAULT_PERMISSIONS'a EKLENMEZ; ADMIN bypass ile erişilir,
   // başka bir role verilecekse UserPermission ile açıkça grant edilir.

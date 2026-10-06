@@ -354,6 +354,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat",
   },
   {
+    href: "/admin/market-scout",
+    label: "Market Scout",
+    iconKey: "search",
+    permission: PERMISSIONS.MARKET_SCOUT_READ,
+    section: "İthalat",
+  },
+  {
     href: "/admin/forecast-v2",
     label: "Tahmin V2 Karşılaştırma",
     iconKey: "chart",

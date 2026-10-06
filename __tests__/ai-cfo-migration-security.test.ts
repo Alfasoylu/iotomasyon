@@ -21,7 +21,9 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: s => db.exec(s), query: <T,>(s: string, p?: unknown[]) => db.query<T>(s, p) });
     for (const m of res.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
-    assert.deepEqual(res.pendingNotInProduction, ["20261005190000_ai_cfo_v1"], "only ai_cfo_v1 is held back from production");
+    // market_scout_foundation (PR3) is also held back (separate approval); it creates only market_* objects and does not affect this check
+    assert.deepEqual(res.pendingNotInProduction, ["20261005190000_ai_cfo_v1", "20261007100000_market_scout_foundation"],
+      "only ai_cfo_v1 and market_scout_foundation are held back from production");
     // production default ACL for objects postgres creates in public (after the security phase)
     await db.exec(`alter default privileges in schema public grant all on tables to service_role;
       alter default privileges in schema public grant all on sequences to service_role;
