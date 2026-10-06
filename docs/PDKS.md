@@ -166,6 +166,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 - [ ] **Güvenlik backlog (baseline sonrası):** `cfo_acceptance_reader → cfo_google` EXECUTE least-privilege incelemesi; kalan çalıştırılabilir fonksiyon yetki incelemesi (`ANON-GRANTS-FUNCTIONS-AUDIT.md` §3).
 - [ ] **Güvenlik defense-in-depth (baseline sonrası):** 56 tabloda anon/authenticated grant revoke + katalog CI kapısı — tasarım `docs/ANON-GRANTS-FUNCTIONS-AUDIT.md` §5; toplu revoke onay bekliyor.
 
+- [ ] **Baseline sonrası (onay bekliyor):** `__tests__/migration-clean-apply.test.ts` kaldırılıp yerine `schema-baseline` (plan §4); `schema.prisma` ↔ üretim sürüklenme (3 tablo) hizalama migration'ı; her yeni üretim migration'ından sonra baseline yenileme politikası (`docs/BASELINE-CAPTURE.md`).
+
 ### Faz 2 (öncelik)
 - [x] **R1–R5 TAMAM** (Artım 1+2+3, main, migration canlıda): self-servis kayıt
   (`/kayit`) + tenant slug + default seed + 30 gün deneme; müşteriye özel link
@@ -244,6 +246,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+- **2026-10-06 — Baseline capture (strateji C, adım 1-2-5):** `scripts/schema-baseline/{inventory.sql,fingerprint.sql,fingerprint.expected.txt,bootstrap.ts,build-seed.sh}`, `prisma/baseline/{2026-10-06.sql,2026-10-06.seed.sql,baseline.json}`, `npm run db:bootstrap`, test `__tests__/schema-baseline.test.ts` (CI'ya eklendi). Boş DB 0 hata; tam-şema parmak izi üretimle birebir (17 tür); 113/113 migration applied kaydı; üretime yazma 0; tarihsel migration değişmedi. Doküman: `docs/BASELINE-CAPTURE.md`. Backlog: `migration-clean-apply.test.ts` baseline kanıtlandıktan sonra kaldırılacak; MarketplaceProductMapping/MonthlyExchangeRate/SupplierProduct sürüklenmesi için `schema.prisma` hizalama migration'ı (ayrı onay).
 
 - **2026-10-06 — cfo-files private + anon denetimi:** migration `20261006100000_cfo_files_private` üretime uygulandı + kayıtlı (bucket public=false, 8 referans private, yedek tablo); `lib/cfo-agent/private-files.ts` (`signedCfoFileUrl`), test `cfo-files-private-migration`, `scripts/verify-cfo-files-private.ts`; dokümanlar ANON-GRANTS-FUNCTIONS-AUDIT, SECURITY-HARDENING-ACCEPTANCE. Backlog: 56 tablo anon grant revoke / defense-in-depth (baseline sonrası; tasarım `ANON-GRANTS-FUNCTIONS-AUDIT.md` §5). Geçmiş cfo-files maruziyeti BİLİNMİYOR.
 - **2026-10-06 — cfo_google kilidi:** üretimde `CFO_GOOGLE_INTERNAL_TOKEN` (cfo_secret) üretildi, Edge Function `cfo-google` v2 (verify_jwt=false + iç sır), `public.cfo_google()` SECURITY DEFINER + EXECUTE daraltma; migration `20261006110000`; `supabase/functions/cfo-google/*`; test `cfo-google-lockdown`; doküman `CFO-GOOGLE-LOCKDOWN.md`. Anonim Edge/RPC 401, yetkili yol çalışıyor.
