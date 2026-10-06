@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO — monitor kilidi hata etiketleri (2026-10-06)
+- `lib/cfo-agent/lock.ts`: kilit hataları artık genel `monitor_failed` yerine sabit, kimlik bilgisi içermeyen etiketlerle döner (`session_lock_not_configured`, `transaction_pooler_not_allowed`, `lock_direct_host_not_reachable_use_session_pooler`, `lock_tls_certificate_error`, `lock_authentication_failed`, `lock_network_connection_failed` …); doğrudan (IPv6) Supabase host'u açıkça reddedilir. Runner bu etiketi `/admin/ai-cfo`'ya döndürür; URI veya ham sürücü hatası dönmez. Test `ai-cfo-runner`.
+
 ### AI CFO — komisyon örneklem kuralı (`alfas-gross-v6`) (2026-10-06)
 - Ölçülen komisyon oranı yalnız `adet_duz=1` ve `guven='YUKSEK'` satırlardan (kopyasız), asOf'a sabit 120 günlük pencerede ve SKU başına en az 10 kabul edilen kayıtla hesaplanır. Önceki kural çok adetli, SET_DUZELTILDI ve (Türkçe karakterli) BILINMIYOR satırları da örnekleme katıyordu. Üretim, son 120 gün: Trendyol'da 5.698 temiz satıra 265 çok adetli + 200 set düzeltmeli + 81 BILINMIYOR satır karışıyordu.
 - Test `ai-cfo-source-mapping`: eski kural 0,19 (karışık), yeni kural 0,18 (yalnız temiz örneklem). Hesap sürümü `alfas-gross-v6`.
