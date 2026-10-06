@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### AI CFO — komisyon örneklem kuralı (`alfas-gross-v6`) (2026-10-06)
+- Ölçülen komisyon oranı yalnız `adet_duz=1` ve `guven='YUKSEK'` satırlardan (kopyasız), asOf'a sabit 120 günlük pencerede ve SKU başına en az 10 kabul edilen kayıtla hesaplanır. Önceki kural çok adetli, SET_DUZELTILDI ve (Türkçe karakterli) BILINMIYOR satırları da örnekleme katıyordu. Üretim, son 120 gün: Trendyol'da 5.698 temiz satıra 265 çok adetli + 200 set düzeltmeli + 81 BILINMIYOR satır karışıyordu.
+- Test `ai-cfo-source-mapping`: eski kural 0,19 (karışık), yeni kural 0,18 (yalnız temiz örneklem). Hesap sürümü `alfas-gross-v6`.
+
 ### AI CFO adım 8A — `ai_cfo_v1` üretimde (2026-10-06)
 - `20261005190000_ai_cfo_v1` üretime kontrollü SQL ile uygulandı (`postgres` rolü, tek transaction, `_prisma_migrations` checksum dosyayla aynı). `prisma migrate deploy` kullanılmadı; `20261007100000_market_scout_foundation` uygulanmadı.
 - Doğrulama: `cfo_run`/`cfo_insight`/`cfo_usage` RLS açık, politika 0, anon/authenticated/PUBLIC/reader yetkisi yok, service_role erişimi var; parmak izi AI CFO nesneleri hariç 17/17 grup önceki ölçümle aynı (+30 nesne: 3 tablo, 12 kısıt, 9 indeks).
