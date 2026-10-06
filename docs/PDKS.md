@@ -253,6 +253,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-07 — AI CFO elle çalıştırma dilimi:** elle koşular saat yerine 20 dk dilimde idempotent (saatte 3); cron saatlik kalır. `lib/cfo-agent/runner.ts` (`runPeriodKey`), `ai-trigger.ts`, `app/api/admin/ai-cfo/runner/route.ts`, test `ai-cfo-runner`.
 - **2026-10-07 — AI CFO STEP C (deterministik gölge) kabulü:** ilk üretim koşusu `cmux810…` (`ai_disabled`): 38 anomali → kullanıcı 37 gerçek / 1 yanlış (FBA STOCKOUT) işaretledi; 13 kontrollük gölge hafta yerine bu inceleme kabul edildi. Düzeltmeler `lib/cfo-agent/snapshot.ts` (FBA stok günü `fba_inventory_unknown`; komisyon `outliers` yalnız uygun örneklem), test `ai-cfo-source-mapping`. Sırada STEP E/F (AI kapalı bütçe/sağlayıcı doğrulaması → tek onaylı AI koşusu), ayrı onayla.
 - **2026-10-06 — AI CFO monitor kilidi teşhisi:** ilk elle çalıştırma `monitor_failed` döndü (kayıt açılmadan, kilit bağlantısında). `lock.ts` `LockError` sabit etiketleri + doğrudan host reddi; `runner.ts` etiketi döndürür; test `ai-cfo-runner`. Muhtemel neden: kilit URL'sinde `sslmode=require` (pg bunu `verify-full` sayar; Supabase CA'sı Node'da güvenilir değil).
 - **2026-10-06 — AI CFO komisyon örneklem kuralı (`alfas-gross-v6`):** `lib/cfo-agent/snapshot.ts` komisyon örneklemi `adet_duz=1` + `guven='YUKSEK'` + kopyasız + asOf'a sabit 120 gün + SKU ≥10 kayıt; `types.ts`/`calculations.ts` sürüm v6; test `ai-cfo-source-mapping` (çok adetli satır karışımı 0,19 → 0,18). Gölge hafta (STEP C) öncesi şart.

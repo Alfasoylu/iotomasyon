@@ -4,7 +4,7 @@
  * Çalıştır: node --conditions=react-server --import tsx __tests__/ai-cfo-runner.test.ts
  */
 import assert from "node:assert/strict";
-import { runCfoMonitor, runCfoMorningBrief, type RunnerDependencies } from "../lib/cfo-agent/runner";
+import { runCfoMonitor, runCfoMorningBrief, type RunnerDependencies, runPeriodKey } from "../lib/cfo-agent/runner";
 import { validateAiOutput } from "../lib/cfo-agent/validate-ai-output";
 import { goalAnomalies } from "../lib/cfo-agent/goal-anomalies";
 import { getCfoConfig } from "../lib/cfo-agent/config";
@@ -192,6 +192,18 @@ async function main() {
     const failedRun = await runCfoMonitor({ ...base, store: fakeStore().store, lock: { async acquire() { throw new LockError("lock_tls_certificate_error"); }, async release() {} } });
     assert.deepEqual([failedRun.status, failedRun.error, failedRun.runId], ["failed", "lock_tls_certificate_error", null], "no run row, diagnostic tag returned");
     assert.ok(!JSON.stringify(failedRun).includes("secret-pw"));
+  });
+
+  await check("elle çalıştırma: saatte 3 (20 dk dilim); zamanlanmış koşu saatte 1 kalır", async () => {
+    const st = fakeStore(), at = (min: number) => new Date(NOW.getTime() + min * 60000);
+    const manual = async (min: number) => (await runCfoMonitor({ ...base, now: at(min), store: st.store, manual: true })).status;
+    assert.notEqual(await manual(5), "duplicate"); assert.notEqual(await manual(25), "duplicate"); assert.notEqual(await manual(45), "duplicate");
+    assert.equal(await manual(10), "duplicate", "same 20-minute slot");
+    assert.notEqual((await runCfoMonitor({ ...base, now: at(50), store: st.store })).status, "duplicate", "scheduled key is separate from manual slots");
+    assert.equal((await runCfoMonitor({ ...base, now: at(55), store: st.store })).status, "duplicate", "scheduled stays once per hour");
+    assert.deepEqual([runPeriodKey("monitor", { date: "2026-10-07", hour: "2026-10-07T02", minutes: 2 * 60 + 41 }, true),
+      runPeriodKey("morning", { date: "2026-10-07", hour: "2026-10-07T10", minutes: 600 }), runPeriodKey("monitor", { date: "2026-10-07", hour: "2026-10-07T02", minutes: 130 })],
+      ["2026-10-07T02:m2", "2026-10-07", "2026-10-07T02"]);
   });
 
   await check("sabah özeti 09:30 İstanbul'dan önce çalışmaz; sonra bağlam + hedeflerle çalışır", async () => {

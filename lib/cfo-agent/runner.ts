@@ -22,7 +22,17 @@ export type RunnerDependencies = {
   now?: Date; config?: CfoConfig; lock?: MonitorLock; store?: CfoStore; provider?: CfoReasoningProvider | null;
   snapshot?: () => Promise<CfoAgentSnapshot>; goals?: () => Promise<GoalRow[]>;
   queues?: (anomalies: Anomaly[]) => Promise<Map<string, string[]>>; memory?: (anomalies: Anomaly[]) => Promise<MemoryItem[]>;
+  /** Manual run from /admin/ai-cfo: idempotency per 20-minute slot (3 per hour) instead of the scheduled hour/day. */
+  manual?: boolean;
 };
+
+/** Idempotency period of a run. Scheduled: monitor per Istanbul hour, morning per day (a re-delivered cron never runs twice).
+ *  Manual: 20-minute slot of the hour (`<hour>:m0|m1|m2`) → at most 3 manual runs per hour; cost stays bounded by the
+ *  daily call limit, the monthly budget and the per-anomaly cooldown. */
+export function runPeriodKey(type: RunType, period: { date: string; hour: string; minutes: number }, manual = false): string {
+  if (manual) return `${period.hour}:m${Math.floor((period.minutes % 60) / 20)}`;
+  return type === "morning" ? period.date : period.hour;
+}
 export type RunnerOutcome = { status: string; runId?: string | null; insights?: number; error?: string };
 
 export async function runCfoMonitor(deps: RunnerDependencies = {}) { return run("monitor", deps); }
@@ -45,7 +55,7 @@ async function run(type: RunType, deps: RunnerDependencies): Promise<RunnerOutco
   let id: string | null = null, usageId: string | null = null, usage: UsageWrite | undefined;
   try {
     if (!await lock.acquire()) return { status: "locked" };
-    id = await store.begin(type, type === "morning" ? period.date : period.hour, now);
+    id = await store.begin(type, runPeriodKey(type, period, deps.manual), now);
     if (!id) return { status: "duplicate" };
     const snapshot = await (deps.snapshot ?? (() => buildCfoAgentSnapshot({ now, config })))();
     const goals = goalAnomalies(await (deps.goals ?? readGoals)(), now);
