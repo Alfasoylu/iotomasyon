@@ -9,6 +9,14 @@
 
 ## 2026-10
 
+### AI CFO — test/CI tamamlama (V1 adım 6/9) (2026-10-06)
+- Elle çalıştırma kapısı saf fonksiyona ayrıldı (`lib/cfo-agent/runner-request.ts`); gövde yalnız yetkili istekte okunur, beyan + gerçek bayt sınırı. Test `ai-cfo-runner-route`.
+- `ai-cfo-access` (parked daldan): reader bağlantı seçenekleri ve sabit hata etiketleri.
+- `ai-cfo-migration-security`: üretim kopyası + üretimin varsayılan ACL'i üzerinde `ai_cfo_v1` → RLS deny-all, anon/authenticated/PUBLIC/reader yetkisi 0, idempotent; negatif kontrol.
+- `scripts/ai-cfo-migration-check.sql`: adım 8 öncesi/sonrası salt-okunur operatör kontrolü (testte doğrulanıyor; üretimde "önce" durumu 2026-10-06 doğrulandı: rol postgres, ACL anon'a kapalı, tablo/kayıt yok).
+- Build smoke: AI CFO cron route'ları fail-closed ve bayraklar kapalıyken DB'siz `disabled`; runner yetkisiz 401; `/admin/ai-cfo` oturumsuz `/login`.
+- Doğrulama: tsc, eslint, yerel `next build` + smoke, ilgili PGlite testleri. Üretim DB değişmedi.
+
 ### AI CFO — zamanlama + /admin/ai-cfo (V1 adım 5/9) (2026-10-06)
 - Monitor günlük XML/Trendyol cron'larında CFO döngüsünden sonra `after()` ile çalışır (Hobby: yeni cron yok); `/api/cron/ai-cfo-monitor` ve `/api/cron/ai-cfo-morning` (CRON_SECRET).
 - `/admin/ai-cfo` kontrol merkezi (kapılar, hedefler, snapshot, uyarılar, içgörüler, kullanım; kimlik bilgisi yalnız var/yok) + elle çalıştırma API'si (ADMIN+CFO_WRITE, aynı origin, production). Tablolar yokken `installed:false`.
