@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO runner — V1 yeniden inşası adım 4/9 + Goal Engine (2026-10-06)
+- `lib/cfo-agent/runner.ts` (monitor/sabah), `store.ts`, `lock.ts`, `memory.ts`, `validate-ai-output.ts`, `goal-anomalies.ts`. Goal Engine hedefleri (OFF_TRACK/AT_RISK/NOT_MET, kalite A–D, taze) anomaly olarak modele gider; kanıt dışı sayı, değişmiş severity/kategori, uydurma kanıt reddedilir. Hiçbir route/cron'dan çağrılmıyor, bayraklar kapalı; üretimde değişiklik yok. Testler `ai-cfo-runner`, `ai-cfo-store` (CI). Baseline bootstrap düzeltmesi: üretimde olmayan `ai_cfo_v1` artık yanlışlıkla "uygulandı" kaydedilmiyor (`notAppliedInProduction`). Belge `docs/AI-CFO-RUNNER.md`.
+
 ### AI CFO V2 Step 2 — Goal Engine v1 (2026-10-06)
 - Deterministik hedef motoru: aylık ciro (USD→TCMB), toplam borç < 5M TL, servet (USD, tarihli), net pozisyon tabanı. `fm_goal` (sürümlü tanım), `fm_goal_observation` (idempotent geçmiş), `fm_goal_evaluate`, `fm_memory_goal`; `fm_memory_refresh_daily` satış/bakiye hafızasını her döngüde (6 saat aralıkla) tazeler. Bilinmeyen = UNKNOWN (bayat hafıza, eksik kur); kalite = girdilerin en kötüsü; uzun ufuklu projeksiyon üretilmez. CFO iş akışı `goals` çıktısını devraldı, `/cfo/calisan` paneli gösteriyor. Migration `20261006130000_fm_goal_engine` üretimde uygulandı ve doğrulandı (mutabakat farkı 0; temiz DB ↔ üretim parmak izi birebir). Test `fm-goal-engine`. Belge `docs/GOAL-ENGINE.md`.
 

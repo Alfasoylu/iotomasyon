@@ -22,7 +22,7 @@ async function main() {
       alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;`);
     const client = { exec: (s: string) => db.exec(s), query: <T,>(s: string, p?: unknown[]) => db.query<T>(s, p) };
     const res = await bootstrap(client);
-    assert.ok(res.pending.includes("20261006120000_security_defense_in_depth"), "migration must be newer than the baseline cutoff");
+    assert.ok(res.pendingInProduction.includes("20261006120000_security_defense_in_depth"), "migration must be newer than the baseline cutoff");
     await db.exec("set search_path = public");
     const q = async <T,>(s: string) => (await db.query<T>(s)).rows;
     const OWN_FN = `from pg_proc p where p.pronamespace='public'::regnamespace and p.prokind in ('f','p') and p.proowner=(select oid from pg_roles where rolname=current_user)
@@ -34,7 +34,7 @@ async function main() {
     const readerBefore = await q<{ f: string; ro: boolean }>(`select p.oid::regprocedure::text f, (p.provolatile in ('s','i') and p.prorettype<>'trigger'::regtype and p.prokind='f') ro ${OWN_FN} and has_function_privilege('cfo_acceptance_reader',p.oid,'execute')`);
     const svcTblBefore = await q<{ a: string }>(`select string_agg(c.relname||':'||coalesce(c.relacl::text,''),'|' order by c.relname) a from pg_class c where c.relnamespace='public'::regnamespace and c.relkind in ('r','p','v','m','S')`);
 
-    for (const m of res.pending) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    for (const m of res.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     await db.exec("set search_path = public");
 
     const gates = async () => (await q<Record<string, number>>(`select

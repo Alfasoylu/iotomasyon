@@ -26,6 +26,12 @@ npm run db:bootstrap -- --url=postgres://...   # boş veritabanı; DIRECT_URL/DA
 
 Cutoff: `20261006110000_cfo_google_lockdown` (baseline, bu migration'lar üretimde uygulandıktan sonra çekildi: `cfo_files_private` + `cfo_google_lockdown` dahil).
 
+### Üretimde olmayan migration'lar (`notAppliedInProduction`)
+`prisma/baseline/baseline.json` → `notAppliedInProduction` (şu an `20261005190000_ai_cfo_v1`): repoda olan ama üretime bilerek **uygulanmamış**
+(ayrı onay bekleyen) migration'lar. Bootstrap bunları kaydetmez; `pending` olarak raporlar (`prisma migrate deploy` uygular). Parmak izi
+karşılaştırması yalnız üretimin sahip olduğu migration'larla yapılır; ardından bu migration'ların temiz uygulandığı ayrıca test edilir.
+(Düzeltme 2026-10-06: önceki sürüm `ai_cfo_v1`'i yanlışlıkla "uygulandı" kaydediyordu; tablolar baseline'da olmadığı için temiz DB'de hiç oluşmayacaktı.)
+
 ## Yeniden üretme (yeni baseline)
 1. Salt-okunur: `psql "$PROD_URL" -X -At -f scripts/schema-baseline/inventory.sql > prisma/baseline/<tarih>.sql` (JWT benzeri sabitler `REDACTED` olur; tablo verisi okunmaz).
 2. `fingerprint.sql`'i üretimde çalıştır → `fingerprint.expected.txt`'e yaz; `baseline.json`'ı güncelle (`cutoffMigration` = üretimde uygulanmış son migration).

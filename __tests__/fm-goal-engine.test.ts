@@ -22,8 +22,8 @@ async function main() {
       alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
       alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;`);
     const res = await bootstrap({ exec: (s: string) => db.exec(s), query: <T,>(s: string, p?: unknown[]) => db.query<T>(s, p) });
-    assert.ok(res.pending.includes("20261006130000_fm_goal_engine"));
-    for (const m of res.pending) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    assert.ok(res.pendingInProduction.includes("20261006130000_fm_goal_engine"));
+    for (const m of res.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     await db.exec("set search_path = public");
     const q = async <T,>(s: string) => (await db.query<T>(s)).rows;
     const goals = async () => Object.fromEntries((await q<Goal>(`select goal_key, goal_version, state, grade, flags, observed_value_try, target_value_try, progress_pct, gap_try, current_rate_try_per_day, required_rate_try_per_day, projected_value_try, projected_on::text projected_on, period_start::text period_start, inputs from fm_memory_goal`)).map(g => [g.goal_key, g]));
