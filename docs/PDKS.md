@@ -253,6 +253,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-07 — AI CFO STEP F engeli: karar hafızası `regclass`:** ilk onaylı AI koşusu `cmuxa4cc…` snapshot sonrası `monitor_failed` (Prisma: "Failed to deserialize column of type 'regclass'", `retrieveRelevantMemory`). `lib/cfo-agent/memory.ts` `::text` cast; `__tests__/ai-cfo-store.test.ts` regresyon. Sağlayıcı çağrılmadı, `cfo_usage` yazılmadı.
 - **2026-10-07 — AI CFO elle çalıştırma dilimi:** elle koşular saat yerine 20 dk dilimde idempotent (saatte 3); cron saatlik kalır. `lib/cfo-agent/runner.ts` (`runPeriodKey`), `ai-trigger.ts`, `app/api/admin/ai-cfo/runner/route.ts`, test `ai-cfo-runner`.
 - **2026-10-07 — AI CFO STEP C (deterministik gölge) kabulü:** ilk üretim koşusu `cmux810…` (`ai_disabled`): 38 anomali → kullanıcı 37 gerçek / 1 yanlış (FBA STOCKOUT) işaretledi; 13 kontrollük gölge hafta yerine bu inceleme kabul edildi. Düzeltmeler `lib/cfo-agent/snapshot.ts` (FBA stok günü `fba_inventory_unknown`; komisyon `outliers` yalnız uygun örneklem), test `ai-cfo-source-mapping`. Sırada STEP E/F (AI kapalı bütçe/sağlayıcı doğrulaması → tek onaylı AI koşusu), ayrı onayla.
 - **2026-10-06 — AI CFO monitor kilidi teşhisi:** ilk elle çalıştırma `monitor_failed` döndü (kayıt açılmadan, kilit bağlantısında). `lock.ts` `LockError` sabit etiketleri + doğrudan host reddi; `runner.ts` etiketi döndürür; test `ai-cfo-runner`. Muhtemel neden: kilit URL'sinde `sslmode=require` (pg bunu `verify-full` sayar; Supabase CA'sı Node'da güvenilir değil).
