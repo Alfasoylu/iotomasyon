@@ -2,7 +2,9 @@
  * db:bootstrap — reproduce the production public schema on an EMPTY PostgreSQL without replaying history.
  *   1. apply prisma/baseline/<date>.sql (schema only) + <date>.seed.sql (dictionary rows copied from migrations)
  *   2. register every prisma/migrations directory up to the baseline cutoff as applied in _prisma_migrations (except
- *      baseline.json notAppliedInProduction: migrations production deliberately does not have yet stay pending)
+ *      baseline.json notAppliedInProduction: migrations production deliberately does not have yet stay pending, and
+ *      appliedAfterCapture: older-named migrations production applied AFTER the baseline capture — they are not in the
+ *      baseline SQL, so they stay pending and are applied after the newer ones, in production's apply order)
  *      (same semantics as `prisma migrate resolve --applied`: sha256 of migration.sql, finished_at set, 1 step)
  *   3. report newer migrations; the CLI then runs `prisma migrate deploy` for them (skip with --skip-deploy)
  * Never run against production: the CLI refuses Supabase hosts and any non-empty public schema.
@@ -18,7 +20,7 @@ export interface SqlClient {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 }
 
-export interface BaselineConfig { baselineFile: string; seedFile: string; cutoffMigration: string; notAppliedInProduction?: string[] }
+export interface BaselineConfig { baselineFile: string; seedFile: string; cutoffMigration: string; notAppliedInProduction?: string[]; appliedAfterCapture?: string[] }
 
 export function readBaselineConfig(root = "."): BaselineConfig {
   return JSON.parse(readFileSync(join(root, "prisma/baseline/baseline.json"), "utf8")) as BaselineConfig;
@@ -51,14 +53,34 @@ export async function bootstrap(client: SqlClient, opts: { root?: string; allowN
   await client.exec(readFileSync(join(root, "prisma/baseline", cfg.seedFile), "utf8"));
   const notApplied = new Set(cfg.notAppliedInProduction ?? []);
   for (const m of notApplied) if (!all.includes(m)) throw new Error(`notAppliedInProduction ${m} is not in prisma/migrations`);
-  const registered = all.filter(m => m <= cfg.cutoffMigration && !notApplied.has(m));
+  const late = cfg.appliedAfterCapture ?? [];
+  for (const m of late) if (!all.includes(m) || notApplied.has(m)) throw new Error(`appliedAfterCapture ${m} is not in prisma/migrations or is also notAppliedInProduction`);
+  const registered = all.filter(m => m <= cfg.cutoffMigration && !notApplied.has(m) && !late.includes(m));
   for (const m of registered) {
     await client.query(
       "insert into public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) values ($1, $2, now(), $3, null, null, now(), 1)",
       [randomUUID(), migrationChecksum(root, m), m]);
   }
   const pending = all.filter(m => !registered.includes(m));
-  return { registered, pending, pendingInProduction: pending.filter(m => !notApplied.has(m)), pendingNotInProduction: pending.filter(m => notApplied.has(m)) };
+  // production apply order: newer-than-cutoff migrations first, then the late ones in the order baseline.json lists them
+  const pendingInProduction = [...pending.filter(m => !notApplied.has(m) && !late.includes(m)), ...late];
+  return { registered, pending, pendingInProduction, pendingNotInProduction: pending.filter(m => notApplied.has(m)) };
+}
+
+// appliedAfterCapture migrations were applied in production by `postgres`, whose default ACL in public grants nothing to
+// anon/authenticated (pg_default_acl read 2026-10-06); the reproduction switches to that default ACL before applying them.
+export const LATE_APPLY_DEFAULT_ACL = `alter default privileges in schema public revoke all on tables from anon, authenticated;
+  alter default privileges in schema public revoke all on functions from anon, authenticated;
+  alter default privileges in schema public revoke all on sequences from anon, authenticated;`;
+
+/** Applies result.pendingInProduction in production order (late migrations last, under the production applier's default ACL). */
+export async function applyPendingInProduction(client: SqlClient, result: BootstrapResult, root = "."): Promise<void> {
+  const late = new Set(readBaselineConfig(root).appliedAfterCapture ?? []);
+  let switched = false;
+  for (const m of result.pendingInProduction) {
+    if (late.has(m) && !switched) { await client.exec(LATE_APPLY_DEFAULT_ACL); switched = true; }
+    await client.exec(readFileSync(join(root, "prisma/migrations", m, "migration.sql"), "utf8"));
+  }
 }
 
 function refuseProduction(url: string): void {

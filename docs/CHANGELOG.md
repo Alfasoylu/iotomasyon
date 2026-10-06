@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### AI CFO adım 8A — `ai_cfo_v1` üretimde (2026-10-06)
+- `20261005190000_ai_cfo_v1` üretime kontrollü SQL ile uygulandı (`postgres` rolü, tek transaction, `_prisma_migrations` checksum dosyayla aynı). `prisma migrate deploy` kullanılmadı; `20261007100000_market_scout_foundation` uygulanmadı.
+- Doğrulama: `cfo_run`/`cfo_insight`/`cfo_usage` RLS açık, politika 0, anon/authenticated/PUBLIC/reader yetkisi yok, service_role erişimi var; parmak izi AI CFO nesneleri hariç 17/17 grup önceki ölçümle aynı (+30 nesne: 3 tablo, 12 kısıt, 9 indeks).
+- Repo senkronu: `baseline.json` `appliedAfterCapture` (bootstrap geç migration'ları üretim sırasıyla sona koyar), beklenen parmak izi üretimden yenilendi, ilgili testler güncellendi. Bayraklar ve ENV değişmedi; AI çağrısı yok.
+
 ### Market Scout temeli (PR3) — yalnız meşru kaynaklar, üretime uygulanmadı (2026-10-06)
 - Migration `20261007100000_market_scout_foundation` (yalnız yeni `market_*` tabloları; append-only tetikleyici, idempotency, observed_at/known_at, RLS + anon/authenticated/PUBLIC yetkisiz). Eski scout tablolarına dokunulmadı. Üretime **uygulanmadı** (baseline `notAppliedInProduction`).
 - DB kısıtları: sitemap gözlemi satıcı/fiyat/puan/yorum/satış taşıyamaz; buybox yalnız resmi API + derece A, satış kolonu yok; anahtar kelime tablosunda hacim kolonu yok; MANUAL_SOURCING iniş maliyeti daima UNKNOWN; fırsat durumlarında BUY/ORDER yok; LLM eşleşmesi derece D.

@@ -168,7 +168,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
-- [ ] **AI CFO runner adım 8:** (5, 6, 7 tamam) · 8 ai_cfo_v1 üretime + shadow week + AI'ı açma (her biri ayrı onay). Adım 4 tamam (`AI-CFO-RUNNER.md`).
+- [ ] **AI CFO runner adım 8:** (5, 6, 7 tamam; 8A `ai_cfo_v1` üretimde 2026-10-06) · STEP C deterministik monitor (AI kapalı) → anomali incelemesi (shadow week kabulü yerine) → AI'ı açma (her biri ayrı onay). Adım 4 tamam (`AI-CFO-RUNNER.md`).
 
 - [ ] **Güvenlik (sonraya, kritik değil):** `cfo_secret` düz metin kimlik bilgilerini ortam değişkenlerine taşı; pgvector'ü `public` dışına taşı; `tmp-cfo-files-verify` Edge Function'ı panelden sil.
 
@@ -253,6 +253,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-06 — AI CFO adım 8A: `ai_cfo_v1` üretimde + repo senkronu:** migration kontrollü SQL ile (`postgres`, tek transaction, `_prisma_migrations` checksum `4f03992b…`; `prisma migrate deploy` KULLANILMADI, `market_scout_foundation` bekliyor). `cfo_run`/`cfo_insight`/`cfo_usage`: RLS açık, politika 0, anon/authenticated/PUBLIC/reader yetkisi yok; parmak izi AI CFO nesneleri hariç 17/17 önceki ile aynı (+30 nesne). Repo: `baseline.json` `appliedAfterCapture`, `bootstrap.ts` (geç migration'lar sonda), `fingerprint.expected.txt` (üretimden), testler `schema-baseline`/`ai-cfo-store`/`ai-cfo-migration-security`/`security-defense-in-depth` (ortak `applyPendingInProduction`), `BASELINE-CAPTURE.md`.
 - **2026-10-06 — Market Scout (PR3) sitemap koşullu GET düzeltmesi:** Cloudflare zayıf ETag (`W/`) döndürüyor, origin yalnız güçlü ETag'e 304 veriyor → eski kod her taramada tüm dosyaları (~1,9 GB) yeniden indirirdi. `strongEtag` ile doğrulayıcı güçlü formda saklanıp gönderiliyor (ölçüm: 333 koşullu istek 7,5 dk, 309/309 → 304, 429 yok) (`lib/market/providers/trendyol-sitemap.ts`, `scripts/market/sitemap-benchmark.ts`); test sahte taşıyıcısı Cloudflare davranışını taklit ediyor (`market-scout-db`).
 - **2026-10-06 — Market Scout (PR3) doğrulama düzeltmesi:** eski scout adaptörü her satırı `original_row` (to_jsonb, tüm kolonlar) ile taşıyor — önceden scores/signals_daily'nin bir kısım kolonu eşlemede kayboluyordu. `lib/market/legacy-scout.ts`, test `market-scout-db` (provenance kontrolleri).
 - **2026-10-06 — Market Scout temeli (PR3):** migration `20261007100000_market_scout_foundation` (üretime UYGULANMADI), `lib/market/*` (sources, safe-fetch, trendyol-url, normalize, matching, momentum, scoring, sourcing-query, hunter, image-similarity, legacy-scout, store, providers/*), `lib/actions/market-scout-actions.ts`, `/admin/market-scout`, izinler `marketScout.read/write`, `scripts/market/*` (varsayılan salt-okunur/dry-run), testler `market-scout-core`, `market-safe-fetch`, `market-scout-db` (CI). Yalnız meşru kaynaklar (resmi buybox, izinli sitemap, manuel capture/sourcing); aşma/proxy/scraper yok. Sitemap ölçümü → toplayıcı etkin değil. Eski scout tabloları dokunulmadı. Belge `docs/MARKET-SCOUT.md`.

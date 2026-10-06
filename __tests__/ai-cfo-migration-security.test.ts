@@ -4,7 +4,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite/vector";
 import { bootstrap } from "../scripts/schema-baseline/bootstrap";
 
-// Step 8 deployment path of the pending 20261005190000_ai_cfo_v1 on the clean-DB reproduction of production
+// Step 8 deployment path of 20261005190000_ai_cfo_v1 (applied in production 2026-10-06, step 8A) on the clean-DB reproduction of production as it was BEFORE step 8
 // (baseline + every production-applied migration), with production's default privileges for tables created by `postgres`
 // in public (read-only catalog check 2026-10-06: pg_default_acl public/r = postgres + service_role only).
 // Proves: cfo_run/cfo_insight/cfo_usage are RLS deny-all, no policies, no anon/authenticated/PUBLIC/reader privilege,
@@ -20,10 +20,11 @@ async function main() {
     await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin;
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: s => db.exec(s), query: <T,>(s: string, p?: unknown[]) => db.query<T>(s, p) });
-    for (const m of res.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
-    // market_scout_foundation (PR3) is also held back (separate approval); it creates only market_* objects and does not affect this check
-    assert.deepEqual(res.pendingNotInProduction, ["20261005190000_ai_cfo_v1", "20261007100000_market_scout_foundation"],
-      "only ai_cfo_v1 and market_scout_foundation are held back from production");
+    // production before step 8 = every production-applied migration except ai_cfo_v1 (now listed in baseline.json appliedAfterCapture)
+    assert.ok(res.pendingInProduction.includes("20261005190000_ai_cfo_v1"), "ai_cfo_v1 is applied in production (step 8A)");
+    for (const m of res.pendingInProduction.filter(x => x !== "20261005190000_ai_cfo_v1")) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    // market_scout_foundation (PR3) stays held back (separate approval); it creates only market_* objects and does not affect this check
+    assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation"], "only market_scout_foundation is held back from production");
     // production default ACL for objects postgres creates in public (after the security phase)
     await db.exec(`alter default privileges in schema public grant all on tables to service_role;
       alter default privileges in schema public grant all on sequences to service_role;

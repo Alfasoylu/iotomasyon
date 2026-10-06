@@ -8,8 +8,8 @@ import { PrismaClient } from "@prisma/client";
 import { bootstrap, readBaselineConfig } from "../scripts/schema-baseline/bootstrap";
 
 // AI CFO store (cfo_run / cfo_insight / cfo_usage) through the REAL Prisma client against PostgreSQL (PGlite behind a socket).
-// Schema = production reproduction (baseline + production-applied migrations) + the pending 20261005190000_ai_cfo_v1, i.e. the
-// exact deployment path of step 8. Proves: idempotent period key, usage totals, insight CHECK constraints, cooldown recall.
+// Schema = production reproduction (baseline + production-applied migrations, incl. 20261005190000_ai_cfo_v1, applied in production
+// 2026-10-06 by controlled SQL — step 8A; baseline.json appliedAfterCapture). The state before step 8 is reproduced first. Proves: idempotent period key, usage totals, insight CHECK constraints, cooldown recall.
 // Run with: node --conditions=react-server --import tsx __tests__/ai-cfo-store.test.ts
 async function main() {
   const pg = new PGlite({ extensions: { vector } });
@@ -17,10 +17,11 @@ async function main() {
     create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
   const res = await bootstrap({ exec: s => pg.exec(s), query: <T,>(s: string, p?: unknown[]) => pg.query<T>(s, p) });
   const cfg = readBaselineConfig();
-  assert.ok(cfg.notAppliedInProduction?.includes("20261005190000_ai_cfo_v1"), "ai_cfo_v1 must stay pending until step 8");
-  assert.ok(!res.registered.includes("20261005190000_ai_cfo_v1"));
+  const AI = "20261005190000_ai_cfo_v1";
+  assert.ok(cfg.appliedAfterCapture?.includes(AI) && !cfg.notAppliedInProduction?.includes(AI), "ai_cfo_v1 is applied in production (step 8A)");
+  assert.ok(!res.registered.includes(AI) && res.pendingInProduction.includes(AI), "not in the baseline SQL: bootstrap applies it after the capture");
   const apply = async (ms: string[]) => { for (const m of ms) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8")); };
-  await apply(res.pendingInProduction);
+  await apply(res.pendingInProduction.filter(m => m !== AI));
   const server = new PGLiteSocketServer({ db: pg, port: 0, host: "127.0.0.1" });
   await server.start();
   const conn = server.getServerConn();
@@ -29,10 +30,10 @@ async function main() {
   const client = new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 1 }) });
   (globalThis as unknown as { _prismaClient: PrismaClient })._prismaClient = client;
   try {
-    // /admin/ai-cfo before step 8: production has no cfo_run/cfo_insight/cfo_usage → explained state, never a query error
+    // /admin/ai-cfo without cfo_run/cfo_insight/cfo_usage (production before step 8) → explained state, never a query error
     const { loadCfoControlCenter } = await import("../lib/cfo-agent/control-center");
     assert.deepEqual(await loadCfoControlCenter(), { installed: false });
-    await apply(res.pendingNotInProduction);
+    await apply([AI]);
     const { cfoStore } = await import("../lib/cfo-agent/store");
     const now = new Date("2026-10-06T08:00:00Z");
     const id = await cfoStore.begin("monitor", "2026-10-06T11", now);
@@ -69,7 +70,7 @@ async function main() {
     // (run on the engine directly: an error through the single socket connection would end the PGlite socket session)
     await assert.rejects(pg.query(`insert into cfo_insight (id,"runId",severity,category,"entityType","entityId",fingerprint,"cooldownKey",title,observation,recommendation,"riskIfIgnored",confidence,evidence)
       values ('bad','${id}','fatal','sales','goal','x','f2','c','t','o','r','x','low','[]')`), /check/i);
-    console.log("AI CFO store: idempotent run key, usage totals, insights + CHECK constraints, cooldown recall, control center (before/after step 8) passed (baseline + pending ai_cfo_v1)");
+    console.log("AI CFO store: idempotent run key, usage totals, insights + CHECK constraints, cooldown recall, control center (before/after step 8) passed (production reproduction incl. ai_cfo_v1)");
   } finally {
     await client.$disconnect().catch(() => undefined);
     await server.stop().catch(() => undefined);

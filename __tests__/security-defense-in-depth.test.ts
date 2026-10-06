@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite/vector";
-import { bootstrap } from "../scripts/schema-baseline/bootstrap";
+import { applyPendingInProduction, bootstrap } from "../scripts/schema-baseline/bootstrap";
 
 // Defense-in-depth gate (20261006120000_security_defense_in_depth), on the clean-DB reproduction of production
 // (baseline + newer migrations):
@@ -34,7 +34,7 @@ async function main() {
     const readerBefore = await q<{ f: string; ro: boolean }>(`select p.oid::regprocedure::text f, (p.provolatile in ('s','i') and p.prorettype<>'trigger'::regtype and p.prokind='f') ro ${OWN_FN} and has_function_privilege('cfo_acceptance_reader',p.oid,'execute')`);
     const svcTblBefore = await q<{ a: string }>(`select string_agg(c.relname||':'||coalesce(c.relacl::text,''),'|' order by c.relname) a from pg_class c where c.relnamespace='public'::regnamespace and c.relkind in ('r','p','v','m','S')`);
 
-    for (const m of res.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    await applyPendingInProduction(client, res);
     await db.exec("set search_path = public");
 
     const gates = async () => (await q<Record<string, number>>(`select
