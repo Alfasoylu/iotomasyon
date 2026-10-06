@@ -19,7 +19,8 @@ async function main() {
   const cfg = readBaselineConfig();
   assert.ok(cfg.notAppliedInProduction?.includes("20261005190000_ai_cfo_v1"), "ai_cfo_v1 must stay pending until step 8");
   assert.ok(!res.registered.includes("20261005190000_ai_cfo_v1"));
-  for (const m of res.pending) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+  const apply = async (ms: string[]) => { for (const m of ms) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8")); };
+  await apply(res.pendingInProduction);
   const server = new PGLiteSocketServer({ db: pg, port: 0, host: "127.0.0.1" });
   await server.start();
   const conn = server.getServerConn();
@@ -28,6 +29,10 @@ async function main() {
   const client = new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 1 }) });
   (globalThis as unknown as { _prismaClient: PrismaClient })._prismaClient = client;
   try {
+    // /admin/ai-cfo before step 8: production has no cfo_run/cfo_insight/cfo_usage → explained state, never a query error
+    const { loadCfoControlCenter } = await import("../lib/cfo-agent/control-center");
+    assert.deepEqual(await loadCfoControlCenter(), { installed: false });
+    await apply(res.pendingNotInProduction);
     const { cfoStore } = await import("../lib/cfo-agent/store");
     const now = new Date("2026-10-06T08:00:00Z");
     const id = await cfoStore.begin("monitor", "2026-10-06T11", now);
@@ -53,11 +58,18 @@ async function main() {
     assert.ok(recent, "cooldown recalls the anomaly sent in a completed run");
     const rows = await client.$queryRawUnsafe<{ status: string; n: number }[]>(`select r.status, (select count(*)::int from cfo_insight i where i."runId"=r.id) n from cfo_run r`);
     assert.deepEqual(rows, [{ status: "completed", n: 1 }]);
+    const center = await loadCfoControlCenter(now);
+    assert.ok(center.installed);
+    assert.equal(center.run?.status, "completed");
+    assert.equal(center.insights.length, 1);
+    assert.deepEqual(center.anomalies.map(a => a.id), [anomaly.id]);
+    assert.equal(center.usage.callsToday, 1);
+    assert.equal(center.usage.outputTokens, 200);
     // CHECK constraint: an invalid severity can never be stored
     // (run on the engine directly: an error through the single socket connection would end the PGlite socket session)
     await assert.rejects(pg.query(`insert into cfo_insight (id,"runId",severity,category,"entityType","entityId",fingerprint,"cooldownKey",title,observation,recommendation,"riskIfIgnored",confidence,evidence)
       values ('bad','${id}','fatal','sales','goal','x','f2','c','t','o','r','x','low','[]')`), /check/i);
-    console.log("AI CFO store: idempotent run key, usage totals, insights + CHECK constraints, cooldown recall passed (baseline + pending ai_cfo_v1)");
+    console.log("AI CFO store: idempotent run key, usage totals, insights + CHECK constraints, cooldown recall, control center (before/after step 8) passed (baseline + pending ai_cfo_v1)");
   } finally {
     await client.$disconnect().catch(() => undefined);
     await server.stop().catch(() => undefined);
