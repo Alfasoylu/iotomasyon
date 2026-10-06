@@ -163,7 +163,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
-- [ ] **AI CFO V2 Step 3 — AI runner:** Goal Engine çıktısını (fm_memory_goal) okuyan LLM katmanı; ayrı onayla başlar.
+- [ ] **AI CFO runner adım 5–8:** 5 cron + /admin/ai-cfo UI · 6 test/CI · 7 kargo/SET/nakit kolon eşlemesi · 8 ai_cfo_v1 üretime + shadow week + AI'ı açma (her biri ayrı onay). Adım 4 tamam (`AI-CFO-RUNNER.md`).
 
 - [ ] **Güvenlik (sonraya, kritik değil):** `cfo_secret` düz metin kimlik bilgilerini ortam değişkenlerine taşı; pgvector'ü `public` dışına taşı; `tmp-cfo-files-verify` Edge Function'ı panelden sil.
 
@@ -247,6 +247,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+- **2026-10-06 — AI CFO runner (V1 adım 4/9 + Goal Engine):** runner/store/lock/memory/validate-ai-output/goal-anomalies; testler `ai-cfo-runner` + `ai-cfo-store` (gerçek Prisma/PGlite, bekleyen ai_cfo_v1 ile); baseline `notAppliedInProduction` düzeltmesi. Çağrılmıyor, bayraklar kapalı, üretim değişmedi. Belge `AI-CFO-RUNNER.md`. Sırada adım 5 (cron + /admin/ai-cfo), ayrı onayla.
 
 - **2026-10-06 — AI CFO V2 Step 2: Goal Engine v1:** migration `20261006130000_fm_goal_engine` (üretimde + kayıtlı), `lib/fm/goal-engine.ts`, `lib/fm/goals.ts`, `lib/cfo-agent/workflow*.ts` (goals aşaması + devralma), `/cfo/calisan` paneli, test `fm-goal-engine`; `security-defense-in-depth` testi yeni ilişkilere toleranslı; parmak izleri üretimden güncellendi. İlk sonuç: ciro OFF_TRACK (B), borç NOT_MET (C), servet OFF_TRACK (C), taban OFF_TRACK (D). Belge `GOAL-ENGINE.md`.
 

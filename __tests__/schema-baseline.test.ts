@@ -25,7 +25,7 @@ async function main() {
 
     // newer-than-baseline migrations must apply on top of the baseline without error (prisma migrate deploy semantics);
     // baseline + pending migrations together must equal production
-    for (const m of result.pending) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    for (const m of result.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     await db.exec("set search_path = public");
 
     // (b) full fingerprint vs production
@@ -47,17 +47,21 @@ async function main() {
     const dirs = listMigrations();
     const cfg = readBaselineConfig();
     assert.equal(result.registered.length + result.pending.length, dirs.length);
-    assert.deepEqual(result.registered, dirs.filter(m => m <= cfg.cutoffMigration));
+    assert.deepEqual(result.registered, dirs.filter(m => m <= cfg.cutoffMigration && !(cfg.notAppliedInProduction ?? []).includes(m)));
+    assert.deepEqual(result.pendingNotInProduction, cfg.notAppliedInProduction ?? []);
     const rows = (await db.query<{ migration_name: string; checksum: string; finished_at: string | null; applied_steps_count: number }>(
       "select migration_name, checksum, finished_at, applied_steps_count from public._prisma_migrations order by migration_name")).rows;
     assert.equal(rows.length, result.registered.length);
     assert.ok(rows.every(r => r.finished_at !== null && r.applied_steps_count === 1));
     for (const r of rows) assert.equal(r.checksum, migrationChecksum(".", r.migration_name), `checksum ${r.migration_name}`);
 
+    // migrations production does not have yet must still apply cleanly on top (the future deployment path)
+    for (const m of result.pendingNotInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+
     // a second bootstrap on a populated database is refused
     await assert.rejects(() => bootstrap(client), /not empty/);
 
-    console.log(`Schema baseline: clean bootstrap 0 errors, ${actual.length} fingerprint groups equal production, ${step1.length} Step 1 groups equal, ${rows.length}/${dirs.length} migrations registered applied (${result.pending.length} pending applied cleanly)`);
+    console.log(`Schema baseline: clean bootstrap 0 errors, ${actual.length} fingerprint groups equal production, ${step1.length} Step 1 groups equal, ${rows.length}/${dirs.length} migrations registered applied (${result.pendingInProduction.length} production-pending + ${result.pendingNotInProduction.length} not-yet-in-production applied cleanly)`);
   } finally {
     await db.close();
   }

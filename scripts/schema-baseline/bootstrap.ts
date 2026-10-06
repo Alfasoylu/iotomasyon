@@ -1,7 +1,8 @@
 /**
  * db:bootstrap — reproduce the production public schema on an EMPTY PostgreSQL without replaying history.
  *   1. apply prisma/baseline/<date>.sql (schema only) + <date>.seed.sql (dictionary rows copied from migrations)
- *   2. register every prisma/migrations directory up to the baseline cutoff as applied in _prisma_migrations
+ *   2. register every prisma/migrations directory up to the baseline cutoff as applied in _prisma_migrations (except
+ *      baseline.json notAppliedInProduction: migrations production deliberately does not have yet stay pending)
  *      (same semantics as `prisma migrate resolve --applied`: sha256 of migration.sql, finished_at set, 1 step)
  *   3. report newer migrations; the CLI then runs `prisma migrate deploy` for them (skip with --skip-deploy)
  * Never run against production: the CLI refuses Supabase hosts and any non-empty public schema.
@@ -17,7 +18,7 @@ export interface SqlClient {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 }
 
-export interface BaselineConfig { baselineFile: string; seedFile: string; cutoffMigration: string }
+export interface BaselineConfig { baselineFile: string; seedFile: string; cutoffMigration: string; notAppliedInProduction?: string[] }
 
 export function readBaselineConfig(root = "."): BaselineConfig {
   return JSON.parse(readFileSync(join(root, "prisma/baseline/baseline.json"), "utf8")) as BaselineConfig;
@@ -32,7 +33,9 @@ export function migrationChecksum(root: string, name: string): string {
   return createHash("sha256").update(readFileSync(join(root, "prisma/migrations", name, "migration.sql"))).digest("hex");
 }
 
-export interface BootstrapResult { registered: string[]; pending: string[] }
+// pending = everything not registered (what `prisma migrate deploy` would apply), split into the migrations production
+// already has (pendingInProduction: baseline + these = production) and those production deliberately does not have yet.
+export interface BootstrapResult { registered: string[]; pending: string[]; pendingInProduction: string[]; pendingNotInProduction: string[] }
 
 export async function bootstrap(client: SqlClient, opts: { root?: string; allowNonEmpty?: boolean } = {}): Promise<BootstrapResult> {
   const root = opts.root ?? ".";
@@ -46,13 +49,16 @@ export async function bootstrap(client: SqlClient, opts: { root?: string; allowN
   }
   await client.exec(readFileSync(join(root, "prisma/baseline", cfg.baselineFile), "utf8"));
   await client.exec(readFileSync(join(root, "prisma/baseline", cfg.seedFile), "utf8"));
-  const registered = all.filter(m => m <= cfg.cutoffMigration);
+  const notApplied = new Set(cfg.notAppliedInProduction ?? []);
+  for (const m of notApplied) if (!all.includes(m)) throw new Error(`notAppliedInProduction ${m} is not in prisma/migrations`);
+  const registered = all.filter(m => m <= cfg.cutoffMigration && !notApplied.has(m));
   for (const m of registered) {
     await client.query(
       "insert into public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) values ($1, $2, now(), $3, null, null, now(), 1)",
       [randomUUID(), migrationChecksum(root, m), m]);
   }
-  return { registered, pending: all.filter(m => m > cfg.cutoffMigration) };
+  const pending = all.filter(m => !registered.includes(m));
+  return { registered, pending, pendingInProduction: pending.filter(m => !notApplied.has(m)), pendingNotInProduction: pending.filter(m => notApplied.has(m)) };
 }
 
 function refuseProduction(url: string): void {
