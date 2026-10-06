@@ -212,15 +212,18 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       group by 1,2,3) select * from grouped`,asOf);
     // Commission measurements use the audited 120-day window independently
     // of the sales periods. Revenue/quantity still use corrected canonical rows.
+    // Sample rule (user-confirmed 2026-10-06): only single-unit lines (adet_duz=1) with guven='YUKSEK', no duplicate copies,
+    // window [asOf-120 days, asOf] fixed to the snapshot's asOf ($1, never now()), and >=10 accepted records per SKU
+    // (measuredCommission). Multi-unit, set-corrected (SET_DUZELTILDI), KARMA and BILINMIYOR lines never set the rate.
     const commissionRows=await db.query(`with base as (
       select s.*,count(*) over(partition by ${sales.channel},${sales.orderNumber},${sales.modelNumber}) as copies
       from cfo_satis_birim_duz s where ${salesLocalTime}>=date_trunc('day',$1::timestamptz at time zone 'Europe/Istanbul')-interval '120 days' and ${salesLocalTime}<=($1::timestamptz at time zone 'Europe/Istanbul') and ${sales.adet_duz}>0),
-      valid as(select * from base where copies=1 and ${sales.guven} is not null and ${sales.guven}::text not in ('KARMA','BILINMIYOR')),
+      valid as(select * from base where copies=1 and ${sales.adet_duz}=1 and ${sales.guven}::text='YUKSEK'),
       med as(select ${sales.channel} as channel,${sales.modelNumber} as sku,percentile_cont(0.5) within group(order by ${sales.commissionTry}::numeric/nullif(${sales.totalAmountTry}::numeric,0)) as mid
         from valid where ${sales.commissionTry}>0 and ${sales.totalAmountTry}>0 group by 1,2),
       deviation as(select v.${sales.channel} as channel,v.${sales.modelNumber} as sku,m.mid,percentile_cont(0.5) within group(order by abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-m.mid)) as mad
         from valid v join med m on m.channel=v.${sales.channel} and m.sku=v.${sales.modelNumber} where v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 group by 1,2,3),
-      checked as(select v.*,v.copies=1 and v.${sales.guven} is not null and v.${sales.guven}::text not in ('KARMA','BILINMIYOR') and v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 and abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-d.mid)<=greatest(0.05,3*d.mad) as ok
+      checked as(select v.*,v.copies=1 and v.${sales.adet_duz}=1 and v.${sales.guven}::text='YUKSEK' and v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 and abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-d.mid)<=greatest(0.05,3*d.mad) as ok
         from base v left join deviation d on d.channel=v.${sales.channel} and d.sku=v.${sales.modelNumber})
       select ${sales.channel} as channel,${sales.modelNumber} as sku,count(*)::int as records,count(${sales.commissionTry})::int as present,
         count(*) filter(where ok)::int as accepted,sum(${sales.commissionTry}::numeric) filter(where ok) as commission,

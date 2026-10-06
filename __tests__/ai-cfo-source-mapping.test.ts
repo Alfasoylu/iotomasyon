@@ -67,11 +67,14 @@ async function main() {
         values ('b1','Banka','2026-10-06',100000,now(),true,'TICARI',500000);
       insert into cfo_receivable (id,channel,"dueDate","amountTry","updatedAt","isCollected") values ('r1','TRENDYOL',current_date+5,40000,now(),false);
       insert into cfo_cash_event (id,"eventDate",kind,description,"updatedAt","outflowTry","isSettled") values ('e1',current_date+3,'KREDI_TAKSITI','taksit',now(),250000,false);`);
-    const sales = (channel: string, prefix: string, day: string, n: number, total: number) => pg.exec(`insert into "MarketplaceSalesRecord"
+    const sales = (channel: string, prefix: string, day: string, n: number, total: number, qty = 1, rate = 0.18) => pg.exec(`insert into "MarketplaceSalesRecord"
       (id,channel,"orderNumber","orderDate",quantity,"modelNumber","totalAmountTry","commissionTry",status)
-      select '${prefix}'||i,'${channel}','${prefix}'||i,'${day}',1,'MD-X',${total},${total * 0.18},'Teslim Edildi' from generate_series(1,${n}) i`);
+      select '${prefix}'||i,'${channel}','${prefix}'||i,'${day}',${qty},'MD-X',${total},${total * rate},'Teslim Edildi' from generate_series(1,${n}) i`);
     await sales("TRENDYOL", "t", "2026-09-28 10:00", 12, 300);
     await sales("HEPSIBURADA", "h", "2026-09-28 11:00", 12, 300);
+    // multi-unit lines at 20% (inside the outlier band): the old rule would have blended them in (weighted 19%); the sample rule
+    // (adet_duz=1, guven='YUKSEK') excludes them, so the measured Trendyol rate stays exactly 18%
+    await sales("TRENDYOL", "tm", "2026-09-29 10:00", 6, 600, 2, 0.2);
 
     const db: ReadSource = { async query<T extends Row>(sql: string, ...params: unknown[]) { return (await pg.query<T>(sql, params)).rows; } };
     // SQL tariff selection on the real table with the reviewed column names
@@ -95,7 +98,7 @@ async function main() {
     const s = await buildCfoAgentSnapshot({ db, now, config, compact: false });
     const missing = s.dataQuality.missingFields;
     assert.ok(!missing.some(f => f.startsWith("reviewed_source_changed")), `reviewed profile valid by default: ${missing.join(",")}`);
-    assert.equal(s.calculationVersion, "alfas-gross-v5");
+    assert.equal(s.calculationVersion, "alfas-gross-v6");
 
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;
@@ -110,6 +113,9 @@ async function main() {
     const ty = s.products.find(p => p.sku === "MD-X" && p.channel === "TRENDYOL"), hb = s.products.find(p => p.sku === "MD-X" && p.channel === "HEPSIBURADA");
     assert.ok(ty && hb, `product signals: ${s.products.map(p => `${p.sku}/${p.channel}`).join(",")}`);
     assert.ok(ty!.commissionRate.value != null, "measured commission");
+    const trust = (await pg.query<{ g: string; a: number; n: number }>(`select guven::text g, adet_duz a, count(*)::int n from cfo_satis_birim_duz where channel='TRENDYOL' group by 1,2 order by 2`)).rows;
+    assert.deepEqual(trust, [{ g: "YUKSEK", a: 1, n: 12 }, { g: "YUKSEK", a: 2, n: 6 }], "fixture: single- and multi-unit YUKSEK lines");
+    assert.ok(Math.abs(ty!.commissionRate.value! - 0.18) < 1e-9, `commission sample = adet_duz=1 & guven=YUKSEK only (got ${ty!.commissionRate.value})`);
     assert.equal(ty!.priceFloor.value, priceFloor(200, ty!.commissionRate.value, 0.4, BANDS, true).value);
     assert.equal(ty!.priceFloor.reason, undefined);
     assert.ok(hb!.commissionRate.value != null, "measured commission (Hepsiburada)");
