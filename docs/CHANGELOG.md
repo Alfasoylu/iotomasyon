@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Güvenlik — SECURITY DEFINER view'lar (2026-10-06)
+- `20261005290000_security_definer_views_lockdown`: security_invoker olmayan 43 `public` view'dan anon/authenticated yetkisi kaldırıldı (tanım/sahip/semantik aynı; postgres/service_role/reader değişmedi) + `ALTER DEFAULT PRIVILEGES` ile yeni public nesneler anon/authenticated'a otomatik açılmıyor. Üretimde uygulandı ve katalogdan doğrulandı; advisor ERROR'ları kalktı. Rapor: `docs/SECURITY-DEFINER-VIEW-EXPOSURE-REPORT.md`. Test: `security-definer-views`.
+
 ### Güvenlik — anon/authenticated daraltma (2026-10-05)
 - `20261005270000_security_anon_lockdown`: `cfo_xml_urun_degisim`, `cfo_stok_sicrama`, `cfo_backfill_trendyol_pid_20260922` tablolarında RLS açıldı + anon/authenticated yetkileri kaldırıldı (reader SELECT korundu); `cfo_take_snapshot`, `cfo_ay_kazanan_yaz`, `cfo_kilometre_yaz`, `cfo_sicrama_kapat`, `cfo_stok_sicrama_kaydet` fonksiyonlarında anon/authenticated EXECUTE kaldırıldı. Üretimde uygulandı ve katalogdan doğrulandı (RLS'siz public tablo 0). Test: `security-anon-lockdown`.
 
