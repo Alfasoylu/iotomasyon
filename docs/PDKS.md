@@ -163,6 +163,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
+- [ ] **Güvenlik defense-in-depth (baseline sonrası):** 56 tabloda anon/authenticated grant revoke + katalog CI kapısı — tasarım `docs/ANON-GRANTS-FUNCTIONS-AUDIT.md` §5; toplu revoke onay bekliyor.
+
 ### Faz 2 (öncelik)
 - [x] **R1–R5 TAMAM** (Artım 1+2+3, main, migration canlıda): self-servis kayıt
   (`/kayit`) + tenant slug + default seed + 30 gün deneme; müşteriye özel link
@@ -242,7 +244,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
-- **2026-10-06 — cfo-files private + anon denetimi:** migration `20261006100000_cfo_files_private` üretime uygulandı + kayıtlı (bucket public=false, 8 referans private, yedek tablo); `lib/cfo-agent/private-files.ts` (`signedCfoFileUrl`), test `cfo-files-private-migration`, `scripts/verify-cfo-files-private.ts`; dokümanlar ANON-GRANTS-FUNCTIONS-AUDIT, SECURITY-HARDENING-ACCEPTANCE. Backlog: `cfo_google` anon EXECUTE kapatma, 56 tablo anon grant revoke (onay bekliyor).
+- **2026-10-06 — cfo-files private + anon denetimi:** migration `20261006100000_cfo_files_private` üretime uygulandı + kayıtlı (bucket public=false, 8 referans private, yedek tablo); `lib/cfo-agent/private-files.ts` (`signedCfoFileUrl`), test `cfo-files-private-migration`, `scripts/verify-cfo-files-private.ts`; dokümanlar ANON-GRANTS-FUNCTIONS-AUDIT, SECURITY-HARDENING-ACCEPTANCE. Backlog: 56 tablo anon grant revoke / defense-in-depth (baseline sonrası; tasarım `ANON-GRANTS-FUNCTIONS-AUDIT.md` §5). Geçmiş cfo-files maruziyeti BİLİNMİYOR.
 
 - **2026-10-06 — fm_stock_refresh otomasyonu:** `lib/fm/stock-refresh.ts` + `lib/xml-sync-runner.ts` (`finalizeLog` sonunda çağrı); migration `20261005300000_fm_stock_refresh_automation` (`fm_stock_refresh_after_sync(text)`, `fm_stock_freshness`) üretime uygulandı + `_prisma_migrations` kaydı; fingerprint beklenen hash'leri güncellendi. SUCCESS → yenile; PARTIAL/ERROR → `failed` run, yenileme yok; idempotent. Test: `__tests__/xml-sync-fm-refresh.test.ts` (CI'da).
 

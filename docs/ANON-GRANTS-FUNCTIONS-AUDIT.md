@@ -33,7 +33,7 @@ Neden toplu revoke şimdi uygulanmadı: kapsam talimatı (yalnız denetim) + ür
 Hepsi `SECURITY INVOKER` (secdef=false) → çağıran rolün RLS/grant'leriyle çalışır; anon için tablolar boş/ret döner.
 | Fonksiyon | Tür | Risk |
 |---|---|---|
-| **`cfo_google(jsonb)`** | VOLATILE; `extensions.http` ile `cfo-google` Edge Function'ı **gömülü anon JWT** ile çağırır | **YÜKSEK**: anon RPC ile (`/rest/v1/rpc/cfo_google`) Google Search Console/GA4 verisini (salt-okunur) ve servis hesabı e-postasını sorgulatabilir. Ek olarak Edge Function `verify_jwt=true` ama anon key **herkese açık** → fonksiyon doğrudan da çağrılabilir. Öneri: (1) `REVOKE EXECUTE ON FUNCTION cfo_google FROM PUBLIC, anon, authenticated`; (2) Edge Function'da çağıranın `service_role` olduğunu doğrula (veya `verify_jwt` + rol kontrolü); (3) fonksiyon gövdesindeki gömülü token'ı kaldır |
+| **`cfo_google(jsonb)`** (ARTIK KAPALI — PR #156) | VOLATILE; `extensions.http` ile `cfo-google` Edge Function'ı **gömülü anon JWT** ile çağırır | **YÜKSEK**: anon RPC ile (`/rest/v1/rpc/cfo_google`) Google Search Console/GA4 verisini (salt-okunur) ve servis hesabı e-postasını sorgulatabilir. Ek olarak Edge Function `verify_jwt=true` ama anon key **herkese açık** → fonksiyon doğrudan da çağrılabilir. Öneri: (1) `REVOKE EXECUTE ON FUNCTION cfo_google FROM PUBLIC, anon, authenticated`; (2) Edge Function'da çağıranın `service_role` olduğunu doğrula (veya `verify_jwt` + rol kontrolü); (3) fonksiyon gövdesindeki gömülü token'ı kaldır |
 | `cfo_defter_denetim`, `cfo_gumruk_dilim`, `cfo_kar_kopru`, `cfo_kart_karari`, `cfo_kaynak_yeterliligi`, `cfo_model_hakedis`, `cfo_nakit_projeksiyon`, `cfo_onucus`, `_temel`, `_v19` | STABLE analiz; mali tabloları okur | **Orta**: yalnız RLS koruyor (anon → 0 satır). Reader/uygulama kullanır → anon EXECUTE gereksiz |
 | `cfo_kargo_tahmin` | STABLE; tarife tablosu | Düşük (tarife RLS'i + reader) |
 | `cfo_stok_sicrama_trg`, `cfo_xml_urun_degisim_trg` | trigger fonksiyonları | Düşük: doğrudan çağrılamaz (trigger dönüşü) |
@@ -43,7 +43,16 @@ Yazma fonksiyonları (`cfo_ay_kazanan_yaz`, `cfo_kilometre_yaz`, `cfo_sicrama_ka
 pgvector fonksiyonları (`vector_*`, `halfvec_*`, `sparsevec_*`, ~110; sahip `supabase_admin`): eklenti; zararsız saf fonksiyonlar; eklenti `public` şemasında (advisor uyarısı) — taşıma ayrı iş.
 
 ## 4. Önerilen sıra (hepsi ayrı onay gerektirir)
-1. **`cfo_google` EXECUTE kapat + Edge Function rol kontrolü** (tek fonksiyon; uygulama bağımlılığı yok: repoda referans yok).
+1. ~~`cfo_google` kilidi~~ — TAMAMLANDI (PR #156).
 2. Mali analiz fonksiyonlarında `REVOKE EXECUTE … FROM PUBLIC, anon, authenticated` (+ `cfo_acceptance_reader`'a açık GRANT).
 3. 56 tablodan `anon, authenticated` grant'lerini kaldır (log doğrulamasından sonra).
 4. Kalıcılık: `ALTER DEFAULT PRIVILEGES` (#152) zaten yeni nesneleri kapatıyor; global PUBLIC EXECUTE varsayılanı için `supabase_admin`/`postgres` varsayılanları ayrı karar.
+
+## 5. Defense-in-depth migration tasarımı (BACKLOG — baseline PR'ından SONRA; şimdi uygulanmaz)
+Amaç: RLS yanlışlıkla kapatılır / geniş bir policy eklenirse 56 tablonun anında açığa çıkmasını engellemek.
+1. **Grant katmanı:** `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated` (+ sequences); `postgres`, `service_role`, `cfo_acceptance_reader` (policy'li SELECT) korunur. Uygulama öncesi 24 saatlik API log'unda anon/authenticated REST isteği taraması ve Data API bağımlılığı yok teyidi (repo taramasında 0).
+2. **Kalıcılık:** `ALTER DEFAULT PRIVILEGES` zaten #152 ile kapalı; global `PUBLIC EXECUTE` varsayılanı için fonksiyon başına `REVOKE EXECUTE … FROM PUBLIC` desenini her yeni fonksiyon migration'ının şablonuna ekle.
+3. **Düzeltici kontrol (CI/üretim):** katalog testi: (a) RLS'siz public tablo = 0; (b) `anon/authenticated` rolüne uygulanan policy = 0; (c) anon grant'li tablo = 0; (d) anon EXECUTE'lu kendi fonksiyonu = 0 (pgvector eklenti fonksiyonları ayrı allowlist); başarısızlık merge'ü bloklar. Şema baseline parmak izi (PR baseline) bu denetimi de taşıyabilir.
+4. **Policy hijyeni:** `FORCE ROW LEVEL SECURITY` değerlendirilmeli (postgres/Prisma BYPASSRLS ile zaten etkilenmez); geniş `TO public/anon` policy'leri CI'da yasak.
+5. **Aşama:** staging'de (PGlite + Supabase benzeri roller) önce test → ayrı onaylı PR → üretim sonrası katalog doğrulaması + reader/service_role regresyon testi.
+Gerekçe/öncelik: risk düşük-orta (RLS şu an açık, 0 geniş policy) ama tek savunma katmanı RLS; baseline sonrası yapılmalı.
