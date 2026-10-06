@@ -1,4 +1,6 @@
 import { requireUser } from "@/lib/auth";
+import { forecastV2Enabled } from "@/lib/forecast/v2";
+import { ForecastV2Notice } from "@/components/forecast/forecast-v2-notice";
 import { getSmartRecommendations } from "@/lib/smart-recommendations";
 import {
   getAdminEnhancedData,
@@ -195,6 +197,7 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-3">
+      <ForecastV2Notice on={forecastV2Enabled()} />
       {user.role === "ADMIN" && (
         <div className="flex justify-end">
           <DashboardViewToggle currentView="admin" />

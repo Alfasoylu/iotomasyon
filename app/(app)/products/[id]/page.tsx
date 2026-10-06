@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { forecastV2ForConsumers, forecastV2View, v2DecisionDemand } from "@/lib/forecast/consumer";
 import { ProductDeleteButton } from "@/components/products/product-delete-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -252,6 +253,9 @@ export default async function ProductDetailPage({
   const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
   // Phase 31 — RMB/USD rate from latest exchange rate entry
   const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : 7.0; // 1 USD ≈ 7 RMB varsayılanı
+  // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy manual-potential monthlyUnits below is unchanged.
+  const v2 = await forecastV2ForConsumers();
+  const v2Info = v2 ? forecastV2View(v2, product.id) : null;
   const importDecision = calculateImportDecision({
     sourcePriceUsd:
       product.importUnitCostUsd != null
@@ -287,10 +291,11 @@ export default async function ProductDetailPage({
           ? Number(product.shippingCost)
           : null,
     usdTryRate,
-    monthlyUnits:
-      (product.onlineSalesPotential ?? 0) +
-      (product.wholesaleSalesPotential ?? 0) +
-      (product.installerSalesPotential ?? 0) || null,
+    monthlyUnits: v2
+      ? v2DecisionDemand(v2, product.id) || null
+      : (product.onlineSalesPotential ?? 0) +
+        (product.wholesaleSalesPotential ?? 0) +
+        (product.installerSalesPotential ?? 0) || null,
     airFreightPerKgOverride: null,
     seaFreightPerKgOverride: null,
   });
@@ -915,6 +920,12 @@ export default async function ProductDetailPage({
             <p className="mt-1 text-sm text-slate-500">
               Hava/deniz kargo ekonomisi. Kur: 1 USD = ₺{usdTryRate.toFixed(2)}
             </p>
+            {v2 && (
+              <p className="mt-1 text-xs text-amber-700">
+                Talep: Forecast V2 {v2Info?.forecastUnits ?? "UNKNOWN"} adet/ay ({v2Info?.dataGrade ?? "UNKNOWN"}) · manuel potansiyel yalnız karşılaştırma
+                ({(product.onlineSalesPotential ?? 0) + (product.wholesaleSalesPotential ?? 0) + (product.installerSalesPotential ?? 0)} adet/ay)
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <ImportSnapshotButton productId={product.id} />

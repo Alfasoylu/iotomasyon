@@ -3,10 +3,13 @@ import { addDays } from "../lib/forecast/models";
 import { BACKTEST_VERSION, CATASTROPHIC, cutoffSchedule, ECONOMIC_TIME_LABEL, HORIZON_DAYS } from "../lib/forecast/backtest";
 import { BACKTEST_SESSION_PRELUDE, backtestSql, backtestSqlHash, type SqlParams } from "../lib/forecast/backtest-sql";
 import { candidateSql, candidateSqlHash } from "../lib/forecast/candidates-sql";
+import { m7ForwardSql } from "../lib/forecast/m7-shadow";
+import { shadowSql } from "../lib/forecast/shadow-sql";
 
 // Forecast backtest runner (READ-ONLY). Usage:
 //   node --import tsx scripts/forecast-backtest.ts --today 2026-10-06 --print-sql long|waterfall|short|today|meta   (paste into a read-only session)
 //   node --import tsx scripts/forecast-backtest.ts --today 2026-10-06 --print-sql candLong|candShort|candHash        (Forecast V2 candidates)
+//   node --import tsx scripts/forecast-backtest.ts --today 2026-10-06 --print-sql shadowSummary|shadowDetail|m7Forward  (V2 shadow, M7 telemetry)
 //   FORECAST_BACKTEST_DATABASE_URL=… node --import tsx scripts/forecast-backtest.ts --today 2026-10-06 > report.json
 // Every statement runs inside BEGIN READ ONLY … ROLLBACK; the connection string is never printed. The report carries the version,
 // cutoffs, SQL sha256, source watermarks and generated_at so a run can be reproduced (same data + same version ⇒ same numbers).
@@ -21,7 +24,8 @@ async function main() {
   const params = productionSchedule(today, arg("long-from"), arg("short-from"));
   const only = arg("print-sql");
   if (only === "candHash") { process.stdout.write(`${candidateSqlHash(params)}\n`); return; }
-  const sql = { ...backtestSql(params), ...candidateSql(params) };
+  const shadow = shadowSql({ asOf: today, legacyNow: new Date().toISOString().replace(/\.\d{3}Z$/, "Z") });
+  const sql = { ...backtestSql(params), ...candidateSql(params), shadowSummary: shadow.summary, shadowDetail: shadow.detail, m7Forward: m7ForwardSql(today) };
   if (only) { if (!(only in sql)) throw new Error("unknown section"); process.stdout.write(`${BACKTEST_SESSION_PRELUDE.join(";\n")};\n${sql[only as keyof typeof sql]};\n`); return; }
   const url = process.env.FORECAST_BACKTEST_DATABASE_URL; if (!url) throw new Error("FORECAST_BACKTEST_DATABASE_URL missing");
   const client = new Client({ connectionString: url, application_name: "forecast-backtest", statement_timeout: 300000 });
@@ -31,11 +35,13 @@ async function main() {
     const run = async (k: keyof typeof sql) => (await client.query(sql[k])).rows;
     const [meta] = await run("meta"), long = await run("long"), waterfall = await run("waterfall"), short = await run("short"), todayRows = await run("today");
     const candLong = await run("candLong"), candShort = await run("candShort");
+    const [shadowRow] = await run("shadowSummary"), m7 = await run("m7Forward");
     await client.query("ROLLBACK");
     process.stdout.write(JSON.stringify({ meta: { version: BACKTEST_VERSION, label: ECONOMIC_TIME_LABEL, horizonDays: HORIZON_DAYS, catastrophic: CATASTROPHIC,
       ...params, sqlSha256: backtestSqlHash(params), source: meta.meta, generatedAt: new Date().toISOString() },
       long, waterfall, short: short.filter(r => r.section === "short"), shortExclusions: JSON.parse(short.find(r => r.section === "short_exclusions")?.segment ?? "{}"),
-      today: todayRows, candidates: { sqlSha256: candidateSqlHash(params), long: candLong, short: candShort } }, null, 2) + "\n");
+      today: todayRows, candidates: { sqlSha256: candidateSqlHash(params), long: candLong, short: candShort },
+      shadow: shadowRow.shadow, m7Forward: m7 }, null, 2) + "\n");
   } finally { await client.end(); }
 }
 if (process.argv[1]?.endsWith("forecast-backtest.ts")) main().catch(e => { console.error(e instanceof Error ? e.message : "failed"); process.exit(1); });

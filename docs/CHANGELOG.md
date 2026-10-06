@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Forecast V2 — `observed-sales-v2-true30` bayrak arkasında (PR2) (2026-10-06)
+- Kanonik Financial Memory satışından gerçek 30 gün tahmini; sürümlü çıktı sözleşmesi (veri derecesi, neden bayrakları, filigran), soğuk başlangıç (<7 gün UNKNOWN, 7–29 gün PARTIAL, yıllıklandırma yok), stok-düzeltilmiş talep tahmini ayrı alan, manuel potansiyel yalnız karşılaştırma (`effective_forecast = model_forecast`).
+- `FORECAST_V2_ENABLED` (varsayılan kapalı): kapalıyken davranış birebir aynı; açıkken yalnız denetlenmiş 10 tüketici V2 kullanır, PARTIAL/UNKNOWN sipariş/sermaye hesabına girmez. Uyarı bandı + `/admin/forecast-v2` gölge karşılaştırması.
+- Üretim gölge (salt-okunur): eski efektif talep 7.529 → V2 1.747 adet/ay; 377 SKU'da >%25, 150'de >2× fark; kokpit 90 gün kuralında öneri adedi 8.807 → 1.832.
+- M7 A-shrink yalnız gölge telemetri (keşif kesimi 2026-10-06, otomatik terfi yok). Migration, üretim verisi ve 5 M TL borç kapısı değişmedi.
+
 ### Forecast V2 — aday model ölçümü (PR2, kısım 1) (2026-10-06)
 - `lib/forecast/candidates.ts` + SQL portu `candidates-sql.ts`: ön kayıtlı 7 aday (true30, true90, ağırlıklı, EWMA, sönümlü trend, walk-forward kalibre true30, sınırlı mevsimsel) + kısmi geçmiş yıllıklandırma; sermaye güvenliği metrikleri (fazla birim, reorder-v1 fazla sipariş). PGlite'ta TS referansıyla birebir; kalibrasyon/satış/stok sızıntı testleri.
 - Üretim (salt-okunur): ön kayıtlı kabul kapısında true30 kazanıyor (WAPE 87,4% / bias +5,0%); kalibre model felaket fazla tahmin kapısında kalıyor; mevsimsellik ve yıllıklandırma fayda getirmiyor. Belge `docs/FORECAST-V2.md`.

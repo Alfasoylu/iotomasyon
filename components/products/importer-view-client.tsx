@@ -30,6 +30,7 @@ import {
 } from "@/lib/importer-cost";
 import type { ImporterProduct } from "@/app/api/products/importer-view/route";
 import { ImportQuickEdit } from "@/components/products/import-quick-edit";
+import { ForecastV2Notice } from "@/components/forecast/forecast-v2-notice";
 
 // ── Formatting helpers ──────────────────────────────────────────────────────────
 
@@ -141,8 +142,9 @@ function recalcProduct(
   // Phase 92: demand = max(system forecast, manuel onlineSalesPotential).
   // forecast client-side recalc'da değişmez (DB sorgusu lazım) — server'dan gelen
   // forecastMonthlyUnits'i baz alır, sadece manual override değişirse onunla karşılaştır.
+  // Forecast V2 açıkken manuel değer talebi değiştirmez (yalnız karşılaştırma); efektif = sunucudaki FULL dereceli V2.
   const manualOnline = m.onlineSalesPotential ?? 0;
-  const effectiveT30g = Math.max(m.forecastMonthlyUnits, manualOnline);
+  const effectiveT30g = m.forecastV2 ? m.effectiveMonthlyUnits : Math.max(m.forecastMonthlyUnits, manualOnline);
   const stockDays = calcStockDays(m.stockQuantity, effectiveT30g);
   const healthScore = calcHealthScore({
     hasRmb: m.sourceCostRmb != null,
@@ -383,8 +385,9 @@ export function ImporterViewClient() {
       const alloc = allocationMap.get(p.id) ?? { recommendedQty: 0, neededQty: 0, budgetCost: 0 };
 
       // Historical fallback — sadece stoksuz + lifetime satışlı ürünler için
+      // Forecast V2 açıkken eski kaynaklı (çift sayımlı) ömür boyu hızla adet önerilmez.
       const isStocksuzSatisli =
-        p.stockQuantity === 0 && p.lifetimeTotalQty > 0;
+        !p.forecastV2 && p.stockQuantity === 0 && p.lifetimeTotalQty > 0;
       const historicalRecommendedQty = isStocksuzSatisli
         ? calcHistoricalRecommendedQty({
             lifetimeSold: p.lifetimeTotalQty,
@@ -521,8 +524,10 @@ export function ImporterViewClient() {
     );
   }
 
+  const v2On = products.some((p) => p.forecastV2 != null);
   return (
     <div className="space-y-5">
+      <ForecastV2Notice on={v2On} />
       {/* ── Summary cards ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
@@ -877,9 +882,13 @@ export function ImporterViewClient() {
                       <td className="px-3 py-2 text-right">
                         <span
                           className={`font-mono text-xs ${p.forecastMonthlyUnits > 0 ? "text-emerald-700 font-semibold" : "text-slate-300"}`}
-                          title={`Sistem tahmini (formül: ${p.forecastFormula})`}
+                          title={p.forecastV2
+                            ? `V2: ${p.forecastV2.forecastUnits ?? "UNKNOWN"} (${p.forecastV2.dataGrade}) · eski efektif ${p.forecastV2.legacyEffectiveMonthlyUnits} · fark ${(p.forecastV2.forecastUnits ?? 0) - p.forecastV2.legacyEffectiveMonthlyUnits}` +
+                              (p.forecastV2.reasonFlags.length ? ` · ${p.forecastV2.reasonFlags.join(", ")}` : "")
+                            : `Sistem tahmini (formül: ${p.forecastFormula})`}
                         >
-                          {p.forecastMonthlyUnits > 0 ? p.forecastMonthlyUnits : "—"}
+                          {p.forecastV2 && p.forecastV2.forecastUnits == null ? "?" : p.forecastMonthlyUnits > 0 ? p.forecastMonthlyUnits : "—"}
+                          {p.forecastV2?.dataGrade === "PARTIAL" && <sup className="ml-0.5 text-amber-600">P</sup>}
                         </span>
                       </td>
 

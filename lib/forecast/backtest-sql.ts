@@ -56,7 +56,7 @@ act as (select u.c, u.k, coalesce(sum(kd.u), 0) as a from uni u left join kd on 
 /** forecastMonthlySales() in SQL over a buckets relation (c, k, m, u): 15th-of-month windows, blend, seasonal clamp. Computed in float8 in
  *  the same operation order as the JS so values are bit-identical; the caller applies floor(greatest(b30, blend × seas) + 0.5), which is
  *  Math.round for positive values (PostgreSQL round(float8) rounds half to even and would differ on exact .5). */
-const FMS = (name: string, buckets: string) => `${name}_agg as (
+export const FMS = (name: string, buckets: string) => `${name}_agg as (
   select c, k, coalesce(sum(u) filter (where u > 0 and m + 14 >= c - 30), 0) as b30, coalesce(sum(u) filter (where u > 0 and m + 14 >= c - 90), 0) as b90,
     coalesce(sum(u) filter (where u > 0 and m + 14 >= c - 365), 0) as b365, coalesce(sum(u) filter (where u > 0), 0) as life, min(m) filter (where u > 0) as fm,
     count(*) as n_all, count(*) filter (where extract(month from m) = extract(month from c)) as n_cur,
@@ -69,7 +69,7 @@ ${name} as (
       else greatest(0.5::float8, least(2.0::float8, (s_cur::float8 / n_cur) / (s_all::float8 / n_all))) end as seas
   from ${name}_agg)`;
 
-const UNION = `ur as (
+export const UNION = `ur as (
   select "productId" as pid, "orderDate"::date as d, quantity::numeric as u, status from (
     select "productId", "orderDate", quantity, status from public."MarketplaceSalesRecord" where "productId" is not null
     union all select "productId", "orderDate", quantity, status from public."TrendyolSalesRecord" where "productId" is not null

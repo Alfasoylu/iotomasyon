@@ -102,3 +102,87 @@ fazla birimi %28,8 → %43,9, ciro ağırlıklı WAPE'yi 110,8% → 127,4% köt�
 Yalnız A'ya M5 faktörü, B/C'ye M0 uygulansaydı (aynı veriden segment toplamlarıyla birebir hesap): WAPE 85,1% (−2,3 pp), bias −2,6%, >2× 7,97%,
 fazla birim %41,2. Bu bileşim sonuçlar görüldükten sonra tasarlandığı için aynı 50 kesimde **kanıt sayılmaz**; ancak yeni bir ön kayıtla
 (`M7_A_shrink`: k_A walk-forward, yalnız küçültme [0,6, 1,0], B/C = true30) ileriye dönük (2026-10-06 sonrası kesimler) gölge ölçümle sınanabilir.
+
+## Uygulama (PR2) — `observed-sales-v2-true30`
+Karar (kullanıcı onayı, 2026-10-06): üretim modeli **kanonik Financial Memory + global true30**. Daha karmaşık model yok; ekonomik kazanç
+eski zincirdeki çift kaynak + max/mevsim + manuel taban hatalarının kaldırılmasından geliyor.
+
+- **Bayrak:** `FORECAST_V2_ENABLED` (yalnız tam olarak `"true"` açar; varsayılan kapalı). Kapalıyken her tüketici eski ifadesini birebir
+  çalıştırır (V2 sorgusu bile çalışmaz). Açıkken yalnız aşağıda MIGRATE_V2 işaretli tüketiciler V2'ye geçer. Merge sonrası otomatik açılmaz.
+- **Model** (`lib/forecast/v2.ts`, yükleyici `v2-loader.ts`): yalnız `fm_sales_canonical_snapshot` (COUNTED, eşlenmiş `product_id`), gerçek
+  `[as_of − 30, as_of)` penceresi (as_of = İstanbul bugünü, bugünün eksik günü hariç). Eski `UNION ALL` yok, `max()` yok, mevsim yok, manuel yok.
+  Tek SELECT, üretimde 1.325 ürün için ≈0,27 sn; istek başına bir kez (React `cache`).
+- **Çıktı sözleşmesi:** `sku, product_id, as_of, horizon_days (30), forecast_units, model_version, history_days, segment (A/B/C, kesim öncesi
+  90 gün), data_grade (FULL/PARTIAL/UNKNOWN), estimated (false — gözlenen sayım), reason_flags, source_watermark, demand_estimate_units,
+  manual_override_units, model_forecast, manual_override, effective_forecast`.
+- **Soğuk başlangıç:** ilk kanonik satıştan `< 7` gün veya hiç satış yok → `forecast_units = null` (UNKNOWN); `7–29` gün → gözlenen true30,
+  `PARTIAL` (yıllıklandırma yok); `≥ 30` → FULL. `decisionUnits()` yalnız FULL için değer döner; PARTIAL/UNKNOWN sipariş/sermaye motorlarına
+  0 (“Veri Eksik”) olarak girer.
+- **Talep tahmini ayrı:** `demand_estimate_units` = stoklu günlerdeki satış / stoklu gün × 30; 30 günün hepsinde stok bilinmiyorsa veya
+  < 10 stoklu gün varsa UNKNOWN. Hiçbir tüketici bunu tahmin yerine kullanmaz (testle kilitli).
+- **Manuel potansiyel:** `effective_forecast = model_forecast`; manuel değer yalnız karşılaştırma (UI'da gösterilir), satın alma/sermaye
+  hesabına girmez; mevcut değerler silinmez/değişmez. Toptan/bayi manuel potansiyelleri de V2 açıkken karar talebine girmez.
+- **Sessiz değişim yok:** V2 açıkken taşınan her ekranda uyarı bandı + `/admin/forecast-v2` gölge sayfası (eski/yeni, mutlak ve % fark,
+  sipariş kuralı etkisi, açık siparişler). Saklı kayıtlar (taslak siparişler, `cfo_order_line`, ImportDecisionSnapshot) değiştirilmez.
+  Otomatik sipariş üretilmez; 5 milyon TL borç kapısı (`lib/cfo-agent/debt-policy.ts`) aynen.
+
+### Tüketici denetimi (kaynak: `lib/forecast/consumer-audit.ts`, testle zorlanır)
+| Karar | Tüketici | Eski talep | V2 açıkken |
+|---|---|---|---|
+| MIGRATE_V2 | importer-view route + istemci | max(forecastMonthlySales(UNION), manuel) | FULL V2; manuel düzenleme talebi değiştirmez; eski ömür boyu adet ipucu gizli |
+| MIGRATE_V2 | sermaye sağlık | max(forecastMonthlySales(UNION), manuel) | FULL V2 |
+| MIGRATE_V2 | dashboard sermaye özeti, akıllı öneriler | max(Trendyol 30g, manuel) | FULL V2 |
+| MIGRATE_V2 | ithalat kokpiti | max(Trendyol Delivered×(1−iade), manuel) + toptan + bayi; STOKSUZ_AL ömür boyu yedeği | FULL V2; STOKSUZ_AL sinyali kalır, eski kaynaklı adet yok |
+| MIGRATE_V2 | capital | max(Trendyol 30g, manuel) + toptan + bayi | FULL V2; manuel kanallar yok (motor değişmedi) |
+| MIGRATE_V2 | sipariş formu ön doldurma (reorder) | manuel toplam × 2 − stok | FULL V2 × 2 − stok; 0 → minimum stok kuralı |
+| MIGRATE_V2 | ürün detayı ithalat kararı, import snapshot | manuel toplam | FULL V2 (karar/puan büyüklükten bağımsız) |
+| KEEP_LEGACY | sales-potential, capital-allocation, import-decision, importer-cost motorları | saf motorlar | girdiyi çağıran belirler |
+| KEEP_LEGACY | stok sağlığı, marketplace kâr, ürün listesi hız sütunları | gözlem metrikleri | gösterim |
+| KEEP_LEGACY | AI CFO (snapshot/iş planı), CFO ithalat planı | min(kanonik/30, XML) · saklı `monthly_sales` | kapsam dışı (zaten ihtiyatlı) |
+| DEPRECATE | `lib/procurement.ts` (çağıran yok), executive ölü seçimler | — | ayrı temizlik PR'ı |
+
+### Gölge karşılaştırma — üretim, 2026-10-06 (salt-okunur, `shadowSql`, PGlite'ta TS referansıyla birebir)
+Aktif SKU 1.311: FULL 1.152 · PARTIAL 11 · UNKNOWN 148 (146 hiç kanonik satış yok, 2 < 7 gün) · talep tahmini bilinen 134 · kanonik filigran 2026-10-05.
+
+| Aylık talep (adet) | Toplam |
+|---|---|
+| Eski importer/sermaye efektif = max(motor, manuel) | 7.529 |
+| Eski motor (max/mevsim, manuel hariç) | 5.999 |
+| Eski Trendyol 30g ∨ manuel (dashboard/öneriler/capital) | 4.399 |
+| Eski kokpit | 4.544 |
+| **V2 tahmin** (PARTIAL 35 dahil) | **1.747** |
+| V2 karar (yalnız FULL) | 1.712 |
+
+V2 ile eski efektif karşılaştırması (1.163 SKU; 148 UNKNOWN ayrı): **>%25 fark 377 SKU**, **>2× fark 150 SKU**, V2 daha düşük 384, daha yüksek 0.
+Trendyol-tabanlı eski sinyale göre: >%25 123, >2× 62 (V2 80 SKU'da daha yüksek — tüm kanallar).
+
+| Sipariş kuralı (yalnız talep kısmı) | Eski adet>0 SKU | V2 adet>0 | Değişen | Sıfıra düşen | Eski adet | V2 adet | Azalan adet | Artan adet |
+|---|---|---|---|---|---|---|---|---|
+| Kokpit 90 gün kapsam | 77 | 55 | 90 | 42 | 8.807 | 1.832 | 7.896 | 921 |
+| İthalatçı 45 gün ihtiyaç | 325 | 43 | 317 | 282 | 5.964 | 832 | 5.132 | 0 |
+| Sipariş formu 2× (stok ≤ min) | 1.093 | 1.093 | 60 | 0 | 4.761 | 2.242 | 3.213 | 694 |
+
+Açık kayıtlar (değiştirilmedi): 1 DRAFT satın alma siparişi (25 kalem, 1.632 adet) — V2'ye göre 24 kalemde stok+sipariş 90 günü aşıyor
+(eskiye göre 11), 16 kalemin V2 karar talebi yok. 34 BEKLIYOR CFO sipariş satırı (4.346 adet): satırdaki aylık satış toplamı 1.261,5,
+V2 karar toplamı 450; 33 satırda >%25, 24 satırda >2× fark; 16 satırın V2 karar talebi yok.
+
+**TL ifadesi:** tarihsel maliyet olmadığı için tarihsel TL tasarrufu hesaplanmaz. Yalnız *bugünkü* `Product.unitCostTry` ile ileriye dönük
+maruziyet (433 SKU maliyetli): kokpit kuralında azalan 7.380 adet ≈ ₺2,72 M; ithalatçı kuralında 4.480 adet ≈ ₺2,48 M. Bu bir tahmin değil,
+öneri adedi farkının bugünkü maliyetle çarpımıdır ve geri testten ayrıdır. Geri test (PR1/PR2, birim): üretim yolu L4 fazla birim oranı
+≈ %111,6 → true30 ≈ %45,7 (gerçekleşen birime oranla).
+
+### M7 A-shrink (yalnız gölge)
+`shadow-m7-a-shrink-v1` (`lib/forecast/m7-shadow.ts`): A segmentinde k_A·U30, k_A walk-forward (yalnız küçültme [0,6, 1,0], ≥300 gözlem,
+≥4 kesim), B/C = true30. Keşif kesimi **2026-10-06**: yalnız bu tarihten itibaren haftalık kesimler ve hedefi tamamen geçmiş olanlar
+puanlanır (ilk puanlanabilir gün 2026-11-06); daha öncesini doğrulama olarak kullanmak kodla engellenir. Üretim kodu M7'yi import etmez
+(testle kilitli). Telemetri: `--print-sql m7Forward` (M0 vs M7: WAPE, bias, >2×, fazla birim, n). Terfi otomatik değil; gelecekteki kapı:
+≥12 ileri kesim, ≥150 A gözlemi, WAPE ≥3 pp iyileşme, |bias|/>2×/fazla birim kötüleşmez + ayrı PR ve onay.
+
+### Geri alma
+`FORECAST_V2_ENABLED` kaldır/`false` → bir sonraki istekte tüm tüketiciler eski formüle döner (veri/migration değişikliği yok). Kod geri
+alımı gerekirse PR revert yeterli; hiçbir tablo yazılmadı.
+
+### Testler
+`forecast-v2` (sözleşme, soğuk başlangıç, manuel/talep izolasyonu, yükleyici SQL == referans, çift Trendyol/UNION/iptal/manuel değişikliğine
+bağışıklık, M7 ileri SQL == TS, M7 V2'yi değiştirmez), `forecast-shadow` (gölge SQL == TS referansı), `forecast-consumers` (20 çağrı noktası
+kayıtlı ve zorlanır, bayrak kapalı = eski, açık = yalnız FULL V2, borç kapısı etkilenmez), mevcut `forecast-backtest*`, `forecast-candidates`.

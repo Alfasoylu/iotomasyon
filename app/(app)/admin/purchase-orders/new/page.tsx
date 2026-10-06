@@ -14,6 +14,8 @@ import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
+import { ForecastV2Notice } from "@/components/forecast/forecast-v2-notice";
 import { CreatePurchaseOrderForm } from "@/components/purchase-orders/create-purchase-order-form";
 import {
   calculateImportDecision,
@@ -99,6 +101,8 @@ export default async function NewPurchaseOrderPage({
     monthlyDemand: number; needsReorder: boolean; suggestedQty: number;
   };
 
+  // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy manual-potential demand below is unchanged.
+  const v2 = await forecastV2ForConsumers();
   // Build product data with cost estimates
   const productData: ProductData[] = products.map((p: RawProduct) => {
     const rmb = p.sourceCostRmb != null ? Number(p.sourceCostRmb) : null;
@@ -126,10 +130,12 @@ export default async function NewPurchaseOrderPage({
     }
 
     // Monthly demand for prioritization
-    const monthlyDemand =
-      (p.onlineSalesPotential ?? 0) +
-      (p.wholesaleSalesPotential ?? 0) +
-      (p.installerSalesPotential ?? 0);
+    // V2 açıkken: FULL dereceli V2 (manuel potansiyeller öneri adedine girmez); 0 → yalnız minimum stok kuralı.
+    const monthlyDemand = v2
+      ? v2DecisionDemand(v2, p.id)
+      : (p.onlineSalesPotential ?? 0) +
+        (p.wholesaleSalesPotential ?? 0) +
+        (p.installerSalesPotential ?? 0);
 
     // Need to reorder?
     const needsReorder = p.stockQuantity <= p.minimumStock || p.stockQuantity === 0;
@@ -188,6 +194,7 @@ export default async function NewPurchaseOrderPage({
           {rmbUsdRate && <> · <span className="font-semibold font-mono tabular-nums">1 USD = ¥{rmbUsdRate.toFixed(4)}</span></>}
         </p>
       </div>
+      <ForecastV2Notice on={v2 != null} />
 
       {fromImporter && importerSuggestions.length > 0 && (
         <div className="rounded-lg border border-[var(--ok-border)] bg-[var(--ok-dim)] px-4 py-3 text-sm text-[var(--ok)]">

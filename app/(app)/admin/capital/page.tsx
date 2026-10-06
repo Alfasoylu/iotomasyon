@@ -16,6 +16,8 @@ import { DollarSign, AlertTriangle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
+import { ForecastV2Notice } from "@/components/forecast/forecast-v2-notice";
 import { calculateCapitalAllocation } from "@/lib/capital-allocation";
 import { isDropshipStock } from "@/lib/importer-cost";
 import { calculateSalesPotential } from "@/lib/sales-potential";
@@ -110,12 +112,17 @@ export default async function CapitalPage() {
   // Compute investment scores for all products.
   // Pazar yeri demand: max(Trendyol 30g, manuel onlineSalesPotential) —
   // manuel tahmin Trendyol satışından büyükse devre dışı kalmaz.
+  // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy max(Trendyol 30g, manuel) + manuel kanallar unchanged.
+  // V2 açıkken talep = FULL dereceli V2; manuel toptan/bayi potansiyelleri sermaye hesabına girmez.
+  const v2 = await forecastV2ForConsumers();
   const productsWithScore = products.map((p) => {
     const actualQty = actualSales30d.get(p.id) ?? null;
     const manualOnline = p.onlineSalesPotential ?? 0;
     const trendyolOnline = actualQty ?? 0;
-    const maxOnline = Math.max(trendyolOnline, manualOnline);
+    const maxOnline = v2 ? v2DecisionDemand(v2, p.id) : Math.max(trendyolOnline, manualOnline);
     const effectiveOnlinePotential = maxOnline > 0 ? maxOnline : null;
+    const wholesaleSalesPotential = v2 ? null : p.wholesaleSalesPotential;
+    const installerSalesPotential = v2 ? null : p.installerSalesPotential;
     const effectiveCostTry = computeLandedCost(p);
 
     const sp = calculateSalesPotential({
@@ -132,8 +139,8 @@ export default async function CapitalPage() {
       paymentFeeRate: p.paymentFeeRate != null ? Number(p.paymentFeeRate) : null,
       returnReserveRate: p.returnReserveRate != null ? Number(p.returnReserveRate) : null,
       onlineSalesPotential: effectiveOnlinePotential,
-      wholesaleSalesPotential: p.wholesaleSalesPotential,
-      installerSalesPotential: p.installerSalesPotential,
+      wholesaleSalesPotential,
+      installerSalesPotential,
       stockQuantity: p.stockQuantity,
       minimumStock: p.minimumStock,
     });
@@ -145,14 +152,14 @@ export default async function CapitalPage() {
       stockQuantity: p.stockQuantity,
       minimumStock: p.minimumStock,
       onlineSalesPotential: effectiveOnlinePotential,
-      wholesaleSalesPotential: p.wholesaleSalesPotential,
-      installerSalesPotential: p.installerSalesPotential,
+      wholesaleSalesPotential,
+      installerSalesPotential,
       marketplacePriceTry: p.marketplacePriceTry != null ? Number(p.marketplacePriceTry) : null,
       wholesalePriceTry: p.wholesalePriceTry != null ? Number(p.wholesalePriceTry) : null,
       sellingPriceTry: p.sellingPriceTry != null ? Number(p.sellingPriceTry) : null,
       investmentScore: sp.investmentScore,
       velocitySource:
-        trendyolOnline > 0 && trendyolOnline >= manualOnline
+        v2 ? "actual" : trendyolOnline > 0 && trendyolOnline >= manualOnline
           ? "actual"
           : "estimated",
     };
@@ -202,6 +209,7 @@ export default async function CapitalPage() {
           ) : null
         }
       />
+      <ForecastV2Notice on={v2 != null} />
 
       {/* Real velocity notice */}
       {actualDataCount > 0 && (
