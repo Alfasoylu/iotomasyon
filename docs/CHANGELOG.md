@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Financial Memory — belgelenmiş stok düzeltmeleri / AL-CAM03 (2026-10-06)
+- `20261005280000_fm_stock_adjustment`: `fm_stock_adjustment` (fiziki sayım/manuel düzeltme, kaynak+kanıt+zaman damgaları), `fm_memory_stock_adjusted_company_day` (gözlenen XML ↔ düzeltilmiş ayrı sütunlar, sayım gününden itibaren, `manual_count_adjustment` bayrağı), `fm_stock_reconciliation` (zincir+düzeltme ↔ `Product.stockQuantity`). `fm_memory_stock_company_day` **değişmedi** (yalnız gözlenen). AL-CAM03 +443 (sayım 2026-09-11, Product düzeltmesi 2026-09-12 05:11) EXPLAINED olarak kaydedildi. Üretim: 274 MATCH + 1 MATCH_AFTER_ADJUSTMENT, 0 açıklanamayan fark; fingerprint 21/21 üretimle birebir. Test: `fm-stock-adjustment`.
+
 ### Step 1 kapanışı — production↔repo parity, kargo tarifeleri, banka/stok adli analizi (2026-10-05)
 - Repo migration'ları üretim gerçeğine hizalandı (cfo_secret policy `USING (false)` korunur/DROP yok, fonksiyon gövdeleri, 1E anon/authenticated revoke, 1A policy ALTER); Step 1'in 7 migration'ı 21 parmak izi grubunda üretimle birebir doğrulanıp `_prisma_migrations`'a işlendi. CI: `migration-clean-apply` (10 bilinen out-of-band hata dondurulmuş + Step 1 parmak izi). Rapor: `docs/SCHEMA-DRIFT-REPORT.md`.
 - Trendyol desi kargo tarifeleri (3 Ocak 2025, 13 Temmuz 2026; KDV hariç) + küçük sipariş baremleri + "tüm kanallarda aynı kargo maliyeti" varsayımı: `cfo_kargo_desi_tarife/barem/kanal_varsayim`, `cfo_kargo_tahmin()`; faturalarla doğrulandı. Doküman: `docs/KARGO-TARIFE.md`.

@@ -242,6 +242,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+### 2026-10-06 — Stok düzeltme katmanı (AL-CAM03)
+
+`20261005280000_fm_stock_adjustment`, test `fm-stock-adjustment`. Gözlenen (XML) ve düzeltilmiş stok ayrı; sayımdan öncesine geriye uygulama yok. Not: `fm_stock_refresh()` otomatik çalışmıyor — XML senkronundan sonra çağrılmazsa mutabakat `UNEXPLAINED` görünür (bayat hafıza); zamanlama ayrı iş.
+
 ### 2026-10-05 — Step 1 kapanışı (parity + kargo + adli analiz)
 
 Production↔repo şema parity'si (`docs/SCHEMA-DRIFT-REPORT.md`), kargo tarifeleri (`docs/KARGO-TARIFE.md`), banka adli analizi (`docs/BANK-DATA-FORENSICS.md`), final kabul raporu. Açık kararlar: RLS'siz 3 tablo + anon yetkileri, baseline-capture migration'ı, banka nakdi için YKB export'u.
