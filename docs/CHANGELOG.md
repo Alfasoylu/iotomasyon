@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### AI CFO — zamanlama + /admin/ai-cfo (V1 adım 5/9) (2026-10-06)
+- Monitor günlük XML/Trendyol cron'larında CFO döngüsünden sonra `after()` ile çalışır (Hobby: yeni cron yok); `/api/cron/ai-cfo-monitor` ve `/api/cron/ai-cfo-morning` (CRON_SECRET).
+- `/admin/ai-cfo` kontrol merkezi (kapılar, hedefler, snapshot, uyarılar, içgörüler, kullanım; kimlik bilgisi yalnız var/yok) + elle çalıştırma API'si (ADMIN+CFO_WRITE, aynı origin, production). Tablolar yokken `installed:false`.
+- Doğrulama: tsc, eslint (CI listesine eklendi), `ai-cfo-store` testi adım 8 öncesi/sonrası kontrol merkezi. Bayraklar kapalı; üretim DB değişmedi.
+
 ### AI CFO runner — V1 yeniden inşası adım 4/9 + Goal Engine (2026-10-06)
 - `lib/cfo-agent/runner.ts` (monitor/sabah), `store.ts`, `lock.ts`, `memory.ts`, `validate-ai-output.ts`, `goal-anomalies.ts`. Goal Engine hedefleri (OFF_TRACK/AT_RISK/NOT_MET, kalite A–D, taze) anomaly olarak modele gider; kanıt dışı sayı, değişmiş severity/kategori, uydurma kanıt reddedilir. Hiçbir route/cron'dan çağrılmıyor, bayraklar kapalı; üretimde değişiklik yok. Testler `ai-cfo-runner`, `ai-cfo-store` (CI). Baseline bootstrap düzeltmesi: üretimde olmayan `ai_cfo_v1` artık yanlışlıkla "uygulandı" kaydedilmiyor (`notAppliedInProduction`). Belge `docs/AI-CFO-RUNNER.md`.
 

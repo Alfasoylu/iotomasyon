@@ -29,7 +29,7 @@ export const maxDuration = 300; // 5 min
 export async function GET(req: NextRequest) {
   const denied = authorizeCron(req);
   if (denied) return denied;
-  scheduleCfoCycle("daily_trendyol");
+  scheduleCfoCycle("daily_trendyol", { aiMonitor: true });
 
   const config = await prisma.trendyolConfig.findFirst();
   if (!config || !config.isEnabled) {
