@@ -1,0 +1,5 @@
+{
+  "baselineFile": "2026-10-06.sql",
+  "seedFile": "2026-10-06.seed.sql",
+  "cutoffMigration": "20261006110000_cfo_google_lockdown"
+}

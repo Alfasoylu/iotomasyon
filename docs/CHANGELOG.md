@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Baseline capture — boş DB'den üretim şeması (2026-10-06)
+- Üretim `public` şemasının (143 tablo, 55 view + 1 matview, 31 fonksiyon, 420 indeks, 312 kısıt, 78 policy, 32 enum, 2 trigger, grant'lar) salt-okunur envanterden üretilmiş döküm: `prisma/baseline/2026-10-06.sql` + migration'lardan kopyalanan tohumlar; `npm run db:bootstrap` (baseline → 113 migration `applied` → yalnız yeni migration'lar). PGlite testi `schema-baseline`: boş DB 0 hata, 17 tür tam-şema parmak izi üretimle birebir, Step 1 21 grup eşit, 113/113 migration kayıtlı. Üretime yazma yok; tarihsel migration değişmedi; `cfo_secret` verisi okunmadı. `docs/BASELINE-CAPTURE.md`.
+
 ### Güvenlik — cfo-files private + anon denetimi (2026-10-06)
 - `cfo-files` bucket'ı **private**; 8 `cfo_question_file` referansı `private:cfo-files/<path>` biçimine taşındı (idempotent migration `20261006100000_cfo_files_private`, yedek tablo + rollback); dosyalar silinmedi/yeniden yüklenmedi. Eski public URL'ler anonim erişimde 400 (üretimde doğrulandı). `signedCfoFileUrl` yardımcısı + `scripts/verify-cfo-files-private.ts`. Denetim: `docs/ANON-GRANTS-FUNCTIONS-AUDIT.md` (yalnız denetim), kabul: `docs/SECURITY-HARDENING-ACCEPTANCE.md`.
 ### Güvenlik — cfo_google kilidi (2026-10-06)

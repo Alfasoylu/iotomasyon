@@ -53,6 +53,7 @@ jobs:
       - run: node --conditions=react-server --import tsx __tests__/xml-sync-fm-refresh.test.ts
       - run: node --import tsx __tests__/cfo-kargo-tarife.test.ts
       - run: node --import tsx __tests__/migration-clean-apply.test.ts
+      - run: node --import tsx __tests__/schema-baseline.test.ts
       - run: node --import tsx __tests__/security-anon-lockdown.test.ts
       - run: node --import tsx __tests__/cfo-files-private-migration.test.ts
       - run: node --import tsx __tests__/cfo-google-lockdown.test.ts
