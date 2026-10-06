@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### Market Scout temeli (PR3) — yalnız meşru kaynaklar, üretime uygulanmadı (2026-10-06)
+- Migration `20261007100000_market_scout_foundation` (yalnız yeni `market_*` tabloları; append-only tetikleyici, idempotency, observed_at/known_at, RLS + anon/authenticated/PUBLIC yetkisiz). Eski scout tablolarına dokunulmadı. Üretime **uygulanmadı** (baseline `notAppliedInProduction`).
+- DB kısıtları: sitemap gözlemi satıcı/fiyat/puan/yorum/satış taşıyamaz; buybox yalnız resmi API + derece A, satış kolonu yok; anahtar kelime tablosunda hacim kolonu yok; MANUAL_SOURCING iniş maliyeti daima UNKNOWN; fırsat durumlarında BUY/ORDER yok; LLM eşleşmesi derece D.
+- `lib/market/*`: kaynak sağlık matrisi, SSRF-sertleştirilmiş `safe-fetch`, URL/sitemap ayrıştırma, deterministik eşleştirme (`match-v1`; görsel tek başına EXACT olamaz), momentum, kategori uyumu (`fit-v1`, yeniden normalize yok), fırsat (`opp-v1`), EN/ZH sorgu üretici (GENERATED_QUERY), buybox/sitemap/manuel sağlayıcıları, Google/Alibaba/lisanslı sağlayıcı arayüzleri (UNAVAILABLE/EXPERIMENTAL), eski scout salt-okunur adaptörü (200 aday / 3 karar, `legacy_writer=UNKNOWN`).
+- `/admin/market-scout` (Product Hunter, Watchlist, Pazar gözlemleri, Tedarik adayları, Veri kaynakları); izinler `marketScout.read/write`. Testler `market-scout-core`, `market-safe-fetch`, `market-scout-db` (CI).
+- Sitemap ölçümü: 333 dosya, 13,89 GB ham / ~1,9 GB gzip tam geçiş, ID'ler dağınık (artımlı yok), 304 destekli, ~3 istek/sn'de 429 → toplayıcı etkin değil. Belge `docs/MARKET-SCOUT.md`. Toplayıcı, zamanlayıcı, ENV, Forecast V2, sipariş tabloları değişmedi.
+
 ### Forecast V2 — `observed-sales-v2-true30` bayrak arkasında (PR2) (2026-10-06)
 - Kanonik Financial Memory satışından gerçek 30 gün tahmini; sürümlü çıktı sözleşmesi (veri derecesi, neden bayrakları, filigran), soğuk başlangıç (<7 gün UNKNOWN, 7–29 gün PARTIAL, yıllıklandırma yok), stok-düzeltilmiş talep tahmini ayrı alan, manuel potansiyel yalnız karşılaştırma (`effective_forecast = model_forecast`).
 - `FORECAST_V2_ENABLED` (varsayılan kapalı): kapalıyken davranış birebir aynı; açıkken yalnız denetlenmiş 10 tüketici V2 kullanır, PARTIAL/UNKNOWN sipariş/sermaye hesabına girmez. Uyarı bandı + `/admin/forecast-v2` gölge karşılaştırması.

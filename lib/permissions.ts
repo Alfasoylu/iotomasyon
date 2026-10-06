@@ -129,6 +129,10 @@ export const PERMISSIONS = {
   // Executive
   EXECUTIVE_READ:               "executive.read",
 
+  // Market Scout (PR3) — dış pazar istihbaratı (watchlist, manuel capture, manuel tedarik). Yalnız ADMIN/OWNER varsayılanı; rol yok.
+  MARKET_SCOUT_READ:            "marketScout.read",
+  MARKET_SCOUT_WRITE:           "marketScout.write",
+
   // Catalogs (Faz 1-6) — Ürün katalogu sektör odaklı PDF/web
   CATALOGS_READ:                "catalogs.read",
   CATALOGS_CREATE:              "catalogs.create",
