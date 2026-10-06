@@ -28,3 +28,11 @@ export async function downloadPrivateCfoFile(config:StorageConfig,ref:string,req
     const body=await response.arrayBuffer();return body.byteLength<=10*1024*1024?body:null;
   }catch{return null;}
 }
+/** Kısa ömürlü imzalı URL (yalnız sunucu tarafı; bucket private doğrulanmadan üretilmez). */
+export async function signedCfoFileUrl(config:StorageConfig,ref:string,expiresIn=60,request:typeof fetch=fetch){
+  const path=privateFilePath(ref,config);if(!path||!await privateBucket(config,request))return null;
+  try{const response=await request(`${config.url}/storage/v1/object/sign/${BUCKET}/${path}`,{method:'POST',headers:{...headers(config),'Content-Type':'application/json'},body:JSON.stringify({expiresIn}),redirect:'error',cache:'no-store',signal:AbortSignal.timeout(10000)});
+    if(!response.ok)return null;const {signedURL}=await response.json() as {signedURL?:string};
+    return signedURL&&signedURL.startsWith('/object/sign/')?`${config.url}/storage/v1${signedURL}`:null;
+  }catch{return null;}
+}

@@ -9,6 +9,8 @@
 
 ## 2026-10
 
+### Güvenlik — cfo-files private + anon denetimi (2026-10-06)
+- `cfo-files` bucket'ı **private**; 8 `cfo_question_file` referansı `private:cfo-files/<path>` biçimine taşındı (idempotent migration `20261006100000_cfo_files_private`, yedek tablo + rollback); dosyalar silinmedi/yeniden yüklenmedi. Eski public URL'ler anonim erişimde 400 (üretimde doğrulandı). `signedCfoFileUrl` yardımcısı + `scripts/verify-cfo-files-private.ts`. Denetim: `docs/ANON-GRANTS-FUNCTIONS-AUDIT.md` (yalnız denetim), kabul: `docs/SECURITY-HARDENING-ACCEPTANCE.md`.
 ### Güvenlik — cfo_google kilidi (2026-10-06)
 - `cfo_google(jsonb)` anon/authenticated/PUBLIC EXECUTE kaldırıldı; gömülü anon JWT silindi; Edge Function `cfo-google` yalnız sunucu-içi sır (`x-cfo-internal`) ile yetkilendiriliyor, yanıttan servis hesabı e-postası kaldırıldı. Üretimde doğrulandı: anonim doğrudan Edge çağrısı ve anonim RPC reddedildi (401), yetkili postgres yolu çalışıyor. Migration `20261006110000_cfo_google_lockdown`; kaynak `supabase/functions/cfo-google`; test `cfo-google-lockdown`; `docs/CFO-GOOGLE-LOCKDOWN.md`.
 
