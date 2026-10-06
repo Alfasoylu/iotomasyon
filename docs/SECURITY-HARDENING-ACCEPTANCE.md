@@ -8,7 +8,7 @@
 | anonymous cfo-files access = denied | **Denied** | eski 5 farklı public URL (png, xlsx, 2×Enpara xls) → HTTP **400 "Bucket not found"** (önce 200 idi); anon key ile `/object/authenticated`, `/object/sign` → 404 NoSuchKey; anon key `/object/list/cfo-files` → `[]` |
 | 8 referans private biçime taşındı | **8/8** | `cfo_question_file.url` = `private:cfo-files/<path>`; 0 satır `object/public` içeriyor; 8/8 referans `storage.objects`'te çözülüyor; 8 nesne yerinde (silme/yükleme yok) |
 | migration idempotent + rollback | **Doğrulandı** | `__tests__/cfo-files-private-migration.test.ts` (PGlite): 2. çalıştırma değişiklik yok; geçersiz/olmayan/başka-bucket satırlar dokunulmaz; rollback SQL (yedek tablodan) eski URL'leri ve public bayrağını geri getirir |
-| authenticated/application access path | **Kod yolu test edildi; canlı 8/8 doğrulama BEKLİYOR (service-role anahtarı sandbox'ta yok)** | Uygulama yolu: `/api/admin/ai-cfo/files/[id]` (ADMIN + CFO_READ + EXECUTIVE_READ) → service key ile `/object/authenticated`. Birim test (`cfo-private-files.test.ts`): private bucket doğrulaması, path doğrulaması, public bucket'ta indirme reddi, imzalı URL (`signedCfoFileUrl`, 60 sn) üretimi. Sandbox'ta service-role anahtarı yok → canlı doğrulama için `scripts/verify-cfo-files-private.ts` hazır (8 dosya için authenticated indirme + imzalı URL + eski URL reddi) |
+| authenticated/application access path | **8/8 doğrulandı (sunucu tarafı, service-role, secret gösterilmeden)** | Geçici Edge Function (kendi ortamındaki service key ile; yalnız durum/boyut döndü, sonra 410'a çevrilip kapatıldı): bucket `public=false`; 8/8 referans `private:` biçiminde; 8/8 `object/sign` (`expiresIn=60`, JWT TTL 59–60 sn) üretildi; 8/8 imzalı URL ile okundu (HTTP 200, bayt sayısı > 0) ve `authenticated` indirmesiyle **aynı bayt sayısı**; 8/8 eski public URL anonim **400**. **Kapsam notu:** bu, Storage API + service-role yolunu kanıtlar; Next.js yolunun (`/api/admin/ai-cfo/files/[id]`, ADMIN oturumu gerekir) tarayıcıdan uçtan uca açılışı oturum olmadan yapılamadı — o yol birim testlerle (`cfo-private-files.test.ts`) kapsanıyor. `scripts/verify-cfo-files-private.ts` kendi ortamınızda isteğe bağlı olarak çalıştırılabilir (secret'ı paylaşmadan) |
 | internal CFO views anon = denied | **Denied** | anon/authenticated SELECT'i olan view sayısı **0**; `cfo_servet`, `cfo_satis_siparis`, `cfo_nakit_mutabakat`, `cfo_nakit_kapisi`, `cfo_servet_kalem` → erişim yok (#152) |
 | public RLS-disabled tables = 0 | **0 / 143** | `pg_class.relrowsecurity` |
 | write functions anon execution = denied | **Denied** | `cfo_ay_kazanan_yaz`, `cfo_kilometre_yaz`, `cfo_sicrama_kapat`, `cfo_stok_sicrama_kaydet`, `cfo_take_snapshot`: anon=false, authenticated=false |
@@ -27,3 +27,13 @@ UPDATE cfo_question_file f SET url = b.old_url FROM cfo_question_file_url_backup
 UPDATE storage.buckets SET public = true WHERE id = 'cfo-files';  -- yalnız bilinçli olarak yeniden public yapılacaksa
 ```
 Not: kod `public=true` bucket'ı reddeder; geri alma uygulama indirmesini de kapatır — rollback yalnız acil durumda.
+
+## Doğrulama kalıntıları (temizlik notu)
+- Geçici Edge Function `tmp-cfo-files-verify`: v3 = 410 stub (verify_jwt=true), işlevsiz; Supabase panelinden silinebilir (MCP silme aracı yok).
+- `cfo_secret.TMP_CFO_FILES_VERIFY_TOKEN`: değeri boşaltıldı (satır duruyor).
+- `cfo_google` (#156) merge edildi; `_prisma_migrations` checksum'ları repoyla eşit (20261005290000 / 300000 / 20261006110000 doğrulandı).
+
+## Backlog (security — baseline sonrası, bu aşamada yeni iş başlatılmaz)
+1. `cfo_acceptance_reader → cfo_google` EXECUTE **least-privilege incelemesi** (şu an korunuyor; fonksiyon sır döndürmez ama reader'ın Google verisini tetikleyebilmesi gerekli mi?).
+2. 56 tablo anon/authenticated grant **defense-in-depth** (`ANON-GRANTS-FUNCTIONS-AUDIT.md` §5).
+3. Kalan **çalıştırılabilir fonksiyon** yetki incelemesi (10 analiz fonksiyonu anon EXECUTE, `fm_*` 2 salt-okunur, pgvector eklenti fonksiyonları).
