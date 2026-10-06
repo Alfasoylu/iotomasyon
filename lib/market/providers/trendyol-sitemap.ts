@@ -56,6 +56,10 @@ export function resolveSeller(input: { name: string; url?: string | null }, dire
   return { resolution: "UNRESOLVED", sellerId: null, sellerSlug: null, sellerUrl: null, candidates: cands, evidence: { from: "name", slug, ambiguous: exact.length > 1, sitemapEtag: directoryEtag } };
 }
 
+/** Cloudflare serves gzip responses with a WEAK validator (W/"…") but the origin answers 304 only to the STRONG form in If-None-Match
+ *  (measured 2026-10-06: W/"x" → 200 full body, "x" → 304). Validators are therefore stored and sent in strong form. */
+export const strongEtag = (etag: string) => etag.trim().replace(/^W\//i, "");
+
 export interface SitemapScanOptions extends FetchDeps {
   files: string[];                         // e.g. ["https://www.trendyol.com/sitemap_products1.xml", ...]
   previousEtags?: Record<string, string>;  // from the last run → conditional GET (304 = skip)
@@ -76,11 +80,11 @@ export async function scanProductSitemaps(db: Db, o: SitemapScanOptions) {
     if (i > 0) await sleep(SITEMAP_MIN_INTERVAL_MS);
     try {
       const prev = o.previousEtags?.[url];
-      const r = await getWithBackoff(url, o, prev ? { "If-None-Match": prev } : {});
-      if (r.status === 304) { unchanged++; if (prev) etags[url] = prev; continue; }
+      const r = await getWithBackoff(url, o, prev ? { "If-None-Match": strongEtag(prev) } : {});
+      if (r.status === 304) { unchanged++; if (prev) etags[url] = strongEtag(prev); continue; }
       if (r.status !== 200) { failed++; continue; }
       files++; bytes += r.body.length;
-      const etag = r.headers["etag"] ?? idemKey(url, r.body.length);
+      const etag = r.headers["etag"] ? strongEtag(r.headers["etag"]) : idemKey(url, r.body.length);
       etags[url] = etag;
       const observedAt = now().toISOString();
       for (const e of parseProductSitemap(r.body.toString("utf8"))) {

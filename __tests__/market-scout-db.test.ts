@@ -134,7 +134,8 @@ async function main() {
     const fake = async (u: string, o: { headers?: Record<string, string> }): Promise<R> => { calls++;
       if (u.endsWith("3.xml")) return { status: 500, headers: {}, body: Buffer.alloc(0) };
       if (o.headers?.["If-None-Match"] === `"e-${u.slice(-6)}"`) return { status: 304, headers: {}, body: Buffer.alloc(0) };
-      return { status: 200, headers: { etag: `"e-${u.slice(-6)}"`, "content-type": "text/xml" }, body: Buffer.from(xml(u.endsWith("1.xml") ? [1, 2, 3, 4, 5, 6] : [7, 8, 9])) }; };
+      // like Cloudflare: gzip responses carry a WEAK etag, but only the STRONG form in If-None-Match yields 304 (W/"…" → full 200 again)
+      return { status: 200, headers: { etag: `W/"e-${u.slice(-6)}"`, "content-type": "text/xml" }, body: Buffer.from(xml(u.endsWith("1.xml") ? [1, 2, 3, 4, 5, 6] : [7, 8, 9])) }; };
     const files = [1, 2, 3].map(n => `https://www.trendyol.com/sitemap_products${n}.xml`);
     const scan1 = await scanProductSitemaps(db, { files, brandSlugs: ["luxury-faucet"], keywordConcepts: ["faucet"], trigger: "TEST", fetcher: fake, sleep: async () => {} });
     assert.equal(scan1.status, "PARTIAL"); assert.equal(scan1.failed, 1); assert.equal(scan1.files, 2);
@@ -144,6 +145,7 @@ async function main() {
     assert.equal(sm.sellers, 0, "sitemap never yields a seller"); assert.equal(sm.n, scan1.matched);
     const scan2 = await scanProductSitemaps(db, { files: files.slice(0, 2), previousEtags: scan1.etags, brandSlugs: ["luxury-faucet"], keywordConcepts: ["faucet"], trigger: "TEST", fetcher: fake, sleep: async () => {} });
     assert.deepEqual([scan2.status, scan2.unchanged, scan2.newProducts], ["SKIPPED_UNCHANGED", 2, 0]);
+    assert.ok(Object.values(scan1.etags).every(e => !e.startsWith("W/")), "validators stored in strong form");
     assert.equal((await db.query<{ n: number }>(`select count(*)::int as n from public.market_product_observation where source = 'TRENDYOL_SITEMAP'`)).rows[0].n, sm.n, "no duplicate rows");
     assert.ok(calls > 0);
 

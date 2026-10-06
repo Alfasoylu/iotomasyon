@@ -69,7 +69,7 @@ Güvenlik: 14 tabloda RLS açık; PUBLIC/anon/authenticated yetkisi yok; `cfo_ac
 - Ürün sitemap'i: **333 dosya**, ~24,15 bin URL/dosya (~8,0 M URL), ham **13,89 GB** (309 dosya ölçüldü), gzip ~5,77 MB/dosya → **~1,9 GB tam geçiş**.
 - İndirme 1,5–2 sn/dosya (aykırı 33–68 sn). ~3 istek/sn'de 429 (333 HEAD'in 24'ü) → 1,5 sn aralık + Retry-After geri çekilme.
 - Ürün ID'leri dosyalara düzgün dağılmış ve sırasız → **ID ile dosya-düzeyi artımlı yöntem yok**; yeni ürün tespiti tam geçiş ister.
-- Her dosyada ETag + Last-Modified; `If-None-Match`/`If-Modified-Since` → 304 çalışıyor; byte range destekleniyor.
+- Her dosyada ETag + Last-Modified; byte range destekleniyor. **Dikkat:** Cloudflare gzip yanıtında ETag'i zayıf (`W/"…"`) verir, origin ise `If-None-Match`'te yalnız GÜÇLÜ formu (`"…"`) tanır: `W/"x"` → 200 (tam gövde), `"x"` → 304. `If-Modified-Since` da 304 verir. Sağlayıcı doğrulayıcıyı güçlü formda saklar/gönderir (`strongEtag`).
 - Tüm dosyalar günlük ~16:39–16:41 UTC yeniden üretiliyor. **24 saatlik ETag değişim oranı henüz ölçülmedi.**
 - ALFAS ile ilgili ~200 URL/dosya (marka/anahtar kelime filtresi). Mağaza sitemap'i: 5.264 mağaza, sayısal ID.
 - Karar: güvenilir artımlı yöntem kanıtlanmadığı için **sitemap toplayıcısı etkin değil**. Sağlayıcı hazır; ETag değişimi ölçülünce yeniden değerlendirilir.

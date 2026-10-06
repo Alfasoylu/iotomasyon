@@ -1,7 +1,7 @@
 import { safeFetch, MARKET_FETCH_HOSTS } from "../../lib/market/safe-fetch";
 import { parseProductSitemap } from "../../lib/market/trendyol-url";
 import { concepts } from "../../lib/market/normalize";
-import { SITEMAP_MIN_INTERVAL_MS } from "../../lib/market/providers/trendyol-sitemap";
+import { SITEMAP_MIN_INTERVAL_MS, strongEtag } from "../../lib/market/providers/trendyol-sitemap";
 
 // READ-ONLY benchmark of the Trendyol product sitemaps (no DB). Usage:
 //   node --import tsx scripts/market/sitemap-benchmark.ts --sample 1,100,200,333 [--head-sweep]
@@ -23,7 +23,7 @@ async function main() {
     const r = await safeFetch(url, { allowedHosts: MARKET_FETCH_HOSTS.trendyolSitemap, maxBytes: 70_000_000, timeoutMs: 120_000, headers: UA });
     const entries = parseProductSitemap(r.body.toString("utf8")), ids = entries.map(e => Number(e.contentId));
     const sorted = [...ids].sort((a, b) => a - b);
-    const cond = r.headers.etag ? (await safeFetch(url, { allowedHosts: MARKET_FETCH_HOSTS.trendyolSitemap, maxBytes: 70_000_000, headers: { ...UA, "If-None-Match": r.headers.etag } })).status : null;
+    const cond = r.headers.etag ? (await safeFetch(url, { allowedHosts: MARKET_FETCH_HOSTS.trendyolSitemap, maxBytes: 70_000_000, headers: { ...UA, "If-None-Match": strongEtag(r.headers.etag) } })).status : null;
     per.push({ file: n, decompressedBytes: r.body.length, seconds: (Date.now() - t) / 1000, urls: entries.length, idMin: sorted[0], idMax: sorted.at(-1),
       idMedian: sorted[Math.floor(sorted.length / 2)], idsSortedInFile: ids.every((x, i) => i === 0 || ids[i - 1] <= x),
       relevant: entries.filter(e => [...concepts(e.titleSlug.replace(/-/g, " "))].some(c => ALFAS.has(c))).length, etag: r.headers.etag ?? null, conditionalStatus: cond });
