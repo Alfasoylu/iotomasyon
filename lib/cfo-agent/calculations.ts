@@ -3,7 +3,7 @@ import type { Impact, Metric, Profitability } from "./types";
 
 // See docs/AI-CFO-FINANCIAL-CONTRACT.md. No legacy dashboard calculation changes.
 export const FINANCIAL_CONTRACT = Object.freeze({
-  version: "alfas-gross-v4", basis: "gross_incl_vat" as const,
+  version: "alfas-gross-v5", basis: "gross_incl_vat" as const,
   statement: "Komisyon, kargo, hizmet ve ceza oranları KDV DÂHİL brüt tutar üzerinden uygulanır. revenue_ex_vat yalnızca raporlama içindir, marj paydası olarak kullanılmaz.",
   dummyStock: [500, 998, 999, 1000, 9999, 10000],
   orderReturnReserveTry: "13.36", orderProcessingTry: "12.29", orderServicePenaltyTry: "10.00",
@@ -45,10 +45,12 @@ export function shippingFor(price: number, bands: ShippingBand[]): number | null
   const found = bands.filter(b => price >= b.min && (b.max == null || price < b.max));
   return found.length === 1 ? found[0].shipping : null;
 }
-export function priceFloor(cost: number | null, commission: number | null, weightKg: number | null, bands: ShippingBand[]): Metric {
+/** `processingInShipping`: the shipping bands already carry the measured per-order processing fee (cfo_kargo_tarife.toplam =
+ *  tarife + ek_maliyet/ISLEM_BEDELI), so the contract's constant processing fee is not added a second time. */
+export function priceFloor(cost: number | null, commission: number | null, weightKg: number | null, bands: ShippingBand[], processingInShipping = false): Metric {
   if (cost == null || commission == null || weightKg == null || commission < 0 || commission >= 1) return unknown("floor_inputs_unavailable");
   const pack = weightKg <= .5 ? FINANCIAL_CONTRACT.packagingLightTry : FINANCIAL_CONTRACT.packagingHeavyTry;
-  const fixed = D(cost).add(pack).add(FINANCIAL_CONTRACT.orderReturnReserveTry).add(FINANCIAL_CONTRACT.orderProcessingTry).add(FINANCIAL_CONTRACT.orderServicePenaltyTry);
+  const fixed = D(cost).add(pack).add(FINANCIAL_CONTRACT.orderReturnReserveTry).add(processingInShipping ? 0 : FINANCIAL_CONTRACT.orderProcessingTry).add(FINANCIAL_CONTRACT.orderServicePenaltyTry);
   // Solve in every band, rather than iterating indefinitely across discontinuities.
   const solutions = bands.map(b => fixed.add(b.shipping).div(D(1).sub(commission)))
     .filter(p => shippingFor(p.toNumber(), bands) != null && p.gte(fixed.add(shippingFor(p.toNumber(), bands)!).div(D(1).sub(commission))))

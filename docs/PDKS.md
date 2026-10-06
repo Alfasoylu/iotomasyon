@@ -163,7 +163,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
-- [ ] **AI CFO runner adım 7–8:** (5, 6 tamam) · 7 kargo/SET/nakit kolon eşlemesi · 8 ai_cfo_v1 üretime + shadow week + AI'ı açma (her biri ayrı onay). Adım 4 tamam (`AI-CFO-RUNNER.md`).
+- [ ] **AI CFO runner adım 8:** (5, 6, 7 tamam) · 8 ai_cfo_v1 üretime + shadow week + AI'ı açma (her biri ayrı onay). Adım 4 tamam (`AI-CFO-RUNNER.md`).
 
 - [ ] **Güvenlik (sonraya, kritik değil):** `cfo_secret` düz metin kimlik bilgilerini ortam değişkenlerine taşı; pgvector'ü `public` dışına taşı; `tmp-cfo-files-verify` Edge Function'ı panelden sil.
 
@@ -248,6 +248,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-06 — AI CFO adım 7/9 (kolon eşlemesi):** incelenmiş profil varsayılan; kargo `toplam` (işlem bedeli tek sefer), 19.06 geçerlilik, kanal varsayımı (FBA hariç); SET maliyeti `cfo_set_fiyat.maliyet`; nakit `pozisyon` semantiği. `shipping.ts`, `snapshot.ts`, `reviewed-sources.ts`, `calculations.ts` (v5), test `ai-cfo-source-mapping`. Canlı deterministik CFO döngüsü de bu eşlemeyi kullanır (fiyat tabanı/SET maliyeti artık bilinir). Üretim verisi değişmedi. Sırada adım 8, ayrı onayla.
 - **2026-10-06 — AI CFO adım 6/9 (test/CI):** `runner-request.ts` (saf kapı) + testler `ai-cfo-runner-route`, `ai-cfo-access`, `ai-cfo-migration-security`; adım 8 operatör kontrolü `scripts/ai-cfo-migration-check.sql` (üretimde "önce" doğrulandı, salt-okunur); build smoke'a AI CFO cron/runner/sayfa kapıları. Üretim DB değişmedi. Sırada adım 7, ayrı onayla.
 - **2026-10-06 — AI CFO adım 5/9 (zamanlama + /admin/ai-cfo):** monitor günlük cron'ların after() işinde CFO döngüsünden sonra; `ai-cfo-monitor`/`ai-cfo-morning` cron route'ları; `/admin/ai-cfo` kontrol merkezi + `POST /api/admin/ai-cfo/runner`; `control-center.ts` (`installed:false` adım 8'e kadar); menü CFO → AI CFO. Bayraklar kapalı, üretim DB değişmedi. Sırada adım 6, ayrı onayla.
 - **2026-10-06 — AI CFO runner (V1 adım 4/9 + Goal Engine):** runner/store/lock/memory/validate-ai-output/goal-anomalies; testler `ai-cfo-runner` + `ai-cfo-store` (gerçek Prisma/PGlite, bekleyen ai_cfo_v1 ile); baseline `notAppliedInProduction` düzeltmesi. Çağrılmıyor, bayraklar kapalı, üretim değişmedi. Belge `AI-CFO-RUNNER.md`. Sırada adım 5 (cron + /admin/ai-cfo), ayrı onayla.

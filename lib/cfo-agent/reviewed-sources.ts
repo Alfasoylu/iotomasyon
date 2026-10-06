@@ -10,6 +10,12 @@ const hashes = {
   cfo_nakit_projeksiyon: "3d5a2913aabf4835dd42fe4b28e1f6cdee130b1ee08716e31af1c622c4f17db2",
 };
 export const ALFAS_SOURCE_PROFILE = "alfas_2026_10_04";
+/** Reviewed profile is the default (hash-gated: a changed definition disables it and flags reviewed_source_changed).
+ *  AI_CFO_SOURCE_PROFILE=off falls back to explicit AI_CFO_SOURCE_COLUMNS_JSON / AI_CFO_PROJECTION_POSITION_COLUMN only. */
+export function resolveCfoSourceProfile(env: Record<string, string | undefined> = process.env): string | undefined {
+  const value = env.AI_CFO_SOURCE_PROFILE?.trim();
+  return !value ? ALFAS_SOURCE_PROFILE : value === "off" ? undefined : value;
+}
 export async function reviewedCfoSources(db: ReadSource, profile: string | undefined) {
   if (!profile) return null;
   if (profile !== ALFAS_SOURCE_PROFILE) throw new Error("unknown_cfo_source_profile");
@@ -27,7 +33,12 @@ export async function reviewedCfoSources(db: ReadSource, profile: string | undef
   }
   return { valid: true as const, projectionPositionColumn: "pozisyon", bindings: {
     ...REVIEWED_CFO_SOURCE_BINDINGS,
+    // toplam = tarife + ek_maliyet (measured Trendyol ISLEM_BEDELI, docs/KARGO-TARIFE.md) → contract's constant processing fee is skipped.
     cfo_kargo_tarife: { min_try: "alt_sinir", max_try: "ust_sinir", kargo_try: "toplam", channel: "pazaryeri", effective_from: "gecerli_tarih" },
-    // The component table has no set_sku relation. Never alias model/grup into it.
+    // The component table has no set_sku relation. Never alias model/grup into it; the set's own cost comes from cfo_set_fiyat.
+  }, shipping: {
+    processingInShipping: true,
+    // Bands were measured on 19.06–02.09.2026 Trendyol invoice lines and recorded with gecerli_tarih 2026-09-09 (decision 2026-10-06).
+    effectiveRemap: { "2026-09-09": "2026-06-19" } as Readonly<Record<string, string>>,
   } };
 }

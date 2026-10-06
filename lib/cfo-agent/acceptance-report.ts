@@ -5,6 +5,7 @@ import { hashSnapshot } from "./evidence";
 import { assertReviewedCfoDefinitions, cfoAcceptanceContext, REVIEWED_CFO_SOURCE_BINDINGS } from "./acceptance-profile";
 import { cfoAcceptanceDiagnostics } from "./acceptance-diagnostics";
 import { cfoAcceptanceReconciliation } from "./acceptance-reconciliation";
+import { ALFAS_SOURCE_PROFILE, resolveCfoSourceProfile } from "./reviewed-sources";
 import type { ReadSource } from "./sources";
 
 
@@ -19,14 +20,15 @@ export async function buildCfoAcceptanceReport(db:ReadSource,env:Record<string,s
     }
     const config=getCfoConfig({...env,AI_CFO_ENABLED:"false",AI_CFO_MONITOR_ENABLED:"false",AI_CFO_PROVIDER:"disabled",
       ...(profile?{AI_CFO_CANONICAL_SALES_VALIDATED:"true"}:{})});
-    const snapshot=await buildCfoAgentSnapshot({db,now:new Date(asOf),config,compact:false,sourceProfile:env.AI_CFO_SOURCE_PROFILE,
-      ...(profile&&!env.AI_CFO_SOURCE_PROFILE?{bindings:REVIEWED_CFO_SOURCE_BINDINGS}:{})});
+    const sourceProfile=resolveCfoSourceProfile(env);
+    const snapshot=await buildCfoAgentSnapshot({db,now:new Date(asOf),config,compact:false,sourceProfile,
+      ...(profile&&!sourceProfile?{bindings:REVIEWED_CFO_SOURCE_BINDINGS}:{})});
     const checks=evaluateCfoAcceptance(snapshot),passed=checks.filter(c=>c.passed).length;
     const diagnostics=isCurrentComparison?await cfoAcceptanceDiagnostics(db,asOf):undefined;
     const reconciliation=isCurrentComparison?await cfoAcceptanceReconciliation(db,snapshot):undefined;
-    const nativeProjection=snapshot.cash.minimumProjectedPosition.value!=null&&env.AI_CFO_SOURCE_PROFILE==='alfas_2026_10_04'
+    const nativeProjection=snapshot.cash.minimumProjectedPosition.value!=null&&sourceProfile===ALFAS_SOURCE_PROFILE
       ?await db.query(`select min(pozisyon) as minimum_position,count(*)::int as days from public.cfo_nakit_projeksiyon(120)`):null;
-    const adapterVerification={sourceProfile:env.AI_CFO_SOURCE_PROFILE??null,
+    const adapterVerification={sourceProfile:sourceProfile??null,
       reviewedSourceChanged:snapshot.dataQuality.missingFields.filter(f=>f.startsWith('reviewed_source_changed:')),
       minimumProjectedPosition:snapshot.cash.minimumProjectedPosition,nativeProjection,
       banksFresh:snapshot.cash.banksFresh,priceFloorsKnown:snapshot.products.filter(p=>p.priceFloor.value!=null).length,

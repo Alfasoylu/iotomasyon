@@ -11,7 +11,8 @@ export const REVIEWED_CFO_VIEW_HASHES: Readonly<Record<string, string>> = Object
 export const REVIEWED_CFO_SOURCE_BINDINGS = {
   cfo_satis_siparis: { orderDate: "siparis_tarihi", totalAmountTry: "siparis_tutari" },
   cfo_nakit_kapisi: { amac_kmh: "amacli_kmh_try" },
-  cfo_set_fiyat: { birim_kar_try: "kar" },
+  // maliyet: the set SKU's own computed cost (gross, KDV dahil), decision 2026-10-06 — no component recipe exists.
+  cfo_set_fiyat: { birim_kar_try: "kar", set_maliyet_try: "maliyet" },
 };
 
 export function assertReviewedCfoDefinitions(definitions: Row[], expected = REVIEWED_CFO_VIEW_HASHES) {

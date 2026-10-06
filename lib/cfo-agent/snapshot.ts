@@ -7,8 +7,8 @@ import { CALCULATION_VERSION, SCHEMA_VERSION, type CfoAgentSnapshot, type Metric
 import { contribution, cautiousDemand, D, divide, emptyProfitability, isDummyStock, measuredCommission, metric, numeric, orderAllocationSql, percentage, priceFloor, stale, unknown } from "./calculations";
 import { evidence } from "./evidence";
 import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type ReadSource, type Row } from "./sources";
-import { reviewedCfoSources } from "./reviewed-sources";
-import { shippingBandsFor, shippingTariffSql } from "./shipping";
+import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources";
+import { assumedShippingChannel, shippingBandsFor, shippingChannelFor, shippingTariffSql, type ShippingOptions } from "./shipping";
 import { istanbulPeriod } from "./budget";
 
 const iso = (v:unknown) => v == null || !Number.isFinite(Date.parse(String(v))) ? null : new Date(String(v)).toISOString();
@@ -30,7 +30,7 @@ function optionalSum(col:string|null, alias:string, table="s") {return col ? `ca
 
 export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfig;db?:ReadSource;bindings?:Record<string,Record<string,string>>;compact?:boolean;sourceProfile?:string} = {}): Promise<CfoAgentSnapshot> {
   const now=options.now??new Date(), config={...(options.config??getCfoConfig())}, db=options.db??businessSource;
-  const reviewed=await reviewedCfoSources(db,options.sourceProfile??process.env.AI_CFO_SOURCE_PROFILE);
+  const reviewed=await reviewedCfoSources(db,options.sourceProfile??resolveCfoSourceProfile());
   const asOf=now.toISOString(), catalog=new SourceCatalog(db,options.bindings??(reviewed?.valid?reviewed.bindings:sourceBindings())); await catalog.load();
   const blankPeriod=():SalesPeriod=>({grossRevenue:unknown("source_unavailable"),orders:null,aov:unknown("source_unavailable"),complete:false});
   const snapshot:CfoAgentSnapshot={schemaVersion:SCHEMA_VERSION,calculationVersion:CALCULATION_VERSION,generatedAt:asOf,timezone:"Europe/Istanbul",currency:"TRY",accountingBasis:"gross_incl_vat",
@@ -97,6 +97,10 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   const shippingChannel=catalog.column("cfo_kargo_tarife","channel")??catalog.column("cfo_kargo_tarife","channel","pazaryeri"),shippingDate=catalog.column("cfo_kargo_tarife","effective_from")??catalog.column("cfo_kargo_tarife","effective_from","gecerli_tarih");
   let bandsRows=await catalog.rows("cfo_kargo_tarife",["min_try","max_try","kargo_try",...(shippingChannel?["channel"]:[]),...(shippingDate?["effective_from"]:[])],1000);
   if(bandsRows?.length===1000){bandsRows=null;missing.push("shipping_tariff_limit_unverified");}
+  // Channel assumption (cfo_kargo_kanal_varsayim '*') and reviewed date corrections; unknown basis → no assumption.
+  const shippingOptions:ShippingOptions={fallbackChannel:assumedShippingChannel(await catalog.rows("cfo_kargo_kanal_varsayim",["channel","cost_basis"],50)),
+    effectiveRemap:reviewed?.valid?reviewed.shipping.effectiveRemap:undefined};
+  const processingInShipping=!!reviewed?.valid&&reviewed.shipping.processingInShipping;
   const day=istanbulPeriod(now).date;
   const velocityRows=await catalog.rows("cfo_stok_hareket_hiz",["sku","gunluk_30g_ihtiyatli","tukenme_gun_ihtiyatli","hizlanma_katsayi"],10000);
   const velocityUnitCol=catalog.column("cfo_stok_hareket_hiz","adet30");
@@ -119,6 +123,11 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   for(const r of components??[]) {
     const sku=String(r.set_sku),old=sets.get(sku),cost=n(r,"maliyet_try");
     sets.set(sku,old?.value===null||cost==null?unknown("set_component_unknown"):metric(D(old?.value??0).add(cost).toNumber(),true));
+  }
+  // No component→set relation (BOM) exists: the set SKU's own computed cost in cfo_set_fiyat is used (reviewed binding only).
+  if(!components&&catalog.column("cfo_set_fiyat","set_maliyet_try"))for(const r of await catalog.rows("cfo_set_fiyat",["sku","set_maliyet_try"],10000)??[]) {
+    const sku=String(r.sku),cost=n(r,"set_maliyet_try");
+    sets.set(sku,sets.has(sku)?unknown("ambiguous_set_cost_rows"):cost==null||cost<=0?unknown("set_cost_missing"):metric(cost,true,"set_price_view_cost"));
   }
   const setScopeColumn=catalog.column("cfo_set_fiyat","pazaryeri");
   const setPrices=await catalog.rows("cfo_set_fiyat",["sku","birim_kar_try",...(setScopeColumn?["pazaryeri"]:[])],10000);
@@ -169,9 +178,9 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     const returned=catalog.column("cfo_satis_birim_duz","returnedUnits");
     const bandCols=bandsRows?catalog.require("cfo_kargo_tarife",["min_try","max_try","kargo_try"]):null;
     const orderTotal=orders?`(select case when count(*)=1 then max(o.${orders.totalAmountTry}::numeric) end from cfo_satis_siparis o where o.${orders.channel}=s.${sales.channel} and o.${orders.orderNumber}=s.${sales.orderNumber})`:"null::numeric";
-    const tariff=bandCols?shippingTariffSql(bandCols,orderTotal,`s.${sales.channel}`,salesLocalTime,{channel:shippingChannel,effectiveFrom:shippingDate}):"null::numeric";
+    const tariff=bandCols?shippingTariffSql(bandCols,orderTotal,`s.${sales.channel}`,salesLocalTime,{channel:shippingChannel,effectiveFrom:shippingDate},shippingOptions):"null::numeric";
     const shippingAllocation=orderAllocationSql(tariff,`s.${sales.tutar_duz}`,"s.order_line_gross","s.order_complete");
-    const packaging="case when s.order_weight_known then case when s.order_weight<=0.5 then 10.00 else 18.74 end + 12.29 + 10.00 end";
+    const packaging=`case when s.order_weight_known then case when s.order_weight<=0.5 then 10.00 else 18.74 end${processingInShipping?"":" + 12.29"} + 10.00 end`;
     const otherAllocation=orderAllocationSql(packaging,`s.${sales.tutar_duz}`,"s.order_line_gross","s.order_complete");
     const rows=await db.query(`${PERIOD_CTE}, product_keys as (select pr.*, count(*) over(partition by ${foldedSkuSql("pr.sku")}) as key_count from "Product" pr), canonical_base as (select s.*,count(*) over(partition by ${sales.channel},${sales.orderNumber},${sales.modelNumber}) as copies,
       sum(s.${sales.tutar_duz}::numeric) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_line_gross,
@@ -250,10 +259,11 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       const velocity=demand.velocity;
       const prev=rows.find(x=>x.period==="previous"&&x.sku===r.sku&&x.channel===r.channel);
       const prevProfit=profits.find(x=>x.period==="previous"&&x.channel===channel&&x.sku===sku)?.profit;
-      const bands=shippingBandsFor(bandsRows??[],channel,day);
-      const floor=channel==="MIRAKL_KOCTAS"?unknown("commission_unavailable"):priceFloor(cost.value,commission.value,n(p??{},"weight"),bands);
+      const priced=shippingChannelFor(bandsRows??[],channel,shippingOptions),bands=shippingBandsFor(bandsRows??[],priced.channel,day,shippingOptions);
+      const assumed=(m:Metric)=>priced.assumed&&m.value!=null?metric(m.value,true,`shipping_channel_assumption:${priced.channel}`):m;
+      const floor=channel==="MIRAKL_KOCTAS"?unknown("commission_unavailable"):assumed(priceFloor(cost.value,commission.value,n(p??{},"weight"),bands,processingInShipping));
       const signal:ProductSignal={sku,channel,isSet,trusted,sourceFresh:channelFresh(channel),financialSourceFresh:financialFresh,inventorySourceFresh:xmlFresh,catalogSku:p?String(p.sku):undefined,cost,avgPrice,commissionRate:commission,commissionSamples:n(cm??{},"accepted")??0,priceFloor:floor,
-        zeroCommissionFloor:priceFloor(cost.value,0,n(p??{},"weight"),bands),
+        zeroCommissionFloor:assumed(priceFloor(cost.value,0,n(p??{},"weight"),bands,processingInShipping)),
         unitProfit:isSet?(cost.value==null?unknown("set_component_unknown"):setScopes.has(sku)&&!setScopes.get(sku)!.has(channel)?unknown("set_profit_channel_unavailable"):setProfits.get(sku)??unknown("set_profit_unavailable")):metric(divide(profit.contributionProfit.value,units),profit.contributionProfit.estimated),
         previousUnitProfit:isSet?unknown("set_historical_profit_unavailable"):metric(divide(prevProfit?.contributionProfit.value??null,n(prev??{},"units"))),contribution:isSet?unknown("set_profit_use_price_view"):profit.contributionProfit,
         previousMargin:prevProfit?.contributionMargin??unknown("previous_contribution_unavailable"),margin:profit.contributionMargin,
@@ -313,7 +323,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   const positionKey=reviewed?(reviewed.valid?reviewed.projectionPositionColumn:undefined):process.env.AI_CFO_PROJECTION_POSITION_COLUMN;
   if(positionKey&&functions.cfo_nakit_projeksiyon?.length) {
     const values=functions.cfo_nakit_projeksiyon.map(r=>numeric(r[positionKey]));
-    snapshot.cash.minimumProjectedPosition=values.every(v=>v!=null)?metric(Math.min(...values as number[]),true):unknown("projection_column_unavailable");
+    snapshot.cash.minimumProjectedPosition=values.every(v=>v!=null)?metric(Math.min(...values as number[]),true,"projection_bank_cash_plus_receivables_and_estimated_collections_excludes_overdraft"):unknown("projection_column_unavailable");
   } else missing.push("projection_position_column_unvalidated");
   // Read existing payment/wealth sources; only numeric aggregates reach snapshot.
   const payments=await catalog.rows("cfo_odeme_gunluk",["kalan_gun","cikacak","girecek"],200);
