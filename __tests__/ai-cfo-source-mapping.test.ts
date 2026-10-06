@@ -75,6 +75,7 @@ async function main() {
     // multi-unit lines at 20% (inside the outlier band): the old rule would have blended them in (weighted 19%); the sample rule
     // (adet_duz=1, guven='YUKSEK') excludes them, so the measured Trendyol rate stays exactly 18%
     await sales("TRENDYOL", "tm", "2026-09-29 10:00", 6, 600, 2, 0.2);
+    await sales("AMAZON_FBA", "f", "2026-09-29 12:00", 2, 300, 1, 0);
 
     const db: ReadSource = { async query<T extends Row>(sql: string, ...params: unknown[]) { return (await pg.query<T>(sql, params)).rows; } };
     // SQL tariff selection on the real table with the reviewed column names
@@ -116,6 +117,13 @@ async function main() {
     const trust = (await pg.query<{ g: string; a: number; n: number }>(`select guven::text g, adet_duz a, count(*)::int n from cfo_satis_birim_duz where channel='TRENDYOL' group by 1,2 order by 2`)).rows;
     assert.deepEqual(trust, [{ g: "YUKSEK", a: 1, n: 12 }, { g: "YUKSEK", a: 2, n: 6 }], "fixture: single- and multi-unit YUKSEK lines");
     assert.ok(Math.abs(ty!.commissionRate.value! - 0.18) < 1e-9, `commission sample = adet_duz=1 & guven=YUKSEK only (got ${ty!.commissionRate.value})`);
+    // rows the sample rule excludes (multi-unit) are not "outliers": only MAD rejections inside the eligible sample count
+    assert.equal(s.dataQuality.commissionCoverage.find(c => c.channel === "TRENDYOL")?.outliers, 0, "excluded multi-unit lines are not reported as outliers");
+    // FBA stock lives in Amazon warehouses: with FBA inventory unknown, our XML stock never yields FBA stock-days (no false STOCKOUT)
+    const fba = s.products.find(p => p.sku === "MD-X" && p.channel === "AMAZON_FBA");
+    assert.ok(fba && s.dataQuality.fbaInventoryUnknown, `FBA product signal present: ${s.products.map(p => `${p.sku}/${p.channel}`).join(",")}`);
+    assert.deepEqual([fba!.stockDays.value, fba!.stockDays.reason], [null, "fba_inventory_unknown"]);
+    assert.notEqual(ty!.stockDays.reason, "fba_inventory_unknown");
     assert.equal(ty!.priceFloor.value, priceFloor(200, ty!.commissionRate.value, 0.4, BANDS, true).value);
     assert.equal(ty!.priceFloor.reason, undefined);
     assert.ok(hb!.commissionRate.value != null, "measured commission (Hepsiburada)");

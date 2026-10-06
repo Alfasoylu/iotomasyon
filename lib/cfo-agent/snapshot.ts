@@ -223,11 +223,11 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
         from valid where ${sales.commissionTry}>0 and ${sales.totalAmountTry}>0 group by 1,2),
       deviation as(select v.${sales.channel} as channel,v.${sales.modelNumber} as sku,m.mid,percentile_cont(0.5) within group(order by abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-m.mid)) as mad
         from valid v join med m on m.channel=v.${sales.channel} and m.sku=v.${sales.modelNumber} where v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 group by 1,2,3),
-      checked as(select v.*,v.copies=1 and v.${sales.adet_duz}=1 and v.${sales.guven}::text='YUKSEK' and v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 and abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-d.mid)<=greatest(0.05,3*d.mad) as ok
+      checked as(select v.*,v.copies=1 and v.${sales.adet_duz}=1 and v.${sales.guven}::text='YUKSEK' as eligible,v.copies=1 and v.${sales.adet_duz}=1 and v.${sales.guven}::text='YUKSEK' and v.${sales.commissionTry}>0 and v.${sales.totalAmountTry}>0 and abs(v.${sales.commissionTry}::numeric/nullif(v.${sales.totalAmountTry}::numeric,0)-d.mid)<=greatest(0.05,3*d.mad) as ok
         from base v left join deviation d on d.channel=v.${sales.channel} and d.sku=v.${sales.modelNumber})
       select ${sales.channel} as channel,${sales.modelNumber} as sku,count(*)::int as records,count(${sales.commissionTry})::int as present,
         count(*) filter(where ok)::int as accepted,sum(${sales.commissionTry}::numeric) filter(where ok) as commission,
-        sum(${sales.totalAmountTry}::numeric) filter(where ok) as gross,count(*) filter(where ${sales.commissionTry}>0 and not ok)::int as outliers
+        sum(${sales.totalAmountTry}::numeric) filter(where ok) as gross,count(*) filter(where eligible and ${sales.commissionTry}>0 and ${sales.totalAmountTry}>0 and not ok)::int as outliers
       from checked group by grouping sets((${sales.channel},${sales.modelNumber}),(${sales.channel}))`,asOf);
     const channelMeasurements=new Map(commissionRows.filter(r=>r.sku==null).map(r=>[String(r.channel),r]));
     const skuMeasurements=new Map(commissionRows.filter(r=>r.sku!=null).map(r=>[`${r.channel}:${r.sku}`,r]));
@@ -255,7 +255,9 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       if(isSet&&cost.value==null)missing.push(`set_component_unknown:${sku}`);
       const v=velocityLookup.get(sku),inb=inboundLookup.get(sku),open=p?pos.get(String(p.id)):undefined;
       const excluded=!p||p.active===false||(p&&isDummyStock(n(p,"stock")??0))||exceptions.has(sku)||!exceptionRows;
-      const stockDays=excluded?unknown("dummy_or_unverified_inventory"):metric(v?.tukenme_gun_ihtiyatli,true,"cautious_stock_movement_estimate");
+      // FBA units sit in Amazon warehouses: our XML stock/velocity says nothing about them while FBA inventory is unknown.
+      const fbaUnknown=channel==="AMAZON_FBA"&&snapshot.dataQuality.fbaInventoryUnknown;
+      const stockDays=excluded?unknown("dummy_or_unverified_inventory"):fbaUnknown?unknown("fba_inventory_unknown"):metric(v?.tukenme_gun_ihtiyatli,true,"cautious_stock_movement_estimate");
       const xmlVelocity=excluded?unknown("dummy_or_unverified_inventory"):metric(v?.gunluk_30g_ihtiyatli,true,"cautious_stock_movement_estimate");
       const salesUnits30=trusted?metric(unitsBySku.get(sku)):unknown("untrusted_sku_grain"),xmlUnits30=xmlLookup.get(sku)?metric(xmlLookup.get(sku)!.units,true,"xml_movement_not_confirmed_sales"):unknown("xml_units_unavailable");
       const demand=cautiousDemand(salesUnits30,xmlUnits30,xmlVelocity,snapshot.sales.last30Days.complete);
