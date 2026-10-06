@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Güvenlik — cfo_google kilidi (2026-10-06)
+- `cfo_google(jsonb)` anon/authenticated/PUBLIC EXECUTE kaldırıldı; gömülü anon JWT silindi; Edge Function `cfo-google` yalnız sunucu-içi sır (`x-cfo-internal`) ile yetkilendiriliyor, yanıttan servis hesabı e-postası kaldırıldı. Üretimde doğrulandı: anonim doğrudan Edge çağrısı ve anonim RPC reddedildi (401), yetkili postgres yolu çalışıyor. Migration `20261006110000_cfo_google_lockdown`; kaynak `supabase/functions/cfo-google`; test `cfo-google-lockdown`; `docs/CFO-GOOGLE-LOCKDOWN.md`.
+
 ### Güvenlik — SECURITY DEFINER view'lar (2026-10-06)
 - `20261005290000_security_definer_views_lockdown`: security_invoker olmayan 43 `public` view'dan anon/authenticated yetkisi kaldırıldı (tanım/sahip/semantik aynı; postgres/service_role/reader değişmedi) + `ALTER DEFAULT PRIVILEGES` ile yeni public nesneler anon/authenticated'a otomatik açılmıyor. Üretimde uygulandı ve katalogdan doğrulandı; advisor ERROR'ları kalktı. Rapor: `docs/SECURITY-DEFINER-VIEW-EXPOSURE-REPORT.md`. Test: `security-definer-views`.
 

@@ -242,6 +242,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-06 — cfo_google kilidi:** üretimde `CFO_GOOGLE_INTERNAL_TOKEN` (cfo_secret) üretildi, Edge Function `cfo-google` v2 (verify_jwt=false + iç sır), `public.cfo_google()` SECURITY DEFINER + EXECUTE daraltma; migration `20261006110000`; `supabase/functions/cfo-google/*`; test `cfo-google-lockdown`; doküman `CFO-GOOGLE-LOCKDOWN.md`. Anonim Edge/RPC 401, yetkili yol çalışıyor.
+
 - **2026-10-06 — fm_stock_refresh otomasyonu:** `lib/fm/stock-refresh.ts` + `lib/xml-sync-runner.ts` (`finalizeLog` sonunda çağrı); migration `20261005300000_fm_stock_refresh_automation` (`fm_stock_refresh_after_sync(text)`, `fm_stock_freshness`) üretime uygulandı + `_prisma_migrations` kaydı; fingerprint beklenen hash'leri güncellendi. SUCCESS → yenile; PARTIAL/ERROR → `failed` run, yenileme yok; idempotent. Test: `__tests__/xml-sync-fm-refresh.test.ts` (CI'da).
 
 ### 2026-10-06 — Stok düzeltme katmanı (AL-CAM03)
