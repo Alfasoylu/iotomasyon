@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Forecast V2 — aday model ölçümü (PR2, kısım 1) (2026-10-06)
+- `lib/forecast/candidates.ts` + SQL portu `candidates-sql.ts`: ön kayıtlı 7 aday (true30, true90, ağırlıklı, EWMA, sönümlü trend, walk-forward kalibre true30, sınırlı mevsimsel) + kısmi geçmiş yıllıklandırma; sermaye güvenliği metrikleri (fazla birim, reorder-v1 fazla sipariş). PGlite'ta TS referansıyla birebir; kalibrasyon/satış/stok sızıntı testleri.
+- Üretim (salt-okunur): ön kayıtlı kabul kapısında true30 kazanıyor (WAPE 87,4% / bias +5,0%); kalibre model felaket fazla tahmin kapısında kalıyor; mevsimsellik ve yıllıklandırma fayda getirmiyor. Belge `docs/FORECAST-V2.md`.
+- Üretim davranışı, migration ve veri değişmedi.
+
 ### Tahmin geri testi — ölçüm altyapısı (PR1) (2026-10-06)
 - `lib/forecast/{models,backtest,backtest-sql}.ts`, `scripts/forecast-backtest.ts`: sızıntısız walk-forward geri test; gözlenen satış tahmini ile stok-düzeltilmiş talep ayrı; üretim çağrı yolu katmanları (kanonik → çift kaynak → Türkçe-İ durum sızıntısı → ay kovası → max/mevsim → manuel). SQL portu PGlite'ta TS referansıyla birebir.
 - Üretim (salt-okunur, economic-time): mevcut model WAPE %126,7 / sapma +%53,5; üretim yolu (manuel hariç) +%79,7, tam Trendyol API penceresinde +%150,9; bugün manuel dahil ×4,07 şişme. Belge `docs/FORECAST-BACKTEST.md`.
