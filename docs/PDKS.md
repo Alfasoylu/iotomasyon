@@ -160,6 +160,9 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Backlog & Hedefler
 
+- [ ] **Forecast V2** (PR1 sonuçlarına göre birlikte seçilecek): kanonik girdi, gerçek gün penceresi, `max` yok, manuel override ayrı bayrak; kabul kapısı = WAPE + mutlak sapma + yüksek hız + felaket fazla tahmin + stok bazlı kısa pencere.
+- [ ] Eski tahmin girdisi hataları: Trendyol çift sayım, `ILIKE` Türkçe-İ (`İade-İptal`) sızıntısı — V2 ile birlikte.
+
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
@@ -248,6 +251,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-06 — Tahmin geri testi PR1 (ölçüm altyapısı):** `lib/forecast/*`, `scripts/forecast-backtest.ts`, testler `forecast-backtest` + `forecast-backtest-sql` (PGlite eşdeğerlik). Üretimde salt-okunur çalıştırıldı; karşılaştırma tablosu + şişme şelalesi `docs/FORECAST-BACKTEST.md`. Üretim davranışı değişmedi. Forecast V2 tasarımı sonuçlara göre kullanıcıyla seçilecek.
 - **2026-10-06 — AI CFO adım 7/9 (kolon eşlemesi):** incelenmiş profil varsayılan; kargo `toplam` (işlem bedeli tek sefer), 19.06 geçerlilik, kanal varsayımı (FBA hariç); SET maliyeti `cfo_set_fiyat.maliyet`; nakit `pozisyon` semantiği. `shipping.ts`, `snapshot.ts`, `reviewed-sources.ts`, `calculations.ts` (v5), test `ai-cfo-source-mapping`. Canlı deterministik CFO döngüsü de bu eşlemeyi kullanır (fiyat tabanı/SET maliyeti artık bilinir). Üretim verisi değişmedi. Sırada adım 8, ayrı onayla.
 - **2026-10-06 — AI CFO adım 6/9 (test/CI):** `runner-request.ts` (saf kapı) + testler `ai-cfo-runner-route`, `ai-cfo-access`, `ai-cfo-migration-security`; adım 8 operatör kontrolü `scripts/ai-cfo-migration-check.sql` (üretimde "önce" doğrulandı, salt-okunur); build smoke'a AI CFO cron/runner/sayfa kapıları. Üretim DB değişmedi. Sırada adım 7, ayrı onayla.
 - **2026-10-06 — AI CFO adım 5/9 (zamanlama + /admin/ai-cfo):** monitor günlük cron'ların after() işinde CFO döngüsünden sonra; `ai-cfo-monitor`/`ai-cfo-morning` cron route'ları; `/admin/ai-cfo` kontrol merkezi + `POST /api/admin/ai-cfo/runner`; `control-center.ts` (`installed:false` adım 8'e kadar); menü CFO → AI CFO. Bayraklar kapalı, üretim DB değişmedi. Sırada adım 6, ayrı onayla.

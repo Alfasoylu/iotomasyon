@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Tahmin geri testi — ölçüm altyapısı (PR1) (2026-10-06)
+- `lib/forecast/{models,backtest,backtest-sql}.ts`, `scripts/forecast-backtest.ts`: sızıntısız walk-forward geri test; gözlenen satış tahmini ile stok-düzeltilmiş talep ayrı; üretim çağrı yolu katmanları (kanonik → çift kaynak → Türkçe-İ durum sızıntısı → ay kovası → max/mevsim → manuel). SQL portu PGlite'ta TS referansıyla birebir.
+- Üretim (salt-okunur, economic-time): mevcut model WAPE %126,7 / sapma +%53,5; üretim yolu (manuel hariç) +%79,7, tam Trendyol API penceresinde +%150,9; bugün manuel dahil ×4,07 şişme. Belge `docs/FORECAST-BACKTEST.md`.
+- Bulunan hatalar (düzeltilmedi, PR2+): eski girdi Trendyol'u çift sayıyor; `ILIKE` Türkçe `İ`'yi yakalamıyor (`İade-İptal` 6.939 adet satış sayılıyor); ay kovası "son 30 gün"ü ayın gününe göre ±; `max` + manuel `max` yukarı yanlı.
+- Üretim davranışı, migration ve veri değişmedi.
+
 ### AI CFO — kargo/SET/nakit kolon eşlemesi (V1 adım 7/9) (2026-10-06)
 - İncelenmiş kaynak profili varsayılan (hash-kapılı; `AI_CFO_SOURCE_PROFILE=off` kapatır). Hash'ler üretim ve baseline'da doğrulandı.
 - Kargo: `toplam` bandı; ölçülü işlem bedeli dahil olduğundan sabit 12,29 ₺ ikinci kez eklenmiyor; geçerlilik ölçüm başlangıcı 2026-06-19; kendi bandı olmayan kanallara Trendyol bandı (TAHMİNİ, kanal varsayımı), `AMAZON_FBA` hariç. Son 90 günde kargosu bilinen sipariş 1.150 → 6.497 / 6.515.
