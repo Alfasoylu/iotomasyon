@@ -17,6 +17,6 @@ export async function POST(req: Request) {
   const body = authorized && declared <= RUNNER_BODY_LIMIT ? await req.text().catch(() => "") : "";
   const guard = runnerRequestGuard({ authorized, origin: req.headers.get("origin"), url: req.url, vercelEnv: process.env.VERCEL_ENV, declaredLength: declared, body });
   if (!guard.ok) return NextResponse.json({ error: guard.error }, { status: guard.status, headers });
-  const result = await safeAiCfoRun(guard.action);
+  const result = await safeAiCfoRun(guard.action, { manual: true });
   return NextResponse.json(result, { status: result.status === "failed" ? 503 : 200, headers });
 }

@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO — elle çalıştırma saatte 3 (2026-10-07)
+- `/admin/ai-cfo` elle çalıştırması artık 20 dakikalık dilimlerle idempotent (`<saat>:m0|m1|m2`, saatte en çok 3); zamanlanmış koşular (cron) saatte 1 / sabah günde 1 kalır. Maliyet sınırı değişmedi: günlük çağrı limiti, aylık bütçe ve anomali başına soğuma süresi. `runner.ts` `runPeriodKey`, `ai-trigger.ts`, runner route; test `ai-cfo-runner`.
+
 ### AI CFO — ilk deterministik monitor koşusu + kural düzeltmeleri (2026-10-07)
 - STEP C: üretimde ilk monitor koşusu (`ai_disabled`, `alfas-gross-v6`): 38 anomali, kullanıcı incelemesinde 37 gerçek / 1 yanlış alarm (gölge hafta kabulünün yerine geçti). AI çağrısı yok (`cfo_usage` 0).
 - Yanlış alarm düzeltildi: AMAZON_FBA ürününde FBA stoğu bilinmezken depo (XML) stoğundan stok günü üretilmez (`fba_inventory_unknown`) → sahte STOCKOUT yok.
