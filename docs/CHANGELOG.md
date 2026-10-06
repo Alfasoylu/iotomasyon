@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### AI CFO — kargo/SET/nakit kolon eşlemesi (V1 adım 7/9) (2026-10-06)
+- İncelenmiş kaynak profili varsayılan (hash-kapılı; `AI_CFO_SOURCE_PROFILE=off` kapatır). Hash'ler üretim ve baseline'da doğrulandı.
+- Kargo: `toplam` bandı; ölçülü işlem bedeli dahil olduğundan sabit 12,29 ₺ ikinci kez eklenmiyor; geçerlilik ölçüm başlangıcı 2026-06-19; kendi bandı olmayan kanallara Trendyol bandı (TAHMİNİ, kanal varsayımı), `AMAZON_FBA` hariç. Son 90 günde kargosu bilinen sipariş 1.150 → 6.497 / 6.515.
+- SET maliyeti `cfo_set_fiyat.maliyet` (reçete uydurulmuyor; ürün maliyetine düşülmüyor).
+- Nakit projeksiyonu `pozisyon` semantiği doğrulandı (KMH nakit sayılmaz), TAHMİNİ + gerekçe.
+- Hesap sürümü `alfas-gross-v5`. Test `ai-cfo-source-mapping` (gerçek snapshot, üretim şeması kopyası). Üretim verisi değişmedi.
+
 ### AI CFO — test/CI tamamlama (V1 adım 6/9) (2026-10-06)
 - Elle çalıştırma kapısı saf fonksiyona ayrıldı (`lib/cfo-agent/runner-request.ts`); gövde yalnız yetkili istekte okunur, beyan + gerçek bayt sınırı. Test `ai-cfo-runner-route`.
 - `ai-cfo-access` (parked daldan): reader bağlantı seçenekleri ve sabit hata etiketleri.

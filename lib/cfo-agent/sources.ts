@@ -13,7 +13,7 @@ export const businessSource: ReadSource = { query: (sql, ...params) => prisma.$t
 }, {timeout:20000}) };
 // Identifiers may only be selected from catalog-confirmed columns of a fixed
 // allowlist of sources. SQL expressions and arbitrary table names are forbidden.
-const SOURCES = ["cfo_satis_siparis", "cfo_satis_birim_duz", "cfo_kargo_tarife", "cfo_stok_hareket_hiz",
+const SOURCES = ["cfo_satis_siparis", "cfo_satis_birim_duz", "cfo_kargo_tarife", "cfo_kargo_kanal_varsayim", "cfo_stok_hareket_hiz",
   "cfo_kanal_net_oran", "cfo_set_bilesen_maliyet", "cfo_set_fiyat", "cfo_stok_istisna", "cfo_olu_stok", "cfo_yolda_sku",
   "cfo_yoldaki_kapsam", "cfo_nakit_kapisi", "cfo_odeme_gunluk", "cfo_servet", "cfo_servet_kalem", "cfo_servet_likidite"];
 export const CFO_AGENT_SOURCE_NAMES: readonly string[] = Object.freeze([...SOURCES]);

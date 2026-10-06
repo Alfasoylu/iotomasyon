@@ -20,3 +20,6 @@ Kaynak: kullanıcının paylaştığı Trendyol anlaşmalı kargo fiyat listeler
 - Ürün tablosunda desi yok (`weightKg` var); desi = max(ağırlık, hacim) olduğundan `ceil(weightKg)` alt sınırdır.
 - 2026 için sipariş-tutarı baremi (≤200 TL) belgesiz; ölçülü bantlar `cfo_kargo_tarife` (siparis <200 TL: 41,60+12,01).
 - 2 Ocak 2024 listesi (desi 0-49) paylaşıldı fakat istenmediği için yüklenmedi.
+
+## AI CFO kullanımı (2026-10-06)
+AI CFO snapshot'ı sipariş-tutarı bantlarını (`cfo_kargo_tarife.toplam`) kullanır; `toplam` ölçülü işlem bedelini içerdiği için sabit işlem bedeli ayrıca eklenmez. Bantlar 2026-06-19'dan (ölçüm başlangıcı) itibaren geçerli sayılır. Kendi bandı olmayan kanallara `cfo_kargo_kanal_varsayim` gereği Trendyol bantları "TAHMİNİ" olarak uygulanır; `AMAZON_FBA` hariç (Amazon gönderir). Ayrıntı: `docs/AI-CFO-RUNNER.md` → "Kaynak kolon eşlemesi".
