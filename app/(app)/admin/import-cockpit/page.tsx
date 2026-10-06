@@ -27,6 +27,8 @@ import { Ship, Check, Pause, X, Info, HelpCircle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
+import { ForecastV2Notice } from "@/components/forecast/forecast-v2-notice";
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -304,6 +306,8 @@ export default async function ImportCockpitPage({
     lifetimeTotalQty: number;
   };
 
+  // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy demand / fallback below is unchanged.
+  const v2 = await forecastV2ForConsumers();
   const rows: Row[] = products.map((p) => {
     // ── Trendyol verileri ──────────────────────────────────────────────────
     const s90 = sales90Map.get(p.id);
@@ -443,7 +447,8 @@ export default async function ImportCockpitPage({
     const effectiveOnline = Math.max(trendyolAdjusted, manualOnline);
     const manualOtherChannels =
       (p.wholesaleSalesPotential ?? 0) + (p.installerSalesPotential ?? 0);
-    const effectiveMonthlyUnitsRaw = effectiveOnline + manualOtherChannels;
+    // V2 açıkken: kanonik true30 (iadeler kanonikte zaten düşülü), yalnız FULL derece; manuel kanallar (online/toptan/bayi) uygulanmaz.
+    const effectiveMonthlyUnitsRaw = v2 ? v2DecisionDemand(v2, p.id) : effectiveOnline + manualOtherChannels;
     const effectiveMonthlyUnits: number | null =
       effectiveMonthlyUnitsRaw > 0 ? effectiveMonthlyUnitsRaw : null;
 
@@ -486,7 +491,8 @@ export default async function ImportCockpitPage({
     let recommendedQty: number | null = null;
     if (dailyVelocity != null && signal !== "ALMA") {
       recommendedQty = Math.max(0, Math.ceil(dailyVelocity * TARGET_DAYS) - p.stockQuantity);
-    } else if (signal === "STOKSUZ_AL" && lifetimeMonths != null && lifetimeMonths > 0) {
+    } else if (!v2 && signal === "STOKSUZ_AL" && lifetimeMonths != null && lifetimeMonths > 0) {
+      // (V2 açıkken eski kaynaklı ömür boyu hızla adet önerilmez — stoksuz sinyali kalır, adet insan kararı.)
       // Historical velocity: lifetimeQty / lifetimeMonths × (90/30) → 3 ay stok
       const historicalMonthly = lifetimeQty / lifetimeMonths;
       recommendedQty = Math.max(5, Math.ceil(historicalMonthly * 3));
@@ -601,6 +607,7 @@ export default async function ImportCockpitPage({
           </>
         }
       />
+      <ForecastV2Notice on={v2 != null} />
 
       {/* Bu sayfa ÜRÜN BAZINDA maliyet/navlun analizidir; bağlayıcı sipariş listesi değildir.
           Sıradaki siparişin ne olduğu 10.09.2026'dan beri tek yerde: /cfo/kazananlar.

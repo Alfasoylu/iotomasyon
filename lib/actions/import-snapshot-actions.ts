@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
 import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
@@ -91,10 +92,13 @@ export async function createImportDecisionSnapshotAction(
       ? Number(product.unitCostUsd)
       : null;
 
-  const monthlyUnits =
-    (product.onlineSalesPotential ?? 0) +
-    (product.wholesaleSalesPotential ?? 0) +
-    (product.installerSalesPotential ?? 0) || null;
+  // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy manual-potential demand below is unchanged.
+  const v2 = await forecastV2ForConsumers();
+  const monthlyUnits = v2
+    ? v2DecisionDemand(v2, product.id) || null
+    : (product.onlineSalesPotential ?? 0) +
+      (product.wholesaleSalesPotential ?? 0) +
+      (product.installerSalesPotential ?? 0) || null;
 
   const sellingPriceTry = product.marketplacePriceTry != null
     ? Number(product.marketplacePriceTry)

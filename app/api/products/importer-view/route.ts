@@ -27,6 +27,7 @@ import {
   buildMonthlySalesMap,
   effectiveMonthlyUnits as pickEffectiveMonthly,
 } from "@/lib/sales-forecast";
+import { forecastV2ForConsumers, forecastV2View, type ForecastV2View } from "@/lib/forecast/consumer";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +78,9 @@ export type ImporterProduct = {
   forecastMonthlyUnits: number;
   forecastFormula: string;
   effectiveMonthlyUnits: number;
+  /** Forecast V2 (FORECAST_V2_ENABLED). null while the flag is off. When set, forecastMonthlyUnits / forecastFormula / effectiveMonthlyUnits
+   *  come from V2 (effective = FULL-grade V2 units, manual potential NOT applied) and the legacy value is kept for comparison. */
+  forecastV2: (ForecastV2View & { legacyForecastMonthlyUnits: number; legacyEffectiveMonthlyUnits: number }) | null;
 
   // Computed cost breakdown
   shippingMethod: "AIR" | "SEA" | null;
@@ -230,6 +234,9 @@ export async function GET(_req: NextRequest) {
     }
   }
 
+  // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy path below is unchanged.
+  const v2 = await forecastV2ForConsumers();
+
   // ── Compute per product ────────────────────────────────────────────────────
   const result: ImporterProduct[] = products.map((p) => {
     // Resolve Trendyol price TRY
@@ -249,7 +256,10 @@ export async function GET(_req: NextRequest) {
     // effective = max(forecast, manuel kullanıcı tahmini).
     const monthlyMap = monthlyByProduct.get(p.id) ?? new Map<string, number>();
     const forecast = forecastMonthlySales(monthlyMap, now);
-    const effectiveT30g = pickEffectiveMonthly(forecast, p.onlineSalesPotential);
+    const legacyEffectiveT30g = pickEffectiveMonthly(forecast, p.onlineSalesPotential);
+    const v2View = v2 ? forecastV2View(v2, p.id) : null;
+    // V2 açıkken: talep = yalnız FULL dereceli V2 (PARTIAL/UNKNOWN → 0 → "Veri Eksik"); manuel potansiyel uygulanmaz.
+    const effectiveT30g = v2 ? (v2View?.decisionUnits ?? 0) : legacyEffectiveT30g;
 
     // Import cost — Phase 92: otomatik kargo seçimi ROI bazlı yapılır (pref null
     // ise). Trendyol fiyatı + kur passlanır.
@@ -321,9 +331,14 @@ export async function GET(_req: NextRequest) {
       // Phase 92: demand sinyali = max(forecast, manuel onlineSalesPotential).
       // forecast tüm 14 kanaldan + 5 yıllık tarihçeden recency-weighted + mevsimsel
       // düzeltmeyle hesaplanır (lib/sales-forecast.ts).
-      forecastMonthlyUnits: forecast.monthlyUnits,
-      forecastFormula: forecast.formula,
+      forecastMonthlyUnits: v2 ? (v2View?.forecastUnits ?? 0) : forecast.monthlyUnits,
+      forecastFormula: v2 ? `${v2View?.modelVersion ?? "observed-sales-v2-true30"} · ${v2View?.dataGrade ?? "UNKNOWN"}` : forecast.formula,
       effectiveMonthlyUnits: effectiveT30g,
+      forecastV2: v2
+        ? { ...(v2View ?? { modelVersion: "observed-sales-v2-true30", forecastUnits: null, dataGrade: "UNKNOWN", historyDays: null, reasonFlags: ["NO_CANONICAL_SALES"],
+            demandEstimateUnits: null, manualOverrideUnits: p.onlineSalesPotential, decisionUnits: 0, sourceWatermark: null }),
+            legacyForecastMonthlyUnits: forecast.monthlyUnits, legacyEffectiveMonthlyUnits: legacyEffectiveT30g }
+        : null,
 
       shippingMethod: costResult?.shippingMethod ?? null,
       productUsd: costResult?.productUsd ?? null,

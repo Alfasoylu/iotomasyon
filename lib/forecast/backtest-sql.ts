@@ -11,7 +11,7 @@ import { MIN_IN_STOCK_DAYS } from "./models";
 export const BACKTEST_SESSION_PRELUDE = ["begin read only", "set local enable_nestloop = off"] as const;
 export interface SqlParams { longCutoffs: string[]; shortCutoffs: string[]; todayCutoff: string }
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-const dates = (xs: string[]) => {
+export const dates = (xs: string[]) => {
   for (const x of xs) if (!DAY.test(x)) throw new Error("invalid_cutoff");
   return `array[${xs.map(x => `'${x}'`).join(",") || "null"}]::date[]`;
 };
@@ -24,7 +24,7 @@ const PROD_ILIKE = `(status is null or (status not ilike '%iptal%' and status no
 const PROD_KEPT = `(status is null or (lower(replace(status, 'İ', 'i' || chr(775))) not like '%iptal%' and lower(replace(status, 'İ', 'i' || chr(775))) not like '%iade%'
   and lower(replace(status, 'İ', 'i' || chr(775))) not like '%cancel%'))`;
 const CORRECT_KEPT = `(status is null or (lower(replace(status, 'İ', 'i')) not like '%iptal%' and lower(replace(status, 'İ', 'i')) not like '%iade%' and lower(replace(status, 'İ', 'i')) not like '%cancel%'))`;
-const METRICS = (f: string, a: string, w: string) => `count(*)::int as "n", sum(${a}) as "sumActual", sum(${f}) as "sumForecast", sum(abs(${f} - ${a})) as "sumAbsError",
+export const METRICS = (f: string, a: string, w: string) => `count(*)::int as "n", sum(${a}) as "sumActual", sum(${f}) as "sumForecast", sum(abs(${f} - ${a})) as "sumAbsError",
   sum(abs(${f} - ${a})) / count(*) as "mae", sum(abs(${f} - ${a})) / nullif(sum(${a}), 0) as "wape", (sum(${f}) - sum(${a})) / nullif(sum(${a}), 0) as "bias",
   avg((${f} > ${a})::int) as "overRate", avg((${f} < ${a})::int) as "underRate",
   avg((${f} > ${CATASTROPHIC.ratio} * ${a} and ${f} - ${a} >= ${CATASTROPHIC.minUnits})::int) as "catOverRate",
@@ -33,7 +33,7 @@ const METRICS = (f: string, a: string, w: string) => `count(*)::int as "n", sum(
   count(${w})::int as "revN"`;
 
 /** Canonical daily sales (COUNTED), key per Financial Memory (P:product / R:normalised raw sku), universe with pre-cutoff segments. */
-const BASE = (cuts: string) => `cuts as (select unnest(${cuts}) as c),
+export const BASE = (cuts: string) => `cuts as (select unnest(${cuts}) as c),
 sales as (
   select ${KEY} as k, s.product_id as pid, s.channel as ch, s.economic_date as d, sum(s.units_counted)::numeric as u,
     sum(s.revenue_incl_vat_try)::numeric as r, bool_or(s.legacy_business is not null) as leg
@@ -56,7 +56,7 @@ act as (select u.c, u.k, coalesce(sum(kd.u), 0) as a from uni u left join kd on 
 /** forecastMonthlySales() in SQL over a buckets relation (c, k, m, u): 15th-of-month windows, blend, seasonal clamp. Computed in float8 in
  *  the same operation order as the JS so values are bit-identical; the caller applies floor(greatest(b30, blend × seas) + 0.5), which is
  *  Math.round for positive values (PostgreSQL round(float8) rounds half to even and would differ on exact .5). */
-const FMS = (name: string, buckets: string) => `${name}_agg as (
+export const FMS = (name: string, buckets: string) => `${name}_agg as (
   select c, k, coalesce(sum(u) filter (where u > 0 and m + 14 >= c - 30), 0) as b30, coalesce(sum(u) filter (where u > 0 and m + 14 >= c - 90), 0) as b90,
     coalesce(sum(u) filter (where u > 0 and m + 14 >= c - 365), 0) as b365, coalesce(sum(u) filter (where u > 0), 0) as life, min(m) filter (where u > 0) as fm,
     count(*) as n_all, count(*) filter (where extract(month from m) = extract(month from c)) as n_cur,
@@ -69,7 +69,7 @@ ${name} as (
       else greatest(0.5::float8, least(2.0::float8, (s_cur::float8 / n_cur) / (s_all::float8 / n_all))) end as seas
   from ${name}_agg)`;
 
-const UNION = `ur as (
+export const UNION = `ur as (
   select "productId" as pid, "orderDate"::date as d, quantity::numeric as u, status from (
     select "productId", "orderDate", quantity, status from public."MarketplaceSalesRecord" where "productId" is not null
     union all select "productId", "orderDate", quantity, status from public."TrendyolSalesRecord" where "productId" is not null

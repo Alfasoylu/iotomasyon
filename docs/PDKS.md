@@ -160,8 +160,9 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Backlog & Hedefler
 
-- [ ] **Forecast V2** (PR1 sonuçlarına göre birlikte seçilecek): kanonik girdi, gerçek gün penceresi, `max` yok, manuel override ayrı bayrak; kabul kapısı = WAPE + mutlak sapma + yüksek hız + felaket fazla tahmin + stok bazlı kısa pencere.
-- [ ] Eski tahmin girdisi hataları: Trendyol çift sayım, `ILIKE` Türkçe-İ (`İade-İptal`) sızıntısı — V2 ile birlikte.
+- [ ] **Forecast V2'yi açma kararı** (ayrı onay): `FORECAST_V2_ENABLED=true` öncesi `/admin/forecast-v2` gölge raporu incelenir; açık DRAFT sipariş ve BEKLIYOR CFO satırları insan tarafından gözden geçirilir. Açılana kadar eski tahmin girdisi hataları (Trendyol çift sayım, Türkçe-İ sızıntısı, max/manuel taban) eski yolda sürer.
+- [ ] **M7 A-shrink ileri telemetri:** ilk puan 2026-11-06; ≥12 ileri kesim + ≥150 A gözlemi sonrası kapı değerlendirmesi (terfi ayrı PR/onay).
+- [ ] **Tahmin temizlik PR'ı (DEPRECATE):** `lib/procurement.ts` (çağıran yok), executive ölü potansiyel seçimleri; V2 kalıcı olunca `lib/sales-forecast.ts`; stok sağlığı/ürün listesi hız sütunlarını kanoniğe taşıma.
 
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
@@ -251,6 +252,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-06 — Forecast V2 (PR2) uygulaması:** `observed-sales-v2-true30` (kanonik + gerçek 30 gün; max/mevsim/manuel yok) `lib/forecast/{v2,v2-loader,selection,consumer,consumer-audit,shadow-sql,m7-shadow}.ts`; `FORECAST_V2_ENABLED` (varsayılan kapalı) arkasında 10 tüketici taşındı (importer-view, sermaye sağlık, dashboard, akıllı öneriler, kokpit, capital, sipariş formu, ürün detayı, import snapshot); PARTIAL/UNKNOWN karar talebine girmez; manuel yalnız karşılaştırma. Gölge sayfa `/admin/forecast-v2`, uyarı bandı `components/forecast/forecast-v2-notice.tsx`. M7 A-shrink yalnız gölge (keşif 2026-10-06). Testler `forecast-v2`, `forecast-shadow`, `forecast-consumers`. Üretim gölge karşılaştırması `docs/FORECAST-V2.md`. Migration yok, üretime yazma yok, bayrak kapalı.
+- **2026-10-06 — Forecast V2 (PR2) aday ölçümü:** ön kayıtlı adaylar M0–M6 + walk-forward kalibrasyon `lib/forecast/candidates{,-sql}.ts`, ortak test verisi `__tests__/forecast-fixture.ts`, test `forecast-candidates` (sızıntı + PGlite eşdeğerlik), `--print-sql candLong|candShort|candHash`. Üretimde salt-okunur çalıştırıldı: ön kayıtlı kapıya göre kazanan **true30**; M5 (kalibre) G4'te kalıyor (C segmenti faktörü tavanda). Sonuçlar `docs/FORECAST-V2.md`. Tüketici geçişi/bayrak kullanıcı kararını bekliyor; üretim davranışı değişmedi.
 - **2026-10-06 — Tahmin geri testi PR1 (ölçüm altyapısı):** `lib/forecast/*`, `scripts/forecast-backtest.ts`, testler `forecast-backtest` + `forecast-backtest-sql` (PGlite eşdeğerlik). Üretimde salt-okunur çalıştırıldı; karşılaştırma tablosu + şişme şelalesi `docs/FORECAST-BACKTEST.md`. Üretim davranışı değişmedi. Forecast V2 tasarımı sonuçlara göre kullanıcıyla seçilecek.
 - **2026-10-06 — AI CFO adım 7/9 (kolon eşlemesi):** incelenmiş profil varsayılan; kargo `toplam` (işlem bedeli tek sefer), 19.06 geçerlilik, kanal varsayımı (FBA hariç); SET maliyeti `cfo_set_fiyat.maliyet`; nakit `pozisyon` semantiği. `shipping.ts`, `snapshot.ts`, `reviewed-sources.ts`, `calculations.ts` (v5), test `ai-cfo-source-mapping`. Canlı deterministik CFO döngüsü de bu eşlemeyi kullanır (fiyat tabanı/SET maliyeti artık bilinir). Üretim verisi değişmedi. Sırada adım 8, ayrı onayla.
 - **2026-10-06 — AI CFO adım 6/9 (test/CI):** `runner-request.ts` (saf kapı) + testler `ai-cfo-runner-route`, `ai-cfo-access`, `ai-cfo-migration-security`; adım 8 operatör kontrolü `scripts/ai-cfo-migration-check.sql` (üretimde "önce" doğrulandı, salt-okunur); build smoke'a AI CFO cron/runner/sayfa kapıları. Üretim DB değişmedi. Sırada adım 7, ayrı onayla.

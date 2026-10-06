@@ -354,6 +354,13 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     section: "İthalat",
   },
   {
+    href: "/admin/forecast-v2",
+    label: "Tahmin V2 Karşılaştırma",
+    iconKey: "chart",
+    permission: PERMISSIONS.EXECUTIVE_READ,
+    section: "İthalat",
+  },
+  {
     href: "/admin/import-calculator",
     label: "İthalat Hesaplayıcı",
     iconKey: "calculator",

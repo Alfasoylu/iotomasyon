@@ -21,6 +21,7 @@
 
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
 import {
   calcImportCost,
   calcRevenue,
@@ -152,10 +153,12 @@ export async function getSmartRecommendations(): Promise<SmartRecsResult> {
       hasTrendyolPrice: boolean;
     };
 
+    // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy max(Trendyol 30g, manuel) below is unchanged.
+    const v2 = await forecastV2ForConsumers();
     const enriched: Enriched[] = products.map((p) => {
       const t30g = t30Map.get(p.id) ?? 0;
       const manualOnline = p.onlineSalesPotential ?? 0;
-      const effectiveMonthlyUnits = Math.max(t30g, manualOnline);
+      const effectiveMonthlyUnits = v2 ? v2DecisionDemand(v2, p.id) : Math.max(t30g, manualOnline);
       const lifetimeSold = lifetimeMap.get(p.id) ?? 0;
 
       const trendyolPriceTry =

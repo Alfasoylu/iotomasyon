@@ -26,7 +26,7 @@ export interface BacktestConfig { longCutoffs: string[]; shortCutoffs: string[];
 
 export interface Metrics { n: number; sumActual: number; sumForecast: number; sumAbsError: number; mae: number | null; wape: number | null; bias: number | null;
   overRate: number | null; underRate: number | null; catOverRate: number | null; revWape: number | null; revBias: number | null; revN: number }
-export interface MetricRow extends Metrics { section: "long" | "waterfall" | "short"; model: string; target: "observed" | "availability_normalized"; dim: string; segment: string }
+export interface MetricRow extends Metrics { section: string; model: string; target: "observed" | "availability_normalized"; dim: string; segment: string }
 export interface LevelRow { layer: string; n: number; sumForecast: number; nManualKnown: number }
 export interface Obs { f: number; a: number; w: number | null; segs: [string, string][] }
 
@@ -44,15 +44,15 @@ export function metrics(obs: Obs[]): Metrics {
   return { n, sumActual: sa, sumForecast: sf, sumAbsError: sae, mae: ratio(sae, n), wape: ratio(sae, sa), bias: ratio(sf - sa, sa),
     overRate: ratio(over, n), underRate: ratio(under, n), catOverRate: ratio(cat, n), revWape: ratio(rae, ra), revBias: ratio(rdiff, ra), revN };
 }
-function grouped(section: MetricRow["section"], model: string, target: MetricRow["target"], obs: Obs[]): MetricRow[] {
+export function grouped(section: MetricRow["section"], model: string, target: MetricRow["target"], obs: Obs[]): MetricRow[] {
   const groups = new Map<string, Obs[]>();
   for (const o of obs) for (const [dim, seg] of o.segs) { const k = `${dim}\u0000${seg}`; groups.set(k, [...(groups.get(k) ?? []), o]); }
   return [...groups].map(([k, g]) => { const [dim, segment] = k.split("\u0000"); return { section, model, target, dim, segment, ...metrics(g) }; });
 }
 
-const iso = (day: string) => `${day}T00:00:00.000Z`;
-const known = (at: string | null | undefined, cutoff: string, mode: BacktestMode) => mode === "economic_time" || (at != null && at < iso(cutoff));
-const velocity = (u90: number) => u90 / 3 >= 30 ? "A_ge30_per_month" : u90 / 3 >= 5 ? "B_5_30_per_month" : "C_lt5_per_month";
+export const iso = (day: string) => `${day}T00:00:00.000Z`;
+export const known = (at: string | null | undefined, cutoff: string, mode: BacktestMode) => mode === "economic_time" || (at != null && at < iso(cutoff));
+export const velocity = (u90: number) => u90 / 3 >= 30 ? "A_ge30_per_month" : u90 / 3 >= 5 ? "B_5_30_per_month" : "C_lt5_per_month";
 
 interface KeyState { key: string; productId: string | null; rows: CanonicalRow[] }
 /** Training view of the canonical rows at a cutoff: day < c, known_at/mapping per mode. Keys follow the mapping known at the cutoff. */
@@ -67,14 +67,14 @@ function trainingByKey(data: BacktestData, cutoff: string, mode: BacktestMode): 
   }
   return out;
 }
-const units = (rows: CanonicalRow[]): DayUnits[] => rows.map(r => ({ day: r.day, units: r.units }));
+export const units = (rows: CanonicalRow[]): DayUnits[] => rows.map(r => ({ day: r.day, units: r.units }));
 /** Evaluation target (may look past the cutoff). In point_in_time mode a pre-mapping raw key also owns its later (now mapped) rows. */
-const futureUnits = (data: BacktestData, key: string, from: string, to: string, mode: BacktestMode) =>
+export const futureUnits = (data: BacktestData, key: string, from: string, to: string, mode: BacktestMode) =>
   data.canonical.reduce((s, r) => (r.key === key || (mode === "point_in_time" && r.rawKey === key)) && r.day >= from && r.day < to ? s + r.units : s, 0);
 
-interface Universe { key: string; productId: string | null; rows: CanonicalRow[]; u90: number; r90: number; legacy: boolean; weight: number | null; segs: [string, string][] }
+export interface Universe { key: string; productId: string | null; rows: CanonicalRow[]; u90: number; r90: number; legacy: boolean; weight: number | null; segs: [string, string][] }
 /** Keys with sales in the 365 days before the cutoff, with pre-cutoff segments. */
-function universe(data: BacktestData, cutoff: string, mode: BacktestMode): Universe[] {
+export function universe(data: BacktestData, cutoff: string, mode: BacktestMode): Universe[] {
   const from365 = addDays(cutoff, -365), from90 = addDays(cutoff, -90);
   const list: Universe[] = [];
   for (const s of trainingByKey(data, cutoff, mode).values()) {
@@ -100,7 +100,7 @@ function universe(data: BacktestData, cutoff: string, mode: BacktestMode): Unive
   return list;
 }
 
-const manualAt = (data: BacktestData, productId: string, cutoff: string) => {
+export const manualAt = (data: BacktestData, productId: string, cutoff: string) => {
   const v = data.manual.filter(m => m.productId === productId && m.knownAt < iso(cutoff)).sort((a, b) => a.knownAt < b.knownAt ? 1 : -1)[0];
   return v ? v.value ?? 0 : null;
 };
@@ -109,7 +109,7 @@ function unionInputs(data: BacktestData, productId: string, cutoff: string, mode
   return { unionCorrect: rows.filter(r => statusKept(r.status, true)).map(r => ({ day: r.day, units: r.units })),
     unionProduction: rows.filter(r => statusKept(r.status, false)).map(r => ({ day: r.day, units: r.units })) };
 }
-const stockLog = (data: BacktestData, productId: string, cutoff: string | null, mode: BacktestMode): StockDay[] => data.stock
+export const stockLog = (data: BacktestData, productId: string, cutoff: string | null, mode: BacktestMode): StockDay[] => data.stock
   .filter(r => r.productId === productId && (cutoff == null || (r.day < cutoff && known(r.knownAt, cutoff, mode))))
   .sort((a, b) => a.day < b.day ? -1 : 1).map(r => ({ day: r.day, unitsOpen: r.unitsOpen, unitsEod: r.unitsEod }));
 

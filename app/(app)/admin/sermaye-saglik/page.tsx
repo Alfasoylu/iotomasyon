@@ -37,6 +37,8 @@ import {
   buildMonthlySalesMap,
   effectiveMonthlyUnits as pickEffectiveMonthly,
 } from "@/lib/sales-forecast";
+import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
+import { ForecastV2Notice } from "@/components/forecast/forecast-v2-notice";
 
 export const dynamic = "force-dynamic";
 
@@ -194,13 +196,15 @@ export default async function SermayeSaglikPage() {
     lifetimeMap.set(pid, lt);
   }
 
+  // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy demand below is unchanged.
+  const v2 = await forecastV2ForConsumers();
   const enriched: ProductLite[] = products.map((p) => {
     const t30g = t30Map.get(p.id) ?? 0;
     const prevT30g = tPrev30Map.get(p.id) ?? 0;
     // Phase 92: forecast tüm 14 kanaldan + 5 yıllık tarihçeden
     const monthlyMap = monthlyByProduct.get(p.id) ?? new Map<string, number>();
     const forecast = forecastMonthlySales(monthlyMap, nowDate);
-    const effectiveMonthlyUnits = pickEffectiveMonthly(forecast, p.onlineSalesPotential);
+    const effectiveMonthlyUnits = v2 ? v2DecisionDemand(v2, p.id) : pickEffectiveMonthly(forecast, p.onlineSalesPotential);
 
     const trendyolPriceTry =
       p.marketplacePrices[0]?.priceTry != null
@@ -355,6 +359,7 @@ export default async function SermayeSaglikPage() {
         subtitle="Günde bir kez aç, ne yapmalısın kararla — sermayenin nereye bağlı, ne kadar nakit beklenir, neyi siparişe vermeli, neyi tasfiye etmeli."
         actions={<PageHelp pageKey="admin/sermaye-saglik" />}
       />
+      <ForecastV2Notice on={v2 != null} />
 
       {/* Sermaye Sağlık Skoru — manşet */}
       <Card className="p-6">
