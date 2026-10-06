@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Güvenlik — cfo-files private + anon denetimi (2026-10-06)
+- `cfo-files` bucket'ı **private**; 8 `cfo_question_file` referansı `private:cfo-files/<path>` biçimine taşındı (idempotent migration `20261006100000_cfo_files_private`, yedek tablo + rollback); dosyalar silinmedi/yeniden yüklenmedi. Eski public URL'ler anonim erişimde 400 (üretimde doğrulandı). `signedCfoFileUrl` yardımcısı + `scripts/verify-cfo-files-private.ts`. Denetim: `docs/ANON-GRANTS-FUNCTIONS-AUDIT.md` (yalnız denetim), kabul: `docs/SECURITY-HARDENING-ACCEPTANCE.md`.
+
 ### Financial Memory — XML sync → stok hafızası otomasyonu (2026-10-06)
 - XML senkronu tamamlandığında `fm_stock_refresh()` deterministik tetiklenir (`lib/fm/stock-refresh.ts` → `finalizeLog`). Yalnız `XmlSyncLog.status='SUCCESS'` yenilemeyi çalıştırır; PARTIAL/ERROR yenilemez ve `fm_ingest_run`'da `failed` (sync_not_success) olarak görünür. Aynı sync_log için idempotent; hata senkronu bozmaz. Migration `20261005300000_fm_stock_refresh_automation` (`fm_stock_refresh_after_sync`, `fm_stock_freshness`) üretime uygulandı, parmak izi üretimle birebir. Test `__tests__/xml-sync-fm-refresh.test.ts` (XML sync → refresh → reconciliation).
 

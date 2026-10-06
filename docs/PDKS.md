@@ -242,6 +242,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-06 — cfo-files private + anon denetimi:** migration `20261006100000_cfo_files_private` üretime uygulandı + kayıtlı (bucket public=false, 8 referans private, yedek tablo); `lib/cfo-agent/private-files.ts` (`signedCfoFileUrl`), test `cfo-files-private-migration`, `scripts/verify-cfo-files-private.ts`; dokümanlar ANON-GRANTS-FUNCTIONS-AUDIT, SECURITY-HARDENING-ACCEPTANCE. Backlog: `cfo_google` anon EXECUTE kapatma, 56 tablo anon grant revoke (onay bekliyor).
+
 - **2026-10-06 — fm_stock_refresh otomasyonu:** `lib/fm/stock-refresh.ts` + `lib/xml-sync-runner.ts` (`finalizeLog` sonunda çağrı); migration `20261005300000_fm_stock_refresh_automation` (`fm_stock_refresh_after_sync(text)`, `fm_stock_freshness`) üretime uygulandı + `_prisma_migrations` kaydı; fingerprint beklenen hash'leri güncellendi. SUCCESS → yenile; PARTIAL/ERROR → `failed` run, yenileme yok; idempotent. Test: `__tests__/xml-sync-fm-refresh.test.ts` (CI'da).
 
 ### 2026-10-06 — Stok düzeltme katmanı (AL-CAM03)

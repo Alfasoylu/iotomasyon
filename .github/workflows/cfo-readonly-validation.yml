@@ -54,6 +54,7 @@ jobs:
       - run: node --import tsx __tests__/cfo-kargo-tarife.test.ts
       - run: node --import tsx __tests__/migration-clean-apply.test.ts
       - run: node --import tsx __tests__/security-anon-lockdown.test.ts
+      - run: node --import tsx __tests__/cfo-files-private-migration.test.ts
       - run: node --import tsx __tests__/ai-cfo-acceptance-profile.test.ts
       - run: node --import tsx __tests__/ai-cfo-anomalies.test.ts
       - run: node --import tsx __tests__/ai-cfo-provider.test.ts
