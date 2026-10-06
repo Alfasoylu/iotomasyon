@@ -1,18 +1,19 @@
-# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-06, read-only catalog SELECT, after migrations 20261006100000 + 20261006110000 were applied).
-# A bootstrapped clean database (prisma/baseline/2026-10-06.sql) must produce exactly these rows from scripts/schema-baseline/fingerprint.sql.
+# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-06 ~20:25 UTC, read-only catalog SELECT, after 20261005190000_ai_cfo_v1 was applied
+# by controlled SQL; previous capture: after 20261006100000 + 20261006110000). Excluding cfo_run/cfo_insight/cfo_usage, all 17 groups equal the previous capture.
+# A bootstrapped clean database (prisma/baseline/2026-10-06.sql + baseline.json pending/late migrations) must produce exactly these rows from scripts/schema-baseline/fingerprint.sql.
 # Columns: kind object_count short_md5. Regenerate ONLY by re-running fingerprint.sql on production (docs/BASELINE-CAPTURE.md).
-acl 334 d35af47194
-con 321 ce4bbc3bd9
+acl 337 9fd3027f65
+con 333 895ac9b65d
 enum 32 ac59222f85
 ext 1 56e042523e
 fn 34 a3bfb3ee44
 fnacl 51 4a91d0382c
-idx 424 57da0e1411
+idx 433 7dd78e1300
 pol 80 32812b7f8a
 rel:m 1 0ad09bf43e
-rel:r 145 3eb34c2ad0
+rel:r 148 d66f21ff29
 rel:v 56 1ab6a1fb00
-rls 145 3002b81db8
+rls 148 237d8bcd7c
 schemaacl 3 45e3344ecd
 seq 15 cda7319017
 seqacl 15 40c6ef1c15

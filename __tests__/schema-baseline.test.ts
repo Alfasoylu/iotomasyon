@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite/vector";
-import { bootstrap, listMigrations, migrationChecksum, readBaselineConfig } from "../scripts/schema-baseline/bootstrap";
+import { applyPendingInProduction, bootstrap, listMigrations, migrationChecksum, readBaselineConfig } from "../scripts/schema-baseline/bootstrap";
 
 // Clean-DB reproducibility gate (docs/BASELINE-CAPTURE.md):
 //  (a) bootstrap on an EMPTY database (Supabase-like roles / default privileges) raises no error
@@ -25,7 +25,7 @@ async function main() {
 
     // newer-than-baseline migrations must apply on top of the baseline without error (prisma migrate deploy semantics);
     // baseline + pending migrations together must equal production
-    for (const m of result.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    await applyPendingInProduction(client, result); // late (appliedAfterCapture) ones last, under the production applier's default ACL
     await db.exec("set search_path = public");
 
     // (b) full fingerprint vs production
@@ -47,7 +47,8 @@ async function main() {
     const dirs = listMigrations();
     const cfg = readBaselineConfig();
     assert.equal(result.registered.length + result.pending.length, dirs.length);
-    assert.deepEqual(result.registered, dirs.filter(m => m <= cfg.cutoffMigration && !(cfg.notAppliedInProduction ?? []).includes(m)));
+    assert.deepEqual(result.registered, dirs.filter(m => m <= cfg.cutoffMigration && !(cfg.notAppliedInProduction ?? []).includes(m) && !(cfg.appliedAfterCapture ?? []).includes(m)));
+    assert.deepEqual(result.pendingInProduction.slice(-(cfg.appliedAfterCapture ?? []).length || Infinity), cfg.appliedAfterCapture ?? [], "late migrations run last, in production order");
     assert.deepEqual(result.pendingNotInProduction, cfg.notAppliedInProduction ?? []);
     const rows = (await db.query<{ migration_name: string; checksum: string; finished_at: string | null; applied_steps_count: number }>(
       "select migration_name, checksum, finished_at, applied_steps_count from public._prisma_migrations order by migration_name")).rows;
