@@ -168,7 +168,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
-- [ ] **AI CFO runner adım 8:** (5, 6, 7 tamam; 8A `ai_cfo_v1` üretimde 2026-10-06) · STEP C deterministik monitor (AI kapalı) → anomali incelemesi (shadow week kabulü yerine) → AI'ı açma (her biri ayrı onay). Adım 4 tamam (`AI-CFO-RUNNER.md`).
+- [ ] **AI CFO runner adım 8:** (5, 6, 7 tamam; 8A `ai_cfo_v1` üretimde 2026-10-06; STEP C deterministik monitor çalışıyor, ilk koşu 37/38 gerçek alarm — kabul edildi) · STEP E bütçe/sağlayıcı kapalı doğrulaması → STEP F tek onaylı AI koşusu → kalibrasyon (her biri ayrı onay). Adım 4 tamam (`AI-CFO-RUNNER.md`).
 
 - [ ] **Güvenlik (sonraya, kritik değil):** `cfo_secret` düz metin kimlik bilgilerini ortam değişkenlerine taşı; pgvector'ü `public` dışına taşı; `tmp-cfo-files-verify` Edge Function'ı panelden sil.
 
@@ -253,6 +253,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-07 — AI CFO STEP C (deterministik gölge) kabulü:** ilk üretim koşusu `cmux810…` (`ai_disabled`): 38 anomali → kullanıcı 37 gerçek / 1 yanlış (FBA STOCKOUT) işaretledi; 13 kontrollük gölge hafta yerine bu inceleme kabul edildi. Düzeltmeler `lib/cfo-agent/snapshot.ts` (FBA stok günü `fba_inventory_unknown`; komisyon `outliers` yalnız uygun örneklem), test `ai-cfo-source-mapping`. Sırada STEP E/F (AI kapalı bütçe/sağlayıcı doğrulaması → tek onaylı AI koşusu), ayrı onayla.
 - **2026-10-06 — AI CFO monitor kilidi teşhisi:** ilk elle çalıştırma `monitor_failed` döndü (kayıt açılmadan, kilit bağlantısında). `lock.ts` `LockError` sabit etiketleri + doğrudan host reddi; `runner.ts` etiketi döndürür; test `ai-cfo-runner`. Muhtemel neden: kilit URL'sinde `sslmode=require` (pg bunu `verify-full` sayar; Supabase CA'sı Node'da güvenilir değil).
 - **2026-10-06 — AI CFO komisyon örneklem kuralı (`alfas-gross-v6`):** `lib/cfo-agent/snapshot.ts` komisyon örneklemi `adet_duz=1` + `guven='YUKSEK'` + kopyasız + asOf'a sabit 120 gün + SKU ≥10 kayıt; `types.ts`/`calculations.ts` sürüm v6; test `ai-cfo-source-mapping` (çok adetli satır karışımı 0,19 → 0,18). Gölge hafta (STEP C) öncesi şart.
 - **2026-10-06 — AI CFO adım 8A: `ai_cfo_v1` üretimde + repo senkronu:** migration kontrollü SQL ile (`postgres`, tek transaction, `_prisma_migrations` checksum `4f03992b…`; `prisma migrate deploy` KULLANILMADI, `market_scout_foundation` bekliyor). `cfo_run`/`cfo_insight`/`cfo_usage`: RLS açık, politika 0, anon/authenticated/PUBLIC/reader yetkisi yok; parmak izi AI CFO nesneleri hariç 17/17 önceki ile aynı (+30 nesne). Repo: `baseline.json` `appliedAfterCapture`, `bootstrap.ts` (geç migration'lar sonda), `fingerprint.expected.txt` (üretimden), testler `schema-baseline`/`ai-cfo-store`/`ai-cfo-migration-security`/`security-defense-in-depth` (ortak `applyPendingInProduction`), `BASELINE-CAPTURE.md`.

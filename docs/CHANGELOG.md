@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### AI CFO — ilk deterministik monitor koşusu + kural düzeltmeleri (2026-10-07)
+- STEP C: üretimde ilk monitor koşusu (`ai_disabled`, `alfas-gross-v6`): 38 anomali, kullanıcı incelemesinde 37 gerçek / 1 yanlış alarm (gölge hafta kabulünün yerine geçti). AI çağrısı yok (`cfo_usage` 0).
+- Yanlış alarm düzeltildi: AMAZON_FBA ürününde FBA stoğu bilinmezken depo (XML) stoğundan stok günü üretilmez (`fba_inventory_unknown`) → sahte STOCKOUT yok.
+- Komisyon kapsamındaki `outliers` artık yalnız uygun örneklem içindeki MAD redlerini sayar; örneklem kuralının dışladığı satırlar (çok adetli, SET_DUZELTILDI, KARMA, BILINMIYOR) aykırı sayılmaz (önceki ölçümde Trendyol 1.038 / Hepsiburada 287 şişkin). Test `ai-cfo-source-mapping`.
+
 ### AI CFO — monitor kilidi hata etiketleri (2026-10-06)
 - `lib/cfo-agent/lock.ts`: kilit hataları artık genel `monitor_failed` yerine sabit, kimlik bilgisi içermeyen etiketlerle döner (`session_lock_not_configured`, `transaction_pooler_not_allowed`, `lock_direct_host_not_reachable_use_session_pooler`, `lock_tls_certificate_error`, `lock_authentication_failed`, `lock_network_connection_failed` …); doğrudan (IPv6) Supabase host'u açıkça reddedilir. Runner bu etiketi `/admin/ai-cfo`'ya döndürür; URI veya ham sürücü hatası dönmez. Test `ai-cfo-runner`.
 
