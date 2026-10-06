@@ -1,24 +1,24 @@
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-05): the Step 1 fingerprint of a clean apply of prisma/migrations
 # must equal this. Columns: scope kind object_count hash. Regenerate ONLY after re-verifying against production
 # (run scripts/schema-drift/step1-fingerprint.sql there and compare).
-A acl 60 ca21e51650
-A con 41 9136b56f1e
-A fn 8 1abe1bf580
+A acl 68 8fb0e00e83
+A con 47 a8cf88230d
+A fn 9 625f743722
 A fnacl 9 0a84a86122
-A idx 21 9bed3498fd
-A pol 17 76c61292c5
+A idx 22 ba279cce9a
+A pol 18 0339f5c028
 A rel:m 1 b73a20b3ff
-A rel:r 17 833619fede
-A rel:v 12 382607bbe3
-A rls 17 df6d309e35
+A rel:r 18 64bb1e9e6a
+A rel:v 15 3b3e1ada65
+A rls 18 74f4e7d238
 A seed:cfo_kargo_barem 1 c2799544dd
 A seed:cfo_kargo_desi_tarife 1 54d61d872f
 A seed:cfo_kargo_kanal_varsayim 1 93a26276c4
 A seed:fm_metric 1 d914c3c81b
-A seed:fm_quality_flag 1 8d77acda6d
+A seed:fm_quality_flag 1 e7d75716b5
 A seed:fm_quality_policy 1 0095b87391
 A seed:fm_source_priority 1 10406f50a3
-A view 13 7dc2fbb329
+A view 16 bdcbfbe560
 B acl 10 59c32b6cfa
 B pol 10 6cf94d13ae
 B rls 10 ce2943d96f
