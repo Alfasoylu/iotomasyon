@@ -1,6 +1,6 @@
 import { allocate, DEFAULT_PARAMS, type DebtInput, type SkuInput } from "./capital-efficiency";
 import { loadDownside } from "./downside-data";
-import { cardEffectiveMonthlyRate, isPersonalCard } from "./card-cost";
+import { CARD_COLUMNS_SQL, cardEffectiveMonthlyRate, isPersonalCard } from "./card-cost";
 
 // Sermaye verimliliği veri yükleyicisi (salt-okunur, TEK yükleyici: /cfo/sermaye sayfası Prisma ile, AI CFO bağlamı salt-okunur
 // iş kaynağı ile çağırır — `q` yalnız SQL çalıştırır). Kaynaklar:
@@ -16,6 +16,7 @@ import { cardEffectiveMonthlyRate, isPersonalCard } from "./card-cost";
 export type SqlQuery = <T = Record<string, unknown>>(sql: string) => Promise<T[]>;
 
 export async function loadCapitalEfficiency(q: SqlQuery, opts: { budgetTry?: number } = {}) {
+  const [cc] = await q<{ n: number }>(CARD_COLUMNS_SQL);
   const [skus, loans, kmh, settings, floor, downside, cards] = await Promise.all([
     q<{ id: string; sku: string; name: string; stok: unknown; birim_maliyet: unknown; birim_net_deger: unknown; gunluk_hiz: unknown; deger_kaynagi: string }>(
       `select id, sku, name, stok, birim_maliyet, birim_net_deger, gunluk_hiz, deger_kaynagi from cfo_stok_deger where gercek_stok`),
@@ -28,8 +29,9 @@ export async function loadCapitalEfficiency(q: SqlQuery, opts: { budgetTry?: num
     q<{ state: string; gap: unknown }>(`select state, gap_try as gap from fm_goal_observation where goal_key = 'net_position_floor_try' order by evaluated_at desc limit 1`)
       .catch(() => []),
     loadDownside(q).catch(() => null),
-    q<{ bank: string; holder: string | null; revolving: unknown; rate: unknown }>(
-      `select bank, holder, "revolvingTry" as revolving, "contractMonthlyRatePct" as rate from cfo_credit_card where "isActive" and "revolvingTry" > 0`),
+    Number(cc?.n) === 2 ? q<{ bank: string; holder: string | null; revolving: unknown; rate: unknown }>(
+      `select bank, holder, "revolvingTry" as revolving, "contractMonthlyRatePct" as rate from cfo_credit_card where "isActive" and "revolvingTry" > 0`)
+      : Promise.resolve([] as { bank: string; holder: string | null; revolving: unknown; rate: unknown }[]),
   ]);
   const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
   const skuInputs: SkuInput[] = skus.map(s => ({

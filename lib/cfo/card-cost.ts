@@ -50,3 +50,7 @@ export function cardCarry(cards: CardCostInput[]): CardCarry {
 
 /** Şahsi kart: decision-memory ile aynı kural (sahibi 'Alp'). */
 export const isPersonalCard = (holder: string | null) => (holder ?? "").trim() === "Alp";
+
+/** Devreden/oran sütunları var mı? (migration 20261008000000 uygulanmadan önce ham sorgular bu sütunları okumaz) */
+export const CARD_COLUMNS_SQL = `select count(*)::int as n from information_schema.columns
+  where table_schema = 'public' and table_name = 'cfo_credit_card' and column_name in ('revolvingTry', 'contractMonthlyRatePct')`;

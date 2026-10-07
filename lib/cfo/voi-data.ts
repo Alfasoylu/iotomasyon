@@ -1,5 +1,6 @@
 import { classifySku, type SkuInput } from "./capital-efficiency";
 import { loadCapitalEfficiency, type SqlQuery } from "./capital-efficiency-data";
+import { CARD_COLUMNS_SQL } from "./card-cost";
 import { cardCostVoi, deadPriceVoi, DEFAULT_VOI_PARAMS, financeFileVoi, importStatusVoi, rankVoi, skuCostVoi, staleBalanceVoi, textQuestionVoi, type VoiItem } from "./voi";
 
 // VOI veri yükleyicisi (salt-okunur, tek yükleyici: /cfo/sorular ve AI CFO aynı kodu çağırır). Sermaye motorunun çıktısını
@@ -13,6 +14,7 @@ export async function loadVoi(q: SqlQuery, at: Date = new Date()) {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(at);
   const ce = await loadCapitalEfficiency(q, { budgetTry: 0 });
   const hurdle = ce.hurdleMonthly ?? 0.04;
+  const [cc] = await q<{ n: number }>(CARD_COLUMNS_SQL);
   const [accounts, flows, dip, projects, fin, questions, cards] = await Promise.all([
     q<{ name: string; updated: unknown; type: string | null }>(`select name, "lastUpdatedAt" as updated, "accountType"::text as type from cfo_bank_account where "isActive"`),
     q<{ banka: string; gross: unknown }>(`select banka, sum(abs(tutar_try))::float8 as gross from cfo_banka_hareket where tarih > current_date - 30 group by banka`).catch(() => []),
@@ -23,7 +25,7 @@ export async function loadVoi(q: SqlQuery, at: Date = new Date()) {
       (select sum("totalTry") from trendyol_settlement_line where "transactionType"='Satış' and "transactionDate" > (select max("transactionDate") from trendyol_settlement_line) - interval '30 days') as sales`).catch(() => []),
     q<{ id: string; question: string; area: string }>(`select id, question, area from cfo_question where status = 'ACIK'`),
     q<{ bank: string; holder: string | null; debt: unknown; revolving: unknown; rate: unknown }>(`select bank, holder, coalesce("totalDebtTry", "statementDebtTry") as debt,
-      "revolvingTry" as revolving, "contractMonthlyRatePct" as rate from cfo_credit_card where "isActive"`),
+      ${Number(cc?.n) === 2 ? `"revolvingTry" as revolving, "contractMonthlyRatePct" as rate` : `null::numeric as revolving, null::numeric as rate`} from cfo_credit_card where "isActive"`),
   ]);
 
   // Bilinen SKU'ların maliyet / net değer oranı dağılımı (veriden; varsayım değil)
