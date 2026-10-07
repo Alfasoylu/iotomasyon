@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### AI CFO — banka bakiyesi ödeme takviminden ileri taşınır (2026-10-07)
+- Kullanıcı kararı: takvim kalemi **tarihi geçince** gerçekleşmiş sayılır; giriş/çıkışın bankası takvimde, pazaryeri → banka eşlemesi gözlenen ödemelerde (`cfo_pay_obs`: Trendyol/Amazon → Yapı Kredi, Hepsiburada/ePttAVM/Koçtaş → Enpara, N11 → Ziraat).
+- `lib/cfo-agent/bank-rollforward.ts`: her hesabın son girilen bakiyesi + güncelleme gününden SONRAKİ tarihi geçmiş (ya da ödendi işaretli) `cfo_cash_event` ve `cfo_receivable` kalemleri; güncelleme gününün kalemi bakiyede sayılır (06.10 Ziraat taksiti örneği), bugünün kalemi yalnız ödendi işaretliyse. Banka adı → hesap: birebir ad, yoksa markada tek hesap; eşlenmeyen kalem uydurulmaz, raporlanır (üretimde: bankasız 100.000 TL sabit gider kalanı, Idefix, Trendyol Azerbaycan). Gün sınırı İstanbul saatiyle.
+- Blok B'ye eklendi: son girilen toplam (ölçülmüş) ↔ ileri taşınan toplam ve hareketli hesaplar (TAHMİNİ) ↔ eşlenmeyen kalemler. Haftalık gerçek bakiye girişi yine istenir.
+- Testler: `ai-cfo-bank-rollforward` (yeni, CI'da), `ai-cfo-source-mapping` (gerçek DB).
+
 ### AI CFO — girdi şartnamesi (Blok A/B/C + önbellek) + anomalilere TL etkisi (`alfas-gross-v10`) (2026-10-07)
 - **Blok A — el kitabı karar çekirdeği** (`lib/cfo-agent/handbook-core.ts`, `v33-core-2026-10-07`): şartname A1–A9 (itirazın dört şartı, grain kuralı, taban fiyat sabitleri + komisyon ölçüm kuralı + ölü bantlar + kargo çift sayım yasağı, dip bandı, kaldıraç merdiveni + −3.000.000 tabanı, borç sırası + para maliyeti, servet iki türlü, yazma sözlüğü, yasaklar). Kargo tarifesi, kanal net oranı ve komisyon kapsamı kopyalanmaz, koşu anında okunur. Sistem talimatıyla tek blokta `cache_control` → önceki ~400 token Sonnet 4.6'nın 1.024 token önbellek alt sınırının altındaydı (`cacheRead=0`'ın sebebi); şimdi önbelleğe alınır.
 - **Blok B — bugünün durumu / Blok C — hafıza** (`lib/cfo-agent/context.ts`, salt-okunur kaynak): nakit kapısı, `cfo_kaynak_yeterliligi()`, yakın dip (≤35 gün, bant) ↔ uzak dip, servet geniş (`cfo_servet`) ↔ dar (`fm_balance_day.net_capital_try`), hedef notları, bayat kaynaklar + **susan kurallar**; defter son 20, açık P1 sorular (10), son 3 koşu. Her satır id'li kanıt: içgörü atıf yapabilir, doğrulayıcı sayısını uydurma saymaz (`validateAiOutput` contextIds; `§` kural numaraları sayı sayılmaz; el kitabından yalnız ayırt edici sabitler — küçük tam sayılar serbest değil).

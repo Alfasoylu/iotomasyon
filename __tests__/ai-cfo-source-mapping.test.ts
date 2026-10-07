@@ -150,6 +150,8 @@ async function main() {
     assert.ok(ctx.state.some(e => q(e).startsWith("kaynak.")), "kaynak yeterliliği satırları");
     assert.ok(ctx.memory.some(e => q(e).startsWith("defter.cl_t1.veri/bulgu") && e.value === "Açık 533.740 TL"), "defter Blok C'de");
     assert.match(ctx.tables, /KARGO TARİFESİ \(cfo_kargo_tarife\)/);
+    assert.ok(ctx.state.some(e => q(e) === "banka.son_girilen_toplam_try" && typeof e.value === "number"), "banka ileri taşıma: son girilen toplam");
+    assert.ok(ctx.state.some(e => q(e).startsWith("banka.ileri_tasinan_toplam_try") && e.measured === false), "ileri taşınan toplam TAHMİNİ");
     assert.ok(new Set([...ctx.state, ...ctx.memory].map(e => e.id)).size === ctx.state.length + ctx.memory.length, "bağlam kanıt id'leri benzersiz");
     assert.ok(ty && hb, `product signals: ${s.products.map(p => `${p.sku}/${p.channel}`).join(",")}`);
     assert.ok(ty!.commissionRate.value != null, "measured commission");
