@@ -5,6 +5,7 @@ import type { CfoConfig } from "./config";
 import { getCfoConfig } from "./config";
 import { CALCULATION_VERSION, SCHEMA_VERSION, type CfoAgentSnapshot, type Metric, type ProductSignal, type SalesPeriod, type SourceWatermark } from "./types";
 import { contribution, cautiousDemand, D, divide, emptyProfitability, isDummyStock, measuredCommission, metric, numeric, orderAllocationSql, percentage, priceFloor, stale, unknown } from "./calculations";
+const DIRECT_API_SOURCES=new Set(["Trendyol","Hepsiburada"]);
 import { evidence } from "./evidence";
 import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type ReadSource, type Row } from "./sources";
 import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources";
@@ -59,7 +60,9 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     count(distinct (${localTime("HepsiburadaSalesRecord","syncedAt")})::date) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int from "HepsiburadaSalesRecord" union all
     select 'XML',null,max("syncedAt"),count(distinct date_trunc('minute',"syncedAt")) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int,0,
     count(distinct (${localTime("XmlStockChangeLog","syncedAt")})::date) filter(where "syncedAt">=$1::timestamptz-interval '7 days')::int from "XmlStockChangeLog"`,asOf);
-  snapshot.dataQuality.sourceWatermarks=watermarks.map(r=>({source:String(r.source),orderDate:iso(r.event_at),syncedAt:iso(r.ingest_at),batchDays:n(r,"batch_days")??0,coverageDays:n(r,"coverage_days")??0,
+  // A direct marketplace API table that has never received a row is "not configured", not stale: its channel's sales
+  // still arrive through Entegra (Hepsiburada: 0 direct rows, Entegra HEPSIBURADA rows present), so it is left out.
+  snapshot.dataQuality.sourceWatermarks=watermarks.filter(r=>!(DIRECT_API_SOURCES.has(String(r.source))&&r.event_at==null&&r.ingest_at==null)).map(r=>({source:String(r.source),orderDate:iso(r.event_at),syncedAt:iso(r.ingest_at),batchDays:n(r,"batch_days")??0,coverageDays:n(r,"coverage_days")??0,
     stale:stale(iso(r.source==="XML"?r.ingest_at:r.event_at),now)||stale(iso(r.ingest_at),now)} satisfies SourceWatermark));
   snapshot.dataQuality.staleSources=snapshot.dataQuality.sourceWatermarks.filter(w=>w.stale).map(w=>w.source);
   const financialFresh=snapshot.dataQuality.sourceWatermarks.find(w=>w.source==="Entegra")?.stale===false && config.canonicalValidated;
@@ -153,7 +156,9 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   const xmlLookup=skuIndex(velocityUnits,r=>String(r.sku));
   const inboundLookup=skuIndex(inboundRows??[],r=>String(r.sku));
   const xmlFresh=snapshot.dataQuality.sourceWatermarks.find(w=>w.source==="XML")?.stale===false;
-  const channelFresh=(channel:string)=>snapshot.dataQuality.sourceWatermarks.find(w=>w.source===({TRENDYOL:"Trendyol",HEPSIBURADA:"Hepsiburada",INVENTORY:"XML"}[channel]??"Entegra"))?.stale===false;
+  // Channel freshness uses the channel's direct source when it is configured, otherwise Entegra (where that channel's sales come from).
+  const channelFresh=(channel:string)=>{const wm=snapshot.dataQuality.sourceWatermarks,direct=({TRENDYOL:"Trendyol",HEPSIBURADA:"Hepsiburada",INVENTORY:"XML"} as Record<string,string>)[channel];
+    return (wm.find(w=>w.source===direct)??wm.find(w=>w.source==="Entegra"))?.stale===false;};
   let knownValue=D(0),retailValue=D(0),unknownCost=0,unknownRetail=0;
   for(const p of products) {
     const stock=n(p,"stock");if(stock==null)continue;

@@ -99,7 +99,7 @@ async function main() {
     const s = await buildCfoAgentSnapshot({ db, now, config, compact: false });
     const missing = s.dataQuality.missingFields;
     assert.ok(!missing.some(f => f.startsWith("reviewed_source_changed")), `reviewed profile valid by default: ${missing.join(",")}`);
-    assert.equal(s.calculationVersion, "alfas-gross-v6");
+    assert.equal(s.calculationVersion, "alfas-gross-v7");
 
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;
@@ -112,6 +112,13 @@ async function main() {
 
     // price floors: Trendyol own bands; Hepsiburada priced with Trendyol bands, labelled as an assumption
     const ty = s.products.find(p => p.sku === "MD-X" && p.channel === "TRENDYOL"), hb = s.products.find(p => p.sku === "MD-X" && p.channel === "HEPSIBURADA");
+    // Direct Hepsiburada API table is empty (sales arrive via Entegra): not a stale source, and the HB channel's
+    // freshness follows Entegra instead of being permanently stale (production 2026-10-07 false alarm).
+    const entegra = s.dataQuality.sourceWatermarks.find(w => w.source === "Entegra");
+    assert.ok(entegra, "Entegra watermark present");
+    assert.ok(!s.dataQuality.sourceWatermarks.some(w => w.source === "Hepsiburada"), "unconfigured direct HB source is not a watermark");
+    assert.ok(!s.dataQuality.staleSources.includes("Hepsiburada"), "unconfigured direct HB source is not stale");
+    assert.equal(hb!.sourceFresh, entegra!.stale === false, "HB channel freshness follows Entegra");
     assert.ok(ty && hb, `product signals: ${s.products.map(p => `${p.sku}/${p.channel}`).join(",")}`);
     assert.ok(ty!.commissionRate.value != null, "measured commission");
     const trust = (await pg.query<{ g: string; a: number; n: number }>(`select guven::text g, adet_duz a, count(*)::int n from cfo_satis_birim_duz where channel='TRENDYOL' group by 1,2 order by 2`)).rows;

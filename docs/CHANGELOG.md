@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO — yapılandırılmamış doğrudan API kaynağı bayat sayılmaz (`alfas-gross-v7`) (2026-10-07)
+- Üretimde `HepsiburadaSalesRecord` hiç satır almamış (doğrudan HB API kullanılmıyor); HB satışları Entegra'dan geliyor (60 günde 749 satır). Eski kod boş tabloyu kalıcı `stale` sayıyor ve HB kanal tazeliğini ona bağlıyordu → HB ürün sinyalleri hep "bayat". `lib/cfo-agent/snapshot.ts`: hiç satırı olmayan doğrudan API kaynağı (Trendyol/Hepsiburada) watermark/staleSources dışında; kanal tazeliği doğrudan kaynak yoksa Entegra'yı izler. Hesap sürümü `alfas-gross-v7`. Test `ai-cfo-source-mapping`.
+
 ### AI CFO — kısmi başarı `completed` + ret nedeni kodları (2026-10-07)
 - İlk içgörü üreten koşu (`cmuxqfti…`, 09:34; 3.488/1.205 token, 1,43 ₺): 4 hedef anomalisi gönderildi, 2 içgörü kaydedildi, 1 reddedildi; ama tek ret yüzünden koşu `invalid_output` görünüyordu. `runner.ts`: en az bir içgörü kabul edildiyse durum `completed`, `error` = `rejected_insights:N (neden=adet,…)`; hiçbiri geçmezse `invalid_output`. `validate-ai-output.ts`: ret nedeni kodları (`invalid_json`, `schema`, `over_limit`, `unknown_anomaly`, `duplicate`, `severity_changed`, `category_changed`, `evidence_not_allowed`, `evidence_missing`, `fabricated_number`) — model metni saklanmaz. `/admin/ai-cfo` mesajları güncellendi. Test `ai-cfo-runner`.
 

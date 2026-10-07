@@ -166,10 +166,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 **P0 — Hemen**
 1. [ ] **S-K2 Hepsiburada şifre rotasyonu + git geçmişi temizliği** (kullanıcı) — dosya silindi ama şifre geçmişte duruyor.
-2. [ ] **`cfo_secret` düz metin kimlik bilgileri (5 satır) → ortam değişkeni/Vault** — önceki "kritik değil" notu yükseltildi: DB okuma yetkisi olan herkes pazaryeri kimliklerini görür.
+2. [ ] **`cfo_secret` düz metin kimlik bilgileri (5 satır) → Vault + iptal** — anahtarlar: `GITHUB_PAT`, `RAILWAY_PROJECT_TOKEN` (hiçbir yerde kullanılmıyor → kaynağında iptal + satır sil), `TMP_CFO_FILES_VERIFY_TOKEN` (boş → sil), `CFO_GOOGLE_INTERNAL_TOKEN` + `GOOGLE_SA_KEY_JSON` (`cfo-google` köprüsü → Vault). Erişim yalnız postgres/service_role. Taşıma taslağı hazır; uygulama kullanıcı onayı/izni bekliyor.
 
 **P1 — Bu hafta (canlı kararları etkileyen veri + AI CFO)**
-3. [ ] **Bayat kaynaklar: Entegra, Hepsiburada, banka** — AI CFO'nun iki içgörüsü de bunu işaret etti; nakit/borç hedefleri `measured=false` tahmine dayanıyor. Besleme/sync akışlarının neden durduğunu teşhis et.
+3. [ ] **Bayat kaynaklar** — teşhis 2026-10-07: Hepsiburada yanlış alarmı kodda düzeltildi (`alfas-gross-v7`). Kalan (kullanıcı): güncel Entegra Excel'ini yükle (son 05.10); Ziraat USD + Yapı Kredi USD (şirket) bakiyelerini güncelle ya da pasife al (son 17.09).
 4. [ ] **Maliyet kapsamı %56,6** — eksik ürün maliyetleri girilmeden kârlılık/marj anomalileri güvenilir değil (kullanıcı + veri girişi ekranı).
 5. [ ] **Forecast V2 açma kararı** — eski yolda Trendyol çift sayım + Türkçe-İ hataları satın alma tahminini bozmaya devam ediyor (gölge raporu → onay).
 6. [ ] **AI CFO anomali seçiminde kategori çeşitliliği** — ilk koşuda 8/8 STOCKOUT gitti; kategori başına kota (ör. en fazla 3 stok + hedef/marj/nakit).
@@ -287,6 +287,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-07 — P1-3 bayat kaynak teşhisi:** Entegra = elle Excel yükleme, son 05.10 09:06 (>48 sa) → kullanıcı yüklemeli. Hepsiburada = yanlış alarm (doğrudan API tablosu 0 satır; satışlar Entegra'dan) → kod düzeltildi (`snapshot.ts`, `alfas-gross-v7`). Banka = 15 hesaptan 2'si (Ziraat USD, Yapı Kredi USD şirket) 17.09'dan beri güncellenmemiş → 7 gün kuralı tümünü bayat sayıyor; kullanıcı güncellemeli. P0-2 (`cfo_secret` → Vault) taslağı ortam güvenlik denetimince engellendi (secret-store yazımı); kullanıcı kararı bekliyor.
 - **2026-10-07 — Öncelikli aksiyon planı:** backlog P0–P3 sıralandı (üretim salt-okunur doğrulama: bayat kaynaklar Entegra/Hepsiburada/banka, maliyet kapsamı %56,6, `cfo_secret` 5 düz metin satır, 43 definer view, 147 değişken search_path). AI CFO adım 8 STEP F tamam olarak işaretlendi.
 - **2026-10-07 — AI CFO STEP F tamam: ilk AI içgörüleri üretimde:** `cmuxqfti…` (09:34, elle): 4 GOAL anomalisi → 2 içgörü kaydedildi (borç 5M hedefi NOT_MET; net pozisyon tabanı OFF_TRACK, ikisi de TAHMİNİ/güven düşük), 1 ret; 1,43 ₺. Kullanıcı onayıyla: kısmi başarı `completed` + ret nedeni kodları (`runner.ts`, `validate-ai-output.ts`, `run-buttons.tsx`, test `ai-cfo-runner`).
 - **2026-10-07 — AI CFO STEP F: ilk başarılı sağlayıcı çağrısı, çıktı kesildi:** `maxItems` düzeltmesi (#173) sonrası 09:13 zamanlanmış monitor `cmuxpo8e…` Anthropic'ten yanıt aldı (5.559/800 token, 1,43 ₺) ama 800 tavanında kesildi → `invalid_output`. Çıktı tavanı varsayılan 1500 / üst 2000; kesilme `output_truncated` etiketi. `config.ts`, `runner.ts`, `__tests__/ai-cfo-runner.test.ts`, `docs/AI-CFO-RUNNER.md`.
