@@ -3,12 +3,13 @@ import type { AiInsight, Anomaly, CfoAgentSnapshot } from "./types";
 
 // AI CFO — model çıktısının deterministik denetimi. Model yalnız gönderilen anomaly'yi açıklar;
 // severity/category değiştiremez, kanıt uyduramaz, kanıtta olmayan sayı yazamaz.
+export const MAX_INSIGHTS = 3;
 export const aiOutputSchema = z.object({ insights: z.array(z.object({
   anomalyId: z.string().max(100), severity: z.enum(["info", "warning", "critical"]),
   category: z.enum(["margin", "inventory", "sales", "cash", "pricing", "procurement", "marketing", "data_quality"]),
   title: z.string().min(1).max(160), observation: z.string().min(1).max(600), recommendation: z.string().min(1).max(600),
   riskIfIgnored: z.string().min(1).max(400), confidence: z.enum(["low", "medium", "high"]), evidenceIds: z.array(z.string()).min(1).max(12),
-}).strict()).max(3) }).strict();
+}).strict()).max(MAX_INSIGHTS) }).strict();
 
 function numberVariants(token: string): number[] {
   const t = token.replace(/\s/g, "");
@@ -19,10 +20,13 @@ function numberVariants(token: string): number[] {
 export function validateAiOutput(text: string, snapshot: CfoAgentSnapshot, anomalies: Anomaly[]): { insights: AiInsight[]; rejected: number } {
   let json: unknown;
   try { json = JSON.parse(text); } catch { return { insights: [], rejected: 1 }; }
-  const parsed = aiOutputSchema.safeParse(json);
+  // The provider schema cannot carry maxItems, so extra insights are counted as rejected instead of discarding the whole response.
+  const all = (json as { insights?: unknown })?.insights;
+  const overflow = Array.isArray(all) && all.length > MAX_INSIGHTS ? all.length - MAX_INSIGHTS : 0;
+  const parsed = aiOutputSchema.safeParse(overflow ? { ...(json as object), insights: (all as unknown[]).slice(0, MAX_INSIGHTS) } : json);
   if (!parsed.success) return { insights: [], rejected: 1 };
   const accepted: AiInsight[] = [], seen = new Set<string>();
-  let rejected = 0;
+  let rejected = overflow;
   for (const item of parsed.data.insights) {
     const a = anomalies.find(x => x.id === item.anomalyId);
     if (!a || seen.has(a.id) || item.severity !== a.severity || item.category !== a.category || item.evidenceIds.some(id => !a.evidenceIds.includes(id))) { rejected++; continue; }

@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO — yapılandırılmış çıktı şeması `maxItems` düzeltmesi (2026-10-07)
+- `lib/cfo-agent/provider.ts`: `output_config.format` şemasından `maxItems:3` kaldırıldı; Anthropic structured outputs bu kısıtı desteklemediği için ilk ücretli çağrı (`cmuxo5fc…`, 08:30) `provider_http_400` ile reddediliyordu (0 token, ücret yok). 3 içgörü sınırı artık `validateAiOutput`'ta uygulanıyor: fazlası tek tek reddedilir, yanıtın tamamı atılmaz. Testler: `ai-cfo-provider` (şemada desteklenmeyen kısıt yok), `ai-cfo-runner` (4 içgörü → 1 kabul, 3 red).
+
 ### AI CFO — karar hafızası `regclass` düzeltmesi (2026-10-07)
 - `lib/cfo-agent/memory.ts`: `to_regclass('public.cfo_urun_karar')` artık `::text` ile okunuyor; Prisma raw sorgusu `regclass` sütununu çözemediği için ilk onaylı AI koşusu (07.10.2026 01:57, `cmuxa4cc…`) snapshot sonrası `monitor_failed` ile düşüyordu (sağlayıcı çağrılmadı, maliyet yok). `__tests__/ai-cfo-store.test.ts` regresyon testi: düzeltme olmadan aynı hatayı üretiyor, düzeltmeyle geçiyor.
 
