@@ -6,7 +6,8 @@ const schema = z.object({
   model: z.string().min(1).default("claude-sonnet-4-6"),
   maxCallsPerDay: z.coerce.number().int().min(0).max(24).default(6),
   maxInputTokens: z.coerce.number().int().min(500).max(8000).default(4500),
-  maxOutputTokens: z.coerce.number().int().min(100).max(800).default(800),
+  // 3 Turkish insights in JSON need ~1200–1500 tokens; 800 truncated the first production answer (stop_reason max_tokens).
+  maxOutputTokens: z.coerce.number().int().min(100).max(2000).default(1500),
   monthlyBudgetTry: z.coerce.number().min(0).default(3000),
   inputPriceUsdPerMillion: z.coerce.number().min(0).optional(),
   outputPriceUsdPerMillion: z.coerce.number().min(0).optional(),

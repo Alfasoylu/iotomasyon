@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO — çıktı token tavanı 1500/2000 + `output_truncated` (2026-10-07)
+- İlk başarılı Anthropic çağrısı (`cmuxpo8e…`, 09:13 zamanlanmış monitor; 5.559 girdi / 800 çıktı token, 1,43 ₺) 800 çıktı tavanında kesildi (`stop_reason=max_tokens`) → boş metin → `invalid_output` / `rejected_insights:1`, içgörü yok. `lib/cfo-agent/config.ts`: `AI_CFO_MAX_OUTPUT_TOKENS` varsayılan 1500, üst sınır 2000. `runner.ts`: tavanda kesilen yanıt `output_truncated` olarak etiketlenir. Test `ai-cfo-runner`.
+
 ### AI CFO — yapılandırılmış çıktı şeması `maxItems` düzeltmesi (2026-10-07)
 - `lib/cfo-agent/provider.ts`: `output_config.format` şemasından `maxItems:3` kaldırıldı; Anthropic structured outputs bu kısıtı desteklemediği için ilk ücretli çağrı (`cmuxo5fc…`, 08:30) `provider_http_400` ile reddediliyordu (0 token, ücret yok). 3 içgörü sınırı artık `validateAiOutput`'ta uygulanıyor: fazlası tek tek reddedilir, yanıtın tamamı atılmaz. Testler: `ai-cfo-provider` (şemada desteklenmeyen kısıt yok), `ai-cfo-runner` (4 içgörü → 1 kabul, 3 red).
 
