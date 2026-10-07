@@ -8,6 +8,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { loadDecisionMemory } from "@/lib/cfo/decision-memory-data";
+import { loadGoalAttribution } from "@/lib/cfo/goal-attribution-data";
 import { METRIC_LABEL, type HamleStatus } from "@/lib/cfo/decision-memory";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
@@ -25,7 +26,9 @@ const STATUS: Record<HamleStatus, { label: string; variant: "danger" | "warn" | 
 
 export default async function CfoDecisionsPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
-  const dm = await loadDecisionMemory(sql => prisma.$queryRawUnsafe(sql));
+  const [dm, ga] = await Promise.all([loadDecisionMemory(sql => prisma.$queryRawUnsafe(sql)), loadGoalAttribution(sql => prisma.$queryRawUnsafe(sql))]);
+  const tl = (v: number) => new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(v);
+  const VERDICT = { ON_PACE: "hedef hızında", BEHIND: "hedef hızının altında", SHRINKING: "operasyonel olarak eriyor", UNKNOWN: "hedef hızı bilinmiyor" } as const;
   const bad = (dm.byStatus.WRONG_DIRECTION ?? 0) + (dm.byStatus.WORSENING ?? 0) + (dm.byStatus.BEHIND ?? 0);
   return (
     <>
@@ -43,6 +46,28 @@ export default async function CfoDecisionsPage() {
           {" "}Ölçüm tarihi {dm.today}; değerler bugünkü veridir, defter değiştirilmez.
         </p>
       </Card>
+      {ga.available && (
+        <Card className="mb-6 p-5">
+          <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Net sermaye neden değişti? — hedef açığı atfı</h2>
+          <p className="mb-3 text-xs text-[var(--text-muted)]">
+            Stok değeri satış fiyatından yeniden hesaplandığı için adet değişmeden oynar. Değişim; nakit, alacak, borç, stok MİKTARI
+            (Δadet × bugünkü birim değer) ve stok DEĞERLEMESİ olarak bölünür. Hedefe ilerleme yalnız operasyonel kısımla ölçülür.
+          </p>
+          <CfoTable head={<tr><Th>Pencere</Th><Th right>Bildirilen değişim</Th><Th right>Nakit</Th><Th right>Alacak</Th><Th right>Borç azalışı</Th>
+            <Th right>Stok miktarı</Th><Th right>Stok değerleme</Th><Th right>Operasyonel/gün</Th><Th>Hedefe göre</Th></tr>}>
+            {ga.windows.map(w => (
+              <tr key={w.window}>
+                <Td strong>{w.attribution.from} → {w.attribution.to} ({w.attribution.days} gün)</Td>
+                <Td right>{tl(w.attribution.netChange)}</Td><Td right>{tl(w.attribution.cash)}</Td><Td right>{tl(w.attribution.receivables)}</Td>
+                <Td right>{tl(w.attribution.debt)}</Td><Td right>{tl(w.attribution.inventoryQuantity)}</Td>
+                <Td right>{tl(w.attribution.inventoryValuation)}<span className="block text-[11px] text-[var(--text-muted)]">değişimin %{Math.round(w.attribution.valuationShare * 100)}&apos;i</span></Td>
+                <Td right strong>{tl(w.pace.operationalPerDay)}</Td>
+                <Td muted>{VERDICT[w.pace.verdict]}{w.pace.requiredPerDay != null ? ` (gereken ${tl(w.pace.requiredPerDay)}/gün)` : ""}{w.pace.daysToGoalAtOperational != null ? ` · bu hızla ${w.pace.daysToGoalAtOperational} gün` : ""}</Td>
+              </tr>
+            ))}
+          </CfoTable>
+        </Card>
+      )}
       <Card className="p-5">
         <CfoTable head={<tr><Th>Durum</Th><Th>Karar</Th><Th>Metrik</Th><Th right>Başlangıç</Th><Th right>Bugün</Th><Th right>Hedef</Th><Th>Değerlendirme</Th></tr>}>
           {dm.evals.map(e => (
