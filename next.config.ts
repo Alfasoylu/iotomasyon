@@ -32,6 +32,10 @@ const nextConfig: NextConfig = {
       { source: "/admin/import-decisions", destination: "/cfo/kazananlar#ithalat", permanent: true },
       { source: "/admin/procurement", destination: "/cfo/kazananlar#ithalat", permanent: true },
       { source: "/admin/bulk-import", destination: "/products", permanent: true },
+      // 2026-10-07: üç sermaye sayfası tek sayfada (/admin/sermaye) birleşti.
+      { source: "/admin/sermaye-saglik", destination: "/admin/sermaye#saglik", permanent: true },
+      { source: "/admin/capital", destination: "/admin/sermaye#durum", permanent: true },
+      { source: "/admin/executive", destination: "/admin/sermaye#operasyon", permanent: true },
       { source: "/admin", destination: "/dashboard", permanent: false },
     ];
   },

@@ -349,8 +349,8 @@ export default async function SafetyPage() {
 
       {/* Links */}
       <div className="flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
-        <Link href="/admin/executive" className="transition-colors hover:text-[var(--text-primary)]">
-          ← Yönetici Paneli
+        <Link href="/admin/sermaye" className="transition-colors hover:text-[var(--text-primary)]">
+          ← Sermaye
         </Link>
         <Link
           href="/admin/data-hygiene"

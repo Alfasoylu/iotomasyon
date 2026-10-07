@@ -40,10 +40,10 @@ const DAY_NAMES = [
   "Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi",
 ];
 
-function fmtUsd(n: number, decimals = 0): string {
-  return new Intl.NumberFormat("en-US", {
+function fmtTry(n: number, decimals = 0): string {
+  return new Intl.NumberFormat("tr-TR", {
     style: "currency",
-    currency: "USD",
+    currency: "TRY",
     maximumFractionDigits: decimals,
   }).format(n);
 }
@@ -128,7 +128,7 @@ export async function AdminWorkspace({
         return (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
             {/* Sol: Skor */}
-            <Link href="/admin/sermaye-saglik" className="block">
+            <Link href="/admin/sermaye#saglik" className="block">
               <div className="flex h-full flex-col justify-between rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-6 transition-colors hover:border-[var(--border-strong)]">
                 <div>
                   <div className="flex items-start justify-between">
@@ -157,16 +157,16 @@ export async function AdminWorkspace({
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <MetricCard
                 label="Bağlı Sermaye"
-                value={fmtUsd(capital.totalLockedUsd)}
+                value={fmtTry(capital.totalLockedTry)}
                 icon={DollarSign}
-                href="/admin/capital"
+                href="/admin/sermaye#durum"
               />
               <MetricCard
                 label="Aylık Beklenen"
-                value={fmtUsd(capital.monthlyExpectedUsd)}
+                value={fmtTry(capital.monthlyExpectedTry)}
                 icon={TrendingUp}
                 status="ok"
-                href="/admin/sermaye-saglik"
+                href="/admin/sermaye#saglik"
               />
               <MetricCard
                 label="Yıllık ROI"
@@ -375,23 +375,23 @@ export async function AdminWorkspace({
         title="Finans"
         subtitle="Sermaye, kazanılan değer ve son 7 gün operasyonel sinyaller"
         tone="info"
-        href="/admin/capital"
-        hrefLabel="Sermaye Dağılımı"
+        href="/admin/sermaye#durum"
+        hrefLabel="Sermaye"
       >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Bağlı Sermaye"
-            value={fmtUsd(capital.totalLockedUsd)}
+            value={fmtTry(capital.totalLockedTry)}
             tone="neutral"
-            hint="ürünlere kilitli USD"
-            href="/admin/capital"
+            hint="stok × maliyet (CFO), TL"
+            href="/admin/sermaye#durum"
           />
           <KpiCard
             label="Aylık Beklenen Nakit"
-            value={fmtUsd(capital.monthlyExpectedUsd)}
+            value={fmtTry(capital.monthlyExpectedTry)}
             tone="success"
             hint="net kâr (kargo+komisyon sonrası)"
-            href="/admin/sermaye-saglik"
+            href="/admin/sermaye#saglik"
           />
           <KpiCard
             label="Yıllık ROI"

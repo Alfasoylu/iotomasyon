@@ -130,16 +130,15 @@ eski zincirdeki çift kaynak + max/mevsim + manuel taban hatalarının kaldırı
 | Karar | Tüketici | Eski talep | V2 açıkken |
 |---|---|---|---|
 | MIGRATE_V2 | importer-view route + istemci | max(forecastMonthlySales(UNION), manuel) | FULL V2; manuel düzenleme talebi değiştirmez; eski ömür boyu adet ipucu gizli |
-| MIGRATE_V2 | sermaye sağlık | max(forecastMonthlySales(UNION), manuel) | FULL V2 |
-| MIGRATE_V2 | dashboard sermaye özeti, akıllı öneriler | max(Trendyol 30g, manuel) | FULL V2 |
+| MIGRATE_V2 | sermaye sağlığı (`lib/capital/health.ts` — /admin/sermaye + dashboard manşeti, 2026-10-07 birleşti) | max(forecastMonthlySales(UNION), manuel) | FULL V2 |
+| MIGRATE_V2 | akıllı öneriler | max(Trendyol 30g, manuel) | FULL V2 |
 | MIGRATE_V2 | ithalat kokpiti | max(Trendyol Delivered×(1−iade), manuel) + toptan + bayi; STOKSUZ_AL ömür boyu yedeği | FULL V2; STOKSUZ_AL sinyali kalır, eski kaynaklı adet yok |
-| MIGRATE_V2 | capital | max(Trendyol 30g, manuel) + toptan + bayi | FULL V2; manuel kanallar yok (motor değişmedi) |
 | MIGRATE_V2 | sipariş formu ön doldurma (reorder) | manuel toplam × 2 − stok | FULL V2 × 2 − stok; 0 → minimum stok kuralı |
 | MIGRATE_V2 | ürün detayı ithalat kararı, import snapshot | manuel toplam | FULL V2 (karar/puan büyüklükten bağımsız) |
-| KEEP_LEGACY | sales-potential, capital-allocation, import-decision, importer-cost motorları | saf motorlar | girdiyi çağıran belirler |
+| KEEP_LEGACY | sales-potential, import-decision, importer-cost motorları (capital-allocation 2026-10-07 kaldırıldı — tek çağıranı /admin/capital birleşti) | saf motorlar | girdiyi çağıran belirler |
 | KEEP_LEGACY | stok sağlığı, marketplace kâr, ürün listesi hız sütunları | gözlem metrikleri | gösterim |
 | KEEP_LEGACY | AI CFO (snapshot/iş planı), CFO ithalat planı | min(kanonik/30, XML) · saklı `monthly_sales` | kapsam dışı (zaten ihtiyatlı) |
-| DEPRECATE | `lib/procurement.ts` (çağıran yok), executive ölü seçimler | — | ayrı temizlik PR'ı |
+| DEPRECATE | `lib/procurement.ts` (çağıran yok) | — | ayrı temizlik PR'ı (executive ölü seçimleri sayfa birleşmesiyle 2026-10-07 gitti) |
 
 ### Gölge karşılaştırma — üretim, 2026-10-06 (salt-okunur, `shadowSql`, PGlite'ta TS referansıyla birebir)
 Aktif SKU 1.311: FULL 1.152 · PARTIAL 11 · UNKNOWN 148 (146 hiç kanonik satış yok, 2 < 7 gün) · talep tahmini bilinen 134 · kanonik filigran 2026-10-05.

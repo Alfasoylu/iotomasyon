@@ -260,8 +260,8 @@ export default async function ProductPerformancePage() {
             Trendyol siparişlerine göre ürün bazlı satış adedi, ciro ve gerçekleşen marj.
           </p>
         </div>
-        <Link href="/admin/executive" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
-          ← Yönetici Paneli
+        <Link href="/admin/sermaye" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
+          ← Sermaye
         </Link>
       </div>
 
@@ -380,7 +380,7 @@ export default async function ProductPerformancePage() {
       {/* Footer */}
       <div className="text-xs text-[var(--text-muted)] flex gap-4 pt-2">
         <Link href="/products" className="hover:text-[var(--text-primary)] transition">← Ürünler</Link>
-        <Link href="/admin/executive" className="hover:text-[var(--text-primary)] transition">Yönetici Paneli →</Link>
+        <Link href="/admin/sermaye" className="hover:text-[var(--text-primary)] transition">Sermaye →</Link>
         <Link href="/admin/data-hygiene" className="hover:text-[var(--text-primary)] transition">Veri Hijyeni →</Link>
       </div>
     </div>

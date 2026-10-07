@@ -384,10 +384,10 @@ export default async function DataHygienePage() {
           ← Ürünler
         </Link>
         <Link
-          href="/admin/executive"
+          href="/admin/sermaye"
           className="transition-colors hover:text-[var(--text-primary)]"
         >
-          Yönetici Paneli →
+          Sermaye →
         </Link>
         <Link
           href="/cfo/kazananlar#ithalat"
