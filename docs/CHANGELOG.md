@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### AI CFO — kısmi başarı `completed` + ret nedeni kodları (2026-10-07)
+- İlk içgörü üreten koşu (`cmuxqfti…`, 09:34; 3.488/1.205 token, 1,43 ₺): 4 hedef anomalisi gönderildi, 2 içgörü kaydedildi, 1 reddedildi; ama tek ret yüzünden koşu `invalid_output` görünüyordu. `runner.ts`: en az bir içgörü kabul edildiyse durum `completed`, `error` = `rejected_insights:N (neden=adet,…)`; hiçbiri geçmezse `invalid_output`. `validate-ai-output.ts`: ret nedeni kodları (`invalid_json`, `schema`, `over_limit`, `unknown_anomaly`, `duplicate`, `severity_changed`, `category_changed`, `evidence_not_allowed`, `evidence_missing`, `fabricated_number`) — model metni saklanmaz. `/admin/ai-cfo` mesajları güncellendi. Test `ai-cfo-runner`.
+
 ### AI CFO — çıktı token tavanı 1500/2000 + `output_truncated` (2026-10-07)
 - İlk başarılı Anthropic çağrısı (`cmuxpo8e…`, 09:13 zamanlanmış monitor; 5.559 girdi / 800 çıktı token, 1,43 ₺) 800 çıktı tavanında kesildi (`stop_reason=max_tokens`) → boş metin → `invalid_output` / `rejected_insights:1`, içgörü yok. `lib/cfo-agent/config.ts`: `AI_CFO_MAX_OUTPUT_TOKENS` varsayılan 1500, üst sınır 2000. `runner.ts`: tavanda kesilen yanıt `output_truncated` olarak etiketlenir. Test `ai-cfo-runner`.
 
