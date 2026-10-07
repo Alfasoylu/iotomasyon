@@ -7,6 +7,7 @@ import { loadCapitalConfig } from "./capital-config";
 import { loadBankLedger, loadQuotes, loadTrendyolFinance } from "./finance-ledgers";
 import { loadCapitalEvidence } from "./capital-evidence";
 import { loadVoiEvidence } from "./voi-evidence";
+import { loadDecisionMemoryEvidence, loadGoalAttributionEvidence } from "./decision-memory-evidence";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -103,6 +104,10 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   state.push(...await loadCapitalEvidence(db, at));
   // B4i — bilgi değeri: hangi bilinmeyen en çok TL'lik kararı değiştirir; düşük değerliler sorulmaz (deterministik)
   state.push(...await loadVoiEvidence(db, at));
+  // B4j — karar hafızası: geçmiş stratejik kararlar veriyle ölçülür (ters yön / geride / kalibrasyon)
+  state.push(...await loadDecisionMemoryEvidence(db, at));
+  // B4k — hedef açığı atfı: bildirilen net sermaye ↔ operasyonel (stok değerleme hariç) değişim ve hedef hızı
+  state.push(...await loadGoalAttributionEvidence(db, at));
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
     for (const g of await db.query(`select distinct on (goal_key) goal_key, state, grade, gap_try, current_rate_try_per_day, required_rate_try_per_day, as_of::text as as_of
@@ -154,7 +159,15 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
 /** SCHEDULED_CFO eki (deterministik, küçük): nakit kararında kaldıraç merdiveninin BOŞTA en ucuz 2 basamağı; nakit ve stok
  *  kararında en yakın varışlı ithalat projesinin beklenen aylık ciro katkısı (TAHMİNİ). Başka bağlam yok. */
 export async function loadScheduledExtras(decisionType: string, at: string, db: ReadSource = businessSource): Promise<Evidence[]> {
+  // Paket ekleri en çok 4 (decision-packet.ts) → sıra karar değerine göre: önce sermaye eşiği + tahsis planı ve ters yöndeki
+  // geçmiş karar, sonra kaldıraç merdiveni ve ithalat katkısı.
   const out: Evidence[] = [];
+  if (decisionType === "CASH" || decisionType === "INVENTORY") {
+    // Nakit/stok kararlarında: eşik getiri + tahsis planının ilk adımı (her 1 TL nereye?)
+    out.push(...(await loadCapitalEvidence(db, at)).filter(e => e.query.startsWith("sermaye_verimliligi.esik_getiri") || e.query.startsWith("sermaye_verimliligi.plan.1")));
+    // Nakit kararında ters yöndeki ilk geçmiş karar (ör. borç hedefi) — model önceki kararla tutarlılığı sorgular
+    if (decisionType === "CASH") out.push(...(await loadDecisionMemoryEvidence(db, at)).filter(e => /\.(WRONG_DIRECTION|WORSENING) /.test(e.query)).slice(0, 1));
+  }
   if (decisionType === "CASH") {
     const [p] = await db.query<{ t: string | null }>(`select to_regclass('public.cfo_kaldirac_basamak')::text as t`);
     if (p?.t) {
@@ -172,8 +185,6 @@ export async function loadScheduledExtras(decisionType: string, at: string, db: 
     out.push(...(await loadTrendyolFinance(db, at)).filter(e => e.query.startsWith("trendyol_finans.yukleme") || e.query.includes(".kesinti_orani_pct")));
   }
   if (decisionType === "CASH" || decisionType === "INVENTORY") {
-    // Nakit/stok kararlarında: eşik getiri + tahsis planının ilk adımı (her 1 TL nereye?)
-    out.push(...(await loadCapitalEvidence(db, at)).filter(e => e.query.startsWith("sermaye_verimliligi.esik_getiri") || e.query.startsWith("sermaye_verimliligi.plan.1")));
     const imports = await loadImportRevenue(db, at);
     const first = imports.find(e => e.query.endsWith(".durum"))?.query.split(".")[1];
     out.push(...imports.filter(e => first && e.query.startsWith(`ithalat.${first}.`) && (e.query.includes("aylik_ciro") || e.query.endsWith(".durum"))).slice(0, 2));

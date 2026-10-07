@@ -438,6 +438,13 @@ const ALL_NAV: Array<NavItem & { permission?: string; alsoRequires?: string[]; a
     section: "CFO",
   },
   {
+    href: "/cfo/kararlar",
+    label: "Kararlar ve Sonuçları",
+    iconKey: "chart",
+    permission: PERMISSIONS.CFO_READ,
+    section: "CFO",
+  },
+  {
     href: "/cfo/sorular",
     label: "CFO Soruları",
     iconKey: "help",

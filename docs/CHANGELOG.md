@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Decision Memory — beklenen ↔ gerçekleşen (2026-10-07)
+- `lib/cfo/decision-memory.ts` + `decision-memory-data.ts`: `cfo_hamle` kararları veriyle ölçülür (metrik eşleme, hedef yoluna göre ilerleme, gereken günlük değişim, kapanmış kararlarda tahmin hatası). Defter değiştirilmez.
+- Yeni sayfa `/cfo/kararlar` ve menü girişi; AI CFO Blok B4j; planlı paket eklerinin sırası karar değerine göre.
+- Test: `cfo-decision-memory`.
+- Hedef açığı atfı (`lib/cfo/goal-attribution.ts`): net sermaye değişimi nakit/alacak/borç/stok miktarı/stok değerlemesi olarak bölünür; operasyonel hız hedef hızıyla karşılaştırılır (`/cfo/kararlar`, AI CFO B4k). Test: `cfo-goal-attribution`.
+
 ### Value of Information engine (2026-10-07)
 - `lib/cfo/voi.ts` + `voi-data.ts`: her bilinmeyen için etkilediği karar, TL aralığı, yaklaşık bilgi değeri ve DECIDE_NOW / ASK_FIRST / RESEARCH_FIRST; dikkat bütçesi (ilk 5 soru), düşük değerli ve kararı değiştirmeyen sorular bastırılır.
 - `/cfo/sorular`: "Önce bunu öğren — bilgi değeri sırası" kartı. AI CFO Blok B4i.
