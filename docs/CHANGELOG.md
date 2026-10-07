@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### Panel taraması — aşama 1 (2026-10-07)
+- Kırık linkler düzeltildi: satın alma siparişi detay sayfası (`/admin/purchase-orders/[id]`) eklendi; "Yeni teklif oluştur" müşteri sayfasının teklif bölümüne gider; `/admin` linkleri `/dashboard`'a.
+- Sahipsiz/emekli sayfalar kaldırıldı, eski adresler kalıcı yönlendirilir: `/admin/bulk-import` → `/products`, `/admin/import-decisions` ve `/admin/procurement` → `/cfo/kazananlar#ithalat`.
+- Menü, sayfanın kendi kontrolüyle uyumlu: AI CFO ek olarak EXECUTIVE_READ, Satış Eşleştirme yalnız ADMIN/sahip; `/cfo`'daki Çalışan CFO linkleri yalnız ADMIN'e.
+- Oturumsuz erişimde erken yönlendirme tüm panel bölümlerini kapsar (`proxy.ts`).
+- CFO borç tahmini geçmiş satış penceresini yanlış sütun adlarıyla sorguluyordu (her koşuda boş); doğru sütunlarla üretimde doğrulandı.
+
 ### AI CFO — reddedilen çağrı bütçeyi doldurmaz, route süresi 300 sn (2026-10-07)
 - Sağlayıcı HTTP hata yanıtı verirse (`provider_http_*`, faturalanmaz) kullanım satırının rezervi 0 yazılır; günlük/aylık TL tavanını doldurmaz. Zaman aşımı/bağlantı hatasında rezerv kalır. İlk planlı koşu (07.10 19:53) bu yüzden `blocked_by_daily_budget` olmuştu.
 - `/api/admin/ai-cfo/runner`, `/api/cron/ai-cfo-monitor`, `/api/cron/ai-cfo-morning` `maxDuration` 120 → 300 (snapshot 75–110 sn ölçüldü).

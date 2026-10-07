@@ -793,7 +793,7 @@ export default async function CustomerDetailPage({
                       <p className="text-[11px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                         Teklif stüdyosu
                       </p>
-                      <h2 className="mt-2 text-[18px] font-semibold tracking-tight text-[var(--text-primary)]">
+                      <h2 id="teklif" className="mt-2 scroll-mt-24 text-[18px] font-semibold tracking-tight text-[var(--text-primary)]">
                         Bu müşteri için profesyonel teklif hazırla
                       </h2>
                       <p className="mt-2 max-w-3xl text-[13px] leading-6 text-[var(--text-secondary)]">

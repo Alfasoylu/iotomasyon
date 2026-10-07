@@ -36,7 +36,7 @@ const ACTION_STYLE = {
 } as const;
 
 export default async function CfoPage() {
-  await requirePermission(PERMISSIONS.CFO_READ);
+  const viewer = await requirePermission(PERMISSIONS.CFO_READ);
 
   const { raw, overview: o } = await loadCfoData();
   // Hedef tarihi ayarlardan geldiği için servet yüklemesi buna bağlı; sıralı.
@@ -88,8 +88,11 @@ export default async function CfoPage() {
       />
 
       <Card className="mb-6 p-4">
-        <a href="/cfo/calisan" className="mr-4 text-sm underline">Çalışan CFO · kararlar ve araştırmalar</a>
-        <a href="/cfo/calisma-durumu" className="mr-4 text-sm underline">Mevcut verilerle çalışma durumu</a>
+        {/* Bu iki sayfa yalnız ADMIN'e açık (aksi halde 404): linki de yalnız ADMIN görür. */}
+        {viewer.role === "ADMIN" && <>
+          <a href="/cfo/calisan" className="mr-4 text-sm underline">Çalışan CFO · kararlar ve araştırmalar</a>
+          <a href="/cfo/calisma-durumu" className="mr-4 text-sm underline">Mevcut verilerle çalışma durumu</a>
+        </>}
         <a href="/api/admin/ai-cfo/acceptance" className="text-sm underline">Kabul karşılaştırmasını çalıştır (JSON)</a>
         <p className="mt-1 text-xs text-[var(--text-muted)]">Admin hesabıyla güncel verileri salt okunur karşılaştırır. Sonuç canlıya geçiş onayı değildir.</p>
       </Card>

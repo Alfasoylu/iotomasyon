@@ -123,7 +123,7 @@ export default async function MarketplaceMappingsPage({
         <div className="flex flex-wrap items-center gap-3">
           <BulkBackfillButton />
           <RematchNormalizedButton />
-          <Link href="/admin">
+          <Link href="/dashboard">
             <Button variant="secondary">← Admin Panel</Button>
           </Link>
         </div>
