@@ -3,6 +3,27 @@
 Model çağıran katmanın orkestrasyonu. Adım 5 ile zamanlama + `/admin/ai-cfo` bağlandı (aşağıda); bütün bayraklar varsayılan kapalı, kapalıyken runner ilk satırda `disabled` döner ve hiçbir şey yazmaz.
 `cfo_run`/`cfo_insight`/`cfo_usage` tabloları (`20261005190000_ai_cfo_v1`) üretimde **yok** — uygulanması adım 8'dir ve ayrı onay ister.
 
+## Maliyet ve görev ayrımı (2026-10-07)
+**DETERMINISTIC FINANCIAL ENGINE → CHANGE/MATERIALITY GATE → SMALL DECISION PACKET → LLM → EXECUTIVE JUDGMENT.** LLM finans motoru değildir:
+hesap, sınıflandırma, anomali, sıralama, TL etkisi, nakit projeksiyonu, hedef açığı, banka ileri taşıma, tazelik deterministik kalır.
+
+| | SCHEDULED_CFO (cron + "Monitor'ü çalıştır" + sabah özeti) | MANUAL_DEEP_REVIEW ("Derin inceleme", yalnız elle) |
+|---|---|---|
+| Girdi | Küçük karar paketi (`decision-packet.ts`): ≤3 anomali, anomali başına ≤6 kanıt, ≤2 rule card, ≤2 önceki karar, kısıtlar | Talimat + el kitabı v33 Blok A tamamı + Blok B/C (`context.ts`) |
+| Sınır | **Sert** girdi 8.000 / çıktı 700 token (env yalnız düşürür); büyükse paket küçülür, sınır yükselmez | `AI_CFO_MAX_INPUT_TOKENS_PER_RUN` (vars. 32.000, ≤50.000) / çıktı 1.500 |
+| Çağrı | Önemli değişiklik kapısı geçerse; günde ≤1 zamanlanmış, toplam ≤2 | Her istekte (kapı yok); günde ≤2 |
+| Bütçe | Koşu ≤2 TL, gün ≤5 TL, ay ≤300 TL (tüm modlar) | Koşu ≤8 TL, ayrı ay ≤100 TL |
+| Önbellek | Yok (5 dk ömür, slotlar saatler arayla → yalnız 1,25× yazım) | Yok |
+| Çıktı | En çok 2 içgörü: decision · why · risk · next_action · confidence · evidence_ids (severity/category/financial_impact koddan) | En çok 3 içgörü (eski şema) |
+
+- **Rule card'lar v1** (`rule-cards.md` → `npm run gen:handbook` → `rule-cards.ts`): STOCKOUT · DEAD_STOCK · PRICE_FLOOR · CASH_SHORTFALL · CAPITAL_ALLOCATION · DEBT_GATE · DATA_QUALITY. Maddeler el kitabı v33 **§7'den birebir**, seçim ve §7 madde numaraları el kitabı sahibinin; kart ≤800 token (tahmini 324–758), asıl kapı paket toplamı (sert 8.000). Eşleme: STOCKOUT→STOCKOUT · DEAD_STOCK→DEAD_STOCK · fiyat/marj kuralları→PRICE_FLOOR · CASH_CRITICAL ve GOAL_*→CASH_SHORTFALL+CAPITAL_ALLOCATION; DATA_QUALITY kartı planlı yolda kullanılmaz; DEBT_GATE için bugün anomali kuralı yok. **Ortak çekirdek** (4 madde, ~284 token) kartta değil planlı sistem talimatında. Not: v33 §7'nin tam metni repoda yok (`docs/CFO-GOREV.md` 10.09 sürümü); test, kart baytlarının sahibin ölçümüyle aynı olduğunu ve `handbook-core.md`'de de geçen maddelerin aynı olduğunu denetler.
+- **Kapılar (sırayla, her biri ücretsiz durum kodu):** açık iş → `open_task` · soğuma → `cooldown` · yalnız veri kalitesi bulgusu → `data_quality_only` (deterministik yol, 0 LLM) · önemli değişiklik yok → `no_material_change` · aynı `decision_input_hash` → `same_input` · bayraklar · paket sığmadı → `blocked_by_input_tokens` (`estimated_tokens:N limit:M shrink:K`) · `blocked_by_scheduled_limit` / `blocked_by_daily_limit` / `blocked_by_run_cost` / `blocked_by_daily_budget` / `blocked_by_budget`.
+- **Önemli değişiklik** (`materiality.ts`): son 14 günde yanıt alınmış (completed / invalid_output) koşulardaki duruma göre anomali yeni ya da önemi arttı ya da TL etkisi ~%25'lik bir kova **ve** ≥10.000 TL (`AI_CFO_MATERIAL_MIN_TRY`) arttı. `decision_input_hash` = mod + karar tipi + (anahtar, kural, varlık, önem, etki kovası) + kartlar + talimat/kart/hesap sürümü; zaman damgası, asOf, tazelik, kanıt sırası girmez. `cfo_run.triggerReasons` içinde saklanır (migration yok).
+- **Token sayımı:** yerel tutucu tahmin (bayt/2,5; ölçülen ~3,0). Planlı modda tahmin sınırın %80'inin altındaysa uzak `count_tokens` atlanır; derin incelemede her zaman sayılır.
+- **Hafıza** (`memory.ts`): yalnız aynı anomali/SKU için en çok 2 önceki karar (son AI kararı, yürürlükteki ürün kararı); yoksa `[]`.
+- **Admin** `/admin/ai-cfo` → "Maliyet verimliliği" (bugün + 30 gün: monitor koşusu, AI çağrısı, önlenen çağrı, token, maliyet, kabul edilen içgörü, içgörü başına maliyet, kaçınma nedenleri; `cost-efficiency.ts`) ve "Derin inceleme (elle)" butonu. Sağlık alarmı: `no_insight_24h` yalnız model 24 saatte ≥2 kez yanıt verip içgörü çıkmadıysa; `blocked_by_scheduled_limit` alarm değildir.
+- **Env (yeni):** `AI_CFO_MAX_SCHEDULED_CALLS_PER_DAY` (1) · `AI_CFO_SCHEDULED_MAX_INPUT_TOKENS` (≤8000) · `AI_CFO_SCHEDULED_MAX_OUTPUT_TOKENS` (≤700) · `AI_CFO_MAX_COST_TRY_PER_RUN` (2) · `AI_CFO_MAX_COST_TRY_PER_DAY` (5) · `AI_CFO_MATERIAL_MIN_TRY` (10000) · `AI_CFO_MATERIAL_LOOKBACK_DAYS` (14) · `AI_CFO_DEEP_MAX_CALLS_PER_DAY` (2) · `AI_CFO_DEEP_MAX_COST_TRY_PER_RUN` (8) · `AI_CFO_DEEP_MONTHLY_BUDGET_TRY` (100). Varsayılan değişen: `AI_CFO_MAX_CALLS_PER_DAY` 6→2 (≤6), `AI_CFO_MONTHLY_BUDGET_TRY` 3000→300. Tavan üstü env değerleri hata değil, tavana kırpılır.
+
 ## Akış (`lib/cfo-agent/runner.ts`)
 1. `AI_CFO_MONITOR_ENABLED` kapalıysa hiçbir şey yazılmaz (`disabled`). Sabah özeti 09:30 İstanbul'dan önce çalışmaz.
 2. Oturum düzeyinde advisory kilit (`AI_CFO_LOCK_DATABASE_URL`, session pooler; transaction pooler 6543 reddedilir) → eşzamanlı çalışma `locked`.

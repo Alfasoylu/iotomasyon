@@ -15,7 +15,8 @@ export type HealthRun = { status: string; generatedAt: Date; error: string | nul
 const FAILED = new Set(["failed", "invalid_output"]);
 /** Atlanan ama "başarısız" sayılmayan koşular: tek bir koşu bile monitörün kör olduğunu gösterir → ANINDA alarm
  *  (07.10: token sınırı 8.000'de kaldı, koşular saatlerce atlandı, alarm çalmadı; bütçe ayın 20'sinde biterse 24 saat beklenmez). */
-const BUDGET = new Set(["blocked_by_budget", "blocked_by_daily_limit", "billing_unconfigured"]);
+// blocked_by_scheduled_limit alarm DEĞİL: günde 1 planlı çağrı tasarım gereği (2026-10-07 maliyet/görev ayrımı).
+const BUDGET = new Set(["blocked_by_budget", "blocked_by_daily_limit", "blocked_by_daily_budget", "blocked_by_run_cost", "billing_unconfigured"]);
 const INPUT_LIMIT = new Set(["blocked_by_input_tokens", "blocked_by_input_size"]);
 /** Model çağrısına hiç ulaşmayan, sağlık açısından nötr durumlar. */
 const NEUTRAL = new Set(["running"]);
@@ -34,9 +35,11 @@ export function evaluateCfoAlarms(runs: HealthRun[], lastInsightAt: Date | null,
     alarms.push({ code: "input_limit_blocked", message: `Son koşu girdi sınırında atlandı (${last.status}${last.error ? `: ${last.error}` : ""}); AI CFO model çağırmıyor. AI_CFO_MAX_INPUT_TOKENS_PER_RUN ölçülen sayının üstünde olmalı (en çok 50000).` });
   }
   const dayAgo = now.getTime() - 24 * 3600000;
-  const triedToday = recent.some(r => r.generatedAt.getTime() >= dayAgo && r.sentActionable > 0);
-  if (aiActive && triedToday && (!lastInsightAt || lastInsightAt.getTime() < dayAgo)) {
-    alarms.push({ code: "no_insight_24h", message: `24 saattir içgörü yok; son içgörü: ${lastInsightAt ? lastInsightAt.toISOString() : "hiç"}` });
+  // Yeni düzende AI çağrısı olmaması NORMALDİR (önemli değişiklik yok → çağrı yok). Alarm yalnız modelin önemli değişiklikle
+  // en az 2 kez gerçekten çağrılıp (completed / invalid_output) 24 saatte hiç içgörü vermemesidir.
+  const answered = recent.filter(r => r.generatedAt.getTime() >= dayAgo && r.sentActionable > 0 && (r.status === "completed" || r.status === "invalid_output")).length;
+  if (aiActive && answered >= 2 && (!lastInsightAt || lastInsightAt.getTime() < dayAgo)) {
+    alarms.push({ code: "no_insight_24h", message: `Model 24 saatte ${answered} kez çağrıldı ama içgörü yok; son içgörü: ${lastInsightAt ? lastInsightAt.toISOString() : "hiç"}` });
   }
   // Sistem günlük değil HAFTALIK veri ister: 7 gün dolunca hatırlatır (eşik 8 gün, 1 gün tolerans — snapshot.ts).
   if (manual && (!manual.entegraLastImport || now.getTime() - manual.entegraLastImport.getTime() > WEEK_MS)) {

@@ -47,16 +47,19 @@ async function main() {
       entityId: "revenue_month_usd", period: "2026-10-01", fingerprint: "goal:revenue_month_usd:OFF_TRACK:2026-10-01", cooldownKey: "goal:revenue_month_usd:OFF_TRACK",
       evidenceIds: ["e_1"], actionable: true, impact: null, weight: 2, existingRecordIds: [] };
     const snap = { evidence: [{ id: "e_1", source: "fm_memory_goal", query: "revenue_month_usd.observed_try", value: 309926.92, unit: "TRY", asOf: "2026-10-06", measured: true }] };
-    await cfoStore.snapshot(id!, snap as never, "hash", [anomaly], [anomaly]);
+    await cfoStore.snapshot(id!, snap as never, "hash", [anomaly], [anomaly], { mode: "scheduled", manual: false, decisionInputHash: "dih_1" });
     const usageId = await cfoStore.usage(id!, { provider: "anthropic", model: "m", status: "reserved", triggerReason: "GOAL_OFF_TRACK", reservedCostTry: 1.5, priceContext: { a: 1 } });
     await cfoStore.updateUsage(usageId, { provider: "anthropic", model: "m", status: "completed", triggerReason: "GOAL_OFF_TRACK", inputTokens: 1000, outputTokens: 200, estimatedCost: 0.36, reservedCostTry: null });
     const totals = await cfoStore.totals(now);
-    assert.deepEqual(totals, { callsToday: 1, spentThisMonth: 0.36 });
+    assert.deepEqual(totals, { callsToday: 1, scheduledCallsToday: 1, deepCallsToday: 0, spentToday: 0.36, spentThisMonth: 0.36, deepSpentThisMonth: 0 }, "zamanlanmış koşu (periodKey eksiz)");
     await cfoStore.insights(id!, [{ anomalyId: anomaly.id, severity: "warning", category: "sales", title: "t", observation: "o", recommendation: "r", riskIfIgnored: "x",
       confidence: "medium", evidenceIds: ["e_1"] }], [anomaly], snap.evidence as never);
     await cfoStore.finish(id!, "completed", now, 0, null);
     const recent = await cfoStore.recent(anomaly.cooldownKey, new Date(now.getTime() + 3600000), 72);
     assert.ok(recent, "cooldown recalls the anomaly that received an insight");
+    // Önemli değişiklik kapısı: yanıt alınmış koşunun karar girdisi hash'i ve anomali durumu geri okunur
+    const ev = await cfoStore.evaluations(new Date(now.getTime() - 86400000));
+    assert.ok(ev.hashes.has("dih_1")); assert.deepEqual(ev.byKey.get(anomaly.cooldownKey), { severity: "warning", impact: null });
     const rows = await client.$queryRawUnsafe<{ status: string; n: number }[]>(`select r.status, (select count(*)::int from cfo_insight i where i."runId"=r.id) n from cfo_run r`);
     assert.deepEqual(rows, [{ status: "completed", n: 1 }]);
     const center = await loadCfoControlCenter(now);

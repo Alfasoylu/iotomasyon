@@ -1,5 +1,5 @@
 import "server-only";
-import { runCfoMonitor, runCfoMorningBrief, type RunnerOutcome } from "./runner";
+import { runCfoDeepReview, runCfoMonitor, runCfoMorningBrief, type RunnerOutcome } from "./runner";
 
 // Zamanlama (adım 5). Vercel Hobby'de yeni cron slotu yok: monitor, mevcut günlük XML/Trendyol cron'larının
 // CFO döngüsünden SONRA (hedefler taze) aynı after() işinde çalışır. Bayraklar kapalıyken runner ilk satırda
@@ -7,7 +7,9 @@ import { runCfoMonitor, runCfoMorningBrief, type RunnerOutcome } from "./runner"
 // cron saatlerinde (05:00 / 09:00) otomatik tetiklenmez: /api/cron/ai-cfo-morning (harici zamanlayıcı) veya
 // /admin/ai-cfo'daki elle çalıştırma ile.
 // manual: /admin/ai-cfo elle çalıştırma — idempotency saat yerine 20 dakikalık dilim (saatte 3), bkz. runPeriodKey.
-export async function safeAiCfoRun(type: "monitor" | "morning", opts: { manual?: boolean } = {}): Promise<RunnerOutcome> {
-  try { return type === "morning" ? await runCfoMorningBrief({ manual: opts.manual }) : await runCfoMonitor({ manual: opts.manual }); }
+// deep_review (MANUAL_DEEP_REVIEW) yalnız elle: cron route'ları bu değeri hiç göndermez; elle değilse reddedilir.
+export async function safeAiCfoRun(type: "monitor" | "morning" | "deep_review", opts: { manual?: boolean } = {}): Promise<RunnerOutcome> {
+  if (type === "deep_review" && !opts.manual) return { status: "failed", error: "deep_review_manual_only" };
+  try { return type === "deep_review" ? await runCfoDeepReview() : type === "morning" ? await runCfoMorningBrief({ manual: opts.manual }) : await runCfoMonitor({ manual: opts.manual }); }
   catch { return { status: "failed", error: "runner_unavailable" }; }
 }

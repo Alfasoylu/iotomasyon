@@ -68,8 +68,9 @@ export default async function AiCfoPage() {
         <Gate ok={billingConfigured(config)} label="Fiyat ve kur yapılandırması (bütçe hesabı)" />
         <Gate ok={lockConfigured()} label="Oturum kilidi bağlantısı (session pooler, 6543 değil)" />
       </ul>
-      <p className="text-xs text-[var(--text-muted)]">Model: {config.model} · Günlük en çok {config.maxCallsPerDay} çağrı · Aylık bütçe {fmtTry(config.monthlyBudgetTry)} · Girdi ≤ {config.maxInputTokens} token, çıktı ≤ {config.maxOutputTokens} token.
-        Zamanlama: monitor her gün XML (05:00) ve Trendyol (09:00) senkronlarından sonra CFO döngüsünün ardından; sabah özeti elle veya harici zamanlayıcıyla (≥09:30).</p>
+      <p className="text-xs text-[var(--text-muted)]">Model: {config.model} · <strong>Planlı (SCHEDULED_CFO):</strong> günde en çok {config.maxScheduledCallsPerDay} zamanlanmış, toplam {config.maxCallsPerDay} çağrı · girdi ≤ {config.scheduledMaxInputTokens}, çıktı ≤ {config.scheduledMaxOutputTokens} token · koşu ≤ {fmtTry(config.maxCostTryPerRun)}, gün ≤ {fmtTry(config.maxCostTryPerDay)} · aylık {fmtTry(config.monthlyBudgetTry)}.
+        <strong> Derin inceleme (elle):</strong> el kitabının tamamı, girdi ≤ {config.maxInputTokens} token, koşu ≤ {fmtTry(config.deepMaxCostTryPerRun)}, aylık {fmtTry(config.deepMonthlyBudgetTry)}.
+        Zamanlama: monitor 05:00 (XML) · 07:55 · 09:00 (Trendyol) · 11:50 · 16:50; her slotta deterministik motor çalışır, AI yalnız önemli değişiklik kapısı geçerse çağrılır.</p>
       <RunButtons />
     </Card>
 
@@ -108,6 +109,17 @@ export default async function AiCfoPage() {
           <details className="text-xs"><summary className="cursor-pointer">Kanıt ({proof.length})</summary><ul className="mt-2 space-y-2">{proof.map(e => <li key={e.id}>{e.source} · {e.query}: {e.value ?? "Bilinmiyor"} {e.unit} {!e.measured && "· TAHMİNİ"} · {time(e.asOf)}</li>)}</ul></details>
         </Card>;
       }) : <p className="text-sm text-[var(--text-muted)]">Henüz AI önerisi yok.</p>}</div>
+      <h2 className="text-lg font-semibold">Maliyet verimliliği</h2>
+      {([["Bugün", live.efficiency.today], ["Son 30 gün", live.efficiency.last30]] as const).map(([label, e]) => <div key={label} className="space-y-2">
+        <h3 className="text-sm font-semibold">{label}</h3>
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <Stat label="Monitor koşusu" value={e.monitorRuns} /><Stat label="AI çağrısı" value={e.aiCalls} /><Stat label="Önlenen çağrı" value={e.callsAvoided} />
+          <Stat label="Girdi token" value={e.inputTokens} /><Stat label="Çıktı token" value={e.outputTokens} /><Stat label="Cache okuma" value={e.cacheReadTokens} />
+          <Stat label="AI maliyeti" value={fmtTry(e.costTry)} /><Stat label="Kabul edilen içgörü" value={e.acceptedInsights} />
+          <Stat label="İçgörü başına maliyet" value={e.costPerAcceptedInsight == null ? "—" : fmtTry(e.costPerAcceptedInsight)} />
+        </div>
+        <p className="text-xs text-[var(--text-muted)]">AI çağrılmadı çünkü: aynı girdi {e.avoided.same_input} · önemli değişiklik yok {e.avoided.no_material_change} · soğuma {e.avoided.cooldown} · açık iş {e.avoided.open_task} · bütçe/limit {e.avoided.budget} · veri kalitesi {e.avoided.data_quality} · eylemlik bulgu yok {e.avoided.no_actionable}</p>
+      </div>)}
       <h2 className="text-lg font-semibold">Kullanım (bu ay)</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Bugün çağrı" value={live.usage.callsToday} /><Stat label="Bu ay çağrı" value={live.usage.callsMonth} />
         <Stat label="Girdi token · cache dahil" value={live.usage.inputTokens} /><Stat label="Çıktı token" value={live.usage.outputTokens} />
