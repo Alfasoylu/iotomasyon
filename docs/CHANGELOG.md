@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### AI CFO — soğuma yalnız teslimde + sağlık alarmı (2026-10-07)
+- **Soğuma (`store.recent`):** bir anomali yalnız kendisi için `cfo_insight` yazıldığında soğumaya girer; ya da model geçerli yanıtta (`completed`) onu iki kez tavsiyesiz geçtiyse. `failed`, kesilen, tamamen reddedilen (`invalid_output`) ve atlanan çağrılar anomaliyi açık bırakır. Üretimde 06:13 kesilen yanıt 8 STOCKOUT'u, 06:34 koşusu içgörü yazılmayan 2 hedefi 72 saat kilitlemişti → 08:00 `no_actionable_anomaly`. Test `ai-cfo-store` (eski kodla kırılır).
+- **Sağlık alarmı:** `lib/cfo-agent/health.ts` — son iki koşu üst üste başarısız (`failed`/`invalid_output`) ya da AI açık + eylemlik anomali gönderilmiş + 24 saattir içgörü yok → alarm. `/api/cron/ai-cfo-health` (CRON_SECRET, salt-okunur) alarmda 503 döner; `.github/workflows/ai-cfo-health.yml` saatlik (:25) çağırır, 503'te iş kırmızı → GitHub e-postası. `/admin/ai-cfo`'da kırmızı alarm kartı. Test `ai-cfo-health` (07.10 üretim dizisi alarm üretir).
+
 ### AI CFO — yapılandırılmamış doğrudan API kaynağı bayat sayılmaz (`alfas-gross-v7`) (2026-10-07)
 - Üretimde `HepsiburadaSalesRecord` hiç satır almamış (doğrudan HB API kullanılmıyor); HB satışları Entegra'dan geliyor (60 günde 749 satır). Eski kod boş tabloyu kalıcı `stale` sayıyor ve HB kanal tazeliğini ona bağlıyordu → HB ürün sinyalleri hep "bayat". `lib/cfo-agent/snapshot.ts`: hiç satırı olmayan doğrudan API kaynağı (Trendyol/Hepsiburada) watermark/staleSources dışında; kanal tazeliği doğrudan kaynak yoksa Entegra'yı izler. Hesap sürümü `alfas-gross-v7`. Test `ai-cfo-source-mapping`.
 
