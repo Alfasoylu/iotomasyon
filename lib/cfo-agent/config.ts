@@ -5,8 +5,9 @@ const schema = z.object({
   provider: z.enum(["anthropic", "disabled"]).default("disabled"),
   model: z.string().min(1).default("claude-sonnet-4-6"),
   maxCallsPerDay: z.coerce.number().int().min(0).max(24).default(6),
-  // Girdi şartnamesi (2026-10-07): Blok A (el kitabı, önbellekli) + B (durum) + C (hafıza) ≈ 8.000 token → üst sınır 12.000.
-  maxInputTokens: z.coerce.number().int().min(500).max(12000).default(12000),
+  // Girdi şartnamesi (2026-10-07): Blok A el kitabı v33 birebir ≈ 8.300 token (önbellekli) + talimat/tablolar ≈ 1.200
+  // + anomali/kanıt + Blok B/C ≈ 6.000–7.000 → ≈ 16.000. Varsayılan 20.000, üst sınır 24.000.
+  maxInputTokens: z.coerce.number().int().min(500).max(24000).default(20000),
   // 3 Turkish insights in JSON need ~1200–1500 tokens; 800 truncated the first production answer (stop_reason max_tokens).
   maxOutputTokens: z.coerce.number().int().min(100).max(2000).default(1500),
   monthlyBudgetTry: z.coerce.number().min(0).default(3000),
