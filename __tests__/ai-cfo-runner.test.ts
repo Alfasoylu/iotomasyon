@@ -108,6 +108,11 @@ async function main() {
     assert.equal(validateAiOutput("{bozuk", s0, list).insights.length, 0);
     // Türkçe sayı biçimi kanıttaki değerle eşleşir
     assert.equal(validateAiOutput(aiFor(revenue, s0, { observation: "Ay başından beri ciro 309.926,92 TL." }), s0, list).insights.length, 1);
+    // Sağlayıcı şeması maxItems taşıyamaz: 3'ten fazla içgörü tümden atılmaz, fazlası reddedilir.
+    const one = JSON.parse(aiFor(revenue, s0)).insights[0];
+    const four = validateAiOutput(JSON.stringify({ insights: [one, one, one, one] }), s0, list);
+    assert.equal(four.insights.length, 1);
+    assert.equal(four.rejected, 3, "1 fazla + 2 tekrar");
   });
 
   const provider = { async countInput() { return 1000; }, async generate() { return { text: aiFor(revenue, s0), inputTokens: 1000, outputTokens: 200, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: "test" }; } };

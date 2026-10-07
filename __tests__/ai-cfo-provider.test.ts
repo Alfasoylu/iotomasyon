@@ -127,6 +127,10 @@ async function main() {
     assert.equal(req.body.model, "claude-sonnet-4-6");
     assert.equal(req.body.max_tokens, 600);
     assert.equal(req.body.output_config.format.type, "json_schema");
+    // Structured outputs bu kısıtları 400 ile reddeder (üretimde provider_http_400).
+    const schemaText = JSON.stringify((req.body.output_config.format as unknown as { schema: unknown }).schema);
+    for (const k of ["maxItems", "minLength", "maxLength", "minimum", "maximum", "multipleOf"]) assert.ok(!schemaText.includes(`"${k}"`), k);
+    assert.ok(!/"minItems":(?![01][,}])/.test(schemaText), "minItems yalnız 0/1");
   });
 
   await check("generate: geçerli yanıt doğru ayrıştırılır (token/cache/requestId dahil)", async () => {

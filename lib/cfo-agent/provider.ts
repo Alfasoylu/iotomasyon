@@ -48,13 +48,14 @@ export function createCfoProvider(config:CfoConfig,env:Record<string,string|unde
       return await res.json() as unknown;
     }catch(e){if(e instanceof ProviderError)throw e;throw new ProviderError(e instanceof Error&&(e.name==="TimeoutError"||e.name==="AbortError")?"provider_timeout":"provider_unavailable");}
   };
+  // Structured outputs reject maxItems/minLength/maxLength/minimum/maximum (HTTP 400); the 3-insight cap is enforced in validateAiOutput.
   const messages=(input:ReasoningInput)=>[{role:"user",content:JSON.stringify(reasoningPayload(input))}];
   return {
     async countInput(input){const result=z.object({input_tokens:z.number().int().nonnegative()}).safeParse(await send("messages/count_tokens",{model:config.model,system,messages:messages(input)}));
       if(!result.success)throw new ProviderError("provider_invalid_token_count");return result.data.input_tokens;},
     async generate(input){
       const result=responseSchema.safeParse(await send("messages",{model:config.model,max_tokens:config.maxOutputTokens,system,messages:messages(input),
-        output_config:{format:{type:"json_schema",schema:{type:"object",additionalProperties:false,required:["insights"],properties:{insights:{type:"array",maxItems:3,items:{
+        output_config:{format:{type:"json_schema",schema:{type:"object",additionalProperties:false,required:["insights"],properties:{insights:{type:"array",items:{
           type:"object",additionalProperties:false,required:["anomalyId","severity","category","title","observation","recommendation","riskIfIgnored","confidence","evidenceIds"],properties:{
             anomalyId:{type:"string"},severity:{type:"string",enum:["info","warning","critical"]},category:{type:"string",enum:["margin","inventory","sales","cash","pricing","procurement","marketing","data_quality"]},
             title:{type:"string"},observation:{type:"string"},recommendation:{type:"string"},riskIfIgnored:{type:"string"},confidence:{type:"string",enum:["low","medium","high"]},evidenceIds:{type:"array",items:{type:"string"}}}}}}}}}}));
