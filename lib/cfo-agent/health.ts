@@ -31,7 +31,7 @@ export function evaluateCfoAlarms(runs: HealthRun[], lastInsightAt: Date | null,
     alarms.push({ code: "budget_blocked", message: `Son koşu bütçe/limit yüzünden atlandı (${last.status}); AI CFO model çağırmıyor. AI_CFO_MONTHLY_BUDGET_TRY / AI_CFO_MAX_CALLS_PER_DAY kontrol edin.` });
   }
   if (last && INPUT_LIMIT.has(last.status)) {
-    alarms.push({ code: "input_limit_blocked", message: `Son koşu girdi sınırında atlandı (${last.status}); AI CFO model çağırmıyor. AI_CFO_MAX_INPUT_TOKENS_PER_RUN ayarını kontrol edin (önerilen 20000).` });
+    alarms.push({ code: "input_limit_blocked", message: `Son koşu girdi sınırında atlandı (${last.status}${last.error ? `: ${last.error}` : ""}); AI CFO model çağırmıyor. AI_CFO_MAX_INPUT_TOKENS_PER_RUN ölçülen sayının üstünde olmalı (en çok 50000).` });
   }
   const dayAgo = now.getTime() - 24 * 3600000;
   const triedToday = recent.some(r => r.generatedAt.getTime() >= dayAgo && r.sentActionable > 0);

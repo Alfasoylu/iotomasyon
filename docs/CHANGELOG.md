@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### AI CFO — girdi tavanı 50.000, blokta ölçülen token kaydı (2026-10-07)
+- `AI_CFO_MAX_INPUT_TOKENS_PER_RUN` varsayılan 32.000, üst sınır 50.000 (önceki 20.000/24.000; 24.000 üstü değer ayar okumasını düşürüyordu). Üretimde 20.000 sınırıyla iki koşu `blocked_by_input_tokens` oldu.
+- `blocked_by_input_tokens` / `blocked_by_input_size` artık sayıyı yazar (`input_tokens:N reserve:512 limit:M`, `payload_bytes:N limit_bytes:M`); sağlık alarmı mesajı bu sayıyı taşır. Test: `ai-cfo-runner`.
+
 ### AI CFO — kanal sözlüğü, kaldıraç merdiveni, anında alarm, 5 slot takvim (2026-10-07)
 - Banka ileri taşıma: pazaryeri hakedişinin bankası yalnız `cfo_kanal_sozluk`'tan (birebir yazım) okunur; `cfo_pay_obs`'tan türetme kaldırıldı. Sözlükte olmayan yazım ya da bankası ölçülmemiş satır eşlenmez, nedeniyle raporlanır. Bankası belirsiz kalem hiçbir hesaba atanmaz; yalnız şirket toplamından düşülür (en son bakiye gününden sonraki kalemler). Production'da 07.10 için hesabı belirsiz tek kalem 100.000 TL sabit gider kalanı; tüm hakediş kanalları sözlükte (salt-okunur doğrulandı).
 - Blok B'ye `cfo_kaldirac_basamak` (`merdiven.<n>.<ad>.durum/kapasite_try/maliyet_try`); istem: KULLANIMDA basamak yeni öneri değildir, BILINCLI_TUTULUYOR (şahsi hesaplar) önerilmez, hesabı belirsiz tutar bir hesaba atanmaz.

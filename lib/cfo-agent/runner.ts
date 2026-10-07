@@ -113,9 +113,11 @@ async function run(type: RunType, deps: RunnerDependencies): Promise<RunnerOutco
     for (const e of [...(context?.state ?? []), ...(context?.memory ?? [])]) if (!snapshot.evidence.some(x => x.id === e.id)) snapshot.evidence.push(e);
     const input = { snapshot, anomalies: selected, memory, context };
     // Ağ isteğinden önce bayt sınırı, ücretli çağrıdan önce kesin token sayımı; sessiz kırpma yok.
-    if (Buffer.byteLength(JSON.stringify(reasoningPayload(input)), "utf8") > config.maxInputTokens * 3) return await skip("blocked_by_input_size");
+    // Blok nedeni sayıyla yazılır: sınırın ne kadar aşıldığı tahmin edilmez, ölçülür.
+    const bytes = Buffer.byteLength(JSON.stringify(reasoningPayload(input)), "utf8");
+    if (bytes > config.maxInputTokens * 3) return await skip("blocked_by_input_size", `payload_bytes:${bytes} limit_bytes:${config.maxInputTokens * 3}`);
     const tokens = await provider.countInput(input);
-    if (tokens + 512 > config.maxInputTokens) return await skip("blocked_by_input_tokens");
+    if (tokens + 512 > config.maxInputTokens) return await skip("blocked_by_input_tokens", `input_tokens:${tokens} reserve:512 limit:${config.maxInputTokens}`);
     usageId = await store.usage(id, usage); // en kötü durum rezervasyonu zaman aşımı/süreç ölümünde de kalır
     const result = await provider.generate(input);
     const cost = costTry(config, result);
