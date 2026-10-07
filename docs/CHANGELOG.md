@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Ciro hedefine giden yol — gelir kaldıraçları (2026-10-07)
+- `lib/cfo/revenue-levers.ts` + `revenue-levers-data.ts`: ciro açığı ve kaldıraçlar (konteynerdeki listelenmemiş ürünler — batık sermaye, ek sermaye yok; stoksuz satan ürünler; SCALE stok tamamlama), ek/batık sermaye, güven, açık payı.
+- `/cfo/sermaye` kartı; AI CFO Blok B4l; planlı pakette ciro kararlarına açık + kaldıraç #1.
+- Test: `cfo-revenue-levers`.
+
 ### Decision Memory — beklenen ↔ gerçekleşen (2026-10-07)
 - `lib/cfo/decision-memory.ts` + `decision-memory-data.ts`: `cfo_hamle` kararları veriyle ölçülür (metrik eşleme, hedef yoluna göre ilerleme, gereken günlük değişim, kapanmış kararlarda tahmin hatası). Defter değiştirilmez.
 - Yeni sayfa `/cfo/kararlar` ve menü girişi; AI CFO Blok B4j; planlı paket eklerinin sırası karar değerine göre.
