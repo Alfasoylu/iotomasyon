@@ -11,6 +11,7 @@ import { budgetBlock, type BudgetTotals } from "../lib/cfo-agent/budget";
 import { getCfoConfig } from "../lib/cfo-agent/config";
 import { costEfficiency } from "../lib/cfo-agent/cost-efficiency";
 import { importProjectEvidence } from "../lib/cfo-agent/import-revenue";
+import { alfashomeEvidence } from "../lib/cfo-agent/alfashome-sales";
 import { evidence } from "../lib/cfo-agent/evidence";
 import type { Anomaly, Evidence } from "../lib/cfo-agent/types";
 
@@ -151,6 +152,18 @@ check("ithalat beklenen ciro: proje başına durum/ciro/kâr/aylık katkı TAHM�
   assert.equal(v("ithalat.ROMANYA-PARCA.aylik_ciro_katkisi_try"), undefined, "satış ayı yoksa aylık katkı uydurulmaz");
   assert.equal(v("ithalat.toplam_beklenen_ciro_try")?.value, 15474895 + 3343000);
   assert.doesNotMatch(String(v("ithalat.ROMANYA-PARCA.durum")?.value), /geçti/, "varış tarihi yoksa bayat sayılmaz");
+});
+
+check("ALFASHOME kanalı: senkron tazeliği kanıtın ölçülmüşlüğünü belirler; senkron yoksa BAYAT/hiç", () => {
+  const at = "2026-10-07T12:00:00.000Z";
+  const fresh = alfashomeEvidence({ n30: 12, rev30: 18450.5, mtd: 4200, pending30: 1500, lastOrder: "2026-10-06T10:00:00.000Z", lastSync: "2026-10-07T06:00:00.000Z" }, at);
+  const v = (list: typeof fresh, q: string) => list.find(e => e.query.startsWith(q));
+  assert.equal(v(fresh, "alfashome.ciro_son_30_gun_try")?.value, 18450.5); assert.equal(v(fresh, "alfashome.ciro_son_30_gun_try")?.measured, true);
+  assert.equal(v(fresh, "alfashome.son_siparis")?.value, "2026-10-06");
+  const stale = alfashomeEvidence({ n30: 0, rev30: null, mtd: null, pending30: null, lastOrder: null, lastSync: "2026-10-01T06:00:00.000Z" }, at);
+  assert.match(String(v(stale, "alfashome.senkron")?.value), /BAYAT/); assert.equal(v(stale, "alfashome.ciro_son_30_gun_try")?.measured, false, "bayat senkron ölçüm sayılmaz");
+  assert.equal(v(stale, "alfashome.ciro_son_30_gun_try")?.value, 0);
+  assert.match(String(v(alfashomeEvidence({ n30: 0, rev30: null, mtd: null, pending30: null, lastOrder: null, lastSync: null }, at), "alfashome.senkron")?.value), /hiç senkron yok/);
 });
 
 if (failed) { console.error(`\n${failed} test başarısız`); process.exit(1); }

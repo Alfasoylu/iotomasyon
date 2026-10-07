@@ -15,6 +15,7 @@
  */
 
 import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
+import { safeSyncAlfasOrders } from "@/lib/alfashome/sync";
 import { NextRequest, NextResponse } from "next/server";
 
 import { authorizeCron } from "@/lib/cron-auth";
@@ -29,6 +30,8 @@ export const maxDuration = 300; // 5 min
 export async function GET(req: NextRequest) {
   const denied = authorizeCron(req);
   if (denied) return denied;
+  // alfashome siparişleri CFO döngüsünden ÖNCE yazılır (ALFASHOME kanalı; hata döngüyü durdurmaz).
+  await safeSyncAlfasOrders();
   scheduleCfoCycle("daily_trendyol", { aiMonitor: true });
 
   const config = await prisma.trendyolConfig.findFirst();
