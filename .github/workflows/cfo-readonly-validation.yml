@@ -49,6 +49,8 @@ jobs:
       - run: node --import tsx __tests__/fm-tcmb-fx.test.ts
       - run: node --import tsx __tests__/fm-fx-monthly.test.ts
       - run: node --import tsx __tests__/fx-current.test.ts
+      - run: node --import tsx __tests__/cfo-capital-efficiency.test.ts
+      - run: node --import tsx __tests__/cfo-voi.test.ts
       - run: node --import tsx __tests__/fm-stock-balance.test.ts
       - run: node --import tsx __tests__/fm-stock-adjustment.test.ts
       - run: node --import tsx __tests__/fm-goal-engine.test.ts
@@ -110,7 +112,7 @@ jobs:
       - run: npm run check:banka:pdf
       - run: npm run check:banka:review
       - run: npx eslint lib/banka components/banka app/api/admin/banka-yukleme __tests__/banka*.test.ts 'app/(app)/admin/banka-yukleme/page.tsx'
-      - run: npx eslint lib/cfo-agent app/api/admin/ai-cfo/acceptance app/api/admin/ai-cfo/runner app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning 'app/(app)/admin/ai-cfo' app/api/cron/xml-sync app/api/cron/trendyol-sync app/api/admin/ai-cfo/context app/api/admin/ai-cfo/cycle app/api/cron/cfo-cycle 'app/(app)/cfo/calisan' __tests__/cfo-workflow.test.ts __tests__/cfo-import-planner.test.ts lib/actions/cfo-row-qa.ts lib/actions/cfo-question-actions.ts lib/cfo/row-qa.ts lib/cfo/question*.ts components/cfo/row-qa-panel.tsx 'app/(app)/cfo/sorular/page.tsx' __tests__/cfo-question-research.test.ts 'app/(app)/cfo/kazananlar' __tests__/cfo-private-files.test.ts __tests__/cfo-operating-context.test.ts scripts/cfo-read-context.ts __tests__/ai-cfo*.test.ts lib/forecast scripts/forecast-backtest.ts __tests__/forecast-*.ts components/forecast 'app/(app)/admin/forecast-v2' lib/market scripts/market __tests__/market-*.ts lib/actions/market-scout-actions.ts 'app/(app)/admin/market-scout' 'app/(app)/cfo/page.tsx' 'app/(app)/admin/sermaye' lib/capital lib/fx __tests__/fx-current.test.ts services/dashboard-service.ts 'app/(app)/cfo/calisma-durumu/page.tsx' __tests__/cfo-cost-answer.test.ts
+      - run: npx eslint lib/cfo-agent app/api/admin/ai-cfo/acceptance app/api/admin/ai-cfo/runner app/api/cron/ai-cfo-monitor app/api/cron/ai-cfo-morning 'app/(app)/admin/ai-cfo' app/api/cron/xml-sync app/api/cron/trendyol-sync app/api/admin/ai-cfo/context app/api/admin/ai-cfo/cycle app/api/cron/cfo-cycle 'app/(app)/cfo/calisan' __tests__/cfo-workflow.test.ts __tests__/cfo-import-planner.test.ts lib/actions/cfo-row-qa.ts lib/actions/cfo-question-actions.ts lib/cfo/row-qa.ts lib/cfo/question*.ts components/cfo/row-qa-panel.tsx 'app/(app)/cfo/sorular/page.tsx' __tests__/cfo-question-research.test.ts 'app/(app)/cfo/kazananlar' __tests__/cfo-private-files.test.ts __tests__/cfo-operating-context.test.ts scripts/cfo-read-context.ts __tests__/ai-cfo*.test.ts lib/forecast scripts/forecast-backtest.ts __tests__/forecast-*.ts components/forecast 'app/(app)/admin/forecast-v2' lib/market scripts/market __tests__/market-*.ts lib/actions/market-scout-actions.ts 'app/(app)/admin/market-scout' 'app/(app)/cfo/page.tsx' 'app/(app)/admin/sermaye' lib/capital lib/fx __tests__/fx-current.test.ts lib/cfo/capital-efficiency.ts lib/cfo/capital-efficiency-data.ts __tests__/cfo-capital-efficiency.test.ts 'app/(app)/cfo/sermaye' lib/cfo/voi.ts lib/cfo/voi-data.ts __tests__/cfo-voi.test.ts services/dashboard-service.ts 'app/(app)/cfo/calisma-durumu/page.tsx' __tests__/cfo-cost-answer.test.ts
       - name: Generate ephemeral build-only session key
         run: |
           python - <<'PY'

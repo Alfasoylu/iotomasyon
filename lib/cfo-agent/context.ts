@@ -5,6 +5,8 @@ import { loadImportRevenue } from "./import-revenue";
 import { loadAlfashomeSales } from "./alfashome-sales";
 import { loadCapitalConfig } from "./capital-config";
 import { loadBankLedger, loadQuotes, loadTrendyolFinance } from "./finance-ledgers";
+import { loadCapitalEvidence } from "./capital-evidence";
+import { loadVoiEvidence } from "./voi-evidence";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -97,6 +99,10 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   // B4g — panelde olup CFO'nun okumadığı defterler: Trendyol fatura/hakediş (kesinti dökümü, reklam, ceza, iade), banka
   // hareketleri (ekstre), açık teklifler. Yükleme bazlı → tazelik ölçülmüşlüğü belirler.
   state.push(...await loadTrendyolFinance(db, at), ...await loadBankLedger(db, at), ...await loadQuotes(db, at));
+  // B4h — sermaye verimliliği: borç eşiğine göre SKU sınıfları, değer kaybı, açığa çıkarılabilir nakit, tahsis planı (deterministik)
+  state.push(...await loadCapitalEvidence(db, at));
+  // B4i — bilgi değeri: hangi bilinmeyen en çok TL'lik kararı değiştirir; düşük değerliler sorulmaz (deterministik)
+  state.push(...await loadVoiEvidence(db, at));
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
     for (const g of await db.query(`select distinct on (goal_key) goal_key, state, grade, gap_try, current_rate_try_per_day, required_rate_try_per_day, as_of::text as as_of
@@ -166,6 +172,8 @@ export async function loadScheduledExtras(decisionType: string, at: string, db: 
     out.push(...(await loadTrendyolFinance(db, at)).filter(e => e.query.startsWith("trendyol_finans.yukleme") || e.query.includes(".kesinti_orani_pct")));
   }
   if (decisionType === "CASH" || decisionType === "INVENTORY") {
+    // Nakit/stok kararlarında: eşik getiri + tahsis planının ilk adımı (her 1 TL nereye?)
+    out.push(...(await loadCapitalEvidence(db, at)).filter(e => e.query.startsWith("sermaye_verimliligi.esik_getiri") || e.query.startsWith("sermaye_verimliligi.plan.1")));
     const imports = await loadImportRevenue(db, at);
     const first = imports.find(e => e.query.endsWith(".durum"))?.query.split(".")[1];
     out.push(...imports.filter(e => first && e.query.startsWith(`ithalat.${first}.`) && (e.query.includes("aylik_ciro") || e.query.endsWith(".durum"))).slice(0, 2));

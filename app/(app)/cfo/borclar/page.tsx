@@ -162,7 +162,7 @@ export default async function CfoDebtsPage() {
               <Td right>
                 {numOrNull(l.interestRatePct) == null
                   ? <span className="text-[var(--danger)]">girilmeli</span>
-                  : `%${num(l.interestRatePct)}/ay`}
+                  : `%${num(l.interestRatePct)}/yıl (aylık %${(num(l.interestRatePct) / 12).toFixed(2)})`}
               </Td>
               <Td muted>{l.status === "AKTIF" ? fmtDate(l.nextPaymentDate) : "—"}</Td>
               <Td><PaymentStateBadge state={l.currentMonthState} /></Td>
