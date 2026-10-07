@@ -6,6 +6,10 @@ import { getCfoConfig } from "./config";
 import { CALCULATION_VERSION, SCHEMA_VERSION, type CfoAgentSnapshot, type Metric, type ProductSignal, type SalesPeriod, type SourceWatermark } from "./types";
 import { contribution, cautiousDemand, D, divide, emptyProfitability, isDummyStock, measuredCommission, metric, numeric, orderAllocationSql, percentage, priceFloor, stale, unknown } from "./calculations";
 const DIRECT_API_SOURCES=new Set(["Trendyol","Hepsiburada"]);
+/** Entegra Excel and bank balances are uploaded by hand once a week (2026-10-07 decision): 7 days + 1 day grace.
+ *  Periods the upload has not reached yet stay incomplete through the day-coverage check, so no false revenue drop. */
+export const WEEKLY_UPLOAD_MAX_AGE_HOURS=8*24;
+const maxAgeHours=(source:string)=>source==="Entegra"?WEEKLY_UPLOAD_MAX_AGE_HOURS:48;
 import { evidence } from "./evidence";
 import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type ReadSource, type Row } from "./sources";
 import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources";
@@ -63,7 +67,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   // A direct marketplace API table that has never received a row is "not configured", not stale: its channel's sales
   // still arrive through Entegra (Hepsiburada: 0 direct rows, Entegra HEPSIBURADA rows present), so it is left out.
   snapshot.dataQuality.sourceWatermarks=watermarks.filter(r=>!(DIRECT_API_SOURCES.has(String(r.source))&&r.event_at==null&&r.ingest_at==null)).map(r=>({source:String(r.source),orderDate:iso(r.event_at),syncedAt:iso(r.ingest_at),batchDays:n(r,"batch_days")??0,coverageDays:n(r,"coverage_days")??0,
-    stale:stale(iso(r.source==="XML"?r.ingest_at:r.event_at),now)||stale(iso(r.ingest_at),now)} satisfies SourceWatermark));
+    stale:stale(iso(r.source==="XML"?r.ingest_at:r.event_at),now,maxAgeHours(String(r.source)))||stale(iso(r.ingest_at),now,maxAgeHours(String(r.source)))} satisfies SourceWatermark));
   snapshot.dataQuality.staleSources=snapshot.dataQuality.sourceWatermarks.filter(w=>w.stale).map(w=>w.source);
   const financialFresh=snapshot.dataQuality.sourceWatermarks.find(w=>w.source==="Entegra")?.stale===false && config.canonicalValidated;
 
@@ -319,7 +323,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   snapshot.procurement.riskySkuCount=new Set(risks.map(p=>p.sku)).size;
 
   const banks=await db.query(`select count(*)::int as accounts,count("balanceTry")::int as balances,count("lastUpdatedAt")::int as timestamps,min("lastUpdatedAt") as oldest,max("lastUpdatedAt") as latest from cfo_bank_account where "isActive"`);
-  snapshot.cash.banksFresh=(n(banks[0]??{},"accounts")??0)>0&&n(banks[0],"accounts")===n(banks[0],"balances")&&n(banks[0],"accounts")===n(banks[0],"timestamps")&&!stale(iso(banks[0]?.oldest),now,7*24);
+  snapshot.cash.banksFresh=(n(banks[0]??{},"accounts")??0)>0&&n(banks[0],"accounts")===n(banks[0],"balances")&&n(banks[0],"accounts")===n(banks[0],"timestamps")&&!stale(iso(banks[0]?.oldest),now,WEEKLY_UPLOAD_MAX_AGE_HOURS);
   snapshot.dataQuality.sourceWatermarks.push({source:"banks",orderDate:null,syncedAt:iso(banks[0]?.latest),batchDays:0,coverageDays:0,stale:!snapshot.cash.banksFresh});
   if(!snapshot.cash.banksFresh)snapshot.dataQuality.staleSources.push("banks");
   const gate=await catalog.rows("cfo_nakit_kapisi",["nakit_try","bos_kmh_try"],1);

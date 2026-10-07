@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### AI CFO — haftalık elle veri düzeni (`alfas-gross-v8`) (2026-10-07)
+- Kullanıcı kararı: Entegra satış dökümü ve banka bakiyeleri günlük değil **haftalık** verilir. `lib/cfo-agent/snapshot.ts`: Entegra ve banka tazelik eşiği 48 sa / 7 gün → **8 gün** (`WEEKLY_UPLOAD_MAX_AGE_HOURS`, 7 gün + 1 gün tolerans). Yüklemenin henüz ulaşmadığı günler gün-kapsama kontrolüyle eksik kalır → sahte ciro düşüşü üretilmez. API kaynakları (Trendyol/XML) 48 sa kalır.
+- `lib/cfo-agent/health.ts`: sistem haftalık ister — son Entegra yüklemesi 7 günü geçince `entegra_upload_due`, 7 günden eski aktif banka hesapları adıyla `bank_update_due` (saatlik sağlık işi → GitHub e-postası + admin alarm kartı).
+- Testler: `ai-cfo-source-mapping` (6,9 günlük Entegra taze, 8,9 günlük bayat, kapsanmayan gün eksik; eski kuralla kırılır), `ai-cfo-health` (haftalık istekler).
+
 ### AI CFO — soğuma yalnız teslimde + sağlık alarmı (2026-10-07)
 - **Soğuma (`store.recent`):** bir anomali yalnız kendisi için `cfo_insight` yazıldığında soğumaya girer; ya da model geçerli yanıtta (`completed`) onu iki kez tavsiyesiz geçtiyse. `failed`, kesilen, tamamen reddedilen (`invalid_output`) ve atlanan çağrılar anomaliyi açık bırakır. Üretimde 06:13 kesilen yanıt 8 STOCKOUT'u, 06:34 koşusu içgörü yazılmayan 2 hedefi 72 saat kilitlemişti → 08:00 `no_actionable_anomaly`. Test `ai-cfo-store` (eski kodla kırılır).
 - **Sağlık alarmı:** `lib/cfo-agent/health.ts` — son iki koşu üst üste başarısız (`failed`/`invalid_output`) ya da AI açık + eylemlik anomali gönderilmiş + 24 saattir içgörü yok → alarm. `/api/cron/ai-cfo-health` (CRON_SECRET, salt-okunur) alarmda 503 döner; `.github/workflows/ai-cfo-health.yml` saatlik (:25) çağırır, 503'te iş kırmızı → GitHub e-postası. `/admin/ai-cfo`'da kırmızı alarm kartı. Test `ai-cfo-health` (07.10 üretim dizisi alarm üretir).

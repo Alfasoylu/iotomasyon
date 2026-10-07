@@ -99,7 +99,7 @@ async function main() {
     const s = await buildCfoAgentSnapshot({ db, now, config, compact: false });
     const missing = s.dataQuality.missingFields;
     assert.ok(!missing.some(f => f.startsWith("reviewed_source_changed")), `reviewed profile valid by default: ${missing.join(",")}`);
-    assert.equal(s.calculationVersion, "alfas-gross-v7");
+    assert.equal(s.calculationVersion, "alfas-gross-v8");
 
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;
@@ -119,6 +119,13 @@ async function main() {
     assert.ok(!s.dataQuality.sourceWatermarks.some(w => w.source === "Hepsiburada"), "unconfigured direct HB source is not a watermark");
     assert.ok(!s.dataQuality.staleSources.includes("Hepsiburada"), "unconfigured direct HB source is not stale");
     assert.equal(hb!.sourceFresh, entegra!.stale === false, "HB channel freshness follows Entegra");
+    // Weekly Entegra upload (2026-10-07): last order 2026-09-29, now 2026-10-06 (~6.9 days) is still fresh under the
+    // 8-day weekly threshold; two days later it is stale. Days the upload has not reached keep periods incomplete.
+    assert.equal(entegra!.stale, false, "Entegra within the weekly window is fresh");
+    assert.equal(s.sales.yesterday.complete, false, "a day the weekly upload has not reached stays incomplete (no false revenue drop)");
+    const late = await buildCfoAgentSnapshot({ db, now: new Date("2026-10-08T08:00:00Z"), config, compact: false });
+    assert.equal(late.dataQuality.sourceWatermarks.find(w => w.source === "Entegra")?.stale, true, "Entegra older than 8 days is stale");
+    assert.ok(late.dataQuality.staleSources.includes("Entegra"));
     assert.ok(ty && hb, `product signals: ${s.products.map(p => `${p.sku}/${p.channel}`).join(",")}`);
     assert.ok(ty!.commissionRate.value != null, "measured commission");
     const trust = (await pg.query<{ g: string; a: number; n: number }>(`select guven::text g, adet_duz a, count(*)::int n from cfo_satis_birim_duz where channel='TRENDYOL' group by 1,2 order by 2`)).rows;

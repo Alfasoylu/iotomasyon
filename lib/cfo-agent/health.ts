@@ -5,7 +5,10 @@ import { getCfoConfig } from "./config";
 // arasında ayırt edilemez. Saatlik GitHub Actions işi /api/cron/ai-cfo-health'i çağırır; alarm varsa 503 → iş kırmızı →
 // GitHub depo sahibine e-posta gönderir. Aynı alarmlar /admin/ai-cfo'da gösterilir. Yalnız okur, hiçbir şey yazmaz.
 
-export type CfoAlarm = { code: "consecutive_failures" | "no_insight_24h"; message: string };
+export type CfoAlarm = { code: "consecutive_failures" | "no_insight_24h" | "entegra_upload_due" | "bank_update_due"; message: string };
+/** Haftalık elle yüklenen veriler (2026-10-07 kararı): son Entegra yüklemesi ve 7 günden eski banka hesapları. */
+export type ManualData = { entegraLastImport: Date | null; staleBankAccounts: string[] };
+const WEEK_MS = 7 * 24 * 3600000;
 export type HealthRun = { status: string; generatedAt: Date; error: string | null; insights: number; sentActionable: number };
 
 /** Koşu sonucu "başarısız": hata ya da hiç içgörü geçmeyen model çıktısı. */
@@ -13,7 +16,7 @@ const FAILED = new Set(["failed", "invalid_output"]);
 /** Model çağrısına hiç ulaşmayan, sağlık açısından nötr durumlar. */
 const NEUTRAL = new Set(["running"]);
 
-export function evaluateCfoAlarms(runs: HealthRun[], lastInsightAt: Date | null, aiActive: boolean, now: Date): CfoAlarm[] {
+export function evaluateCfoAlarms(runs: HealthRun[], lastInsightAt: Date | null, aiActive: boolean, now: Date, manual?: ManualData): CfoAlarm[] {
   const alarms: CfoAlarm[] = [];
   const recent = runs.filter(r => !NEUTRAL.has(r.status)).sort((a, b) => b.generatedAt.getTime() - a.generatedAt.getTime());
   const [last, prev] = recent;
@@ -24,6 +27,13 @@ export function evaluateCfoAlarms(runs: HealthRun[], lastInsightAt: Date | null,
   const triedToday = recent.some(r => r.generatedAt.getTime() >= dayAgo && r.sentActionable > 0);
   if (aiActive && triedToday && (!lastInsightAt || lastInsightAt.getTime() < dayAgo)) {
     alarms.push({ code: "no_insight_24h", message: `24 saattir içgörü yok; son içgörü: ${lastInsightAt ? lastInsightAt.toISOString() : "hiç"}` });
+  }
+  // Sistem günlük değil HAFTALIK veri ister: 7 gün dolunca hatırlatır (eşik 8 gün, 1 gün tolerans — snapshot.ts).
+  if (manual && (!manual.entegraLastImport || now.getTime() - manual.entegraLastImport.getTime() > WEEK_MS)) {
+    alarms.push({ code: "entegra_upload_due", message: `Haftalık Entegra satış dökümü bekleniyor; son yükleme: ${manual.entegraLastImport ? manual.entegraLastImport.toISOString().slice(0, 10) : "hiç"}` });
+  }
+  if (manual?.staleBankAccounts.length) {
+    alarms.push({ code: "bank_update_due", message: `Haftalık banka bakiyesi güncellemesi bekleniyor (7 günden eski): ${manual.staleBankAccounts.join(", ")}` });
   }
   return alarms;
 }
@@ -36,5 +46,9 @@ export async function loadCfoAlarms(now = new Date(), env: Record<string, string
   const last = await prisma.cfoInsight.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } });
   const runs: HealthRun[] = rows.map(r => ({ status: r.status, generatedAt: r.generatedAt, error: r.error, insights: r._count.insights,
     sentActionable: ((r.triggerReasons as { sentAnomalies?: { actionable?: boolean }[] } | null)?.sentAnomalies ?? []).filter(a => a.actionable).length }));
-  return evaluateCfoAlarms(runs, last?.createdAt ?? null, config.monitorEnabled && config.enabled && config.releaseApproved, now);
+  const entegra = await prisma.entegraImportLog.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } });
+  const banks = await prisma.cfoBankAccount.findMany({ where: { isActive: true, lastUpdatedAt: { lt: new Date(now.getTime() - WEEK_MS) } },
+    orderBy: { sortOrder: "asc" }, select: { name: true } });
+  return evaluateCfoAlarms(runs, last?.createdAt ?? null, config.monitorEnabled && config.enabled && config.releaseApproved, now,
+    { entegraLastImport: entegra?.createdAt ?? null, staleBankAccounts: banks.map(b => b.name) });
 }
