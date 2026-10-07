@@ -4,7 +4,7 @@
  * Eski üç sayfanın yerini alır: /admin/sermaye-saglik (Sermaye Sağlığı), /admin/capital (Sermaye Dağılımı),
  * /admin/executive (Yönetici Paneli). Üçü aynı soruya üç farklı kur ve üç farklı "bağlı sermaye" kuralıyla
  * cevap veriyordu (elle girilen aylık kur 2026/06'da kalmıştı). Artık tüm sayılar CFO kaynağından:
- *   kur → cfo_settings · bağlı sermaye → cfo_stok_deger · ölü stok → cfo_olu_stok · servet → cfo_servet.
+ *   kur → lib/fx/current.ts (cfo_kur) · bağlı sermaye → cfo_stok_deger · ölü stok → cfo_olu_stok · servet → cfo_servet.
  * Hesap lib/capital/health.ts'te; dashboard manşeti de aynı fonksiyonu okur. Eski adresler next.config.ts'te
  * buraya yönlenir. Salt-okunur; tek yazma Sermaye ayarları formu (CapitalConfig, değişmedi).
  */
@@ -57,7 +57,7 @@ export default async function SermayePage() {
         subtitle="Sermayenin ne kadarı stokta bağlı, ne kadarı serbest, stok ne kadar sağlıklı ve satış ne getiriyor — tek ekranda, CFO'nun sayılarıyla."
         meta={
           <Badge variant={h.fx.fromCfo ? "neutral" : "warn"}>
-            1 USD = ₺{h.fx.usdTry.toFixed(2)} · {h.fx.rmbPerUsd.toFixed(2)} RMB {h.fx.fromCfo ? "(CFO kuru)" : "(varsayılan — CFO ayarı yok)"}
+            1 USD = ₺{h.fx.usdTry.toFixed(2)} · {h.fx.rmbPerUsd.toFixed(2)} RMB ({h.fx.source})
           </Badge>
         }
         actions={<PageHelp pageKey="admin/sermaye" />}

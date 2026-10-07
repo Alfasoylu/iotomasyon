@@ -56,6 +56,7 @@ import {
   policySourceLabel,
   policySourceColor,
 } from "@/lib/marketplace-pricing";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -108,9 +109,7 @@ export default async function ProductDetailPage({
     getProductById(id),
     getProductIntelligence(id),
     canViewFinance
-      ? prisma.monthlyExchangeRate.findFirst({
-          orderBy: [{ year: "desc" }, { month: "desc" }],
-        })
+      ? getCurrentFx()
       : Promise.resolve(null),
     canViewFinance
       ? prisma.trendyolSalesRecord.findMany({
@@ -250,9 +249,9 @@ export default async function ProductDetailPage({
   const hasSalesPotential = salesPotential.totalMonthlyUnits > 0;
 
   // Phase 11C — Import decision
-  const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
+  const usdTryRate = latestRate ? latestRate.usdTry : DEFAULT_USD_TRY_RATE;
   // Phase 31 — RMB/USD rate from latest exchange rate entry
-  const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : 7.0; // 1 USD ≈ 7 RMB varsayılanı
+  const rmbUsdRate = latestRate ? latestRate.rmbPerUsd : 7.0; // 1 USD ≈ 7 RMB varsayılanı
   // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy manual-potential monthlyUnits below is unchanged.
   const v2 = await forecastV2ForConsumers();
   const v2Info = v2 ? forecastV2View(v2, product.id) : null;

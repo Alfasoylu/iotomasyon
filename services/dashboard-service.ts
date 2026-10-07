@@ -3,6 +3,7 @@ import "server-only";
 import { isDatabaseUnavailableError } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { loadCapitalHealth } from "@/lib/capital/health";
+import { getCurrentFx } from "@/lib/fx/current";
 
 // ── Capital health snapshot (dashboard manşet) ──────────────────────────────
 // /admin/sermaye ile AYNI hesap (lib/capital/health.ts): CFO kuru, cfo_stok_deger bağlı sermaye, cfo_olu_stok ölü stok.
@@ -606,12 +607,8 @@ export async function getAdminEnhancedData() {
       trendyolThisMonth,
       trendyolLastMonth,
     ] = await Promise.all([
-      // Latest exchange rate with RMB
-      prisma.monthlyExchangeRate.findFirst({
-        where: { rmbUsdRate: { not: null } },
-        orderBy: [{ year: "desc" }, { month: "desc" }],
-        select: { year: true, month: true, usdTryRate: true, rmbUsdRate: true },
-      }),
+      // Güncel kur — tek kaynak (lib/fx/current.ts)
+      getCurrentFx(),
       // Import decision snapshots in last 7 days
       prisma.importDecisionSnapshot.count({
         where: { createdAt: { gte: sevenDaysAgo } },
@@ -684,14 +681,13 @@ export async function getAdminEnhancedData() {
 
     return {
       databaseAvailable: true as const,
-      latestRate: latestRate
-        ? {
-            year: latestRate.year,
-            month: latestRate.month,
-            usdTryRate: Number(latestRate.usdTryRate),
-            rmbUsdRate: Number(latestRate.rmbUsdRate ?? 0),
-          }
-        : null,
+      latestRate: {
+        year: latestRate.usdTryMonth ? Number(latestRate.usdTryMonth.slice(0, 4)) : null,
+        month: latestRate.usdTryMonth ? Number(latestRate.usdTryMonth.slice(5, 7)) : null,
+        usdTryRate: latestRate.usdTry,
+        rmbUsdRate: latestRate.rmbPerUsd,
+        source: latestRate.usdTrySource,
+      },
       recentSnapshotCount7d: recentSnapshotCount,
       recentSnapshotCount30d,
       activeInterestsTotal,

@@ -12,6 +12,7 @@ import { refreshFinancialMemoryStock } from "@/lib/fm/stock-refresh";
 import { prisma } from "@/lib/prisma";
 import { parseXmlFeed, type XmlProductRecord } from "@/lib/xml-sync";
 import type { ActionResult } from "@/types/actions";
+import { getCurrentFx } from "@/lib/fx/current";
 
 // ── XML Overwrite Policy (Phase 11 / Phase 28) ───────────────────────────────
 //
@@ -126,12 +127,8 @@ export async function runSync(
 
     const now = new Date();
 
-    // Fetch latest exchange rate for USD→TRY conversion
-    const latestRate = await prisma.monthlyExchangeRate.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-      select: { usdTryRate: true },
-    });
-    const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : 45;
+    // USD→TRY: tek kur kaynağı (lib/fx/current.ts — CFO kur defteri). Elle girilen aylık kur 2026/06'da kalmıştı.
+    const usdTryRate = (await getCurrentFx()).usdTry;
 
     // ── 2. Mark ALL previously-seen XmlProductData as missing ─────────────────
     await prisma.xmlProductData.updateMany({

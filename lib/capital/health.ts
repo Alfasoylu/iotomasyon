@@ -1,7 +1,8 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
-import { calcImportCost, calcRevenue, calcProfit, DEFAULT_USD_TRY_RATE, DEFAULT_RMB_USD_RATE } from "@/lib/importer-cost";
+import { calcImportCost, calcRevenue, calcProfit } from "@/lib/importer-cost";
+import { getCurrentFx } from "@/lib/fx/current";
 import { forecastMonthlySales, buildMonthlySalesMap, effectiveMonthlyUnits as pickEffectiveMonthly } from "@/lib/sales-forecast";
 import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
 import { capitalScore, type CapitalScore } from "./score";
@@ -9,19 +10,18 @@ import { capitalScore, type CapitalScore } from "./score";
 // Sermaye sağlığı — TEK hesap (2026-10-07 panel taraması: /admin/sermaye-saglik, /admin/capital, /admin/executive ve
 // dashboard manşeti dört ayrı kopyaydı; üç farklı kur, iki farklı "ölü stok" ve iki farklı bağlı sermaye kuralı vardı).
 // Artık sayılar CFO'nun kaynaklarından gelir:
-//   kur            → cfo_settings.usdTryRate / usdRmbRate (CFO'nun kullandığı kur; elle girilen aylık kur bayattı)
+//   kur            → lib/fx/current.ts (USD/TRY CFO kur defteri cfo_kur; elle girilen aylık kur bayattı)
 //   bağlı sermaye  → cfo_stok_deger.maliyet_degeri (gercek_stok) = stok × birim maliyet; yer tutucu stoklar hariç
 //   ölü stok       → cfo_olu_stok (CFO'nun ölü stok kuralı; /cfo/olu-stok ile aynı liste)
 // Talep (aylık kâr / acil sipariş için) Forecast V2 köprüsünden; bayrak kapalıyken eski 3 tablo + mevsim tahmini.
 // Salt-okunur.
 
-export type CapitalFx = { usdTry: number; rmbPerUsd: number; fromCfo: boolean };
+export type CapitalFx = { usdTry: number; rmbPerUsd: number; fromCfo: boolean; source: string };
 
+/** Tek kur kaynağı (lib/fx/current.ts): USD/TRY CFO kur defterinden. */
 export async function loadCapitalFx(): Promise<CapitalFx> {
-  const s = await prisma.cfoSettings.findFirst({ select: { usdTryRate: true, usdRmbRate: true } });
-  const usdTry = s ? Number(s.usdTryRate) : 0;
-  const rmb = s ? Number(s.usdRmbRate) : 0;
-  return { usdTry: usdTry > 0 ? usdTry : DEFAULT_USD_TRY_RATE, rmbPerUsd: rmb > 0 ? rmb : DEFAULT_RMB_USD_RATE, fromCfo: usdTry > 0 };
+  const fx = await getCurrentFx();
+  return { usdTry: fx.usdTry, rmbPerUsd: fx.rmbPerUsd, fromCfo: fx.usdTrySource.startsWith("cfo_"), source: fx.usdTrySource };
 }
 
 export type HealthProduct = {

@@ -31,6 +31,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { resolveFinanceGate } from "@/lib/finance-visibility";
 import { calcImportCost, calcRevenue, trendyolPriceInclVat } from "@/lib/importer-cost";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -211,14 +212,9 @@ export default async function ProductsPage({
   // Only fetched when the viewer can see finance data — otherwise we never
   // compute profit / margin / ROI on the server, so we never have to risk
   // leaking them in the rendered output.
-  const latestRate = canViewFinance
-    ? await prisma.monthlyExchangeRate.findFirst({
-        orderBy: [{ year: "desc" }, { month: "desc" }],
-        select: { usdTryRate: true, rmbUsdRate: true },
-      })
-    : null;
-  const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : 45;
-  const rmbUsdRate = latestRate?.rmbUsdRate ? Number(latestRate.rmbUsdRate) : 7.0;
+  const latestRate = canViewFinance ? await getCurrentFx() : null;
+  const usdTryRate = latestRate?.usdTry ?? 45;
+  const rmbUsdRate = latestRate?.rmbPerUsd ?? 7.0;
 
   // Phase 74 — pre-compute profit + health for all products, then filter by durumFilter.
   // Finance fields (trendyolPriceTry, profit) are NULL for non-finance viewers —

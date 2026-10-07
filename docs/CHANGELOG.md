@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Tek kur kaynağı + şema yakalama (2026-10-07)
+- `lib/fx/current.ts` + `lib/fx/pick.ts`: USD/TRY `cfo_kur` (CFO aylık kur defteri) → `cfo_settings` → `MonthlyExchangeRate` → varsayılan; RMB/USD `MonthlyExchangeRate` → `cfo_settings`. 13 okuyucu taşındı (sermaye, ithalat, kârlılık, ürünler, XML fiyat çevrimi, dashboard). Pazar kârlılığı / gerçekleşen marj yılı yok sayan kur seçimi düzeltildi. Döviz kurları sayfasında etkin kur + kaynak.
+- Migration `20261007220000_cfo_ledger_tables_capture` (üretimde önceden var olan iki CFO tablosu; üretimde kayıt). `20261007200000_drop_legacy_backup_tables` repoda, üretimde bekliyor (`notAppliedInProduction`).
+- Test: `fx-current` (seçim sırası + tek okuyucu kuralı), `schema-baseline` tam üretim parmak izi, `ai-cfo-migration-security`.
+
 ### Sermaye sayfaları birleşti — /admin/sermaye (2026-10-07)
 - `/admin/sermaye-saglik`, `/admin/capital`, `/admin/executive` → tek `/admin/sermaye` (bölümler: Sermaye durumu, Sermaye sağlığı, Satış ve kârlılık); eski adresler kalıcı yönlenir, menü/komut paleti/dashboard linkleri güncellendi.
 - Tek hesap `lib/capital/health.ts` + `lib/capital/score.ts`: kur `cfo_settings`, stokta bağlı `cfo_stok_deger.maliyet_degeri`, ölü stok `cfo_olu_stok`; sayfa ve dashboard skoru aynı fonksiyon, TL. Rezerv serbest sermayenin yüzdesi (tek kural). Maliyeti eksik stoklu ürün sayısı uyarı olarak gösterilir.

@@ -6,10 +6,10 @@ import { requireUser, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
   calculateImportDecision,
-  DEFAULT_USD_TRY_RATE,
   effectiveFreightPerKg,
 } from "@/lib/import-decision";
 import type { ActionResult } from "@/types/actions";
+import { getCurrentFx } from "@/lib/fx/current";
 
 /**
  * Phase 32 — Import Decision Snapshot
@@ -68,12 +68,12 @@ export async function createImportDecisionSnapshotAction(
   if (!product) return { ok: false, message: "Ürün bulunamadı." };
 
   // Load latest exchange rate
-  const latestRate = await prisma.monthlyExchangeRate.findFirst({
-    orderBy: [{ year: "desc" }, { month: "desc" }],
-  });
+  // Tek kur kaynağı (lib/fx/current.ts); kayıttaki kur ayı USD/TRY'nin geldiği ay.
+  const fx = await getCurrentFx();
+  const [rateYear, rateMonth] = fx.usdTryMonth ? fx.usdTryMonth.split("-").map(Number) : [null, null];
 
-  const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
-  const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : null;
+  const usdTryRate = fx.usdTry;
+  const rmbUsdRate: number | null = fx.rmbPerUsd;
 
   // Resolve preferred supplier for freight overrides
   const preferredLink = product.supplierLinks[0] ?? null;
@@ -149,8 +149,8 @@ export async function createImportDecisionSnapshotAction(
     data: {
       productId,
       supplierId: preferredSupplierId,
-      rateYear: latestRate?.year ?? null,
-      rateMonth: latestRate?.month ?? null,
+      rateYear,
+      rateMonth,
       usdTryRate,
       rmbUsdRate,
       sourceCostRmb: product.sourceCostRmb != null ? Number(product.sourceCostRmb) : null,

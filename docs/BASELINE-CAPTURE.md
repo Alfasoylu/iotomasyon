@@ -27,7 +27,7 @@ npm run db:bootstrap -- --url=postgres://...   # boş veritabanı; DIRECT_URL/DA
 Cutoff: `20261006110000_cfo_google_lockdown` (baseline, bu migration'lar üretimde uygulandıktan sonra çekildi: `cfo_files_private` + `cfo_google_lockdown` dahil).
 
 ### Üretimde olmayan migration'lar (`notAppliedInProduction`)
-`prisma/baseline/baseline.json` → `notAppliedInProduction` (şu an `20261007100000_market_scout_foundation`): repoda olan ama üretime bilerek **uygulanmamış**
+`prisma/baseline/baseline.json` → `notAppliedInProduction` (şu an `20261007100000_market_scout_foundation` ve `20261007200000_drop_legacy_backup_tables`): repoda olan ama üretime bilerek **uygulanmamış**
 (ayrı onay bekleyen) migration'lar. Bootstrap bunları kaydetmez; `pending` olarak raporlar (`prisma migrate deploy` uygular). Parmak izi
 karşılaştırması yalnız üretimin sahip olduğu migration'larla yapılır; ardından bu migration'ların temiz uygulandığı ayrıca test edilir.
 (Düzeltme 2026-10-06: önceki sürüm `ai_cfo_v1`'i yanlışlıkla "uygulandı" kaydediyordu; tablolar baseline'da olmadığı için temiz DB'de hiç oluşmayacaktı.)

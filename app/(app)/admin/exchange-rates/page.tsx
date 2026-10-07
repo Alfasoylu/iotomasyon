@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExchangeRateForm } from "@/components/marketplace/exchange-rate-form";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +25,10 @@ const MONTHS = [
 export default async function ExchangeRatesPage() {
   await requirePermission(PERMISSIONS.EXCHANGE_RATES_MANAGE);
 
-  const rates = await prisma.monthlyExchangeRate.findMany({
-    orderBy: [{ year: "desc" }, { month: "desc" }],
-  });
+  const [rates, fx] = await Promise.all([
+    prisma.monthlyExchangeRate.findMany({ orderBy: [{ year: "desc" }, { month: "desc" }] }),
+    getCurrentFx(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -47,6 +49,19 @@ export default async function ExchangeRatesPage() {
           <Button variant="secondary">← Admin Panel</Button>
         </Link>
       </div>
+
+      {/* Panelin kullandığı kur — tek kaynak (lib/fx/current.ts, 2026-10-07) */}
+      <Card className="rounded-lg border-[var(--info-border)] bg-[var(--info-dim)] p-4 text-sm text-[var(--text-secondary)]">
+        <p>
+          <span className="font-semibold text-[var(--text-primary)]">Panelin şu an kullandığı kur:</span>{" "}
+          1 USD = ₺{fx.usdTry.toFixed(2)} ({fx.usdTrySource}) · 1 USD = ¥{fx.rmbPerUsd.toFixed(2)} ({fx.rmbSource})
+        </p>
+        <p className="mt-1 text-xs">
+          USD/TRY artık CFO&apos;nun aylık kur defterinden (<code>cfo_kur</code>) okunur — sermaye, ithalat, kârlılık ve XML fiyat
+          çevrimi aynı kuru kullanır. Bu sayfadaki USD/TRY değerleri yalnız CFO defteri boşsa yedek olarak kullanılır.
+          RMB/USD bu sayfadan okunur (girilen en son değer).
+        </p>
+      </Card>
 
       {/* Add / edit form */}
       <Card className="p-6 space-y-4 rounded-lg">

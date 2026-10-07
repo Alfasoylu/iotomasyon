@@ -1,22 +1,21 @@
-# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-07 ~18:40 UTC, read-only catalog SELECT, after 20261007210000_alfashome_order
-# was applied by user-approved controlled SQL). Measured with the two tables created directly in production WITHOUT a repo migration
-# (cfo_kaldirac_basamak, cfo_kanal_sozluk — handbook owner, 2026-10-07) excluded from the rel set; including them production reads
-# acl 341 / con 340 / idx 437 / rel:r 151 / rls 151 (backlog: capture both in a repo migration, then drop this exclusion).
-# Every other group equals the previous capture (2026-10-06 ~20:25 UTC) plus alfashome_order.
+# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-07 ~18:40 UTC, read-only catalog SELECT, full public schema, no exclusions)
+# after 20261007210000_alfashome_order (user-approved controlled SQL) and with cfo_kaldirac_basamak + cfo_kanal_sozluk, which production
+# had before any repo migration; 20261007220000_cfo_ledger_tables_capture now creates them (IF NOT EXISTS, no-op in production).
+# The 3 backup tables are still present (20261007200000_drop_legacy_backup_tables is held back in baseline.json until it runs).
 # A bootstrapped clean database (prisma/baseline/2026-10-06.sql + baseline.json pending/late migrations) must produce exactly these rows from scripts/schema-baseline/fingerprint.sql.
 # Columns: kind object_count short_md5. Regenerate ONLY by re-running fingerprint.sql on production (docs/BASELINE-CAPTURE.md).
-acl 339 dbb754ef14
-con 334 0770ac374b
+acl 341 d1495c27f4
+con 340 007c77859c
 enum 32 ac59222f85
 ext 1 56e042523e
 fn 34 a3bfb3ee44
 fnacl 51 4a91d0382c
-idx 435 7ba33ed005
+idx 437 d1baea3d4e
 pol 80 32812b7f8a
 rel:m 1 0ad09bf43e
-rel:r 149 14529c6e25
+rel:r 151 910d0dcf6d
 rel:v 56 1ab6a1fb00
-rls 149 659e086e6a
+rls 151 55a126580a
 schemaacl 3 45e3344ecd
 seq 15 cda7319017
 seqacl 15 40c6ef1c15
