@@ -6,6 +6,7 @@ import { loadAlfashomeSales } from "./alfashome-sales";
 import { loadCapitalConfig } from "./capital-config";
 import { loadBankLedger, loadQuotes, loadTrendyolFinance } from "./finance-ledgers";
 import { loadCapitalEvidence } from "./capital-evidence";
+import { loadVoiEvidence } from "./voi-evidence";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -100,6 +101,8 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   state.push(...await loadTrendyolFinance(db, at), ...await loadBankLedger(db, at), ...await loadQuotes(db, at));
   // B4h — sermaye verimliliği: borç eşiğine göre SKU sınıfları, değer kaybı, açığa çıkarılabilir nakit, tahsis planı (deterministik)
   state.push(...await loadCapitalEvidence(db, at));
+  // B4i — bilgi değeri: hangi bilinmeyen en çok TL'lik kararı değiştirir; düşük değerliler sorulmaz (deterministik)
+  state.push(...await loadVoiEvidence(db, at));
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
     for (const g of await db.query(`select distinct on (goal_key) goal_key, state, grade, gap_try, current_rate_try_per_day, required_rate_try_per_day, as_of::text as as_of

@@ -18,6 +18,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AnswerForm, ProcessedButton, CancelButton } from "./answer-form";
+import { loadVoi } from "@/lib/cfo/voi-data";
+import type { VoiItem } from "@/lib/cfo/voi";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -59,6 +61,14 @@ export default async function CfoQuestionsPage({searchParams}: {searchParams:Pro
   ]);
   const identities=await prisma.$queryRawUnsafe<{id:string;scope:string|null;entity_key:string|null}[]>(`select id,to_jsonb(q)->>'scope' as scope,to_jsonb(q)->>'entity_key' as entity_key from cfo_question q where id=any($1::text[])`,[...top,...backlog,...answered,...(focused?[focused]:[])].map(q=>q.id));
   const identity=new Map(identities.map(q=>[q.id,q]));
+  // Bilgi değeri sırası (lib/cfo/voi.ts): hangi bilinmeyen en çok TL'lik kararı değiştirir? Düşük değerliler sorulmaz.
+  const voi=await loadVoi(sql=>prisma.$queryRawUnsafe(sql));
+  const tl=(v:number|null)=>v==null?"ölçülemedi":new Intl.NumberFormat("tr-TR",{style:"currency",currency:"TRY",maximumFractionDigits:0}).format(v);
+  const voiRow=(i:VoiItem)=><li key={i.key} className="rounded border border-[var(--border)] p-3 text-xs">
+    <div className="flex flex-wrap items-baseline justify-between gap-2"><span className="font-medium text-[var(--text-primary)]">{i.unknown}</span>
+      <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">{tl(i.voiTry)}</span></div>
+    <p className="text-[var(--text-muted)]">Etkilediği karar: {i.decision} · aralık {tl(i.rangeLoTry)} – {tl(i.rangeHiTry)} · {i.basis}</p>
+    {i.questionId&&<a href={`#question-${i.questionId}`} className="underline">soruya git →</a>}</li>;
   const sourceLink=(id:string)=>{const q=identity.get(id),href=questionSourceHref(q?.scope??null);return href?<Link href={href} className="mt-2 block text-xs underline">İlgili plan / ürün: {q?.entity_key} →</Link>:null;};
   const questionRow=(q:(typeof top)[number])=>{
     const p=PRIO.find(x=>x.n===q.priority)??PRIO[2];
@@ -130,6 +140,25 @@ export default async function CfoQuestionsPage({searchParams}: {searchParams:Pro
         title="CFO Soruları"
         subtitle="CFO'nun cevap bekleyen soruları, önem sırasına göre. Yazıyla cevapla, gerekiyorsa dosya ekle."
       />
+
+      <Card className="mb-6 p-5">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)]">Önce bunu öğren — bilgi değeri sırası</h2>
+        <p className="mt-1 mb-3 text-xs text-[var(--text-muted)]">
+          Her bilinmeyen, değiştirebileceği kararın TL değerine göre sıralanır (yaklaşık bilgi değeri; eşik faiz aylık %{(voi.hurdleMonthly*100).toFixed(2)}).
+          {" "}{tl(voi.params.askMinTry)} altındaki ya da kararı değiştirmeyen sorular sorulmaz; CFO ihtiyatlı varsayımla karar verir.
+          Toplam çözülmeye değer belirsizlik: <strong>{tl(voi.totalVoiTry)}</strong>.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div><h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--danger)]">Önce sana soruyorum (ASK FIRST · ilk {voi.params.askBudget})</h3>
+            {voi.ask.length?<ul className="space-y-2">{voi.ask.map(voiRow)}</ul>:<p className="text-xs text-[var(--text-muted)]">yok</p>}</div>
+          <div><h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--info)]">Önce ben araştırıyorum (RESEARCH FIRST)</h3>
+            {voi.research.length?<ul className="space-y-2">{voi.research.slice(0,5).map(voiRow)}</ul>:<p className="text-xs text-[var(--text-muted)]">yok</p>}</div>
+        </div>
+        <p className="mt-3 text-[11px] text-[var(--text-muted)]">
+          Bastırılan: {voi.suppressedAsk.length} değerli soru dikkat bütçesi dışında · {voi.decideNow.length} soru şimdi karar verilebilir (DECIDE NOW: değeri düşük ya da kararı değiştirmiyor)
+          · {voi.unmeasured.length} sorunun değeri ölçülemedi (metinde tutar yok / finansal olmayan alan) · açık soru {voi.openQuestions}.
+        </p>
+      </Card>
 
       <Card className="mb-6 p-5">
         <div className="flex flex-wrap items-center gap-3">

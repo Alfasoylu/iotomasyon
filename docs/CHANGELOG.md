@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Value of Information engine (2026-10-07)
+- `lib/cfo/voi.ts` + `voi-data.ts`: her bilinmeyen için etkilediği karar, TL aralığı, yaklaşık bilgi değeri ve DECIDE_NOW / ASK_FIRST / RESEARCH_FIRST; dikkat bütçesi (ilk 5 soru), düşük değerli ve kararı değiştirmeyen sorular bastırılır.
+- `/cfo/sorular`: "Önce bunu öğren — bilgi değeri sırası" kartı. AI CFO Blok B4i.
+- Test: `cfo-voi`.
+
 ### Sermaye verimliliği + marjinal tahsis (2026-10-07)
 - `lib/cfo/capital-efficiency.ts` + `capital-efficiency-data.ts`: borç eşiğine (en pahalı ticari kredinin aylık faizi) göre SKU sermaye getirisi, SCALE/KEEP/TRIM/FIX_PRICE/LIQUIDATE/UNKNOWN, fazla stok, break-even tasfiye indirimi, açığa çıkabilir nakit; likidite-öncelikli tahsis planı.
 - `/cfo/sermaye`: verimlilik kartları, sınıf tablosu, "sıradaki X TL" planı, FIX_PRICE / TRIM-LIQUIDATE / SCALE listeleri.
