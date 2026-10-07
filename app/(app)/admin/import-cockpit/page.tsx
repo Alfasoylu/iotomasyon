@@ -36,10 +36,10 @@ import { PageHeader } from "@/components/layout/page-header";
 import { PageHelp } from "@/components/layout/page-help";
 import {
   calculateImportDecision,
-  DEFAULT_USD_TRY_RATE,
 } from "@/lib/import-decision";
 import { calcRevenue } from "@/lib/importer-cost";
 import { resolveMarginPolicy } from "@/lib/marketplace-policy";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -124,10 +124,8 @@ export default async function ImportCockpitPage({
   const ago30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   // ── Paralel veri çekimi ───────────────────────────────────────────────────
-  const [latestRate, trendyolPolicy, products, sales90Raw, sales30Raw, returnsRaw, mpPricesRaw, lifetimeSalesRaw] = await Promise.all([
-    prisma.monthlyExchangeRate.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    }),
+  const [fx, trendyolPolicy, products, sales90Raw, sales30Raw, returnsRaw, mpPricesRaw, lifetimeSalesRaw] = await Promise.all([
+    getCurrentFx(),
     // Trendyol platform policy — komisyon + kargo kademe
     prisma.marketplacePlatformPolicy.findUnique({ where: { platform: "TRENDYOL" } }),
     prisma.product.findMany({
@@ -208,8 +206,8 @@ export default async function ImportCockpitPage({
     }),
   ]);
 
-  const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
-  const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : null;
+  const usdTryRate = fx.usdTry;
+  const rmbUsdRate: number | null = fx.rmbPerUsd;
 
   // Platform policy shape for resolveMarginPolicy
   const platformPolicyInput = trendyolPolicy
@@ -583,7 +581,7 @@ export default async function ImportCockpitPage({
         meta={
           <Badge variant="neutral">
             Kur: 1 USD = ₺{usdTryRate.toFixed(2)}
-            {latestRate ? ` (${latestRate.month}/${latestRate.year})` : " (varsayılan)"}
+            {` (${fx.usdTrySource})`}
           </Badge>
         }
         actions={

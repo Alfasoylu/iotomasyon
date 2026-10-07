@@ -36,6 +36,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Prisma, MarketplacePlatform } from "@prisma/client";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -305,10 +306,11 @@ export default async function MarketplaceProfitPage() {
       orderBy: { createdAt: "desc" },
     }),
     prisma.marketplacePlatformPolicy.findMany(),
-    prisma.monthlyExchangeRate.findFirst({ orderBy: { month: "desc" } }),
+    getCurrentFx(),
   ]);
 
-  const usdTryRate = latestRate ? toNum(latestRate.usdTryRate) : 32;
+  // Tek kur kaynağı (lib/fx/current.ts). Eskiden yalnız aya göre sıralıyordu (yıl yok) → eski yılın Aralık kuru seçilebiliyordu.
+  const usdTryRate = latestRate.usdTry;
 
   // Build platform policy lookup map
   const policyByPlatform = Object.fromEntries(

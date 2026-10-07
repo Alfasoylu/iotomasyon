@@ -26,9 +26,8 @@ import {
   calcImportCost,
   calcRevenue,
   calcProfit,
-  DEFAULT_USD_TRY_RATE,
-  DEFAULT_RMB_USD_RATE,
 } from "@/lib/importer-cost";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export type RecKind =
   | "star"          // yıldız ürün
@@ -74,12 +73,9 @@ export async function getSmartRecommendations(): Promise<SmartRecsResult> {
     const since60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
     // ── Kur ──
-    const latestRate = await prisma.monthlyExchangeRate.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-      select: { usdTryRate: true, rmbUsdRate: true },
-    });
-    const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
-    const rmbUsdRate = latestRate?.rmbUsdRate ? Number(latestRate.rmbUsdRate) : DEFAULT_RMB_USD_RATE;
+    const fx = await getCurrentFx(); // tek kur kaynağı (lib/fx/current.ts)
+    const usdTryRate = fx.usdTry;
+    const rmbUsdRate = fx.rmbPerUsd;
 
     // ── Ürünler ──
     const products = await prisma.product.findMany({

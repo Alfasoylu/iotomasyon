@@ -21,6 +21,7 @@ import { calcMarketplacePricingRow } from "@/lib/marketplace-pricing";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Prisma } from "@prisma/client";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -123,10 +124,11 @@ export default async function RealizedMarginPage() {
       },
     }),
     prisma.marketplacePlatformPolicy.findMany(),
-    prisma.monthlyExchangeRate.findFirst({ orderBy: { month: "desc" } }),
+    getCurrentFx(),
   ]);
 
-  const usdTryRate = latestRate ? toNum(latestRate.usdTryRate) : 32;
+  // Tek kur kaynağı (lib/fx/current.ts). Eskiden yalnız aya göre sıralıyordu (yıl yok) → eski yılın Aralık kuru seçilebiliyordu.
+  const usdTryRate = latestRate.usdTry;
 
   // Build product lookup
   const productMap = new Map(allProducts.map((p) => [p.id, p]));

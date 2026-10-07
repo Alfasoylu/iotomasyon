@@ -23,9 +23,9 @@ async function main() {
     // production before step 8 = every production-applied migration except ai_cfo_v1 (now listed in baseline.json appliedAfterCapture)
     assert.ok(res.pendingInProduction.includes("20261005190000_ai_cfo_v1"), "ai_cfo_v1 is applied in production (step 8A)");
     for (const m of res.pendingInProduction.filter(x => x !== "20261005190000_ai_cfo_v1")) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
-    // market_scout_foundation (PR3) is held back (separate approval); it creates only market_* objects and does not affect this check.
-    // alfashome_order was applied in production on 2026-10-07 (user-approved controlled SQL) and is part of the loop above.
-    assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation"], "only the approval-pending migration is held back from production");
+    // market_scout_foundation (PR3) and drop_legacy_backup_tables (waits for the operator to run it) are held back; they touch only
+    // market_* objects / 3 unused backup tables and do not affect this check. alfashome_order and cfo_ledger_tables_capture are applied.
+    assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation", "20261007200000_drop_legacy_backup_tables"], "only the held-back migrations stay out of production");
     // production default ACL for objects postgres creates in public (after the security phase)
     await db.exec(`alter default privileges in schema public grant all on tables to service_role;
       alter default privileges in schema public grant all on sequences to service_role;

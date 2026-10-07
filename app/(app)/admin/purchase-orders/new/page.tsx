@@ -19,10 +19,10 @@ import { ForecastV2Notice } from "@/components/forecast/forecast-v2-notice";
 import { CreatePurchaseOrderForm } from "@/components/purchase-orders/create-purchase-order-form";
 import {
   calculateImportDecision,
-  DEFAULT_USD_TRY_RATE,
   AIR_FREIGHT_PER_KG,
   SEA_FREIGHT_PER_KG,
 } from "@/lib/import-decision";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -49,10 +49,8 @@ export default async function NewPurchaseOrderPage({
   }
 
   // Fetch exchange rates, suppliers, and eligible products
-  const [latestRate, suppliers, products] = await Promise.all([
-    prisma.monthlyExchangeRate.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    }),
+  const [fx, suppliers, products] = await Promise.all([
+    getCurrentFx(),
     prisma.supplier.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
@@ -88,8 +86,8 @@ export default async function NewPurchaseOrderPage({
     }),
   ]);
 
-  const usdTryRate = latestRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
-  const rmbUsdRate = latestRate?.rmbUsdRate != null ? Number(latestRate.rmbUsdRate) : null;
+  const usdTryRate = fx.usdTry;
+  const rmbUsdRate: number | null = fx.rmbPerUsd;
 
   type RawProduct = (typeof products)[number];
 

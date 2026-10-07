@@ -153,16 +153,12 @@ async function main() {
     assert.ok(ctx.state.some(e => q(e) === "banka.son_girilen_toplam_try" && typeof e.value === "number"), "banka ileri taşıma: son girilen toplam");
     assert.ok(ctx.state.some(e => q(e).startsWith("banka.ileri_tasinan_toplam_try") && e.measured === false), "ileri taşınan toplam TAHMİNİ");
     assert.ok(new Set([...ctx.state, ...ctx.memory].map(e => e.id)).size === ctx.state.length + ctx.memory.length, "bağlam kanıt id'leri benzersiz");
-    // Kanal sözlüğü + kaldıraç merdiveni (2026-10-07): production'da el kitabı sahibinin tuttuğu tablolar — burada aynı şekille kurulur.
-    // Hakediş bankası YALNIZ sözlükten: sözlükte yok / banka ölçülmedi → eşlenmez, nedeniyle raporlanır; bankasız çıkış hiçbir
-    // hesaba atanmaz, yalnız şirket toplamından düşülür.
-    await pg.exec(`create table cfo_kanal_sozluk (yazim text primary key, kanonik text not null, banka text, kaynak_tablo text, gozlem int,
-        guven text, note text, "updatedAt" timestamp default now());
-      insert into cfo_kanal_sozluk (yazim,kanonik,banka,guven) values ('Idefix','IDEFIX','Banka','OLCULDU'),('TEMU','TEMU',null,'OLCULMEDI');
-      create table cfo_kaldirac_basamak (basamak smallint primary key, ad text, durum text, tl_kapasite numeric, tl_maliyet numeric, kaynak text,
-        guven text, note text, "updatedAt" timestamp default now());
-      insert into cfo_kaldirac_basamak (basamak,ad,durum,tl_kapasite,tl_maliyet,guven,note) values
-        (3,'Trendyol erken odeme','BOSTA',250000,null,'TAHMINI','en ucuz bos basamak'),(7,'Sahsi hesaplar','BILINCLI_TUTULUYOR',1550000,null,'OLCULDU','hedef sahsi kartlari kapatmak');
+    // Kanal sözlüğü + kaldıraç merdiveni (2026-10-07): el kitabı sahibinin üretimde tuttuğu tablolar; şema artık migration'dan
+    // (20261007220000_cfo_ledger_tables_capture, CHECK kısıtlarıyla). Hakediş bankası YALNIZ sözlükten: sözlükte yok / banka
+    // ölçülmedi → eşlenmez, nedeniyle raporlanır; bankasız çıkış hiçbir hesaba atanmaz, yalnız şirket toplamından düşülür.
+    await pg.exec(`insert into cfo_kanal_sozluk (yazim,kanonik,banka,kaynak_tablo,guven) values ('Idefix','IDEFIX','Banka','cfo_receivable','OLCULDU'),('TEMU','TEMU',null,'cfo_receivable','OLCULMEDI');
+      insert into cfo_kaldirac_basamak (basamak,ad,durum,tl_kapasite,tl_maliyet,kaynak,guven,note) values
+        (3,'Trendyol erken odeme','BOSTA',250000,null,'test','TAHMINI','en ucuz bos basamak'),(7,'Sahsi hesaplar','BILINCLI_TUTULUYOR',1550000,null,'test','OLCULDU','hedef sahsi kartlari kapatmak');
       update cfo_bank_account set "lastUpdatedAt"='2026-10-04 10:00' where id='b1';
       insert into cfo_receivable (id,channel,"dueDate","amountTry","updatedAt","isCollected") values
         ('r2','Idefix','2026-10-06',5000,now(),false),('r3','TEMU','2026-10-06',3000,now(),false),('r4','YeniKanal','2026-10-06',2000,now(),false);

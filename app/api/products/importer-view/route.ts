@@ -19,8 +19,6 @@ import {
   calcProfit,
   calcStockDays,
   calcHealthScore,
-  DEFAULT_RMB_USD_RATE,
-  DEFAULT_USD_TRY_RATE,
 } from "@/lib/importer-cost";
 import {
   forecastMonthlySales,
@@ -28,6 +26,7 @@ import {
   effectiveMonthlyUnits as pickEffectiveMonthly,
 } from "@/lib/sales-forecast";
 import { forecastV2ForConsumers, forecastV2View, type ForecastV2View } from "@/lib/forecast/consumer";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -117,12 +116,10 @@ export async function GET(_req: NextRequest) {
   }
 
   // ── Fetch exchange rates ───────────────────────────────────────────────────
-  const latestRate = await prisma.monthlyExchangeRate.findFirst({
-    orderBy: [{ year: "desc" }, { month: "desc" }],
-    select: { usdTryRate: true, rmbUsdRate: true },
-  });
-  const usdTryRate = latestRate?.usdTryRate ? Number(latestRate.usdTryRate) : DEFAULT_USD_TRY_RATE;
-  const rmbUsdRate = latestRate?.rmbUsdRate ? Number(latestRate.rmbUsdRate) : DEFAULT_RMB_USD_RATE;
+  // Tek kur kaynağı (lib/fx/current.ts): USD/TRY CFO kur defterinden, RMB/USD elle girilen son kayıttan.
+  const fx = await getCurrentFx();
+  const usdTryRate = fx.usdTry;
+  const rmbUsdRate = fx.rmbPerUsd;
 
   // ── Fetch products ─────────────────────────────────────────────────────────
   const products = await prisma.product.findMany({

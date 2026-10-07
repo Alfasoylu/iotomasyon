@@ -16,6 +16,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { ImportCalculatorForm } from "@/components/suppliers/import-calculator-form";
+import { getCurrentFx } from "@/lib/fx/current";
 
 export const dynamic = "force-dynamic";
 
@@ -49,10 +50,7 @@ export default async function ImportCalculatorPage() {
         leadDays: true,
       },
     }),
-    prisma.monthlyExchangeRate.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-      select: { usdTryRate: true },
-    }),
+    getCurrentFx(),
   ]);
 
   return (
@@ -141,7 +139,7 @@ export default async function ImportCalculatorPage() {
             moq: sp.moq,
             leadDays: sp.leadDays,
           }))}
-          latestRate={latestRate?.usdTryRate != null ? Number(latestRate.usdTryRate) : null}
+          latestRate={latestRate.usdTry}
         />
       </Card>
     </div>
