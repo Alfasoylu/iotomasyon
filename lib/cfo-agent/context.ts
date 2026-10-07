@@ -4,6 +4,7 @@ import { loadBankRollForward } from "./bank-rollforward";
 import { loadImportRevenue } from "./import-revenue";
 import { loadAlfashomeSales } from "./alfashome-sales";
 import { loadCapitalConfig } from "./capital-config";
+import { loadBankLedger, loadQuotes, loadTrendyolFinance } from "./finance-ledgers";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -93,6 +94,9 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   state.push(...await loadAlfashomeSales(db, at));
   // B4f — sermaye ayarı (/admin/sermaye): elle girilen toplam sermaye çerçevesi + stokta bağlı + kullanılabilir
   state.push(...await loadCapitalConfig(db, at));
+  // B4g — panelde olup CFO'nun okumadığı defterler: Trendyol fatura/hakediş (kesinti dökümü, reklam, ceza, iade), banka
+  // hareketleri (ekstre), açık teklifler. Yükleme bazlı → tazelik ölçülmüşlüğü belirler.
+  state.push(...await loadTrendyolFinance(db, at), ...await loadBankLedger(db, at), ...await loadQuotes(db, at));
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
     for (const g of await db.query(`select distinct on (goal_key) goal_key, state, grade, gap_try, current_rate_try_per_day, required_rate_try_per_day, as_of::text as as_of
@@ -156,6 +160,10 @@ export async function loadScheduledExtras(decisionType: string, at: string, db: 
   if (decisionType === "SALES") {
     // Ciro kararlarında Entegra'nın görmediği ALFASHOME cirosu (son 30 gün + senkron tazeliği).
     out.push(...(await loadAlfashomeSales(db, at)).filter(e => e.query.startsWith("alfashome.senkron") || e.query.startsWith("alfashome.ciro_son_30")));
+  }
+  if (decisionType === "PRICING") {
+    // Fiyat/marj kararlarında gerçekleşen pazar yeri kesinti oranı (fatura bazlı) + dosya tazeliği.
+    out.push(...(await loadTrendyolFinance(db, at)).filter(e => e.query.startsWith("trendyol_finans.yukleme") || e.query.includes(".kesinti_orani_pct")));
   }
   if (decisionType === "CASH" || decisionType === "INVENTORY") {
     const imports = await loadImportRevenue(db, at);
