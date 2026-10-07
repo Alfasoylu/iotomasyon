@@ -10,6 +10,7 @@ import { decisionInputHash, decisionTypeOf, impactBucket, materialChange } from 
 import { budgetBlock, type BudgetTotals } from "../lib/cfo-agent/budget";
 import { getCfoConfig } from "../lib/cfo-agent/config";
 import { costEfficiency } from "../lib/cfo-agent/cost-efficiency";
+import { importProjectEvidence } from "../lib/cfo-agent/import-revenue";
 import { evidence } from "../lib/cfo-agent/evidence";
 import type { Anomaly, Evidence } from "../lib/cfo-agent/types";
 
@@ -135,6 +136,21 @@ check("maliyet verimliliği: monitor ≠ AI çağrısı; kaçınma nedenleri; i�
   assert.deepEqual(e.avoided, { same_input: 1, no_material_change: 1, cooldown: 1, open_task: 1, data_quality: 1, no_actionable: 0, budget: 1 });
   assert.equal(e.callsAvoided, 6);
   assert.equal(costEfficiency(runs, usage, [], d(5)).costPerAcceptedInsight, null);
+});
+
+check("ithalat beklenen ciro: proje başına durum/ciro/kâr/aylık katkı TAHMİNİ; varışı geçmiş YOLDA kaydı işaretlenir", () => {
+  const ev = importProjectEvidence([
+    { code: "07.26sea", status: "YOLDA", eta: "2026-10-05", revenue: 15474895, profit: 6039484, months: 6, tag: "KESIN" },
+    { code: "ROMANYA-PARCA", status: "GUMRUKTE", eta: null, revenue: 3343000, profit: null, months: null, tag: "KESIN" },
+  ], "2026-10-07T12:00:00.000Z");
+  const v = (q: string) => ev.find(e => e.query.startsWith(q));
+  assert.match(String(v("ithalat.07.26sea.durum")?.value), /varış tarihi geçti — durum güncellenmeli/);
+  assert.equal(v("ithalat.07.26sea.durum")?.measured, false, "bayat kayıt ölçülmüş sayılmaz");
+  assert.equal(v("ithalat.07.26sea.aylik_ciro_katkisi_try")?.value, Math.round(15474895 / 6));
+  assert.equal(v("ithalat.07.26sea.beklenen_kar_try")?.measured, false, "plan TAHMİNİdir");
+  assert.equal(v("ithalat.ROMANYA-PARCA.aylik_ciro_katkisi_try"), undefined, "satış ayı yoksa aylık katkı uydurulmaz");
+  assert.equal(v("ithalat.toplam_beklenen_ciro_try")?.value, 15474895 + 3343000);
+  assert.doesNotMatch(String(v("ithalat.ROMANYA-PARCA.durum")?.value), /geçti/, "varış tarihi yoksa bayat sayılmaz");
 });
 
 if (failed) { console.error(`\n${failed} test başarısız`); process.exit(1); }

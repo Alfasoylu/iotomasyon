@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### AI CFO — gelecek ithalatın beklenen cirosu CFO'da (2026-10-07)
+- `lib/cfo-agent/import-revenue.ts`: açık ithalat projelerinin (`cfo_import_project`, teslim/iptal hariç) beklenen ciro, kâr ve aylık ciro katkısı (ciro ÷ satış ayı) ile konteynerdeki yeni ürünlerin (`urun_aday` TASLAK/HAZIR) liste fiyatlı brüt değeri ve katalogda olmayan sayısı CFO kanıtı olur; hepsi TAHMİNİ. Varış tarihi geçmiş ama YOLDA/PLANLANDI kalan proje işaretlenir.
+- Derin inceleme Blok B'de tümü; planlı karar paketinde nakit ve stok kararlarında en yakın projenin durum + aylık katkısı (≤2 kanıt).
+- Testler: `ai-cfo-decision-packet` (saf), `ai-cfo-source-mapping` (üretim şeması kopyasında yükleyici).
+
 ### Panel taraması — aşama 1 (2026-10-07)
 - Kırık linkler düzeltildi: satın alma siparişi detay sayfası (`/admin/purchase-orders/[id]`) eklendi; "Yeni teklif oluştur" müşteri sayfasının teklif bölümüne gider; `/admin` linkleri `/dashboard`'a.
 - Sahipsiz/emekli sayfalar kaldırıldı, eski adresler kalıcı yönlendirilir: `/admin/bulk-import` → `/products`, `/admin/import-decisions` ve `/admin/procurement` → `/cfo/kazananlar#ithalat`.

@@ -178,6 +178,16 @@ async function main() {
     assert.match(unm, /YeniKanal hakediş 2000 TRY — sözlükte yok: YeniKanal/);
     assert.match(unm, /sabit gider kalani -100000 TRY — takvimde banka yok/);
     assert.match(String(v("merdiven.7.Sahsi hesaplar.durum")), /^BILINCLI_TUTULUYOR \(ÖNERME\)/, "bilinçli tutulan basamak işaretli");
+    // Gelecek ithalat (2026-10-07): proje beklenen cirosu + konteynerdeki katalogda olmayan yeni ürünler CFO bağlamında
+    await pg.exec(`insert into cfo_import_project (id,code,status,"etaDate","expectedRevenueTry","expectedProfitTry","salesMonths","dataTag","updatedAt")
+        values ('ip1','KONT-1','YOLDA','2026-11-01',600000,240000,6,'KESIN',now()),('ip2','ESKI','TESLIM_ALINDI',null,999,null,null,'KESIN',now());
+      insert into urun_aday (sku,satis_try,adet,durum) values ('YENI-1',100,50,'TASLAK'),('MD-X',200,10,'HAZIR'),('RED-1',999,9,'REDDEDILDI');`);
+    const ctx3 = await loadCfoContext(late, config, db);
+    const w = (key: string) => ctx3.state.find(e => q(e).startsWith(key))?.value;
+    assert.equal(w("ithalat.KONT-1.aylik_ciro_katkisi_try"), 100000, "600.000 / 6 ay");
+    assert.equal(w("ithalat.ESKI."), undefined, "teslim alınmış proje gelecek ciro değildir");
+    assert.equal(w("ithalat.yeni_urun.liste_fiyatli_brut_try"), 100 * 50 + 200 * 10, "reddedilen aday sayılmaz");
+    assert.equal(w("ithalat.yeni_urun.katalogda_olmayan"), "1/2 ürün, 60 adet", "MD-X katalogda var");
     assert.equal(v("merdiven.3.Trendyol erken odeme.kapasite_try"), 250000);
     assert.equal(ctx2.state.find(e => q(e).startsWith("merdiven.3."))?.measured, false, "TAHMINI basamak ölçülmemiş sayılır");
 

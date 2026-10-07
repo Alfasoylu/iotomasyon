@@ -89,7 +89,7 @@ export function buildDecisionPacket(input: { decisionType: DecisionType; anomali
       return { id: a.id, rule: a.rule, severity: a.severity, category: a.category, entity: a.entityId,
         impact: a.impact ? { value: a.impact.value, ...(a.impact.kind ? { kind: a.impact.kind } : {}), tahmini: a.impact.estimated } : null, evidence_ids: ids };
     });
-    const extras = input.extras.slice(0, 3);
+    const extras = input.extras.slice(0, 4);
     const packet: DecisionPacket = {
       decision_type: input.decisionType,
       why_now: chosen.map(c => ({ anomaly_id: c.anomaly.id, reason: REASON_TEXT[c.reason] })),
