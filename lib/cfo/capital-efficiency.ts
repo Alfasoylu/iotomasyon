@@ -128,7 +128,7 @@ export type Allocation = {
  * Marjinal tahsis: önce likidite açığı (zorunlu), sonra risk ayarlı getiriye göre stok yenileme ve borç kapama.
  * Borç kapama getirisi kesin (güven 1); stok yenileme getirisi 90 günlük satış hızına dayanır (güven 0,6) ve talep sınırlıdır.
  */
-export function allocate(skus: SkuInput[], debts: DebtInput[], opts: { liquidityGapTry: number; budgetTry: number; unitPriceBySku?: Map<string, number> }, p: Params = DEFAULT_PARAMS): Allocation & { skus: SkuResult[] } {
+export function allocate(skus: SkuInput[], debts: DebtInput[], opts: { liquidityGapTry: number; budgetTry: number; unitPriceBySku?: Map<string, number>; stressGapTry?: number }, p: Params = DEFAULT_PARAMS): Allocation & { skus: SkuResult[] } {
   const h = hurdleRate(debts);
   const hurdle = h.monthly ?? 0.04;
   const res = skus.map(s => classifySku(s, hurdle, p));
@@ -140,7 +140,13 @@ export function allocate(skus: SkuInput[], debts: DebtInput[], opts: { liquidity
   })) as Allocation["portfolio"];
 
   const uses: Use[] = [];
-  if (opts.liquidityGapTry > 0) uses.push({ kind: "LIQUIDITY", label: "nakit dibi tabanın altında — önce açığı kapat", capitalTry: r2(opts.liquidityGapTry),
+  // Likidite önce; açık, baz (Goal Engine tabanı) ile makul stres senaryosunun (lib/cfo/downside.ts) büyüğü → nakit tüketen her
+  // kullanım (stok tamamlama, borç kapama) önce stres dibini tabana çekecek nakit ayrıldıktan sonra sıraya girer.
+  const stress = Math.max(0, opts.stressGapTry ?? 0);
+  const liq = Math.max(opts.liquidityGapTry, stress);
+  if (liq > 0) uses.push({ kind: "LIQUIDITY", label: stress > opts.liquidityGapTry
+      ? `makul streste nakit dibi tabanın ${Math.round(stress)} TL altında (baz ${Math.round(opts.liquidityGapTry)}) — önce açığı kapat`
+      : "nakit dibi tabanın altında — önce açığı kapat", capitalTry: r2(liq),
     returnMonthly: null, confidence: 1, riskAdjusted: Infinity, goal: { debtTry: 0, netCapitalMonthlyTry: 0, revenueMonthlyTry: 0 }, downside: "kapanmazsa ödeme aksar / pahalı KMH" });
   for (const r of res.filter(x => x.cls === "SCALE" && x.restockCapitalTry > 0 && x.marginalReturnMonthly != null)) {
     const conf = 0.6;

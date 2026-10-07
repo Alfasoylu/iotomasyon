@@ -64,5 +64,10 @@ assert.ok(a.releasableCashTry > 900000);
 assert.ok(a.dragMonthlyTry > 29000);
 // likidite açığı yoksa ilk sırada getiri
 assert.equal(allocate([], debts, { liquidityGapTry: 0, budgetTry: 100000 }).plan[0].use.kind, "DEBT_PAYOFF");
+// stres açığı bazdan büyükse likidite rezervi stres kadar → nakit tüketen kullanımlar geriye itilir
+const st = allocate([], debts, { liquidityGapTry: 50000, budgetTry: 100000, stressGapTry: 80000 });
+assert.equal(st.plan[0].use.kind, "LIQUIDITY"); assert.equal(st.plan[0].amountTry, 80000); assert.match(st.plan[0].use.label, /makul streste/);
+assert.equal(st.plan[1].amountTry, 20000, "kalan bütçe borca");
+assert.equal(allocate([], debts, { liquidityGapTry: 50000, budgetTry: 100000, stressGapTry: 10000 }).plan[0].amountTry, 50000, "stres bazdan küçükse baz geçerli");
 
-console.log("CFO capital efficiency: hurdle from priciest company debt, TRIM/LIQUIDATE/FIX_PRICE/SCALE/UNKNOWN, break-even discount, liquidity-first allocation passed");
+console.log("CFO capital efficiency: hurdle from priciest company debt, TRIM/LIQUIDATE/FIX_PRICE/SCALE/UNKNOWN, break-even discount, liquidity-first allocation (stress gap) passed");

@@ -8,6 +8,7 @@ import { loadCapitalEfficiency } from "@/lib/cfo/capital-efficiency-data";
 import { loadRevenueLevers } from "@/lib/cfo/revenue-levers-data";
 import { prisma } from "@/lib/prisma";
 import type { CapClass, SkuResult } from "@/lib/cfo/capital-efficiency";
+import { TIER_LABEL } from "@/lib/cfo/downside";
 import Link from "next/link";
 import { fmtTry, fmtPct } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
@@ -22,6 +23,7 @@ export default async function CfoAllocationPage() {
   const [{ raw, overview: o }, ce, rv] = await Promise.all([loadCfoData(), loadCapitalEfficiency(sql => prisma.$queryRawUnsafe(sql)), loadRevenueLevers(sql => prisma.$queryRawUnsafe(sql))]);
   const options = buildAllocation(o, raw.loans);
   const hurdlePct = ce.hurdleMonthly != null ? ce.hurdleMonthly * 100 : null;
+  const dn = ce.downside;
   const top = (cls: CapClass[], key: (r: SkuResult) => number, n = 8) => ce.skus.filter(r => cls.includes(r.cls)).sort((a, b) => key(b) - key(a)).slice(0, n);
 
   return (
@@ -31,6 +33,39 @@ export default async function CfoAllocationPage() {
         title="Sermaye Tahsisi"
         subtitle="Eline geçen her serbest nakit için: borç mu kapatmalı, mal mı almalı, reklam mı artırmalı?"
       />
+
+      {/* Aşağı yön senaryoları — lib/cfo/downside.ts (deterministik; projeksiyon + KMH faizi + parametrik şoklar) */}
+      {dn && (
+        <Card className="mb-6 p-5">
+          <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Aşağı yön — nakit dibi şoklara ne kadar dayanır?</h2>
+          <p className="mb-3 text-xs text-[var(--text-muted)]">
+            Projeksiyon dibi {fmtTry(dn.projectionMin.position)} ({dn.projectionMin.date}) eksi pozisyonun KMH faizini saymıyor; {dn.kmhMonthly == null ? "KMH faizi girilmemiş (0 alındı — iyimser)," : `aylık %${(dn.kmhMonthly * 100).toFixed(2)} faizle`} baz dip
+            <strong> {fmtTry(dn.scenarios[0].minPosition)}</strong>. Kaynaklar: genel KMH {fmtTry(dn.resources.generalTry)} · gümrük limiti {fmtTry(dn.resources.customsTry)} ·
+            şahsi KMH {dn.resources.personalTry == null ? "bilinmiyor" : fmtTry(dn.resources.personalTry)}. Emniyet payı (tüm kaynaklarla fonlanabilir kalan en büyük tekil şok):
+            ciro −%{dn.tolerance.maxRevenueDropPct ?? 0} · hakediş gecikmesi {dn.tolerance.maxPayoutDelayDays ?? 0} gün · kur +%{dn.tolerance.maxFxUpPct ?? 0}.
+            Şoklar olasılık değil, ölçüdür.
+          </p>
+          {dn.parity.mismatchDays > 0 && (
+            <p className="mb-3 rounded border border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2 text-xs text-[var(--text-primary)]">
+              <Badge variant="danger">Uyuşmazlık</Badge> {dn.parity.mismatchDays} günde akış cfo_nakit_projeksiyon ile tutmuyor — fonksiyon değişmiş; senaryolar tahsise bağlanmadı.
+            </p>
+          )}
+          <CfoTable head={<tr><Th>Senaryo</Th><Th right>Dip</Th><Th>Tarih</Th><Th right>Baza göre</Th><Th right>KMH faizi (120g)</Th><Th>Kaynak katmanı</Th><Th right>Eksik</Th></tr>}>
+            {dn.scenarios.map(s => (
+              <tr key={s.key}>
+                <Td strong>{s.label}</Td><Td right>{fmtTry(s.minPosition)}</Td><Td muted>{s.minDate}</Td>
+                <Td right>{s.key === "base" ? "—" : fmtTry(s.deltaVsBaseTry)}</Td><Td right>{fmtTry(s.carryCostTry)}</Td>
+                <Td>{s.tier === "UNFUNDED" ? <Badge variant="danger">{TIER_LABEL[s.tier]}</Badge> : TIER_LABEL[s.tier]}</Td>
+                <Td right>{s.shortfallTry ? fmtTry(s.shortfallTry) : "—"}</Td>
+              </tr>
+            ))}
+          </CfoTable>
+          <p className="mt-3 text-xs text-[var(--text-muted)]">
+            En zararlı tekil şok: {dn.sensitivity[0]?.label} ({fmtTry(dn.sensitivity[0]?.deltaVsBaseTry ?? 0)}). Tahsis planı makul stres dibini tabana
+            {dn.floorTry == null ? " (taban bilinmiyor)" : ` (${fmtTry(dn.floorTry)})`} çekecek {fmtTry(ce.stressGapTry)} nakdi diğer her kullanımdan önce ayırır.
+          </p>
+        </Card>
+      )}
 
       {/* Ciro hedefine giden yol — lib/cfo/revenue-levers.ts (deterministik) */}
       <Card className="mb-6 p-5">
@@ -66,7 +101,8 @@ export default async function CfoAllocationPage() {
           {[
             ["Eşik altı değer kaybı", `${fmtTry(ce.dragMonthlyTry)}/ay`, "bu sermaye borç kapatsaydı kazanılacak − bugünkü katkı"],
             ["Açığa çıkarılabilir nakit", fmtTry(ce.releasableCashTry), "fazla + ölü stok, elde tutmaya eşit indirimle"],
-            ["Likidite açığı", ce.liquidityGapTry > 0 ? fmtTry(ce.liquidityGapTry) : "yok", "120 gün nakit dibi tabanın altında"],
+            ["Likidite açığı", Math.max(ce.liquidityGapTry, ce.stressGapTry) > 0 ? fmtTry(Math.max(ce.liquidityGapTry, ce.stressGapTry)) : "yok",
+              ce.stressGapTry > ce.liquidityGapTry ? `makul streste (baz ${fmtTry(ce.liquidityGapTry)})` : "120 gün nakit dibi tabanın altında"],
             ["Eşik altı sermaye", fmtTry(ce.portfolio.TRIM.capitalTry + ce.portfolio.LIQUIDATE.capitalTry + ce.portfolio.FIX_PRICE.capitalTry), "TRIM + LIQUIDATE + FIX_PRICE"],
           ].map(([l, v, sub]) => (
             <div key={l} className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-3">
@@ -92,7 +128,7 @@ export default async function CfoAllocationPage() {
 
       <Card className="mb-6 p-5">
         <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Sıradaki {fmtTry(ce.budgetTry)} nereye? (açığa çıkarılabilir nakit kadar)</h2>
-        <p className="mb-3 text-xs text-[var(--text-muted)]">Önce likidite açığı (zorunlu), sonra risk ayarlı aylık getiriye göre: stok tamamlama getirisi 90 günlük satışa dayanır (güven 0,6), borç kapama kesindir (güven 1). Para transferi/sipariş/kredi işlemi yapılmaz — karar önerisidir.</p>
+        <p className="mb-3 text-xs text-[var(--text-muted)]">Önce likidite açığı (zorunlu; baz ile makul stres senaryosunun büyüğü), sonra risk ayarlı aylık getiriye göre: stok tamamlama getirisi 90 günlük satışa dayanır (güven 0,6), borç kapama kesindir (güven 1). Para transferi/sipariş/kredi işlemi yapılmaz — karar önerisidir.</p>
         <CfoTable head={<tr><Th>#</Th><Th>Kullanım</Th><Th right>Tutar</Th><Th right>Aylık getiri</Th><Th right>Güven</Th><Th>Hedef etkisi</Th><Th>Aşağı yön</Th></tr>}>
           {ce.plan.map((p, i) => (
             <tr key={i}>

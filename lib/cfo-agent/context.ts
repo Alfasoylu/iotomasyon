@@ -9,6 +9,7 @@ import { loadCapitalEvidence } from "./capital-evidence";
 import { loadVoiEvidence } from "./voi-evidence";
 import { loadDecisionMemoryEvidence, loadGoalAttributionEvidence } from "./decision-memory-evidence";
 import { loadRevenueEvidence } from "./revenue-evidence";
+import { loadDownsideEvidence } from "./downside-evidence";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -111,6 +112,8 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   state.push(...await loadGoalAttributionEvidence(db, at));
   // B4l — ciro hedefine giden yol: açık ve gelir kaldıraçları (batık sermayeyi çalıştıran önce)
   state.push(...await loadRevenueEvidence(db, at));
+  // B4m — aşağı yön: KMH faizi dahil nakit dibi, makul stres, emniyet payı, en zararlı şok (deterministik)
+  state.push(...await loadDownsideEvidence(db, at));
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
     for (const g of await db.query(`select distinct on (goal_key) goal_key, state, grade, gap_try, current_rate_try_per_day, required_rate_try_per_day, as_of::text as as_of
@@ -163,13 +166,15 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
  *  kararında en yakın varışlı ithalat projesinin beklenen aylık ciro katkısı (TAHMİNİ). Başka bağlam yok. */
 export async function loadScheduledExtras(decisionType: string, at: string, db: ReadSource = businessSource): Promise<Evidence[]> {
   // Paket ekleri en çok 4 (decision-packet.ts) → sıra karar değerine göre: önce sermaye eşiği + tahsis planı ve ters yöndeki
-  // geçmiş karar, sonra kaldıraç merdiveni ve ithalat katkısı.
+  // geçmiş karar, nakit kararında stres dibi (KMH faizi + makul şoklar); sonra kaldıraç merdiveni ve ithalat katkısı.
   const out: Evidence[] = [];
   if (decisionType === "CASH" || decisionType === "INVENTORY") {
     // Nakit/stok kararlarında: eşik getiri + tahsis planının ilk adımı (her 1 TL nereye?)
     out.push(...(await loadCapitalEvidence(db, at)).filter(e => e.query.startsWith("sermaye_verimliligi.esik_getiri") || e.query.startsWith("sermaye_verimliligi.plan.1")));
     // Nakit kararında ters yöndeki ilk geçmiş karar (ör. borç hedefi) — model önceki kararla tutarlılığı sorgular
     if (decisionType === "CASH") out.push(...(await loadDecisionMemoryEvidence(db, at)).filter(e => /\.(WRONG_DIRECTION|WORSENING) /.test(e.query)).slice(0, 1));
+    // Nakit kararında stres dibi (KMH faizi + makul şoklar) — "baz fonlanıyor" iyimserliğini sorgular
+    if (decisionType === "CASH") out.push(...(await loadDownsideEvidence(db, at)).filter(e => e.query.startsWith("asagi_yon.stres_dip") || e.query.startsWith("asagi_yon.uyusmazlik")));
   }
   if (decisionType === "CASH") {
     const [p] = await db.query<{ t: string | null }>(`select to_regclass('public.cfo_kaldirac_basamak')::text as t`);
