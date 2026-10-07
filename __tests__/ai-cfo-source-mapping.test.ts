@@ -188,9 +188,9 @@ async function main() {
     assert.equal(w("ithalat.ESKI."), undefined, "teslim alınmış proje gelecek ciro değildir");
     assert.equal(w("ithalat.yeni_urun.liste_fiyatli_brut_try"), 100 * 50 + 200 * 10, "reddedilen aday sayılmaz");
     assert.equal(w("ithalat.yeni_urun.katalogda_olmayan"), "1/2 ürün, 60 adet", "MD-X katalogda var");
-    // ALFASHOME kanalı (2026-10-07): migration üretimde onay bekliyor → test kendi uygular. Ödenmiş + iptal olmayan ciro sayılır.
-    assert.equal(ctx3.state.some(e => q(e).startsWith("alfashome.")), false, "tablo yokken bölüm atlanır");
-    await pg.exec(readFileSync("prisma/migrations/20261007210000_alfashome_order/migration.sql", "utf8"));
+    // ALFASHOME kanalı (2026-10-07): tablo üretimde (bootstrap'ta da var). Boş tablo → "hiç senkron yok", ölçüm sayılmaz.
+    // Ödenmiş + iptal olmayan ciro sayılır.
+    assert.match(String(w("alfashome.senkron")), /hiç senkron yok/, "boş tablo: senkron hiç çalışmadı diye bildirilir");
     await pg.exec(`insert into alfashome_order (id,ordered_at,amount,status,payment_status,item_qty,synced_at) values
       ('o1','2026-10-06 10:00+03',1000,'pending','captured',2,'2026-10-08 06:00+03'),
       ('o2','2026-10-07 11:00+03',500,'pending','awaiting',1,'2026-10-08 06:00+03'),
