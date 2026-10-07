@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Aşağı yön senaryoları — nakit dibi şoklara ne kadar dayanır? (2026-10-07)
+- `lib/cfo/downside.ts` + `downside-data.ts`: `cfo_nakit_projeksiyon(120)` günlük bileşenleri (defter alacağı / kanal temposu / çıkış / kur duyarlı gümrük çıkışı) fonksiyonla gün gün eşlik denetimiyle okunur; eksi pozisyonun KMH faizi eklenir; ciro −%20, hakediş +14 gün, kur +%15, faiz +1 puan/ay, makul stres (yarım şoklar birlikte) ve ağır stres; kaynak katmanı (genel KMH / gümrük limiti / şahsi / fonlanamıyor), eksik tutar, emniyet payları, duyarlılık sırası.
+- Tahsis motoru: likidite rezervi = baz ile makul stres açığının büyüğü (`allocate` `stressGapTry`).
+- `/cfo/sermaye` en üst kartı; AI CFO Blok B4m; planlı pakette nakit kararlarına stres dibi.
+- Test: `cfo-downside` (07.10 üretim akışıyla projeksiyon dibi birebir), `cfo-capital-efficiency` stres tahsisi.
+
 ### Ciro hedefine giden yol — gelir kaldıraçları (2026-10-07)
 - `lib/cfo/revenue-levers.ts` + `revenue-levers-data.ts`: ciro açığı ve kaldıraçlar (konteynerdeki listelenmemiş ürünler — batık sermaye, ek sermaye yok; stoksuz satan ürünler; SCALE stok tamamlama), ek/batık sermaye, güven, açık payı.
 - `/cfo/sermaye` kartı; AI CFO Blok B4l; planlı pakette ciro kararlarına açık + kaldıraç #1.
