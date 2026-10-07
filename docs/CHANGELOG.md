@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### AI CFO — reddedilen çağrı bütçeyi doldurmaz, route süresi 300 sn (2026-10-07)
+- Sağlayıcı HTTP hata yanıtı verirse (`provider_http_*`, faturalanmaz) kullanım satırının rezervi 0 yazılır; günlük/aylık TL tavanını doldurmaz. Zaman aşımı/bağlantı hatasında rezerv kalır. İlk planlı koşu (07.10 19:53) bu yüzden `blocked_by_daily_budget` olmuştu.
+- `/api/admin/ai-cfo/runner`, `/api/cron/ai-cfo-monitor`, `/api/cron/ai-cfo-morning` `maxDuration` 120 → 300 (snapshot 75–110 sn ölçüldü).
+
 ### AI CFO — maliyet ve görev ayrımı (2026-10-07)
 - İki mod: **SCHEDULED_CFO** (cron, elle monitor, sabah özeti) ve **MANUAL_DEEP_REVIEW** (yalnız elle, `/admin/ai-cfo` "Derin inceleme"). Planlı iş derin incelemeye hiçbir yoldan geçemez (`safeAiCfoRun` elle olmayan `deep_review`'u reddeder).
 - Planlı çağrı el kitabının tamamı yerine **küçük karar paketi** alır (`decision-packet.ts`): ≤3 anomali, anomali başına ≤6 kanıt, ≤2 rule card, ≤2 önceki karar, kısıtlar. Rule card'lar v1 `rule-cards.md`'de: el kitabı v33 §7'den birebir seçilmiş maddeler (seçim el kitabı sahibinin), kart ≤800 token; ortak çekirdek (4 madde) planlı sistem talimatında. Sert sınır 8.000 girdi / 700 çıktı token; paket büyükse küçülür (kanıt → kart → anomali → hafıza), sınır yükselmez. Önbellek kaldırıldı (ölçülen isabet %0; slot aralığı 5 dk ömrü aşıyor).

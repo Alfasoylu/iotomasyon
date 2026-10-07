@@ -36,7 +36,7 @@ jobs:
             echo "SITE_BASE_URL/PDKS_BASE_URL veya CRON_SECRET tanımlı değil; atlanıyor."
             exit 0
           fi
-          code=$(curl -sS -m 170 -L --location-trusted -o /tmp/out.txt -w "%{http_code}" \
+          code=$(curl -sS -m 310 -L --location-trusted -o /tmp/out.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "${BASE_URL%/}/api/cron/ai-cfo-monitor")
           echo "HTTP ${code}"

@@ -6,7 +6,7 @@ import { RUNNER_BODY_LIMIT, runnerRequestGuard } from "@/lib/cfo-agent/runner-re
 
 // /admin/ai-cfo elle çalıştırma (ADMIN + CFO_READ + EXECUTIVE_READ + CFO_WRITE, aynı origin, yalnız production).
 // Runner kendi kapılarını uygular: bayraklar kapalıyken `disabled`, AI kapalıyken model çağrılmaz.
-export const dynamic = "force-dynamic"; export const runtime = "nodejs"; export const maxDuration = 120;
+export const dynamic = "force-dynamic"; export const runtime = "nodejs"; export const maxDuration = 300; // snapshot ~75–110 sn + model çağrısı; 120 sn sınırı yetmiyordu (07.10)
 const headers = { "Cache-Control": "private, no-store", "Vary": "Cookie", "X-Content-Type-Options": "nosniff", "Cross-Origin-Resource-Policy": "same-origin" };
 export async function POST(req: Request) {
   const user = await getCurrentSession();
