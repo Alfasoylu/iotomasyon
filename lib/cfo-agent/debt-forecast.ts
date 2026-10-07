@@ -1,3 +1,4 @@
+import { REVIEWED_CFO_SOURCE_BINDINGS } from './acceptance-profile';
 import { NEW_ORDER_DEBT_LIMIT_TRY } from './debt-policy';
 import type { ReadSource, Row } from './sources';
 import type { CfoAgentSnapshot } from './types';
@@ -10,8 +11,11 @@ export async function readForecastInputs(db:ReadSource,snapshot:CfoAgentSnapshot
   // Anchor the historical window at the last imported day, not today's missing rows.
   const end=snapshot.dataQuality.sourceWatermarks?.find(w=>w.source==='Entegra')?.orderDate;
   if(end&&!snapshot.dataQuality.missingFields?.includes('canonical_sales_semantics_not_validated')&&snapshot.dataQuality.duplicateCanonicalRows===0){
-    try{const [r]=await db.query<Row>(`select sum("totalAmountTry")::numeric as revenue,count(distinct "orderDate"::date)::int as days
-      from cfo_satis_siparis where "orderDate">=date_trunc('day',$1::timestamp)-interval '30 days' and "orderDate"<date_trunc('day',$1::timestamp)`,end);
+    // Görünümün gerçek sütunları siparis_tarihi / siparis_tutari (REVIEWED_CFO_SOURCE_BINDINGS). Eski "orderDate"/"totalAmountTry"
+    // adları üretimde yoktu: sorgu her koşuda düşüyor, borç tahmini hep "Geçmiş satış penceresi okunamadı" diyordu (2026-10-07).
+    const col=REVIEWED_CFO_SOURCE_BINDINGS.cfo_satis_siparis;
+    try{const [r]=await db.query<Row>(`select sum("${col.totalAmountTry}")::numeric as revenue,count(distinct "${col.orderDate}"::date)::int as days
+      from cfo_satis_siparis where "${col.orderDate}">=date_trunc('day',$1::timestamp)-interval '30 days' and "${col.orderDate}"<date_trunc('day',$1::timestamp)`,end);
       result.historicalRevenueTry=r?.revenue==null?null:Number(r.revenue);result.historicalDays=Number(r?.days??0);result.historicalEnd=end;
     }catch{result.missing.push('Geçmiş satış penceresi okunamadı');}
   }

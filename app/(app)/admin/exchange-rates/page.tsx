@@ -43,7 +43,7 @@ export default async function ExchangeRatesPage() {
             İthalat maliyeti hesaplamasında kullanılan aylık USD/TRY ve RMB/USD kurlarını yönetin.
           </p>
         </div>
-        <Link href="/admin">
+        <Link href="/dashboard">
           <Button variant="secondary">← Admin Panel</Button>
         </Link>
       </div>

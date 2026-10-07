@@ -159,7 +159,7 @@ export function OutcomeChips({ customerId }: { customerId: string }) {
                   🎉 Status &quot;Kazanıldı&quot; olarak güncellenecek.
                 </p>
                 <Link
-                  href={`/quotes/new?customerId=${customerId}`}
+                  href={`/customers/${customerId}#teklif`}
                   className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 underline"
                 >
                   Yeni teklif oluştur →

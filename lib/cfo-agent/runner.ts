@@ -197,7 +197,10 @@ async function run(type: RunType, deps: RunnerDependencies): Promise<RunnerOutco
     // Provider and monitor-lock failures carry fixed diagnostic tags; anything else stays generic.
     const code = error instanceof ProviderError || error instanceof LockError ? error.code : "monitor_failed";
     try {
-      if (usageId && usage) await store.updateUsage(usageId, { ...usage, status: "failed" });
+      // HTTP hata yanıtı (4xx/5xx) = istek reddedildi, faturalanmadı → rezerv harcama sayılmaz (07.10: iki provider_http_400'ün
+      // 4,20 TL rezervi günlük tavanı doldurdu). Zaman aşımı / bağlantı hatasında maliyet bilinmez → rezerv kalır.
+      if (usageId && usage) await store.updateUsage(usageId, { ...usage, status: "failed",
+        ...(code.startsWith("provider_http_") ? { estimatedCost: 0, reservedCostTry: null } : {}) });
       if (id) await store.finish(id, "failed", new Date(), 0, null, code);
     } catch { /* kayıt hatası asıl sonucu değiştirmez */ }
     return { status: "failed", runId: id, error: code };

@@ -15,6 +15,16 @@ const protectedPrefixes = [
   "/search",
   "/activity",
   "/cfo",
+  // 2026-10-07 panel taraması: (app) altındaki diğer bölümler de oturumsuzken /login'e yönlenir (layout'taki
+  // requireUser zaten korur; bu, sayfa sunucuda çalışmadan önce erken yönlendirmedir).
+  "/admin",
+  "/marketplace",
+  "/warehouse",
+  "/orders",
+  "/alfashome",
+  "/reklamlar",
+  "/whatsapp",
+  "/yardim",
 ];
 
 export async function proxy(request: NextRequest) {

@@ -11,13 +11,15 @@ import { LogoutButton } from "@/components/dashboard/logout-button";
 import { MobileNavButton } from "@/components/dashboard/mobile-nav-button";
 import { Sidebar, type NavItem } from "@/components/dashboard/sidebar";
 import { CommandPalette } from "@/components/layout/command-palette";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkPermission, isOwner } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 
 // ── Navigation definition ──────────────────────────────────────────────────
 // 8 mantıksal grup. Her item için:
 //   • `iconKey` → Lucide icon (sidebar.tsx ICONS map)
 //   • `permission` → görünürlük (undefined = tüm authenticated kullanıcılar)
+//   • `alsoRequires` → sayfanın ek istediği izinler (menü sayfanın reddettiği kullanıcıya link göstermesin)
+//   • `adminOnly` → yalnız ADMIN rolü / sahip (sayfa böyle kontrol ediyorsa)
 //   • `section` → sidebar grup başlığı
 //   • `subGroup` → grup içinde alt-başlık (örn. "Yapılandırma")
 //
@@ -27,7 +29,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 //   MARKETPLACE_OPERATOR — pazaryeri + iade odaklı
 //   ADMIN               — her şeye erişir
 
-const ALL_NAV: Array<NavItem & { permission?: string }> = [
+const ALL_NAV: Array<NavItem & { permission?: string; alsoRequires?: string[]; adminOnly?: boolean }> = [
   // ── PANO ─────────────────────────────────────────────────────────────────
   { href: "/dashboard", label: "Pano", iconKey: "home" },
 
@@ -404,6 +406,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     label: "AI CFO",
     iconKey: "sparkles",
     permission: PERMISSIONS.CFO_READ,
+    alsoRequires: [PERMISSIONS.EXECUTIVE_READ],
     section: "CFO",
   },
   {
@@ -525,6 +528,7 @@ const ALL_NAV: Array<NavItem & { permission?: string }> = [
     label: "Satış Eşleştirme",
     iconKey: "crosshair",
     permission: PERMISSIONS.EXECUTIVE_READ,
+    adminOnly: true,
     section: "Finans",
   },
 
@@ -631,7 +635,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const navChecks = await Promise.all(
     ALL_NAV.map(async (item) => {
       const allowed =
-        !item.permission || (await checkPermission(user, item.permission));
+        (!item.permission || (await checkPermission(user, item.permission))) &&
+        (!item.adminOnly || user.role === "ADMIN" || isOwner(user)) &&
+        (await Promise.all((item.alsoRequires ?? []).map(p => checkPermission(user, p)))).every(Boolean);
       return allowed
         ? {
             href: item.href,

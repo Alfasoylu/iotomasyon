@@ -268,6 +268,11 @@ async function main() {
       provider: { ...provider, async generate() { throw new ProviderError("provider_timeout"); } } });
     assert.equal(r.status, "failed"); assert.equal(r.error, "provider_timeout"); assert.equal(st.usage[0].status, "failed");
     assert.ok((st.usage[0].reservedCostTry ?? 0) > 0); assert.ok(released);
+    // HTTP hata yanıtı faturalanmaz: rezerv harcama sayılmaz (günlük/aylık tavanı boşuna doldurmaz)
+    const rej = fakeStore();
+    const r400 = await runCfoMonitor({ ...base, store: rej.store, provider: { ...provider, async generate() { throw new ProviderError("provider_http_400"); } } });
+    assert.equal(r400.error, "provider_http_400");
+    assert.deepEqual([rej.usage[0].status, rej.usage[0].estimatedCost, rej.usage[0].reservedCostTry], ["failed", 0, null]);
   });
 
   await check("soğuma süresi / açık iş: çağrı yok, durum kaçınma nedenini söyler", async () => {

@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
     return [
       // Personel ekranı /pdks'ten /personel'e taşındı; eski linkler/QR çalışsın.
       { source: "/pdks", destination: "/personel", permanent: true },
+      // 2026-10-07 panel taraması: emekli/sahipsiz sayfalar kaldırıldı; eski yer imleri yeni tek kaynağa gider.
+      { source: "/admin/import-decisions", destination: "/cfo/kazananlar#ithalat", permanent: true },
+      { source: "/admin/procurement", destination: "/cfo/kazananlar#ithalat", permanent: true },
+      { source: "/admin/bulk-import", destination: "/products", permanent: true },
+      { source: "/admin", destination: "/dashboard", permanent: false },
     ];
   },
   async headers() {
