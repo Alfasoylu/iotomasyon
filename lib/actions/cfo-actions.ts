@@ -93,6 +93,10 @@ export async function updateCardAction(input: {
   id: string; totalDebtTry?: number | null; minOverrideTry?: number | null;
   currentMonthState?: "ODENDI" | "ODENMEDI" | "TEYIT_EDILMELI" | "KISMI_ODENDI";
   statementDay?: number | null; dueDay?: number | null; source?: string;
+  /** son ekstreden devreden faiz işleyen bakiye; null = bilinmiyor */
+  revolvingTry?: number | null;
+  /** ekstredeki aylık akdi faiz % (vergi hariç) */
+  contractMonthlyRatePct?: number | null;
 }): Promise<ActionResult> {
   const user = await guard();
   if (!user) return PERM_DENIED;
@@ -107,12 +111,22 @@ export async function updateCardAction(input: {
         ...(input.currentMonthState ? { currentMonthState: input.currentMonthState } : {}),
         ...(input.statementDay !== undefined ? { statementDay: input.statementDay } : {}),
         ...(input.dueDay !== undefined ? { dueDay: input.dueDay } : {}),
+        ...(input.revolvingTry !== undefined ? { revolvingTry: input.revolvingTry } : {}),
+        ...(input.contractMonthlyRatePct !== undefined ? { contractMonthlyRatePct: input.contractMonthlyRatePct } : {}),
         lastUpdatedAt: new Date(),
       },
     });
     if (input.totalDebtTry !== undefined) {
       await logChange("cfo_credit_card", `${prev.bank} ${prev.holder ?? ""} borç`.trim(),
         prev.totalDebtTry?.toString() ?? "BİLİNMİYOR", input.totalDebtTry ?? "BİLİNMİYOR", input.source ?? user.email);
+    }
+    if (input.revolvingTry !== undefined) {
+      await logChange("cfo_credit_card", `${prev.bank} ${prev.holder ?? ""} devreden bakiye`.trim(),
+        prev.revolvingTry?.toString() ?? "BİLİNMİYOR", input.revolvingTry ?? "BİLİNMİYOR", input.source ?? user.email);
+    }
+    if (input.contractMonthlyRatePct !== undefined) {
+      await logChange("cfo_credit_card", `${prev.bank} ${prev.holder ?? ""} akdi faiz`.trim(),
+        prev.contractMonthlyRatePct?.toString() ?? "BİLİNMİYOR", input.contractMonthlyRatePct ?? "BİLİNMİYOR", input.source ?? user.email);
     }
     if (input.currentMonthState) {
       await logChange("cfo_credit_card", `${prev.bank} ${prev.holder ?? ""} ödeme durumu`.trim(),

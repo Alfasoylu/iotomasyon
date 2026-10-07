@@ -14,6 +14,8 @@
  *  4. Yoldaki ve bloke stok, satılabilir stoğa dahil edilmez.
  */
 
+import { CARD_TAX, cardCarry, isPersonalCard } from "./card-cost";
+
 export type Traffic = "YESIL" | "SARI" | "KIRMIZI" | "NOTR";
 
 type Dec = { toString(): string } | number | null | undefined;
@@ -45,6 +47,8 @@ export interface CardRow {
   id: string; bank: string; holder: string | null;
   statementDebtTry: Dec; totalDebtTry: Dec; fxDebtUsd: Dec;
   statementDay: number | null; dueDay: number | null; minOverrideTry: Dec;
+  /** devreden faiz işleyen bakiye + aylık akdi faiz (2026-10-08 migration; okunmamışsa undefined = bilinmiyor) */
+  revolvingTry?: Dec; contractMonthlyRatePct?: Dec;
   currentMonthState: string; nextDueDate: Date | null;
   dataTag: string; note: string | null; lastUpdatedAt: Date;
 }
@@ -158,7 +162,11 @@ export interface CfoOverview {
   // Borçlar
   cardDebtTry: number;
   cardMinTotalTry: number;
+  /** devreden bakiyesi ve oranı bilinen kartların aylık faiz + KKDF/BSMV maliyeti */
   cardCarryCostTry: number;
+  cardRevolvingTry: number; cardRevolvingWithoutRateTry: number; cardsUnknownRevolving: number;
+  /** devreden bakiyesi ve oranı bilinen en pahalı kart (şahsi dahil) */
+  cardTopRevolving: { name: string; revolvingTry: number; effectiveMonthlyRate: number } | null;
   loanEarlyPayoffTry: number;
   loanMonthlyServiceTry: number;
   loansMissingRate: number;
@@ -217,7 +225,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
   const cardMinPct = (s ? num(s.cardMinPct) : 20) / 100;
 
   // ── Bankalar ──
-  let netCashTry = 0, usedKmhTry = 0, totalKmhLimitTry = 0, freeKmhTry = 0, banksMissingBalance = 0;
+  let netCashTry = 0, usedKmhTry = 0, totalKmhLimitTry = 0, freeKmhTry = 0, banksMissingBalance = 0, kmhInterestMonthlyTry = 0;
   for (const b of input.banks) {
     const bal = numOrNull(b.balanceTry);
     const limit = num(b.kmhLimitTry);
@@ -227,8 +235,10 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const used = bal < 0 ? -bal : 0;
     usedKmhTry += used;
     freeKmhTry += Math.max(0, limit - used);
+    // Banka bazlı oran (yoksa genel); şahsi KMH faizine KKDF + BSMV eklenir (bireysel kredi vergisi).
+    const bankRate = (numOrNull(b.monthlyRatePct) ?? ratePct) / 100;
+    kmhInterestMonthlyTry += used * bankRate * (/ŞAHSİ|şahsi/i.test(`${b.accountType} ${b.name}`) ? 1 + CARD_TAX.kkdf + CARD_TAX.bsmv : 1);
   }
-  const kmhInterestMonthlyTry = usedKmhTry * rate;
 
   // ── Kartlar ──
   let cardDebtTry = 0, cardMinTotalTry = 0;
@@ -238,7 +248,11 @@ export function computeCfo(input: CfoInput): CfoOverview {
     cardDebtTry += debt;
     cardMinTotalTry += numOrNull(c.minOverrideTry) ?? Math.round(debt * cardMinPct);
   }
-  const cardCarryCostTry = cardDebtTry * rate;
+  // Faiz yalnız devreden bakiyeye işler (lib/cfo/card-cost.ts); devreden ya da oran bilinmiyorsa maliyet UNKNOWN kalır.
+  const carry = cardCarry(input.cards.map(c => ({ name: `${c.bank} ${c.holder ?? ""}`.trim(), personal: isPersonalCard(c.holder),
+    totalDebtTry: numOrNull(c.totalDebtTry) ?? numOrNull(c.statementDebtTry), revolvingTry: numOrNull(c.revolvingTry ?? null),
+    contractMonthlyRatePct: numOrNull(c.contractMonthlyRatePct ?? null) })));
+  const cardCarryCostTry = carry.interestMonthlyTry;
 
   // ── Krediler ──
   let loanEarlyPayoffTry = 0, loanMonthlyServiceTry = 0, loansMissingRate = 0;
@@ -435,7 +449,11 @@ export function computeCfo(input: CfoInput): CfoOverview {
   return {
     today, usdTry, monthlyRatePct: ratePct,
     netCashTry, usedKmhTry, totalKmhLimitTry, freeKmhTry, kmhInterestMonthlyTry, banksMissingBalance,
-    cardDebtTry, cardMinTotalTry, cardCarryCostTry,
+    cardDebtTry, cardMinTotalTry, cardCarryCostTry, cardRevolvingTry: carry.revolvingTry, cardRevolvingWithoutRateTry: carry.revolvingWithoutRateTry,
+    cardsUnknownRevolving: carry.unknownRevolvingCards,
+    cardTopRevolving: carry.perCard.filter(c => (c.revolvingTry ?? 0) > 0 && c.effectiveMonthlyRate != null)
+      .sort((a, b) => b.effectiveMonthlyRate! - a.effectiveMonthlyRate!)
+      .map(c => ({ name: c.name, revolvingTry: c.revolvingTry!, effectiveMonthlyRate: c.effectiveMonthlyRate! }))[0] ?? null,
     loanEarlyPayoffTry, loanMonthlyServiceTry, loansMissingRate,
     fixedExpenseMonthlyTry, totalFinancialDebtTry, netDebtTry, debtServiceRatio,
     receivablesPendingTry, receivablesByChannel,
@@ -476,12 +494,19 @@ export function buildAllocation(o: CfoOverview, loans: LoanRow[], unit = 100_000
     annualReturn: unit * rate * 12, annualRoi: rate * 12, risk: "Çok düşük", liquidity: "İyileştirir", dataOk: true,
     advice: "Kesin ve garantili tasarruf. Limit yeniden kullanılabilir hale gelir.",
   });
-  opts.push({
-    rank: rank++, name: "Kredi kartı borcu azaltma", capital: unit,
-    certainSavingMonthly: unit * rate, cashReliefMonthly: unit * rate * 0.2,
-    annualReturn: unit * rate * 12, annualRoi: rate * 12, risk: "Çok düşük", liquidity: "İyileştirir", dataOk: true,
-    advice: "KMH ile aynı maliyet. Gecikme riski olan kart varsa KMH'den önce gelir.",
-  });
+  // Kart: tasarruf yalnız DEVREDEN bakiyede ve kartın kendi efektif oranıyla (akdi × (1+KKDF+BSMV)). Dönem içi harcamayı erken
+  // ödemek faiz kazandırmaz. Devreden ya da oran bilinmiyorsa getiri UNKNOWN (eskiden KMH oranı varsayılıyordu).
+  const card = o.cardTopRevolving;
+  opts.push(card
+    ? { rank: rank++, name: `Kart devreden bakiyesi azaltma (${card.name})`, capital: Math.min(unit, card.revolvingTry),
+        certainSavingMonthly: Math.min(unit, card.revolvingTry) * card.effectiveMonthlyRate, cashReliefMonthly: null,
+        annualReturn: Math.min(unit, card.revolvingTry) * card.effectiveMonthlyRate * 12, annualRoi: card.effectiveMonthlyRate * 12,
+        risk: "Çok düşük", liquidity: "Limit açılır", dataOk: true,
+        advice: `Devreden ${Math.round(card.revolvingTry)} TL aylık %${(card.effectiveMonthlyRate * 100).toFixed(2)} (KKDF+BSMV dahil) işliyor — en pahalı borçlardan.` }
+    : { rank: rank++, name: "Kredi kartı borcu azaltma", capital: unit, certainSavingMonthly: null, cashReliefMonthly: null,
+        annualReturn: null, annualRoi: null, risk: "Çok düşük", liquidity: "İyileştirir", dataOk: false,
+        advice: o.cardRevolvingTry > 0 ? "Devreden bakiyenin akdi faiz oranı girilmemiş — getiri hesaplanamıyor."
+          : "Devreden (faiz işleyen) kart bakiyesi girilmemiş — dönem içi harcamayı erken ödemek faiz kazandırmaz." });
 
   for (const l of loans.filter((x) => x.status === "AKTIF")) {
     // cfo_loan.interestRatePct YILLIK tutulur (el kitabı v33 🔴; taksit/bakiye amortismanı da yıllık okumayla tutarlı).

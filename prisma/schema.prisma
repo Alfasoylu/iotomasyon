@@ -2016,6 +2016,10 @@ model CfoCreditCard {
   statementDay      Int? // ayın kaçında kesim
   dueDay            Int? // ayın kaçında son ödeme
   minOverrideTry    Decimal?         @db.Decimal(14, 2)
+  /// son ekstreden devreden, FAİZ İŞLEYEN bakiye; null = bilinmiyor (dönem içi harcama ve gelecek taksit hariç)
+  revolvingTry      Decimal?         @db.Decimal(14, 2)
+  /// ekstredeki aylık akdi faiz % (vergi hariç; KKDF+BSMV kodda eklenir)
+  contractMonthlyRatePct Decimal?    @db.Decimal(6, 3)
   currentMonthState CfoPaymentStatus @default(TEYIT_EDILMELI)
   nextDueDate       DateTime?
   dataTag           CfoDataTag       @default(KESIN)

@@ -156,10 +156,11 @@ export function allocate(skus: SkuInput[], debts: DebtInput[], opts: { liquidity
       goal: { debtTry: 0, netCapitalMonthlyTry: r2(r.restockCapitalTry * r.marginalReturnMonthly!), revenueMonthlyTry: r2(r.dailyVelocity * 30 * price) },
       downside: "talep düşerse sermaye bağlanır; tedarik süresi boyunca nakit çıkışı" });
   }
-  for (const d of debts.filter(x => !x.personal && x.monthlyRate != null && x.monthlyRate > 0 && x.payoffTry > 0 && x.kind === "LOAN")) {
-    uses.push({ kind: "DEBT_PAYOFF", label: `${d.name} kapat`, capitalTry: r2(d.payoffTry), returnMonthly: d.monthlyRate, confidence: 1, riskAdjusted: d.monthlyRate!,
+  for (const d of debts.filter(x => !x.personal && x.monthlyRate != null && x.monthlyRate > 0 && x.payoffTry > 0 && (x.kind === "LOAN" || x.kind === "CARD"))) {
+    uses.push({ kind: "DEBT_PAYOFF", label: d.kind === "CARD" ? `${d.name} devreden bakiyesini kapat` : `${d.name} kapat`, capitalTry: r2(d.payoffTry), returnMonthly: d.monthlyRate, confidence: 1, riskAdjusted: d.monthlyRate!,
       goal: { debtTry: -r2(d.payoffTry), netCapitalMonthlyTry: r2(d.payoffTry * d.monthlyRate!), revenueMonthlyTry: 0 },
-      downside: `likidite azalır; aylık taksit ${d.monthlyPaymentTry != null ? Math.round(d.monthlyPaymentTry) : "?"} TL serbest kalır` });
+      downside: d.kind === "CARD" ? "likidite azalır; kart limiti yeniden harcanabilir hâle gelir"
+        : `likidite azalır; aylık taksit ${d.monthlyPaymentTry != null ? Math.round(d.monthlyPaymentTry) : "?"} TL serbest kalır` });
   }
   uses.sort((a, b) => b.riskAdjusted - a.riskAdjusted);
 
