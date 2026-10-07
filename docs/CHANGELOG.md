@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### CFO panel defterlerini okuyor (2026-10-07)
+- `lib/cfo-agent/finance-ledgers.ts` (Blok B4g): Trendyol fatura/hakediş kesinti dökümü + kesinti oranı + iade oranı + ceza, banka hareketleri (30 gün giriş/çıkış, son hareket), açık/süresi geçmiş teklifler. Tazelik ölçülmüşlüğü belirler. Fiyat/marj kararlarında planlı pakete kesinti oranı.
+- Test: `ai-cfo-decision-packet` (üretim şekilli fikstür).
+
 ### Tek kur kaynağı + şema yakalama (2026-10-07)
 - `lib/fx/current.ts` + `lib/fx/pick.ts`: USD/TRY `cfo_kur` (CFO aylık kur defteri) → `cfo_settings` → `MonthlyExchangeRate` → varsayılan; RMB/USD `MonthlyExchangeRate` → `cfo_settings`. 13 okuyucu taşındı (sermaye, ithalat, kârlılık, ürünler, XML fiyat çevrimi, dashboard). Pazar kârlılığı / gerçekleşen marj yılı yok sayan kur seçimi düzeltildi. Döviz kurları sayfasında etkin kur + kaynak.
 - Migration `20261007220000_cfo_ledger_tables_capture` (üretimde önceden var olan iki CFO tablosu; üretimde kayıt). `20261007200000_drop_legacy_backup_tables` repoda, üretimde bekliyor (`notAppliedInProduction`).

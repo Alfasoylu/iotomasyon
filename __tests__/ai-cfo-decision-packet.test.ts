@@ -13,6 +13,7 @@ import { costEfficiency } from "../lib/cfo-agent/cost-efficiency";
 import { importProjectEvidence } from "../lib/cfo-agent/import-revenue";
 import { alfashomeEvidence } from "../lib/cfo-agent/alfashome-sales";
 import { capitalConfigEvidence } from "../lib/cfo-agent/capital-config";
+import { bankLedgerEvidence, quoteEvidence, trendyolFinanceEvidence } from "../lib/cfo-agent/finance-ledgers";
 import { capitalScore, freeCapital } from "../lib/capital/score";
 import { evidence } from "../lib/cfo-agent/evidence";
 import type { Anomaly, Evidence } from "../lib/cfo-agent/types";
@@ -183,6 +184,31 @@ check("sermaye: tek skor/serbest sermaye kuralı (sayfa + dashboard + CFO aynı)
   assert.equal(v("sermaye.ayar_toplam_try")?.measured, false, "elle girilen çerçeve ölçüm değildir");
   assert.equal(v("sermaye.kullanilabilir_try")?.value, 514_220);
   assert.deepEqual(capitalConfigEvidence(null, null, AT), [], "ayar ve görünüm yoksa kanıt yok");
+});
+
+check("panel defterleri: Trendyol kesinti dökümü + oran, banka hareketi, teklif; bayat yükleme ölçüm sayılmaz", () => {
+  // Üretim 07.10 şekli: Ağustos faturaları, son yükleme 09.09 (27 tam gün → BAYAT)
+  const agg = { lastImport: "2026-09-09T19:52:30.000Z", lastInvoice: "2026-09-09T13:08:00.000Z", month: "2026-08",
+    expenseByGroup: [{ group: "KOMISYON", expenseTry: 194144 }, { group: "KARGO", expenseTry: 163348 }, { group: "HIZMET", expenseTry: 23210 },
+      { group: "CEZA", expenseTry: 9100 }, { group: "REKLAM", expenseTry: 5000 }, { group: "IADE_ALACAK", expenseTry: 0 }],
+    monthSalesTry: 1512257, sales90Try: 2787127, returns90Try: 320796, penalties90: { n: 16, try: 21000 } };
+  const ev = trendyolFinanceEvidence(agg, "2026-10-07T12:00:00.000Z");
+  const v = (q: string) => ev.find(e => e.query.startsWith(q));
+  assert.match(String(v("trendyol_finans.yukleme")?.value), /27 gün\) — BAYAT/);
+  assert.equal(v("trendyol_finans.2026-08.kesinti_toplam_try")?.value, 394802);
+  assert.equal(v("trendyol_finans.2026-08.kesinti_orani_pct")?.value, 26.1, "394.802 / 1.512.257");
+  assert.equal(v("trendyol_finans.iade_orani_son_90_gun_pct")?.value, 11.5);
+  assert.equal(v("trendyol_finans.2026-08.kesinti_reklam_try")?.value, 5000, "pazar yeri reklam harcaması görünür");
+  assert.equal(v("trendyol_finans.2026-08.kesinti_iade_alacak_try"), undefined, "sıfır kalem yazılmaz");
+  assert.ok(ev.every(e => !e.measured), "bayat dosya → hiçbir kanıt ölçüm değil");
+  assert.ok(trendyolFinanceEvidence({ ...agg, lastImport: "2026-10-05T00:00:00.000Z" }, "2026-10-07T12:00:00.000Z").every(e => e.measured), "taze dosya ölçüm");
+  assert.equal(trendyolFinanceEvidence({ ...agg, lastImport: null, month: null }, AT).length, 1, "yükleme yoksa yalnız durum");
+  const bank = bankLedgerEvidence([{ bank: "Ziraat", lastDate: "2026-10-04", in30: 1072776.4, out30: 1043684 }, { bank: "Ziraat USD (şirket)", lastDate: "2026-09-15", in30: 7500, out30: 7500 }], "2026-10-07T12:00:00.000Z");
+  assert.equal(bank.find(e => e.query === "banka_hareket.Ziraat.giris_son_30_gun_try")?.value, 1072776);
+  assert.match(String(bank.find(e => e.query.startsWith("banka_hareket.Ziraat USD (şirket).son_hareket"))?.value), /BAYAT/, "22 gün > 10");
+  const q = quoteEvidence({ open: 9, openTry: 248032, expired: 8, oldest: "2026-05-14T21:59:11.000Z" }, AT);
+  assert.deepEqual(q.map(e => e.value), [9, 248032, 8, "2026-05-14"]);
+  assert.deepEqual(quoteEvidence({ open: 0, openTry: 0, expired: 0, oldest: null }, AT).map(e => e.value), [0]);
 });
 
 if (failed) { console.error(`\n${failed} test başarısız`); process.exit(1); }
