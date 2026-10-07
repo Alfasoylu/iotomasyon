@@ -9,7 +9,7 @@ const LABEL: Record<string, string> = {
   locked: "Başka bir çalışma sürüyor.", duplicate: "Bu dönem için zaten çalıştı.",
   no_actionable_anomaly: "Gönderilecek yeni bulgu yok; model çağrılmadı.", ai_disabled: "Deterministik kayıt alındı; AI kapalı.",
   release_gates_pending: "Deterministik kayıt alındı; yayın kapıları bekliyor.", provider_unavailable: "Sağlayıcı yapılandırılmadı; model çağrılmadı.",
-  completed: "Tamamlandı.", invalid_output: "Model çıktısı denetimden geçmeyen içgörü içeriyordu; yalnız geçenler kaydedildi.", failed: "Çalışma tamamlanamadı.",
+  completed: "Tamamlandı (reddedilen içgörü varsa nedeni parantez içinde).", invalid_output: "Model çıktısındaki içgörülerin hiçbiri denetimden geçmedi; içgörü kaydedilmedi.", failed: "Çalışma tamamlanamadı.",
 };
 
 export function RunButtons() {

@@ -17,21 +17,29 @@ function numberVariants(token: string): number[] {
   return [...new Set([Number(t), Number(t.replace(/\./g, "").replace(",", ".")), Number(t.replace(/,/g, ""))])].filter(Number.isFinite);
 }
 
-export function validateAiOutput(text: string, snapshot: CfoAgentSnapshot, anomalies: Anomaly[]): { insights: AiInsight[]; rejected: number } {
+/** Reason codes only — never the model text — so a rejection can be diagnosed without storing output. */
+export type RejectReason = "invalid_json" | "schema" | "over_limit" | "unknown_anomaly" | "duplicate" | "severity_changed" | "category_changed" | "evidence_not_allowed" | "evidence_missing" | "fabricated_number";
+
+export function validateAiOutput(text: string, snapshot: CfoAgentSnapshot, anomalies: Anomaly[]): { insights: AiInsight[]; rejected: number; reasons: Partial<Record<RejectReason, number>> } {
+  const reasons: Partial<Record<RejectReason, number>> = {};
+  const reject = (r: RejectReason, n = 1) => { reasons[r] = (reasons[r] ?? 0) + n; };
   let json: unknown;
-  try { json = JSON.parse(text); } catch { return { insights: [], rejected: 1 }; }
+  try { json = JSON.parse(text); } catch { return { insights: [], rejected: 1, reasons: { invalid_json: 1 } }; }
   // The provider schema cannot carry maxItems, so extra insights are counted as rejected instead of discarding the whole response.
   const all = (json as { insights?: unknown })?.insights;
   const overflow = Array.isArray(all) && all.length > MAX_INSIGHTS ? all.length - MAX_INSIGHTS : 0;
   const parsed = aiOutputSchema.safeParse(overflow ? { ...(json as object), insights: (all as unknown[]).slice(0, MAX_INSIGHTS) } : json);
-  if (!parsed.success) return { insights: [], rejected: 1 };
+  if (!parsed.success) return { insights: [], rejected: 1, reasons: { schema: 1 } };
   const accepted: AiInsight[] = [], seen = new Set<string>();
   let rejected = overflow;
+  if (overflow) reject("over_limit", overflow);
   for (const item of parsed.data.insights) {
     const a = anomalies.find(x => x.id === item.anomalyId);
-    if (!a || seen.has(a.id) || item.severity !== a.severity || item.category !== a.category || item.evidenceIds.some(id => !a.evidenceIds.includes(id))) { rejected++; continue; }
+    const mismatch: RejectReason | null = !a ? "unknown_anomaly" : seen.has(a.id) ? "duplicate" : item.severity !== a.severity ? "severity_changed"
+      : item.category !== a.category ? "category_changed" : item.evidenceIds.some(id => !a.evidenceIds.includes(id)) ? "evidence_not_allowed" : null;
+    if (!a || mismatch) { rejected++; reject(mismatch ?? "unknown_anomaly"); continue; }
     const proof = snapshot.evidence.filter(e => item.evidenceIds.includes(e.id));
-    if (proof.length !== new Set(item.evidenceIds).size) { rejected++; continue; }
+    if (proof.length !== new Set(item.evidenceIds).size) { rejected++; reject("evidence_missing"); continue; }
     // Sayılar yalnız atıf yapılan kanıtta geçebilir (gösterim yuvarlaması toleranslı); türetilmiş yüzde/çarpım/tarih kabul edilmez.
     const allowed = proof.flatMap(e => typeof e.value === "number" ? [e.value, Number(e.value.toFixed(2)), Number(e.value.toFixed(1)), Math.round(e.value)] : []);
     const id = a.entityId.split(":").at(-1)!;
@@ -39,11 +47,11 @@ export function validateAiOutput(text: string, snapshot: CfoAgentSnapshot, anoma
       .split(a.entityId).join("").split(id.length > 2 ? id : "__none__").join("");
     const tokens = prose.match(/[-−]?\d+(?:[.,]\d+)*(?:\s?%|\s?₺)?/g) ?? [];
     const fabricated = tokens.some(token => !numberVariants(token.replace(/[₺%−]/g, m => (m === "−" ? "-" : ""))).some(v => allowed.some(n => Math.abs(n - v) < 0.000001)));
-    if (fabricated) { rejected++; continue; }
+    if (fabricated) { rejected++; reject("fabricated_number"); continue; }
     const estimated = proof.some(e => !e.measured);
     accepted.push({ ...item, observation: estimated ? `TAHMİNİ — ${item.observation}` : item.observation,
       confidence: estimated && item.confidence === "high" ? "medium" : item.confidence });
     seen.add(a.id);
   }
-  return { insights: accepted, rejected };
+  return { insights: accepted, rejected, reasons };
 }

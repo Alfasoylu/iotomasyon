@@ -116,11 +116,14 @@ async function run(type: RunType, deps: RunnerDependencies): Promise<RunnerOutco
     usageId = null;
     const validated = validateAiOutput(result.text, snapshot, selected);
     await store.insights(id, validated.insights, selected, snapshot.evidence);
-    const status = validated.rejected ? "invalid_output" : "completed";
+    // Partial success is still completed: accepted insights are saved and the rejected count/reasons go in error.
+    const status = validated.rejected && !validated.insights.length ? "invalid_output" : "completed";
     // The provider returns empty text on stop_reason=max_tokens; tag it so a truncated answer is not mistaken for a rejected insight.
     const truncated = result.text === "" && result.outputTokens >= config.maxOutputTokens;
-    await store.finish(id, status, new Date(), 0, null, truncated ? "output_truncated" : validated.rejected ? `rejected_insights:${validated.rejected}` : undefined);
-    return { status, runId: id, insights: validated.insights.length };
+    const reasons = Object.entries(validated.reasons).map(([k, n]) => `${k}=${n}`).join(",");
+    const error = truncated ? "output_truncated" : validated.rejected ? `rejected_insights:${validated.rejected} (${reasons})` : undefined;
+    await store.finish(id, status, new Date(), 0, null, error);
+    return { status, runId: id, insights: validated.insights.length, ...(error ? { error } : {}) };
   } catch (error) {
     // SDK hata gövdesi, bağlantı adresi, kimlik bilgisi veya kaynak satırı asla kaydedilmez.
     // Provider and monitor-lock failures carry fixed diagnostic tags; anything else stays generic.

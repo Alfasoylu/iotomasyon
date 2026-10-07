@@ -113,6 +113,9 @@ async function main() {
     const four = validateAiOutput(JSON.stringify({ insights: [one, one, one, one] }), s0, list);
     assert.equal(four.insights.length, 1);
     assert.equal(four.rejected, 3, "1 fazla + 2 tekrar");
+    assert.deepEqual(four.reasons, { over_limit: 1, duplicate: 2 });
+    assert.deepEqual(validateAiOutput("{bozuk", s0, list).reasons, { invalid_json: 1 });
+    assert.deepEqual(validateAiOutput(aiFor(revenue, s0, { observation: "Kazanç 123456789 TL." }), s0, list).reasons, { fabricated_number: 1 });
   });
 
   const provider = { async countInput() { return 1000; }, async generate() { return { text: aiFor(revenue, s0), inputTokens: 1000, outputTokens: 200, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: "test" }; } };
@@ -150,7 +153,16 @@ async function main() {
     const st = fakeStore();
     const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: aiFor(revenue, s0, { observation: "Ciro 999999 TL." }), inputTokens: 900, outputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
     assert.equal(r.status, "invalid_output"); assert.equal(st.insights.length, 0); assert.equal(st.usage[0].status, "completed");
-    assert.equal(st.finished.at(-1)?.error, "rejected_insights:1");
+    assert.equal(st.finished.at(-1)?.error, "rejected_insights:1 (fabricated_number=1)");
+  });
+
+  await check("kısmi başarı: geçen içgörü kaydedilir, durum completed, ret nedeni error'da", async () => {
+    const st = fakeStore();
+    const good = JSON.parse(aiFor(revenue, s0)).insights[0], bad = JSON.parse(aiFor(revenue, s0, { observation: "Ciro 999999 TL." })).insights[0];
+    const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: JSON.stringify({ insights: [bad, good] }), inputTokens: 900, outputTokens: 300, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
+    assert.equal(r.status, "completed"); assert.equal(r.insights, 1); assert.equal(st.insights.length, 1);
+    assert.equal(st.finished.at(-1)?.status, "completed"); assert.equal(st.finished.at(-1)?.error, "rejected_insights:1 (fabricated_number=1)");
+    assert.equal(r.error, "rejected_insights:1 (fabricated_number=1)");
   });
 
   await check("çıktı tavanında kesilen yanıt: invalid_output + output_truncated, kullanım yine ölçülür", async () => {
