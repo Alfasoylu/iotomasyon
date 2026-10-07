@@ -1,6 +1,6 @@
 // ÜRETİLMİŞ DOSYA — elle düzenlemeyin. Kaynak: lib/cfo-agent/handbook-core.md (npm run gen:handbook).
-// AI CFO girdi Blok A: el kitabının karar çekirdeği, birebir metin. Sistem talimatıyla tek önbellek bloğunda gider;
-// her koşuda değişen hiçbir şey (tarih, bakiye, anomali) burada olmaz — onlar Blok B/C'dedir (context.ts).
+// AI CFO girdi Blok A: el kitabının karar çekirdeği, birebir metin. YALNIZ MANUAL_DEEP_REVIEW modunda gider;
+// planlı (SCHEDULED_CFO) çağrı bunun yerine ilgili rule card'ı alır (rule-cards.ts).
 
 export const HANDBOOK_CORE_VERSION = "v33-blok-a";
 

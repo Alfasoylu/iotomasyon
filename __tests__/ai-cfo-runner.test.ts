@@ -4,7 +4,10 @@
  * Çalıştır: node --conditions=react-server --import tsx __tests__/ai-cfo-runner.test.ts
  */
 import assert from "node:assert/strict";
-import { runCfoMonitor, runCfoMorningBrief, type RunnerDependencies, runPeriodKey } from "../lib/cfo-agent/runner";
+import { runCfoDeepReview, runCfoMonitor, runCfoMorningBrief, type RunnerDependencies, runPeriodKey } from "../lib/cfo-agent/runner";
+import { safeAiCfoRun } from "../lib/cfo-agent/ai-trigger";
+import type { BudgetTotals } from "../lib/cfo-agent/budget";
+import type { RunMeta } from "../lib/cfo-agent/store";
 import { validateAiOutput } from "../lib/cfo-agent/validate-ai-output";
 import { goalAnomalies } from "../lib/cfo-agent/goal-anomalies";
 import { getCfoConfig } from "../lib/cfo-agent/config";
@@ -53,12 +56,14 @@ const goal = (o: Partial<GoalRow> = {}): GoalRow => ({
 });
 
 function fakeStore() {
-  const usage: UsageWrite[] = [], insights: AiInsight[] = [], finished: { status: string; error?: string }[] = [], saved: Anomaly[][] = [];
-  const begun = new Set<string>();
-  let totals = { callsToday: 0, spentThisMonth: 0 }, recent: { createdAt: Date; impact: number | null } | null = null;
+  const usage: UsageWrite[] = [], insights: AiInsight[] = [], finished: { status: string; error?: string }[] = [], saved: Anomaly[][] = [], metas: (RunMeta | undefined)[] = [];
+  const begun = new Set<string>(), periods: string[] = [];
+  let totals: BudgetTotals = { callsToday: 0, scheduledCallsToday: 0, deepCallsToday: 0, spentToday: 0, spentThisMonth: 0, deepSpentThisMonth: 0 }, recent: { createdAt: Date; impact: number | null } | null = null;
+  let evaluations = { hashes: new Set<string>(), byKey: new Map<string, { severity: "info" | "warning" | "critical"; impact: number | null }>() };
   const store: CfoStore = {
-    async begin(type, period) { const k = `${type}:${period}`; if (begun.has(k)) return null; begun.add(k); return `run-${begun.size}`; },
-    async snapshot(_id, _s, _h, _a, sent) { saved.push(sent); },
+    async begin(type, period) { const k = `${type}:${period}`; if (begun.has(k)) return null; begun.add(k); periods.push(period); return `run-${begun.size}`; },
+    async snapshot(_id, _s, _h, _a, sent, meta) { saved.push(sent); metas.push(meta); },
+    async evaluations() { return evaluations; },
     async recent() { return recent; },
     async totals() { return totals; },
     async usage(_run, data) { usage.push({ ...data }); return `u-${usage.length}`; },
@@ -66,11 +71,18 @@ function fakeStore() {
     async insights(_run, list) { insights.push(...list); },
     async finish(_id, status, _now, _avoided, _saved, error) { finished.push({ status, error }); },
   };
-  return { store, usage, insights, finished, saved, setTotals: (t: typeof totals) => { totals = t; }, setRecent: (r: typeof recent) => { recent = r; } };
+  return { store, usage, insights, finished, saved, metas, periods, setTotals: (t: Partial<BudgetTotals>) => { totals = { ...totals, ...t }; },
+    setRecent: (r: typeof recent) => { recent = r; }, setEvaluations: (e: typeof evaluations) => { evaluations = e; } };
 }
 const freeLock = () => ({ async acquire() { return true; }, async release() {} });
 
-// Model yanıtı: anomaly'nin kendi kanıtındaki sayıları kullanır.
+// Planlı (SCHEDULED_CFO) model yanıtı: kısa alanlar; severity/category kod ekler.
+function aiSched(a: Anomaly, s: CfoAgentSnapshot, o: Record<string, unknown> = {}) {
+  const n = s.evidence.find(e => a.evidenceIds.includes(e.id) && typeof e.value === "number")?.value ?? "";
+  return JSON.stringify({ insights: [{ anomalyId: a.id, decision: "Ciro hedefi için hızlı ürün stoğunu koru", why: `Ay başından beri ciro ${n} TL.`,
+    risk: "Ay hedefi kaçar.", next_action: "Hızlı satan ürünlerin stok ve fiyatını gözden geçir.", confidence: "high", evidence_ids: a.evidenceIds.slice(0, 2), ...o }] });
+}
+// Model yanıtı (derin inceleme şeması): anomaly'nin kendi kanıtındaki sayıları kullanır.
 function aiFor(a: Anomaly, s: CfoAgentSnapshot, o: Record<string, unknown> = {}) {
   const proof = s.evidence.filter(e => a.evidenceIds.includes(e.id) && typeof e.value === "number");
   const n = proof[0]?.value ?? "";
@@ -121,12 +133,12 @@ async function main() {
     assert.deepEqual(validateAiOutput(aiFor(revenue, s0, { observation: "Kazanç 123456789 TL." }), s0, list).reasons, { fabricated_number: 1 });
   });
 
-  const provider = { async countInput() { return 1000; }, async generate() { return { text: aiFor(revenue, s0), inputTokens: 1000, outputTokens: 200, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: "test" }; } };
+  const provider = { async countInput() { return 1000; }, async generate(i: { packet?: unknown }) { return { text: i.packet ? aiSched(revenue, s0) : aiFor(revenue, s0), inputTokens: 1000, outputTokens: 200, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: "test" }; } };
   // Girdi şartnamesi Blok B/C — defterde ölçülmüş açık (533.740) ve nakit kapısı satırı
   const ctxGap = evidence("cfo_change_log", "defter.cl_1.veri/bulgu: nakit açığı ölçüldü", "Açık 533.740 TL; ölü stok tasfiyesi açığın %174'ünü karşılar", "text", "2026-10-07T05:00:00.000Z", true);
   const ctxCash = evidence("cfo_nakit_kapisi", "nakit_kapisi.nakit_try", 59693.13, "TRY", "2026-10-07T05:00:00.000Z", true);
   const fakeContext = { tables: "KARGO TARİFESİ (cfo_kargo_tarife): TRENDYOL A [0–150] 42,5 TL", state: [ctxCash], memory: [ctxGap] };
-  const base: RunnerDependencies = { now: NOW, config, context: async () => fakeContext, snapshot: async () => snapshot(), goals: async () => [goal()], queues: async () => new Map(), memory: async () => [], lock: freeLock(), provider };
+  const base: RunnerDependencies = { now: NOW, config, context: async () => fakeContext, snapshot: async () => snapshot(), goals: async () => [goal()], queues: async () => new Map(), memory: async () => [], extras: null, lock: freeLock(), provider };
 
   await check("kapılar: monitor kapalı → hiç yazma yok; AI kapalı/release kapısı/sağlayıcı yok → deterministik kayıt, çağrı yok", async () => {
     const st = fakeStore();
@@ -154,14 +166,15 @@ async function main() {
     assert.match(st.finished.at(-1)?.error ?? "", /susan_kurallar: Entegra bayat → PRICE_BELOW_FLOOR.*DEAD_STOCK.*\| banka bakiyesi bayat → CASH_CRITICAL/);
   });
 
-  await check("kabul 1: içgörü bağlam kanıtına (defter TL'si) ve § kuralına atıf yapabilir; sistem el kitabı çekirdeğini taşır", async () => {
+  await check("derin inceleme (elle): içgörü bağlam kanıtına (defter TL'si) ve § kuralına atıf yapabilir; sistem el kitabının tamamını taşır", async () => {
     const st = fakeStore();
     let sentInput: unknown = null;
     const cite = (o: Record<string, unknown>) => JSON.stringify({ insights: [{ ...JSON.parse(aiFor(revenue, s0)).insights[0], ...o }] });
     const ok = cite({ recommendation: "§2E ölü stok tasfiyesi: defterdeki açık 533.740 TL; nakit 59.693,13 TL.", evidenceIds: [...revenue.evidenceIds, ctxGap.id, ctxCash.id] });
-    const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async countInput(i) { sentInput = i; return 1000; },
+    const r = await runCfoDeepReview({ ...base, store: st.store, provider: { ...provider, async countInput(i) { sentInput = i; return 1000; },
       async generate() { return { text: ok, inputTokens: 1000, outputTokens: 200, cacheReadTokens: 900, cacheWriteTokens: 0, requestId: "t" }; } } });
     assert.equal(r.status, "completed"); assert.equal(st.insights.length, 1);
+    assert.match(st.periods[0], /:d\d$/, "derin inceleme kendi periodKey'i (':d') ile ayrılır"); assert.equal(st.metas[0]?.mode, "deep_review");
     assert.ok(st.insights[0].recommendation.includes("§2E") && st.insights[0].recommendation.includes("533.740"));
     const payload = reasoningPayload(sentInput as never) as { context?: { state: { id: string }[]; memory: { id: string }[] } };
     assert.deepEqual(payload.context?.memory.map(m => m.id), [ctxGap.id], "Blok C kullanıcı mesajında");
@@ -172,26 +185,34 @@ async function main() {
     assert.equal(validateAiOutput(cite({ recommendation: "Fiyatı %15 artır." }), s0, [revenue]).reasons.fabricated_number, 1, "el kitabındaki küçük tam sayılar serbest değil");
   });
 
-  await check("başarılı çağrı: hedef anomaly'si gönderilir, kullanım ölçülür, içgörü kaydedilir (≤3)", async () => {
+  await check("planlı başarılı çağrı: küçük paket (el kitabı yok, önbellek yok), uzak sayım atlanır, kısa çıktı kaydedilir", async () => {
     const st = fakeStore();
-    const r = await runCfoMonitor({ ...base, store: st.store });
+    let sent: { packet?: { relevant_rule_cards: { id: string }[]; top_anomalies: unknown[] } } | null = null;
+    const r = await runCfoMonitor({ ...base, store: st.store, provider: { async countInput() { throw new Error("MUST NOT COUNT (estimate < 80%)"); },
+      async generate(i) { sent = i as never; return { text: aiSched(revenue, s0), inputTokens: 1000, outputTokens: 200, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: "t" }; } } });
+    const packet = (sent as unknown as { packet: { relevant_rule_cards: { id: string; text: string }[]; top_anomalies: unknown[] } }).packet;
+    assert.ok(packet && packet.top_anomalies.length <= 3, "paket var, ≤3 anomali");
+    assert.deepEqual(packet.relevant_rule_cards.map(c => c.id), ["CASH_SHORTFALL", "CAPITAL_ALLOCATION"], "hedef → nakit kartları");
+    assert.ok(!systemText(sent as never).includes(HANDBOOK_CORE.slice(0, 200)), "el kitabının tamamı planlı çağrıda yok");
+    assert.equal(st.insights[0].title, "Ciro hedefi için hızlı ürün stoğunu koru"); assert.equal(st.insights[0].severity, revenue.severity, "severity anomaliden");
+    assert.equal(st.metas[0]?.mode, "scheduled"); assert.ok(st.metas[0]?.decisionInputHash);
     assert.equal(r.status, "completed"); assert.equal(r.insights, 1);
     assert.equal(st.saved[0][0].id, "goal:revenue_month_usd");
     assert.equal(st.usage[0].status, "completed"); assert.equal(st.usage[0].inputTokens, 1000);
-    assert.ok((st.usage[0].estimatedCost ?? 0) > 0); assert.ok(st.insights.length <= 3);
+    assert.ok((st.usage[0].estimatedCost ?? 0) > 0); assert.ok(st.insights.length <= 2);
     assert.ok(!JSON.stringify(reasoningPayload({ snapshot: s0, anomalies: [revenue], memory: [] })).includes("customer"));
   });
 
   await check("geçersiz model çıktısı: içgörü kaydedilmez, durum invalid_output", async () => {
     const st = fakeStore();
-    const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: aiFor(revenue, s0, { observation: "Ciro 999999 TL." }), inputTokens: 900, outputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
+    const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: aiSched(revenue, s0, { why: "Ciro 999999 TL." }), inputTokens: 900, outputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
     assert.equal(r.status, "invalid_output"); assert.equal(st.insights.length, 0); assert.equal(st.usage[0].status, "completed");
     assert.equal(st.finished.at(-1)?.error, "rejected_insights:1 (fabricated_number=1)");
   });
 
   await check("kısmi başarı: geçen içgörü kaydedilir, durum completed, ret nedeni error'da", async () => {
     const st = fakeStore();
-    const good = JSON.parse(aiFor(revenue, s0)).insights[0], bad = JSON.parse(aiFor(revenue, s0, { observation: "Ciro 999999 TL." })).insights[0];
+    const good = JSON.parse(aiSched(revenue, s0)).insights[0], bad = JSON.parse(aiSched(revenue, s0, { why: "Ciro 999999 TL." })).insights[0];
     const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: JSON.stringify({ insights: [bad, good] }), inputTokens: 900, outputTokens: 300, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
     assert.equal(r.status, "completed"); assert.equal(r.insights, 1); assert.equal(st.insights.length, 1);
     assert.equal(st.finished.at(-1)?.status, "completed"); assert.equal(st.finished.at(-1)?.error, "rejected_insights:1 (fabricated_number=1)");
@@ -200,22 +221,42 @@ async function main() {
 
   await check("çıktı tavanında kesilen yanıt: invalid_output + output_truncated, kullanım yine ölçülür", async () => {
     const st = fakeStore();
-    const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: "", inputTokens: 5559, outputTokens: config.maxOutputTokens, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
+    const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: "", inputTokens: 5559, outputTokens: config.scheduledMaxOutputTokens, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
     assert.equal(r.status, "invalid_output"); assert.equal(st.finished.at(-1)?.error, "output_truncated");
-    assert.equal(st.usage[0].status, "completed"); assert.equal(st.usage[0].outputTokens, config.maxOutputTokens);
+    assert.equal(st.usage[0].status, "completed"); assert.equal(st.usage[0].outputTokens, 700, "planlı çıktı tavanı 700");
   });
 
-  await check("bütçe/günlük limit: çağrı yok, engel kaydı tutulur", async () => {
-    const st = fakeStore(); st.setTotals({ callsToday: 0, spentThisMonth: 3000 });
+  await check("sert maliyet kapıları: planlı/gün çağrı, koşu başı TL, gün TL, ay TL — hepsi çağrıdan önce", async () => {
+    const st = fakeStore(); st.setTotals({ spentThisMonth: 300 });
     assert.equal((await runCfoMonitor({ ...base, store: st.store })).status, "blocked_by_budget");
     assert.equal(st.usage[0].status, "blocked_by_budget");
-    const lim = fakeStore(); lim.setTotals({ callsToday: 6, spentThisMonth: 0 });
-    assert.equal((await runCfoMonitor({ ...base, store: lim.store })).status, "blocked_by_daily_limit");
+    const lim = fakeStore(); lim.setTotals({ callsToday: 2 });
+    assert.equal((await runCfoMonitor({ ...base, store: lim.store, manual: true })).status, "blocked_by_daily_limit");
+    const sched = fakeStore(); sched.setTotals({ scheduledCallsToday: 1, callsToday: 1 });
+    assert.equal((await runCfoMonitor({ ...base, store: sched.store })).status, "blocked_by_scheduled_limit", "günde 1 zamanlanmış çağrı");
+    assert.notEqual((await runCfoMonitor({ ...base, store: sched.store, manual: true })).status, "blocked_by_scheduled_limit", "elle monitor planlı hakkı kullanmaz");
+    const day = fakeStore(); day.setTotals({ spentToday: 5 });
+    assert.equal((await runCfoMonitor({ ...base, store: day.store })).status, "blocked_by_daily_budget");
+    assert.equal((await runCfoMonitor({ ...base, store: fakeStore().store, config: { ...config, maxCostTryPerRun: 0.01 } })).status, "blocked_by_run_cost");
+    const deep = fakeStore(); deep.setTotals({ deepSpentThisMonth: 100 });
+    assert.equal((await runCfoDeepReview({ ...base, store: deep.store })).status, "blocked_by_budget", "derin inceleme ayrı aylık bütçe");
+    assert.equal(getCfoConfig({}).maxCallsPerDay, 2); assert.equal(getCfoConfig({}).maxScheduledCallsPerDay, 1);
   });
 
-  await check("token sınırı ücretli çağrıdan ve rezervasyondan önce durdurur", async () => {
+  await check("planlı girdi sınırı: env yükseltemez; paket sığmazsa çağrı yok, tahmin sayıyla yazılır", async () => {
+    const env = { AI_CFO_SCHEDULED_MAX_INPUT_TOKENS: "50000", AI_CFO_MAX_INPUT_TOKENS_PER_RUN: "90000", AI_CFO_SCHEDULED_MAX_OUTPUT_TOKENS: "5000", AI_CFO_MAX_CALLS_PER_DAY: "50" };
+    assert.deepEqual([getCfoConfig(env).scheduledMaxInputTokens, getCfoConfig(env).scheduledMaxOutputTokens, getCfoConfig(env).maxInputTokens, getCfoConfig(env).maxCallsPerDay], [8000, 700, 50000, 6],
+      "büyük env değeri tavana kırpılır, ayar okuması düşmez");
     const st = fakeStore();
-    const blocked = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async countInput() { return config.maxInputTokens; } } });
+    const r = await runCfoMonitor({ ...base, store: st.store, config: { ...config, scheduledMaxInputTokens: 1000 },
+      provider: { ...provider, async generate() { throw new Error("MUST NOT CALL"); } } });
+    assert.equal(r.status, "blocked_by_input_tokens"); assert.match(r.error ?? "", /^estimated_tokens:\d+ limit:1000 shrink:4$/, "önce küçültülür, sonra bloklanır");
+    assert.equal(st.usage.length, 0);
+  });
+
+  await check("derin inceleme token sınırı ücretli çağrıdan ve rezervasyondan önce durdurur", async () => {
+    const st = fakeStore();
+    const blocked = await runCfoDeepReview({ ...base, store: st.store, provider: { ...provider, async countInput() { return config.maxInputTokens; } } });
     assert.equal(blocked.status, "blocked_by_input_tokens");
     assert.equal(blocked.error, `input_tokens:${config.maxInputTokens} reserve:512 limit:${config.maxInputTokens}`, "ölçülen sayı kayda geçer");
     assert.equal(st.usage.length, 0);
@@ -229,11 +270,33 @@ async function main() {
     assert.ok((st.usage[0].reservedCostTry ?? 0) > 0); assert.ok(released);
   });
 
-  await check("soğuma süresi: aynı hedef anomaly'si tekrar çağrı üretmez; açık iş kaydı varsa da", async () => {
+  await check("soğuma süresi / açık iş: çağrı yok, durum kaçınma nedenini söyler", async () => {
     const st = fakeStore(); st.setRecent({ createdAt: NOW, impact: null });
-    assert.equal((await runCfoMonitor({ ...base, store: st.store })).status, "no_actionable_anomaly");
+    assert.equal((await runCfoMonitor({ ...base, store: st.store })).status, "cooldown");
     const q = fakeStore();
-    assert.equal((await runCfoMonitor({ ...base, store: q.store, queues: async a => new Map(a.map(x => [x.id, ["cfo_question:1"]])) })).status, "no_actionable_anomaly");
+    assert.equal((await runCfoMonitor({ ...base, store: q.store, queues: async a => new Map(a.map(x => [x.id, ["cfo_question:1"]])) })).status, "open_task");
+  });
+
+  await check("önemli değişiklik kapısı: aynı anomali / aynı girdi hash'i → 0 sağlayıcı çağrısı; önem artınca yeniden", async () => {
+    let calls = 0;
+    const counting = { ...provider, async generate(i: { packet?: unknown }) { calls++; return provider.generate(i); } };
+    const first = fakeStore();
+    assert.equal((await runCfoMonitor({ ...base, store: first.store, provider: counting })).status, "completed");
+    const hash = first.metas[0]!.decisionInputHash!;
+    // Aynı anomali aynı önemle değerlendirilmiş → no_material_change (saat/cron/yalnız tazelik çağrı başlatmaz)
+    const same = fakeStore(); same.setEvaluations({ hashes: new Set([hash]), byKey: new Map([[revenue.cooldownKey, { severity: revenue.severity, impact: null }]]) });
+    assert.equal((await runCfoMonitor({ ...base, store: same.store, provider: counting })).status, "no_material_change");
+    // Anomali kaydı yok ama aynı karar girdisi hash'i değerlendirilmiş → same_input
+    const hashOnly = fakeStore(); hashOnly.setEvaluations({ hashes: new Set([hash]), byKey: new Map() });
+    assert.equal((await runCfoMonitor({ ...base, store: hashOnly.store, provider: counting })).status, "same_input");
+    assert.equal(calls, 1, "aynı karar girdisi için 0 tekrar çağrı");
+    // Önem derecesi arttıysa yeniden değerlendirilir
+    const up = fakeStore(); up.setEvaluations({ hashes: new Set(), byKey: new Map([[revenue.cooldownKey, { severity: "info", impact: null }]]) });
+    assert.equal((await runCfoMonitor({ ...base, store: up.store, provider: counting })).status, "completed"); assert.equal(calls, 2);
+  });
+
+  await check("derin inceleme yalnız elle: planlı tetik onu seçemez", async () => {
+    assert.deepEqual(await safeAiCfoRun("deep_review"), { status: "failed", error: "deep_review_manual_only" });
   });
 
   await check("eşzamanlılık ve idempotency: aynı saat ikinci çalışma duplicate; kilit tutuluyorsa locked", async () => {

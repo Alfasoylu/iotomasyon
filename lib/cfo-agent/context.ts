@@ -130,3 +130,13 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   if (coverage?.length) tables.push(`KOMİSYON ALANI KAPSAMI: ${coverage.map(c => `${c.channel} %${c.coveragePct == null ? "?" : Math.round(c.coveragePct)}`).join(" · ")}`);
   return { tables: tables.join("\n"), state, memory };
 }
+
+/** SCHEDULED_CFO eki: yalnız nakit kararlarında, kaldıraç merdiveninin BOŞTA en ucuz 2 basamağı (deterministik sıra). Başka bağlam yok. */
+export async function loadScheduledExtras(decisionType: string, at: string, db: ReadSource = businessSource): Promise<Evidence[]> {
+  if (decisionType !== "CASH") return [];
+  const [p] = await db.query<{ t: string | null }>(`select to_regclass('public.cfo_kaldirac_basamak')::text as t`);
+  if (!p?.t) return [];
+  const rows = await db.query(`select basamak, ad, tl_kapasite, guven from cfo_kaldirac_basamak where durum='BOSTA' order by basamak limit 2`);
+  return rows.map(b => evidence("cfo_kaldirac_basamak", `merdiven.${b.basamak}.${clip(b.ad, 40)} (BOSTA) kapasite`, num(b.tl_kapasite) ?? "ölçülmedi",
+    num(b.tl_kapasite) == null ? "state" : "TRY", at, b.guven === "OLCULDU" || b.guven === "KESIN"));
+}

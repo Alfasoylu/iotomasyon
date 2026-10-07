@@ -9,6 +9,15 @@
 
 ## 2026-10
 
+### AI CFO — maliyet ve görev ayrımı (2026-10-07)
+- İki mod: **SCHEDULED_CFO** (cron, elle monitor, sabah özeti) ve **MANUAL_DEEP_REVIEW** (yalnız elle, `/admin/ai-cfo` "Derin inceleme"). Planlı iş derin incelemeye hiçbir yoldan geçemez (`safeAiCfoRun` elle olmayan `deep_review`'u reddeder).
+- Planlı çağrı el kitabının tamamı yerine **küçük karar paketi** alır (`decision-packet.ts`): ≤3 anomali, anomali başına ≤6 kanıt, ≤2 rule card, ≤2 önceki karar, kısıtlar. Rule card'lar `rule-cards.md`'de, el kitabından birebir alıntı (test: her paragraf `handbook-core.md` alt dizesi, kart ≤1.250 bayt). Sert sınır 8.000 girdi / 700 çıktı token; paket büyükse küçülür (kanıt → kart → anomali → hafıza), sınır yükselmez. Önbellek kaldırıldı (ölçülen isabet %0; slot aralığı 5 dk ömrü aşıyor).
+- **Önemli değişiklik kapısı** (`materiality.ts`): çağrı yalnız anomali yeni / önemi arttı / TL etkisi bir kova ve ≥10.000 TL arttıysa; aynı `decision_input_hash` son 14 günde değerlendirildiyse `same_input` (0 çağrı). Yeni kaçınma durumları: `open_task`, `cooldown`, `data_quality_only`, `no_material_change`, `same_input`. Veri kalitesi bulguları AI'ye gitmez.
+- **Sert maliyet kapıları** (`budget.ts`): günde ≤1 zamanlanmış ve ≤2 toplam çağrı, koşu ≤2 TL, gün ≤5 TL, ay ≤300 TL; derin inceleme ayrı (günde ≤2, koşu ≤8 TL, ay ≤100 TL). Tavan üstü env değerleri artık ayar okumasını düşürmez, kırpılır.
+- Uzak `count_tokens` planlı modda yalnız yerel tutucu tahmin sınırın %80'ini aşarsa. Hafıza en çok 2 ilgili karar. Çıktı en çok 2 kısa içgörü (decision · why · risk · next_action · confidence · evidence_ids); severity/category/finansal etki koddan.
+- `/admin/ai-cfo` maliyet verimliliği kartı (bugün / 30 gün, kaçınma nedenleri, içgörü başına maliyet). Sağlık alarmı: `no_insight_24h` yalnız model 24 saatte ≥2 kez yanıt verip içgörü çıkmadıysa; günlük planlı hakkın dolması alarm değil.
+- Testler: yeni `ai-cfo-decision-packet`; güncellenen `ai-cfo-runner`, `ai-cfo-health`, `ai-cfo-store`. Migration yok.
+
 ### AI CFO — girdi tavanı 50.000, blokta ölçülen token kaydı (2026-10-07)
 - `AI_CFO_MAX_INPUT_TOKENS_PER_RUN` varsayılan 32.000, üst sınır 50.000 (önceki 20.000/24.000; 24.000 üstü değer ayar okumasını düşürüyordu). Üretimde 20.000 sınırıyla iki koşu `blocked_by_input_tokens` oldu.
 - `blocked_by_input_tokens` / `blocked_by_input_size` artık sayıyı yazar (`input_tokens:N reserve:512 limit:M`, `payload_bytes:N limit_bytes:M`); sağlık alarmı mesajı bu sayıyı taşır. Test: `ai-cfo-runner`.
