@@ -215,7 +215,9 @@ async function main() {
 
   await check("token sınırı ücretli çağrıdan ve rezervasyondan önce durdurur", async () => {
     const st = fakeStore();
-    assert.equal((await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async countInput() { return config.maxInputTokens; } } })).status, "blocked_by_input_tokens");
+    const blocked = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async countInput() { return config.maxInputTokens; } } });
+    assert.equal(blocked.status, "blocked_by_input_tokens");
+    assert.equal(blocked.error, `input_tokens:${config.maxInputTokens} reserve:512 limit:${config.maxInputTokens}`, "ölçülen sayı kayda geçer");
     assert.equal(st.usage.length, 0);
   });
 
