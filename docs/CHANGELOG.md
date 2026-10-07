@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### AI CFO — haftalık Entegra boşluğu Trendyol API'den tahmin (`alfas-gross-v9`) (2026-10-07)
+- Kullanıcı isteği: döküm yokken sistem otomatik kaynaklara bakmalı. Üretim ölçümü (22.09–04.10): Entegra Trendyol kanalı ≈ 520 bin ₺ ↔ Trendyol API ≈ 520 bin ₺ (sipariş adetleri çoğu gün ±2); Trendyol tüm kanalların ≈ %62,5'i. XML stok düşüşleri günlük çok gürültülü (06.10: 1.146 adet, düzeltme) → ana kaynak değil.
+- `lib/cfo-agent/snapshot.ts`: Entegra'nın son tam günü = en son sipariş gününden bir önceki gün (yükleme günü kısmi). Sonraki günlerin cirosu = Trendyol API (iptaller hariç) × Entegra son 28 gün tüm kanal/Trendyol oranı; dönem metriği `estimated=true`, `reason=entegra_gap_estimated_from_trendyol_api` (modele TAHMİNİ olarak gider). Trendyol bayatsa tahmin yapılmaz. Kısmi yükleme günü Entegra'dan değil tahminden gelir. Test `ai-cfo-source-mapping`.
+
 ### AI CFO — haftalık elle veri düzeni (`alfas-gross-v8`) (2026-10-07)
 - Kullanıcı kararı: Entegra satış dökümü ve banka bakiyeleri günlük değil **haftalık** verilir. `lib/cfo-agent/snapshot.ts`: Entegra ve banka tazelik eşiği 48 sa / 7 gün → **8 gün** (`WEEKLY_UPLOAD_MAX_AGE_HOURS`, 7 gün + 1 gün tolerans). Yüklemenin henüz ulaşmadığı günler gün-kapsama kontrolüyle eksik kalır → sahte ciro düşüşü üretilmez. API kaynakları (Trendyol/XML) 48 sa kalır.
 - `lib/cfo-agent/health.ts`: sistem haftalık ister — son Entegra yüklemesi 7 günü geçince `entegra_upload_due`, 7 günden eski aktif banka hesapları adıyla `bank_update_due` (saatlik sağlık işi → GitHub e-postası + admin alarm kartı).
