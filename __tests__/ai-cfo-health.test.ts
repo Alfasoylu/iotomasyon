@@ -26,4 +26,12 @@ assert.deepEqual(evaluateCfoAlarms([run("05:42", "completed")], at("05:42"), tru
 assert.deepEqual(evaluateCfoAlarms([run("05:42", "completed")], new Date("2026-10-06T05:00:00Z"), true, now).map(a => a.code), ["no_insight_24h"]);
 assert.deepEqual(evaluateCfoAlarms([], null, true, now), [], "hiç koşu yoksa alarm yok");
 
-console.log("AI CFO health alarms: consecutive failures (prod 07.10 sequence), invalid_output counts, running neutral, 24h no-insight gated by AI + actionable sends passed");
+// Haftalık veri isteği (2026-10-07): günlük döküm beklenmez; 7 gün dolunca hatırlatılır, eski hesaplar adıyla yazılır
+const fresh = { entegraLastImport: new Date("2026-10-05T09:06:00Z"), staleBankAccounts: [] };
+assert.deepEqual(evaluateCfoAlarms([], null, true, now, fresh), [], "2 günlük Entegra yüklemesi istek doğurmaz");
+assert.deepEqual(evaluateCfoAlarms([], null, true, new Date("2026-10-12T10:00:00Z"), fresh).map(a => a.code), ["entegra_upload_due"], "7 gün dolunca istenir");
+const banks = evaluateCfoAlarms([], null, true, now, { ...fresh, staleBankAccounts: ["Ziraat USD (şirket)", "Yapı Kredi USD (şirket)"] });
+assert.deepEqual(banks.map(a => a.code), ["bank_update_due"]); assert.match(banks[0].message, /Ziraat USD \(şirket\), Yapı Kredi USD \(şirket\)/);
+assert.deepEqual(evaluateCfoAlarms([], null, true, now, { entegraLastImport: null, staleBankAccounts: [] }).map(a => a.code), ["entegra_upload_due"], "hiç yükleme yoksa istenir");
+
+console.log("AI CFO health alarms: consecutive failures (prod 07.10 sequence), invalid_output counts, running neutral, 24h no-insight gated by AI + actionable sends, weekly Entegra/bank data requests passed");
