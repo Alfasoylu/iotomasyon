@@ -99,7 +99,7 @@ async function main() {
     const s = await buildCfoAgentSnapshot({ db, now, config, compact: false });
     const missing = s.dataQuality.missingFields;
     assert.ok(!missing.some(f => f.startsWith("reviewed_source_changed")), `reviewed profile valid by default: ${missing.join(",")}`);
-    assert.equal(s.calculationVersion, "alfas-gross-v8");
+    assert.equal(s.calculationVersion, "alfas-gross-v9");
 
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;
@@ -126,6 +126,19 @@ async function main() {
     const late = await buildCfoAgentSnapshot({ db, now: new Date("2026-10-08T08:00:00Z"), config, compact: false });
     assert.equal(late.dataQuality.sourceWatermarks.find(w => w.source === "Entegra")?.stale, true, "Entegra older than 8 days is stale");
     assert.ok(late.dataQuality.staleSources.includes("Entegra"));
+    // Gap between weekly Entegra uploads (2026-10-07): days after Entegra's last complete day (latest order 09-29 is the
+    // partial upload day → cutoff 09-28) come from the Trendyol API × Entegra's trailing 28-day all/Trendyol ratio
+    // (09-28: 3600 TY + 3600 HB → 2). Cancelled API lines are ignored; the result is flagged estimated.
+    assert.equal(s.sales.yesterday.grossRevenue.estimated, false, "no API rows yet → no estimate");
+    await pg.exec(`insert into "TrendyolSalesRecord" (id,"orderId","lineId","orderDate",status,"productName",quantity,"unitPriceTry","totalPriceTry","syncedAt") values
+      ('ty1','9001',1,'2026-10-05 10:00','Delivered','MD-X',1,1000,1000,'2026-10-06 07:00'),
+      ('ty2','9002',1,'2026-10-05 11:00','Cancelled','MD-X',1,5000,5000,'2026-10-06 07:00')`);
+    const gap = await buildCfoAgentSnapshot({ db, now, config, compact: false });
+    assert.equal(gap.sales.yesterday.grossRevenue.value, 2000, "1000 TY API × ratio 2 (cancelled excluded)");
+    assert.equal(gap.sales.yesterday.grossRevenue.estimated, true);
+    assert.equal(gap.sales.yesterday.grossRevenue.reason, "entegra_gap_estimated_from_trendyol_api");
+    assert.equal(gap.sales.last7Days.grossRevenue.value, 2000, "partial upload day 09-29 (4200 Entegra) replaced by the estimate");
+    assert.equal(gap.sales.last7Days.complete, false, "estimated days still need full day coverage");
     assert.ok(ty && hb, `product signals: ${s.products.map(p => `${p.sku}/${p.channel}`).join(",")}`);
     assert.ok(ty!.commissionRate.value != null, "measured commission");
     const trust = (await pg.query<{ g: string; a: number; n: number }>(`select guven::text g, adet_duz a, count(*)::int n from cfo_satis_birim_duz where channel='TRENDYOL' group by 1,2 order by 2`)).rows;
