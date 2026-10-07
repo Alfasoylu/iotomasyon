@@ -1,6 +1,7 @@
 import "server-only";
 import { silencedRules } from "./anomalies";
 import { loadBankRollForward } from "./bank-rollforward";
+import { loadImportRevenue } from "./import-revenue";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -84,6 +85,8 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
       if (num(b.tl_maliyet) != null) s("cfo_kaldirac_basamak", `${key}.maliyet_try`, num(b.tl_maliyet), "TRY", measured);
     }
   }
+  // B4d — gelecek ithalatın beklenen cirosu/kârı ve konteynerdeki yeni ürünler (TAHMİNİ; 2026-10-07)
+  state.push(...await loadImportRevenue(db, at));
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
     for (const g of await db.query(`select distinct on (goal_key) goal_key, state, grade, gap_try, current_rate_try_per_day, required_rate_try_per_day, as_of::text as as_of
@@ -132,11 +135,22 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
 }
 
 /** SCHEDULED_CFO eki: yalnız nakit kararlarında, kaldıraç merdiveninin BOŞTA en ucuz 2 basamağı (deterministik sıra). Başka bağlam yok. */
+/** SCHEDULED_CFO eki (deterministik, küçük): nakit kararında kaldıraç merdiveninin BOŞTA en ucuz 2 basamağı; nakit ve stok
+ *  kararında en yakın varışlı ithalat projesinin beklenen aylık ciro katkısı (TAHMİNİ). Başka bağlam yok. */
 export async function loadScheduledExtras(decisionType: string, at: string, db: ReadSource = businessSource): Promise<Evidence[]> {
-  if (decisionType !== "CASH") return [];
-  const [p] = await db.query<{ t: string | null }>(`select to_regclass('public.cfo_kaldirac_basamak')::text as t`);
-  if (!p?.t) return [];
-  const rows = await db.query(`select basamak, ad, tl_kapasite, guven from cfo_kaldirac_basamak where durum='BOSTA' order by basamak limit 2`);
-  return rows.map(b => evidence("cfo_kaldirac_basamak", `merdiven.${b.basamak}.${clip(b.ad, 40)} (BOSTA) kapasite`, num(b.tl_kapasite) ?? "ölçülmedi",
-    num(b.tl_kapasite) == null ? "state" : "TRY", at, b.guven === "OLCULDU" || b.guven === "KESIN"));
+  const out: Evidence[] = [];
+  if (decisionType === "CASH") {
+    const [p] = await db.query<{ t: string | null }>(`select to_regclass('public.cfo_kaldirac_basamak')::text as t`);
+    if (p?.t) {
+      const rows = await db.query(`select basamak, ad, tl_kapasite, guven from cfo_kaldirac_basamak where durum='BOSTA' order by basamak limit 2`);
+      out.push(...rows.map(b => evidence("cfo_kaldirac_basamak", `merdiven.${b.basamak}.${clip(b.ad, 40)} (BOSTA) kapasite`, num(b.tl_kapasite) ?? "ölçülmedi",
+        num(b.tl_kapasite) == null ? "state" : "TRY", at, b.guven === "OLCULDU" || b.guven === "KESIN")));
+    }
+  }
+  if (decisionType === "CASH" || decisionType === "INVENTORY") {
+    const imports = await loadImportRevenue(db, at);
+    const first = imports.find(e => e.query.endsWith(".durum"))?.query.split(".")[1];
+    out.push(...imports.filter(e => first && e.query.startsWith(`ithalat.${first}.`) && (e.query.includes("aylik_ciro") || e.query.endsWith(".durum"))).slice(0, 2));
+  }
+  return out;
 }
