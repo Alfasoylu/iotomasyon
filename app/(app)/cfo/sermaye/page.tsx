@@ -5,6 +5,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
 import { buildAllocation } from "@/lib/cfo/engine";
 import { loadCapitalEfficiency } from "@/lib/cfo/capital-efficiency-data";
+import { loadRevenueLevers } from "@/lib/cfo/revenue-levers-data";
 import { prisma } from "@/lib/prisma";
 import type { CapClass, SkuResult } from "@/lib/cfo/capital-efficiency";
 import Link from "next/link";
@@ -18,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CfoAllocationPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
-  const [{ raw, overview: o }, ce] = await Promise.all([loadCfoData(), loadCapitalEfficiency(sql => prisma.$queryRawUnsafe(sql))]);
+  const [{ raw, overview: o }, ce, rv] = await Promise.all([loadCfoData(), loadCapitalEfficiency(sql => prisma.$queryRawUnsafe(sql)), loadRevenueLevers(sql => prisma.$queryRawUnsafe(sql))]);
   const options = buildAllocation(o, raw.loans);
   const hurdlePct = ce.hurdleMonthly != null ? ce.hurdleMonthly * 100 : null;
   const top = (cls: CapClass[], key: (r: SkuResult) => number, n = 8) => ce.skus.filter(r => cls.includes(r.cls)).sort((a, b) => key(b) - key(a)).slice(0, n);
@@ -30,6 +31,28 @@ export default async function CfoAllocationPage() {
         title="Sermaye Tahsisi"
         subtitle="Eline geçen her serbest nakit için: borç mu kapatmalı, mal mı almalı, reklam mı artırmalı?"
       />
+
+      {/* Ciro hedefine giden yol — lib/cfo/revenue-levers.ts (deterministik) */}
+      <Card className="mb-6 p-5">
+        <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Ciro hedefine giden yol — gelir kaldıraçları</h2>
+        <p className="mb-3 text-xs text-[var(--text-muted)]">
+          Bugün aylık ~{fmtTry(rv.currentMonthlyTry)} (son 90 gün ortalaması) · hedef {fmtTry(rv.targetMonthlyTry)} (100.000 USD × CFO kuru {rv.fx.toFixed(2)}) ·
+          açık <strong>{fmtTry(rv.gapMonthlyTry)}/ay</strong>. Sıra: önce ek sermaye istemeyen (parası ödenmiş ama satılamayan), sonra aylık brüt katkı / ek sermaye.
+          Güvenle ağırlıklı kaldıraçlar açığın ~%{Math.round(rv.coveredShare * 100)}&apos;ini kapatıyor.
+        </p>
+        <CfoTable head={<tr><Th>#</Th><Th>Kaldıraç</Th><Th right>Aylık ciro</Th><Th right>Aylık brüt katkı</Th><Th right>Ek sermaye</Th><Th right>Batık sermaye</Th><Th right>Güven</Th><Th right>Açık payı</Th><Th>Engel</Th></tr>}>
+          {rv.levers.map((l, i) => (
+            <tr key={l.key}>
+              <Td strong>{i + 1}</Td>
+              <Td strong>{l.label}<span className="block text-[11px] font-normal text-[var(--text-muted)]">{l.basis} · ~{l.daysToRevenue} gün</span></Td>
+              <Td right>{fmtTry(l.revenueMonthlyTry)}</Td><Td right>{fmtTry(l.grossMonthlyTry)}</Td>
+              <Td right>{l.capitalNeededTry ? fmtTry(l.capitalNeededTry) : "yok"}</Td><Td right>{l.sunkCapitalTry ? fmtTry(l.sunkCapitalTry) : "—"}</Td>
+              <Td right>{l.confidence.toFixed(1)}</Td><Td right>%{Math.round(l.gapShare * 100)}</Td><Td muted>{l.blocker}</Td>
+            </tr>
+          ))}
+        </CfoTable>
+        {rv.stockoutTop.length > 0 && <p className="mt-3 text-xs text-[var(--text-muted)]">Stoksuz kalan en çok satanlar (aylık ciro): {rv.stockoutTop.map(s => `${s.sku} ${fmtTry(s.revMonthlyTry)}`).join(" · ")}</p>}
+      </Card>
 
       {/* Sermaye verimliliği — deterministik (lib/cfo/capital-efficiency.ts). Eşik: en pahalı kapatılabilir ticari borcun aylık faizi. */}
       <Card className="mb-6 p-5">

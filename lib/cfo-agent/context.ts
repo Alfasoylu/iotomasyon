@@ -8,6 +8,7 @@ import { loadBankLedger, loadQuotes, loadTrendyolFinance } from "./finance-ledge
 import { loadCapitalEvidence } from "./capital-evidence";
 import { loadVoiEvidence } from "./voi-evidence";
 import { loadDecisionMemoryEvidence, loadGoalAttributionEvidence } from "./decision-memory-evidence";
+import { loadRevenueEvidence } from "./revenue-evidence";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -108,6 +109,8 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   state.push(...await loadDecisionMemoryEvidence(db, at));
   // B4k — hedef açığı atfı: bildirilen net sermaye ↔ operasyonel (stok değerleme hariç) değişim ve hedef hızı
   state.push(...await loadGoalAttributionEvidence(db, at));
+  // B4l — ciro hedefine giden yol: açık ve gelir kaldıraçları (batık sermayeyi çalıştıran önce)
+  state.push(...await loadRevenueEvidence(db, at));
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
     for (const g of await db.query(`select distinct on (goal_key) goal_key, state, grade, gap_try, current_rate_try_per_day, required_rate_try_per_day, as_of::text as as_of
@@ -177,6 +180,8 @@ export async function loadScheduledExtras(decisionType: string, at: string, db: 
     }
   }
   if (decisionType === "SALES") {
+    // Ciro kararlarında: ciro açığı + en büyük gelir kaldıracı
+    out.push(...(await loadRevenueEvidence(db, at)).filter(e => e.query.startsWith("ciro_yolu.acik") || e.query.startsWith("ciro_yolu.kaldirac.1")));
     // Ciro kararlarında Entegra'nın görmediği ALFASHOME cirosu (son 30 gün + senkron tazeliği).
     out.push(...(await loadAlfashomeSales(db, at)).filter(e => e.query.startsWith("alfashome.senkron") || e.query.startsWith("alfashome.ciro_son_30")));
   }
