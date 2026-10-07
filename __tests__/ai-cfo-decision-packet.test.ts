@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { RULE_CARDS } from "../lib/cfo-agent/rule-cards";
+import { CORE_RULES, RULE_CARD_SECTIONS, RULE_CARDS } from "../lib/cfo-agent/rule-cards";
 import { buildDecisionPacket, cardsFor, CARDS_FOR_RULE, estimateTokens, SCHEDULED_SYSTEM_PROMPT } from "../lib/cfo-agent/decision-packet";
 import { decisionInputHash, decisionTypeOf, impactBucket, materialChange } from "../lib/cfo-agent/materiality";
 import { budgetBlock, type BudgetTotals } from "../lib/cfo-agent/budget";
@@ -27,20 +27,29 @@ function anomaly(i: number, rule = "STOCKOUT", impact: number | null = 120000, n
     impact: impact == null ? null : { value: impact, formula: "x", inputs: {}, basis: "gross_incl_vat", estimated: true, kind: "lost_profit" }, weight: 1, existingRecordIds: [] } };
 }
 
-check("rule card'lar el kitabından BİREBİR ve küçük (≤1.250 bayt ≈ ≤500 token); her kural bir karta eşli", () => {
-  const handbook = readFileSync("lib/cfo-agent/handbook-core.md", "utf8");
-  for (const [id, text] of Object.entries(RULE_CARDS)) {
-    for (const para of text.split("\n\n")) assert.ok(handbook.includes(para.trim()), `${id}: el kitabında olmayan paragraf: ${para.slice(0, 60)}`);
-    assert.ok(Buffer.byteLength(text, "utf8") <= 1250, `${id} ${Buffer.byteLength(text, "utf8")} bayt`);
-    assert.ok(estimateTokens(text) <= 500, `${id} tahmini ${estimateTokens(text)} token`);
-  }
-  for (const ids of Object.values(CARDS_FOR_RULE)) for (const id of ids) assert.ok(id in RULE_CARDS, id);
-  assert.deepEqual(cardsFor([anomaly(0).a]), ["STOCKOUT"]);
-  assert.deepEqual(cardsFor([anomaly(0, "DEAD_STOCK").a]), ["DEAD_STOCK", "CAPITAL_ALLOCATION"]);
-  assert.deepEqual(cardsFor([{ ...anomaly(0).a, rule: "GOAL_OFF_TRACK" }]), ["CASH_SHORTFALL", "CAPITAL_ALLOCATION"]);
-  // rule-cards.ts .md'den üretilmiş olmalı
+check("rule card'lar (v1, el kitabı §7'den birebir): kart ≤800 token, madde sayısı = §7 numarası sayısı; eşleme Rule Cards v1", () => {
   const md = readFileSync("lib/cfo-agent/rule-cards.md", "utf8");
-  for (const [id, text] of Object.entries(RULE_CARDS)) assert.ok(md.includes(`## CARD ${id} `) && md.includes(text), `${id}: rule-cards.ts yeniden üretilmedi (npm run gen:handbook)`);
+  for (const [id, text] of Object.entries(RULE_CARDS)) {
+    assert.ok(estimateTokens(text) <= 800, `${id} tahmini ${estimateTokens(text)} token`);
+    const items = text.split("\n").filter(l => l.startsWith("- ")).length;
+    assert.equal(items, RULE_CARD_SECTIONS[id as keyof typeof RULE_CARDS].length, `${id}: madde sayısı §7 numaralarıyla aynı`);
+    assert.ok(md.includes(text), `${id}: rule-cards.ts yeniden üretilmedi (npm run gen:handbook)`);
+  }
+  // el kitabı sahibinin ölçtüğü baytlar (Rule Cards v1) — metin birebir kopyalanmış
+  assert.deepEqual(Object.fromEntries(Object.entries(RULE_CARDS).map(([k, v]) => [k, Buffer.byteLength(v, "utf8")])),
+    { STOCKOUT: 1026, DEAD_STOCK: 1253, PRICE_FLOOR: 1292, CASH_SHORTFALL: 1722, CAPITAL_ALLOCATION: 1453, DEBT_GATE: 1893, DATA_QUALITY: 810 });
+  // handbook-core.md'de de geçen §7 maddeleri (A6+A9) oradaki metinle aynı
+  const handbook = readFileSync("lib/cfo-agent/handbook-core.md", "utf8");
+  for (const line of ["🔴 **STOK DÜŞÜŞÜ SATIŞ DEĞİLDİR** (§4C, §9).", "🔴 **Net nakit pozisyonu −3.000.000 ₺ altına inemez.**", "🔴 **TAKSİTLİ NAKİT AVANS, ŞAHSİ KMH'DEN ÖNCE GELİR.**"])
+    assert.ok(handbook.includes(line) && Object.values(RULE_CARDS).some(t => t.includes(line)), line);
+  assert.ok(CORE_RULES.includes("SEN İTAAT EDEN BİR PERSONEL DEĞİLSİN") && SCHEDULED_SYSTEM_PROMPT.includes(CORE_RULES), "ortak çekirdek talimatta, bir kez");
+  assert.ok(estimateTokens(CORE_RULES) <= 300);
+  for (const ids of Object.values(CARDS_FOR_RULE)) for (const id of ids) { assert.ok(id in RULE_CARDS, id); assert.notEqual(id, "DATA_QUALITY", "DATA_QUALITY kartı planlı yolda yok"); }
+  assert.deepEqual(cardsFor([anomaly(0).a]), ["STOCKOUT"]);
+  assert.deepEqual(cardsFor([anomaly(0, "DEAD_STOCK").a]), ["DEAD_STOCK"]);
+  assert.deepEqual(cardsFor([anomaly(0, "MARGIN_DROP").a]), ["PRICE_FLOOR"]);
+  assert.deepEqual(cardsFor([{ ...anomaly(0).a, rule: "GOAL_OFF_TRACK" }]), ["CASH_SHORTFALL", "CAPITAL_ALLOCATION"]);
+  assert.deepEqual(cardsFor([anomaly(0, "REVENUE_DEVIATION").a]), [], "eşlemesi olmayan kural kartsız");
 });
 
 check("tutucu token tahmini ölçülenin altına düşmez (07.10: ≈17 KB → 5.559 token)", () => {
@@ -89,7 +98,7 @@ check("karar paketi: ≤3 anomali, anomali başına ≤6 kanıt, ≤2 kart, ≤2
   assert.ok(worst.packet.relevant_rule_cards.length <= 2 && worst.packet.previous_decisions.length <= 2);
   const json = JSON.stringify(worst.packet);
   for (const forbidden of ["El Kitabı v33", "sourceWatermarks", "profitability", "cfo_change_log", "soru."]) assert.ok(!json.includes(forbidden), forbidden);
-  assert.ok(!SCHEDULED_SYSTEM_PROMPT.includes("El Kitabı"), "planlı sistem talimatı el kitabını taşımaz");
+  assert.ok(!SCHEDULED_SYSTEM_PROMPT.includes("El Kitabı v33 — AI CFO Blok A"), "planlı sistem talimatı el kitabının tamamını taşımaz");
   // sınır küçükse paket küçülür (kanıt → kart → anomali → hafıza); en küçük basamak da sığmazsa fits=false (sınır yükselmez)
   const small = buildDecisionPacket({ decisionType: "INVENTORY", anomalies: items.map(x => ({ anomaly: x.a, reason: "new" as const })), evidence: evidenceAll, memory, extras }, 1800);
   assert.ok(small.shrinkLevel > 0 && small.packet.top_anomalies.length < 3, `küçüldü: seviye ${small.shrinkLevel}`);
