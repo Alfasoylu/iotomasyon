@@ -253,6 +253,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-07 — AI CFO STEP F: ilk başarılı sağlayıcı çağrısı, çıktı kesildi:** `maxItems` düzeltmesi (#173) sonrası 09:13 zamanlanmış monitor `cmuxpo8e…` Anthropic'ten yanıt aldı (5.559/800 token, 1,43 ₺) ama 800 tavanında kesildi → `invalid_output`. Çıktı tavanı varsayılan 1500 / üst 2000; kesilme `output_truncated` etiketi. `config.ts`, `runner.ts`, `__tests__/ai-cfo-runner.test.ts`, `docs/AI-CFO-RUNNER.md`.
 - **2026-10-07 — AI CFO STEP F: structured outputs `maxItems` 400:** `cmuxn1eh…` `blocked_by_input_tokens` (varsayılan 4500 sınırı; kullanıcı `AI_CFO_MAX_INPUT_TOKENS_PER_RUN=8000` ayarladı, `avoidedCostTry` artık dolu). Ardından `cmuxo5fc…` `provider_http_400`: şemadaki `maxItems` desteklenmiyor → `provider.ts` şemadan kaldırıldı, sınır `validate-ai-output.ts`'te (`MAX_INSIGHTS`). Testler `ai-cfo-provider`, `ai-cfo-runner`.
 - **2026-10-07 — AI CFO STEP F engeli: karar hafızası `regclass`:** ilk onaylı AI koşusu `cmuxa4cc…` snapshot sonrası `monitor_failed` (Prisma: "Failed to deserialize column of type 'regclass'", `retrieveRelevantMemory`). `lib/cfo-agent/memory.ts` `::text` cast; `__tests__/ai-cfo-store.test.ts` regresyon. Sağlayıcı çağrılmadı, `cfo_usage` yazılmadı.
 - **2026-10-07 — AI CFO elle çalıştırma dilimi:** elle koşular saat yerine 20 dk dilimde idempotent (saatte 3); cron saatlik kalır. `lib/cfo-agent/runner.ts` (`runPeriodKey`), `ai-trigger.ts`, `app/api/admin/ai-cfo/runner/route.ts`, test `ai-cfo-runner`.

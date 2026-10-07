@@ -150,6 +150,14 @@ async function main() {
     const st = fakeStore();
     const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: aiFor(revenue, s0, { observation: "Ciro 999999 TL." }), inputTokens: 900, outputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
     assert.equal(r.status, "invalid_output"); assert.equal(st.insights.length, 0); assert.equal(st.usage[0].status, "completed");
+    assert.equal(st.finished.at(-1)?.error, "rejected_insights:1");
+  });
+
+  await check("çıktı tavanında kesilen yanıt: invalid_output + output_truncated, kullanım yine ölçülür", async () => {
+    const st = fakeStore();
+    const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async generate() { return { text: "", inputTokens: 5559, outputTokens: config.maxOutputTokens, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: null }; } } });
+    assert.equal(r.status, "invalid_output"); assert.equal(st.finished.at(-1)?.error, "output_truncated");
+    assert.equal(st.usage[0].status, "completed"); assert.equal(st.usage[0].outputTokens, config.maxOutputTokens);
   });
 
   await check("bütçe/günlük limit: çağrı yok, engel kaydı tutulur", async () => {
