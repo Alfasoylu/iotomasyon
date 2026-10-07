@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { istanbulPeriod } from "./budget";
 import type { AiInsight, Anomaly, CfoAgentSnapshot, Evidence, RunType } from "./types";
 import { CALCULATION_VERSION, SCHEMA_VERSION } from "./types";
+/** Valid model answers that skipped an anomaly before it cools down without an insight. */
+export const DECLINED_RUNS_FOR_COOLDOWN=2;
 
 const json=(value:unknown):Prisma.InputJsonValue=>JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 export interface UsageWrite {
@@ -25,13 +27,16 @@ export const cfoStore:CfoStore={
     catch(e){if(e instanceof Prisma.PrismaClientKnownRequestError&&e.code==="P2002")return null;throw e;}},
   async snapshot(id,snapshot,hash,anomalies,sent){await prisma.cfoRun.update({where:{id},data:{snapshot:json(snapshot),snapshotHash:hash,triggerReasons:json({anomalies,sentAnomalies:sent})}});},
   async recent(key,now,cooldownHours=72){
-    // Run history also remembers valid empty AI replies: no repeated billing for
-    // an unchanged anomaly just because the model correctly emitted no advice.
-    const rows=await prisma.cfoRun.findMany({where:{generatedAt:{gte:new Date(now.getTime()-cooldownHours*3600000)},status:{in:["completed","invalid_output"]}},orderBy:{generatedAt:"desc"},take:100,select:{generatedAt:true,triggerReasons:true}});
-    for(const row of rows) {
-      const reason=row.triggerReasons as {sentAnomalies?:Anomaly[]};const previous=reason.sentAnomalies?.find(a=>a.cooldownKey===key);
-      if(previous)return {createdAt:row.generatedAt,impact:previous.impact?.value??null};
-    }return null;
+    // Cooldown starts only on delivery (2026-10-07): an insight was written for this anomaly, or the model gave a valid
+    // answer (status completed) without advice for it twice — no endless re-billing of an anomaly the model declines.
+    // A failed, truncated, fully rejected (invalid_output) or skipped call leaves the anomaly open for the next run.
+    const since=new Date(now.getTime()-cooldownHours*3600000);
+    const impactOf=(t:unknown)=>(t as {sentAnomalies?:Anomaly[]}|null)?.sentAnomalies?.find(a=>a.cooldownKey===key)?.impact?.value??null;
+    const insight=await prisma.cfoInsight.findFirst({where:{cooldownKey:key,createdAt:{gte:since}},orderBy:{createdAt:"desc"},select:{createdAt:true,run:{select:{triggerReasons:true}}}});
+    if(insight)return {createdAt:insight.createdAt,impact:impactOf(insight.run.triggerReasons)};
+    const rows=await prisma.cfoRun.findMany({where:{generatedAt:{gte:since},status:"completed"},orderBy:{generatedAt:"desc"},take:100,select:{generatedAt:true,triggerReasons:true}});
+    const declined=rows.filter(r=>(r.triggerReasons as {sentAnomalies?:Anomaly[]}|null)?.sentAnomalies?.some(a=>a.cooldownKey===key));
+    return declined.length>=DECLINED_RUNS_FOR_COOLDOWN?{createdAt:declined[0].generatedAt,impact:impactOf(declined[0].triggerReasons)}:null;
   },
   async totals(now){const p=istanbulPeriod(now);const rows=await prisma.cfoUsage.findMany({where:{createdAt:{gte:p.monthStart},status:{in:["reserved","completed","failed"]}},select:{createdAt:true,estimatedCost:true,reservedCostTry:true}});
     return {callsToday:rows.filter(r=>r.createdAt>=p.dayStart).length,spentThisMonth:rows.reduce((s,r)=>s.add(r.estimatedCost??r.reservedCostTry??0),new Prisma.Decimal(0)).toNumber()};},

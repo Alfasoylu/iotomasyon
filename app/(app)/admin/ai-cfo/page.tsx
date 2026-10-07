@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
 import { loadCfoControlCenter } from "@/lib/cfo-agent/control-center";
+import { loadCfoAlarms, type CfoAlarm } from "@/lib/cfo-agent/health";
 import { getCfoConfig, billingConfigured } from "@/lib/cfo-agent/config";
 import { goalItem, GOAL_STATE_LABEL, type GoalRow } from "@/lib/fm/goals";
 import type { Evidence, Metric } from "@/lib/cfo-agent/types";
@@ -42,11 +43,19 @@ export default async function AiCfoPage() {
   const goals = (await readGoals()).map(goalItem);
   const live = data?.installed ? data : null, s = live?.snapshot;
   const aiOn = config.enabled && config.releaseApproved;
+  let alarms: CfoAlarm[] = [];
+  if (data?.installed) { try { alarms = await loadCfoAlarms(); } catch { /* sağlık okuması başarısızsa sayfa yine açılır */ } }
   return <div className="space-y-6">
     <PageHeader title="AI CFO" subtitle="Deterministik bulguları ve hedefleri açıklayan, kanıta bağlı öneri katmanı."
       breadcrumb={[{ label: "CFO" }, { label: "AI CFO" }]}
       meta={<><Badge variant={aiOn ? "ok" : "neutral"}>{aiOn ? "AI açık" : "AI kapalı"}</Badge><Badge>{config.monitorEnabled ? "Monitor açık" : "Monitor kapalı"}</Badge>
         <span className="text-xs">Son çalışma: {time(live?.run?.generatedAt)} · {live?.run?.status ?? "Henüz çalışmadı"}</span></>} />
+
+    {alarms.length > 0 && <Card className="space-y-1 border-[var(--danger)] p-4">
+      <h2 className="font-semibold text-[var(--danger)]">Alarm</h2>
+      <ul className="list-disc pl-5 text-sm">{alarms.map(a => <li key={a.code}>{a.message}</li>)}</ul>
+      <p className="text-xs text-[var(--text-muted)]">Saatlik &quot;AI CFO sağlık alarmı&quot; GitHub Actions işi de bu durumda kırmızı yanar ve e-posta gönderir.</p>
+    </Card>}
 
     <Card className="space-y-3 p-4">
       <h2 className="font-semibold">Durum ve kapılar</h2>

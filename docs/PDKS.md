@@ -172,25 +172,26 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 3. [ ] **Bayat kaynaklar** — teşhis 2026-10-07: Hepsiburada yanlış alarmı kodda düzeltildi (`alfas-gross-v7`). Kalan (kullanıcı): güncel Entegra Excel'ini yükle (son 05.10); Ziraat USD + Yapı Kredi USD (şirket) bakiyelerini güncelle ya da pasife al (son 17.09).
 4. [ ] **Maliyet kapsamı %56,6** — eksik ürün maliyetleri girilmeden kârlılık/marj anomalileri güvenilir değil (kullanıcı + veri girişi ekranı).
 5. [ ] **Forecast V2 açma kararı** — eski yolda Trendyol çift sayım + Türkçe-İ hataları satın alma tahminini bozmaya devam ediyor (gölge raporu → onay).
-6. [ ] **AI CFO anomali seçiminde kategori çeşitliliği** — ilk koşuda 8/8 STOCKOUT gitti; kategori başına kota (ör. en fazla 3 stok + hedef/marj/nakit).
-7. [ ] **AI CFO girdi paketini küçült** — kanıtta tekrarlanan `asOf` vb. alanlar; hedef 8000 yerine 4500 token sınırına dönmek (maliyet ↓).
-8. [ ] **AI CFO kalibrasyon** — 1–2 hafta içgörüleri `/admin/ai-cfo`'da doğru/yanlış işaretleme (`reviewedAt/By` alanları mevcut, UI yok); ret nedeni kodlarını izle (`fabricated_number` oranı).
+6. [ ] **AI CFO 24 saat raporu kalanları (07.10):** (2) girdi bağlamı — el kitabı kuralları + `cfo_change_log` son 30 + açık P1 sorular, el kitabı kısmı prompt cache'li; (3) anomalilere TL etkisi (STOCKOUT hız×birim kâr, PRICE_BELOW_FLOOR (taban−fiyat)×hız, DEAD_STOCK bağlı sermaye×para maliyeti) ve impact'e göre sıralama; (5) tek kanonik nakit dibi + kur yalnız `cfo_kur`'dan (priceContext/cfo_servet gömülü kur); (6) saat bazlı görev planı (`cfo_run.type` plan adımı); (7) sınırlı yazma yetkisi (change_log/soru/isSettled; fiyat/ödeme/sipariş asla). Madde 1 + 4 tamam.
+7. [ ] **AI CFO anomali seçiminde kategori çeşitliliği** — ilk koşuda 8/8 STOCKOUT gitti; kategori başına kota (ör. en fazla 3 stok + hedef/marj/nakit).
+8. [ ] **AI CFO girdi paketini küçült** — kanıtta tekrarlanan `asOf` vb. alanlar; hedef 8000 yerine 4500 token sınırına dönmek (maliyet ↓).
+9. [ ] **AI CFO kalibrasyon** — 1–2 hafta içgörüleri `/admin/ai-cfo`'da doğru/yanlış işaretleme (`reviewedAt/By` alanları mevcut, UI yok); ret nedeni kodlarını izle (`fabricated_number` oranı).
 
 **P2 — Bu ay (büyüme + teknik borç)**
-9. [ ] **Yeni ürünler pazaryeri hazırlığı** (kullanıcı ağırlıklı) — 126/127 üründe görsel yok (en büyük darboğaz), 16 kutu ölçüsü, kategori eşleme, 64 marka, 40 uzun başlık.
-10. [ ] **Market Scout yayına alma** — migration + baseline yenileme → eski scout içe aktarımı → buybox (her adım ayrı onay; aşağıdaki madde).
-11. [ ] **C6 hata telemetrisi (Sentry)** — bugünkü `monitor_failed`/`provider_http_400` ancak elle sorguyla bulundu.
-12. [ ] **Baseline sonrası:** `schema.prisma` ↔ üretim sürüklenmesi (3 tablo) hizalama; `migration-clean-apply` testini kaldır.
-13. [ ] **D7: 43 `SECURITY DEFINER` view → `security_invoker`** (39'dan 43'e çıktı; anon yetkisi yok, sömürülemez ama büyüyor).
-14. [ ] **Faz 2 vitrin:** landing CTA'larını `/kayit`'a bağla, gerçek iletişim bilgisi, yasal sayfalar (ödeme 10 müşteriye kadar kapalı kalır).
+10. [ ] **Yeni ürünler pazaryeri hazırlığı** (kullanıcı ağırlıklı) — 126/127 üründe görsel yok (en büyük darboğaz), 16 kutu ölçüsü, kategori eşleme, 64 marka, 40 uzun başlık.
+11. [ ] **Market Scout yayına alma** — migration + baseline yenileme → eski scout içe aktarımı → buybox (her adım ayrı onay; aşağıdaki madde).
+12. [ ] **C6 hata telemetrisi (Sentry)** — bugünkü `monitor_failed`/`provider_http_400` ancak elle sorguyla bulundu.
+13. [ ] **Baseline sonrası:** `schema.prisma` ↔ üretim sürüklenmesi (3 tablo) hizalama; `migration-clean-apply` testini kaldır.
+14. [ ] **D7: 43 `SECURITY DEFINER` view → `security_invoker`** (39'dan 43'e çıktı; anon yetkisi yok, sömürülemez ama büyüyor).
+15. [ ] **Faz 2 vitrin:** landing CTA'larını `/kayit`'a bağla, gerçek iletişim bilgisi, yasal sayfalar (ödeme 10 müşteriye kadar kapalı kalır).
 
 **P3 — Takvime bağlı / iyileştirme**
-15. [ ] M7 A-shrink telemetrisi — ilk puan 2026-11-06.
-16. [ ] Tahmin temizlik PR'ı — V2 kalıcı olunca.
-17. [ ] AI CFO küçükler: çıktıda İngilizce terim sızıntısı ("contribution profit") için prompt; kesilen yanıtın soğumayı tetiklememesi.
-18. [ ] D8 (147 fonksiyonda değişken `search_path`), D9 (`vector` public'te), `tmp-cfo-files-verify` Edge Function silme.
-19. [ ] PDKS ürün: C4 güvenilir cron, C1 offline kuyruk, C2/D4 audit log, C7 izin bakiyesi, D3 cihaz çıkarma, PDF/Excel rapor, zaman/format kod birleştirme.
-20. [ ] `CLAUDE.md` şirket profili yer tutucularını doldur (kullanıcı).
+16. [ ] M7 A-shrink telemetrisi — ilk puan 2026-11-06.
+17. [ ] Tahmin temizlik PR'ı — V2 kalıcı olunca.
+18. [ ] AI CFO küçükler: çıktıda İngilizce terim sızıntısı ("contribution profit") için prompt; kesilen yanıtın soğumayı tetiklememesi.
+19. [ ] D8 (147 fonksiyonda değişken `search_path`), D9 (`vector` public'te), `tmp-cfo-files-verify` Edge Function silme.
+20. [ ] PDKS ürün: C4 güvenilir cron, C1 offline kuyruk, C2/D4 audit log, C7 izin bakiyesi, D3 cihaz çıkarma, PDF/Excel rapor, zaman/format kod birleştirme.
+21. [ ] `CLAUDE.md` şirket profili yer tutucularını doldur (kullanıcı).
 
 ### Ayrıntılı maddeler
 
@@ -287,6 +288,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-07 — AI CFO 24 saat raporu, madde 1 + 4:** soğuma yalnız teslimde (`store.ts`; kesilen/başarısız/reddedilen koşu anomaliyi kilitlemez; model iki geçerli yanıtta atlarsa soğur) + sağlık alarmı (`health.ts`, `/api/cron/ai-cfo-health`, `ai-cfo-health.yml`, admin alarm kartı). Not: `PRICE_BELOW_FLOOR`/`DEAD_STOCK`'un 07.10'da düşmesi soğumadan değil, Entegra 48 sa bayat olduğu için (kural tasarım gereği finansal tazelik ister).
 - **2026-10-07 — P1-3 bayat kaynak teşhisi:** Entegra = elle Excel yükleme, son 05.10 09:06 (>48 sa) → kullanıcı yüklemeli. Hepsiburada = yanlış alarm (doğrudan API tablosu 0 satır; satışlar Entegra'dan) → kod düzeltildi (`snapshot.ts`, `alfas-gross-v7`). Banka = 15 hesaptan 2'si (Ziraat USD, Yapı Kredi USD şirket) 17.09'dan beri güncellenmemiş → 7 gün kuralı tümünü bayat sayıyor; kullanıcı güncellemeli. P0-2 (`cfo_secret` → Vault) taslağı ortam güvenlik denetimince engellendi (secret-store yazımı); kullanıcı kararı bekliyor.
 - **2026-10-07 — Öncelikli aksiyon planı:** backlog P0–P3 sıralandı (üretim salt-okunur doğrulama: bayat kaynaklar Entegra/Hepsiburada/banka, maliyet kapsamı %56,6, `cfo_secret` 5 düz metin satır, 43 definer view, 147 değişken search_path). AI CFO adım 8 STEP F tamam olarak işaretlendi.
 - **2026-10-07 — AI CFO STEP F tamam: ilk AI içgörüleri üretimde:** `cmuxqfti…` (09:34, elle): 4 GOAL anomalisi → 2 içgörü kaydedildi (borç 5M hedefi NOT_MET; net pozisyon tabanı OFF_TRACK, ikisi de TAHMİNİ/güven düşük), 1 ret; 1,43 ₺. Kullanıcı onayıyla: kısmi başarı `completed` + ret nedeni kodları (`runner.ts`, `validate-ai-output.ts`, `run-buttons.tsx`, test `ai-cfo-runner`).

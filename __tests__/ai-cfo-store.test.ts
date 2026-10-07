@@ -56,7 +56,7 @@ async function main() {
       confidence: "medium", evidenceIds: ["e_1"] }], [anomaly], snap.evidence as never);
     await cfoStore.finish(id!, "completed", now, 0, null);
     const recent = await cfoStore.recent(anomaly.cooldownKey, new Date(now.getTime() + 3600000), 72);
-    assert.ok(recent, "cooldown recalls the anomaly sent in a completed run");
+    assert.ok(recent, "cooldown recalls the anomaly that received an insight");
     const rows = await client.$queryRawUnsafe<{ status: string; n: number }[]>(`select r.status, (select count(*)::int from cfo_insight i where i."runId"=r.id) n from cfo_run r`);
     assert.deepEqual(rows, [{ status: "completed", n: 1 }]);
     const center = await loadCfoControlCenter(now);
@@ -66,6 +66,22 @@ async function main() {
     assert.deepEqual(center.anomalies.map(a => a.id), [anomaly.id]);
     assert.equal(center.usage.callsToday, 1);
     assert.equal(center.usage.outputTokens, 200);
+    // Cooldown only on delivery (2026-10-07): sent but no insight → stays open; failed/invalid_output never cool;
+    // two valid answers (completed) that skip it do cool it, so a declined anomaly is not re-billed forever.
+    const other = { ...anomaly, id: "a_other", cooldownKey: "stockout:X", entityId: "TRENDYOL:X" };
+    const later = new Date(now.getTime() + 2 * 3600000);
+    for (const [period, status] of [["2026-10-06T12", "invalid_output"], ["2026-10-06T13", "failed"]] as const) {
+      const rid = await cfoStore.begin("monitor", period, later);
+      await cfoStore.snapshot(rid!, snap as never, "hash", [other], [other]);
+      await cfoStore.finish(rid!, status, later, 0, null);
+    }
+    assert.equal(await cfoStore.recent(other.cooldownKey, later, 72), null, "failed / invalid_output runs do not start the cooldown");
+    const c1 = await cfoStore.begin("monitor", "2026-10-06T14", later);
+    await cfoStore.snapshot(c1!, snap as never, "hash", [other], [other]); await cfoStore.finish(c1!, "completed", later, 0, null);
+    assert.equal(await cfoStore.recent(other.cooldownKey, later, 72), null, "one valid answer without advice keeps it open");
+    const c2 = await cfoStore.begin("monitor", "2026-10-06T15", later);
+    await cfoStore.snapshot(c2!, snap as never, "hash", [other], [other]); await cfoStore.finish(c2!, "completed", later, 0, null);
+    assert.ok(await cfoStore.recent(other.cooldownKey, later, 72), "declined in two valid answers → cooled");
     // AI-path memory through the REAL Prisma raw source: a regclass value cannot be deserialized by Prisma, so the
     // existence probe must return text (production run 2026-10-07 failed here with monitor_failed before the provider call)
     await pg.query(`insert into cfo_urun_karar (sku,karar,sebep,updated_at) values ('MEM-1','BEKLE','test karari',now())`);
