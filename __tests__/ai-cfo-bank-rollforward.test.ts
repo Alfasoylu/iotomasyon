@@ -25,7 +25,8 @@ const r = rollForwardBalances(accounts, [
   { date: "2026-10-07", bank: "Yapı Kredi", amountTry: -9999, settled: false, label: "Bugün, ödenmedi" },  // bugün, işaret yok → henüz değil
   { date: "2026-10-07", bank: "Akbank", amountTry: -1000, settled: true, label: "Bugün ödendi" },          // bugün ama ödendi → eklenir
   { date: "2026-10-08", bank: "Ziraat", amountTry: -50000, settled: false, label: "Yarın" },               // gelecek → eklenmez
-  { date: "2026-10-05", bank: "Fibabanka", amountTry: -700, settled: false, label: "Eşlenmeyen" },          // hesap yok → raporlanır
+  { date: "2026-10-07", bank: "Fibabanka", amountTry: -700, settled: true, label: "Eşlenmeyen" },           // hesap yok → raporlanır
+  { date: "2026-10-05", bank: "Fibabanka", amountTry: -300, settled: false, label: "Eski eşlenmeyen" },     // en son bakiye gününden (06.10) önce → sayılmaz
 ], "2026-10-07");
 const by = (n: string) => r.accounts.find(a => a.name === n)!;
 assert.equal(by("Ziraat").projectedTry, 100000, "güncelleme günündeki kalem bakiyede");
@@ -33,12 +34,24 @@ assert.equal(by("Yapı Kredi").projectedTry, 20000 + 15000 - 3000, "tarihi geçm
 assert.equal(by("Yapı Kredi").movements, 2);
 assert.equal(by("Akbank Alp").projectedTry, 4000, "bugün ama ödendi işaretli");
 assert.equal(by("Ziraat USD (şirket)").projectedTry, 50000, "hareketsiz hesap aynen kalır");
-assert.deepEqual(r.unmapped, [{ label: "Eşlenmeyen", bank: "Fibabanka", amountTry: -700 }], "eşlenmeyen uydurulmaz, raporlanır");
-assert.equal(r.anchorTotalTry, 178000); assert.equal(r.projectedTotalTry, 178000 + 12000 - 1000);
+assert.deepEqual(r.unmapped, [{ label: "Eşlenmeyen", bank: "Fibabanka", amountTry: -700, reason: "hesap bulunamadı: Fibabanka" }], "eşlenmeyen uydurulmaz, raporlanır");
+assert.equal(r.anchorTotalTry, 178000); assert.equal(r.accountsProjectedTry, 178000 + 12000 - 1000);
+assert.equal(r.unassignedTry, -700); assert.equal(r.projectedTotalTry, 178000 + 12000 - 1000 - 700, "hesabı belirsiz kalem şirket toplamından düşülür");
+
+// Bankasız çıkış (07.10: 100.000 TL sabit gider, bakiyeler toplamı 57.764) HİÇBİR hesaba atanmaz; nedeniyle raporlanır.
+// En son bakiye gününden (06.10) önceki bankasız kalem çift düşülmez: hangi hesaptan çıktıysa o bakiyede.
+const u = rollForwardBalances(accounts, [
+  { date: "2026-10-07", bank: null, amountTry: -100000, settled: true, label: "Sabit gider kalanı" },
+  { date: "2026-10-05", bank: null, amountTry: -400, settled: false, label: "Eski bankasız" },
+  { date: "2026-10-06", bank: "IDEASOFT?", amountTry: 900, settled: false, label: "IDEASOFT hakediş", reason: "sözlükte banka ölçülmedi (OLCULMEDI)" },
+], "2026-10-08");
+assert.deepEqual(u.accounts.map(a => a.projectedTry), accounts.map(a => a.balanceTry), "hiçbir hesap değişmez");
+assert.deepEqual(u.unmapped.map(x => x.reason), ["takvimde banka yok"], "06.10 ve öncesi en son bakiyede; yalnız 07.10 kalemi");
+assert.equal(u.projectedTotalTry, 178000 - 100000);
 
 // Güncelleme günü İstanbul saatiyle: 05.10 22:30 UTC = 06.10 01:30 İstanbul → 06.10 kalemi bakiyede sayılır
 const late = rollForwardBalances([{ name: "Enpara", balanceTry: 1000, lastUpdatedAt: "2026-10-05T22:30:00.000Z" }],
   [{ date: "2026-10-06", bank: "Enpara", amountTry: -500, settled: true, label: "x" }], "2026-10-07");
 assert.equal(late.accounts[0].anchorDate, "2026-10-06"); assert.equal(late.accounts[0].projectedTry, 1000);
 
-console.log("AI CFO bank roll-forward: anchor-day items stay in balance, passed-date items added, today only if settled, future excluded, brand→account mapping, unmapped reported passed");
+console.log("AI CFO bank roll-forward: anchor-day items stay in balance, passed-date items added, today only if settled, future excluded, brand→account mapping, unmapped reported with reason, bank-less items only hit the company total passed");

@@ -153,6 +153,34 @@ async function main() {
     assert.ok(ctx.state.some(e => q(e) === "banka.son_girilen_toplam_try" && typeof e.value === "number"), "banka ileri taşıma: son girilen toplam");
     assert.ok(ctx.state.some(e => q(e).startsWith("banka.ileri_tasinan_toplam_try") && e.measured === false), "ileri taşınan toplam TAHMİNİ");
     assert.ok(new Set([...ctx.state, ...ctx.memory].map(e => e.id)).size === ctx.state.length + ctx.memory.length, "bağlam kanıt id'leri benzersiz");
+    // Kanal sözlüğü + kaldıraç merdiveni (2026-10-07): production'da el kitabı sahibinin tuttuğu tablolar — burada aynı şekille kurulur.
+    // Hakediş bankası YALNIZ sözlükten: sözlükte yok / banka ölçülmedi → eşlenmez, nedeniyle raporlanır; bankasız çıkış hiçbir
+    // hesaba atanmaz, yalnız şirket toplamından düşülür.
+    await pg.exec(`create table cfo_kanal_sozluk (yazim text primary key, kanonik text not null, banka text, kaynak_tablo text, gozlem int,
+        guven text, note text, "updatedAt" timestamp default now());
+      insert into cfo_kanal_sozluk (yazim,kanonik,banka,guven) values ('Idefix','IDEFIX','Banka','OLCULDU'),('TEMU','TEMU',null,'OLCULMEDI');
+      create table cfo_kaldirac_basamak (basamak smallint primary key, ad text, durum text, tl_kapasite numeric, tl_maliyet numeric, kaynak text,
+        guven text, note text, "updatedAt" timestamp default now());
+      insert into cfo_kaldirac_basamak (basamak,ad,durum,tl_kapasite,tl_maliyet,guven,note) values
+        (3,'Trendyol erken odeme','BOSTA',250000,null,'TAHMINI','en ucuz bos basamak'),(7,'Sahsi hesaplar','BILINCLI_TUTULUYOR',1550000,null,'OLCULDU','hedef sahsi kartlari kapatmak');
+      update cfo_bank_account set "lastUpdatedAt"='2026-10-04 10:00' where id='b1';
+      insert into cfo_receivable (id,channel,"dueDate","amountTry","updatedAt","isCollected") values
+        ('r2','Idefix','2026-10-06',5000,now(),false),('r3','TEMU','2026-10-06',3000,now(),false),('r4','YeniKanal','2026-10-06',2000,now(),false);
+      insert into cfo_cash_event (id,"eventDate",kind,description,"updatedAt","outflowTry","isSettled",bank) values
+        ('e2','2026-10-07','SABIT_GIDER','sabit gider kalani',now(),100000,true,null);`);
+    const ctx2 = await loadCfoContext(late, config, db);
+    const v = (key: string) => ctx2.state.find(e => q(e).startsWith(key))?.value;
+    assert.equal(v("banka.Banka.ileri_tasinan_try"), 100000 + 5000, "Idefix hakedişi sözlükteki bankaya gider");
+    assert.equal(v("banka.hesabi_belirsiz_try"), 3000 + 2000 - 100000, "ölçülmemiş/sözlükte olmayan hakediş ve bankasız çıkış hesaba atanmaz");
+    assert.equal(v("banka.ileri_tasinan_toplam_try"), 105000 + 3000 + 2000 - 100000, "şirket toplamı = hesaplar + hesabı belirsiz");
+    const unm = String(v("banka.eslenmeyen_kalemler"));
+    assert.match(unm, /TEMU hakediş 3000 TRY — sözlükte banka ölçülmedi \(OLCULMEDI\)/);
+    assert.match(unm, /YeniKanal hakediş 2000 TRY — sözlükte yok: YeniKanal/);
+    assert.match(unm, /sabit gider kalani -100000 TRY — takvimde banka yok/);
+    assert.match(String(v("merdiven.7.Sahsi hesaplar.durum")), /^BILINCLI_TUTULUYOR \(ÖNERME\)/, "bilinçli tutulan basamak işaretli");
+    assert.equal(v("merdiven.3.Trendyol erken odeme.kapasite_try"), 250000);
+    assert.equal(ctx2.state.find(e => q(e).startsWith("merdiven.3."))?.measured, false, "TAHMINI basamak ölçülmemiş sayılır");
+
     assert.ok(ty && hb, `product signals: ${s.products.map(p => `${p.sku}/${p.channel}`).join(",")}`);
     assert.ok(ty!.commissionRate.value != null, "measured commission");
     const trust = (await pg.query<{ g: string; a: number; n: number }>(`select guven::text g, adet_duz a, count(*)::int n from cfo_satis_birim_duz where channel='TRENDYOL' group by 1,2 order by 2`)).rows;

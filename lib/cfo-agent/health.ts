@@ -5,7 +5,7 @@ import { getCfoConfig } from "./config";
 // arasında ayırt edilemez. Saatlik GitHub Actions işi /api/cron/ai-cfo-health'i çağırır; alarm varsa 503 → iş kırmızı →
 // GitHub depo sahibine e-posta gönderir. Aynı alarmlar /admin/ai-cfo'da gösterilir. Yalnız okur, hiçbir şey yazmaz.
 
-export type CfoAlarm = { code: "consecutive_failures" | "no_insight_24h" | "entegra_upload_due" | "bank_update_due"; message: string };
+export type CfoAlarm = { code: "consecutive_failures" | "budget_blocked" | "input_limit_blocked" | "no_insight_24h" | "entegra_upload_due" | "bank_update_due"; message: string };
 /** Haftalık elle yüklenen veriler (2026-10-07 kararı): son Entegra yüklemesi ve 7 günden eski banka hesapları. */
 export type ManualData = { entegraLastImport: Date | null; staleBankAccounts: string[] };
 const WEEK_MS = 7 * 24 * 3600000;
@@ -13,6 +13,10 @@ export type HealthRun = { status: string; generatedAt: Date; error: string | nul
 
 /** Koşu sonucu "başarısız": hata ya da hiç içgörü geçmeyen model çıktısı. */
 const FAILED = new Set(["failed", "invalid_output"]);
+/** Atlanan ama "başarısız" sayılmayan koşular: tek bir koşu bile monitörün kör olduğunu gösterir → ANINDA alarm
+ *  (07.10: token sınırı 8.000'de kaldı, koşular saatlerce atlandı, alarm çalmadı; bütçe ayın 20'sinde biterse 24 saat beklenmez). */
+const BUDGET = new Set(["blocked_by_budget", "blocked_by_daily_limit", "billing_unconfigured"]);
+const INPUT_LIMIT = new Set(["blocked_by_input_tokens", "blocked_by_input_size"]);
 /** Model çağrısına hiç ulaşmayan, sağlık açısından nötr durumlar. */
 const NEUTRAL = new Set(["running"]);
 
@@ -22,6 +26,12 @@ export function evaluateCfoAlarms(runs: HealthRun[], lastInsightAt: Date | null,
   const [last, prev] = recent;
   if (last && prev && FAILED.has(last.status) && FAILED.has(prev.status)) {
     alarms.push({ code: "consecutive_failures", message: `Son iki koşu başarısız: ${[last, prev].map(r => `${r.status}${r.error ? ` (${r.error})` : ""}`).join(" · ")}` });
+  }
+  if (last && BUDGET.has(last.status)) {
+    alarms.push({ code: "budget_blocked", message: `Son koşu bütçe/limit yüzünden atlandı (${last.status}); AI CFO model çağırmıyor. AI_CFO_MONTHLY_BUDGET_TRY / AI_CFO_MAX_CALLS_PER_DAY kontrol edin.` });
+  }
+  if (last && INPUT_LIMIT.has(last.status)) {
+    alarms.push({ code: "input_limit_blocked", message: `Son koşu girdi sınırında atlandı (${last.status}); AI CFO model çağırmıyor. AI_CFO_MAX_INPUT_TOKENS_PER_RUN ayarını kontrol edin (önerilen 20000).` });
   }
   const dayAgo = now.getTime() - 24 * 3600000;
   const triedToday = recent.some(r => r.generatedAt.getTime() >= dayAgo && r.sentActionable > 0);

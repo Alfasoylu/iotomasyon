@@ -26,6 +26,15 @@ assert.deepEqual(evaluateCfoAlarms([run("05:42", "completed")], at("05:42"), tru
 assert.deepEqual(evaluateCfoAlarms([run("05:42", "completed")], new Date("2026-10-06T05:00:00Z"), true, now).map(a => a.code), ["no_insight_24h"]);
 assert.deepEqual(evaluateCfoAlarms([], null, true, now), [], "hiç koşu yoksa alarm yok");
 
+// Bütçe / girdi sınırı: TEK atlanan koşu yeter, 24 saat beklenmez (07.10: sınır 8.000'de kaldı, koşular atlandı, alarm çalmadı)
+const tok = evaluateCfoAlarms([run("05:00", "completed", { insights: 1 }), run("05:42", "blocked_by_input_tokens")], at("05:00"), true, now);
+assert.deepEqual(tok.map(a => a.code), ["input_limit_blocked"]); assert.match(tok[0].message, /AI_CFO_MAX_INPUT_TOKENS_PER_RUN/);
+assert.deepEqual(evaluateCfoAlarms([run("05:42", "blocked_by_input_size")], at("05:00"), true, now).map(a => a.code), ["input_limit_blocked"]);
+for (const st of ["blocked_by_budget", "blocked_by_daily_limit", "billing_unconfigured"])
+  assert.deepEqual(evaluateCfoAlarms([run("05:42", st)], at("05:00"), true, now).map(a => a.code), ["budget_blocked"], st);
+assert.deepEqual(evaluateCfoAlarms([run("05:30", "blocked_by_budget"), run("05:42", "no_actionable_anomaly", { sentActionable: 0 })], at("05:00"), true, now), [],
+  "yalnız SON koşu sayılır: sonraki koşu atlanmadıysa alarm kalkar");
+
 // Haftalık veri isteği (2026-10-07): günlük döküm beklenmez; 7 gün dolunca hatırlatılır, eski hesaplar adıyla yazılır
 const fresh = { entegraLastImport: new Date("2026-10-05T09:06:00Z"), staleBankAccounts: [] };
 assert.deepEqual(evaluateCfoAlarms([], null, true, now, fresh), [], "2 günlük Entegra yüklemesi istek doğurmaz");
@@ -34,4 +43,4 @@ const banks = evaluateCfoAlarms([], null, true, now, { ...fresh, staleBankAccoun
 assert.deepEqual(banks.map(a => a.code), ["bank_update_due"]); assert.match(banks[0].message, /Ziraat USD \(şirket\), Yapı Kredi USD \(şirket\)/);
 assert.deepEqual(evaluateCfoAlarms([], null, true, now, { entegraLastImport: null, staleBankAccounts: [] }).map(a => a.code), ["entegra_upload_due"], "hiç yükleme yoksa istenir");
 
-console.log("AI CFO health alarms: consecutive failures (prod 07.10 sequence), invalid_output counts, running neutral, 24h no-insight gated by AI + actionable sends, weekly Entegra/bank data requests passed");
+console.log("AI CFO health alarms: consecutive failures (prod 07.10 sequence), invalid_output counts, running neutral, immediate budget/input-limit blocks, 24h no-insight gated by AI + actionable sends, weekly Entegra/bank data requests passed");

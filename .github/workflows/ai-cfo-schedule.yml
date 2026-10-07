@@ -1,0 +1,45 @@
+name: AI CFO koşu takvimi
+
+# 5 slot/gün (2026-10-07 kararı — "her koşu bir şey yapılabilecek anda düşsün"). Saatler İSTANBUL:
+#   05:00 XML senkronu sonrası    → mevcut: vercel.json xml-sync (02:00 UTC) after() içinde monitor
+#   07:55 günün kararları         → bu workflow (04:55 UTC)
+#   09:00 Trendyol senkronu sonrası → mevcut: vercel.json trendyol-sync (06:00 UTC) after() içinde monitor
+#   11:50 bugün vadesi gelenler   → bu workflow (08:50 UTC)
+#   16:50 yarının banka talimatı  → bu workflow (13:50 UTC)
+# Uç /api/cron/ai-cfo-monitor: bayraklar, bütçe, günlük çağrı limiti ve anomali soğutması aynen uygulanır; yeni bir şey
+# yoksa model çağrılmaz. Vercel Hobby yeni cron slotu vermediği için GitHub Actions kullanılır (birkaç dk gecikebilir).
+# Gerekli repo secret'ları ai-cfo-health.yml ile aynı: CRON_SECRET + SITE_BASE_URL (yoksa PDKS_BASE_URL).
+# ⚠️ Zamanlanmış workflow yalnız varsayılan dalda (main) çalışır.
+
+on:
+  schedule:
+    - cron: "55 4 * * *"  # 07:55 İstanbul
+    - cron: "50 8 * * *"  # 11:50 İstanbul
+    - cron: "50 13 * * *" # 16:50 İstanbul
+  workflow_dispatch: {}
+
+concurrency:
+  group: ai-cfo-schedule
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: AI CFO monitor koşusunu tetikle
+        env:
+          BASE_URL: ${{ secrets.SITE_BASE_URL || secrets.PDKS_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$BASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "SITE_BASE_URL/PDKS_BASE_URL veya CRON_SECRET tanımlı değil; atlanıyor."
+            exit 0
+          fi
+          code=$(curl -sS -m 170 -L --location-trusted -o /tmp/out.txt -w "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${BASE_URL%/}/api/cron/ai-cfo-monitor")
+          echo "HTTP ${code}"
+          cat /tmp/out.txt || true
+          echo
+          test "$code" = "200"

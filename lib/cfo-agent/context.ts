@@ -26,7 +26,7 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   const names = new Set((await db.query<{ name: string }>(`select c.relname as name from pg_class c join pg_namespace n on n.oid=c.relnamespace
     where n.nspname='public' and c.relname = any($1::text[]) union select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname = any($1::text[])`, ["cfo_nakit_kapisi", "cfo_kaynak_yeterliligi", "cfo_odeme_gunluk", "cfo_servet", "fm_balance_day",
-      "fm_goal_observation", "cfo_change_log", "cfo_question", "cfo_run", "cfo_kargo_tarife", "cfo_kanal_net_oran"])).map(r => r.name));
+      "fm_goal_observation", "cfo_change_log", "cfo_question", "cfo_run", "cfo_kargo_tarife", "cfo_kanal_net_oran", "cfo_kaldirac_basamak"])).map(r => r.name));
   const state: Evidence[] = [], memory: Evidence[] = [];
   const s = (source: string, query: string, value: Evidence["value"], unit: string, measured = true, asOf = at) => state.push(evidence(source, query, value, unit, asOf, measured));
 
@@ -66,10 +66,23 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   const rf = await loadBankRollForward(db, today);
   if (rf) {
     s("cfo_bank_account", "banka.son_girilen_toplam_try", rf.anchorTotalTry, "TRY");
-    s("cfo_cash_event", "banka.ileri_tasinan_toplam_try (son bakiye + tarihi geçmiş takvim kalemleri)", rf.projectedTotalTry, "TRY", false);
+    s("cfo_cash_event", "banka.ileri_tasinan_toplam_try (şirket: hesaplar + hesabı belirsiz kalemler)", rf.projectedTotalTry, "TRY", false);
     for (const a of rf.accounts.filter(x => x.movements > 0))
       s("cfo_cash_event", `banka.${a.name}.ileri_tasinan_try (bakiye ${a.anchorDate} + ${a.movements} kalem)`, a.projectedTry, "TRY", false);
-    if (rf.unmapped.length) s("cfo_cash_event", "banka.eslenmeyen_kalemler", `${rf.unmapped.length} kalem, net ${Math.round(rf.unmapped.reduce((t, u) => t + u.amountTry, 0))} TRY: ${rf.unmapped.slice(0, 5).map(u => `${u.label} (${u.bank ?? "banka yok"})`).join("; ")}`, "text", false);
+    if (rf.unmapped.length) {
+      // Hesabı belirsiz: hiçbir hesaba atanmadı, yalnız şirket toplamından düşüldü. Bayat bakiye kullanılmış KMH'yi göstermez (§7).
+      s("cfo_cash_event", "banka.hesabi_belirsiz_try (hiçbir hesaba atanmadı, şirket toplamından düşüldü)", rf.unassignedTry, "TRY", false);
+      s("cfo_cash_event", "banka.eslenmeyen_kalemler", `${rf.unmapped.length} kalem: ${rf.unmapped.slice(0, 5).map(u => `${clip(u.label, 50)} ${Math.round(u.amountTry)} TRY — ${u.reason}`).join("; ")}`, "text", false);
+    }
+  }
+  // B4c — kaldıraç merdiveni (§2E): hangi basamak kullanımda / boşta / bilinçli tutuluyor. BILINCLI_TUTULUYOR önerilmez.
+  if (names.has("cfo_kaldirac_basamak")) {
+    for (const b of await db.query(`select basamak, ad, durum, tl_kapasite, tl_maliyet, guven, note from cfo_kaldirac_basamak order by basamak`)) {
+      const key = `merdiven.${b.basamak}.${clip(b.ad, 40)}`, measured = b.guven === "OLCULDU" || b.guven === "KESIN";
+      s("cfo_kaldirac_basamak", `${key}.durum`, `${b.durum}${b.durum === "BILINCLI_TUTULUYOR" ? " (ÖNERME)" : ""}${b.note ? ` — ${clip(b.note)}` : ""}`, "state", measured);
+      if (num(b.tl_kapasite) != null) s("cfo_kaldirac_basamak", `${key}.kapasite_try`, num(b.tl_kapasite), "TRY", measured);
+      if (num(b.tl_maliyet) != null) s("cfo_kaldirac_basamak", `${key}.maliyet_try`, num(b.tl_maliyet), "TRY", measured);
+    }
   }
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
