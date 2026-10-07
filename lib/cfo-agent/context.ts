@@ -1,5 +1,6 @@
 import "server-only";
 import { silencedRules } from "./anomalies";
+import { loadBankRollForward } from "./bank-rollforward";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -24,8 +25,8 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   const at = snapshot.generatedAt;
   const names = new Set((await db.query<{ name: string }>(`select c.relname as name from pg_class c join pg_namespace n on n.oid=c.relnamespace
     where n.nspname='public' and c.relname = any($1::text[]) union select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and p.proname = any($1::text[])`, [["cfo_nakit_kapisi", "cfo_kaynak_yeterliligi", "cfo_odeme_gunluk", "cfo_servet", "fm_balance_day",
-      "fm_goal_observation", "cfo_change_log", "cfo_question", "cfo_run", "cfo_kargo_tarife", "cfo_kanal_net_oran"]])).map(r => r.name));
+    where n.nspname='public' and p.proname = any($1::text[])`, ["cfo_nakit_kapisi", "cfo_kaynak_yeterliligi", "cfo_odeme_gunluk", "cfo_servet", "fm_balance_day",
+      "fm_goal_observation", "cfo_change_log", "cfo_question", "cfo_run", "cfo_kargo_tarife", "cfo_kanal_net_oran"])).map(r => r.name));
   const state: Evidence[] = [], memory: Evidence[] = [];
   const s = (source: string, query: string, value: Evidence["value"], unit: string, measured = true, asOf = at) => state.push(evidence(source, query, value, unit, asOf, measured));
 
@@ -59,6 +60,16 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   if (names.has("fm_balance_day")) {
     const [b] = await db.query(`select economic_date::text as d, value_try from fm_balance_day where metric_key='net_capital_try' order by economic_date desc limit 1`);
     if (b) s("fm_balance_day", "servet.dar_try (net sermaye)", num(b.value_try), "TRY", true, String(b.d));
+  }
+  // B4b — banka bakiyesi ileri taşıma (haftalık bakiye + tarihi geçmiş takvim kalemleri; TAHMİNİ)
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date(at));
+  const rf = await loadBankRollForward(db, today);
+  if (rf) {
+    s("cfo_bank_account", "banka.son_girilen_toplam_try", rf.anchorTotalTry, "TRY");
+    s("cfo_cash_event", "banka.ileri_tasinan_toplam_try (son bakiye + tarihi geçmiş takvim kalemleri)", rf.projectedTotalTry, "TRY", false);
+    for (const a of rf.accounts.filter(x => x.movements > 0))
+      s("cfo_cash_event", `banka.${a.name}.ileri_tasinan_try (bakiye ${a.anchorDate} + ${a.movements} kalem)`, a.projectedTry, "TRY", false);
+    if (rf.unmapped.length) s("cfo_cash_event", "banka.eslenmeyen_kalemler", `${rf.unmapped.length} kalem, net ${Math.round(rf.unmapped.reduce((t, u) => t + u.amountTry, 0))} TRY: ${rf.unmapped.slice(0, 5).map(u => `${u.label} (${u.bank ?? "banka yok"})`).join("; ")}`, "text", false);
   }
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
