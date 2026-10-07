@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### AI CFO — Blok A el kitabı v33 birebir metin (2026-10-07)
+- Kullanıcı v33'ün A1–A9 birebir metnini verdi (`claude/cfo-gorev.md`, Claude Projesi "ALFA CFO"). `lib/cfo-agent/handbook-core.md` kaynak (düzenlenebilir), `handbook-core.ts` ondan üretilir (`npm run gen:handbook`, `scripts/gen-handbook-core.mjs`); `ai-cfo-provider` testi ikisinin birebir aynı olduğunu denetler. Sürüm başlığı ve bölüm başlarındaki token notları dışında metin değişmedi.
+- Metin ≈ 8.300 token (şartname tahmini 4.000) → `AI_CFO_MAX_INPUT_TOKENS_PER_RUN` varsayılan 20.000, üst sınır 24.000 (toplam girdi ≈ 16.000). Önbellek yazımında koşu başı ≈ 3,7 TL, isabette ≈ 2,1 TL (Sonnet 4.6).
+
 ### AI CFO — banka bakiyesi ödeme takviminden ileri taşınır (2026-10-07)
 - Kullanıcı kararı: takvim kalemi **tarihi geçince** gerçekleşmiş sayılır; giriş/çıkışın bankası takvimde, pazaryeri → banka eşlemesi gözlenen ödemelerde (`cfo_pay_obs`: Trendyol/Amazon → Yapı Kredi, Hepsiburada/ePttAVM/Koçtaş → Enpara, N11 → Ziraat).
 - `lib/cfo-agent/bank-rollforward.ts`: her hesabın son girilen bakiyesi + güncelleme gününden SONRAKİ tarihi geçmiş (ya da ödendi işaretli) `cfo_cash_event` ve `cfo_receivable` kalemleri; güncelleme gününün kalemi bakiyede sayılır (06.10 Ziraat taksiti örneği), bugünün kalemi yalnız ödendi işaretliyse. Banka adı → hesap: birebir ad, yoksa markada tek hesap; eşlenmeyen kalem uydurulmaz, raporlanır (üretimde: bankasız 100.000 TL sabit gider kalanı, Idefix, Trendyol Azerbaycan). Gün sınırı İstanbul saatiyle.

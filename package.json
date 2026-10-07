@@ -27,7 +27,8 @@
     "check:banka": "node --import tsx __tests__/banka.test.ts",
     "check:banka:safety": "node --import tsx __tests__/banka-safety.test.ts",
     "check:banka:pdf": "node --import tsx __tests__/banka-pdf.test.ts",
-    "check:banka:review": "node --import tsx __tests__/banka-review.test.ts"
+    "check:banka:review": "node --import tsx __tests__/banka-review.test.ts",
+    "gen:handbook": "node scripts/gen-handbook-core.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

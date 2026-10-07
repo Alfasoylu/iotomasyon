@@ -17,6 +17,8 @@
  * Çalıştır: npx tsx __tests__/ai-cfo-provider.test.ts
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { HANDBOOK_CORE, HANDBOOK_CORE_VERSION } from "../lib/cfo-agent/handbook-core";
 import { createCfoProvider, ProviderError, reasoningPayload, type ReasoningInput } from "../lib/cfo-agent/provider";
 import { getCfoConfig } from "../lib/cfo-agent/config";
 import { metric, unknown } from "../lib/cfo-agent/calculations";
@@ -110,6 +112,12 @@ async function main() {
     assert.equal(payload.anomalies.length, 8);
     assert.equal(payload.memory.length, 5);
     assert.equal(payload.dataQuality.missingFields.length, 15);
+  });
+
+  await check("el kitabı Blok A: .ts üretilmiş dosya .md ile birebir aynı (npm run gen:handbook)", () => {
+    assert.equal(HANDBOOK_CORE, readFileSync("lib/cfo-agent/handbook-core.md", "utf8"), "handbook-core.md değişti ama handbook-core.ts yeniden üretilmedi");
+    assert.equal(HANDBOOK_CORE_VERSION, "v33-blok-a");
+    assert.ok(HANDBOOK_CORE.includes("İTİRAZIN DÖRT ŞARTI") && HANDBOOK_CORE.includes("kısmi çekim → antrepoda bekletme") && HANDBOOK_CORE.includes("SERVET HER RAPORDA İKİ TÜRLÜ"));
   });
 
   await check("istek şekli: model/max_tokens/output_config.json_schema doğru gönderilir", async () => {
