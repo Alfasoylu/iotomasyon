@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### AI CFO — kanal sözlüğü, kaldıraç merdiveni, anında alarm, 5 slot takvim (2026-10-07)
+- Banka ileri taşıma: pazaryeri hakedişinin bankası yalnız `cfo_kanal_sozluk`'tan (birebir yazım) okunur; `cfo_pay_obs`'tan türetme kaldırıldı. Sözlükte olmayan yazım ya da bankası ölçülmemiş satır eşlenmez, nedeniyle raporlanır. Bankası belirsiz kalem hiçbir hesaba atanmaz; yalnız şirket toplamından düşülür (en son bakiye gününden sonraki kalemler). Production'da 07.10 için hesabı belirsiz tek kalem 100.000 TL sabit gider kalanı; tüm hakediş kanalları sözlükte (salt-okunur doğrulandı).
+- Blok B'ye `cfo_kaldirac_basamak` (`merdiven.<n>.<ad>.durum/kapasite_try/maliyet_try`); istem: KULLANIMDA basamak yeni öneri değildir, BILINCLI_TUTULUYOR (şahsi hesaplar) önerilmez, hesabı belirsiz tutar bir hesaba atanmaz.
+- Sağlık alarmı: son koşu `blocked_by_budget`/`blocked_by_daily_limit`/`billing_unconfigured` → `budget_blocked`, `blocked_by_input_tokens`/`blocked_by_input_size` → `input_limit_blocked`, ikisi de tek koşuda anında.
+- `.github/workflows/ai-cfo-schedule.yml`: 07:55, 11:50, 16:50 İstanbul'da `/api/cron/ai-cfo-monitor`; mevcut XML (05:00) ve Trendyol (09:00) sonrası koşularla günde 5 slot.
+- Testler: `ai-cfo-bank-rollforward`, `ai-cfo-source-mapping` (sözlük/merdiven tabloları PGlite'ta), `ai-cfo-health`.
+
 ### AI CFO — Blok A el kitabı v33 birebir metin (2026-10-07)
 - Kullanıcı v33'ün A1–A9 birebir metnini verdi (`claude/cfo-gorev.md`, Claude Projesi "ALFA CFO"). `lib/cfo-agent/handbook-core.md` kaynak (düzenlenebilir), `handbook-core.ts` ondan üretilir (`npm run gen:handbook`, `scripts/gen-handbook-core.mjs`); `ai-cfo-provider` testi ikisinin birebir aynı olduğunu denetler. Sürüm başlığı ve bölüm başlarındaki token notları dışında metin değişmedi.
 - Metin ≈ 8.300 token (şartname tahmini 4.000) → `AI_CFO_MAX_INPUT_TOKENS_PER_RUN` varsayılan 20.000, üst sınır 24.000 (toplam girdi ≈ 16.000). Önbellek yazımında koşu başı ≈ 3,7 TL, isabette ≈ 2,1 TL (Sonnet 4.6).

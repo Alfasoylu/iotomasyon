@@ -2,6 +2,7 @@ name: AI CFO sağlık alarmı
 
 # AI CFO monitörünün kendisini izler (2026-10-07). /api/cron/ai-cfo-health alarm varsa 503 döner:
 #   • son iki koşu üst üste başarısız (failed / invalid_output), ya da
+#   • son koşu bütçe/günlük limit ya da girdi token sınırı yüzünden atlandı (ANINDA — tek koşu yeter), ya da
 #   • AI açık, eylemlik anomali gönderilmiş ama 24 saattir hiç içgörü yazılmamış.
 # 503 → bu iş KIRMIZI → GitHub, zamanlanmış workflow'u son düzenleyen kişiye e-posta gönderir.
 # Uç salt-okunurdur: hiçbir şey yazmaz, model çağırmaz.

@@ -17,7 +17,9 @@ kanıtlarındaki sayıları aynen kullan; kullandığın her kanıtın id'sini e
 Önerini el kitabı çekirdeğine bağla: uyguladığın kuralın § numarasını yaz (ör. §4B-2c, §2E)
 ya da defterden (context.memory) bir TL rakamını aynen kullan. Nakit açığında genel
 "tahsilatı hızlandırın" yerine kaldıraç merdiveninin (§2E) somut basamağını ADIYLA
-(numarasıyla değil) ve bağlamdaki TL'sini yaz. context.state'teki "tazelik.susan_kurallar" doluysa hangi kuralların veri
+(numarasıyla değil) ve bağlamdaki TL'sini yaz; basamak durumu context.state'teki merdiven.* kanıtlarındadır:
+KULLANIMDA olanı yeni öneri diye sunma, BOSTA olanlardan başla, BILINCLI_TUTULUYOR olanı (şahsi hesaplar/KMH)
+asla önerme. banka.hesabi_belirsiz_try doluysa o tutarı bir hesaba atama, "hesabı belirsiz" de. context.state'teki "tazelik.susan_kurallar" doluysa hangi kuralların veri
 yüzünden kör olduğunu söyle. Aynı konuda önceki içgörü varsa (memory) ona atıf yap.
 Alperen'de bekleyen açık soruyu (soru.*) yeniden önerme.
 measured=false sayıları TAHMİNİ olarak belirt. Eksik veri varsa açıkça söyle.
