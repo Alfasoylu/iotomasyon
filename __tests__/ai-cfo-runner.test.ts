@@ -11,6 +11,9 @@ import { getCfoConfig } from "../lib/cfo-agent/config";
 import { ProviderError, reasoningPayload } from "../lib/cfo-agent/provider";
 import { createMonitorLock, LockError } from "../lib/cfo-agent/lock";
 import { metric, unknown } from "../lib/cfo-agent/calculations";
+import { evidence } from "../lib/cfo-agent/evidence";
+import { systemText } from "../lib/cfo-agent/provider";
+import { HANDBOOK_CORE } from "../lib/cfo-agent/handbook-core";
 import type { CfoStore, UsageWrite } from "../lib/cfo-agent/store";
 import type { AiInsight, Anomaly, CfoAgentSnapshot, Metric } from "../lib/cfo-agent/types";
 import type { GoalRow } from "../lib/fm/goals";
@@ -119,7 +122,11 @@ async function main() {
   });
 
   const provider = { async countInput() { return 1000; }, async generate() { return { text: aiFor(revenue, s0), inputTokens: 1000, outputTokens: 200, cacheReadTokens: 0, cacheWriteTokens: 0, requestId: "test" }; } };
-  const base: RunnerDependencies = { now: NOW, config, snapshot: async () => snapshot(), goals: async () => [goal()], queues: async () => new Map(), memory: async () => [], lock: freeLock(), provider };
+  // Girdi şartnamesi Blok B/C — defterde ölçülmüş açık (533.740) ve nakit kapısı satırı
+  const ctxGap = evidence("cfo_change_log", "defter.cl_1.veri/bulgu: nakit açığı ölçüldü", "Açık 533.740 TL; ölü stok tasfiyesi açığın %174'ünü karşılar", "text", "2026-10-07T05:00:00.000Z", true);
+  const ctxCash = evidence("cfo_nakit_kapisi", "nakit_kapisi.nakit_try", 59693.13, "TRY", "2026-10-07T05:00:00.000Z", true);
+  const fakeContext = { tables: "KARGO TARİFESİ (cfo_kargo_tarife): TRENDYOL A [0–150] 42,5 TL", state: [ctxCash], memory: [ctxGap] };
+  const base: RunnerDependencies = { now: NOW, config, context: async () => fakeContext, snapshot: async () => snapshot(), goals: async () => [goal()], queues: async () => new Map(), memory: async () => [], lock: freeLock(), provider };
 
   await check("kapılar: monitor kapalı → hiç yazma yok; AI kapalı/release kapısı/sağlayıcı yok → deterministik kayıt, çağrı yok", async () => {
     const st = fakeStore();
@@ -137,6 +144,32 @@ async function main() {
     const st = fakeStore();
     const r = await runCfoMonitor({ ...base, store: st.store, goals: async () => [goal({ state: "ON_TRACK" })], provider: { ...provider, async generate() { throw new Error("MUST NOT CALL"); } } });
     assert.equal(r.status, "no_actionable_anomaly"); assert.equal(st.usage.length, 0);
+  });
+
+  await check("kabul 2: no_actionable_anomaly hangi kuralların veri yüzünden kör olduğunu söyler", async () => {
+    const st = fakeStore();
+    const stale = snapshot(); stale.dataQuality.staleSources = ["Entegra"]; stale.cash.banksFresh = false;
+    const r = await runCfoMonitor({ ...base, store: st.store, snapshot: async () => stale, goals: async () => [goal({ state: "ON_TRACK" })] });
+    assert.equal(r.status, "no_actionable_anomaly");
+    assert.match(st.finished.at(-1)?.error ?? "", /susan_kurallar: Entegra bayat → PRICE_BELOW_FLOOR.*DEAD_STOCK.*\| banka bakiyesi bayat → CASH_CRITICAL/);
+  });
+
+  await check("kabul 1: içgörü bağlam kanıtına (defter TL'si) ve § kuralına atıf yapabilir; sistem el kitabı çekirdeğini taşır", async () => {
+    const st = fakeStore();
+    let sentInput: unknown = null;
+    const cite = (o: Record<string, unknown>) => JSON.stringify({ insights: [{ ...JSON.parse(aiFor(revenue, s0)).insights[0], ...o }] });
+    const ok = cite({ recommendation: "§2E ölü stok tasfiyesi: defterdeki açık 533.740 TL; nakit 59.693,13 TL.", evidenceIds: [...revenue.evidenceIds, ctxGap.id, ctxCash.id] });
+    const r = await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async countInput(i) { sentInput = i; return 1000; },
+      async generate() { return { text: ok, inputTokens: 1000, outputTokens: 200, cacheReadTokens: 900, cacheWriteTokens: 0, requestId: "t" }; } } });
+    assert.equal(r.status, "completed"); assert.equal(st.insights.length, 1);
+    assert.ok(st.insights[0].recommendation.includes("§2E") && st.insights[0].recommendation.includes("533.740"));
+    const payload = reasoningPayload(sentInput as never) as { context?: { state: { id: string }[]; memory: { id: string }[] } };
+    assert.deepEqual(payload.context?.memory.map(m => m.id), [ctxGap.id], "Blok C kullanıcı mesajında");
+    assert.ok(systemText(sentInput as never).includes(HANDBOOK_CORE) && systemText(sentInput as never).includes("KARGO TARİFESİ"), "Blok A + tablo eki sistemde");
+    // bağlamda olmayan rakam ya da bağlam dışı kanıt hâlâ reddedilir
+    assert.equal(validateAiOutput(cite({ recommendation: "Açık 999.999 TL." }), s0, [revenue], new Set([ctxGap.id])).reasons.fabricated_number, 1);
+    assert.equal(validateAiOutput(cite({ evidenceIds: [...revenue.evidenceIds, ctxGap.id] }), s0, [revenue]).reasons.evidence_not_allowed, 1, "contextIds verilmezse bağlam kanıtı izinsiz");
+    assert.equal(validateAiOutput(cite({ recommendation: "Fiyatı %15 artır." }), s0, [revenue]).reasons.fabricated_number, 1, "el kitabındaki küçük tam sayılar serbest değil");
   });
 
   await check("başarılı çağrı: hedef anomaly'si gönderilir, kullanım ölçülür, içgörü kaydedilir (≤3)", async () => {
@@ -182,7 +215,7 @@ async function main() {
 
   await check("token sınırı ücretli çağrıdan ve rezervasyondan önce durdurur", async () => {
     const st = fakeStore();
-    assert.equal((await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async countInput() { return 8000; } } })).status, "blocked_by_input_tokens");
+    assert.equal((await runCfoMonitor({ ...base, store: st.store, provider: { ...provider, async countInput() { return config.maxInputTokens; } } })).status, "blocked_by_input_tokens");
     assert.equal(st.usage.length, 0);
   });
 

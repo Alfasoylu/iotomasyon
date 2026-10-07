@@ -5,7 +5,8 @@ const schema = z.object({
   provider: z.enum(["anthropic", "disabled"]).default("disabled"),
   model: z.string().min(1).default("claude-sonnet-4-6"),
   maxCallsPerDay: z.coerce.number().int().min(0).max(24).default(6),
-  maxInputTokens: z.coerce.number().int().min(500).max(8000).default(4500),
+  // Girdi şartnamesi (2026-10-07): Blok A (el kitabı, önbellekli) + B (durum) + C (hafıza) ≈ 8.000 token → üst sınır 12.000.
+  maxInputTokens: z.coerce.number().int().min(500).max(12000).default(12000),
   // 3 Turkish insights in JSON need ~1200–1500 tokens; 800 truncated the first production answer (stop_reason max_tokens).
   maxOutputTokens: z.coerce.number().int().min(100).max(2000).default(1500),
   monthlyBudgetTry: z.coerce.number().min(0).default(3000),
@@ -18,6 +19,8 @@ const schema = z.object({
   marginDropPoints: z.coerce.number().positive().default(5),
   minCostCoveragePct: z.coerce.number().min(0).max(100).default(95),
   stockoutDays: z.coerce.number().positive().default(21),
+  // Aylık para maliyeti (DEAD_STOCK TL etkisi): el kitabı §7 para maliyeti merdiveninin en ucuz basamağı (Ziraat Kredi 2 %2,83).
+  moneyCostMonthlyPct: z.coerce.number().positive().max(20).default(2.83),
   returnMinSample: z.coerce.number().int().positive().default(30),
   returnIncreasePoints: z.coerce.number().positive().default(5),
   cooldownHours: z.coerce.number().min(72).default(72),
@@ -41,7 +44,7 @@ export function getCfoConfig(env: Record<string, string | undefined> = process.e
     revenueDeviationPct: env.AI_CFO_REVENUE_DEVIATION_PCT,
     minRevenueDifferenceTry: env.AI_CFO_MIN_REVENUE_DIFFERENCE_TRY,
     marginDropPoints: env.AI_CFO_MARGIN_DROP_POINTS, minCostCoveragePct: env.AI_CFO_MIN_COST_COVERAGE_PCT,
-    stockoutDays: env.AI_CFO_STOCKOUT_DAYS, returnMinSample: env.AI_CFO_RETURN_MIN_SAMPLE,
+    stockoutDays: env.AI_CFO_STOCKOUT_DAYS, moneyCostMonthlyPct: env.AI_CFO_MONEY_COST_MONTHLY_PCT, returnMinSample: env.AI_CFO_RETURN_MIN_SAMPLE,
     returnIncreasePoints: env.AI_CFO_RETURN_INCREASE_POINTS, cooldownHours: env.AI_CFO_COOLDOWN_HOURS,
     cashFloorTry: env.AI_CFO_CASH_FLOOR_TRY,
     canonicalValidated: env.AI_CFO_CANONICAL_SALES_VALIDATED === "true",

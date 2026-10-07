@@ -3,7 +3,7 @@ import type { Impact, Metric, Profitability } from "./types";
 
 // See docs/AI-CFO-FINANCIAL-CONTRACT.md. No legacy dashboard calculation changes.
 export const FINANCIAL_CONTRACT = Object.freeze({
-  version: "alfas-gross-v9", basis: "gross_incl_vat" as const,
+  version: "alfas-gross-v10", basis: "gross_incl_vat" as const,
   statement: "Komisyon, kargo, hizmet ve ceza oranları KDV DÂHİL brüt tutar üzerinden uygulanır. revenue_ex_vat yalnızca raporlama içindir, marj paydası olarak kullanılmaz.",
   dummyStock: [500, 998, 999, 1000, 9999, 10000],
   orderReturnReserveTry: "13.36", orderProcessingTry: "12.29", orderServicePenaltyTry: "10.00",
@@ -87,8 +87,29 @@ export function financialImpact(unitProfit: Metric, dailyVelocity: Metric, days:
   if (unitProfit.value == null || dailyVelocity.value == null || dailyVelocity.value < 0 || days < 0) return null;
   return { value:D(unitProfit.value).mul(dailyVelocity.value).mul(days).toDecimalPlaces(2).toNumber(),
     formula:"unit_profit_try * daily_velocity * affected_days", inputs:{unit_profit_try:unitProfit.value,daily_velocity:dailyVelocity.value,affected_days:days},
-    basis:"gross_incl_vat", estimated:unitProfit.estimated || dailyVelocity.estimated };
+    basis:"gross_incl_vat", estimated:unitProfit.estimated || dailyVelocity.estimated, kind:"lost_profit" };
 }
+/** STOCKOUT when unit profit is unknown (cost coverage gap): revenue at risk, labelled as such — never presented as profit. */
+export function revenueAtRisk(avgPrice: Metric, dailyVelocity: Metric, days: number): Impact | null {
+  if (avgPrice.value == null || avgPrice.value <= 0 || dailyVelocity.value == null || dailyVelocity.value <= 0 || days <= 0) return null;
+  return { value:D(avgPrice.value).mul(dailyVelocity.value).mul(days).toDecimalPlaces(2).toNumber(), formula:"avg_price_try * daily_velocity * affected_days",
+    inputs:{avg_price_try:avgPrice.value,daily_velocity:dailyVelocity.value,affected_days:days}, basis:"gross_incl_vat", estimated:true, kind:"revenue_at_risk" };
+}
+/** PRICE_BELOW_FLOOR: money left on the table at the floor price over the horizon. */
+export function priceGapImpact(floor: Metric, price: Metric, dailyVelocity: Metric, days = IMPACT_HORIZON_DAYS): Impact | null {
+  if (floor.value == null || price.value == null || floor.value <= price.value || dailyVelocity.value == null || dailyVelocity.value <= 0) return null;
+  return { value:D(floor.value).sub(price.value).mul(dailyVelocity.value).mul(days).toDecimalPlaces(2).toNumber(), formula:"(floor_price_try - avg_price_try) * daily_velocity * horizon_days",
+    inputs:{floor_price_try:floor.value,avg_price_try:price.value,daily_velocity:dailyVelocity.value,horizon_days:days}, basis:"gross_incl_vat",
+    estimated:floor.estimated || price.estimated || dailyVelocity.estimated, kind:"price_gap" };
+}
+/** DEAD_STOCK: monthly financing cost of the capital tied up in the stock. */
+export function capitalCostImpact(value: Metric, monthlyPct: number): Impact | null {
+  if (value.value == null || value.value <= 0 || !(monthlyPct > 0)) return null;
+  return { value:D(value.value).mul(monthlyPct).div(100).toDecimalPlaces(2).toNumber(), formula:"tied_capital_try * monthly_money_cost_pct / 100",
+    inputs:{tied_capital_try:value.value,monthly_money_cost_pct:monthlyPct}, basis:"gross_incl_vat", estimated:true, kind:"capital_cost" };
+}
+/** Common horizon so price and stock impacts rank on the same scale (≈ one month). */
+export const IMPACT_HORIZON_DAYS = 30;
 export function stale(orderDate: string | null, now: Date, hours = 48): boolean {
   return !orderDate || !Number.isFinite(Date.parse(orderDate)) || now.getTime() - Date.parse(orderDate) > hours * 3600000;
 }

@@ -205,6 +205,24 @@ async function main() {
     assert.equal(shouldReopen(anomaly, previous, now, 72), true);
   });
 
+  // TL etkisi (2026-10-07): sıralama TL'ye göre; kâr bilinmiyorsa STOCKOUT ciro riskiyle (etiketli) dolar
+  check("TL etkisi: STOCKOUT kâr / ciro riski, PRICE_BELOW_FLOOR fiyat açığı, DEAD_STOCK para maliyeti; sıralama TL'ye göre", () => {
+    const days = config.stockoutDays - 5;
+    const profit = detectCfoAnomalies(baseSnapshot({ products: [baseProduct({ stockDays: metric(5), stockQty: 5 })] }), config).find(a => a.rule === "STOCKOUT")!;
+    assert.equal(profit.impact?.kind, "lost_profit"); assert.equal(profit.impact?.value, 50 * 1 * days);
+    const revenue = detectCfoAnomalies(baseSnapshot({ products: [baseProduct({ stockDays: metric(5), stockQty: 5, unitProfit: unknown("cost_unknown") })] }), config).find(a => a.rule === "STOCKOUT")!;
+    assert.equal(revenue.impact?.kind, "revenue_at_risk"); assert.equal(revenue.impact?.value, 200 * 1 * days); assert.equal(revenue.impact?.estimated, true);
+    assert.equal(revenue.evidenceIds.length, 6, "ciro riski için ortalama fiyat kanıtı eklenir");
+    const price = detectCfoAnomalies(baseSnapshot({ products: [baseProduct({ avgPrice: metric(100), priceFloor: metric(150) })] }), config).find(a => a.rule === "PRICE_BELOW_FLOOR")!;
+    assert.equal(price.impact?.kind, "price_gap"); assert.equal(price.impact?.value, (150 - 100) * 1 * 30);
+    const dead = detectCfoAnomalies(baseSnapshot({ deadStock: [{ sku: "OLU-1", value: metric(100000), alarm: "KIRMIZI", findingId: null }] }), config).find(a => a.rule === "DEAD_STOCK")!;
+    assert.equal(dead.impact?.kind, "capital_cost"); assert.equal(dead.impact?.value, 2830); assert.equal(dead.weight, 2830);
+    // aynı önemdeki iki anomali TL etkisine göre sıralanır
+    const both = detectCfoAnomalies(baseSnapshot({ products: [baseProduct({ avgPrice: metric(100), priceFloor: metric(150) })],
+      deadStock: [{ sku: "OLU-1", value: metric(100000), alarm: "KIRMIZI", findingId: null }] }), config).filter(a => a.severity === "critical");
+    assert.deepEqual(both.map(a => a.rule).slice(0, 2), ["DEAD_STOCK", "PRICE_BELOW_FLOOR"], "2.830 TL > 1.500 TL");
+  });
+
   console.log(failed ? `\n${failed} test BAŞARISIZ.\n` : "\nTüm testler geçti.\n");
   if (failed) process.exit(1);
 }

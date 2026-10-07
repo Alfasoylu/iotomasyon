@@ -1,12 +1,13 @@
 import type { CfoNotebook } from "./notebook";
 export const SCHEMA_VERSION = "2";
-export const CALCULATION_VERSION = "alfas-gross-v9";
+export const CALCULATION_VERSION = "alfas-gross-v10";
 export type Basis = "gross_incl_vat" | "net_ex_vat";
 export type Metric = { value: number | null; estimated: boolean; basis: Basis; reason?: string };
 export type Severity = "info" | "warning" | "critical";
 export type Category = "margin" | "inventory" | "sales" | "cash" | "pricing" | "procurement" | "marketing" | "data_quality";
 export type Evidence = { id: string; source: string; query: string; value: number | string | null; unit: string; asOf: string; measured: boolean };
-export type Impact = { value: number; formula: string; inputs: Record<string, number>; basis: Basis; estimated: boolean };
+/** kind: lost_profit (birim kâr × hız × gün) · revenue_at_risk (kâr bilinmiyorsa ciro) · price_gap ((taban − fiyat) × hız × gün) · capital_cost (bağlı sermaye × aylık para maliyeti). */
+export type Impact = { value: number; formula: string; inputs: Record<string, number>; basis: Basis; estimated: boolean; kind?: "lost_profit" | "revenue_at_risk" | "price_gap" | "capital_cost" };
 export type SourceWatermark = { source: string; orderDate: string | null; syncedAt: string | null; batchDays: number; coverageDays: number; stale: boolean };
 export type Profitability = {
   grossRevenue: Metric; revenueExVat: Metric; vat: Metric; refunds: Metric;

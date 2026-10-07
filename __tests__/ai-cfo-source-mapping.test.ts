@@ -99,7 +99,7 @@ async function main() {
     const s = await buildCfoAgentSnapshot({ db, now, config, compact: false });
     const missing = s.dataQuality.missingFields;
     assert.ok(!missing.some(f => f.startsWith("reviewed_source_changed")), `reviewed profile valid by default: ${missing.join(",")}`);
-    assert.equal(s.calculationVersion, "alfas-gross-v9");
+    assert.equal(s.calculationVersion, "alfas-gross-v10");
 
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;
@@ -139,6 +139,18 @@ async function main() {
     assert.equal(gap.sales.yesterday.grossRevenue.reason, "entegra_gap_estimated_from_trendyol_api");
     assert.equal(gap.sales.last7Days.grossRevenue.value, 2000, "partial upload day 09-29 (4200 Entegra) replaced by the estimate");
     assert.equal(gap.sales.last7Days.complete, false, "estimated days still need full day coverage");
+
+    // Girdi şartnamesi Blok A eki + B + C (2026-10-07): production şemasının görünümlerinden salt-okunur yüklenir.
+    const { loadCfoContext } = await import("../lib/cfo-agent/context");
+    await pg.exec(`insert into cfo_change_log (id,"changedAt",area,item,"newValue",source,kind) values ('cl_t1',now(),'veri','nakit açığı ölçüldü','Açık 533.740 TL','test','bulgu')`);
+    const ctx = await loadCfoContext(late, config, db);
+    const q = (e: { query: string }) => e.query;
+    assert.ok(ctx.state.some(e => q(e) === "tazelik.susan_kurallar" && String(e.value).includes("Entegra bayat → PRICE_BELOW_FLOOR")), "Entegra bayatken susan kurallar Blok B'de");
+    assert.ok(ctx.state.some(e => q(e).startsWith("nakit_kapisi.")), "nakit kapısı satırları");
+    assert.ok(ctx.state.some(e => q(e).startsWith("kaynak.")), "kaynak yeterliliği satırları");
+    assert.ok(ctx.memory.some(e => q(e).startsWith("defter.cl_t1.veri/bulgu") && e.value === "Açık 533.740 TL"), "defter Blok C'de");
+    assert.match(ctx.tables, /KARGO TARİFESİ \(cfo_kargo_tarife\)/);
+    assert.ok(new Set([...ctx.state, ...ctx.memory].map(e => e.id)).size === ctx.state.length + ctx.memory.length, "bağlam kanıt id'leri benzersiz");
     assert.ok(ty && hb, `product signals: ${s.products.map(p => `${p.sku}/${p.channel}`).join(",")}`);
     assert.ok(ty!.commissionRate.value != null, "measured commission");
     const trust = (await pg.query<{ g: string; a: number; n: number }>(`select guven::text g, adet_duz a, count(*)::int n from cfo_satis_birim_duz where channel='TRENDYOL' group by 1,2 order by 2`)).rows;
