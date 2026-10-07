@@ -36,8 +36,8 @@ const ALL_NAV: Array<NavItem & { permission?: string; alsoRequires?: string[]; a
   // ── GÜNLÜK DURUM ─────────────────────────────────────────────────────────
   // Manşet karar panoları — admin/owner için günlük açılan ekranlar.
   {
-    href: "/admin/sermaye-saglik",
-    label: "Sermaye Sağlığı",
+    href: "/admin/sermaye",
+    label: "Sermaye",
     iconKey: "heart",
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "Günlük Durum",
@@ -45,13 +45,6 @@ const ALL_NAV: Array<NavItem & { permission?: string; alsoRequires?: string[]; a
   {
     href: "/admin/catalog-performance",
     label: "Katalog Performansı",
-    iconKey: "chart",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Günlük Durum",
-  },
-  {
-    href: "/admin/executive",
-    label: "Yönetici Paneli",
     iconKey: "chart",
     permission: PERMISSIONS.EXECUTIVE_READ,
     section: "Günlük Durum",
@@ -488,13 +481,6 @@ const ALL_NAV: Array<NavItem & { permission?: string; alsoRequires?: string[]; a
   },
 
   // ── FİNANS ──────────────────────────────────────────────────────────────
-  {
-    href: "/admin/capital",
-    label: "Sermaye Dağılımı",
-    iconKey: "dollar",
-    permission: PERMISSIONS.EXECUTIVE_READ,
-    section: "Finans",
-  },
   {
     href: "/admin/exchange-rates",
     label: "Döviz Kurları",

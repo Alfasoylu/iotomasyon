@@ -12,6 +12,8 @@ import { getCfoConfig } from "../lib/cfo-agent/config";
 import { costEfficiency } from "../lib/cfo-agent/cost-efficiency";
 import { importProjectEvidence } from "../lib/cfo-agent/import-revenue";
 import { alfashomeEvidence } from "../lib/cfo-agent/alfashome-sales";
+import { capitalConfigEvidence } from "../lib/cfo-agent/capital-config";
+import { capitalScore, freeCapital } from "../lib/capital/score";
 import { evidence } from "../lib/cfo-agent/evidence";
 import type { Anomaly, Evidence } from "../lib/cfo-agent/types";
 
@@ -164,6 +166,23 @@ check("ALFASHOME kanalı: senkron tazeliği kanıtın ölçülmüşlüğünü be
   assert.match(String(v(stale, "alfashome.senkron")?.value), /BAYAT/); assert.equal(v(stale, "alfashome.ciro_son_30_gun_try")?.measured, false, "bayat senkron ölçüm sayılmaz");
   assert.equal(v(stale, "alfashome.ciro_son_30_gun_try")?.value, 0);
   assert.match(String(v(alfashomeEvidence({ n30: 0, rev30: null, mtd: null, pending30: null, lastOrder: null, lastSync: null }, at), "alfashome.senkron")?.value), /hiç senkron yok/);
+});
+
+check("sermaye: tek skor/serbest sermaye kuralı (sayfa + dashboard + CFO aynı) ve CFO sermaye ayarını görür", () => {
+  // Serbest sermaye: rezerv SERBEST kısmın yüzdesi (eski Yönetici Paneli toplamın yüzdesini alıyordu).
+  assert.deepEqual(freeCapital(5_000_000, 4_000_000, 20), { total: 5_000_000, locked: 4_000_000, available: 1_000_000, reserve: 200_000, deployable: 800_000 });
+  assert.deepEqual(freeCapital(1_000_000, 2_000_000, 20), { total: 1_000_000, locked: 2_000_000, available: 0, reserve: 0, deployable: 0 }, "stok > sermaye → negatif serbest yok");
+  const full = capitalScore({ annualRoiPct: 60, deadRatio: 0, urgentCount: 0, liquidationCount: 0 });
+  assert.deepEqual([full.total, full.label, full.tone], [100, "Mükemmel", "ok"]);
+  const s = capitalScore({ annualRoiPct: 30, deadRatio: 0.25, urgentCount: 3, liquidationCount: 10 });
+  assert.deepEqual([s.roi, s.dead, s.urgent, s.liquidation, s.total, s.label], [25, 12.5, 7, 10, 55, "İyi"]);
+  assert.equal(capitalScore({ annualRoiPct: -40, deadRatio: 2, urgentCount: 50, liquidationCount: 99 }).total, 0, "alt sınır 0");
+  const ev = capitalConfigEvidence({ totalTry: 5_000_000, reservePct: 20, updatedAt: "2026-09-01T00:00:00.000Z" }, 4_357_225.37, AT);
+  const v = (q: string) => ev.find(e => e.query.startsWith(q));
+  assert.equal(v("sermaye.stokta_bagli_try")?.value, 4_357_225); assert.equal(v("sermaye.stokta_bagli_try")?.measured, true);
+  assert.equal(v("sermaye.ayar_toplam_try")?.measured, false, "elle girilen çerçeve ölçüm değildir");
+  assert.equal(v("sermaye.kullanilabilir_try")?.value, 514_220);
+  assert.deepEqual(capitalConfigEvidence(null, null, AT), [], "ayar ve görünüm yoksa kanıt yok");
 });
 
 if (failed) { console.error(`\n${failed} test başarısız`); process.exit(1); }

@@ -66,7 +66,7 @@ export const PAGE_HELP: Record<string, PageHelp> = {
     tasks: [
       {
         title: "Manşet skoru kontrol et",
-        steps: ["Üstte Sermaye Sağlık Skoru kartına bak", "Tıklarsan /admin/sermaye-saglik'e gider", "Skor düşükse detayda hangi bileşen sorunlu görürsün"],
+        steps: ["Üstte Sermaye Sağlık Skoru kartına bak", "Tıklarsan /admin/sermaye'ye gider", "Skor düşükse detayda hangi bileşen sorunlu görürsün"],
       },
       {
         title: "Acil işlere bak",
@@ -76,24 +76,25 @@ export const PAGE_HELP: Record<string, PageHelp> = {
     relatedTerms: ["Sermaye Sağlık Skoru", "ROI", "Stok Günü"],
   },
 
-  "admin/sermaye-saglik": {
-    title: "Sermaye Sağlığı Panosu",
+  "admin/sermaye": {
+    title: "Sermaye",
     purpose:
-      "USD bazlı tek bakışta günlük durum: paranın nereye bağlı, bu ay ne kadar nakit beklenir, neyi siparişe vermeli, neyi tasfiye etmeli. Üstte 0–100 skor; altta KPI'lar, kategori dağılımı ve 4 aksiyon listesi.",
+      "Eski Sermaye Sağlığı, Sermaye Dağılımı ve Yönetici Paneli tek sayfada (TL). Tüm sayılar CFO kaynağından: kur cfo_settings, stokta bağlı sermaye cfo_stok_deger, ölü stok cfo_olu_stok. Dashboard'daki skor da aynı hesaptır.",
     fields: [
-      { label: "Bağlı Sermaye", desc: "Toplam unitCost × stock (USD). Ürünlere kilitli para." },
-      { label: "Aylık Beklenen Nakit", desc: "Σ(net kâr × aylık satış). Sadece kârlı ürünler dahil." },
-      { label: "Yıllık ROI", desc: "Aylık × 12 / bağlı sermaye. Mevcut hızda 12 aylık projeksiyon." },
-      { label: "Ölü Stok", desc: "Lifetime satışı 0 olan ama stoğu olan ürünlerin toplam bağlı sermayesi." },
+      { label: "Stokta bağlı", desc: "Stok × birim maliyet (CFO stok değeri). 500/998/999/1000/9999/10000 gibi yer tutucu stoklar ve maliyeti girilmemiş ürünler 0 sayılır." },
+      { label: "Serbest / Rezerv / Kullanılabilir", desc: "Toplam sermaye (ayar) − stokta bağlı = serbest; rezerv serbestin yüzdesi; kalan kullanılabilir." },
+      { label: "Aylık Beklenen Nakit", desc: "Σ(net kâr × aylık satış tahmini). Yalnız kârlı ürünler dahil." },
+      { label: "Yıllık ROI", desc: "Aylık beklenen × 12 / stokta bağlı." },
+      { label: "Ölü Stok", desc: "CFO ölü stok listesi (/cfo/olu-stok ile aynı kural ve aynı tutar)." },
     ],
     tasks: [
       {
-        title: "Acil sipariş listesini CSV indir",
-        steps: ["🔴 Acil Sipariş kartının başlığında '⬇ CSV indir'", "Excel'de aç, tedarikçiye gönder"],
+        title: "Ölü stoğu tasfiye et",
+        steps: ["Ölü Stok kartını CSV indir", "Bağlı sermayesi en yüksek ürünlerden başla", "İndirim/promo kararını CFO → Ölü stok ekranında not et"],
       },
       {
-        title: "Ölü stoğu tasfiye et",
-        steps: ["🟡 Ölü Stok kartındaki ürünleri incele", "Hangileri 6 aydır satılmıyor?", "İndirim/promo başlat"],
+        title: "Sermaye ayarını güncelle",
+        steps: ["Sermaye durumu → Sermaye ayarları", "Toplam sermaye ve rezerv oranını gir", "Serbest ve kullanılabilir tutar hemen yenilenir"],
       },
     ],
     relatedTerms: ["Sermaye Sağlık Skoru", "Ölü Stok", "Likidasyon Adayı"],

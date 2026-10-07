@@ -19,7 +19,7 @@ Modules now active (permission-guarded routes exist):
 - xml.* — /admin/xml-sync active since Phase 11 (EXECUTIVE_READ gate)
 - marketplaceListings.* — /marketplace and /marketplace/monitoring active since Phase 12–13
 - marketplaceAnalytics.read, marketplaceOrders.read, marketplaceReturns.read — /marketplace/trendyol and /marketplace/profit active since Phase 14–15
-- executive.read — /admin/capital, /admin/xml-sync, /admin/trendyol gated since Phase 10
+- executive.read — /admin/sermaye (eski /admin/capital), /admin/xml-sync, /admin/trendyol gated since Phase 10
 
 Still deferred (no routes implemented yet):
 - procurement.*, suppliers.* — Phases 19–21
@@ -588,8 +588,7 @@ Import intelligence pages:
 - /admin/import-decisions
 - /admin/import-calculator
 - /admin/procurement
-- /admin/capital
-- /admin/executive
+- /admin/sermaye (2026-10-07: eski /admin/capital, /admin/executive, /admin/sermaye-saglik birleşti; CFO servet satırı ayrıca CFO_READ ister)
 
 Derived metrics admin-only:
 - Net profit per unit / margin % / ROI %

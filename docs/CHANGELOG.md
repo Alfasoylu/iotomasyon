@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### Sermaye sayfaları birleşti — /admin/sermaye (2026-10-07)
+- `/admin/sermaye-saglik`, `/admin/capital`, `/admin/executive` → tek `/admin/sermaye` (bölümler: Sermaye durumu, Sermaye sağlığı, Satış ve kârlılık); eski adresler kalıcı yönlenir, menü/komut paleti/dashboard linkleri güncellendi.
+- Tek hesap `lib/capital/health.ts` + `lib/capital/score.ts`: kur `cfo_settings`, stokta bağlı `cfo_stok_deger.maliyet_degeri`, ölü stok `cfo_olu_stok`; sayfa ve dashboard skoru aynı fonksiyon, TL. Rezerv serbest sermayenin yüzdesi (tek kural). Maliyeti eksik stoklu ürün sayısı uyarı olarak gösterilir.
+- AI CFO Blok B4f: sermaye ayarı (toplam TAHMİNİ, stokta bağlı ölçüm, kullanılabilir) — `lib/cfo-agent/capital-config.ts`.
+- `alfashome_order` üretimde uygulandı (kontrollü SQL + `_prisma_migrations` kaydı, kullanıcı onaylı); `baseline.json` ve üretim parmak izi güncellendi.
+- Kaldırıldı: `lib/capital-allocation.ts`, `components/cfo/import-order-pointer.tsx`. Test: `ai-cfo-decision-packet` (skor/serbest sermaye/CFO kanıtı), `forecast-consumers` (kayıt güncel). Migration yok.
+
 ### ALFASHOME kanalı CFO'da (2026-10-07)
 - `alfashome_order` (migration `20261007210000_alfashome_order`, RLS açık, Data API kapalı, kişisel veri sütunu yok) + `lib/alfashome/sync.ts`: Medusa `/crm/orders`'tan son 500 sipariş günlük upsert (trendyol-sync cron'u, CFO döngüsünden önce; hata döngüyü durdurmaz, tablo yoksa atlar).
 - `lib/cfo-agent/alfashome-sales.ts`: ödenmiş (captured/authorized/kısmi iade) ve iptal/arşiv olmayan siparişlerden son 30 gün ciro + sipariş sayısı, ay başından ciro, ödeme bekleyen tutar, son sipariş, senkron tazeliği (2 günden eski → BAYAT, ölçülmemiş). Derin incelemede Blok B; planlı pakette ciro (SALES) kararlarında.
