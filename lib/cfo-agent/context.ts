@@ -2,6 +2,7 @@ import "server-only";
 import { silencedRules } from "./anomalies";
 import { loadBankRollForward } from "./bank-rollforward";
 import { loadImportRevenue } from "./import-revenue";
+import { loadAlfashomeSales } from "./alfashome-sales";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
@@ -87,6 +88,8 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   }
   // B4d — gelecek ithalatın beklenen cirosu/kârı ve konteynerdeki yeni ürünler (TAHMİNİ; 2026-10-07)
   state.push(...await loadImportRevenue(db, at));
+  // B4e — ALFASHOME kanalı (Entegra'da yok; sipariş toplamı bazlı ciro)
+  state.push(...await loadAlfashomeSales(db, at));
   // B5 — hedef notları (son gözlem)
   if (names.has("fm_goal_observation")) {
     for (const g of await db.query(`select distinct on (goal_key) goal_key, state, grade, gap_try, current_rate_try_per_day, required_rate_try_per_day, as_of::text as as_of
@@ -146,6 +149,10 @@ export async function loadScheduledExtras(decisionType: string, at: string, db: 
       out.push(...rows.map(b => evidence("cfo_kaldirac_basamak", `merdiven.${b.basamak}.${clip(b.ad, 40)} (BOSTA) kapasite`, num(b.tl_kapasite) ?? "ölçülmedi",
         num(b.tl_kapasite) == null ? "state" : "TRY", at, b.guven === "OLCULDU" || b.guven === "KESIN")));
     }
+  }
+  if (decisionType === "SALES") {
+    // Ciro kararlarında Entegra'nın görmediği ALFASHOME cirosu (son 30 gün + senkron tazeliği).
+    out.push(...(await loadAlfashomeSales(db, at)).filter(e => e.query.startsWith("alfashome.senkron") || e.query.startsWith("alfashome.ciro_son_30")));
   }
   if (decisionType === "CASH" || decisionType === "INVENTORY") {
     const imports = await loadImportRevenue(db, at);

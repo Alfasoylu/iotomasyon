@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### ALFASHOME kanalı CFO'da (2026-10-07)
+- `alfashome_order` (migration `20261007210000_alfashome_order`, RLS açık, Data API kapalı, kişisel veri sütunu yok) + `lib/alfashome/sync.ts`: Medusa `/crm/orders`'tan son 500 sipariş günlük upsert (trendyol-sync cron'u, CFO döngüsünden önce; hata döngüyü durdurmaz, tablo yoksa atlar).
+- `lib/cfo-agent/alfashome-sales.ts`: ödenmiş (captured/authorized/kısmi iade) ve iptal/arşiv olmayan siparişlerden son 30 gün ciro + sipariş sayısı, ay başından ciro, ödeme bekleyen tutar, son sipariş, senkron tazeliği (2 günden eski → BAYAT, ölçülmemiş). Derin incelemede Blok B; planlı pakette ciro (SALES) kararlarında.
+- Migration üretime henüz uygulanmadı (onay bekliyor). Testler: `ai-cfo-decision-packet`, `ai-cfo-source-mapping`, `ai-cfo-migration-security` (bekleyen migration listesi).
+
 ### AI CFO — gelecek ithalatın beklenen cirosu CFO'da (2026-10-07)
 - `lib/cfo-agent/import-revenue.ts`: açık ithalat projelerinin (`cfo_import_project`, teslim/iptal hariç) beklenen ciro, kâr ve aylık ciro katkısı (ciro ÷ satış ayı) ile konteynerdeki yeni ürünlerin (`urun_aday` TASLAK/HAZIR) liste fiyatlı brüt değeri ve katalogda olmayan sayısı CFO kanıtı olur; hepsi TAHMİNİ. Varış tarihi geçmiş ama YOLDA/PLANLANDI kalan proje işaretlenir.
 - Derin inceleme Blok B'de tümü; planlı karar paketinde nakit ve stok kararlarında en yakın projenin durum + aylık katkısı (≤2 kanıt).
