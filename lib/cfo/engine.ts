@@ -469,14 +469,16 @@ export function buildAllocation(o: CfoOverview, loans: LoanRow[], unit = 100_000
   });
 
   for (const l of loans.filter((x) => x.status === "AKTIF")) {
+    // cfo_loan.interestRatePct YILLIK tutulur (el kitabı v33 🔴; taksit/bakiye amortismanı da yıllık okumayla tutarlı).
+    // 2026-10-07'ye kadar burada aylık sayılıyordu → kredi getirisi 12 kat şişiyordu (Garanti %620/yıl, 517k/ay tasarruf).
     const r = numOrNull(l.interestRatePct);
     const payoff = numOrNull(l.earlyPayoffTry);
     opts.push({
       rank: rank++, name: `${l.bank} — ${l.name} erken kapama`, capital: payoff,
-      certainSavingMonthly: r != null && payoff != null ? payoff * (r / 100) : null,
+      certainSavingMonthly: r != null && payoff != null ? payoff * (r / 100 / 12) : null,
       cashReliefMonthly: numOrNull(l.monthlyPaymentTry),
-      annualReturn: r != null && payoff != null ? payoff * (r / 100) * 12 : null,
-      annualRoi: r != null ? (r / 100) * 12 : null,
+      annualReturn: r != null && payoff != null ? payoff * (r / 100) : null,
+      annualRoi: r != null ? r / 100 : null,
       risk: l.priority === "Yüksek" ? "Orta" : "Düşük",
       liquidity: "Nakdi azaltır", dataOk: r != null,
       advice: r == null

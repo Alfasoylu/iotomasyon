@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### Sermaye verimliliği + marjinal tahsis (2026-10-07)
+- `lib/cfo/capital-efficiency.ts` + `capital-efficiency-data.ts`: borç eşiğine (en pahalı ticari kredinin aylık faizi) göre SKU sermaye getirisi, SCALE/KEEP/TRIM/FIX_PRICE/LIQUIDATE/UNKNOWN, fazla stok, break-even tasfiye indirimi, açığa çıkabilir nakit; likidite-öncelikli tahsis planı.
+- `/cfo/sermaye`: verimlilik kartları, sınıf tablosu, "sıradaki X TL" planı, FIX_PRICE / TRIM-LIQUIDATE / SCALE listeleri.
+- AI CFO Blok B4h + planlı pakette nakit/stok kararlarına eşik ve plan #1.
+- Düzeltme: kredi faizi (`cfo_loan.interestRatePct`, yıllık) `buildAllocation` ve `/cfo/borclar`'da aylık sayılıyordu (12 kat şişme).
+- Test: `cfo-capital-efficiency`.
+
 ### CFO panel defterlerini okuyor (2026-10-07)
 - `lib/cfo-agent/finance-ledgers.ts` (Blok B4g): Trendyol fatura/hakediş kesinti dökümü + kesinti oranı + iade oranı + ceza, banka hareketleri (30 gün giriş/çıkış, son hareket), açık/süresi geçmiş teklifler. Tazelik ölçülmüşlüğü belirler. Fiyat/marj kararlarında planlı pakete kesinti oranı.
 - Test: `ai-cfo-decision-packet` (üretim şekilli fikstür).
