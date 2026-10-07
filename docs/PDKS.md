@@ -160,6 +160,40 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Backlog & Hedefler
 
+### Öncelikli aksiyon planı (2026-10-07)
+> Sıralama: güvenlik riski → canlıda yanlış karar üreten veri → canlı AI CFO kalitesi/maliyeti → büyüme → iyileştirme.
+> "Kullanıcı" = yalnız Alperen'in yapabileceği (şifre, panel, iş kararı). Her üretim adımı ayrı onay.
+
+**P0 — Hemen**
+1. [ ] **S-K2 Hepsiburada şifre rotasyonu + git geçmişi temizliği** (kullanıcı) — dosya silindi ama şifre geçmişte duruyor.
+2. [ ] **`cfo_secret` düz metin kimlik bilgileri (5 satır) → ortam değişkeni/Vault** — önceki "kritik değil" notu yükseltildi: DB okuma yetkisi olan herkes pazaryeri kimliklerini görür.
+
+**P1 — Bu hafta (canlı kararları etkileyen veri + AI CFO)**
+3. [ ] **Bayat kaynaklar: Entegra, Hepsiburada, banka** — AI CFO'nun iki içgörüsü de bunu işaret etti; nakit/borç hedefleri `measured=false` tahmine dayanıyor. Besleme/sync akışlarının neden durduğunu teşhis et.
+4. [ ] **Maliyet kapsamı %56,6** — eksik ürün maliyetleri girilmeden kârlılık/marj anomalileri güvenilir değil (kullanıcı + veri girişi ekranı).
+5. [ ] **Forecast V2 açma kararı** — eski yolda Trendyol çift sayım + Türkçe-İ hataları satın alma tahminini bozmaya devam ediyor (gölge raporu → onay).
+6. [ ] **AI CFO anomali seçiminde kategori çeşitliliği** — ilk koşuda 8/8 STOCKOUT gitti; kategori başına kota (ör. en fazla 3 stok + hedef/marj/nakit).
+7. [ ] **AI CFO girdi paketini küçült** — kanıtta tekrarlanan `asOf` vb. alanlar; hedef 8000 yerine 4500 token sınırına dönmek (maliyet ↓).
+8. [ ] **AI CFO kalibrasyon** — 1–2 hafta içgörüleri `/admin/ai-cfo`'da doğru/yanlış işaretleme (`reviewedAt/By` alanları mevcut, UI yok); ret nedeni kodlarını izle (`fabricated_number` oranı).
+
+**P2 — Bu ay (büyüme + teknik borç)**
+9. [ ] **Yeni ürünler pazaryeri hazırlığı** (kullanıcı ağırlıklı) — 126/127 üründe görsel yok (en büyük darboğaz), 16 kutu ölçüsü, kategori eşleme, 64 marka, 40 uzun başlık.
+10. [ ] **Market Scout yayına alma** — migration + baseline yenileme → eski scout içe aktarımı → buybox (her adım ayrı onay; aşağıdaki madde).
+11. [ ] **C6 hata telemetrisi (Sentry)** — bugünkü `monitor_failed`/`provider_http_400` ancak elle sorguyla bulundu.
+12. [ ] **Baseline sonrası:** `schema.prisma` ↔ üretim sürüklenmesi (3 tablo) hizalama; `migration-clean-apply` testini kaldır.
+13. [ ] **D7: 43 `SECURITY DEFINER` view → `security_invoker`** (39'dan 43'e çıktı; anon yetkisi yok, sömürülemez ama büyüyor).
+14. [ ] **Faz 2 vitrin:** landing CTA'larını `/kayit`'a bağla, gerçek iletişim bilgisi, yasal sayfalar (ödeme 10 müşteriye kadar kapalı kalır).
+
+**P3 — Takvime bağlı / iyileştirme**
+15. [ ] M7 A-shrink telemetrisi — ilk puan 2026-11-06.
+16. [ ] Tahmin temizlik PR'ı — V2 kalıcı olunca.
+17. [ ] AI CFO küçükler: çıktıda İngilizce terim sızıntısı ("contribution profit") için prompt; kesilen yanıtın soğumayı tetiklememesi.
+18. [ ] D8 (147 fonksiyonda değişken `search_path`), D9 (`vector` public'te), `tmp-cfo-files-verify` Edge Function silme.
+19. [ ] PDKS ürün: C4 güvenilir cron, C1 offline kuyruk, C2/D4 audit log, C7 izin bakiyesi, D3 cihaz çıkarma, PDF/Excel rapor, zaman/format kod birleştirme.
+20. [ ] `CLAUDE.md` şirket profili yer tutucularını doldur (kullanıcı).
+
+### Ayrıntılı maddeler
+
 - [ ] **Market Scout yayına alma (her adım ayrı onay, `docs/MARKET-SCOUT.md` §10):** migration `20261007100000_market_scout_foundation` üretime + baseline yenileme · eski scout içe aktarımı (dry-run → apply; 107 REJECTED / 93 WATCHING / 3 karar) · `MARKET_SCOUT_TRENDYOL_STOREFRONT_CODE` doğrulama + ilk manuel buybox çalıştırması · sitemap ETag 24–72 sa değişim ölçümü → artımlı strateji kararı · çalıştırıcı kararı (buybox GitHub Actions, sitemap Railway) · Google Trends alpha erişimi · lisanslı sağlayıcı hukuki inceleme.
 - [ ] **Forecast V2'yi açma kararı** (ayrı onay): `FORECAST_V2_ENABLED=true` öncesi `/admin/forecast-v2` gölge raporu incelenir; açık DRAFT sipariş ve BEKLIYOR CFO satırları insan tarafından gözden geçirilir. Açılana kadar eski tahmin girdisi hataları (Trendyol çift sayım, Türkçe-İ sızıntısı, max/manuel taban) eski yolda sürer.
 - [ ] **M7 A-shrink ileri telemetri:** ilk puan 2026-11-06; ≥12 ileri kesim + ≥150 A gözlemi sonrası kapı değerlendirmesi (terfi ayrı PR/onay).
@@ -168,7 +202,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
-- [ ] **AI CFO runner adım 8:** (5, 6, 7 tamam; 8A `ai_cfo_v1` üretimde 2026-10-06; STEP C deterministik monitor çalışıyor, ilk koşu 37/38 gerçek alarm — kabul edildi) · STEP E bütçe/sağlayıcı kapalı doğrulaması → STEP F tek onaylı AI koşusu → kalibrasyon (her biri ayrı onay). Adım 4 tamam (`AI-CFO-RUNNER.md`).
+- [x] **AI CFO runner adım 8 — STEP F tamam (2026-10-07):** ilk onaylı AI koşusu `cmuxqfti…` 2 içgörü kaydetti (1,43 ₺). Kalan: kalibrasyon ve aşağıdaki P1 AI CFO maddeleri.
 
 - [ ] **Güvenlik (sonraya, kritik değil):** `cfo_secret` düz metin kimlik bilgilerini ortam değişkenlerine taşı; pgvector'ü `public` dışına taşı; `tmp-cfo-files-verify` Edge Function'ı panelden sil.
 
@@ -253,6 +287,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-07 — Öncelikli aksiyon planı:** backlog P0–P3 sıralandı (üretim salt-okunur doğrulama: bayat kaynaklar Entegra/Hepsiburada/banka, maliyet kapsamı %56,6, `cfo_secret` 5 düz metin satır, 43 definer view, 147 değişken search_path). AI CFO adım 8 STEP F tamam olarak işaretlendi.
 - **2026-10-07 — AI CFO STEP F tamam: ilk AI içgörüleri üretimde:** `cmuxqfti…` (09:34, elle): 4 GOAL anomalisi → 2 içgörü kaydedildi (borç 5M hedefi NOT_MET; net pozisyon tabanı OFF_TRACK, ikisi de TAHMİNİ/güven düşük), 1 ret; 1,43 ₺. Kullanıcı onayıyla: kısmi başarı `completed` + ret nedeni kodları (`runner.ts`, `validate-ai-output.ts`, `run-buttons.tsx`, test `ai-cfo-runner`).
 - **2026-10-07 — AI CFO STEP F: ilk başarılı sağlayıcı çağrısı, çıktı kesildi:** `maxItems` düzeltmesi (#173) sonrası 09:13 zamanlanmış monitor `cmuxpo8e…` Anthropic'ten yanıt aldı (5.559/800 token, 1,43 ₺) ama 800 tavanında kesildi → `invalid_output`. Çıktı tavanı varsayılan 1500 / üst 2000; kesilme `output_truncated` etiketi. `config.ts`, `runner.ts`, `__tests__/ai-cfo-runner.test.ts`, `docs/AI-CFO-RUNNER.md`.
 - **2026-10-07 — AI CFO STEP F: structured outputs `maxItems` 400:** `cmuxn1eh…` `blocked_by_input_tokens` (varsayılan 4500 sınırı; kullanıcı `AI_CFO_MAX_INPUT_TOKENS_PER_RUN=8000` ayarladı, `avoidedCostTry` artık dolu). Ardından `cmuxo5fc…` `provider_http_400`: şemadaki `maxItems` desteklenmiyor → `provider.ts` şemadan kaldırıldı, sınır `validate-ai-output.ts`'te (`MAX_INSIGHTS`). Testler `ai-cfo-provider`, `ai-cfo-runner`.
