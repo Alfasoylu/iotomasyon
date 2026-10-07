@@ -13,6 +13,7 @@
 - `/admin/sermaye-saglik`, `/admin/capital`, `/admin/executive` → tek `/admin/sermaye` (bölümler: Sermaye durumu, Sermaye sağlığı, Satış ve kârlılık); eski adresler kalıcı yönlenir, menü/komut paleti/dashboard linkleri güncellendi.
 - Tek hesap `lib/capital/health.ts` + `lib/capital/score.ts`: kur `cfo_settings`, stokta bağlı `cfo_stok_deger.maliyet_degeri`, ölü stok `cfo_olu_stok`; sayfa ve dashboard skoru aynı fonksiyon, TL. Rezerv serbest sermayenin yüzdesi (tek kural). Maliyeti eksik stoklu ürün sayısı uyarı olarak gösterilir.
 - AI CFO Blok B4f: sermaye ayarı (toplam TAHMİNİ, stokta bağlı ölçüm, kullanılabilir) — `lib/cfo-agent/capital-config.ts`.
+- `alfashome_order` üretimde uygulandı (kontrollü SQL + `_prisma_migrations` kaydı, kullanıcı onaylı); `baseline.json` ve üretim parmak izi güncellendi.
 - Kaldırıldı: `lib/capital-allocation.ts`, `components/cfo/import-order-pointer.tsx`. Test: `ai-cfo-decision-packet` (skor/serbest sermaye/CFO kanıtı), `forecast-consumers` (kayıt güncel). Migration yok.
 
 ### ALFASHOME kanalı CFO'da (2026-10-07)
