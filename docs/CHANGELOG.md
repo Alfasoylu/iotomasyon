@@ -9,6 +9,14 @@
 
 ## 2026-10
 
+### AI CFO — girdi şartnamesi (Blok A/B/C + önbellek) + anomalilere TL etkisi (`alfas-gross-v10`) (2026-10-07)
+- **Blok A — el kitabı karar çekirdeği** (`lib/cfo-agent/handbook-core.ts`, `v33-core-2026-10-07`): şartname A1–A9 (itirazın dört şartı, grain kuralı, taban fiyat sabitleri + komisyon ölçüm kuralı + ölü bantlar + kargo çift sayım yasağı, dip bandı, kaldıraç merdiveni + −3.000.000 tabanı, borç sırası + para maliyeti, servet iki türlü, yazma sözlüğü, yasaklar). Kargo tarifesi, kanal net oranı ve komisyon kapsamı kopyalanmaz, koşu anında okunur. Sistem talimatıyla tek blokta `cache_control` → önceki ~400 token Sonnet 4.6'nın 1.024 token önbellek alt sınırının altındaydı (`cacheRead=0`'ın sebebi); şimdi önbelleğe alınır.
+- **Blok B — bugünün durumu / Blok C — hafıza** (`lib/cfo-agent/context.ts`, salt-okunur kaynak): nakit kapısı, `cfo_kaynak_yeterliligi()`, yakın dip (≤35 gün, bant) ↔ uzak dip, servet geniş (`cfo_servet`) ↔ dar (`fm_balance_day.net_capital_try`), hedef notları, bayat kaynaklar + **susan kurallar**; defter son 20, açık P1 sorular (10), son 3 koşu. Her satır id'li kanıt: içgörü atıf yapabilir, doğrulayıcı sayısını uydurma saymaz (`validateAiOutput` contextIds; `§` kural numaraları sayı sayılmaz; el kitabından yalnız ayırt edici sabitler — küçük tam sayılar serbest değil).
+- **Kabul testi 2:** `no_actionable_anomaly` hata alanı hangi kuralların veri yüzünden kör olduğunu yazar (`silencedRules`).
+- **Girdi sınırı** `AI_CFO_MAX_INPUT_TOKENS_PER_RUN` varsayılan/üst 12.000.
+- **TL etkisi** (`anomalies.ts`, `calculations.ts`): STOCKOUT birim kâr × hız × gün (kâr bilinmiyorsa `revenue_at_risk` = ortalama fiyat × hız × gün, etiketli); PRICE_BELOW_FLOOR (taban − fiyat) × hız × 30 gün; DEAD_STOCK bağlı sermaye × aylık para maliyeti (`AI_CFO_MONEY_COST_MONTHLY_PCT`, varsayılan %2,83 — §7 en ucuz basamak). Sıralama TL'ye göre; `cfo_insight.financialImpact`/`impactCalculation` anomaliden dolar.
+- Testler: `ai-cfo-runner` (kabul 1 ve 2), `ai-cfo-anomalies` (TL etkileri + sıralama), `ai-cfo-source-mapping` (bağlam yükleyici gerçek DB).
+
 ### AI CFO — haftalık Entegra boşluğu Trendyol API'den tahmin (`alfas-gross-v9`) (2026-10-07)
 - Kullanıcı isteği: döküm yokken sistem otomatik kaynaklara bakmalı. Üretim ölçümü (22.09–04.10): Entegra Trendyol kanalı ≈ 520 bin ₺ ↔ Trendyol API ≈ 520 bin ₺ (sipariş adetleri çoğu gün ±2); Trendyol tüm kanalların ≈ %62,5'i. XML stok düşüşleri günlük çok gürültülü (06.10: 1.146 adet, düzeltme) → ana kaynak değil.
 - `lib/cfo-agent/snapshot.ts`: Entegra'nın son tam günü = en son sipariş gününden bir önceki gün (yükleme günü kısmi). Sonraki günlerin cirosu = Trendyol API (iptaller hariç) × Entegra son 28 gün tüm kanal/Trendyol oranı; dönem metriği `estimated=true`, `reason=entegra_gap_estimated_from_trendyol_api` (modele TAHMİNİ olarak gider). Trendyol bayatsa tahmin yapılmaz. Kısmi yükleme günü Entegra'dan değil tahminden gelir. Test `ai-cfo-source-mapping`.

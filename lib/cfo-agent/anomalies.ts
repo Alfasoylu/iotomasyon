@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { getCfoConfig, type CfoConfig } from "./config";
-import { D, financialImpact } from "./calculations";
+import { capitalCostImpact, D, financialImpact, priceGapImpact, revenueAtRisk } from "./calculations";
 import { evidence } from "./evidence";
 import type { Anomaly, Category, CfoAgentSnapshot, Evidence, Impact, Metric, Severity } from "./types";
 
@@ -45,7 +45,8 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
     // satış fiyatı) sourceFresh'e bakar. İkisini karıştırmak eski (tek alanlı)
     // davranışı yanlış sinyalle taklit eder.
     if(p.sourceFresh&&p.financialSourceFresh&&p.cost.value!=null&&p.avgPrice.value!=null&&p.priceFloor.value!=null&&p.avgPrice.value<p.priceFloor.value) {
-      add("PRICE_BELOW_FLOOR","pricing","critical",entity,p.pricePeriod,[m("cfo_satis_birim_duz",`${entity}.avg_price`,p.avgPrice,"TRY"),m("cfo_kargo_tarife",`${entity}.floor_single_unit_order`,p.priceFloor,"TRY"),m("cfo_satis_birim_duz",`${entity}.commission`,p.commissionRate,"ratio")]);
+      add("PRICE_BELOW_FLOOR","pricing","critical",entity,p.pricePeriod,[m("cfo_satis_birim_duz",`${entity}.avg_price`,p.avgPrice,"TRY"),m("cfo_kargo_tarife",`${entity}.floor_single_unit_order`,p.priceFloor,"TRY"),m("cfo_satis_birim_duz",`${entity}.commission`,p.commissionRate,"ratio"),m("cfo_stok_hareket_hiz",`${entity}.cautious_velocity`,p.velocity,"units/day")],
+        priceGapImpact(p.priceFloor,p.avgPrice,p.velocity));
     }
     const price=p.avgPrice.value;
     if(p.sourceFresh&&price!=null&&((price>=200&&price<=243.70)||(price>=350&&price<=365.50)))add("PRICE_DEAD_BAND","pricing","warning",entity,p.pricePeriod,[m("cfo_satis_birim_duz",`${entity}.avg_price`,p.avgPrice,"TRY")]);
@@ -54,13 +55,15 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
     if(xmlFresh&&p.stockQty!=null&&p.stockDays.value!=null&&p.stockDays.value<config.stockoutDays) {
       const proof=[m("cfo_stok_hareket_hiz",`${entity}.stock_days`,p.stockDays,"days"),m("cfo_stok_hareket_hiz",`${entity}.cautious_velocity`,p.velocity,"units/day"),
         evidence("cfo_yolda_sku",`${entity}.inbound_quantity`,p.inboundQty,"units",at,true),evidence("cfo_yolda_sku",`${entity}.inbound_eta`,p.inboundEta,"date",at,true),evidence("PurchaseOrder",`${entity}.open_orders`,p.openPurchaseOrders,"count",at,true)];
-      add("STOCKOUT","inventory",p.stockDays.value<7?"critical":"warning",entity,month,proof,financialImpact(p.unitProfit,p.velocity,config.stockoutDays-p.stockDays.value));
+      const affected=config.stockoutDays-p.stockDays.value;
+      if(p.unitProfit.value==null&&p.avgPrice.value!=null)proof.push(m("cfo_satis_birim_duz",`${entity}.avg_price`,p.avgPrice,"TRY"));
+      add("STOCKOUT","inventory",p.stockDays.value<7?"critical":"warning",entity,month,proof,financialImpact(p.unitProfit,p.velocity,affected)??revenueAtRisk(p.avgPrice,p.velocity,affected));
       if(financialAllowed&&p.financialSourceFresh&&p.unitProfit.value!=null&&p.unitProfit.value>0&&p.velocity.value!=null&&p.velocity.value>0&&!p.inboundBeforeStockout&&(p.openPurchaseOrders??0)===0)
         add("PROCUREMENT","procurement","warning",entity,month,proof,financialImpact(p.unitProfit,p.velocity,config.stockoutDays-p.stockDays.value));
     }
     if(financialAllowed&&p.financialSourceFresh&&p.unitProfit.value!=null&&p.previousUnitProfit.value!=null&&p.unitProfit.value<0&&p.previousUnitProfit.value>=0)add("NEGATIVE_PROFIT","margin","critical",entity,month,[m("cfo_satis_birim_duz",`${entity}.unit_profit`,p.unitProfit,"TRY"),m("cfo_satis_birim_duz",`${entity}.previous_unit_profit`,p.previousUnitProfit,"TRY")]);
   }
-  for(const p of snapshot.deadStock)if(xmlFresh&&!snapshot.dataQuality.staleSources.includes("Entegra")&&(p.alarm==="KIRMIZI"||p.alarm==="SARI"))add("DEAD_STOCK","inventory",p.alarm==="KIRMIZI"?"critical":"warning",p.sku,month,[m("cfo_olu_stok",`${p.sku}.cost_value`,p.value,"TRY")],null,true,p.findingId?[`cfo_dead_stock_finding:${p.findingId}`]:[]);
+  for(const p of snapshot.deadStock)if(xmlFresh&&!snapshot.dataQuality.staleSources.includes("Entegra")&&(p.alarm==="KIRMIZI"||p.alarm==="SARI"))add("DEAD_STOCK","inventory",p.alarm==="KIRMIZI"?"critical":"warning",p.sku,month,[m("cfo_olu_stok",`${p.sku}.cost_value`,p.value,"TRY")],capitalCostImpact(p.value,config.moneyCostMonthlyPct),true,p.findingId?[`cfo_dead_stock_finding:${p.findingId}`]:[]);
   const r=snapshot.returns;
   if(r.complete&&r.sample>=config.returnMinSample&&r.currentRate.value!=null&&r.previousRate.value!=null&&D(r.currentRate.value).sub(r.previousRate.value).gte(config.returnIncreasePoints))add("RETURNS_SPIKE","sales","warning","company",month,[m("cfo_satis_birim_duz","return_rate.current",r.currentRate,"pct"),m("cfo_satis_birim_duz","return_rate.previous",r.previousRate,"pct")]);
   return result.sort((a,b)=>(a.category==="cash"?-100:0)+(a.severity==="critical"?-10:0)-((b.category==="cash"?-100:0)+(b.severity==="critical"?-10:0))||b.weight-a.weight);
@@ -70,4 +73,17 @@ export function shouldReopen(anomaly:Anomaly, previous:{createdAt:Date;impact:nu
   if(now.getTime()-previous.createdAt.getTime()>=cooldownHours*3600000)return true;
   const impact=anomaly.impact?.value;
   return impact!=null&&previous.impact!=null&&Math.abs(impact)>0&&Math.abs(impact)>=Math.abs(previous.impact)*1.5;
+}
+
+/** Rules that cannot fire right now because of data freshness / coverage (girdi şartnamesi Blok B + kabul testi 2):
+ *  `no_actionable_anomaly` must be able to say WHICH rules are blind, not only that nothing was found. Mirrors the gates above. */
+export function silencedRules(snapshot:CfoAgentSnapshot,config:CfoConfig=getCfoConfig()):string[] {
+  const stale=snapshot.dataQuality.staleSources, out:string[]=[];
+  const coverage=snapshot.dataQuality.costCoveragePct;
+  if(stale.includes("Entegra"))out.push("Entegra bayat → PRICE_BELOW_FLOOR, LOW_PRICE_STRUCTURAL_LOSS, DEAD_STOCK, PROCUREMENT, NEGATIVE_PROFIT, REVENUE_DEVIATION susuyor");
+  if(stale.includes("XML"))out.push("XML bayat → STOCKOUT, DEAD_STOCK, PROCUREMENT susuyor");
+  if(!snapshot.cash.banksFresh)out.push("banka bakiyesi bayat → CASH_CRITICAL susuyor");
+  if(coverage==null||coverage<config.minCostCoveragePct)out.push(`maliyet kapsamı %${coverage==null?"?":Math.round(coverage*10)/10} < %${config.minCostCoveragePct} → MARGIN_DROP, NEGATIVE_PROFIT, PROCUREMENT susuyor`);
+  if(snapshot.dataQuality.duplicateCanonicalRows>0)out.push("kanonik satışta mükerrer satır → MARGIN_DROP, NEGATIVE_PROFIT, PROCUREMENT susuyor");
+  return out;
 }

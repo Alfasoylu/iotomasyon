@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import type { GoalRow } from "@/lib/fm/goals";
 import { getCfoConfig, type CfoConfig } from "./config";
 import { buildCfoAgentSnapshot } from "./snapshot";
-import { detectCfoAnomalies, shouldReopen } from "./anomalies";
+import { detectCfoAnomalies, shouldReopen, silencedRules } from "./anomalies";
+import { loadCfoContext, type CfoContext } from "./context";
 import { evidence, hashSnapshot } from "./evidence";
 import { goalAnomalies } from "./goal-anomalies";
 import { existingQueueRecords, retrieveRelevantMemory } from "./memory";
@@ -22,6 +23,8 @@ export type RunnerDependencies = {
   now?: Date; config?: CfoConfig; lock?: MonitorLock; store?: CfoStore; provider?: CfoReasoningProvider | null;
   snapshot?: () => Promise<CfoAgentSnapshot>; goals?: () => Promise<GoalRow[]>;
   queues?: (anomalies: Anomaly[]) => Promise<Map<string, string[]>>; memory?: (anomalies: Anomaly[]) => Promise<MemoryItem[]>;
+  /** Girdi Blok B/C + Blok A tablo eki (context.ts); null = bağlamsız (testler). */
+  context?: ((snapshot: CfoAgentSnapshot, config: CfoConfig) => Promise<CfoContext>) | null;
   /** Manual run from /admin/ai-cfo: idempotency per 20-minute slot (3 per hour) instead of the scheduled hour/day. */
   manual?: boolean;
 };
@@ -90,8 +93,9 @@ async function run(type: RunType, deps: RunnerDependencies): Promise<RunnerOutco
     const selected = sent.slice(0, 8);
     await store.snapshot(id, snapshot, hashSnapshot(snapshot), anomalies, selected);
     const saving = costTry(config, { inputTokens: Math.min(3000, config.maxInputTokens), outputTokens: Math.min(600, config.maxOutputTokens), cacheReadTokens: 0, cacheWriteTokens: 0 });
-    const skip = async (status: string) => { await store.finish(id!, status, new Date(), 1, saving); return { status, runId: id }; };
-    if (!selected.length) return await skip("no_actionable_anomaly");
+    const skip = async (status: string, error?: string) => { await store.finish(id!, status, new Date(), 1, saving, error); return { status, runId: id, ...(error ? { error } : {}) }; };
+    // Kabul testi 2: hiçbir şey gönderilmediğinde hangi kuralların veri yüzünden KÖR olduğu söylenir.
+    if (!selected.length) { const blind = silencedRules(snapshot, config); return await skip("no_actionable_anomaly", blind.length ? `susan_kurallar: ${blind.join(" | ")}`.slice(0, 900) : undefined); }
     if (!config.enabled) return await skip("ai_disabled");
     if (!config.releaseApproved) return await skip("release_gates_pending");
     const provider = deps.provider === undefined ? createCfoProvider(config) : deps.provider;
@@ -103,7 +107,11 @@ async function run(type: RunType, deps: RunnerDependencies): Promise<RunnerOutco
         usdTryRate: config.usdTryRate ?? null, cacheReadMultiplier: 0.1, cacheWriteMultiplier: 1.25 } };
     if (block) { await store.usage(id, { ...usage, status: block, estimatedCost: 0, reservedCostTry: null }); return await skip(block); }
     const memory = await (deps.memory ?? retrieveRelevantMemory)(selected);
-    const input = { snapshot, anomalies: selected, memory };
+    const context = deps.context === null ? undefined : await (deps.context ?? loadCfoContext)(snapshot, config);
+    // Bağlam kanıtları snapshot kanıtına eklenir: içgörü onlara atıf yapabilir, kayıtta kanıt olarak saklanır.
+    const contextIds = new Set([...(context?.state ?? []), ...(context?.memory ?? [])].map(e => e.id));
+    for (const e of [...(context?.state ?? []), ...(context?.memory ?? [])]) if (!snapshot.evidence.some(x => x.id === e.id)) snapshot.evidence.push(e);
+    const input = { snapshot, anomalies: selected, memory, context };
     // Ağ isteğinden önce bayt sınırı, ücretli çağrıdan önce kesin token sayımı; sessiz kırpma yok.
     if (Buffer.byteLength(JSON.stringify(reasoningPayload(input)), "utf8") > config.maxInputTokens * 3) return await skip("blocked_by_input_size");
     const tokens = await provider.countInput(input);
@@ -114,7 +122,7 @@ async function run(type: RunType, deps: RunnerDependencies): Promise<RunnerOutco
     await store.updateUsage(usageId, { ...usage, status: "completed", inputTokens: result.inputTokens, outputTokens: result.outputTokens,
       cacheReadTokens: result.cacheReadTokens, cacheWriteTokens: result.cacheWriteTokens, estimatedCost: cost, reservedCostTry: null, providerRequestId: result.requestId });
     usageId = null;
-    const validated = validateAiOutput(result.text, snapshot, selected);
+    const validated = validateAiOutput(result.text, snapshot, selected, contextIds);
     await store.insights(id, validated.insights, selected, snapshot.evidence);
     // Partial success is still completed: accepted insights are saved and the rejected count/reasons go in error.
     const status = validated.rejected && !validated.insights.length ? "invalid_output" : "completed";
