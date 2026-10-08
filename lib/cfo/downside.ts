@@ -186,7 +186,8 @@ export function stressGapTry(d: Downside, floorTry: number): number {
  */
 export function tieredDrawInterest(slices: KmhSlice[], fromTry: number, drawTry: number):
   { monthlyInterestTry: number; unknownRateTry: number; beyondCapacityTry: number } {
-  let start = Math.max(0, fromTry), end = start + Math.max(0, drawTry), cursor = 0, interest = 0, unknown = 0;
+  const start = Math.max(0, fromTry), end = start + Math.max(0, drawTry);
+  let cursor = 0, interest = 0, unknown = 0;
   for (const s of orderSlices(slices)) {
     const lo = Math.max(start, cursor), hi = Math.min(end, cursor + s.limitTry);
     if (hi > lo) { if (s.monthlyRate == null) unknown += hi - lo; else interest += (hi - lo) * s.monthlyRate; }
