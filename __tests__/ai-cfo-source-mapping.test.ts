@@ -142,6 +142,14 @@ async function main() {
     }
     assert.equal(s.dataQuality.costCoveragePct! >= config.minCostCoveragePct ? s.dataQuality.costCoverageGap : undefined, undefined, "eşik üstünde liste yok");
 
+    // Metrik mutabakatı (CFO-001 PR-A): scripts/cfo/metric-reconciliation.sql üretim kopyasında hatasız çalışır, tek satır döner;
+    // net sermaye varyantları kendi bileşenlerinden tutarlı (dar + yoldaki ödenmiş = geniş), kredi servet satırı = kalan anapara.
+    const [rec] = (await pg.query<Record<string, string | number | null>>(readFileSync("scripts/cfo/metric-reconciliation.sql", "utf8"))).rows;
+    assert.ok(rec && "net_dar_bugunku" in rec && "borc_finansal_sirket" in rec && "tcmb_aylik" in rec, "mutabakat satırı");
+    assert.equal(Math.round((Number(rec.net_dar_bugunku) + Number(rec.yolda_odenmis)) * 100), Math.round(Number(rec.net_genis_bugunku) * 100), "geniş = dar + yoldaki ödenmiş");
+    assert.equal(Number(rec.kredi_servet_fark), 0, "override yokken kredi satırı = kalan anapara");
+    assert.ok(Number(rec.stok_lcnrv) <= Number(rec.stok_maliyet) + 0.01, "LCNRV maliyeti aşmaz");
+
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;
     assert.equal(s.cash.minimumProjectedPosition.value, Number(native.m));

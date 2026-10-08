@@ -70,3 +70,4 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | Tarih | Commit | Skor | Gate | Not |
 |---|---|---|---|---|
 | 2026-10-08 | 422a6db | 48 | 5/12 | İlk tam denetim (başlangıç çizgisi) |
+| 2026-10-08 | CFO-001 PR-A | 48 | 5/12 | Ölçüm + karar memosu; tanım değişmedi → puan değişmedi (mutabakat görünür ama tek tanım yok). Yeni RF-025 (HIGH), RF-026, RF-027 |

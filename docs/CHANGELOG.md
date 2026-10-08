@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Metrik mutabakat ölçümü ve tanım önerileri (2026-10-09)
+- Net sermaye, borç, nakit, kur ve cironun sistemdeki tüm tanımlarını yan yana ölçen salt-okunur sorgu ve karar memosu eklendi; önerilen tanımlarla bugün net sermaye ≈ 61,2k USD, finansal borç ≈ 121,3k USD.
+
 ### CFO ilk tam sistem denetimi ve kalıcı yönetim belgeleri (2026-10-08)
 - CFO sisteminin geliştirilmesi artık beş kalıcı belgeyle yönetiliyor: ana plan (`docs/CFO-MASTER-PLAN.md`), öncelikli iş listesi (`CFO-BACKLOG.md`), sabit puanlama (`CFO-SCORECARD.md`), bağımsız risk kaydı (`CFO-RED-FLAGS.md`) ve karar günlüğü (`CFO-DECISION-LOG.md`). İlk denetim skoru 48/100; en büyük risk net sermayenin üç farklı tanımla ölçülmesi.
 

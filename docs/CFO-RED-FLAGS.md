@@ -11,7 +11,7 @@ next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-08):** CRITICAL 1 · HIGH 9 · MEDIUM 10 · LOW 4 · toplam 24.
+**Açık özet (2026-10-08, CFO-001 PR-A sonrası):** CRITICAL 1 · HIGH 10 · MEDIUM 11 · LOW 4 · INFO 1 · toplam 27.
 
 ---
 
@@ -170,3 +170,29 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **severity:** LOW · **status:** OPEN · **commit:** 422a6db
 - **finding:** `/api/cron/cfo-cycle` çağrılmıyor; `cfo_model_hakedis` sabit tarih penceresi; `cfo_insight`/`cfo_usage` yazılmıyor; eski motor alanları hesaplanıp gösterilmiyor; `cfo_settings` ölü alanları.
 - **recommended_fix:** CFO-018/CFO-024.
+
+---
+
+## 2026-10-08 — CFO-001 PR-A (metrik mutabakatı) RED FLAG PASS
+
+### RF-20261008-001 — güncelleme (kayıt değişmez, açıklama eklenir)
+- Mutabakat SQL'i (`scripts/cfo/metric-reconciliation.sql`) gösterdi: "üç sayı" aslında **iki tanım + ölçüm anı farkı** (DAR 2.507.805 canlı / 2.617.204 Goal sabah gözlemi; GENİŞ 6.266.139 = DAR + yoldaki ödenmiş 3.758.334). Severity aynı (CRITICAL): hedef DAR'ı, sayfa GENİŞ'i, ikisi de KDV dahil NRV stokla gösteriyor. Önerilen sözleşme: 2.973.814 TL (LCNRV, geniş) — `docs/CFO-METRIC-CONTRACT.md`.
+
+### RF-20261008-025 — Ciro hedefi eksik günleri "A" notuyla tam sayıyor; KDV hariç ciro hiç ölçülmüyor
+- **date:** 2026-10-08 · **commit:** cde8760 · **severity:** HIGH · **status:** OPEN
+- **finding:** `fm_memory_sales_company_day` 07.10 = 5.288 TL (tipik gün 55–75k; Entegra yüklemesi 05.10'da) ama `revenue_grade = 'A'`; Goal Engine run-rate'i bu günleri tam sayıyor (`complete_through 2026-10-07`). `revenue_ex_vat_try` tüm günlerde NULL (grade U) → KDV hariç ciro ölçülemiyor.
+- **evidence:** üretim sorgusu (25.09–07.10 günlük satırlar); mutabakat `ciro_mtd_kdv_haric = NULL`.
+- **economic_risk:** G1 gidişi olduğundan kötü görünüyor (aylık tahmin 33,7k USD eksik günlerle); ekonomik ciro hedefi tanımlanamıyor.
+- **affected_component:** fm sales memory, `fm_goal_evaluate`, revenue goal.
+- **recommended_fix:** CFO-008 (kaynak tazeliği ile "tamamlanmış gün" sınırı; satır KDV'sinden `revenue_ex_vat_try`).
+
+### RF-20261008-026 — TCMB Ekim kuru NULL; kur betiği elle çalışıyor
+- **date:** 2026-10-08 · **commit:** cde8760 · **severity:** MEDIUM · **status:** OPEN
+- **finding:** `fm_memory_fx_monthly` 2026-10 satırı `usd_try_forex_buying = NULL` (grade U); Goal Engine önceki ay kurunu (48,5585) kullanıyor (`goal_fx_prior_month`). `scripts/fm-fx-tcmb.ts` yalnız SQL üretiyor, elle uygulanıyor.
+- **recommended_fix:** CFO-003 (kur otomasyonu + tek kaynak).
+
+### RF-20261008-027 — 39 SKU KDV sonrası maliyetin altında satılıyor; 32 SKU değersiz (0) sayılıyor
+- **date:** 2026-10-08 · **commit:** cde8760 · **severity:** INFO (ekonomik bulgu) / MEDIUM (32 SKU UNKNOWN→0, RF-016 kapsamı) · **status:** OPEN
+- **finding:** `stok × (birim_net_deger − birim_fiyat/6) < maliyet_degeri` olan 39 SKU (gerçekleşen fiyat, banka net oranı, kargo ve çıktı KDV'si sonrası); 32 SKU maliyetsiz + satışsız → `cfo_stok_deger` 0 (336 adet).
+- **economic_risk:** zararına satış (fiyat/tasfiye kararı); 336 adetlik stok değeri bilinmiyor ama 0 görünüyor.
+- **recommended_fix:** CFO-007 (KDV hariç marj, sermaye motoruna FIX_PRICE girdisi) + CFO-014 (DEGERSIZ → UNKNOWN).
