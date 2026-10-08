@@ -1,5 +1,5 @@
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-08 ~11:10 UTC, read-only catalog SELECT, full public schema, no exclusions)
-# after 20261008100000_cfo_gun_ozeti (approved 2026-10-08, controlled SQL; listed in baseline.json appliedAfterCapture after ai_cfo_v1);
+# after 20261008100000_cfo_gun_ozeti + 20261008130000_cfo_gun_ozeti_tz (approved 2026-10-08, controlled SQL; listed in baseline.json appliedAfterCapture after ai_cfo_v1);
 # after 20261007210000_alfashome_order (user-approved controlled SQL) and with cfo_kaldirac_basamak + cfo_kanal_sozluk, which production
 # had before any repo migration; 20261007220000_cfo_ledger_tables_capture now creates them (IF NOT EXISTS, no-op in production).
 # The 3 backup tables are still present (20261007200000_drop_legacy_backup_tables is held back in baseline.json until it runs).
@@ -21,4 +21,4 @@ schemaacl 3 45e3344ecd
 seq 15 cda7319017
 seqacl 15 40c6ef1c15
 trg 2 90b8397906
-view 58 fc503e550c
+view 58 4f72bbeac2

@@ -78,7 +78,8 @@ const TEMPLATES: Record<string, (c: Ctx, o: FindingOptions) => { what: string; a
     const unitProfit = a.impact?.kind === "lost_profit" ? a.impact.inputs.unit_profit_try ?? null : null;
     const perDay = unitProfit != null && v != null ? unitProfit * v : a.impact?.kind === "revenue_at_risk" && v != null ? (a.impact.inputs.avg_price_try ?? 0) * v : null;
     const need = v != null && stock != null ? Math.max(0, Math.ceil(v * o.coverDays - stock - inbound)) : null;
-    return { what: `${where(a.entityId)} ${fmt(days, num)} günde tükenecek. Hız ${fmt(v, num)} adet/gün, stok ${fmt(stock, num)}, yolda ${fmt(n("inbound_quantity"), num)}`
+    const head = stock === 0 || (days != null && days < 1) ? `${where(a.entityId)} stokta yok` : `${where(a.entityId)} ${fmt(days, num)} günde tükenecek`;
+    return { what: `${head}. Hız ${fmt(v, num)} adet/gün, stok ${fmt(stock, num)}, yolda ${fmt(n("inbound_quantity"), num)}`
         + (unitProfit != null ? `, birim kâr ${num(unitProfit)} TL` : "")
         + (perDay != null ? `, stoksuzluk maliyeti ${tl(perDay)}/gün${a.impact?.kind === "revenue_at_risk" ? " (ciro; kâr bilinmiyor)" : ""}` : "") + ".",
       action: need == null ? "Sipariş miktarı hesaplanamadı (stok ya da hız bilinmiyor)." : need > 0 ? `${o.coverDays} günlük örtü için ${nf0.format(need)} adet sipariş gerekiyor.` : `Yoldaki mal ${o.coverDays} günlük örtüyü karşılıyor; varışı izle.`,

@@ -22,7 +22,8 @@ async function main() {
   assert.ok(!res.registered.includes(AI) && res.pendingInProduction.includes(AI), "not in the baseline SQL: bootstrap applies it after the capture");
   const apply = async (ms: string[]) => { for (const m of ms) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8")); };
   const VIEW = "20261008100000_cfo_gun_ozeti"; // cfo_run üzerinde görünüm → ai_cfo_v1'den sonra (baseline.json appliedAfterCapture)
-  await apply(res.pendingInProduction.filter(m => m !== AI && m !== VIEW));
+  const VIEW_TZ = "20261008130000_cfo_gun_ozeti_tz";
+  await apply(res.pendingInProduction.filter(m => m !== AI && m !== VIEW && m !== VIEW_TZ));
   const server = new PGLiteSocketServer({ db: pg, port: 0, host: "127.0.0.1" });
   await server.start();
   const conn = server.getServerConn();
@@ -34,7 +35,7 @@ async function main() {
     // /admin/ai-cfo without cfo_run/cfo_insight/cfo_usage (production before step 8) → explained state, never a query error
     const { loadCfoControlCenter } = await import("../lib/cfo-agent/control-center");
     assert.deepEqual(await loadCfoControlCenter(), { installed: false });
-    await apply([AI, VIEW]);
+    await apply([AI, VIEW, VIEW_TZ]);
     const { cfoStore } = await import("../lib/cfo-agent/store");
     const now = new Date("2026-10-06T08:00:00Z");
     const id = await cfoStore.begin("2026-10-06T11:hourly", now);
