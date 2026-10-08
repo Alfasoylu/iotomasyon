@@ -9,6 +9,14 @@
 
 ## 2026-10
 
+### Sitede LLM yok — deterministik CFO motoru + Cowork CFO günlük görünümü (2026-10-08)
+- `lib/cfo-agent/findings.ts`: her anomali şablonlu bulgu (ne · TL etkisi · kanıt id'leri · aksiyon · aciliyet); sayılar yalnız kanıttan.
+- Motor (`runner.ts`): saatlik + senkron sonrası + elle; önemli değişiklik bayrağı (tüm anomaliler, dünden beri yeni/değişti/aynı, kapanan), METRIK satırları (CFO bağlamı Blok B), alarm; tek `cfo_run` kaydı (`engine:%`), snapshot yalnız girdi değişince.
+- Alarmlar: motor bayat (6 saat), üst üste 2 başarısız, taban deliniyor, işaretlenmemiş/vadesi geçmiş ödeme, ölü veri kaynağı; e-posta yalnız arıza, yeni alarm ve 09:00 TR hatırlatmasında.
+- `cfo_gun_ozeti` görünümü (üretimde uygulandı, `_prisma_migrations`'a kayıtlı; security_invoker, anon/authenticated erişimi yok); parmak izi üretimle birebir.
+- Saatlik GitHub Actions işi (motor + sağlık); LLM katmanı (sağlayıcı, doğrulayıcı, el kitabı, rule card, karar paketi, bütçe, sabah özeti, derin inceleme) kaldırıldı.
+- Testler: `ai-cfo-findings`, `ai-cfo-runner`, `ai-cfo-health`, `ai-cfo-context-blocks`, `ai-cfo-store` (görünüm + ACL).
+
 ### Aşağı yön senaryoları — nakit dibi şoklara ne kadar dayanır? (2026-10-07)
 - `lib/cfo/downside.ts` + `downside-data.ts`: `cfo_nakit_projeksiyon(120)` günlük bileşenleri (defter alacağı / kanal temposu / çıkış / kur duyarlı gümrük çıkışı) fonksiyonla gün gün eşlik denetimiyle okunur; eksi pozisyonun KMH faizi eklenir; ciro −%20, hakediş +14 gün, kur +%15, faiz +1 puan/ay, makul stres (yarım şoklar birlikte) ve ağır stres; kaynak katmanı (genel KMH / gümrük limiti / şahsi / fonlanamıyor), eksik tutar, emniyet payları, duyarlılık sırası.
 - Tahsis motoru: likidite rezervi = baz ile makul stres açığının büyüğü (`allocate` `stressGapTry`).
