@@ -60,6 +60,8 @@ async function main() {
     for (const m of res.pendingInProduction) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     // kapsamın satır sınıflaması (Cowork uygulayacak; baseline.json notAppliedInProduction) — motorun okuduğu sürüm
     await pg.exec(readFileSync("prisma/migrations/20261008200000_cfo_maliyet_kapsami_satir/migration.sql", "utf8"));
+    // kredi borcu = kalan anapara (CFO-004; Cowork uygulayacak)
+    await pg.exec(readFileSync("prisma/migrations/20261009100000_cfo_kredi_kalan_anapara/migration.sql", "utf8"));
     await pg.exec("set search_path = public");
     await pg.exec(`${TARIFF};
       insert into "Product" (id,sku,name,"updatedAt","stockQuantity","unitCostTry","weightKg","sellingPriceTry","isActive") values
@@ -149,6 +151,15 @@ async function main() {
     assert.equal(Math.round((Number(rec.net_dar_bugunku) + Number(rec.yolda_odenmis)) * 100), Math.round(Number(rec.net_genis_bugunku) * 100), "geniş = dar + yoldaki ödenmiş");
     assert.equal(Number(rec.kredi_servet_fark), 0, "override yokken kredi satırı = kalan anapara");
     assert.ok(Number(rec.stok_lcnrv) <= Number(rec.stok_maliyet) + 0.01, "LCNRV maliyeti aşmaz");
+    // Kredi borcu = kalan anapara (CFO-004, migration 20261009100000): remainingOverride bir TAKSİT SAYISIDIR, TL olarak toplanmaz.
+    const loanLine = async () => Number((await pg.query<{ t: string }>(`select tutar::text t from cfo_servet_kalem where sira = 7`)).rows[0].t);
+    const loanBefore = await loanLine();
+    await pg.exec(`insert into cfo_loan (id,bank,name,"remainingTry","remainingOverride","updatedAt") values ('ov1','Test','Override kredisi',500000,12,now())`);
+    assert.equal(await loanLine(), loanBefore - 500000, "override=12 taksit iken borç 500.000 TL artar (12 TL değil)");
+    const [after] = (await pg.query<Record<string, string>>(readFileSync("scripts/cfo/metric-reconciliation.sql", "utf8"))).rows;
+    assert.equal(Number(after.kredi_servet_fark), 0, "mutabakat: kredi satırı = kalan anapara");
+    assert.equal(Number(after.kredi_override_sayisi), 1);
+    await pg.exec(`delete from cfo_loan where id = 'ov1'`);
 
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;

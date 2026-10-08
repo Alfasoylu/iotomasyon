@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Kredi borcu taksit sayısıyla karışmıyor (2026-10-09)
+- Servet ve aylık kilometre taşı hesabı kredi borcunu yalnız kalan anaparadan alıyor; elle girilen "kalan taksit sayısı" artık TL tutarı yerine geçemez. Üretimde migration uygulanınca devreye girer (bugünkü sayılar değişmez).
+
 ### Metrik mutabakat ölçümü ve tanım önerileri (2026-10-09)
 - Net sermaye, borç, nakit, kur ve cironun sistemdeki tüm tanımlarını yan yana ölçen salt-okunur sorgu ve karar memosu eklendi; önerilen tanımlarla bugün net sermaye ≈ 61,2k USD, finansal borç ≈ 121,3k USD.
 

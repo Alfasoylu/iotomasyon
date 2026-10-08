@@ -196,3 +196,16 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **finding:** `stok × (birim_net_deger − birim_fiyat/6) < maliyet_degeri` olan 39 SKU (gerçekleşen fiyat, banka net oranı, kargo ve çıktı KDV'si sonrası); 32 SKU maliyetsiz + satışsız → `cfo_stok_deger` 0 (336 adet).
 - **economic_risk:** zararına satış (fiyat/tasfiye kararı); 336 adetlik stok değeri bilinmiyor ama 0 görünüyor.
 - **recommended_fix:** CFO-007 (KDV hariç marj, sermaye motoruna FIX_PRICE girdisi) + CFO-014 (DEGERSIZ → UNKNOWN).
+
+---
+
+## 2026-10-09 — CFO-004 RED FLAG PASS
+
+### RF-20261008-005 — güncelleme: FIX READY (migration 20261009100000, Cowork uygulayacak)
+- `cfo_servet_kalem` "Krediler" ve `cfo_kilometre_yaz` artık yalnız `remainingTry` toplar. PGlite testi: override = 12 taksit olan 500.000 TL'lik kredi borcu 500.000 artırır. Üretim sayıları değişmez (override 0 kredide). Status üretimde uygulanınca RESOLVED olacak.
+
+### RF-20261008-014 — düzeltme (kayıt değişmez, açıklama eklenir)
+- "`cfo_hamle_olcum` hiç yazılmıyor" ifadesi eksik: `cfo_kilometre_yaz` aylık kapanışta yalnız `H01-MARJ-DONUSU` için yazıyor. Diğer hamleler için ölçüm yazımı yok — bulgunun özü (kalibrasyon yapılamıyor) geçerli.
+
+### Bağımsız inceleme (CFO-004)
+- Aynı para iki kez sayılıyor mu? Hayır — satır yalnız kalan anapara. Yeni teknik borç: kilometre fonksiyonu baseline metniyle kopyalandı (tek kaynak = migration). Güvenlik: yetkiler CREATE OR REPLACE ile korunur (`cfo_acceptance_reader` SELECT dahil). Look-ahead / kur / UNKNOWN etkisi yok. **Yeni red flag yok.**
