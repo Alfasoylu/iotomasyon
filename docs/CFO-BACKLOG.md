@@ -18,7 +18,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | Sıra | ID | Başlık | P | Hedef | EV | RR | GI | CX | DU | OR | Skor | Maliyet | Durum | RF |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | IN_PROGRESS (PR-A ✓; karar bekliyor) | 001,011 |
-| 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | VALIDATED | 005 |
+| 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | IN_PROGRESS (kod+test ✓; migration Cowork'te) | 005 |
 | 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | VALIDATED | 003 |
 | 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | VALIDATED | 002,019,020 |
 | 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | VALIDATED | 004 |
@@ -76,7 +76,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-004 — `remainingOverride` TL olarak kullanılmasın
 - **neden:** Taksit sayısı TL'ye karışıyor (LATENT). **uygulama:** `cfo_servet_kalem`, `cfo_kilometre_yaz` migration (Cowork uygular), PGlite testi.
-- **kabul:** override=12 iken borç değişmez. **maliyet:** S · **durum:** VALIDATED
+- **kabul:** override=12 iken borç değişmez. **maliyet:** S · **durum:** IN_PROGRESS — migration `20261009100000_cfo_kredi_kalan_anapara` (sha256 2de5c7bb…ebca7) Cowork uygulayacak; PGlite testi `ai-cfo-source-mapping`.
 
 ### CFO-005 — Düz %4,5 KMH oranını kaldır
 - **neden:** 5 yerde düz oran; borclar satırları toplamı tutmuyor; kart erteleme KKDF/BSMV'siz.

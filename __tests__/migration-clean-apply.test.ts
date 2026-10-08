@@ -20,7 +20,9 @@ const KNOWN_OUT_OF_BAND = [
 //   20261008160000_cfo_maliyet_kapsami — cfo_satis_birim_duz ve cfo_set_fiyat yalnız baseline'da.
 //   20261008190000_cfo_maliyet_kapsami_satir_kimligi — aynı fonksiyonun yeni sürümü (aynı bağımlılıklar).
 //   20261008200000_cfo_maliyet_kapsami_satir — sınıflama ayrı fonksiyona taşındı (aynı bağımlılıklar).
-const BASELINE_DEPENDENT = ["20261008160000_cfo_maliyet_kapsami", "20261008190000_cfo_maliyet_kapsami_satir_kimligi", "20261008200000_cfo_maliyet_kapsami_satir"];
+//   20261009100000_cfo_kredi_kalan_anapara — cfo_servet_kalem / cfo_kilometre_yaz yalnız baseline'da (cfo_stok_deger, cfo_yoldaki_mal…).
+const BASELINE_DEPENDENT = ["20261008160000_cfo_maliyet_kapsami", "20261008190000_cfo_maliyet_kapsami_satir_kimligi", "20261008200000_cfo_maliyet_kapsami_satir",
+  "20261009100000_cfo_kredi_kalan_anapara"];
 
 async function main() {
   const db = new PGlite({ extensions: { vector } });
