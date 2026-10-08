@@ -6,7 +6,7 @@ import { CARD_COLUMNS_SQL, cardEffectiveMonthlyRate, isPersonalCard } from "./ca
 // iş kaynağı ile çağırır — `q` yalnız SQL çalıştırır). Kaynaklar:
 //   SKU    → cfo_stok_deger (gercek_stok; yer tutucu stoklar hariç). Net değer YALNIZ gerçekleşen satıştan: deger_kaynagi
 //            'GERCEKLESEN_SATIS' değilse birim_net_deger maliyete düşer (görünüm yedeği) → burada null (UNKNOWN) sayılır.
-//   Borç   → cfo_loan AKTIF (interestRatePct YILLIK → /12), kullanılan KMH (eksi bakiye; banka oranı yoksa cfo_settings),
+//   Borç   → cfo_loan AKTIF (interestRatePct YILLIK → /12), kullanılan KMH (eksi bakiye; hesabın ölçülmüş oranı, yoksa UNKNOWN),
 //            kartlarda YALNIZ devreden bakiye, akdi faiz × (1 + KKDF + BSMV) ile (lib/cfo/card-cost.ts); devreden ya da oran
 //            girilmemiş kart eşiğe ve tahsise girmez (UNKNOWN). Şahsi kartlar (sahibi 'Alp') eşik dışı.
 //   Likidite açığı → Goal Engine net pozisyon tabanı gözlemi (fm_goal_observation, MET değilse gap_try) ile makul stres
@@ -25,7 +25,7 @@ export async function loadCapitalEfficiency(q: SqlQuery, opts: { budgetTry?: num
          from cfo_loan where status::text = 'AKTIF'`),
     q<{ name: string; balance: unknown; rate: unknown; type: string | null }>(
       `select name, "balanceTry" as balance, "monthlyRatePct" as rate, "accountType"::text as type from cfo_bank_account where "isActive" and "balanceTry" < 0`),
-    q<{ sea: unknown; kmh: unknown }>(`select "importSeaLeadDays" as sea, "kmhMonthlyRatePct" as kmh from cfo_settings limit 1`),
+    q<{ sea: unknown }>(`select "importSeaLeadDays" as sea from cfo_settings limit 1`),
     q<{ state: string; gap: unknown }>(`select state, gap_try as gap from fm_goal_observation where goal_key = 'net_position_floor_try' order by evaluated_at desc limit 1`)
       .catch(() => []),
     loadDownside(q).catch(() => null),
@@ -39,7 +39,6 @@ export async function loadCapitalEfficiency(q: SqlQuery, opts: { budgetTry?: num
     unitCost: num(s.birim_maliyet), unitNet: s.deger_kaynagi === "GERCEKLESEN_SATIS" ? num(s.birim_net_deger) : null,
     dailyVelocity: num(s.gunluk_hiz) ?? 0,
   }));
-  const kmhRate = num(settings[0]?.kmh);
   const debts: DebtInput[] = [
     ...loans.map(l => {
       const annual = num(l.rate);
@@ -47,7 +46,8 @@ export async function loadCapitalEfficiency(q: SqlQuery, opts: { budgetTry?: num
         monthlyRate: annual != null ? annual / 100 / 12 : null, monthlyPaymentTry: num(l.payment) };
     }),
     ...kmh.map(k => ({ name: `${k.name} KMH`, kind: "KMH" as const, payoffTry: -Number(k.balance),
-      monthlyRate: num(k.rate) != null ? Number(k.rate) / 100 : kmhRate != null ? kmhRate / 100 : null, monthlyPaymentTry: null,
+      // hesabın ölçülmüş oranı; yoksa UNKNOWN (küresel cfo_settings oranı kullanılmaz — CFO-005)
+      monthlyRate: num(k.rate) != null && Number(k.rate) > 0 ? Number(k.rate) / 100 : null, monthlyPaymentTry: null,
       personal: /ŞAHSİ|şahsi/i.test(`${k.type ?? ""} ${k.name}`) })),
     ...cards.map(c => ({ name: `${c.bank} ${c.holder ?? ""} kart`.replace(/\s+/g, " ").trim(), kind: "CARD" as const, payoffTry: Number(c.revolving),
       monthlyRate: cardEffectiveMonthlyRate(num(c.rate)), monthlyPaymentTry: null, personal: isPersonalCard(c.holder) })),

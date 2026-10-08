@@ -177,3 +177,27 @@ export function runDownside(days: DayFlow[], startCash: number, res: Resources, 
 export function stressGapTry(d: Downside, floorTry: number): number {
   return Math.max(0, Math.round(floorTry - d.stress.minPosition));
 }
+
+/**
+ * Ek KMH çekilişinin aylık faizi (kademeli; CFO-005). Mevcut kullanım `fromTry` kadar dilimlerin çekiliş sırasına göre DOLU kabul
+ * edilir; [fromTry, fromTry + drawTry] aralığı hangi dilimlere düşüyorsa o dilimin ÖLÇÜLMÜŞ oranıyla faizlenir. Oranı ölçülmemiş
+ * dilime düşen kısım `unknownRateTry`, tüm kapasiteyi aşan kısım `beyondCapacityTry` (faizsiz, fonlanamaz). Ödeme tasarrufu için
+ * (KMH azaltma) aynı fonksiyon `fromTry − x`'ten `x` kadar çağrılır: son çekilen (en pahalı ölçülmüş / bilinmeyen) kısım kapanır.
+ */
+export function tieredDrawInterest(slices: KmhSlice[], fromTry: number, drawTry: number):
+  { monthlyInterestTry: number; unknownRateTry: number; beyondCapacityTry: number } {
+  let start = Math.max(0, fromTry), end = start + Math.max(0, drawTry), cursor = 0, interest = 0, unknown = 0;
+  for (const s of orderSlices(slices)) {
+    const lo = Math.max(start, cursor), hi = Math.min(end, cursor + s.limitTry);
+    if (hi > lo) { if (s.monthlyRate == null) unknown += hi - lo; else interest += (hi - lo) * s.monthlyRate; }
+    cursor += s.limitTry;
+  }
+  return { monthlyInterestTry: interest, unknownRateTry: unknown, beyondCapacityTry: Math.max(0, end - Math.max(start, cursor)) };
+}
+
+/** Ölçülmüş oran aralığı (gösterim; karar değil). Hiç ölçülmemişse null. */
+export function measuredRateRange(slices: KmhSlice[]): { minPct: number; maxPct: number; unmeasured: number } | null {
+  const m = slices.filter(s => s.limitTry > 0 && s.monthlyRate != null).map(s => s.monthlyRate! * 100);
+  const unmeasured = slices.filter(s => s.limitTry > 0 && s.monthlyRate == null).length;
+  return m.length ? { minPct: Math.min(...m), maxPct: Math.max(...m), unmeasured } : null;
+}

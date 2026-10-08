@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### KMH maliyeti her hesabın kendi oranıyla (2026-10-09)
+- Borçlar, gümrük ve sermaye sayfalarında KMH faizi artık tek bir varsayılan oranla değil, her bankanın ölçülmüş aylık oranıyla hesaplanıyor; oranı bilinmeyen hesap "oran yok" olarak işaretleniyor. KMH kullanılmazken "KMH azaltma" seçeneği artık hayali tasarruf göstermiyor.
+
 ### Kredi borcu taksit sayısıyla karışmıyor (2026-10-09)
 - Servet ve aylık kilometre taşı hesabı kredi borcunu yalnız kalan anaparadan alıyor; elle girilen "kalan taksit sayısı" artık TL tutarı yerine geçemez. Üretimde migration uygulanınca devreye girer (bugünkü sayılar değişmez).
 

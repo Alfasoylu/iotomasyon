@@ -2,7 +2,7 @@
 last_updated: 2026-10-08 23:45 TR
 current_main_commit: 422a6db
 current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 48/100
+current_score: 49/100
 next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 ---
 
@@ -209,3 +209,13 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
 ### Bağımsız inceleme (CFO-004)
 - Aynı para iki kez sayılıyor mu? Hayır — satır yalnız kalan anapara. Yeni teknik borç: kilometre fonksiyonu baseline metniyle kopyalandı (tek kaynak = migration). Güvenlik: yetkiler CREATE OR REPLACE ile korunur (`cfo_acceptance_reader` SELECT dahil). Look-ahead / kur / UNKNOWN etkisi yok. **Yeni red flag yok.**
+
+---
+
+## 2026-10-09 — CFO-005 RED FLAG PASS
+
+### RF-20261008-004 — güncelleme: KISMEN ÇÖZÜLDÜ (CFO-005, TS katmanı)
+- Düz `cfo_settings.kmhMonthlyRatePct` artık hiçbir hesapta kullanılmıyor: eski motor KMH faizi hesap başına ölçülmüş oran (yoksa "faizi bilinmiyor" tutarı ayrı), gümrük açığı faizi ve `buildAllocation` (gümrük rezervi / KMH azaltma) kademeli çekiliş sırasıyla (`tieredDrawInterest`, downside ile aynı dilim mantığı), capital-efficiency KMH yedeği kaldırıldı (UNKNOWN). `/cfo` rozet, `/cfo/borclar` satırları (artık toplamı tutar; oransız hesap "oran yok"), `/cfo/gumruk`, `/cfo/sermaye` metinleri ölçülmüş oran aralığını gösterir.
+- Şahsi KMH'ye eski motorun eklediği ×1,30 KKDF/BSMV çarpanı kaldırıldı: `monthlyRatePct` ekstreden ölçülen **efektif** oran olarak tanımlandı (downside ile tutarlı); bugün hiçbir şahsi hesapta oran yok → sayısal etki 0.
+- **Açık kalan:** SQL `cfo_kart_karari` kart erteleme maliyetini hâlâ KMH oranıyla (KKDF/BSMV'siz) fiyatlıyor → CFO-005b (migration). `cfo_loan.interestRatePct` şema yorumu "aylık" → "yıllık" düzeltmesi CFO-005b ile.
+- **Bağımsız inceleme:** KMH kullanılmıyorken "KMH azaltma" getirisi artık 0 (eskiden 4.500 TL/ay hayali tasarruf gösteriyordu). Yeni UNKNOWN taşıma: oranı ölçülmemiş dilime düşen getiri `dataOk=false`. Look-ahead/kur/çift sayım etkisi yok. Yeni red flag yok.
