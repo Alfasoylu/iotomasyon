@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### Güvenilir CFO motoru tetiği (2026-10-08)
+- `vercel.json`: `trendyol-sync` cron'u 06:00 → 12:00 UTC (15:00–15:59 TR). Motor Cowork CFO'nun iki okumasından önce Vercel cron'uyla koşar (05:xx ve 15:xx TR); GitHub zamanlayıcısı bu repoda günde 2–3 koşuyla sınırlı (ölçüldü). Trendyol 14 günlük pencere tarar, veri kaybı yok.
+- Motor uçtan uca doğrulandı (elle tetik, `?trigger=manual`): kapsam %87,5 fonksiyondan, dip −3.593.003 tek tahsilat mekanizmasından.
+
 ### Tek tahsilat mekanizması + motor günde 3 + maliyet kapsamı tek tanım (2026-10-08)
 - `20261008170000_cfo_tahsilat_tahmini` (Cowork CFO uyguladı, metin birebir; parmak izi üretimle eşit): `cfo_tahsilat_tahmini` = `cfo_nakit_projeksiyon` kanal temposu; `cfo_yaklasan_odeme` → `cfo_odeme_gunluk` / `cfo_nakit_dibi` aynı mekanizmayı görür. Model tahsilat kayıtları (`ce_model_tahsilat_*`) Cowork tarafından boşaltıldı; dipler buluştu (−3.591.775 ↔ −3.593.003, 01.12).
 - `/cfo` haftalık tahmini (`lib/cfo/engine.ts`) aynı görünümü okur; yedek `last14dRevenueTry/4` yalnız görünüm yoksa. `/cfo/odemeler`: tahmin satırı işaretlenemez, yalnız tahmin içeren günler sonraki gerçek günde toplanır.

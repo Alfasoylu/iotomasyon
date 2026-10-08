@@ -185,6 +185,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
    geri alınabilir migration ✓, sütun listesi PR'da ✓); bekleyen: (a) migration `20261008180000_cfo_credit_card_revolving`'i Cowork uygular, (b) devreden bakiyelerin kart notlarındaki ölçümlerden
    doldurulması (onay), (c) her kartın ekstredeki aylık akdi faizi (kullanıcı). Sonra: kart faizinin nakit projeksiyonuna eklenmesi.
 
+### Backlog — motor tetiği (2026-10-08)
+- [x] Cowork'ün 16:49 okumasından önce güvenilir motor koşusu: `trendyol-sync` Vercel cron'u `0 6` → `0 12` UTC (15:00–15:59 TR; 14 günlük pencere → veri kaybı yok). Alperen: tam yetki (2026-10-08).
+- [ ] Ziraat USD (şirket) bakiyesi 7 günden eski → `banksFresh=false` → CASH_CRITICAL kuralı susuyor (taban alarmı yine de var).
+
 ### Backlog — tahsilat tahmini (2026-10-08)
 - [x] `lib/cfo/engine.ts` haftalık tahmini `cfo_tahsilat_tahmini`'ye bağlandı (2026-10-08).
 - [ ] `cfo_settings.customsReserveDate` 30.09'da kalmış: gümrük rezervi kartı 09.10 / 21.10 dilimlerini görmüyor (veri sahibi: Alperen/Cowork).
@@ -325,6 +329,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-08 — Güvenilir motor tetiği:** `vercel.json` trendyol-sync `0 6 * * *` → `0 12 * * *` (Hobby: saat içinde → 15:00–15:59 TR). Motor artık Cowork'ün iki okumasından önce Vercel cron'uyla koşar: 05:xx (xml-sync) → 08:00 okuması, 15:xx (trendyol-sync) → 16:49 okuması. Trendyol 14 günlük pencere tarar, veri kaybı yok; Trendyol verisi sabah yerine öğleden sonra tazelenir (08:00 okumasında Trendyol verisi 23 yerine ~16 saatlik). GitHub `ai-cfo-schedule` ek koşu + sağlık e-postası olarak kalır.
+- **2026-10-08 — Motor uçtan uca doğrulandı + GitHub zamanlayıcısı ölçüldü:** elle tetik (`workflow_dispatch` → `?trigger=manual`, anahtar `engine:2026-10-08T20:m2`) 2 dk'da tamamlandı; kapsam fonksiyondan (%87,5), dip tek mekanizmadan (−3.593.003, 01.12), alarm 2 (taban + Ziraat USD bayat → CASH_CRITICAL susuyor). **GitHub zamanlayıcısı bu repoda güvenilmez:** `*/5` hatırlatma işi gerçekte günde 2–3 kez, rastgele saatte koşuyor; `ai-cfo-schedule` 24 saatte 1 zamanlanmış koşu. Güvenilir tetik yalnız Vercel cron (Hobby: 2 iş, günde 1, saat içinde rastgele dakika): 05:00 TR xml-sync → motor (Cowork 08:00 okumasından önce ✓); 09:00 TR trendyol-sync → motor (16:49 okumasından 8 saat önce). Karar Cowork'te (Backlog).
 - **2026-10-08 — Maliyet kapsamı üretimde (Cowork uyguladı):** `20261008160000_cfo_maliyet_kapsami` birebir (checksum 4b9b6ff2…); `cfo_maliyet_kapsami` %87,5, dört parça ciroya eşit, anon/authenticated erişemez. Repo `notAppliedInProduction`'dan çıkarıldı, parmak izi üretimden yeniden ölçüldü. Motor bir sonraki koşuda kapsamı bu fonksiyondan okur. Eşleşmeyen 31.011 TL'nin 29.148'i `anunnaki-pointer` (cfo_norm ile 2 ürün → bilinçli olarak eşleşmez); `productId` ile üçüncü eşleşme adımı Cowork kararına bırakıldı.
 - **2026-10-08 — `/cfo` haftalık tahmini tek mekanizmaya bağlandı (Alperen: tam yetki):** Cowork `20261008170000_cfo_tahsilat_tahmini`'yi üretimde uyguladı (16:46 UTC) ve 14 `ce_model_tahsilat_*` kaydının `inflowTry`'ını boşalttı → çift sayım yok; dipler buluştu: `cfo_odeme_gunluk` −3.591.775 ↔ projeksiyon −3.593.003 (ikisi 01.12). `lib/cfo/engine.ts`: haftalık ek tahsilat artık `cfo_tahsilat_tahmini` (kanal temposu, alacak ufku dışı; `lib/cfo/queries.ts` okur) → `/cfo` ufukları, ay sonları ve gümrük kartı da aynı girişi görür; görünüm yoksa eski `last14dRevenueTry/4` yedeği (kaynak `weeklyEstimateSource` ile ekranda yazılı, `/cfo/nakit-akisi`). Test `cfo-engine-forecast`.
 - **2026-10-08 — Uzun metin UPDATE zaman aşımı teşhisi (salt okuma):** sebep veritabanında değil; ayrıntı Backlog'da.
