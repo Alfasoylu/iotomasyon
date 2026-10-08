@@ -108,7 +108,7 @@ function goalTemplate({ a, n, get }: Ctx): { what: string; action: string; urgen
   const k = a.entityId;
   const rate = n(`${k}.current_rate_try_per_day`), req = n(`${k}.required_rate_try_per_day`);
   return {
-    what: `Hedef ${k} ${String(get(`${k}.state`) ?? a.rule)}: gözlem ${fmt(n(`${k}.observed_try`), tl)}, hedef ${fmt(n(`${k}.target_try`), tl)}, açık ${fmt(n(`${k}.gap_try`), tl)}`
+    what: `Hedef ${k} ${String(get(`${k}.state`) ?? a.rule)}: gözlem ${fmt(n(`${k}.observed_try`), tl)}${get(`${k}.evaluated_at`) ? ` (${String(get(`${k}.evaluated_at`))} TR ölçümü)` : ""}, hedef ${fmt(n(`${k}.target_try`), tl)}, açık ${fmt(n(`${k}.gap_try`), tl)}`
       + (rate != null || req != null ? `; hız ${fmt(rate, tl)}/gün, gereken ${fmt(req, tl)}/gün` : "") + ".",
     action: "Hedef sapmasının sürücüsünü (cfo_gun_ozeti METRIK satırları: hedef atfı) incele.",
   };

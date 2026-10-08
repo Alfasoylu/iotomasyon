@@ -58,6 +58,8 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: s => pg.exec(s), query: <T,>(s: string, p?: unknown[]) => pg.query<T>(s, p) });
     for (const m of res.pendingInProduction) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    // maliyet kapsamı mükerrer anahtarı düzeltmesi (Cowork uygulayacak; baseline.json notAppliedInProduction) — motorun okuduğu sürüm
+    await pg.exec(readFileSync("prisma/migrations/20261008190000_cfo_maliyet_kapsami_satir_kimligi/migration.sql", "utf8"));
     await pg.exec("set search_path = public");
     await pg.exec(`${TARIFF};
       insert into "Product" (id,sku,name,"updatedAt","stockQuantity","unitCostTry","weightKg","sellingPriceTry","isActive") values
@@ -278,6 +280,19 @@ async function main() {
     assert.match(String(ev(withRate, "kmh_dahil_fonlama")), /KMH|FONLANAMIYOR|şahsi|gümrük/);
     assert.match(String(ev(withRate, "kmh_dahil_dip_tarih")), /^\d{4}-\d{2}-\d{2}$/);
     await pg.exec(`delete from cfo_settings where id = 'st1'`);
+    // Mükerrer anahtarı platform satır kimliğini içerir (Cowork CFO ölçümü 2026-10-08): aynı siparişte aynı modelin iki satırı
+    // ayrı externalLineId ile gelirse (ayrı koli) mükerrer DEĞİL. (kanal, sipariş, externalLineId) tabloda tekil olduğundan gerçek
+    // mükerrer yalnız satır kimliği BOŞ satırlarda mümkündür — onlar ayırt edilemez, mükerrer sayılır (ihtiyatlı).
+    const dupBefore = s.dataQuality.duplicateCanonicalRows;
+    await pg.exec(`insert into "MarketplaceSalesRecord" (id,channel,"orderNumber","orderDate",quantity,"modelNumber","totalAmountTry","commissionTry",status,"externalLineId")
+      values ('k1','HEPSIBURADA','KOLI-1','2026-09-30 10:00',1,'MD-X',300,54,'Teslim Edildi','155104'),('k2','HEPSIBURADA','KOLI-1','2026-09-30 10:00',1,'MD-X',300,54,'Teslim Edildi','155582')`);
+    const twoParcels = await buildCfoAgentSnapshot({ db, now, config, compact: false });
+    assert.equal(twoParcels.dataQuality.duplicateCanonicalRows, dupBefore, "ayrı satır kimliği → mükerrer değil");
+    await pg.exec(`insert into "MarketplaceSalesRecord" (id,channel,"orderNumber","orderDate",quantity,"modelNumber","totalAmountTry","commissionTry",status,"externalLineId")
+      values ('k3','HEPSIBURADA','KOLI-2','2026-09-30 10:00',1,'MD-X',300,54,'Teslim Edildi',null),('k4','HEPSIBURADA','KOLI-2','2026-09-30 10:00',1,'MD-X',300,54,'Teslim Edildi',null)`);
+    const realDup = await buildCfoAgentSnapshot({ db, now, config, compact: false });
+    assert.equal(realDup.dataQuality.duplicateCanonicalRows, dupBefore + 2, "satır kimliği boş iki satır → ayırt edilemez, mükerrer");
+    await pg.exec(`delete from "MarketplaceSalesRecord" where id in ('k1','k2','k3','k4')`);
     console.log("AI CFO source mapping: kargo bands (toplam, measured fee once, 19.06 validity, Trendyol assumption for other channels), SET cost from cfo_set_fiyat, cash projection pozisyon (no overdraft), default reviewed profile + off switch passed");
   } finally { await pg.close(); }
 }

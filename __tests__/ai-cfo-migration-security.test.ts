@@ -28,7 +28,7 @@ async function main() {
     // market_* objects / 3 unused backup tables and do not affect this check. alfashome_order and cfo_ledger_tables_capture are applied.
     // cfo_credit_card_revolving (2 additive card columns) waits for the operator's approval.
     assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation", "20261007200000_drop_legacy_backup_tables",
-      "20261008180000_cfo_credit_card_revolving"], "only the held-back migrations stay out of production");
+      "20261008180000_cfo_credit_card_revolving", "20261008190000_cfo_maliyet_kapsami_satir_kimligi"], "only the held-back migrations stay out of production");
     // production default ACL for objects postgres creates in public (after the security phase)
     await db.exec(`alter default privileges in schema public grant all on tables to service_role;
       alter default privileges in schema public grant all on sequences to service_role;

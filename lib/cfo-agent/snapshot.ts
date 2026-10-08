@@ -229,7 +229,12 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     const shippingAllocation=orderAllocationSql(tariff,`s.${sales.tutar_duz}`,"s.order_line_gross","s.order_complete");
     const packaging=`case when s.order_weight_known then case when s.order_weight<=0.5 then 10.00 else 18.74 end${processingInShipping?"":" + 12.29"} + 10.00 end`;
     const otherAllocation=orderAllocationSql(packaging,`s.${sales.tutar_duz}`,"s.order_line_gross","s.order_complete");
-    const rows=await db.query(`${PERIOD_CTE}, product_keys as (select pr.*, count(*) over(partition by ${foldedSkuSql("pr.sku")}) as key_count from "Product" pr), canonical_base as (select s.*,count(*) over(partition by ${sales.channel},${sales.orderNumber},${sales.modelNumber}) as copies,
+    // Mükerrer satır anahtarı platformun kendi satır kimliğini içerir (Cowork CFO ölçümü 2026-10-08): (kanal, sipariş, model)
+    // tek başına 419 satırı yanlışlıkla "mükerrer" sayıyordu (aynı siparişte ayrı koliye giden adetler, ayrı satır kimliği);
+    // externalLineId ile gerçek mükerrer 0. Sütun yoksa eski anahtar.
+    const lineKey=catalog.column("cfo_satis_birim_duz","externalLineId");
+    const dupKey=(alias:string)=>`${alias}${sales.channel},${alias}${sales.orderNumber},${alias}${sales.modelNumber}${lineKey?`,${alias}${lineKey}`:""}`;
+    const rows=await db.query(`${PERIOD_CTE}, product_keys as (select pr.*, count(*) over(partition by ${foldedSkuSql("pr.sku")}) as key_count from "Product" pr), canonical_base as (select s.*,count(*) over(partition by ${dupKey("s.")}) as copies,
       sum(s.${sales.tutar_duz}::numeric) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_line_gross,
       bool_and(s.${sales.guven} is not null and s.${sales.guven}::text not in ('KARMA','BILINMIYOR')) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_complete,
       bool_and(pr."weightKg" is not null) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_weight_known,
@@ -263,7 +268,7 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     // window [asOf-120 days, asOf] fixed to the snapshot's asOf ($1, never now()), and >=10 accepted records per SKU
     // (measuredCommission). Multi-unit, set-corrected (SET_DUZELTILDI), KARMA and BILINMIYOR lines never set the rate.
     const commissionRows=await db.query(`with base as (
-      select s.*,count(*) over(partition by ${sales.channel},${sales.orderNumber},${sales.modelNumber}) as copies
+      select s.*,count(*) over(partition by ${dupKey("s.")}) as copies
       from cfo_satis_birim_duz s where ${salesLocalTime}>=date_trunc('day',$1::timestamptz at time zone 'Europe/Istanbul')-interval '120 days' and ${salesLocalTime}<=($1::timestamptz at time zone 'Europe/Istanbul') and ${sales.adet_duz}>0),
       valid as(select * from base where copies=1 and ${sales.adet_duz}=1 and ${sales.guven}::text='YUKSEK'),
       med as(select ${sales.channel} as channel,${sales.modelNumber} as sku,percentile_cont(0.5) within group(order by ${sales.commissionTry}::numeric/nullif(${sales.totalAmountTry}::numeric,0)) as mid

@@ -16,9 +16,10 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
   for(const source of snapshot.dataQuality.staleSources)add("DATA_STALE","data_quality","warning",source,month,[evidence(source,"freshness","stale","state",at,true)],null,false);
   if(snapshot.dataQuality.missingFields.length)add("DATA_QUALITY","data_quality","warning","company",month,[evidence("snapshot","missing_fields",snapshot.dataQuality.missingFields.join(",").slice(0,1200),"fields",at,true)],null,false);
   const coverage=snapshot.dataQuality.costCoveragePct;
-  // Mükerrer kanonik satış satırı şirket çapında kapı DEĞİL (Cowork CFO kararı 2026-10-08, A): ilgili SKU-kanal grubu zaten
-  // güvenilmez sayılıp marj hesabından çıkar; tek bir tekrar (bugün 1 sipariş satırı, cironun %1,2'si) bütün marj/kâr
-  // kurallarını susturmamalı. Uyarı olarak DUPLICATE_SALES_ROWS bulgusu üretilir.
+  // Mükerrer kanonik satış satırı şirket çapında kapı DEĞİL (Alperen kararı 2026-10-08, "A"; Cowork CFO sonuçta hemfikir):
+  // ilgili SKU-kanal grubu zaten güvenilmez sayılıp marj hesabından çıkar. Asıl kök neden Cowork'ün ölçümüyle düzeltildi:
+  // mükerrer anahtarı artık platform satır kimliğini (externalLineId) içerir → gerçek mükerrer 0 (snapshot.ts). Kalan
+  // (satır kimliği boş) tekrarlar DUPLICATE_SALES_ROWS bilgi bulgusu üretir.
   const financialAllowed=coverage!=null&&coverage>=config.minCostCoveragePct;
   if(snapshot.dataQuality.duplicateCanonicalRows>0)add("DUPLICATE_SALES_ROWS","data_quality","warning","company",month,[evidence("cfo_satis_birim_duz","duplicate_rows",snapshot.dataQuality.duplicateCanonicalRows,"rows",at,true)],null,false);
   if(!financialAllowed)add("COST_COVERAGE","data_quality","warning","company",month,[evidence("cfo_maliyet_kapsami","cost_coverage",coverage,"pct",at,true)],null,false);

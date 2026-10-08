@@ -30,6 +30,13 @@ export function goalAnomalies(rows: GoalRow[], now: Date): { anomalies: Anomaly[
       const e = evidence("fm_memory_goal", `${g.key}.${name}`, value, unit, asOf, measured);
       proof.push(e); ids.push(e.id);
     }
+    // Ölçüm anı (2026-10-08, Cowork: alarm dibi ile hedef dibi farklı görünüyordu — aynı kaynak, farklı ölçüm saati).
+    const at = row.evaluated_at instanceof Date ? row.evaluated_at : row.evaluated_at ? new Date(String(row.evaluated_at)) : null;
+    if (at && !Number.isNaN(at.getTime())) {
+      const tr = new Date(at.getTime() + 3 * 3600000).toISOString();
+      const e = evidence("fm_memory_goal", `${g.key}.evaluated_at`, `${tr.slice(8, 10)}.${tr.slice(5, 7)} ${tr.slice(11, 16)}`, "time_tr", asOf, true);
+      proof.push(e); ids.push(e.id);
+    }
     const state = evidence("fm_memory_goal", `${g.key}.state`, `${g.state}/${g.grade}${g.flags.length ? ` (${g.flags.join(",")})` : ""}`, "state", asOf, measured);
     proof.push(state); ids.push(state.id);
     const severity: Severity = g.kind === "position_floor" && g.state === "OFF_TRACK" ? "critical" : SEVERITY[g.state];

@@ -16,6 +16,8 @@ export async function cfoAcceptanceReconciliation(db: ReadSource, snapshot: CfoA
   const columns = catalog.require("cfo_satis_birim_duz",
     ["channel", "modelNumber", "orderNumber", "orderDate", "adet_duz", "guven"]);
   const time = catalog.localTime("cfo_satis_birim_duz", "orderDate", "s");
+  // mükerrer anahtarı platform satır kimliğini içerir (snapshot.ts ile aynı; 2026-10-08)
+  const lineKey = catalog.column("cfo_satis_birim_duz", "externalLineId");
   const velocityColumns = catalog.require("cfo_stok_hareket_hiz",
     ["sku", "adet30", "gunluk_30g_ihtiyatli", "tukenme_gun_ihtiyatli", "hizlanma_katsayi"]);
   const sales = columns && time ? await db.query(`with clock as (
@@ -26,7 +28,7 @@ export async function cfoAcceptanceReconciliation(db: ReadSource, snapshot: CfoA
     ), lines as (
       select s.${columns.channel} as channel,s.${columns.modelNumber} as sku,
         ${time} as local_at,s.${columns.adet_duz}::numeric as units,s.${columns.guven}::text as trust,
-        count(*) over(partition by s.${columns.channel},s.${columns.orderNumber},s.${columns.modelNumber}) as copies
+        count(*) over(partition by s.${columns.channel},s.${columns.orderNumber},s.${columns.modelNumber}${lineKey ? `,s.${lineKey}` : ""}) as copies
       from public.cfo_satis_birim_duz s
       where s.${columns.modelNumber}=any($2::text[]) and s.${columns.adet_duz}>0
       and ${time} >= (select end_at-interval '65 days' from clock)
