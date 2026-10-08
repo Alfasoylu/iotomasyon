@@ -41,7 +41,9 @@ for (const [environment, status, failure] of [
     const worker=await fetch('http://127.0.0.1:3199/cfo/calisan',{redirect:'manual'});assert.equal(worker.status,307);
     assert.equal((await fetch('http://127.0.0.1:3199/api/admin/ai-cfo/files/example')).status,401);
     const cron=await fetch('http://127.0.0.1:3199/api/cron/cfo-cycle');assert.ok([401,503].includes(cron.status));
-    for (const job of ["ai-cfo-monitor", "ai-cfo-morning"]) {
+    // 2026-10-08: sitede LLM yok — sabah özeti ucu kaldırıldı; yalnız deterministik motor ucu kalır.
+    assert.equal((await fetch("http://127.0.0.1:3199/api/cron/ai-cfo-morning", { headers: { authorization: `Bearer ${cronSecret}` } })).status, 404);
+    for (const job of ["ai-cfo-monitor"]) {
       const jobUrl = `http://127.0.0.1:3199/api/cron/${job}`;
       assert.equal((await fetch(jobUrl)).status, 401);
       assert.equal((await fetch(jobUrl, { headers: { authorization: "Bearer wrong" } })).status, 401);
@@ -50,7 +52,7 @@ for (const [environment, status, failure] of [
       assert.deepEqual(await allowed.json(), { status: "disabled" });
       assert.match(allowed.headers.get("cache-control") ?? "", /no-store/);
     }
-    const runner = await fetch("http://127.0.0.1:3199/api/admin/ai-cfo/runner", { method: "POST", headers: { "content-type": "application/json", origin: "http://127.0.0.1:3199" }, body: '{"action":"monitor"}' });
+    const runner = await fetch("http://127.0.0.1:3199/api/admin/ai-cfo/runner", { method: "POST", headers: { "content-type": "application/json", origin: "http://127.0.0.1:3199" }, body: '{"action":"engine"}' });
     assert.equal(runner.status, 401);
     assert.deepEqual(await runner.json(), { error: "unauthorized" });
     assert.match(runner.headers.get("cache-control") ?? "", /private.*no-store/);
