@@ -14,7 +14,7 @@ import { evidence } from "./evidence";
 import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type ReadSource, type Row } from "./sources";
 import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources";
 import { assumedShippingChannel, shippingBandsFor, shippingChannelFor, shippingTariffSql, type ShippingOptions } from "./shipping";
-import { istanbulPeriod } from "./budget";
+import { istanbulPeriod } from "./period";
 
 const iso = (v:unknown) => v == null || !Number.isFinite(Date.parse(String(v))) ? null : new Date(String(v)).toISOString();
 const n = (r:Row, key:string) => numeric(r[key]);

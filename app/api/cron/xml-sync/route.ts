@@ -20,7 +20,7 @@ export const maxDuration = 300; // 5 min
 export async function GET(req: NextRequest) {
   const denied = authorizeCron(req);
   if (denied) return denied;
-  scheduleCfoCycle("daily_xml", { aiMonitor: true });
+  scheduleCfoCycle("daily_xml", { engine: "sync_xml" });
 
   const sources = await prisma.xmlSyncSource.findMany({
     where: { isEnabled: true },

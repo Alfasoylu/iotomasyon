@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // /api/admin/ai-cfo/runner istek kapısı (saf; route ve test aynı kodu kullanır). Sıra: yetki → origin → ortam → boyut → şema.
 export const RUNNER_BODY_LIMIT = 1024;
-const input = z.object({ action: z.enum(["monitor", "morning", "deep_review"]) }).strict();
+const input = z.object({ action: z.enum(["engine"]) }).strict();
 export type RunnerAction = z.infer<typeof input>["action"];
 export type RunnerGuardResult = { ok: true; action: RunnerAction } | { ok: false; status: number; error: string };
 

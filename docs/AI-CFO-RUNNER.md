@@ -1,3 +1,13 @@
+> ## ⚠️ 2026-10-08 — MİMARİ DEĞİŞTİ: sitede LLM YOK
+> Alperen kararı ("Sabah + akşam"): AI yargısı Cowork CFO'ya taşındı (08:00 ve 16:49 TR, Claude aboneliği). Site yalnız
+> **deterministik motor**: saatte bir ölçer, tespit eder, TL'ye göre sıralar, bulguyu **şablonla** yazar (`lib/cfo-agent/findings.ts`),
+> önemli değişikliği **bayrak** olarak işaretler (`materiality.ts`, kapı değil), CFO bağlamı Blok B'yi **METRIK** satırı olarak
+> kaydeder ve **alarm** üretir (`health.ts`). Tek kayıt `cfo_run` (`idempotencyKey 'engine:%'`); Cowork CFO yalnız
+> `select * from cfo_gun_ozeti` okur. Kaldırılanlar: `provider.ts`, `validate-ai-output.ts`, `handbook-core`, `rule-cards`,
+> `decision-packet.ts`, `budget.ts`, `cost-efficiency.ts`, LLM hafızası, sabah özeti ucu, derin inceleme, token/bütçe ayarları.
+> `cfo_insight` / `cfo_usage` artık yazılmaz (geçmiş kalır). Zamanlama: `.github/workflows/ai-cfo-schedule.yml` (her saat :05,
+> motor + sağlık tek iş) + XML/Trendyol senkron sonrası. Aşağıdaki metin LLM dönemi tarihçesidir.
+
 # AI CFO Runner (V1 yeniden inşası adım 4/9 + V2 Goal Engine)
 
 Model çağıran katmanın orkestrasyonu. Adım 5 ile zamanlama + `/admin/ai-cfo` bağlandı (aşağıda); bütün bayraklar varsayılan kapalı, kapalıyken runner ilk satırda `disabled` döner ve hiçbir şey yazmaz.

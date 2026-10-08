@@ -1,7 +1,8 @@
 import 'server-only';
 import { after } from 'next/server';
 import { safeCfoCycle } from './workflow';
-import { safeAiCfoRun } from './ai-trigger';
+import { safeCfoEngineRun } from './ai-trigger';
+import type { EngineTrigger } from './store';
 /** Best effort after-response work; the independent daily cron retries missed events.
- *  `aiMonitor`: daily crons also run the AI CFO monitor after the cycle (goals fresh); it is a no-op while its flags are off. */
-export function scheduleCfoCycle(trigger:string,opts:{aiMonitor?:boolean}={}){after(async()=>{await safeCfoCycle(trigger);if(opts.aiMonitor)await safeAiCfoRun('monitor');});}
+ *  `engine`: daily syncs also run the deterministic CFO engine after the cycle (goals fresh); no-op while AI_CFO_MONITOR_ENABLED is off. */
+export function scheduleCfoCycle(trigger:string,opts:{engine?:EngineTrigger}={}){after(async()=>{await safeCfoCycle(trigger);if(opts.engine)await safeCfoEngineRun(opts.engine);});}

@@ -1,15 +1,11 @@
 import "server-only";
-import { runCfoDeepReview, runCfoMonitor, runCfoMorningBrief, type RunnerOutcome } from "./runner";
+import { runCfoEngine, type RunnerOutcome } from "./runner";
+import type { EngineTrigger } from "./store";
 
-// Zamanlama (adım 5). Vercel Hobby'de yeni cron slotu yok: monitor, mevcut günlük XML/Trendyol cron'larının
-// CFO döngüsünden SONRA (hedefler taze) aynı after() işinde çalışır. Bayraklar kapalıyken runner ilk satırda
-// `disabled` döner — DB'ye yazmaz, kilit/sağlayıcı açmaz. Sabah özeti 09:30 İstanbul kuralı yüzünden mevcut
-// cron saatlerinde (05:00 / 09:00) otomatik tetiklenmez: /api/cron/ai-cfo-morning (harici zamanlayıcı) veya
-// /admin/ai-cfo'daki elle çalıştırma ile.
-// manual: /admin/ai-cfo elle çalıştırma — idempotency saat yerine 20 dakikalık dilim (saatte 3), bkz. runPeriodKey.
-// deep_review (MANUAL_DEEP_REVIEW) yalnız elle: cron route'ları bu değeri hiç göndermez; elle değilse reddedilir.
-export async function safeAiCfoRun(type: "monitor" | "morning" | "deep_review", opts: { manual?: boolean } = {}): Promise<RunnerOutcome> {
-  if (type === "deep_review" && !opts.manual) return { status: "failed", error: "deep_review_manual_only" };
-  try { return type === "deep_review" ? await runCfoDeepReview() : type === "morning" ? await runCfoMorningBrief({ manual: opts.manual }) : await runCfoMonitor({ manual: opts.manual }); }
+// Deterministik CFO motoru tetiği (2026-10-08: sitede LLM yok). Saatlik GitHub Actions işi (/api/cron/ai-cfo-monitor), günlük
+// XML/Trendyol senkronlarından sonraki CFO döngüsü (hedefler taze) ve /admin/ai-cfo elle çalıştırma aynı motoru çağırır.
+// AI_CFO_MONITOR_ENABLED kapalıyken motor ilk satırda `disabled` döner — DB'ye yazmaz, kilit açmaz.
+export async function safeCfoEngineRun(trigger: EngineTrigger): Promise<RunnerOutcome> {
+  try { return await runCfoEngine(trigger); }
   catch { return { status: "failed", error: "runner_unavailable" }; }
 }

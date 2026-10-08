@@ -1,53 +1,44 @@
+/**
+ * CFO alarmları (lib/cfo-agent/health.ts, 2026-10-08: sitede LLM yok) — saf değerlendirme + bildirim kuralı.
+ * Çalıştır: node --import tsx __tests__/ai-cfo-health.test.ts
+ */
 import assert from "node:assert/strict";
-import { evaluateCfoAlarms, type HealthRun } from "../lib/cfo-agent/health";
+import { evaluateCfoAlarms, shouldNotify, type AlarmInput, type EngineRunInfo } from "../lib/cfo-agent/health";
 
-// AI CFO sağlık alarmı: üretimde 07.10 sabahı 5 başarısız koşu kimseye ulaşmadı. Bu kurallar o sessizliği yakalar.
-const at = (h: string) => new Date(`2026-10-07T${h}:00Z`);
-const run = (h: string, status: string, o: Partial<HealthRun> = {}): HealthRun => ({ status, generatedAt: at(h), error: null, insights: 0, sentActionable: 8, ...o });
-const now = at("06:00");
+const now = new Date("2026-10-08T10:00:00Z");
+const h = (n: number) => new Date(now.getTime() - n * 3600000);
+const run = (hoursAgo: number, status: string, error: string | null = null): EngineRunInfo => ({ status, generatedAt: h(hoursAgo), finishedAt: h(hoursAgo), error });
+const fresh = [{ name: "XML", lastAt: h(5), maxAgeHours: 26 }, { name: "Trendyol", lastAt: h(1), maxAgeHours: 26 }, { name: "Entegra", lastAt: h(70), maxAgeHours: 192 }];
+const base = (o: Partial<AlarmInput> = {}): AlarmInput => ({ now, engineEnabled: true, runs: [run(1, "completed"), run(2, "completed")],
+  minPosition: { valueTry: -2500000, date: "2026-12-01" }, floorTry: -3000000, payments: [], sources: fresh, staleBankAccounts: [], ...o });
+const codes = (i: AlarmInput) => evaluateCfoAlarms(i).map(a => a.code);
 
-// Üretim dizisi: 05:30 ve 05:42 provider_http_400 → iki ardışık başarısızlık
-const prod = [run("04:59", "blocked_by_input_tokens", { sentActionable: 0 }), run("05:30", "failed", { error: "provider_http_400" }), run("05:42", "failed", { error: "provider_http_400" })];
-const a1 = evaluateCfoAlarms(prod, null, true, now);
-assert.deepEqual(a1.map(a => a.code), ["consecutive_failures"], "başarısız çağrı 'yanıt verdi' sayılmaz → no_insight_24h yok");
-assert.match(a1[0].message, /provider_http_400/);
+assert.deepEqual(codes(base()), [], "sağlıklı: alarm yok — AI çağrısı olmaması alarm DEĞİL (no_insight_24h kaldırıldı)");
 
-// Tek başarısızlık alarm değil; araya giren başarılı koşu diziyi keser
-assert.deepEqual(evaluateCfoAlarms([run("05:30", "failed"), run("05:42", "completed", { insights: 2 })], at("05:43"), true, now), []);
-// invalid_output (hiç içgörü geçmedi) da başarısızlık sayılır
-assert.deepEqual(evaluateCfoAlarms([run("05:30", "invalid_output"), run("05:42", "failed")], at("05:00"), true, now).map(a => a.code), ["consecutive_failures"]);
-// "running" nötrdür: arada yarım kalmış koşu diziyi bozmaz
-assert.deepEqual(evaluateCfoAlarms([run("05:30", "failed"), run("05:40", "running"), run("05:42", "failed")], at("05:00"), true, now).map(a => a.code), ["consecutive_failures"]);
+// Motor bayat: 6 saattir tamamlanmadı (koşu var ama hep başarısız ya da hiç yok); motor kapalıyken susar
+assert.deepEqual(codes(base({ runs: [run(7, "completed")] })), ["engine_stale"]);
+assert.deepEqual(codes(base({ runs: [] })), ["engine_stale"]);
+assert.deepEqual(codes(base({ runs: [], engineEnabled: false })), [], "motor kapalıyken bayatlık alarmı yok");
+// Üst üste iki tamamlanmamış koşu (failed ya da beklenmeyen durum); 'running' sayılmaz
+assert.deepEqual(codes(base({ runs: [run(0, "failed", "engine_failed"), run(1, "failed"), run(2, "completed")] })), ["consecutive_failures"]);
+assert.deepEqual(codes(base({ runs: [run(0, "running"), run(1, "failed"), run(2, "completed")] })), [], "koşan koşu başarısız sayılmaz");
+// Taban deliniyor (07.10: −3.379.787)
+const floor = evaluateCfoAlarms(base({ minPosition: { valueTry: -3379787, date: "2026-12-01" } }));
+assert.equal(floor[0].code, "floor_breach"); assert.match(floor[0].message, /-3\.379\.787 TL \(2026-12-01\).*-3\.000\.000 TL/);
+// İşaretlenmemiş ödeme ve ölü kaynaklar (her biri ayrı anahtar)
+const pay = evaluateCfoAlarms(base({ payments: [{ label: "Garanti — Kredi 1", amountTry: 60000, due: "2026-10-08" }] }));
+assert.deepEqual(pay.map(a => a.key), ["payment_unmarked:Garanti — Kredi 1:2026-10-08"]);
+const dead = evaluateCfoAlarms(base({ sources: [{ name: "XML", lastAt: h(30), maxAgeHours: 26 }, { name: "Trendyol", lastAt: null, maxAgeHours: 26 }, fresh[2]],
+  staleBankAccounts: ["Ziraat USD"] }));
+assert.deepEqual(dead.map(a => a.key), ["source_dead:XML", "source_dead:Trendyol", "source_dead:banka"]);
+assert.match(dead[1].message, /hiç gelmedi/);
 
-// 24 saat içgörü yok (2026-10-07 maliyet ayrımı): AI çağrısı OLMAMASI artık normal; alarm yalnız model önemli değişiklikle
-// en az 2 kez gerçekten yanıt verip (completed / invalid_output) hiç içgörü çıkmadıysa.
-const stale = new Date("2026-10-06T05:00:00Z");
-assert.deepEqual(evaluateCfoAlarms([run("05:42", "no_actionable_anomaly", { sentActionable: 0 })], null, true, now), [], "hiç gönderim yoksa alarm yok");
-assert.deepEqual(evaluateCfoAlarms([run("04:00", "no_material_change"), run("05:42", "same_input")], stale, true, now), [], "kaçınılan koşular alarm değil");
-assert.deepEqual(evaluateCfoAlarms([run("05:42", "completed")], stale, true, now), [], "tek yanıt yetmez");
-assert.deepEqual(evaluateCfoAlarms([run("04:42", "completed"), run("05:42", "completed")], null, false, now), [], "AI kapalıysa alarm yok");
-assert.deepEqual(evaluateCfoAlarms([run("04:42", "completed"), run("05:42", "completed")], at("05:42"), true, now), [], "taze içgörü varsa alarm yok");
-assert.deepEqual(evaluateCfoAlarms([run("04:42", "completed"), run("05:42", "invalid_output")], stale, true, now).map(a => a.code), ["no_insight_24h"]);
-// Günde 1 planlı çağrı tasarım gereği: planlı hakkın dolması alarm değil; koşu/gün TL tavanı alarm
-assert.deepEqual(evaluateCfoAlarms([run("05:42", "blocked_by_scheduled_limit")], at("05:00"), true, now), []);
-for (const st of ["blocked_by_daily_budget", "blocked_by_run_cost"]) assert.deepEqual(evaluateCfoAlarms([run("05:42", st)], at("05:00"), true, now).map(a => a.code), ["budget_blocked"], st);
-assert.deepEqual(evaluateCfoAlarms([], null, true, now), [], "hiç koşu yoksa alarm yok");
-
-// Bütçe / girdi sınırı: TEK atlanan koşu yeter, 24 saat beklenmez (07.10: sınır 8.000'de kaldı, koşular atlandı, alarm çalmadı)
-const tok = evaluateCfoAlarms([run("05:00", "completed", { insights: 1 }), run("05:42", "blocked_by_input_tokens")], at("05:00"), true, now);
-assert.deepEqual(tok.map(a => a.code), ["input_limit_blocked"]); assert.match(tok[0].message, /AI_CFO_MAX_INPUT_TOKENS_PER_RUN/);
-assert.deepEqual(evaluateCfoAlarms([run("05:42", "blocked_by_input_size")], at("05:00"), true, now).map(a => a.code), ["input_limit_blocked"]);
-for (const st of ["blocked_by_budget", "blocked_by_daily_limit", "billing_unconfigured"])
-  assert.deepEqual(evaluateCfoAlarms([run("05:42", st)], at("05:00"), true, now).map(a => a.code), ["budget_blocked"], st);
-assert.deepEqual(evaluateCfoAlarms([run("05:30", "blocked_by_budget"), run("05:42", "no_actionable_anomaly", { sentActionable: 0 })], at("05:00"), true, now), [],
-  "yalnız SON koşu sayılır: sonraki koşu atlanmadıysa alarm kalkar");
-
-// Haftalık veri isteği (2026-10-07): günlük döküm beklenmez; 7 gün dolunca hatırlatılır, eski hesaplar adıyla yazılır
-const fresh = { entegraLastImport: new Date("2026-10-05T09:06:00Z"), staleBankAccounts: [] };
-assert.deepEqual(evaluateCfoAlarms([], null, true, now, fresh), [], "2 günlük Entegra yüklemesi istek doğurmaz");
-assert.deepEqual(evaluateCfoAlarms([], null, true, new Date("2026-10-12T10:00:00Z"), fresh).map(a => a.code), ["entegra_upload_due"], "7 gün dolunca istenir");
-const banks = evaluateCfoAlarms([], null, true, now, { ...fresh, staleBankAccounts: ["Ziraat USD (şirket)", "Yapı Kredi USD (şirket)"] });
-assert.deepEqual(banks.map(a => a.code), ["bank_update_due"]); assert.match(banks[0].message, /Ziraat USD \(şirket\), Yapı Kredi USD \(şirket\)/);
-assert.deepEqual(evaluateCfoAlarms([], null, true, now, { entegraLastImport: null, staleBankAccounts: [] }).map(a => a.code), ["entegra_upload_due"], "hiç yükleme yoksa istenir");
-
-console.log("AI CFO health alarms: consecutive failures (prod 07.10 sequence), invalid_output counts, running neutral, immediate budget/input-limit blocks, 24h no-insight gated by AI + actionable sends, weekly Entegra/bank data requests passed");
+// Bildirim: arıza her zaman; yeni alarm; süregelen alarm saatte bir e-posta üretmez; 09:00 TR günlük hatırlatma
+const f = evaluateCfoAlarms(base({ minPosition: { valueTry: -3379787, date: "2026-12-01" } }));
+assert.equal(shouldNotify([], null, 9), false);
+assert.equal(shouldNotify(f, null, 13), true, "ilk kez görülen alarm");
+assert.equal(shouldNotify(f, ["floor_breach"], 13), false, "süregelen taban alarmı: e-posta yok (cfo_gun_ozeti'nde görünür)");
+assert.equal(shouldNotify(f, ["floor_breach"], 9), true, "09:00 TR hatırlatma");
+assert.equal(shouldNotify([...f, ...pay], ["floor_breach"], 13), true, "yeni ödeme alarmı");
+assert.equal(shouldNotify(evaluateCfoAlarms(base({ runs: [] })), ["engine_stale"], 13), true, "motor arızası her saat bildirilir");
+console.log("CFO alarms: engine stale, consecutive failures, floor breach, unmarked payment, dead sources, notify-on-change + 09:00 reminder passed");

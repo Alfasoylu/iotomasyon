@@ -7,9 +7,9 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { bootstrap, readBaselineConfig } from "../scripts/schema-baseline/bootstrap";
 
-// AI CFO store (cfo_run / cfo_insight / cfo_usage) through the REAL Prisma client against PostgreSQL (PGlite behind a socket).
+// CFO engine store (cfo_run) + cfo_gun_ozeti through the REAL Prisma client against PostgreSQL (PGlite behind a socket).
 // Schema = production reproduction (baseline + production-applied migrations, incl. 20261005190000_ai_cfo_v1, applied in production
-// 2026-10-06 by controlled SQL — step 8A; baseline.json appliedAfterCapture). The state before step 8 is reproduced first. Proves: idempotent period key, usage totals, insight CHECK constraints, cooldown recall.
+// 2026-10-06 by controlled SQL — step 8A; baseline.json appliedAfterCapture). The state before step 8 is reproduced first.
 // Run with: node --conditions=react-server --import tsx __tests__/ai-cfo-store.test.ts
 async function main() {
   const pg = new PGlite({ extensions: { vector } });
@@ -21,7 +21,8 @@ async function main() {
   assert.ok(cfg.appliedAfterCapture?.includes(AI) && !cfg.notAppliedInProduction?.includes(AI), "ai_cfo_v1 is applied in production (step 8A)");
   assert.ok(!res.registered.includes(AI) && res.pendingInProduction.includes(AI), "not in the baseline SQL: bootstrap applies it after the capture");
   const apply = async (ms: string[]) => { for (const m of ms) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8")); };
-  await apply(res.pendingInProduction.filter(m => m !== AI));
+  const VIEW = "20261008100000_cfo_gun_ozeti"; // cfo_run üzerinde görünüm → ai_cfo_v1'den sonra (baseline.json appliedAfterCapture)
+  await apply(res.pendingInProduction.filter(m => m !== AI && m !== VIEW));
   const server = new PGLiteSocketServer({ db: pg, port: 0, host: "127.0.0.1" });
   await server.start();
   const conn = server.getServerConn();
@@ -33,69 +34,66 @@ async function main() {
     // /admin/ai-cfo without cfo_run/cfo_insight/cfo_usage (production before step 8) → explained state, never a query error
     const { loadCfoControlCenter } = await import("../lib/cfo-agent/control-center");
     assert.deepEqual(await loadCfoControlCenter(), { installed: false });
-    await apply([AI]);
+    await apply([AI, VIEW]);
     const { cfoStore } = await import("../lib/cfo-agent/store");
     const now = new Date("2026-10-06T08:00:00Z");
-    const id = await cfoStore.begin("monitor", "2026-10-06T11", now);
+    const id = await cfoStore.begin("2026-10-06T11:hourly", now);
     assert.ok(id);
+    const keyRow = await client.$queryRawUnsafe<{ k: string; type: string }[]>(`select "idempotencyKey" k, type from cfo_run`);
+    assert.deepEqual(keyRow, [{ k: "engine:2026-10-06T11:hourly", type: "monitor" }], "type CHECK'i değişmeden motor koşusu ayırt edilir");
     // The duplicate-period path relies on a unique violation (P2002). Over the single PGlite socket a server-side error ends
     // the session, so the constraint is proven on the engine directly; the P2002 → null mapping is covered in the unit test.
     await assert.rejects(pg.query(`insert into cfo_run (id,type,status,"periodKey","idempotencyKey","triggerReasons","schemaVersion","calculationVersion")
-      values ('dup','monitor','running','2026-10-06T11','monitor:2026-10-06T11','[]','2','v')`), /unique|duplicate/i);
+      values ('dup','monitor','running','2026-10-06T11:hourly','engine:2026-10-06T11:hourly','[]','2','v')`), /unique|duplicate/i);
 
     const anomaly = { id: "goal:revenue_month_usd", rule: "GOAL_OFF_TRACK", severity: "warning" as const, category: "sales" as const, entityType: "goal",
       entityId: "revenue_month_usd", period: "2026-10-01", fingerprint: "goal:revenue_month_usd:OFF_TRACK:2026-10-01", cooldownKey: "goal:revenue_month_usd:OFF_TRACK",
       evidenceIds: ["e_1"], actionable: true, impact: null, weight: 2, existingRecordIds: [] };
-    const snap = { evidence: [{ id: "e_1", source: "fm_memory_goal", query: "revenue_month_usd.observed_try", value: 309926.92, unit: "TRY", asOf: "2026-10-06", measured: true }] };
-    await cfoStore.snapshot(id!, snap as never, "hash", [anomaly], [anomaly], { mode: "scheduled", manual: false, decisionInputHash: "dih_1" });
-    const usageId = await cfoStore.usage(id!, { provider: "anthropic", model: "m", status: "reserved", triggerReason: "GOAL_OFF_TRACK", reservedCostTry: 1.5, priceContext: { a: 1 } });
-    await cfoStore.updateUsage(usageId, { provider: "anthropic", model: "m", status: "completed", triggerReason: "GOAL_OFF_TRACK", inputTokens: 1000, outputTokens: 200, estimatedCost: 0.36, reservedCostTry: null });
-    const totals = await cfoStore.totals(now);
-    assert.deepEqual(totals, { callsToday: 1, scheduledCallsToday: 1, deepCallsToday: 0, spentToday: 0.36, spentThisMonth: 0.36, deepSpentThisMonth: 0 }, "zamanlanmış koşu (periodKey eksiz)");
-    await cfoStore.insights(id!, [{ anomalyId: anomaly.id, severity: "warning", category: "sales", title: "t", observation: "o", recommendation: "r", riskIfIgnored: "x",
-      confidence: "medium", evidenceIds: ["e_1"] }], [anomaly], snap.evidence as never);
-    await cfoStore.finish(id!, "completed", now, 0, null);
-    const recent = await cfoStore.recent(anomaly.cooldownKey, new Date(now.getTime() + 3600000), 72);
-    assert.ok(recent, "cooldown recalls the anomaly that received an insight");
-    // Önemli değişiklik kapısı: yanıt alınmış koşunun karar girdisi hash'i ve anomali durumu geri okunur
-    const ev = await cfoStore.evaluations(new Date(now.getTime() - 86400000));
-    assert.ok(ev.hashes.has("dih_1")); assert.deepEqual(ev.byKey.get(anomaly.cooldownKey), { severity: "warning", impact: null });
-    const rows = await client.$queryRawUnsafe<{ status: string; n: number }[]>(`select r.status, (select count(*)::int from cfo_insight i where i."runId"=r.id) n from cfo_run r`);
-    assert.deepEqual(rows, [{ status: "completed", n: 1 }]);
-    const center = await loadCfoControlCenter(now);
+    const finding = { fingerprint: anomaly.fingerprint, cooldownKey: anomaly.cooldownKey, rule: anomaly.rule, severity: "warning" as const, category: "sales" as const,
+      entity: anomaly.entityId, urgency: "ACIL" as const, impactTry: 12345.6, impactKind: "lost_profit", impactEstimated: true, what: "w", action: "a", text: "Hedef … Aciliyet: ACİL.",
+      evidenceIds: ["e_1", "e_2"], openRecords: [], actionable: true, sinceYesterday: "yeni" as const };
+    const record = (hash: string, o: Record<string, unknown> = {}) => ({ engineVersion: "e1", trigger: "hourly" as const, decisionInputHash: hash,
+      material: { sincePreviousRun: true, sinceYesterday: true, previousRunHash: null, yesterdayHash: null }, anomalies: [anomaly], findings: [finding],
+      closedSinceYesterday: ["STOCKOUT|X"], metrics: [{ source: "cfo_nakit_kapisi", key: "nakit_kapisi.nakit_try", value: 59693.13, unit: "TRY", measured: true, asOf: "x" },
+        { source: "snapshot", key: "tazelik.bayat_kaynaklar", value: "yok", unit: "state", measured: false, asOf: "x" }],
+      alarms: [{ code: "floor_breach" as const, key: "floor_breach", message: "Nakit dibi -3.379.787 TL" }], silenced: ["XML bayat → STOCKOUT susuyor"], snapshotRef: null, ...o });
+    const snap = { evidence: [], generatedAt: now.toISOString() };
+    await cfoStore.record(id!, snap as never, "sh", record("h1"));
+    await cfoStore.finish(id!, "completed", now);
+    // previous(): son koşu hash'i + snapshot'ı tutan koşu; dünün son koşusundan anomali değerlendirmesi
+    const later = new Date("2026-10-07T08:00:00Z"), dayStart = new Date("2026-10-07T00:00:00+03:00");
+    const prev = await cfoStore.previous(later, dayStart);
+    assert.deepEqual(prev.last, { id, hash: "h1", snapshotRunId: id });
+    assert.equal(prev.yesterday?.hash, "h1"); assert.deepEqual(prev.yesterday?.evaluations.get(anomaly.cooldownKey), { severity: "warning", impact: null });
+    // aynı girdi: snapshot yazılmaz (DbNull), snapshotRef önceki koşuyu gösterir
+    const id2 = await cfoStore.begin("2026-10-07T11:hourly", later);
+    await cfoStore.record(id2!, null, "sh", record("h1", { snapshotRef: id }));
+    await cfoStore.finish(id2!, "completed", later);
+    const p2 = await cfoStore.previous(new Date(later.getTime() + 3600000), dayStart);
+    assert.deepEqual(p2.last, { id: id2, hash: "h1", snapshotRunId: id }, "snapshot'sız koşu referansı taşır");
+    const snaps = await client.$queryRawUnsafe<{ n: number }[]>(`select count(*)::int n from cfo_run where snapshot is not null`);
+    assert.equal(snaps[0].n, 1, "snapshot yalnız bir kez");
+    const center = await loadCfoControlCenter();
     assert.ok(center.installed);
-    assert.equal(center.run?.status, "completed");
-    assert.equal(center.insights.length, 1);
-    assert.deepEqual(center.anomalies.map(a => a.id), [anomaly.id]);
-    assert.equal(center.usage.callsToday, 1);
-    assert.equal(center.usage.outputTokens, 200);
-    // Cooldown only on delivery (2026-10-07): sent but no insight → stays open; failed/invalid_output never cool;
-    // two valid answers (completed) that skip it do cool it, so a declined anomaly is not re-billed forever.
-    const other = { ...anomaly, id: "a_other", cooldownKey: "stockout:X", entityId: "TRENDYOL:X" };
-    const later = new Date(now.getTime() + 2 * 3600000);
-    for (const [period, status] of [["2026-10-06T12", "invalid_output"], ["2026-10-06T13", "failed"]] as const) {
-      const rid = await cfoStore.begin("monitor", period, later);
-      await cfoStore.snapshot(rid!, snap as never, "hash", [other], [other]);
-      await cfoStore.finish(rid!, status, later, 0, null);
-    }
-    assert.equal(await cfoStore.recent(other.cooldownKey, later, 72), null, "failed / invalid_output runs do not start the cooldown");
-    const c1 = await cfoStore.begin("monitor", "2026-10-06T14", later);
-    await cfoStore.snapshot(c1!, snap as never, "hash", [other], [other]); await cfoStore.finish(c1!, "completed", later, 0, null);
-    assert.equal(await cfoStore.recent(other.cooldownKey, later, 72), null, "one valid answer without advice keeps it open");
-    const c2 = await cfoStore.begin("monitor", "2026-10-06T15", later);
-    await cfoStore.snapshot(c2!, snap as never, "hash", [other], [other]); await cfoStore.finish(c2!, "completed", later, 0, null);
-    assert.ok(await cfoStore.recent(other.cooldownKey, later, 72), "declined in two valid answers → cooled");
-    // AI-path memory through the REAL Prisma raw source: a regclass value cannot be deserialized by Prisma, so the
-    // existence probe must return text (production run 2026-10-07 failed here with monitor_failed before the provider call)
-    await pg.query(`insert into cfo_urun_karar (sku,karar,sebep,updated_at) values ('MEM-1','BEKLE','test karari',now())`);
-    const { retrieveRelevantMemory } = await import("../lib/cfo-agent/memory");
-    const mem = await retrieveRelevantMemory([{ ...anomaly, id: "a_mem", entityType: "sku", entityId: "TRENDYOL:MEM-1", cooldownKey: "mem" }]);
-    assert.ok(mem.some(m => m.source === "cfo_urun_karar" && m.entityId === "MEM-1" && m.text.startsWith("BEKLE")), JSON.stringify(mem));
-    // CHECK constraint: an invalid severity can never be stored
-    // (run on the engine directly: an error through the single socket connection would end the PGlite socket session)
-    await assert.rejects(pg.query(`insert into cfo_insight (id,"runId",severity,category,"entityType","entityId",fingerprint,"cooldownKey",title,observation,recommendation,"riskIfIgnored",confidence,evidence)
-      values ('bad','${id}','fatal','sales','goal','x','f2','c','t','o','r','x','low','[]')`), /check/i);
-    console.log("AI CFO store: idempotent run key, usage totals, insights + CHECK constraints, cooldown recall, control center (before/after step 8) passed (production reproduction incl. ai_cfo_v1)");
+    assert.equal(center.run?.status, "completed"); assert.equal(center.record?.findings?.length, 1); assert.ok(center.snapshot, "son yazılmış snapshot okunur");
+
+    // cfo_gun_ozeti: tek select * — SAGLIK, ALARM, BULGU, KAPANAN, SUSAN, METRIK; yalnız son TAMAMLANMIŞ motor koşusu
+    assert.ok(res.pendingInProduction.includes(VIEW), "view migration'ı üretim kopyasında");
+    await pg.query(`insert into cfo_run (id,type,status,"periodKey","idempotencyKey","triggerReasons","schemaVersion","calculationVersion","generatedAt")
+      values ('old','monitor','completed','x','monitor:x','{"findings":[{"text":"eski LLM dönemi"}]}','2','v', now())`);
+    const rows = (await pg.query<{ sira: number; tur: string; aciliyet: string | null; kural: string; varlik: string | null; tl_etkisi: string | null; metin: string; kanit_ids: string[] | null; dunden_beri: string | null }>(
+      `select * from cfo_gun_ozeti`)).rows;
+    assert.deepEqual(rows.map(r => r.tur), ["SAGLIK", "ALARM", "BULGU", "KAPANAN", "SUSAN", "METRIK", "METRIK"]);
+    assert.match(rows[0].metin, /Bulgu 1 \(ACİL 1\), alarm 1, dünden beri kapanan 1\./);
+    const b = rows[2];
+    assert.deepEqual([b.aciliyet, b.kural, b.varlik, Number(b.tl_etkisi), b.kanit_ids, b.dunden_beri], ["ACİL", "GOAL_OFF_TRACK", "revenue_month_usd", 12345.6, ["e_1", "e_2"], "yeni"]);
+    assert.equal(Number(rows[5].tl_etkisi), 59693.13); assert.equal(rows[5].metin, "59693.13 TRY");
+    assert.equal(rows[6].tl_etkisi, null); assert.equal(rows[6].metin, "yok state (TAHMİNİ)");
+    assert.ok(!rows.some(r => r.metin.includes("eski LLM")), "LLM dönemi monitor koşuları görünmez");
+    // anon/authenticated/PUBLIC görünümü okuyamaz
+    const acl = (await pg.query<{ g: string }>(`select grantee g from information_schema.role_table_grants where table_name='cfo_gun_ozeti' and grantee in ('anon','authenticated','PUBLIC')`)).rows;
+    assert.deepEqual(acl, []);
+    console.log("CFO engine store: engine key prefix, record/finish, previous() hash + evaluations, snapshot dedupe, control center, cfo_gun_ozeti rows + ACL passed (production reproduction)");
   } finally {
     await client.$disconnect().catch(() => undefined);
     await server.stop().catch(() => undefined);
