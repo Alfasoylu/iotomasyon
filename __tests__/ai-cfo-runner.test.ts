@@ -135,6 +135,7 @@ async function main() {
     const h = fakeStore();
     const l = await runCfoEngine("scheduled", deps({ store: h.store, lock: { async acquire() { throw new LockError("lock_unavailable"); }, async release() {} } }));
     assert.equal(l.error, "lock_unavailable");
+    assert.deepEqual(h.finished, [{ status: "failed", error: "lock_unavailable" }], "kilit hatası da iz bırakır (CFO-009) — sağlık ardışık hatayı görür");
   });
   if (failed) { console.error(`\n${failed} test başarısız`); process.exit(1); }
   console.log("\nCFO engine runner: flag, period keys, templated findings for every anomaly, materiality flag, snapshot dedupe, metrics/alarms, lock/duplicate/failure: tüm testler geçti");

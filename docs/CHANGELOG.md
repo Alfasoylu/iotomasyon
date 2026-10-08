@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Kredi ve kart taksit alarmı geçen ayın ödeme işaretine takılmıyor (2026-10-09)
+- Bir kredi/kart geçen ay "ödendi" işaretlendiyse bu ayın taksiti için de ödenmiş sayılıyor ve alarm susuyordu; artık işaret yalnız bu döngüde yapıldıysa geçerli. Vadesi geçip sonraki vadesi girilmeyen kalemler için ayrı "defter güncellenmedi" alarmı eklendi.
+
+### CFO motorunun sessiz arızaları alarm veriyor (2026-10-09)
+- Zaman aşımıyla yarıda kalan motor koşusu artık "takılmış koşu" alarmı veriyor; kilit hatası iz bırakıyor; başarısız bir koşu aynı saat içinde yeniden denenebiliyor.
+
 ### Kart ödemesi erteleme kararı kart faiziyle (2026-10-09)
 - Nakit tabanı delindiğinde kart ödemesini asgariye çekme önerisi artık ertelenen tutarın maliyetini kartın kendi aylık faizi + KKDF/BSMV ile gösteriyor (önce KMH oranıyla ve vergisiz, yani düşük gösteriliyordu); oranı bilinmeyen kartta maliyet "bilinmiyor" yazar. Üretimde migration uygulanınca devreye girer.
 

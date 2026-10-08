@@ -102,7 +102,11 @@ export async function runCfoEngine(trigger: EngineTrigger, deps: RunnerDependenc
   } catch (error) {
     // Bağlantı adresi, kimlik bilgisi veya kaynak satırı asla kaydedilmez: yalnız sabit teşhis kodu.
     const code = error instanceof LockError ? error.code : "engine_failed";
-    try { if (id) await store.finish(id, "failed", new Date(), code); } catch { /* kayıt hatası asıl sonucu değiştirmez */ }
+    try {
+      // Kilit yapılandırma hatası satır açılmadan olur; eskiden iz bırakmıyordu (sağlık "ardışık hata"yı göremiyordu, CFO-009).
+      if (!id && error instanceof LockError) id = await store.begin(`${runPeriodKey(trigger, period)}:${code}`, now);
+      if (id) await store.finish(id, "failed", new Date(), code);
+    } catch { /* kayıt hatası asıl sonucu değiştirmez */ }
     return { status: "failed", runId: id, error: code };
   } finally { await lock.release(); }
 }

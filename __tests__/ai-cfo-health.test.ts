@@ -23,12 +23,20 @@ assert.deepEqual(codes(base({ runs: [], engineEnabled: false })), [], "motor kap
 // Üst üste iki tamamlanmamış koşu (failed ya da beklenmeyen durum); 'running' sayılmaz
 assert.deepEqual(codes(base({ runs: [run(0, "failed", "engine_failed"), run(1, "failed"), run(2, "completed")] })), ["consecutive_failures"]);
 assert.deepEqual(codes(base({ runs: [run(0, "running"), run(1, "failed"), run(2, "completed")] })), [], "koşan koşu başarısız sayılmaz");
+// Takılmış koşu (CFO-009): 15 dakikadan uzun 'running' → zaman aşımıyla öldü; alarm verir ve ardışık hatada başarısız sayılır
+assert.deepEqual(codes(base({ runs: [run(0.5, "running"), run(1, "completed")] })), ["stuck_run"]);
+assert.deepEqual(codes(base({ runs: [run(0.5, "running"), run(1, "failed", "engine_failed"), run(2, "completed")] })), ["stuck_run", "consecutive_failures"]);
+assert.deepEqual(codes(base({ runs: [run(0.2, "running"), run(1, "completed")] })), [], "12 dakikalık koşu henüz takılmış değil");
 // Taban deliniyor (07.10: −3.379.787)
 const floor = evaluateCfoAlarms(base({ minPosition: { valueTry: -3379787, date: "2026-12-01" } }));
 assert.equal(floor[0].code, "floor_breach"); assert.match(floor[0].message, /-3\.379\.787 TL \(2026-12-01\).*-3\.000\.000 TL/);
 // İşaretlenmemiş ödeme ve ölü kaynaklar (her biri ayrı anahtar)
 const pay = evaluateCfoAlarms(base({ payments: [{ label: "Garanti — Kredi 1", amountTry: 60000, due: "2026-10-08" }] }));
 assert.deepEqual(pay.map(a => a.key), ["payment_unmarked:Garanti — Kredi 1:2026-10-08"]);
+// Defter dönmedi (CFO-010): vade geçti, ödendi işaretli, sonraki vade girilmemiş → ayrı anahtar, sonraki alarm körleşmesin diye
+const led = evaluateCfoAlarms(base({ staleLedger: [{ label: "Garanti — Ticari kredi", amountTry: null, due: "2026-10-16" }] }));
+assert.deepEqual(led.map(a => a.key), ["ledger_stale:Garanti — Ticari kredi"]);
+assert.match(led[0].message, /vade 2026-10-16 geçti, ödendi işaretli ama sonraki vade girilmedi/);
 const dead = evaluateCfoAlarms(base({ sources: [{ name: "XML", lastAt: h(30), maxAgeHours: 26 }, { name: "Trendyol", lastAt: null, maxAgeHours: 26 }, fresh[2]],
   staleBankAccounts: ["Ziraat USD"] }));
 assert.deepEqual(dead.map(a => a.key), ["source_dead:XML", "source_dead:Trendyol", "source_dead:banka"]);
