@@ -26,9 +26,7 @@ async function main() {
     for (const m of res.pendingInProduction.filter(x => x !== "20261005190000_ai_cfo_v1" && x !== "20261008100000_cfo_gun_ozeti" && x !== "20261008130000_cfo_gun_ozeti_tz")) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     // market_scout_foundation (PR3) and drop_legacy_backup_tables (waits for the operator to run it) are held back; they touch only
     // market_* objects / 3 unused backup tables and do not affect this check. alfashome_order and cfo_ledger_tables_capture are applied.
-    // cfo_credit_card_revolving (2 additive card columns) waits for the operator's approval.
-    assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation", "20261007200000_drop_legacy_backup_tables",
-      "20261008180000_cfo_credit_card_revolving", "20261008190000_cfo_maliyet_kapsami_satir_kimligi"], "only the held-back migrations stay out of production");
+    assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation", "20261007200000_drop_legacy_backup_tables"], "only the held-back migrations stay out of production");
     // production default ACL for objects postgres creates in public (after the security phase)
     await db.exec(`alter default privileges in schema public grant all on tables to service_role;
       alter default privileges in schema public grant all on sequences to service_role;

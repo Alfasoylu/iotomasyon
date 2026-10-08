@@ -1,3 +1,5 @@
+# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-08 ~20:00 UTC, read-only catalog SELECT) after Cowork CFO applied
+# 20261008180000_cfo_credit_card_revolving and 20261008190000_cfo_maliyet_kapsami_satir_kimligi verbatim (checksums fbc2ad78… / b47a4553…).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-08 ~17:20 UTC, read-only catalog SELECT) after Cowork CFO applied
 # 20261008170000_cfo_tahsilat_tahmini and 20261008160000_cfo_maliyet_kapsami verbatim (checksums 808995b6… / 4b9b6ff2…).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-08 ~11:10 UTC, read-only catalog SELECT, full public schema, no exclusions)
@@ -11,12 +13,12 @@ acl 344 e304ce3368
 con 340 007c77859c
 enum 32 ac59222f85
 ext 1 56e042523e
-fn 35 96ea0fdaf1
+fn 35 fd044c3d95
 fnacl 52 36bf09e58e
 idx 437 d1baea3d4e
 pol 80 32812b7f8a
 rel:m 1 0ad09bf43e
-rel:r 151 910d0dcf6d
+rel:r 151 59c7db9733
 rel:v 59 7aaa2c5ba8
 rls 151 55a126580a
 schemaacl 3 45e3344ecd
