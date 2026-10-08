@@ -355,9 +355,18 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   snapshot.inventory.stockoutRiskValue=metric(velocityRows&&sales&&exceptionRows&&uniqueRisks.every(p=>p.cost.value!=null&&p.stockQty!=null)?uniqueRisks.reduce((s,p)=>s.add(D(p.cost.value!).mul(p.stockQty!)),D(0)).toNumber():null,true);
   snapshot.procurement.riskySkuCount=new Set(risks.map(p=>p.sku)).size;
 
-  const banks=await db.query(`select count(*)::int as accounts,count("balanceTry")::int as balances,count("lastUpdatedAt")::int as timestamps,min("lastUpdatedAt") as oldest,max("lastUpdatedAt") as latest from cfo_bank_account where "isActive"`);
-  snapshot.cash.banksFresh=(n(banks[0]??{},"accounts")??0)>0&&n(banks[0],"accounts")===n(banks[0],"balances")&&n(banks[0],"accounts")===n(banks[0],"timestamps")&&!stale(iso(banks[0]?.oldest),now,WEEKLY_UPLOAD_MAX_AGE_HOURS);
-  snapshot.dataQuality.sourceWatermarks.push({source:"banks",orderDate:null,syncedAt:iso(banks[0]?.latest),batchDays:0,coverageDays:0,stale:!snapshot.cash.banksFresh});
+  // Bayatlık kapısı ÖNEMLİLİK eşikli (Cowork CFO kararı 2026-10-08): bayat bir hesap ancak kaydedilmiş bakiyesi
+  // materialMinTry'ı aşıyorsa (ya da bakiye/tarih bilinmiyorsa) nakit kurallarını susturur. 419 TL'lik bir USD hesabı −3,6M'lik
+  // dibe karşı CASH_CRITICAL'ı susturmamalı; önemsiz bayat hesaplar kanıta uyarı olarak eklenir.
+  const bankRows=await db.query(`select name,"balanceTry" as balance,"lastUpdatedAt" as updated from cfo_bank_account where "isActive" order by name`);
+  const staleBanks=bankRows.filter(r=>n(r,"balance")==null||r.updated==null||stale(iso(r.updated),now,WEEKLY_UPLOAD_MAX_AGE_HOURS))
+    .map(r=>({name:String(r.name),balanceTry:n(r,"balance"),material:n(r,"balance")==null||r.updated==null||Math.abs(n(r,"balance")!)>=config.materialMinTry}));
+  snapshot.cash.staleBanks=staleBanks;
+  snapshot.cash.banksFresh=bankRows.length>0&&!staleBanks.some(b=>b.material);
+  const immaterial=staleBanks.filter(b=>!b.material);
+  if(immaterial.length)snapshot.cash.summaries.push(evidence("cfo_bank_account","stale_immaterial",immaterial.map(b=>`${b.name} (${Math.round(b.balanceTry!)} TL)`).join(", "),"accounts",asOf,true));
+  const latestBank=bankRows.map(r=>iso(r.updated)).filter((x):x is string=>x!=null).sort().at(-1)??null;
+  snapshot.dataQuality.sourceWatermarks.push({source:"banks",orderDate:null,syncedAt:latestBank,batchDays:0,coverageDays:0,stale:!snapshot.cash.banksFresh});
   if(!snapshot.cash.banksFresh)snapshot.dataQuality.staleSources.push("banks");
   const gate=await catalog.rows("cfo_nakit_kapisi",["nakit_try","bos_kmh_try"],1);
   const purpose=await catalog.rows("cfo_nakit_kapisi",["amac_kmh"],1);

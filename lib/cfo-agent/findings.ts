@@ -39,8 +39,8 @@ const where = (entity: string) => (channel(entity) ? `${sku(entity)} (${channel(
 
 /** Kural başına şablon. Dönen null alan "bilinmiyor" demektir; metne uydurma değer girmez. */
 const TEMPLATES: Record<string, (c: Ctx, o: FindingOptions) => { what: string; action: string; urgency?: Urgency }> = {
-  CASH_CRITICAL: ({ n }, o) => ({
-    what: `Nakit dibi ${fmt(n("minimum_position"), tl)} — taban ${tl(o.cashFloorTry)} altında. Kasa ${fmt(n("cash"), tl)}; amaca bağlı limit ${fmt(n("purpose_limit_not_general_cash"), tl)} genel nakit değil.`,
+  CASH_CRITICAL: ({ n, get }, o) => ({
+    what: `Nakit dibi ${fmt(n("minimum_position"), tl)} — taban ${tl(o.cashFloorTry)} altında. Kasa ${fmt(n("cash"), tl)}; amaca bağlı limit ${fmt(n("purpose_limit_not_general_cash"), tl)} genel nakit değil.${get("stale_immaterial") ? ` Bayat ama önemsiz hesap (kapıyı kapatmaz): ${get("stale_immaterial")}.` : ""}`,
     action: "Ödeme takvimini ve boştaki kaldıraç basamaklarını (cfo_kaldirac_basamak) gözden geçir; ertelenebilir çıkışları belirle.",
     urgency: "ACIL" }),
   REVENUE_DEVIATION: ({ a, n }) => {

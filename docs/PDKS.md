@@ -180,14 +180,14 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 6. [x] **Aşağı yön senaryoları** — ✅ 2026-10-07 (`lib/cfo/downside.ts`, `/cfo/sermaye`, AI CFO B4m; tahsis stres açığıyla).
    Sonraki adım: (a) `cfo_nakit_projeksiyon`'a KMH faizi eklenmeli (üretim fonksiyonu → onaylı migration; bugün yalnız senaryolar
    sayıyor); (b) emniyet payı ≈ 0 → yeni likidite kaynağı/erteleme seçenekleri (gümrük ödeme zamanlaması, TRIM/LIQUIDATE nakdi)
-   senaryoya göre sıralanmalı; (c) tahmini tahsilat temposu (~1,0M/ay) ciro (~1,89M/ay) ile uzlaştırılmalı.
+   senaryoya göre sıralanmalı; (c) ✅ 2026-10-08 uzlaştırıldı: tempo toplamı 34.931 TL/gün ↔ son 30 gün satış × ekstreden ölçülmüş kanal net oranı 36.043 TL/gün (−%3); ~1,0M ↔ ~1,89M farkı komisyon/kargo/kesinti (net oran ~0,63). Kanal bazında dengeleniyor: Trendyol +3,2k/gün fazla, ePttAVM −2,5k, N11 −1,6k, Pazarama −0,65k (defterde hiç alacak yok → tahmin 0), Amazon −0,35k eksik — defter bakımı (panel alacakları) işi, mekanizma değişikliği gerekmiyor.
 7. [ ] **Borç maliyeti doğruluğu** — kod hazır (2026-10-08, `lib/cfo/card-cost.ts`); Cowork onayı (3 şart: maliyet tanımı kapandı ✓,
    geri alınabilir migration ✓, sütun listesi PR'da ✓); bekleyen: (a) migration `20261008180000_cfo_credit_card_revolving`'i Cowork uygular, (b) devreden bakiyelerin kart notlarındaki ölçümlerden
    doldurulması (onay), (c) her kartın ekstredeki aylık akdi faizi (kullanıcı). Sonra: kart faizinin nakit projeksiyonuna eklenmesi.
 
 ### Backlog — motor tetiği (2026-10-08)
 - [x] Cowork'ün 16:49 okumasından önce güvenilir motor koşusu: `trendyol-sync` Vercel cron'u `0 6` → `0 12` UTC (15:00–15:59 TR; 14 günlük pencere → veri kaybı yok). Alperen: tam yetki (2026-10-08).
-- [ ] Ziraat USD (şirket) bakiyesi 7 günden eski → `banksFresh=false` → CASH_CRITICAL kuralı susuyor (taban alarmı yine de var).
+- [x] Bayatlık kapısına önemlilik eşiği (Cowork kararı 2026-10-08): Ziraat USD 419,53 TL (dibin %0,01'i) CASH_CRITICAL'ı susturuyordu. Artık yalnız bakiyesi `materialMinTry` (10.000 TL) üstü ya da bilinmeyen bayat hesap susturur; önemsizler bulguda uyarı. Ekran görüntüsüyle bakiye güncellemesi yine Alperen'de (yarın).
 
 ### Backlog — tahsilat tahmini (2026-10-08)
 - [x] `lib/cfo/engine.ts` haftalık tahmini `cfo_tahsilat_tahmini`'ye bağlandı (2026-10-08).
@@ -329,6 +329,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-08 — Banka bayatlık kapısı önemlilik eşikli (Cowork kararı):** `snapshot.ts` hesap bazında okur; bayat hesap (8 günden eski / bakiye ya da tarih bilinmiyor) yalnız |bakiye| ≥ `materialMinTry` (10.000 TL) ise `banksFresh=false` yapar. Önemsizler `cash.staleBanks` + `stale_immaterial` kanıtıyla CASH_CRITICAL bulgusuna uyarı olarak girer ("Bayat ama önemsiz hesap (kapıyı kapatmaz): Ziraat USD (420 TL)"); SUSAN satırı önemli hesap adlarını yazar. Testler: source-mapping (üretim kopyası: 419,53 → kapı açık, 50.000 → kapalı), findings.
+- **2026-10-08 — Tahsilat temposu ↔ ciro uzlaştırması (yol haritası 6c, salt okuma):** kanal temposu (alacak defteri) toplamı 34.931 TL/gün, son 30 gün satış × `cfo_kanal_net_oran` 36.043 TL/gün (−%3) → dipte sistematik sapma yok (~33k TL/ay karamsar). Kanal bazında: ePttAVM / N11 / Pazarama / Amazon defterde eksik (−5,2k/gün), Trendyol / HB fazla (+3,7k/gün). Pazarama'nın hiç alacak kaydı yok.
 - **2026-10-08 — Güvenilir motor tetiği:** `vercel.json` trendyol-sync `0 6 * * *` → `0 12 * * *` (Hobby: saat içinde → 15:00–15:59 TR). Motor artık Cowork'ün iki okumasından önce Vercel cron'uyla koşar: 05:xx (xml-sync) → 08:00 okuması, 15:xx (trendyol-sync) → 16:49 okuması. Trendyol 14 günlük pencere tarar, veri kaybı yok; Trendyol verisi sabah yerine öğleden sonra tazelenir (08:00 okumasında Trendyol verisi 23 yerine ~16 saatlik). GitHub `ai-cfo-schedule` ek koşu + sağlık e-postası olarak kalır.
 - **2026-10-08 — Motor uçtan uca doğrulandı + GitHub zamanlayıcısı ölçüldü:** elle tetik (`workflow_dispatch` → `?trigger=manual`, anahtar `engine:2026-10-08T20:m2`) 2 dk'da tamamlandı; kapsam fonksiyondan (%87,5), dip tek mekanizmadan (−3.593.003, 01.12), alarm 2 (taban + Ziraat USD bayat → CASH_CRITICAL susuyor). **GitHub zamanlayıcısı bu repoda güvenilmez:** `*/5` hatırlatma işi gerçekte günde 2–3 kez, rastgele saatte koşuyor; `ai-cfo-schedule` 24 saatte 1 zamanlanmış koşu. Güvenilir tetik yalnız Vercel cron (Hobby: 2 iş, günde 1, saat içinde rastgele dakika): 05:00 TR xml-sync → motor (Cowork 08:00 okumasından önce ✓); 09:00 TR trendyol-sync → motor (16:49 okumasından 8 saat önce). Karar Cowork'te (Backlog).
 - **2026-10-08 — Maliyet kapsamı üretimde (Cowork uyguladı):** `20261008160000_cfo_maliyet_kapsami` birebir (checksum 4b9b6ff2…); `cfo_maliyet_kapsami` %87,5, dört parça ciroya eşit, anon/authenticated erişemez. Repo `notAppliedInProduction`'dan çıkarıldı, parmak izi üretimden yeniden ölçüldü. Motor bir sonraki koşuda kapsamı bu fonksiyondan okur. Eşleşmeyen 31.011 TL'nin 29.148'i `anunnaki-pointer` (cfo_norm ile 2 ürün → bilinçli olarak eşleşmez); `productId` ile üçüncü eşleşme adımı Cowork kararına bırakıldı.

@@ -43,6 +43,10 @@ const cash = [evidence("cfo_nakit_projeksiyon", "minimum_position", -3379787, "T
 const c = renderFinding(anomaly("CASH_CRITICAL", "company", cash, { category: "cash", severity: "critical" }), cash, O);
 assert.equal(c.urgency, "ACIL");
 assert.equal(c.what, "Nakit dibi -3.379.787 TL — taban -3.000.000 TL altında. Kasa 59.693 TL; amaca bağlı limit 750.000 TL genel nakit değil.");
+// önemsiz bayat hesap kapıyı kapatmaz ama bulguda uyarı olarak görünür (Cowork 2026-10-08: Ziraat USD 419,53 TL)
+const cashStale = [...cash, evidence("cfo_bank_account", "stale_immaterial", "Ziraat USD (420 TL)", "accounts", AT, true)];
+assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashStale, { category: "cash", severity: "critical" }), cashStale, O).what,
+  /genel nakit değil\. Bayat ama önemsiz hesap \(kapıyı kapatmaz\): Ziraat USD \(420 TL\)\.$/);
 
 // PRICE_BELOW_FLOOR, DEAD_STOCK, açık iş ve veri kalitesi
 const pb = [evidence("cfo_satis_birim_duz", "TRENDYOL:X1.avg_price", 180, "TRY", AT, true), evidence("cfo_kargo_tarife", "TRENDYOL:X1.floor_single_unit_order", 214.5, "TRY", AT, false),
