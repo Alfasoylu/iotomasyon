@@ -16,7 +16,11 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
   for(const source of snapshot.dataQuality.staleSources)add("DATA_STALE","data_quality","warning",source,month,[evidence(source,"freshness","stale","state",at,true)],null,false);
   if(snapshot.dataQuality.missingFields.length)add("DATA_QUALITY","data_quality","warning","company",month,[evidence("snapshot","missing_fields",snapshot.dataQuality.missingFields.join(",").slice(0,1200),"fields",at,true)],null,false);
   const coverage=snapshot.dataQuality.costCoveragePct;
-  const financialAllowed=coverage!=null&&coverage>=config.minCostCoveragePct&&snapshot.dataQuality.duplicateCanonicalRows===0;
+  // Mükerrer kanonik satış satırı şirket çapında kapı DEĞİL (Cowork CFO kararı 2026-10-08, A): ilgili SKU-kanal grubu zaten
+  // güvenilmez sayılıp marj hesabından çıkar; tek bir tekrar (bugün 1 sipariş satırı, cironun %1,2'si) bütün marj/kâr
+  // kurallarını susturmamalı. Uyarı olarak DUPLICATE_SALES_ROWS bulgusu üretilir.
+  const financialAllowed=coverage!=null&&coverage>=config.minCostCoveragePct;
+  if(snapshot.dataQuality.duplicateCanonicalRows>0)add("DUPLICATE_SALES_ROWS","data_quality","warning","company",month,[evidence("cfo_satis_birim_duz","duplicate_rows",snapshot.dataQuality.duplicateCanonicalRows,"rows",at,true)],null,false);
   if(!financialAllowed)add("COST_COVERAGE","data_quality","warning","company",month,[evidence("cfo_maliyet_kapsami","cost_coverage",coverage,"pct",at,true)],null,false);
   // Cash comes first. Stale manual bank balances block financial diagnosis.
   if(snapshot.cash.banksFresh&&snapshot.cash.minimumProjectedPosition.value!=null&&snapshot.cash.minimumProjectedPosition.value<config.cashFloorTry) {
@@ -84,6 +88,5 @@ export function silencedRules(snapshot:CfoAgentSnapshot,config:CfoConfig=getCfoC
   if(stale.includes("XML"))out.push("XML bayat → STOCKOUT, DEAD_STOCK, PROCUREMENT susuyor");
   if(!snapshot.cash.banksFresh){const m=(snapshot.cash.staleBanks??[]).filter(b=>b.material).map(b=>b.name);out.push(`banka bakiyesi bayat${m.length?` (${m.join(", ")})`:""} → CASH_CRITICAL susuyor`);}
   if(coverage==null||coverage<config.minCostCoveragePct)out.push(`maliyet kapsamı %${coverage==null?"?":Math.round(coverage*10)/10} < %${config.minCostCoveragePct} → MARGIN_DROP, NEGATIVE_PROFIT, PROCUREMENT susuyor`);
-  if(snapshot.dataQuality.duplicateCanonicalRows>0)out.push("kanonik satışta mükerrer satır → MARGIN_DROP, NEGATIVE_PROFIT, PROCUREMENT susuyor");
   return out;
 }
