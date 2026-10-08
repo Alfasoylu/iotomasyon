@@ -58,6 +58,8 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: s => pg.exec(s), query: <T,>(s: string, p?: unknown[]) => pg.query<T>(s, p) });
     for (const m of res.pendingInProduction) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    // maliyet kapsamı (Cowork uygulayacak; baseline.json notAppliedInProduction) — motorun okuduğu fonksiyon burada sınanır
+    await pg.exec(readFileSync("prisma/migrations/20261008160000_cfo_maliyet_kapsami/migration.sql", "utf8"));
     await pg.exec("set search_path = public");
     await pg.exec(`${TARIFF};
       insert into "Product" (id,sku,name,"updatedAt","stockQuantity","unitCostTry","weightKg","sellingPriceTry","isActive") values
