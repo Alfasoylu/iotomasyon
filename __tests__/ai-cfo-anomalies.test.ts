@@ -182,6 +182,24 @@ async function main() {
     assert.equal(result[0]?.rule, "CASH_CRITICAL");
   });
 
+  check("KMH faizi dahil dip tabanın altındaysa projeksiyon üstünde olsa da CASH_CRITICAL üretir (Cowork sırası 3/3)", () => {
+    const cash = (withInterest: number | null, proj: number | null = config.cashFloorTry + 100_000) => baseSnapshot({
+      cash: { generalUnusedOverdraft: metric(0), totalCardDebt: metric(0), activeCards: 0, cash: metric(0),
+        minimumProjectedPosition: proj == null ? unknown("projection_unavailable") : metric(proj),
+        purposeLimit: metric(0), banksFresh: true, summaries: [], minimumWithInterestTry: withInterest },
+    });
+    const hit = cash(config.cashFloorTry - 1);
+    const r = detectCfoAnomalies(hit, config);
+    assert.equal(r[0]?.rule, "CASH_CRITICAL");
+    assert.equal(hit.evidence.find(e => r[0].evidenceIds.includes(e.id) && e.query === "trigger")?.value, "kmh_interest");
+    assert(!rules(detectCfoAnomalies(cash(config.cashFloorTry + 1), config)).includes("CASH_CRITICAL"), "faizli dip de tabanın üstünde");
+    assert(!rules(detectCfoAnomalies(cash(null), config)).includes("CASH_CRITICAL"), "faizli dip yoksa projeksiyona bakar");
+    assert(!rules(detectCfoAnomalies(cash(config.cashFloorTry - 1, null), config)).includes("CASH_CRITICAL"), "projeksiyon bilinmiyorsa susar");
+    const both = cash(config.cashFloorTry - 2, config.cashFloorTry - 1);
+    const rb = detectCfoAnomalies(both, config);
+    assert.equal(both.evidence.find(e => rb[0].evidenceIds.includes(e.id) && e.query === "trigger")?.value, "projection");
+  });
+
   check("banksFresh=false iken nakit bayat olsa da CASH_CRITICAL üretmez", () => {
     const snap = baseSnapshot({
       cash: { generalUnusedOverdraft: metric(0), totalCardDebt: metric(0), activeCards: 0, cash: metric(0),

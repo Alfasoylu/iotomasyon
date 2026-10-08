@@ -41,7 +41,9 @@ export type CfoAgentSnapshot = {
   deadStock: { sku: string; value: Metric; alarm: string; findingId: string | null }[];
   cash: { generalUnusedOverdraft: Metric; totalCardDebt: Metric; activeCards: number; cash: Metric; minimumProjectedPosition: Metric; purposeLimit: Metric; banksFresh: boolean; summaries: Evidence[];
     /** bayat (8 günden eski / bakiyesi bilinmeyen) hesaplar; material=false → kapıyı kapatmaz, yalnız uyarı */
-    staleBanks?: { name: string; balanceTry: number | null; material: boolean }[] };
+    staleBanks?: { name: string; balanceTry: number | null; material: boolean }[];
+    /** KMH faizi dahil dip (aşağı yön baz senaryosu, kademeli faiz); yoksa CASH_CRITICAL yalnız projeksiyon dibine bakar */
+    minimumWithInterestTry?: number | null };
   procurement: { riskySkuCount: number; openOrders: number | null };
   importPipeline: { inboundSkuCount: number | null; coveragePct: Metric };
   returns: { currentRate: Metric; previousRate: Metric; sample: number; complete: boolean };

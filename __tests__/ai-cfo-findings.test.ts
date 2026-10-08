@@ -52,6 +52,11 @@ assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashKmh, { catego
 const cashKmhUnknown = [...cashKmh, evidence("cfo_bank_account", "kmh_orani_olculmemis", "Garanti 500.000 TL, Akbank Alp 250.000 TL", "text", AT, false)];
 assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashKmhUnknown, { category: "cash", severity: "critical" }), cashKmhUnknown, O).what,
   /120 günde KMH faizi en az 616\.399 TL \(oranı ölçülmemiş limit kullanılıyor: Garanti 500\.000 TL, Akbank Alp 250\.000 TL\)\.$/);
+// Tetik faizli dipse (projeksiyon tabanın üstünde) başlık bunu söyler (Cowork sırası 3/3)
+const cashByInterest = [evidence("cfo_nakit_projeksiyon", "minimum_position", -2900000, "TRY", AT, true), ...cash.slice(1),
+  evidence("cfo_nakit_projeksiyon", "trigger", "kmh_interest", "text", AT, true), ...cashKmh.slice(3)];
+assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashByInterest, { category: "cash", severity: "critical" }), cashByInterest, O).what,
+  /^Nakit dibi -2\.900\.000 TL taban -3\.000\.000 TL üstünde, ama KMH faizi dahil dip -3\.958\.629 TL taban altında \(tetik faizli dip\)\. Kasa 59\.693 TL/);
 // önemsiz bayat hesap kapıyı kapatmaz ama bulguda uyarı olarak görünür (Cowork 2026-10-08: Ziraat USD 419,53 TL)
 const cashStale = [...cash, evidence("cfo_bank_account", "stale_immaterial", "Ziraat USD (420 TL)", "accounts", AT, true)];
 assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashStale, { category: "cash", severity: "critical" }), cashStale, O).what,

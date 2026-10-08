@@ -24,8 +24,13 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
   if(snapshot.dataQuality.duplicateCanonicalRows>0)add("DUPLICATE_SALES_ROWS","data_quality","warning","company",month,[evidence("cfo_satis_birim_duz","duplicate_rows",snapshot.dataQuality.duplicateCanonicalRows,"rows",at,true)],null,false);
   if(!financialAllowed)add("COST_COVERAGE","data_quality","warning","company",month,[evidence("cfo_maliyet_kapsami","cost_coverage",coverage,"pct",at,true)],null,false);
   // Cash comes first. Stale manual bank balances block financial diagnosis.
-  if(snapshot.cash.banksFresh&&snapshot.cash.minimumProjectedPosition.value!=null&&snapshot.cash.minimumProjectedPosition.value<config.cashFloorTry) {
-    add("CASH_CRITICAL","cash","critical","company",month,[m("cfo_nakit_projeksiyon","minimum_position",snapshot.cash.minimumProjectedPosition,"TRY"),m("cfo_nakit_kapisi","cash",snapshot.cash.cash,"TRY"),m("cfo_nakit_kapisi","purpose_limit_not_general_cash",snapshot.cash.purposeLimit,"TRY"),...snapshot.cash.summaries]);
+  // Tetik (Cowork sırası 3/3, 2026-10-08): projeksiyon dibi YA DA KMH faizi dahil dip (kademeli faiz, yalnız ölçülmüş oranlar →
+  // faiz alt sınır) tabanın altındaysa. Faizli dip hiçbir zaman projeksiyondan iyi değildir; bağlama yalnız tetiği öne çeker.
+  // Projeksiyon dibi bilinmiyorsa kural susar (faizli dip tek başına tetiklemez — aynı akıştan türer).
+  const projMin=snapshot.cash.minimumProjectedPosition.value,withInterest=snapshot.cash.minimumWithInterestTry??null;
+  const cashTrigger=projMin==null?null:projMin<config.cashFloorTry?"projection":withInterest!=null&&withInterest<config.cashFloorTry?"kmh_interest":null;
+  if(snapshot.cash.banksFresh&&cashTrigger) {
+    add("CASH_CRITICAL","cash","critical","company",month,[m("cfo_nakit_projeksiyon","minimum_position",snapshot.cash.minimumProjectedPosition,"TRY"),m("cfo_nakit_kapisi","cash",snapshot.cash.cash,"TRY"),m("cfo_nakit_kapisi","purpose_limit_not_general_cash",snapshot.cash.purposeLimit,"TRY"),evidence("cfo_nakit_projeksiyon","trigger",cashTrigger,"text",at,true),...snapshot.cash.summaries]);
   }
   for(const c of snapshot.sales.comparisons) {
     if(!c.complete||!c.sourceFresh||c.current.value==null||c.previous.value==null||c.previous.value<=0)continue;

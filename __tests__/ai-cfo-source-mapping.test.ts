@@ -282,6 +282,8 @@ async function main() {
     assert.equal(ev(withRate, "kmh_orani_olculmemis"), undefined, "tek dilim ölçülmüş → faiz eksiksiz");
     assert.ok(Number(ev(withRate, "kmh_dahil_dip")) <= withRate.cash.minimumProjectedPosition.value!, "faizli dip faizsizden kötü ya da eşit");
     assert.ok(Number(ev(withRate, "kmh_faizi_120g")) > 0, "eksi pozisyon faiz doğurur");
+    assert.equal(withRate.cash.minimumWithInterestTry, Number(ev(withRate, "kmh_dahil_dip")), "kural tetiği faizli dibi görür (Cowork 3/3)");
+    assert.equal(s.cash.minimumWithInterestTry ?? null, null, "oran yokken tetik yalnız projeksiyon");
     assert.match(String(ev(withRate, "kmh_dahil_fonlama")), /KMH|FONLANAMIYOR|şahsi|gümrük/);
     assert.match(String(ev(withRate, "kmh_dahil_dip_tarih")), /^\d{4}-\d{2}-\d{2}$/);
     await pg.exec(`delete from cfo_settings where id = 'st1'; update cfo_bank_account set "monthlyRatePct" = null where id = 'b1'`);

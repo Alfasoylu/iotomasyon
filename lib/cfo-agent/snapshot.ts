@@ -389,13 +389,15 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     snapshot.cash.minimumProjectedPosition=values.every(v=>v!=null)?metric(Math.min(...values as number[]),true,"projection_bank_cash_plus_receivables_and_estimated_collections_excludes_overdraft"):unknown("projection_column_unavailable");
   } else missing.push("projection_position_column_unvalidated");
   // KMH faizi dahil dip (aşağı yön baz senaryosu, lib/cfo/downside.ts — yol haritası 6a): projeksiyon eksi pozisyonun faizini
-  // saymaz; dip iyimser kalır. Kanonik dip (projeksiyon) ve kural tetiği değişmez; faizli dip CASH_CRITICAL kanıtına eklenir.
+  // saymaz; dip iyimser kalır. Kanonik dip (projeksiyon) değişmez; faizli dip CASH_CRITICAL kanıtına eklenir ve kural tetiği
+  // ikisinin kötüsüne bakar (Cowork sırası 3/3, anomalies.ts).
   // Faiz KADEMELİ (Cowork 2026-10-08): yalnız KMH ile fonlanan kısma, hesap başına ölçülmüş oranla; kapasiteyi aşan kısma faiz yok.
   // Akış projeksiyonla birebir tutmuyorsa (parity) ya da hiçbir KMH limitinin oranı ölçülmemişse eklenmez (uydurma yok).
   // Oranı ölçülmemiş dilim kullanıldıysa faiz "en az"dır ve o dilimler adıyla kanıta yazılır.
   const down=await loadDownside(<T,>(sql:string)=>db.query(sql) as Promise<T[]>);
   if(down&&down.parity.mismatchDays===0&&down.kmh.measuredLimitTry>0){
     const b=down.scenarios[0];
+    snapshot.cash.minimumWithInterestTry=b.minPosition;
     snapshot.cash.summaries.push(evidence("cfo_nakit_projeksiyon","kmh_dahil_dip",b.minPosition,"TRY",asOf,false),
       evidence("cfo_nakit_projeksiyon","kmh_dahil_dip_tarih",b.minDate,"date",asOf,false),
       evidence("cfo_nakit_projeksiyon","kmh_dahil_fonlama",TIER_LABEL[b.tier],"text",asOf,false),
