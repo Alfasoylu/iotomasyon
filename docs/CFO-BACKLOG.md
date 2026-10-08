@@ -1,9 +1,9 @@
 ---
-last_updated: 2026-10-09 01:10 TR
-current_main_commit: 9bd5bd9
+last_updated: 2026-10-09 02:10 TR
+current_main_commit: 90af323
 current_phase: "Faz 0 — İlk tam sistem denetimi tamamlandı; Faz 1 (Metrik sözleşmesi) sırada"
 current_score: 50/100
-next_action: "CFO-004 (PR-B) — kararsız yapılabilir; paralelde Alperen kararları D-P01…D-P06 (CFO-METRIC-CONTRACT.md)"
+next_action: "CFO-014 (UNKNOWN→0 süpürmesi + FX yedekleri) → CFO-016 güvenlik; RF-029 veri düzeltmesi Cowork; CFO-005 migration 110000 Cowork"
 ---
 
 # CFO BACKLOG
@@ -26,7 +26,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | IN_PROGRESS (TS ✓ PR #214; SQL `cfo_kart_karari` PR #215, migration 20261009110000 Cowork'te) | 004 |
 | 6 | CFO-006 | Şirket/şahsi tek sınıflama; nakit/kapasite/borç bunu kullansın | P1 | G2,G3 | 4 | 4 | 3 | 3 | 1 | 2 | **5** | M | VALIDATED | 010 |
 | 7 | CFO-009 | Alarm teslimi GitHub'dan bağımsız; takılan koşu + kilit hatası alarmı; cfo-cycle bağla | P1 | tümü | 3 | 5 | 2 | 2 | 1 | 2 | **5** | M | IN_PROGRESS (takılan koşu/kilit/yeniden deneme ✓; teslim kanalı D-P07 bekliyor) | 006 |
-| 8 | CFO-010 | Defter bakım yolu: kredi/kart vade devri, alacak/ödeme girişi | P1 | tümü | 4 | 4 | 2 | 3 | 1 | 2 | **4** | L | IN_PROGRESS (kısım 1 ✓: ödeme alarmı döngü-farkında + ledger_stale; kısım 2: yazma yolu + paidAt) | 007,028 |
+| 8 | CFO-010 | Defter bakım yolu: kredi/kart vade devri, alacak/ödeme girişi | P1 | tümü | 4 | 4 | 2 | 3 | 1 | 2 | **4** | L | ✅ TAMAMLANDI 2026-10-09 — ödeme durumu tek kaynak (takvim); defter↔takvim boşluk + mükerrer taksit alarmı; Borçlar takvimden; yetim cfo-actions silindi | 007,028,029 |
 | 9 | CFO-007 | KDV esası kararı + marj/NRV KDV hariç | P1 | G1,G2 | 4 | 4 | 4 | 3 | 3 | 2 | **4** | M | DISCOVERED | 008 |
 | 10 | CFO-008 | Ciro hedefi tanımı (KDV, kanal kapsamı) + tek ciro fonksiyonu | P1 | G1 | 3 | 3 | 5 | 3 | 2 | 1 | **5** | M | DISCOVERED | 009,023 |
 | 11 | CFO-011 | Maliyet kapsamı ≥ %95 (8 SKU veri + migration 200000) | P1 | G1 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen; Code ✓ PR #210, migration 200000 üretimde 2026-10-08) | 013 |
@@ -103,7 +103,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-010 — Defter bakım yolu
 - **uygulama:** kredi/kart için ay dönümü devri (ödenen ay → sonraki vade), `currentMonthState` sıfırlama; alacak/ödeme girişi için kontrollü form veya içe aktarma; `cfo-actions.ts` bağlanır ya da silinir.
-- **kabul:** ay dönümünde `payment_unmarked` doğru tetiklenir. **durum:** IN_PROGRESS — kısım 1 bitti 2026-10-09 (PR #216: "ODENDI" yalnız vade − 25 gün içinde sayılır, `ledger_stale` alarmı; RF-028); kalan: yazma yolu, `paidAt`, vade devri.
+- **kabul:** ay dönümünde `payment_unmarked` doğru tetiklenir. **durum:** ✅ TAMAMLANDI 2026-10-09 — kısım 1 (PR #216) + kısım 2: ödeme durumunun TEK kaynağı takvim (`cfo_cash_event` taksit satırı + `isSettled`, projeksiyonla aynı); `currentMonthState` alarmda/sayfada okunmuyor → ay dönümü devri ve `paidAt` gereksiz; `ledger_stale` = aktif kredi/kartın takvimde bekleyen ödemesi yok; yeni `schedule_duplicate` (banka × ay taksit > aktif kredi; üretimde Yapı Kredi Kas–Oca, RF-029); `/cfo/borclar` "takvimde sonraki ödeme"; ödeme girişi `/cfo/odemeler` (loglu); yetim `cfo-actions.ts` silindi. Üretim salt-okuma: boşluk 0, mükerrer 3 ay. Kalan veri işi: RF-029 satırları (Cowork/Alperen).
 
 ### CFO-011 — Maliyet kapsamı ≥ %95
 - **durum:** BLOCKED — veri (6 SKU maliyeti, anunnaki-pointer eşlemesi, 2827456501236 set tanımı; Alperen). Code tarafı ✅ TAMAMLANDI 2026-10-08 (PR #210; migration 20261008200000 Cowork 2026-10-08 20:26 UTC uyguladı, satır toplamı = ciro üretimde doğrulandı).
@@ -141,7 +141,7 @@ Faz 0 sonrası (backlog maddesi):
 - ✅ TAMAMLANDI 2026-10-08 — **CFO-001 PR-A** metrik sözleşmesi memosu + salt-okunur mutabakat SQL'i (PR #212). CFO-001'in kendisi karar bekliyor.
 - ✅ TAMAMLANDI 2026-10-08 — **Faz 0 ilk tam denetim** + 5 yönetim dosyası (PR #211).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-009 kısım 1** takılan koşu alarmı, kilit hatası izi, başarısız dilim yeniden denenir (PR #216). Madde açık (teslim kanalı).
-- ✅ TAMAMLANDI 2026-10-09 — **CFO-010 kısım 1** ödeme alarmı döngü-farkında + `ledger_stale` (PR #216; RF-028). Madde açık (yazma yolu).
+- ✅ TAMAMLANDI 2026-10-09 — **CFO-010** defter bakım yolu: ödeme durumu tek kaynak = takvim; boşluk + mükerrer taksit alarmı; Borçlar takvimden; yetim `cfo-actions.ts` silindi (PR #216 + bu PR; RF-028 RESOLVED, RF-029 açıldı).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-005 TS katmanı**: düz %4,5 KMH oranı kalktı, banka başına ölçülmüş oran, kademeli (PR #214). SQL kısmı (PR #215) migration bekliyor.
 
 Faz 0 öncesi (referans; ayrıntı PDKS.md / CHANGELOG.md):
