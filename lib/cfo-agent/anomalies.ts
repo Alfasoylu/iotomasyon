@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { getCfoConfig, type CfoConfig } from "./config";
 import { capitalCostImpact, D, financialImpact, priceGapImpact, revenueAtRisk } from "./calculations";
 import { evidence } from "./evidence";
+import { fmtClosers } from "./cost-coverage";
 import type { Anomaly, Category, CfoAgentSnapshot, Evidence, Impact, Metric, Severity } from "./types";
 
 export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=getCfoConfig()):Anomaly[] {
@@ -22,7 +23,12 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
   // (satır kimliği boş) tekrarlar DUPLICATE_SALES_ROWS bilgi bulgusu üretir.
   const financialAllowed=coverage!=null&&coverage>=config.minCostCoveragePct;
   if(snapshot.dataQuality.duplicateCanonicalRows>0)add("DUPLICATE_SALES_ROWS","data_quality","warning","company",month,[evidence("cfo_satis_birim_duz","duplicate_rows",snapshot.dataQuality.duplicateCanonicalRows,"rows",at,true)],null,false);
-  if(!financialAllowed)add("COST_COVERAGE","data_quality","warning","company",month,[evidence("cfo_maliyet_kapsami","cost_coverage",coverage,"pct",at,true)],null,false);
+  const gap=snapshot.dataQuality.costCoverageGap;
+  if(!financialAllowed)add("COST_COVERAGE","data_quality","warning","company",month,[evidence("cfo_maliyet_kapsami","cost_coverage",coverage,"pct",at,true),
+    ...(gap?[evidence("cfo_maliyet_kapsami_satir","kapsam_acigi_try",gap.gapTry,"TRY",at,true),
+      evidence("cfo_maliyet_kapsami_satir","kapatan_kalemler",fmtClosers(gap.items),"text",at,true),
+      evidence("cfo_maliyet_kapsami_satir","kalem_sayisi",gap.items.length,"items",at,true),
+      evidence("cfo_maliyet_kapsami_satir","acigi_kapatir",gap.closesGap?"evet":"hayir","state",at,true)]:[])],null,false);
   // Cash comes first. Stale manual bank balances block financial diagnosis.
   // Tetik (Cowork sırası 3/3, 2026-10-08): projeksiyon dibi YA DA KMH faizi dahil dip (kademeli faiz, yalnız ölçülmüş oranlar →
   // faiz alt sınır) tabanın altındaysa. Faizli dip hiçbir zaman projeksiyondan iyi değildir; bağlama yalnız tetiği öne çeker.

@@ -7,6 +7,7 @@ import { renderFinding, renderFindings, type FindingOptions } from "../lib/cfo-a
 import { financialImpact, metric, capitalCostImpact } from "../lib/cfo-agent/calculations";
 import { evidence } from "../lib/cfo-agent/evidence";
 import type { Anomaly, Evidence } from "../lib/cfo-agent/types";
+import { coverageClosers, fmtClosers } from "../lib/cfo-agent/cost-coverage";
 
 const AT = "2026-10-08T06:00:00.000Z";
 const O: FindingOptions = { cashFloorTry: -3000000, coverDays: 21, minCostCoveragePct: 95 };
@@ -57,6 +58,32 @@ const cashByInterest = [evidence("cfo_nakit_projeksiyon", "minimum_position", -2
   evidence("cfo_nakit_projeksiyon", "trigger", "kmh_interest", "text", AT, true), ...cashKmh.slice(3)];
 assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashByInterest, { category: "cash", severity: "critical" }), cashByInterest, O).what,
   /^Nakit dibi -2\.900\.000 TL taban -3\.000\.000 TL üstünde, ama KMH faizi dahil dip -3\.958\.629 TL taban altında \(tetik faizli dip\)\. Kasa 59\.693 TL/);
+// Kapsam açığını kapatan en kısa liste (08.10 üretim: ciro 1.675.211,79, kapsanan 1.465.810,14 → %95 için 125.642 TL; ilk 8 kalem yeter)
+{
+  const rows = [
+    { durum: "eslesmeyen", sku: "anunnaki-pointer", tl: 29148, guven: "YUKSEK", tekrar: false },
+    { durum: "guvenilmez", sku: "2827456501236", tl: 24885, guven: "BILINMIYOR", tekrar: false },
+    { durum: "maliyetsiz", sku: "ANK-IPSET-VRYN", tl: 19900, guven: "YUKSEK", tekrar: false },
+    { durum: "maliyetsiz", sku: "muk-8li-ip-kamera-seti-sesli", tl: 19840, guven: "YUKSEK", tekrar: false },
+    { durum: "maliyetsiz", sku: "543600000", tl: 10605, guven: "YUKSEK", tekrar: false },
+    { durum: "maliyetsiz", sku: "4140404044444", tl: 9900, guven: "YUKSEK", tekrar: false },
+    { durum: "maliyetsiz", sku: "4224333434117", tl: 9796, guven: "YUKSEK", tekrar: false },
+    { durum: "maliyetsiz", sku: "4Q0055916", tl: 9303, guven: "YUKSEK", tekrar: false },
+    { durum: "guvenilmez", sku: "MD-3003B1", tl: 8507, guven: "KARMA", tekrar: false },
+    { durum: "kapsanan", sku: "X", tl: 999999, guven: "YUKSEK", tekrar: false },
+  ];
+  const r = coverageClosers(rows, 1675211.79, 1465810.14, 95);
+  assert.equal(r.gapTry, 125642, "ceil(0,95 × 1.675.211,79 − 1.465.810,14) = ceil(125.641,06)");
+  assert.equal(r.items.length, 8); assert.equal(r.closesGap, true);
+  assert.deepEqual(r.items.slice(0, 3).map(i => i.why), ["ürüne eşleşmiyor", "adet/set ayrıştırması belirsiz, güven BILINMIYOR", "maliyet girilmemiş"]);
+  assert.equal(coverageClosers(rows, 1675211.79, 1465810.14, 95, 3).closesGap, false, "üst sınır kesince açığı kapatmadığını söyler");
+  assert.equal(coverageClosers(rows, 100, 99, 95).items.length, 0, "eşik üstünde liste boş");
+  const cov = [evidence("cfo_maliyet_kapsami", "cost_coverage", 87.5, "pct", AT, true), evidence("cfo_maliyet_kapsami_satir", "kapsam_acigi_try", r.gapTry, "TRY", AT, true),
+    evidence("cfo_maliyet_kapsami_satir", "kapatan_kalemler", fmtClosers(r.items.slice(0, 2)), "text", AT, true),
+    evidence("cfo_maliyet_kapsami_satir", "kalem_sayisi", 2, "items", AT, true), evidence("cfo_maliyet_kapsami_satir", "acigi_kapatir", "hayir", "state", AT, true)];
+  assert.equal(renderFinding(anomaly("COST_COVERAGE", "company", cov, { category: "data_quality", severity: "warning" }), cov, O).what,
+    "Maliyet kapsamı %87,5 < %95 → marj ve kâr kuralları susuyor. Eşiğe 125.642 TL kapsanan ciro eksik; en büyük 2 kalem yetmiyor: anunnaki-pointer 29.148 TL (ürüne eşleşmiyor); 2827456501236 24.885 TL (adet/set ayrıştırması belirsiz, güven BILINMIYOR).");
+}
 // önemsiz bayat hesap kapıyı kapatmaz ama bulguda uyarı olarak görünür (Cowork 2026-10-08: Ziraat USD 419,53 TL)
 const cashStale = [...cash, evidence("cfo_bank_account", "stale_immaterial", "Ziraat USD (420 TL)", "accounts", AT, true)];
 assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashStale, { category: "cash", severity: "critical" }), cashStale, O).what,

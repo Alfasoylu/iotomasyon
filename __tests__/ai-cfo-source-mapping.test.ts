@@ -58,6 +58,8 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: s => pg.exec(s), query: <T,>(s: string, p?: unknown[]) => pg.query<T>(s, p) });
     for (const m of res.pendingInProduction) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    // kapsamın satır sınıflaması (Cowork uygulayacak; baseline.json notAppliedInProduction) — motorun okuduğu sürüm
+    await pg.exec(readFileSync("prisma/migrations/20261008200000_cfo_maliyet_kapsami_satir/migration.sql", "utf8"));
     await pg.exec("set search_path = public");
     await pg.exec(`${TARIFF};
       insert into "Product" (id,sku,name,"updatedAt","stockQuantity","unitCostTry","weightKg","sellingPriceTry","isActive") values
@@ -117,6 +119,28 @@ async function main() {
     const covExec = (await pg.query<{ a: boolean; u: boolean }>(`select has_function_privilege('anon','public.cfo_maliyet_kapsami_at(timestamptz)','execute') a,
       has_function_privilege('authenticated','public.cfo_maliyet_kapsami_at(timestamptz)','execute') u`)).rows[0];
     assert.deepEqual([covExec.a, covExec.u], [false, false], "fonksiyonu anon/authenticated çalıştıramaz");
+    // Satır sınıflaması (20261008200000): toplam fonksiyonu satırlardan alır — eski (190000) gövdeyle birebir aynı sonuç; satır
+    // toplamları dört parçaya eşit; anon/authenticated çalıştıramaz; kapsam eşik altındaysa motor kapatan listeyi aynı satırlardan kurar.
+    const full = async () => (await pg.query<Record<string, unknown>>(`select row_to_json(k)::text j from cfo_maliyet_kapsami_at($1::timestamptz) k`, [now.toISOString()])).rows[0];
+    const viaRows = await full();
+    await pg.exec(readFileSync("prisma/migrations/20261008190000_cfo_maliyet_kapsami_satir_kimligi/migration.sql", "utf8"));
+    assert.deepEqual(await full(), viaRows, "satır fonksiyonu üzerinden toplam = eski tek parça gövde");
+    await pg.exec(readFileSync("prisma/migrations/20261008200000_cfo_maliyet_kapsami_satir/migration.sql", "utf8"));
+    const bucket = (await pg.query<{ durum: string; t: string }>(`select durum, sum(tutar)::text t from cfo_maliyet_kapsami_satir($1::timestamptz) group by durum`, [now.toISOString()])).rows;
+    const tb = (d: string) => Number(bucket.find(b => b.durum === d)?.t ?? 0);
+    assert.deepEqual([tb("kapsanan"), tb("guvenilmez"), tb("eslesmeyen"), tb("maliyetsiz")].map(v => Math.round(v * 100) / 100),
+      [Number(cov.kapsanan_try), Number(cov.guvenilmez_try), Number(cov.eslesmeyen_try), Number(cov.maliyetsiz_try)], "satır toplamları = kovalar");
+    const rowExec = (await pg.query<{ a: boolean; u: boolean }>(`select has_function_privilege('anon','public.cfo_maliyet_kapsami_satir(timestamptz)','execute') a,
+      has_function_privilege('authenticated','public.cfo_maliyet_kapsami_satir(timestamptz)','execute') u`)).rows[0];
+    assert.deepEqual([rowExec.a, rowExec.u], [false, false], "satır fonksiyonunu anon/authenticated çalıştıramaz");
+    const strict = await buildCfoAgentSnapshot({ db, now, config: { ...config, minCostCoveragePct: 100 }, compact: false });
+    const g = strict.dataQuality.costCoverageGap;
+    if (Number(cov.kapsam_pct) < 100) {
+      assert.ok(g && g.items.length > 0, "eşik altı → kapatan liste");
+      assert.equal(g!.gapTry, Math.max(0, Math.ceil(Number(cov.ciro_try) - Number(cov.kapsanan_try))));
+      assert.ok(g!.items.every(i => ["maliyetsiz", "eslesmeyen", "guvenilmez"].includes(i.durum)));
+    }
+    assert.equal(s.dataQuality.costCoveragePct! >= config.minCostCoveragePct ? s.dataQuality.costCoverageGap : undefined, undefined, "eşik üstünde liste yok");
 
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;

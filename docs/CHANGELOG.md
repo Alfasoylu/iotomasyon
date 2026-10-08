@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Maliyet kapsamı bulgusu düzeltilecek kalemleri sayar (2026-10-08)
+- Kapsam eşiğin altındayken bulgu artık eşiğe kaç TL eksik olduğunu ve açığı kapatan en kısa SKU listesini (her biri için yapılacak iş: maliyet gir / ürüne eşle / adet-set tanımla) yazar. Liste, kapsam yüzdesiyle aynı satır sınıflamasından gelir. Üretimde, satır sınıflama migration'ı uygulanınca devreye girer; o zamana kadar bulgu yalnız yüzdeyi yazar.
+
 ### Kart sütunları ve mükerrer anahtarı üretimde (2026-10-08)
 - Kredi kartı devreden bakiye / akdi faiz sütunları ve maliyet kapsamının satır kimlikli mükerrer anahtarı üretime uygulandı; 19.900 TL "güvenilmez"den "maliyeti girilmemiş" kovasına geçti, kapsam %87,5 aynı. Üretim şema parmak izi repo ile eşitlendi.
 

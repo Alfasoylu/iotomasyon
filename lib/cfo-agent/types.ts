@@ -32,7 +32,9 @@ export type CfoAgentSnapshot = {
   currency: "TRY"; accountingBasis: Basis;
   dataQuality: { staleSources: string[]; missingFields: string[]; costCoveragePct: number | null;
     matchingCoveragePct: number | null; sourceWatermarks: SourceWatermark[]; excludedDummyStock: number; zeroStockSkuCount: number; commissionCoverage: {channel:string; coveragePct:number|null; outliers:number}[];
-    fbaInventoryUnknown: true; duplicateCanonicalRows: number; excludedUntrustedRows: number };
+    fbaInventoryUnknown: true; duplicateCanonicalRows: number; excludedUntrustedRows: number;
+    /** kapsam eşiğe çıksın diye kapatılması gereken TL ve en kısa kalem listesi (cfo_maliyet_kapsami_satir; yoksa tanımsız) */
+    costCoverageGap?: { gapTry: number; closesGap: boolean; items: { sku: string; durum: string; tl: number; why: string }[] } };
   sales: { lastHour: SalesPeriod; today: SalesPeriod; yesterday: SalesPeriod; last7Days: SalesPeriod;
     last30Days: SalesPeriod; monthToDate: SalesPeriod; comparisons: Comparison[] };
   profitability: Profitability; profitabilityByPeriod: Record<string, Profitability>; channels: { channel: string; profitability: Profitability; previousMargin: Metric; sourceFresh: boolean; netSettlementRatio: Metric; estimatedNetReceipts: Metric }[];
