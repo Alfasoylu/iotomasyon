@@ -13,7 +13,7 @@
  * Çalıştır: npx tsx __tests__/ai-cfo-anomalies.test.ts
  */
 import assert from "node:assert/strict";
-import { detectCfoAnomalies, shouldReopen } from "../lib/cfo-agent/anomalies";
+import { detectCfoAnomalies, shouldReopen, silencedRules } from "../lib/cfo-agent/anomalies";
 import { getCfoConfig } from "../lib/cfo-agent/config";
 import { metric, unknown } from "../lib/cfo-agent/calculations";
 import type { Anomaly, CfoAgentSnapshot, Metric, ProductSignal } from "../lib/cfo-agent/types";
@@ -132,6 +132,19 @@ async function main() {
     const found = rules(detectCfoAnomalies(snap, config));
     assert(found.includes("COST_COVERAGE"));
     assert(!found.includes("NEGATIVE_PROFIT"));
+  });
+
+  check("mükerrer satır şirket çapında kapı değil: marj kuralları çalışır, DUPLICATE_SALES_ROWS uyarısı gelir (Cowork 2026-10-08)", () => {
+    const snap = baseSnapshot({
+      dataQuality: { staleSources: [], missingFields: [], costCoveragePct: 100, matchingCoveragePct: 100,
+        sourceWatermarks: [], excludedDummyStock: 0, zeroStockSkuCount: 0, commissionCoverage: [],
+        fbaInventoryUnknown: true, duplicateCanonicalRows: 2, excludedUntrustedRows: 0 },
+      products: [baseProduct({ sourceFresh: true, financialSourceFresh: true, unitProfit: metric(-10), previousUnitProfit: metric(10) })],
+    });
+    const found = rules(detectCfoAnomalies(snap, config));
+    assert(found.includes("NEGATIVE_PROFIT"), "tek tekrar marj/kâr kurallarını susturmaz");
+    assert(found.includes("DUPLICATE_SALES_ROWS"));
+    assert(!silencedRules(snap, config).some(r => r.includes("mükerrer")));
   });
 
   check("stockDays eşiğin altındaysa STOCKOUT üretir (XML taze olmalı)", () => {

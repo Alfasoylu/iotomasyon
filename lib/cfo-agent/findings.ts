@@ -96,6 +96,8 @@ const TEMPLATES: Record<string, (c: Ctx, o: FindingOptions) => { what: string; a
     action: "Tasfiye / indirim planı yap (break-even indirim /cfo/sermaye'de)." }),
   RETURNS_SPIKE: ({ n }) => ({ what: `İade oranı ${fmt(n("current"), pct)} (önceki ${fmt(n("previous"), pct)}).`, action: "İade sebeplerini kanal ve ürün bazında incele." }),
   DATA_STALE: ({ a }) => ({ what: `${a.entityId} verisi bayat — bu kaynağa bağlı kurallar susuyor.`, action: `${a.entityId} yüklemesini / senkronunu yenile.`, urgency: "BUGUN" }),
+  DUPLICATE_SALES_ROWS: ({ n }) => ({ what: `Kanonik satışta ${fmt(n("duplicate_rows"), num)} mükerrer satır (aynı kanal + sipariş + model); ilgili SKU-kanal grupları marj hesabından çıkarıldı, kurallar susmuyor.`,
+    action: "Panelden doğrula: gerçek tekrar mı, aynı siparişte ayrı satırlara bölünmüş adet mi.", urgency: "BILGI" }),
   DATA_QUALITY: ({ get }) => ({ what: `Eksik alanlar: ${String(get("missing_fields") ?? "").slice(0, 300)}.`, action: "Eksik veriyi tamamla.", urgency: "BILGI" }),
   COST_COVERAGE: ({ n }, o) => ({ what: `Maliyet kapsamı ${fmt(n("cost_coverage"), pct)} < %${o.minCostCoveragePct} → marj ve kâr kuralları susuyor.`,
     action: "Eksik ürün maliyetlerini gir.", urgency: "BUGUN" }),
