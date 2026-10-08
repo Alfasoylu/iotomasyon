@@ -43,6 +43,11 @@ const cash = [evidence("cfo_nakit_projeksiyon", "minimum_position", -3379787, "T
 const c = renderFinding(anomaly("CASH_CRITICAL", "company", cash, { category: "cash", severity: "critical" }), cash, O);
 assert.equal(c.urgency, "ACIL");
 assert.equal(c.what, "Nakit dibi -3.379.787 TL — taban -3.000.000 TL altında. Kasa 59.693 TL; amaca bağlı limit 750.000 TL genel nakit değil.");
+// KMH faizi dahil dip kanıtı varsa bulguya eklenir (yol haritası 6a)
+const cashKmh = [...cash, evidence("cfo_nakit_projeksiyon", "kmh_dahil_dip", -3958629, "TRY", AT, false), evidence("cfo_nakit_projeksiyon", "kmh_dahil_dip_tarih", "2027-01-01", "date", AT, false),
+  evidence("cfo_nakit_projeksiyon", "kmh_dahil_fonlama", "FONLANAMIYOR", "text", AT, false), evidence("cfo_nakit_projeksiyon", "kmh_faizi_120g", 616399, "TRY", AT, false)];
+assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashKmh, { category: "cash", severity: "critical" }), cashKmh, O).what,
+  /genel nakit değil\. KMH faizi dahil dip -3\.958\.629 TL \(2027-01-01\) — FONLANAMIYOR; 120 günde KMH faizi 616\.399 TL\.$/);
 // önemsiz bayat hesap kapıyı kapatmaz ama bulguda uyarı olarak görünür (Cowork 2026-10-08: Ziraat USD 419,53 TL)
 const cashStale = [...cash, evidence("cfo_bank_account", "stale_immaterial", "Ziraat USD (420 TL)", "accounts", AT, true)];
 assert.match(renderFinding(anomaly("CASH_CRITICAL", "company", cashStale, { category: "cash", severity: "critical" }), cashStale, O).what,
