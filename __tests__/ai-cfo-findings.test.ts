@@ -33,6 +33,10 @@ const r2 = renderFinding(anomaly("STOCKOUT", e, noStock, { impact: { value: 5000
 assert.match(r2.what, /stok bilinmiyor/); assert.match(r2.what, /1\.599 TL\/gün \(ciro; kâr bilinmiyor\)/);
 assert.equal(r2.action, "Sipariş miktarı hesaplanamadı (stok ya da hız bilinmiyor).");
 
+// stok sıfırsa "0 günde tükenecek" yerine "stokta yok"
+const zero = so.map(x => x.query.endsWith("stock_qty") ? { ...x, value: 0 } : x.query.endsWith("stock_days") ? { ...x, value: 0 } : x);
+assert.match(renderFinding(stockout, zero, O).what, /^MD-3003B1 \(EPTTAVM\) stokta yok\. Hız 5,33/);
+
 // CASH_CRITICAL — ACİL; sayılar kanıttan
 const cash = [evidence("cfo_nakit_projeksiyon", "minimum_position", -3379787, "TRY", AT, true), evidence("cfo_nakit_kapisi", "cash", 59693.13, "TRY", AT, true),
   evidence("cfo_nakit_kapisi", "purpose_limit_not_general_cash", 750000, "TRY", AT, true)];

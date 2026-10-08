@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### CFO motoru ilk üretim koşusu düzeltmeleri (2026-10-08)
+- `cfo_gun_ozeti` SAGLIK satırında saat 6 saat geri görünüyordu (saat dilimsiz UTC sütun); `20261008130000_cfo_gun_ozeti_tz` üretimde uygulandı, parmak izi birebir.
+- Stoğu sıfır SKU bulgusu "stokta yok" der ("0 günde tükenecek" yerine).
+
 ### Sitede LLM yok — deterministik CFO motoru + Cowork CFO günlük görünümü (2026-10-08)
 - `lib/cfo-agent/findings.ts`: her anomali şablonlu bulgu (ne · TL etkisi · kanıt id'leri · aksiyon · aciliyet); sayılar yalnız kanıttan.
 - Motor (`runner.ts`): saatlik + senkron sonrası + elle; önemli değişiklik bayrağı (tüm anomaliler, dünden beri yeni/değişti/aynı, kapanan), METRIK satırları (CFO bağlamı Blok B), alarm; tek `cfo_run` kaydı (`engine:%`), snapshot yalnız girdi değişince.
