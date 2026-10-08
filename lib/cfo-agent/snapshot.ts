@@ -11,6 +11,8 @@ const DIRECT_API_SOURCES=new Set(["Trendyol","Hepsiburada"]);
 export const WEEKLY_UPLOAD_MAX_AGE_HOURS=8*24;
 const maxAgeHours=(source:string)=>source==="Entegra"?WEEKLY_UPLOAD_MAX_AGE_HOURS:48;
 import { evidence } from "./evidence";
+import { loadDownside } from "../cfo/downside-data";
+import { TIER_LABEL } from "../cfo/downside";
 import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type ReadSource, type Row } from "./sources";
 import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources";
 import { assumedShippingChannel, shippingBandsFor, shippingChannelFor, shippingTariffSql, type ShippingOptions } from "./shipping";
@@ -381,6 +383,17 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     const values=functions.cfo_nakit_projeksiyon.map(r=>numeric(r[positionKey]));
     snapshot.cash.minimumProjectedPosition=values.every(v=>v!=null)?metric(Math.min(...values as number[]),true,"projection_bank_cash_plus_receivables_and_estimated_collections_excludes_overdraft"):unknown("projection_column_unavailable");
   } else missing.push("projection_position_column_unvalidated");
+  // KMH faizi dahil dip (aşağı yön baz senaryosu, lib/cfo/downside.ts — yol haritası 6a): projeksiyon eksi pozisyonun faizini
+  // saymaz; dip iyimser kalır. Kanonik dip (projeksiyon) ve kural tetiği değişmez; faizli dip CASH_CRITICAL kanıtına eklenir.
+  // Akış projeksiyonla birebir tutmuyorsa (parity) ya da KMH oranı girilmemişse eklenmez (uydurma yok).
+  const down=await loadDownside(<T,>(sql:string)=>db.query(sql) as Promise<T[]>);
+  if(down&&down.parity.mismatchDays===0&&down.kmhMonthly!=null){
+    const b=down.scenarios[0];
+    snapshot.cash.summaries.push(evidence("cfo_nakit_projeksiyon","kmh_dahil_dip",b.minPosition,"TRY",asOf,false),
+      evidence("cfo_nakit_projeksiyon","kmh_dahil_dip_tarih",b.minDate,"date",asOf,false),
+      evidence("cfo_nakit_projeksiyon","kmh_dahil_fonlama",TIER_LABEL[b.tier],"text",asOf,false),
+      evidence("cfo_nakit_projeksiyon","kmh_faizi_120g",b.carryCostTry,"TRY",asOf,false));
+  }
   // Read existing payment/wealth sources; only numeric aggregates reach snapshot.
   const payments=await catalog.rows("cfo_odeme_gunluk",["kalan_gun","cikacak","girecek"],200);
   const wealth=await catalog.rows("cfo_servet",["servet_try","servet_usd"],1);

@@ -10,6 +10,7 @@
 ## 2026-10
 
 ### Banka bayatlık kapısı önemlilik eşikli (2026-10-08)
+- Nakit kritik bulgusu KMH faizi dahil dibi ve fonlanabilirliği de yazar (aşağı yön baz senaryosu); kanonik dip ve tetik değişmedi.
 - Canlıda doğrulandı: CASH_CRITICAL yeniden ACİL bulgu, Ziraat USD önemsiz bayat hesap olarak uyarıda.
 - Mükerrer kanonik satış satırı artık marj/kâr kurallarını şirket çapında susturmaz; `DUPLICATE_SALES_ROWS` bilgi bulgusu üretir (Cowork kararı).
 - Bayat banka hesabı nakit kurallarını (CASH_CRITICAL) yalnız bakiyesi önemlilik eşiğini (10.000 TL) aşıyorsa ya da bilinmiyorsa susturur; önemsiz bayat hesap bulguda uyarı olarak görünür. Ziraat USD (419,53 TL) artık −3,6M'lik dip kuralını susturmuyor.

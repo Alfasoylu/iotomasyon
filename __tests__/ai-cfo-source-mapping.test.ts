@@ -267,6 +267,17 @@ async function main() {
     assert.equal(big.cash.banksFresh, false, "önemli bayat hesap nakit kurallarını susturur");
     assert.ok(big.dataQuality.staleSources.includes("banks"));
     await pg.exec(`delete from cfo_bank_account where id in ('b2','b3')`);
+    // KMH faizi dahil dip (yol haritası 6a): oran girilmemişse kanıt yok (uydurma oran yok); girilince aşağı yön baz senaryosu
+    // CASH_CRITICAL kanıtına eklenir — kanonik dip (projeksiyon) değişmez, faizli dip ondan kötü ya da eşittir.
+    const ev = (snap: typeof s, k: string) => snap.cash.summaries.find(e => e.query === k)?.value;
+    assert.equal(ev(s, "kmh_dahil_dip"), undefined, "KMH oranı yokken faizli dip yazılmaz");
+    await pg.exec(`insert into cfo_settings (id,"updatedAt","kmhMonthlyRatePct") values ('st1',now(),5)`);
+    const withRate = await buildCfoAgentSnapshot({ db, now, config, compact: false });
+    assert.ok(Number(ev(withRate, "kmh_dahil_dip")) <= withRate.cash.minimumProjectedPosition.value!, "faizli dip faizsizden kötü ya da eşit");
+    assert.ok(Number(ev(withRate, "kmh_faizi_120g")) > 0, "eksi pozisyon faiz doğurur");
+    assert.match(String(ev(withRate, "kmh_dahil_fonlama")), /KMH|FONLANAMIYOR|şahsi|gümrük/);
+    assert.match(String(ev(withRate, "kmh_dahil_dip_tarih")), /^\d{4}-\d{2}-\d{2}$/);
+    await pg.exec(`delete from cfo_settings where id = 'st1'`);
     console.log("AI CFO source mapping: kargo bands (toplam, measured fee once, 19.06 validity, Trendyol assumption for other channels), SET cost from cfo_set_fiyat, cash projection pozisyon (no overdraft), default reviewed profile + off switch passed");
   } finally { await pg.close(); }
 }
