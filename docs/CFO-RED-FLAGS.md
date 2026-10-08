@@ -311,3 +311,20 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **Kalan sınır (bilinçli):** `npx prisma migrate deploy` doğrudan çağrılırsa koruma atlanır; yönetişim kuralı (Master Plan: üretimde deploy yok,
   Cowork SQL uygular) geçerli. Yeni red flag yok.
 
+---
+
+## 2026-10-09 — CFO-008 kısım 1 (KDV hariç ciro) RED FLAG PASS
+
+### RF-20261008-025 — güncelleme: KISMEN FIX READY (KDV hariç yarısı; migration 20261009120000, Cowork uygulayacak)
+- `fm_sales_canonical` kaynakta KDV hariç tutar olmayan satırda (Trendyol API, Amazon FBA) tutarı türetir: SKU'nun pazaryeri satırlarındaki baskın
+  KDV oranı (yalnız 2023-07-10 sonrası — öncesi %18; ≥ %80 baskınlık), yoksa %20 varsayılan; bayrak `ex_vat_derived_sku` / `ex_vat_default_rate`.
+  Kaynak değer korunur; görünümün diğer tüm sütunları aynı (PGlite eşlik testi `fm-kdv-haric`). Kalite notu U → B.
+- Üretim ölçümü (anlık görüntü üzerinde aynı mantık, salt-okuma): Mayıs–Ekim her ay KDV payı %16,67 (tümü %20). Eylül KDV hariç 1.604.768 TL;
+  Ekim varsayılan oran payı %38,9 (yeni SKU'ların Entegra geçmişi yok; oran yine %20 — tutar etkilenmez, köken bayrakta).
+- **Açık kalan (ikinci yarı):** eksik günlerin "A" notuyla tam sayılması (07.10 = 5.288 TL) — kaynak tazeliği sınırı ayrı iş.
+
+### Bağımsız inceleme
+- Aynı KDV iki kez düşülüyor mu? Hayır: türetme yalnız kaynakta KDV hariç tutar YOKSA; kimlik testi KDV hariç + KDV = KDV dahil. Eski oranla
+  (%18) türetme riski 2023-07-10 filtresiyle kapatıldı (üretimde 8 SKU'nun medyanı %18'e düşüyordu). XML KDV kullanılmadı: okuyucu rolünün
+  `XmlProductData` yetkisi yok (security_invoker görünüm onu kırardı) ve Trendyol ürünlerinde %10 ürün yok. Yeni red flag yok.
+
