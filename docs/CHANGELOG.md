@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### CFO ilk tam sistem denetimi ve kalıcı yönetim belgeleri (2026-10-08)
+- CFO sisteminin geliştirilmesi artık beş kalıcı belgeyle yönetiliyor: ana plan (`docs/CFO-MASTER-PLAN.md`), öncelikli iş listesi (`CFO-BACKLOG.md`), sabit puanlama (`CFO-SCORECARD.md`), bağımsız risk kaydı (`CFO-RED-FLAGS.md`) ve karar günlüğü (`CFO-DECISION-LOG.md`). İlk denetim skoru 48/100; en büyük risk net sermayenin üç farklı tanımla ölçülmesi.
+
 ### Maliyet kapsamı bulgusu düzeltilecek kalemleri sayar (2026-10-08)
 - Kapsam eşiğin altındayken bulgu artık eşiğe kaç TL eksik olduğunu ve açığı kapatan en kısa SKU listesini (her biri için yapılacak iş: maliyet gir / ürüne eşle / adet-set tanımla) yazar. Liste, kapsam yüzdesiyle aynı satır sınıflamasından gelir. Üretimde, satır sınıflama migration'ı uygulanınca devreye girer; o zamana kadar bulgu yalnız yüzdeyi yazar.
 

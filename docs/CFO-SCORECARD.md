@@ -1,0 +1,72 @@
+---
+last_updated: 2026-10-08 23:45 TR
+current_main_commit: 422a6db
+current_phase: "Faz 0 — İlk tam sistem denetimi"
+current_score: 48/100 (hard gate 12/12 gerekiyor; bugün 5/12)
+next_action: "CFO-001"
+---
+
+# CFO SCORECARD
+
+## Metodoloji (sabit — değişiklik ancak gerekçeyle ve DECISION-LOG kaydıyla)
+
+100 puan, 10 boyut. Her puan **kanıt** (dosya:satır / test / metrik / üretim gözlemi) ister. "Özellik var" tam puan değildir:
+özellik mevcut ama veri kalitesi, tutarlılık veya kapsama zayıfsa kısmi puan. Bir boyutun puanı, o boyuttaki en zayıf halka ile sınırlanır
+(ör. motor doğru ama sayfalar başka tanım gösteriyorsa "tutarlılık" kırılır).
+
+| # | Boyut | Ağırlık | Tam puan için gereken |
+|---|---|---|---|
+| 1 | Financial accuracy & reconciliation | 20 | Her ekonomik metrik tek tanım; mutabakat testleri (satış, nakit, stok, bilanço kimliği) yeşil; çoklu tanım yok |
+| 2 | Cash / liquidity / debt intelligence | 15 | Tek nakit yolu, kapasite, kademeli faiz (ölçülmüş oranlar), borç tek tanım + güncel hedef, ödeme alarmları güvenilir |
+| 3 | Capital allocation quality | 15 | Fırsat maliyeti (eşik getiri), marjinal tahsis, doğru tabanlı (KDV hariç, kapsam ≥ %95), kararlara bağlı |
+| 4 | Revenue / profitability intelligence | 10 | Tek ciro tanımı, KDV hariç katkı marjı, iade/komisyon/kargo ölçülmüş, marj kuralları açık |
+| 5 | Inventory / procurement intelligence | 10 | Hız, stockout, ölü stok (tek kural), ithalat önerisi, yoldaki mal tek kaynak |
+| 6 | Decision memory & calibration | 10 | Öneriler beklenen değerle kaydedilir, sonuç ölçülür, isabet skoru izlenir |
+| 7 | Data quality / provenance | 7 | UNKNOWN≠0, measured/estimated doğru, kaynak + ölçüm anı her sayıda, bayatlık kapıları |
+| 8 | Automation / observability | 5 | Güvenilir zamanlama, sessiz hata yok, alarm teslimi bağımsız |
+| 9 | Cost efficiency | 4 | Runtime AI maliyeti ~0 ve ölçülü; altyapı maliyeti bilinir |
+| 10 | Security / operational safety | 4 | En az yetki, yazma yolları yazma izniyle, audit izlenebilir, secret güvenliği |
+
+Seviye ölçeği (her boyut): 0–20% yok/yanlış · 20–40% parçalı, çelişkili · 40–60% çalışıyor ama tutarsız/eksik veri · 60–80% doğru ve
+tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde gözlenmiş.
+
+## Hard gate'ler (90+ için ayrıca hepsi gerekli)
+
+| # | Gate | 2026-10-08 | Kanıt |
+|---|---|---|---|
+| H1 | Kritik mutabakat problemi yok | ❌ | RF-001 net sermaye 3 tanım |
+| H2 | Açıklanamayan duplicate finansal metrik yok | ❌ | nakit 4, borç 5, kur 4, ciro 7, marj 5 tanım |
+| H3 | Kritik UNKNOWN kararlar gizlenmiyor | ❌ | RF-016 (eski motor null→0, sabit kur yedekleri) |
+| H4 | Nakit/borç riskleri görünür | ✅ | CASH_CRITICAL (faizli dip tetiği), kapasite alarmı, `cfo_gun_ozeti` (borç tanımı ayrıca H2'de) |
+| H5 | Sermaye tahsisi fırsat maliyeti içeriyor | ✅ | `capital-efficiency.ts` eşik getiri, tasfiye başabaş, marjinal tahsis |
+| H6 | CFO kararları sonuçla ölçülebiliyor | ❌ | RF-014 (15 kararın 3'ünde beklenen değer; ölçüm tablosu boş) |
+| H7 | Önemli sayılar provenance taşıyor | ❌ | eski motor sayfaları kaynak/ölçüm anı taşımıyor; tahminler measured=true |
+| H8 | Site sayfaları aynı finansal gerçeği gösteriyor | ❌ | Master Plan §C |
+| H9 | Kritik finansal işlem otomatik/kontrolsüz yapılmıyor | ✅ | Ödeme/sipariş/fiyat yolu yok; yazma yolları izinli (bkz. RF-012 kısmi) |
+| H10 | Sistem AI olmadan temel CFO görevlerini yapıyor | ✅ | Runtime LLM yok; deterministik motor 3+/gün `completed` |
+| H11 | Runtime AI maliyeti düşük ve ölçülüyor | ✅ | LLM çağrısı 0; Cowork abonelik (sitede maliyet yok) |
+| H12 | Açık P0 red flag yok | ❌ | RF-001…005 |
+
+**Gate durumu: 5/12.** Skor 90'ı geçse bile gate'ler geçmeden sistem "mükemmel" sayılmaz.
+
+## Puan — 2026-10-08 (başlangıç)
+
+| # | Boyut | Ağırlık | Puan | Kanıt (artı) | Kanıt (eksi) |
+|---|---|---|---|---|---|
+| 1 | Financial accuracy & reconciliation | 20 | **8** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye 3, borç 5, kur 4, ciro 7, marj 5 tanım; KDV esası belirsiz; latent `remainingOverride`; atıf kimliği bozuk |
+| 2 | Cash / liquidity / debt | 15 | **8** | 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | 4 nakit/4 kapasite tanımı; düz %4,5 beş yerde; borç hedefi eski; defterlerin yazma yolu/vade devri yok; 8 limitin oranı ölçülmemiş |
+| 3 | Capital allocation | 15 | **7** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | KDV dahil NRV tabanı; kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
+| 4 | Revenue / profitability | 10 | **4** | Ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları | Marj kuralları susuyor (kapsam); KDV düşülmüyor; 7 ciro formülü; iade marja bağlı değil |
+| 5 | Inventory / procurement | 10 | **5** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
+| 6 | Decision memory & calibration | 10 | **3** | `cfo_hamle` + beklenen/gerçekleşen ekranı; goal attribution | 3/15 karar ölçülebilir; ölçüm tablosu hiç yazılmıyor; atıf kimliği bozuk |
+| 7 | Data quality / provenance | 7 | **4** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi | Eski motor/yan modüllerde UNKNOWN→0; tahminler measured=true; elle defterler; 66 açık soru, karışık durum sözlüğü |
+| 8 | Automation / observability | 5 | **3** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; takılan koşu/kilit hatası görünmez; yetim `cfo-cycle` |
+| 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
+| 10 | Security / operational safety | 4 | **2** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Okuma izniyle yazma yolları, yetkisiz action, düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü |
+| | **TOPLAM** | **100** | **48** | | |
+
+## Skor geçmişi
+
+| Tarih | Commit | Skor | Gate | Not |
+|---|---|---|---|---|
+| 2026-10-08 | 422a6db | 48 | 5/12 | İlk tam denetim (başlangıç çizgisi) |
