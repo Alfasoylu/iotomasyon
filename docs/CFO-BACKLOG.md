@@ -2,7 +2,7 @@
 last_updated: 2026-10-09 02:10 TR
 current_main_commit: 90af323
 current_phase: "Faz 0 — İlk tam sistem denetimi tamamlandı; Faz 1 (Metrik sözleşmesi) sırada"
-current_score: 50/100
+current_score: 51/100
 next_action: "CFO-014 (UNKNOWN→0 süpürmesi + FX yedekleri) → CFO-016 güvenlik; RF-029 veri düzeltmesi Cowork; CFO-005 migration 110000 Cowork"
 ---
 
