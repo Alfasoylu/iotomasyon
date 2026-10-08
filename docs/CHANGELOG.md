@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Nakit kritik kuralı KMH faizi dahil dibe bağlandı (2026-10-08)
+- Nakit kritik bulgusu artık faizsiz projeksiyon dibi tabanın üstünde olsa bile KMH faizi dahil dip tabanın altına inerse tetiklenir; bulgu hangi dibin tetiklediğini yazar. Faizli dip projeksiyondan iyi olamayacağı için kural yalnız daha erken uyarır, hiçbir durumu susturmaz.
+
 ### Kademeli KMH faizi (2026-10-08)
 - Aşağı yön senaryolarında KMH faizi artık yalnız KMH ile fonlanan kısma, her bankanın ölçülmüş aylık oranıyla işliyor (Ziraat %4,083 · Enpara %4,25 · YKB %4,50); oranı ölçülmemiş limitlerin faizi bilinmiyor olarak kalır, kapasiteyi aşan kısma faiz yok. Küresel %4,50 oranı kaldırıldı. Nakit kritik bulgusu oranı ölçülmemiş limit kullanıldığında faizi "en az" diye yazar ve o limitleri sayar. `/cfo/sermaye`'de banka bazlı dilim tablosu.
 
