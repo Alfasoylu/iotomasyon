@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Kart sütunları ve mükerrer anahtarı üretimde (2026-10-08)
+- Kredi kartı devreden bakiye / akdi faiz sütunları ve maliyet kapsamının satır kimlikli mükerrer anahtarı üretime uygulandı; 19.900 TL "güvenilmez"den "maliyeti girilmemiş" kovasına geçti, kapsam %87,5 aynı. Üretim şema parmak izi repo ile eşitlendi.
+
 ### Nakit kritik kuralı KMH faizi dahil dibe bağlandı (2026-10-08)
 - Nakit kritik bulgusu artık faizsiz projeksiyon dibi tabanın üstünde olsa bile KMH faizi dahil dip tabanın altına inerse tetiklenir; bulgu hangi dibin tetiklediğini yazar. Faizli dip projeksiyondan iyi olamayacağı için kural yalnız daha erken uyarır, hiçbir durumu susturmaz.
 
