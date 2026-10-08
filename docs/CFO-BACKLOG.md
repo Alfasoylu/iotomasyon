@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-10-08 23:45 TR
-current_main_commit: 422a6db
+last_updated: 2026-10-09 01:10 TR
+current_main_commit: 9bd5bd9
 current_phase: "Faz 0 — İlk tam sistem denetimi tamamlandı; Faz 1 (Metrik sözleşmesi) sırada"
 current_score: 50/100
 next_action: "CFO-004 (PR-B) — kararsız yapılabilir; paralelde Alperen kararları D-P01…D-P06 (CFO-METRIC-CONTRACT.md)"
@@ -10,6 +10,8 @@ next_action: "CFO-004 (PR-B) — kararsız yapılabilir; paralelde Alperen karar
 
 Sıralama: **(ekonomik değer + risk azaltımı + hedef etkisi) − (karmaşıklık + veri belirsizliği + operasyonel risk)**, her bileşen 1–5.
 Skor = (EV + RR + GI) − (CX + DU + OR). Durumlar: DISCOVERED · VALIDATED · PLANNED · IN_PROGRESS · BLOCKED · DONE · REJECTED · DEPRECATED.
+**Tamamlanma kuralı (2026-10-09):** %100 biten madde "✅ TAMAMLANDI YYYY-AA-GG — kısa not (PR/migration)" olarak işaretlenir;
+kısmen biten madde TAMAMLANDI yazılmaz (biten/kalan ayrı yazılır). Faz 0 öncesi biten işler en altta "Tamamlanan" listesinde.
 Öncelik: P0 finansal doğruluk/güvenlik · P1 büyük ekonomik etki · P2 karar kalitesi · P3 optimizasyon · P4 nice-to-have.
 AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). Uygulama maliyeti S/M/L.
 
@@ -18,16 +20,16 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | Sıra | ID | Başlık | P | Hedef | EV | RR | GI | CX | DU | OR | Skor | Maliyet | Durum | RF |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | IN_PROGRESS (PR-A ✓; karar bekliyor) | 001,011 |
-| 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | IN_PROGRESS (kod+test ✓; migration Cowork'te) | 005 |
+| 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | ✅ TAMAMLANDI 2026-10-09 — kalan anapara; PR #213 + migration 100000 üretimde | 005 |
 | 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | VALIDATED | 003 |
 | 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | VALIDATED | 002,019,020 |
-| 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | IN_PROGRESS (TS ✓; SQL `cfo_kart_karari` migration 20261009110000 Cowork'te) | 004 |
+| 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | IN_PROGRESS (TS ✓ PR #214; SQL `cfo_kart_karari` PR #215, migration 20261009110000 Cowork'te) | 004 |
 | 6 | CFO-006 | Şirket/şahsi tek sınıflama; nakit/kapasite/borç bunu kullansın | P1 | G2,G3 | 4 | 4 | 3 | 3 | 1 | 2 | **5** | M | VALIDATED | 010 |
 | 7 | CFO-009 | Alarm teslimi GitHub'dan bağımsız; takılan koşu + kilit hatası alarmı; cfo-cycle bağla | P1 | tümü | 3 | 5 | 2 | 2 | 1 | 2 | **5** | M | IN_PROGRESS (takılan koşu/kilit/yeniden deneme ✓; teslim kanalı D-P07 bekliyor) | 006 |
 | 8 | CFO-010 | Defter bakım yolu: kredi/kart vade devri, alacak/ödeme girişi | P1 | tümü | 4 | 4 | 2 | 3 | 1 | 2 | **4** | L | IN_PROGRESS (kısım 1 ✓: ödeme alarmı döngü-farkında + ledger_stale; kısım 2: yazma yolu + paidAt) | 007,028 |
 | 9 | CFO-007 | KDV esası kararı + marj/NRV KDV hariç | P1 | G1,G2 | 4 | 4 | 4 | 3 | 3 | 2 | **4** | M | DISCOVERED | 008 |
 | 10 | CFO-008 | Ciro hedefi tanımı (KDV, kanal kapsamı) + tek ciro fonksiyonu | P1 | G1 | 3 | 3 | 5 | 3 | 2 | 1 | **5** | M | DISCOVERED | 009,023 |
-| 11 | CFO-011 | Maliyet kapsamı ≥ %95 (8 SKU veri + migration 200000) | P1 | G1 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen; migration: Cowork) | 013 |
+| 11 | CFO-011 | Maliyet kapsamı ≥ %95 (8 SKU veri + migration 200000) | P1 | G1 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen; Code ✓ PR #210, migration 200000 üretimde 2026-10-08) | 013 |
 | 12 | CFO-015 | Ölçülmemiş KMH/gümrük/şahsi faiz oranlarını gir | P1 | G3 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen) | 018 |
 | 13 | CFO-012 | Karar hafızası: beklenen değer zorunlu, `cfo_hamle_olcum` yazımı, kalibrasyon | P2 | tümü | 3 | 2 | 3 | 2 | 2 | 1 | **3** | M | VALIDATED | 014 |
 | 14 | CFO-014 | UNKNOWN→0 süpürmesi + measured bayrak düzeltmesi | P2 | tümü | 2 | 4 | 2 | 2 | 1 | 1 | **4** | M | VALIDATED | 016 |
@@ -76,7 +78,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-004 — `remainingOverride` TL olarak kullanılmasın
 - **neden:** Taksit sayısı TL'ye karışıyor (LATENT). **uygulama:** `cfo_servet_kalem`, `cfo_kilometre_yaz` migration (Cowork uygular), PGlite testi.
-- **kabul:** override=12 iken borç değişmez. **maliyet:** S · **durum:** IN_PROGRESS — migration `20261009100000_cfo_kredi_kalan_anapara` (sha256 2de5c7bb…ebca7) Cowork uygulayacak; PGlite testi `ai-cfo-source-mapping`.
+- **kabul:** override=12 iken borç değişmez. **maliyet:** S · **durum:** ✅ TAMAMLANDI 2026-10-09 — PR #213; migration `20261009100000_cfo_kredi_kalan_anapara` (sha256 2de5c7bb…ebca7) Cowork 2026-10-08 21:25 UTC uyguladı; üretimde Krediler satırı = −3.373.797,12 = kalan anapara, `cfo_kilometre_yaz` override kullanmıyor; PGlite testi `ai-cfo-source-mapping`; parmak izi yeniden ölçüldü.
 
 ### CFO-005 — Düz %4,5 KMH oranını kaldır
 - **neden:** 5 yerde düz oran; borclar satırları toplamı tutmuyor; kart erteleme KKDF/BSMV'siz.
@@ -97,14 +99,14 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-009 — Alarm teslimi ve gözlemlenebilirlik
 - **uygulama:** sağlık değerlendirmesini Vercel cron'larının `after()` zincirine de ekle; `running` > 15 dk → başarısız say; kilit hatasında `cfo_run` satırı; `cfo-cycle`'ı mevcut cron'a bağla; teslim kanalı (e-posta/WhatsApp — mevcut WhatsApp altyapısı) karar: Alperen.
-- **kabul:** GitHub işi olmadan alarm üretilir; takılan koşu testi. **durum:** VALIDATED
+- **kabul:** GitHub işi olmadan alarm üretilir; takılan koşu testi. **durum:** IN_PROGRESS — kısım 1 bitti 2026-10-09 (PR #216: `stuck_run` alarmı, kilit hatası `cfo_run` satırı, başarısız/takılı dilim yeniden denenir); kalan: Vercel `after()` zinciri, `cfo-cycle`, teslim kanalı (D-P07).
 
 ### CFO-010 — Defter bakım yolu
 - **uygulama:** kredi/kart için ay dönümü devri (ödenen ay → sonraki vade), `currentMonthState` sıfırlama; alacak/ödeme girişi için kontrollü form veya içe aktarma; `cfo-actions.ts` bağlanır ya da silinir.
-- **kabul:** ay dönümünde `payment_unmarked` doğru tetiklenir. **durum:** VALIDATED
+- **kabul:** ay dönümünde `payment_unmarked` doğru tetiklenir. **durum:** IN_PROGRESS — kısım 1 bitti 2026-10-09 (PR #216: "ODENDI" yalnız vade − 25 gün içinde sayılır, `ledger_stale` alarmı; RF-028); kalan: yazma yolu, `paidAt`, vade devri.
 
 ### CFO-011 — Maliyet kapsamı ≥ %95
-- **durum:** BLOCKED — veri (6 SKU maliyeti, anunnaki-pointer eşlemesi, 2827456501236 set tanımı; Alperen) + migration 20261008200000 (Cowork). Code tarafı DONE (PR #210).
+- **durum:** BLOCKED — veri (6 SKU maliyeti, anunnaki-pointer eşlemesi, 2827456501236 set tanımı; Alperen). Code tarafı ✅ TAMAMLANDI 2026-10-08 (PR #210; migration 20261008200000 Cowork 2026-10-08 20:26 UTC uyguladı, satır toplamı = ciro üretimde doğrulandı).
 
 ### CFO-012 — Karar hafızası kalibrasyonu
 - **uygulama:** yeni hamlede `beklenen_deger` + `olcum_metrigi` zorunlu; motor/sermaye önerileri hamle önerisi olarak kaydedilir (onay akışı); ölçüm `cfo_hamle_olcum`'a; kalibrasyon skoru. **durum:** VALIDATED
@@ -132,6 +134,34 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ---
 
-## Tamamlanan (Faz 0 öncesi, referans)
-- PR #199–#210 (2026-10-08): tek tahsilat mekanizması, tek maliyet kapsamı tanımı, kart maliyeti, bayatlık kapısı önemlilik eşiği,
-  mükerrer anahtarı, kapasite alarmı, kademeli KMH faizi, CASH_CRITICAL faizli dibe bağlama, kapsam kapatan liste. Ayrıntı: PDKS.md.
+## Tamamlanan
+
+Faz 0 sonrası (backlog maddesi):
+- ✅ TAMAMLANDI 2026-10-09 — **CFO-004** kredi borcu = kalan anapara (PR #213 + migration 20261009100000 üretimde; RF-005 kapandı).
+- ✅ TAMAMLANDI 2026-10-08 — **CFO-001 PR-A** metrik sözleşmesi memosu + salt-okunur mutabakat SQL'i (PR #212). CFO-001'in kendisi karar bekliyor.
+- ✅ TAMAMLANDI 2026-10-08 — **Faz 0 ilk tam denetim** + 5 yönetim dosyası (PR #211).
+- ✅ TAMAMLANDI 2026-10-09 — **CFO-009 kısım 1** takılan koşu alarmı, kilit hatası izi, başarısız dilim yeniden denenir (PR #216). Madde açık (teslim kanalı).
+- ✅ TAMAMLANDI 2026-10-09 — **CFO-010 kısım 1** ödeme alarmı döngü-farkında + `ledger_stale` (PR #216; RF-028). Madde açık (yazma yolu).
+- ✅ TAMAMLANDI 2026-10-09 — **CFO-005 TS katmanı**: düz %4,5 KMH oranı kalktı, banka başına ölçülmüş oran, kademeli (PR #214). SQL kısmı (PR #215) migration bekliyor.
+
+Faz 0 öncesi (referans; ayrıntı PDKS.md / CHANGELOG.md):
+- ✅ TAMAMLANDI 2026-10-08 — PR #210: maliyet kapsamı bulgusu açığı kapatan en kısa SKU listesini veriyor (migration 200000 üretimde).
+- ✅ TAMAMLANDI 2026-10-08 — PR #209: kart sütunları + mükerrer anahtar düzeltmesi üretimde, parmak izi yeniden ölçüldü.
+- ✅ TAMAMLANDI 2026-10-08 — PR #208: CASH_CRITICAL KMH faizi dahil dipte de tetikleniyor.
+- ✅ TAMAMLANDI 2026-10-08 — PR #207: kademeli KMH faizi (yalnız KMH ile fonlanan kısma, ölçülmüş banka oranı).
+- ✅ TAMAMLANDI 2026-10-08 — PR #206: mükerrer satır anahtarı platform satır kimliği + KMH kapasite alarmı.
+- ✅ TAMAMLANDI 2026-10-08 — PR #205: CASH_CRITICAL kanıtında KMH faizi dahil dip.
+- ✅ TAMAMLANDI 2026-10-08 — PR #204: mükerrer kanonik satış satırları marj kurallarını şirket çapında susturmuyor.
+- ✅ TAMAMLANDI 2026-10-08 — PR #203: banka bayatlık kapısına önemlilik eşiği (10.000 TL).
+- ✅ TAMAMLANDI 2026-10-08 — PR #202: Trendyol senkronu 12:00 UTC (motor Cowork'ün 16:49 okumasından önce koşar).
+- ✅ TAMAMLANDI 2026-10-08 — PR #201: kart borç maliyeti (faiz yalnız devreden bakiyeye, akdi oran + KKDF/BSMV).
+- ✅ TAMAMLANDI 2026-10-08 — PR #200: `cfo_maliyet_kapsami` üretimde, parmak izi yeniden ölçüldü.
+- ✅ TAMAMLANDI 2026-10-08 — PR #199: tek tahsilat mekanizması, motor günde 3 koşu, tek maliyet kapsamı tanımı.
+- ✅ TAMAMLANDI 2026-10-08 — PR #198: `cfo_gun_ozeti` İstanbul saati + sıfır stoklu bulgularda "stokta yok".
+- ✅ TAMAMLANDI 2026-10-08 — PR #197: sitede LLM yok — deterministik CFO motoru + Cowork günlük görünümü.
+- ✅ TAMAMLANDI 2026-10-07 — PR #196: aşağı yön senaryoları (nakit dibinin taşıyabileceği şok).
+- ✅ TAMAMLANDI 2026-10-07 — PR #195: gelir kaldıraçları (100k USD/ay açığını kapatma yolları sıralı).
+- ✅ TAMAMLANDI 2026-10-07 — PR #194: Decision Memory + hedef açığı atfı.
+- ✅ TAMAMLANDI 2026-10-07 — PR #193: sermaye verimliliği + marjinal tahsis, Value of Information motoru, kredi faizi düzeltmesi.
+- ✅ TAMAMLANDI 2026-10-07 — PR #192: CFO panel defterlerini (Trendyol kesinti, banka hareketi, teklif) okuyor.
+- ✅ TAMAMLANDI 2026-10-07 — PR #191: tek kur kaynağı (`cfo_kur`) + 2 üretim tablosunun migration kaydı.

@@ -58,10 +58,6 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: s => pg.exec(s), query: <T,>(s: string, p?: unknown[]) => pg.query<T>(s, p) });
     for (const m of res.pendingInProduction) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
-    // kapsamın satır sınıflaması (Cowork uygulayacak; baseline.json notAppliedInProduction) — motorun okuduğu sürüm
-    await pg.exec(readFileSync("prisma/migrations/20261008200000_cfo_maliyet_kapsami_satir/migration.sql", "utf8"));
-    // kredi borcu = kalan anapara (CFO-004; Cowork uygulayacak)
-    await pg.exec(readFileSync("prisma/migrations/20261009100000_cfo_kredi_kalan_anapara/migration.sql", "utf8"));
     // kart ertelemesi kart faiziyle (CFO-005b; Cowork uygulayacak)
     await pg.exec(readFileSync("prisma/migrations/20261009110000_cfo_kart_karari_kart_faizi/migration.sql", "utf8"));
     await pg.exec("set search_path = public");

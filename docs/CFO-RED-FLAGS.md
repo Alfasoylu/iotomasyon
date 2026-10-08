@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-10-08 23:45 TR
-current_main_commit: 422a6db
+last_updated: 2026-10-09 01:10 TR
+current_main_commit: 9bd5bd9
 current_phase: "Faz 0 — İlk tam sistem denetimi"
 current_score: 50/100
 next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
@@ -11,7 +11,7 @@ next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-09):** CRITICAL 1 · HIGH 10 (+1 yeni RF-028 FIX READY) · MEDIUM 11 · LOW 4 · INFO 1 · toplam 28.
+**Açık özet (2026-10-09, senkron sonrası):** RF-005 RESOLVED · CRITICAL 1 · HIGH 10 (+1 yeni RF-028 FIX READY) · MEDIUM 11 · LOW 4 · INFO 1 · toplam 28.
 
 ---
 
@@ -251,3 +251,22 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **economic_risk:** kaçan kredi/kart taksiti → gecikme faizi, KKB notu, kart limit blokesi.
 - **fix:** "ODENDI" yalnız bu döngüde işaretlendiyse sayılır (`lastUpdatedAt > vade − 25 gün`); vade geçip ödendi işaretli ama sonraki vade girilmemişse `ledger_stale` alarmı; vadesi geçmiş kredi/kart artık sabah koşusunda da alarm verir (eskiden yalnız vade günü 15:00 sonrası).
 - **sınır (bilinçli):** `lastUpdatedAt` satırdaki her güncellemede değişir — döngü içinde başka alan güncellenirse yanlışlıkla "ödendi" sayılabilir; kalıcı çözüm ödeme işaretinin kendi tarihi (`paidAt`) — CFO-010 kısım 2 (defter yazma yolu) ile.
+
+---
+
+## 2026-10-09 — Üretim senkronu (migration 200000 + 100000) RED FLAG PASS
+
+### RF-20261008-005 — güncelleme: RESOLVED (2026-10-09)
+- Migration `20261009100000_cfo_kredi_kalan_anapara` (checksum 2de5c7bb…) Cowork tarafından 2026-10-08 21:25 UTC uygulandı.
+  Üretim salt-okuma: `cfo_servet_kalem` Krediler satırı = −3.373.797,12 TL = `cfo_loan.remainingTry` toplamı; `cfo_kilometre_yaz`
+  gövdesinde `remainingOverride` yok. Parmak izi yeniden ölçüldü (fn 36, fnacl 53, view 60) ve repo ile eşit.
+
+### RF-20261008-013 — güncelleme: Code tarafı üretimde
+- Migration `20261008200000_cfo_maliyet_kapsami_satir` (checksum 76abb7a0…) 2026-10-08 20:26 UTC uygulandı; satır fonksiyonu toplamı = ciro,
+  ACL yalnız postgres/service_role. Kapsam (pencere kaydı) %87,3 — açık kalan veri işi (Alperen), durum değişmedi.
+
+### Bağımsız inceleme
+- Parmak izi farkı yalnız beklenen nesnelerde (yeni `cfo_maliyet_kapsami_satir` fonksiyonu + ACL'i, değişen görünüm/fonksiyon gövdeleri);
+  rel/acl/pol/idx değişmedi → beklenmeyen şema sürüklenmesi yok. `20261009110000` hâlâ üretimde değil (Cowork uyguluyor) — RF-004 SQL kısmı FIX READY kalır.
+  Yeni red flag yok.
+
