@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
 import { num, numOrNull, remainingInstallments } from "@/lib/cfo/engine";
+import { cardEffectiveMonthlyRate } from "@/lib/cfo/card-cost";
 import { fmtTry, fmtPct, fmtDate, daysFromNow } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
@@ -93,7 +94,7 @@ export default async function CfoDebtsPage() {
         <CfoTable head={
           <tr>
             <Th>Kart</Th><Th right>Güncel borç</Th><Th right>Asgari</Th><Th>Kesim</Th><Th>Son ödeme</Th>
-            <Th>Bu ay</Th><Th right>Aylık taşıma</Th><Th>Veri</Th>
+            <Th>Bu ay</Th><Th right>Aylık faiz (devreden)</Th><Th>Veri</Th>
           </tr>
         }>
           {raw.cards.map((c) => {
@@ -112,7 +113,15 @@ export default async function CfoDebtsPage() {
                 <Td muted>{c.statementDay ? `ayın ${c.statementDay}'i` : "—"}</Td>
                 <Td muted>{c.dueDay ? `ayın ${c.dueDay}'i` : fmtDate(c.nextDueDate)}</Td>
                 <Td><PaymentStateBadge state={c.currentMonthState} /></Td>
-                <Td right>{debt == null ? "—" : fmtTry(debt * (o.monthlyRatePct / 100))}</Td>
+                <Td right>{(() => {
+                  // Faiz yalnız devreden bakiyeye, kartın kendi akdi oranı × (1 + KKDF + BSMV) ile (lib/cfo/card-cost.ts)
+                  const rev = c.revolvingTry == null ? null : Number(c.revolvingTry);
+                  const eff = cardEffectiveMonthlyRate(c.contractMonthlyRatePct == null ? null : Number(c.contractMonthlyRatePct));
+                  if (debt == null || debt === 0) return "—";
+                  if (rev == null) return <span className="text-[var(--text-muted)]">devreden girilmemiş</span>;
+                  if (rev === 0) return fmtTry(0);
+                  return eff == null ? <span className="text-[var(--text-muted)]">{fmtTry(rev)} devreden · oran yok</span> : `${fmtTry(rev * eff)} (%${(eff * 100).toFixed(2)})`;
+                })()}</Td>
                 <Td><DataTagBadge tag={c.dataTag} /></Td>
               </tr>
             );
@@ -128,6 +137,9 @@ export default async function CfoDebtsPage() {
         </CfoTable>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
           Asgari tutar %{(minPct * 100).toFixed(0)} varsayımıyla hesaplanır. Gerçek ekstre asgarisi girildiğinde varsayım devre dışı kalır.
+          Faiz yalnız son ekstreden devreden bakiyeye işler; dönem içi harcama ve gelecek taksitler faizsizdir. Efektif oran = akdi faiz × (1 + KKDF %15 + BSMV %15).
+          {o.cardsUnknownRevolving > 0 && ` ${o.cardsUnknownRevolving} kartta devreden bakiye girilmemiş — toplam faiz eksik.`}
+          {o.cardRevolvingWithoutRateTry > 0 && ` ${fmtTry(o.cardRevolvingWithoutRateTry)} devreden bakiyenin akdi faizi girilmemiş.`}
         </p>
       </Card>
 

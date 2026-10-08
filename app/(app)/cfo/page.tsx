@@ -131,7 +131,7 @@ export default async function CfoPage() {
         <MetricCard
           label="Kredi kartı borcu" value={fmtTry(o.cardDebtTry)} icon={CreditCard}
           status={o.cardDebtTry === 0 ? "ok" : o.cardDebtTry <= 1_000_000 ? "warn" : "danger"}
-          hint={`Aylık taşıma ${fmtTry(o.cardCarryCostTry)}`}
+          hint={o.cardsUnknownRevolving > 0 || o.cardRevolvingWithoutRateTry > 0 ? `Devreden faiz ${fmtTry(o.cardCarryCostTry)}/ay + bilinmeyen` : `Devreden faiz ${fmtTry(o.cardCarryCostTry)}/ay`}
           href="/cfo/borclar"
         />
         <MetricCard
