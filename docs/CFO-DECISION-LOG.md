@@ -3,7 +3,7 @@ last_updated: 2026-10-08 23:45 TR
 current_main_commit: 422a6db
 current_phase: "Faz 0 — İlk tam sistem denetimi"
 current_score: 48/100
-next_action: "Bekleyen tanım kararları D-P01…D-P06 (CFO-001/002/003/007/008 için)"
+next_action: "Bekleyen tanım kararları D-P01…D-P06 — CFO önerileri ve TL etkileri: docs/CFO-METRIC-CONTRACT.md"
 ---
 
 # CFO DECISION LOG
@@ -23,6 +23,11 @@ kararlar yazılır. Append-only; değişen karar yeni satırla "supersedes" gös
 | D-P05 | Ciro hedefi (G1) KDV ve kanal kapsamı | KDV dahil / hariç · Alfashome dahil mi · IDEASOFT / eski tekstil dahil mi | KDV dahil ≈ 33,7k USD/ay tahmini · hariç ≈ 28k | CFO-008 |
 | D-P06 | `Product.unitCostTry` KDV dahil mi hariç mi? | dahil / hariç | marj ve NRV esası buna bağlı | CFO-007 |
 | D-P07 | Alarm teslim kanalı | e-posta · WhatsApp (mevcut altyapı) · ikisi | — | CFO-009 |
+
+CFO önerileri (2026-10-08, PR-A; Alperen onaylayana kadar öneri):
+D-P01 → GENİŞ (yoldaki ödenmiş mal dahil) · D-P02 → LCNRV (maliyet ile KDV hariç NRV'nin düşüğü) · D-P03 → finansal borç (kredi kalan + kart toplam
++ kullanılan KMH; yoldaki vergi/navlun ayrı taahhüt) · D-P04 → TCMB döviz alış (ayın 15'i), yoksa önceki ay işaretli, yoksa UNKNOWN ·
+D-P05 → KDV hariç, iade düşülmüş, tüm kanallar (Alfashome dahil, eski tekstil hariç) — veri hazır olana kadar KDV dahil etiketli · D-P06 → teyit gerekli.
 
 ## Sistem tasarım kararları (bu oturuma kadar, özet)
 

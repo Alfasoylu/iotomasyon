@@ -3,7 +3,7 @@ last_updated: 2026-10-08 23:45 TR
 current_main_commit: 422a6db
 current_phase: "Faz 0 — İlk tam sistem denetimi tamamlandı; Faz 1 (Metrik sözleşmesi) sırada"
 current_score: 48/100
-next_action: "CFO-001 — PR-A: metrik sözleşmesi karar memosu + mutabakat testi"
+next_action: "CFO-004 (PR-B) — kararsız yapılabilir; paralelde Alperen kararları D-P01…D-P06 (CFO-METRIC-CONTRACT.md)"
 ---
 
 # CFO BACKLOG
@@ -17,7 +17,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 
 | Sıra | ID | Başlık | P | Hedef | EV | RR | GI | CX | DU | OR | Skor | Maliyet | Durum | RF |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | VALIDATED | 001,011 |
+| 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | IN_PROGRESS (PR-A ✓; karar bekliyor) | 001,011 |
 | 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | VALIDATED | 005 |
 | 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | VALIDATED | 003 |
 | 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | VALIDATED | 002,019,020 |
@@ -56,7 +56,8 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **bağımlılık:** CFO-003 (kur), CFO-007 (KDV esası) kararı; Alperen kararları: dar/geniş, stok esası (maliyet / KDV hariç NRV), yoldaki mal, şahsi varlık dahil mi.
 - **uygulama:** PR-A karar memosu + salt-okunur mutabakat testi (bugünkü tüm tanımları ölçer, farkları TL ile yazar); PR-D `cfo_metrik_net_sermaye` + tek snapshot yazarı + Goal/sayfa/motor aynı kaynak.
 - **kabul:** Goal Engine `wealth_usd` = `/cfo` servet kartı = snapshot (aynı tarih, aynı kur) 1 TL içinde; eşlik testi CI'da.
-- **AI maliyeti:** 0 · **durum:** VALIDATED · **PR:** — · **tamamlanma:** —
+- **AI maliyeti:** 0 · **durum:** IN_PROGRESS · **PR:** PR-A (memo `docs/CFO-METRIC-CONTRACT.md` + `scripts/cfo/metric-reconciliation.sql` + CI kontrolü) · **tamamlanma:** —
+- **PR-A sonucu (2026-10-08):** önerilen net sermaye 2.973.814 TL ≈ 61,2k USD (LCNRV, geniş); önerilen borç 5.889.904 TL ≈ 121,3k USD (+3,79M taahhüt ayrı); KDV hariç ciro ölçülemiyor (yeni RF-025).
 
 ### CFO-002 — Borç tek tanım + hedef <100k USD
 - **neden:** Hedef 5M TL (eski); 5 borç formülü; KMH yok; yoldaki mal vergisi borçta; şahsi kartlar karışık; 5M sabiti SQL+TS'de.

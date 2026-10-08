@@ -1,15 +1,15 @@
 ---
 last_updated: 2026-10-08 23:45 TR
-current_main_commit: 422a6db
-current_phase: "Faz 0 — İlk tam sistem denetimi tamamlandı (uygulama başlamadı)"
+current_main_commit: cde8760
+current_phase: "Faz 1 — Metrik sözleşmesi (CFO-001 PR-A tamam; tanım kararları bekleniyor)"
 current_score: 48/100 (hard gate'ler GEÇMİYOR — bkz. CFO-SCORECARD.md)
-next_action: "CFO-001 — Finansal metrik sözleşmesi: net sermaye / borç / FX / ciro tek tanım (önce karar memosu + mutabakat testi)"
+next_action: "CFO-004 (PR-B); Alperen kararları D-P01…D-P06 → CFO-001 PR-D / CFO-002 PR-E / CFO-003 PR-C"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)
 
 Bu belge CFO sisteminin ana sözleşmesidir. **Her görevden önce okunur.** Plan dışına çıkılırsa nedeni buraya yazılır.
-Bağlı belgeler: [CFO-BACKLOG](CFO-BACKLOG.md) · [CFO-SCORECARD](CFO-SCORECARD.md) · [CFO-RED-FLAGS](CFO-RED-FLAGS.md) ·
+Bağlı belgeler: [CFO-METRIC-CONTRACT](CFO-METRIC-CONTRACT.md) · [CFO-BACKLOG](CFO-BACKLOG.md) · [CFO-SCORECARD](CFO-SCORECARD.md) · [CFO-RED-FLAGS](CFO-RED-FLAGS.md) ·
 [CFO-DECISION-LOG](CFO-DECISION-LOG.md) · çalışma günlüğü [PDKS](PDKS.md) · [CHANGELOG](CHANGELOG.md) · [GOAL-ENGINE](GOAL-ENGINE.md) ·
 [AI-CFO-RUNNER](AI-CFO-RUNNER.md) · [CFO-WORKFLOW](CFO-WORKFLOW.md) · [CFO-GOREV](CFO-GOREV.md) (Cowork okuma sözleşmesi).
 
