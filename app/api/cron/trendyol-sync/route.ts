@@ -1,7 +1,9 @@
 /**
  * Phase 48 — Trendyol Daily Order + Return Sync Cron
  *
- * Called by Vercel Cron (vercel.json) daily at 06:00 UTC.
+ * Called by Vercel Cron (vercel.json) daily at 12:00 UTC (Hobby: anytime within the hour → 15:00–15:59 TR).
+ * Moved from 06:00 UTC on 2026-10-08 so the CFO engine run that follows lands before the Cowork CFO
+ * 16:49 TR read (GitHub schedules are unreliable in this repo); the 14-day window means no data is lost.
  * Syncs the last 14 days of Trendyol orders and return claims.
  * A 14-day window catches any orders that might have been missed
  * by the previous run (status changes, late deliveries, etc.).
