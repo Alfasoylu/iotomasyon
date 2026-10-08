@@ -15,8 +15,9 @@ import { evidence } from "./evidence";
 import { businessSource, type ReadSource } from "./sources";
 import type { CfoAgentSnapshot, Evidence } from "./types";
 
-// AI CFO girdi Blok B (bugünün durumu) + Blok C (hafıza) ve Blok A tablo eki — 2026-10-07 girdi şartnamesi §3.
-// Her satır bir kanıttır (id'li): model ona atıf yapabilir, doğrulayıcı sayısını uydurma saymaz. Her kaynak önce varlığı
+// CFO bağlamı: Blok B (bugünün durumu) + Blok C (hafıza) ve Blok A tablo eki — 2026-10-07 girdi şartnamesi §3.
+// 2026-10-08'den beri LLM'e gitmez: Blok B satırları deterministik motorun METRIK satırlarıdır (cfo_gun_ozeti, Cowork CFO okur).
+// Her satır bir kanıttır (id'li). Her kaynak önce varlığı
 // kontrol edilerek okunur (eksik görünüm/fonksiyon koşuyu düşürmez, o bölüm atlanır). Müşteri alanı okunmaz.
 
 export type CfoContext = { tables: string; state: Evidence[]; memory: Evidence[] };
@@ -159,45 +160,4 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   const coverage = snapshot.dataQuality.commissionCoverage;
   if (coverage?.length) tables.push(`KOMİSYON ALANI KAPSAMI: ${coverage.map(c => `${c.channel} %${c.coveragePct == null ? "?" : Math.round(c.coveragePct)}`).join(" · ")}`);
   return { tables: tables.join("\n"), state, memory };
-}
-
-/** SCHEDULED_CFO eki: yalnız nakit kararlarında, kaldıraç merdiveninin BOŞTA en ucuz 2 basamağı (deterministik sıra). Başka bağlam yok. */
-/** SCHEDULED_CFO eki (deterministik, küçük): nakit kararında kaldıraç merdiveninin BOŞTA en ucuz 2 basamağı; nakit ve stok
- *  kararında en yakın varışlı ithalat projesinin beklenen aylık ciro katkısı (TAHMİNİ). Başka bağlam yok. */
-export async function loadScheduledExtras(decisionType: string, at: string, db: ReadSource = businessSource): Promise<Evidence[]> {
-  // Paket ekleri en çok 4 (decision-packet.ts) → sıra karar değerine göre: önce sermaye eşiği + tahsis planı ve ters yöndeki
-  // geçmiş karar, nakit kararında stres dibi (KMH faizi + makul şoklar); sonra kaldıraç merdiveni ve ithalat katkısı.
-  const out: Evidence[] = [];
-  if (decisionType === "CASH" || decisionType === "INVENTORY") {
-    // Nakit/stok kararlarında: eşik getiri + tahsis planının ilk adımı (her 1 TL nereye?)
-    out.push(...(await loadCapitalEvidence(db, at)).filter(e => e.query.startsWith("sermaye_verimliligi.esik_getiri") || e.query.startsWith("sermaye_verimliligi.plan.1")));
-    // Nakit kararında ters yöndeki ilk geçmiş karar (ör. borç hedefi) — model önceki kararla tutarlılığı sorgular
-    if (decisionType === "CASH") out.push(...(await loadDecisionMemoryEvidence(db, at)).filter(e => /\.(WRONG_DIRECTION|WORSENING) /.test(e.query)).slice(0, 1));
-    // Nakit kararında stres dibi (KMH faizi + makul şoklar) — "baz fonlanıyor" iyimserliğini sorgular
-    if (decisionType === "CASH") out.push(...(await loadDownsideEvidence(db, at)).filter(e => e.query.startsWith("asagi_yon.stres_dip") || e.query.startsWith("asagi_yon.uyusmazlik")));
-  }
-  if (decisionType === "CASH") {
-    const [p] = await db.query<{ t: string | null }>(`select to_regclass('public.cfo_kaldirac_basamak')::text as t`);
-    if (p?.t) {
-      const rows = await db.query(`select basamak, ad, tl_kapasite, guven from cfo_kaldirac_basamak where durum='BOSTA' order by basamak limit 2`);
-      out.push(...rows.map(b => evidence("cfo_kaldirac_basamak", `merdiven.${b.basamak}.${clip(b.ad, 40)} (BOSTA) kapasite`, num(b.tl_kapasite) ?? "ölçülmedi",
-        num(b.tl_kapasite) == null ? "state" : "TRY", at, b.guven === "OLCULDU" || b.guven === "KESIN")));
-    }
-  }
-  if (decisionType === "SALES") {
-    // Ciro kararlarında: ciro açığı + en büyük gelir kaldıracı
-    out.push(...(await loadRevenueEvidence(db, at)).filter(e => e.query.startsWith("ciro_yolu.acik") || e.query.startsWith("ciro_yolu.kaldirac.1")));
-    // Ciro kararlarında Entegra'nın görmediği ALFASHOME cirosu (son 30 gün + senkron tazeliği).
-    out.push(...(await loadAlfashomeSales(db, at)).filter(e => e.query.startsWith("alfashome.senkron") || e.query.startsWith("alfashome.ciro_son_30")));
-  }
-  if (decisionType === "PRICING") {
-    // Fiyat/marj kararlarında gerçekleşen pazar yeri kesinti oranı (fatura bazlı) + dosya tazeliği.
-    out.push(...(await loadTrendyolFinance(db, at)).filter(e => e.query.startsWith("trendyol_finans.yukleme") || e.query.includes(".kesinti_orani_pct")));
-  }
-  if (decisionType === "CASH" || decisionType === "INVENTORY") {
-    const imports = await loadImportRevenue(db, at);
-    const first = imports.find(e => e.query.endsWith(".durum"))?.query.split(".")[1];
-    out.push(...imports.filter(e => first && e.query.startsWith(`ithalat.${first}.`) && (e.query.includes("aylik_ciro") || e.query.endsWith(".durum"))).slice(0, 2));
-  }
-  return out;
 }

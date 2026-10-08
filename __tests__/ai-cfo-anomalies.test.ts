@@ -212,7 +212,7 @@ async function main() {
     assert.equal(profit.impact?.kind, "lost_profit"); assert.equal(profit.impact?.value, 50 * 1 * days);
     const revenue = detectCfoAnomalies(baseSnapshot({ products: [baseProduct({ stockDays: metric(5), stockQty: 5, unitProfit: unknown("cost_unknown") })] }), config).find(a => a.rule === "STOCKOUT")!;
     assert.equal(revenue.impact?.kind, "revenue_at_risk"); assert.equal(revenue.impact?.value, 200 * 1 * days); assert.equal(revenue.impact?.estimated, true);
-    assert.equal(revenue.evidenceIds.length, 6, "ciro riski için ortalama fiyat kanıtı eklenir");
+    assert.equal(revenue.evidenceIds.length, 7, "ciro riski için ortalama fiyat kanıtı eklenir (stok adedi kanıtı dahil: şablonlu bulgu sipariş miktarını hesaplar)");
     const price = detectCfoAnomalies(baseSnapshot({ products: [baseProduct({ avgPrice: metric(100), priceFloor: metric(150) })] }), config).find(a => a.rule === "PRICE_BELOW_FLOOR")!;
     assert.equal(price.impact?.kind, "price_gap"); assert.equal(price.impact?.value, (150 - 100) * 1 * 30);
     const dead = detectCfoAnomalies(baseSnapshot({ deadStock: [{ sku: "OLU-1", value: metric(100000), alarm: "KIRMIZI", findingId: null }] }), config).find(a => a.rule === "DEAD_STOCK")!;

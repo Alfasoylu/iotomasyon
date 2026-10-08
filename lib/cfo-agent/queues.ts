@@ -1,28 +1,8 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
-import type { Anomaly, MemoryItem } from "./types";
+import type { Anomaly } from "./types";
 import { businessSource, type ReadSource } from "./sources";
 
-/** Deterministik hafıza (2026-10-07): yalnız bu anomalilerle (cooldownKey / SKU) ilgili EN ÇOK 2 önceki karar; yoksa []. */
-export const MAX_MEMORY_ITEMS=2;
-export async function retrieveRelevantMemory(anomalies:Anomaly[],db:ReadSource=businessSource):Promise<MemoryItem[]> {
-  const skus=[...new Set(anomalies.filter(a=>a.entityType==="sku").map(a=>a.entityId.split(":").at(-1)!))].slice(0,8);
-  const memory:MemoryItem[]=[];
-  // Önce aynı anomali için verilmiş son AI kararı, sonra SKU'nun yürürlükteki ürün kararı.
-  const previous=await prisma.cfoInsight.findMany({where:{cooldownKey:{in:anomalies.map(a=>a.cooldownKey)}},orderBy:{createdAt:"desc"},take:MAX_MEMORY_ITEMS,select:{entityId:true,recommendation:true,createdAt:true}});
-  for(const r of previous)memory.push({source:"cfo_insight",entityId:r.entityId,text:r.recommendation.slice(0,200),asOf:r.createdAt.toISOString()});
-  if(skus.length&&memory.length<MAX_MEMORY_ITEMS) {
-    // ::text — Prisma raw queries cannot deserialize a regclass value ("Failed to deserialize column of type 'regclass'").
-    const present=await db.query(`select to_regclass('public.cfo_urun_karar')::text as source`);
-    if(present[0]?.source) {
-      const rows=await db.query(`select sku,karar,left(sebep,200) as sebep,updated_at from cfo_urun_karar where sku=any($1::text[])
-        and (gecerli_bitis is null or gecerli_bitis>=current_date) order by updated_at desc limit 2`,skus);
-      for(const r of rows)memory.push({source:"cfo_urun_karar",entityId:String(r.sku),text:`${r.karar}: ${r.sebep??""}`.slice(0,200),asOf:new Date(String(r.updated_at)).toISOString()});
-    }
-  }
-  return memory.slice(0,MAX_MEMORY_ITEMS);
-}
-
+/** Anomaliye karşılık zaten açık iş kaydı (ölü stok bulgusu, stok sıçraması, açık soru) — bulgu satırı onu "Açık iş" diye gösterir. */
 export async function existingQueueRecords(anomalies:Anomaly[],db:ReadSource=businessSource):Promise<Map<string,string[]>> {
   const result=new Map<string,string[]>();
   const present=await db.query<{name:string}>(`select table_name as name from information_schema.tables where table_schema='public'

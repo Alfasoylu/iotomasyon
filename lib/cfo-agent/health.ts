@@ -1,67 +1,102 @@
 import { prisma } from "@/lib/prisma";
 import { getCfoConfig } from "./config";
+import { istanbulPeriod } from "./period";
 
-// AI CFO sağlık alarmı (2026-10-07): monitörün kendisi izlenmezse sessizlik "her şey yolunda" ile "monitör ölü"
-// arasında ayırt edilemez. Saatlik GitHub Actions işi /api/cron/ai-cfo-health'i çağırır; alarm varsa 503 → iş kırmızı →
-// GitHub depo sahibine e-posta gönderir. Aynı alarmlar /admin/ai-cfo'da gösterilir. Yalnız okur, hiçbir şey yazmaz.
+// Alarm — Cowork CFO'nun iki koşusu (08:00 / 16:49 TR) arasında Alperen'e ulaşan TEK kanal (2026-10-08 mimari kararı).
+// Sitede LLM yok: "içgörü yok", bütçe ve token alarmları kaldırıldı (AI çağrısı olmaması normaldir). Alarmlar:
+//   engine_stale          deterministik motor 6 saattir tamamlanmadı (gerçek arıza)
+//   consecutive_failures  son iki motor koşusu tamamlanmadı (failed ya da beklenmeyen durum)
+//   floor_breach          cfo_nakit_projeksiyon(120) dibi tabanın (−3.000.000) altında
+//   payment_unmarked      vadesi bugün olup 15:00 TR sonrası hâlâ işaretlenmemiş ya da vadesi geçmiş ödeme
+//   source_dead           Entegra / XML / Trendyol senkronu ya da banka bakiyesi eşik süreden eski
+// Bildirim (GitHub işi kırmızı → e-posta) yalnız arıza, YENİ alarm ya da 09:00 TR günlük hatırlatmada: süregelen bir taban
+// alarmı saatte bir e-posta üretmez; yine de her koşuda cfo_gun_ozeti'nde görünür.
 
-export type CfoAlarm = { code: "consecutive_failures" | "budget_blocked" | "input_limit_blocked" | "no_insight_24h" | "entegra_upload_due" | "bank_update_due"; message: string };
-/** Haftalık elle yüklenen veriler (2026-10-07 kararı): son Entegra yüklemesi ve 7 günden eski banka hesapları. */
-export type ManualData = { entegraLastImport: Date | null; staleBankAccounts: string[] };
-const WEEK_MS = 7 * 24 * 3600000;
-export type HealthRun = { status: string; generatedAt: Date; error: string | null; insights: number; sentActionable: number };
+export type AlarmCode = "engine_stale" | "consecutive_failures" | "floor_breach" | "payment_unmarked" | "source_dead";
+export type CfoAlarm = { code: AlarmCode; key: string; message: string };
+export type EngineRunInfo = { status: string; generatedAt: Date; finishedAt: Date | null; error: string | null };
+export type DueItem = { label: string; amountTry: number | null; due: string };
+export type SourceAge = { name: string; lastAt: Date | null; maxAgeHours: number };
+export type AlarmInput = {
+  now: Date; engineEnabled: boolean; runs: EngineRunInfo[];
+  minPosition: { valueTry: number | null; date: string | null } | null; floorTry: number;
+  payments: DueItem[]; sources: SourceAge[]; staleBankAccounts: string[];
+};
 
-/** Koşu sonucu "başarısız": hata ya da hiç içgörü geçmeyen model çıktısı. */
-const FAILED = new Set(["failed", "invalid_output"]);
-/** Atlanan ama "başarısız" sayılmayan koşular: tek bir koşu bile monitörün kör olduğunu gösterir → ANINDA alarm
- *  (07.10: token sınırı 8.000'de kaldı, koşular saatlerce atlandı, alarm çalmadı; bütçe ayın 20'sinde biterse 24 saat beklenmez). */
-// blocked_by_scheduled_limit alarm DEĞİL: günde 1 planlı çağrı tasarım gereği (2026-10-07 maliyet/görev ayrımı).
-const BUDGET = new Set(["blocked_by_budget", "blocked_by_daily_limit", "blocked_by_daily_budget", "blocked_by_run_cost", "billing_unconfigured"]);
-const INPUT_LIMIT = new Set(["blocked_by_input_tokens", "blocked_by_input_size"]);
-/** Model çağrısına hiç ulaşmayan, sağlık açısından nötr durumlar. */
-const NEUTRAL = new Set(["running"]);
+export const ENGINE_STALE_HOURS = 6;
+const H = 3600000;
+const tl = (v: number) => `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 }).format(Math.round(v))} TL`;
 
-export function evaluateCfoAlarms(runs: HealthRun[], lastInsightAt: Date | null, aiActive: boolean, now: Date, manual?: ManualData): CfoAlarm[] {
-  const alarms: CfoAlarm[] = [];
-  const recent = runs.filter(r => !NEUTRAL.has(r.status)).sort((a, b) => b.generatedAt.getTime() - a.generatedAt.getTime());
-  const [last, prev] = recent;
-  if (last && prev && FAILED.has(last.status) && FAILED.has(prev.status)) {
-    alarms.push({ code: "consecutive_failures", message: `Son iki koşu başarısız: ${[last, prev].map(r => `${r.status}${r.error ? ` (${r.error})` : ""}`).join(" · ")}` });
+export function evaluateCfoAlarms(i: AlarmInput): CfoAlarm[] {
+  const out: CfoAlarm[] = [];
+  const finished = i.runs.filter(r => r.status !== "running").sort((a, b) => b.generatedAt.getTime() - a.generatedAt.getTime());
+  const lastOk = finished.find(r => r.status === "completed");
+  if (i.engineEnabled) {
+    const at = lastOk ? (lastOk.finishedAt ?? lastOk.generatedAt) : null;
+    if (!at || i.now.getTime() - at.getTime() > ENGINE_STALE_HOURS * H)
+      out.push({ code: "engine_stale", key: "engine_stale", message: `Deterministik motor ${ENGINE_STALE_HOURS} saattir tamamlanmadı; son başarılı koşu: ${at ? at.toISOString() : "hiç"}` });
   }
-  if (last && BUDGET.has(last.status)) {
-    alarms.push({ code: "budget_blocked", message: `Son koşu bütçe/limit yüzünden atlandı (${last.status}); AI CFO model çağırmıyor. AI_CFO_MONTHLY_BUDGET_TRY / AI_CFO_MAX_CALLS_PER_DAY kontrol edin.` });
+  const [a, b] = finished;
+  if (a && b && a.status !== "completed" && b.status !== "completed")
+    out.push({ code: "consecutive_failures", key: "consecutive_failures", message: `Son iki motor koşusu tamamlanmadı: ${[a, b].map(r => `${r.status}${r.error ? ` (${r.error})` : ""}`).join(" · ")}` });
+  if (i.minPosition?.valueTry != null && i.minPosition.valueTry < i.floorTry)
+    out.push({ code: "floor_breach", key: "floor_breach", message: `Nakit dibi ${tl(i.minPosition.valueTry)}${i.minPosition.date ? ` (${i.minPosition.date})` : ""} — taban ${tl(i.floorTry)} deliniyor` });
+  for (const p of i.payments)
+    out.push({ code: "payment_unmarked", key: `payment_unmarked:${p.label}:${p.due}`, message: `Vadesi ${p.due} olan ödeme işaretlenmemiş: ${p.label}${p.amountTry != null ? ` · ${tl(p.amountTry)}` : ""}` });
+  for (const s of i.sources) {
+    const age = s.lastAt ? (i.now.getTime() - s.lastAt.getTime()) / H : null;
+    if (age == null || age > s.maxAgeHours)
+      out.push({ code: "source_dead", key: `source_dead:${s.name}`, message: `${s.name} verisi ${age == null ? "hiç gelmedi" : `${Math.floor(age)} saattir gelmedi`} (eşik ${s.maxAgeHours} saat)` });
   }
-  if (last && INPUT_LIMIT.has(last.status)) {
-    alarms.push({ code: "input_limit_blocked", message: `Son koşu girdi sınırında atlandı (${last.status}${last.error ? `: ${last.error}` : ""}); AI CFO model çağırmıyor. AI_CFO_MAX_INPUT_TOKENS_PER_RUN ölçülen sayının üstünde olmalı (en çok 50000).` });
-  }
-  const dayAgo = now.getTime() - 24 * 3600000;
-  // Yeni düzende AI çağrısı olmaması NORMALDİR (önemli değişiklik yok → çağrı yok). Alarm yalnız modelin önemli değişiklikle
-  // en az 2 kez gerçekten çağrılıp (completed / invalid_output) 24 saatte hiç içgörü vermemesidir.
-  const answered = recent.filter(r => r.generatedAt.getTime() >= dayAgo && r.sentActionable > 0 && (r.status === "completed" || r.status === "invalid_output")).length;
-  if (aiActive && answered >= 2 && (!lastInsightAt || lastInsightAt.getTime() < dayAgo)) {
-    alarms.push({ code: "no_insight_24h", message: `Model 24 saatte ${answered} kez çağrıldı ama içgörü yok; son içgörü: ${lastInsightAt ? lastInsightAt.toISOString() : "hiç"}` });
-  }
-  // Sistem günlük değil HAFTALIK veri ister: 7 gün dolunca hatırlatır (eşik 8 gün, 1 gün tolerans — snapshot.ts).
-  if (manual && (!manual.entegraLastImport || now.getTime() - manual.entegraLastImport.getTime() > WEEK_MS)) {
-    alarms.push({ code: "entegra_upload_due", message: `Haftalık Entegra satış dökümü bekleniyor; son yükleme: ${manual.entegraLastImport ? manual.entegraLastImport.toISOString().slice(0, 10) : "hiç"}` });
-  }
-  if (manual?.staleBankAccounts.length) {
-    alarms.push({ code: "bank_update_due", message: `Haftalık banka bakiyesi güncellemesi bekleniyor (7 günden eski): ${manual.staleBankAccounts.join(", ")}` });
-  }
-  return alarms;
+  if (i.staleBankAccounts.length)
+    out.push({ code: "source_dead", key: "source_dead:banka", message: `Banka bakiyesi 7 günden eski: ${i.staleBankAccounts.join(", ")}` });
+  return out;
 }
 
-export async function loadCfoAlarms(now = new Date(), env: Record<string, string | undefined> = process.env): Promise<CfoAlarm[]> {
+/** E-posta (503) yalnız: motor arızası, önceki motor koşusunda olmayan YENİ alarm, ya da 09:00 TR günlük hatırlatma. */
+export function shouldNotify(current: CfoAlarm[], previousKeys: string[] | null, hourTr: number): boolean {
+  if (!current.length) return false;
+  if (current.some(a => a.code === "engine_stale" || a.code === "consecutive_failures")) return true;
+  if (hourTr === 9) return true;
+  const prev = new Set(previousKeys ?? []);
+  return current.some(a => !prev.has(a.key));
+}
+
+const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+
+export async function loadAlarmInput(now = new Date(), env: Record<string, string | undefined> = process.env): Promise<AlarmInput> {
   const config = getCfoConfig(env);
-  const since = new Date(now.getTime() - 48 * 3600000);
-  const rows = await prisma.cfoRun.findMany({ where: { generatedAt: { gte: since } }, orderBy: { generatedAt: "desc" }, take: 50,
-    select: { status: true, generatedAt: true, error: true, triggerReasons: true, _count: { select: { insights: true } } } });
-  const last = await prisma.cfoInsight.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } });
-  const runs: HealthRun[] = rows.map(r => ({ status: r.status, generatedAt: r.generatedAt, error: r.error, insights: r._count.insights,
-    sentActionable: ((r.triggerReasons as { sentAnomalies?: { actionable?: boolean }[] } | null)?.sentAnomalies ?? []).filter(a => a.actionable).length }));
-  const entegra = await prisma.entegraImportLog.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } });
-  const banks = await prisma.cfoBankAccount.findMany({ where: { isActive: true, lastUpdatedAt: { lt: new Date(now.getTime() - WEEK_MS) } },
-    orderBy: { sortOrder: "asc" }, select: { name: true } });
-  return evaluateCfoAlarms(runs, last?.createdAt ?? null, config.monitorEnabled && config.enabled && config.releaseApproved, now,
-    { entegraLastImport: entegra?.createdAt ?? null, staleBankAccounts: banks.map(b => b.name) });
+  const p = istanbulPeriod(now), afternoon = p.minutes >= 15 * 60;
+  const today = p.date;
+  const q = <T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql).catch(() => [] as T[]);
+  const [runs, dip, events, loans, cards, xml, ty, entegra, banks] = await Promise.all([
+    prisma.cfoRun.findMany({ where: { idempotencyKey: { startsWith: "engine:" }, generatedAt: { gte: new Date(now.getTime() - 48 * H) } }, orderBy: { generatedAt: "desc" }, take: 20,
+      select: { status: true, generatedAt: true, finishedAt: true, error: true } }),
+    q<{ v: unknown; d: string | null }>(`select pozisyon as v, tarih::text as d from cfo_nakit_projeksiyon(120) order by pozisyon asc limit 1`),
+    // Vadesi geçmiş her zaman; bugün vadeli yalnız 15:00 TR sonrası (sabah işaretlenmemiş olması normal).
+    q<{ label: string; amount: unknown; due: string }>(`select left(coalesce(description, kind::text), 60) as label, "outflowTry" as amount, "eventDate"::date::text as due
+      from cfo_cash_event where not "isSettled" and coalesce("outflowTry", 0) > 0 and "eventDate"::date ${afternoon ? "<=" : "<"} '${today}'::date order by "eventDate" limit 20`),
+    afternoon ? q<{ label: string; amount: unknown; due: string }>(`select bank || ' — ' || name as label, "monthlyPaymentTry" as amount, "nextPaymentDate"::date::text as due
+      from cfo_loan where status::text = 'AKTIF' and "nextPaymentDate"::date = '${today}'::date and "currentMonthState"::text <> 'ODENDI'`) : Promise.resolve([]),
+    afternoon ? q<{ label: string; amount: unknown; due: string }>(`select bank || ' ' || coalesce(holder, '') || ' kart' as label, "minOverrideTry" as amount, "nextDueDate"::date::text as due
+      from cfo_credit_card where "isActive" and "nextDueDate"::date = '${today}'::date and "currentMonthState"::text <> 'ODENDI'`) : Promise.resolve([]),
+    prisma.xmlSyncLog.findFirst({ where: { status: "SUCCESS" }, orderBy: { completedAt: "desc" }, select: { completedAt: true } }).catch(() => null),
+    prisma.trendyolSalesRecord.findFirst({ orderBy: { syncedAt: "desc" }, select: { syncedAt: true } }).catch(() => null),
+    prisma.entegraImportLog.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }).catch(() => null),
+    prisma.cfoBankAccount.findMany({ where: { isActive: true, lastUpdatedAt: { lt: new Date(now.getTime() - 7 * 24 * H) } }, orderBy: { sortOrder: "asc" }, select: { name: true } }),
+  ]);
+  const due = (r: { label: string; amount: unknown; due: string }) => ({ label: String(r.label).trim(), amountTry: num(r.amount), due: String(r.due) });
+  return {
+    now, engineEnabled: config.monitorEnabled, runs,
+    minPosition: dip[0] ? { valueTry: num(dip[0].v), date: dip[0].d } : null, floorTry: config.cashFloorTry,
+    payments: [...events, ...loans, ...cards].map(due),
+    // Eşikler: XML ve Trendyol günlük senkron (26 saat); Entegra haftalık yükleme (8 gün = 7 + 1 tolerans).
+    sources: [{ name: "XML", lastAt: xml?.completedAt ?? null, maxAgeHours: 26 }, { name: "Trendyol", lastAt: ty?.syncedAt ?? null, maxAgeHours: 26 },
+      { name: "Entegra", lastAt: entegra?.createdAt ?? null, maxAgeHours: 8 * 24 }],
+    staleBankAccounts: banks.map(b => b.name),
+  };
+}
+
+export async function loadCfoAlarms(now = new Date()): Promise<CfoAlarm[]> {
+  return evaluateCfoAlarms(await loadAlarmInput(now));
 }

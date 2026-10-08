@@ -7,24 +7,23 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
 import { loadCfoControlCenter } from "@/lib/cfo-agent/control-center";
 import { loadCfoAlarms, type CfoAlarm } from "@/lib/cfo-agent/health";
-import { getCfoConfig, billingConfigured } from "@/lib/cfo-agent/config";
+import { getCfoConfig } from "@/lib/cfo-agent/config";
+import { URGENCY_LABEL } from "@/lib/cfo-agent/findings";
 import { goalItem, GOAL_STATE_LABEL, type GoalRow } from "@/lib/fm/goals";
-import type { Evidence, Metric } from "@/lib/cfo-agent/types";
+import type { Metric } from "@/lib/cfo-agent/types";
 import { fmtTry } from "@/lib/cfo/format";
 import { RunButtons } from "./run-buttons";
 
-// AI CFO kontrol merkezi (adım 5). Salt okunur görünüm + elle çalıştırma. Kimlik bilgisi değeri asla gösterilmez (yalnız var/yok).
+// Deterministik CFO motoru (2026-10-08: sitede LLM yok). Motor saatte bir ölçer, tespit eder, TL'ye göre sıralar ve bulguyu
+// ŞABLONLA yazar; yargı ve karar Cowork CFO'nundur (08:00 + 16:49 TR, cfo_gun_ozeti'ni okur). Salt okunur + elle çalıştırma.
 export const dynamic = "force-dynamic";
 const time = (date: Date | string | null | undefined) => date ? new Date(date).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "Bilinmiyor";
 const money = (metric: Metric | undefined) => metric?.value == null ? "Bilinmiyor" : `${fmtTry(metric.value)}${metric.estimated ? " · TAHMİNİ" : ""}`;
+const URGENCY_VARIANT = { ACIL: "danger", BUGUN: "warn", BU_HAFTA: "info", BILGI: "neutral" } as const;
+const SINCE = { yeni: "yeni", degisti: "değişti", ayni: "aynı" } as const;
 function Stat({ label, value }: { label: string; value: string | number }) {
   return <Card className="p-4"><p className="text-xs text-[var(--text-muted)]">{label}</p><p className="mt-2 text-lg font-semibold">{value}</p></Card>;
 }
-function lockConfigured() {
-  const url = process.env.AI_CFO_LOCK_DATABASE_URL;
-  try { return !!url && process.env.AI_CFO_LOCK_SESSION_MODE === "true" && new URL(url).port !== "6543"; } catch { return false; }
-}
-function Gate({ ok, label }: { ok: boolean; label: string }) { return <li>{ok ? "✓" : "✗"} {label}</li>; }
 
 async function readGoals(): Promise<GoalRow[]> {
   try {
@@ -41,91 +40,56 @@ export default async function AiCfoPage() {
   let data: Awaited<ReturnType<typeof loadCfoControlCenter>> | null = null;
   try { data = await loadCfoControlCenter(); } catch { /* bağlantı hatası: aşağıda açıklanır */ }
   const goals = (await readGoals()).map(goalItem);
-  const live = data?.installed ? data : null, s = live?.snapshot;
-  const aiOn = config.enabled && config.releaseApproved;
+  const live = data?.installed ? data : null, s = live?.snapshot, r = live?.record;
   let alarms: CfoAlarm[] = [];
   if (data?.installed) { try { alarms = await loadCfoAlarms(); } catch { /* sağlık okuması başarısızsa sayfa yine açılır */ } }
+  const findings = r?.findings ?? [];
   return <div className="space-y-6">
-    <PageHeader title="AI CFO" subtitle="Deterministik bulguları ve hedefleri açıklayan, kanıta bağlı öneri katmanı."
-      breadcrumb={[{ label: "CFO" }, { label: "AI CFO" }]}
-      meta={<><Badge variant={aiOn ? "ok" : "neutral"}>{aiOn ? "AI açık" : "AI kapalı"}</Badge><Badge>{config.monitorEnabled ? "Monitor açık" : "Monitor kapalı"}</Badge>
-        <span className="text-xs">Son çalışma: {time(live?.run?.generatedAt)} · {live?.run?.status ?? "Henüz çalışmadı"}</span></>} />
+    <PageHeader title="CFO motoru" subtitle="Saatte bir ölçer, tespit eder, TL'ye göre sıralar ve şablonla bulgu yazar. Yargı ve karar Cowork CFO'nun (08:00 · 16:49)."
+      breadcrumb={[{ label: "CFO" }, { label: "CFO motoru" }]}
+      meta={<><Badge variant={config.monitorEnabled ? "ok" : "neutral"}>{config.monitorEnabled ? "Motor açık" : "Motor kapalı"}</Badge><Badge>LLM yok</Badge>
+        <span className="text-xs">Son koşu: {time(live?.run?.generatedAt)} · {live?.run?.status ?? "Henüz çalışmadı"} · son tamamlanan: {time(live?.completedAt)}</span></>} />
 
     {alarms.length > 0 && <Card className="space-y-1 border-[var(--danger)] p-4">
       <h2 className="font-semibold text-[var(--danger)]">Alarm</h2>
-      <ul className="list-disc pl-5 text-sm">{alarms.map(a => <li key={a.code}>{a.message}</li>)}</ul>
-      <p className="text-xs text-[var(--text-muted)]">Saatlik &quot;AI CFO sağlık alarmı&quot; GitHub Actions işi de bu durumda kırmızı yanar ve e-posta gönderir.</p>
+      <ul className="list-disc pl-5 text-sm">{alarms.map(a => <li key={a.key}>{a.message}</li>)}</ul>
+      <p className="text-xs text-[var(--text-muted)]">Saatlik iş motor arızasında, yeni alarmda ve 09:00 TR hatırlatmasında kırmızı yanar ve e-posta gönderir.</p>
     </Card>}
 
     <Card className="space-y-3 p-4">
-      <h2 className="font-semibold">Durum ve kapılar</h2>
-      <ul className="text-sm space-y-1">
-        <Gate ok={!!data?.installed} label="Kayıt tabloları (cfo_run / cfo_insight / cfo_usage) — adım 8'de üretime uygulanır" />
-        <Gate ok={config.monitorEnabled} label="Monitor (AI_CFO_MONITOR_ENABLED) — deterministik kayıt" />
-        <Gate ok={config.enabled} label="AI (AI_CFO_ENABLED)" />
-        <Gate ok={config.releaseApproved} label="Yayın kapıları: CI build + canlı kabul + shadow week" />
-        <Gate ok={config.provider === "anthropic" && !!process.env.ANTHROPIC_API_KEY} label={`Sağlayıcı (${config.provider}) ve API anahtarı (yalnız var/yok)`} />
-        <Gate ok={billingConfigured(config)} label="Fiyat ve kur yapılandırması (bütçe hesabı)" />
-        <Gate ok={lockConfigured()} label="Oturum kilidi bağlantısı (session pooler, 6543 değil)" />
-      </ul>
-      <p className="text-xs text-[var(--text-muted)]">Model: {config.model} · <strong>Planlı (SCHEDULED_CFO):</strong> günde en çok {config.maxScheduledCallsPerDay} zamanlanmış, toplam {config.maxCallsPerDay} çağrı · girdi ≤ {config.scheduledMaxInputTokens}, çıktı ≤ {config.scheduledMaxOutputTokens} token · koşu ≤ {fmtTry(config.maxCostTryPerRun)}, gün ≤ {fmtTry(config.maxCostTryPerDay)} · aylık {fmtTry(config.monthlyBudgetTry)}.
-        <strong> Derin inceleme (elle):</strong> el kitabının tamamı, girdi ≤ {config.maxInputTokens} token, koşu ≤ {fmtTry(config.deepMaxCostTryPerRun)}, aylık {fmtTry(config.deepMonthlyBudgetTry)}.
-        Zamanlama: monitor 05:00 (XML) · 07:55 · 09:00 (Trendyol) · 11:50 · 16:50; her slotta deterministik motor çalışır, AI yalnız önemli değişiklik kapısı geçerse çağrılır.</p>
+      <h2 className="font-semibold">Durum</h2>
+      <p className="text-sm">{r?.material ? (r.material.sinceYesterday ? "Karar girdisi dünden beri DEĞİŞTİ." : "Dünden beri önemli değişiklik yok (no_material_change).") : "Henüz motor kaydı yok."}
+        {r?.closedSinceYesterday?.length ? ` Dünden beri kapanan bulgu: ${r.closedSinceYesterday.length}.` : ""}</p>
+      {r?.silenced?.length ? <p className="text-xs text-[var(--text-muted)]">Susan kurallar: {r.silenced.join(" | ")}</p> : null}
+      <p className="text-xs text-[var(--text-muted)]">Zamanlama: her saat :05 (GitHub Actions) + XML (05:00) ve Trendyol (09:00) senkronlarından sonra. Cowork CFO tek görünümü okur: <code>select * from cfo_gun_ozeti</code>.</p>
       <RunButtons />
     </Card>
 
+    {s && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <Stat label="Dün ciro" value={money(s.sales.yesterday.grossRevenue)} />
+      <Stat label="Ticari nakit" value={money(s.cash.cash)} />
+      <Stat label="En düşük projeksiyon nakit pozisyonu" value={money(s.cash.minimumProjectedPosition)} />
+      <Stat label="Bulgu (ACİL / toplam)" value={`${findings.filter(f => f.urgency === "ACIL").length} / ${findings.length}`} />
+    </div>}
+
+    <h2 className="text-lg font-semibold">Bulgular ({findings.length})</h2>
+    <div className="space-y-2">{findings.length ? findings.map(f => <Card key={f.fingerprint} className="space-y-1 p-3">
+      <div className="flex flex-wrap items-center gap-2"><Badge variant={URGENCY_VARIANT[f.urgency]}>{URGENCY_LABEL[f.urgency]}</Badge><Badge>{f.rule}</Badge>
+        <span className="text-xs text-[var(--text-muted)]">dünden beri: {SINCE[f.sinceYesterday]}{f.impactTry != null ? ` · ${fmtTry(f.impactTry)}${f.impactEstimated ? " (tahmini)" : ""}` : ""}</span></div>
+      <p className="text-sm">{f.what}</p>
+      <p className="text-sm"><strong>Aksiyon:</strong> {f.action}{f.openRecords.length ? ` · Açık iş: ${f.openRecords.join(", ")}` : ""}</p>
+      <p className="text-xs text-[var(--text-muted)]">Kanıt: {f.evidenceIds.join(", ") || "yok"}</p>
+    </Card>) : <p className="text-sm">Bulgu yok.</p>}</div>
+
     <h2 className="text-lg font-semibold">Hedefler (Goal Engine)</h2>
-    <p className="text-xs text-[var(--text-muted)]">Gerisinde/riskte/sağlanmamış ve kalitesi bilinen (A–D) taze hedefler modele bulgu olarak gider; bilinmeyen hedef gönderilmez.</p>
     <div className="grid gap-3 md:grid-cols-2">{goals.length ? goals.map(g => <Card key={g.key} className="p-4 space-y-1">
       <p className="font-semibold">{g.title}</p>
-      <p className="text-sm">{GOAL_STATE_LABEL[g.state]} · kalite {g.grade}{["OFF_TRACK", "AT_RISK", "NOT_MET"].includes(g.state) && g.grade !== "U" ? " · modele gider" : ""}</p>
+      <p className="text-sm">{GOAL_STATE_LABEL[g.state]} · kalite {g.grade}</p>
       <p className="text-xs">Hedef {g.targetTry == null ? "Bilinmiyor" : fmtTry(g.targetTry)} · Gözlenen {g.observedTry == null ? "Bilinmiyor" : fmtTry(g.observedTry)}{g.observedOn ? ` (${g.observedOn})` : ""}</p>
     </Card>) : <p className="text-sm">Hedef gözlemi yok (Goal Engine henüz çalışmadı).</p>}</div>
 
-    {!data && <Card className="p-4"><p>AI CFO verisi yüklenemedi. Veritabanı bağlantısını kontrol edin.</p></Card>}
-    {data && !data.installed && <Card className="p-4"><p>Kayıt tabloları henüz üretimde yok (adım 8, ayrı onay). Monitor açılsa bile kayıt tutulamaz; şu an hiçbir AI çalışması yapılmıyor.</p></Card>}
-    {live && !s && <Card className="p-4">Henüz snapshot yok. Monitor açıldıktan sonra ilk sonuç burada görünecek.</Card>}
-    {s && <><h2 className="text-lg font-semibold">Son snapshot</h2><p className="text-xs text-[var(--text-muted)]">{time(s.generatedAt)}. Bilinmeyen maliyetler sıfır sayılmaz.</p>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Dün ciro" value={money(s.sales.yesterday.grossRevenue)} />
-        <Stat label="Ticari nakit" value={money(s.cash.cash)} />
-        <Stat label="En düşük projeksiyon nakit pozisyonu" value={money(s.cash.minimumProjectedPosition)} />
-        <Stat label="Kritik uyarı" value={live?.anomalies.filter(a => a.severity === "critical").length ?? 0} />
-      </div>
-      <h2 className="text-lg font-semibold">Deterministik uyarılar</h2>
-      <div className="space-y-2">{live?.anomalies.length ? live.anomalies.slice(0, 12).map(a => <Card key={a.id} className="p-3"><Badge variant={a.severity === "critical" ? "danger" : "warn"}>{a.severity}</Badge>
-        <span className="ml-2">{a.rule} · {a.entityId}</span>{a.existingRecordIds.length > 0 && <p className="mt-1 text-xs">Mevcut kayıt takip ediliyor: {a.existingRecordIds.join(", ")}</p>}</Card>)
-        : <p className="text-sm">Önemli anomali tespit edilmedi.</p>}</div></>}
-
-    {live && <><h2 className="text-lg font-semibold">AI içgörüleri</h2>
-      <div className="space-y-3">{live.insights.length ? live.insights.map(i => {
-        const proof = i.evidence as unknown as Evidence[];
-        return <Card key={i.id} className="space-y-3 p-4">
-          <div className="flex flex-wrap items-center gap-2"><Badge variant={i.severity === "critical" ? "danger" : i.severity === "warning" ? "warn" : "info"}>{i.severity}</Badge><Badge>{i.category}</Badge>
-            <span className="text-xs">Güven: {i.confidence} · {time(i.createdAt)}</span></div>
-          <h3 className="font-semibold">{i.title}</h3><p className="text-sm">{i.observation}</p>
-          <p className="text-sm"><strong>Öneri:</strong> {i.recommendation}</p><p className="text-sm"><strong>Aksiyon alınmazsa:</strong> {i.riskIfIgnored}</p>
-          {i.financialImpact != null && <p className="text-sm">Etki: {fmtTry(Number(i.financialImpact))} · {i.financialImpactType === "estimated" ? "TAHMİNİ" : "ölçülmüş"} (kodla hesaplandı)</p>}
-          <details className="text-xs"><summary className="cursor-pointer">Kanıt ({proof.length})</summary><ul className="mt-2 space-y-2">{proof.map(e => <li key={e.id}>{e.source} · {e.query}: {e.value ?? "Bilinmiyor"} {e.unit} {!e.measured && "· TAHMİNİ"} · {time(e.asOf)}</li>)}</ul></details>
-        </Card>;
-      }) : <p className="text-sm text-[var(--text-muted)]">Henüz AI önerisi yok.</p>}</div>
-      <h2 className="text-lg font-semibold">Maliyet verimliliği</h2>
-      {([["Bugün", live.efficiency.today], ["Son 30 gün", live.efficiency.last30]] as const).map(([label, e]) => <div key={label} className="space-y-2">
-        <h3 className="text-sm font-semibold">{label}</h3>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <Stat label="Monitor koşusu" value={e.monitorRuns} /><Stat label="AI çağrısı" value={e.aiCalls} /><Stat label="Önlenen çağrı" value={e.callsAvoided} />
-          <Stat label="Girdi token" value={e.inputTokens} /><Stat label="Çıktı token" value={e.outputTokens} /><Stat label="Cache okuma" value={e.cacheReadTokens} />
-          <Stat label="AI maliyeti" value={fmtTry(e.costTry)} /><Stat label="Kabul edilen içgörü" value={e.acceptedInsights} />
-          <Stat label="İçgörü başına maliyet" value={e.costPerAcceptedInsight == null ? "—" : fmtTry(e.costPerAcceptedInsight)} />
-        </div>
-        <p className="text-xs text-[var(--text-muted)]">AI çağrılmadı çünkü: aynı girdi {e.avoided.same_input} · önemli değişiklik yok {e.avoided.no_material_change} · soğuma {e.avoided.cooldown} · açık iş {e.avoided.open_task} · bütçe/limit {e.avoided.budget} · veri kalitesi {e.avoided.data_quality} · eylemlik bulgu yok {e.avoided.no_actionable}</p>
-      </div>)}
-      <h2 className="text-lg font-semibold">Kullanım (bu ay)</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Bugün çağrı" value={live.usage.callsToday} /><Stat label="Bu ay çağrı" value={live.usage.callsMonth} />
-        <Stat label="Girdi token · cache dahil" value={live.usage.inputTokens} /><Stat label="Çıktı token" value={live.usage.outputTokens} />
-        <Stat label="Tahmini API maliyeti" value={fmtTry(live.usage.cost)} /><Stat label="Önlenen çağrı" value={live.usage.avoidedCalls} />
-        <Stat label="Tahmini tasarruf" value={live.usage.avoidedCost == null ? "Fiyat yapılandırılmadı" : fmtTry(live.usage.avoidedCost)} />
-      </div>{!!live.usage.uncertainCosts && <p className="text-xs">Yanıtı doğrulanamayan çağrılar için bütçede üst sınır rezervi tutuluyor.</p>}</>}
+    {!data && <Card className="p-4"><p>Motor verisi yüklenemedi. Veritabanı bağlantısını kontrol edin.</p></Card>}
+    {data && !data.installed && <Card className="p-4"><p>Kayıt tablosu (cfo_run) üretimde yok.</p></Card>}
     <p className="text-sm"><Link href="/cfo/calisan" className="underline">CFO çalışma döngüsü ve hedefler</Link> · <Link href="/cfo/kazananlar" className="underline">İthalat kararları</Link></p>
   </div>;
 }

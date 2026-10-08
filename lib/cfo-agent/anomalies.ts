@@ -53,7 +53,7 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
     if(p.sourceFresh&&p.financialSourceFresh&&price!=null&&price<200&&p.zeroCommissionFloor.value!=null&&price<p.zeroCommissionFloor.value)add("LOW_PRICE_STRUCTURAL_LOSS","pricing","critical",entity,p.pricePeriod,[m("cfo_satis_birim_duz",`${entity}.avg_price`,p.avgPrice,"TRY"),m("cfo_kargo_tarife",`${entity}.zero_commission_sensitivity_floor`,p.zeroCommissionFloor,"TRY")]);
     if(p.financialSourceFresh&&p.priceFloor.value==null)add("FLOOR_DATA_QUALITY","data_quality","warning",entity,month,[evidence("pricing",`${entity}.floor`,p.priceFloor.reason??"unavailable","reason",at,true)],null,false);
     if(xmlFresh&&p.stockQty!=null&&p.stockDays.value!=null&&p.stockDays.value<config.stockoutDays) {
-      const proof=[m("cfo_stok_hareket_hiz",`${entity}.stock_days`,p.stockDays,"days"),m("cfo_stok_hareket_hiz",`${entity}.cautious_velocity`,p.velocity,"units/day"),
+      const proof=[m("cfo_stok_hareket_hiz",`${entity}.stock_days`,p.stockDays,"days"),evidence("Product",`${entity}.stock_qty`,p.stockQty,"units",at,true),m("cfo_stok_hareket_hiz",`${entity}.cautious_velocity`,p.velocity,"units/day"),
         evidence("cfo_yolda_sku",`${entity}.inbound_quantity`,p.inboundQty,"units",at,true),evidence("cfo_yolda_sku",`${entity}.inbound_eta`,p.inboundEta,"date",at,true),evidence("PurchaseOrder",`${entity}.open_orders`,p.openPurchaseOrders,"count",at,true)];
       const affected=config.stockoutDays-p.stockDays.value;
       if(p.unitProfit.value==null&&p.avgPrice.value!=null)proof.push(m("cfo_satis_birim_duz",`${entity}.avg_price`,p.avgPrice,"TRY"));
