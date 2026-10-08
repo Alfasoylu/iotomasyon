@@ -16,7 +16,7 @@ import { CALCULATION_VERSION, SCHEMA_VERSION } from "./types";
 export const ENGINE_KEY_PREFIX = "engine:";
 /** Motor koşularını eski (LLM dönemi) monitor koşularından ayıran filtre. */
 export const ENGINE_RUNS = { idempotencyKey: { startsWith: ENGINE_KEY_PREFIX } };
-export type EngineTrigger = "hourly" | "sync_xml" | "sync_trendyol" | "manual";
+export type EngineTrigger = "scheduled" | "sync_xml" | "sync_trendyol" | "manual";
 export type MetricRow = { source: string; key: string; value: string | number | null; unit: string; measured: boolean; asOf: string };
 export type EngineFinding = Finding & { sinceYesterday: SinceYesterday };
 export type EngineRecord = {

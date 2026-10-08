@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Tek tahsilat mekanizması + motor günde 3 + maliyet kapsamı tek tanım (2026-10-08)
+- `20261008170000_cfo_tahsilat_tahmini` (Cowork CFO uyguladı, metin birebir; parmak izi üretimle eşit): `cfo_tahsilat_tahmini` = `cfo_nakit_projeksiyon` kanal temposu; `cfo_yaklasan_odeme` → `cfo_odeme_gunluk` / `cfo_nakit_dibi` aynı mekanizmayı görür. Model tahsilat kayıtları (`ce_model_tahsilat_*`) Cowork tarafından boşaltıldı; dipler buluştu (−3.591.775 ↔ −3.593.003, 01.12).
+- `/cfo` haftalık tahmini (`lib/cfo/engine.ts`) aynı görünümü okur; yedek `last14dRevenueTry/4` yalnız görünüm yoksa. `/cfo/odemeler`: tahmin satırı işaretlenemez, yalnız tahmin içeren günler sonraki gerçek günde toplanır.
+- CFO motoru günde 3 sabit koşu (07:17 / 12:37 / 16:07 TR) + `workflow_dispatch` (`?trigger=manual`); motor bayat alarmı 20 saat, günlük hatırlatma sabah koşusunda.
+- Maliyet kapsamı tek tanım `cfo_maliyet_kapsami_at(asof)` / `cfo_maliyet_kapsami` (ciro ağırlıklı; canlı salt-okuma ölçümü %87,5): motor kapsamı bu fonksiyondan okur. Migration `20261008160000` henüz üretimde YOK (Cowork uygulayacak; o zamana kadar motor kapsamı "bilinmiyor" sayar, marj/kâr kuralları susar).
+
 ### CFO motoru ilk üretim koşusu düzeltmeleri (2026-10-08)
 - `cfo_gun_ozeti` SAGLIK satırında saat 6 saat geri görünüyordu (saat dilimsiz UTC sütun); `20261008130000_cfo_gun_ozeti_tz` üretimde uygulandı, parmak izi birebir.
 - Stoğu sıfır SKU bulgusu "stokta yok" der ("0 günde tükenecek" yerine).

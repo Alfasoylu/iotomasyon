@@ -1,3 +1,5 @@
+# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-08 ~17:30 UTC, read-only catalog SELECT) after 20261008170000_cfo_tahsilat_tahmini
+# (applied by Cowork CFO, checksum 808995b6…). 20261008160000_cfo_maliyet_kapsami is NOT applied yet (baseline.json notAppliedInProduction).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-08 ~11:10 UTC, read-only catalog SELECT, full public schema, no exclusions)
 # after 20261008100000_cfo_gun_ozeti + 20261008130000_cfo_gun_ozeti_tz (approved 2026-10-08, controlled SQL; listed in baseline.json appliedAfterCapture after ai_cfo_v1);
 # after 20261007210000_alfashome_order (user-approved controlled SQL) and with cfo_kaldirac_basamak + cfo_kanal_sozluk, which production
@@ -5,7 +7,7 @@
 # The 3 backup tables are still present (20261007200000_drop_legacy_backup_tables is held back in baseline.json until it runs).
 # A bootstrapped clean database (prisma/baseline/2026-10-06.sql + baseline.json pending/late migrations) must produce exactly these rows from scripts/schema-baseline/fingerprint.sql.
 # Columns: kind object_count short_md5. Regenerate ONLY by re-running fingerprint.sql on production (docs/BASELINE-CAPTURE.md).
-acl 342 833975c254
+acl 343 23b73e7d6b
 con 340 007c77859c
 enum 32 ac59222f85
 ext 1 56e042523e
@@ -15,10 +17,10 @@ idx 437 d1baea3d4e
 pol 80 32812b7f8a
 rel:m 1 0ad09bf43e
 rel:r 151 910d0dcf6d
-rel:v 57 443afa4b43
+rel:v 58 c570c6f9a1
 rls 151 55a126580a
 schemaacl 3 45e3344ecd
 seq 15 cda7319017
 seqacl 15 40c6ef1c15
 trg 2 90b8397906
-view 58 4f72bbeac2
+view 59 537bd3b57c

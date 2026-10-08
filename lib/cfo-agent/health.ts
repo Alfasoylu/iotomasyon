@@ -4,13 +4,13 @@ import { istanbulPeriod } from "./period";
 
 // Alarm — Cowork CFO'nun iki koşusu (08:00 / 16:49 TR) arasında Alperen'e ulaşan TEK kanal (2026-10-08 mimari kararı).
 // Sitede LLM yok: "içgörü yok", bütçe ve token alarmları kaldırıldı (AI çağrısı olmaması normaldir). Alarmlar:
-//   engine_stale          deterministik motor 6 saattir tamamlanmadı (gerçek arıza)
+//   engine_stale          deterministik motor 20 saattir tamamlanmadı (günde 3 koşu: en uzun boşluk 16:07 → 07:17 TR ≈ 15 saat + GitHub gecikmesi)
 //   consecutive_failures  son iki motor koşusu tamamlanmadı (failed ya da beklenmeyen durum)
 //   floor_breach          cfo_nakit_projeksiyon(120) dibi tabanın (−3.000.000) altında
 //   payment_unmarked      vadesi bugün olup 15:00 TR sonrası hâlâ işaretlenmemiş ya da vadesi geçmiş ödeme
 //   source_dead           Entegra / XML / Trendyol senkronu ya da banka bakiyesi eşik süreden eski
-// Bildirim (GitHub işi kırmızı → e-posta) yalnız arıza, YENİ alarm ya da 09:00 TR günlük hatırlatmada: süregelen bir taban
-// alarmı saatte bir e-posta üretmez; yine de her koşuda cfo_gun_ozeti'nde görünür.
+// Bildirim (GitHub işi kırmızı → e-posta) yalnız arıza, YENİ alarm ya da sabah koşusundaki (06:00–10:59 TR) günlük hatırlatmada:
+// süregelen bir taban alarmı her koşuda e-posta üretmez; yine de her koşuda cfo_gun_ozeti'nde görünür.
 
 export type AlarmCode = "engine_stale" | "consecutive_failures" | "floor_breach" | "payment_unmarked" | "source_dead";
 export type CfoAlarm = { code: AlarmCode; key: string; message: string };
@@ -23,7 +23,9 @@ export type AlarmInput = {
   payments: DueItem[]; sources: SourceAge[]; staleBankAccounts: string[];
 };
 
-export const ENGINE_STALE_HOURS = 6;
+export const ENGINE_STALE_HOURS = 20;
+/** Günlük hatırlatma penceresi: sabah zamanlanmış koşusu 07:17 TR; GitHub gecikmesi için 11:00'a kadar. */
+export const REMINDER_WINDOW_TR = { fromHour: 6, toHour: 11 } as const;
 const H = 3600000;
 const tl = (v: number) => `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 }).format(Math.round(v))} TL`;
 
@@ -53,11 +55,11 @@ export function evaluateCfoAlarms(i: AlarmInput): CfoAlarm[] {
   return out;
 }
 
-/** E-posta (503) yalnız: motor arızası, önceki motor koşusunda olmayan YENİ alarm, ya da 09:00 TR günlük hatırlatma. */
+/** E-posta (503) yalnız: motor arızası, önceki motor koşusunda olmayan YENİ alarm, ya da sabah penceresinde günlük hatırlatma. */
 export function shouldNotify(current: CfoAlarm[], previousKeys: string[] | null, hourTr: number): boolean {
   if (!current.length) return false;
   if (current.some(a => a.code === "engine_stale" || a.code === "consecutive_failures")) return true;
-  if (hourTr === 9) return true;
+  if (hourTr >= REMINDER_WINDOW_TR.fromHour && hourTr < REMINDER_WINDOW_TR.toHour) return true;
   const prev = new Set(previousKeys ?? []);
   return current.some(a => !prev.has(a.key));
 }

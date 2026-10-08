@@ -15,8 +15,9 @@ const codes = (i: AlarmInput) => evaluateCfoAlarms(i).map(a => a.code);
 
 assert.deepEqual(codes(base()), [], "sağlıklı: alarm yok — AI çağrısı olmaması alarm DEĞİL (no_insight_24h kaldırıldı)");
 
-// Motor bayat: 6 saattir tamamlanmadı (koşu var ama hep başarısız ya da hiç yok); motor kapalıyken susar
-assert.deepEqual(codes(base({ runs: [run(7, "completed")] })), ["engine_stale"]);
+// Motor bayat: 20 saattir tamamlanmadı (günde 3 koşu) (koşu var ama hep başarısız ya da hiç yok); motor kapalıyken susar
+assert.deepEqual(codes(base({ runs: [run(15, "completed")] })), [], "gece boşluğu (16:07 → 07:17) bayat değil");
+assert.deepEqual(codes(base({ runs: [run(21, "completed")] })), ["engine_stale"]);
 assert.deepEqual(codes(base({ runs: [] })), ["engine_stale"]);
 assert.deepEqual(codes(base({ runs: [], engineEnabled: false })), [], "motor kapalıyken bayatlık alarmı yok");
 // Üst üste iki tamamlanmamış koşu (failed ya da beklenmeyen durum); 'running' sayılmaz
@@ -33,12 +34,15 @@ const dead = evaluateCfoAlarms(base({ sources: [{ name: "XML", lastAt: h(30), ma
 assert.deepEqual(dead.map(a => a.key), ["source_dead:XML", "source_dead:Trendyol", "source_dead:banka"]);
 assert.match(dead[1].message, /hiç gelmedi/);
 
-// Bildirim: arıza her zaman; yeni alarm; süregelen alarm saatte bir e-posta üretmez; 09:00 TR günlük hatırlatma
+// Bildirim: arıza her zaman; yeni alarm; süregelen alarm her koşuda e-posta üretmez; sabah koşusunda (06–10 TR) günlük hatırlatma
 const f = evaluateCfoAlarms(base({ minPosition: { valueTry: -3379787, date: "2026-12-01" } }));
 assert.equal(shouldNotify([], null, 9), false);
 assert.equal(shouldNotify(f, null, 13), true, "ilk kez görülen alarm");
 assert.equal(shouldNotify(f, ["floor_breach"], 13), false, "süregelen taban alarmı: e-posta yok (cfo_gun_ozeti'nde görünür)");
-assert.equal(shouldNotify(f, ["floor_breach"], 9), true, "09:00 TR hatırlatma");
+assert.equal(shouldNotify(f, ["floor_breach"], 7), true, "07:17 TR sabah koşusu hatırlatır");
+assert.equal(shouldNotify(f, ["floor_breach"], 10), true, "gecikmeli sabah koşusu da hatırlatır");
+assert.equal(shouldNotify(f, ["floor_breach"], 12), false, "öğle koşusu hatırlatmaz");
+assert.equal(shouldNotify(f, ["floor_breach"], 16), false, "akşam koşusu hatırlatmaz");
 assert.equal(shouldNotify([...f, ...pay], ["floor_breach"], 13), true, "yeni ödeme alarmı");
 assert.equal(shouldNotify(evaluateCfoAlarms(base({ runs: [] })), ["engine_stale"], 13), true, "motor arızası her saat bildirilir");
-console.log("CFO alarms: engine stale, consecutive failures, floor breach, unmarked payment, dead sources, notify-on-change + 09:00 reminder passed");
+console.log("CFO alarms: engine stale, consecutive failures, floor breach, unmarked payment, dead sources, notify-on-change + morning-slot reminder passed");

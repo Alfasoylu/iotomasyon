@@ -71,19 +71,19 @@ const deps = (o: Partial<RunnerDependencies> = {}): RunnerDependencies => ({ now
 async function main() {
   await check("motor bayrağı kapalı → disabled, hiçbir şey yazılmaz", async () => {
     const f = fakeStore();
-    assert.deepEqual(await runCfoEngine("hourly", deps({ config: getCfoConfig({}), store: f.store })), { status: "disabled" });
+    assert.deepEqual(await runCfoEngine("scheduled", deps({ config: getCfoConfig({}), store: f.store })), { status: "disabled" });
     assert.equal(f.records.length, 0);
-    assert.deepEqual(await safeCfoEngineRun("hourly"), { status: "disabled" }, "env yokken cron ucu da yazmaz");
+    assert.deepEqual(await safeCfoEngineRun("scheduled"), { status: "disabled" }, "env yokken cron ucu da yazmaz");
   });
   await check("idempotency: saatlik ve her senkron saat başına bir kez; elle 20 dakikalık dilim", () => {
     const p = { hour: "2026-10-06T11", minutes: 11 * 60 + 25 };
-    assert.equal(runPeriodKey("hourly", p), "2026-10-06T11:hourly");
+    assert.equal(runPeriodKey("scheduled", p), "2026-10-06T11:scheduled");
     assert.equal(runPeriodKey("sync_xml", p), "2026-10-06T11:sync_xml", "senkron koşusu saatlik koşuyla çakışmaz");
     assert.equal(runPeriodKey("manual", p), "2026-10-06T11:m1");
   });
   await check("koşu: her anomali şablonlu bulgu olur; ACİL başta; önceki gün yoksa hepsi 'yeni'; snapshot yazılır", async () => {
     const f = fakeStore();
-    const r = await runCfoEngine("hourly", deps({ store: f.store }));
+    const r = await runCfoEngine("scheduled", deps({ store: f.store }));
     assert.equal(r.status, "completed"); assert.deepEqual(f.finished, [{ status: "completed", error: undefined }]);
     const d = f.records[0].data;
     assert.equal(d.findings.length, d.anomalies.length, "görüş kapanmaz: 19 satır gizlenmez");
@@ -92,14 +92,14 @@ async function main() {
     assert.ok(d.findings.every(x => x.sinceYesterday === "yeni" && /Kanıt: e_/.test(x.text) && /Aciliyet: /.test(x.text)));
     assert.equal(d.material.sinceYesterday, true); assert.equal(d.material.sincePreviousRun, true);
     assert.ok(f.records[0].snapshot, "ilk koşu snapshot yazar"); assert.equal(d.snapshotRef, null);
-    assert.equal(d.trigger, "hourly"); assert.ok(/^[0-9a-f]{64}$/.test(d.decisionInputHash));
+    assert.equal(d.trigger, "scheduled"); assert.ok(/^[0-9a-f]{64}$/.test(d.decisionInputHash));
   });
   await check("önemli değişiklik BAYRAĞI: dünle aynı girdi → no_material_change; bulgu 'aynı'; snapshot önceki koşuya referans", async () => {
-    const first = fakeStore(); await runCfoEngine("hourly", deps({ store: first.store }));
+    const first = fakeStore(); await runCfoEngine("scheduled", deps({ store: first.store }));
     const d0 = first.records[0].data;
     const evals = new Map(d0.anomalies.map(a => [a.cooldownKey, { severity: a.severity, impact: a.impact?.value ?? null }]));
     const f = fakeStore({ last: { id: "run-prev", hash: d0.decisionInputHash, snapshotRunId: "run-prev" }, yesterday: { hash: d0.decisionInputHash, evaluations: evals } });
-    const r = await runCfoEngine("hourly", deps({ store: f.store }));
+    const r = await runCfoEngine("scheduled", deps({ store: f.store }));
     assert.equal(r.material, false);
     const d = f.records[0].data;
     assert.deepEqual(d.material, { sincePreviousRun: false, sinceYesterday: false, previousRunHash: d0.decisionInputHash, yesterdayHash: d0.decisionInputHash });
@@ -109,31 +109,31 @@ async function main() {
     evals.set("STOCKOUT|TRENDYOL:OLD", { severity: "warning", impact: 1 });
     evals.set(d0.anomalies[0].cooldownKey, { severity: "warning", impact: null });
     const g = fakeStore({ last: null, yesterday: { hash: "x", evaluations: evals } });
-    await runCfoEngine("hourly", deps({ store: g.store }));
+    await runCfoEngine("scheduled", deps({ store: g.store }));
     assert.deepEqual(g.records[0].data.closedSinceYesterday, ["STOCKOUT|TRENDYOL:OLD"]);
     assert.equal(g.records[0].data.findings.find(x => x.cooldownKey === d0.anomalies[0].cooldownKey)?.sinceYesterday, "degisti");
   });
   await check("METRIK satırları ve alarmlar kayda girer; METRIK hatası bulguları engellemez; koşan motor kendini 'bayat' saymaz", async () => {
     const f = fakeStore();
-    await runCfoEngine("hourly", deps({ store: f.store, metrics: async () => [{ source: "cfo_nakit_kapisi", key: "nakit_kapisi.nakit_try", value: 59693, unit: "TRY", measured: true, asOf: "x" }],
+    await runCfoEngine("scheduled", deps({ store: f.store, metrics: async () => [{ source: "cfo_nakit_kapisi", key: "nakit_kapisi.nakit_try", value: 59693, unit: "TRY", measured: true, asOf: "x" }],
       alarms: async () => [{ code: "engine_stale", key: "engine_stale", message: "m" }, { code: "floor_breach", key: "floor_breach", message: "dip" }] }));
     assert.equal(f.records[0].data.metrics.length, 1);
     assert.deepEqual(f.records[0].data.alarms.map(a => a.code), ["floor_breach"]);
     const g = fakeStore();
-    const r = await runCfoEngine("hourly", deps({ store: g.store, metrics: async () => { throw new Error("db url secret"); } }));
+    const r = await runCfoEngine("scheduled", deps({ store: g.store, metrics: async () => { throw new Error("db url secret"); } }));
     assert.equal(r.status, "completed"); assert.equal(g.records[0].data.metricsError, "context_unavailable");
     assert.ok(!JSON.stringify(g.records[0].data).includes("secret"), "hata metni kayda girmez");
   });
   await check("kilit, tekrar ve hata: sabit teşhis kodu, kaynak metni yok", async () => {
     const f = fakeStore();
-    assert.equal((await runCfoEngine("hourly", deps({ store: f.store, lock: { async acquire() { return false; }, async release() {} } }))).status, "locked");
-    await runCfoEngine("hourly", deps({ store: f.store }));
-    assert.equal((await runCfoEngine("hourly", deps({ store: f.store }))).status, "duplicate");
+    assert.equal((await runCfoEngine("scheduled", deps({ store: f.store, lock: { async acquire() { return false; }, async release() {} } }))).status, "locked");
+    await runCfoEngine("scheduled", deps({ store: f.store }));
+    assert.equal((await runCfoEngine("scheduled", deps({ store: f.store }))).status, "duplicate");
     const g = fakeStore();
-    const r = await runCfoEngine("hourly", deps({ store: g.store, snapshot: async () => { throw new Error("postgres://user:pw@host"); } }));
+    const r = await runCfoEngine("scheduled", deps({ store: g.store, snapshot: async () => { throw new Error("postgres://user:pw@host"); } }));
     assert.deepEqual([r.status, r.error], ["failed", "engine_failed"]); assert.deepEqual(g.finished, [{ status: "failed", error: "engine_failed" }]);
     const h = fakeStore();
-    const l = await runCfoEngine("hourly", deps({ store: h.store, lock: { async acquire() { throw new LockError("lock_unavailable"); }, async release() {} } }));
+    const l = await runCfoEngine("scheduled", deps({ store: h.store, lock: { async acquire() { throw new LockError("lock_unavailable"); }, async release() {} } }));
     assert.equal(l.error, "lock_unavailable");
   });
   if (failed) { console.error(`\n${failed} test başarısız`); process.exit(1); }

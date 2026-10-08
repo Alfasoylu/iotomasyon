@@ -242,6 +242,28 @@ export default async function CfoPaymentsPage({
     else hareketByGun.set(key, [h]);
   }
 
+  // Alacak ufku dışındaki tahmini tahsilat (cfo_tahsilat_tahmini, kanal temposu) her gün bir satırdır. Yalnız tahmin içeren
+  // günler ayrı kart açmaz: tutarları bir sonraki gerçek hareket gününün kartında tek satırda toplanır. Yürüyen bakiye
+  // (gun_sonu_nakit) kümülatif olduğu için gizlenen günler bakiyeyi değiştirmez. Takvimin son günü her zaman gösterilir.
+  const tahminMi = (h: Hareket) => h.id.startsWith("tahmin:");
+  const gunKarti: { g: Gun; satirlar: Hareket[] }[] = [];
+  let birikenTahmin = 0, birikenGun = 0;
+  gunler.forEach((g, i) => {
+    const satirlar = hareketByGun.get(g.tarih.toISOString().slice(0, 10)) ?? [];
+    const yalnizTahmin = satirlar.length > 0 && satirlar.every(tahminMi);
+    if (yalnizTahmin && i < gunler.length - 1) {
+      birikenTahmin += satirlar.reduce((a, h) => a + n(h.tutar), 0); birikenGun++;
+      return;
+    }
+    const ozet: Hareket[] = birikenGun > 0 ? [{
+      id: `tahmin-ozet:${g.tarih.toISOString().slice(0, 10)}`, tarih: g.tarih, yon: "GIRIS", tur: "Tahmini tahsilat",
+      aciklama: `Önceki ${birikenGun} günün kanal temposu (alacak ufku dışı)`, banka: null, tutar: birikenTahmin,
+      kesinlik: "TAHMINI", odendi: false, kalan_gun: g.kalan_gun, aciliyet: "",
+    }] : [];
+    gunKarti.push({ g, satirlar: [...ozet, ...satirlar] });
+    birikenTahmin = 0; birikenGun = 0;
+  });
+
   /** Nakit negatifse: ticari limitle kapanıyor mu, şahsiye mi iniyor mu? */
   function nakitRengi(nakit: number) {
     if (nakit < 0 && Math.abs(nakit) > ticariKmh) return "danger" as const;
@@ -410,11 +432,10 @@ export default async function CfoPaymentsPage({
         </Card>
       ) : (
         <div className="space-y-4">
-          {gunler.map((g) => {
+          {gunKarti.map(({ g, satirlar }) => {
             const nakit = n(g.gun_sonu_nakit);
             const dipIci = n(g.gun_ici_dip);
             const renk = nakitRengi(nakit);
-            const satirlar = hareketByGun.get(g.tarih.toISOString().slice(0, 10)) ?? [];
             const gecikti = g.kalan_gun < 0;
 
             return (
@@ -504,13 +525,15 @@ export default async function CfoPaymentsPage({
                             {giris ? "+" : "−"}
                             {fmtTry(n(h.tutar))}
                           </span>
-                          <SettleButton
-                            id={h.id}
-                            tur={h.tur}
-                            aciklama={h.aciklama ?? ""}
-                            giris={giris}
-                            islendi={islendi}
-                          />
+                          {!h.id.startsWith("tahmin") && (
+                            <SettleButton
+                              id={h.id}
+                              tur={h.tur}
+                              aciklama={h.aciklama ?? ""}
+                              giris={giris}
+                              islendi={islendi}
+                            />
+                          )}
                         </div>
                       </li>
                     );

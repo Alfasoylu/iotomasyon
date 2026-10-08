@@ -87,6 +87,8 @@ export interface CfoInput {
   receivables: ReceivableRow[];
   cashEvents: CashEventRow[];
   imports: ImportRow[];
+  /** cfo_tahsilat_tahmini (kanal temposu, alacak ufku dışı; cfo_nakit_projeksiyon ile aynı mekanizma). null = görünüm yok → eski last14/4 tahmini. */
+  forecast?: { date: Date; amountTry: number }[] | null;
   today?: Date;
 }
 
@@ -177,6 +179,8 @@ export interface CfoOverview {
   monthlyRunRateTry: number | null;
   monthlyCashCollectionTry: number | null;
   weeklyEstimateGrossTry: number;
+  /** Haftalık tahminin kaynağı: kanal temposu (cfo_tahsilat_tahmini) ya da yedek last14/4 (elle girilen ciro). */
+  weeklyEstimateSource: "kanal_temposu" | "last14";
   revenueDataAgeDays: number | null;
 
   // Forecast
@@ -289,6 +293,12 @@ export function computeCfo(input: CfoInput): CfoOverview {
       : null;
 
   // ── Haftalık tahmin kovaları (çift sayım korumalı) ──
+  // Tek mekanizma (2026-10-08, Cowork kararı): cfo_tahsilat_tahmini varsa haftanın ek tahsilatı = o haftaya düşen kanal temposu.
+  // Görünüm her kanalı kendi son açık vadesinden SONRA saydığı için alacakla çakışmaz (net = tahmin, brüt = alacak + tahmin);
+  // /cfo ufukları, ay sonları ve gümrük kartı böylece cfo_nakit_projeksiyon / cfo_odeme_gunluk ile aynı girişi görür.
+  // Görünüm yoksa eski yedek: elle girilen son 14 gün cirosu / 4, haftanın gerçek hakedişi düşülerek.
+  const forecast = input.forecast ?? null;
+  const weeklyEstimateSource: CfoOverview["weeklyEstimateSource"] = forecast ? "kanal_temposu" : "last14";
   const weeks: WeekBucket[] = [];
   for (let i = 0; i < 14; i++) {
     const start = addDays(today, i * 7);
@@ -296,7 +306,12 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const actual = pending
       .filter((r) => r.dueDate >= start && r.dueDate <= end)
       .reduce((a, r) => a + num(r.amountTry), 0);
-    weeks.push({ start, end, gross: weeklyEstimateGrossTry, actual, net: Math.max(0, weeklyEstimateGrossTry - actual) });
+    if (forecast) {
+      const est = forecast.filter((f) => f.date >= start && f.date <= end).reduce((a, f) => a + f.amountTry, 0);
+      weeks.push({ start, end, gross: actual + est, actual, net: est });
+    } else {
+      weeks.push({ start, end, gross: weeklyEstimateGrossTry, actual, net: Math.max(0, weeklyEstimateGrossTry - actual) });
+    }
   }
 
   // ── Rolling forecast ──
@@ -425,7 +440,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     fixedExpenseMonthlyTry, totalFinancialDebtTry, netDebtTry, debtServiceRatio,
     receivablesPendingTry, receivablesByChannel,
     sellableStockTry, blockedStockTry, inTransitStockTry,
-    last14dRevenueTry: last14, monthlyRunRateTry, monthlyCashCollectionTry, weeklyEstimateGrossTry, revenueDataAgeDays,
+    last14dRevenueTry: last14, monthlyRunRateTry, monthlyCashCollectionTry, weeklyEstimateGrossTry, weeklyEstimateSource, revenueDataAgeDays,
     weeks, horizons, monthEnds, customs,
     narrowWorthTry, narrowWorthUsd, wideWorthTry, wideWorthUsd, target,
     monthlyOperatingCashTry, needsAttention,

@@ -62,11 +62,20 @@ export default async function CfoCashFlowPage() {
       <Card className="mb-6 p-5">
         <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Haftalık tahmini ek tahsilat</h2>
         <p className="mb-3 text-xs text-[var(--text-muted)]">
-          Brüt tahmin = son 14 gün cirosu / 4 = {fmtTry(o.weeklyEstimateGrossTry)}.
-          Aynı haftadaki gerçek hakedişler bu tutardan DÜŞÜLÜR — böylece aynı para iki kez sayılmaz.
+          {o.weeklyEstimateSource === "kanal_temposu" ? (
+            <>
+              Ek tahsilat = kanal temposu (<code>cfo_tahsilat_tahmini</code>): her kanal yalnız kendi son açık hakedişinden SONRA,
+              önümüzdeki 30 günün hakedişi / 30 ile sayılır — nakit projeksiyonu ve ödeme takvimiyle aynı mekanizma, alacakla çakışmaz.
+            </>
+          ) : (
+            <>
+              Brüt tahmin = son 14 gün cirosu / 4 = {fmtTry(o.weeklyEstimateGrossTry)} (yedek: tahsilat tahmini görünümü okunamadı).
+              Aynı haftadaki gerçek hakedişler bu tutardan DÜŞÜLÜR — böylece aynı para iki kez sayılmaz.
+            </>
+          )}
         </p>
         <CfoTable head={
-          <tr><Th>Hafta</Th><Th right>Brüt tahmin</Th><Th right>Gerçek hakediş</Th><Th right>Net ek tahsilat</Th></tr>
+          <tr><Th>Hafta</Th><Th right>{o.weeklyEstimateSource === "kanal_temposu" ? "Toplam giriş" : "Brüt tahmin"}</Th><Th right>Gerçek hakediş</Th><Th right>Net ek tahsilat</Th></tr>
         }>
           {o.weeks.slice(0, 8).map((w, i) => (
             <tr key={i}>
