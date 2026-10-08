@@ -13,6 +13,7 @@ const maxAgeHours=(source:string)=>source==="Entegra"?WEEKLY_UPLOAD_MAX_AGE_HOUR
 import { evidence } from "./evidence";
 import { loadDownside } from "../cfo/downside-data";
 import { TIER_LABEL } from "../cfo/downside";
+import { coverageClosers } from "./cost-coverage";
 import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type ReadSource, type Row } from "./sources";
 import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources";
 import { assumedShippingChannel, shippingBandsFor, shippingChannelFor, shippingTariffSql, type ShippingOptions } from "./shipping";
@@ -212,10 +213,22 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   // cfo_maliyet_kapsami görünümünden okur): motor kendi sayısını hesaplamaz. Fonksiyon yoksa kapsam bilinmiyor → COST_COVERAGE
   // kapısı kapalı kalır (marj/kâr kuralları susar). Var olup olmadığı önce sorulur: başarısız sorgu okuma işlemini düşürmesin.
   const [coverageFn]=await db.query(`select to_regprocedure('public.cfo_maliyet_kapsami_at(timestamptz)') is not null as ok`);
-  const costCoverage=coverageFn?.ok===true?(await db.query(`select kapsam_pct,eslesme_pct from public.cfo_maliyet_kapsami_at($1::timestamptz)`,asOf))[0]:undefined;
+  const costCoverage=coverageFn?.ok===true?(await db.query(`select kapsam_pct,eslesme_pct,ciro_try,kapsanan_try from public.cfo_maliyet_kapsami_at($1::timestamptz)`,asOf))[0]:undefined;
   snapshot.dataQuality.costCoveragePct=costCoverage?n(costCoverage,"kapsam_pct"):null;
   snapshot.dataQuality.matchingCoveragePct=costCoverage?n(costCoverage,"eslesme_pct"):null;
   if(!costCoverage)missing.push("cost_coverage_function_unavailable");
+  // Kapsam eşiğin altındaysa: açığı kapatan en kısa SKU listesi — AYNI sınıflamadan (cfo_maliyet_kapsami_satir; migration
+  // 20261008200000). Fonksiyon yoksa liste yok (bulgu yalnız yüzdeyi yazar).
+  const coverageNow=snapshot.dataQuality.costCoveragePct;
+  if(costCoverage&&coverageNow!=null&&coverageNow<config.minCostCoveragePct) {
+    const [rowFn]=await db.query(`select to_regprocedure('public.cfo_maliyet_kapsami_satir(timestamptz)') is not null as ok`);
+    if(rowFn?.ok===true) {
+      const rows=await db.query(`select durum, sku, sum(tutar) as tl, string_agg(distinct guven, '/') as guven, bool_or(kopya > 1) as tekrar
+        from public.cfo_maliyet_kapsami_satir($1::timestamptz) where durum <> 'kapsanan' and sku is not null group by durum, sku order by tl desc limit 60`,asOf);
+      snapshot.dataQuality.costCoverageGap=coverageClosers(rows.map(r=>({durum:String(r.durum),sku:String(r.sku),tl:Number(r.tl),guven:r.guven==null?null:String(r.guven),tekrar:r.tekrar===true})),
+        n(costCoverage,"ciro_try")??0,n(costCoverage,"kapsanan_try")??0,config.minCostCoveragePct);
+    }
+  }
 
   const sales=catalog.require("cfo_satis_birim_duz",["channel","modelNumber","orderNumber","orderDate","adet_duz","tutar_duz","guven","commissionTry","totalAmountTry"]);
   const salesLocalTime=catalog.localTime("cfo_satis_birim_duz","orderDate","s");

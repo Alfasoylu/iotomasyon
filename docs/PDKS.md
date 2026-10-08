@@ -194,6 +194,10 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 - [x] Cowork'ün 16:49 okumasından önce güvenilir motor koşusu: `trendyol-sync` Vercel cron'u `0 6` → `0 12` UTC (15:00–15:59 TR; 14 günlük pencere → veri kaybı yok). Alperen: tam yetki (2026-10-08).
 - [x] Bayatlık kapısına önemlilik eşiği (Cowork kararı 2026-10-08): Ziraat USD 419,53 TL (dibin %0,01'i) CASH_CRITICAL'ı susturuyordu. Artık yalnız bakiyesi `materialMinTry` (10.000 TL) üstü ya da bilinmeyen bayat hesap susturur; önemsizler bulguda uyarı. Ekran görüntüsüyle bakiye güncellemesi yine Alperen'de (yarın).
 
+### Backlog — maliyet kapsamı (2026-10-08)
+- [ ] Migration `20261008200000_cfo_maliyet_kapsami_satir`'ı Cowork uygular (sonra parmak izi yeniden ölçülür, repo listeleri temizlenir).
+- [ ] Kapsamı %95'e çıkaran 8 kalem (veri sahibi Alperen): 6 SKU'ya ürün maliyeti, anunnaki-pointer ürün eşlemesi, 2827456501236 adet/set tanımı.
+
 ### Backlog — tahsilat tahmini (2026-10-08)
 - [x] `lib/cfo/engine.ts` haftalık tahmini `cfo_tahsilat_tahmini`'ye bağlandı (2026-10-08).
 - [ ] `cfo_settings.customsReserveDate` 30.09'da kalmış: gümrük rezervi kartı 09.10 / 21.10 dilimlerini görmüyor (veri sahibi: Alperen/Cowork).
@@ -333,6 +337,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+- **2026-10-08 — Maliyet kapsamı açığını kapatan kalem listesi (yerel; migration Cowork uygulayacak):** kapsam %87,5 < %95 → marj/kâr kuralları susuyor; bulgu yalnız yüzde söylüyordu. Migration `20261008200000_cfo_maliyet_kapsami_satir`: satır sınıflaması yeni `cfo_maliyet_kapsami_satir(asof)` fonksiyonuna taşındı, `cfo_maliyet_kapsami_at(asof)` toplamı ondan alır (TEK tanım korunur; imza/dönüş/görünüm aynı; eski gövdeyle birebir aynı sonuç PGlite'ta sınandı; yeni fonksiyondan PUBLIC/anon/authenticated yetkisi alındı). `lib/cfo-agent/cost-coverage.ts` (saf): açık = ceil(eşik × ciro) − kapsanan; en büyük TL'den başlayan en kısa liste, her kalemin işi (maliyet girilmemiş / ürüne eşleşmiyor / adet-set ayrıştırması belirsiz / satır kimliği boş tekrar). `snapshot.ts` kapsam eşik altındaysa ve fonksiyon varsa listeyi kurar; COST_COVERAGE bulgusu: "Eşiğe X TL kapsanan ciro eksik; şu N kalem yeter: …". Fonksiyon yokken eski davranış. **Üretim (salt-okunur, 08.10):** açık 125.642 TL; 8 kalem yeter (133.377 TL → %95,5): anunnaki-pointer 29.148 (eşleşmiyor), 2827456501236 24.885 (güven BILINMIYOR), ANK-IPSET-VRYN 19.900, muk-8li-ip-kamera-seti-sesli 19.840, 543600000 10.605, 4140404044444 9.900, 4224333434117 9.796, 4Q0055916 9.303 (maliyet girilmemiş). Test `ai-cfo-findings` (liste, üst sınır, metin), `ai-cfo-source-mapping` (eski gövdeyle eşlik, kova toplamları, yetki, kapatan liste).
 
 - **2026-10-08 — İki migration üretimde (Cowork uyguladı) — parmak izi yeniden ölçüldü:** `20261008180000_cfo_credit_card_revolving` (checksum fbc2ad78…) ve `20261008190000_cfo_maliyet_kapsami_satir_kimligi` (b47a4553…) `_prisma_migrations`'ta, sütunlar `cfo_credit_card."revolvingTry"` numeric(14,2) / `"contractMonthlyRatePct"` numeric(6,3) var, fonksiyon satır kimliğini kullanıyor. Kapsam (salt-okuma): %87,5 aynı; güvenilmez 101.639,54 → 81.739,54, maliyetsiz 76.750,72 → 96.650,72 (tam 19.900 TL yer değiştirdi; dört kova ciroya 1.675.211,79 TL kuruşu kuruşuna eşit). Üretim parmak izi: yalnız `fn 35 fd044c3d95` ve `rel:r 151 59c7db9733` değişti (beklenen). Repo: `baseline.json` notAppliedInProduction'dan iki migration çıktı, `fingerprint.expected.txt` güncellendi, migration-security beklenen listesi ve source-mapping'deki ayrı uygulama kaldırıldı (bootstrap artık uyguluyor). Kart maliyeti kodu sütunları görüyor; devreden bakiye ve akdi oran girilene kadar kartlar UNKNOWN.
 

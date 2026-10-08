@@ -101,8 +101,10 @@ const TEMPLATES: Record<string, (c: Ctx, o: FindingOptions) => { what: string; a
   DUPLICATE_SALES_ROWS: ({ n }) => ({ what: `Kanonik satışta ${fmt(n("duplicate_rows"), num)} mükerrer satır (aynı kanal + sipariş + model); ilgili SKU-kanal grupları marj hesabından çıkarıldı, kurallar susmuyor.`,
     action: "Panelden doğrula: gerçek tekrar mı, aynı siparişte ayrı satırlara bölünmüş adet mi.", urgency: "BILGI" }),
   DATA_QUALITY: ({ get }) => ({ what: `Eksik alanlar: ${String(get("missing_fields") ?? "").slice(0, 300)}.`, action: "Eksik veriyi tamamla.", urgency: "BILGI" }),
-  COST_COVERAGE: ({ n }, o) => ({ what: `Maliyet kapsamı ${fmt(n("cost_coverage"), pct)} < %${o.minCostCoveragePct} → marj ve kâr kuralları susuyor.`,
-    action: "Eksik ürün maliyetlerini gir.", urgency: "BUGUN" }),
+  COST_COVERAGE: ({ n, get }, o) => ({ what: `Maliyet kapsamı ${fmt(n("cost_coverage"), pct)} < %${o.minCostCoveragePct} → marj ve kâr kuralları susuyor.${
+      get("kapatan_kalemler") ? ` Eşiğe ${fmt(n("kapsam_acigi_try"), tl)} kapsanan ciro eksik; ${get("acigi_kapatir") === "evet" ? `şu ${fmt(n("kalem_sayisi"), num)} kalem yeter` : `en büyük ${fmt(n("kalem_sayisi"), num)} kalem yetmiyor`}: ${get("kapatan_kalemler")}.` : ""}`,
+    action: get("kapatan_kalemler") ? "Listedeki kalemleri sırayla düzelt: maliyet girilmemişe ürün maliyeti, eşleşmeyene ürün eşlemesi, belirsiz ayrıştırmaya set/adet tanımı." : "Eksik ürün maliyetlerini gir.",
+    urgency: "BUGUN" }),
 };
 
 /** Goal Engine kuralları (GOAL_OFF_TRACK / GOAL_AT_RISK / GOAL_NOT_MET) ortak şablon. */

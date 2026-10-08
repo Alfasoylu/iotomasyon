@@ -19,7 +19,8 @@ const KNOWN_OUT_OF_BAND = [
 // (schema-baseline, ai-cfo-source-mapping). Bu liste de donmuştur: yeni bir giriş gerekçesiyle eklenir.
 //   20261008160000_cfo_maliyet_kapsami — cfo_satis_birim_duz ve cfo_set_fiyat yalnız baseline'da.
 //   20261008190000_cfo_maliyet_kapsami_satir_kimligi — aynı fonksiyonun yeni sürümü (aynı bağımlılıklar).
-const BASELINE_DEPENDENT = ["20261008160000_cfo_maliyet_kapsami", "20261008190000_cfo_maliyet_kapsami_satir_kimligi"];
+//   20261008200000_cfo_maliyet_kapsami_satir — sınıflama ayrı fonksiyona taşındı (aynı bağımlılıklar).
+const BASELINE_DEPENDENT = ["20261008160000_cfo_maliyet_kapsami", "20261008190000_cfo_maliyet_kapsami_satir_kimligi", "20261008200000_cfo_maliyet_kapsami_satir"];
 
 async function main() {
   const db = new PGlite({ extensions: { vector } });
