@@ -18,7 +18,8 @@ const KNOWN_OUT_OF_BAND = [
 // dayanan migration'lar. Boş veritabanında kurulamazlar; üretim kopyasında (baseline + migration'lar) doğrulanırlar
 // (schema-baseline, ai-cfo-source-mapping). Bu liste de donmuştur: yeni bir giriş gerekçesiyle eklenir.
 //   20261008160000_cfo_maliyet_kapsami — cfo_satis_birim_duz ve cfo_set_fiyat yalnız baseline'da.
-const BASELINE_DEPENDENT = ["20261008160000_cfo_maliyet_kapsami"];
+//   20261008190000_cfo_maliyet_kapsami_satir_kimligi — aynı fonksiyonun yeni sürümü (aynı bağımlılıklar).
+const BASELINE_DEPENDENT = ["20261008160000_cfo_maliyet_kapsami", "20261008190000_cfo_maliyet_kapsami_satir_kimligi"];
 
 async function main() {
   const db = new PGlite({ extensions: { vector } });

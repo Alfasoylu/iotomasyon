@@ -9,10 +9,17 @@
 
 ## 2026-10
 
+### KMH kapasite alarmı (2026-10-08)
+- Yeni alarm `capacity_breach`: nakit pozisyonu şirket KMH kapasitesini ilk aştığı gün ve tutar (bugün 21.10, 365.173 TL; şahsi hesaplar gerekiyor). Cowork CFO sırasının ilk adımı; kademeli faiz ve kuralın faizli dibe bağlanması sonraki adımlar.
+
+### Mükerrer satır anahtarı platform satır kimliğiyle (2026-10-08)
+- Aynı siparişte ayrı koliye giden adetler artık mükerrer sayılmıyor (anahtara `externalLineId` eklendi): 419 yanlış pozitif → 0. Motorda uygulandı; maliyet kapsamı fonksiyonu için migration Cowork'te.
+- Hedef bulgusu gözlemin ölçüm saatini yazar (canlı alarm dibiyle karışmasın).
+
 ### Banka bayatlık kapısı önemlilik eşikli (2026-10-08)
 - Nakit kritik bulgusu KMH faizi dahil dibi ve fonlanabilirliği de yazar (aşağı yön baz senaryosu); kanonik dip ve tetik değişmedi.
 - Canlıda doğrulandı: CASH_CRITICAL yeniden ACİL bulgu, Ziraat USD önemsiz bayat hesap olarak uyarıda.
-- Mükerrer kanonik satış satırı artık marj/kâr kurallarını şirket çapında susturmaz; `DUPLICATE_SALES_ROWS` bilgi bulgusu üretir (Cowork kararı).
+- Mükerrer kanonik satış satırı artık marj/kâr kurallarını şirket çapında susturmaz; `DUPLICATE_SALES_ROWS` bilgi bulgusu üretir (Alperen kararı; Cowork hemfikir).
 - Bayat banka hesabı nakit kurallarını (CASH_CRITICAL) yalnız bakiyesi önemlilik eşiğini (10.000 TL) aşıyorsa ya da bilinmiyorsa susturur; önemsiz bayat hesap bulguda uyarı olarak görünür. Ziraat USD (419,53 TL) artık −3,6M'lik dip kuralını susturmuyor.
 
 ### Güvenilir CFO motoru tetiği (2026-10-08)

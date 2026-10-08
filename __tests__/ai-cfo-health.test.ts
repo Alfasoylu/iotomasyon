@@ -34,6 +34,22 @@ const dead = evaluateCfoAlarms(base({ sources: [{ name: "XML", lastAt: h(30), ma
 assert.deepEqual(dead.map(a => a.key), ["source_dead:XML", "source_dead:Trendyol", "source_dead:banka"]);
 assert.match(dead[1].message, /hiç gelmedi/);
 
+// Kapasite (Cowork CFO 2026-10-08): pozisyonun eksisi şirket KMH kapasitesini (genel + amaca bağlı) ilk aştığı gün ve tutar.
+// Üretim 08.10: 09.10 −1.768.612 (genel 1.809.300 içinde, 40.688 boşluk), 21.10 −2.924.473 → genel+amaçlı 2.559.300'ü 365.173 aşıyor.
+const path = [{ date: "2026-10-09", position: -1768612 }, { date: "2026-10-20", position: -1554437 }, { date: "2026-10-21", position: -2924473 }, { date: "2026-12-01", position: -3593003 }];
+const cap = (o: Partial<NonNullable<AlarmInput["capacity"]>> = {}) => evaluateCfoAlarms(base({ capacity: { generalTry: 1809300, customsTry: 750000, personalTry: 1100000, path, ...o } }));
+const c1 = cap();
+assert.deepEqual(c1.map(a => a.key), ["capacity_breach:company"]);
+assert.equal(c1[0].message, "Nakit pozisyonu 2026-10-21'de -2.924.473 TL — şirket KMH kapasitesini (genel 1.809.300 TL + amaca bağlı 750.000 TL) 365.173 TL aşıyor; şahsi hesaplar (1.100.000 TL) gerekiyor");
+assert.match(cap({ personalTry: 1000000 })[0].message, /şahsi hesaplar \(1\.000\.000 TL\) dahil FONLANAMIYOR \(en kötü gün 2026-12-01: 33\.703 TL açık\)/);
+assert.match(cap({ personalTry: null })[0].message, /şahsi kapasite bilinmiyor/);
+// yalnız genel aşılıyorsa: amaca bağlı limit koşullu (gümrük Ziraat'ten ödenirse)
+const g1 = cap({ path: [{ date: "2026-10-21", position: -2000000 }] });
+assert.deepEqual(g1.map(a => a.key), ["capacity_breach:general"]);
+assert.match(g1[0].message, /genel KMH'yi \(1\.809\.300 TL\) 190\.700 TL aşıyor; yalnız gümrük Ziraat'ten ödenirse/);
+assert.deepEqual(cap({ path: [{ date: "2026-10-09", position: -1768612 }] }), [], "kapasite içinde: alarm yok");
+assert.deepEqual(codes(base({ capacity: null })), [], "kapasite verisi yoksa değerlendirilmez");
+
 // Bildirim: arıza her zaman; yeni alarm; süregelen alarm her koşuda e-posta üretmez; sabah koşusunda (06–10 TR) günlük hatırlatma
 const f = evaluateCfoAlarms(base({ minPosition: { valueTry: -3379787, date: "2026-12-01" } }));
 assert.equal(shouldNotify([], null, 9), false);
@@ -45,4 +61,4 @@ assert.equal(shouldNotify(f, ["floor_breach"], 12), false, "öğle koşusu hatı
 assert.equal(shouldNotify(f, ["floor_breach"], 16), false, "akşam koşusu hatırlatmaz");
 assert.equal(shouldNotify([...f, ...pay], ["floor_breach"], 13), true, "yeni ödeme alarmı");
 assert.equal(shouldNotify(evaluateCfoAlarms(base({ runs: [] })), ["engine_stale"], 13), true, "motor arızası her saat bildirilir");
-console.log("CFO alarms: engine stale, consecutive failures, floor breach, unmarked payment, dead sources, notify-on-change + morning-slot reminder passed");
+console.log("CFO alarms: engine stale, consecutive failures, floor breach, unmarked payment, dead sources, KMH capacity breach, notify-on-change + morning-slot reminder passed");

@@ -9,10 +9,12 @@ import { istanbulPeriod } from "./period";
 //   floor_breach          cfo_nakit_projeksiyon(120) dibi tabanın (−3.000.000) altında
 //   payment_unmarked      vadesi bugün olup 15:00 TR sonrası hâlâ işaretlenmemiş ya da vadesi geçmiş ödeme
 //   source_dead           Entegra / XML / Trendyol senkronu ya da banka bakiyesi eşik süreden eski
+//   capacity_breach       nakit pozisyonu (cfo_nakit_projeksiyon, faizsiz) şirket KMH kapasitesini aşıyor — Cowork CFO sırası
+//                         2026-10-08: önce kapasite alarmı, sonra kademeli faiz, en son kuralı faizli dibe bağlama
 // Bildirim (GitHub işi kırmızı → e-posta) yalnız arıza, YENİ alarm ya da sabah koşusundaki (06:00–10:59 TR) günlük hatırlatmada:
 // süregelen bir taban alarmı her koşuda e-posta üretmez; yine de her koşuda cfo_gun_ozeti'nde görünür.
 
-export type AlarmCode = "engine_stale" | "consecutive_failures" | "floor_breach" | "payment_unmarked" | "source_dead";
+export type AlarmCode = "engine_stale" | "consecutive_failures" | "floor_breach" | "payment_unmarked" | "source_dead" | "capacity_breach";
 export type CfoAlarm = { code: AlarmCode; key: string; message: string };
 export type EngineRunInfo = { status: string; generatedAt: Date; finishedAt: Date | null; error: string | null };
 export type DueItem = { label: string; amountTry: number | null; due: string };
@@ -21,6 +23,8 @@ export type AlarmInput = {
   now: Date; engineEnabled: boolean; runs: EngineRunInfo[];
   minPosition: { valueTry: number | null; date: string | null } | null; floorTry: number;
   payments: DueItem[]; sources: SourceAge[]; staleBankAccounts: string[];
+  /** KMH kapasitesi ve projeksiyon yolu (cfo_nakit_kapisi + cfo_nakit_projeksiyon(120)); yoksa kapasite alarmı değerlendirilmez */
+  capacity?: { generalTry: number; customsTry: number; personalTry: number | null; path: { date: string; position: number }[] } | null;
 };
 
 export const ENGINE_STALE_HOURS = 20;
@@ -50,6 +54,21 @@ export function evaluateCfoAlarms(i: AlarmInput): CfoAlarm[] {
     if (age == null || age > s.maxAgeHours)
       out.push({ code: "source_dead", key: `source_dead:${s.name}`, message: `${s.name} verisi ${age == null ? "hiç gelmedi" : `${Math.floor(age)} saattir gelmedi`} (eşik ${s.maxAgeHours} saat)` });
   }
+  // Kapasite: pozisyonun eksisi = KMH ihtiyacı. Genel KMH her işe; amaca bağlı limit yalnız gümrük Ziraat'ten ödenirse; şahsi
+  // hesaplar son çare. İlk aşım günü ve aşım tutarı yazılır (alarm anahtarı günsüz: tarih kayınca yeni e-posta üretmez).
+  if (i.capacity) {
+    const { generalTry: g, customsTry: c, personalTry: p, path } = i.capacity;
+    const first = (limit: number) => path.find(d => -d.position > limit);
+    const beyondCompany = first(g + c), beyondGeneral = first(g);
+    if (beyondCompany) {
+      const worst = path.reduce((m, d) => (d.position < m.position ? d : m), beyondCompany);
+      const allTry = g + c + (p ?? 0), personal = p == null ? "şahsi kapasite bilinmiyor" : -worst.position > allTry
+        ? `şahsi hesaplar (${tl(p)}) dahil FONLANAMIYOR (en kötü gün ${worst.date}: ${tl(-worst.position - allTry)} açık)` : `şahsi hesaplar (${tl(p)}) gerekiyor`;
+      out.push({ code: "capacity_breach", key: "capacity_breach:company", message: `Nakit pozisyonu ${beyondCompany.date}'de ${tl(beyondCompany.position)} — şirket KMH kapasitesini (genel ${tl(g)} + amaca bağlı ${tl(c)}) ${tl(-beyondCompany.position - g - c)} aşıyor; ${personal}` });
+    } else if (beyondGeneral) {
+      out.push({ code: "capacity_breach", key: "capacity_breach:general", message: `Nakit pozisyonu ${beyondGeneral.date}'de ${tl(beyondGeneral.position)} — genel KMH'yi (${tl(g)}) ${tl(-beyondGeneral.position - g)} aşıyor; yalnız gümrük Ziraat'ten ödenirse amaca bağlı limit (${tl(c)}) kapatır` });
+    }
+  }
   if (i.staleBankAccounts.length)
     out.push({ code: "source_dead", key: "source_dead:banka", message: `Banka bakiyesi 7 günden eski: ${i.staleBankAccounts.join(", ")}` });
   return out;
@@ -71,10 +90,10 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
   const p = istanbulPeriod(now), afternoon = p.minutes >= 15 * 60;
   const today = p.date;
   const q = <T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql).catch(() => [] as T[]);
-  const [runs, dip, events, loans, cards, xml, ty, entegra, banks] = await Promise.all([
+  const [runs, dip, events, loans, cards, xml, ty, entegra, banks, gate, personal] = await Promise.all([
     prisma.cfoRun.findMany({ where: { idempotencyKey: { startsWith: "engine:" }, generatedAt: { gte: new Date(now.getTime() - 48 * H) } }, orderBy: { generatedAt: "desc" }, take: 20,
       select: { status: true, generatedAt: true, finishedAt: true, error: true } }),
-    q<{ v: unknown; d: string | null }>(`select pozisyon as v, tarih::text as d from cfo_nakit_projeksiyon(120) order by pozisyon asc limit 1`),
+    q<{ v: unknown; d: string | null }>(`select pozisyon as v, tarih::text as d from cfo_nakit_projeksiyon(120) order by tarih`),
     // Vadesi geçmiş her zaman; bugün vadeli yalnız 15:00 TR sonrası (sabah işaretlenmemiş olması normal).
     q<{ label: string; amount: unknown; due: string }>(`select left(coalesce(description, kind::text), 60) as label, "outflowTry" as amount, "eventDate"::date::text as due
       from cfo_cash_event where not "isSettled" and coalesce("outflowTry", 0) > 0 and "eventDate"::date ${afternoon ? "<=" : "<"} '${today}'::date order by "eventDate" limit 20`),
@@ -86,11 +105,17 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
     prisma.trendyolSalesRecord.findFirst({ orderBy: { syncedAt: "desc" }, select: { syncedAt: true } }).catch(() => null),
     prisma.entegraImportLog.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }).catch(() => null),
     prisma.cfoBankAccount.findMany({ where: { isActive: true, lastUpdatedAt: { lt: new Date(now.getTime() - 7 * 24 * H) } }, orderBy: { sortOrder: "asc" }, select: { name: true } }),
+    q<{ g: unknown; c: unknown }>(`select bos_kmh_try as g, amacli_kmh_try as c from cfo_nakit_kapisi`),
+    q<{ t: unknown }>(`select tutar as t from cfo_kaynak_yeterliligi() where kalem ilike 'Sahsi KMH%' limit 1`),
   ]);
+  const path = dip.map(r => ({ date: String(r.d), position: num(r.v) })).filter((r): r is { date: string; position: number } => r.position != null);
+  const low = path.reduce<{ date: string; position: number } | null>((m, d) => (!m || d.position < m.position ? d : m), null);
+  const g = num(gate[0]?.g);
   const due = (r: { label: string; amount: unknown; due: string }) => ({ label: String(r.label).trim(), amountTry: num(r.amount), due: String(r.due) });
   return {
     now, engineEnabled: config.monitorEnabled, runs,
-    minPosition: dip[0] ? { valueTry: num(dip[0].v), date: dip[0].d } : null, floorTry: config.cashFloorTry,
+    minPosition: low ? { valueTry: low.position, date: low.date } : null, floorTry: config.cashFloorTry,
+    capacity: g != null && path.length ? { generalTry: g, customsTry: num(gate[0]?.c) ?? 0, personalTry: num(personal[0]?.t), path } : null,
     payments: [...events, ...loans, ...cards].map(due),
     // Eşikler: XML ve Trendyol günlük senkron (26 saat); Entegra haftalık yükleme (8 gün = 7 + 1 tolerans).
     sources: [{ name: "XML", lastAt: xml?.completedAt ?? null, maxAgeHours: 26 }, { name: "Trendyol", lastAt: ty?.syncedAt ?? null, maxAgeHours: 26 },

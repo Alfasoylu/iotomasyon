@@ -77,6 +77,9 @@ const gp = [evidence("fm_memory_goal", `${gk}.observed_try`, -3379787, "TRY", "2
 const g = renderFinding(anomaly("GOAL_OFF_TRACK", gk, gp, { category: "cash", severity: "critical", entityType: "goal" }), gp, O);
 assert.equal(g.urgency, "ACIL", "taban hedefi kritik → ACİL");
 assert.equal(g.what, "Hedef net_position_floor_try OFF_TRACK/D: gözlem -3.379.787 TL, hedef -3.000.000 TL, açık 379.787 TL.");
+// ölçüm anı varsa yazılır: alarmın canlı dibi ile hedefin sabah gözlemi karışmasın (Cowork 2026-10-08)
+const gpt = [...gp, evidence("fm_memory_goal", `${gk}.evaluated_at`, "08.10 09:11", "time_tr", "2026-10-08", true)];
+assert.match(renderFinding(anomaly("GOAL_OFF_TRACK", gk, gpt, { category: "cash", severity: "critical", entityType: "goal" }), gpt, O).what, /gözlem -3\.379\.787 TL \(08\.10 09:11 TR ölçümü\), hedef/);
 
 // Sıralama: aciliyet, sonra |TL etkisi|
 const all = renderFindings([anomaly("COST_COVERAGE", "company", cov, { category: "data_quality" }), anomaly("DEAD_STOCK", "SKU9", ds, { impact: capitalCostImpact(metric(120000, true), 2.83) }), stockout,

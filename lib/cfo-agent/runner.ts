@@ -40,7 +40,7 @@ export function runPeriodKey(trigger: EngineTrigger, period: { hour: string; min
 
 async function readGoals(): Promise<GoalRow[]> {
   try {
-    return await prisma.$queryRaw<GoalRow[]>`SELECT goal_key, goal_version, kind, title, target_value, target_currency, deadline, as_of,
+    return await prisma.$queryRaw<GoalRow[]>`SELECT goal_key, goal_version, kind, title, target_value, target_currency, deadline, as_of, evaluated_at,
       period_start, period_end, state, observed_value_try, observed_on, target_value_try, fx_usd_try, fx_month, progress_pct, gap_try,
       current_rate_try_per_day, required_rate_try_per_day, projected_value_try, projected_on, grade, flags FROM public.fm_memory_goal`;
   } catch { return []; }

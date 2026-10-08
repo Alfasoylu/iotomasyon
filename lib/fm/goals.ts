@@ -7,6 +7,8 @@ export type GoalRow = {
   target_value_try: unknown; fx_usd_try: unknown; fx_month: unknown; progress_pct: unknown; gap_try: unknown;
   current_rate_try_per_day: unknown; required_rate_try_per_day: unknown; projected_value_try: unknown; projected_on: unknown;
   grade: string; flags: string[] | null;
+  /** gözlemin ölçüldüğü an (fm_memory_goal.evaluated_at); yoksa bilinmiyor */
+  evaluated_at?: unknown;
 };
 export type GoalItem = {
   key: string; version: number; kind: string; title: string; state: GoalState; grade: string; flags: string[];
