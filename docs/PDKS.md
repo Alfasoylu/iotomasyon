@@ -167,17 +167,17 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Durum 07.10: ciro ~53k TL/gün (gereken 181,5k, ~3,4×) · borç 9,24M (açık 4,24M) · net sermaye açığı 11,8M TL ve
 > GERİLİYOR (−33k TL/gün; büyük kısmı stok değerleme oynaklığı) · nakit 71k TL · 01.11'de nakit dibi −3,31M (taban −3M).
 
-1. [x] **Sermaye verimliliği + marjinal tahsis motoru** — ✅ 2026-10-07 (`lib/cfo/capital-efficiency.ts`, `/cfo/sermaye`, AI CFO B4h).
-2. [x] **VALUE OF INFORMATION ENGINE** — ✅ 2026-10-07 (`lib/cfo/voi.ts`, `/cfo/sorular` üst kartı, AI CFO B4i). Sonraki adım: soru
+1. [x] **Sermaye verimliliği + marjinal tahsis motoru** — ✅ TAMAMLANDI 2026-10-07 (`lib/cfo/capital-efficiency.ts`, `/cfo/sermaye`, AI CFO B4h).
+2. [x] **VALUE OF INFORMATION ENGINE** — ✅ TAMAMLANDI 2026-10-07 (`lib/cfo/voi.ts`, `/cfo/sorular` üst kartı, AI CFO B4i). Sonraki adım: soru
    üretimini (workflow-plan) VOI eşiğine bağla — değeri eşik altı soru hiç oluşturulmasın; cevapları sayıya çevirip hafızaya yaz.
-3. [x] **Decision Memory + beklenen/gerçekleşen ölçümü** — ✅ 2026-10-07 (`lib/cfo/decision-memory.ts`, `/cfo/kararlar`, AI CFO B4j).
+3. [x] **Decision Memory + beklenen/gerçekleşen ölçümü** — ✅ TAMAMLANDI 2026-10-07 (`lib/cfo/decision-memory.ts`, `/cfo/kararlar`, AI CFO B4j).
    Sonraki adım: sermaye motorunun ve AI içgörülerinin önerileri beklenen değerle `cfo_hamle`'ye kaydedilsin (yazma kuralı +
    onay akışı); yeni hamlelerde `beklenen_deger` zorunlu (bugün kapanmış 5 kararın hiçbirinde yok → isabet ölçülemiyor).
-4. [x] **Hedef açığı atfı (goal-gap attribution)** — ✅ 2026-10-07 (`lib/cfo/goal-attribution.ts`, `/cfo/kararlar`, AI CFO B4k).
+4. [x] **Hedef açığı atfı (goal-gap attribution)** — ✅ TAMAMLANDI 2026-10-07 (`lib/cfo/goal-attribution.ts`, `/cfo/kararlar`, AI CFO B4k).
    Sonraki adım: Goal Engine `wealth_usd` cari hızını operasyonel hızla hesaplasın (bugün değerleme dahil regresyon eğimi).
-4b. [x] **Ciro hedefine giden yol — gelir kaldıraçları** — ✅ 2026-10-07 (`lib/cfo/revenue-levers.ts`, `/cfo/sermaye`, AI CFO B4l).
+4b. [x] **Ciro hedefine giden yol — gelir kaldıraçları** — ✅ TAMAMLANDI 2026-10-07 (`lib/cfo/revenue-levers.ts`, `/cfo/sermaye`, AI CFO B4l).
 5. [ ] **Nakit tahmini kalibrasyonu** — `cfo_nakit_projeksiyon` tahminleri saklanmıyor; tahmin vs gerçekleşen hata izlenmiyor. Not 07.10: Goal Engine gözlemleri (`fm_goal_observation.projected_value_try/projected_on`) zaten günlük tahmin saklıyor (06.10'dan beri); 2–4 hafta veri birikince kalibrasyon bunun üzerine kurulur. Şimdi değeri düşük → ertelendi (VOI ilkesi).
-6. [x] **Aşağı yön senaryoları** — ✅ 2026-10-07 (`lib/cfo/downside.ts`, `/cfo/sermaye`, AI CFO B4m; tahsis stres açığıyla).
+6. [x] **Aşağı yön senaryoları** — ✅ TAMAMLANDI 2026-10-07 (`lib/cfo/downside.ts`, `/cfo/sermaye`, AI CFO B4m; tahsis stres açığıyla).
    Sonraki adım: (a) ✅ kısmen 2026-10-08: KMH faizi dahil baz dip (−3.958.629, 01.01, FONLANAMIYOR; 120 günde faiz 616.399) artık
    CASH_CRITICAL bulgusunun kanıtında; kanonik dip (projeksiyon, faizsiz) ve kural tetiği değişmedi. **Cowork sırası (2026-10-08):**
    (1) ✅ kapasite alarmı (`capacity_breach`, 21.10'u bugün yakalar); (2) ✅ 2026-10-08 KADEMELİ faiz — yalnız KMH ile fonlanan kısma, banka
@@ -191,15 +191,15 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
    doldurulması (onay), (c) her kartın ekstredeki aylık akdi faizi (kullanıcı). Sonra: kart faizinin nakit projeksiyonuna eklenmesi.
 
 ### Backlog — motor tetiği (2026-10-08)
-- [x] Cowork'ün 16:49 okumasından önce güvenilir motor koşusu: `trendyol-sync` Vercel cron'u `0 6` → `0 12` UTC (15:00–15:59 TR; 14 günlük pencere → veri kaybı yok). Alperen: tam yetki (2026-10-08).
-- [x] Bayatlık kapısına önemlilik eşiği (Cowork kararı 2026-10-08): Ziraat USD 419,53 TL (dibin %0,01'i) CASH_CRITICAL'ı susturuyordu. Artık yalnız bakiyesi `materialMinTry` (10.000 TL) üstü ya da bilinmeyen bayat hesap susturur; önemsizler bulguda uyarı. Ekran görüntüsüyle bakiye güncellemesi yine Alperen'de (yarın).
+- [x] ✅ TAMAMLANDI 2026-10-08 (PR #202) — Cowork'ün 16:49 okumasından önce güvenilir motor koşusu: `trendyol-sync` Vercel cron'u `0 6` → `0 12` UTC (15:00–15:59 TR; 14 günlük pencere → veri kaybı yok). Alperen: tam yetki (2026-10-08).
+- [x] ✅ TAMAMLANDI 2026-10-08 (PR #203) — Bayatlık kapısına önemlilik eşiği (Cowork kararı 2026-10-08): Ziraat USD 419,53 TL (dibin %0,01'i) CASH_CRITICAL'ı susturuyordu. Artık yalnız bakiyesi `materialMinTry` (10.000 TL) üstü ya da bilinmeyen bayat hesap susturur; önemsizler bulguda uyarı. Ekran görüntüsüyle bakiye güncellemesi yine Alperen'de (yarın).
 
 ### Backlog — maliyet kapsamı (2026-10-08)
-- [ ] Migration `20261008200000_cfo_maliyet_kapsami_satir`'ı Cowork uygular (sonra parmak izi yeniden ölçülür, repo listeleri temizlenir).
+- [x] ✅ TAMAMLANDI 2026-10-09 — Migration `20261008200000_cfo_maliyet_kapsami_satir` Cowork 2026-10-08 20:26 UTC uyguladı (satır toplamı = ciro üretimde doğrulandı); parmak izi yeniden ölçüldü, repo listeleri temizlendi.
 - [ ] Kapsamı %95'e çıkaran 8 kalem (veri sahibi Alperen): 6 SKU'ya ürün maliyeti, anunnaki-pointer ürün eşlemesi, 2827456501236 adet/set tanımı.
 
 ### Backlog — tahsilat tahmini (2026-10-08)
-- [x] `lib/cfo/engine.ts` haftalık tahmini `cfo_tahsilat_tahmini`'ye bağlandı (2026-10-08).
+- [x] ✅ TAMAMLANDI 2026-10-08 (PR #199) — `lib/cfo/engine.ts` haftalık tahmini `cfo_tahsilat_tahmini`'ye bağlandı.
 - [ ] `cfo_settings.customsReserveDate` 30.09'da kalmış: gümrük rezervi kartı 09.10 / 21.10 dilimlerini görmüyor (veri sahibi: Alperen/Cowork).
 - [ ] `cfo_cash_event` / `cfo_yoldaki_mal` / `cfo_question` üzerinde ~1.000+ karakter metin UPDATE'i 180 sn zaman aşımı (Cowork 4 kez gördü). **Teşhis 2026-10-08 (salt okuma):** veritabanı tarafında sebep yok — üç tabloda tetikleyici, kural, realtime yayını, metin sütunu indeksi yok; asılı işlem yok; `postgres` rolünde statement_timeout yok; `pg_stat_statements`'ta bu tablolara ulaşan her UPDATE ≤ 52 ms. Zaman aşımı istemci/araç katmanında (Postgres'e hiç ulaşmıyor ya da yanıt dönüşünde takılıyor). Doğrulama önerisi (Cowork): aynı UPDATE takılırken ayrı oturumdan `pg_stat_activity`'de görünüyor mu.
 
@@ -212,15 +212,15 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 2. [ ] **`cfo_secret` düz metin kimlik bilgileri (5 satır) → Vault + iptal** — anahtarlar: `GITHUB_PAT`, `RAILWAY_PROJECT_TOKEN` (hiçbir yerde kullanılmıyor → kaynağında iptal + satır sil), `TMP_CFO_FILES_VERIFY_TOKEN` (boş → sil), `CFO_GOOGLE_INTERNAL_TOKEN` + `GOOGLE_SA_KEY_JSON` (`cfo-google` köprüsü → Vault). Erişim yalnız postgres/service_role. Taşıma taslağı hazır; uygulama kullanıcı onayı/izni bekliyor.
 
 **P1 — Bu hafta (canlı kararları etkileyen veri + AI CFO)**
-10. [ ] **CFO motoru için güvenilir saatlik tetik** — GitHub zamanlanmış işleri bu depoda saatte bir koşmuyor (24 saatte ~4). Seçenekler (kullanıcı): (a) harici ücretsiz cron (cron-job.org vb.) `GET /api/cron/ai-cfo-monitor` + `Authorization: Bearer CRON_SECRET` ve ardından `/api/cron/ai-cfo-health`; (b) Vercel Pro saatlik cron; (c) Cowork CFO 08:00 / 16:49 koşusundan önce `workflow_dispatch` tetikler (sıfır maliyet, günde 2 taze koşu garanti).
+10. [x] **CFO motoru için güvenilir tetik** — ✅ TAMAMLANDI 2026-10-08 (PR #199, #202): saatlik yerine günde 3 sabit koşu (07:17 / 12:37 / 16:07 TR) + `workflow_dispatch`, motor bayat alarmı 20 sa; Trendyol senkronu 12:00 UTC. Eski not: GitHub zamanlanmış işleri bu depoda saatte bir koşmuyor (24 saatte ~4). Seçenekler (kullanıcı): (a) harici ücretsiz cron (cron-job.org vb.) `GET /api/cron/ai-cfo-monitor` + `Authorization: Bearer CRON_SECRET` ve ardından `/api/cron/ai-cfo-health`; (b) Vercel Pro saatlik cron; (c) Cowork CFO 08:00 / 16:49 koşusundan önce `workflow_dispatch` tetikler (sıfır maliyet, günde 2 taze koşu garanti).
 3. [ ] **Bayat kaynaklar** — teşhis 2026-10-07: Hepsiburada yanlış alarmı düzeltildi (`v7`); Entegra/banka haftalık düzene alındı (`v8`, sistem 7. günde ister). Kalan (kullanıcı): Ziraat USD + Yapı Kredi USD (şirket) bakiyelerini güncelle ya da pasife al (son 17.09).
 4. [ ] **Maliyet kapsamı %56,6** — eksik ürün maliyetleri girilmeden kârlılık/marj anomalileri güvenilir değil (kullanıcı + veri girişi ekranı).
 5. [ ] **Forecast V2 açma kararı** — eski yolda Trendyol çift sayım + Türkçe-İ hataları satın alma tahminini bozmaya devam ediyor (gölge raporu → onay).
 6. [ ] **Haftalık arası boşluk tahmini (Aşama 2):** ✅ 2a satış (Trendyol API × oran, `v9`). ✅ 2b banka ileri taşıma (tarihi geçen kalem; banka takvimden, kanal → `cfo_pay_obs`). XML yalnız çapraz kontrol (günlük gürültülü).
-7. [x] **AI CFO 24 saat raporu kalanları** — 2026-10-08 mimari kararıyla kapandı: sitede LLM yok (deterministik motor + Cowork CFO). Kalan tek iş: **tek kanonik nakit dibi** — kaynak `cfo_nakit_projeksiyon(120)`; Goal Engine (−3.546.019) ve `cfo_odeme_gunluk` (−3.408.171) farkı açıklanacak.
-8. [x] **AI CFO anomali seçiminde kategori çeşitliliği** — 2026-10-08: seçim kalktı; her anomali şablonlu bulgu olur (görüş kapanmaz).
-9. [x] **Tek kur kaynağı** — ✅ 2026-10-07: `lib/fx/current.ts` (USD/TRY `cfo_kur` → `cfo_settings` → elle → varsayılan; RMB/USD elle → `cfo_settings`), 13 okuyucu taşındı.
-9a. [x] **Repoda migration'ı olmayan 2 üretim tablosu** — ✅ 2026-10-07: `20261007220000_cfo_ledger_tables_capture`, parmak izi hariç tutmasız üretimle birebir.
+7. [x] **AI CFO 24 saat raporu kalanları** — ✅ TAMAMLANDI 2026-10-08 (PR #197) — mimari kararıyla kapandı (kalan nakit dibi işi CFO-BACKLOG CFO-013'e taşındı): sitede LLM yok (deterministik motor + Cowork CFO). Kalan tek iş: **tek kanonik nakit dibi** — kaynak `cfo_nakit_projeksiyon(120)`; Goal Engine (−3.546.019) ve `cfo_odeme_gunluk` (−3.408.171) farkı açıklanacak.
+8. [x] **AI CFO anomali seçiminde kategori çeşitliliği** — ✅ TAMAMLANDI 2026-10-08 (PR #197): seçim kalktı; her anomali şablonlu bulgu olur (görüş kapanmaz).
+9. [x] **Tek kur kaynağı** — ✅ TAMAMLANDI 2026-10-07 (PR #191): `lib/fx/current.ts` (USD/TRY `cfo_kur` → `cfo_settings` → elle → varsayılan; RMB/USD elle → `cfo_settings`), 13 okuyucu taşındı.
+9a. [x] **Repoda migration'ı olmayan 2 üretim tablosu** — ✅ TAMAMLANDI 2026-10-07 (PR #191): `20261007220000_cfo_ledger_tables_capture`, parmak izi hariç tutmasız üretimle birebir.
 9d. [ ] **Meta reklam harcaması kaydedilmiyor** — `/reklamlar` canlı API'den okuyor, tabloya yazmıyor → CFO göremiyor (Trendyol reklamı fatura üzerinden görünüyor). Günlük harcama özeti tablosu + senkron (salt-okunur Meta API).
 9e. [ ] **Trendyol fatura/hakediş dosyası 09.09'dan beri yüklenmemiş** (kullanıcı) — CFO kesinti/iade/ceza kanıtını BAYAT işaretliyor.
 9c. [ ] **3 yedek tablo silme SQL'i** (kullanıcı, Supabase SQL Editor) — Supabase aracı DROP'ta onay ekranında takılıyor (4 deneme, hiçbiri uygulanmadı). Migration `20261007200000_drop_legacy_backup_tables` repoda, `notAppliedInProduction`'da; çalıştırılınca baseline'dan çıkarılır ve parmak izi yeniden ölçülür.
@@ -253,7 +253,7 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 > Kaynak: 2026-06-25 tam kod analizi (eksikler C*, güvenlik D*) + Faz 2 gereksinimleri.
 > Tamamlanan madde "Yapılanlar"a taşınır.
 
-- [x] **AI CFO runner adım 8 — STEP F tamam (2026-10-07):** ilk onaylı AI koşusu `cmuxqfti…` 2 içgörü kaydetti (1,43 ₺). Kalan: kalibrasyon ve aşağıdaki P1 AI CFO maddeleri.
+- [x] **AI CFO runner adım 8 — STEP F** — ✅ TAMAMLANDI 2026-10-07: ilk onaylı AI koşusu `cmuxqfti…` 2 içgörü kaydetti (1,43 ₺). Kalan: kalibrasyon ve aşağıdaki P1 AI CFO maddeleri.
 
 - [ ] **Güvenlik (sonraya, kritik değil):** `cfo_secret` düz metin kimlik bilgilerini ortam değişkenlerine taşı; pgvector'ü `public` dışına taşı; `tmp-cfo-files-verify` Edge Function'ı panelden sil.
 
@@ -337,6 +337,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 ---
 
 ## Yapılanlar (delta günlüğü)
+
+- **2026-10-09 — Üretim senkronu (200000 + 100000) + backlog tamamlanma kuralı:** Cowork `20261008200000_cfo_maliyet_kapsami_satir` (76abb7a0…, 20:26 UTC) ve `20261009100000_cfo_kredi_kalan_anapara` (2de5c7bb…, 21:25 UTC) uyguladı. Üretim parmak izi salt-okunur yeniden ölçüldü (fn 35→36, fnacl 52→53, view gövdeleri) → `fingerprint.expected.txt`; iki migration `baseline.json` `notAppliedInProduction` ve migration-security listesinden çıktı, source-mapping testindeki açık uygulamaları kaldırıldı (bootstrap uyguluyor). CFO-004 ✅ TAMAMLANDI, RF-005 RESOLVED. Yeni kural (Alperen/Cowork): %100 biten backlog maddesi "✅ TAMAMLANDI YYYY-AA-GG — kısa not" ile işaretlenir → `AGENTS.md` madde 5; `CFO-BACKLOG.md` "Tamamlanan" PR #191–#215 tek tek tarih + not; PDKS backlog'daki biten maddeler aynı biçimde. `20261009110000` (CFO-005b) hâlâ Cowork'te.
 
 - **2026-10-09 — CFO-010 (kısım 1): kredi/kart ödeme alarmı geçen ayın "ODENDI"siyle körleşmesin (RF-028):** `health.ts` "ODENDI" yalnız `lastUpdatedAt > vade − 25 gün` ise sayılır (`PAID_WINDOW_DAYS`); vadesi geçmiş kredi/kart sabah da alarm verir; yeni `ledger_stale` alarmı (vade geçti, ödendi işaretli, sonraki vade girilmemiş). Üretim: 11 kalemin 10'u eski aydan "ODENDI"; 16.10 simülasyonunda eski kural yalnız Ziraat kartını, yeni kural Garanti kredisini de yakalıyor. Test `ai-cfo-health`. Kalan (kısım 2): ödeme işaretinin kendi tarihi + defter yazma yolu.
 

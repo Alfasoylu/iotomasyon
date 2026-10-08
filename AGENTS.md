@@ -16,5 +16,9 @@ Her tamamlanan görevden sonra ilgili MD dosyaları GÜNCELLENİR. Bu opsiyonel 
    Hedefler"** ve **"Fazlar"** bölümleri güncellenir.
 4. Bir backlog maddesi tamamlandığında, "Backlog"tan işaretlenir/çıkarılır ve
    "Yapılanlar"a taşınır.
+5. **%100 tamamlanan backlog görevi (`docs/PDKS.md` ve `docs/CFO-BACKLOG.md`) yerinde
+   "✅ TAMAMLANDI YYYY-AA-GG" olarak işaretlenir ve yanına kısa özet not düşülür**
+   (ne yapıldı + PR/migration). Kısmen biten iş TAMAMLANDI yazılmaz; biten kısım ve kalan
+   kısım ayrı yazılır. (Kural: Alperen / Cowork, 2026-10-09.)
 
 Kısa kural: **kod değişti → MD değişir.** Commit, doküman güncellemesini de içermelidir.

@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### Kredi borcu üretimde kalan anaparadan; maliyet kapsamı satır listesi canlıda (2026-10-09)
+- İki migration üretimde: servet/kilometre hesabındaki kredi borcu artık yalnız kalan anapara (taksit sayısı TL'ye karışmıyor; üretimde Krediler = −3.373.797,12 TL) ve maliyet kapsamı açığını kapatan kalem listesi satır fonksiyonundan geliyor. Şema parmak izi üretimden yeniden ölçüldü, repo ile eşit.
+- Backlog kuralı: %100 biten madde tarih + kısa notla "TAMAMLANDI" işaretleniyor; geçmiş biten işler (PR #191–#215) bu biçimde listelendi.
+
 ### Kredi ve kart taksit alarmı geçen ayın ödeme işaretine takılmıyor (2026-10-09)
 - Bir kredi/kart geçen ay "ödendi" işaretlendiyse bu ayın taksiti için de ödenmiş sayılıyor ve alarm susuyordu; artık işaret yalnız bu döngüde yapıldıysa geçerli. Vadesi geçip sonraki vadesi girilmeyen kalemler için ayrı "defter güncellenmedi" alarmı eklendi.
 

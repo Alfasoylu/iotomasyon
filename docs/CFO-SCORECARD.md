@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-10-08 23:45 TR
-current_main_commit: 422a6db
+last_updated: 2026-10-09 01:10 TR
+current_main_commit: 9bd5bd9
 current_phase: "Faz 0 — İlk tam sistem denetimi"
 current_score: 50/100 (hard gate 12/12 gerekiyor; bugün 5/12)
 next_action: "CFO-001"
@@ -73,3 +73,4 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 2026-10-08 | CFO-001 PR-A | 48 | 5/12 | Ölçüm + karar memosu; tanım değişmedi → puan değişmedi (mutabakat görünür ama tek tanım yok). Yeni RF-025 (HIGH), RF-026, RF-027 |
 | 2026-10-09 | CFO-004 + CFO-005 | 49 | 5/12 | Düz KMH oranı TS katmanında kalktı (borclar satır=toplam, hayali KMH tasarrufu yok); kredi override hatası düzeltildi (üretimde migration bekliyor) |
 | 2026-10-09 | CFO-005b + CFO-009 | 50 | 5/12 | Takılan koşu / kilit hatası görünür, başarısız dilim yeniden denenir (8. boyut 3→4); kart erteleme kart faiziyle (üretimde migration bekliyor) |
+| 2026-10-09 | Üretim senkronu (200000 + 100000) | 50 | 5/12 | Kredi borcu üretimde kalan anapara (RF-005 RESOLVED; H12 hâlâ RF-001…004 nedeniyle ❌). Puan artışı yok: 1. boyut tek tanım eksikliğiyle sınırlı |
