@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### KMH kapasite alarmı (2026-10-08)
+- Yeni alarm `capacity_breach`: nakit pozisyonu şirket KMH kapasitesini ilk aştığı gün ve tutar (bugün 21.10, 365.173 TL; şahsi hesaplar gerekiyor). Cowork CFO sırasının ilk adımı; kademeli faiz ve kuralın faizli dibe bağlanması sonraki adımlar.
+
 ### Mükerrer satır anahtarı platform satır kimliğiyle (2026-10-08)
 - Aynı siparişte ayrı koliye giden adetler artık mükerrer sayılmıyor (anahtara `externalLineId` eklendi): 419 yanlış pozitif → 0. Motorda uygulandı; maliyet kapsamı fonksiyonu için migration Cowork'te.
 - Hedef bulgusu gözlemin ölçüm saatini yazar (canlı alarm dibiyle karışmasın).
