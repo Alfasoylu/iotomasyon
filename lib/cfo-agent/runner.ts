@@ -33,7 +33,7 @@ export type RunnerDependencies = {
 };
 export type RunnerOutcome = { status: string; runId?: string | null; findings?: number; material?: boolean; error?: string };
 
-/** İdempotency dilimi: saatlik ve her senkron tetiği saat başına bir kez; elle 20 dakikalık dilimde bir kez. */
+/** İdempotency dilimi: zamanlanmış ve her senkron tetiği saat başına bir kez; elle 20 dakikalık dilimde bir kez. */
 export function runPeriodKey(trigger: EngineTrigger, period: { hour: string; minutes: number }): string {
   return trigger === "manual" ? `${period.hour}:m${Math.floor((period.minutes % 60) / 20)}` : `${period.hour}:${trigger}`;
 }

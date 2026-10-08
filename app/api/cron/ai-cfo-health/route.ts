@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { loadCfoAlarms, shouldNotify, type CfoAlarm } from "@/lib/cfo-agent/health";
 import { istanbulPeriod } from "@/lib/cfo-agent/period";
 
-// CFO sağlık kontrolü (CRON_SECRET; saatlik motor işinin ikinci adımı). 503 → GitHub Actions işi kırmızı → depo sahibine e-posta.
-// Yalnız motor arızası, YENİ alarm (önceki motor koşusunda olmayan) ya da 09:00 TR günlük hatırlatmada 503; süregelen alarm
-// gövdede listelenir ama saatte bir e-posta üretmez. Salt-okunur: hiçbir şey yazmaz.
+// CFO sağlık kontrolü (CRON_SECRET; motor işinin ikinci adımı, günde 3 koşu). 503 → GitHub Actions işi kırmızı → depo sahibine e-posta.
+// Yalnız motor arızası, YENİ alarm (önceki motor koşusunda olmayan) ya da sabah koşusundaki günlük hatırlatmada 503; süregelen
+// alarm gövdede listelenir ama her koşuda e-posta üretmez. Salt-okunur: hiçbir şey yazmaz.
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export async function GET(req: NextRequest) {

@@ -1,12 +1,17 @@
 > ## ⚠️ 2026-10-08 — MİMARİ DEĞİŞTİ: sitede LLM YOK
 > Alperen kararı ("Sabah + akşam"): AI yargısı Cowork CFO'ya taşındı (08:00 ve 16:49 TR, Claude aboneliği). Site yalnız
-> **deterministik motor**: saatte bir ölçer, tespit eder, TL'ye göre sıralar, bulguyu **şablonla** yazar (`lib/cfo-agent/findings.ts`),
+> **deterministik motor**: günde 3 kez ölçer, tespit eder, TL'ye göre sıralar, bulguyu **şablonla** yazar (`lib/cfo-agent/findings.ts`),
 > önemli değişikliği **bayrak** olarak işaretler (`materiality.ts`, kapı değil), CFO bağlamı Blok B'yi **METRIK** satırı olarak
 > kaydeder ve **alarm** üretir (`health.ts`). Tek kayıt `cfo_run` (`idempotencyKey 'engine:%'`); Cowork CFO yalnız
 > `select * from cfo_gun_ozeti` okur. Kaldırılanlar: `provider.ts`, `validate-ai-output.ts`, `handbook-core`, `rule-cards`,
 > `decision-packet.ts`, `budget.ts`, `cost-efficiency.ts`, LLM hafızası, sabah özeti ucu, derin inceleme, token/bütçe ayarları.
-> `cfo_insight` / `cfo_usage` artık yazılmaz (geçmiş kalır). Zamanlama: `.github/workflows/ai-cfo-schedule.yml` (her saat :05,
-> motor + sağlık tek iş) + XML/Trendyol senkron sonrası. Aşağıdaki metin LLM dönemi tarihçesidir.
+> `cfo_insight` / `cfo_usage` artık yazılmaz (geçmiş kalır). Zamanlama: `.github/workflows/ai-cfo-schedule.yml` — **günde 3 sabit
+> koşu** (Cowork kararı 2026-10-08; 07:17 / 12:37 / 16:07 TR, motor + sağlık tek iş) + Cowork'ün kendi okumalarından önce elle
+> tetikleme (`workflow_dispatch` → `?trigger=manual`) + XML/Trendyol senkron sonrası. Harici cron servisi yok (CRON_SECRET üçüncü
+> tarafa gitmez). Motor bayat alarmı 20 saat; günlük hatırlatma sabah koşusunda (06–10 TR).
+> **Maliyet kapsamı tek tanım:** `cfo_maliyet_kapsami_at(asof)` / görünüm `cfo_maliyet_kapsami` (ciro ağırlıklı, son 30 tam gün;
+> güvenilmez → eşleşmeyen → maliyetsiz → kapsanan ayrışımı). Motorun COST_COVERAGE kapısı bu sayıyı okur, kendisi hesaplamaz.
+> Aşağıdaki metin LLM dönemi tarihçesidir.
 
 # AI CFO Runner (V1 yeniden inşası adım 4/9 + V2 Goal Engine)
 

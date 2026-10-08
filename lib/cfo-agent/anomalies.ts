@@ -17,7 +17,7 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
   if(snapshot.dataQuality.missingFields.length)add("DATA_QUALITY","data_quality","warning","company",month,[evidence("snapshot","missing_fields",snapshot.dataQuality.missingFields.join(",").slice(0,1200),"fields",at,true)],null,false);
   const coverage=snapshot.dataQuality.costCoveragePct;
   const financialAllowed=coverage!=null&&coverage>=config.minCostCoveragePct&&snapshot.dataQuality.duplicateCanonicalRows===0;
-  if(!financialAllowed)add("COST_COVERAGE","data_quality","warning","company",month,[evidence("cfo_satis_birim_duz","cost_coverage",coverage,"pct",at,true)],null,false);
+  if(!financialAllowed)add("COST_COVERAGE","data_quality","warning","company",month,[evidence("cfo_maliyet_kapsami","cost_coverage",coverage,"pct",at,true)],null,false);
   // Cash comes first. Stale manual bank balances block financial diagnosis.
   if(snapshot.cash.banksFresh&&snapshot.cash.minimumProjectedPosition.value!=null&&snapshot.cash.minimumProjectedPosition.value<config.cashFloorTry) {
     add("CASH_CRITICAL","cash","critical","company",month,[m("cfo_nakit_projeksiyon","minimum_position",snapshot.cash.minimumProjectedPosition,"TRY"),m("cfo_nakit_kapisi","cash",snapshot.cash.cash,"TRY"),m("cfo_nakit_kapisi","purpose_limit_not_general_cash",snapshot.cash.purposeLimit,"TRY"),...snapshot.cash.summaries]);

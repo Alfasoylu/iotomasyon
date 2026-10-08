@@ -38,14 +38,14 @@ async function main() {
     await apply([AI, VIEW, VIEW_TZ]);
     const { cfoStore } = await import("../lib/cfo-agent/store");
     const now = new Date("2026-10-06T08:00:00Z");
-    const id = await cfoStore.begin("2026-10-06T11:hourly", now);
+    const id = await cfoStore.begin("2026-10-06T11:scheduled", now);
     assert.ok(id);
     const keyRow = await client.$queryRawUnsafe<{ k: string; type: string }[]>(`select "idempotencyKey" k, type from cfo_run`);
-    assert.deepEqual(keyRow, [{ k: "engine:2026-10-06T11:hourly", type: "monitor" }], "type CHECK'i değişmeden motor koşusu ayırt edilir");
+    assert.deepEqual(keyRow, [{ k: "engine:2026-10-06T11:scheduled", type: "monitor" }], "type CHECK'i değişmeden motor koşusu ayırt edilir");
     // The duplicate-period path relies on a unique violation (P2002). Over the single PGlite socket a server-side error ends
     // the session, so the constraint is proven on the engine directly; the P2002 → null mapping is covered in the unit test.
     await assert.rejects(pg.query(`insert into cfo_run (id,type,status,"periodKey","idempotencyKey","triggerReasons","schemaVersion","calculationVersion")
-      values ('dup','monitor','running','2026-10-06T11:hourly','engine:2026-10-06T11:hourly','[]','2','v')`), /unique|duplicate/i);
+      values ('dup','monitor','running','2026-10-06T11:scheduled','engine:2026-10-06T11:scheduled','[]','2','v')`), /unique|duplicate/i);
 
     const anomaly = { id: "goal:revenue_month_usd", rule: "GOAL_OFF_TRACK", severity: "warning" as const, category: "sales" as const, entityType: "goal",
       entityId: "revenue_month_usd", period: "2026-10-01", fingerprint: "goal:revenue_month_usd:OFF_TRACK:2026-10-01", cooldownKey: "goal:revenue_month_usd:OFF_TRACK",
@@ -53,7 +53,7 @@ async function main() {
     const finding = { fingerprint: anomaly.fingerprint, cooldownKey: anomaly.cooldownKey, rule: anomaly.rule, severity: "warning" as const, category: "sales" as const,
       entity: anomaly.entityId, urgency: "ACIL" as const, impactTry: 12345.6, impactKind: "lost_profit", impactEstimated: true, what: "w", action: "a", text: "Hedef … Aciliyet: ACİL.",
       evidenceIds: ["e_1", "e_2"], openRecords: [], actionable: true, sinceYesterday: "yeni" as const };
-    const record = (hash: string, o: Record<string, unknown> = {}) => ({ engineVersion: "e1", trigger: "hourly" as const, decisionInputHash: hash,
+    const record = (hash: string, o: Record<string, unknown> = {}) => ({ engineVersion: "e1", trigger: "scheduled" as const, decisionInputHash: hash,
       material: { sincePreviousRun: true, sinceYesterday: true, previousRunHash: null, yesterdayHash: null }, anomalies: [anomaly], findings: [finding],
       closedSinceYesterday: ["STOCKOUT|X"], metrics: [{ source: "cfo_nakit_kapisi", key: "nakit_kapisi.nakit_try", value: 59693.13, unit: "TRY", measured: true, asOf: "x" },
         { source: "snapshot", key: "tazelik.bayat_kaynaklar", value: "yok", unit: "state", measured: false, asOf: "x" }],
@@ -67,7 +67,7 @@ async function main() {
     assert.deepEqual(prev.last, { id, hash: "h1", snapshotRunId: id });
     assert.equal(prev.yesterday?.hash, "h1"); assert.deepEqual(prev.yesterday?.evaluations.get(anomaly.cooldownKey), { severity: "warning", impact: null });
     // aynı girdi: snapshot yazılmaz (DbNull), snapshotRef önceki koşuyu gösterir
-    const id2 = await cfoStore.begin("2026-10-07T11:hourly", later);
+    const id2 = await cfoStore.begin("2026-10-07T11:scheduled", later);
     await cfoStore.record(id2!, null, "sh", record("h1", { snapshotRef: id }));
     await cfoStore.finish(id2!, "completed", later);
     const p2 = await cfoStore.previous(new Date(later.getTime() + 3600000), dayStart);

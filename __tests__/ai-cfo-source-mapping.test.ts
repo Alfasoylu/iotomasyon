@@ -101,6 +101,23 @@ async function main() {
     assert.ok(!missing.some(f => f.startsWith("reviewed_source_changed")), `reviewed profile valid by default: ${missing.join(",")}`);
     assert.equal(s.calculationVersion, "alfas-gross-v10");
 
+    // Maliyet kapsamı TEK tanım (cfo_maliyet_kapsami_at, 2026-10-08): motor sayıyı fonksiyondan asOf ile alır; ciro dört parçaya
+    // ayrılır ve toplamı cirodur; görünüm aynı fonksiyonun now() çağrısıdır; anon/authenticated/PUBLIC okuyamaz.
+    type Cov = { kapsam_pct: string; ciro_try: string; kapsanan_try: string; guvenilmez_try: string; eslesmeyen_try: string; maliyetsiz_try: string; eslesme_pct: string; pencere_bas: string; pencere_bit: string };
+    const [cov] = (await pg.query<Cov>(`select pencere_bas::text, pencere_bit::text, kapsam_pct::text, ciro_try::text, kapsanan_try::text, guvenilmez_try::text,
+      eslesmeyen_try::text, maliyetsiz_try::text, eslesme_pct::text from cfo_maliyet_kapsami_at($1::timestamptz)`, [now.toISOString()])).rows;
+    assert.deepEqual([cov.pencere_bas, cov.pencere_bit], ["2026-09-06", "2026-10-05"], "son 30 tam gün, bugün hariç");
+    assert.ok(Number(cov.ciro_try) > 0, "fikstür satışları pencerede");
+    assert.equal(s.dataQuality.costCoveragePct, Number(cov.kapsam_pct), "motor kapsamı fonksiyondan okur");
+    assert.equal(s.dataQuality.matchingCoveragePct, Number(cov.eslesme_pct));
+    assert.equal(Number(cov.kapsanan_try) + Number(cov.guvenilmez_try) + Number(cov.eslesmeyen_try) + Number(cov.maliyetsiz_try), Number(cov.ciro_try), "parçalar ciroyu tam tutar");
+    assert.equal((await pg.query("select * from cfo_maliyet_kapsami")).rows.length, 1, "görünüm tek satır");
+    const covAcl = (await pg.query<{ g: string }>(`select grantee g from information_schema.role_table_grants where table_name='cfo_maliyet_kapsami' and grantee in ('anon','authenticated','PUBLIC')`)).rows;
+    assert.deepEqual(covAcl, []);
+    const covExec = (await pg.query<{ a: boolean; u: boolean }>(`select has_function_privilege('anon','public.cfo_maliyet_kapsami_at(timestamptz)','execute') a,
+      has_function_privilege('authenticated','public.cfo_maliyet_kapsami_at(timestamptz)','execute') u`)).rows[0];
+    assert.deepEqual([covExec.a, covExec.u], [false, false], "fonksiyonu anon/authenticated çalıştıramaz");
+
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;
     assert.equal(s.cash.minimumProjectedPosition.value, Number(native.m));

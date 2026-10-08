@@ -1,17 +1,23 @@
-name: CFO motoru (saatlik) + sağlık alarmı
+name: CFO motoru (günde 3) + sağlık alarmı
 
-# Deterministik CFO motoru (2026-10-08 mimari kararı: sitede LLM yok). Her saat :05 UTC:
+# Deterministik CFO motoru (2026-10-08 mimari kararı: sitede LLM yok). Cowork CFO kararı 2026-10-08: saatlik değil, günde 3 sabit koşu
+# + Cowork'ün kendi iki okumasından (08:00 / 16:49 TR) önce elle tetikleme (workflow_dispatch). ~180 Actions dk/ay.
+# Harici cron servisi YOK (CRON_SECRET üçüncü tarafa taşınmaz).
+#   Sabit koşular (UTC → TR): 04:17 → 07:17 (Cowork 08:00 öncesi) · 09:37 → 12:37 · 13:07 → 16:07 (Cowork 16:49 öncesi).
+#   Dakikalar :00/:05 değil: GitHub zamanlayıcısı saat başlarında en çok geciktirir/atlar.
 #   1) /api/cron/ai-cfo-monitor — motor: ölç → tespit et → şablonla bulgu yaz → önemli değişiklik bayrağı → METRIK → alarm
-#      (cfo_run 'engine:%'; Cowork CFO cfo_gun_ozeti görünümünü okur, 08:00 + 16:49 TR). Model çağrısı YOK, maliyet 0 TL.
-#   2) /api/cron/ai-cfo-health — motor arızası, YENİ alarm ya da 09:00 TR hatırlatmasında 503 → iş KIRMIZI → GitHub e-postası.
-#      Süregelen alarm (ör. taban delinmiş) saatte bir e-posta üretmez; cfo_gun_ozeti'nde görünür.
+#      (cfo_run 'engine:%'; Cowork CFO cfo_gun_ozeti görünümünü okur). Model çağrısı YOK, maliyet 0 TL.
+#      Elle tetikleme ?trigger=manual ile 20 dakikalık dilim anahtarı kullanır (aynı saatte başarısız koşudan sonra yeniden denenebilir).
+#   2) /api/cron/ai-cfo-health — motor arızası, YENİ alarm ya da sabah koşusundaki günlük hatırlatmada 503 → iş KIRMIZI → GitHub e-postası.
+#      Süregelen alarm (ör. taban delinmiş) her koşuda e-posta üretmez; cfo_gun_ozeti'nde görünür.
 # Senkron sonrası koşular ayrıca vercel.json xml-sync (05:00 TR) ve trendyol-sync (09:00 TR) after() içinde (ayrı idempotency anahtarı).
-# Vercel Hobby yeni cron slotu vermediği için GitHub Actions (birkaç dk gecikebilir). Tek iş: dakika yuvarlaması bir kez ödenir.
 # Gerekli repo secret'ları: CRON_SECRET + SITE_BASE_URL (yoksa PDKS_BASE_URL). ⚠️ Zamanlanmış workflow yalnız varsayılan dalda (main) çalışır.
 
 on:
   schedule:
-    - cron: "5 * * * *"
+    - cron: "17 4 * * *"
+    - cron: "37 9 * * *"
+    - cron: "7 13 * * *"
   workflow_dispatch: {}
 
 concurrency:
@@ -27,6 +33,7 @@ jobs:
         env:
           BASE_URL: ${{ secrets.SITE_BASE_URL || secrets.PDKS_BASE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          TRIGGER: ${{ github.event_name == 'workflow_dispatch' && 'manual' || 'scheduled' }}
         run: |
           if [ -z "$BASE_URL" ] || [ -z "$CRON_SECRET" ]; then
             echo "SITE_BASE_URL/PDKS_BASE_URL veya CRON_SECRET tanımlı değil; atlanıyor."
@@ -34,11 +41,11 @@ jobs:
           fi
           code=$(curl -sS -m 310 -L --location-trusted -o /tmp/out.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
-            "${BASE_URL%/}/api/cron/ai-cfo-monitor") || code="000"
+            "${BASE_URL%/}/api/cron/ai-cfo-monitor?trigger=${TRIGGER}") || code="000"
           echo "HTTP ${code}"
           cat /tmp/out.txt || true
           echo
-          # Motor hatası burada işi düşürmez: sağlık adımı arızayı (üst üste 2 başarısız / 6 saat) kendi kuralıyla bildirir.
+          # Motor hatası burada işi düşürmez: sağlık adımı arızayı (üst üste 2 başarısız / 20 saat) kendi kuralıyla bildirir.
           if [ "$code" != "200" ]; then echo "::warning::Motor koşusu HTTP ${code}"; fi
       - name: Sağlık alarmı
         env:

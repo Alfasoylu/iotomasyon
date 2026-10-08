@@ -206,6 +206,15 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   if(unknownCost)missing.push(`inventory_cost_unknown:${unknownCost}`);
   if(!exceptionRows) {snapshot.inventory.costValue=unknown("stock_exceptions_unavailable");missing.push("inventory_exclusions_unverified");}
 
+  // Maliyet kapsamının TEK tanımı cfo_maliyet_kapsami_at(asof) fonksiyonundadır (Cowork CFO kararı 2026-10-08; Cowork aynı tanımı
+  // cfo_maliyet_kapsami görünümünden okur): motor kendi sayısını hesaplamaz. Fonksiyon yoksa kapsam bilinmiyor → COST_COVERAGE
+  // kapısı kapalı kalır (marj/kâr kuralları susar). Var olup olmadığı önce sorulur: başarısız sorgu okuma işlemini düşürmesin.
+  const [coverageFn]=await db.query(`select to_regprocedure('public.cfo_maliyet_kapsami_at(timestamptz)') is not null as ok`);
+  const costCoverage=coverageFn?.ok===true?(await db.query(`select kapsam_pct,eslesme_pct from public.cfo_maliyet_kapsami_at($1::timestamptz)`,asOf))[0]:undefined;
+  snapshot.dataQuality.costCoveragePct=costCoverage?n(costCoverage,"kapsam_pct"):null;
+  snapshot.dataQuality.matchingCoveragePct=costCoverage?n(costCoverage,"eslesme_pct"):null;
+  if(!costCoverage)missing.push("cost_coverage_function_unavailable");
+
   const sales=catalog.require("cfo_satis_birim_duz",["channel","modelNumber","orderNumber","orderDate","adet_duz","tutar_duz","guven","commissionTry","totalAmountTry"]);
   const salesLocalTime=catalog.localTime("cfo_satis_birim_duz","orderDate","s");
   if(sales&&salesLocalTime) {
@@ -269,7 +278,6 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     const skuMeasurements=new Map(commissionRows.filter(r=>r.sku!=null).map(r=>[`${r.channel}:${r.sku}`,r]));
     for(const [channel,c] of channelMeasurements)snapshot.dataQuality.commissionCoverage.push({channel,coveragePct:percentage(n(c,"present"),n(c,"records")),outliers:n(c,"outliers")??0});
     const unitsBySku=new Map<string,number>();for(const r of rows)if(r.period==="current"&&(n(r,"untrusted")??0)===0&&(n(r,"duplicates")??0)===0)unitsBySku.set(String(r.sku),D(unitsBySku.get(String(r.sku))??0).add(n(r,"units")??0).toNumber());
-    let costRows=0,matchedRows=0,totalRows=0;
     const profits:{channel:string;sku:string;period:string;profit:ReturnType<typeof contribution>}[]=[];
     // Previous rows must be evaluated first; association is by SKU AND channel.
     for(const r of [...rows].sort((a,b)=>a.period==="previous"?-1:b.period==="previous"?1:0)) {
@@ -285,7 +293,6 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
         shipping:metric(r.shipping,!actualShipping),otherVariableCosts:metric(r.other,!other)},config.grossIncludesRefunds);
       profits.push({channel,sku,period:String(r.period),profit});
       if(r.period!=="current")continue;
-      const records=n(r,"records")??0;totalRows+=records;if(p)matchedRows+=records;if(cost.value!=null&&trusted)costRows+=records;
       snapshot.dataQuality.excludedUntrustedRows+=n(r,"untrusted")??0;
       snapshot.dataQuality.duplicateCanonicalRows+=n(r,"duplicates")??0;
       if(isSet&&cost.value==null)missing.push(`set_component_unknown:${sku}`);
@@ -313,7 +320,6 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
         openPurchaseOrders:open?n(open,"open_orders"):0,momentum:metric(numeric(v?.hizlanma_katsayi),true),pricePeriod:asOf.slice(0,7)};
       snapshot.products.push(signal);
     }
-    snapshot.dataQuality.costCoveragePct=percentage(costRows,totalRows);snapshot.dataQuality.matchingCoveragePct=percentage(matchedRows,totalRows);
     const aggregate=(entries:typeof profits)=>{
       const keys=["grossRevenue","vat","refunds","productCost","commission","shipping","advertising","otherVariableCosts"] as const;
       const data=Object.fromEntries(keys.map(k=>{const ms=entries.map(e=>e.profit[k]);return [k,metric(ms.length&&ms.every(m=>m.value!=null)?ms.reduce((s,m)=>s.add(m.value!),D(0)).toNumber():null,ms.some(m=>m.estimated))];}));

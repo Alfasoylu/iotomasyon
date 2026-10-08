@@ -55,9 +55,9 @@ const d = renderFinding(anomaly("DEAD_STOCK", "SKU9", ds, { impact: capitalCostI
 assert.match(d.what, /bağlı sermaye 120\.000 TL, aylık para maliyeti 3\.396 TL \(%2,83\)/);
 assert.deepEqual(d.openRecords, ["cfo_dead_stock_finding:7"], "kuyruk kontrolü yapılamadı notu açık iş sayılmaz");
 assert.match(d.text, /Açık iş: cfo_dead_stock_finding:7\./);
-const cov = [evidence("cfo_satis_birim_duz", "cost_coverage", 56.67, "pct", AT, true)];
+const cov = [evidence("cfo_maliyet_kapsami", "cost_coverage", 87.5, "pct", AT, true)];
 const cc = renderFinding(anomaly("COST_COVERAGE", "company", cov, { category: "data_quality", actionable: false }), cov, O);
-assert.equal(cc.what, "Maliyet kapsamı %56,7 < %95 → marj ve kâr kuralları susuyor."); assert.equal(cc.actionable, false);
+assert.equal(cc.what, "Maliyet kapsamı %87,5 < %95 → marj ve kâr kuralları susuyor."); assert.equal(cc.actionable, false);
 // şablonu olmayan kural da satır alır (görüş kapanmaz)
 assert.match(renderFinding(anomaly("NEW_RULE", "company", []), [], O).text, /^NEW_RULE — company\./);
 
