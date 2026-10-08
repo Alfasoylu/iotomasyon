@@ -33,6 +33,10 @@ assert.equal(floor[0].code, "floor_breach"); assert.match(floor[0].message, /-3\
 // İşaretlenmemiş ödeme ve ölü kaynaklar (her biri ayrı anahtar)
 const pay = evaluateCfoAlarms(base({ payments: [{ label: "Garanti — Kredi 1", amountTry: 60000, due: "2026-10-08" }] }));
 assert.deepEqual(pay.map(a => a.key), ["payment_unmarked:Garanti — Kredi 1:2026-10-08"]);
+// Defter dönmedi (CFO-010): vade geçti, ödendi işaretli, sonraki vade girilmemiş → ayrı anahtar, sonraki alarm körleşmesin diye
+const led = evaluateCfoAlarms(base({ staleLedger: [{ label: "Garanti — Ticari kredi", amountTry: null, due: "2026-10-16" }] }));
+assert.deepEqual(led.map(a => a.key), ["ledger_stale:Garanti — Ticari kredi"]);
+assert.match(led[0].message, /vade 2026-10-16 geçti, ödendi işaretli ama sonraki vade girilmedi/);
 const dead = evaluateCfoAlarms(base({ sources: [{ name: "XML", lastAt: h(30), maxAgeHours: 26 }, { name: "Trendyol", lastAt: null, maxAgeHours: 26 }, fresh[2]],
   staleBankAccounts: ["Ziraat USD"] }));
 assert.deepEqual(dead.map(a => a.key), ["source_dead:XML", "source_dead:Trendyol", "source_dead:banka"]);
