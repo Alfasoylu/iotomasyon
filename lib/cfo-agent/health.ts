@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCfoConfig } from "./config";
 import { istanbulPeriod } from "./period";
+import { LOAN_AMOUNT_TOLERANCE } from "@/lib/cfo/payment-schedule";
 
 // Alarm — Cowork CFO'nun iki koşusu (08:00 / 16:49 TR) arasında Alperen'e ulaşan TEK kanal (2026-10-08 mimari kararı).
 // Sitede LLM yok: "içgörü yok", bütçe ve token alarmları kaldırıldı (AI çağrısı olmaması normaldir). Alarmlar:
@@ -8,34 +9,39 @@ import { istanbulPeriod } from "./period";
 //   consecutive_failures  son iki motor koşusu tamamlanmadı (failed, takılmış ya da beklenmeyen durum)
 //   stuck_run             bir motor koşusu STUCK_RUN_MINUTES'tan uzun süredir 'running' (fonksiyon zaman aşımıyla öldü; CFO-009)
 //   floor_breach          cfo_nakit_projeksiyon(120) dibi tabanın (−3.000.000) altında
-//   payment_unmarked      vadesi bugün olup 15:00 TR sonrası hâlâ işaretlenmemiş ya da vadesi geçmiş ödeme. Kredi/kartta "ODENDI" yalnız
-//                         BU döngüde işaretlendiyse (lastUpdatedAt > vade − PAID_WINDOW_DAYS) sayılır: currentMonthState ay dönümünde
-//                         sıfırlanmıyor, geçen ayın "ODENDI"si bu ayın taksitini örtüyordu (CFO-010, 08.10: 10 kalemin 10'u)
-//   ledger_stale          kredi/kart vadesi geçti, ödendi işaretli ama sonraki vade girilmedi (defter dönmedi → sonraki alarm körleşir)
+//   payment_unmarked      vadesi bugün olup 15:00 TR sonrası hâlâ işaretlenmemiş ya da vadesi geçmiş ödeme. TEK kaynak: ödeme takvimi
+//                         (cfo_cash_event, taksit başına satır + isSettled; /cfo/odemeler'de loglu işaretlenir) — projeksiyonla aynı defter.
+//                         cfo_loan/cfo_credit_card."currentMonthState" kullanılmaz: ay dönümünde sıfırlanmıyor, geçen ayın "ODENDI"si bu
+//                         ayın taksitini örtüyordu (CFO-010, 08.10: 11 kalemin 10'u) ve takvimle çift alarm üretiyordu.
+//   ledger_stale          aktif kredi/kartın takvimde bekleyen sonraki ödemesi yok → projeksiyon o taksiti görmüyor, ödeme alarmı da
+//                         çalışmaz (kredi: banka + tutar ±%25 eşleşmesi; kart: banka eşleşmesi). CFO-010 kısım 2.
+//   schedule_duplicate    bir bankanın aynı aydaki bekleyen kredi taksiti satırı, o bankadaki aktif kredi sayısından fazla → mükerrer
+//                         satır projeksiyonu fazla çıkışla kötüleştiriyor (09.10: Yapı Kredi Kas–Oca 25'i + eski 28'i kaydı, 3 × 33.277 TL)
 //   source_dead           Entegra / XML / Trendyol senkronu ya da banka bakiyesi eşik süreden eski
 //   capacity_breach       nakit pozisyonu (cfo_nakit_projeksiyon, faizsiz) şirket KMH kapasitesini aşıyor — Cowork CFO sırası
 //                         2026-10-08: önce kapasite alarmı, sonra kademeli faiz, en son kuralı faizli dibe bağlama
 // Bildirim (GitHub işi kırmızı → e-posta) yalnız arıza, YENİ alarm ya da sabah koşusundaki (06:00–10:59 TR) günlük hatırlatmada:
 // süregelen bir taban alarmı her koşuda e-posta üretmez; yine de her koşuda cfo_gun_ozeti'nde görünür.
 
-export type AlarmCode = "engine_stale" | "consecutive_failures" | "stuck_run" | "floor_breach" | "payment_unmarked" | "ledger_stale" | "source_dead" | "capacity_breach";
+export type AlarmCode = "engine_stale" | "consecutive_failures" | "stuck_run" | "floor_breach" | "payment_unmarked" | "ledger_stale" | "schedule_duplicate" | "source_dead" | "capacity_breach";
 export type CfoAlarm = { code: AlarmCode; key: string; message: string };
 export type EngineRunInfo = { status: string; generatedAt: Date; finishedAt: Date | null; error: string | null };
 export type DueItem = { label: string; amountTry: number | null; due: string };
+export type ScheduleDuplicate = { bank: string; month: string; count: number; expected: number; rows: string };
 export type SourceAge = { name: string; lastAt: Date | null; maxAgeHours: number };
 export type AlarmInput = {
   now: Date; engineEnabled: boolean; runs: EngineRunInfo[];
   minPosition: { valueTry: number | null; date: string | null } | null; floorTry: number;
   payments: DueItem[]; sources: SourceAge[]; staleBankAccounts: string[];
-  /** vadesi geçmiş, bu döngüde ödendi işaretli ama sonraki vadesi girilmemiş kredi/kart (CFO-010) */
+  /** takvimde (cfo_cash_event) bekleyen sonraki ödemesi olmayan aktif kredi/kart (CFO-010) */
   staleLedger?: DueItem[];
+  /** banka × ay: bekleyen kredi taksiti satırı > aktif kredi sayısı (CFO-010) */
+  scheduleDuplicates?: ScheduleDuplicate[];
   /** KMH kapasitesi ve projeksiyon yolu (cfo_nakit_kapisi + cfo_nakit_projeksiyon(120)); yoksa kapasite alarmı değerlendirilmez */
   capacity?: { generalTry: number; customsTry: number; personalTry: number | null; path: { date: string; position: number }[] } | null;
 };
 
 export const ENGINE_STALE_HOURS = 20;
-/** Kredi/kart "ODENDI" işaretinin bu döngüye ait sayılması için vadeden en fazla kaç gün önce yapılmış olması gerekir (aylık döngü ~30 gün). */
-export const PAID_WINDOW_DAYS = 25;
 /** Motor koşusu ~2 dk sürer; Vercel fonksiyon sınırı 300 sn. Bundan uzun 'running' kalan koşu öldürülmüş sayılır (CFO-009). */
 export const STUCK_RUN_MINUTES = 15;
 /** Günlük hatırlatma penceresi: sabah zamanlanmış koşusu 07:17 TR; GitHub gecikmesi için 11:00'a kadar. */
@@ -64,8 +70,14 @@ export function evaluateCfoAlarms(i: AlarmInput): CfoAlarm[] {
     out.push({ code: "floor_breach", key: "floor_breach", message: `Nakit dibi ${tl(i.minPosition.valueTry)}${i.minPosition.date ? ` (${i.minPosition.date})` : ""} — taban ${tl(i.floorTry)} deliniyor` });
   for (const p of i.payments)
     out.push({ code: "payment_unmarked", key: `payment_unmarked:${p.label}:${p.due}`, message: `Vadesi ${p.due} olan ödeme işaretlenmemiş: ${p.label}${p.amountTry != null ? ` · ${tl(p.amountTry)}` : ""}` });
+  // Mükerrer taksit: banka başına tek alarm (aylar birlikte), anahtar bankaya bağlı — her ay yeni e-posta üretmez
+  const dupByBank = new Map<string, ScheduleDuplicate[]>();
+  for (const d of i.scheduleDuplicates ?? []) dupByBank.set(d.bank, [...(dupByBank.get(d.bank) ?? []), d]);
+  for (const [bank, ds] of dupByBank)
+    out.push({ code: "schedule_duplicate", key: `schedule_duplicate:${bank}`, message: `${bank}: ödeme takviminde aktif kredi sayısından fazla bekleyen taksit var — ${ds
+      .map(d => `${d.month}: ${d.count} satır / ${d.expected} kredi (${d.rows})`).join("; ")}. Mükerrer satır projeksiyonu fazla çıkışla kötüleştirir; fazla olanı /cfo/odemeler'de kapat`});
   for (const l of i.staleLedger ?? [])
-    out.push({ code: "ledger_stale", key: `ledger_stale:${l.label}`, message: `${l.label}: vade ${l.due} geçti, ödendi işaretli ama sonraki vade girilmedi — defteri güncelle (yoksa sonraki taksit alarmı çalışmaz)` });
+    out.push({ code: "ledger_stale", key: `ledger_stale:${l.label}`, message: `${l.label}: ödeme takviminde bekleyen sonraki ödeme yok${l.due ? ` (defterdeki vade ${l.due})` : ""} — takvime ekle; yoksa nakit projeksiyonu bu ödemeyi görmez ve ödeme alarmı çalışmaz` });
   for (const s of i.sources) {
     const age = s.lastAt ? (i.now.getTime() - s.lastAt.getTime()) / H : null;
     if (age == null || age > s.maxAgeHours)
@@ -102,49 +114,88 @@ export function shouldNotify(current: CfoAlarm[], previousKeys: string[] | null,
 
 const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
 
+/** Ödeme alarmı (CFO-010): takvimdeki işaretlenmemiş çıkışlar. Vadesi geçmiş her zaman; bugün vadeli yalnız 15:00 TR sonrası. */
+export function unmarkedPaymentsSql(today: string, afternoon: boolean): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) throw new Error("today must be YYYY-MM-DD");
+  return `select left(coalesce(description, kind::text), 60) as label, "outflowTry" as amount, "eventDate"::date::text as due
+    from cfo_cash_event where not "isSettled" and coalesce("outflowTry", 0) > 0 and "eventDate"::date ${afternoon ? "<=" : "<"} '${today}'::date
+    order by "eventDate" limit 20`;
+}
+
+// Banka eşleşmesi lib/cfo/payment-schedule.ts sameBank ile aynı: yapısal `bank` sütunu ya da açıklama; Türkçe I/İ/ı katlanır.
+const fold = (x: string) => `lower(translate(${x}, 'İIı', 'iii'))`;
+const bankMatch = (b: string) => `(${fold("coalesce(e.bank, '')")} = ${fold(b)} or ${fold("coalesce(e.description, '')")} like '%' || ${fold(b)} || '%')`;
+
+/** Mükerrer taksit (CFO-010): projeksiyon ufkunda (120 gün) banka × ay bekleyen KREDI_TAKSITI satırı > o bankadaki aktif kredi. */
+export function scheduleDuplicateSql(today: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) throw new Error("today must be YYYY-MM-DD");
+  return `with ev as (
+      select coalesce(e.bank, '?') as bank, to_char(e."eventDate", 'YYYY-MM') as month, count(*)::int as n,
+             string_agg(to_char(e."eventDate", 'YYYY-MM-DD') || ' ' || round(e."outflowTry")::text, ', ' order by e."eventDate") as rows
+        from cfo_cash_event e
+       where not e."isSettled" and e.kind::text = 'KREDI_TAKSITI' and coalesce(e."outflowTry", 0) > 0
+         and e."eventDate"::date between '${today}'::date and '${today}'::date + 120
+       group by 1, 2),
+    cap as (select l.bank, count(*)::int as n from cfo_loan l
+             where l.status::text = 'AKTIF' and (l."lastInstallmentDate" is null or l."lastInstallmentDate"::date >= '${today}'::date) group by 1)
+    select ev.bank, ev.month, ev.n as count, coalesce(cap.n, 0) as expected, ev.rows
+      from ev left join cap on ${fold("cap.bank")} = ${fold("ev.bank")}
+     where ev.n > coalesce(cap.n, 0) order by ev.bank, ev.month`;
+}
+
+/** Defter ↔ takvim boşluğu (CFO-010): takvimde bekleyen sonraki ödemesi olmayan aktif kredi/kart. Vadesi geçmiş bekleyen satır da sayılır
+ *  (o zaten payment_unmarked verir). Bitmiş kredi (son taksit tarihi geçmiş) ve borcu 0 olan kart dışarıda. */
+export function ledgerGapSql(today: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) throw new Error("today must be YYYY-MM-DD");
+  return `select l.bank || ' — ' || l.name as label, null as amount, l."nextPaymentDate"::date::text as due
+      from cfo_loan l
+     where l.status::text = 'AKTIF' and (l."lastInstallmentDate" is null or l."lastInstallmentDate"::date >= '${today}'::date)
+       and not exists (select 1 from cfo_cash_event e
+                        where e.kind::text = 'KREDI_TAKSITI' and not e."isSettled" and ${bankMatch("l.bank")}
+                          and (l."monthlyPaymentTry" is null or abs(e."outflowTry" - l."monthlyPaymentTry") <= ${LOAN_AMOUNT_TOLERANCE} * l."monthlyPaymentTry"))
+    union all
+    select c.bank || ' ' || coalesce(c.holder, '') || ' kart' as label, null as amount, c."nextDueDate"::date::text as due
+      from cfo_credit_card c
+     where c."isActive" and coalesce(c."totalDebtTry", 1) > 0
+       and not exists (select 1 from cfo_cash_event e
+                        where e.kind::text = 'KART_ODEMESI' and not e."isSettled" and ${bankMatch("c.bank")})
+    order by label`;
+}
+
 export async function loadAlarmInput(now = new Date(), env: Record<string, string | undefined> = process.env): Promise<AlarmInput> {
   const config = getCfoConfig(env);
   const p = istanbulPeriod(now), afternoon = p.minutes >= 15 * 60;
   const today = p.date;
   const q = <T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql).catch(() => [] as T[]);
-  // "ODENDI" bu döngüde mi işaretlendi? (CFO-010) — lastUpdatedAt vadeden en fazla PAID_WINDOW_DAYS gün önce
-  const paidNow = (due: string) => `("currentMonthState"::text = 'ODENDI' and "lastUpdatedAt" > ${due} - interval '${PAID_WINDOW_DAYS} days')`;
-  const [runs, dip, events, loans, cards, xml, ty, entegra, banks, gate, personal, staleLoans, staleCards] = await Promise.all([
+  const [runs, dip, events, xml, ty, entegra, banks, gate, personal, gaps, dups] = await Promise.all([
     prisma.cfoRun.findMany({ where: { idempotencyKey: { startsWith: "engine:" }, generatedAt: { gte: new Date(now.getTime() - 48 * H) } }, orderBy: { generatedAt: "desc" }, take: 20,
       select: { status: true, generatedAt: true, finishedAt: true, error: true } }),
     q<{ v: unknown; d: string | null }>(`select pozisyon as v, tarih::text as d from cfo_nakit_projeksiyon(120) order by tarih`),
-    // Vadesi geçmiş her zaman; bugün vadeli yalnız 15:00 TR sonrası (sabah işaretlenmemiş olması normal).
-    q<{ label: string; amount: unknown; due: string }>(`select left(coalesce(description, kind::text), 60) as label, "outflowTry" as amount, "eventDate"::date::text as due
-      from cfo_cash_event where not "isSettled" and coalesce("outflowTry", 0) > 0 and "eventDate"::date ${afternoon ? "<=" : "<"} '${today}'::date order by "eventDate" limit 20`),
-    q<{ label: string; amount: unknown; due: string }>(`select bank || ' — ' || name as label, "monthlyPaymentTry" as amount, "nextPaymentDate"::date::text as due
-      from cfo_loan where status::text = 'AKTIF' and "nextPaymentDate"::date ${afternoon ? "<=" : "<"} '${today}'::date and not ${paidNow('"nextPaymentDate"')}`),
-    q<{ label: string; amount: unknown; due: string }>(`select bank || ' ' || coalesce(holder, '') || ' kart' as label, "minOverrideTry" as amount, "nextDueDate"::date::text as due
-      from cfo_credit_card where "isActive" and "nextDueDate"::date ${afternoon ? "<=" : "<"} '${today}'::date and not ${paidNow('"nextDueDate"')}`),
+    q<{ label: string; amount: unknown; due: string }>(unmarkedPaymentsSql(today, afternoon)),
     prisma.xmlSyncLog.findFirst({ where: { status: "SUCCESS" }, orderBy: { completedAt: "desc" }, select: { completedAt: true } }).catch(() => null),
     prisma.trendyolSalesRecord.findFirst({ orderBy: { syncedAt: "desc" }, select: { syncedAt: true } }).catch(() => null),
     prisma.entegraImportLog.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }).catch(() => null),
     prisma.cfoBankAccount.findMany({ where: { isActive: true, lastUpdatedAt: { lt: new Date(now.getTime() - 7 * 24 * H) } }, orderBy: { sortOrder: "asc" }, select: { name: true } }),
     q<{ g: unknown; c: unknown }>(`select bos_kmh_try as g, amacli_kmh_try as c from cfo_nakit_kapisi`),
     q<{ t: unknown }>(`select tutar as t from cfo_kaynak_yeterliligi() where kalem ilike 'Sahsi KMH%' limit 1`),
-    q<{ label: string; amount: unknown; due: string }>(`select bank || ' — ' || name as label, null as amount, "nextPaymentDate"::date::text as due
-      from cfo_loan where status::text = 'AKTIF' and "nextPaymentDate"::date < '${today}'::date and ${paidNow('"nextPaymentDate"')}`),
-    q<{ label: string; amount: unknown; due: string }>(`select bank || ' ' || coalesce(holder, '') || ' kart' as label, null as amount, "nextDueDate"::date::text as due
-      from cfo_credit_card where "isActive" and "nextDueDate"::date < '${today}'::date and ${paidNow('"nextDueDate"')}`),
+    q<{ label: string; amount: unknown; due: string }>(ledgerGapSql(today)),
+    q<ScheduleDuplicate>(scheduleDuplicateSql(today)),
   ]);
   const path = dip.map(r => ({ date: String(r.d), position: num(r.v) })).filter((r): r is { date: string; position: number } => r.position != null);
   const low = path.reduce<{ date: string; position: number } | null>((m, d) => (!m || d.position < m.position ? d : m), null);
   const g = num(gate[0]?.g);
-  const due = (r: { label: string; amount: unknown; due: string }) => ({ label: String(r.label).trim(), amountTry: num(r.amount), due: String(r.due) });
+  const due = (r: { label: string; amount: unknown; due: string | null }) => ({ label: String(r.label).trim(), amountTry: num(r.amount), due: r.due == null ? "" : String(r.due) });
   return {
     now, engineEnabled: config.monitorEnabled, runs,
     minPosition: low ? { valueTry: low.position, date: low.date } : null, floorTry: config.cashFloorTry,
     capacity: g != null && path.length ? { generalTry: g, customsTry: num(gate[0]?.c) ?? 0, personalTry: num(personal[0]?.t), path } : null,
-    payments: [...events, ...loans, ...cards].map(due),
+    payments: events.map(due),
     // Eşikler: XML ve Trendyol günlük senkron (26 saat); Entegra haftalık yükleme (8 gün = 7 + 1 tolerans).
     sources: [{ name: "XML", lastAt: xml?.completedAt ?? null, maxAgeHours: 26 }, { name: "Trendyol", lastAt: ty?.syncedAt ?? null, maxAgeHours: 26 },
       { name: "Entegra", lastAt: entegra?.createdAt ?? null, maxAgeHours: 8 * 24 }],
     staleBankAccounts: banks.map(b => b.name),
-    staleLedger: [...staleLoans, ...staleCards].map(due),
+    staleLedger: gaps.map(due),
+    scheduleDuplicates: dups.map(d => ({ bank: String(d.bank), month: String(d.month), count: Number(d.count), expected: Number(d.expected), rows: String(d.rows) })),
   };
 }
 

@@ -3,7 +3,9 @@
  * Çalıştır: node --import tsx __tests__/ai-cfo-health.test.ts
  */
 import assert from "node:assert/strict";
-import { evaluateCfoAlarms, shouldNotify, type AlarmInput, type EngineRunInfo } from "../lib/cfo-agent/health";
+import { PGlite } from "@electric-sql/pglite";
+import { nextScheduledPayment, sameBank, type ScheduleRow } from "../lib/cfo/payment-schedule";
+import { evaluateCfoAlarms, shouldNotify, unmarkedPaymentsSql, ledgerGapSql, scheduleDuplicateSql, type AlarmInput, type EngineRunInfo } from "../lib/cfo-agent/health";
 
 const now = new Date("2026-10-08T10:00:00Z");
 const h = (n: number) => new Date(now.getTime() - n * 3600000);
@@ -33,10 +35,32 @@ assert.equal(floor[0].code, "floor_breach"); assert.match(floor[0].message, /-3\
 // İşaretlenmemiş ödeme ve ölü kaynaklar (her biri ayrı anahtar)
 const pay = evaluateCfoAlarms(base({ payments: [{ label: "Garanti — Kredi 1", amountTry: 60000, due: "2026-10-08" }] }));
 assert.deepEqual(pay.map(a => a.key), ["payment_unmarked:Garanti — Kredi 1:2026-10-08"]);
-// Defter dönmedi (CFO-010): vade geçti, ödendi işaretli, sonraki vade girilmemiş → ayrı anahtar, sonraki alarm körleşmesin diye
-const led = evaluateCfoAlarms(base({ staleLedger: [{ label: "Garanti — Ticari kredi", amountTry: null, due: "2026-10-16" }] }));
-assert.deepEqual(led.map(a => a.key), ["ledger_stale:Garanti — Ticari kredi"]);
-assert.match(led[0].message, /vade 2026-10-16 geçti, ödendi işaretli ama sonraki vade girilmedi/);
+// Defter ↔ takvim boşluğu (CFO-010): aktif kredinin takvimde bekleyen sonraki taksiti yok → ayrı anahtar
+const led = evaluateCfoAlarms(base({ staleLedger: [{ label: "Ziraat — Ziraat Kredi 2", amountTry: null, due: "2026-11-10" }] }));
+assert.deepEqual(led.map(a => a.key), ["ledger_stale:Ziraat — Ziraat Kredi 2"]);
+assert.match(led[0].message, /ödeme takviminde bekleyen sonraki ödeme yok \(defterdeki vade 2026-11-10\).*projeksiyonu bu ödemeyi görmez/);
+assert.doesNotMatch(evaluateCfoAlarms(base({ staleLedger: [{ label: "X kart", amountTry: null, due: "" }] }))[0].message, /defterdeki vade/);
+// Mükerrer taksit (CFO-010): banka başına tek alarm, aylar mesajda
+const dup = evaluateCfoAlarms(base({ scheduleDuplicates: [
+  { bank: "Yapı Kredi", month: "2026-11", count: 2, expected: 1, rows: "2026-11-25 33112, 2026-11-28 33277" },
+  { bank: "Yapı Kredi", month: "2026-12", count: 2, expected: 1, rows: "2026-12-25 33112, 2026-12-28 33277" }] }));
+assert.deepEqual(dup.map(a => a.key), ["schedule_duplicate:Yapı Kredi"]);
+assert.match(dup[0].message, /2026-11: 2 satır \/ 1 kredi \(2026-11-25 33112, 2026-11-28 33277\); 2026-12: 2 satır/);
+
+// Takvim ↔ defter eşleşmesi (lib/cfo/payment-schedule.ts; Borçlar sayfası "takvimde sonraki ödeme")
+const sch: ScheduleRow[] = [
+  { kind: "KREDI_TAKSITI", bank: "Ziraat", description: "Ziraat KGF taksiti", eventDate: "2026-10-21", outflowTry: 51587, isSettled: false },
+  { kind: "KREDI_TAKSITI", bank: "Ziraat", description: "Ziraat Kredi 2 — taksit 5", eventDate: "2026-11-10", outflowTry: 29750, isSettled: false },
+  { kind: "KREDI_TAKSITI", bank: "Ziraat", description: "Ziraat Kredi 2 — taksit 4", eventDate: "2026-10-06", outflowTry: 29750, isSettled: true },
+  { kind: "KART_ODEMESI", bank: null, description: "YAPI KREDI kart asgarisi", eventDate: "2026-10-30", outflowTry: 1000, isSettled: false },
+];
+assert.equal(nextScheduledPayment(sch, { kind: "KREDI_TAKSITI", bank: "Ziraat", expectedTry: 29750 })?.date.toISOString().slice(0, 10), "2026-11-10", "tutar iki Ziraat kredisini ayırır; ödenmiş satır sayılmaz");
+assert.equal(nextScheduledPayment(sch, { kind: "KREDI_TAKSITI", bank: "Ziraat", expectedTry: 51587.41 })?.amountTry, 51587);
+assert.equal(nextScheduledPayment(sch, { kind: "KREDI_TAKSITI", bank: "Ziraat", expectedTry: null })?.date.toISOString().slice(0, 10), "2026-10-21");
+assert.equal(nextScheduledPayment(sch, { kind: "KREDI_TAKSITI", bank: "Fibabanka", expectedTry: 32793 }), null, "takvimde yok");
+assert.equal(nextScheduledPayment(sch, { kind: "KART_ODEMESI", bank: "Yapı Kredi" })?.amountTry, 1000, "Türkçe I/ı katlanır, açıklamadan eşleşir");
+assert.equal(sameBank({ bank: "Garanti", description: null }, ""), false);
+
 const dead = evaluateCfoAlarms(base({ sources: [{ name: "XML", lastAt: h(30), maxAgeHours: 26 }, { name: "Trendyol", lastAt: null, maxAgeHours: 26 }, fresh[2]],
   staleBankAccounts: ["Ziraat USD"] }));
 assert.deepEqual(dead.map(a => a.key), ["source_dead:XML", "source_dead:Trendyol", "source_dead:banka"]);
@@ -69,4 +93,55 @@ assert.equal(shouldNotify(f, ["floor_breach"], 12), false, "öğle koşusu hatı
 assert.equal(shouldNotify(f, ["floor_breach"], 16), false, "akşam koşusu hatırlatmaz");
 assert.equal(shouldNotify([...f, ...pay], ["floor_breach"], 13), true, "yeni ödeme alarmı");
 assert.equal(shouldNotify(evaluateCfoAlarms(base({ runs: [] })), ["engine_stale"], 13), true, "motor arızası her saat bildirilir");
+// SQL (CFO-010 kısım 2): ödeme alarmı yalnız takvimden; defter satırının "ODENDI"si alarmı ne susturur ne de çift alarm üretir.
+async function sql() {
+  const pg = new PGlite();
+  await pg.exec(`create table cfo_cash_event (id text, kind text, bank text, description text, "eventDate" timestamptz, "outflowTry" numeric, "isSettled" boolean);
+    create table cfo_loan (bank text, name text, status text, "monthlyPaymentTry" numeric, "nextPaymentDate" timestamptz, "lastInstallmentDate" timestamptz, "currentMonthState" text);
+    create table cfo_credit_card (bank text, holder text, "isActive" boolean, "totalDebtTry" numeric, "nextDueDate" timestamptz, "currentMonthState" text);
+    insert into cfo_cash_event values
+      ('1','KREDI_TAKSITI','Garanti','Garanti ticari kredi taksiti — ODENDI','2026-09-16',129202,true),
+      ('2','KREDI_TAKSITI','Garanti','Garanti ticari kredi taksiti (TAHMINI 137.314)','2026-10-16',137314,false),
+      ('3','KREDI_TAKSITI','Ziraat','Ziraat KGF taksiti','2026-10-21',51587,false),
+      ('4','KREDI_TAKSITI','Ziraat','Ziraat Kredi 2 taksiti — ODENDI','2026-10-06',29750,true),
+      ('5','KREDI_TAKSITI','Yapı Kredi','Yapı Kredi kredi taksiti — ayin 25i','2026-10-25',33112,false),
+      ('5b','KREDI_TAKSITI','Yapı Kredi','Yapı Kredi kredi taksiti — ayin 25i','2026-11-25',33112,false),
+      ('5c','KREDI_TAKSITI','Yapı Kredi','Yapı Kredi taksiti','2026-11-28',33277,false),
+      ('6','KART_ODEMESI','Akbank','Akbank Axess ekstre asgarisi','2026-10-22',95510,false),
+      ('7','KART_ODEMESI','Enpara','Enpara kart ASGARI — ODENDI','2026-10-02',45014,true),
+      ('8','SABIT_GIDER',null,'Kira','2026-10-08',40000,false),
+      ('9','TAHSILAT',null,'Trendyol hakedis','2026-10-07',0,false);
+    insert into cfo_loan values
+      ('Garanti','Ticari kredi','AKTIF',137313.81,'2026-10-16',null,'ODENDI'),
+      ('Ziraat','Ziraat KGF / TOBB Nefes Kredisi','AKTIF',51587.41,'2026-10-21',null,'ODENDI'),
+      ('Ziraat','Ziraat Kredi 2','AKTIF',29750,'2026-11-10',null,'ODENDI'),
+      ('Yapı Kredi','Ticari kredi','AKTIF',33112.46,'2026-10-25',null,'ODENDI'),
+      ('Fibabanka','Eski kredi','KAPANDI',10000,'2026-05-01',null,'ODENDI'),
+      ('Fibabanka','Bitmiş kredi','AKTIF',10000,'2026-09-01','2026-09-01','ODENDI'),
+      ('QNB','Oranı/taksiti bilinmeyen','AKTIF',null,null,null,'TEYIT_EDILMELI');
+    insert into cfo_credit_card values
+      ('Akbank','Alp',true,397925,'2026-10-22','ODENDI'),
+      ('Enpara','Şirket',true,581296,'2026-11-06','ODENDI'),
+      ('Garanti','Alp',true,0,'2026-10-15','ODENDI');`);
+  const rows = async (q: string) => (await pg.query<{ label: string; due: string | null }>(q)).rows.map(r => `${r.label}|${r.due ?? ""}`);
+  // 08.10 sabah: vadesi geçmiş işaretlenmemiş kira; bugün vadeli yok; tahsilat (çıkış 0) sayılmaz; "ODENDI" defter satırları hiç okunmaz
+  assert.deepEqual(await rows(unmarkedPaymentsSql("2026-10-09", false)), ["Kira|2026-10-08"]);
+  // 16.10 öğleden sonra: Garanti taksiti takvimde bekliyor → tek alarm (defter satırından ikinci alarm yok)
+  assert.deepEqual(await rows(unmarkedPaymentsSql("2026-10-16", true)), ["Kira|2026-10-08", "Garanti ticari kredi taksiti (TAHMINI 137.314)|2026-10-16"]);
+  assert.deepEqual(await rows(unmarkedPaymentsSql("2026-10-16", false)), ["Kira|2026-10-08"], "bugün vadeli sabah alarm değil");
+  // Boşluk: Ziraat Kredi 2'nin bekleyen taksiti yok (KGF satırı tutarla ayrışır); Enpara kartının bekleyen ödemesi yok;
+  // QNB taksiti bilinmiyor + takvimde yok. Kapanmış / bitmiş kredi ve borcu 0 kart dışarıda; "Yapı Kredi" (ı) eşleşir.
+  assert.deepEqual(await rows(ledgerGapSql("2026-10-09")), ["Enpara Şirket kart|2026-11-06", "QNB — Oranı/taksiti bilinmeyen|", "Ziraat — Ziraat Kredi 2|2026-11-10"]);
+  await pg.exec(`insert into cfo_cash_event values ('10','KREDI_TAKSITI','Ziraat',null,'2026-11-10',29750,false)`);
+  assert.ok(!(await rows(ledgerGapSql("2026-10-09"))).some(r => r.startsWith("Ziraat")), "taksit takvime girince boşluk kapanır (yapısal bank sütunu, açıklama boş)");
+  // Mükerrer: Yapı Kredi Kasım'da 2 satır / 1 kredi; Ziraat Kasım'da 1 satır / 2 kredi (eksik ≠ mükerrer); ufuk dışı sayılmaz
+  const dups = (await pg.query<{ bank: string; month: string; count: number; expected: number; rows: string }>(scheduleDuplicateSql("2026-10-09"))).rows;
+  assert.deepEqual(dups, [{ bank: "Yapı Kredi", month: "2026-11", count: 2, expected: 1, rows: "2026-11-25 33112, 2026-11-28 33277" }]);
+  assert.deepEqual((await pg.query(scheduleDuplicateSql("2026-12-01"))).rows, [], "geçmiş ay ufuk dışında");
+  assert.throws(() => ledgerGapSql("2026-10-09'; drop table x; --"), /YYYY-MM-DD/);
+  await pg.close();
+}
+
 console.log("CFO alarms: engine stale, consecutive failures, floor breach, unmarked payment, dead sources, KMH capacity breach, notify-on-change + morning-slot reminder passed");
+sql().then(() => console.log("CFO alarms SQL: payments only from the schedule (no double alarm, ODENDI ignored), ledger↔schedule gaps, duplicate installments passed"),
+  e => { console.error(e); process.exit(1); });

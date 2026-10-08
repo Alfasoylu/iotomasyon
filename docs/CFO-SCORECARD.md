@@ -1,9 +1,9 @@
 ---
-last_updated: 2026-10-09 01:10 TR
-current_main_commit: 9bd5bd9
+last_updated: 2026-10-09 02:10 TR
+current_main_commit: 90af323
 current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 50/100 (hard gate 12/12 gerekiyor; bugün 5/12)
-next_action: "CFO-001"
+current_score: 51/100 (hard gate 12/12 gerekiyor; bugün 5/12)
+next_action: "CFO-014 (UNKNOWN→0 süpürmesi) / CFO-016; RF-029 veri düzeltmesi Cowork'te; D-P01…D-P07 kararları"
 ---
 
 # CFO SCORECARD
@@ -54,7 +54,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | # | Boyut | Ağırlık | Puan | Kanıt (artı) | Kanıt (eksi) |
 |---|---|---|---|---|---|
 | 1 | Financial accuracy & reconciliation | 20 | **8** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye 3, borç 5, kur 4, ciro 7, marj 5 tanım; KDV esası belirsiz; latent `remainingOverride`; atıf kimliği bozuk |
-| 2 | Cash / liquidity / debt | 15 | **9** | 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | 4 nakit/4 kapasite tanımı; düz %4,5 beş yerde; borç hedefi eski; defterlerin yazma yolu/vade devri yok; 8 limitin oranı ölçülmemiş |
+| 2 | Cash / liquidity / debt | 15 | **10** | Ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | 4 nakit/4 kapasite tanımı; düz %4,5 beş yerde; borç hedefi eski; takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş |
 | 3 | Capital allocation | 15 | **7** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | KDV dahil NRV tabanı; kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
 | 4 | Revenue / profitability | 10 | **4** | Ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları | Marj kuralları susuyor (kapsam); KDV düşülmüyor; 7 ciro formülü; iade marja bağlı değil |
 | 5 | Inventory / procurement | 10 | **5** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
@@ -63,7 +63,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; takılan koşu/kilit hatası görünmez; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **2** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Okuma izniyle yazma yolları, yetkisiz action, düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü |
-| | **TOPLAM** | **100** | **50** | | |
+| | **TOPLAM** | **100** | **51** | | |
 
 ## Skor geçmişi
 
@@ -74,3 +74,4 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 2026-10-09 | CFO-004 + CFO-005 | 49 | 5/12 | Düz KMH oranı TS katmanında kalktı (borclar satır=toplam, hayali KMH tasarrufu yok); kredi override hatası düzeltildi (üretimde migration bekliyor) |
 | 2026-10-09 | CFO-005b + CFO-009 | 50 | 5/12 | Takılan koşu / kilit hatası görünür, başarısız dilim yeniden denenir (8. boyut 3→4); kart erteleme kart faiziyle (üretimde migration bekliyor) |
 | 2026-10-09 | Üretim senkronu (200000 + 100000) | 50 | 5/12 | Kredi borcu üretimde kalan anapara (RF-005 RESOLVED; H12 hâlâ RF-001…004 nedeniyle ❌). Puan artışı yok: 1. boyut tek tanım eksikliğiyle sınırlı |
+| 2026-10-09 | CFO-010 kısım 2 | 51 | 5/12 | Ödeme durumu tek kaynak (takvim), çift alarm yok, boşluk + mükerrer taksit görünür (2. boyut 9→10). Projeksiyon 99.832 TL fazla çıkış içeriyor (RF-029, veri) |

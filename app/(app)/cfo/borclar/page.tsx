@@ -5,11 +5,12 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
 import { num, numOrNull, remainingInstallments } from "@/lib/cfo/engine";
 import { cardEffectiveMonthlyRate } from "@/lib/cfo/card-cost";
+import { nextScheduledPayment } from "@/lib/cfo/payment-schedule";
 import { fmtTry, fmtPct, fmtDate, daysFromNow } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DataTagBadge, PaymentStateBadge, TrafficBadge } from "@/components/cfo/badges";
+import { DataTagBadge, TrafficBadge } from "@/components/cfo/badges";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
 
 
@@ -33,6 +34,16 @@ export default async function CfoDebtsPage() {
     .filter((e) => !e.isSettled && num(e.outflowTry) > 0 && (e.kind === "VERGI_GUMRUK" || e.kind === "DIGER"))
     .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
   const plannedTotal = planned.reduce((a, e) => a + num(e.outflowTry), 0);
+
+  // Ödeme durumu TEK kaynaktan: takvim (cfo_cash_event, taksit başına satır + isSettled). Defterdeki "currentMonthState"
+  // ay dönümünde sıfırlanmıyordu (08.10: 11 kalemin 10'u geçen ayın "Ödendi"siyle) — burada gösterilmez (CFO-010).
+  const todayMs = new Date().setHours(0, 0, 0, 0);
+  const scheduleCell = (nx: { date: Date; amountTry: number } | null) => nx == null
+    ? <span className="text-[var(--danger)]">takvimde yok</span>
+    : <>
+        <span className="tabular-nums">{fmtDate(nx.date)} · {fmtTry(nx.amountTry)}</span>
+        {nx.date.getTime() < todayMs && <span className="ml-1"><Badge variant="danger">gecikmiş</Badge></span>}
+      </>;
 
   const lastLoanEnd = raw.loans
     .filter((l) => l.status === "AKTIF" && l.lastInstallmentDate)
@@ -99,7 +110,7 @@ export default async function CfoDebtsPage() {
         <CfoTable head={
           <tr>
             <Th>Kart</Th><Th right>Güncel borç</Th><Th right>Asgari</Th><Th>Kesim</Th><Th>Son ödeme</Th>
-            <Th>Bu ay</Th><Th right>Aylık faiz (devreden)</Th><Th>Veri</Th>
+            <Th>Takvimde sonraki ödeme</Th><Th right>Aylık faiz (devreden)</Th><Th>Veri</Th>
           </tr>
         }>
           {raw.cards.map((c) => {
@@ -117,7 +128,7 @@ export default async function CfoDebtsPage() {
                 </Td>
                 <Td muted>{c.statementDay ? `ayın ${c.statementDay}'i` : "—"}</Td>
                 <Td muted>{c.dueDay ? `ayın ${c.dueDay}'i` : fmtDate(c.nextDueDate)}</Td>
-                <Td><PaymentStateBadge state={c.currentMonthState} /></Td>
+                <Td>{debt === 0 ? "—" : scheduleCell(nextScheduledPayment(raw.cashEvents, { kind: "KART_ODEMESI", bank: c.bank }))}</Td>
                 <Td right>{(() => {
                   // Faiz yalnız devreden bakiyeye, kartın kendi akdi oranı × (1 + KKDF + BSMV) ile (lib/cfo/card-cost.ts)
                   const rev = c.revolvingTry == null ? null : Number(c.revolvingTry);
@@ -154,7 +165,7 @@ export default async function CfoDebtsPage() {
           <tr>
             <Th>Kredi</Th><Th right>Aylık taksit</Th><Th right>Kalan taksit</Th><Th>Bitiş tarihi</Th>
             <Th right>Erken kapama</Th><Th right>Faiz</Th>
-            <Th>Sonraki ödeme</Th><Th>Bu ay</Th><Th>Öncelik</Th><Th>Durum</Th>
+            <Th>Sonraki ödeme (defter)</Th><Th>Takvimde sonraki taksit</Th><Th>Öncelik</Th><Th>Durum</Th>
           </tr>
         }>
           {raw.loans.map((l) => {
@@ -182,7 +193,7 @@ export default async function CfoDebtsPage() {
                   : `%${num(l.interestRatePct)}/yıl (aylık %${(num(l.interestRatePct) / 12).toFixed(2)})`}
               </Td>
               <Td muted>{l.status === "AKTIF" ? fmtDate(l.nextPaymentDate) : "—"}</Td>
-              <Td><PaymentStateBadge state={l.currentMonthState} /></Td>
+              <Td>{l.status !== "AKTIF" ? "—" : scheduleCell(nextScheduledPayment(raw.cashEvents, { kind: "KREDI_TAKSITI", bank: l.bank, expectedTry: numOrNull(l.monthlyPaymentTry) }))}</Td>
               <Td muted>{l.priority ?? "—"}</Td>
               <Td><Badge variant={l.status === "AKTIF" ? "info" : "ok"}>{l.status === "AKTIF" ? "Aktif" : "Kapandı"}</Badge></Td>
             </tr>

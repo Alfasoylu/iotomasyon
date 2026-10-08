@@ -11,7 +11,7 @@ next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-09, senkron sonrası):** RF-005 RESOLVED · CRITICAL 1 · HIGH 10 (+1 yeni RF-028 FIX READY) · MEDIUM 11 · LOW 4 · INFO 1 · toplam 28.
+**Açık özet (2026-10-09, CFO-019 sonrası):** RF-005, RF-017, RF-028 RESOLVED · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 9 · MEDIUM 12 (yeni RF-029) · LOW 4 · INFO 1 · toplam 29.
 
 ---
 
@@ -269,4 +269,45 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - Parmak izi farkı yalnız beklenen nesnelerde (yeni `cfo_maliyet_kapsami_satir` fonksiyonu + ACL'i, değişen görünüm/fonksiyon gövdeleri);
   rel/acl/pol/idx değişmedi → beklenmeyen şema sürüklenmesi yok. `20261009110000` hâlâ üretimde değil (Cowork uyguluyor) — RF-004 SQL kısmı FIX READY kalır.
   Yeni red flag yok.
+
+---
+
+## 2026-10-09 — CFO-010 (kısım 2) RED FLAG PASS
+
+### RF-20261009-028 — güncelleme: RESOLVED (2026-10-09, CFO-010 kısım 2)
+- Ödeme alarmı artık yalnız ödeme takviminden (`cfo_cash_event`, taksit başına satır + `isSettled`) — projeksiyonla aynı defter.
+  `currentMonthState` hiçbir alarmda ve Borçlar sayfasında okunmuyor; kısım 1'deki `lastUpdatedAt` sınırı (döngü içi başka güncelleme
+  yanlış "ödendi" sayılabilir) ortadan kalktı. Kısım 1 kuralı 16.10'da Garanti taksiti için takvimle **ikinci** bir alarm üretecek ve takvim
+  satırı işaretlendikten sonra da susmayacaktı (üretim salt-okuma simülasyonu) — bu çift alarm kaldırıldı.
+
+### RF-20261008-007 — güncelleme: KISMEN ÇÖZÜLDÜ, HIGH → MEDIUM
+- Ekonomik risk (ödeme kaçırma, alarmın sessizce durması) kapandı: ödeme durumu takvimden; `ledger_stale` artık "aktif kredi/kartın takvimde
+  bekleyen sonraki ödemesi yok" (projeksiyon o ödemeyi görmüyor) demek; ödeme işaretleme yolu `/cfo/odemeler` (CFO_WRITE + `cfo_change_log`).
+  Yetim `lib/actions/cfo-actions.ts` silindi (UI çağıranı yoktu; ikinci snapshot yazarıydı — RF-011'e katkı).
+- **Açık kalan:** takvim/defter satırı OLUŞTURMA hâlâ Cowork SQL ile (tasarım gereği); kayıtlı yazma rolü CFO-016.
+
+### RF-20261009-029 — Yapı Kredi taksiti Kasım–Ocak takvimde iki kez (YENİ, MEDIUM, veri)
+- **date:** 2026-10-09 · **commit:** 90af323+ · **severity:** MEDIUM · **status:** OPEN (veri düzeltmesi insan/Cowork)
+- **finding:** her ay doğru satır (25'i, 33.112 TL, KESIN) + 26.08 düzeltme notunda "ödeme günü 28 değil 25; tutar 33.277,20 değil 33.112,46"
+  denen eski kaydın devamı (28'i, 33.277 TL, TAHMINI): `8ab7fc76-3e55-4a3c-a098-92ea132d6564` (2026-11-28), `9dd414e3-499a-4530-a7b8-e9baab4f6f02`
+  (2026-12-28), `1f20c74c-7c5a-4081-80f0-0c755ef180b4` (2027-01-28). Aktif Yapı Kredi kredisi 1.
+- **evidence:** üretim salt-okuma (`scheduleDuplicateSql`); `cfo_loan` YKB notu.
+- **economic_risk:** projeksiyon 120 günde 99.832 TL fazla çıkış; 01.12 dibi −3.578.121 yerine −3.544.844 TL olmalı (33.277 TL kötü). Taban yine deliniyor.
+- **fix:** kod — `schedule_duplicate` alarmı her koşuda yakalar (banka × ay bekleyen taksit > aktif kredi). Veri — 3 satırın kapatılması/silinmesi
+  Cowork/Alperen kararı (üretim verisine Code dokunmaz). Garanti Ekim kart satırları (5.000 kapatma + 1.000 asgari, Alp) olası mükerrer, düşük tutar; kart kuralı yok.
+
+### Bağımsız inceleme
+- Aynı ödeme iki kez sayılıyor mu? Alarmda hayır (tek kaynak). Projeksiyonda evet → RF-029. Yeni UNKNOWN: kart eşleşmesi yalnız banka
+  (aynı bankada iki kart varsa biri takvimde yoksa görülmez — Garanti ana/ek tek satırda ödeniyor, bilinçli). Güvenlik: SQL'ler `today`'i
+  YYYY-AA-GG doğrulamasıyla gömüyor (enjeksiyon testi var); yazma yolu eklenmedi, biri silindi.
+
+---
+
+## 2026-10-09 — CFO-019 RED FLAG PASS
+
+### RF-20261008-017 — güncelleme: RESOLVED (2026-10-09, CFO-019)
+- `npm run db:migrate:deploy` artık `scripts/schema-baseline/guard-deploy.mjs` ile başlar: bekletilen migration (bugün 3, biri `DROP TABLE`)
+  ve Supabase hedefi açık izin değişkeni olmadan reddedilir (çıkış 1, prisma hiç başlamaz). Test `migrate-deploy-guard` CI'da.
+- **Kalan sınır (bilinçli):** `npx prisma migrate deploy` doğrudan çağrılırsa koruma atlanır; yönetişim kuralı (Master Plan: üretimde deploy yok,
+  Cowork SQL uygular) geçerli. Yeni red flag yok.
 
