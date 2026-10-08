@@ -18,8 +18,17 @@ export async function loadCfoData(): Promise<{ raw: CfoInput; overview: CfoOverv
     prisma.cfoImportProject.findMany({ orderBy: { etaDate: "asc" } }),
   ]);
 
-  const raw: CfoInput = { settings, banks, cards, loans, expenses, receivables, cashEvents, imports };
+  const raw: CfoInput = { settings, banks, cards, loans, expenses, receivables, cashEvents, imports, forecast: await loadCollectionForecast() };
   return { raw, overview: computeCfo(raw) };
+}
+
+/** Alacak ufku dışı tahmini tahsilat (cfo_tahsilat_tahmini, günlük toplam). Görünüm yoksa null → engine eski last14/4 yedeğine düşer.
+ *  Var olup olmadığı önce sorulur: başarısız sorgu loglarda hata gürültüsü bırakmasın. */
+async function loadCollectionForecast(): Promise<{ date: Date; amountTry: number }[] | null> {
+  const [v] = await prisma.$queryRaw<{ ok: boolean }[]>`select to_regclass('public.cfo_tahsilat_tahmini') is not null as ok`;
+  if (!v?.ok) return null;
+  const rows = await prisma.$queryRaw<{ tarih: Date; tutar: unknown }[]>`select tarih, sum(tutar) as tutar from cfo_tahsilat_tahmini group by tarih order by tarih`;
+  return rows.map((r) => ({ date: new Date(r.tarih), amountTry: Number(r.tutar) }));
 }
 
 /** Son N snapshot — servet trendi için. */
