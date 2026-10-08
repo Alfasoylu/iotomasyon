@@ -2,7 +2,7 @@
 last_updated: 2026-10-08 23:45 TR
 current_main_commit: 422a6db
 current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 49/100
+current_score: 50/100
 next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 ---
 
@@ -228,3 +228,14 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - `cfo_kart_karari` asgariye çekilen kart bakiyesinin faizini artık eşleşen kartın akdi aylık oranı × 1,30 (KKDF %15 + BSMV %15; `lib/cfo/card-cost.ts` ile aynı) ile hesaplıyor; kartın oranı yoksa `aylik_faiz` NULL + "BILINMIYOR". `cfo_settings.kmhMonthlyRatePct` kodda yalnız ayarlar sayfasında gösterim olarak kaldı. Şema yorumu: `cfo_loan.interestRatePct` YILLIK.
 - Üretim etkisi (uygulanınca): 6 kartın hepsinde akdi oran 4,25 → erteleme faizi 4,5 yerine 4,25 × 1,30 = **5,525%/ay** (eskisi %23 düşük gösteriyordu). Bugün taban deliniyor (−3,37M) ama karar listesi hangi kalemlerin ertelendiğine bağlı; sıralama mantığı değişmedi.
 - Bağımsız inceleme: aynı faiz iki kez sayılmıyor (karar fonksiyonu yalnız öneri; engine card carry ayrı). Kart eşleme `description ILIKE %bank%` — aynı bankada birden çok kart varsa `sortOrder` ilkini alır (mevcut davranış, asgari tutarla tutarlı). Yeni red flag yok. RF-004 üretimde uygulanınca RESOLVED.
+
+---
+
+## 2026-10-09 — CFO-009 RED FLAG PASS
+
+### RF-20261008-006 — güncelleme: KISMEN ÇÖZÜLDÜ
+- Takılmış koşu artık görünür: 15 dakikadan uzun `running` kalan motor koşusu `stuck_run` alarmı verir ve ardışık hata sayımına girer (eskiden hiç sayılmıyordu).
+- Kilit yapılandırma hatası (`LockError`) artık `engine:<dilim>:<kod>` satırıyla `failed` kaydedilir (eskiden iz bırakmıyordu).
+- Aynı dilimde başarısız ya da takılmış koşu yeniden denenebilir (eskiden aynı saat içinde `duplicate` dönüyordu); tamamlanmış ya da taze `running` koşu tekrar açılmaz.
+- **Açık kalan:** bildirim kanalı hâlâ GitHub işi kırmızı → e-posta (güvenilmez zamanlayıcı). Alarmlar her motor koşusunda `cfo_gun_ozeti` ALARM satırlarına yazılıyor (Vercel cron'ları güvenilir) → Cowork günde iki kez görüyor; arada anlık iletim için kanal kararı D-P07 (e-posta / WhatsApp) bekleniyor. `/api/cron/cfo-cycle` yetim: Vercel Hobby 2 cron sınırı nedeniyle ayrı zamanlayıcı eklenmedi; döngü iki sync cron'unun `after()` zincirinde zaten çalışıyor (yorum düzeltilecek, CFO-024).
+- Bağımsız inceleme: yeniden deneme güncellemesi `where: { id, status }` ile koşullu (iki eşzamanlı deneme aynı satırı alamaz; kilit de var). Yeni red flag yok.

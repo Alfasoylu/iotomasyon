@@ -14,6 +14,8 @@ import { CALCULATION_VERSION, SCHEMA_VERSION } from "./types";
 // Snapshot (~164 kB) yalnız karar girdisi hash'i değiştiğinde yazılır; değişmediyse snapshotRef önceki koşuyu gösterir.
 
 export const ENGINE_KEY_PREFIX = "engine:";
+/** health.ts STUCK_RUN_MINUTES ile aynı: bundan uzun 'running' kalan koşu yeniden denenebilir. */
+const RETRY_STUCK_MINUTES = 15;
 /** Motor koşularını eski (LLM dönemi) monitor koşularından ayıran filtre. */
 export const ENGINE_RUNS = { idempotencyKey: { startsWith: ENGINE_KEY_PREFIX } };
 export type EngineTrigger = "scheduled" | "sync_xml" | "sync_trendyol" | "manual";
@@ -42,6 +44,16 @@ export interface CfoStore {
 
 export const cfoStore: CfoStore = {
   async begin(period, now) {
+    // Aynı dilimde başarısız ya da takılmış (zaman aşımıyla ölmüş) koşu yeniden denenebilir (CFO-009); tamamlanmış ya da hâlâ
+    // koşan koşu tekrar edilmez. Hata yolu (P2002) yerine önce bakılır: tek oturumlu bağlantılarda hata oturumu düşürür.
+    const key = `${ENGINE_KEY_PREFIX}${period}`, stuckBefore = new Date(now.getTime() - RETRY_STUCK_MINUTES * 60000);
+    const existing = await prisma.cfoRun.findUnique({ where: { idempotencyKey: key }, select: { id: true, status: true, generatedAt: true } });
+    if (existing) {
+      if (existing.status !== "failed" && !(existing.status === "running" && existing.generatedAt < stuckBefore)) return null;
+      const reset = await prisma.cfoRun.updateMany({ where: { id: existing.id, status: existing.status },
+        data: { status: "running", generatedAt: now, startedAt: now, finishedAt: null, error: null } });
+      return reset.count === 1 ? existing.id : null;
+    }
     try {
       const run = await prisma.cfoRun.create({ data: { type: "monitor", status: "running", periodKey: period, idempotencyKey: `${ENGINE_KEY_PREFIX}${period}`,
         generatedAt: now, startedAt: now, triggerReasons: [], schemaVersion: SCHEMA_VERSION, calculationVersion: CALCULATION_VERSION } });

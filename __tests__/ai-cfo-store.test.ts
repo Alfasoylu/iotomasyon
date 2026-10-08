@@ -72,6 +72,16 @@ async function main() {
     await cfoStore.finish(id2!, "completed", later);
     const p2 = await cfoStore.previous(new Date(later.getTime() + 3600000), dayStart);
     assert.deepEqual(p2.last, { id: id2, hash: "h1", snapshotRunId: id }, "snapshot'sız koşu referansı taşır");
+    // Yeniden deneme (CFO-009): tamamlanmış dilim tekrar açılmaz; başarısız dilim aynı satırla yeniden koşar; takılmış (15 dk+) da
+    assert.equal(await cfoStore.begin("2026-10-07T11:scheduled", new Date(later.getTime() + 60000)), null, "tamamlanmış koşu tekrar edilmez");
+    // (dilim id2'den ÖNCEKİ bir zamanda: aşağıdaki "son koşu" kontrolleri id2 üzerinde kalır)
+    const t0 = new Date(now.getTime() + 3600000);
+    const f1 = await cfoStore.begin("2026-10-06T12:scheduled", t0);
+    await cfoStore.finish(f1!, "failed", t0, "engine_failed");
+    assert.equal(await cfoStore.begin("2026-10-06T12:scheduled", new Date(t0.getTime() + 60000)), f1, "başarısız dilim yeniden denenir");
+    assert.equal(await cfoStore.begin("2026-10-06T12:scheduled", new Date(t0.getTime() + 120000)), null, "koşan (taze) koşu tekrar açılmaz");
+    assert.equal(await cfoStore.begin("2026-10-06T12:scheduled", new Date(t0.getTime() + 20 * 60000)), f1, "takılmış koşu yeniden denenir");
+    await cfoStore.finish(f1!, "failed", t0, "engine_failed");
     const snaps = await client.$queryRawUnsafe<{ n: number }[]>(`select count(*)::int n from cfo_run where snapshot is not null`);
     assert.equal(snaps[0].n, 1, "snapshot yalnız bir kez");
     const center = await loadCfoControlCenter();

@@ -23,6 +23,10 @@ assert.deepEqual(codes(base({ runs: [], engineEnabled: false })), [], "motor kap
 // Üst üste iki tamamlanmamış koşu (failed ya da beklenmeyen durum); 'running' sayılmaz
 assert.deepEqual(codes(base({ runs: [run(0, "failed", "engine_failed"), run(1, "failed"), run(2, "completed")] })), ["consecutive_failures"]);
 assert.deepEqual(codes(base({ runs: [run(0, "running"), run(1, "failed"), run(2, "completed")] })), [], "koşan koşu başarısız sayılmaz");
+// Takılmış koşu (CFO-009): 15 dakikadan uzun 'running' → zaman aşımıyla öldü; alarm verir ve ardışık hatada başarısız sayılır
+assert.deepEqual(codes(base({ runs: [run(0.5, "running"), run(1, "completed")] })), ["stuck_run"]);
+assert.deepEqual(codes(base({ runs: [run(0.5, "running"), run(1, "failed", "engine_failed"), run(2, "completed")] })), ["stuck_run", "consecutive_failures"]);
+assert.deepEqual(codes(base({ runs: [run(0.2, "running"), run(1, "completed")] })), [], "12 dakikalık koşu henüz takılmış değil");
 // Taban deliniyor (07.10: −3.379.787)
 const floor = evaluateCfoAlarms(base({ minPosition: { valueTry: -3379787, date: "2026-12-01" } }));
 assert.equal(floor[0].code, "floor_breach"); assert.match(floor[0].message, /-3\.379\.787 TL \(2026-12-01\).*-3\.000\.000 TL/);
