@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Kademeli KMH faizi (2026-10-08)
+- Aşağı yön senaryolarında KMH faizi artık yalnız KMH ile fonlanan kısma, her bankanın ölçülmüş aylık oranıyla işliyor (Ziraat %4,083 · Enpara %4,25 · YKB %4,50); oranı ölçülmemiş limitlerin faizi bilinmiyor olarak kalır, kapasiteyi aşan kısma faiz yok. Küresel %4,50 oranı kaldırıldı. Nakit kritik bulgusu oranı ölçülmemiş limit kullanıldığında faizi "en az" diye yazar ve o limitleri sayar. `/cfo/sermaye`'de banka bazlı dilim tablosu.
+
 ### KMH kapasite alarmı (2026-10-08)
 - Yeni alarm `capacity_breach`: nakit pozisyonu şirket KMH kapasitesini ilk aştığı gün ve tutar (bugün 21.10, 365.173 TL; şahsi hesaplar gerekiyor). Cowork CFO sırasının ilk adımı; kademeli faiz ve kuralın faizli dibe bağlanması sonraki adımlar.
 
