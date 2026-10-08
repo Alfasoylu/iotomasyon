@@ -219,3 +219,12 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - Şahsi KMH'ye eski motorun eklediği ×1,30 KKDF/BSMV çarpanı kaldırıldı: `monthlyRatePct` ekstreden ölçülen **efektif** oran olarak tanımlandı (downside ile tutarlı); bugün hiçbir şahsi hesapta oran yok → sayısal etki 0.
 - **Açık kalan:** SQL `cfo_kart_karari` kart erteleme maliyetini hâlâ KMH oranıyla (KKDF/BSMV'siz) fiyatlıyor → CFO-005b (migration). `cfo_loan.interestRatePct` şema yorumu "aylık" → "yıllık" düzeltmesi CFO-005b ile.
 - **Bağımsız inceleme:** KMH kullanılmıyorken "KMH azaltma" getirisi artık 0 (eskiden 4.500 TL/ay hayali tasarruf gösteriyordu). Yeni UNKNOWN taşıma: oranı ölçülmemiş dilime düşen getiri `dataOk=false`. Look-ahead/kur/çift sayım etkisi yok. Yeni red flag yok.
+
+---
+
+## 2026-10-09 — CFO-005b RED FLAG PASS
+
+### RF-20261008-004 — güncelleme: SQL katmanı FIX READY (migration 20261009110000, Cowork uygulayacak)
+- `cfo_kart_karari` asgariye çekilen kart bakiyesinin faizini artık eşleşen kartın akdi aylık oranı × 1,30 (KKDF %15 + BSMV %15; `lib/cfo/card-cost.ts` ile aynı) ile hesaplıyor; kartın oranı yoksa `aylik_faiz` NULL + "BILINMIYOR". `cfo_settings.kmhMonthlyRatePct` kodda yalnız ayarlar sayfasında gösterim olarak kaldı. Şema yorumu: `cfo_loan.interestRatePct` YILLIK.
+- Üretim etkisi (uygulanınca): 6 kartın hepsinde akdi oran 4,25 → erteleme faizi 4,5 yerine 4,25 × 1,30 = **5,525%/ay** (eskisi %23 düşük gösteriyordu). Bugün taban deliniyor (−3,37M) ama karar listesi hangi kalemlerin ertelendiğine bağlı; sıralama mantığı değişmedi.
+- Bağımsız inceleme: aynı faiz iki kez sayılmıyor (karar fonksiyonu yalnız öneri; engine card carry ayrı). Kart eşleme `description ILIKE %bank%` — aynı bankada birden çok kart varsa `sortOrder` ilkini alır (mevcut davranış, asgari tutarla tutarlı). Yeni red flag yok. RF-004 üretimde uygulanınca RESOLVED.

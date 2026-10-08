@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Kart ödemesi erteleme kararı kart faiziyle (2026-10-09)
+- Nakit tabanı delindiğinde kart ödemesini asgariye çekme önerisi artık ertelenen tutarın maliyetini kartın kendi aylık faizi + KKDF/BSMV ile gösteriyor (önce KMH oranıyla ve vergisiz, yani düşük gösteriliyordu); oranı bilinmeyen kartta maliyet "bilinmiyor" yazar. Üretimde migration uygulanınca devreye girer.
+
 ### KMH maliyeti her hesabın kendi oranıyla (2026-10-09)
 - Borçlar, gümrük ve sermaye sayfalarında KMH faizi artık tek bir varsayılan oranla değil, her bankanın ölçülmüş aylık oranıyla hesaplanıyor; oranı bilinmeyen hesap "oran yok" olarak işaretleniyor. KMH kullanılmazken "KMH azaltma" seçeneği artık hayali tasarruf göstermiyor.
 

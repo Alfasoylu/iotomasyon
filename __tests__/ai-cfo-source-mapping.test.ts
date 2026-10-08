@@ -62,6 +62,8 @@ async function main() {
     await pg.exec(readFileSync("prisma/migrations/20261008200000_cfo_maliyet_kapsami_satir/migration.sql", "utf8"));
     // kredi borcu = kalan anapara (CFO-004; Cowork uygulayacak)
     await pg.exec(readFileSync("prisma/migrations/20261009100000_cfo_kredi_kalan_anapara/migration.sql", "utf8"));
+    // kart ertelemesi kart faiziyle (CFO-005b; Cowork uygulayacak)
+    await pg.exec(readFileSync("prisma/migrations/20261009110000_cfo_kart_karari_kart_faizi/migration.sql", "utf8"));
     await pg.exec("set search_path = public");
     await pg.exec(`${TARIFF};
       insert into "Product" (id,sku,name,"updatedAt","stockQuantity","unitCostTry","weightKg","sellingPriceTry","isActive") values
@@ -160,6 +162,21 @@ async function main() {
     assert.equal(Number(after.kredi_servet_fark), 0, "mutabakat: kredi satırı = kalan anapara");
     assert.equal(Number(after.kredi_override_sayisi), 1);
     await pg.exec(`delete from cfo_loan where id = 'ov1'`);
+    // Kart ertelemesi = KART faizi (CFO-005b): asgariye çekilen kısım kartın akdi oranı × 1,30 (KKDF+BSMV) ile; küresel KMH oranı
+    // (cfo_settings 4,5) KULLANILMAZ; kartın oranı yoksa aylık faiz NULL ve gerekçe "BILINMIYOR".
+    await pg.exec(`insert into cfo_settings (id,"updatedAt","kmhMonthlyRatePct","netPositionFloorTry","cardMinPct") values ('st2',now(),4.5,0,20);
+      insert into cfo_credit_card (id,bank,"statementDebtTry","totalDebtTry","contractMonthlyRatePct","isActive","updatedAt") values ('cc1','TestBank',100000,100000,4.25,true,now());
+      insert into cfo_cash_event (id,"eventDate",kind,description,"updatedAt","outflowTry","isSettled") values ('ek1',current_date+1,'KART_ODEMESI','TestBank kart ekstre',now(),100000,false);`);
+    const kart = (await pg.query<{ karar: string; yeni_odeme: string; kazanc: string; aylik_faiz: string | null; gerekce: string }>(
+      `select karar, yeni_odeme::text, kazanc::text, aylik_faiz::text, gerekce from cfo_kart_karari() where karar = 'ASGARIYE CEK'`)).rows;
+    assert.equal(kart.length, 1, "taban deliniyor → kart asgariye çekilir");
+    assert.deepEqual([Number(kart[0].yeni_odeme), Number(kart[0].kazanc)], [20000, 80000]);
+    assert.equal(Number(kart[0].aylik_faiz), Math.round(80000 * 0.0425 * 1.3 * 100) / 100, "kart akdi × 1,30 — KMH %4,5 değil");
+    await pg.exec(`update cfo_credit_card set "contractMonthlyRatePct" = null where id = 'cc1'`);
+    const kartBilinmiyor = (await pg.query<{ aylik_faiz: string | null; gerekce: string }>(`select aylik_faiz::text, gerekce from cfo_kart_karari() where karar = 'ASGARIYE CEK'`)).rows[0];
+    assert.equal(kartBilinmiyor.aylik_faiz, null, "oran yok → faiz UNKNOWN");
+    assert.match(kartBilinmiyor.gerekce, /BILINMIYOR/);
+    await pg.exec(`delete from cfo_cash_event where id = 'ek1'; delete from cfo_credit_card where id = 'cc1'; delete from cfo_settings where id = 'st2'`);
 
     // cash projection: real cfo_nakit_projeksiyon pozisyon = commercial bank cash + receivables/estimated collections − outflows; no overdraft
     const [native] = (await pg.query<{ m: string }>("select min(pozisyon) m from cfo_nakit_projeksiyon(120)")).rows;
