@@ -37,7 +37,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 16 | CFO-016 | Güvenlik: yazma izinleri, yetkisiz action, sunucu tarafı audit kaynağı, Cowork salt-okunur rol + görünüm izni | P2 | — | 2 | 4 | 1 | 2 | 1 | 2 | **2** | M | VALIDATED | 012 |
 | 17 | CFO-023 | Sayfa-motor eşlik testi (aynı metrik tüm sayfalarda aynı) | P2 | tümü | 3 | 4 | 2 | 3 | 1 | 1 | **4** | M | DISCOVERED | 001-010 |
 | 18 | CFO-017 | Atıf kimliği: tek snapshot yazarı, bileşenler toplamı = net sermaye | P2 | G2 | 2 | 3 | 3 | 2 | 1 | 1 | **4** | S | VALIDATED | 011 |
-| 19 | CFO-019 | Held-back migration'ları deploy'dan koru | P3 | — | 1 | 4 | 1 | 1 | 1 | 1 | **3** | S | VALIDATED | 017 |
+| 19 | CFO-019 | Held-back migration'ları deploy'dan koru | P3 | — | 1 | 4 | 1 | 1 | 1 | 1 | **3** | S | ✅ TAMAMLANDI 2026-10-09 — `npm run db:migrate:deploy` bekletilen migration ve Supabase hedefini açık izin olmadan reddeder | 017 |
 | 20 | CFO-018 | Eski `computeCfo` sayfalarını sözleşmeye taşı, sonra emekli et | P3 | tümü | 3 | 3 | 2 | 4 | 1 | 3 | **0** | L | DISCOVERED | 004,010,024 |
 | 21 | CFO-020 | Ölü stok tek kural + eşikler konfigürasyondan | P3 | G2 | 2 | 2 | 2 | 2 | 1 | 1 | **2** | S | DISCOVERED | 019 |
 | 22 | CFO-022 | Nakit tahmini kalibrasyonu (Goal Engine gözlemleri, 2–4 hafta veri sonrası) | P3 | taban | 3 | 3 | 2 | 2 | 3 | 1 | **2** | M | PLANNED (veri birikiyor) | — |
@@ -125,7 +125,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-017 — Atıf kimliği · CFO-001'in parçası olarak tek snapshot yazarı. **durum:** VALIDATED
 ### CFO-018 — Eski motoru emekli et · CFO-001..006 sonrası. **durum:** DISCOVERED
-### CFO-019 — Held-back migration koruması · `prisma migrate deploy` uygulamasın (ayrı dizin veya guard). **durum:** VALIDATED
+### CFO-019 — Held-back migration koruması · `prisma migrate deploy` uygulamasın (ayrı dizin veya guard). **durum:** ✅ TAMAMLANDI 2026-10-09 — `scripts/schema-baseline/guard-deploy.mjs`: `db:migrate:deploy` önce korumayı çalıştırır; baseline.json `notAppliedInProduction` boş değilse (bugün 3: market_scout, drop_legacy_backup_tables, 110000) `ALLOW_HELD_BACK_MIGRATIONS` listeyi aynen saymadıkça, hedef Supabase ise `ALLOW_PRODUCTION_MIGRATE_DEPLOY=1` olmadıkça reddeder. Sınır: `npx prisma migrate deploy` doğrudan çağrılırsa atlanır (belgelendi). Test `migrate-deploy-guard` (CI).
 ### CFO-020 — Ölü stok tek kural + eşikler konfigürasyondan. **durum:** DISCOVERED
 ### CFO-021 — CI yml:113 + alfashome testi + eski UI metinleri. **durum:** VALIDATED
 ### CFO-022 — Nakit tahmini kalibrasyonu (eski PDKS yol haritası #5). **durum:** PLANNED (veri birikiyor; ~2026-10-25 sonrası)
@@ -141,6 +141,7 @@ Faz 0 sonrası (backlog maddesi):
 - ✅ TAMAMLANDI 2026-10-08 — **CFO-001 PR-A** metrik sözleşmesi memosu + salt-okunur mutabakat SQL'i (PR #212). CFO-001'in kendisi karar bekliyor.
 - ✅ TAMAMLANDI 2026-10-08 — **Faz 0 ilk tam denetim** + 5 yönetim dosyası (PR #211).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-009 kısım 1** takılan koşu alarmı, kilit hatası izi, başarısız dilim yeniden denenir (PR #216). Madde açık (teslim kanalı).
+- ✅ TAMAMLANDI 2026-10-09 — **CFO-019** held-back migration koruması (`db:migrate:deploy` guard; RF-017 RESOLVED).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-010** defter bakım yolu: ödeme durumu tek kaynak = takvim; boşluk + mükerrer taksit alarmı; Borçlar takvimden; yetim `cfo-actions.ts` silindi (PR #216 + bu PR; RF-028 RESOLVED, RF-029 açıldı).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-005 TS katmanı**: düz %4,5 KMH oranı kalktı, banka başına ölçülmüş oran, kademeli (PR #214). SQL kısmı (PR #215) migration bekliyor.
 

@@ -11,7 +11,7 @@ next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-09, CFO-010 sonrası):** RF-005, RF-028 RESOLVED · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 9 · MEDIUM 13 (yeni RF-029) · LOW 4 · INFO 1 · toplam 29.
+**Açık özet (2026-10-09, CFO-019 sonrası):** RF-005, RF-017, RF-028 RESOLVED · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 9 · MEDIUM 12 (yeni RF-029) · LOW 4 · INFO 1 · toplam 29.
 
 ---
 
@@ -300,4 +300,14 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - Aynı ödeme iki kez sayılıyor mu? Alarmda hayır (tek kaynak). Projeksiyonda evet → RF-029. Yeni UNKNOWN: kart eşleşmesi yalnız banka
   (aynı bankada iki kart varsa biri takvimde yoksa görülmez — Garanti ana/ek tek satırda ödeniyor, bilinçli). Güvenlik: SQL'ler `today`'i
   YYYY-AA-GG doğrulamasıyla gömüyor (enjeksiyon testi var); yazma yolu eklenmedi, biri silindi.
+
+---
+
+## 2026-10-09 — CFO-019 RED FLAG PASS
+
+### RF-20261008-017 — güncelleme: RESOLVED (2026-10-09, CFO-019)
+- `npm run db:migrate:deploy` artık `scripts/schema-baseline/guard-deploy.mjs` ile başlar: bekletilen migration (bugün 3, biri `DROP TABLE`)
+  ve Supabase hedefi açık izin değişkeni olmadan reddedilir (çıkış 1, prisma hiç başlamaz). Test `migrate-deploy-guard` CI'da.
+- **Kalan sınır (bilinçli):** `npx prisma migrate deploy` doğrudan çağrılırsa koruma atlanır; yönetişim kuralı (Master Plan: üretimde deploy yok,
+  Cowork SQL uygular) geçerli. Yeni red flag yok.
 

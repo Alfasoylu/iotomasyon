@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Migration deploy komutu bekletilen migration'ları uygulamıyor (2026-10-09)
+- `npm run db:migrate:deploy`, üretime bilinçli olarak uygulanmamış migration'lar (yıkıcı yedek tablo silme dahil) varken ya da hedef Supabase üretim veritabanıyken açık izin olmadan çalışmayı reddediyor.
+
 ### Ödeme alarmı ve Borçlar sayfası ödeme takviminden okuyor (2026-10-09)
 - Kredi/kart taksitinin ödenip ödenmediği artık yalnız ödeme takviminden (taksit başına satır) okunuyor; aynı taksit için iki ayrı alarm çıkmıyor, takvimde işaretlenen ödeme alarmı hemen susturuyor.
 - Aktif bir kredi ya da kartın takvimde bekleyen sonraki ödemesi yoksa ("projeksiyon bu ödemeyi görmüyor") ve bir bankanın aynı ayda aktif kredi sayısından fazla taksit satırı varsa (mükerrer) alarm veriliyor. Üretimde Yapı Kredi'nin Kasım–Ocak taksitleri iki kez kayıtlı bulundu (3 × 33.277 TL).
