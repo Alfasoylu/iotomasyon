@@ -252,6 +252,21 @@ async function main() {
     assert.ok(offTy);
     assert.deepEqual([offTy!.priceFloor.value, offTy!.priceFloor.reason], [null, "shipping_band_unavailable"]);
     assert.equal(off.inventory.costValue.value, null, "set cost unknown without the reviewed binding");
+    // Bayatlık kapısı önemlilik eşikli (Cowork CFO 2026-10-08): 419,53 TL'lik bayat hesap CASH_CRITICAL'ı susturmaz, kanıta
+    // uyarı olarak girer; materialMinTry (10.000) üstü bayat hesap ya da bakiyesi bilinmeyen hesap kapıyı kapatır.
+    await pg.exec(`insert into cfo_bank_account (id,name,"updatedAt","balanceTry","lastUpdatedAt","isActive","accountType")
+      values ('b2','Ziraat USD','2026-09-01',419.53,'2026-09-01',true,'TICARI')`);
+    const small = await buildCfoAgentSnapshot({ db, now, config, compact: false });
+    assert.equal(small.cash.banksFresh, true, "önemsiz bayat hesap kapıyı kapatmaz");
+    assert.deepEqual(small.cash.staleBanks, [{ name: "Ziraat USD", balanceTry: 419.53, material: false }]);
+    assert.equal(small.cash.summaries.find(e => e.query === "stale_immaterial")?.value, "Ziraat USD (420 TL)");
+    assert.ok(!small.dataQuality.staleSources.includes("banks"));
+    await pg.exec(`insert into cfo_bank_account (id,name,"updatedAt","balanceTry","lastUpdatedAt","isActive","accountType")
+      values ('b3','Garanti','2026-09-01',50000,'2026-09-01',true,'TICARI')`);
+    const big = await buildCfoAgentSnapshot({ db, now, config, compact: false });
+    assert.equal(big.cash.banksFresh, false, "önemli bayat hesap nakit kurallarını susturur");
+    assert.ok(big.dataQuality.staleSources.includes("banks"));
+    await pg.exec(`delete from cfo_bank_account where id in ('b2','b3')`);
     console.log("AI CFO source mapping: kargo bands (toplam, measured fee once, 19.06 validity, Trendyol assumption for other channels), SET cost from cfo_set_fiyat, cash projection pozisyon (no overdraft), default reviewed profile + off switch passed");
   } finally { await pg.close(); }
 }

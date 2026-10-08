@@ -82,7 +82,7 @@ export function silencedRules(snapshot:CfoAgentSnapshot,config:CfoConfig=getCfoC
   const coverage=snapshot.dataQuality.costCoveragePct;
   if(stale.includes("Entegra"))out.push("Entegra bayat → PRICE_BELOW_FLOOR, LOW_PRICE_STRUCTURAL_LOSS, DEAD_STOCK, PROCUREMENT, NEGATIVE_PROFIT, REVENUE_DEVIATION susuyor");
   if(stale.includes("XML"))out.push("XML bayat → STOCKOUT, DEAD_STOCK, PROCUREMENT susuyor");
-  if(!snapshot.cash.banksFresh)out.push("banka bakiyesi bayat → CASH_CRITICAL susuyor");
+  if(!snapshot.cash.banksFresh){const m=(snapshot.cash.staleBanks??[]).filter(b=>b.material).map(b=>b.name);out.push(`banka bakiyesi bayat${m.length?` (${m.join(", ")})`:""} → CASH_CRITICAL susuyor`);}
   if(coverage==null||coverage<config.minCostCoveragePct)out.push(`maliyet kapsamı %${coverage==null?"?":Math.round(coverage*10)/10} < %${config.minCostCoveragePct} → MARGIN_DROP, NEGATIVE_PROFIT, PROCUREMENT susuyor`);
   if(snapshot.dataQuality.duplicateCanonicalRows>0)out.push("kanonik satışta mükerrer satır → MARGIN_DROP, NEGATIVE_PROFIT, PROCUREMENT susuyor");
   return out;

@@ -9,6 +9,9 @@
 
 ## 2026-10
 
+### Banka bayatlık kapısı önemlilik eşikli (2026-10-08)
+- Bayat banka hesabı nakit kurallarını (CASH_CRITICAL) yalnız bakiyesi önemlilik eşiğini (10.000 TL) aşıyorsa ya da bilinmiyorsa susturur; önemsiz bayat hesap bulguda uyarı olarak görünür. Ziraat USD (419,53 TL) artık −3,6M'lik dip kuralını susturmuyor.
+
 ### Güvenilir CFO motoru tetiği (2026-10-08)
 - `vercel.json`: `trendyol-sync` cron'u 06:00 → 12:00 UTC (15:00–15:59 TR). Motor Cowork CFO'nun iki okumasından önce Vercel cron'uyla koşar (05:xx ve 15:xx TR); GitHub zamanlayıcısı bu repoda günde 2–3 koşuyla sınırlı (ölçüldü). Trendyol 14 günlük pencere tarar, veri kaybı yok.
 - Motor uçtan uca doğrulandı (elle tetik, `?trigger=manual`): kapsam %87,5 fonksiyondan, dip −3.593.003 tek tahsilat mekanizmasından.

@@ -39,7 +39,9 @@ export type CfoAgentSnapshot = {
   inventory: { costValue: Metric; knownCostValue: Metric; retailValue: Metric; stockoutRiskValue: Metric; deadStockValue: Metric };
   products: ProductSignal[];
   deadStock: { sku: string; value: Metric; alarm: string; findingId: string | null }[];
-  cash: { generalUnusedOverdraft: Metric; totalCardDebt: Metric; activeCards: number; cash: Metric; minimumProjectedPosition: Metric; purposeLimit: Metric; banksFresh: boolean; summaries: Evidence[] };
+  cash: { generalUnusedOverdraft: Metric; totalCardDebt: Metric; activeCards: number; cash: Metric; minimumProjectedPosition: Metric; purposeLimit: Metric; banksFresh: boolean; summaries: Evidence[];
+    /** bayat (8 günden eski / bakiyesi bilinmeyen) hesaplar; material=false → kapıyı kapatmaz, yalnız uyarı */
+    staleBanks?: { name: string; balanceTry: number | null; material: boolean }[] };
   procurement: { riskySkuCount: number; openOrders: number | null };
   importPipeline: { inboundSkuCount: number | null; coveragePct: Metric };
   returns: { currentRate: Metric; previousRate: Metric; sample: number; complete: boolean };
