@@ -1,13 +1,16 @@
 import type { SqlQuery } from "./capital-efficiency-data";
-import { runDownside, stressGapTry, type DayFlow, type Downside, type Resources } from "./downside";
+import { runDownside, stressGapTry, type DayFlow, type Downside, type KmhSlice, type Resources } from "./downside";
 
 // Aşağı yön senaryoları veri yükleyicisi (salt-okunur; /cfo/sermaye Prisma ile, AI CFO salt-okunur iş kaynağıyla çağırır).
 // Günlük akış cfo_nakit_projeksiyon(120) ile AYNI kurallarla, ama bileşenlerine ayrılmış okunur (fonksiyon yalnız toplam giriş
 // döndürüyor): defterdeki açık alacak / kanal temposundan tahmini tahsilat / çıkış / kur duyarlı çıkış (VERGI_GUMRUK).
 // Eşlik denetimi: her gün giriş ve çıkış fonksiyonla 1 TL içinde aynı olmalı; değilse `parity.mismatchDays` > 0 ve sonuç
 // "projeksiyonla uyuşmuyor" işaretlenir (fonksiyon değişmiş demektir — bu SQL güncellenmeli).
-// Kaynaklar: cfo_nakit_kapisi (nakit, boş genel KMH, amaca bağlı KMH), cfo_kaynak_yeterliligi ('Sahsi KMH' kalemi), KMH aylık faiz
-// cfo_settings.kmhMonthlyRatePct, taban Goal Engine net_position_floor_try gözleminin inputs.floor_try'si.
+// Kaynaklar: cfo_nakit_kapisi (nakit, boş genel KMH, amaca bağlı KMH), cfo_kaynak_yeterliligi ('Sahsi KMH' kalemi), taban Goal
+// Engine net_position_floor_try gözleminin inputs.floor_try'si.
+// KMH faizi KADEMELİ (Cowork 2026-10-08): dilimler cfo_bank_account'tan — her aktif hesabın kmhLimitTry'si kendi monthlyRatePct'iyle
+// (ekstreden ölçülen aylık oran; boşsa UNKNOWN), purposeLimitTry gümrük dilimi (ayrı ürün; oranı ölçülmedi → UNKNOWN), 'ŞAHSİ'
+// hesaplar şahsi katman. cfo_settings.kmhMonthlyRatePct (küresel %4,50) KULLANILMAZ: bankalar farklı, ölçülmemiş oran uydurulmaz.
 
 const HORIZON = 120;
 const FLOW_SQL = `
@@ -30,8 +33,9 @@ order by t.d`;
 
 export type DownsideData = Downside & {
   startCash: number; resources: Resources;
-  /** KMH aylık faizi (cfo_settings); girilmemişse null → faiz 0 alınır ve dip iyimser kalır (UNKNOWN, uydurma oran yok) */
-  kmhMonthly: number | null; floorTry: number | null; stressGapTry: number;
+  /** KMH dilimleri (hesap başına limit + ölçülmüş oran). measuredLimitTry = oranı bilinen limit; unknownRateLimitTry = bilinmeyen */
+  kmh: { slices: KmhSlice[]; measuredLimitTry: number; unknownRateLimitTry: number };
+  floorTry: number | null; stressGapTry: number;
   parity: { days: number; mismatchDays: number };
 };
 
@@ -41,11 +45,13 @@ export async function loadDownside(q: SqlQuery): Promise<DownsideData | null> {
   const [have] = await q<{ p: string | null; k: string | null; y: string | null }>(`select to_regprocedure('public.cfo_nakit_projeksiyon(integer)')::text as p,
     to_regclass('public.cfo_nakit_kapisi')::text as k, to_regprocedure('public.cfo_kaynak_yeterliligi()')::text as y`);
   if (!have?.p || !have.k) return null;
-  const [rows, gate, personal, settings, floor] = await Promise.all([
+  const [rows, gate, personal, accounts, floor] = await Promise.all([
     q<{ date: string; ledger_in: unknown; forecast_in: unknown; out: unknown; fx_out: unknown; p_in: unknown; p_out: unknown }>(FLOW_SQL),
     q<{ nakit: unknown; genel: unknown; amacli: unknown }>(`select nakit_try as nakit, bos_kmh_try as genel, amacli_kmh_try as amacli from cfo_nakit_kapisi`),
     have.y ? q<{ tutar: unknown }>(`select tutar from cfo_kaynak_yeterliligi() where kalem ilike 'Sahsi KMH%' limit 1`) : Promise.resolve([] as { tutar: unknown }[]),
-    q<{ kmh: unknown }>(`select "kmhMonthlyRatePct" as kmh from cfo_settings limit 1`),
+    q<{ name: string; type: string | null; lim: unknown; plim: unknown; rate: unknown }>(
+      `select name, "accountType"::text as type, "kmhLimitTry" as lim, "purposeLimitTry" as plim, "monthlyRatePct" as rate
+         from cfo_bank_account where "isActive" and ("kmhLimitTry" > 0 or "purposeLimitTry" > 0)`),
     q<{ floor: unknown }>(`select inputs->>'floor_try' as floor from fm_goal_observation where goal_key = 'net_position_floor_try' order by evaluated_at desc limit 1`)
       .catch(() => []),
   ]);
@@ -55,8 +61,22 @@ export async function loadDownside(q: SqlQuery): Promise<DownsideData | null> {
     || Math.abs(Number(r.out) - (num(r.p_out) ?? NaN)) > 1).length;
   const startCash = num(gate[0].nakit) ?? 0;
   const resources: Resources = { generalTry: num(gate[0].genel) ?? 0, customsTry: num(gate[0].amacli) ?? 0, personalTry: num(personal[0]?.tutar) };
-  const kmhPct = num(settings[0]?.kmh), kmhMonthly = kmhPct == null ? null : kmhPct / 100;
+  const slices = kmhSlices(accounts);
+  const measuredLimitTry = slices.filter(s => s.monthlyRate != null).reduce((a, s) => a + s.limitTry, 0);
   const floorTry = num(floor[0]?.floor);
-  const d = runDownside(days, startCash, resources, kmhMonthly ?? 0);
-  return { ...d, startCash, resources, kmhMonthly, floorTry, stressGapTry: floorTry == null || mismatchDays > 0 ? 0 : stressGapTry(d, floorTry), parity: { days: rows.length, mismatchDays } };
+  const d = runDownside(days, startCash, resources, slices);
+  return { ...d, startCash, resources, kmh: { slices, measuredLimitTry, unknownRateLimitTry: slices.reduce((a, s) => a + s.limitTry, 0) - measuredLimitTry },
+    floorTry, stressGapTry: floorTry == null || mismatchDays > 0 ? 0 : stressGapTry(d, floorTry), parity: { days: rows.length, mismatchDays } };
+}
+
+/** cfo_bank_account satırları → KMH dilimleri (saf; test edilir). Oran ≤ 0 ya da boş → ölçülmedi. */
+export function kmhSlices(rows: { name: string; type: string | null; lim: unknown; plim: unknown; rate: unknown }[]): KmhSlice[] {
+  const pos = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) || Number(v) <= 0 ? null : Number(v));
+  return rows.flatMap(r => {
+    const personal = /ŞAHSİ/i.test(r.type ?? ""), rate = pos(r.rate), lim = pos(r.lim), plim = pos(r.plim);
+    const out: KmhSlice[] = [];
+    if (lim) out.push({ name: r.name, tier: personal ? "PERSONAL" : "GENERAL", limitTry: lim, monthlyRate: rate == null ? null : rate / 100 });
+    if (plim && !personal) out.push({ name: `${r.name} (amaca bağlı)`, tier: "CUSTOMS", limitTry: plim, monthlyRate: null });
+    return out;
+  });
 }

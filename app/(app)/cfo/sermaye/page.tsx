@@ -39,8 +39,9 @@ export default async function CfoAllocationPage() {
         <Card className="mb-6 p-5">
           <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Aşağı yön — nakit dibi şoklara ne kadar dayanır?</h2>
           <p className="mb-3 text-xs text-[var(--text-muted)]">
-            Projeksiyon dibi {fmtTry(dn.projectionMin.position)} ({dn.projectionMin.date}) eksi pozisyonun KMH faizini saymıyor; {dn.kmhMonthly == null ? "KMH faizi girilmemiş (0 alındı — iyimser)," : `aylık %${(dn.kmhMonthly * 100).toFixed(2)} faizle`} baz dip
-            <strong> {fmtTry(dn.scenarios[0].minPosition)}</strong>. Kaynaklar: genel KMH {fmtTry(dn.resources.generalTry)} · gümrük limiti {fmtTry(dn.resources.customsTry)} ·
+            Projeksiyon dibi {fmtTry(dn.projectionMin.position)} ({dn.projectionMin.date}) eksi pozisyonun KMH faizini saymıyor; faiz yalnız KMH ile fonlanan kısma, hesap başına ölçülmüş oranla (kapasiteyi aşan kısma
+            faiz yok) eklenince baz dip <strong>{fmtTry(dn.scenarios[0].minPosition)}</strong>
+            {dn.scenarios[0].unknownRateTryDays > 0 && " (oranı ölçülmemiş limit kullanılıyor — faiz alt sınır)"}. Kaynaklar: genel KMH {fmtTry(dn.resources.generalTry)} · gümrük limiti {fmtTry(dn.resources.customsTry)} ·
             şahsi KMH {dn.resources.personalTry == null ? "bilinmiyor" : fmtTry(dn.resources.personalTry)}. Emniyet payı (tüm kaynaklarla fonlanabilir kalan en büyük tekil şok):
             ciro −%{dn.tolerance.maxRevenueDropPct ?? 0} · hakediş gecikmesi {dn.tolerance.maxPayoutDelayDays ?? 0} gün · kur +%{dn.tolerance.maxFxUpPct ?? 0}.
             Şoklar olasılık değil, ölçüdür.
@@ -57,6 +58,17 @@ export default async function CfoAllocationPage() {
                 <Td right>{s.key === "base" ? "—" : fmtTry(s.deltaVsBaseTry)}</Td><Td right>{fmtTry(s.carryCostTry)}</Td>
                 <Td>{s.tier === "UNFUNDED" ? <Badge variant="danger">{TIER_LABEL[s.tier]}</Badge> : TIER_LABEL[s.tier]}</Td>
                 <Td right>{s.shortfallTry ? fmtTry(s.shortfallTry) : "—"}</Td>
+              </tr>
+            ))}
+          </CfoTable>
+          <h3 className="mb-1 mt-4 text-xs font-semibold text-[var(--text-primary)]">KMH dilimleri — baz senaryo (çekiliş sırası: genel → gümrük → şahsi; katman içinde ucuzdan pahalıya, ölçülmemiş en sonda)</h3>
+          <CfoTable head={<tr><Th>Hesap</Th><Th>Katman</Th><Th right>Limit</Th><Th right>Aylık oran</Th><Th right>En yüksek kullanım</Th><Th right>Faiz (120g)</Th></tr>}>
+            {dn.scenarios[0].slices.map(u => (
+              <tr key={`${u.tier}:${u.name}`}>
+                <Td strong>{u.name}</Td><Td muted>{u.tier === "GENERAL" ? "genel" : u.tier === "CUSTOMS" ? "gümrük" : "şahsi"}</Td>
+                <Td right>{fmtTry(u.limitTry)}</Td><Td right>{u.monthlyRate == null ? <Badge variant="warn">ölçülmedi</Badge> : `%${(u.monthlyRate * 100).toFixed(3)}`}</Td>
+                <Td right>{u.peakDrawTry ? fmtTry(u.peakDrawTry) : "—"}</Td>
+                <Td right>{u.interestTry == null ? (u.peakDrawTry ? "bilinmiyor" : "—") : fmtTry(u.interestTry)}</Td>
               </tr>
             ))}
           </CfoTable>

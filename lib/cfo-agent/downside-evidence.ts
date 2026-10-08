@@ -14,11 +14,14 @@ export function downsideEvidence(d: DownsideData, at: string): Evidence[] {
     return [evidence(src, "asagi_yon.uyusmazlik_gun (akış projeksiyonla tutmuyor — senaryolar güvenilmez)", d.parity.mismatchDays, "days", at, true)];
   const out: Evidence[] = [
     evidence(src, `asagi_yon.baz_dip_try (KMH faizi dahil; projeksiyon faizsiz ${d.projectionMin.position}) ${base.minDate} — ${TIER_LABEL[base.tier]}`, base.minPosition, "TRY", at, false),
-    evidence(src, "asagi_yon.kmh_faizi_120g_try (projeksiyonda yok)", base.carryCostTry, "TRY", at, false),
+    evidence(src, `asagi_yon.kmh_faizi_120g_try (projeksiyonda yok; yalnız KMH ile fonlanan kısma, hesap başına ölçülmüş oranla${base.unknownRateTryDays > 0 ? " — oranı ölçülmemiş limit kullanılıyor, alt sınır" : ""})`, base.carryCostTry, "TRY", at, false),
     evidence(src, `asagi_yon.stres_dip_try (${d.stress.label}) — ${TIER_LABEL[d.stress.tier]}`, d.stress.minPosition, "TRY", at, false),
     evidence(src, "asagi_yon.emniyet_payi (tüm kaynaklarla fonlanabilir en büyük tekil şok)",
       `ciro −%${d.tolerance.maxRevenueDropPct ?? 0} · gecikme ${d.tolerance.maxPayoutDelayDays ?? 0} gün · kur +%${d.tolerance.maxFxUpPct ?? 0}`, "text", at, false),
   ];
+  const unknown = base.slices.filter(u => u.interestTry == null && u.peakDrawTry > 0);
+  if (unknown.length) out.push(evidence("cfo_bank_account", "asagi_yon.kmh_orani_olculmemis (faizi hesaba girmeyen dilimler, en yüksek kullanım)",
+    unknown.map(u => `${u.name} ${Math.round(u.peakDrawTry)}`).join(", "), "text", at, false));
   const worst = d.sensitivity[0];
   if (worst) out.push(evidence(src, `asagi_yon.en_zararli_sok (${worst.label})`, worst.deltaVsBaseTry, "TRY", at, false));
   return out;

@@ -390,14 +390,19 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   } else missing.push("projection_position_column_unvalidated");
   // KMH faizi dahil dip (aşağı yön baz senaryosu, lib/cfo/downside.ts — yol haritası 6a): projeksiyon eksi pozisyonun faizini
   // saymaz; dip iyimser kalır. Kanonik dip (projeksiyon) ve kural tetiği değişmez; faizli dip CASH_CRITICAL kanıtına eklenir.
-  // Akış projeksiyonla birebir tutmuyorsa (parity) ya da KMH oranı girilmemişse eklenmez (uydurma yok).
+  // Faiz KADEMELİ (Cowork 2026-10-08): yalnız KMH ile fonlanan kısma, hesap başına ölçülmüş oranla; kapasiteyi aşan kısma faiz yok.
+  // Akış projeksiyonla birebir tutmuyorsa (parity) ya da hiçbir KMH limitinin oranı ölçülmemişse eklenmez (uydurma yok).
+  // Oranı ölçülmemiş dilim kullanıldıysa faiz "en az"dır ve o dilimler adıyla kanıta yazılır.
   const down=await loadDownside(<T,>(sql:string)=>db.query(sql) as Promise<T[]>);
-  if(down&&down.parity.mismatchDays===0&&down.kmhMonthly!=null){
+  if(down&&down.parity.mismatchDays===0&&down.kmh.measuredLimitTry>0){
     const b=down.scenarios[0];
     snapshot.cash.summaries.push(evidence("cfo_nakit_projeksiyon","kmh_dahil_dip",b.minPosition,"TRY",asOf,false),
       evidence("cfo_nakit_projeksiyon","kmh_dahil_dip_tarih",b.minDate,"date",asOf,false),
       evidence("cfo_nakit_projeksiyon","kmh_dahil_fonlama",TIER_LABEL[b.tier],"text",asOf,false),
       evidence("cfo_nakit_projeksiyon","kmh_faizi_120g",b.carryCostTry,"TRY",asOf,false));
+    const unknown=b.slices.filter(u=>u.interestTry==null&&u.peakDrawTry>0);
+    if(unknown.length)snapshot.cash.summaries.push(evidence("cfo_bank_account","kmh_orani_olculmemis",
+      unknown.map(u=>`${u.name} ${new Intl.NumberFormat("tr-TR").format(u.peakDrawTry)} TL`).join(", "),"text",asOf,false));
   }
   // Read existing payment/wealth sources; only numeric aggregates reach snapshot.
   const payments=await catalog.rows("cfo_odeme_gunluk",["kalan_gun","cikacak","girecek"],200);

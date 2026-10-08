@@ -4,7 +4,8 @@
  * Çalıştır: node --import tsx __tests__/cfo-downside.test.ts
  */
 import assert from "node:assert/strict";
-import { NO_SHOCK, runDownside, simulate, stressGapTry, tierOf, type DayFlow, type Resources } from "../lib/cfo/downside";
+import { NO_SHOCK, orderSlices, runDownside, simulate, stressGapTry, tierOf, type DayFlow, type KmhSlice, type Resources } from "../lib/cfo/downside";
+import { kmhSlices } from "../lib/cfo/downside-data";
 
 const START = 59693.13;
 const RES: Resources = { generalTry: 1786353.47, customsTry: 750000, personalTry: 1100000 };
@@ -61,4 +62,46 @@ assert.equal(tierOf(-5_000_000, { ...RES, personalTry: null }).headroomTry, null
 assert.equal(stressGapTry(d, -3_000_000), Math.round(-3_000_000 - d.stress.minPosition));
 // Gecikme ufuk dışına taşan tahsilatı düşer (temkinli) ve hiçbir zaman iyileştirmez
 assert.ok(simulate(days, START, { ...NO_SHOCK, payoutDelayDays: 30 }, KMH).minPosition <= simulate(days, START, { ...NO_SHOCK, payoutDelayDays: 14 }, KMH).minPosition);
+// 6) KADEMELİ faiz (Cowork 2026-10-08): yalnız KMH ile fonlanan kısma, hesap başına ölçülmüş oranla; kapasiteyi aşan kısma faiz yok.
+// Dilimler 08.10 üretim cfo_bank_account'tan (Ziraat 4,083 · Enpara 4,25 · YKB 4,50 ölçülmüş; Garanti, Garanti Alp, Akbank Alp yok).
+const SLICES = kmhSlices([
+  { name: "Yapı Kredi", type: "Vadesiz + KMH", lim: "500000.00", plim: null, rate: "4.500" },
+  { name: "Ziraat", type: "Vadesiz + KMH", lim: "250000.00", plim: "750000.00", rate: "4.083" },
+  { name: "Enpara", type: "Vadesiz + KMH", lim: "109300.00", plim: null, rate: "4.250" },
+  { name: "Garanti", type: "Vadesiz + KMH", lim: "500000.00", plim: null, rate: null },
+  { name: "Garanti Alp", type: "Vadesiz + KMH", lim: "200000.00", plim: null, rate: null },
+  { name: "Akbank Alp", type: "Vadesiz + KMH", lim: "250000.00", plim: null, rate: null },
+  { name: "Ziraat Alperen (şahsi)", type: "Vadesiz + KMH (ŞAHSİ)", lim: "750000.00", plim: null, rate: null },
+  { name: "Yapı Kredi Alperen (şahsi)", type: "Vadesiz + KMH (ŞAHSİ)", lim: "100000.00", plim: null, rate: null },
+  { name: "İş Bankası Alperen (şahsi)", type: "Vadesiz + KMH (ŞAHSİ)", lim: "100000.00", plim: null, rate: null },
+  { name: "Garanti Alperen (şahsi)", type: "Vadesiz + KMH (ŞAHSİ)", lim: "150000.00", plim: null, rate: "0" },
+  { name: "Ziraat USD (şirket)", type: "Vadesiz DÖVİZ", lim: "0.00", plim: null, rate: null },
+]);
+const sum = (t: KmhSlice["tier"]) => SLICES.filter(x => x.tier === t).reduce((a, x) => a + x.limitTry, 0);
+assert.deepEqual([sum("GENERAL"), sum("CUSTOMS"), sum("PERSONAL")], [1809300, 750000, 1100000], "dilimler cfo_nakit_kapisi / şahsi KMH kapasitesiyle aynı");
+assert.equal(SLICES.find(x => x.tier === "CUSTOMS")!.monthlyRate, null, "amaca bağlı limit ayrı ürün — oranı ölçülmedi");
+assert.equal(SLICES.find(x => x.name.startsWith("Garanti Alperen"))!.monthlyRate, null, "oran 0 = ölçülmedi");
+assert.deepEqual(orderSlices(SLICES).map(x => x.name).slice(0, 7),
+  ["Ziraat", "Enpara", "Yapı Kredi", "Akbank Alp", "Garanti", "Garanti Alp", "Ziraat (amaca bağlı)"], "katman → ölçülmüş ucuzdan → ölçülmemiş");
+// Tek gün 1.000.000 TL eksi: ölçülmüş üç dilim dolar (859.300), kalan 140.700 Akbank Alp'ten (faizi bilinmiyor)
+const one = simulate([{ date: "2026-10-09", ledgerIn: 0, forecastIn: 0, out: 1_000_000, fxOut: 0 }], 0, NO_SHOCK, SLICES);
+assert.equal(one.carryCostTry, Math.round(250000 * 0.04083 / 30 + 109300 * 0.0425 / 30 + 500000 * 0.045 / 30));
+assert.equal(one.unknownRateTryDays, 140700);
+assert.deepEqual(one.slices.filter(u => u.peakDrawTry > 0).map(u => [u.name, u.peakDrawTry, u.interestTry]),
+  [["Ziraat", 250000, 340], ["Enpara", 109300, 155], ["Yapı Kredi", 500000, 750], ["Akbank Alp", 140700, null]]);
+// Kapasiteyi aşan kısma faiz yok: 10M eksi, ölçülmüş faiz 1M eksiyle aynı; aşan TL·gün raporlanır
+const huge = simulate([{ date: "2026-10-09", ledgerIn: 0, forecastIn: 0, out: 10_000_000, fxOut: 0 }], 0, NO_SHOCK, SLICES);
+assert.equal(huge.carryCostTry, one.carryCostTry);
+assert.equal(huge.beyondCapacityTryDays, 10_000_000 - 1809300 - 750000 - 1100000);
+// Faiz şoku yalnız ölçülmüş dilimlere
+assert.equal(simulate([{ date: "2026-10-09", ledgerIn: 0, forecastIn: 0, out: 1_000_000, fxOut: 0 }], 0, { ...NO_SHOCK, rateUpMonthly: 0.01 }, SLICES).carryCostTry,
+  Math.round(250000 * 0.05083 / 30 + 109300 * 0.0525 / 30 + 500000 * 0.055 / 30));
+// 120 gün fikstürde: kademeli faiz küresel %4,50'nin sınırsız uygulandığı eski hesaptan küçük (faiz fazlaydı, sorun azdı)
+const tiered = runDownside(days, START, RES, SLICES), flat = runDownside(days, START, RES, KMH);
+const tb = tiered.scenarios[0], fb = flat.scenarios[0];
+assert.ok(tb.carryCostTry < fb.carryCostTry, `kademeli ${tb.carryCostTry} < küresel ${fb.carryCostTry}`);
+assert.ok(tb.minPosition > fb.minPosition, "daha az faiz → dip daha az derin");
+assert.ok(tb.minPosition < proj.minPosition, "ama yine projeksiyondan derin");
+assert.ok(tb.unknownRateTryDays > 0, "ölçülmemiş limitler kullanılıyor → faiz alt sınır");
+console.log(`CFO downside tiered: base dip ${tb.minPosition} (${tb.minDate}, ${tb.tier}), interest ≥ ${tb.carryCostTry} vs flat ${fb.carryCostTry}; beyond capacity ${tb.beyondCapacityTryDays} TL·gün passed`);
 console.log(`CFO downside: projection parity (−3.279.787 @ 01.12), carry cost ${by("base").carryCostTry}, stress ${d.stress.minPosition} (${d.stress.tier}), tolerance revenue %${d.tolerance.maxRevenueDropPct} / delay ${d.tolerance.maxPayoutDelayDays}g / fx %${d.tolerance.maxFxUpPct} passed`);
