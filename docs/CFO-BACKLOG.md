@@ -21,7 +21,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | IN_PROGRESS (kod+test ✓; migration Cowork'te) | 005 |
 | 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | VALIDATED | 003 |
 | 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | VALIDATED | 002,019,020 |
-| 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | IN_PROGRESS (TS katmanı ✓; CFO-005b `cfo_kart_karari` SQL) | 004 |
+| 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | IN_PROGRESS (TS ✓; SQL `cfo_kart_karari` migration 20261009110000 Cowork'te) | 004 |
 | 6 | CFO-006 | Şirket/şahsi tek sınıflama; nakit/kapasite/borç bunu kullansın | P1 | G2,G3 | 4 | 4 | 3 | 3 | 1 | 2 | **5** | M | VALIDATED | 010 |
 | 7 | CFO-009 | Alarm teslimi GitHub'dan bağımsız; takılan koşu + kilit hatası alarmı; cfo-cycle bağla | P1 | tümü | 3 | 5 | 2 | 2 | 1 | 2 | **5** | M | VALIDATED | 006 |
 | 8 | CFO-010 | Defter bakım yolu: kredi/kart vade devri, alacak/ödeme girişi | P1 | tümü | 4 | 4 | 2 | 3 | 1 | 2 | **4** | L | VALIDATED | 007 |
@@ -81,7 +81,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 ### CFO-005 — Düz %4,5 KMH oranını kaldır
 - **neden:** 5 yerde düz oran; borclar satırları toplamı tutmuyor; kart erteleme KKDF/BSMV'siz.
 - **uygulama:** hesap başına ölçülmüş oran (yoksa UNKNOWN) — downside ile aynı yardımcı; `cfo_kart_karari` → card-cost; `cfo_loan.interestRatePct` şema yorumu "yıllık".
-- **kabul:** `kmhMonthlyRatePct` yalnız ayarlar sayfasında (gösterim); borclar satır toplamı = toplam. **durum:** IN_PROGRESS — TS katmanı tamam (2026-10-09; testler `cfo-engine-forecast`, `cfo-downside`); kalan CFO-005b: `cfo_kart_karari` SQL + şema yorumu.
+- **kabul:** `kmhMonthlyRatePct` yalnız ayarlar sayfasında (gösterim); borclar satır toplamı = toplam. **durum:** IN_PROGRESS — TS katmanı tamam (2026-10-09; testler `cfo-engine-forecast`, `cfo-downside`); CFO-005b (2026-10-09): `cfo_kart_karari` kart akdi × 1,30 (migration 20261009110000, sha256 99359b09…7314) + şema yorumu YILLIK — Cowork uygulayınca DONE.
 
 ### CFO-006 — Şirket/şahsi tek sınıflama
 - **neden:** 4 nakit + 4 kapasite tanımı; regex/ILIKE/LIKE karışık. **uygulama:** `cfo_bank_account`/`cfo_credit_card` için sahiplik alanı (SIRKET/SAHSI) veya tek SQL fonksiyonu; tüm tüketiciler.

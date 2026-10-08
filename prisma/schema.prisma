@@ -2048,7 +2048,7 @@ model CfoLoan {
   remainingOverride   Int? // düzensiz ödeme planlarında kalan taksit elle girilir; boşsa tarihlerden hesaplanır
   lastInstallmentDate DateTime? // = kredi bitiş tarihi
   nextPaymentDate     DateTime?
-  interestRatePct     Decimal?         @db.Decimal(6, 3) // aylık faiz — boşsa erken kapama ROI'si hesaplanamaz
+  interestRatePct     Decimal?         @db.Decimal(6, 3) // YILLIK faiz % (kod /12 ile aylığa çevirir; el kitabı v33) — boşsa erken kapama ROI'si hesaplanamaz
   currentMonthState   CfoPaymentStatus @default(TEYIT_EDILMELI)
   status              CfoLoanStatus    @default(AKTIF)
   priority            String? // Yüksek | Orta | Düşük
