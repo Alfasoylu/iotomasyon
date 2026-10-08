@@ -2,7 +2,7 @@
 last_updated: 2026-10-08 23:45 TR
 current_main_commit: 422a6db
 current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 48/100 (hard gate 12/12 gerekiyor; bugün 5/12)
+current_score: 49/100 (hard gate 12/12 gerekiyor; bugün 5/12)
 next_action: "CFO-001"
 ---
 
@@ -54,7 +54,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | # | Boyut | Ağırlık | Puan | Kanıt (artı) | Kanıt (eksi) |
 |---|---|---|---|---|---|
 | 1 | Financial accuracy & reconciliation | 20 | **8** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye 3, borç 5, kur 4, ciro 7, marj 5 tanım; KDV esası belirsiz; latent `remainingOverride`; atıf kimliği bozuk |
-| 2 | Cash / liquidity / debt | 15 | **8** | 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | 4 nakit/4 kapasite tanımı; düz %4,5 beş yerde; borç hedefi eski; defterlerin yazma yolu/vade devri yok; 8 limitin oranı ölçülmemiş |
+| 2 | Cash / liquidity / debt | 15 | **9** | 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | 4 nakit/4 kapasite tanımı; düz %4,5 beş yerde; borç hedefi eski; defterlerin yazma yolu/vade devri yok; 8 limitin oranı ölçülmemiş |
 | 3 | Capital allocation | 15 | **7** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | KDV dahil NRV tabanı; kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
 | 4 | Revenue / profitability | 10 | **4** | Ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları | Marj kuralları susuyor (kapsam); KDV düşülmüyor; 7 ciro formülü; iade marja bağlı değil |
 | 5 | Inventory / procurement | 10 | **5** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
@@ -63,7 +63,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 8 | Automation / observability | 5 | **3** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; takılan koşu/kilit hatası görünmez; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **2** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Okuma izniyle yazma yolları, yetkisiz action, düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü |
-| | **TOPLAM** | **100** | **48** | | |
+| | **TOPLAM** | **100** | **49** | | |
 
 ## Skor geçmişi
 
@@ -71,3 +71,4 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 |---|---|---|---|---|
 | 2026-10-08 | 422a6db | 48 | 5/12 | İlk tam denetim (başlangıç çizgisi) |
 | 2026-10-08 | CFO-001 PR-A | 48 | 5/12 | Ölçüm + karar memosu; tanım değişmedi → puan değişmedi (mutabakat görünür ama tek tanım yok). Yeni RF-025 (HIGH), RF-026, RF-027 |
+| 2026-10-09 | CFO-004 + CFO-005 | 49 | 5/12 | Düz KMH oranı TS katmanında kalktı (borclar satır=toplam, hayali KMH tasarrufu yok); kredi override hatası düzeltildi (üretimde migration bekliyor) |

@@ -66,7 +66,7 @@ export default async function CfoDebtsPage() {
                 <Td right>{fmtTry(num(b.kmhLimitTry))}</Td>
                 <Td right>{bal == null ? "—" : fmtTry(used)}</Td>
                 <Td right>{free == null ? "—" : fmtTry(free)}</Td>
-                <Td right>{bal == null ? "—" : fmtTry(used * (o.monthlyRatePct / 100))}</Td>
+                <Td right>{bal == null ? "—" : numOrNull(b.monthlyRatePct) == null || num(b.monthlyRatePct) <= 0 ? (used > 0 ? "oran yok" : "—") : fmtTry(used * (num(b.monthlyRatePct) / 100))}</Td>
                 <Td><DataTagBadge tag={b.dataTag} /></Td>
                 <Td muted>{fmtDate(b.lastUpdatedAt)}</Td>
               </tr>
@@ -78,10 +78,15 @@ export default async function CfoDebtsPage() {
             <Td right strong>{fmtTry(o.totalKmhLimitTry)}</Td>
             <Td right strong>{fmtTry(o.usedKmhTry)}</Td>
             <Td right strong>{fmtTry(o.freeKmhTry)}</Td>
-            <Td right strong>{fmtTry(o.kmhInterestMonthlyTry)}</Td>
+            <Td right strong>{fmtTry(o.kmhInterestMonthlyTry)}{o.kmhUsedWithoutRateTry > 0 ? " + ?" : ""}</Td>
             <Td>—</Td><Td>—</Td>
           </tr>
         </CfoTable>
+        {o.kmhUsedWithoutRateTry > 0 && (
+          <p className="mt-2 text-xs text-[var(--warn)]">
+            Kullanılan KMH&apos;nin {fmtTry(o.kmhUsedWithoutRateTry)} kadarı oranı ölçülmemiş hesaplarda — faizi toplamda YOK (alt sınır). Ekstreden aylık oranı girin.
+          </p>
+        )}
         {o.banksMissingBalance > 0 && (
           <p className="mt-2 text-xs text-[var(--danger)]">
             {o.banksMissingBalance} hesabın bakiyesi bilinmiyor. Muhafazakâr davranıp boş limit toplamına DAHİL EDİLMEDİ.

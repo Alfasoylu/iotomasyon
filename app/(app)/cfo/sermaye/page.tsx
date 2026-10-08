@@ -212,15 +212,15 @@ export default async function CfoAllocationPage() {
         <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Strateji kuralları</h2>
         <ol className="list-decimal space-y-2 pl-5 text-sm text-[var(--text-secondary)]">
           <li>
-            %{o.monthlyRatePct}/ay maliyetli KMH ve kredi kartı <strong>kalıcı sermaye olarak kullanılmaz</strong>;
-            yalnız kısa vadeli köprü finansmanıdır. Yıllık maliyeti {fmtPct((o.monthlyRatePct / 100) * 12)}.
+            KMH ({o.kmh.range ? `%${o.kmh.range.minPct.toFixed(2)}${o.kmh.range.maxPct !== o.kmh.range.minPct ? `–${o.kmh.range.maxPct.toFixed(2)}` : ""}/ay${o.kmh.range.unmeasured ? ` · ${o.kmh.range.unmeasured} hesap ölçülmedi` : ""}` : "oran ölçülmedi"}) ve kredi kartı <strong>kalıcı sermaye olarak kullanılmaz</strong>;
+            yalnız kısa vadeli köprü finansmanıdır.{o.kmh.range ? ` En ucuz ölçülmüş KMH bile yıllık ${fmtPct((o.kmh.range.minPct / 100) * 12)}.` : ""}
           </li>
           <li>Ucuz krediler yüksek ROI&apos;li ithalatı finanse etmek için korunur — sırf borçsuz kalmak için erken kapatılmaz.</li>
           <li>Stokta duran sermaye aylık getirisi eşiğin (en pahalı ticari kredinin aylık faizi) altındaysa yeniden sipariş verilmez; fazlası tasfiye edilip pahalı borca aktarılır.</li>
           <li>Sıra: gümrük rezervi → KMH sıfırlama → kart borcu → pahalı kredi kapama → yeni ithalat büyütme.</li>
           <li>
-            Bir seçeneğin yıllıklandırılmış ROI&apos;si %{((o.monthlyRatePct / 100) * 12 * 100).toFixed(0)}&apos;in
-            altındaysa o para borç kapatmaya gider.
+            Bir seçeneğin yıllıklandırılmış ROI&apos;si, kapatabileceği en pahalı borcun yıllık maliyetinin
+            {o.kmh.range ? ` (KMH en çok %${((o.kmh.range.maxPct / 100) * 12 * 100).toFixed(0)})` : ""} altındaysa o para borç kapatmaya gider.
           </li>
           <li>Erken kapama öncesi: yeterli işletme sermayesi + gelecek ithalat sermayesi + nakit tampon korunmalı.</li>
         </ol>

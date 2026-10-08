@@ -42,7 +42,7 @@ export default async function CfoCustomsPage() {
             <Row label="FİNANSMAN AÇIĞI" value={fmtTry(o.customs.gap)} note="Hedef − (projeksiyon + ayrılmış)" strong danger={o.customs.gap > 0} />
             <Row label="Boş KMH kapasitesi" value={fmtTry(o.freeKmhTry)} note="Açığı karşılayabilecek kapasite" />
             <Row label="Açık sonrası kalan kapasite" value={fmtTry(o.customs.remainingCapacity)} note={o.customs.remainingCapacity < 0 ? "KMH YETMİYOR" : "KMH ile karşılanabilir"} strong danger={o.customs.remainingCapacity < 0} />
-            <Row label="Açığın 1 aylık faiz maliyeti" value={fmtTry(o.customs.interestCostMonthly)} note={`%${o.monthlyRatePct}/ay`} />
+            <Row label="Açığın 1 aylık faiz maliyeti" value={`${o.customs.interestUnknownTry > 0 ? "en az " : ""}${fmtTry(o.customs.interestCostMonthly)}`} note={o.customs.interestUnknownTry > 0 ? `${fmtTry(o.customs.interestUnknownTry)} oranı ölçülmemiş KMH / kapasite dışı` : "kademeli: hesap başına ölçülmüş oran"} />
           </CfoTable>
 
           {o.customs.gap > 0 && (

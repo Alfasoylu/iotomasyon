@@ -4,7 +4,7 @@
  * Çalıştır: node --import tsx __tests__/cfo-downside.test.ts
  */
 import assert from "node:assert/strict";
-import { NO_SHOCK, orderSlices, runDownside, simulate, stressGapTry, tierOf, type DayFlow, type KmhSlice, type Resources } from "../lib/cfo/downside";
+import { NO_SHOCK, measuredRateRange, orderSlices, runDownside, simulate, stressGapTry, tieredDrawInterest, tierOf, type DayFlow, type KmhSlice, type Resources } from "../lib/cfo/downside";
 import { kmhSlices } from "../lib/cfo/downside-data";
 
 const START = 59693.13;
@@ -103,5 +103,15 @@ assert.ok(tb.carryCostTry < fb.carryCostTry, `kademeli ${tb.carryCostTry} < kür
 assert.ok(tb.minPosition > fb.minPosition, "daha az faiz → dip daha az derin");
 assert.ok(tb.minPosition < proj.minPosition, "ama yine projeksiyondan derin");
 assert.ok(tb.unknownRateTryDays > 0, "ölçülmemiş limitler kullanılıyor → faiz alt sınır");
+// 7) Ek çekilişin kademeli faizi (CFO-005; gümrük açığı / KMH azaltma tasarrufu): mevcut kullanımın üstüne çekiliş sırasıyla
+const d0 = tieredDrawInterest(SLICES, 0, 300000);   // Ziraat 250k @4,083 + Enpara 50k @4,25
+assert.equal(Math.round(d0.monthlyInterestTry), Math.round(250000 * 0.04083 + 50000 * 0.0425));
+assert.equal(d0.unknownRateTry, 0);
+const d1 = tieredDrawInterest(SLICES, 800000, 100000); // YKB son 59,3k @4,50 + Akbank Alp (ölçülmemiş) 40,7k
+assert.equal(Math.round(d1.monthlyInterestTry), Math.round(59300 * 0.045));
+assert.equal(Math.round(d1.unknownRateTry), 40700);
+assert.equal(tieredDrawInterest(SLICES, 3_600_000, 200_000).beyondCapacityTry, 3_600_000 + 200_000 - 3_659_300, "kapasite üstü fonlanamaz");
+assert.deepEqual(measuredRateRange(SLICES), { minPct: 4.083, maxPct: 4.5, unmeasured: 8 });
+assert.equal(measuredRateRange(SLICES.map(x => ({ ...x, monthlyRate: null }))), null);
 console.log(`CFO downside tiered: base dip ${tb.minPosition} (${tb.minDate}, ${tb.tier}), interest ≥ ${tb.carryCostTry} vs flat ${fb.carryCostTry}; beyond capacity ${tb.beyondCapacityTryDays} TL·gün passed`);
 console.log(`CFO downside: projection parity (−3.279.787 @ 01.12), carry cost ${by("base").carryCostTry}, stress ${d.stress.minPosition} (${d.stress.tier}), tolerance revenue %${d.tolerance.maxRevenueDropPct} / delay ${d.tolerance.maxPayoutDelayDays}g / fx %${d.tolerance.maxFxUpPct} passed`);

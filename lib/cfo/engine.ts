@@ -14,7 +14,8 @@
  *  4. Yoldaki ve bloke stok, satılabilir stoğa dahil edilmez.
  */
 
-import { CARD_TAX, cardCarry, isPersonalCard } from "./card-cost";
+import { cardCarry, isPersonalCard } from "./card-cost";
+import { measuredRateRange, tieredDrawInterest, type KmhSlice } from "./downside";
 
 export type Traffic = "YESIL" | "SARI" | "KIRMIZI" | "NOTR";
 
@@ -149,7 +150,10 @@ export interface MonthEndRow {
 export interface CfoOverview {
   today: Date;
   usdTry: number;
-  monthlyRatePct: number;
+  /** KMH faizi KADEMELİ (CFO-005): hesap başına ölçülmüş oran; küresel cfo_settings oranı KULLANILMAZ. */
+  kmh: { slices: KmhSlice[]; range: { minPct: number; maxPct: number; unmeasured: number } | null };
+  /** kullanılan KMH'nin oranı ölçülmemiş hesaplara düşen kısmı (faizi bilinmiyor → kmhInterestMonthlyTry alt sınır) */
+  kmhUsedWithoutRateTry: number;
 
   // Nakit & banka
   netCashTry: number;
@@ -200,7 +204,11 @@ export interface CfoOverview {
   customs: {
     target: number; saved: number; dueDate: Date | null; daysLeft: number | null;
     expectedInflow: number; mandatoryOutflow: number; projectedCash: number;
-    gap: number; remainingCapacity: number; traffic: Traffic; interestCostMonthly: number;
+    gap: number; remainingCapacity: number; traffic: Traffic;
+    /** açığın KMH'den (mevcut kullanımın üstüne, çekiliş sırasıyla) finansmanının aylık faizi — yalnız ölçülmüş oranlı dilimler */
+    interestCostMonthly: number;
+    /** açığın oranı ölçülmemiş dilime / kapasite dışına düşen kısmı (>0 ise faiz alt sınır) */
+    interestUnknownTry: number;
   } | null;
 
   // Net ticari servet
@@ -220,12 +228,11 @@ export function computeCfo(input: CfoInput): CfoOverview {
   const s = input.settings;
 
   const usdTry = s ? num(s.usdTryRate) || 1 : 1;
-  const ratePct = s ? num(s.kmhMonthlyRatePct) : 4.5;
-  const rate = ratePct / 100;
   const cardMinPct = (s ? num(s.cardMinPct) : 20) / 100;
 
   // ── Bankalar ──
-  let netCashTry = 0, usedKmhTry = 0, totalKmhLimitTry = 0, freeKmhTry = 0, banksMissingBalance = 0, kmhInterestMonthlyTry = 0;
+  let netCashTry = 0, usedKmhTry = 0, totalKmhLimitTry = 0, freeKmhTry = 0, banksMissingBalance = 0, kmhInterestMonthlyTry = 0, kmhUsedWithoutRateTry = 0;
+  const kmhSlices: KmhSlice[] = [];
   for (const b of input.banks) {
     const bal = numOrNull(b.balanceTry);
     const limit = num(b.kmhLimitTry);
@@ -235,9 +242,12 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const used = bal < 0 ? -bal : 0;
     usedKmhTry += used;
     freeKmhTry += Math.max(0, limit - used);
-    // Banka bazlı oran (yoksa genel); şahsi KMH faizine KKDF + BSMV eklenir (bireysel kredi vergisi).
-    const bankRate = (numOrNull(b.monthlyRatePct) ?? ratePct) / 100;
-    kmhInterestMonthlyTry += used * bankRate * (/ŞAHSİ|şahsi/i.test(`${b.accountType} ${b.name}`) ? 1 + CARD_TAX.kkdf + CARD_TAX.bsmv : 1);
+    // Hesabın ÖLÇÜLMÜŞ aylık oranı (ekstreden; vergiler dahil efektif oran olarak girilir). Yoksa UNKNOWN: küresel %4,5 varsayılmaz
+    // (Cowork 2026-10-08) — o hesabın kullanımı faizsiz değil, "faizi bilinmiyor" olarak ayrıca raporlanır.
+    const bankRatePct = numOrNull(b.monthlyRatePct);
+    const bankRate = bankRatePct != null && bankRatePct > 0 ? bankRatePct / 100 : null;
+    if (bankRate == null) kmhUsedWithoutRateTry += used; else kmhInterestMonthlyTry += used * bankRate;
+    if (limit > 0) kmhSlices.push({ name: b.name, tier: /ŞAHSİ|şahsi/i.test(`${b.accountType} ${b.name}`) ? "PERSONAL" : "GENERAL", limitTry: limit, monthlyRate: bankRate });
   }
 
   // ── Kartlar ──
@@ -393,7 +403,8 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const remainingCapacity = freeKmhTry - gap;
     customs = {
       target, saved, dueDate: due, daysLeft, expectedInflow, mandatoryOutflow, projectedCash,
-      gap, remainingCapacity, traffic: trafficForGap(gap, freeKmhTry), interestCostMonthly: gap * rate,
+      gap, remainingCapacity, traffic: trafficForGap(gap, freeKmhTry),
+      ...(() => { const d = tieredDrawInterest(kmhSlices, usedKmhTry, gap); return { interestCostMonthly: d.monthlyInterestTry, interestUnknownTry: d.unknownRateTry + d.beyondCapacityTry }; })(),
     };
   }
 
@@ -447,7 +458,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
   }
 
   return {
-    today, usdTry, monthlyRatePct: ratePct,
+    today, usdTry, kmh: { slices: kmhSlices, range: measuredRateRange(kmhSlices) }, kmhUsedWithoutRateTry,
     netCashTry, usedKmhTry, totalKmhLimitTry, freeKmhTry, kmhInterestMonthlyTry, banksMissingBalance,
     cardDebtTry, cardMinTotalTry, cardCarryCostTry, cardRevolvingTry: carry.revolvingTry, cardRevolvingWithoutRateTry: carry.revolvingWithoutRateTry,
     cardsUnknownRevolving: carry.unknownRevolvingCards,
@@ -476,24 +487,39 @@ export interface AllocationOption {
 
 /** Her yeni 100.000 TL serbest nakit için alternatif kullanım sıralaması. */
 export function buildAllocation(o: CfoOverview, loans: LoanRow[], unit = 100_000): AllocationOption[] {
-  const rate = o.monthlyRatePct / 100;
   const opts: AllocationOption[] = [];
   let rank = 1;
+  // KMH faizi kademeli (CFO-005): getiri, o 100.000 TL'nin hangi KMH dilimini kapattığına / önlediğine göre hesap başına ölçülmüş oranla.
+  // Oranı ölçülmemiş dilime düşüyorsa getiri UNKNOWN (dataOk=false) — küresel oran varsayılmaz.
+  const tiered = (from: number, amount: number) => {
+    const d = tieredDrawInterest(o.kmh.slices, from, amount);
+    return d.unknownRateTry + d.beyondCapacityTry > 0 ? null : d.monthlyInterestTry;
+  };
 
   if (o.customs && o.customs.gap > 0) {
+    const amount = Math.min(unit, o.customs.gap), saving = tiered(o.usedKmhTry, amount);
     opts.push({
-      rank: rank++, name: "Gümrük rezervi", capital: unit,
-      certainSavingMonthly: unit * rate, cashReliefMonthly: null,
-      annualReturn: unit * rate * 12, annualRoi: rate * 12, risk: "Düşük", liquidity: "Nakdi bağlar", dataOk: true,
-      advice: "ÖNCELİK 1. Rezerv oluşmazsa gümrük KMH ile finanse edilir; hem faiz hem ardiye/gecikme riski doğar.",
+      rank: rank++, name: "Gümrük rezervi", capital: amount,
+      certainSavingMonthly: saving, cashReliefMonthly: null,
+      annualReturn: saving == null ? null : saving * 12, annualRoi: saving == null ? null : (saving / amount) * 12,
+      risk: "Düşük", liquidity: "Nakdi bağlar", dataOk: saving != null,
+      advice: saving == null ? "ÖNCELİK 1. Açık oranı ölçülmemiş KMH'ye düşüyor — faiz getirisi bilinmiyor (ekstreden oran girilmeli)."
+        : "ÖNCELİK 1. Rezerv oluşmazsa gümrük KMH ile finanse edilir; hem faiz hem ardiye/gecikme riski doğar.",
     });
   }
-  opts.push({
-    rank: rank++, name: "KMH azaltma", capital: unit,
-    certainSavingMonthly: unit * rate, cashReliefMonthly: unit * rate,
-    annualReturn: unit * rate * 12, annualRoi: rate * 12, risk: "Çok düşük", liquidity: "İyileştirir", dataOk: true,
-    advice: "Kesin ve garantili tasarruf. Limit yeniden kullanılabilir hale gelir.",
-  });
+  if (o.usedKmhTry <= 0) {
+    opts.push({ rank: rank++, name: "KMH azaltma", capital: 0, certainSavingMonthly: 0, cashReliefMonthly: 0, annualReturn: 0, annualRoi: 0,
+      risk: "—", liquidity: "—", dataOk: true, advice: "Şu an kullanılan KMH yok — kapatılacak faizli bakiye yok." });
+  } else {
+    const amount = Math.min(unit, o.usedKmhTry), saving = tiered(o.usedKmhTry - amount, amount);
+    opts.push({
+      rank: rank++, name: "KMH azaltma", capital: amount,
+      certainSavingMonthly: saving, cashReliefMonthly: saving,
+      annualReturn: saving == null ? null : saving * 12, annualRoi: saving == null ? null : (saving / amount) * 12,
+      risk: "Çok düşük", liquidity: "İyileştirir", dataOk: saving != null,
+      advice: saving == null ? "Kapanacak KMH kısmının oranı ölçülmemiş — tasarruf bilinmiyor." : "Kesin ve garantili tasarruf. Limit yeniden kullanılabilir hale gelir.",
+    });
+  }
   // Kart: tasarruf yalnız DEVREDEN bakiyede ve kartın kendi efektif oranıyla (akdi × (1+KKDF+BSMV)). Dönem içi harcamayı erken
   // ödemek faiz kazandırmaz. Devreden ya da oran bilinmiyorsa getiri UNKNOWN (eskiden KMH oranı varsayılıyordu).
   const card = o.cardTopRevolving;

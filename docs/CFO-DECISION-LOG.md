@@ -2,7 +2,7 @@
 last_updated: 2026-10-08 23:45 TR
 current_main_commit: 422a6db
 current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 48/100
+current_score: 49/100
 next_action: "Bekleyen tanım kararları D-P01…D-P06 — CFO önerileri ve TL etkileri: docs/CFO-METRIC-CONTRACT.md"
 ---
 

@@ -2,7 +2,7 @@
 last_updated: 2026-10-08 23:45 TR
 current_main_commit: cde8760
 current_phase: "Faz 1 — Metrik sözleşmesi (CFO-001 PR-A tamam; tanım kararları bekleniyor)"
-current_score: 48/100 (hard gate'ler GEÇMİYOR — bkz. CFO-SCORECARD.md)
+current_score: 49/100 (hard gate'ler GEÇMİYOR — bkz. CFO-SCORECARD.md)
 next_action: "CFO-004 (PR-B); Alperen kararları D-P01…D-P06 → CFO-001 PR-D / CFO-002 PR-E / CFO-003 PR-C"
 ---
 

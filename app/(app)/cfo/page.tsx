@@ -77,7 +77,7 @@ export default async function CfoPage() {
         meta={
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="neutral">USD/TRY {o.usdTry.toLocaleString("tr-TR")}</Badge>
-            <Badge variant="neutral">KMH maliyeti %{o.monthlyRatePct}/ay</Badge>
+            <Badge variant="neutral">KMH maliyeti {o.kmh.range ? `%${o.kmh.range.minPct.toFixed(2)}${o.kmh.range.maxPct !== o.kmh.range.minPct ? `–${o.kmh.range.maxPct.toFixed(2)}` : ""}/ay${o.kmh.range.unmeasured ? ` · ${o.kmh.range.unmeasured} hesap ölçülmedi` : ""}` : "oran ölçülmedi"}</Badge>
             {o.revenueDataAgeDays != null && (
               <Badge variant={o.revenueDataAgeDays > 21 ? "danger" : o.revenueDataAgeDays > 14 ? "warn" : "ok"}>
                 Ciro verisi {o.revenueDataAgeDays} günlük
