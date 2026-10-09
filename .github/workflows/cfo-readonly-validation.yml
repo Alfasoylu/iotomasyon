@@ -46,6 +46,7 @@ jobs:
       - run: node --import tsx __tests__/fm-canonical-sales.test.ts
       - run: node --import tsx __tests__/fm-kdv-haric.test.ts
       - run: node --import tsx __tests__/fm-sales-alfashome.test.ts
+      - run: node --conditions=react-server --import tsx __tests__/cfo-gtip-tarife.test.ts
       - run: node --import tsx __tests__/fm-goal-kaynak.test.ts
       - run: node --import tsx __tests__/cfo-net-sermaye.test.ts
       - run: node --import tsx __tests__/cfo-metrik-borc.test.ts
