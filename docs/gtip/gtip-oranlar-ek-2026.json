@@ -1,0 +1,473 @@
+{
+  "meta": {
+    "tarih": "2026-10-09",
+    "kapsam": "cfo_gtip_tarife'de eşleşmeyen 51 maliyetli ürünün 35 GTİP'i (migration 20261009220000)",
+    "yontem": "GV: 2026 İthalat Rejimi Kararı Excel listeleri (ddp.com.tr ith-rejim-karari.zip), '7 = Diğer Ülkeler' sütunu (Çin GTS dışı). İGV: CB 10791 Ek-1 (görsel okuma; listede yoksa 0). ÖTV: 4760 sayılı Kanun (IV) sayılı liste, mevzuat.gov.tr konsolide metin (01.10.2026); son IV değişikliği CB 10521 (RG 24.10.2025, yalnız telefon bantları). Dipnot (b) = sivil hava taşıtı nihai kullanım.",
+    "belirsizlikler": [
+      "8517.13.00.00.19 PDA: hücreselse ÖTV cep telefonu bandı (%25/%40/%50 + asgari 456 TL/adet), değilse yok — dogrulandi=false",
+      "8504.31.80.90.11: İGV Ek-1'de .90.19 var, .90.11 görülmedi → 0 (teyit) — dogrulandi=false",
+      "8519.81 MP3 modülü 'aksam' sayılırsa ÖTV dışı",
+      "8536.50.19.00.11 tarifede yok → ürün 8536.50.19.00.00'a düzeltildi (docs/cowork/2026-10-09-gtip-pir-duzeltme.sql)"
+    ]
+  },
+  "oranlar": [
+    {
+      "gtip": "820320000011",
+      "gv_cin_pct": 1.7,
+      "igv_cin_pct": 25.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Pense/kerpeten — kablo kesme-sıkma (RJ45 sıkma pensesi)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "900211000000",
+      "gv_cin_pct": 6.7,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Kamera/projektör objektifleri (telefon için takma lens)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "962000910000",
+      "gv_cin_pct": 6.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Monopod/bipod/tripod — diğer (selfie çubuğu, masaüstü tripod)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "854320000000",
+      "gv_cin_pct": 3.7,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Sinyal jeneratörleri",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "901380400000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Diğer optik alet ve cihazlar (fiber optik PLC splitter)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "844110709000",
+      "gv_cin_pct": 1.7,
+      "igv_cin_pct": 10.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Kağıt kesme makineleri — diğer (giyotin)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "847160609000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Klavyeler (tablet klavyeli kılıf)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "847170309000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Optik disk sürücüleri (harici DVD)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "850431809011",
+      "gv_cin_pct": 3.7,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Küçük güçlü transformatörler (video balun) (İGV Ek-1 görsel okumada .90.19 var, .90.11 yok → 0; teyit)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": false
+    },
+    {
+      "gtip": "851511000000",
+      "gv_cin_pct": 2.7,
+      "igv_cin_pct": 7.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Lehim havyaları ve tabancaları",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "851713000019",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": 25.0,
+      "tanim": "Akıllı telefonlar — diğer (Android el terminali/PDA) — ÖTV IV cep telefonu bandı: matrah ≤4.500 TL %25, ≤9.000 TL %40, üstü %50 + asgari maktu 456 TL/adet; hücresel değilse ÖTV yok (teyit)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+        "ÖTV (IV): https://www.mevzuat.gov.tr/MevzuatMetin/1.5.4760.pdf"
+      ],
+      "dogrulandi": false
+    },
+    {
+      "gtip": "851769100000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Görüntülü kapı telefonları",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "851981000000",
+      "gv_cin_pct": 9.5,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": 6.7,
+      "tanim": "Ses kayıt/çalma cihazları — manyetik/optik/yarı iletken ortamlı (araç teyp, MP3 modül) — ÖTV IV %6,7 (yalnız MP3 modülü \"aksam\" sayılabilir)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+        "ÖTV (IV): https://www.mevzuat.gov.tr/MevzuatMetin/1.5.4760.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "852190000000",
+      "gv_cin_pct": 13.9,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": 6.7,
+      "tanim": "Video kayıt/gösterme cihazları — diğer (HDMI AV kaydedici) — ÖTV IV %6,7",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+        "ÖTV (IV): https://www.mevzuat.gov.tr/MevzuatMetin/1.5.4760.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "853180400000",
+      "gv_cin_pct": 2.2,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Sesli/görsel sinyal cihazları — diğer (kablosuz buton/zil)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "853229000000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Sabit kondansatörler — diğer (süper kondansatör)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "732119000000",
+      "gv_cin_pct": 2.7,
+      "igv_cin_pct": 10.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Pişirme cihazları — diğer yakıtlı (kömürlü mangal/fırın)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "854129000000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Transistörler — diğer (güç transistörü)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "854231900000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Elektronik entegre devreler — işlemci/denetleyici (mikrodenetleyici)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "871495000000",
+      "gv_cin_pct": 4.7,
+      "igv_cin_pct": 10.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Bisiklet seleleri",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "900580001000",
+      "gv_cin_pct": 4.2,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Monoküler ve diğer optik teleskoplar (telefon için)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "902519001900",
+      "gv_cin_pct": 3.2,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Termometreler — elektronik diğer (mutfak termometresi)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "902580409000",
+      "gv_cin_pct": 3.2,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Higrometre vb. elektronik — diğer (sıcaklık-nem ölçer)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "902610219000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Sıvı akış ölçerler — elektronik (debimetre)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "902620209000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Basınç ölçerler — elektronik (TPMS lastik basınç sensörü)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "902710100000",
+      "gv_cin_pct": 2.5,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Gaz/duman analiz cihazları — elektronik",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "902750000019",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Optik ışın kullanan diğer cihazlar (refraktometre)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "903040009000",
+      "gv_cin_pct": 0.0,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Telekomünikasyon ölçüm cihazları — diğer (SWR metre, vektör ağ analizörü)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "903210209000",
+      "gv_cin_pct": 2.8,
+      "igv_cin_pct": 6.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Termostatlar — elektronik (sıcaklık kontrol modülü)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "960390919019",
+      "gv_cin_pct": 3.7,
+      "igv_cin_pct": 23.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Fırçalar — diğer (klozet fırçası)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "853650190000",
+      "gv_cin_pct": 2.3,
+      "igv_cin_pct": 0.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Anahtarlar ≤1000V — diğer (PIR hareket sensörü) (ürün kodu 8536.50.19.00.11 2026 tarifesinde yok → 8536.50.19.00.00)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "732410000000",
+      "gv_cin_pct": 2.7,
+      "igv_cin_pct": 25.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Paslanmaz çelikten evye ve lavabolar",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "820890000019",
+      "gv_cin_pct": 1.7,
+      "igv_cin_pct": 8.8,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Makine bıçakları — diğer (plotter bıçağı)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "842420000000",
+      "gv_cin_pct": 1.7,
+      "igv_cin_pct": 15.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Püskürtme tabancaları vb. cihazlar",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    },
+    {
+      "gtip": "844110309000",
+      "gv_cin_pct": 1.7,
+      "igv_cin_pct": 10.0,
+      "kdv_pct": 20,
+      "otv_pct": null,
+      "tanim": "Kağıt kesme makineleri — giyotin (kollu)",
+      "kaynaklar": [
+        "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+        "İGV: https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+      ],
+      "dogrulandi": true
+    }
+  ]
+}

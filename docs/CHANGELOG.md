@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Tüm maliyetli ürünler için gümrük oranı (2026-10-09)
+
+- Oran tablosuna 35 GTİP eklendi (gümrük vergisi, ilave gümrük vergisi, ÖTV); 433 maliyetli ürünün tamamı yasal gümrük yüküyle karşılaştırılabiliyor.
+- 2026 tarifesinde bulunmayan bir ürün GTİP'i düzeltildi ve değişiklik günlüğüne yazıldı.
+
 ### Sipariş borç kapısında sabit 5 milyon TL eşiği kalktı (2026-10-09)
 
 - Yeni sipariş kapısı yalnız borç sözleşmesini (`cfo_metrik_borc`) hedefle (CFO ayarı USD × TCMB) karşılaştırır; sözleşme, hedef ya da kur yoksa kapı kapalı kalır.

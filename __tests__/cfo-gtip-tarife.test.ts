@@ -57,6 +57,21 @@ async function main() {
       has_table_privilege('authenticated','public.cfo_gtip_yuk','select') u, has_table_privilege('cfo_acceptance_reader','public.cfo_gtip_yuk','select') r,
       (select relrowsecurity from pg_class where oid = 'public.cfo_gtip_tarife'::regclass) rls`))[0];
     assert.deepEqual([pr.a, pr.u, pr.r, pr.rls], [false, false, true, true]);
+
+    // 20261009220000: eşleşmeyen 51 ürünün 35 GTİP'i (yalnız ekleme, idempotent; mevcut satır değişmez)
+    const EK = "20261009220000_cfo_gtip_tarife_ek";
+    const ekSql = readFileSync(`prisma/migrations/${EK}/migration.sql`, "utf8");
+    await db.exec(ekSql); await db.exec(ekSql);
+    const ekKodlar = [...ekSql.matchAll(/^\s*\('(\d{12})',/gm)].map(m => m[1]);
+    assert.equal(ekKodlar.length, 35);
+    assert.equal((await db.query<{ n: number }>(`select count(*)::int n from cfo_gtip_tarife where gtip = any($1)`, [ekKodlar])).rows[0].n, 35, "35 yeni oran satırı");
+    await db.exec(`insert into "Product"(id, sku, name, gtip1, "customsRatePct", "unitCostTry", "stockQuantity", "updatedAt") values
+      ('pz','PENSE','rj45 pense','8203.20.00.00.11',50,100,3,now()), ('av','AVKAY','hdmi kaydedici','8521.90.00.00.00',40,500,2,now()),
+      ('pda','PDA','el terminali','8517.13.00.00.19',30,3000,1,now())`);
+    const v2 = Object.fromEntries((await q<Record<string, unknown>>(`select * from cfo_gtip_yuk where sku in ('PENSE','AVKAY','PDA')`)).map(r => [r.sku as string, r]));
+    assert.deepEqual([v2.PENSE.tarife_gtip, n(v2.PENSE.gv_pct), n(v2.PENSE.igv_pct), n(v2.PENSE.yasal_yuk_pct)], ["820320000011", 1.7, 25, 52], "pense alt kodu .11: GV %1,7 + İGV %25");
+    assert.deepEqual([n(v2.AVKAY.gv_pct), n(v2.AVKAY.otv_pct), n(v2.AVKAY.yasal_yuk_pct), n(v2.AVKAY.yasal_yuk_otv_pct)], [13.9, 6.7, 36.7, 45.8], "8521.90 ÖTV (IV) %6,7 ayrı sütunda");
+    assert.deepEqual([n(v2.PDA.otv_pct), v2.PDA.dogrulandi], [25, false], "PDA: telefon ÖTV bandının alt sınırı, doğrulanmamış");
     console.log(`GTİP yasal yük: ${t} oran satırı, önek eşleşmesi, yasal yük/ÖTV, eksik maliyet, dropship hariç, duty_gap alarmı, yetkiler passed`);
   } finally { await db.close(); }
 }
