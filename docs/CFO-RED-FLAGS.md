@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-09 23:30 TR
-current_main_commit: c0823f9
+last_updated: 2026-10-10 00:30 TR
+current_main_commit: ed3c0c9
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-006, CFO-013 → CFO-014 kısım 2 / CFO-018"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → CFO-027 Cowork belge okuma rutini → onay bekleyen: CFO-006, CFO-013 (migration yazılacak) → CFO-028 komisyon oranı belgeleri → CFO-014 kısım 2 / CFO-018"
 open_critical: 1
 open_high: 5
-score_change: "52→58 — 2026-10-09 akşamı yeniden puanlama (SCORECARD tablosu): 1. boyut 8→9, 2. 10→11, 3. 7→8, 5. 5→6, 7. 4→5, 10. 2→3; gate 5/12 aynı"
+score_change: "unchanged — 2026-10-09 akşam üretime alındı: 230000 (CFO-017 atıf bileşenleri) + 240000 (CFO-027 belge kütüphanesi); atıf ilk bileşenli snapshot (10.10) ve 2. v3 gününden önce değişmez, belge kütüphanesi henüz boş — puan etkisi ölçülünce (6. boyut) yeniden puanlanır"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -34,7 +34,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
 | RF-20261008-009 | HIGH | IN_PROGRESS | KDV hariç ciro + Alfashome üretimde; tek ciro fonksiyonu kalan (CFO-008) |
 | RF-20261008-010 | HIGH | IN_PROGRESS | TS tek kural + D-P08 üretimde; SQL görünümleri DDL onayı bekliyor (CFO-006); bugün 15 hesapta sonuç aynı |
-| RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017 migration 230000 onay bekliyor |
+| RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017 migration 230000 üretimde (2026-10-09 akşam, kimlik farkı 0,00); ilk bileşenli snapshot 10.10 |
 | RF-20261008-012 | MEDIUM | IN_PROGRESS | yazma yolları yazma izni (PR #242); API anahtarı şifreleme, Cowork rolü kalan |
 | RF-20261008-013 | MEDIUM | OPEN | veri: 8 SKU maliyeti (CFO-011, Alperen) |
 | RF-20261008-014 | MEDIUM | OPEN | CFO-012 |
@@ -55,6 +55,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261009-029 | MEDIUM | OPEN | veri düzeltmesi (Cowork/Alperen) |
 | RF-20261009-030 | LOW | OPEN | veri düzeltmesi (insan) |
 | RF-20261009-031 | LOW | MITIGATED | capture migration kuralı |
+| RF-20261009-032 | MEDIUM | OPEN | 6 kanal + ePTT komisyonu kayıtsız; motor UNKNOWN, raporlar 0 (CFO-028; kanıt yolu CFO-027) |
 
 ## 2026-10-08 — İlk tam sistem denetimi (bağımsız dış denetçi bakışı)
 
@@ -408,6 +409,11 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 ### RF-20261008-025 — güncelleme: RESOLVED (2026-10-09)
 - KDV hariç ciro: Nisan–Ekim her gün dolu (not B); Eylül 1.604.768 TL (KDV dahil 1.925.721). Hedef: hız yalnız tam kaynaklı günlerden
   (58.318 TL/gün, projeksiyon 1.807.851 TL, rate_through 04.10, bayrak goal_sources_partial).
+
+### RF-20261009-032 — Komisyonu kayıtsız kanallar (YENİ, MEDIUM, veri)
+- **date:** 2026-10-09 · **severity:** MEDIUM · **status:** OPEN
+- **finding:** son 30 gün N11/Amazon/Pazarama/Idefix/Temu/Koçtaş 165 satır, 186.213 TL — komisyon çoğunlukla NULL; ePTT 98/128 NULL. Motor bu satırları UNKNOWN sayıyor (komisyon > 0 örneği yok → geçersiz), yani CFO sayısı uydurma 0 kullanmıyor; ama `commissionTry` toplayan raporlar 0 gösteriyor ve kanal marjı ölçülemiyor. Cowork tahmini ~312,6k TL/yıl.
+- **neden HIGH değil:** motor UNKNOWN≠0 kuralına uyuyor (CFO-014); hata sayı değil kapsam. **fix:** CFO-028 (oran belgesi → onaylı oran; CFO-027 kanıt yolu).
 
 ### RF-20261009-031 — Cowork üretimde migration'sız değişiklik + uygulanan metin repo'dan farklı (YENİ, LOW, süreç)
 - **date:** 2026-10-09 · **severity:** LOW · **status:** MITIGATED

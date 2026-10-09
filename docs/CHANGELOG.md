@@ -9,6 +9,15 @@
 
 ## 2026-10
 
+### CFO belge kütüphanesi açıldı (2026-10-09)
+
+- `/cfo/belgeler`: komisyon oranı, kart/banka ekstresi, KDV beyannamesi, platform faturası gibi belgeler sabit kategori ve zorunlu açıklamayla yükleniyor; dosya özel depoda, aynı dosya iki kez yüklenmiyor.
+- Belge kanıt olarak saklanıyor, hiçbir defteri değiştirmiyor; AI'a ham dosya değil yalnız açıklama ve maskeli özet gidiyor (IBAN, kart ve kimlik numarası gizli).
+
+### Net sermaye bileşenleri tek kaynaktan (2026-10-09)
+
+- Günlük snapshot artık sözleşmenin nakit, alacak, stok ve yoldaki mal kalemlerini de yazıyor; bileşenler − borç = net sermaye üretimde 0,00 TL farkla tutuyor.
+
 ### CFO yönetişim belgeleri CI ile tutarlı tutuluyor (2026-10-09)
 
 - Beş CFO yönetişim belgesindeki main commit, skor, faz, sıradaki iş ve açık kritik/yüksek red flag sayısı birbiriyle ve gerçek main ile uyuşmazsa CI başarısız oluyor; skor değişmediyse gerekçesi zorunlu.
