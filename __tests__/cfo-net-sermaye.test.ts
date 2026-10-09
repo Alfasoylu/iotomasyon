@@ -82,9 +82,22 @@ async function main() {
     assert.equal(t(90), null); assert.match(rows.find(r => r.sira === 90)!.aciklama, /BILINMIYOR: 1 SKU, 7 adet/);
     assert.equal(t(91), 350000, "ödenmemiş gümrük/navlun bilgi satırı (iki taraflı, net 0)");
     assert.equal(t(92), 320); assert.match(rows.find(r => r.sira === 92)!.aciklama, /BILINMIYOR: 1 SKU satiyor ama birim maliyeti yok/);
-    const total = 150000 + 60000 + 1200 + 1000000 - 400000 - 250000 - 20000;
-    assert.equal(t(100), total);
+    assert.equal(t(100), 150000 + 60000 + 1200 + 1000000 - 400000 - 250000 - 20000, "170000 tanımı");
     assert.match(rows.find(r => r.sira === 3)!.aciklama, /^3 SKU; 1 SKU NRV maliyetin altinda/, "değerlenen 3 SKU, 1i zararına satılıyor");
+
+    // D-P06 (migration 20261009190000): maliyet KDV dahil kayıtlı → KDV hariç NRV ile karşılaştırmak için maliyet / 1,2
+    const MIG2 = "20261009190000_cfo_net_sermaye_maliyet_kdv_haric";
+    assert.ok(res.pendingNotInProduction.includes(MIG2));
+    const mig2 = readFileSync(`prisma/migrations/${MIG2}/migration.sql`, "utf8");
+    await db.exec(mig2); await db.exec(mig2);
+    const rows2 = await q<Row>(`select * from cfo_metrik_net_sermaye()`);
+    const t2 = (s: number) => n(rows2.find(r => r.sira === s)?.tutar);
+    // p1 min(500/1,2; 700) = 416,67 · p2 min(800/1,2; 400) = 400 · p3 300/1,2 = 250
+    assert.equal(t2(3), 1066.67, "LCNRV iki tarafta KDV hariç");
+    assert.deepEqual([1, 2, 4, 5, 6, 7, 91, 92].map(t2), [1, 2, 4, 5, 6, 7, 91, 92].map(t), "diğer satırlar 170000 ile aynı");
+    const total = Math.round((150000 + 60000 + 1066.67 + 1000000 - 400000 - 250000 - 20000) * 100) / 100;
+    assert.equal(t2(100), total);
+    assert.match(rows2.find(r => r.sira === 3)!.aciklama, /^3 SKU; 1 SKU NRV maliyetin altinda .*D-P06/);
 
     // 2) Bağımsız ikinci uygulama (mutabakat SQL'i) aynı sayıyı verir
     const [rec] = await q<Record<string, string>>(readFileSync("scripts/cfo/metric-reconciliation.sql", "utf8"));
