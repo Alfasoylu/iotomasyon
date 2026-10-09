@@ -20,6 +20,9 @@ WITH k AS (
     COALESCE(SUM(CASE WHEN deger_kaynagi = 'GERCEKLESEN_SATIS' THEN stok * (birim_net_deger - birim_fiyat / 6.0) ELSE net_deger END), 0) AS nrv_kdv_haric,
     COALESCE(SUM(CASE WHEN deger_kaynagi = 'GERCEKLESEN_SATIS' THEN LEAST(maliyet_degeri, stok * (birim_net_deger - birim_fiyat / 6.0))
                       WHEN deger_kaynagi = 'MALIYET' THEN maliyet_degeri END), 0) AS lcnrv,
+    -- sözleşme (CFO-001 PR-D): satan ama birim maliyeti olmayan SKU LCNRV'ye girmez (maliyetsiz hesaplanamaz → BILINMIYOR)
+    COALESCE(SUM(CASE WHEN deger_kaynagi = 'GERCEKLESEN_SATIS' AND birim_maliyet IS NOT NULL THEN LEAST(maliyet_degeri, stok * (birim_net_deger - birim_fiyat / 6.0))
+                      WHEN deger_kaynagi = 'MALIYET' THEN maliyet_degeri END), 0) AS lcnrv_sozlesme,
     COUNT(*) FILTER (WHERE deger_kaynagi = 'GERCEKLESEN_SATIS' AND stok * (birim_net_deger - birim_fiyat / 6.0) < maliyet_degeri) AS sku_nrv_maliyet_alti,
     COUNT(*) FILTER (WHERE deger_kaynagi = 'DEGERSIZ') AS sku_degersiz
   FROM public.cfo_stok_deger WHERE gercek_stok
@@ -30,7 +33,9 @@ WITH k AS (
     (SELECT COUNT(*) FROM public.cfo_loan WHERE status::text = 'AKTIF' AND "remainingOverride" IS NOT NULL) AS kredi_override_sayisi,
     (SELECT COALESCE(SUM("totalDebtTry"), 0) FROM public.cfo_credit_card WHERE "isActive") AS kart_toplam,
     (SELECT COALESCE(SUM(GREATEST(-"balanceTry", 0)), 0) FROM public.cfo_bank_account WHERE "isActive" AND "accountType" !~* 'ŞAHSİ|SAHSI') AS kmh_kullanilan_sirket,
-    (SELECT COALESCE(SUM(GREATEST(-"balanceTry", 0)), 0) FROM public.cfo_bank_account WHERE "isActive" AND "accountType" ~* 'ŞAHSİ|SAHSI') AS kmh_kullanilan_sahsi
+    (SELECT COALESCE(SUM(GREATEST(-"balanceTry", 0)), 0) FROM public.cfo_bank_account WHERE "isActive" AND "accountType" ~* 'ŞAHSİ|SAHSI') AS kmh_kullanilan_sahsi,
+    (SELECT COALESCE(SUM(GREATEST(-"balanceTry", 0)), 0) FROM public.cfo_bank_account WHERE "isActive") AS kmh_kullanilan_tum,
+    (SELECT COALESCE(SUM(GREATEST("balanceTry", 0)), 0) FROM public.cfo_bank_account WHERE "isActive") AS nakit_pozitif
 ), nakit AS (
   SELECT
     (SELECT COALESCE(SUM("balanceTry"), 0) FROM public.cfo_bank_account WHERE "isActive" AND "balanceTry" IS NOT NULL) AS tum_hesaplar,
@@ -60,6 +65,9 @@ SELECT
   round(k.nakit + k.alacak + s.maliyet + k.yolda_odenmis - k.kredi_servet - k.kart_servet, 2) AS net_genis_stok_maliyet,
   round(k.nakit + k.alacak + s.nrv_kdv_haric + k.yolda_odenmis - k.kredi_servet - k.kart_servet, 2) AS net_genis_stok_nrv_kdv_haric,
   round(k.nakit + k.alacak + s.lcnrv + k.yolda_odenmis - k.kredi_servet - k.kart_servet - b.kmh_kullanilan_sirket, 2) AS net_genis_lcnrv_kmh_dahil,
+  -- SÖZLEŞME (CFO-001 PR-D; D-P01 GENİŞ, D-P02 LCNRV, D-P03 kredi + kart + KMH): cfo_metrik_net_sermaye() sira 100 ile eşit olmalı
+  -- (bağımsız ikinci uygulama; __tests__/cfo-net-sermaye.test.ts eşitliği denetler). Nakit = artı bakiyeler, KMH = eksi bakiyeler.
+  round(b.nakit_pozitif + k.alacak + s.lcnrv_sozlesme + k.yolda_odenmis - b.kredi_kalan - b.kart_toplam - b.kmh_kullanilan_tum, 2) AS net_sozlesme,
   h.goal_net_sermaye,
   -- STOK (rafta)
   round(s.maliyet, 2) AS stok_maliyet, round(s.nrv_kdv_dahil, 2) AS stok_nrv_kdv_dahil, round(s.nrv_kdv_haric, 2) AS stok_nrv_kdv_haric,
