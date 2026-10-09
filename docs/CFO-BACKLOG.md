@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 01:45 TR
-current_main_commit: 6a2d888
+last_updated: 2026-10-10 03:00 TR
+current_main_commit: 6283500
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık maliyet düzeltmelerini içerir: −138.411 + 206.152 TL) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu, RMB/USD tek kaynak 6,7) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — maliyeti eksik 20 ürün (Alperen verisi) yazıldı: 7 SKU stok değerine girdi, net sermaye 2.266.989 → 2.473.141 TL (179.044 TL'si başarısız 4K kameranın NRV'si); 7 ürün NO_REORDER. 1./3. boyut CFO-029 bitince yeniden puanlanır"
+score_change: "unchanged — RMB/USD tek kaynağa bağlandı (MonthlyExchangeRate 6,7, sabit yedek yok) ve 335 Excel ürünü 6,8 → 6,7 düzeltildi (net sermaye +7.405,67 TL, ölçümle birebir); CFO-029 kodu test edildi, ilk koşu 05:00 TR. 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
 ---
 
 # CFO BACKLOG
@@ -49,7 +49,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 9b | CFO-026 | GTİP düzeltmesi + yasal gümrük yükü (GV/İGV/ÖTV/KDV) ile kayıtlı maliyet karşılaştırması | P1 | G1,G2 | 4 | 4 | 3 | 2 | 3 | 1 | **4** | M | IN_PROGRESS (2026-10-09 üretimde ✓: GTİP 433/433 12 haneli, teyit turu (telsiz/kart okuyucu/ÖTV), migration 210000 oran tablosu 97 satır + `duty_gap`; 51 ürünün oranı ✓ 2026-10-09 migration 220000 üretimde — 433/433 oranlı; depo baseline senkronu ✓ PR #237; kalan: IP kamera ÖTV özelgesi (GİB), stoklu ürünlerde boş `customsRatePct`) — önceki not: (analiz ✓; GTİP düzeltmesi 405 ürün + oran tablosu/`cfo_gtip_yuk`/`duty_gap` alarmı ✓ kod 2026-10-09 — Cowork uygulayacak; kalan: 28 düşük güven + ÖTV teyidi) | — |
 | 9c | CFO-027 | CFO belge kütüphanesi (Cowork brief): sabit kategori, zorunlu açıklama, private dosya, Cowork özet yolu (maskeli), belge = kanıt | P1 | tümü | 3 | 3 | 2 | 2 | 2 | 1 | **4** | M | IN_PROGRESS (kod + test ✓; migration 240000 üretimde 2026-10-09 akşam — tablo/RLS/yetki/maskeleme doğrulandı; kalan: Cowork okuma rutini, onaylı sayı → defter akışı) | 032 |
 | 9d | CFO-028 | Komisyonu kayıtsız 6 kanal (N11, Amazon, Pazarama, Idefix, Temu, Koçtaş) + ePTT: oran belgesi → onaylı kanal oranı | P1 | G1 | 4 | 3 | 3 | 2 | 1 | 1 | **5** | S (veri) | DISCOVERED (ölçüm ✓ 2026-10-09; oran belgeleri Alperen/Cowork) | 032 |
-| 9e | CFO-029 | CFO birim maliyeti (unitCostTry) ithalat motorundan otomatik türetilsin (kur/yol/GTİP değişince); Excel dışı maliyetli ürünler | P1 | G1,G2 | 4 | 4 | 3 | 2 | 2 | 1 | **6** | M | DISCOVERED (335 ürün tek seferlik türetildi 2026-10-10) | 033 |
+| 9e | CFO-029 | CFO birim maliyeti (unitCostTry) ithalat motorundan otomatik türetilsin (kur/yol/GTİP değişince); Excel dışı maliyetli ürünler | P1 | G1,G2 | 4 | 4 | 3 | 2 | 2 | 1 | **6** | M | IN_PROGRESS (kod + test ✓ 2026-10-10: GTİP gümrüğü, korumalı yazma, günlük, `cost_jump`; ilk üretim koşusu 10.10 05:00 TR — kuru çalıştırma 143 ürün; önceki: 335 ürün tek seferlik türetildi 2026-10-10) | 033 |
 | 24 | CFO-024 | Ölü bileşen temizliği (`cfo_model_hakedis`, `cfo_insight/usage`, ölü ayar alanları, yetim route) | P4 | — | 1 | 1 | 1 | 1 | 1 | 2 | **−1** | S | DISCOVERED | 024 |
 
 Not: CFO-004 skoru en yüksek ama tek başına küçük; CFO-001'in PR-B'si olarak sıraya alındı. CFO-011/015 Code işi değil, veri işi —
@@ -167,7 +167,9 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **uygulama:** CFO-027 ile oran belgesi (KOMISYON_ORANI) → Cowork özeti → onaylı kanal oranı (belge kimliği kanıt); veri kaynağı (Entegra) komisyon alanı kontrolü. **durum:** DISCOVERED
 
 ### CFO-029 — CFO birim maliyeti ithalat motorundan
-- **neden:** RF-033 — sistem maliyeti hava + KDV dahil kurulmuştu; motor (`lib/importer-cost.ts`) deniz/havayı ROI ile seçiyor ama `unitCostTry` elle/tek seferlik. **yapıldı (2026-10-10):** 335 ürün tek seferlik türetildi (net sermaye −138.411 TL). **uygulama:** günlük iş `calcImportCost` ile `unitCostUsd/unitCostTry`'yi yeniden hesaplar (değişiklik günlüklü, eşik üstü fark alarm); Excel dışı ~100 maliyetli ürün için RMB/ağırlık kanıtı. **durum:** DISCOVERED
+- **2026-10-10 — RMB/USD tek kaynak (Alperen):** RMB/USD yalnız `MonthlyExchangeRate` (2026-10 = 6,7), sabit yedek yok (kur yoksa maliyet null); 335 Excel ürünü 6,8 → 6,7 korumalı düzeltildi (net sermaye 2.473.141 → 2.480.547 TL, +7.405,67). CFO-029 kuru çalıştırması yeniden: 149 ürün / 436 alan (8 eksik-20 + 141 Excel dışı), +26.001 TL KDV dahil. Kayıt `docs/maliyet/2026-10-10-rmb-6-7-tek-kaynak.md`.
+- **2026-10-10 — kod + test (Claude Code):** `lib/cfo/cost-derivation.ts` (saf) + `-data.ts` (tek SQL, korumalı yazma + günlük + özet), xml-sync `after()` içinde TCMB kurundan hemen sonra; gümrük % GTİP tarifesinden (tarife/kayıt yoksa ürün atlanır, varsayılan %30 yazılmaz); yurt içi (`IC_PIYASA`) TL = USD × kur; kur varsayılansa yazma yok; `resolveShipping` Türkçe tercih (deniz/hava); alarm `cost_jump` (%25 / ±50.000 TL). Test `__tests__/cfo-cost-derivation.test.ts` (PGlite üretim kopyası). Kuru çalıştırma (üretim verisi): 143 ürün / 422 alan, stok maliyeti +15.417 TL (KDV dahil), atlanan 3. Kayıt `docs/maliyet/2026-10-10-cfo-029-otomatik-maliyet.md`. **Kalan:** ilk üretim koşusunun doğrulanması (10.10 sabah), atlanan 3 ürünün gümrüğü (FT232 tarife satırı).
+- **neden:** RF-033 — sistem maliyeti hava + KDV dahil kurulmuştu; motor (`lib/importer-cost.ts`) deniz/havayı ROI ile seçiyor ama `unitCostTry` elle/tek seferlik. **yapıldı (2026-10-10):** 335 ürün tek seferlik türetildi (net sermaye −138.411 TL). **uygulama:** günlük iş `calcImportCost` ile `unitCostUsd/unitCostTry`'yi yeniden hesaplar (değişiklik günlüklü, eşik üstü fark alarm); Excel dışı ~100 maliyetli ürün için RMB/ağırlık kanıtı. **durum:** IN_PROGRESS (kod + test ✓; ilk üretim koşusu doğrulanınca TAMAMLANDI)
 
 ### CFO-024 — Ölü bileşen temizliği. **durum:** DISCOVERED
 

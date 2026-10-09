@@ -43,7 +43,7 @@ import { calcShippingFromPriceTiers } from "./marketplace-pricing";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-export const DEFAULT_RMB_USD_RATE = 7.2;
+// RMB/USD için SABİT YEDEK YOK (2026-10-10): kur lib/fx/current.ts tek kaynağından gelir; bilinmiyorsa (null/0) maliyet null döner.
 export const DEFAULT_USD_TRY_RATE = 45;
 export const DEFAULT_CUSTOMS_PCT = 30;        // %
 export const AIR_FREIGHT_PER_KG = 8;          // USD/kg
@@ -128,11 +128,11 @@ export const DEFAULT_BUDGET_PARAMS: BudgetParams = {
  */
 export function rmbToUsd(
   sourceCostRmb: number | null | undefined,
-  rmbUsdRate: number,
+  rmbUsdRate: number | null | undefined,
 ): number | null {
   if (sourceCostRmb == null || sourceCostRmb <= 0) return null;
-  const rate = rmbUsdRate > 0 ? rmbUsdRate : DEFAULT_RMB_USD_RATE;
-  return sourceCostRmb / rate;
+  if (rmbUsdRate == null || !(rmbUsdRate > 0)) return null;
+  return sourceCostRmb / rmbUsdRate;
 }
 
 /**
@@ -169,8 +169,7 @@ function buildCostFor(
   rmbUsdRate: number,
 ): ImportCostResult {
   const freightPerKg = method === "SEA" ? SEA_FREIGHT_PER_KG : AIR_FREIGHT_PER_KG;
-  const rate = rmbUsdRate > 0 ? rmbUsdRate : DEFAULT_RMB_USD_RATE;
-  const productUsd = (sourceCostRmb / rate) * (1 + payFeePct / 100);
+  const productUsd = (sourceCostRmb / rmbUsdRate) * (1 + payFeePct / 100);
   const freightUsd = weightKg * freightPerKg;
   const customsUsd = (productUsd + freightUsd) * (customsPct / 100);
   const totalCostUsd = productUsd + freightUsd + customsUsd;
@@ -179,7 +178,7 @@ function buildCostFor(
 
 /**
  * Otomatik kargo seçimi:
- *   - Kullanıcı tercihi varsa (AIR/SEA) → onu döndür.
+ *   - Kullanıcı tercihi varsa (AIR/SEA; Türkçe kayıt DENIZ/HAVA da — üretimde "deniz"/"DENIZ" 29 ürün) → onu döndür.
  *   - Trendyol fiyatı + kur verilmişse → AIR ve SEA için annualRoiPct hesapla,
  *     daha yüksek olan kazansın (zarar bile etse en az zarar olanı seçer).
  *   - Aksi halde ağırlık fallback: ≥5 kg → SEA, < 5 kg → AIR.
@@ -196,9 +195,9 @@ export function resolveShipping(
     usdTryRate?: number;
   },
 ): ShippingMethod {
-  const up = pref?.toUpperCase();
-  if (up === "SEA") return "SEA";
-  if (up === "AIR") return "AIR";
+  const up = pref?.trim().toUpperCase().replace(/İ/g, "I");
+  if (up === "SEA" || up === "DENIZ") return "SEA";
+  if (up === "AIR" || up === "HAVA") return "AIR";
 
   // ROI tabanlı seçim (yeterli veri varsa)
   if (
@@ -231,7 +230,8 @@ export function calcImportCost(input: {
   customsRatePct: number | null;
   importPaymentFeePct: number | null;
   shippingMethodPref: string | null;
-  rmbUsdRate: number;
+  /** RMB/USD — tek kaynak lib/fx/current.ts; null/0 → maliyet bilinmiyor (null), sabit yedek yok. */
+  rmbUsdRate: number | null;
   /** Opsiyonel — verilirse otomatik kargo seçimi ROI bazlı yapılır. */
   trendyolPriceTry?: number | null;
   /** Opsiyonel — trendyolPriceTry ile birlikte ROI seçimi için gerekli. */
@@ -240,6 +240,7 @@ export function calcImportCost(input: {
   const { sourceCostRmb, weightKg, customsRatePct, importPaymentFeePct, shippingMethodPref, rmbUsdRate } = input;
   if (!sourceCostRmb || sourceCostRmb <= 0) return null;
   if (!weightKg || weightKg <= 0) return null;
+  if (rmbUsdRate == null || !(rmbUsdRate > 0)) return null;
 
   const shippingMethod = resolveShipping(shippingMethodPref, weightKg, {
     sourceCostRmb,

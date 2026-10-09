@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 01:45 TR
-current_main_commit: 6a2d888
+last_updated: 2026-10-10 03:00 TR
+current_main_commit: 6283500
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık maliyet düzeltmelerini içerir: −138.411 + 206.152 TL) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu, RMB/USD tek kaynak 6,7) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — maliyeti eksik 20 ürün (Alperen verisi) yazıldı: 7 SKU stok değerine girdi, net sermaye 2.266.989 → 2.473.141 TL (179.044 TL'si başarısız 4K kameranın NRV'si); 7 ürün NO_REORDER. 1./3. boyut CFO-029 bitince yeniden puanlanır"
+score_change: "unchanged — RMB/USD tek kaynağa bağlandı (MonthlyExchangeRate 6,7, sabit yedek yok) ve 335 Excel ürünü 6,8 → 6,7 düzeltildi (net sermaye +7.405,67 TL, ölçümle birebir); CFO-029 kodu test edildi, ilk koşu 05:00 TR. 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -55,8 +55,9 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261009-029 | MEDIUM | OPEN | veri düzeltmesi (Cowork/Alperen) |
 | RF-20261009-030 | LOW | OPEN | veri düzeltmesi (insan) |
 | RF-20261009-031 | LOW | MITIGATED | capture migration kuralı |
-| RF-20261010-033 | MEDIUM | MITIGATED | 335 üründe CFO maliyeti ithalat motorundan (deniz/hava motor seçer) — net sermaye −138.411 TL; kalan: otomatik türetme + Excel dışı ürünler (CFO-029) |
+| RF-20261010-033 | MEDIUM | MITIGATED | 335 + 8 üründe CFO maliyeti ithalat motorundan; CFO-029 otomatik türetme kodu hazır (Excel dışı 143 ürün dahil, ilk üretim koşusu 10.10 05:00 TR) — RESOLVED ilk koşu doğrulanınca |
 | RF-20261009-032 | MEDIUM | OPEN | 6 kanal + ePTT komisyonu kayıtsız; motor UNKNOWN, raporlar 0 (CFO-028; kanıt yolu CFO-027) |
+| RF-20261010-034 | MEDIUM | MITIGATED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
 
 ## 2026-10-08 — İlk tam sistem denetimi (bağımsız dış denetçi bakışı)
 
@@ -410,6 +411,13 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 ### RF-20261008-025 — güncelleme: RESOLVED (2026-10-09)
 - KDV hariç ciro: Nisan–Ekim her gün dolu (not B); Eylül 1.604.768 TL (KDV dahil 1.925.721). Hedef: hız yalnız tam kaynaklı günlerden
   (58.318 TL/gün, projeksiyon 1.807.851 TL, rate_through 04.10, bayrak goal_sources_partial).
+
+### RF-20261010-034 — RMB/USD kuru dört farklı değer; CFO maliyeti kuraldan farklı kurla (YENİ, MEDIUM, MITIGATED aynı gün)
+- **date:** 2026-10-10 · **severity:** MEDIUM · **status:** MITIGATED
+- **finding:** Alperen'in maliyet Excel'i kuralı RMB/USD 6,7. PR #248 335 ürünü 6,8 (MonthlyExchangeRate 2026-06) ile türetti. `lib/fx/current.ts` yedekleri cfo_settings 6,72 ve kod 7,2; `calcImportCost`/`rmbToUsd` kur yoksa sessizce 7,2; ürün sayfaları 7,0.
+- **evidence:** 335 ürün 6,8 ile yeniden türetildiğinde 334'ü kuruşu kuruşuna tutuyor; ölçüm 6,7 → LCNRV +7.405,67 TL (78 SKU).
+- **economic_risk:** maliyet ~%1,5 düşük, net sermaye 7,4k TL eksik (8 ithal ürün ile +1,2k). Kur girilmezse UI ve CFO-029 uydurma 7,2 ile maliyet üretebilirdi.
+- **fix (2026-10-10):** RMB yalnız MonthlyExchangeRate'ten; yoksa null (maliyet hesaplanmaz); tüm sabit yedekler kaldırıldı + CI kontrolü (`fx-current.test.ts`); 2026-10 = 6,7 kaydı; 335 ürün korumalı düzeltildi (`docs/maliyet/2026-10-10-rmb-6-7-tek-kaynak.md`). Kalan: 8 + 141 ürün CFO-029 ilk koşusunda.
 
 ### RF-20261010-033 — Ürün USD maliyeti hava kargo + ithalat KDV'si dahil kurulmuş görünüyor (YENİ, MEDIUM, karar bekliyor)
 - **date:** 2026-10-10 · **severity:** MEDIUM (doğrulanırsa HIGH) · **status:** OPEN

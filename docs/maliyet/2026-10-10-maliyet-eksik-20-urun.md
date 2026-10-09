@@ -1,5 +1,7 @@
 # Maliyeti eksik 20 ürün — Alperen'in doldurduğu liste uygulandı (2026-10-10)
 
+> **Not (2026-10-10, RMB tek kaynak):** 8 ithal ürün RMB ÷ 6,8 ile yazıldı; Alperen kuralı 6,7. CFO-029 ilk koşusu tek kaynakla (6,7) yeniden türetir (+4.269,83 TL stok maliyeti KDV dahil, LCNRV ≈ +1.212 TL). Bkz. `docs/maliyet/2026-10-10-rmb-6-7-tek-kaynak.md`.
+
 > **UYGULANDI 2026-10-10 (Alperen: "Tam yetkilisin")** — Claude Code'un çıkardığı "maliyeti bilinmesi en önemli ama bilinmeyen 20 ürün" listesi
 > (son 90 gün cirosu, satışı yoksa stokta bağlı değer sırası) Alperen tarafından dolduruldu. 20 ürün, 86 alan değişikliği,
 > hepsi `cfo_change_log`'da (area `maliyet`, kind `duzeltme`, eski → yeni). Koruma: tek alan bile okunan eski değerde değilse

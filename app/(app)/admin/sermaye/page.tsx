@@ -57,7 +57,7 @@ export default async function SermayePage() {
         subtitle="Sermayenin ne kadarı stokta bağlı, ne kadarı serbest, stok ne kadar sağlıklı ve satış ne getiriyor — tek ekranda, CFO'nun sayılarıyla."
         meta={
           <Badge variant={h.fx.fromCfo ? "neutral" : "warn"}>
-            1 USD = ₺{h.fx.usdTry.toFixed(2)} · {h.fx.rmbPerUsd.toFixed(2)} RMB ({h.fx.source})
+            1 USD = ₺{h.fx.usdTry.toFixed(2)} · {h.fx.rmbPerUsd != null ? `${h.fx.rmbPerUsd.toFixed(2)} RMB` : "RMB kuru yok"} ({h.fx.source})
           </Badge>
         }
         actions={<PageHelp pageKey="admin/sermaye" />}

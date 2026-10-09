@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Çin alış kuru tek kaynağa bağlandı; Excel maliyetleri 6,7 ile düzeltildi (2026-10-10)
+
+- RMB/USD kuru artık yalnız aylık kur sayfasından okunuyor (Ekim 2026: 6,7). Kur girilmemişse maliyet hesaplanmıyor; 7,2 / 7,0 gibi sabit varsayımlar kaldırıldı.
+- Maliyet Excel'inden gelen 335 ürünün maliyeti 6,8 yerine 6,7 ile yeniden hesaplandı; net sermaye 2.473.141 → 2.480.547 TL.
+
 ### Maliyeti eksik 20 ürünün maliyeti girildi (2026-10-10)
 
 - 8 ithal ürünün maliyeti alış fiyatı (RMB) ve ağırlıktan ithalat motoruyla hesaplandı; deniz/hava kararını motor verdi, gümrük GTİP'e göre.
