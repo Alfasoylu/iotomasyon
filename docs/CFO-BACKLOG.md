@@ -27,7 +27,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 6 | CFO-006 | Şirket/şahsi tek sınıflama; nakit/kapasite/borç bunu kullansın | P1 | G2,G3 | 4 | 4 | 3 | 3 | 1 | 2 | **5** | M | IN_PROGRESS (TS tek sınıflama ✓ 2026-10-09 `lib/cfo/ownership.ts`; kalan: SQL görünümleri; D-P08 kararlandı — Akbank Alp veri düzeltmesi Cowork) | 010 |
 | 7 | CFO-009 | Alarm teslimi GitHub'dan bağımsız; takılan koşu + kilit hatası alarmı; cfo-cycle bağla | P1 | tümü | 3 | 5 | 2 | 2 | 1 | 2 | **5** | M | IN_PROGRESS (takılan koşu/kilit/yeniden deneme ✓; ölü koşu süpürme + süre bütçesi + SAĞLIK alarmı ✓ kod, migration 150000 Cowork bekliyor; WhatsApp teslimi ✓ kod (D-P07) — onaylı şablon + ortam değişkenleri bekliyor) | 006 |
 | 8 | CFO-010 | Defter bakım yolu: kredi/kart vade devri, alacak/ödeme girişi | P1 | tümü | 4 | 4 | 2 | 3 | 1 | 2 | **4** | L | ✅ TAMAMLANDI 2026-10-09 — ödeme durumu tek kaynak (takvim); defter↔takvim boşluk + mükerrer taksit alarmı; Borçlar takvimden; yetim cfo-actions silindi | 007,028,029 |
-| 9 | CFO-007 | KDV esası kararı + marj/NRV KDV hariç | P1 | G1,G2 | 4 | 4 | 4 | 3 | 3 | 2 | **4** | M | IN_PROGRESS (D-P06 kararlandı 2026-10-09: maliyet KDV dahil → marj tutarlı; NRV karşılaştırması migration 190000) | 008 |
+| 9 | CFO-007 | KDV esası kararı + marj/NRV KDV hariç | P1 | G1,G2 | 4 | 4 | 4 | 3 | 3 | 2 | **4** | M | BLOCKED (D-P06 askıda 2026-10-09: Cowork ölçümü maliyetlerin KDV hariç olduğunu gösterdi — 431/432 ürün USD×48,5; migration 190000 bekletmede, uygulanmayacak; soru: "yurt içi" mi "hepsi" mi) | 008 |
 | 10 | CFO-008 | Ciro hedefi tanımı (KDV, kanal kapsamı) + tek ciro fonksiyonu | P1 | G1 | 3 | 3 | 5 | 3 | 2 | 1 | **5** | M | IN_PROGRESS (KDV hariç ciro + hedef kaynak tazeliği üretimde 2026-10-09; D-P05: hedef KDV DAHİL — bugünkü ölçüm doğru; kalan: Alfashome kanal kapsamı) | 009,023 |
 | 11 | CFO-011 | Maliyet kapsamı ≥ %95 (8 SKU veri + migration 200000) | P1 | G1 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen; Code ✓ PR #210, migration 200000 üretimde 2026-10-08) | 013 |
 | 12 | CFO-015 | Ölçülmemiş KMH/gümrük/şahsi faiz oranlarını gir | P1 | G3 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen) | 018 |
@@ -93,7 +93,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-007 — KDV esası
 - **neden:** marj ve NRV KDV dahil; vergi borcu yok. **bağımlılık:** `unitCostTry` esası teyidi (Alperen). **uygulama:** karar memosu; KDV hariç katkı marjı; NRV KDV hariç; isteğe bağlı KDV yükümlülüğü satırı.
-- **durum:** DISCOVERED (karar bekliyor)
+- **durum:** BLOCKED (2026-10-09) — Alperen "ürün maliyetleri KDV dahil" dedi; Cowork ölçümü itiraz etti: 431/432 maliyetli üründe `unitCostTry = unitCostUsd × 48,5` (KDV eklenmemiş), tamamı ithalat (ithalat KDV'si indirilir). Migration `20261009190000` (maliyet /1,2) yerel, bekletme listesinde; **uygulanmayacak**, toplu Cowork paketine alınmadı. Açık soru: "yurt içi" mi "hepsi" mi? Öneri: 190000 geri çekilir, maliyet KDV hariç kabul edilir; o zaman doğru düzeltme ciroyu KDV hariç karşılaştırmaktır (CFO-008 kısım 1 hazır).
 
 ### CFO-008 — Ciro hedefi tanımı + tek ciro fonksiyonu
 - **neden:** KDV dahil ölçüm; 7 ciro formülü; Alfashome hariç, IDEASOFT/tekstil dahil. **uygulama:** karar → `cfo_metrik_ciro(gün aralığı, kdv)`; tüm sayfalar.
