@@ -378,6 +378,14 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
   tek satırlık INSERT); parmak izi fonksiyon gövdesini SQL yorumları olmadan, `fm_quality_policy`'yi serbest metin `reason` olmadan karşılaştırır
   (davranış farkı yine yakalanır). Kural önerisi: Cowork üretimde fonksiyon değiştirirse SQL'i Code'a da iletsin (capture aynı gün).
 
+### RF-20261008-006 — güncelleme (2026-10-09, Cowork bulgusu; HIGH, OPEN → kısmen FIX READY)
+- **olay:** 09.10 02:34 UTC `engine:2026-10-09T05:sync_xml` (xml-sync `after()`) Vercel 300 sn sınırında öldü; satır 4+ saat `running` kaldı.
+  `stuck_run` alarmı yalnız motorun kendisi koşunca üretiliyordu ve `cfo_gun_ozeti` SAĞLIK satırı aciliyetsizdi → 08:00 Cowork okuması bayat
+  karar setini güncel sanabilirdi.
+- **düzeltme (kod, bu PR):** ölü koşu süpürmesi (`sweepStuck`, 15 dk), senkron sonrası motor süre bütçesi (≥150 sn), SAĞLIK satırı
+  ACİL (TAKILDI / BAŞARISIZ / BAYAT) — migration `20261009150000_cfo_gun_ozeti_saglik_alarm` Cowork uygulayınca üretimde.
+- **kalan:** teslim kanalı GitHub e-postası (D-P07), `cfo-cycle` yetim.
+
 ### Gözlem (kayıt değişmez): nakit dibi
 - `cfo_kart_karari` bugün en dibi −3.862.998 TL (2027-01-01) gösteriyor (08.10: −3.578.121, 01.12). Ufuk 120 gün kaydıkça Ocak ödemeleri girdi;
   ayrıca incelenecek (CFO-013 / RF-029 Yapı Kredi mükerrer satırları hâlâ projeksiyonda).

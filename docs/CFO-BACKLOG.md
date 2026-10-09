@@ -25,7 +25,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | PLANNED (D-P03 kararlandı 2026-10-09: kredi + kart + kullanılan KMH; hedef <100k USD) | 002,019,020 |
 | 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | ✅ TAMAMLANDI 2026-10-09 — düz %4,5 kalktı: TS (PR #214) + kart kararı kart faiziyle (PR #215, migration 110000 üretimde) | 004 |
 | 6 | CFO-006 | Şirket/şahsi tek sınıflama; nakit/kapasite/borç bunu kullansın | P1 | G2,G3 | 4 | 4 | 3 | 3 | 1 | 2 | **5** | M | VALIDATED | 010 |
-| 7 | CFO-009 | Alarm teslimi GitHub'dan bağımsız; takılan koşu + kilit hatası alarmı; cfo-cycle bağla | P1 | tümü | 3 | 5 | 2 | 2 | 1 | 2 | **5** | M | IN_PROGRESS (takılan koşu/kilit/yeniden deneme ✓; teslim kanalı D-P07 bekliyor) | 006 |
+| 7 | CFO-009 | Alarm teslimi GitHub'dan bağımsız; takılan koşu + kilit hatası alarmı; cfo-cycle bağla | P1 | tümü | 3 | 5 | 2 | 2 | 1 | 2 | **5** | M | IN_PROGRESS (takılan koşu/kilit/yeniden deneme ✓; ölü koşu süpürme + süre bütçesi + SAĞLIK alarmı ✓ kod, migration 150000 Cowork bekliyor; teslim kanalı D-P07 bekliyor) | 006 |
 | 8 | CFO-010 | Defter bakım yolu: kredi/kart vade devri, alacak/ödeme girişi | P1 | tümü | 4 | 4 | 2 | 3 | 1 | 2 | **4** | L | ✅ TAMAMLANDI 2026-10-09 — ödeme durumu tek kaynak (takvim); defter↔takvim boşluk + mükerrer taksit alarmı; Borçlar takvimden; yetim cfo-actions silindi | 007,028,029 |
 | 9 | CFO-007 | KDV esası kararı + marj/NRV KDV hariç | P1 | G1,G2 | 4 | 4 | 4 | 3 | 3 | 2 | **4** | M | DISCOVERED | 008 |
 | 10 | CFO-008 | Ciro hedefi tanımı (KDV, kanal kapsamı) + tek ciro fonksiyonu | P1 | G1 | 3 | 3 | 5 | 3 | 2 | 1 | **5** | M | IN_PROGRESS (KDV hariç ciro + hedef kaynak tazeliği üretimde 2026-10-09; kalan: hedef tanımı D-P05) | 009,023 |
@@ -108,7 +108,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-009 — Alarm teslimi ve gözlemlenebilirlik
 - **uygulama:** sağlık değerlendirmesini Vercel cron'larının `after()` zincirine de ekle; `running` > 15 dk → başarısız say; kilit hatasında `cfo_run` satırı; `cfo-cycle`'ı mevcut cron'a bağla; teslim kanalı (e-posta/WhatsApp — mevcut WhatsApp altyapısı) karar: Alperen.
-- **kabul:** GitHub işi olmadan alarm üretilir; takılan koşu testi. **durum:** IN_PROGRESS — kısım 1 bitti 2026-10-09 (PR #216: `stuck_run` alarmı, kilit hatası `cfo_run` satırı, başarısız/takılı dilim yeniden denenir); kalan: Vercel `after()` zinciri, `cfo-cycle`, teslim kanalı (D-P07).
+- **kabul:** GitHub işi olmadan alarm üretilir; takılan koşu testi. **durum:** IN_PROGRESS — kısım 1 bitti 2026-10-09 (PR #216: `stuck_run` alarmı, kilit hatası `cfo_run` satırı, başarısız/takılı dilim yeniden denenir); kısım 2 kod 2026-10-09 (Cowork 09.10 bulgusu: xml-sync `after()` koşusu 300 sn sınırında öldü, 4+ saat `running`): ölü koşu süpürmesi (`sweepStuck` → `failed`/`killed_timeout`), senkron sonrası motor süre bütçesi (≥150 sn yoksa başlamaz, değişiklik günlüğüne iz), `cfo_gun_ozeti` SAĞLIK satırı ACİL (TAKILDI / BAŞARISIZ / BAYAT; migration `20261009150000`, Cowork uygulayacak). Kalan: `cfo-cycle`, teslim kanalı (D-P07).
 
 ### CFO-010 — Defter bakım yolu
 - **uygulama:** kredi/kart için ay dönümü devri (ödenen ay → sonraki vade), `currentMonthState` sıfırlama; alacak/ödeme girişi için kontrollü form veya içe aktarma; `cfo-actions.ts` bağlanır ya da silinir.
@@ -149,6 +149,7 @@ Faz 0 sonrası (backlog maddesi):
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-004** kredi borcu = kalan anapara (PR #213 + migration 20261009100000 üretimde; RF-005 kapandı).
 - ✅ TAMAMLANDI 2026-10-08 — **CFO-001 PR-A** metrik sözleşmesi memosu + salt-okunur mutabakat SQL'i (PR #212). CFO-001'in kendisi karar bekliyor.
 - ✅ TAMAMLANDI 2026-10-08 — **Faz 0 ilk tam denetim** + 5 yönetim dosyası (PR #211).
+- ✅ TAMAMLANDI 2026-10-09 — **CFO-009 kısım 2 (kod)** ölü koşu süpürmesi + motor süre bütçesi + SAĞLIK alarmı (migration 20261009150000 Cowork bekliyor). Madde açık (teslim kanalı, cfo-cycle).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-009 kısım 1** takılan koşu alarmı, kilit hatası izi, başarısız dilim yeniden denenir (PR #216). Madde açık (teslim kanalı).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-005** düz %4,5 KMH oranı kalktı: TS (PR #214) + `cfo_kart_karari` kart faiziyle (PR #215; migration 110000 üretimde 2026-10-09).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-019** held-back migration koruması (`db:migrate:deploy` guard; RF-017 RESOLVED).
