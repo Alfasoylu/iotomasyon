@@ -12,6 +12,7 @@ import { loadRevenueEvidence } from "./revenue-evidence";
 import { loadDownsideEvidence } from "./downside-evidence";
 import type { CfoConfig } from "./config";
 import { evidence } from "./evidence";
+import { documentContext, type DocumentRow } from "../cfo/documents";
 import { businessSource, type ReadSource } from "./sources";
 import type { CfoAgentSnapshot, Evidence } from "./types";
 
@@ -36,7 +37,7 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   const names = new Set((await db.query<{ name: string }>(`select c.relname as name from pg_class c join pg_namespace n on n.oid=c.relnamespace
     where n.nspname='public' and c.relname = any($1::text[]) union select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.proname = any($1::text[])`, ["cfo_nakit_kapisi", "cfo_kaynak_yeterliligi", "cfo_odeme_gunluk", "cfo_servet", "fm_balance_day",
-      "fm_goal_observation", "cfo_change_log", "cfo_question", "cfo_run", "cfo_kargo_tarife", "cfo_kanal_net_oran", "cfo_kaldirac_basamak"])).map(r => r.name));
+      "fm_goal_observation", "cfo_change_log", "cfo_question", "cfo_run", "cfo_kargo_tarife", "cfo_kanal_net_oran", "cfo_kaldirac_basamak", "cfo_belge"])).map(r => r.name));
   const state: Evidence[] = [], memory: Evidence[] = [];
   const s = (source: string, query: string, value: Evidence["value"], unit: string, measured = true, asOf = at) => state.push(evidence(source, query, value, unit, asOf, measured));
 
@@ -159,6 +160,16 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   if (names.has("cfo_kanal_net_oran")) {
     const rows = await db.query(`select channel, net_oran, guven, kargo_payi from cfo_kanal_net_oran order by channel`);
     if (rows.length) tables.push(`KANAL NET ORAN (cfo_kanal_net_oran): ${rows.map(r => `${r.channel} ${r.net_oran} (güven ${r.guven ?? "?"}${r.kargo_payi != null ? `, kargo payı ${r.kargo_payi}` : ""})`).join(" · ")}`);
+  }
+  // Belge kütüphanesi (CFO-027): ham dosya YOK — yalnız kullanıcı açıklaması (üstün), AI özeti, çıkarılan sayılar (öneri); ≤ 3000 karakter
+  if (names.has("cfo_belge")) {
+    const rows = await db.query(`select id, kategori, baslik, aciklama, donem_baslangic::text as ds, donem_bitis::text as de, gecerlilik_bitis::text as gb,
+        ozet, ozet_durumu, cikarilan, celiski, yuklendi_at from cfo_belge where arsiv_at is null order by yuklendi_at desc limit 40`);
+    const docs: DocumentRow[] = rows.map(r => ({ id: String(r.id), category: String(r.kategori), title: String(r.baslik), description: String(r.aciklama),
+      periodStart: r.ds == null ? null : String(r.ds), periodEnd: r.de == null ? null : String(r.de), validUntil: r.gb == null ? null : String(r.gb),
+      summary: r.ozet == null ? null : String(r.ozet), summaryStatus: String(r.ozet_durumu), extracted: (r.cikarilan as Record<string, unknown> | null) ?? null,
+      conflict: r.celiski == null ? null : String(r.celiski), uploadedAt: new Date(String(r.yuklendi_at)).toISOString() }));
+    if (docs.length) tables.push(`BELGELER (cfo_belge; kanıt, defter değil):\n${documentContext(docs, at.slice(0, 10)).join("\n")}`);
   }
   const coverage = snapshot.dataQuality.commissionCoverage;
   if (coverage?.length) tables.push(`KOMİSYON ALANI KAPSAMI: ${coverage.map(c => `${c.channel} %${c.coveragePct == null ? "?" : Math.round(c.coveragePct)}`).join(" · ")}`);

@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-09 23:30 TR
-current_main_commit: c0823f9
+last_updated: 2026-10-10 00:30 TR
+current_main_commit: ed3c0c9
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-006, CFO-013 → CFO-014 kısım 2 / CFO-018"
+next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-027 (240000 belge kütüphanesi), CFO-006, CFO-013 → CFO-028 komisyon oranı belgeleri → CFO-014 kısım 2 / CFO-018"
 open_critical: 1
 open_high: 5
-score_change: "52→58 — 2026-10-09 akşamı yeniden puanlama (SCORECARD tablosu): 1. boyut 8→9, 2. 10→11, 3. 7→8, 5. 5→6, 7. 4→5, 10. 2→3; gate 5/12 aynı"
+score_change: "unchanged — CFO-027 belge kütüphanesi kodu + migration 240000 üretimde değil (onay bekliyor); hiçbir boyutun üretim davranışı değişmedi, RF-032 MEDIUM eklendi (HIGH sayısı aynı)"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)

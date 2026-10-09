@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-09 23:30 TR
-current_main_commit: c0823f9
+last_updated: 2026-10-10 00:30 TR
+current_main_commit: ed3c0c9
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-006, CFO-013 → CFO-014 kısım 2 / CFO-018"
+next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-027 (240000 belge kütüphanesi), CFO-006, CFO-013 → CFO-028 komisyon oranı belgeleri → CFO-014 kısım 2 / CFO-018"
 open_critical: 1
 open_high: 5
-score_change: "52→58 — 2026-10-09 akşamı yeniden puanlama (SCORECARD tablosu): 1. boyut 8→9, 2. 10→11, 3. 7→8, 5. 5→6, 7. 4→5, 10. 2→3; gate 5/12 aynı"
+score_change: "unchanged — CFO-027 belge kütüphanesi kodu + migration 240000 üretimde değil (onay bekliyor); hiçbir boyutun üretim davranışı değişmedi, RF-032 MEDIUM eklendi (HIGH sayısı aynı)"
 ---
 
 # CFO BACKLOG
@@ -47,6 +47,8 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 23 | CFO-021 | CI düzeltmesi (yml:113, alfashome testi) + eski UI metinleri | P4 | — | 1 | 2 | 1 | 1 | 1 | 1 | **1** | S | VALIDATED | 021,022 |
 | 9a | CFO-025 | Sabit kurun 433 maliyetli üründe maliyete etkisi (marj tabanı) — Alperen sırası: KDV hariç cirodan hemen sonra | P0 | G1,G2 | 4 | 4 | 3 | 2 | 3 | 1 | **5** | S (ölçüm) | IN_PROGRESS (ölçüm ✓ 2026-10-09: sabit kur 48,50 → marj etkisi 0,43 puan; asıl belirsizlik USD maliyet/çarpan — Cowork 8 ürün ayrıntısı bekleniyor) | 030 |
 | 9b | CFO-026 | GTİP düzeltmesi + yasal gümrük yükü (GV/İGV/ÖTV/KDV) ile kayıtlı maliyet karşılaştırması | P1 | G1,G2 | 4 | 4 | 3 | 2 | 3 | 1 | **4** | M | IN_PROGRESS (2026-10-09 üretimde ✓: GTİP 433/433 12 haneli, teyit turu (telsiz/kart okuyucu/ÖTV), migration 210000 oran tablosu 97 satır + `duty_gap`; 51 ürünün oranı ✓ 2026-10-09 migration 220000 üretimde — 433/433 oranlı; depo baseline senkronu ✓ PR #237; kalan: IP kamera ÖTV özelgesi (GİB), stoklu ürünlerde boş `customsRatePct`) — önceki not: (analiz ✓; GTİP düzeltmesi 405 ürün + oran tablosu/`cfo_gtip_yuk`/`duty_gap` alarmı ✓ kod 2026-10-09 — Cowork uygulayacak; kalan: 28 düşük güven + ÖTV teyidi) | — |
+| 9c | CFO-027 | CFO belge kütüphanesi (Cowork brief): sabit kategori, zorunlu açıklama, private dosya, Cowork özet yolu (maskeli), belge = kanıt | P1 | tümü | 3 | 3 | 2 | 2 | 2 | 1 | **4** | M | IN_PROGRESS (kod + test ✓ 2026-10-10; migration 240000 üretim onayı bekliyor) | 032 |
+| 9d | CFO-028 | Komisyonu kayıtsız 6 kanal (N11, Amazon, Pazarama, Idefix, Temu, Koçtaş) + ePTT: oran belgesi → onaylı kanal oranı | P1 | G1 | 4 | 3 | 3 | 2 | 1 | 1 | **5** | S (veri) | DISCOVERED (ölçüm ✓ 2026-10-09; oran belgeleri Alperen/Cowork) | 032 |
 | 24 | CFO-024 | Ölü bileşen temizliği (`cfo_model_hakedis`, `cfo_insight/usage`, ölü ayar alanları, yetim route) | P4 | — | 1 | 1 | 1 | 1 | 1 | 2 | **−1** | S | DISCOVERED | 024 |
 
 Not: CFO-004 skoru en yüksek ama tek başına küçük; CFO-001'in PR-B'si olarak sıraya alındı. CFO-011/015 Code işi değil, veri işi —
@@ -151,6 +153,15 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 ### CFO-021 — CI yml:113 + alfashome testi + eski UI metinleri. **durum:** ✅ TAMAMLANDI 2026-10-09 — CI'daki çok dosyalı `node a b c` satırı yalnız `cfo-cost-answer` koşar (diğerleri zaten ayrı adımda; sayfa/kaynak dosyaları argümandı), `npm run check:alfashome` CI'da; `/cfo/alacaklar` tahmin metni kanal temposu (cfo_tahsilat_tahmini, yedek ciro/4); `/cfo/ayarlar` küresel KMH oranı "kullanılmıyor" (CFO-005). Bilerek değişmeyen: `/cfo/kazananlar` %85 kapsam eşiği kodla tutarlı (CFO-011 hedefi %95 ayrı); PDKS'teki "6 saat / :05" eski delta kayıtları tarihsel (append-only).
 ### CFO-022 — Nakit tahmini kalibrasyonu (eski PDKS yol haritası #5). **durum:** PLANNED (veri birikiyor; ~2026-10-25 sonrası)
 ### CFO-023 — Sayfa-motor eşlik testi · CFO-001..008 tamamlandıkça genişler. **durum:** DISCOVERED
+### CFO-027 — CFO belge kütüphanesi (Cowork brief, 2026-10-09)
+- **neden:** kart faiz çarpanı (KKDF/BSMV ×1,20 mi ×1,05 mi, ~253k TL/yıl), KDV beyannamesi (devreden 564.310 TL), pazaryeri komisyon oranları (~312,6k TL/yıl) ve platform faturaları yalnız belgede; sistemde kanıt saklama yeri yoktu.
+- **yapıldı (2026-10-10, kod):** `/cfo/belgeler` — sabit kategori listesi (`lib/cfo/documents.ts`), başlık, **zorunlu açıklama (≥30)**, dönem, geçerlilik, dosya (≤10 MB; PDF/PNG/JPG/XLSX/XLS/CSV/TXT) → private bucket `cfo-files/belge/`; sha256 mükerrer engeli; indirme yalnız ADMIN + CFO_READ + EXECUTIVE_READ (`/api/admin/cfo/belge/[id]`); yükleme/arşiv CFO_WRITE + değişiklik günlüğü. Migration `20261009240000_cfo_belge` (tablo + CHECK'ler + RLS + `cfo_belge_kuyrugu` + `cfo_belge_maskele` + `cfo_belge_ozet_yaz`; anon/authenticated yetkisi yok). Üç kural kodda: (1) ham dosya motora/bağlama girmez — bağlam yalnız açıklama + özet + çıkarılan sayılar, 3000 karakter sınırı; (2) açıklama üstün, çelişki `celiski` + günlük (`kind=celiski`); (3) belge kanıttır — özet yazımı hiçbir defteri değiştirmez (test). IBAN / Luhn kart no / 10–11 hane kimlik TS ve SQL'de maskeli. Sitede LLM yok: özeti Cowork `cfo_belge_ozet_yaz()` ile yazar. Öncelik paneli (4 belge) + komisyonu kayıtsız kanal paneli. Test `cfo-documents` (CI).
+- **kalan:** migration 240000 üretim onayı (Alperen); onaydan sonra Cowork okuma rutini (kuyruk → özet); onaylı sayı → defter akışı (belge kimliği kanıt) ayrı iş.
+
+### CFO-028 — Komisyonu kayıtsız kanallar
+- **ölçüm (2026-10-09, üretim salt-okuma, son 30 gün):** N11, Amazon, Pazarama, Idefix, Temu, MIRAKL_KOCTAS — 165 satır, 186.213 TL ciro, komisyon çoğunlukla NULL (toplam 0); ePTT %2,32 ama 98/128 satır NULL. Trendyol %15,39, HB %14,61 (ölçülü). Motor (`snapshot.ts`) bu kanalları UNKNOWN sayar (0 değil); `commissionTry` toplayan raporlar 0 gösterir → kanal marjı şişkin görünür. Cowork tahmini ~312,6k TL/yıl.
+- **uygulama:** CFO-027 ile oran belgesi (KOMISYON_ORANI) → Cowork özeti → onaylı kanal oranı (belge kimliği kanıt); veri kaynağı (Entegra) komisyon alanı kontrolü. **durum:** DISCOVERED
+
 ### CFO-024 — Ölü bileşen temizliği. **durum:** DISCOVERED
 
 ---
