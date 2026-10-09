@@ -403,6 +403,11 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
   `cfo_settings.debtTargetUsd` (100.000 USD) × TCMB → Goal `debt_below_usd` ve sipariş kapısı aynı kaynaktan. Migration `20261009180000`
   Cowork uygulayınca + eski 5M TL yolu silinince RESOLVED. Üretim bugün 5.889.904 TL ≈ 121,3k USD → hedefe 21,3k USD.
 
+### RF-20261008-003 — güncelleme (2026-10-09, CFO-003; HIGH, OPEN → MITIGATED)
+- D-P04 (Alperen onayı): stratejik kur = TCMB döviz alış (15'i), yoksa önceki ay işaretli, yoksa BİLİNMİYOR. `lib/fx/strategic.ts` tek okuyucu:
+  sipariş kapısı, ciro hedefi (sabit 45 kalktı), `/cfo` servet USD'si ve Goal Engine aynı kur. TCMB ayı otomatik kaydedilir (xml-sync after()).
+- Kalan (RESOLVED için): eski motor `usdTryRate || 1` yedeği (CFO-018), SQL eski alanları (`cfo_servet.kur`, snapshot `usdTryRate` döngüsü) — hedef ölçmüyorlar.
+
 ### Gözlem (kayıt değişmez): nakit dibi
 - `cfo_kart_karari` bugün en dibi −3.862.998 TL (2027-01-01) gösteriyor (08.10: −3.578.121, 01.12). Ufuk 120 gün kaydıkça Ocak ödemeleri girdi;
   ayrıca incelenecek (CFO-013 / RF-029 Yapı Kredi mükerrer satırları hâlâ projeksiyonda).

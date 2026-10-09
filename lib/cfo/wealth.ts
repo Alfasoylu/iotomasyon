@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { pickStrategicFx, STRATEGIC_FX_SQL, type StrategicFx } from "@/lib/fx/strategic";
 
 /**
  * Servet — `cfo_servet` görünümü (potansiyel değer: stok KDV dahil satış değeriyle) + NET SERMAYE sözleşmesi
@@ -74,6 +75,8 @@ export type ServetVerisi = {
   kalemler: ServetKalemi[];
   /** Net sermayenin tek tanımı (GENİŞ + LCNRV + KMH). Migration 20261009170000 uygulanmadıysa null — sayfa eski servetle kalır. */
   sozlesme: SozlesmeKalemi[] | null;
+  /** Net sermayenin USD karşılığı için STRATEJİK kur (TCMB; Goal Engine ile aynı). Bilinmiyorsa null → USD gösterilmez. */
+  stratejikKur: StrategicFx | null;
   likidite: LikiditeDilimi[];
   yogunlasma: StokYogunlasmasi[];
   /** Hedef tarihine kalan ay. Burada hesaplanır çünkü "şu an"ı okumak bir yan
@@ -86,7 +89,8 @@ export type ServetVerisi = {
  * render sırasında çağrılması güvenli.
  */
 export async function loadWealth(hedefTarihi?: Date | null): Promise<ServetVerisi> {
-  const [ozet, kalemler, sozlesme, likidite, yogunlasma] = await Promise.all([
+  const simdi = new Date();
+  const [ozet, kalemler, sozlesme, likidite, yogunlasma, sfx] = await Promise.all([
     prisma.$queryRaw<ServetOzeti[]>`select * from cfo_servet`,
     prisma.$queryRaw<ServetKalemi[]>`select * from cfo_servet_kalem order by sira`,
     // Fonksiyon henüz üretimde yoksa (bekletilen migration) sayfa düşmez: eski servet gösterilir.
@@ -99,6 +103,7 @@ export async function loadWealth(hedefTarihi?: Date | null): Promise<ServetVeris
        where gercek_stok and net_deger > 0
        order by net_deger desc
        limit 5`,
+    prisma.$queryRawUnsafe<{ month: unknown; rate: unknown }[]>(STRATEGIC_FX_SQL, simdi.toISOString()).catch(() => []),
   ]);
 
   const hedefAyKalan =
@@ -106,7 +111,7 @@ export async function loadWealth(hedefTarihi?: Date | null): Promise<ServetVeris
       ? (new Date(hedefTarihi).getTime() - Date.now()) / 86400000 / 30.4
       : null;
 
-  return { ozet: ozet[0] ?? null, kalemler, sozlesme, likidite, yogunlasma, hedefAyKalan };
+  return { ozet: ozet[0] ?? null, kalemler, sozlesme, stratejikKur: pickStrategicFx(sfx[0], simdi), likidite, yogunlasma, hedefAyKalan };
 }
 
 export const DILIM_ETIKET: Record<string, string> = {

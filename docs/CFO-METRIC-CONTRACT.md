@@ -14,7 +14,8 @@ next_action: "Alperen kararları D-P01…D-P06 → PR-D (net sermaye) / PR-E (bo
 > bakiyeler, KMH = eksi bakiyeler; satan ama maliyeti olmayan stok (24 SKU, ≤ 256.990 TL) ve değeri bilinmeyen stok (32 SKU) BILINMIYOR
 > satırında, toplamda değil. Mutabakat SQL'i `net_sozlesme` sütunuyla bağımsız ikinci uygulamadır (CI eşitlik testi). **Borç uygulandı (CFO-002):** `cfo_metrik_borc()` (migration `20261009180000`) — kredi kalan + kart toplam +
 > kullanılan KMH; hedef `cfo_settings.debtTargetUsd` × TCMB; Goal `debt_below_usd` ve sipariş kapısı aynı kaynak. Üretim 09.10: 5.889.904 TL.
-> Sırada: kur (CFO-003 / D-P04).
+> **Kur uygulandı (CFO-003, D-P04 onayı 2026-10-09):** `lib/fx/strategic.ts` — TCMB döviz alış 15'i, yoksa önceki ay (B), yoksa
+> BİLİNMİYOR; TCMB ayı otomatik kaydedilir. Hedef ölçen tüm USD dönüşümleri (Goal, kapı, ciro hedefi, `/cfo`) aynı kur.
 
 Amaç: stratejik hedeflerin (ciro, net sermaye, borç) ve nakdin **tek** tanımı. Bugün yaşayan tüm tanımlar
 `scripts/cfo/metric-reconciliation.sql` ile tek satırda ölçülür (salt-okunur; CI'da üretim kopyasında koşar; Cowork da çalıştırabilir).

@@ -1,4 +1,5 @@
 import type { ReadSource, Row } from './sources';
+import { STRATEGIC_FX_SQL } from '../fx/strategic';
 /**
  * ESKİ eşik (CFO-002 öncesi): migration 20261009180000 üretimde uygulanana kadar sipariş kapısı bununla çalışır.
  * Sonrasında eşik = cfo_settings."debtTargetUsd" × TCMB aylık döviz alış (Goal Engine ile aynı kur) ve borç = cfo_metrik_borc().
@@ -26,8 +27,7 @@ export async function readOrderDebtGate(db:ReadSource,now=new Date()):Promise<De
     if(has?.contract===true){
       const [row]=await db.query<Row>(`select (select tutar from cfo_metrik_borc() where sira=100)::numeric as debt,
         (select "debtTargetUsd" from cfo_settings order by "updatedAt" desc limit 1)::numeric as target_usd,
-        (select usd_try_forex_buying from fm_memory_fx_monthly where usd_try_forex_buying is not null and month<=date_trunc('month',$1::timestamp)::date
-          order by month desc limit 1)::numeric as fx,
+        (select s.rate from (${STRATEGIC_FX_SQL}) s)::numeric as fx,
         ${FRESH}`,now.toISOString());
       const debt=row?.debt==null?null:Number(row.debt),usd=row?.target_usd==null?null:Number(row.target_usd),fx=row?.fx==null?null:Number(row.fx);
       const limit=usd!=null&&fx!=null&&usd>0&&fx>0?Math.round(usd*fx*100)/100:null;

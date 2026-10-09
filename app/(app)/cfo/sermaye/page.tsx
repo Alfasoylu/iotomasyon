@@ -83,8 +83,12 @@ export default async function CfoAllocationPage() {
       <Card className="mb-6 p-5">
         <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Ciro hedefine giden yol — gelir kaldıraçları</h2>
         <p className="mb-3 text-xs text-[var(--text-muted)]">
-          Bugün aylık ~{fmtTry(rv.currentMonthlyTry)} (son 90 gün ortalaması) · hedef {fmtTry(rv.targetMonthlyTry)} (100.000 USD × CFO kuru {rv.fx.toFixed(2)}) ·
-          açık <strong>{fmtTry(rv.gapMonthlyTry)}/ay</strong>. Sıra: önce ek sermaye istemeyen (parası ödenmiş ama satılamayan), sonra aylık brüt katkı / ek sermaye.
+          Bugün aylık ~{fmtTry(rv.currentMonthlyTry)} (son 90 gün ortalaması) ·{" "}
+          {rv.targetUnknown || rv.fx == null ? (
+            <>hedef <strong>bilinmiyor</strong> ({rv.fxLabel}) ·</>
+          ) : (
+            <>hedef {fmtTry(rv.targetMonthlyTry)} (100.000 USD × {rv.fx.toFixed(4)}, {rv.fxLabel}) · açık <strong>{fmtTry(rv.gapMonthlyTry)}/ay</strong>.</>
+          )} Sıra: önce ek sermaye istemeyen (parası ödenmiş ama satılamayan), sonra aylık brüt katkı / ek sermaye.
           Güvenle ağırlıklı kaldıraçlar açığın ~%{Math.round(rv.coveredShare * 100)}&apos;ini kapatıyor.
         </p>
         <CfoTable head={<tr><Th>#</Th><Th>Kaldıraç</Th><Th right>Aylık ciro</Th><Th right>Aylık brüt katkı</Th><Th right>Ek sermaye</Th><Th right>Batık sermaye</Th><Th right>Güven</Th><Th right>Açık payı</Th><Th>Engel</Th></tr>}>

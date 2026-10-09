@@ -70,11 +70,14 @@ export function WealthSection({
 
   // Manşet = net sermaye SÖZLEŞMESİ (CFO-001) varsa; cfo_servet "potansiyel değer" olarak yanında kalır.
   const netSatir = sozlesme?.find((k) => k.sira === 100) ?? null;
-  const kur = n(ozet.kur);
+  // USD = TL ÷ STRATEJİK kur (TCMB, CFO-003; Goal Engine ile aynı). Kur bilinmiyorsa eski görünüm kuru (etiketli).
+  const sk = veri.stratejikKur;
+  const kur = sk?.usdTry ?? n(ozet.kur);
+  const kurEtiket = sk ? sk.label : "cfo_servet kuru (stratejik kur bilinmiyor)";
   const potansiyelTry = n(ozet.servet_try);
-  const potansiyelUsd = n(ozet.servet_usd);
+  const potansiyelUsd = kur > 0 ? potansiyelTry / kur : n(ozet.servet_usd);
   const servetTry = netSatir ? n(netSatir.tutar) : potansiyelTry;
-  const servetUsd = netSatir ? (kur > 0 ? servetTry / kur : 0) : potansiyelUsd;
+  const servetUsd = kur > 0 ? servetTry / kur : 0;
   const varlik = n(ozet.varlik);
   const borc = n(ozet.borc);
   const riskli = n(ozet.riskli_haric_tutulan);
@@ -125,6 +128,7 @@ export function WealthSection({
             {fmtUsd(servetUsd)}
           </p>
           <p className="text-[11px] text-[var(--text-muted)]">{fmtTry(servetTry)}</p>
+          <p className="text-[10px] text-[var(--text-muted)]">kur {kur.toLocaleString("tr-TR")} · {kurEtiket}</p>
           {netSatir && (
             <p className="mt-1 text-[11px] leading-snug text-[var(--text-muted)]">
               stok maliyet ile KDV hariç satış değerinin düşüğüyle · potansiyel değer {fmtUsd(potansiyelUsd)}
@@ -216,7 +220,7 @@ export function WealthSection({
           <Uyari ton="warn">
             Romanya 1. partisi ({fmtTry(riskli)}) manşete <strong>dâhil değil</strong>: hukuki
             mülkiyet başkasında, müsadere riski var ve ardiye işliyor. Süreç lehe sonuçlanırsa
-            servet {fmtUsd(n(ozet.servet_riskli_dahil) / n(ozet.kur))} olur.
+            servet {fmtUsd(n(ozet.servet_riskli_dahil) / kur)} olur.
           </Uyari>
         )}
       </div>

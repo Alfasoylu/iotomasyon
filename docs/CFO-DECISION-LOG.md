@@ -36,9 +36,10 @@ D-P05 → KDV hariç, iade düşülmüş, tüm kanallar (Alfashome dahil, eski t
 | D-P01 | Net sermaye = **GENİŞ** tanım (yoldaki malın ödenmiş kısmı dahil) | — | — | CFO-001 PR-D |
 | D-P02 | Stok = **maliyet ile KDV hariç NRV'nin düşüğü (LCNRV)** | net sermaye **2.973.814 TL ≈ 61,2k USD** | "Stoku satış fiyatıyla değerlemek yanlıştı" | CFO-001 PR-D |
 | D-P03 | Borç = **krediler + kartlar + kullanılan KMH** (finansal borç). Yoldaki malın gümrüğü defterde iki taraflı (varlık + borç, net 0) kalır | ≈ 5,89M TL ≈ 121,3k USD (PR-A ölçümü; yeniden ölçülecek) | "doğru muhasebe o" | CFO-002 |
+| D-P04 | Stratejik kur = **TCMB döviz alış, ayın 15'i bülteni**; o ayın kuru yoksa önceki ay (işaretli, kalite B); hiç yoksa BİLİNMİYOR. Hedef ölçen tüm USD dönüşümleri bunu kullanır; `cfo_kur` / `cfo_settings.usdTryRate` yalnız operasyonel (ithalat/maliyet) | Eylül 48,5585 (Ekim bülteni 15.10'da) | Alperen onayı 2026-10-09 ("Onaylıyorum") | CFO-003 |
 | — | **Öncelik sırası:** önce KDV hariç ciro (RF-025), sonra sabit kurun 433 maliyetli üründeki etkisi ("marjın tabanı orada") | — | Cowork: maliyet doğrulamasında karşılaştırılabilen 8 üründen 4'ünde bulgu doğrulandı; kalan 433 maliyetli üründe yaygınlık bağımsız kaynakla ölçülemedi | CFO-025 (yeni) |
 
-Hâlâ bekleyen: D-P04 (stratejik kur), D-P05 (ciro hedefi KDV/kanal kapsamı), D-P06 (`unitCostTry` KDV esası), D-P07 (alarm kanalı).
+Hâlâ bekleyen: D-P05 (ciro hedefi KDV/kanal kapsamı), D-P06 (`unitCostTry` KDV esası), D-P07 (alarm kanalı).
 
 ## Sistem tasarım kararları (bu oturuma kadar, özet)
 
