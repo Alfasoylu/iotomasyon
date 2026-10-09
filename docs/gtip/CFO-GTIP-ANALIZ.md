@@ -76,3 +76,12 @@ Kaynak: `gtip-teyit.json` (Ocak 2026 GV listesi, RG 11506/11507, Bakanlık Temmu
 - **ÖTV %20 kesin:** hoparlör/kulaklık/amfi (85.18, amfi kartları dahil), konsol/oyun kolu (9504.50; yalnız PC gamepad'i BTB TR340000230015 emsaliyle 8471.60.70.90.19 → ÖTV yok), IR kumanda (8543.70.90.00.15), **RF kumanda (8526.92 — yeni bulgu)**.
 - **Düşük güvenli 28 ürün:** tek kod + gerekçe (20 orta, 8 düşük). Kamera braketi 8302.50 (İGV %15 + anti-damping 1,35 USD/kg — ikinci kaynakla yeniden okunmadı), buat/siperlik 3926.90, akrobat musluk ucu 8481.90.00.00.29, motor hız kartı 8537.10.98.
 - **Üretim:** `Product.gtip1` 433/433 maliyetli üründe 12 haneli (405 ilk tur + 39 teyit turu; her değişiklik `cfo_change_log`, eski değer korumalı). Oran tablosu (migration 20261009210000, 97 satır) uygulanmayı bekliyor.
+
+## Eksik oranlar tamamlandı (2026-10-09, migration 20261009220000)
+
+- Oran tablosunda karşılığı olmayan 51 maliyetli ürünün 35 GTİP'i eklendi (`cfo_gtip_tarife` 97 → 132 satır). Üretimde **433/433 maliyetli ürün oranlı**.
+- GV: 2026 İthalat Rejimi Kararı Excel listeleri, "7 = Diğer Ülkeler" sütunu (Çin). İGV: CB 10791 Ek-1 (listede yoksa 0). Dipnot (b) yalnız sivil hava taşıtı nihai kullanımı.
+- ÖTV (4760 sayılı Kanun (IV) sayılı liste, mevzuat.gov.tr konsolide metin 01.10.2026): yalnız **8519.81** ve **8521.90** %6,7; **8517.13.00.00.19** (Android el terminali) hücreselse cep telefonu bandı (%25/%40/%50 + asgari 456 TL/adet) — doğrulanmamış. Diğer 31 kod IV listesinde yok.
+- `AY-PIRSENSORSWITCH`: 8536.50.19.00.11 2026 tarifesinde yok → 8536.50.19.00.00 (GV %2,3); `cfo_change_log`'a yazıldı (`docs/cowork/2026-10-09-gtip-pir-duzeltme.sql`).
+- Belirsiz: 8504.31.80.90.11 İGV (Ek-1'de .90.19 var, .90.11 görülmedi → 0), 8519.81 MP3 modülü "aksam" sayılırsa ÖTV dışı. Ayrıntı: `docs/gtip/gtip-oranlar-ek-2026.json`.
+- Etki: yeni satırların 7'sinde stok var (~13 bin TL stok maliyeti); `duty_gap` değişmedi (3 ürün, ≈5.870 TL).
