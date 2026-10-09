@@ -1,6 +1,8 @@
 # Ürün maliyet Excel'i → sistem ürünleri eşleştirme + GTİP/gümrük önerisi (2026-10-10)
 
-> **Salt-okunur analiz.** Hiçbir maliyet, ağırlık, GTİP veya ürün kaydı yazılmadı. Öneriler `2026-10-10-maliyet-excel-eslestirme-oneri.json`'da (CFO kanıtı / yapılandırılmış öneri); uygulama ayrı onay + veri yazım adımı ister.
+> **UYGULANDI 2026-10-10 (Alperen: "muhtemeller doğru, kesinler doğru, conflictler doğru; deniz/havaya ithalat öneri motoru karar vermeli")** — KESİN + MUHTEMEL 343 satır → 336 ürün (aynı ürüne düşen satırlarda SKU birebir satır esas). Yazılan: `sourceCostRmb` 176 değişiklik (160 zaten aynıydı), `weightKg` 172, `customsRatePct` 335 (GTİP yasal yükü, `cfo_gtip_tarife`, sistem tanımı KDV+ÖTV dahil; FT232RL tarifesiz → değişmedi), `gtip1` 49, `importPaymentFeePct` = 5 (324), `shippingMethodPref` → NULL (35; deniz/hava kararını `lib/importer-cost.ts resolveShipping` yıllık ROI ile verir, kur aylık kur tablosundan). 1091 alan değişikliği `cfo_change_log`'da (area `maliyet`, eski → yeni). Eşzamanlılık korumalı (alan yalnız okunan eski değerdeyse yazıldı). Doğrulama: 336 ürünün son değerlerinin md5 özeti yerel beklenenle birebir (f06de57d…). **Değişmeyen:** `unitCostUsd` / `unitCostTry` (CFO marj/LCNRV/net sermaye — RF-033 kararı), CONFLICT 27 satır. Uygulama dosyası `docs/cowork/2026-10-10-maliyet-excel-uygulama.sql`.
+
+> **Analiz (önce salt-okunur yapıldı).** Hiçbir maliyet, ağırlık, GTİP veya ürün kaydı yazılmadı. Öneriler `2026-10-10-maliyet-excel-eslestirme-oneri.json`'da (CFO kanıtı / yapılandırılmış öneri); uygulama ayrı onay + veri yazım adımı ister.
 
 ## Kaynak
 

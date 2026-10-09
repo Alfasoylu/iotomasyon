@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 01:30 TR
-current_main_commit: c9da41f
+last_updated: 2026-10-10 02:00 TR
+current_main_commit: e1d8eda
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → CFO-011 maliyet Excel'i: 27 CONFLICT + 70 MUHTEMEL kararı ve deniz/hava + KDV esası (RF-033) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → RF-033 / CFO-011: unitCostUsd/unitCostTry'nin ithalat motoru maliyetine (RMB + motorun seçtiği navlun + GTİP gümrüğü) bağlanması kararı → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — maliyet Excel eşleştirmesi salt-okunur analiz (veri yazılmadı); RF-033 MEDIUM eklendi (doğrulanırsa HIGH ve 1./3. boyut yeniden puanlanır)"
+score_change: "unchanged — maliyet Excel'i 336 üründe RMB/ağırlık/GTİP gümrüğü olarak yazıldı (ithalat motoru girdileri); CFO maliyeti (unitCostTry) değişmedi, net sermaye ve maliyet kapsamı aynı — RF-033 kararıyla 1./3. boyut yeniden puanlanır"
 ---
 
 # CFO DECISION LOG
