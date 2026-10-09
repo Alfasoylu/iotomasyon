@@ -21,7 +21,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | IN_PROGRESS (PR-A ✓; PR-D kod ✓ 2026-10-09 — `cfo_metrik_net_sermaye()` + snapshot + Goal v3 + /cfo; migration 170000 Cowork bekliyor) | 001,011 |
 | 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | ✅ TAMAMLANDI 2026-10-09 — kalan anapara; PR #213 + migration 100000 üretimde | 005 |
-| 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | VALIDATED | 003 |
+| 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | IN_PROGRESS (D-P04 kararlandı 2026-10-09; `lib/fx/strategic.ts` + kapı + ciro hedefi + /cfo + otomatik TCMB kaydı ✓ kod; kalan: eski motor `|| 1`, SQL görünümleri) | 003 |
 | 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | IN_PROGRESS (kod ✓ 2026-10-09 — `cfo_metrik_borc()` + `debtTargetUsd` + Goal `debt_below_usd` + sipariş kapısı; migration 180000 Cowork bekliyor; `/cfo/borclar` toplamı kalan) | 002,019,020 |
 | 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | ✅ TAMAMLANDI 2026-10-09 — düz %4,5 kalktı: TS (PR #214) + kart kararı kart faiziyle (PR #215, migration 110000 üretimde) | 004 |
 | 6 | CFO-006 | Şirket/şahsi tek sınıflama; nakit/kapasite/borç bunu kullansın | P1 | G2,G3 | 4 | 4 | 3 | 3 | 1 | 2 | **5** | M | VALIDATED | 010 |
@@ -76,7 +76,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **hedef:** G1–G3 · **etki:** USD hedef ölçümleri tutarlı.
 - **bağımlılık:** karar (TCMB aylık döviz alış vs ay başı ölçüm `cfo_kur`); `lib/fx/current.ts` tek okuyucu.
 - **kabul:** CFO modüllerinde sabit kur yok; kur yoksa UNKNOWN; tüm sayfalar aynı kur.
-- **AI maliyeti:** 0 · **durum:** VALIDATED
+- **AI maliyeti:** 0 · **durum:** IN_PROGRESS — D-P04 Alperen onayı 2026-10-09 (TCMB döviz alış, 15'i; yoksa önceki ay işaretli; yoksa BİLİNMİYOR). Kod: `lib/fx/strategic.ts` (tek SQL + saf seçim; Goal Engine kuralıyla aynı) → sipariş borç kapısı eşiği, ciro hedefi (`revenue-levers-data`: sabit **45** yedeği kalktı; kur yoksa hedef BİLİNMİYOR), `/cfo` servet kartı USD'si (kaynak etiketiyle) ve AI kanıt etiketi. Otomatik kayıt: `lib/fm/tcmb-fx-sync.ts` — xml-sync `after()` bu ay ve önceki ay için eksikse TCMB bülteninden ekler (yalnız doğrulanmış değer, mevcut satıra dokunmaz, hata/bülten yoksa yazmaz). Operasyonel kur (`lib/fx/current.ts`: ithalat, ürün maliyeti, marj) ayrı kalır. Test `fx-strategic` (CI). **Kalan:** eski motor (`engine.ts` `usdTryRate || 1`; CFO-018 ile emekli), SQL `cfo_servet.kur` / `cfo_take_snapshot` `usdTryRate` (eski alanlar; Goal TCMB okur), `/cfo` rozeti işlem kuru olarak etiketlenecek.
 
 ### CFO-004 — `remainingOverride` TL olarak kullanılmasın
 - **neden:** Taksit sayısı TL'ye karışıyor (LATENT). **uygulama:** `cfo_servet_kalem`, `cfo_kilometre_yaz` migration (Cowork uygular), PGlite testi.

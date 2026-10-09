@@ -31,7 +31,7 @@ export function stockoutLever(rows: { sku: string; rev90: number; units90: numbe
   return { key: "stockout", label: `Stoksuz kalan ${rows.length} satan ürünü yeniden stokla`, revenueMonthlyTry: Math.round(rev), grossMonthlyTry: Math.round(gross),
     capitalNeededTry: Math.round(capital), sunkCapitalTry: 0, daysToRevenue: leadDays, confidence: 0.6,
     basis: `son 90 gün satılmış, bugün stok 0; aylık ciro = 90 gün cirosu/3; sermaye = ${coverDays} günlük örtü × maliyet (${rows.length - known.length} üründe maliyet yok)`,
-    blocker: "ithalat borç kapısı (yeni sipariş 5M TL borç altına inince) + öz nakit", grossPerCapital: capital > 0 ? gross / capital : null };
+    blocker: "ithalat borç kapısı (yeni sipariş, finansal borç hedefin altına inince) + öz nakit", grossPerCapital: capital > 0 ? gross / capital : null };
 }
 
 export function newProductsLever(agg: { n: number; notInCatalog: number; grossListTry: number; landedTry: number; salesMonths: number }): Lever | null {

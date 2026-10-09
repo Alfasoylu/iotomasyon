@@ -9,7 +9,8 @@
  */
 
 import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
-import { NextRequest, NextResponse } from "next/server";
+import { safeEnsureTcmbFx } from "@/lib/fm/tcmb-fx-auto";
+import { after, NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeCron } from "@/lib/cron-auth";
 import { runSync } from "@/lib/xml-sync-runner";
@@ -20,6 +21,8 @@ export const maxDuration = 300; // 5 min
 export async function GET(req: NextRequest) {
   const denied = authorizeCron(req);
   if (denied) return denied;
+  // Stratejik kur (CFO-003): TCMB aylık bülteni eksikse ekle — motor koşusundan önce, ~1-2 sn
+  after(() => safeEnsureTcmbFx().then(() => undefined));
   scheduleCfoCycle("daily_xml", { engine: "sync_xml", maxDurationSec: maxDuration });
 
   const sources = await prisma.xmlSyncSource.findMany({
