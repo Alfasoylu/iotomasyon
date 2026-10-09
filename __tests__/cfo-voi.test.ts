@@ -3,7 +3,7 @@
  * Çalıştır: node --import tsx __tests__/cfo-voi.test.ts
  */
 import assert from "node:assert/strict";
-import { decideAction, deadPriceVoi, financeFileVoi, importStatusVoi, rankVoi, skuCostVoi, staleBalanceVoi, textQuestionVoi, tlAmounts } from "../lib/cfo/voi";
+import { cardCostVoi, decideAction, deadPriceVoi, financeFileVoi, importStatusVoi, rankVoi, skuCostVoi, staleBalanceVoi, textQuestionVoi, tlAmounts } from "../lib/cfo/voi";
 import { classifySku } from "../lib/cfo/capital-efficiency";
 
 const H = 0.51667 / 12;
@@ -71,4 +71,12 @@ assert.ok(r.suppressedAsk.length >= 1, "bütçe dışı ASK bastırılır");
 assert.ok(r.decideNow.some(i => i.questionId === "kucuk"));
 assert.ok(r.unmeasured.some(i => i.questionId === "veri"));
 assert.ok(r.totalVoiTry > 0);
+// CFO-014: eşik faiz bilinmiyorsa eşiğe dayanan değerler ölçülemedi (null), %4 varsayılmaz
+const stN = staleBalanceVoi([{ name: "Ziraat", staleDays: 22, grossFlow30Try: 15000 }], 0, null, 30);
+assert.equal(stN[0].voiTry, null); assert.match(stN[0].basis, /eşik faiz bilinmiyor/);
+const ccN = cardCostVoi([{ name: "Enpara kart", totalDebtTry: 36000, revolvingTry: null, contractMonthlyRatePct: null }], null);
+assert.equal(ccN[0].voiTry, null);
+const tqN = textQuestionVoi([{ id: "n1", question: "KMH 250.000 TL kapatılsın mı?", area: "nakit" }], null);
+assert.equal(tqN[0].voiTry, null); assert.match(tqN[0].basis, /eşik faiz bilinmiyor/);
+
 console.log("CFO VOI: decide/ask/research rule, TR amount parsing, SKU cost flip, dead price EVPI, stale balance, import status, finance file, text questions, attention budget passed");

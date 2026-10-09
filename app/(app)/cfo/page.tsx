@@ -135,9 +135,9 @@ export default async function CfoPage() {
           href="/cfo/borclar"
         />
         <MetricCard
-          label="30 gün sonundaki nakit" value={fmtTry(h30?.position ?? 0)} icon={TrendingUp}
+          label="30 gün sonundaki nakit" value={h30 ? fmtTry(h30.position) : "bilinmiyor"} icon={TrendingUp}
           status={h30 ? (h30.traffic === "YESIL" ? "ok" : h30.traffic === "SARI" ? "warn" : "danger") : "neutral"}
-          hint={h30 ? `Giriş ${fmtTry(h30.inflow)} / Çıkış ${fmtTry(h30.outflow)}` : undefined}
+          hint={h30 ? `Giriş ${fmtTry(h30.inflow)} / Çıkış ${fmtTry(h30.outflow)}` : "30 günlük projeksiyon yok"}
           href="/cfo/nakit-akisi"
         />
       </section>

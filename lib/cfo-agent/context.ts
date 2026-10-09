@@ -65,11 +65,14 @@ export async function loadCfoContext(snapshot: CfoAgentSnapshot, config: CfoConf
   // B4 — servet iki türlü (A7): geniş (varlık − borç) ↔ dar (net sermaye), ikisi etiketli
   if (names.has("cfo_servet")) {
     const [w] = await db.query(`select servet_try, servet_usd, kur from cfo_servet limit 1`);
-    if (w) { s("cfo_servet", "servet.genis_try (varlık − borç)", num(w.servet_try), "TRY"); s("cfo_servet", "servet.genis_usd", num(w.servet_usd), "USD"); s("cfo_servet", "servet.kur", num(w.kur), "TRY/USD"); }
+    // Eski geniş servet: stok net değeri tahmin, kur elle girilen snapshot kuru → ölçüm değil (CFO-014); tek tanım = servet.dar_try (sözleşme)
+    if (w) { s("cfo_servet", "servet.genis_try (varlık − borç; eski tanım, stok tahmini)", num(w.servet_try), "TRY", false); s("cfo_servet", "servet.genis_usd", num(w.servet_usd), "USD", false); s("cfo_servet", "servet.kur (elle girilen snapshot kuru)", num(w.kur), "TRY/USD", false); }
   }
   if (names.has("fm_balance_day")) {
-    const [b] = await db.query(`select economic_date::text as d, value_try from fm_balance_day where metric_key='net_capital_try' order by economic_date desc limit 1`);
-    if (b) s("fm_balance_day", "servet.dar_try (net sermaye)", num(b.value_try), "TRY", true, String(b.d));
+    // En yeni tanım sürümü (v3 = sözleşme cfo_metrik_net_sermaye); aynı günde v2 ve v3 varsa v3 (sürümler karıştırılmaz)
+    const [b] = await db.query(`select economic_date::text as d, value_try, definition_version as v from fm_balance_day where metric_key='net_capital_try'
+      order by definition_version desc, economic_date desc limit 1`);
+    if (b) s("fm_balance_day", `servet.dar_try (net sermaye, tanım v${b.v})`, num(b.value_try), "TRY", true, String(b.d));
   }
   // B4b — banka bakiyesi ileri taşıma (haftalık bakiye + tarihi geçmiş takvim kalemleri; TAHMİNİ)
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date(at));

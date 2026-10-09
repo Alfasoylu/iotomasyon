@@ -127,7 +127,7 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **recommended_fix:** CFO-013.
 
 ### RF-20261008-016 — UNKNOWN → 0 / varsayılan; tahmin "ölçülmüş" bayrağıyla
-- **severity:** MEDIUM · **status:** OPEN · **commit:** 422a6db
+- **severity:** MEDIUM · **status:** IN_PROGRESS (2026-10-09 kısım 1: hurdle %4, downside startCash, goal-attribution 0 + sürüm karışması, ciro 0, ölçüm bayrakları, /cfo 30 gün nakit; kalan eski motor → CFO-018) · **commit:** 422a6db
 - **finding:** `engine.ts num()` null→0 (earlyPayoff), kur yedeği 1, kart asgari %20, nakde dönüşüm %70; revenue-levers kur 45 / hedef 100000 / ciro 0; hurdle %4; goal-attribution eksik metrik 0; `cfo_servet_kalem` coalesce 0; downside `startCash ?? 0`. revenue-evidence, context servet, capital-config tahminleri `measured=true`.
 - **recommended_fix:** CFO-014.
 

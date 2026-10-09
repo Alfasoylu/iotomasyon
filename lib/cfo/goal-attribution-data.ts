@@ -6,14 +6,23 @@ import { attribute, pace, type BalanceRow } from "./goal-attribution";
 // wealth_usd gözlemi (açık + gereken günlük hız).
 
 const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) ? 0 : Number(v));
+const numOrNull = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
 
 export async function loadGoalAttribution(q: SqlQuery, windows: number[] = [7, 30]) {
-  const rows = (await q<{ d: unknown; cash: unknown; recv: unknown; inv: unknown; debt: unknown; net: unknown }>(`select economic_date::text as d,
+  // Her metrik YALNIZ en yeni tanım sürümünden (CFO-001/002: net_capital_try / debt_try v3 = sözleşme; v2 ile karıştırılmaz) ve yalnız
+  // beş bileşenin de bilindiği günler: eksik bileşen 0 sayılmaz, o gün atıftan çıkar (CFO-014).
+  const raw = await q<{ d: unknown; cash: unknown; recv: unknown; inv: unknown; debt: unknown; net: unknown }>(`with v as (
+        select metric_key, max(definition_version) as mv from fm_balance_day group by metric_key),
+      b as (select b.* from fm_balance_day b join v on v.metric_key = b.metric_key and v.mv = b.definition_version)
+    select economic_date::text as d,
       max(value_try) filter (where metric_key='cash_try') as cash, max(value_try) filter (where metric_key='receivables_try') as recv,
       max(value_try) filter (where metric_key='inventory_value_try') as inv, max(value_try) filter (where metric_key='debt_try') as debt,
       max(value_try) filter (where metric_key='net_capital_try') as net
-    from fm_balance_day group by economic_date order by economic_date`).catch(() => []))
-    .map(r => ({ date: String(r.d), cash: num(r.cash), receivables: num(r.recv), inventory: num(r.inv), debt: num(r.debt), net: num(r.net) } as BalanceRow));
+    from b group by economic_date order by economic_date`).catch(() => []);
+  const rows = raw.flatMap(r => {
+    const x = { cash: numOrNull(r.cash), receivables: numOrNull(r.recv), inventory: numOrNull(r.inv), debt: numOrNull(r.debt), net: numOrNull(r.net) };
+    return Object.values(x).some(v => v == null) ? [] : [{ date: String(r.d), ...x } as BalanceRow];
+  });
   const [goal] = await q<{ gap: unknown; req: unknown }>(`select gap_try as gap, required_rate_try_per_day as req from fm_goal_observation
     where goal_key='wealth_usd' order by evaluated_at desc limit 1`).catch(() => []);
   if (rows.length < 2) return { available: false as const, rows: rows.length };

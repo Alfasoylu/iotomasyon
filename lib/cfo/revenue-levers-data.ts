@@ -28,6 +28,8 @@ export async function loadRevenueLevers(q: SqlQuery) {
   const fx = strategic?.usdTry ?? null;
   const landedFx = num(kur[0]?.v) ?? fx;
   const targetMonthlyTry = fx == null ? null : (num(set[0]?.usd) ?? 100000) * fx;
+  // Son 90 günde hiç satış satırı yoksa bugünkü ciro BİLİNMİYOR (kaynak boş olabilir): plan 0 ile kurulur ama işaretlenir (CFO-014)
+  const currentUnknown = num(cur[0]?.v) == null;
   const currentMonthlyTry = num(cur[0]?.v) ?? 0;
   const sea = num(set[0]?.sea) ?? 67, air = num(set[0]?.air) ?? 22;
   const scale = ce.skus.filter(s => s.cls === "SCALE");
@@ -40,6 +42,6 @@ export async function loadRevenueLevers(q: SqlQuery) {
       scale.reduce((s, r) => s + (r.monthlyContributionTry ?? 0), 0), sea),
   ];
   // hedef bilinmiyorsa açık 0 değil: plan hedefsiz kurulur ve targetUnknown işaretlenir
-  return { ...rankLevers(levers, currentMonthlyTry, targetMonthlyTry ?? currentMonthlyTry), targetUnknown: targetMonthlyTry == null, fx,
+  return { ...rankLevers(levers, currentMonthlyTry, targetMonthlyTry ?? currentMonthlyTry), targetUnknown: targetMonthlyTry == null, currentUnknown, fx,
     fxLabel: strategic?.label ?? "stratejik kur BİLİNMİYOR (fm_fx_monthly boş)", stockoutTop: so.slice(0, 10).map(r => ({ sku: r.sku, revMonthlyTry: Math.round((num(r.rev90) ?? 0) / 3) })) };
 }

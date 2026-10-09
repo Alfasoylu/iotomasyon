@@ -36,7 +36,8 @@ export type DownsideData = Downside & {
   startCash: number; resources: Resources;
   /** KMH dilimleri (hesap başına limit + ölçülmüş oran). measuredLimitTry = oranı bilinen limit; unknownRateLimitTry = bilinmeyen */
   kmh: { slices: KmhSlice[]; measuredLimitTry: number; unknownRateLimitTry: number };
-  floorTry: number | null; stressGapTry: number;
+  /** null = BİLİNMİYOR (taban gözlemi yok ya da projeksiyon eşliği bozuk) — 0 değil (CFO-014) */
+  floorTry: number | null; stressGapTry: number | null;
   parity: { days: number; mismatchDays: number };
 };
 
@@ -60,14 +61,17 @@ export async function loadDownside(q: SqlQuery): Promise<DownsideData | null> {
   const days: DayFlow[] = rows.map(r => ({ date: r.date, ledgerIn: Number(r.ledger_in), forecastIn: Number(r.forecast_in), out: Number(r.out), fxOut: Number(r.fx_out) }));
   const mismatchDays = rows.filter(r => Math.abs(Number(r.ledger_in) + Number(r.forecast_in) - (num(r.p_in) ?? NaN)) > 1
     || Math.abs(Number(r.out) - (num(r.p_out) ?? NaN)) > 1).length;
-  const startCash = num(gate[0].nakit) ?? 0;
+  // Başlangıç nakdi bilinmiyorsa stres testi yapılmaz (0 TL ile başlamak sahte bir dip üretir — CFO-014)
+  const startCash = num(gate[0].nakit);
+  if (startCash == null) return null;
+  // Bilinmeyen KMH limiti kaynak sayılmaz (tutucu: kullanılamayacak kredi varsayılmaz)
   const resources: Resources = { generalTry: num(gate[0].genel) ?? 0, customsTry: num(gate[0].amacli) ?? 0, personalTry: num(personal[0]?.tutar) };
   const slices = kmhSlices(accounts);
   const measuredLimitTry = slices.filter(s => s.monthlyRate != null).reduce((a, s) => a + s.limitTry, 0);
   const floorTry = num(floor[0]?.floor);
   const d = runDownside(days, startCash, resources, slices);
   return { ...d, startCash, resources, kmh: { slices, measuredLimitTry, unknownRateLimitTry: slices.reduce((a, s) => a + s.limitTry, 0) - measuredLimitTry },
-    floorTry, stressGapTry: floorTry == null || mismatchDays > 0 ? 0 : stressGapTry(d, floorTry), parity: { days: rows.length, mismatchDays } };
+    floorTry, stressGapTry: floorTry == null || mismatchDays > 0 ? null : stressGapTry(d, floorTry), parity: { days: rows.length, mismatchDays } };
 }
 
 /** cfo_bank_account satırları → KMH dilimleri (saf; test edilir). Oran ≤ 0 ya da boş → ölçülmedi. */

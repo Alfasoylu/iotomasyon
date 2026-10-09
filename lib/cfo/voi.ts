@@ -68,15 +68,16 @@ export function deadPriceVoi(rows: { sku: string; stock: number; unitCost: numbe
 
 /** Bayat banka bakiyesi: gerçek bakiye son 30 gün brüt hareketin bayat gün oranı kadar sapabilir. Karar: likidite açığına
  *  fon/tasfiye. Salınım = sapma × eşik faiz × dibe kalan ay; açık sapmayla işaret değiştirebiliyorsa karar değişir. */
-export function staleBalanceVoi(accounts: { name: string; staleDays: number; grossFlow30Try: number }[], liquidityGapTry: number, hurdleMonthly: number,
+export function staleBalanceVoi(accounts: { name: string; staleDays: number; grossFlow30Try: number }[], liquidityGapTry: number, hurdleMonthly: number | null,
   daysToDip: number, p: VoiParams = DEFAULT_VOI_PARAMS): VoiItem[] {
   return accounts.filter(a => a.staleDays > 7).map(a => {
     const dev = a.grossFlow30Try * Math.min(1, a.staleDays / 30);
     // Açık varken sapma açığın ≥ %25'i ise fon miktarı kararı değişir; açık yokken her sapma gizli bir açığı saklayabilir.
     const flips = liquidityGapTry > 0 ? dev >= liquidityGapTry * 0.25 : dev > 0;
     return item({ key: `stale-balance:${a.name}`, unknown: `${a.name} güncel bakiyesi (${a.staleDays} gün eski)`, decision: "likidite açığına fon / tasfiye",
-      rangeLoTry: r0(-dev), rangeHiTry: r0(dev), voiTry: r0(dev * hurdleMonthly * Math.max(1, daysToDip / 30)), decisionFlips: flips,
-      basis: `sapma ≈ 30 gün brüt hareket × ${a.staleDays}/30; değer = sapma × aylık eşik %${(hurdleMonthly * 100).toFixed(2)}`, resolver: "OWNER" }, p);
+      rangeLoTry: r0(-dev), rangeHiTry: r0(dev), voiTry: hurdleMonthly == null ? null : r0(dev * hurdleMonthly * Math.max(1, daysToDip / 30)), decisionFlips: flips,
+      basis: hurdleMonthly == null ? `sapma ≈ 30 gün brüt hareket × ${a.staleDays}/30; eşik faiz bilinmiyor — değer ölçülemedi`
+        : `sapma ≈ 30 gün brüt hareket × ${a.staleDays}/30; değer = sapma × aylık eşik %${(hurdleMonthly * 100).toFixed(2)}`, resolver: "OWNER" }, p);
   });
 }
 
@@ -92,13 +93,14 @@ export function importStatusVoi(projects: { code: string; status: string; eta: s
 /** Kart maliyeti bilinmiyor (devreden bakiye ya da akdi faiz girilmemiş): kart kapama ↔ kredi kapama sırası ve eşik getiri bu
  *  bilgiye bağlı. Değer ≈ tutar × eşik × ufuk / 4 (yanlış sıranın faiz farkı kabaca eşiğin dörtte biri; kaba, sıralama içindir). */
 export function cardCostVoi(cards: { name: string; totalDebtTry: number; revolvingTry: number | null; contractMonthlyRatePct: number | null }[],
-  hurdleMonthly: number, p: VoiParams = DEFAULT_VOI_PARAMS): VoiItem[] {
+  hurdleMonthly: number | null, p: VoiParams = DEFAULT_VOI_PARAMS): VoiItem[] {
   return cards.filter(c => c.totalDebtTry > 0 && (c.revolvingTry == null || (c.revolvingTry > 0 && c.contractMonthlyRatePct == null))).map(c => {
     const stake = c.revolvingTry ?? c.totalDebtTry;
     return item({ key: `card-cost:${c.name}`, unknown: `${c.name}: ${c.revolvingTry == null ? "devreden (faiz işleyen) bakiye" : "ekstredeki aylık akdi faiz"} girilmemiş`,
-      decision: "kart mı kredi mi önce kapatılır; eşik getiri", rangeLoTry: 0, rangeHiTry: r0(stake * hurdleMonthly * p.horizonMonths),
-      voiTry: r0((stake * hurdleMonthly * p.horizonMonths) / 4), decisionFlips: true,
-      basis: "ekstrede yazar (son ekstreden kalan borç + akdi faiz); tutar × eşik × ufuk / 4", resolver: "OWNER" }, p);
+      decision: "kart mı kredi mi önce kapatılır; eşik getiri", rangeLoTry: 0, rangeHiTry: hurdleMonthly == null ? r0(stake) : r0(stake * hurdleMonthly * p.horizonMonths),
+      voiTry: hurdleMonthly == null ? null : r0((stake * hurdleMonthly * p.horizonMonths) / 4), decisionFlips: true,
+      basis: hurdleMonthly == null ? "ekstrede yazar (son ekstreden kalan borç + akdi faiz); eşik faiz bilinmiyor — değer ölçülemedi"
+        : "ekstrede yazar (son ekstreden kalan borç + akdi faiz); tutar × eşik × ufuk / 4", resolver: "OWNER" }, p);
   });
 }
 
@@ -121,14 +123,14 @@ const MARGIN_AREAS = new Set(["marj", "satis", "stok", "siparis", "urun"]);
 
 /** Açık serbest metin sorular: kaba değer = metindeki en büyük TL × alan çarpanı (nakit alanı: bir aylık eşik faizi; marj
  *  alanı: %10). Tutarsız ya da finansal olmayan soru (veri/güvenlik) → değer null; ölçülenlerin arkasında sıralanır. */
-export function textQuestionVoi(questions: { id: string; question: string; area: string }[], hurdleMonthly: number, p: VoiParams = DEFAULT_VOI_PARAMS): VoiItem[] {
+export function textQuestionVoi(questions: { id: string; question: string; area: string }[], hurdleMonthly: number | null, p: VoiParams = DEFAULT_VOI_PARAMS): VoiItem[] {
   return questions.map(q => {
     const stake = Math.max(0, ...tlAmounts(q.question));
     const factor = CASH_AREAS.has(q.area) ? hurdleMonthly : MARGIN_AREAS.has(q.area) ? 0.1 : null;
     const voi = stake > 0 && factor != null ? r0(stake * factor) : null;
     return item({ key: `question:${q.id}`, questionId: q.id, area: q.area, unknown: q.question.slice(0, 140), decision: `${q.area} kararı`,
       rangeLoTry: 0, rangeHiTry: r0(stake), voiTry: voi, decisionFlips: true,
-      basis: voi == null ? (stake > 0 ? "alan finansal değil — değer ölçülemedi" : "metinde tutar yok — değer ölçülemedi") : `metindeki en büyük tutar ${r0(stake)} TL × ${CASH_AREAS.has(q.area) ? "aylık eşik faiz" : "%10"}`,
+      basis: voi == null ? (stake === 0 ? "metinde tutar yok — değer ölçülemedi" : CASH_AREAS.has(q.area) ? "eşik faiz bilinmiyor — değer ölçülemedi" : "alan finansal değil — değer ölçülemedi") : `metindeki en büyük tutar ${r0(stake)} TL × ${CASH_AREAS.has(q.area) ? "aylık eşik faiz" : "%10"}`,
       resolver: q.area === "veri" ? "CFO" : "OWNER" }, p);
   });
 }
