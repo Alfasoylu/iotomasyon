@@ -5,6 +5,8 @@
 --   * function and view bodies: whitespace collapsed; any JWT-shaped literal replaced by REDACTED
 --   * object owners, comments, extension version, sequence current values: not compared
 --   * ACLs: only the roles anon, authenticated, service_role, cfo_acceptance_reader and PUBLIC
+-- Function bodies are compared with SQL line comments removed (comments are not behaviour; an apply path that drops them must not
+-- look like drift — 2026-10-09: Cowork applied 110000/130000 without comments, executable code byte-identical).
 WITH rel AS (
   SELECT c.oid, c.relname, c.relkind, c.relrowsecurity rls, c.relforcerowsecurity frls, c.reloptions, c.relacl, c.relowner
   FROM pg_class c
@@ -35,7 +37,7 @@ fp AS (
   UNION ALL SELECT 'pol', p.tablename||'.'||p.policyname, md5(p.cmd||coalesce(array_to_string(p.roles, ','), '')||coalesce(p.qual, '')||coalesce(p.with_check, '')||p.permissive)
     FROM pg_policies p WHERE p.schemaname = 'public'
   UNION ALL SELECT 'view', r.relname, md5(regexp_replace(pg_get_viewdef(r.oid), '\s+', ' ', 'g')) FROM rel r WHERE r.relkind IN ('v','m')
-  UNION ALL SELECT 'fn', f.sig, md5(regexp_replace(regexp_replace(pg_get_functiondef(f.oid), 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', 'REDACTED', 'g'), '\s+', ' ', 'g')) FROM fn f
+  UNION ALL SELECT 'fn', f.sig, md5(regexp_replace(regexp_replace(regexp_replace(pg_get_functiondef(f.oid), '--[^\n]*', '', 'g'), 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', 'REDACTED', 'g'), '\s+', ' ', 'g')) FROM fn f
   UNION ALL SELECT CASE WHEN r.relkind = 'S' THEN 'seqacl' ELSE 'acl' END, r.relname||'.'||coalesce(g.rolname, 'PUBLIC'), md5(string_agg(x.privilege_type, ',' ORDER BY x.privilege_type))
     FROM rel r CROSS JOIN LATERAL aclexplode(coalesce(r.relacl, acldefault((CASE WHEN r.relkind = 'S' THEN 's' ELSE 'r' END)::"char", r.relowner))) x
     LEFT JOIN pg_roles g ON g.oid = x.grantee WHERE coalesce(g.rolname, 'PUBLIC') IN (SELECT rname FROM roles)

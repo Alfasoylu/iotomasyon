@@ -11,7 +11,7 @@ next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-09, CFO-025 ölçümü sonrası):** RF-005, RF-017, RF-028 RESOLVED · RF-025 FIX READY (iki migration Cowork'te) · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 9 · MEDIUM 12 (RF-029) · LOW 5 (yeni RF-030) · INFO 1 · toplam 30.
+**Açık özet (2026-10-09, üretim senkronu sonrası):** RF-004, RF-005, RF-017, RF-025, RF-028 RESOLVED · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 7 · MEDIUM 12 (RF-029) · LOW 6 (RF-030, yeni RF-031 MITIGATED) · INFO 1 · toplam 31.
 
 ---
 
@@ -356,4 +356,29 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 ### Bağımsız inceleme
 - Eksik gün 0 sayılmıyor, tahminle de doldurulmuyor (yalnız hız penceresinden çıkıyor). Kaynak bir daha hiç gelmezse (Entegra durursa) pencere
   daralır ve ay başında tam gün kalmaz → eski davranış + C notu + bayrak; `source_dead` alarmı ayrıca uyarır. Yeni red flag yok.
+
+---
+
+## 2026-10-09 — Üretim senkronu (110000 + 120000 + 130000, Cowork) RED FLAG PASS
+
+### RF-20261008-004 — güncelleme: RESOLVED (2026-10-09)
+- `cfo_kart_karari` üretimde kart akdi oranı × 1,30 ile; düz `kmhMonthlyRatePct` hiçbir hesapta yok. Üretim: Enpara 36.000 TL ertelemesi ~1.989 TL/ay.
+
+### RF-20261008-025 — güncelleme: RESOLVED (2026-10-09)
+- KDV hariç ciro: Nisan–Ekim her gün dolu (not B); Eylül 1.604.768 TL (KDV dahil 1.925.721). Hedef: hız yalnız tam kaynaklı günlerden
+  (58.318 TL/gün, projeksiyon 1.807.851 TL, rate_through 04.10, bayrak goal_sources_partial).
+
+### RF-20261009-031 — Cowork üretimde migration'sız değişiklik + uygulanan metin repo'dan farklı (YENİ, LOW, süreç)
+- **date:** 2026-10-09 · **severity:** LOW · **status:** MITIGATED
+- **finding:** (1) `cfo_gumruk_dilim` üretimde migration'sız düzeltildi ("09.10.2026 duzeltmesi": ödeme günü bugünse NULL; SINIR 2'de nakit çift
+  sayımı, fark 151.553,36 TL) — doğru düzeltme, ama repo'da yoktu → parmak izi kırıldı. (2) 110000/130000 yorum satırları silinerek, 120000'deki
+  `fm_quality_policy.reason` Türkçe karakterleri ASCII'ye çevrilerek uygulandı; `_prisma_migrations` checksum'ları repo dosyasınınki.
+  Yürütülen kod birebir (yorumsuz gövde hash'i eşit).
+- **mitigation:** capture migration `20261009140000_cfo_gumruk_dilim_capture` (üretim tanımı aynen; `_prisma_migrations` kaydı için Cowork'e
+  tek satırlık INSERT); parmak izi fonksiyon gövdesini SQL yorumları olmadan, `fm_quality_policy`'yi serbest metin `reason` olmadan karşılaştırır
+  (davranış farkı yine yakalanır). Kural önerisi: Cowork üretimde fonksiyon değiştirirse SQL'i Code'a da iletsin (capture aynı gün).
+
+### Gözlem (kayıt değişmez): nakit dibi
+- `cfo_kart_karari` bugün en dibi −3.862.998 TL (2027-01-01) gösteriyor (08.10: −3.578.121, 01.12). Ufuk 120 gün kaydıkça Ocak ödemeleri girdi;
+  ayrıca incelenecek (CFO-013 / RF-029 Yapı Kredi mükerrer satırları hâlâ projeksiyonda).
 

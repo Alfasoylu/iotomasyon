@@ -16,7 +16,7 @@ fp AS (
   UNION ALL SELECT r.scope, 'acl', r.relname||'.'||coalesce(g.rolname,'PUBLIC'), md5(string_agg(x.privilege_type, ',' ORDER BY x.privilege_type))
     FROM rel r JOIN pg_class c ON c.oid=r.oid CROSS JOIN LATERAL aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) x LEFT JOIN pg_roles g ON g.oid=x.grantee
     WHERE coalesce(g.rolname,'PUBLIC') IN ('PUBLIC','cfo_acceptance_reader') OR (r.scope='A' AND g.rolname IN ('anon','authenticated','service_role')) GROUP BY r.scope, r.relname, g.rolname
-  UNION ALL SELECT 'A', 'fn', p.proname||'('||pg_get_function_identity_arguments(p.oid)||')', md5(regexp_replace(pg_get_functiondef(p.oid),'\s+',' ','g')) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+  UNION ALL SELECT 'A', 'fn', p.proname||'('||pg_get_function_identity_arguments(p.oid)||')', md5(regexp_replace(regexp_replace(pg_get_functiondef(p.oid),'--[^\n]*','','g'),'\s+',' ','g')) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
     WHERE n.nspname='public' AND p.prokind='f' AND (p.proname LIKE 'fm\_%' OR p.proname='cfo_kargo_tahmin')
   UNION ALL SELECT 'A', 'fnacl', p.proname||'.'||coalesce(g.rolname,'PUBLIC'), 'x' FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
     CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) x LEFT JOIN pg_roles g ON g.oid=x.grantee
@@ -28,7 +28,7 @@ fp AS (
     SELECT 'fm_metric' n, md5(string_agg(m::text, E'\n' ORDER BY metric_key)) h FROM public.fm_metric m
     UNION ALL SELECT 'fm_quality_flag', md5(string_agg(m::text, E'\n' ORDER BY flag)) FROM public.fm_quality_flag m
     UNION ALL SELECT 'fm_source_priority', md5(string_agg(m::text, E'\n' ORDER BY channel, valid_from)) FROM public.fm_source_priority m
-    UNION ALL SELECT 'fm_quality_policy', md5(string_agg(m::text, E'\n' ORDER BY metric_key, channel, valid_from)) FROM public.fm_quality_policy m
+    UNION ALL SELECT 'fm_quality_policy', md5(string_agg(concat_ws('|', m.metric_key, m.channel, m.valid_from, m.valid_to, m.grade), E'\n' ORDER BY metric_key, channel, valid_from)) FROM public.fm_quality_policy m
     UNION ALL SELECT 'cfo_kargo_barem', md5(string_agg(m::text, E'\n' ORDER BY id)) FROM public.cfo_kargo_barem m
     UNION ALL SELECT 'cfo_kargo_kanal_varsayim', md5(string_agg(m::text, E'\n' ORDER BY channel)) FROM public.cfo_kargo_kanal_varsayim m
     UNION ALL SELECT 'cfo_kargo_desi_tarife', md5(string_agg(m::text, E'\n' ORDER BY carrier, valid_from, desi)) FROM public.cfo_kargo_desi_tarife m
