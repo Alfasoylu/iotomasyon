@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types/actions";
@@ -26,7 +26,7 @@ export async function upsertCatalogProfileAction(
   values: CatalogProfileInput,
 ): Promise<ActionResult<keyof CatalogProfileInput>> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.CATALOGS_CREATE))) return PERM_DENIED;
 
   const parsed = profileSchema.safeParse(values);
   if (!parsed.success) {
@@ -65,7 +65,7 @@ export async function deleteCatalogProfileAction(
   slug: string,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.CATALOGS_CREATE))) return PERM_DENIED;
   if (slug === "general") {
     return { ok: false, message: "GENERAL profili silinemez." };
   }

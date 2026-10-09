@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { alfasBaglanti } from "@/lib/alfashome/config";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types/actions";
@@ -47,7 +47,7 @@ export type AlfasAyarValues = z.infer<typeof ayarSchema>;
 
 export async function saveAlfashomeConfigAction(values: AlfasAyarValues): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.MARKETPLACE_POLICIES_MANAGE))) return PERM_DENIED;
 
   const parsed = ayarSchema.safeParse(values);
   if (!parsed.success) {
@@ -98,7 +98,7 @@ export async function testAlfashomeConnectionAction(): Promise<
   ActionResult & { connectionMessage?: string }
 > {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.MARKETPLACE_POLICIES_MANAGE))) return PERM_DENIED;
 
   const b = await alfasBaglanti();
   if (!b.baseUrl || !b.token) {

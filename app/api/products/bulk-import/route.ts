@@ -15,7 +15,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import { checkAllPermissions, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
@@ -34,11 +34,15 @@ function parseDecimal(val: unknown): number | null {
 }
 
 export async function POST(req: NextRequest) {
+  // Okuma izni + ürün güncelleme izni (RF-012); requirePermission() redirect atar, API'de JSON döner
+  let allowed = false;
   try {
-    await requirePermission(PERMISSIONS.EXECUTIVE_READ);
+    const user = await requireUser();
+    allowed = await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.PRODUCTS_UPDATE);
   } catch {
     return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
   }
+  if (!allowed) return NextResponse.json({ error: "Bu işlem için yetkiniz yok" }, { status: 403 });
 
   let formData: FormData;
   try {

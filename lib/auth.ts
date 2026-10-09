@@ -186,6 +186,13 @@ export async function checkPermission(
   return resolvePermission(user, permission);
 }
 
+/** Tüm izinler gerekli (RF-012 / CFO-016): yazma yolları okuma iznine EK olarak uygun yazma iznini ister — okuma izni
+ *  ("panoları görsün") verilen bir kullanıcı finansal/entegrasyon verisini değiştiremez. */
+export async function checkAllPermissions(user: ResolvedUser, ...permissions: string[]): Promise<boolean> {
+  for (const p of permissions) if (!(await resolvePermission(user, p))) return false;
+  return true;
+}
+
 // ── isOwner ───────────────────────────────────────────────────────────────────
 // Returns true only for the single business owner account (ADMIN_EMAIL env var).
 // Used to gate truly owner-only data (e.g. privateNote) — stricter than EXECUTIVE_READ,

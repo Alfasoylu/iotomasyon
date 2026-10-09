@@ -41,6 +41,9 @@ async function guardWrite() {
 
 /** Açık soru sayısı — rozet için. Limit kontrolü YOK. */
 export async function openQuestionCount(): Promise<number> {
+  // "use server" dosyasında dışa açık: istemciden çağrılabilir → oturum + CFO okuma izni (RF-012)
+  const user = await requireUser();
+  if (!(await checkPermission(user, PERMISSIONS.CFO_READ))) return 0;
   return prisma.cfoQuestion.count({ where: { status: "ACIK" } });
 }
 

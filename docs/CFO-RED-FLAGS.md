@@ -105,7 +105,7 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **recommended_fix:** CFO-017 (CFO-001 ile birlikte tek yazar).
 
 ### RF-20261008-012 — Güvenlik boşlukları
-- **severity:** MEDIUM · **status:** OPEN · **commit:** 422a6db
+- **severity:** MEDIUM · **status:** IN_PROGRESS (2026-10-09: yazma yolları okuma + yazma izni, openQuestionCount oturumlu, sistem not kaynağı korumalı; kalan API anahtarı şifreleme, Cowork salt-okunur rol, bypassrls bağlantı) · **commit:** 422a6db
 - **finding:** Yazma yolları okuma izniyle (EXECUTIVE_READ) korunuyor (Trendyol finans içe aktarma, satın alma siparişi, XML kaynak, API kimlik ayarları, toplu ürün içe aktarma); `openQuestionCount` yetkisiz server action; denetim `source` alanı çağıran tarafından verilebilir; pazaryeri API anahtarları düz metin sütunlarda; Cowork yazma yetkili ayrıcalıklı rolle bağlanıyor (okuyucu rol `cfo_gun_ozeti`'ni okuyamıyor); uygulama `postgres` (bypassrls) ile bağlanıyor.
 - **evidence:** ops denetimi §4.
 - **economic_risk:** yetkisiz finansal veri değişikliği; izlenemeyen düzeltmeler.

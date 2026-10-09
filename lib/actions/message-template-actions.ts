@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types/actions";
@@ -21,7 +21,7 @@ export async function createMessageTemplateAction(input: {
   body: string;
 }): Promise<ActionResult & { id?: string }> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.CAMPAIGNS_READ))) {
+  if (!(await checkAllPermissions(user, PERMISSIONS.CAMPAIGNS_READ, PERMISSIONS.CAMPAIGNS_CREATE))) {
     return { ok: false, message: "Bu işlem için yetkiniz yok." };
   }
 
@@ -56,7 +56,7 @@ export async function updateMessageTemplateAction(input: {
   isActive?: boolean;
 }): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.CAMPAIGNS_READ))) {
+  if (!(await checkAllPermissions(user, PERMISSIONS.CAMPAIGNS_READ, PERMISSIONS.CAMPAIGNS_UPDATE))) {
     return { ok: false, message: "Bu işlem için yetkiniz yok." };
   }
 
@@ -86,7 +86,7 @@ export async function updateMessageTemplateAction(input: {
 
 export async function deleteMessageTemplateAction(id: string): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.CAMPAIGNS_READ))) {
+  if (!(await checkAllPermissions(user, PERMISSIONS.CAMPAIGNS_READ, PERMISSIONS.CAMPAIGNS_DELETE))) {
     return { ok: false, message: "Bu işlem için yetkiniz yok." };
   }
 

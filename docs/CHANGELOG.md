@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Yazma işlemleri yazma izni istiyor (2026-10-09)
+
+- Finans içe aktarma, satın alma siparişi, XML kaynakları, pazaryeri API ayarları, şirket/sermaye ayarları, katalog profilleri, senkronlar ve mesaj şablonları artık okuma iznine ek olarak ilgili yazma iznini istiyor.
+- CFO notlarında sisteme ayrılmış kaynak adları kullanıcıya kapalı; açık soru sayısı yalnız oturum açmış, CFO okuma izni olan kullanıcıya dönüyor.
+
 ### Nakit tabanı tek ayardan (2026-10-09)
 
 - Taban alarmı ve motor bulguları, Goal Engine'in kullandığı CFO ayarındaki net pozisyon tabanını okuyor; ayardan değişen taban alarmlara da yansıyor.

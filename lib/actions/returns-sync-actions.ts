@@ -8,7 +8,7 @@
  * and upserts into TrendyolReturnRecord for the order ledger.
  */
 
-import { requirePermission } from "@/lib/auth";
+import { checkAllPermissions, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { fetchTrendyolReturns } from "@/lib/trendyol-api";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -18,7 +18,9 @@ export type ReturnsSyncResult =
   | { success: false; error: string };
 
 export async function syncTrendyolReturnsAction(): Promise<ReturnsSyncResult> {
-  await requirePermission(PERMISSIONS.EXECUTIVE_READ);
+  // Okuma izni + yazma izni (RF-012): requirePermission() server action'da redirect atar, burada sonuç döner
+  const user = await requireUser();
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.MARKETPLACE_RETURNS_ACTION))) return { success: false, error: "Bu işlem için yetkiniz yok." };
 
   const config = await prisma.trendyolConfig.findFirst();
   if (!config || !config.isEnabled) {

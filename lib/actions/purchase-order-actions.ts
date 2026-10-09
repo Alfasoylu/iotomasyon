@@ -9,7 +9,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { userFacingMessage } from "@/lib/safe-error-message";
 import type { ActionResult } from "@/types/actions";
@@ -58,7 +58,7 @@ export async function createPurchaseOrderAction(
   input: CreatePurchaseOrderInput,
 ): Promise<ActionResult & { orderId?: string }> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.PROCUREMENT_APPROVE))) return PERM_DENIED;
 
   if (input.items.length === 0) {
     return { ok: false, message: "En az bir ürün eklemelisiniz." };
@@ -120,7 +120,7 @@ export async function updatePurchaseOrderStatusAction(
   status: "DRAFT" | "CONFIRMED" | "ORDERED" | "SHIPPED" | "RECEIVED",
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.PROCUREMENT_APPROVE))) return PERM_DENIED;
 
   try {
     await prisma.$transaction(async tx=>{
@@ -146,7 +146,7 @@ export async function updatePurchaseOrderStatusAction(
 
 export async function deletePurchaseOrderAction(orderId: string): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.PROCUREMENT_APPROVE))) return PERM_DENIED;
 
   try {
     const order = await prisma.purchaseOrder.findUnique({
