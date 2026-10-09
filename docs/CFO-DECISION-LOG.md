@@ -39,7 +39,7 @@ D-P05 → KDV hariç, iade düşülmüş, tüm kanallar (Alfashome dahil, eski t
 | D-P04 | Stratejik kur = **TCMB döviz alış, ayın 15'i bülteni**; o ayın kuru yoksa önceki ay (işaretli, kalite B); hiç yoksa BİLİNMİYOR. Hedef ölçen tüm USD dönüşümleri bunu kullanır; `cfo_kur` / `cfo_settings.usdTryRate` yalnız operasyonel (ithalat/maliyet) | Eylül 48,5585 (Ekim bülteni 15.10'da) | Alperen onayı 2026-10-09 ("Onaylıyorum") | CFO-003 |
 | — | **Öncelik sırası:** önce KDV hariç ciro (RF-025), sonra sabit kurun 433 maliyetli üründeki etkisi ("marjın tabanı orada") | — | Cowork: maliyet doğrulamasında karşılaştırılabilen 8 üründen 4'ünde bulgu doğrulandı; kalan 433 maliyetli üründe yaygınlık bağımsız kaynakla ölçülemedi | CFO-025 (yeni) |
 
-| D-P08 | **"Akbank Alp" ŞAHSİ, "Garanti Alp" FİRMA** (Alperen 2026-10-09). Alperen'in ayrıca kayıtlarda tutulmayan bir Garanti şahsi hesabı var | şirket genel KMH 1.809.300 → 1.559.300; şahsi KMH 1.100.000 → 1.350.000; "her şey dahil" açık değişmez | veri düzeltmesi Cowork: `docs/cowork/2026-10-09-d-p08-akbank-alp-sahsi.sql` | CFO-006 |
+| D-P08 | **"Akbank Alp" ŞAHSİ; "Garanti Alp" banka hesabı GERÇEKTE YOK → pasif** (Alperen 2026-10-09, Garanti ekranları: 286-6293619 Alfa Soylu Ltd. KMH 500.000 = "Garanti"; 286-6673313 Alperen şahsi KMH 150.000 = "Garanti Alperen (şahsi)"). Şahsi bakiye takip edilmez | şirket genel KMH 1.809.300 → 1.359.300; şahsi KMH 1.100.000 → 1.350.000; "her şey dahil" açık −52.145 → −252.145 | veri düzeltmesi Cowork: `docs/cowork/2026-10-09-d-p08-akbank-alp-sahsi.sql` | CFO-006 |
 
 Hâlâ bekleyen: D-P05 (ciro hedefi KDV/kanal kapsamı), D-P06 (`unitCostTry` KDV esası), D-P07 (alarm kanalı).
 

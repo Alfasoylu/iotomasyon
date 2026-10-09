@@ -414,7 +414,8 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
   kapasitesi 450.000 TL fazla görünüyor (taban/kapasite alarmları). Karar: D-P08 (Alperen).
 
 ### RF-20261008-010 — güncelleme 2 (2026-10-09, D-P08 kararı)
-- Alperen: "Akbank Alp" şahsi, "Garanti Alp" firma. Akbank Alp'in 250.000 TL KMH'si şirket kapasitesinden çıkacak (veri düzeltmesi Cowork).
+- Alperen: "Akbank Alp" şahsi; "Garanti Alp" banka hesabı gerçekte yok (Garanti ekranlarıyla doğrulandı) → pasif. Şirket KMH kapasitesi
+  450.000 TL fazla görünüyordu (veri düzeltmesi Cowork); "her şey dahil" açık −52.145 → −252.145.
   Veritabanı görünümleri (`cfo_nakit_kapisi`, `cfo_kaynak_yeterliligi`, `cfo_onucus_temel`) yalnız tam "ŞAHSİ" yazımını tanır (ILIKE) —
   ASCII "SAHSI" yazılırsa hesap şirket kalır; görünümlerin `personalAccountSql` kuralına bağlanması (migration) bu riski kapatır.
 
