@@ -10,7 +10,8 @@
     "20261009170000_cfo_metrik_net_sermaye",
     "20261009180000_cfo_metrik_borc",
     "20261009190000_cfo_net_sermaye_maliyet_kdv_haric",
-    "20261009200000_fm_sales_alfashome"
+    "20261009200000_fm_sales_alfashome",
+    "20261009210000_cfo_gtip_tarife"
   ],
   "_note": "notAppliedInProduction: repo migrations deliberately NOT applied to production (pending an explicit approval). They are not registered by bootstrap and are not part of the production fingerprint; bootstrap reports them as pending.",
   "appliedAfterCapture": [

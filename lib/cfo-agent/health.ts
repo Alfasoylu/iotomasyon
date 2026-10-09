@@ -23,7 +23,7 @@ import { LOAN_AMOUNT_TOLERANCE } from "@/lib/cfo/payment-schedule";
 // Bildirim (GitHub işi kırmızı → e-posta) yalnız arıza, YENİ alarm ya da sabah koşusundaki (06:00–10:59 TR) günlük hatırlatmada:
 // süregelen bir taban alarmı her koşuda e-posta üretmez; yine de her koşuda cfo_gun_ozeti'nde görünür.
 
-export type AlarmCode = "engine_stale" | "consecutive_failures" | "stuck_run" | "floor_breach" | "payment_unmarked" | "ledger_stale" | "schedule_duplicate" | "source_dead" | "capacity_breach";
+export type AlarmCode = "engine_stale" | "consecutive_failures" | "stuck_run" | "floor_breach" | "payment_unmarked" | "ledger_stale" | "schedule_duplicate" | "source_dead" | "capacity_breach" | "duty_gap";
 export type CfoAlarm = { code: AlarmCode; key: string; message: string };
 export type EngineRunInfo = { status: string; generatedAt: Date; finishedAt: Date | null; error: string | null };
 export type DueItem = { label: string; amountTry: number | null; due: string };
@@ -39,7 +39,11 @@ export type AlarmInput = {
   scheduleDuplicates?: ScheduleDuplicate[];
   /** KMH kapasitesi ve projeksiyon yolu (cfo_nakit_kapisi + cfo_nakit_projeksiyon(120)); yoksa kapasite alarmı değerlendirilmez */
   capacity?: { generalTry: number; customsTry: number; personalTry: number | null; path: { date: string; position: number }[] } | null;
+  /** CFO-026: stoklu ve kayıtlı gümrük %'si yasal yükün (GV + İGV + KDV, cfo_gtip_yuk) DUTY_GAP_POINTS'ten fazla altında kalan ürünler */
+  dutyGap?: { count: number; missingTry: number; worst: { sku: string; kayitliPct: number; yasalPct: number } | null } | null;
 };
+/** Kayıtlı gümrük % yasal yükün bu kadar puan altındaysa maliyet eksik sayılır (yuvarlama/masraf payı toleransı). */
+export const DUTY_GAP_POINTS = 5;
 
 export const ENGINE_STALE_HOURS = 20;
 /** Motor koşusu ~2 dk sürer; Vercel fonksiyon sınırı 300 sn. Bundan uzun 'running' kalan koşu öldürülmüş sayılır (CFO-009). */
@@ -98,6 +102,12 @@ export function evaluateCfoAlarms(i: AlarmInput): CfoAlarm[] {
       out.push({ code: "capacity_breach", key: "capacity_breach:general", message: `Nakit pozisyonu ${beyondGeneral.date}'de ${tl(beyondGeneral.position)} — genel KMH'yi (${tl(g)}) ${tl(-beyondGeneral.position - g)} aşıyor; yalnız gümrük Ziraat'ten ödenirse amaca bağlı limit (${tl(c)}) kapatır` });
     }
   }
+  // Maliyet eksik: kayıtlı gümrük % yasal yükün altında → marj ve stok değeri olduğundan iyi görünür (CFO-026). Anahtar sayısız:
+  // süregelen durum her koşuda yeni bildirim üretmez; cfo_gtip_yuk ürün listesini verir.
+  if (i.dutyGap && i.dutyGap.count > 0) {
+    const w = i.dutyGap.worst;
+    out.push({ code: "duty_gap", key: "duty_gap", message: `${i.dutyGap.count} stoklu üründe kayıtlı gümrük % yasal yükün (GV + İGV + KDV) ${DUTY_GAP_POINTS}+ puan altında — stok maliyeti ~${tl(i.dutyGap.missingTry)} eksik${w ? `; en büyük: ${w.sku} (kayıtlı %${w.kayitliPct}, yasal %${w.yasalPct})` : ""} (cfo_gtip_yuk)` });
+  }
   if (i.staleBankAccounts.length)
     out.push({ code: "source_dead", key: "source_dead:banka", message: `Banka bakiyesi 7 günden eski: ${i.staleBankAccounts.join(", ")}` });
   return out;
@@ -130,6 +140,17 @@ export function unmarkedPaymentsSql(today: string, afternoon: boolean): string {
 // Banka eşleşmesi lib/cfo/payment-schedule.ts sameBank ile aynı: yapısal `bank` sütunu ya da açıklama; Türkçe I/İ/ı katlanır.
 const fold = (x: string) => `lower(translate(${x}, 'İIı', 'iii'))`;
 const bankMatch = (b: string) => `(${fold("coalesce(e.bank, '')")} = ${fold(b)} or ${fold("coalesce(e.description, '')")} like '%' || ${fold(b)} || '%')`;
+
+/** CFO-026: kayıtlı gümrük % < yasal yük − DUTY_GAP_POINTS olan stoklu ürünler — sayı, eksik stok maliyeti, en büyük etki. */
+export function dutyGapSql(): string {
+  return `with g as (select sku, kayitli_pct, yasal_yuk_pct, eksik_maliyet_tl from cfo_gtip_yuk
+      where kayitli_pct is not null and yasal_yuk_pct is not null and stok > 0 and kayitli_pct < yasal_yuk_pct - ${DUTY_GAP_POINTS})
+    select count(*)::int as n, coalesce(sum(eksik_maliyet_tl), 0) as t,
+      (select sku from g order by eksik_maliyet_tl desc limit 1) as sku,
+      (select kayitli_pct from g order by eksik_maliyet_tl desc limit 1) as k,
+      (select yasal_yuk_pct from g order by eksik_maliyet_tl desc limit 1) as y
+    from g`;
+}
 
 /** Mükerrer taksit (CFO-010): projeksiyon ufkunda (120 gün) banka × ay bekleyen KREDI_TAKSITI satırı > o bankadaki aktif kredi. */
 export function scheduleDuplicateSql(today: string): string {
@@ -172,7 +193,7 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
   const p = istanbulPeriod(now), afternoon = p.minutes >= 15 * 60;
   const today = p.date;
   const q = <T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql).catch(() => [] as T[]);
-  const [runs, dip, events, xml, ty, entegra, banks, gate, personal, gaps, dups] = await Promise.all([
+  const [runs, dip, events, xml, ty, entegra, banks, gate, personal, gaps, dups, duty] = await Promise.all([
     prisma.cfoRun.findMany({ where: { idempotencyKey: { startsWith: "engine:" }, generatedAt: { gte: new Date(now.getTime() - 48 * H) } }, orderBy: { generatedAt: "desc" }, take: 20,
       select: { status: true, generatedAt: true, finishedAt: true, error: true } }),
     q<{ v: unknown; d: string | null }>(`select pozisyon as v, tarih::text as d from cfo_nakit_projeksiyon(120) order by tarih`),
@@ -185,6 +206,8 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
     q<{ t: unknown }>(`select tutar as t from cfo_kaynak_yeterliligi() where kalem ilike 'Sahsi KMH%' limit 1`),
     q<{ label: string; amount: unknown; due: string }>(ledgerGapSql(today)),
     q<ScheduleDuplicate>(scheduleDuplicateSql(today)),
+    // cfo_gtip_yuk (migration 20261009210000) yoksa q() boş döner → alarm değerlendirilmez
+    q<{ n: unknown; t: unknown; sku: string | null; k: unknown; y: unknown }>(dutyGapSql()),
   ]);
   const path = dip.map(r => ({ date: String(r.d), position: num(r.v) })).filter((r): r is { date: string; position: number } => r.position != null);
   const low = path.reduce<{ date: string; position: number } | null>((m, d) => (!m || d.position < m.position ? d : m), null);
@@ -200,6 +223,8 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
       { name: "Entegra", lastAt: entegra?.createdAt ?? null, maxAgeHours: 8 * 24 }],
     staleBankAccounts: banks.map(b => b.name),
     staleLedger: gaps.map(due),
+    dutyGap: duty[0] ? { count: num(duty[0].n) ?? 0, missingTry: num(duty[0].t) ?? 0,
+      worst: duty[0].sku ? { sku: String(duty[0].sku), kayitliPct: num(duty[0].k) ?? 0, yasalPct: num(duty[0].y) ?? 0 } : null } : null,
     scheduleDuplicates: dups.map(d => ({ bank: String(d.bank), month: String(d.month), count: Number(d.count), expected: Number(d.expected), rows: String(d.rows) })),
   };
 }
