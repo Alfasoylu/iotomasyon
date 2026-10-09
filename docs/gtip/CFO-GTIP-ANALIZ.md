@@ -65,3 +65,14 @@ Oran bulunan ürün: 348/433 (stok değerinin %81'i). Oran satırı olmayan kodl
 - Anti-damping taraması kapsamlı değil (menteşe 1,35 USD/kg teyitli; mekanik silindirli kilit 0,74 USD/adet).
 - Üretime yazım (Alperen onayı + Cowork): `Product.gtip1` düzeltmesi (317 ürün) ve GTİP oran tablosu; yasal iniş maliyeti modeli (kayıtlı maliyetle yan yana, sapma alarmı).
 
+
+## Teyit turu ve üretim uygulaması (2026-10-09, Alperen: "cevabını sen bul, GTİP düzeltmelerini sen yap, tam yetkilisin")
+
+Kaynak: `gtip-teyit.json` (Ocak 2026 GV listesi, RG 11506/11507, Bakanlık Temmuz 2026 konsolide İGV, ÖTV IV sayılı liste).
+
+- **El telsizi → `8517.69.90.90.24`** ("CB, 49 MHz ve diğer amatör telsiz cihazları"). GV 0, İGV 0, **ÖTV %20**, TAREKS telsiz denetimi. 8525.60 yayın vericisi; 8517.62.00.90.xx 2026/36 ile ÖTV listesinde yalnız akıllı saat. 8517.62 ile beyan → ÖTV + faiz + ceza riski. BTB başvurusu önerilir.
+- **Kart okuyucu → `8471.70.98.90.00`** (bellek birimi; CBP N035358, AB rehberi); hub/OTG ağırlıklı 3 ürün `8471.80.00.00.00` (Türk BTB emsali). Üçünde de GV/İGV/ÖTV 0 — seçim vergi yükünü değiştirmez.
+- **IP kamera ÖTV: belirsiz.** IV listesi "yalnız TV kameraları ve dijital kameralar" (eski 8525.80.11/19/30); görüntü kaydedici kameralar (eski 8525.80.91/99) dışarıda. microSD'ye kayıt yapan kameralar için dışarıda kalma argümanı güçlü (ABAD C-435/15 GROFA); kayıtsız ağ kamerası TV kamerası sayılır → %20. GİB özelgesi önerilir.
+- **ÖTV %20 kesin:** hoparlör/kulaklık/amfi (85.18, amfi kartları dahil), konsol/oyun kolu (9504.50; yalnız PC gamepad'i BTB TR340000230015 emsaliyle 8471.60.70.90.19 → ÖTV yok), IR kumanda (8543.70.90.00.15), **RF kumanda (8526.92 — yeni bulgu)**.
+- **Düşük güvenli 28 ürün:** tek kod + gerekçe (20 orta, 8 düşük). Kamera braketi 8302.50 (İGV %15 + anti-damping 1,35 USD/kg — ikinci kaynakla yeniden okunmadı), buat/siperlik 3926.90, akrobat musluk ucu 8481.90.00.00.29, motor hız kartı 8537.10.98.
+- **Üretim:** `Product.gtip1` 433/433 maliyetli üründe 12 haneli (405 ilk tur + 39 teyit turu; her değişiklik `cfo_change_log`, eski değer korumalı). Oran tablosu (migration 20261009210000, 97 satır) uygulanmayı bekliyor.

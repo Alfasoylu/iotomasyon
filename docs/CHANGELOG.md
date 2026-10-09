@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### GTİP, gümrük oranları, KDV hariç stok değeri ve Alfashome cirosu üretimde (2026-10-09)
+- Maliyetli 433 ürünün tamamının GTİP'i 2026 tarifesine göre 12 haneli doğru koda çekildi (her değişiklik eski/yeni değeriyle değişiklik günlüğünde); el telsizleri 8517.69.90.90.24.
+- GTİP bazında yasal gümrük yükü tablosu (97 kod: gümrük vergisi, ilave gümrük vergisi, KDV, ÖTV) ve ürün bazında yasal yük görünümü; kayıtlı gümrük oranı yasal yükün belirgin altındaki stoklu ürünler alarm üretir (bugün 3 ürün, ≈5.870 TL).
+- Net sermayede stok, KDV hariç maliyet ile KDV hariç net gerçekleşebilir değerin düşüğüyle ölçülüyor: net sermaye 2.886.674 → 2.322.365 TL.
+- Alfashome (musluk sitesi) siparişleri satış katmanında ayrı kanal: Ekim'de 3 sipariş, 14.865 TL; test siparişleri hariç.
+- 12 üründe gümrük yüzdesinin üstüne ikinci kez eklenmiş KDV düzeltildi; Akbank Alp şahsi, Garanti Alp pasif.
+
 ### KDV hariç ciro ve tam günlere dayalı ciro hedefi üretimde (2026-10-09)
 - Günlük satış hafızasında KDV hariç ciro artık her gün dolu (Nisan–Ekim; Eylül 1.604.768 TL). Trendyol satırlarında kaynakta olmayan KDV hariç tutar, ürünün pazaryeri KDV oranından (yoksa %20) türetiliyor ve kaynağı işaretleniyor.
 - Aylık ciro hedefinin hızı ve projeksiyonu yalnız tüm satış kaynaklarının tamam olduğu günlerden hesaplanıyor; eksik son günler hızı düşürmüyor (09.10: 51.941 → 58.318 TL/gün).

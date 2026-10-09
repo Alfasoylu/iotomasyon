@@ -1,0 +1,1349 @@
+{
+ "_meta": {
+  "tarih": "2026-10-09",
+  "kapsam": "Çin menşei; GV = İthalat Rejimi Kararı II sayılı liste 7. sütun (DÜ); İGV = 3351 Ek-1 DÜ sütunu",
+  "gv_kaynagi": "2026 İRK Excel listeleri (10790, Ocak 2026) + 11506 Ek-1 (11.07.2026, RG görüntüsü okundu)",
+  "igv_kaynagi": "Ticaret Bakanlığı konsolide İGV Ek-1 (10791 + 11508 işlenmiş; zip dosya tarihi 17.07.2026)",
+  "tgtc_kaynagi": "gumruk.com.tr TGTC sayfaları (11507 sonrası güncel ulusal kırılımlar görünüyor) + 11507 RG görüntüsü",
+  "otv_kaynagi": "IV sayılı liste konsolide metni (orgtr.org; 5431 sayılı CBK listesi, 24.10.2025 değişikliği işlenmiş). mevzuat.gov.tr ve resmigazete.gov.tr erişimi zaman aşımına uğradı. 2026'da IV listesini değiştiren bir karar aramalarda bulunamadı.",
+  "kdv": "%20 genel oran (7346 sayılı CBK, RG 07.07.2023); listedeki hiçbir kalem I/II sayılı indirimli listede değil",
+  "uyari": "Araştırma niteliğindedir; beyan öncesi gümrük müşaviri/BTB ile teyit edilmelidir."
+ },
+ "dusuk_guven": [
+  {
+   "sku": "21579000",
+   "ad": "3in1 Lightning Micro Usb Type-c To Hdmı Ios Android Görüntü Aktarıcı Kablo 1.5m",
+   "gtip": "8543.70.90.00.19",
+   "gerekce": "Telefonun dijital çıkışını (Lightning/MHL/USB-C) HDMI'ya çeviren aktif dönüştürücü çip içerir; kablo kısmı yardımcıdır. GYK 1, 3(b), 6: esas karakter sinyal dönüştürme → 85.43 (kendine özgü fonksiyonlu elektrikli cihaz), 8544.42 değil. Video sinyal dönüştürücülerinde UK ATaR uygulaması tutarlı biçimde 8543 70 90. TR'de bu ürün tipine BTB bulunamadı. Ürün pasif kablo ise (çip yoksa) 8544.42.90.00.19 olur (GV 3,3 + İGV 15).",
+   "kaynak": [
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600010951",
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600010955",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf"
+   ],
+   "guven": "orta",
+   "gv": 3.7,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8544.42.90.00.19 (yalnız pasif kablo ise)",
+   "onceki_gtip": "8543.70.90.00.19"
+  },
+  {
+   "sku": "240610000",
+   "ad": "Mouse Jiggler Zamanlayıcılı Farkedilemeyen Fare İmleç Taşıyıcı Mouse İmleç Oynatıcı Hareket Cihazı",
+   "gtip": "8479.89.97.90.19",
+   "gerekce": "'Farkedilemeyen' tip, fareyi motorlu döner tabla ile hareket ettirir ve bilgisayara bağlanmaz. Bu nedenle 84.71 birimi değildir. Mekanik iş gören elektrik motorlu cihaz olduğu için 85.43 değil 84.79 (kendine özgü fonksiyonlu makine) → 8479.89.97.90.19 'Diğerleri'. TR BTB'ler motorlu mekanik aktüatörleri de aynı koda veriyor (ör. TR340000250092, TR160000260015). USB dongle tipi olsaydı 8471.60.70.90.19 olurdu (vergi farkı yok).",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8479",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 1.7,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8471.60.70.90.19 (USB fare emülatörü tipi ise)",
+   "onceki_gtip": "8479.89.97.90.19"
+  },
+  {
+   "sku": "4000125478965",
+   "ad": "Güvenlik Kamerası Elektrik Montaj Buatı Bağlantı Kutusu 12cm",
+   "gtip": "3926.90.97.90.29",
+   "gerekce": "Buat kameranın 'aksamı' değil, montaj aksesuarıdır. 85.29 yalnız aksam-parçayı kapsar, aksesuarı kapsamaz. Bu nedenle maddesine göre sınıflandırılır. Plastik (ABS) buat varsayıldı → 39.26 'Diğerleri'. Malzeme doğrulanmadı. Alüminyum ise 76.16, çelik ise 73.26 olur.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=3926",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 6.5,
+   "igv": 10,
+   "otv": 0,
+   "alternatif": "7616.99.90.90.19 / 7326.90.98 (metal ise); 8529.90.96.90.00 (yalnız belirli kamera modeline özgü gövde parçası ise)",
+   "onceki_gtip": "8529.90.96.90.00"
+  },
+  {
+   "sku": "419456541219",
+   "ad": "Bullet Kamera Montaj Ayağı 19cm Ayarlanabilir Başlı Muhafaza Braketi",
+   "gtip": "8302.50.00.00.00",
+   "gerekce": "Duvar/tavan montaj braketi aksesuardır, kameranın parçası değildir. Adi metalden braketler Bölüm XV Not 2 gereği 'genel kullanılan parça' sayılır ve Bölüm XVI Not 1(g) ile 85. fasıldan çıkarılır → 83.02. TR BTB emsalleri aynı yönde: TV askı aparatı TR340000220110, klima braketi TR350000240087 ve projeksiyon tavan askısı TR340000250047 → 8302.50.00.00.00. DİKKAT: 8302.50 için Çin menşeine 1,35 USD/kg anti-damping var (Tebliğ 2023/12). Bu bilgi önceki araştırmadan alındı, bu turda yeniden okunmadı. Plastik braket ise 3926.90.97.90.29.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8302",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 2.7,
+   "igv": 15,
+   "otv": 0,
+   "alternatif": "3926.90.97.90.29 (plastik ise)",
+   "onceki_gtip": "8529.90.96.90.00"
+  },
+  {
+   "sku": "4201545632178",
+   "ad": "Güvenlik Kamerası ve Kapı Zili Yağmur Güneş Koruyucu Gölgelik Siper Koruyucu Plastik Kılıf Siperlik",
+   "gtip": "3926.90.97.90.29",
+   "gerekce": "Plastik siperlik hem kamera hem kapı zili için kullanılıyor. 'Yalnız veya esas olarak' tek bir cihaza özgü olmadığı ve aksesuar niteliği taşıdığı için 85.29 değildir. Maddesine göre 39.26 'Diğerleri' (11507 sonrası .90.29).",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=3926",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 6.5,
+   "igv": 10,
+   "otv": 0,
+   "alternatif": null,
+   "onceki_gtip": "8529.90.96.90.00"
+  },
+  {
+   "sku": "418301836254",
+   "ad": "Elektronik Şarjlı Hava Pompası ve Giysi Vakumu Tiny Pump2 X Şişirme ve Vakumlama Aleti",
+   "gtip": "8414.80.80.90.19",
+   "gerekce": "Şişirme ve vakumlama yapan, bataryalı elektrikli hava pompası (yaklaşık 4 kPa, 180 L/dk). 84.13 sıvı pompasıdır, bu ürün için yanlıştır. 84.14 içinde 'diğer hava pompaları' → 8414.80.80.90.19. Fan/blower (santrifüj) olarak görülürse 8414.59.35.90.00 olur. İki kodda da İGV 0, GV %2,2–2,3, yani mali fark yok. Lamba fonksiyonu ikincildir (GYK 3b).",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8414",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.backpackinglight.com.au/products/flextail-tiny-pump-2x"
+   ],
+   "guven": "orta",
+   "gv": 2.2,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8414.59.35.90.00 (santrifüj fan görüşü; GV 2,3, İGV 0)",
+   "onceki_gtip": "8414.80.80.90.19"
+  },
+  {
+   "sku": "4324570975",
+   "ad": "Mikroskop 2'li Set Çocuk Eğitici Biyolojik Mikroskop Seti Ve Kiti Zoom Led Işıklı 100x 400x 1200x",
+   "gtip": "9011.80.00.00.00",
+   "gerekce": "1200x'e kadar büyüten, ışıklı ve fonksiyonel bileşik optik mikroskop. Esas karakter mikroskoptur (GYK 3b). UK ATaR 600016085: 100–450x ışıklı plastik mikroskop seti → 9011 80 00. Düşük büyütmeli oyuncak tipler ise 95.03'e gidiyor (ATaR 600010011 → 9503 00 70). 1200x gerçek optik büyütme olduğundan 90.11. Not: GV 6,7 > 9503 seçeneğinin GV 4,7'si, ama 9503.00.70.00.11 İGV %25 olduğundan toplam yük 9011'de daha düşük.",
+   "kaynak": [
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600016085",
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600010011",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9011",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip"
+   ],
+   "guven": "orta",
+   "gv": 6.7,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "9503.00.70.00.11 (oyuncak set görüşü; GV 4,7 + İGV 25)",
+   "onceki_gtip": "9011.80.00.00.00"
+  },
+  {
+   "sku": "4407846451043",
+   "ad": "360° Dönebilen Çok Fonksiyonlu Robot Siyah Mutfak ve Banyo Çanak Akrobat Lavabo Bataryası Musluk",
+   "gtip": "8481.90.00.00.29",
+   "gerekce": "Piyasadaki 'akrobat musluk ucu' ABS plastikten, mevcut musluğun ağzına takılan, 1080° dönen, 2 modlu (köpük/duş) uç aparatıdır. Su kesme ve karıştırma yapmaz → musluk aksamı (84.81 aksam ve parçalar). 11507 (RG 11.07.2026) ile 8481.90 yeniden bölündü: '-- Diğerleri (metal döküm olmayan) / --- Diğerleri' → .00.29. Pirinçse .00.22. Ürün tam batarya çıkarsa 8481.80.11.00.00. Tüm seçeneklerde GV 2,2 + İGV 25, vergi farkı yok.",
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.ciceksepeti.com/akrobat-musluk-basligi-kcm68653163"
+   ],
+   "guven": "orta",
+   "gv": 2.2,
+   "igv": 25,
+   "otv": 0,
+   "alternatif": "8481.90.00.00.22 (pirinç) / 8481.80.11.00.00 (tam karıştırıcı batarya)",
+   "onceki_gtip": "8481.90.00.00.29"
+  },
+  {
+   "sku": "44108965254",
+   "ad": "Flextail Akrobat Mutfak ve Banyo Lavabo Bataryası Çift Modlu 360 Döner Fonksiyonel Koyu Gri Musluk",
+   "gtip": "8481.90.00.00.29",
+   "gerekce": "Aynı 'akrobat' uç aparatı ailesi (ABS, çift mod, 360°). Gerekçe 4407846451043 ile aynı.",
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.ciceksepeti.com/akrobat-musluk-basligi-kcm68653163"
+   ],
+   "guven": "orta",
+   "gv": 2.2,
+   "igv": 25,
+   "otv": 0,
+   "alternatif": "8481.80.11.00.00 (tam batarya ise; vergi aynı)",
+   "onceki_gtip": "8481.90.00.00.29"
+  },
+  {
+   "sku": "4411475436910",
+   "ad": "Akrobat Mutfak ve Banyo Lavabo Bataryası Çift Modlu 360 Döner Fonksiyonel Krom Musluk",
+   "gtip": "8481.90.00.00.29",
+   "gerekce": "Aynı 'akrobat' uç aparatı. Krom görünüm genelde ABS üzerine kaplamadır. Gövde pirinçse 8481.90.00.00.22. Gerekçe 4407846451043 ile aynı.",
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 2.2,
+   "igv": 25,
+   "otv": 0,
+   "alternatif": "8481.90.00.00.22 (pirinç gövde)",
+   "onceki_gtip": "8481.90.00.00.29"
+  },
+  {
+   "sku": "4411975325809",
+   "ad": "Akrobat Siyah Lavabo Bataryası Çift Modlu 360 Döner Fonksiyonel Çanak ve Tezgah Üstü Musluk",
+   "gtip": "8481.80.11.00.00",
+   "gerekce": "Diğer akrobat ürünlerinden farklı olarak adında 'çanak ve tezgah üstü' geçiyor. Bu ifade tezgaha monte edilen tam bir sıcak-soğuk karıştırıcı bataryayı gösterir → 8481.80.11 'Karıştırıcı valfler'. Ürün sayfası doğrulanmadı. Yalnız uç aparatıysa 8481.90.00.00.29. Vergi her iki kodda aynı (GV 2,2 + İGV 25).",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8481",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "dusuk",
+   "gv": 2.2,
+   "igv": 25,
+   "otv": 0,
+   "alternatif": "8481.90.00.00.29 (uç aparatı ise)",
+   "onceki_gtip": "8481.90.00.00.29"
+  },
+  {
+   "sku": "441327508784",
+   "ad": "Fonksiyonel Banyo Lavabo Bataryası - Saç Yıkama-Abdest-Hijyen Tasarımı Lavabo Musluğu ABS Plastik",
+   "gtip": "8481.90.00.00.29",
+   "gerekce": "ABS plastik 'saç yıkama/abdest' ürünleri pazarda çoğunlukla mevcut musluğa takılan uzatma/yön değiştirme aparatıdır → musluk aksamı, 11507 sonrası .00.29 (metal döküm olmayan, diğer). Tek suyolu plastik musluk ise 8481.80.19.00.09, karıştırıcı ise 8481.80.11.00.00. Ürün tipi doğrulanmadı ama üç seçenekte de GV 2,2 + İGV 25, vergi yükü aynı.",
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8481"
+   ],
+   "guven": "dusuk",
+   "gv": 2.2,
+   "igv": 25,
+   "otv": 0,
+   "alternatif": "8481.80.19.00.09 / 8481.80.11.00.00 (vergi aynı)",
+   "onceki_gtip": "8481.80.11.00.00"
+  },
+  {
+   "sku": "45677655346",
+   "ad": "Mat Siyah Ankastre Duş Seti Sıva Altı Yağmurlama Duş Başlığı Duvara Monte Banyo Tepe Başlığı",
+   "gtip": "7324.90.00.00.19",
+   "gerekce": "Kayıttaki tanım yalnız tepe başlığı + duvar kolu (valf veya karıştırıcı yok). Paslanmaz çelik sıhhi eşya → 7324.90 'Diğerleri'. Set sıva altı karıştırıcı/termostatik gövde içeriyorsa GYK 3(b) ile esas karakter batarya olur → 8481.80.11.00.00. Emsal: BTB TR340000260063 (VİTRA termostatik duş seti → 8481.80.11). Pirinç ise 7418.20, plastik ise 3922.90. Malzeme ve içerik doğrulanmadı.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=7324",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8481",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "dusuk",
+   "gv": 3.2,
+   "igv": 10,
+   "otv": 0,
+   "alternatif": "8481.80.11.00.00 (karıştırıcı içeren set; GV 2,2 + İGV 25) / 7418.20.00.00.xx (pirinç; İGV 25)",
+   "onceki_gtip": "7324.90.00.00.19"
+  },
+  {
+   "sku": "458009000",
+   "ad": "Telefon Güçlendirici 4G Gsm Şebeke Güçlendirici Sinyal Güçlendirici Anten 3 Band B1 B3 B8",
+   "gtip": "8517.62.00.10.00",
+   "gerekce": "Hücresel sinyali alıp güçlendirerek yeniden yayar (iki yönlü). 8517.62'nin metni '...almaya, çevirmeye ve vermeye veya yeniden oluşturmaya (regeneration) mahsus makinalar'. Anten yükselteci (8543.70.30) tek yönlü yayın-alıcı anten amplifikatörüdür. Baz istasyonu (8517.61) değildir. Hücresel ağ için olduğundan 8517.62.00.10.00. Benzer emsal: UK ATaR 600013373 (Wi-Fi booster → 8517 62 00). TR'de güçlendirici için BTB bulunamadı. Not: BTK izni olmayan repeater kullanımı ve satışı ayrıca kısıtlı olabilir (doğrulanmadı).",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517",
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600013373",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 0,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8543.70.30.00.00 (anten yükselteci görüşü; GV 3,7)",
+   "onceki_gtip": "8517.62.00.10.00"
+  },
+  {
+   "sku": "4580890002",
+   "ad": "5G Telefon Sinyal Güçlendirici Geniş Alan 4G/5G Ağ Tekrarlayıcı GSM Mobil Sinyal Arttırıcı Anten",
+   "gtip": "8517.62.00.10.00",
+   "gerekce": "458009000 ile aynı ürün tipi ve gerekçe (hücresel repeater).",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517",
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600013373",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf"
+   ],
+   "guven": "orta",
+   "gv": 0,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8543.70.30.00.00",
+   "onceki_gtip": "8517.62.00.10.00"
+  },
+  {
+   "sku": "508350000",
+   "ad": "Ac 220V 2000W Tristör Motor İçin Hız Kontrolü Ayarlanabilir Hız Güç Kontrol Kartı Voltaj Regülatörü",
+   "gtip": "8537.10.98.00.19",
+   "gerekce": "Faz açısı kontrollü elektrik kumanda kartı (≤1000 V). Frekans veya akım türü dönüştürmediği için 85.04 statik konvertör değildir. Elektrik kumandasına mahsus cihaz → 85.37. UK ATaR: motor kontrol PCBA 600013762 ve tristör modülatör paneli 600012586 → 8537 10 98. Kart yalnız bir tristör ve potansiyometreden ibaretse '85.35/85.36 cihazından iki veya daha fazla' şartı tartışmalıdır. O durumda 8543.70.90.00.19 (GV 3,7) olur. İki seçenekte de İGV 0.",
+   "kaynak": [
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600013762",
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600012586",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8537",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "dusuk",
+   "gv": 2.1,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8543.70.90.00.19 (GV 3,7, İGV 0)",
+   "onceki_gtip": "8543.70.90.00.19"
+  },
+  {
+   "sku": "519203736262",
+   "ad": "A2 Kesim Matı Kesme Matı 45x60cm Yeşil Patchwork - Kesme Tablası - Kesim Altlığı - Cutting Mat",
+   "gtip": "3926.90.97.90.29",
+   "gerekce": "PVC kesim altlığı. 82.14 (kağıt bıçağı) yanlıştır, çünkü kesici alet değildir. Patchwork ve hobi kesim matı 'okul/büro malzemesi' (3926.10; HS AN 39.26: kağıt ağırlığı, cetvel vb.) niteliğinde değil → 3926.90.97 'Diğerleri' .90.29. 3926.10'un İGV'si %25 olduğundan seçim vergiyi etkiler.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=3926",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 6.5,
+   "igv": 10,
+   "otv": 0,
+   "alternatif": "3926.10.00.00.00 (büro malzemesi görüşü; GV 6,5 + İGV 25)",
+   "onceki_gtip": "3926.90.97.90.29"
+  },
+  {
+   "sku": "52828273736",
+   "ad": "Büyüteçli Tutucu Havya Sehpası",
+   "gtip": "9013.80.80.00.00",
+   "gerekce": "Büyüteç, timsah klipsli tutucu kollar ve havya yuvasından oluşan set. Lehim makinesinin parçası değildir (8515.90 değil). Esas karakter büyüteçtir (GYK 3b). TR BTB emsalleri: büyüteçli LED lambalar TR340000250068 ve TR340000240210 → 9013.80.80.00.00. UK ATaR 600009628 bench magnifier → 9013 80 80.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9013",
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600009628",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 4.7,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8205.70.00.00.00 (mengene/kıskaç görüşü; GV 3,7 + İGV 25)",
+   "onceki_gtip": "9013.80.80.00.00"
+  },
+  {
+   "sku": "54608790845123",
+   "ad": "Tec1-12708 Termoelektrik Soğutucu - Peltier Soğutucu",
+   "gtip": "8543.70.90.00.19",
+   "gerekce": "HS2022 85. Fasıl Not 12(a)(i)'ye göre 8541.51 'yarı iletken tabanlı dönüştürücü' yalnız sensör, aktüatör, rezonatör ve osilatörü kapsar. Aktüatör tanımı 'elektrik sinyalini fiziksel harekete çeviren' cihazdır. Peltier hareket değil ısı pompalar, sensör de değildir → 8541.51 dışında. Kendine özgü fonksiyonlu elektrikli cihaz → 8543.70.90.00.19.",
+   "kaynak": [
+    "https://hts.usitc.gov/reststop/file?release=currentRelease&filename=Chapter%2085",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8541",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip"
+   ],
+   "guven": "orta",
+   "gv": 3.7,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8541.51.00.00.00 (GV 0; Not 12 tanımına uymadığı için önerilmez)",
+   "onceki_gtip": "8543.70.90.00.19"
+  },
+  {
+   "sku": "54935000",
+   "ad": "Max31865 Termokupl Okuyucu Modül Rtd Pt100 Pt1000 Uyumlu",
+   "gtip": "9031.80.80.90.19",
+   "gerekce": "Baskılı devre kartı üzerinde dönüştürücü entegre ve yardımcı elemanlar var. 'Tek, bölünmez ayrık cihaz' olmadığı için 8541.51 değil (Not 12). Harici RTD sensörünün direncini ölçüp sayısal sıcaklık verisi üretir → başka yerde belirtilmeyen ölçme/kontrol cihazı. UK ATaR 600015353: harici sıcaklık sensörlerine arayüz veren modül → 9031 80 80. Alternatif 9025.19 (elektronik termometre) veya 8543.70.90 olabilir. İGV hepsinde 0.",
+   "kaynak": [
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600015353",
+    "https://hts.usitc.gov/reststop/file?release=currentRelease&filename=Chapter%2085",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9031",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 4.0,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8543.70.90.00.19 (GV 3,7)",
+   "onceki_gtip": "9031.80.80.90.19"
+  },
+  {
+   "sku": "591038372011",
+   "ad": "ICM-20948 İvmeölçer, Jiroskop, Manyetometre, 9 Eksen Sensör",
+   "gtip": "9031.80.80.90.19",
+   "gerekce": "Breakout kart (MEMS sensör + regülatör, pasif elemanlar ve konnektör) ivme, açısal hız ve manyetik alanı ölçer. Ayrık tek cihaz olmadığından 8541.51 değil. Çıplak çip olsaydı 8541.51 veya 8542 olurdu. Başka yerde belirtilmeyen ölçme cihazı → 9031.80.80.90.19 (.90.11 'yük hücreleri' değil).",
+   "kaynak": [
+    "https://hts.usitc.gov/reststop/file?release=currentRelease&filename=Chapter%2085",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9031",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 4.0,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8541.51.00.00.00 (yalnız çıplak sensör çipi ise)",
+   "onceki_gtip": "9031.80.80.90.19"
+  },
+  {
+   "sku": "AH-IRIG",
+   "ad": "Gitar iRig iPhone iPod iPad Bağlantı Amplitube",
+   "gtip": "8543.70.90.00.19",
+   "gerekce": "Gitar sinyalini empedans ve seviye uyumlamasıyla telefonun TRRS girişine aktaran, kulaklık çıkışlı analog arayüz. Bilgisayara değil telefona bağlandığından 8471.80 değil. Güç amplifikatörü olmadığından 8518.40 değil. UK ATaR 600013701 (audio interface → 8543 70 90). DİKKAT: Klonda aktif ön-yükselteç (pilli gain) varsa 8518.40 görüşü güçlenir ve ÖTV-IV %20 riski doğar.",
+   "kaynak": [
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600013701",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://orgtr.org/iv-sayili-liste/"
+   ],
+   "guven": "orta",
+   "gv": 3.7,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8518.40.00.00.00 (aktif amfi ise: GV 4,5 + ÖTV %20)",
+   "onceki_gtip": "8543.70.90.00.19"
+  },
+  {
+   "sku": "AY-PKUM",
+   "ad": "Avize kumandası Tavan Pervanesi Kumandası Uzaktan Kontrol 3 Kademeli Zamanlayıcılı Universal",
+   "gtip": "8526.92.00.90.19",
+   "gerekce": "Universal tavan vantilatörü kumanda kitleri RF verici ve gövdeye takılan alıcı-kontrol kutusundan oluşur → radyo ile uzaktan kumanda cihazı (GYK 3b). Emsaller: BTB TR340000260132 (JUUKO, 28.07.2026), TR410000240021 (AJAX), TR330000210013 (İHA kumandası) → 8526.92.00.90.19. IR tipi ise 8543.70.90.00.15. ÖNEMLİ: ÖTV (IV) listesinde '8526.92 Uzaktan kumanda etmeye mahsus telsiz cihazları' %20 olarak yer alıyor. IR kumanda (8543.70.90.00.15) da %20. Bu ürüne her iki durumda ÖTV %20 uygulanır.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8526",
+    "https://orgtr.org/iv-sayili-liste/",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 3.7,
+   "igv": 0,
+   "otv": 20,
+   "alternatif": "8543.70.90.00.15 (IR ise; GV 3,7, ÖTV %20)",
+   "onceki_gtip": "8526.92.00.90.19"
+  },
+  {
+   "sku": "M-400W220VSCONT",
+   "ad": "400W AC 220V Motor Hız Pinpoint Regülatörü Kontrol Cihazı İleri ve Geri 50 / 60hz",
+   "gtip": "8537.10.98.00.19",
+   "gerekce": "Hız ayar potansiyometresi, ileri-geri yön anahtarı (85.36) ve tristör kontrol devresi aynı gövdede → elektrik kumandasına mahsus, gerilimi ≤1000 V kumanda cihazı (85.37). UK ATaR 600013762: motor kontrol kartı → 8537 10 98. 85.04 değil (frekans veya akım türü dönüşümü yok).",
+   "kaynak": [
+    "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600013762",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8537",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 2.1,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "8543.70.90.00.19 (GV 3,7)",
+   "onceki_gtip": "8543.70.90.00.19"
+  },
+  {
+   "sku": "T-LCDBAHCESULAMAKONTROL",
+   "ad": "LCD Ekran Otomatik Bahçe Sulama Zamanlayıcı Sistemi Kontrol Cihazı",
+   "gtip": "8481.80.59.00.19",
+   "gerekce": "Bu isimle satılan ürünlerin çoğu musluğa takılan, pilli, valf (selenoid veya motorlu küresel) ve elektronik zamanlayıcıyı tek gövdede birleştiren 'water timer'dır. Esas fonksiyon su akışını açıp kapamak → 84.81 içinde 'proses kontrol valfleri – diğerleri' 8481.80.59.00.19. TR ulusal kırılımında .00.11 'damla ayar setleri' var, sulama valflerinin burada izlendiğini gösteriyor. Ürün tipi doğrulanmadı. Valfsiz çok istasyonlu kontrol kutusuysa 9107.00.00.00.11 (elektronik zaman şalteri; GV 4,7 + İGV 10) veya programlanabilir ise 8537.10.91.00.00.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8481",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9107",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "dusuk",
+   "gv": 2.2,
+   "igv": 25,
+   "otv": 0,
+   "alternatif": "9107.00.00.00.11 (valfsiz kontrolör; GV 4,7 + İGV 10)",
+   "onceki_gtip": "9107.00.00.00.11"
+  },
+  {
+   "sku": "T-MÜCEVHERÖLÇER",
+   "ad": "Elmas Değerli̇ Taş Seçici Test Ci̇hazı Mücevher Ölçer Pırlanta Yakut Seçici",
+   "gtip": "9027.89.90.00.00",
+   "gerekce": "Isıl iletkenliği ölçerek elmas ve taklidini ayırt eden fiziksel analiz cihazı. Optik ışınım kullanmadığı için 9027.50 değil, 9027.89. Emsal: CBP NY G87246 (2001), elmas test cihazı → 9027 (fiziksel analiz). 9031.80 yalnız kalıntı pozisyondur. 90.27 daha özel olduğu için öncelikli (GYK 3a).",
+   "kaynak": [
+    "https://www.tarifflens.ai/rulings/G87246",
+    "https://open-gov.usebase.io/rulings/G87246",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9027",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 0,
+   "igv": 0,
+   "otv": 0,
+   "alternatif": "9031.80.80.90.19 (GV 4)",
+   "onceki_gtip": "9027.89.90.00.00"
+  },
+  {
+   "sku": "TE-RINGFILLLIGHT",
+   "ad": "Anunnaki 10 İnç Ring Light Youtuber Tiktok Çekim Işıklı Telefon Tutucu Selfie Makyaj Işığı 2.1 M Tripod",
+   "gtip": "9405.21.40.00.00",
+   "gerekce": "Set (GYK 3b): esas karakter LED aydınlatma cihazı. Tripod ayak lambayı yere oturtan kaidedir → 'yere dayanan (floor-standing) LED armatür', plastik gövde → 9405.21.40.00.00. 90.06 (flaş) değil, 96.20 de değil (tripod tali). 9405.42.31 (diğer LED armatür, plastik) görüşünde de GV 4,7 + İGV 30, vergi farkı yok.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9405",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "orta",
+   "gv": 4.7,
+   "igv": 30,
+   "otv": 0,
+   "alternatif": "9405.42.31.00.00 (vergi aynı)",
+   "onceki_gtip": "9405.21.40.00.00"
+  },
+  {
+   "sku": "TE-SARJLISUPOMPASI",
+   "ad": "Anunnaki Taşınabilir Otomatik Hızlı ve Sessiz  Şarjlı Damacana Su Pompası",
+   "gtip": "8413.50.80.90.00",
+   "gerekce": "Pompa damacananın üstünde durur ve kuru hortumdan yaklaşık 40 cm su çekmesi gerekir. Bu kendinden emişli (pozitif deplasmanlı) bir pompa gerektirir. Bu sınıftaki mikro pompalar tipik olarak diyafram tipidir (doğrusal hareketli) → 8413.50 'diğer doğrusal deplasmanlı pompalar' .80.90.00. Pompa tipi söküm veya teknik föyle doğrulanmadı. Santrifüj çıkarsa (çıkış ≤15 mm) 8413.70.35.90.00. Emsal: BTB TR340000250202, küçük santrifüj pompa → 8413.70.35.90.00.",
+   "kaynak": [
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8413",
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ],
+   "guven": "dusuk",
+   "gv": 1.7,
+   "igv": 5,
+   "otv": 0,
+   "alternatif": "8413.70.35.90.00 (santrifüj ise; GV 1,7 + İGV 10)",
+   "onceki_gtip": "8413.70.35.90.00"
+  }
+ ],
+ "telsiz": {
+  "gtip": "8517.69.90.90.24",
+  "tanim_2026_tgtc": "Alıcısı bulunan verici halk bandı (CB) ve 49 MHz alçak güçlü (100 miliwatt'dan küçük) telsiz cihazları ve diğer amatör telsiz cihazları",
+  "gerekce": "1) 8525.60 elenir: HS2007'den beri 85.25 yalnız radyo/TV yayın vericisini kapsar. El telsizi yayın değil, iki yönlü telsiz haberleşmesidir. Türkiye'nin 8525.60.00.00.29 ulusal satırı listede kalsa da altı haneli düzeyde uygun değildir. 2) 85.17 içinde HS/AB-UK uygulaması 8517.62'ye yöneliyor: UK ATaR 600014904 (03.02.2026) iki yönlü walkie-talkie setini GYK 1 ve 6 ile 8517 62 00'a verdi. 3) Ancak 2026 TGTC 8517.69.90.90 altında telsizler için açık ulusal satırlar içeriyor: .15 kara/deniz telsiz telefonu, .24 CB, 49 MHz ve 'diğer amatör telsiz cihazları', .25 trunking. 8517.62.00.90.19 'Diğerleri' satırında telsize dair ifade yok. 4) Türk idari mevzuatı da telsizi bu satırlarda izliyor. ÖTV (IV) listesi 8517.69.90.90.24'ü %20 ile ismen sayıyor. Telsiz Ekipmanlarının İthalat Denetimi Tebliği Ek-1'de 8517.69.90.90.15/.24/.29 ve 8525.60.00.00.29 bulunuyor. 8517.62.00.90.xx ise yalnız akıllı saat/kulaklık için listede: 2026/36 ile .90.11 akıllı saat. Baofeng UV-5R/UV-82/UV-S9/BF-H5/UV-13 Pro/UV-9R/UV-32 ürünleri 136–174 / 400–520 MHz amatör bantlarını kapsayan, 5–10 W, çift bant FM el telsizleridir. TR ulusal metindeki 'diğer amatör telsiz cihazları'na birebir uyar → 8517.69.90.90.24. TR'de bu ürün tipi için BTB bulunamadı. HS düzeyindeki 8517.62 görüşü nedeniyle güven 'orta'. Kesinlik için BTB başvurusu önerilir. 8517.62.00.90.19 ile beyan edilirse ÖTV ve TAREKS telsiz denetimi dışında kalınır. Ancak gümrük idaresi .24'e düzeltirse ÖTV %20, gecikme faizi ve ceza riski doğar.",
+  "guven": "orta",
+  "kaynak": [
+   "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517",
+   "https://www.tax.service.gov.uk/search-for-advance-tariff-rulings/ruling/600014904",
+   "https://orgtr.org/iv-sayili-liste/",
+   "https://www.gumruk.com.tr/files/telsiz_ekipmanlarinin_ithalat_urun_guvenligi_ve_denetimi_2023-8_ekler.htm",
+   "https://orgtr.org/telsiz-ekipmanlarinin-ithalat-denetimi-tebligi-urun-guvenligi-ve-denetimi-2026-8/",
+   "https://www.hukukihaber.net/telsiz-ekipmanlarinin-ithalat-denetimi-tebligi-urun-guvenligi-ve-denetimi-20268nde-degisiklik",
+   "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+   "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+   "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+  ],
+  "gv": 0,
+  "igv": 0,
+  "otv": 20,
+  "karsilastirma": [
+   {
+    "gtip": "8517.69.90.90.24",
+    "gv": 0,
+    "igv": 0,
+    "otv": 20,
+    "tareks_telsiz_denetimi": true,
+    "not": "önerilen"
+   },
+   {
+    "gtip": "8517.62.00.90.19",
+    "gv": 0,
+    "igv": 0,
+    "otv": 0,
+    "tareks_telsiz_denetimi": false,
+    "not": "HS/UK görüşü; TR ulusal satırları ve ÖTV listesiyle çelişir (GV 0: 11506 Ek-1)"
+   },
+   {
+    "gtip": "8525.60.00.00.29",
+    "gv": 0,
+    "igv": 0,
+    "otv": 0,
+    "tareks_telsiz_denetimi": true,
+    "not": "HS2007 sonrası 85.25 yayın cihazlarıyla sınırlı; önerilmez"
+   }
+  ],
+  "not_": "ÖTV-IV satırı GTİP'e değil mal tanımına bağlıdır. GİB'in 24.03.2022 yazısında belirttiği ilkeye göre GTİP değişikliği ÖTV kapsamını değiştirmez. Bu nedenle amatör telsiz 8517.62 ile beyan edilse bile ÖTV riski sürer."
+ },
+ "kart_okuyucu": {
+  "gtip": "8471.70.98.90.00",
+  "gerekce": "Ortamsız (kartsız) USB/Type-C SD/microSD okuyucu, yarı iletken ortam için bir 'sürücü' işlevi görür. HS AN 84.71(D)'de sürücüler (CD/DVD sürücüleri gibi, ortamsız) 'bellek birimi' sayılır. Emsaller: CBP NY N035358 (21.08.2008) USB flash kart okuyucu/yazıcıyı 'storage units in the form of drives for media' gerekçesiyle 8471.70 'other storage units'a verdi. AB Access2Markets rehberi 'card readers for semiconductor media → 8471 70 98 00' diyor. Aynı rehberin harici bellek kartı okuyucuları için 8471 90 00 satırı da var, yani AB/UK içinde de ikili uygulama mevcut. 8471.80 ('diğer birimler') en zayıf seçenek. TR'de 8471.80 BTB'leri (TR340000220113, TR340000240017) USB-C çoklu adaptör/hub (USB-A+HDMI+RJ45) ürünleri için verilmiş. Sonuç: yalnız kart okuyan ürünler (20745000, 21475000, 256085000, 258095000, 26807000, 272726161636) → 8471.70.98.90.00. Hub veya USB-A host portu (OTG) ağırlıklı çok fonksiyonlu adaptörler (209875195180 '...Hub', 25807000 '5-in-3 ... USB ... Kamera Adaptörü', 260860000 'Lightning to USB/TF/3.5mm') → 8471.80.00.00.00 (TR BTB analojisi, GYK 3b). Üç kodda da (8471.70.98.90.00 / 8471.80 / 8471.90) GV 0 ve İGV 0, ÖTV yok. Seçim vergi yükünü değiştirmez, yalnız beyan tutarlılığını etkiler. TR'de kart okuyucu için BTB bulunamadı.",
+  "guven": "orta",
+  "kaynak": [
+   "https://www.customsmobile.com/rulings/docview?doc_id=NY+N035358",
+   "https://trade.ec.europa.eu/access-to-markets/en/content/classifying-computers-and-software",
+   "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471",
+   "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+   "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+  ],
+  "gv": 0,
+  "igv": 0,
+  "sku_ayrimi": {
+   "8471.70.98.90.00": [
+    "20745000",
+    "21475000",
+    "256085000",
+    "258095000",
+    "26807000",
+    "272726161636"
+   ],
+   "8471.80.00.00.00": [
+    "209875195180",
+    "25807000",
+    "260860000"
+   ]
+  }
+ },
+ "otv": [
+  {
+   "gtip": "8525.89.00.00.00",
+   "urun": "IP/WiFi güvenlik kamerası",
+   "otv_pct": 20,
+   "durum": "belirsiz",
+   "gerekce": "Güncel IV listesinde satır şöyle: '8525.80 Televizyon kameraları, dijital kameralar ve görüntü kaydedici kameralar [Yalnız 8525.80.11 Üç veya daha fazla kamera tüpü olan televizyon kameraları; 8525.80.19 Televizyon kameraları (8525.80.11 pozisyonunda olmayan televizyon kameraları); 8525.80.30.00.00 Dijital kameralar]' – %20 (orgtr konsolide, 24.10.2025 değişikliği işlenmiş; 2026'da IV listesini değiştiren karar bulunamadı). 'Yalnız' kaydı görüntü kaydedici kameraları (eski 8525.80.91/99) kapsam dışında bırakıyor. Sektör sirkülerine göre 8525.80.91 kameralar listeye alınmamış. GİB'in 24.03.2022 tarihli E-76264044-135[52-1-756]-40751 sayılı yazısı, listedeki kameraların 2022 TGTC'de 8525.8x'e taşınsalar da vergilendirilmeye devam edeceğini söylüyor. Yani mal tanımı esas alınıyor. Sonuç: Kayıt özelliği olmayan, yalnız ağ üzerinden görüntü ileten IP kamera eski tanımda 'televizyon kamerası' (8525.80.19) olur ve %20 ÖTV'ye tabidir. microSD karta kendi görüntüsünü kaydeden kameralar (V380, PTZ, bebek kameraları gibi kataloğun çoğu) eski 8525.80.91'e karşılık gelir ve ÖTV dışında kalma yönünde güçlü bir argüman taşır. CJEU C-435/15 GROFA kararına göre yalnız kendi kamerasının görüntüsünü kaydeden kayıt cihazları 8525 80 91'dir. IP kamera için GİB özelgesi veya BTB bulunamadı. Bu nedenle sonuç belirsiz. Kesinlik için GİB özelgesi önerilir. TR BTB TR340000230071 microSD'li RJ45 IP kamerayı 8525.89.00.00.00'a verdi, ancak ÖTV hükmü içermiyor.",
+   "kaynak": [
+    "https://orgtr.org/iv-sayili-liste/",
+    "https://ozsoy.com.tr/guncel/525-80-televizyon-kameralari-dijital-kameralar-ve-goruntu-kaydedici-kameralarin-iv-sayili-liste-kapsaminda-otvden-muaf-degerlendirmeye-devam-edecegi-hk/",
+    "https://dbgumrukleme.com/haberler/7720",
+    "https://kpmgvergi.com/yayinlar/mali-bultenler/gumruk/ozel-tuketim-vergisi-kanununa-ekli-iv-sayili-listede-otvye-tabi-olan-bazi-kameralarin-2022-yilinda-farkli-gtip-numaralarinda-yer-alsalar-dahivergilendirilmeye-devam-edilecegi-bildirilmistir/1466",
+    "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:62015CJ0435",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8525"
+   ]
+  },
+  {
+   "gtip": "9504.50.00.00.00",
+   "urun": "Oyun konsolu / konsol uyumlu oyun kolu / direksiyon",
+   "otv_pct": 20,
+   "durum": "uygulanir",
+   "gerekce": "IV listesinde '95.04 Video oyun konsolları ve makinaları ...' tüm pozisyon %20. 9504.50 tamamen kapsamda. İGV de %20. İSTİSNA: Yalnız PC (otomatik bilgi işlem makinesi) ile kullanılan gamepad'ler BTB TR340000230015 (Logitech F710, 16.01.2023) emsaline göre 8471.60.70.90.19'dur. Bu kodda GV 0, İGV 0, ÖTV yok. Kataloğa göre 'TE-ANUNNAKIJOYSTICK (USB, PC)' bu istisnaya aday. PS3/PS4/Xbox uyumlu kollar ve Atari konsolu 9504.50'de kalır.",
+   "kaynak": [
+    "https://orgtr.org/iv-sayili-liste/",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip"
+   ]
+  },
+  {
+   "gtip": "8518.40.00.00.00",
+   "urun": "Ses frekans yükselteci / amfi modülü (TPA3116, TDA7498, XH-M543 vb.)",
+   "otv_pct": 20,
+   "durum": "uygulanir",
+   "gerekce": "IV listesinde '85.18 ... elektrikli ses frekansı yükselteçleri, takım halindeki ses amplifikatörleri' tüm pozisyon %20. Listenin 'aksam ve parçalar kapsama dahil değildir' notu amfi kartlarını kapsamaz, çünkü bunlar komple yükselteçtir. Emsal: BTB TR350000220059 'amfi yedek parçası' 8518.40 yükselteç olarak sınıflandırıldı.",
+   "kaynak": [
+    "https://orgtr.org/iv-sayili-liste/",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8518"
+   ]
+  },
+  {
+   "gtip": "8518.22.00.00.00",
+   "urun": "Aynı kabine monte birden fazla hoparlör",
+   "otv_pct": 20,
+   "durum": "uygulanir",
+   "gerekce": "IV listesi 85.18 tüm pozisyon (hoparlörler, kabinlerine monte edilmiş olsun olmasın) %20.",
+   "kaynak": [
+    "https://orgtr.org/iv-sayili-liste/",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8518"
+   ]
+  },
+  {
+   "gtip": "8518.30.00.90.11 / 8518.30.00.90.19",
+   "urun": "Kulaklık (kablosuz / diğer)",
+   "otv_pct": 20,
+   "durum": "uygulanir",
+   "gerekce": "IV listesi 85.18 (başa ve kulağa takılan kulaklıklar dahil) %20. 11507 ile 8518.30.00.90.11 kablosuz ve .90.19 diğer olarak bölündü. Bölünme ÖTV'yi değiştirmez. Kablosuz kulaklık ayrıca 2026/36 ile TAREKS telsiz denetimine girdi.",
+   "kaynak": [
+    "https://orgtr.org/iv-sayili-liste/",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://www.hukukihaber.net/telsiz-ekipmanlarinin-ithalat-denetimi-tebligi-urun-guvenligi-ve-denetimi-20268nde-degisiklik"
+   ]
+  },
+  {
+   "gtip": "8517.69.90.90.24",
+   "urun": "El telsizi (Baofeng vb. amatör telsiz)",
+   "otv_pct": 20,
+   "durum": "uygulanir",
+   "gerekce": "IV listesinde '8517.69.90.90.24 ... ve diğer amatör telsiz cihazları' %20 olarak ismen var (bkz. telsiz bölümü).",
+   "kaynak": [
+    "https://orgtr.org/iv-sayili-liste/"
+   ]
+  },
+  {
+   "gtip": "8526.92.00.90.19",
+   "urun": "RF/Bluetooth uzaktan kumanda (avize kumandası, 433 MHz röle kumandası, BT deklanşör)",
+   "otv_pct": 20,
+   "durum": "uygulanir",
+   "gerekce": "YENİ BULGU: IV listesinde '8526.92 Uzaktan kumanda etmeye mahsus telsiz cihazları' %20. Önceki oran tablosunda bu kodun ÖTV'si eksikti. 8526.92.00.90.19'a sınıflanan tüm kumandalar (AY-PKUM, 56952000-AE-433RCKUM, 201028372919) ÖTV'ye tabidir.",
+   "kaynak": [
+    "https://orgtr.org/iv-sayili-liste/",
+    "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8526"
+   ]
+  },
+  {
+   "gtip": "8543.70.90.00.15",
+   "urun": "Kızılötesi (IR) uzaktan kumanda / IR kumanda adaptörü",
+   "otv_pct": 20,
+   "durum": "uygulanir",
+   "gerekce": "IV listesinde '8543.70.90.00.15 Infrared ile çalışan uzaktan kumanda cihazları' %20 (önceki tabloyla tutarlı).",
+   "kaynak": [
+    "https://orgtr.org/iv-sayili-liste/"
+   ]
+  }
+ ],
+ "ek_oranlar": [
+  {
+   "gtip": "8537.10.91.00.00",
+   "tanim": "Programlanabilir hafızalı kumanda cihazları (geliştirme kartı)",
+   "gv": 2.1,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8479.89.97.90.19",
+   "tanim": "Kendine özgü fonksiyonlu makine – diğerleri",
+   "gv": 1.7,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true,
+   "not": "İGV yalnız .90.11 (lastik sökme-takma) için %20"
+  },
+  {
+   "gtip": "9603.29.30.00.00",
+   "tanim": "Saç fırçaları",
+   "gv": 3.7,
+   "igv": 23,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "4009.22.00.90.00",
+   "tanim": "Bağlantı elemanlı, metal takviyeli kauçuk hortum (flex/duş hortumu) – diğerleri",
+   "gv": 3,
+   "igv": 5,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true,
+   "not": "BTB TR340000210024 duş hortumu → 4009.22.00.90.00"
+  },
+  {
+   "gtip": "8506.10.98.00.00",
+   "tanim": "Manganez dioksitli pil (alkalin) – diğerleri (9V dahil)",
+   "gv": 4.7,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8544.49.20.00.00",
+   "tanim": "≤80 V telekomünikasyon kablosu, konnektörsüz (Cat6 makara)",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "3917.33.00.00.00",
+   "tanim": "Bağlantı elemanlı plastik hortum (takviyesiz)",
+   "gv": 6.5,
+   "igv": 10,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true,
+   "not": "GV dipnot (b)"
+  },
+  {
+   "gtip": "8529.90.96.90.00",
+   "tanim": "85.25–85.28 cihazlarına ait diğer aksam-parçalar",
+   "gv": 3,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true,
+   "not": "İGV yalnız .10.00 (85.26 montajları) için %10"
+  },
+  {
+   "gtip": "8481.90.00.00.29",
+   "tanim": "Musluk/valf aksamı – metal döküm olmayan – diğerleri (11.07.2026 yeni kod)",
+   "gv": 2.2,
+   "igv": 25,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true,
+   "not": "GV 11506 Ek-1'den okundu"
+  },
+  {
+   "gtip": "8481.90.00.00.22",
+   "tanim": "Musluk/valf aksamı – metal döküm olmayan – pirinç (11.07.2026 yeni kod)",
+   "gv": 2.2,
+   "igv": 25,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8543.70.90.00.19",
+   "tanim": "Kendine özgü fonksiyonlu elektrikli cihaz – diğerleri",
+   "gv": 3.7,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8302.50.00.00.00",
+   "tanim": "Adi metalden sabit askılık, braket ve benzerleri",
+   "gv": 2.7,
+   "igv": 15,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf",
+    "https://kpmgvergi.com/yayinlar/mali-bultenler/gumruk/cin-menseli-mentese-sabit-askilik-ve-mobilya-donanim-urunlerine-uygulanan-dampinge-karsi-onlem-miktari-degistirilmistir/1966"
+   ],
+   "dogrulandi": true,
+   "not": "Çin için AD 1,35 USD/kg (Tebliğ 2023/12) – önceki araştırma; bu turda yeniden doğrulanmadı"
+  },
+  {
+   "gtip": "3926.90.97.90.29",
+   "tanim": "Plastikten diğer eşya – diğerleri",
+   "gv": 6.5,
+   "igv": 10,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "3926.10.00.00.00",
+   "tanim": "Plastikten okul ve büro malzemeleri (karşılaştırma)",
+   "gv": 6.5,
+   "igv": 25,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8414.80.80.90.19",
+   "tanim": "Diğer hava pompaları – diğerleri",
+   "gv": 2.2,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true,
+   "not": "İGV yalnız .90.11 (davlumbaz) için %7"
+  },
+  {
+   "gtip": "8414.59.35.90.00",
+   "tanim": "Santrifüj fanlar – diğerleri (alternatif)",
+   "gv": 2.3,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9011.80.00.00.00",
+   "tanim": "Diğer optik mikroskoplar",
+   "gv": 6.7,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9503.00.70.00.11",
+   "tanim": "Takım halindeki oyuncaklar (alternatif)",
+   "gv": 4.7,
+   "igv": 25,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8481.80.11.00.00",
+   "tanim": "Karıştırıcı valfler (batarya)",
+   "gv": 2.2,
+   "igv": 25,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8481.80.59.00.19",
+   "tanim": "Proses kontrol valfleri – diğerleri",
+   "gv": 2.2,
+   "igv": 25,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "7324.90.00.00.19",
+   "tanim": "Demir/çelikten sıhhi eşya – diğerleri",
+   "gv": 3.2,
+   "igv": 10,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "7418.20.00.00.11 / .15",
+   "tanim": "Bakırdan sıhhi eşya (alternatif)",
+   "gv": 3,
+   "igv": 25,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8517.62.00.10.00",
+   "tanim": "Veri alım-iletim makineleri – hücresel ağ için",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8517.62.00.90.19",
+   "tanim": "Veri alım-iletim makineleri – diğerleri (11.07.2026 yeni kod)",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8517.69.90.90.24",
+   "tanim": "CB, 49 MHz ve diğer amatör telsiz cihazları",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 20,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf",
+    "https://orgtr.org/iv-sayili-liste/"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8525.60.00.00.29",
+   "tanim": "Alıcısı bulunan verici diğer cihazlar",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8537.10.98.00.19",
+   "tanim": "≤1000 V elektrik kumanda cihazları – diğerleri",
+   "gv": 2.1,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9013.80.80.00.00",
+   "tanim": "Diğer optik alet ve cihazlar (büyüteç)",
+   "gv": 4.7,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8541.51.00.00.00",
+   "tanim": "Yarı iletken tabanlı dönüştürücüler",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9031.80.80.90.19",
+   "tanim": "Diğer ölçme/kontrol alet ve cihazları – diğerleri",
+   "gv": 4,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true,
+   "not": "İGV yalnız .90.11 (yük hücreleri) için %6"
+  },
+  {
+   "gtip": "8526.92.00.90.19",
+   "tanim": "Radyo ile uzaktan kumanda cihazları – diğerleri",
+   "gv": 3.7,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 20,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf",
+    "https://orgtr.org/iv-sayili-liste/"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8543.70.90.00.15",
+   "tanim": "IR uzaktan kumanda cihazları",
+   "gv": 3.7,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 20,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf",
+    "https://orgtr.org/iv-sayili-liste/"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9107.00.00.00.11",
+   "tanim": "Elektrikli/elektronik zaman şalterleri",
+   "gv": 4.7,
+   "igv": 10,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9027.89.90.00.00",
+   "tanim": "Fiziksel/kimyasal analiz cihazları – diğerleri",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9405.21.40.00.00",
+   "tanim": "LED masa/yer lambaları – plastik veya seramik",
+   "gv": 4.7,
+   "igv": 30,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9405.42.31.00.00",
+   "tanim": "Diğer LED aydınlatma – plastik",
+   "gv": 4.7,
+   "igv": 30,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8413.50.80.90.00",
+   "tanim": "Diğer doğrusal deplasmanlı (diyafram vb.) pompalar",
+   "gv": 1.7,
+   "igv": 5,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8413.70.35.90.00",
+   "tanim": "Çıkış ağzı ≤15 mm diğer santrifüj pompalar",
+   "gv": 1.7,
+   "igv": 10,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8471.70.98.90.00",
+   "tanim": "Bellek birimleri – diğerleri (kart okuyucu)",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8471.80.00.00.00",
+   "tanim": "ABİ makinelerinin diğer birimleri",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8471.60.70.90.19",
+   "tanim": "Giriş/çıkış birimleri – diğerleri (yalnız PC gamepad)",
+   "gv": 0,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8518.40.00.00.00",
+   "tanim": "Elektrikli ses frekans yükselteçleri",
+   "gv": 4.5,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 20,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf",
+    "https://orgtr.org/iv-sayili-liste/"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8518.30.00.90.11 / .19",
+   "tanim": "Kulaklıklar – kablosuz / diğer",
+   "gv": 2,
+   "igv": 0,
+   "kdv": 20,
+   "otv": 20,
+   "kaynak": [
+    "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf",
+    "https://orgtr.org/iv-sayili-liste/"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "9504.50.00.00.00",
+   "tanim": "Video oyun konsolları ve makineleri",
+   "gv": 0,
+   "igv": 20,
+   "kdv": 20,
+   "otv": 20,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf",
+    "https://orgtr.org/iv-sayili-liste/"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "8205.70.00.00.00",
+   "tanim": "Mengene, kıskaç vb. (alternatif)",
+   "gv": 3.7,
+   "igv": 25,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  },
+  {
+   "gtip": "7616.99.90.90.19",
+   "tanim": "Alüminyumdan diğer eşya – diğerleri (alternatif)",
+   "gv": 6,
+   "igv": 5,
+   "kdv": 20,
+   "otv": 0,
+   "kaynak": [
+    "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+    "https://ticaret.gov.tr/data/63bd486013b8763b44f9da6c/%C4%B0GV.zip",
+    "https://www.mevzuat.gov.tr/mevzuatmetin/1.5.3065.pdf"
+   ],
+   "dogrulandi": true
+  }
+ ]
+}
