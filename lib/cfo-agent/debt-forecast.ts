@@ -68,7 +68,7 @@ export function forecastDebt(context:WorkingContext):DebtForecast{
       'Mevcut ve bedeli ödenmiş gelecek stokla sınırlı satış; bugünkü ihtiyatlı hız ve tam maliyet hesabı sabit kabul edilir.',
       'Aylık sabit gider, kullanıcı beyanıyla vergi dahil faiz ve diğer giderler günlere eşit pay edilir; takvim çıkışları ayrıca düşülür. Bilinmeyen gider sıfır sayılmaz.',
       'Kredi/kart taksiti yeniden gider sayılmaz; borç anaparası serbest nakitten ödenir. Tarih sipariş izni değildir.']};
-  // Eşik kapıyla aynı kaynaktan (CFO-002: borç hedefi USD × TCMB kuru; migration öncesi eski 5M TL)
+  // Eşik kapıyla aynı kaynaktan (CFO-002: borç hedefi USD × TCMB kuru; kapı yoksa eşik bilinmiyor)
   const limit=(context.orderGate??debtGate(debt,context.financialGoals?.balancesFresh??false)).limitTry;
   if(debt==null)missing.push('Toplam borç');
   if(limit==null)missing.push('Borç hedefinin TL karşılığı');

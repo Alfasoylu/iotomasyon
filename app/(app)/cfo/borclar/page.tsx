@@ -12,6 +12,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DataTagBadge, TrafficBadge } from "@/components/cfo/badges";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
+import { prisma } from "@/lib/prisma";
+import { readOrderDebtGate } from "@/lib/cfo-agent/debt-policy";
 
 
 const KIND_TR: Record<string, string> = {
@@ -26,7 +28,15 @@ export const dynamic = "force-dynamic";
 
 export default async function CfoDebtsPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
-  const { raw, overview: o } = await loadCfoData();
+  const db = { query: <T extends Record<string, unknown>>(sql: string, ...params: unknown[]) => prisma.$queryRawUnsafe<T[]>(sql, ...params) };
+  const [{ raw, overview: o }, sozlesme, gate] = await Promise.all([
+    loadCfoData(),
+    // Finansal borcun tek tanımı (CFO-002): sira 1–3 bileşen, 90+ BİLGİ (toplama girmez), 100 toplam. Goal ve sipariş kapısı aynı sayıyı okur.
+    prisma.$queryRaw<{ sira: number; tur: string; kalem: string; tutar: unknown; aciklama: string | null }[]>`select * from cfo_metrik_borc() order by sira`.catch(() => null),
+    readOrderDebtGate(db, new Date()),
+  ]);
+  const toplamBorc = sozlesme?.find((r) => r.sira === 100);
+  const toplamTry = toplamBorc?.tutar == null ? null : Number(toplamBorc.tutar);
   const minPct = raw.settings ? num(raw.settings.cardMinPct) / 100 : 0.2;
   // Aktif kredilerin en geç biten taksit tarihi — "borçtan ne zaman çıkılır" sorusunun cevabı.
   // Planlanmış ödemeler: kredi/kart/sabit gider dışındaki tek seferlik taahhütler.
@@ -57,6 +67,34 @@ export default async function CfoDebtsPage() {
         title="Borçlar"
         subtitle="KMH, kredi kartı ve kredilerin tek listesi. Kapanan krediler borç servisine dahil edilmez."
       />
+
+      <Card className="mb-6 p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Finansal borç (tek tanım)</h2>
+          {gate.limitTry != null && toplamTry != null && (
+            <Badge variant={toplamTry < gate.limitTry ? "ok" : "danger"} className="ml-auto">
+              hedef {gate.limitUsd != null ? `${gate.limitUsd.toLocaleString("tr-TR")} USD = ` : ""}{fmtTry(gate.limitTry)} · açık {fmtTry(Math.max(toplamTry - gate.limitTry, 0))}
+            </Badge>
+          )}
+        </div>
+        {sozlesme == null ? (
+          <p className="text-[12px] text-[var(--danger)]">Borç sözleşmesi (cfo_metrik_borc) okunamadı — toplam BİLİNMİYOR.</p>
+        ) : (
+          <CfoTable head={<tr><Th>Kalem</Th><Th right>Tutar</Th><Th>Açıklama</Th></tr>}>
+            {sozlesme.map((r) => (
+              <tr key={r.sira} className={r.sira === 100 ? "bg-[var(--surface-1)] font-semibold" : r.sira >= 90 ? "text-[var(--text-muted)]" : undefined}>
+                <Td strong={r.sira === 100}>{r.sira >= 90 && r.sira < 100 ? `Bilgi · ${r.kalem}` : r.kalem}</Td>
+                <Td right strong={r.sira === 100}>{r.tutar == null ? "BİLİNMİYOR" : fmtTry(Number(r.tutar))}</Td>
+                <Td muted>{r.aciklama ?? ""}</Td>
+              </tr>
+            ))}
+          </CfoTable>
+        )}
+        <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+          Kredi kalan anapara + kart toplam borcu + kullanılan KMH. Bilgi satırları toplama girmez. Goal Engine (borç hedefi) ve yeni sipariş kapısı aynı sayıyı kullanır.
+          {!gate.open && ` Sipariş kapısı: ${gate.reason}.`}
+        </p>
+      </Card>
 
       <Card className="mb-6 p-5">
         <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Bankalar / KMH</h2>

@@ -12,16 +12,18 @@ const asOf='2026-01-01T00:00:00.000Z';
 const inputs:ForecastInputs={historicalRevenueTry:300000,historicalDays:30,historicalEnd:asOf,fixedMonthlyTry:0,interestMonthlyTry:0,otherMonthlyTry:0,cashReserveTry:0,settlementDays:2,importsPaid:true,extraOutflows:[],horizonDays:90,missing:[]};
 const product={sku:'SYNTHETIC',resolvedSku:'SYNTHETIC',channel:'TRENDYOL',excluded:false,virtual:false,noReorder:false,trusted:true,financialSourceFresh:true,inventorySourceFresh:true,
   unitProfitTry:50,costTry:50,stockQty:100,stockDays:100,velocity:1,inboundQty:0,inboundEta:null,salesUnits30:30};
-const context={asOf,forecastInputs:inputs,financialGoals:{totalDebtTry:5000900,balancesFresh:true},importPipeline:{coveragePct:metric(100)},
+// Eşik kapıdan gelir (CFO-002: debtTargetUsd × TCMB); burada sentetik 5.000.000 TL
+const context={asOf,forecastInputs:inputs,financialGoals:{totalDebtTry:5000900,balancesFresh:true},orderGate:debtGate(5000900,true,5000000,100000,'cfo_metrik_borc'),importPipeline:{coveragePct:metric(100)},
   operating:{products:[product],questions:[],recordedCostReconciliation:[],summary:{skusWithKnownCost:1,skuChannelsWithContributionProfit:1}},
   cash:{cash:metric(0),banksFresh:true,totalCardDebt:metric(100),minimumProjectedPosition:metric(0),summaries:[]},sales:{last30Days:{grossRevenue:metric(300000),complete:true}},
   dataQuality:{sourceWatermarks:[]},notebook:{available:true,truncated:false,notes:[]}} as unknown as WorkingContext;
 
 async function main(){
-  assert(!debtGate(5000000,true).open,'threshold is strictly below, not equal');
-  assert(debtGate(4999999,true).open);
-  assert(!debtGate(4999999,false).open,'stale debt cannot authorize an order');
-  assert(!debtGate(null,true).open);
+  assert(!debtGate(5000000,true,5000000).open,'threshold is strictly below, not equal');
+  assert(debtGate(4999999,true,5000000).open);
+  assert(!debtGate(4999999,false,5000000).open,'stale debt cannot authorize an order');
+  assert(!debtGate(null,true,5000000).open);
+  assert(!debtGate(1,true).open,'no fixed fallback threshold: unknown target keeps the gate closed');
   const forecast=forecastDebt(context);
   assert.equal(forecast.status,'scenario');
   assert.equal(forecast.estimatedOrderDate,'2026-01-13','strict threshold and settlement lag are honored');
@@ -70,7 +72,12 @@ async function main(){
     assert.equal(readMemory(String(heartbeat.body)).nextTopic,'costs');
     const [journal]=await source.query(`select body from cfo_note where source='cfo-workflow-journal' limit 1`);
     for(const heading of ['Çalışma özeti','Yapılanlar','Tespitler','Aksiyonlar','Eksikler / beklenenler','Sonraki çalışma'])assert(String(journal.body).includes(heading));
+    // Sözleşme fonksiyonu yokken kapı kapalı (eski cfo_servet.borc < 5M TL yolu kaldırıldı)
+    assert(!(await readOrderDebtGate(source,new Date(asOf))).open,'missing debt contract closes the gate');
     await db.exec(`create table cfo_servet(borc numeric);insert into cfo_servet values(4999999);
+      create function cfo_metrik_borc() returns table(sira int,tutar numeric) language sql as 'select 100,borc from cfo_servet';
+      create table cfo_settings("debtTargetUsd" numeric,"updatedAt" timestamp);insert into cfo_settings values(100000,'2026-01-01');
+      create table fm_memory_fx_monthly(month date,usd_try_forex_buying numeric,ref_date date);insert into fm_memory_fx_monthly values('2026-01-01',50,'2026-01-15');
       create table cfo_loan("remainingTry" numeric,"lastUpdatedAt" timestamp,status text);insert into cfo_loan values(1,'2026-01-01','AKTIF');
       create table cfo_credit_card("totalDebtTry" numeric,"lastUpdatedAt" timestamp,"isActive" boolean);insert into cfo_credit_card values(1,'2026-01-01',true);
       create table cfo_bank_account("balanceTry" numeric,"lastUpdatedAt" timestamp,"isActive" boolean);insert into cfo_bank_account values(0,'2026-01-01',true);`);

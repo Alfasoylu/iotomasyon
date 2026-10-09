@@ -1,20 +1,20 @@
 import type { ReadSource, Row } from './sources';
 import { STRATEGIC_FX_SQL } from '../fx/strategic';
 /**
- * ESKİ eşik (CFO-002 öncesi): migration 20261009180000 üretimde uygulanana kadar sipariş kapısı bununla çalışır.
- * Sonrasında eşik = cfo_settings."debtTargetUsd" × TCMB aylık döviz alış (Goal Engine ile aynı kur) ve borç = cfo_metrik_borc().
+ * Sipariş borç kapısı (CFO-002, migration 20261009180000 üretimde 2026-10-09): borç = cfo_metrik_borc() toplamı (kredi kalan + kart
+ * toplam + kullanılan KMH), eşik = cfo_settings."debtTargetUsd" × TCMB aylık döviz alış (Goal Engine `debt_below_usd` ile aynı ayar ve kur).
+ * Sabit TL eşiği yok: hedef, kur ya da sözleşme fonksiyonu yoksa eşik BİLİNMİYOR ve kapı kapalı.
  */
-export const NEW_ORDER_DEBT_LIMIT_TRY=5_000_000;
 export type DebtGate={limitTry:number|null;limitUsd:number|null;totalDebtTry:number|null;balancesFresh:boolean;open:boolean;reason:string;
-  debtSource:'cfo_metrik_borc'|'cfo_servet.borc'};
+  debtSource:'cfo_metrik_borc'|null};
 const tl=(v:number)=>Math.round(v).toLocaleString('tr-TR');
-export function debtGate(debt:number|null,fresh:boolean,limitTry:number|null=NEW_ORDER_DEBT_LIMIT_TRY,limitUsd:number|null=null,
-  debtSource:DebtGate['debtSource']='cfo_servet.borc'):DebtGate{
+export function debtGate(debt:number|null,fresh:boolean,limitTry:number|null=null,limitUsd:number|null=null,
+  debtSource:DebtGate['debtSource']=null):DebtGate{
   const ok=debt!==null&&Number.isFinite(debt)&&debt>=0;
   return {limitTry,limitUsd,totalDebtTry:debt,balancesFresh:fresh,debtSource,open:ok&&limitTry!=null&&debt!<limitTry&&fresh,
     reason:debt==null?'Toplam borç doğrulanamadı':limitTry==null?'Borç hedefinin TL karşılığı bilinmiyor (hedef ya da TCMB kuru yok)':
-      debt>=limitTry?(limitUsd!=null?`Finansal borç ${tl(limitUsd)} USD (${tl(limitTry)} TL) hedefinin altına düşene kadar yalnız gelecek sipariş listesi`
-        :'Toplam borç 5 milyon TL altına düşene kadar yalnız gelecek sipariş listesi'):'Borç ve kaynak tazeliği doğrulanmalı'};
+      debt>=limitTry?`Finansal borç ${limitUsd!=null?`${tl(limitUsd)} USD (${tl(limitTry)} TL)`:`${tl(limitTry)} TL`} hedefinin altına düşene kadar yalnız gelecek sipariş listesi`
+        :'Borç ve kaynak tazeliği doğrulanmalı'};
 }
 const FRESH=`(select bool_and("remainingTry" is not null and "lastUpdatedAt">=$1::timestamp-interval '7 days') from cfo_loan where status::text<>'KAPANDI') as loans_ok,
       (select bool_and("totalDebtTry" is not null and "lastUpdatedAt">=$1::timestamp-interval '7 days') from cfo_credit_card where "isActive") as cards_ok,
@@ -33,10 +33,7 @@ export async function readOrderDebtGate(db:ReadSource,now=new Date()):Promise<De
       const limit=usd!=null&&fx!=null&&usd>0&&fx>0?Math.round(usd*fx*100)/100:null;
       return debtGate(debt,row?.loans_ok===true&&row?.cards_ok===true&&row?.banks_ok===true,limit,usd,'cfo_metrik_borc');
     }
-    const [row]=await db.query<Row>(`select w.borc::numeric as debt,
-      ${FRESH}
-      from cfo_servet w`,now.toISOString());
-    const debt=row?.debt==null?null:Number(row.debt);
-    return debtGate(debt,row?.loans_ok===true&&row?.cards_ok===true&&row?.banks_ok===true);
+    // Sözleşme fonksiyonu yok (migration'sız şema): eski "cfo_servet.borc < 5M TL" yoluna düşülmez, kapı kapalı.
+    return {...debtGate(null,false),reason:'Borç sözleşmesi (cfo_metrik_borc) bulunamadı; sipariş kapısı kapalı'};
   }catch{return debtGate(null,false);}
 }

@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Sipariş borç kapısında sabit 5 milyon TL eşiği kalktı (2026-10-09)
+
+- Yeni sipariş kapısı yalnız borç sözleşmesini (`cfo_metrik_borc`) hedefle (CFO ayarı USD × TCMB) karşılaştırır; sözleşme, hedef ya da kur yoksa kapı kapalı kalır.
+- `/cfo/borclar` sayfasının başında finansal borcun tek tanımlı toplamı, hedefi ve açığı gösterilir.
+
 ### Depo, üretimdeki migration'larla senkron (2026-10-09)
 
 - `baseline.json`: 150000–210000 artık üretimde sayılıyor; bekletilen yalnız `market_scout_foundation` ve `drop_legacy_backup_tables`.

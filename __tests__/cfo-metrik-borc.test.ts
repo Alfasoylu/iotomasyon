@@ -45,11 +45,12 @@ async function main() {
       insert into fm_fx_monthly (month, usd_try_forex_buying, ref_date, bulletin_no, is_fallback_day, source_url, fetched_at)
         values (date_trunc('month', current_date)::date, 48.5, current_date, 'x', false, 'synthetic', now());`);
 
-    // Sözleşme fonksiyonu yoksa (180000 öncesi şema) kapı eski yola düşer — cfo_servet.borc (gümrük dahil) < 5M TL
+    // Sözleşme fonksiyonu yoksa kapı KAPALI: eski "cfo_servet.borc < 5M TL" yolu kaldırıldı (sabit TL eşiğine düşülmez)
     await db.exec(`alter function cfo_metrik_borc() rename to cfo_metrik_borc_x`);
     const g0 = await readOrderDebtGate(source, now);
     await db.exec(`alter function cfo_metrik_borc_x() rename to cfo_metrik_borc`);
-    assert.deepEqual([g0.debtSource, g0.limitTry, g0.totalDebtTry], ["cfo_servet.borc", 5_000_000, 4_000_000 + 1_000_000 + 350_000]);
+    assert.deepEqual([g0.open, g0.debtSource, g0.limitTry, g0.totalDebtTry], [false, null, null, null]);
+    assert.match(g0.reason, /cfo_metrik_borc/);
 
     for (const m of [NET, BORC]) { const sql = readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"); await db.exec(sql); await db.exec(sql); }
 

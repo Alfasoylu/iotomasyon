@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { FORECAST_CONSUMERS } from "../lib/forecast/consumer-audit";
 import { compareLegacyV2, forecastV2View, selectMonthlyDemand, v2DecisionDemand, type ForecastV2Map } from "../lib/forecast/selection";
 import { forecastV2, forecastV2Enabled, type ForecastV2Aggregates } from "../lib/forecast/v2";
-import { debtGate, NEW_ORDER_DEBT_LIMIT_TRY } from "../lib/cfo-agent/debt-policy";
+import { debtGate } from "../lib/cfo-agent/debt-policy";
 
 // Forecast V2 consumer integration: the audited call-site registry is complete and enforced (MIGRATE_V2 sites gate on the flag through
 // lib/forecast/consumer, others do not import it), flag OFF returns the legacy value untouched, flag ON uses FULL-grade V2 only (PARTIAL /
@@ -64,9 +64,10 @@ async function main() {
   assert.deepEqual(compareLegacyV2(0, 2), { absDiff: 2, pctDiff: null, gt25pct: true, gt2x: false }, "2x needs ≥ 3 units difference");
   assert.equal(compareLegacyV2(5, null).absDiff, null);
 
-  // 4. 5M TL debt gate untouched and independent of the forecast
-  assert.equal(NEW_ORDER_DEBT_LIMIT_TRY, 5_000_000);
-  assert.equal(debtGate(9_240_000, true).open, false); assert.equal(debtGate(4_999_999, true).open, true); assert.equal(debtGate(4_999_999, false).open, false);
+  // 4. Debt gate (CFO-002: cfo_metrik_borc < debtTargetUsd × TCMB) untouched and independent of the forecast; no fixed TL fallback
+  assert.ok(!/5_000_000|5000000/.test(src("lib/cfo-agent/debt-policy.ts")), "no fixed 5M TL threshold");
+  assert.equal(debtGate(9_240_000, true, 4_855_850).open, false); assert.equal(debtGate(4_855_849, true, 4_855_850).open, true);
+  assert.equal(debtGate(4_855_849, false, 4_855_850).open, false); assert.equal(debtGate(1, true).open, false);
   assert.ok(!/forecast/.test(src("lib/cfo-agent/debt-policy.ts")), "debt gate does not depend on forecasts");
   const po = src("lib/actions/purchase-order-actions.ts");
   assert.ok(/readOrderDebtGate/.test(po) && /order_debt_gate/.test(po) && !/forecast/.test(po), "PO creation still enforces the debt gate, no forecast bypass");

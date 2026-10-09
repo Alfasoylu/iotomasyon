@@ -50,7 +50,7 @@ export default async function ForecastV2Page() {
       <p>Bayrak kapalıyken tüm ekranlar eski formülü kullanır; açıkken yalnız aşağıda MIGRATE_V2 işaretli tüketiciler V2&apos;ye geçer. V2 = kanonik
         satışın gerçek son 30 günü; max/mevsim tabanı ve manuel potansiyel uygulanmaz; PARTIAL (7–29 gün) ve UNKNOWN (&lt;7 gün / hiç satış yok) sipariş ve
         sermaye hesabına girmez. Stok-düzeltilmiş talep tahmini ayrı bir kavramdır ve tahminin yerine geçmez.</p>
-      <p>Sipariş kuralları yalnız talep kısmıyla (kâr/ROI/bütçe kapıları öncesi) hesaplanır. Otomatik sipariş üretilmez; 5 milyon TL borç kapısı aynen geçerlidir.</p>
+      <p>Sipariş kuralları yalnız talep kısmıyla (kâr/ROI/bütçe kapıları öncesi) hesaplanır. Otomatik sipariş üretilmez; borç kapısı (finansal borç, hedef USD × TCMB altında olmalı) aynen geçerlidir.</p>
     </Card>
     {error && <Card className="p-4 text-sm text-red-700">{error}</Card>}
     {shadow && <>
