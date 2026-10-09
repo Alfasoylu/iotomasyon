@@ -2169,6 +2169,11 @@ model CfoSnapshot {
   contractNetWorthTry Decimal? @db.Decimal(14, 2)
   /// Finansal borç SÖZLEŞME tanımı (CFO-002; cfo_metrik_borc() sira 100: kredi kalan + kart toplam + kullanılan KMH). Migration 20261009180000 öncesi boş.
   contractDebtTry     Decimal? @db.Decimal(14, 2)
+  /// Net sermaye sözleşmesinin varlık bileşenleri (CFO-017; cfo_metrik_net_sermaye sira 1–4). Migration 20261009230000 öncesi boş.
+  contractCashTry        Decimal? @db.Decimal(14, 2)
+  contractReceivablesTry Decimal? @db.Decimal(14, 2)
+  contractStockTry       Decimal? @db.Decimal(14, 2)
+  contractInTransitTry   Decimal? @db.Decimal(14, 2)
 
   @@index([takenAt])
   @@map("cfo_snapshot")

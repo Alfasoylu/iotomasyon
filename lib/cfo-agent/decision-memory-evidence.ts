@@ -35,7 +35,7 @@ export async function loadGoalAttributionEvidence(db: ReadSource, at: string): P
   const r0 = Math.round;
   return ga.windows.flatMap(w => [
     evidence("fm_balance_day", `hedef_atfi.${w.window}g.bildirilen_vs_operasyonel_try (${w.attribution.from}→${w.attribution.to})`,
-      `bildirilen ${r0(w.attribution.netChange)} · operasyonel ${r0(w.attribution.operational)} · stok değerleme ${r0(w.attribution.inventoryValuation)}`, "text", at, false),
+      `bildirilen ${r0(w.attribution.netChange)} · operasyonel ${r0(w.attribution.operational)} · stok değerleme ${r0(w.attribution.inventoryValuation)}${w.attribution.identityOk ? "" : ` · açıklanamayan ${r0(w.attribution.unexplained)} (bileşen tanımı net sermayeyle aynı değil)`}`, "text", at, false),
     evidence("fm_balance_day", `hedef_atfi.${w.window}g.operasyonel_try_gun (hedef ${w.pace.requiredPerDay == null ? "?" : r0(w.pace.requiredPerDay)} TL/gün → ${w.pace.verdict})`,
       r0(w.pace.operationalPerDay), "TRY/day", at, false),
   ]);
