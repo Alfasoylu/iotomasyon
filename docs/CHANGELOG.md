@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### Maliyeti eksik 20 ürünün maliyeti girildi (2026-10-10)
+
+- 8 ithal ürünün maliyeti alış fiyatı (RMB) ve ağırlıktan ithalat motoruyla hesaplandı; deniz/hava kararını motor verdi, gümrük GTİP'e göre.
+- İstoç/Euromix'ten alınan 6 armatür ürününün maliyeti tedarikçi fiyatından (USD + KDV) yazıldı, tedarikçi adları kayıtlı.
+- 7 başarısız ürün "tekrar getirilmeyecek" olarak işaretlendi; CFO bu ürünlere sipariş önermiyor.
+- Bu ürünler artık stok değerine giriyor: net sermaye 2.266.989 → 2.473.141 TL.
+
 ### Ürün maliyetleri tedarik Excel'inden güncellendi (2026-10-10)
 
 - CFO'nun stok maliyeti bu 335 üründe ithalat motorunun hesabına çekildi (motorun seçtiği deniz/hava navlunu + GTİP gümrüğü); net sermaye 2.405.400 → 2.266.989 TL.

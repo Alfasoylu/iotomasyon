@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 02:30 TR
-current_main_commit: e1d8eda
+last_updated: 2026-10-10 01:45 TR
+current_main_commit: 6a2d888
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık −138.411 TL maliyet düzeltmesini içerir) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık maliyet düzeltmelerini içerir: −138.411 + 206.152 TL) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — 335 üründe CFO birim maliyeti ithalat motorundan türetildi (net sermaye 2.405.400 → 2.266.989 TL, doğru yönde düzeltme); 1./3. boyut puanı CFO-029 (otomatik türetme) bitince yeniden puanlanır"
+score_change: "unchanged — maliyeti eksik 20 ürün (Alperen verisi) yazıldı: 7 SKU stok değerine girdi, net sermaye 2.266.989 → 2.473.141 TL (179.044 TL'si başarısız 4K kameranın NRV'si); 7 ürün NO_REORDER. 1./3. boyut CFO-029 bitince yeniden puanlanır"
 ---
 
 # CFO RED FLAGS (append-only)
