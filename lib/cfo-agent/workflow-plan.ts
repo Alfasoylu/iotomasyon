@@ -34,7 +34,7 @@ export function planCfoWork(context:WorkingContext,settings:Row,knowledge:Knowle
   if(context.forecastInputs?.interestMonthlyTry==null&&context.notebook?.available!==false&&!context.notebook?.truncated&&
     !knowledge.some(q=>q.id===workflowId('question:'+budgetQuestionKey)||q.status!=='IPTAL'&&/(FAIZ|FAİZ)/.test(skuKey(q.question))&&/(BUTCE|BÜTÇE|AYLIK)/.test(skuKey(q.question)))){
     questions.push({key:budgetQuestionKey,sku:'',area:'nakit',priority:1,question:'Borç hedefi için vergi/ücret dahil aylık faiz, takvim dışında kalan aylık çıkış, korunacak nakit tamponu ve ihtiyatlı tahsilat süresi nedir? Mevcut stok bedeli tamamen ödendi mi?',
-      why:'Bu birleşik soru borcun 5 milyon TL altına ineceği tarih hesabını açar. Çalışan CFO sayfasındaki bütçe formuna girilen beyanla yeniden hesaplanır; bilinmeyen gider sıfır sayılmaz.'});
+      why:'Bu birleşik soru borcun hedefin (sipariş kapısı eşiği) altına ineceği tarih hesabını açar. Çalışan CFO sayfasındaki bütçe formuna girilen beyanla yeniden hesaplanır; bilinmeyen gider sıfır sayılmaz.'});
   }
   const bySku=new Map<string,WorkingContext['operating']['products']>();
   for(const p of context.operating.products){const key=p.resolvedSku;bySku.set(key,[...(bySku.get(key)??[]),p]);}

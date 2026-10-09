@@ -1977,6 +1977,8 @@ model CfoSettings {
   importMinOrderUsd       Decimal @default(10000) @db.Decimal(14, 2) // parti başına min tutar
   importMinLineQty        Int     @default(5) // satır başına min adet
   monthlyRevenueTargetUsd Decimal @default(100000) @db.Decimal(14, 2) // hedef aylık ciro
+  /// Finansal borç hedefi (G3, USD; CFO-002). Goal Engine debt_below_usd ve yeni sipariş kapısı bunu × TCMB kuru ile kullanır.
+  debtTargetUsd           Decimal?  @default(100000) @db.Decimal(14, 2)
 
   updatedAt             DateTime  @updatedAt
   updatedByEmail        String?
@@ -2165,6 +2167,8 @@ model CfoSnapshot {
   note           String?
   /// Net sermaye SÖZLEŞME tanımı (CFO-001; cfo_metrik_net_sermaye() sira 100: GENİŞ + LCNRV + KMH). Migration 20261009170000 öncesi boş.
   contractNetWorthTry Decimal? @db.Decimal(14, 2)
+  /// Finansal borç SÖZLEŞME tanımı (CFO-002; cfo_metrik_borc() sira 100: kredi kalan + kart toplam + kullanılan KMH). Migration 20261009180000 öncesi boş.
+  contractDebtTry     Decimal? @db.Decimal(14, 2)
 
   @@index([takenAt])
   @@map("cfo_snapshot")

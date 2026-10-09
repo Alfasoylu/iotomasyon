@@ -24,8 +24,10 @@ const KNOWN_OUT_OF_BAND = [
 //   20261009140000_cfo_gumruk_dilim_capture — LANGUAGE sql gövdesi cfo_nakit_kapisi / cfo_nakit_projeksiyon'a dayanır (yalnız baseline'da).
 //   20261009170000_cfo_metrik_net_sermaye — LANGUAGE sql gövdesi cfo_stok_deger / cfo_yoldaki_mal'a dayanır (yalnız baseline'da);
 //     üretim kopyasında cfo-net-sermaye testi doğrular.
+//   20261009180000_cfo_metrik_borc — LANGUAGE sql gövdesi cfo_yoldaki_mal'a dayanır ve 170000'in kolonlarını kullanır; cfo-metrik-borc testi doğrular.
 const BASELINE_DEPENDENT = ["20261008160000_cfo_maliyet_kapsami", "20261008190000_cfo_maliyet_kapsami_satir_kimligi", "20261008200000_cfo_maliyet_kapsami_satir",
-  "20261009100000_cfo_kredi_kalan_anapara", "20261009140000_cfo_gumruk_dilim_capture", "20261009170000_cfo_metrik_net_sermaye"];
+  "20261009100000_cfo_kredi_kalan_anapara", "20261009140000_cfo_gumruk_dilim_capture", "20261009170000_cfo_metrik_net_sermaye",
+  "20261009180000_cfo_metrik_borc"];
 
 async function main() {
   const db = new PGlite({ extensions: { vector } });
