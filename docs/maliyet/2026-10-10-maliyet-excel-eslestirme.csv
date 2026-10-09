@@ -1,0 +1,965 @@
+excel_satir,excel_sku,sonuc,guven,yontem,sistem_sku,sistem_urun_adi,aktif,stok,excel_rmb,excel_usd,excel_kg,excel_deniz_navlun_usd,excel_hava_kargo_usd,sistem_rmb,sistem_unitCostUsd,sistem_kg,gtip,gtip_kaynagi,gv_pct,igv_pct,otv_pct,kdv_pct,gumruk_matrahi_deniz_usd,gv_igv_deniz_usd,otv_deniz_usd,ithalat_kdv_deniz_usd_indirilir,inis_maliyeti_deniz_usd_kdv_haric,inis_maliyeti_hava_usd_kdv_haric,not
+2,1SS304EV4835,ESLESMEDI,UNKNOWN,aday yok,,,,,50.0000,7.8358,2.500,2.50,20.00,,,,,,,,,,,,,,,,
+3,1SS304EV5040,ESLESMEDI,UNKNOWN,aday yok,,,,,55.0000,8.6194,3.000,3.00,24.00,,,,,,,,,,,,,,,,
+4,4AS304SS8002,KESIN,HIGH,SKU birebir,4AS304SS8002,ALFAS Lavabo Bataryası İnox Fırçalı Nikel 304 Pasl,evet,0,18.5000,2.8993,0.450,0.45,3.60,18.50,4.98,0.450,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,3.21,0.87,0.00,0.82,4.22,8.23,
+5,5T-USBMGPMACH3,MUHTEMEL,MEDIUM,grup kodu farklı/eksik,T-USBMGPMACH3,Kablosuz USB CNC Mach3 MPG El Çarkı 4 Eksen Kontro,evet,0,560.0000,87.7612,0.500,0.50,4.00,,,,8471.60.70.90.19,ÖNERİ (ORTA): PC'ye USB ile bağlanan CNC MPG el çarkı = ABİM giriş birimi,0.00,0.00,0.00,20.00,84.08,0.00,0.00,16.82,88.26,91.76,"baştaki grup kodu farklı/eksik, gövde kod aynı · sistem GTİP'i 85.37.10.99.00 eski/eksik → öneri 8471.60.70.90.19 (ORTA)"
+6,426M-1006G,CONFLICT,CONFLICT,sistem SKU'su kod+ek,TE-1006GOLDMTFKBATARYA,,,,115.0000,18.0224,2.100,2.10,16.80,,,,,,,,,,,,,,,,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · aynı ürüne satır 10 (1006G) de eşleşti ve RMB/kg farklı
+7,426M-4267192047364,CONFLICT,CONFLICT,grup kodu farklı/eksik,4267192047364,,,,80.0000,12.5373,2.100,2.10,16.80,,,,,,,,,,,,,,,,"baştaki grup kodu farklı/eksik, gövde kod aynı · aynı ürüne satır 832 (ART4267192047364) de eşleşti ve RMB/kg farklı"
+8,426M-4700027164058,ESLESMEDI,UNKNOWN,aday yok,,,,,40.0000,6.2687,1.150,1.15,9.20,,,,,,,,,,,,,,,,
+9,426M-TE-7888G,ESLESMEDI,UNKNOWN,aday yok,,,,,62.0000,9.7164,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+10,1006G,CONFLICT,CONFLICT,sistem SKU'su kod+ek,TE-1006GOLDMTFKBATARYA,,,,145.0000,22.7239,1.500,1.50,12.00,,,,,,,,,,,,,,,,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · aynı ürüne satır 6 (426M-1006G) de eşleşti ve RMB/kg farklı
+11,1024MN,KESIN,HIGH,SKU birebir,1024MN,4 Port PoE + 2 Uplink 10/100 Switch (AN-1024MN) 60,evet,31,30.0000,4.7015,0.550,0.55,4.40,30.00,11.69,0.600,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,5.03,0.00,0.00,1.01,5.25,9.10,ağırlık farkı: sistem 0.6 → Excel 0.55
+12,1028MN,KESIN,HIGH,SKU birebir,1028MN,Anunnaki AN1028MN 8 Port PoE Switch / 120W / 2 Upl,evet,58,50.0000,7.8358,0.600,0.60,4.80,50.00,16.56,0.700,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,8.06,0.00,0.00,1.61,8.44,12.64,ağırlık farkı: sistem 0.7 → Excel 0.6
+13,1450,ESLESMEDI,UNKNOWN,aday yok,,,,,1450.0000,227.2388,,,,,,,,,,,,,,,,,,,
+14,3028GE,ESLESMEDI,UNKNOWN,aday yok,,,,,80.0000,12.5373,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+15,3038GE,KESIN,HIGH,SKU birebir,3038GE,"Anunnaki 3038GE 8 Port Gigabit PoE Switch 22Gbps, ",evet,2,85.0000,13.3209,1.300,1.30,10.40,85.00,21.75,1.300,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,13.99,0.00,0.00,2.80,14.62,23.72,
+16,4230-4230657985411,ESLESMEDI,UNKNOWN,aday yok,,,,,187.0000,29.3060,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+17,4230-4230657986522,ESLESMEDI,UNKNOWN,aday yok,,,,,176.0000,27.5821,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+18,4403-440203838284,KESIN,HIGH,grup kodu farklı/eksik,440203838284,Ankastre Duş Seti Sıva Altı Gold Yağmurlama Duş Ba,evet,0,283.0000,44.3507,3.000,3.00,24.00,283.00,70.45,3.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,45.24,12.30,0.00,11.51,59.66,86.37,"baştaki grup kodu farklı/eksik, gövde kod aynı"
+19,4403-4403704516901,ESLESMEDI,UNKNOWN,aday yok,,,,,335.0000,52.5000,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+20,4403-4403704527012,ESLESMEDI,UNKNOWN,aday yok,,,,,315.0000,49.3657,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+21,4403-4403704538123,ESLESMEDI,UNKNOWN,aday yok,,,,,275.0000,43.0970,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+22,4403-4403704549234,ESLESMEDI,UNKNOWN,aday yok,,,,,265.0000,41.5299,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+23,4550,ESLESMEDI,UNKNOWN,aday yok,,,,,45.1389,7.0740,,,,,,,,,,,,,,,,,,,
+24,7888INOX,ESLESMEDI,UNKNOWN,aday yok,,,,,43.0000,6.7388,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+25,10316KE,KESIN,HIGH,SKU birebir,10316KE,Anunnaki 10316KE 16+2+1 Port Gigabit Poe Switch 16,evet,5,160.0000,25.0746,2.000,2.00,16.00,160.00,39.55,1.500,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,25.88,0.00,0.00,5.18,27.07,41.07,ağırlık farkı: sistem 1.5 → Excel 2
+26,10324KE,KESIN,HIGH,SKU birebir,10324KE,Anunnaki 10324KE 24 Port PoE Switch / 400W / 2GE G,evet,2,220.0000,34.4776,2.500,2.50,20.00,220.00,55.02,2.500,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,35.34,0.00,0.00,7.07,36.98,54.48,
+27,46113,ESLESMEDI,UNKNOWN,aday yok,,,,,3.0000,0.4701,,,,,,,,,,,,,,,,,,,
+28,1405040HONB2,ESLESMEDI,UNKNOWN,aday yok,,,,,147.0000,23.0373,4.000,4.00,32.00,,,,,,,,,,,,,,,,
+29,1407545HONB,ESLESMEDI,UNKNOWN,aday yok,,,,,198.0000,31.0299,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+30,13004050I,ESLESMEDI,UNKNOWN,aday yok,,,,,83.0000,13.0075,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+31,13004555I,ESLESMEDI,UNKNOWN,aday yok,,,,,93.0000,14.5746,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+32,13005040B,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+33,20003000,ESLESMEDI,UNKNOWN,aday yok,,,,,14.0000,2.1940,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+34,20004000,KESIN,HIGH,SKU birebir,20004000,AN2260 Type-c to Hdmi IOS Android Tablet Pc Telefo,evet,0,14.0000,2.1940,0.040,0.04,0.32,14.00,3.69,0.040,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,2.13,0.39,0.00,0.50,2.62,2.95,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 200040000
+35,20496000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,204960000,PC Macbook Ekran Genişletici Çift HDMI VGA USB 3.0,evet,0,36.8000,5.7672,0.100,0.10,0.80,,,,8471.80.00.00.00,ÖNERİ (YUKSEK): USB ekran genişletici; emsal Type-C HDMI görüntü aktarım 8471.80,0.00,0.00,0.00,20.00,5.59,0.00,0.00,1.12,5.87,6.57,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 84.71.80.00.00 eski/eksik → öneri 8471.80.00.00.00 (YUKSEK)
+36,20745000,KESIN,HIGH,SKU birebir,20745000,Anunnaki Micro Usb 3 In 1 Sd Tf Kart Okuyucu Otg V,evet,36,2.0000,0.3134,0.030,0.03,0.24,2.50,0.64,0.040,8471.70.98.90.00,sistem,0.00,0.00,0.00,20.00,0.33,0.00,0.00,0.07,0.34,0.55,RMB farkı: sistem 2.5 → Excel 2 · ağırlık farkı: sistem 0.04 → Excel 0.03
+37,20746000,KESIN,HIGH,SKU birebir,20746000,5.1 Ses Kod Çözücü DTS AC3 Dolby Kod Çözme SPDIF E,evet,0,111.0000,17.3955,0.300,0.30,2.40,111.00,26.35,0.300,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,16.87,0.62,0.00,3.50,18.32,20.50,
+38,20753000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,207530000,Usb To Ethernet Çevirici Dönüştürücü Adaptor Inter,evet,0,6.2500,0.9795,0.015,0.01,0.12,,,,8517.62.00.90.19,ÖNERİ (YUKSEK): USB-Ethernet adaptör = ağ kartı; emsal 10 ürün 8517.62,0.00,0.00,0.00,20.00,0.95,0.00,0.00,0.19,0.99,1.10,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8517.62.00.90.19 (YUKSEK)
+39,20756000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,207560000000,Displayport to Hdmi Mini Siyah 4k 30hz Dp to hdmı ,evet,0,3.6650,0.5744,0.018,0.02,0.14,5.00,1.20,0.030,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,0.56,0.10,0.00,0.13,0.70,0.84,sayısal kodda sondaki sıfır sayısı farklı · RMB farkı: sistem 5 → Excel 3.665 · ağırlık farkı: sistem 0.03 → Excel 0.0175
+40,20793000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,207930000,Bluetooth 5.0 Alıcı Usb Aux Çok Fonksiyonlu Kablos,evet,0,11.4000,1.7866,0.050,0.05,0.40,10.00,2.48,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,1.75,0.00,0.00,0.35,1.84,2.19,sayısal kodda sondaki sıfır sayısı farklı · RMB farkı: sistem 10 → Excel 11.4 · ağırlık farkı: sistem 0.1 → Excel 0.05
+41,20865000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,208650000,iphone SD - Mıkro SD Kart Kamera Okuyucusu lightni,evet,0,6.6500,1.0422,0.020,0.02,0.16,,,,8471.70.98.90.00,ÖNERİ (YUKSEK): kart okuyucu; emsal 6 ürün 8471.70.98,0.00,0.00,0.00,20.00,1.01,0.00,0.00,0.20,1.06,1.20,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 298 (2086500000) de eşleşti; RMB/kg aynı · sistem GTİP'i 84.71.80.00.00 eski/eksik → öneri 8471.70.98.90.00 (YUKSEK)
+42,20896000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,208960000,Kart Okuyucu SD-MMC-MİcroSD-M2-XD-CF Kart Okuma US,evet,5,6.9000,1.0813,0.040,0.04,0.32,,,,8471.70.98.90.00,ÖNERİ (YUKSEK): kart okuyucu; emsal 8471.70.98,0.00,0.00,0.00,20.00,1.07,0.00,0.00,0.21,1.12,1.40,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 84.71.80.00.00 eski/eksik → öneri 8471.70.98.90.00 (YUKSEK)
+43,20965000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,209650000,GS1 3 İn 1 Usb-c Type-c Oyun Ses 60W Hızlı Şarj Ad,evet,0,52.1000,8.1649,0.100,0.10,0.80,,,,8543.70.90.00.19,ÖNERİ (DUSUK): USB-C ses + PD şarj adaptörü (aktif DAC'lı çevirici); teyit,3.70,0.00,0.00,20.00,7.88,0.29,0.00,1.63,8.56,9.28,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.04.40.84.00 eski/eksik → öneri 8543.70.90.00.19 (DUSUK)
+44,20988000,ESLESMEDI,UNKNOWN,aday yok,,,,,26.3000,4.1216,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+45,21074000,ESLESMEDI,UNKNOWN,aday yok,,,,,236.0000,36.9851,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+46,21074100,KESIN,HIGH,sondaki sıfır farkı,210741000000,Type-c & Lightning & Usb Flash Bellek 3 in 1 128Gb,evet,0,53.0000,8.3060,0.020,0.02,0.16,53.00,12.40,0.020,8523.51.10.00.00,sistem,0.00,0.00,0.00,20.00,7.93,0.00,0.00,1.59,8.33,8.47,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 506 (210741000000) de eşleşti; RMB/kg aynı · sistemdeki RMB ile teyitli (±%3)
+47,21357000,KESIN,HIGH,SKU birebir,21357000,Scart To HDMI Dönüştürücü Çevirici Adaptör Av Vide,evet,0,14.4750,2.2685,0.060,0.06,0.48,14.00,3.37,0.070,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,2.22,0.08,0.00,0.46,2.41,2.85,RMB farkı: sistem 14 → Excel 14.475 · ağırlık farkı: sistem 0.07 → Excel 0.06
+48,21455000,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+49,21475000,KESIN,HIGH,SKU birebir,21475000,3in1 Taşınabilir Type C USB Kart Okuyucu Mikro Sd ,evet,272,11.3383,1.7769,0.025,0.03,0.20,6.00,1.64,0.040,8471.70.98.90.00,sistem,0.00,0.00,0.00,20.00,1.72,0.00,0.00,0.34,1.80,1.98,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 214750000 · RMB farkı: sistem 6 → Excel 11.3383 (BÜYÜK FARK — teyit) · ağırlık farkı: sistem 0.04 → Excel 0.025
+50,21476000,KESIN,HIGH,SKU birebir,21476000,POE Repeater 1 Giriş 4 Çıkış POE Tekrarlayıcı Kabl,evet,0,36.7500,5.7593,0.425,0.42,3.40,36.50,12.04,0.250,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,5.91,0.00,0.00,1.18,6.18,9.16,ağırlık farkı: sistem 0.25 → Excel 0.425
+51,21485000,KESIN,HIGH,SKU birebir,21485000,Usb + Type-C Çıkışlı Flash Bellek 64gb Iphone Sams,evet,0,36.5000,5.7201,0.020,0.02,0.16,36.50,8.55,0.020,8523.51.10.00.00,sistem,0.00,0.00,0.00,20.00,5.47,0.00,0.00,1.09,5.74,5.88,
+52,21579000,KESIN,HIGH,SKU birebir,21579000,3in1 Lightning Micro Usb Type-c To Hdmı Ios Androi,evet,0,29.5500,4.6310,0.090,0.09,0.72,28.00,6.61,0.050,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,4.50,0.17,0.00,0.93,4.89,5.54,RMB farkı: sistem 28 → Excel 29.55 · ağırlık farkı: sistem 0.05 → Excel 0.09
+53,21580000,KESIN,HIGH,SKU birebir,21580000,"USB to Sata Usb 3.0 to Sata 22PIN 2,5 inç Adaptör ",evet,0,7.4667,1.1702,0.010,0.01,0.08,7.50,1.71,0.050,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,1.12,0.00,0.00,0.22,1.18,1.25,aynı ürüne satır 264 (215800000) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı · ağırlık farkı: sistem 0.05 → Excel 0.01
+54,21647000,KESIN,HIGH,SKU birebir,21647000,21647000 HDMI TO VGA ÇEVİRİCİ,evet,0,4.8000,0.7522,0.015,0.01,0.12,4.80,1.14,0.010,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,0.73,0.03,0.00,0.15,0.79,0.90,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 216470000 · ağırlık farkı: sistem 0.01 → Excel 0.015
+55,22077000,KESIN,HIGH,SKU birebir,22077000,Displayport To HDMI Display Port HDMI DP to hdmi Ç,evet,0,3.6000,0.5642,0.030,0.03,0.24,3.20,0.93,0.030,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.57,0.01,0.00,0.12,0.61,0.82,RMB farkı: sistem 3.2 → Excel 3.6
+56,22078000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,220780000,DisplayPort to HDMI Dönüştürücü Çevirici Adaptör,evet,2,3.5000,0.5485,0.030,0.03,0.24,,,,8536.69.90.00.18,ÖNERİ (ORTA): DP→HDMI adaptör; emsal 5 ürün 8536.69.90.00.18,2.30,0.00,0.00,20.00,0.55,0.01,0.00,0.11,0.59,0.81,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8536.69.90.00.18 (ORTA)
+57,22079000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,220790000,4k*2k Destekli Displayport'dan Hdmi'ya Çevirici Dö,evet,3,3.4000,0.5328,0.030,0.03,0.24,,0.97,,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.54,0.01,0.00,0.11,0.58,0.79,sayısal kodda sondaki sıfır sayısı farklı
+58,22080000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,4.6500,0.7287,0.030,0.03,0.24,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 220800000 — zorla eşleştirilmedi
+59,22081000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,220810000,Anunnaki DisplayPort to DVI Dönüştürücü Çevirici F,evet,0,5.5000,0.8619,0.030,0.03,0.24,,,,8536.69.90.00.18,ÖNERİ (ORTA): DP→DVI adaptör; emsal DP adaptörleri 8536.69,2.30,0.00,0.00,20.00,0.85,0.02,0.00,0.17,0.91,1.13,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8536.69.90.00.18 (ORTA)
+60,22082000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,220820000,Displayport Dp - HDMI/DVI/VGA Erkek - Dişi 3'ü 1 a,evet,0,14.0000,2.1940,0.030,0.03,0.24,,,,8543.70.90.00.19,ÖNERİ (ORTA): DP→HDMI/DVI/VGA 3'ü 1 (VGA aktif çevirici); emsal DP→VGA 8543.70,3.70,0.00,0.00,20.00,2.12,0.08,0.00,0.44,2.30,2.52,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8543.70.90.00.19 (ORTA)
+61,22083000,KESIN,HIGH,SKU birebir,22083000,Mini Displayport To Hdmi Dönüştürücü Mini Dp Hdmı ,evet,9,3.3500,0.5250,0.030,0.03,0.24,4.00,0.99,0.040,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.53,0.01,0.00,0.11,0.57,0.78,RMB farkı: sistem 4 → Excel 3.35 · ağırlık farkı: sistem 0.04 → Excel 0.03
+62,22084000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,220840000,Anunnaki Mini DisplayPort to HDMI Adaptör Çevirici,evet,9,3.4000,0.5328,0.030,0.03,0.24,,,,8536.69.90.00.18,ÖNERİ (ORTA): Mini DP→HDMI adaptör; emsal 8536.69,2.30,0.00,0.00,20.00,0.54,0.01,0.00,0.11,0.58,0.79,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8536.69.90.00.18 (ORTA)
+63,22085000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,220850000,MiniDP Mini DisplayPort To VGA Dönüştürücü Çeviric,evet,0,5.3000,0.8306,0.030,0.03,0.24,,1.34,,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,0.82,0.03,0.00,0.17,0.89,1.11,sayısal kodda sondaki sıfır sayısı farklı
+64,22086000,KESIN,HIGH,sondaki sıfır farkı,220860000,MiniDP Mini DisplayPort To DVI-A Dönüştürücü Çevir,evet,0,5.5000,0.8619,0.030,0.03,0.24,5.50,1.33,0.030,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,0.85,0.03,0.00,0.18,0.92,1.14,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 265 (220860000) de eşleşti; RMB/kg aynı · sistemdeki RMB ile teyitli (±%3)
+65,22087000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,220870000,MiniDP to VGA-HDMI-DVI Çevirici Dönüştürücü Adaptö,evet,0,17.0000,2.6642,0.030,0.03,0.24,,,,8543.70.90.00.19,ÖNERİ (ORTA): MiniDP→VGA/HDMI/DVI (VGA aktif); emsal 8543.70,3.70,0.00,0.00,20.00,2.57,0.09,0.00,0.53,2.79,3.01,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8543.70.90.00.19 (ORTA)
+66,22088000,KESIN,HIGH,SKU birebir,22088000,Dvi Vga Dvi To Vga Aktif Dönüştürücü Kablo (dvı-d ,evet,7,5.5000,0.8619,0.030,0.03,0.24,5.00,1.55,0.030,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,0.85,0.03,0.00,0.18,0.92,1.14,RMB farkı: sistem 5 → Excel 5.5
+67,22089000,ESLESMEDI,UNKNOWN,aday yok,,,,,22.0000,3.4478,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+68,22090000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,17.5000,2.7425,0.030,0.03,0.24,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 220900000 — zorla eşleştirilmedi
+69,22093000,CONFLICT,CONFLICT,sondaki sıfır farkı,220930000,,,,3.7000,0.5799,0.020,0.02,0.16,,,,,,,,,,,,,,,,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 266 (220930000) de eşleşti ve RMB/kg farklı
+70,22358000,ESLESMEDI,UNKNOWN,aday yok,,,,,570.0000,89.3284,0.250,0.25,2.00,,,,,,,,,,,,,,,,
+71,22460000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,7.6000,1.1910,0.050,0.05,0.40,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 224600000 — zorla eşleştirilmedi
+72,23093000,KESIN,HIGH,SKU birebir,23093000,Mini Display Port Mini Dp To HDMI Çevirici Aparat,evet,0,4.8500,0.7601,0.045,0.04,0.36,5.00,1.24,0.050,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.77,0.02,0.00,0.16,0.82,1.15,RMB farkı: sistem 5 → Excel 4.85 · ağırlık farkı: sistem 0.05 → Excel 0.045
+73,23147000,KESIN,HIGH,SKU birebir,23147000,Macbook Uyumlu Mini Displayport  Hdmı Çıkışlı Dönü,evet,19,3.7600,0.5893,0.020,0.02,0.16,3.00,0.76,0.040,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.58,0.01,0.00,0.12,0.62,0.77,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 231470000 · RMB farkı: sistem 3 → Excel 3.76 · ağırlık farkı: sistem 0.04 → Excel 0.02
+74,23152000,KESIN,HIGH,SKU birebir,23152000,4K 1080P Full HD HDMI USB Video Yakalama Kartı Oyu,evet,0,12.9833,2.0347,0.063,0.06,0.51,11.80,2.82,0.040,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,2.00,0.00,0.00,0.40,2.10,2.54,RMB farkı: sistem 11.8 → Excel 12.9833 · ağırlık farkı: sistem 0.04 → Excel 0.0633
+75,23252000,KESIN,HIGH,SKU birebir,23252000,USB 3.0 TO SATA HDD ÇEVİRİCİ,evet,0,8.6000,1.3478,0.050,0.05,0.40,8.60,2.08,0.050,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,1.33,0.00,0.00,0.27,1.40,1.75,
+76,23578000,ESLESMEDI,UNKNOWN,aday yok,,,,,23.0000,3.6045,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+77,23584000,KESIN,HIGH,SKU birebir,23584000,OTG Typec Usb Flash Bellek Type-c Girişli 128gb Ot,evet,0,44.5000,6.9739,0.020,0.02,0.16,44.50,10.42,0.020,8523.51.10.00.00,sistem,0.00,0.00,0.00,20.00,6.66,0.00,0.00,1.33,6.99,7.13,
+78,23652000,ESLESMEDI,UNKNOWN,aday yok,,,,,75.0000,11.7537,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+79,23654000,KESIN,HIGH,SKU birebir,23654000,2 in 1 Type-C M.2 NGFF NVME USB 3.0 10G SSD Kutusu,evet,0,58.5500,9.1757,0.080,0.08,0.64,52.00,10.92,0.080,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,8.82,0.00,0.00,1.76,9.26,9.82,RMB farkı: sistem 52 → Excel 58.55
+80,23658000,KESIN,HIGH,SKU birebir,23658000,Apple Iphone/ipad Lightning To Ethernet Rj45 Dönüş,evet,0,17.1000,2.6799,0.055,0.06,0.44,25.00,6.72,0.080,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,2.61,0.00,0.00,0.52,2.73,3.12,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 236580000 · RMB farkı: sistem 25 → Excel 17.1 · ağırlık farkı: sistem 0.08 → Excel 0.055
+81,23665000,ESLESMEDI,UNKNOWN,aday yok,,,,,4.0000,0.6269,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+82,23680000,KESIN,HIGH,SKU birebir,23680000,Ethernet Ayırıcı 1'i 2 Arada Çıkış Yüksek Hızlı 10,evet,26,16.7500,2.6250,0.063,0.06,0.51,17.50,3.61,0.020,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,2.56,0.06,0.00,0.52,2.75,3.20,RMB farkı: sistem 17.5 → Excel 16.75 · ağırlık farkı: sistem 0.02 → Excel 0.0633
+83,23695000,CONFLICT,CONFLICT,sondaki sıfır farkı,236950000; 2369500000,,,,54.7500,8.5802,0.125,0.12,1.00,,,,,,,,,,,,,,,,"sayısal kodda sondaki sıfır sayısı farklı → 2 ürün: 236950000, 2369500000"
+84,23698000,KESIN,HIGH,sondaki sıfır farkı,236980000,Displayport'tan HDMI Adaptörüne Mini Dönüştürücü Ç,evet,5,2.3000,0.3604,0.030,0.03,0.24,2.30,0.60,0.040,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.37,0.01,0.00,0.08,0.40,0.61,sayısal kodda sondaki sıfır sayısı farklı · sistemdeki RMB ile teyitli (±%3) · ağırlık farkı: sistem 0.04 → Excel 0.03
+85,24061000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,240610000,Mouse Jiggler Zamanlayıcılı Farkedilemeyen Fare İm,evet,292,40.2500,6.3078,0.217,0.22,1.73,35.00,8.46,0.200,8479.89.97.90.19,sistem,1.70,0.00,0.00,20.00,6.22,0.11,0.00,1.27,6.63,8.17,sayısal kodda sondaki sıfır sayısı farklı · RMB farkı: sistem 35 → Excel 40.25 · ağırlık farkı: sistem 0.2 → Excel 0.2167
+86,24317000,KESIN,HIGH,SKU birebir,24317000,Akıllı Telefon IR Kumanda Kopyalayıcı Adaptörü ios,evet,0,25.2000,3.9493,0.010,0.01,0.08,25.20,5.90,0.010,8543.70.90.00.15,sistem,3.70,0.00,20.00,20.00,3.77,0.14,0.78,0.94,4.88,4.97,
+87,24578089,ESLESMEDI,UNKNOWN,aday yok,,,,,10.5000,1.6455,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+88,24687653,KESIN,HIGH,SKU birebir,24687653,11in1 Çoklayıcı Type-C 3.1 To 4K Hdmi Vga Usb-C Et,evet,5,68.5000,10.7351,0.400,0.40,3.20,85.00,20.28,0.300,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,10.62,0.00,0.00,2.12,11.14,13.94,RMB farkı: sistem 85 → Excel 68.5 · ağırlık farkı: sistem 0.3 → Excel 0.4
+89,24708000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,247080000,X42 Telefon Tablet Radyatör Soğutucu Rgb Renkli Ay,evet,0,56.0000,8.7761,0.200,0.20,1.60,,,,8543.70.90.00.19,ÖNERİ (DUSUK): telefon soğutucu (termoelektrik); emsal Tec1 8543.70; fanlı ise 8414.59 — teyit,3.70,0.00,0.00,20.00,8.56,0.32,0.00,1.77,9.29,10.74,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 84.71.70.50.00 eski/eksik → öneri 8543.70.90.00.19 (DUSUK)
+90,24756000,CONFLICT,CONFLICT,sondaki sıfır farkı,247560000,,,,55.0000,8.6194,0.115,0.12,0.92,,,,,,,,,,,,,,,,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 358 (24756000000) de eşleşti ve RMB/kg farklı
+91,24784000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,247840000,Mac Windows Uyumlu USB 3.0 10/100/1000Mbps RJ45 Et,evet,0,7.9000,1.2381,0.050,0.05,0.40,,,,8517.62.00.90.19,ÖNERİ (YUKSEK): USB 3.0 RJ45 Ethernet adaptör = ağ kartı,0.00,0.00,0.00,20.00,1.23,0.00,0.00,0.25,1.29,1.64,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8517.62.00.90.19 (YUKSEK)
+92,24896000,ESLESMEDI,UNKNOWN,aday yok,,,,,5.0000,0.7836,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+93,25073000,ESLESMEDI,UNKNOWN,aday yok,,,,,6.0000,0.9403,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+94,25365000,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+95,25436000,ESLESMEDI,UNKNOWN,aday yok,,,,,13.5000,2.1157,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+96,25468000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,254680000,Android ve iPhone için Hafıza Kartı Okuyucu USB-C',evet,5,21.0000,3.2910,0.010,0.01,0.08,,,,8471.70.98.90.00,ÖNERİ (YUKSEK): kart okuyucu; emsal 8471.70.98,0.00,0.00,0.00,20.00,3.14,0.00,0.00,0.63,3.30,3.37,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 84.71.80.00.00 eski/eksik → öneri 8471.70.98.90.00 (YUKSEK)
+97,25468096,ESLESMEDI,UNKNOWN,aday yok,,,,,15.0000,2.3507,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+98,25468765,ESLESMEDI,UNKNOWN,aday yok,,,,,15.0000,2.3507,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+99,25477000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,254770000,Anunnaki Hdmı Çoklayıcı Çoğaltıcı Dağıtıcı Metal K,evet,0,11.6000,1.8179,0.080,0.08,0.64,,,,8543.70.90.00.19,ÖNERİ (ORTA): HDMI dağıtıcı (aktif); emsal 12 ürün 8543.70,3.70,0.00,0.00,20.00,1.81,0.07,0.00,0.38,1.96,2.55,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 84.71.80.00.00 eski/eksik → öneri 8543.70.90.00.19 (ORTA)
+100,25478000,KESIN,HIGH,SKU birebir,25478000,Ethernet Splitter 1x4 4 Port Ethernet Çoklayıcı 10,evet,15,25.8167,4.0459,0.063,0.06,0.51,21.00,5.73,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,3.92,0.00,0.00,0.78,4.11,4.55,RMB farkı: sistem 21 → Excel 25.8167 · ağırlık farkı: sistem 0.1 → Excel 0.0633
+101,25654000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,256540000,HDMI Çoğaltıcı Erkek Çift HDMI Dişi Çoklayıcı Adap,evet,0,3.7000,0.5799,0.050,0.05,0.40,,,,8536.69.90.00.18,ÖNERİ (ORTA): HDMI erkek→çift dişi pasif adaptör; emsal 8536.69,2.30,0.00,0.00,20.00,0.60,0.01,0.00,0.12,0.64,1.00,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8536.69.90.00.18 (ORTA)
+102,25680000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,6.0000,0.9403,0.020,0.02,0.16,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 25680000568 — zorla eşleştirilmedi
+103,25690000,ESLESMEDI,UNKNOWN,aday yok,,,,,44.0000,6.8955,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+104,25695000,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+105,25698086,ESLESMEDI,UNKNOWN,aday yok,,,,,32.0000,5.0149,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+106,25804000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,258040000,"Anunnaki A10 Kablosuz Gitar Vericisi 2.4GHz 6,35mm",evet,27,57.5000,9.0112,0.125,0.12,1.00,52.00,12.15,0.150,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,8.71,0.00,0.00,1.74,9.14,10.01,sayısal kodda sondaki sıfır sayısı farklı · RMB farkı: sistem 52 → Excel 57.5 · ağırlık farkı: sistem 0.15 → Excel 0.125
+107,25807000,KESIN,HIGH,SKU birebir,25807000,5-in-3 Usb-Type c-Lightning to SD-TF-USB-Hafıza Ka,evet,0,22.2500,3.4869,0.070,0.07,0.56,30.50,7.18,0.040,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,3.39,0.00,0.00,0.68,3.56,4.05,RMB farkı: sistem 30.5 → Excel 22.25 · ağırlık farkı: sistem 0.04 → Excel 0.07
+108,25895000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,2589500000,Dısplayport'tan Hdmı'ya 4K Destekli Aktif Çevirici,evet,0,3.3000,0.5172,0.030,0.03,0.24,,,,8543.70.90.00.19,ÖNERİ (YUKSEK): aktif DP→HDMI 4K çevirici; emsal 8543.70,3.70,0.00,0.00,20.00,0.52,0.02,0.00,0.11,0.57,0.78,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8543.70.90.00.19 (YUKSEK)
+109,25905000,KESIN,HIGH,SKU birebir,25905000,Lightning HDMI Dönüştürücü ipad iphone Hdmi Tv Bağ,evet,0,22.1000,3.4634,0.030,0.03,0.24,22.00,5.18,0.030,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,3.33,0.12,0.00,0.69,3.62,3.83,
+110,26086000,KESIN,HIGH,sondaki sıfır farkı,260860000,Apple iPad 5'i 1 Arada Lightning to USB TF Okuyucu,evet,3,27.8000,4.3567,0.060,0.06,0.48,27.80,6.58,0.060,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,4.21,0.00,0.00,0.84,4.42,4.84,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 273 (260860000) de eşleşti; RMB/kg aynı · sistemdeki RMB ile teyitli (±%3)
+111,26433000,ESLESMEDI,UNKNOWN,aday yok,,,,,4.0000,0.6269,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+112,26580000,KESIN,HIGH,SKU birebir,26580000,Hdmi To Hdmi Optik Stereo 2.0 4k Arc 2.1 Ch 5.1 Ch,evet,0,35.4000,5.5478,0.100,0.10,0.80,38.00,9.09,0.150,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,5.38,0.20,0.00,1.12,5.85,6.57,RMB farkı: sistem 38 → Excel 35.4 · ağırlık farkı: sistem 0.15 → Excel 0.1
+113,26585808,ESLESMEDI,UNKNOWN,aday yok,,,,,22.5000,3.5261,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+114,26658000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,26658000-TE-HDMITOSCART,Anunnaki Hdmı To Scart Av Video Tv Çevirici Dönüşt,evet,0,12.2500,1.9198,0.075,0.07,0.60,11.00,2.65,0.200,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,1.90,0.07,0.00,0.39,2.07,2.61,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · RMB farkı: sistem 11 → Excel 12.25 · ağırlık farkı: sistem 0.2 → Excel 0.075
+115,26804000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,268040000,Anunnaki HDMI 2.0 Tekrarlayıcı 4K 2160P Dişi Kablo,evet,0,51.2000,8.0239,0.080,0.08,0.64,,,,8543.70.90.00.19,ÖNERİ (ORTA): HDMI tekrarlayıcı (aktif sinyal yükseltici),3.70,0.00,0.00,20.00,7.72,0.29,0.00,1.60,8.39,8.97,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8543.70.90.00.19 (ORTA)
+116,26807000,KESIN,HIGH,SKU birebir,26807000,OTG Kart Okuyucu Type-c kart okuyucu çok fonksiyon,evet,3,9.7000,1.5201,0.030,0.03,0.24,9.70,2.31,0.030,8471.70.98.90.00,sistem,0.00,0.00,0.00,20.00,1.48,0.00,0.00,0.30,1.55,1.76,
+117,26924000,ESLESMEDI,UNKNOWN,aday yok,,,,,75.0000,11.7537,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+118,26932000,KESIN,HIGH,sondaki sıfır farkı,269320000,Dısplayport to Hdmı Dişi 4k*2k Çevirici Converter ,evet,0,3.8500,0.6034,0.030,0.03,0.24,3.85,0.96,0.040,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.60,0.01,0.00,0.12,0.65,0.86,sayısal kodda sondaki sıfır sayısı farklı · sistemdeki RMB ile teyitli (±%3) · ağırlık farkı: sistem 0.04 → Excel 0.03
+119,26954806,ESLESMEDI,UNKNOWN,aday yok,,,,,14.2000,2.2254,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+120,26985000,CONFLICT,CONFLICT,sondaki sıfır farkı,269850000,,,,99.0000,15.5149,0.200,0.20,1.60,,,,,,,,,,,,,,,,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 274 (269850000) de eşleşti ve RMB/kg farklı
+121,27093000,ESLESMEDI,UNKNOWN,aday yok,,,,,14.5000,2.2724,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+122,27363920,ESLESMEDI,UNKNOWN,aday yok,,,,,88.0000,13.7910,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+123,27765000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,277650000,Anunnaki HDMI 4K Ultra Hd 2160P USB Güç Kablolu HD,evet,0,10.0000,1.5672,0.050,0.05,0.40,,,,8543.70.90.00.19,ÖNERİ (DUSUK): USB güçlü HDMI 4K cihaz (aktif); ad kesik — teyit,3.70,0.00,0.00,20.00,1.54,0.06,0.00,0.32,1.67,2.04,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8543.70.90.00.19 (DUSUK)
+124,27908000,ESLESMEDI,UNKNOWN,aday yok,,,,,5.8000,0.9090,0.025,0.03,0.20,,,,,,,,,,,,,,,,
+125,27932000,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+126,28096000,MUHTEMEL,MEDIUM,satış kaydı ürün bağlantısı,2809600000,7 In 1 Usb ve Type-c To Usb A + Type-C Usb 3.0 Çev,evet,0,13.7333,2.1522,0.070,0.07,0.56,11.00,3.01,0.150,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,2.12,0.00,0.00,0.42,2.22,2.71,satış kaydında bu kodla satılan ürüne bağlı (productId) · ürün kartına bağlı olmayan 16 satış kaydı (son 2025-02-01): 7 In 1 Usb/type-c To Usb A+usb C-us · RMB farkı: sistem 11 → Excel 13.7333 · ağırlık farkı: sistem 0.15 → Excel 0.07
+127,28563000,ESLESMEDI,UNKNOWN,aday yok,,,,,3.6000,0.5642,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+128,28565000,ESLESMEDI,UNKNOWN,aday yok,,,,,5.0000,0.7836,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+129,28643000,ESLESMEDI,UNKNOWN,aday yok,,,,,17.0000,2.6642,0.025,0.03,0.20,,,,,,,,,,,,,,,,
+130,29073000,KESIN,HIGH,SKU birebir,29073000,Aux Bluetooth 5.0 Araç Kiti Wireless Dönüştürücü S,evet,0,23.0000,3.6045,0.090,0.09,0.72,23.00,5.49,0.080,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,3.52,0.00,0.00,0.70,3.69,4.32,ağırlık farkı: sistem 0.08 → Excel 0.09
+131,40001080FLEXANTRASIT,ESLESMEDI,UNKNOWN,aday yok,,,,,214.0000,33.5373,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+132,40001080FLEXBEYAZ,ESLESMEDI,UNKNOWN,aday yok,,,,,214.0000,33.5373,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+133,41554709,ESLESMEDI,UNKNOWN,aday yok,,,,,2.4000,0.3761,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+134,41565085,ESLESMEDI,UNKNOWN,aday yok,,,,,2.4000,0.3761,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+135,41580896,ESLESMEDI,UNKNOWN,aday yok,,,,,580.0000,90.8955,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+136,41586000,ESLESMEDI,UNKNOWN,aday yok,,,,,3.6000,0.5642,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+137,41695000,ESLESMEDI,UNKNOWN,aday yok,,,,,15.0000,2.3507,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+138,45215407,ESLESMEDI,UNKNOWN,aday yok,,,,,4.5000,0.7052,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+139,45256000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,452560000,Dedektörlü Temassız Işıklı Kablo Voltaj Test Elekt,evet,11,3.7000,0.5799,0.050,0.05,0.40,,,,9030.33.70.90.00,ÖNERİ (YUKSEK): temassız voltaj test kalemi; emsal 9030.33.70,4.20,5.80,0.00,20.00,0.60,0.06,0.00,0.13,0.69,1.08,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 90.30.33.00.00 eski/eksik → öneri 9030.33.70.90.00 (YUKSEK)
+140,45256850,ESLESMEDI,UNKNOWN,aday yok,,,,,299.0000,46.8582,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+141,45357085,ESLESMEDI,UNKNOWN,aday yok,,,,,4.5000,0.7052,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+142,45790864,ESLESMEDI,UNKNOWN,aday yok,,,,,2.5000,0.3918,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+143,45809872,ESLESMEDI,UNKNOWN,aday yok,,,,,0.8500,0.1332,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+144,45821499,ESLESMEDI,UNKNOWN,aday yok,,,,,104.0000,16.2985,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+145,45823301,ESLESMEDI,UNKNOWN,aday yok,,,,,105.0000,16.4552,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+146,45826306,ESLESMEDI,UNKNOWN,aday yok,,,,,7.5000,1.1754,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+147,45827407,ESLESMEDI,UNKNOWN,aday yok,,,,,340.0000,53.2836,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+148,45845461,ESLESMEDI,UNKNOWN,aday yok,,,,,95.0000,14.8881,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+149,45885000,KESIN,HIGH,SKU birebir,45885000,Motosiklet Tpms Lastik Basınç Sensörü Ve Monitörü ,evet,0,76.0000,11.9104,0.225,0.23,1.80,76.00,17.96,0.150,9026.20.20.90.00,sistem,0.00,0.00,0.00,20.00,11.57,0.00,0.00,2.31,12.14,13.71,ağırlık farkı: sistem 0.15 → Excel 0.225
+150,46032000,ESLESMEDI,UNKNOWN,aday yok,,,,,22.5000,3.5261,0.150,0.15,1.20,,,,,,,,,,,,,,,,ürün kartına bağlı olmayan 32 satış kaydı (son 2024-12-15): 46032000
+151,46033000,ESLESMEDI,UNKNOWN,aday yok,,,,,69.0000,10.8134,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+152,46523000,KESIN,HIGH,SKU birebir,46523000,Boafeng UV-9R Pro Gürültü Engelleme Ip67 Su Geçirm,evet,1,110.0000,17.2388,0.300,0.30,2.40,200.00,39.52,0.600,8517.69.90.90.24,sistem,0.00,0.00,20.00,20.00,16.72,0.00,3.34,4.01,20.88,23.40,RMB farkı: sistem 200 → Excel 110 (BÜYÜK FARK — teyit) · ağırlık farkı: sistem 0.6 → Excel 0.3
+153,46788653,ESLESMEDI,UNKNOWN,aday yok,,,,,16.0000,2.5075,0.400,0.40,3.20,,,,,,,,,,,,,,,,
+154,46906000,ESLESMEDI,UNKNOWN,aday yok,,,,,64.0000,10.0299,0.350,0.35,2.80,,,,,,,,,,,,,,,,
+155,47526000,ESLESMEDI,UNKNOWN,aday yok,,,,,90.0000,14.1045,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+156,48072000,ESLESMEDI,UNKNOWN,aday yok,,,,,90.0000,14.1045,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+157,48092000,ESLESMEDI,UNKNOWN,aday yok,,,,,74.0000,11.5970,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+158,48372000,KESIN,HIGH,SKU birebir,48372000,Dijital Elektrik Kontrol Kalemi,evet,23,1.6000,0.2507,0.050,0.05,0.40,1.60,1.11,0.050,9030.33.70.90.00,sistem,4.20,5.80,0.00,20.00,0.29,0.03,0.00,0.06,0.33,0.71,
+159,48585690,ESLESMEDI,UNKNOWN,aday yok,,,,,255.0000,39.9627,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+160,49382630,ESLESMEDI,UNKNOWN,aday yok,,,,,14.0000,2.1940,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+161,50741000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,50741000AH-150WDCVOLTAJ,150W DC-DC Voltaj Yükseltici 50741000,evet,0,6.2400,0.9779,0.015,0.01,0.12,,,,8504.40.95.90.19,ÖNERİ (YUKSEK): DC-DC yükseltici; emsal 6 ürün 8504.40.95,3.30,5.00,0.00,20.00,0.95,0.08,0.00,0.20,1.07,1.19,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistem GTİP'i 85.04.40.55.00 eski/eksik → öneri 8504.40.95.90.19 (YUKSEK)
+162,50752000,ESLESMEDI,UNKNOWN,aday yok,,,,,31.0000,4.8582,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+163,50835000,CONFLICT,CONFLICT,sondaki sıfır farkı,508350000,,,,3.0000,0.4701,0.020,0.02,0.16,,,,,,,,,,,,,,,,sayısal kodda sondaki sıfır sayısı farklı · ürün kartına bağlı olmayan 37 satış kaydı (son 2025-05-06): 50835000 · aynı ürüne satır 278 (508350000) de eşleşti ve RMB/kg farklı
+164,50862000,KESIN,HIGH,SKU birebir,50862000,Tpa3116d2 2x100W Çift Kanal Stereo Anfi Devresi 2 ,evet,0,23.8000,3.7299,0.100,0.10,0.80,23.80,5.70,0.100,8518.40.00.00.00,sistem,4.50,0.00,20.00,20.00,3.65,0.16,0.76,0.92,4.76,5.64,
+165,50863000,KESIN,HIGH,SKU birebir,50863000,Arduino UNO R3 Klon MEGA328P SMD (CH340 Çip) USB K,evet,0,14.2000,2.2254,0.050,0.05,0.40,14.20,3.39,0.050,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,2.17,0.05,0.00,0.44,2.32,2.68,
+166,50872000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,508720000,M28 BLE 4.2 Bluetooth Kayıpsız MP3 Audio Alıcı Mod,evet,3,3.8000,0.5955,0.020,0.02,0.16,,,,8517.62.00.90.19,ÖNERİ (ORTA): Bluetooth ses alıcı modülü; emsal kablosuz alıcı-verici 8517.62,0.00,0.00,0.00,20.00,0.59,0.00,0.00,0.12,0.62,0.76,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.18.40.30.00 eski/eksik → öneri 8517.62.00.90.19 (ORTA)
+167,50875000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,50875000-T-HEXV2,Anunnaki HEX V2 Arayüzü VAGCOM 20.4.2 VAG COM 19.6,evet,0,69.5000,10.8918,0.300,0.30,2.40,50.00,12.11,0.300,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,10.67,0.00,0.00,2.13,11.19,13.29,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · RMB farkı: sistem 50 → Excel 69.5
+168,50896000,ESLESMEDI,UNKNOWN,aday yok,,,,,83.0000,13.0075,0.250,0.25,2.00,,,,,,,,,,,,,,,,
+169,50896006,KESIN,HIGH,SKU birebir,50896006,Raspberry Pi Pico W Welded Lehimli (Pin Başlıkları,evet,0,10.3000,1.6142,0.010,0.01,0.08,10.30,2.42,0.010,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,1.55,0.03,0.00,0.32,1.66,1.73,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 508960060
+170,50899000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,508990000,FT232RL-REEL USB-Seri Mikrodenetleyici Dönüştürücü,evet,9,8.6000,1.3478,0.010,0.01,0.08,,,,8542.39.90.00.00,"ÖNERİ (ORTA): FT232RL entegre devre (SMD çip) — tarifede satır yok (öneri: GV 0, İGV 0, KDV 20; ITA)",,,,,1.29,,,,,,"sayısal kodda sondaki sıfır sayısı farklı · ürün kartına bağlı olmayan 1 satış kaydı (son 2026-10-01): Ft 232Rl Smd 00903, one size · sistem GTİP'i 85.43.70.90.00 eski/eksik → öneri 8542.39.90.00.00 (ORTA) · GTİP 85.43.70.90.00 tarife tablosunda yok — gümrük hesaplanamadı"
+171,50953008,MUHTEMEL,MEDIUM,sondaki sıfır farkı,509530080,IP54 4*90° Taşınabilir Dijital Eğim Ölçer Manyetik,evet,0,36.0000,5.6418,0.080,0.08,0.64,,,,9031.80.80.90.19,ÖNERİ (YUKSEK): dijital eğim ölçer; emsal dijital protraktör 9031.80.80,4.00,0.00,0.00,20.00,5.45,0.22,0.00,1.13,5.94,6.52,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 90.30.33.00.00 eski/eksik → öneri 9031.80.80.90.19 (YUKSEK)
+172,50963000,ESLESMEDI,UNKNOWN,aday yok,,,,,45.0000,7.0522,0.010,0.01,0.08,,,,,,,,,,,,,,,,ürün kartına bağlı olmayan 9 satış kaydı (son 2025-03-13): BLDC 5-36V 15A Fırçasız Motor Sürüc
+173,50963022,KESIN,HIGH,SKU birebir,50963022,Tda7498e 2x160w Çift Stereo Dijital Amfi Devresi,evet,0,49.0000,7.6791,0.080,0.08,0.64,49.00,11.56,0.080,8518.40.00.00.00,sistem,4.50,0.00,20.00,20.00,7.39,0.33,1.55,1.85,9.64,10.34,
+174,50966005,ESLESMEDI,UNKNOWN,aday yok,,,,,7.3300,1.1487,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+175,50982000,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+176,51257000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,512570000,Kws-Ac301 100A Voltmetre Ampermetre Wattmetre 50–3,evet,0,40.1000,6.2843,0.300,0.30,2.40,,,,9030.33.70.90.00,ÖNERİ (YUKSEK): volt-amper-wattmetre; emsal FNB48P 9030.33.70,4.20,5.80,0.00,20.00,6.29,0.63,0.00,1.38,7.21,9.52,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 90.30.33.20.00 eski/eksik → öneri 9030.33.70.90.00 (YUKSEK)
+177,51258000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,512580000,"KWS-AC301 Dijital Voltmetre Akım Ölçer 50‑300V,0‑2",evet,0,50.1000,7.8515,0.100,0.10,0.80,,,,9030.33.70.90.00,ÖNERİ (YUKSEK): volt-amper metre,4.20,5.80,0.00,20.00,7.58,0.76,0.00,1.67,8.71,9.48,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 90.30.33.20.00 eski/eksik → öneri 9030.33.70.90.00 (YUKSEK)
+178,51450000,KESIN,HIGH,SKU birebir,51450000,FNIRSI 2C23T El Tipi Dijital Osiloskop - Multimetr,evet,0,295.0000,46.2313,0.020,0.02,0.16,295.00,68.89,0.020,9030.20.00.90.00,sistem,4.20,0.00,0.00,20.00,44.05,1.85,0.00,9.18,48.10,48.25,
+179,51476000,ESLESMEDI,UNKNOWN,aday yok,,,,,4.6000,0.7209,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+180,51873000,KESIN,HIGH,sondaki sıfır farkı,518730000,Hc08 Bluetooth 4.0 Ble Seri Haberleşmeli Modül,evet,0,20.0000,3.1343,0.010,0.01,0.08,20.00,4.69,0.010,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,3.00,0.00,0.00,0.60,3.14,3.21,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 285 (518730000) de eşleşti; RMB/kg aynı · sistemdeki RMB ile teyitli (±%3)
+181,52147000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,521470000,Anunnaki Wii Hdmi Hd Tv Kablo Çevirici Dönüştürücü,evet,0,7.4000,1.1597,0.020,0.02,0.16,,,,8543.70.90.00.19,ÖNERİ (YUKSEK): Wii→HDMI aktif çevirici; emsal 8543.70,3.70,0.00,0.00,20.00,1.12,0.04,0.00,0.23,1.22,1.37,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.44.42.90.00 eski/eksik → öneri 8543.70.90.00.19 (YUKSEK)
+182,52317000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,523170000,Akıllı Wifi 4 Kanal Röle USB 5V DC7-48V Smart Röle,evet,0,36.5000,5.7201,0.100,0.10,0.80,,,,8537.10.91.00.00,ÖNERİ (YUKSEK): WiFi 4 kanal akıllı röle; emsal ESP8266 röle 8537.10.91,2.10,0.00,0.00,20.00,5.55,0.12,0.00,1.13,5.94,6.65,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.36.50.19.00 eski/eksik → öneri 8537.10.91.00.00 (YUKSEK)
+183,52365000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,523650000,Temassız Kontrol Kalemi Voltaj Dedektörü Kontrol K,evet,0,3.3300,0.5219,0.020,0.02,0.16,,,,9030.33.70.90.00,ÖNERİ (YUKSEK): temassız voltaj dedektör kalemi,4.20,5.80,0.00,20.00,0.52,0.05,0.00,0.11,0.59,0.75,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 90.30.33.00.00 eski/eksik → öneri 9030.33.70.90.00 (YUKSEK)
+184,52369000,KESIN,HIGH,SKU birebir,52369000,SW-102-UV Dijital VHF UHF Güç ve SWR Metre ve Frek,evet,0,243.0000,38.0821,0.100,0.10,0.80,243.00,56.87,0.100,9030.40.00.90.00,sistem,0.00,0.00,0.00,20.00,36.37,0.00,0.00,7.27,38.18,38.88,
+185,52380000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,20.7000,3.2440,0.100,0.10,0.80,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 523800000 — zorla eşleştirilmedi
+186,52554000,KESIN,HIGH,SKU birebir,52554000,ESP-32 SX1276 LILYGO LORA32 868Mhz OLED 0.96 inç S,evet,0,129.0000,20.2164,0.020,0.02,0.16,129.00,30.14,0.020,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,19.27,0.40,0.00,3.94,20.64,20.78,
+187,52608000,KESIN,HIGH,SKU birebir,52608000,DY-SV17F Ses Çalma MP3 Modül,evet,0,8.0000,1.2537,0.010,0.01,0.08,9.00,2.12,0.010,8519.81.00.00.00,sistem,9.50,0.00,6.70,20.00,1.20,0.11,0.09,0.28,1.47,1.55,RMB farkı: sistem 9 → Excel 8
+188,52690000,ESLESMEDI,UNKNOWN,aday yok,,,,,4.0000,0.6269,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+189,53252000,KESIN,HIGH,SKU birebir,53252000,Bms 2s 10A 7.4V 18650 Lityum Li-Ion Batarya Pil Ak,evet,0,9.0000,1.4104,0.020,0.02,0.16,9.00,2.13,0.020,8537.10.98.00.19,sistem,2.10,0.00,0.00,20.00,1.36,0.03,0.00,0.28,1.46,1.60,
+190,53698000,KESIN,HIGH,SKU birebir,53698000,TDA7498 Amfi Dijital Güç Amplifikatörü 2*100W Araç,evet,0,41.5000,6.5037,0.100,0.10,0.80,41.50,9.83,0.100,8518.40.00.00.00,sistem,4.50,0.00,20.00,20.00,6.29,0.28,1.32,1.58,8.20,9.08,
+191,53735809,MUHTEMEL,MEDIUM,sondaki sıfır farkı,537358090,As8800l Gaz Analiz Dedektörü Portatif Gaz Kaçak Ye,evet,0,68.0000,10.6567,0.300,0.30,2.40,,,,9027.10.10.00.00,ÖNERİ (YUKSEK): gaz kaçak analiz dedektörü; emsal AS8700A 9027.10,2.50,0.00,0.00,20.00,10.45,0.26,0.00,2.14,11.22,13.37,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 90.30.33.00.00 eski/eksik → öneri 9027.10.10.00.00 (YUKSEK)
+192,53739303,KESIN,HIGH,SKU birebir,53739303,Smart Sensor AS 860 Ultrasonik Kalınlık Ölçer,evet,0,535.0000,83.8433,0.200,0.20,1.60,535.00,125.18,0.200,9031.80.80.90.19,sistem,4.00,0.00,0.00,20.00,80.05,3.20,0.00,16.65,87.25,88.70,aynı ürüne satır 321 (5373930300) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı
+193,53804000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,538040000,ESP8266 Wifi Modül 0.96 Inc OLED Ekranlı Geliştirm,evet,0,17.8000,2.7896,0.020,0.02,0.16,,,,8537.10.91.00.00,ÖNERİ (YUKSEK): ESP8266 OLED geliştirme kartı; emsal 8537.10.91,2.10,0.00,0.00,20.00,2.68,0.06,0.00,0.55,2.87,3.01,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.43.70.90.00 eski/eksik → öneri 8537.10.91.00.00 (YUKSEK)
+194,54036000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,54036000-T-TS101,Anunnaki TS101 Elektrikli Havya Seti Ayarlanabilir,evet,0,384.0000,60.1791,0.200,0.20,1.60,,,,8515.11.00.00.00,ÖNERİ (YUKSEK): elektrikli havya; emsal 8515.11,2.70,7.00,0.00,20.00,57.51,5.58,0.00,12.62,65.96,67.49,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistem GTİP'i 85.15.11.00.00 eski/eksik → öneri 8515.11.00.00.00 (YUKSEK)
+195,54096000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,54096000-T-FNB58USB,Anunnaki FNB58 Ampermetre Akım ve Voltmetre USB Te,evet,0,178.0000,27.8955,0.050,0.05,0.40,,,,9030.33.70.90.00,ÖNERİ (YUKSEK): FNB58 USB test cihazı; emsal FNB48P,4.20,5.80,0.00,20.00,26.62,2.66,0.00,5.86,30.61,30.99,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistem GTİP'i 90.30.33.20.00 eski/eksik → öneri 9030.33.70.90.00 (YUKSEK)
+196,54136000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,5413600000,M.2 Nvme Ssd Ngff To Pcie 3.0 X16 Adaptör M-Key Ge,evet,4,8.8000,1.3791,0.050,0.05,0.40,,,,8471.80.00.00.00,ÖNERİ (YUKSEK): M.2 NVMe→PCIe adaptör; emsal 8471.80,0.00,0.00,0.00,20.00,1.36,0.00,0.00,0.27,1.43,1.78,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 84.71.80.00.00 eski/eksik → öneri 8471.80.00.00.00 (YUKSEK)
+197,54160000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,54160000-AH-MEGA2560,Arduino Mega 2560 R3 - Klon CH340 Chip USB Kablo,evet,0,59.5000,9.3246,0.100,0.10,0.80,,,,8537.10.91.00.00,ÖNERİ (YUKSEK): Arduino Mega; emsal Arduino UNO 8537.10.91,2.10,0.00,0.00,20.00,8.98,0.19,0.00,1.83,9.61,10.33,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistem GTİP'i 85.43.70.90.00 eski/eksik → öneri 8537.10.91.00.00 (YUKSEK)
+198,54236000,ESLESMEDI,UNKNOWN,aday yok,,,,,55.0000,8.6194,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+199,54254000,ESLESMEDI,UNKNOWN,aday yok,,,,,7.5000,1.1754,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+200,54360000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,80.0000,12.5373,0.060,0.06,0.48,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 543600000 — zorla eşleştirilmedi · ürün kartına bağlı olmayan 1 satış kaydı (son 2024-11-03): 54360000
+201,54664000,KESIN,HIGH,SKU birebir,54664000,DSO152 Mini El Tipi Dijital Osiloskop,evet,0,105.0000,16.4552,0.300,0.30,2.40,105.00,24.95,0.300,9030.20.00.90.00,sistem,4.20,0.00,0.00,20.00,15.97,0.67,0.00,3.33,17.43,19.61,
+202,54680647,ESLESMEDI,UNKNOWN,aday yok,,,,,35.0000,5.4851,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+203,54708000,KESIN,HIGH,SKU birebir,54708000,T48 TL866-3G SPI/Nor/NAND Flash BIOS MCU EEPROM AV,evet,0,290.0000,45.4478,0.200,0.20,1.60,245.00,57.63,0.300,8471.90.00.00.00,sistem,0.00,0.00,0.00,20.00,43.48,0.00,0.00,8.70,45.65,47.05,RMB farkı: sistem 245 → Excel 290 · ağırlık farkı: sistem 0.3 → Excel 0.2
+204,54725000,ESLESMEDI,UNKNOWN,aday yok,,,,,8.0000,1.2537,0.015,0.01,0.12,,,,,,,,,,,,,,,,
+205,54726000,ESLESMEDI,UNKNOWN,aday yok,,,,,6.7000,1.0500,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+206,54782000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,7.3000,1.1440,0.010,0.01,0.08,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 54782000111 — zorla eşleştirilmedi
+207,54783000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,547830000,Hc05 Bluetooth Modül Kablosuz Bluetooth Alıcı-Veri,evet,0,8.6000,1.3478,0.007,0.01,0.06,,,,8517.62.00.90.19,ÖNERİ (YUKSEK): HC-05 Bluetooth modül (veri alıcı-verici),0.00,0.00,0.00,20.00,1.29,0.00,0.00,0.26,1.35,1.40,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.43.70.90.00 eski/eksik → öneri 8517.62.00.90.19 (YUKSEK)
+208,54785000,KESIN,HIGH,sondaki sıfır farkı,547850000,18650 LCD Ekranlı Pil Kapasitesi Dahili Direnç Tes,evet,0,59.8000,9.3716,0.020,0.02,0.16,59.80,13.99,0.020,9030.33.70.90.00,sistem,4.20,5.80,0.00,20.00,8.95,0.89,0.00,1.97,10.29,10.44,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 290 (547850000) de eşleşti; RMB/kg aynı · sistemdeki RMB ile teyitli (±%3)
+209,54840000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,36.0000,5.6418,0.300,0.30,2.40,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 548400000 — zorla eşleştirilmedi
+210,54935000,KESIN,HIGH,SKU birebir,54935000,Max31865 Termokupl Okuyucu Modül Rtd Pt100 Pt1000 ,evet,0,13.7000,2.1470,0.020,0.02,0.16,13.70,3.23,0.020,9031.80.80.90.19,sistem,4.00,0.00,0.00,20.00,2.06,0.08,0.00,0.43,2.25,2.40,
+211,54976451,KESIN,HIGH,SKU birebir,54976451,ESP32 Wifi Çift Kanallı 5V Büyük Kapasiteli Progra,evet,0,43.0000,6.7388,0.060,0.06,0.48,43.00,10.13,0.060,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,6.48,0.14,0.00,1.32,6.93,7.36,
+212,55652000,KESIN,HIGH,SKU birebir,55652000,4 Eksen 100Khz Usb Cnc Kontrol Kartı Geliştirme Ka,evet,0,30.0000,4.7015,0.150,0.15,1.20,30.00,7.22,0.150,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,4.63,0.10,0.00,0.94,4.95,6.02,
+213,55658000,KESIN,HIGH,sondaki sıfır farkı,556580000,ATMEGA328P-PU 8-Bit 20MHZ Dıp-28 Arduino Uno R3 Ön,evet,0,11.4000,1.7866,0.010,0.01,0.08,11.40,2.68,0.010,8542.31.90.00.00,sistem,0.00,0.00,0.00,20.00,1.71,0.00,0.00,0.34,1.80,1.87,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 291 (556580000) de eşleşti; RMB/kg aynı · sistemdeki RMB ile teyitli (±%3)
+214,56235000,KESIN,HIGH,SKU birebir,56235000,FNIRSI HS01-BC2 65W Akıllı Elektrikli Kalem Havya,evet,0,132.0000,20.6866,0.200,0.20,1.60,132.00,31.11,0.200,8515.11.00.00.00,sistem,2.70,7.00,0.00,20.00,19.90,1.93,0.00,4.37,22.82,24.35,
+215,56325807,MUHTEMEL,MEDIUM,sondaki sıfır farkı,5632580700,125kHZ RFID Kart Kopyalama Cihazı Rfid Kart Okuyuc,evet,0,13.0000,2.0373,0.150,0.15,1.20,,,,8471.90.00.00.00,ÖNERİ (YUKSEK): 125 kHz RFID okuyucu/kopyalayıcı; emsal Alfas RFID okuyucu 8471.90,0.00,0.00,0.00,20.00,2.09,0.00,0.00,0.42,2.19,3.24,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 84.71.80.00.00 eski/eksik → öneri 8471.90.00.00.00 (YUKSEK)
+216,56520471,MUHTEMEL,MEDIUM,sondaki sıfır farkı,565204710,Smart Sensor AR816 Rüzgar Hızı ve Sıcaklık Ölçer A,evet,0,42.0000,6.5821,0.200,0.20,1.60,,,,9015.80.80.00.00,ÖNERİ (ORTA): anemometre (rüzgar hızı ölçer) — meteorolojik alet,3.70,0.00,0.00,20.00,6.47,0.24,0.00,1.34,7.02,8.47,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 90.15.80.91.00 eski/eksik → öneri 9015.80.80.00.00 (ORTA)
+217,56525000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,565250000,Atmel At Avrısp Avr Isp Usb Programlayıcı Mk2 & St,evet,0,55.8000,8.7448,0.100,0.10,0.80,,,,8471.90.00.00.00,ÖNERİ (YUKSEK): AVR ISP programlayıcı; emsal 3 ürün 8471.90,0.00,0.00,0.00,20.00,8.43,0.00,0.00,1.69,8.84,9.54,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.43.70.90.00 eski/eksik → öneri 8471.90.00.00.00 (YUKSEK)
+218,56538405,KESIN,HIGH,SKU birebir,56538405,AS804 Dijital Desibel Ölçer Ses Seviyesi Ölçer Des,evet,0,40.0000,6.2687,0.200,0.20,1.60,40.00,9.63,0.200,9027.89.90.00.00,sistem,0.00,0.00,0.00,20.00,6.17,0.00,0.00,1.23,6.47,7.87,
+219,56576665,ESLESMEDI,UNKNOWN,aday yok,,,,,425.0000,66.6045,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+220,56590906,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,56590906-T-AS803LUXMETER,AS803 LCD Lüksmetre Dijital Işık Ölçer Lux Metre U,evet,0,39.0000,6.1119,0.200,0.20,1.60,,,,9027.50.00.00.19,ÖNERİ (ORTA): lüksmetre (optik ışınlı ölçüm),0.00,0.00,0.00,20.00,6.02,0.00,0.00,1.20,6.31,7.71,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistem GTİP'i 90.27.50.00.00 eski/eksik → öneri 9027.50.00.00.19 (ORTA)
+221,56786000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,56786000-T-1014D,Anunnaki FNIRSI 1014D 2in1 Dijital Osiloskop Sinya,evet,0,660.0000,103.4328,0.750,0.75,6.00,,,,9030.20.00.90.00,ÖNERİ (YUKSEK): osiloskop; emsal 4 ürün 9030.20,4.20,0.00,0.00,20.00,99.26,4.17,0.00,20.69,108.35,113.82,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistem GTİP'i 90.30.20.00.00 eski/eksik → öneri 9030.20.00.90.00 (YUKSEK)
+222,56809764,ESLESMEDI,UNKNOWN,aday yok,,,,,45.0000,7.0522,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+223,56876000,CONFLICT,CONFLICT,satış kaydı ürün bağlantısı,T-REFRAKTOMETRE,,,,29.5000,4.6231,0.150,0.15,1.20,,,,,,,,,,,,,,,,satış kaydında bu kodla satılan ürüne bağlı (productId) → T-REFRAKTOMETRE; diğer yöntemler → 568760000 · ürün kartına bağlı olmayan 3 satış kaydı (son 2025-02-12): 56876000
+224,56877000,KESIN,HIGH,SKU birebir,56877000,Refraktometre,evet,0,46.0000,7.2090,0.150,0.15,1.20,46.00,10.88,0.100,9027.50.00.00.19,sistem,0.00,0.00,0.00,20.00,7.02,0.00,0.00,1.40,7.36,8.41,ağırlık farkı: sistem 0.1 → Excel 0.15
+225,56878000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,568780000,Anunnaki DC-DC 10A 250W Ayarlanabilir Voltaj Yükse,evet,0,7.2500,1.1362,0.020,0.02,0.16,,,,8504.40.95.90.19,ÖNERİ (YUKSEK): DC-DC 250W yükseltici,3.30,5.00,0.00,20.00,1.10,0.09,0.00,0.24,1.25,1.40,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.04.40.55.00 eski/eksik → öneri 8504.40.95.90.19 (YUKSEK)
+226,56884000,ESLESMEDI,UNKNOWN,aday yok,,,,,24.5000,3.8396,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+227,56952000,CONFLICT,CONFLICT,sondaki sıfır farkı,569520000; 5695200000,,,,13.2500,2.0765,0.050,0.05,0.40,,,,,,,,,,,,,,,,"sayısal kodda sondaki sıfır sayısı farklı → 2 ürün: 569520000, 5695200000"
+228,56963580,ESLESMEDI,UNKNOWN,aday yok,,,,,63.0000,9.8731,0.250,0.25,2.00,,,,,,,,,,,,,,,,
+229,56963680,ESLESMEDI,UNKNOWN,aday yok,,,,,8.2000,1.2851,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+230,57096000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,570960000,Çift Usb 5v 2.4a Led Ekranlı 18650 Pil Şarj Modülü,evet,0,6.8000,1.0657,0.010,0.01,0.08,,,,8504.40.60.90.19,ÖNERİ (ORTA): 18650 pil şarj modülü (pil yok) = şarj edici; eski 85.07.60 pil kodu yanlış,3.30,0.00,0.00,20.00,1.02,0.03,0.00,0.21,1.11,1.18,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.07.60.00.00 eski/eksik → öneri 8504.40.60.90.19 (ORTA)
+231,57215000,KESIN,HIGH,SKU birebir,57215000,Toyota Corolla-Yaris 2006-2011 Model 6+6 Pin Giriş,evet,0,108.0000,16.9254,0.100,0.10,0.80,108.00,25.36,0.100,8519.81.00.00.00,sistem,9.50,0.00,6.70,20.00,16.22,1.54,1.19,3.79,19.76,20.57,
+232,57290000,ESLESMEDI,UNKNOWN,aday yok,,,,,52.5000,8.2276,0.043,0.04,0.35,,,,,,,,,,,,,,,,ürün kartına bağlı olmayan 5 satış kaydı (son 2025-08-21): 57290000
+233,57426000,ESLESMEDI,UNKNOWN,aday yok,,,,,360.0000,56.4179,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+234,57480000,ESLESMEDI,UNKNOWN,aday yok,,,,,16.4000,2.5701,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+235,57493000,KESIN,HIGH,SKU birebir,57493000,MATEKSYS F405-WING V2 Uçuş Kontrol Kartı,evet,0,269.0000,42.1567,0.200,0.20,1.60,269.00,63.09,0.200,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,40.35,0.85,0.00,8.24,43.20,44.63,
+236,57496000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,574960000,EZP2020 USB SPI EEprom Flash Bios Yüksek Hız Eprom,evet,0,26.2000,4.1060,0.200,0.20,1.60,,,,8471.90.00.00.00,ÖNERİ (YUKSEK): EZP2020 EEPROM programlayıcı,0.00,0.00,0.00,20.00,4.11,0.00,0.00,0.82,4.31,5.71,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.43.70.90.00 eski/eksik → öneri 8471.90.00.00.00 (YUKSEK)
+237,57536000,KESIN,HIGH,SKU birebir,57536000,V2.1 Obd2 ios Android iphone Samsung Bluetooth Ara,evet,0,7.1000,1.1127,0.090,0.09,0.72,7.10,1.79,0.090,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,1.15,0.00,0.00,0.23,1.20,1.83,
+238,57598000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,57598000-T-SESREZONATÖRÜ,5V 7.83Hz Ultra Düşük Frekans Darbe Dalga Schumann,evet,87,26.5000,4.1530,0.150,0.15,1.20,35.00,7.73,0.200,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,4.11,0.15,0.00,0.85,4.45,5.54,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · RMB farkı: sistem 35 → Excel 26.5 · ağırlık farkı: sistem 0.2 → Excel 0.15
+239,57690000,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+240,57807000,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,57807000-T-USBDIGITALTESTER3.1,USB 3.0 Type-C DC Dijital Volt-Ampermetre Gerilim ,evet,0,50.0000,7.8358,0.080,0.08,0.64,,,,9030.33.70.90.00,ÖNERİ (YUKSEK): USB volt-ampermetre,4.20,5.80,0.00,20.00,7.54,0.75,0.00,1.66,8.67,9.29,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistem GTİP'i 90.30.33.20.00 eski/eksik → öneri 9030.33.70.90.00 (YUKSEK)
+241,58072000,ESLESMEDI,UNKNOWN,aday yok,,,,,6.7000,1.0500,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+242,58075000,KESIN,HIGH,SKU birebir,58075000,MSP430 LaunchPad Flash Programlama ve Hata Ayıklam,evet,0,67.5000,10.5784,0.090,0.09,0.72,65.00,15.32,0.100,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,10.16,0.21,0.00,2.08,10.88,11.53,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 580750000 · RMB farkı: sistem 65 → Excel 67.5 · ağırlık farkı: sistem 0.1 → Excel 0.09
+243,58084000,KESIN,HIGH,SKU birebir,58084000,ZK-PP1 1Hz - 150kHz Sinyal Jeneratörü Pwm Pulse,evet,6,13.6000,2.1313,0.020,0.02,0.16,13.60,3.39,0.020,8543.20.00.00.00,sistem,3.70,0.00,0.00,20.00,2.05,0.08,0.00,0.43,2.23,2.37,
+244,58086000,ESLESMEDI,UNKNOWN,aday yok,,,,,12.0000,1.8806,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+245,58236000,ESLESMEDI,UNKNOWN,aday yok,,,,,5.5000,0.8619,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+246,58429000,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+247,58502749,KESIN,HIGH,SKU birebir,58502749,6ES7972-0CB20-0XA0 USB'den MPI/DP/PPI'ye dönüştürü,evet,0,115.0000,18.0224,0.400,0.40,3.20,115.00,27.43,0.400,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,17.56,0.00,0.00,3.51,18.42,21.22,
+248,58509642,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+249,58514759,ESLESMEDI,UNKNOWN,aday yok,,,,,6.7000,1.0500,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+250,58527301,ESLESMEDI,UNKNOWN,aday yok,,,,,55.0000,8.6194,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+251,58542000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,585420000,Usbasp V2.0 Atmel Mcu Programlayıcı Avr Prog Usb A,evet,0,6.9000,1.0813,0.020,0.02,0.16,,,,8471.90.00.00.00,ÖNERİ (YUKSEK): USBasp programlayıcı,0.00,0.00,0.00,20.00,1.05,0.00,0.00,0.21,1.10,1.24,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.43.70.90.00 eski/eksik → öneri 8471.90.00.00.00 (YUKSEK)
+252,58580852,ESLESMEDI,UNKNOWN,aday yok,,,,,55.0000,8.6194,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+253,58589501,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+254,58596324,ESLESMEDI,UNKNOWN,aday yok,,,,,55.0000,8.6194,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+255,58621000,ESLESMEDI,UNKNOWN,aday yok,,,,,11.5000,1.8022,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+256,58723000,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+257,58741000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,587410000,12V Su Sıvı Seviyesi Kontrol Modülü Röle Çıkışlı P,evet,0,14.0000,2.1940,0.030,0.03,0.24,,,,8537.10.98.00.19,ÖNERİ (ORTA): su seviyesi röle kontrol modülü; eski 84.13 pompa kodu yanlış,2.10,0.00,0.00,20.00,2.12,0.04,0.00,0.43,2.27,2.48,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 84.13.70.81.00 eski/eksik → öneri 8537.10.98.00.19 (ORTA)
+258,58742000,ESLESMEDI,UNKNOWN,aday yok,,,,,7.7000,1.2067,0.010,0.01,0.08,,,,,,,,,,,,,,,,ürün kartına bağlı olmayan 13 satış kaydı (son 2024-10-30): 58742000
+259,58753000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,587530000,433Mhz Kablosuz Uzaktan Kumanda AC110V 220V Röle 4,evet,0,18.0000,2.8209,0.085,0.09,0.68,,,,8526.92.00.90.19,ÖNERİ (YUKSEK): 433 MHz uzaktan kumandalı röle; emsal 8526.92 (ÖTV %20 dahil),3.70,0.00,20.00,20.00,2.77,0.10,0.57,0.69,3.58,4.32,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.25.60.00.00 eski/eksik → öneri 8526.92.00.90.19 (YUKSEK)
+260,58917000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,589170000,Anunnaki ST USB STM8 STM32 Programlayıcı USB STM8 ,evet,0,5.7000,0.8933,0.030,0.03,0.24,7.00,1.69,0.040,8471.90.00.00.00,sistem,0.00,0.00,0.00,20.00,0.88,0.00,0.00,0.18,0.92,1.13,sayısal kodda sondaki sıfır sayısı farklı · RMB farkı: sistem 7 → Excel 5.7 · ağırlık farkı: sistem 0.04 → Excel 0.03
+261,58931000,CONFLICT,CONFLICT,sondaki sıfır farkı,589310000,,,,49.4000,7.7418,0.150,0.15,1.20,,,,,,,,,,,,,,,,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 296 (589310000) de eşleşti ve RMB/kg farklı
+262,58962000,KESIN,HIGH,SKU birebir,58962000,Arduino Attiny85 Geliştirme Kartı Micro Usb,evet,0,8.2000,1.2851,0.010,0.01,0.08,8.20,1.93,0.010,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,1.23,0.03,0.00,0.25,1.32,1.39,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 589620000
+263,58984000,ESLESMEDI,UNKNOWN,aday yok,,,,,155.0000,24.2910,0.325,0.33,2.60,,,,,,,,,,,,,,,,
+264,215800000,CONFLICT,CONFLICT,pazaryeri eşleme kaydı,21580000,,,,7.0000,1.0970,0.020,0.02,0.16,,,,,,,,,,,,,,,,pazaryeri eşleme kaydı (platformSku/barkod) · aynı ürüne satır 53 (21580000) de eşleşti ve RMB/kg farklı
+265,220860000,KESIN,HIGH,SKU birebir,220860000,MiniDP Mini DisplayPort To DVI-A Dönüştürücü Çevir,evet,0,5.5000,0.8619,0.030,0.03,0.24,5.50,1.33,0.030,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,0.85,0.03,0.00,0.18,0.92,1.14,aynı ürüne satır 64 (22086000) de eşleşti; RMB/kg aynı
+266,220930000,KESIN,HIGH,SKU birebir,220930000,Dısplayport Kablolu Hdmı DP To HDMI 10 cm Çevirici,evet,0,4.5000,0.7052,0.050,0.05,0.40,4.50,1.12,0.050,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,0.72,0.13,0.00,0.17,0.89,1.30,aynı ürüne satır 69 (22093000) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı
+267,230665432,KESIN,HIGH,SKU birebir,230665432,ALFAS AL5432 48V to 12V 1.2A Aktif PoE Splitter Po,evet,0,5.7000,0.8933,0.030,0.03,0.24,6.60,1.67,0.030,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,0.88,0.07,0.00,0.19,1.00,1.22,RMB farkı: sistem 6.6 → Excel 5.7
+268,244000000,ESLESMEDI,UNKNOWN,aday yok,,,,,3.5000,0.5485,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+269,256085000,KESIN,HIGH,SKU birebir,256085000,Usb3.0 card Okuyucu,evet,0,2.1000,0.3291,0.020,0.02,0.16,2.10,0.72,0.030,8471.70.98.90.00,sistem,0.00,0.00,0.00,20.00,0.33,0.00,0.00,0.07,0.35,0.49,ağırlık farkı: sistem 0.03 → Excel 0.02
+270,256698086,KESIN,HIGH,SKU birebir,256698086,Usb Çoğaltıcı Adaptör Usb 3.0 Çoklu Bağlantı Nokta,evet,0,4.0167,0.6295,0.030,0.03,0.24,3.55,1.10,0.040,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,0.63,0.00,0.00,0.13,0.66,0.87,RMB farkı: sistem 3.55 → Excel 4.0167 · ağırlık farkı: sistem 0.04 → Excel 0.03
+271,258095000,KESIN,HIGH,SKU birebir,258095000,USB Type-c Sd Kart Dönüştürücü Usb To Sd/micro Sd ,evet,0,3.5000,0.5485,0.020,0.02,0.16,3.50,0.85,0.020,8471.70.98.90.00,sistem,0.00,0.00,0.00,20.00,0.54,0.00,0.00,0.11,0.57,0.71,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 25809500000
+272,258998647,ESLESMEDI,UNKNOWN,aday yok,,,,,312.0000,48.8955,0.500,0.50,4.00,,,,,,,,,,,,,,,,
+273,260860000,KESIN,HIGH,SKU birebir,260860000,Apple iPad 5'i 1 Arada Lightning to USB TF Okuyucu,evet,3,27.8000,4.3567,0.060,0.06,0.48,27.80,6.58,0.060,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,4.21,0.00,0.00,0.84,4.42,4.84,aynı ürüne satır 110 (26086000) de eşleşti; RMB/kg aynı
+274,269850000,KESIN,HIGH,SKU birebir,269850000,WiFi 6E PCIe 5400Mbps WiFi Kartı Üç Bantlı AX210 A,evet,0,92.0000,14.4179,0.200,0.20,1.60,92.00,21.77,0.200,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,13.93,0.00,0.00,2.79,14.62,16.02,aynı ürüne satır 120 (26985000) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı
+275,458009000,KESIN,HIGH,SKU birebir,458009000,Telefon Güçlendirici 4G Gsm Şebeke Güçlendirici Si,evet,0,480.0000,75.2239,2.000,2.00,16.00,480.00,114.98,2.000,8517.62.00.10.00,sistem,0.00,0.00,0.00,20.00,73.64,0.00,0.00,14.73,77.22,91.22,
+276,458089000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,720.0000,112.8358,2.000,2.00,16.00,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 4580890002 — zorla eşleştirilmedi
+277,474758852,KESIN,HIGH,SKU birebir,474758852,Gold Duş Seti Robot Yağmurlama Tepe Duş Seti  30x3,evet,0,320.0000,50.1493,5.325,5.33,42.60,310.00,104.01,6.300,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,53.09,14.44,0.00,13.51,69.91,117.33,RMB farkı: sistem 310 → Excel 320 · ağırlık farkı: sistem 6.3 → Excel 5.325
+278,508350000,KESIN,HIGH,SKU birebir,508350000,Ac 220V 2000W Tristör Motor İçin Hız Kontrolü Ayar,evet,5,2.6500,0.4153,0.020,0.02,0.16,2.65,0.65,0.020,8537.10.98.00.19,sistem,2.10,0.00,0.00,20.00,0.42,0.01,0.00,0.08,0.44,0.59,aynı ürüne satır 163 (50835000) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı
+279,508542000,KESIN,HIGH,SKU birebir,508542000,Çiftli Mikro USB 3.7V'dan 5V'a 2A Lityum Batarya S,evet,0,2.6500,0.4153,0.020,0.02,0.16,2.65,0.90,0.020,8504.40.60.90.19,sistem,3.30,0.00,0.00,20.00,0.42,0.01,0.00,0.09,0.45,0.59,
+280,508565000,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.090,0.09,0.72,,,,,,,,,,,,,,,,
+281,508654000,ESLESMEDI,UNKNOWN,aday yok,,,,,9.5000,1.4888,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+282,508745000,KESIN,HIGH,SKU birebir,508745000,ESP8266 24V 16 Kanal Wifi Kablosuz Uzaktan Kumanda,evet,0,88.0000,13.7910,0.050,0.05,0.40,88.00,20.62,0.050,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,13.18,0.28,0.00,2.69,14.12,14.48,
+283,508962000,KESIN,HIGH,SKU birebir,508962000,Tpa3116 2*50w + 100w Amfi Subwoofer Amfisi Tpa3116,evet,0,20.2000,3.1657,0.150,0.15,1.20,20.20,4.93,0.150,8518.40.00.00.00,sistem,4.50,0.00,20.00,20.00,3.16,0.14,0.66,0.79,4.12,5.44,
+284,514760005,ESLESMEDI,UNKNOWN,aday yok,,,,,4.6000,0.7209,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+285,518730000,KESIN,HIGH,SKU birebir,518730000,Hc08 Bluetooth 4.0 Ble Seri Haberleşmeli Modül,evet,0,20.0000,3.1343,0.010,0.01,0.08,20.00,4.69,0.010,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,3.00,0.00,0.00,0.60,3.14,3.21,aynı ürüne satır 180 (51873000) de eşleşti; RMB/kg aynı
+286,523654000,KESIN,HIGH,SKU birebir,523654000,Dlc9lp Xılınx Platform Kablosu Fpga Cpld Devre İçi,evet,1,124.0000,19.4328,0.100,0.10,0.80,124.00,29.09,0.100,8471.90.00.00.00,sistem,0.00,0.00,0.00,20.00,18.61,0.00,0.00,3.72,19.53,20.23,
+287,525654000,KESIN,HIGH,SKU birebir,525654000,DC 12V 36V 15A 500W Fırçasız Motor Sürücü Soğutucu,evet,0,10.4000,1.6299,0.030,0.03,0.24,10.40,2.44,0.010,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,1.58,0.13,0.00,0.34,1.79,2.02,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 5256540000 · ağırlık farkı: sistem 0.01 → Excel 0.03
+288,543251452,KESIN,HIGH,SKU birebir,543251452,Xl4016 Pot Ayarlı Güç Kaynağı 8a 200w Voltaj Dönüş,evet,0,6.0000,0.9403,0.010,0.01,0.08,6.00,1.42,0.010,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,0.91,0.08,0.00,0.20,1.03,1.10,
+289,546794875,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,0.250,0.25,2.00,,,,,,,,,,,,,,,,
+290,547850000,KESIN,HIGH,SKU birebir,547850000,18650 LCD Ekranlı Pil Kapasitesi Dahili Direnç Tes,evet,0,59.8000,9.3716,0.020,0.02,0.16,59.80,13.99,0.020,9030.33.70.90.00,sistem,4.20,5.80,0.00,20.00,8.95,0.89,0.00,1.97,10.29,10.44,aynı ürüne satır 208 (54785000) de eşleşti; RMB/kg aynı
+291,556580000,KESIN,HIGH,SKU birebir,556580000,ATMEGA328P-PU 8-Bit 20MHZ Dıp-28 Arduino Uno R3 Ön,evet,0,11.4000,1.7866,0.010,0.01,0.08,11.40,2.68,0.010,8542.31.90.00.00,sistem,0.00,0.00,0.00,20.00,1.71,0.00,0.00,0.34,1.80,1.87,aynı ürüne satır 213 (55658000) de eşleşti; RMB/kg aynı
+292,565728362,KESIN,HIGH,SKU birebir,565728362,Smart Sensor ST9604 Desibel Ses Seviyesi Gürültü Ö,evet,0,80.0000,12.5373,0.200,0.20,1.60,80.00,18.97,0.200,9027.89.90.00.00,sistem,0.00,0.00,0.00,20.00,12.14,0.00,0.00,2.43,12.74,14.14,
+293,565808000,ESLESMEDI,UNKNOWN,aday yok,,,,,175.0000,27.4254,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+294,565808559,ESLESMEDI,UNKNOWN,aday yok,,,,,604.0000,94.6567,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+295,580089000,ESLESMEDI,UNKNOWN,aday yok,,,,,3.9200,0.6143,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+296,589310000,KESIN,HIGH,SKU birebir,589310000,Voltaj Yükseltici 1800W 40A DC-DC Boost Dönüştürüc,evet,0,49.4000,7.7418,0.400,0.40,3.20,49.40,12.12,0.400,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,7.77,0.65,0.00,1.68,8.79,11.82,aynı ürüne satır 261 (58931000) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı
+297,596118000,KESIN,HIGH,SKU birebir,596118000,FNIRSI DPOX180H 2x180mhz - 3DB 50000wfms/s Dijital,evet,0,620.0000,97.1642,0.300,0.30,2.40,620.00,145.17,0.300,9030.20.00.90.00,sistem,4.20,0.00,0.00,20.00,92.84,3.90,0.00,19.35,101.36,103.55,
+298,2086500000,MUHTEMEL,MEDIUM,sondaki sıfır farkı,208650000,iphone SD - Mıkro SD Kart Kamera Okuyucusu lightni,evet,0,6.6500,1.0422,0.020,0.02,0.16,,,,8471.70.98.90.00,ÖNERİ (YUKSEK): kart okuyucu; emsal 6 ürün 8471.70.98,0.00,0.00,0.00,20.00,1.01,0.00,0.00,0.20,1.06,1.20,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 41 (20865000) de eşleşti; RMB/kg aynı · sistem GTİP'i 84.71.80.00.00 eski/eksik → öneri 8471.70.98.90.00 (YUKSEK)
+299,2114085236,ESLESMEDI,UNKNOWN,aday yok,,,,,2.4000,0.3761,0.010,0.01,0.08,,,,,,,,,,,,,,,,ürün kartına bağlı olmayan 3 satış kaydı (son 2026-09-15): 90 Derece HDMI Çevirici Dönüştürücü
+300,2158000000,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,7.5000,1.1754,0.010,0.01,0.08,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 21580000 — zorla eşleştirilmedi
+301,2169000033,KESIN,HIGH,SKU birebir,2169000033,USB Type-C SATA 3.0 Dönüştürücü Kablo / 2.5inç SSD,evet,0,6.6500,1.0422,0.020,0.02,0.16,6.50,1.64,0.030,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,1.01,0.00,0.00,0.20,1.06,1.20,RMB farkı: sistem 6.5 → Excel 6.65 · ağırlık farkı: sistem 0.03 → Excel 0.02
+302,2315709756,ESLESMEDI,UNKNOWN,aday yok,,,,,6.3150,0.9897,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+303,2467990086,KESIN,HIGH,SKU birebir,2467990086,Hdmı Av Video Kaydedici 1080p Bilgisayarsız Usb Se,evet,0,270.0000,42.3134,0.300,0.30,2.40,270.00,63.47,0.300,8521.90.00.00.00,sistem,13.90,0.00,6.70,20.00,40.60,5.64,3.10,9.87,51.35,53.91,
+304,2488754789,ESLESMEDI,UNKNOWN,aday yok,,,,,9.5000,1.4888,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+305,2562037183,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+306,2910301937,ESLESMEDI,UNKNOWN,aday yok,,,,,16.0000,2.5075,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+307,2918371312,KESIN,HIGH,SKU birebir,2918371312,Anunnaki HDMI L Tip 90 Derece Hdmı Dişi Erkek Ara ,evet,3,1.1800,0.1849,0.020,0.02,0.16,1.18,0.30,0.020,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.20,0.00,0.00,0.04,0.21,0.35,
+308,3766467096,KESIN,HIGH,SKU birebir,3766467096,V10 Oyun Direksiyon Seti Yarış Direksiyonu  Ayarla,evet,0,1000.0000,156.7164,4.000,4.00,32.00,1000.00,239.29,4.000,9504.50.00.00.00,sistem,0.00,20.00,20.00,20.00,153.25,30.65,36.78,44.14,228.15,268.47,
+309,4098764215,ESLESMEDI,UNKNOWN,aday yok,,,,,255.0000,39.9627,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+310,4249568950,KESIN,HIGH,SKU birebir,4249568950,Banyo Çanak Lavabo Bataryası Parlak Gold Paslanmaz,evet,0,85.0000,13.3209,2.000,2.00,16.00,85.00,22.77,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,14.69,3.99,0.00,3.74,19.32,37.12,
+311,4327048156,KESIN,HIGH,SKU birebir,4327048156,Mat Siyah Şelale Lavabo Bataryası – Lüks Tek Kollu,evet,0,257.5000,40.3545,1.500,1.50,12.00,245.00,65.20,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,39.93,10.86,0.00,10.16,52.72,66.07,RMB farkı: sistem 245 → Excel 257.5 · ağırlık farkı: sistem 1 → Excel 1.5
+312,4356435433,KESIN,HIGH,SKU birebir,4356435433,4249568950 Mat Gold Banyo Çanak Lavabo Bataryası I,evet,0,115.5000,18.1007,2.000,2.00,16.00,81.00,21.84,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,19.24,5.23,0.00,4.89,25.33,43.14,RMB farkı: sistem 81 → Excel 115.5
+313,4434434434,ESLESMEDI,UNKNOWN,aday yok,,,,,52.0000,8.1493,1.250,1.25,10.00,,,,,,,,,,,,,,,,
+314,4568986433,ESLESMEDI,UNKNOWN,aday yok,,,,,6.5000,1.0187,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+315,4580890002,KESIN,HIGH,SKU birebir,4580890002,5G Telefon Sinyal Güçlendirici Geniş Alan 4G/5G Ağ,evet,0,850.0000,133.2090,4.000,4.00,32.00,850.00,253.13,4.000,8517.62.00.10.00,sistem,0.00,0.00,0.00,20.00,130.87,0.00,0.00,26.17,137.21,165.21,
+316,4903046045INOX,ESLESMEDI,UNKNOWN,aday yok,,,,,256.0000,40.1194,7.000,7.00,56.00,,,,,,,,,,,,,,,,
+317,4903046045SIYAH,ESLESMEDI,UNKNOWN,aday yok,,,,,256.0000,40.1194,7.000,7.00,56.00,,,,,,,,,,,,,,,,
+318,5085650000,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.090,0.09,0.72,,,,,,,,,,,,,,,,ürün kartına bağlı olmayan 6 satış kaydı (son 2025-05-13): ESP32-S3-DevKitM-1 Geliştirme Kartı
+319,5272837287,ESLESMEDI,UNKNOWN,aday yok,,,,,2.4000,0.3761,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+320,5273937361,ESLESMEDI,UNKNOWN,aday yok,,,,,12.5000,1.9590,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+321,5373930300,CONFLICT,CONFLICT,sondaki sıfır farkı,53739303,,,,103.0000,16.1418,0.500,0.50,4.00,,,,,,,,,,,,,,,,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 192 (53739303) de eşleşti ve RMB/kg farklı
+322,5654336889,ESLESMEDI,UNKNOWN,aday yok,,,,,32.0000,5.0149,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+323,5666543335,ESLESMEDI,UNKNOWN,aday yok,,,,,16.0000,2.5075,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+324,5677654445,ESLESMEDI,UNKNOWN,aday yok,,,,,30.0000,4.7015,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+325,5678765543,ESLESMEDI,UNKNOWN,aday yok,,,,,8.5000,1.3321,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+326,5678876546,ESLESMEDI,UNKNOWN,aday yok,,,,,2.7500,0.4310,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+327,5688876543,KESIN,HIGH,SKU birebir,5688876543,HCW-M632 Akıllı Şarj Kontrol Devresi 12V 24V Jel A,evet,0,6.9000,1.0813,0.020,0.02,0.16,6.90,1.87,0.020,8537.10.98.00.19,sistem,2.10,0.00,0.00,20.00,1.05,0.02,0.00,0.21,1.12,1.27,
+328,5855808855,ESLESMEDI,UNKNOWN,aday yok,,,,,5.7000,0.8933,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+329,5875404678,ESLESMEDI,UNKNOWN,aday yok,,,,,15.9300,2.4965,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+330,5880998521,ESLESMEDI,UNKNOWN,aday yok,,,,,13.0000,2.0373,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+331,5910876536,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+332,5914566544,ESLESMEDI,UNKNOWN,aday yok,,,,,12.0000,1.8806,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+333,5915679653,ESLESMEDI,UNKNOWN,aday yok,,,,,6.7000,1.0500,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+334,11872600845 (GTIP KESINLEŞTIR),ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+335,20183619368,ESLESMEDI,UNKNOWN,aday yok,,,,,19.0000,2.9776,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+336,20183727193,KESIN,HIGH,SKU birebir,20183727193,Anunnaki 90 Derece L Tipi HDMI Uzatma Kablosu 1 Me,evet,0,5.4000,0.8463,0.058,0.06,0.47,4.60,1.12,0.030,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,0.86,0.16,0.00,0.20,1.06,1.55,RMB farkı: sistem 4.6 → Excel 5.4 · ağırlık farkı: sistem 0.03 → Excel 0.0583
+337,20183728173,ESLESMEDI,UNKNOWN,aday yok,,,,,6.2500,0.9795,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+338,20303833737,ESLESMEDI,UNKNOWN,aday yok,,,,,10.0000,1.5672,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+339,20987690075,ESLESMEDI,UNKNOWN,aday yok,,,,,114.0000,17.8657,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+340,21039471635,KESIN,HIGH,SKU birebir,21039471635,Kablosuz Hdmı Görüntü Aktarma Adaptörü Alıcı Veric,evet,0,245.0000,38.3955,0.060,0.06,0.48,245.00,48.58,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,36.63,0.00,0.00,7.33,38.46,38.88,ağırlık farkı: sistem 0.1 → Excel 0.06
+341,21140085236,KESIN,HIGH,SKU birebir,21140085236,Anunnaki 90 Derece HDMI Çevirici Dönüştürücü 8K,evet,3,2.4500,0.3840,0.010,0.01,0.08,2.50,0.61,0.020,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.38,0.01,0.00,0.08,0.40,0.47,RMB farkı: sistem 2.5 → Excel 2.45 · ağırlık farkı: sistem 0.02 → Excel 0.01
+342,21501503717,ESLESMEDI,UNKNOWN,aday yok,,,,,4.5000,0.7052,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+343,21621161621,ESLESMEDI,UNKNOWN,aday yok,,,,,14.3000,2.2410,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+344,22519304816,ESLESMEDI,UNKNOWN,aday yok,,,,,8.2500,1.2929,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+345,22681746302,ESLESMEDI,UNKNOWN,aday yok,,,,,27.5000,4.3097,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+346,23455433334,ESLESMEDI,UNKNOWN,aday yok,,,,,15.0000,2.3507,0.110,0.11,0.88,,,,,,,,,,,,,,,,
+347,23578764580,KESIN,HIGH,SKU birebir,23578764580,USB to RJ45 Usb 3.0'dan Rj45 1000Mbps Ethernet Çev,evet,13,17.5000,2.7425,0.030,0.03,0.24,17.50,4.13,0.030,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,2.64,0.00,0.00,0.53,2.77,2.98,
+348,23658000111,KESIN,HIGH,satış kaydı ürün bağlantısı,23658000111SIYAH,Hdmi Bi-direction Switch 2 Port Çift Yönlü Hdmi Sw,evet,0,7.2000,1.1284,0.050,0.05,0.40,7.00,1.78,0.100,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,1.12,0.04,0.00,0.23,1.22,1.58,satış kaydında bu kodla satılan ürüne bağlı (productId) · RMB farkı: sistem 7 → Excel 7.2 · sistemdeki RMB ile teyitli (±%3) · ağırlık farkı: sistem 0.1 → Excel 0.05
+349,24409754434,KESIN,HIGH,SKU birebir,24409754434,Anunnaki AN4130 HDMI 4k UHD 30HZ Video Capture Cih,evet,0,31.0000,4.8582,0.200,0.20,1.60,30.00,8.19,0.200,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,4.83,0.00,0.00,0.97,5.06,6.46,RMB farkı: sistem 30 → Excel 31
+350,24548404546,KESIN,HIGH,SKU birebir,24548404546,4kvm421 Kvm Switch 2x1 Hdmı 2.0 4k Ultra Hd 2160p ,evet,21,60.0000,9.4030,0.250,0.25,2.00,55.00,13.13,0.200,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,9.21,0.00,0.00,1.84,9.65,11.40,RMB farkı: sistem 55 → Excel 60 · ağırlık farkı: sistem 0.2 → Excel 0.25
+351,24548407845,ESLESMEDI,UNKNOWN,aday yok,,,,,30.0000,4.7015,0.400,0.40,3.20,,,,,,,,,,,,,,,,
+352,24576534676,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+353,24578009765,ESLESMEDI,UNKNOWN,aday yok,,,,,4.5000,0.7052,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+354,24678097654,ESLESMEDI,UNKNOWN,aday yok,,,,,4.0000,0.6269,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+355,24687545799,KESIN,HIGH,SKU birebir,24687545799,2x2 Video Wall Controller Duvar Ekran Genişletici ,evet,4,107.5000,16.8470,0.300,0.30,2.40,95.00,23.05,0.600,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,16.34,0.60,0.00,3.39,17.75,19.93,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 246875457990 · RMB farkı: sistem 95 → Excel 107.5 · ağırlık farkı: sistem 0.6 → Excel 0.3
+356,24689975421,KESIN,HIGH,SKU birebir,24689975421,Usb 3.0 4 Port Hub 2 Uyumlu Kasa Pc Bilgisayar Kvm,evet,0,47.5000,7.4440,0.150,0.15,1.20,45.00,11.25,0.200,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,7.24,0.00,0.00,1.45,7.59,8.64,RMB farkı: sistem 45 → Excel 47.5 · ağırlık farkı: sistem 0.2 → Excel 0.15
+357,24708754259,KESIN,HIGH,SKU birebir,24708754259,TV Hoparlör Kulaklık Telefon Aux Bluetooth Müzik A,evet,0,14.0000,2.1940,0.100,0.10,0.80,14.00,3.41,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,2.19,0.00,0.00,0.44,2.29,2.99,
+358,24756000000,CONFLICT,CONFLICT,sondaki sıfır farkı,247560000,,,,53.0000,8.3060,0.115,0.12,0.92,,,,,,,,,,,,,,,,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 90 (24756000) de eşleşti ve RMB/kg farklı
+359,25008965214,KESIN,HIGH,SKU birebir,25008965214,2.7v 3000f Süper Kondansatör Pil Yüksek Enerji Süp,evet,0,31.0000,4.8582,0.030,0.03,0.24,31.00,7.49,0.030,8532.29.00.00.00,sistem,0.00,0.00,0.00,20.00,4.66,0.00,0.00,0.93,4.89,5.10,
+360,25468909768,ESLESMEDI,UNKNOWN,aday yok,,,,,13.5000,2.1157,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+361,25470087642,ESLESMEDI,UNKNOWN,aday yok,,,,,5.6000,0.8776,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+362,25470890852,ESLESMEDI,UNKNOWN,aday yok,,,,,56.0000,8.7761,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+363,25470896523,KESIN,HIGH,SKU birebir,25470896523,Usb 3.1 Type C To Pcı-E M.2 Nvme Ssd Harici Taşına,evet,0,19.0000,2.9776,0.070,0.07,0.56,20.00,4.51,0.060,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,2.91,0.00,0.00,0.58,3.05,3.54,RMB farkı: sistem 20 → Excel 19 · ağırlık farkı: sistem 0.06 → Excel 0.07
+364,25474108963,ESLESMEDI,UNKNOWN,aday yok,,,,,155.0000,24.2910,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+365,25610371630,ESLESMEDI,UNKNOWN,aday yok,,,,,6.0000,0.9403,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+366,25610373512,ESLESMEDI,UNKNOWN,aday yok,,,,,13.0000,2.0373,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+367,25610374913,ESLESMEDI,UNKNOWN,aday yok,,,,,5.5000,0.8619,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+368,25610384634,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+369,25681627201,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.055,0.06,0.44,,,,,,,,,,,,,,,,
+370,25780876421,ESLESMEDI,UNKNOWN,aday yok,,,,,106.0000,16.6119,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+371,25780974696,ESLESMEDI,UNKNOWN,aday yok,,,,,19.0000,2.9776,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+372,25808877452,KESIN,HIGH,SKU birebir,25808877452,Usb Ethernet Kartı Lan Ethernet Kablolu Kart Çevir,evet,0,5.0000,0.7836,0.030,0.03,0.24,5.00,1.21,0.030,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,0.78,0.00,0.00,0.16,0.81,1.02,
+373,25808896521,KESIN,HIGH,SKU birebir,25808896521,Vga to Hdmı Full Hd 1080p/60Hz Dönüştürücü Kablo 5,evet,0,9.3500,1.4653,0.045,0.04,0.36,10.00,2.96,0.050,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,1.44,0.05,0.00,0.30,1.56,1.89,RMB farkı: sistem 10 → Excel 9.35 · ağırlık farkı: sistem 0.05 → Excel 0.045
+374,25809876546,ESLESMEDI,UNKNOWN,aday yok,,,,,5.3000,0.8306,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+375,25908741258,KESIN,HIGH,SKU birebir,25908741258,Anunnaki 4K Type-c Hdmı Görüntü Aktarım Kablosu Şa,evet,0,9.1500,1.4340,0.050,0.05,0.40,11.00,2.64,0.050,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,1.42,0.00,0.00,0.28,1.48,1.83,RMB farkı: sistem 11 → Excel 9.15
+376,26103817361,KESIN,HIGH,SKU birebir,26103817361,Anunnaki HDMI + Audio Out Ayırıcı Extractor Conver,evet,186,21.0000,3.2910,0.150,0.15,1.20,18.00,5.23,0.150,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,3.28,0.12,0.00,0.68,3.56,4.65,RMB farkı: sistem 18 → Excel 21
+377,26309865531,ESLESMEDI,UNKNOWN,aday yok,,,,,13.0000,2.0373,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+378,26398074523,ESLESMEDI,UNKNOWN,aday yok,,,,,30.0000,4.7015,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+379,26708985412,ESLESMEDI,UNKNOWN,aday yok,,,,,4.7000,0.7366,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+380,27363610373,KESIN,HIGH,SKU birebir,27363610373,Usb 2.0 Kvm Switch Vga 4 Port,evet,5,25.5000,3.9963,0.150,0.15,1.20,25.50,7.88,0.150,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,3.96,0.00,0.00,0.79,4.15,5.20,
+381,27363729201,ESLESMEDI,UNKNOWN,aday yok,,,,,30.0000,4.7015,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+382,27363828201,ESLESMEDI,UNKNOWN,aday yok,,,,,16.0000,2.5075,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+383,27373830372,ESLESMEDI,UNKNOWN,aday yok,,,,,71.0000,11.1269,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+384,27549467542,KESIN,HIGH,SKU birebir,27549467542,24+1 Dvı Erkek To Hdmı Dişi Çevirici Dvi To Hdmi,evet,0,1.9500,0.3056,0.030,0.03,0.24,1.95,0.88,0.030,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.32,0.01,0.00,0.07,0.34,0.56,
+385,28172617263,ESLESMEDI,UNKNOWN,aday yok,,,,,26.0000,4.0746,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+386,28301847103,KESIN,HIGH,SKU birebir,28301847103,Harici DVD Sürücü USB 3.0 veya Type-c Cd Dvd Yazıc,evet,0,24.5000,3.8396,0.200,0.20,1.60,33.00,8.48,0.200,8471.70.30.90.00,sistem,0.00,0.00,0.00,20.00,3.86,0.00,0.00,0.77,4.04,5.44,RMB farkı: sistem 33 → Excel 24.5
+387,28301937362,KESIN,HIGH,SKU birebir,28301937362,8x Optik Zoom Dürbün Telefon Kameralarına Uyumlu M,evet,0,6.6000,1.0343,0.090,0.09,0.72,6.60,1.67,0.090,9002.11.00.00.00,sistem,6.70,0.00,0.00,20.00,1.08,0.07,0.00,0.23,1.20,1.87,
+388,29301747101,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+389,29303837272,ESLESMEDI,UNKNOWN,aday yok,,,,,3.9000,0.6112,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+390,29308965742,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+391,29358070002,ESLESMEDI,UNKNOWN,aday yok,,,,,2.8000,0.4388,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+392,29358096574,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+393,29907840152,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+394,29907845124,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+395,29907845164,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+396,29907845421,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+397,29907846150,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+398,29970481532,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+399,40103737292,MUHTEMEL,MEDIUM,sondaki sıfır farkı,401037372920,2in1 Masaüstü Kumandalı Tripod ve Taşınbilir Selfi,evet,18,6.8000,1.0657,0.130,0.13,1.04,4.50,1.34,0.200,9620.00.91.00.00,sistem,6.00,0.00,0.00,20.00,1.14,0.07,0.00,0.24,1.26,2.23,sayısal kodda sondaki sıfır sayısı farklı · RMB farkı: sistem 4.5 → Excel 6.8 · ağırlık farkı: sistem 0.2 → Excel 0.13
+400,40726000001,KESIN,HIGH,SKU birebir,40726000001,Klozet Kapağı Amortisörü Çiftli Set Yavaş Kapanır ,evet,0,2.4700,0.3871,0.100,0.10,0.80,2.47,1.66,0.100,8302.10.00.00.19,sistem,2.70,15.00,0.00,20.00,0.47,0.08,0.00,0.11,0.57,1.39,
+401,40980962195,ESLESMEDI,UNKNOWN,aday yok,,,,,352.5000,55.2425,2.500,2.50,20.00,,,,,,,,,,,,,,,,
+402,41681680168,ESLESMEDI,UNKNOWN,aday yok,,,,,40.0000,6.2687,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+403,43120382836,ESLESMEDI,UNKNOWN,aday yok,,,,,1.2200,0.1912,0.018,0.02,0.14,,,,,,,,,,,,,,,,
+404,43219371037,ESLESMEDI,UNKNOWN,aday yok,,,,,245.0000,38.3955,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+405,43219371038,KESIN,HIGH,SKU birebir,43219371038,Krom Şelale Lavabo Bataryası – Lüks Tek Kollu Tezg,evet,0,245.0000,38.3955,1.500,1.50,12.00,245.00,65.20,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,38.07,10.35,0.00,9.68,50.25,63.61,ağırlık farkı: sistem 1 → Excel 1.5
+406,43267804521,KESIN,HIGH,SKU birebir,43267804521,Lüks Gold Altın Şelale Lavabo Bataryası,evet,0,262.5000,41.1381,1.500,1.50,12.00,245.00,65.20,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,40.68,11.06,0.00,10.35,53.70,67.06,RMB farkı: sistem 245 → Excel 262.5 · ağırlık farkı: sistem 1 → Excel 1.5
+407,43267804522,ESLESMEDI,UNKNOWN,aday yok,,,,,205.0000,32.1269,0.900,0.90,7.20,,,,,,,,,,,,,,,,
+408,43267804523,ESLESMEDI,UNKNOWN,aday yok,,,,,205.0000,32.1269,0.900,0.90,7.20,,,,,,,,,,,,,,,,
+409,43267804524,ESLESMEDI,UNKNOWN,aday yok,,,,,205.0000,32.1269,0.900,0.90,7.20,,,,,,,,,,,,,,,,
+410,43267804525,ESLESMEDI,UNKNOWN,aday yok,,,,,205.0000,32.1269,0.900,0.90,7.20,,,,,,,,,,,,,,,,
+411,43267804526,ESLESMEDI,UNKNOWN,aday yok,,,,,205.0000,32.1269,0.900,0.90,7.20,,,,,,,,,,,,,,,,
+412,43289055632,KESIN,HIGH,SKU birebir,43289055632,Lüks Gold Şelale Çanak Lavabo Bataryası Premium Te,evet,1,305.0000,47.7985,2.000,2.00,16.00,325.00,78.79,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,47.52,12.93,0.00,12.09,62.72,80.53,RMB farkı: sistem 325 → Excel 305
+413,44108965254,KESIN,HIGH,SKU birebir,44108965254,Flextail Akrobat Mutfak ve Banyo Lavabo Bataryası ,evet,0,17.0000,2.6642,1.000,1.00,8.00,8.50,2.97,0.675,8481.90.00.00.29,sistem,2.20,25.00,0.00,20.00,3.54,0.96,0.00,0.90,4.63,13.53,aynı ürüne satır 794 (AKR-44108965254) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı · RMB farkı: sistem 8.5 → Excel 17 (BÜYÜK FARK — teyit) · ağırlık farkı: sistem 0.675 → Excel 1
+414,45256809852,ESLESMEDI,UNKNOWN,aday yok,,,,,76.0000,11.9104,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+415,45303740523,ESLESMEDI,UNKNOWN,aday yok,,,,,3.0000,0.4701,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+416,45358007896,ESLESMEDI,UNKNOWN,aday yok,,,,,3.0000,0.4701,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+417,45365808250,ESLESMEDI,UNKNOWN,aday yok,,,,,85.0000,13.3209,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+418,45430200001,KESIN,HIGH,SKU birebir,45430200001,Şelale Banyo Lavabo Bataryası 360 Döner Kare Krom,evet,0,110.0000,17.2388,1.500,1.50,12.00,110.00,27.87,1.500,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,17.92,4.87,0.00,4.56,23.61,36.97,
+419,45678900865,ESLESMEDI,UNKNOWN,aday yok,,,,,12.0000,1.8806,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+420,45854125808-UV5R,KESIN,HIGH,SKU birebir,45854125808-UV5R,UV5R UV-5R EL Telsizi Baofeng Kulaklık Dahil,evet,0,90.0000,14.1045,0.400,0.40,3.20,90.00,24.95,0.400,8517.69.90.90.24,sistem,0.00,0.00,20.00,20.00,13.83,0.00,2.77,3.32,17.27,20.63,
+421,46181028374,ESLESMEDI,UNKNOWN,aday yok,,,,,20.0000,3.1343,0.425,0.42,3.40,,,,,,,,,,,,,,,,
+422,46790988654,ESLESMEDI,UNKNOWN,aday yok,,,,,95.0000,14.8881,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+423,47301937374,KESIN,HIGH,SKU birebir,47301937374,Masaüstü Tripod ve Selfie Çubuğu Cep Telefonu Uzak,evet,0,7.2000,1.1284,0.150,0.15,1.20,7.20,2.96,0.150,9620.00.91.00.00,sistem,6.00,0.00,0.00,20.00,1.22,0.07,0.00,0.26,1.35,2.46,
+424,47401837185,ESLESMEDI,UNKNOWN,aday yok,,,,,231.0000,36.2015,2.800,2.80,22.40,,,,,,,,,,,,,,,,
+425,47421345783,ESLESMEDI,UNKNOWN,aday yok,,,,,252.5000,39.5709,2.800,2.80,22.40,,,,,,,,,,,,,,,,
+426,47473737363,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,47473737363-SIYAH,Mat Siyah Duş Seti Robot Yağmurlama Tepe Duş Seti ,evet,0,160.0000,25.0746,3.000,3.00,24.00,,,,84.81.80.19.00,sistem,2.20,25.00,0.00,20.00,26.88,7.31,0.00,6.84,35.39,62.10,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor
+427,48392019284,ESLESMEDI,UNKNOWN,aday yok,,,,,3.3000,0.5172,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+428,48653147521,ESLESMEDI,UNKNOWN,aday yok,,,,,245.0000,38.3955,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+429,48900987654,ESLESMEDI,UNKNOWN,aday yok,,,,,56.0000,8.7761,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+430,48909764577,KESIN,HIGH,SKU birebir,48909764577,Siyah Kare Banyo Lavabo Şelale Paslanmaz Çelik Mus,evet,0,21.8750,3.4282,0.600,0.60,4.80,28.00,7.41,0.600,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,3.86,1.05,0.00,0.98,5.08,10.42,RMB farkı: sistem 28 → Excel 21.875
+431,49382745638,ESLESMEDI,UNKNOWN,aday yok,,,,,32.5000,5.0933,0.500,0.50,4.00,,,,,,,,,,,,,,,,
+432,49403928374,ESLESMEDI,UNKNOWN,aday yok,,,,,66.0000,10.3433,0.400,0.40,3.20,,,,,,,,,,,,,,,,
+433,51019372735,KESIN,HIGH,SKU birebir,51019372735,RJ45 Ez Kesme Sıkma Pensesi Aleti Taşınabilir Daya,evet,0,20.2500,3.1735,0.300,0.30,2.40,21.00,7.98,0.300,8203.20.00.00.11,sistem,1.70,25.00,0.00,20.00,3.32,0.89,0.00,0.84,4.36,7.02,RMB farkı: sistem 21 → Excel 20.25
+434,51027372017,ESLESMEDI,UNKNOWN,aday yok,,,,,43.0000,6.7388,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+435,51037364066,KESIN,HIGH,SKU birebir,51037364066,RJ45 EZ Kesme Sıkma Pensesi Aleti Taşınabilir Daya,evet,19,18.6250,2.9188,0.375,0.38,3.00,21.00,7.98,0.300,8203.20.00.00.11,sistem,1.70,25.00,0.00,20.00,3.15,0.84,0.00,0.80,4.14,7.46,RMB farkı: sistem 21 → Excel 18.625 · ağırlık farkı: sistem 0.3 → Excel 0.375
+436,51827162626,ESLESMEDI,UNKNOWN,aday yok,,,,,6.5000,1.0187,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+437,51946754085,ESLESMEDI,UNKNOWN,aday yok,,,,,5.5000,0.8619,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+438,52001173727,ESLESMEDI,UNKNOWN,aday yok,,,,,36.0000,5.6418,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+439,52028363723,ESLESMEDI,UNKNOWN,aday yok,,,,,5.3000,0.8306,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+440,52569808541,ESLESMEDI,UNKNOWN,aday yok,,,,,100.0000,15.6716,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+441,52724546469,ESLESMEDI,UNKNOWN,aday yok,,,,,2.9400,0.4607,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+442,52726200188,ESLESMEDI,UNKNOWN,aday yok,,,,,5.5500,0.8698,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+443,52727262627,KESIN,HIGH,SKU birebir,52727262627,10A LTC3780 DC-DC Voltaj Yükseltici ve Düşürücü Re,evet,0,25.8000,4.0433,0.050,0.05,0.40,25.80,6.10,0.050,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,3.90,0.32,0.00,0.84,4.42,4.80,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 527272626270
+444,52727361036,KESIN,HIGH,SKU birebir,52727361036,XH-M543 Çift Kanallı Dijital Ses Güç Amplifikatörü,evet,0,12.5000,1.9590,0.080,0.08,0.64,12.50,3.04,0.080,8518.40.00.00.00,sistem,4.50,0.00,20.00,20.00,1.95,0.09,0.41,0.49,2.53,3.24,
+445,52727372916,ESLESMEDI,UNKNOWN,aday yok,,,,,12.4500,1.9511,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+446,52728282617,ESLESMEDI,UNKNOWN,aday yok,,,,,9.0000,1.4104,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+447,52728362610,KESIN,HIGH,SKU birebir,52728362610,FNIRSI SG-004A 4-20mA Taşınabilir Çok Fonksiyonlu ,evet,0,566.0000,88.7015,0.300,0.30,2.40,566.00,132.56,0.300,8543.20.00.00.00,sistem,3.70,0.00,0.00,20.00,84.78,3.14,0.00,17.58,92.14,94.32,
+448,52728363838,ESLESMEDI,UNKNOWN,aday yok,,,,,5.0000,0.7836,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+449,52820293736,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+450,53638403836,ESLESMEDI,UNKNOWN,aday yok,,,,,7.8000,1.2224,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+451,54311580085,ESLESMEDI,UNKNOWN,aday yok,,,,,4.6000,0.7209,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+452,54323456864,ESLESMEDI,UNKNOWN,aday yok,,,,,70.0000,10.9701,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+453,54467809876,ESLESMEDI,UNKNOWN,aday yok,,,,,8.2000,1.2851,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+454,54568809875,KESIN,HIGH,SKU birebir,54568809875,STM32F411CEU6 Black Pill Geliştirme Kartı Type-C A,evet,0,17.0000,2.6642,0.020,0.02,0.16,17.00,4.00,0.020,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,2.56,0.05,0.00,0.52,2.74,2.88,
+455,54579097665,KESIN,HIGH,SKU birebir,54579097665,Smart Sensor AS847 Problu Sıcaklık ve Nem Ölçer,evet,0,123.0000,19.2761,0.300,0.30,2.40,123.00,29.15,0.300,9025.80.40.90.00,sistem,3.20,0.00,0.00,20.00,18.66,0.60,0.00,3.85,20.17,22.34,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): 545790976650
+456,54580896321,ESLESMEDI,UNKNOWN,aday yok,,,,,4.7000,0.7366,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+457,54678704312,ESLESMEDI,UNKNOWN,aday yok,,,,,16.8000,2.6328,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+458,54680087542,ESLESMEDI,UNKNOWN,aday yok,,,,,13.5000,2.1157,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+459,54782000111,KESIN,HIGH,SKU birebir,54782000111,400W 15A 10-60V DC-DC Çevirici Step-Up Booster Vol,evet,0,7.6733,1.2025,0.015,0.01,0.12,7.09,1.67,0.010,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,1.16,0.10,0.00,0.25,1.31,1.43,RMB farkı: sistem 7.09 → Excel 7.6733 · ağırlık farkı: sistem 0.01 → Excel 0.015
+460,54840784513,ESLESMEDI,UNKNOWN,aday yok,,,,,6.0000,0.9403,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+461,55435790096,ESLESMEDI,UNKNOWN,aday yok,,,,,15.0000,2.3507,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+462,55557880086,ESLESMEDI,UNKNOWN,aday yok,,,,,12.0000,1.8806,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+463,56654367543,ESLESMEDI,UNKNOWN,aday yok,,,,,11.5000,1.8022,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+464,56775435709,KESIN,HIGH,SKU birebir,56775435709,XL4016 300W 10A DC-DC Adım Aşağı Voltaj Düşürücü R,evet,0,8.5000,1.3321,0.050,0.05,0.40,8.50,2.06,0.050,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,1.32,0.11,0.00,0.29,1.49,1.87,
+465,56780988007,ESLESMEDI,UNKNOWN,aday yok,,,,,4.1200,0.6457,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+466,56787643678,ESLESMEDI,UNKNOWN,aday yok,,,,,32.0000,5.0149,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+467,56789008654,ESLESMEDI,UNKNOWN,aday yok,,,,,5.0000,0.7836,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+468,56801937380,ESLESMEDI,UNKNOWN,aday yok,,,,,3.5000,0.5485,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+469,56808745963,ESLESMEDI,UNKNOWN,aday yok,,,,,58.0000,9.0896,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+470,56809764752,ESLESMEDI,UNKNOWN,aday yok,,,,,5.0000,0.7836,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+471,56887643684,ESLESMEDI,UNKNOWN,aday yok,,,,,22.0000,3.4478,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+472,56890876542,ESLESMEDI,UNKNOWN,aday yok,,,,,6.6000,1.0343,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+473,57372730173,ESLESMEDI,UNKNOWN,aday yok,,,,,26.0000,4.0746,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+474,57574839201,ESLESMEDI,UNKNOWN,aday yok,,,,,17.0000,2.6642,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+475,57574839203,ESLESMEDI,UNKNOWN,aday yok,,,,,147.0000,23.0373,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+476,57574930281,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+477,57636544806,ESLESMEDI,UNKNOWN,aday yok,,,,,5.0000,0.7836,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+478,57664321157,ESLESMEDI,UNKNOWN,aday yok,,,,,320.0000,50.1493,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+479,57876544321,KESIN,HIGH,SKU birebir,57876544321,XY-T01 Dijital Sıcaklık Kontrol Modülü DC 6-30V Te,evet,0,18.5000,2.8993,0.030,0.03,0.24,18.50,4.36,0.030,9032.10.20.90.00,sistem,2.80,6.00,0.00,20.00,2.79,0.25,0.00,0.61,3.17,3.40,
+480,58089852369,ESLESMEDI,UNKNOWN,aday yok,,,,,5.2000,0.8149,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+481,58475236808TE-HDM,ESLESMEDI,UNKNOWN,aday yok,,,,,118.0000,18.4925,0.400,0.40,3.20,,,,,,,,,,,,,,,,
+482,58887654321,ESLESMEDI,UNKNOWN,aday yok,,,,,35.0000,5.4851,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+483,59027373711,ESLESMEDI,UNKNOWN,aday yok,,,,,3.2000,0.5015,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+484,59038403030,KESIN,HIGH,SKU birebir,59038403030,Transistör 2sa1943 Yüksek Güçlü Ses Amplifikatörü ,evet,0,3.2000,0.5015,0.010,0.01,0.08,3.20,0.76,0.010,8541.29.00.00.00,sistem,0.00,0.00,0.00,20.00,0.49,0.00,0.00,0.10,0.51,0.58,
+485,59103838373,ESLESMEDI,UNKNOWN,aday yok,,,,,4.3000,0.6739,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+486,59103847301,ESLESMEDI,UNKNOWN,aday yok,,,,,13.0000,2.0373,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+487,59107654327,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+488,59108609656,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+489,59109868743,ESLESMEDI,UNKNOWN,aday yok,,,,,13.0000,2.0373,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+490,59190865478,ESLESMEDI,UNKNOWN,aday yok,,,,,9.0000,1.4104,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+491,200056890900,ESLESMEDI,UNKNOWN,aday yok,,,,,4.7000,0.7366,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+492,200938193830,ESLESMEDI,UNKNOWN,aday yok,,,,,11.6000,1.8179,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+493,201020304836,ESLESMEDI,UNKNOWN,aday yok,,,,,0.2300,0.0360,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+494,201056376986,KESIN,HIGH,SKU birebir,201056376986,Anunnaki 90 Derece Sol Erkek Dişi HDMI Uzatma Kabl,evet,0,6.8000,1.0657,0.035,0.04,0.28,6.80,2.03,0.035,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,1.05,0.19,0.00,0.25,1.29,1.58,
+495,201804160566,KESIN,HIGH,SKU birebir,201804160566,Alfas 125 kHz USB Masaüstü RFID Kart Okuyucu – R20,evet,0,12.0000,1.8806,0.150,0.15,1.20,12.00,3.02,0.150,8471.90.00.00.00,sistem,0.00,0.00,0.00,20.00,1.94,0.00,0.00,0.39,2.03,3.08,
+496,201837182737,ESLESMEDI,UNKNOWN,aday yok,,,,,40.0000,6.2687,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+497,201938183720,KESIN,HIGH,SKU birebir,201938183720,HDMI Dişi Dişi Ara Çevirici Dönüştürücü Adaptör / ,evet,0,0.5900,0.0925,0.020,0.02,0.16,0.59,0.43,0.020,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.11,0.00,0.00,0.02,0.11,0.26,
+498,201988881888,KESIN,HIGH,SKU birebir,201988881888,DC-DC Step Down Voltaj Dönüştürücü Modül 9-36V to ,evet,0,4.4000,0.6896,0.020,0.02,0.16,4.40,1.06,0.020,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,0.68,0.06,0.00,0.15,0.77,0.92,
+499,202620240222,CONFLICT,CONFLICT,sistem SKU'su kod+ek,202620240222GRI2METRE; 202620240222MAVI2METRE; 202620240222MOR2METRE; 202620240222PEMBE2METRE; 202620240222SARI2METRE; 202620240222SIYAH2METRE,,,,2.6000,0.4075,0.050,0.05,0.40,,,,,,,,,,,,,,,,"sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor → 6 ürün: 202620240222GRI2METRE, 202620240222MAVI2METRE, 202620240222MOR2METRE, 202620240222PEMBE2METRE, 202620240222SARI2METRE, 202620240222SIYAH2METRE"
+500,207886435491,ESLESMEDI,UNKNOWN,aday yok,,,,,27.0000,4.2313,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+501,208754649512,ESLESMEDI,UNKNOWN,aday yok,,,,,20.0000,3.1343,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+502,209875195180,KESIN,HIGH,SKU birebir,209875195180,Anunnaki USB 3.0 2‑in‑1 SD TF Kart Okuyucu & Dönüş,evet,0,4.5000,0.7052,0.020,0.02,0.16,4.50,1.29,0.020,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,0.69,0.00,0.00,0.14,0.73,0.87,
+503,210010066666,ESLESMEDI,UNKNOWN,aday yok,,,,,10.0000,1.5672,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+504,210043716253,KESIN,HIGH,SKU birebir,210043716253,Sc Erkek - Lc Dişi Tek Modlu Fiber Optik Adaptör D,evet,2,5.5000,0.8619,0.030,0.03,0.24,5.50,1.47,0.040,8536.70.00.10.00,sistem,3.00,0.00,0.00,20.00,0.85,0.03,0.00,0.18,0.92,1.13,ağırlık farkı: sistem 0.04 → Excel 0.03
+505,210381640183,ESLESMEDI,UNKNOWN,aday yok,,,,,0.8000,0.1254,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+506,210741000000,KESIN,HIGH,SKU birebir,210741000000,Type-c & Lightning & Usb Flash Bellek 3 in 1 128Gb,evet,0,53.0000,8.3060,0.020,0.02,0.16,53.00,12.40,0.020,8523.51.10.00.00,sistem,0.00,0.00,0.00,20.00,7.93,0.00,0.00,1.59,8.33,8.47,aynı ürüne satır 46 (21074100) de eşleşti; RMB/kg aynı
+507,211580874533,KESIN,HIGH,SKU birebir,211580874533,Anunnaki 8K Uhd Mini HDMI to HDMI Çevirici Dönüştü,evet,69,2.4600,0.3855,0.010,0.01,0.08,2.52,0.62,0.020,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.38,0.01,0.00,0.08,0.40,0.48,RMB farkı: sistem 2.52 → Excel 2.46 · ağırlık farkı: sistem 0.02 → Excel 0.01
+508,212012012812,KESIN,HIGH,SKU birebir,212012012812,Anunnaki AN1020 1 Giriş 2 Çıkış PoE Extender Geniş,evet,7,17.0000,2.6642,0.100,0.10,0.80,17.00,4.62,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,2.64,0.00,0.00,0.53,2.76,3.46,
+509,212038273723,KESIN,HIGH,SKU birebir,212038273723,Anunnaki Gigabit Fiber Medya Dönüştürücü  5km HTB-,evet,0,38.0000,5.9552,0.300,0.30,2.40,38.00,9.31,0.300,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,5.97,0.00,0.00,1.19,6.26,8.36,
+510,212099175017,KESIN,HIGH,SKU birebir,212099175017,Anunnaki Ses Destekli HDMI (Dişi) to VGA (Erkek) V,evet,3,3.6050,0.5650,0.020,0.02,0.16,3.50,0.89,0.050,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,0.56,0.02,0.00,0.12,0.61,0.75,RMB farkı: sistem 3.5 → Excel 3.605 · ağırlık farkı: sistem 0.05 → Excel 0.02
+511,212340125016,KESIN,HIGH,SKU birebir,212340125016,Hdmı Kablo 1.5 Metre 4K HDMI Kablo / PS3 PS4 PS5 T,evet,372,1.8150,0.2844,0.050,0.05,0.40,2.00,0.53,0.040,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,0.32,0.06,0.00,0.08,0.39,0.81,RMB farkı: sistem 2 → Excel 1.815 · ağırlık farkı: sistem 0.04 → Excel 0.05
+512,212450183722,KESIN,HIGH,SKU birebir,212450183722,RJ45 Coupler - Ethernet Kablo Birleştirici Adaptör,evet,0,1.8000,0.2821,0.030,0.03,0.24,1.80,0.71,0.030,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.30,0.01,0.00,0.06,0.32,0.53,
+513,212545630123,KESIN,HIGH,SKU birebir,212545630123,Anunnaki Hdmı Ethernet Extender Uzatıcı Cihaz Rj45,evet,0,35.0000,5.4851,0.225,0.23,1.80,35.00,8.87,0.200,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,5.45,0.20,0.00,1.13,5.91,7.54,ağırlık farkı: sistem 0.2 → Excel 0.225
+514,212548752021,ESLESMEDI,UNKNOWN,aday yok,,,,,8.7000,1.3634,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+515,214607540186,ESLESMEDI,UNKNOWN,aday yok,,,,,32.0000,5.0149,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+516,215450183601,KESIN,HIGH,SKU birebir,215450183601,Anunnaki RJ45 Coupler Extender Ethernet Kablo Bİrl,evet,0,1.1500,0.1802,0.020,0.02,0.16,1.15,0.30,0.020,8536.69.90.00.18,sistem,2.30,0.00,0.00,20.00,0.19,0.00,0.00,0.04,0.20,0.35,
+517,230183710433,KESIN,HIGH,SKU birebir,230183710433,Fiber Optik 3 Metre Patch Kablo Sc-Sc Sm Patchcord,evet,66,1.7000,0.2664,0.060,0.06,0.48,1.70,1.11,0.060,8544.70.00.00.00,sistem,0.00,0.00,0.00,20.00,0.31,0.00,0.00,0.06,0.33,0.75,
+518,231038173619,ESLESMEDI,UNKNOWN,aday yok,,,,,1980.0000,310.2985,0.500,0.50,4.00,,,,,,,,,,,,,,,,
+519,231540784533,ESLESMEDI,UNKNOWN,aday yok,,,,,9.5000,1.4888,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+520,233345676565,KESIN,HIGH,SKU birebir,233345676565,AN6650 PoE Splitter Adaptör 24V to 12V Gigabit Eth,evet,1,5.5000,0.8619,0.090,0.09,0.72,5.50,5.85,0.100,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,0.91,0.08,0.00,0.20,1.03,1.71,ağırlık farkı: sistem 0.1 → Excel 0.09
+521,234443344323,ESLESMEDI,UNKNOWN,aday yok,,,,,23.0000,3.6045,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+522,234445432345,ESLESMEDI,UNKNOWN,aday yok,,,,,3.0000,0.4701,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+523,234565465858,KESIN,HIGH,SKU birebir,234565465858,Anunnaki AN3012 Outdoor Su Geçirmez 1x2 1 Giriş 2 ,evet,0,27.5000,4.3097,0.100,0.10,0.80,26.00,6.60,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,4.20,0.00,0.00,0.84,4.41,5.11,RMB farkı: sistem 26 → Excel 27.5
+524,234568514752,ESLESMEDI,UNKNOWN,aday yok,,,,,6.0000,0.9403,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+525,240183719462,ESLESMEDI,UNKNOWN,aday yok,,,,,21.0000,3.2910,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+526,240184019423,KESIN,HIGH,SKU birebir,240184019423,Anunnaki 4 Port HDMI Splitter / 4K UHD Full HD 108,evet,0,11.5000,1.8022,0.100,0.10,0.80,13.00,3.33,0.200,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,1.82,0.07,0.00,0.38,1.97,2.70,RMB farkı: sistem 13 → Excel 11.5 · ağırlık farkı: sistem 0.2 → Excel 0.1
+527,240184726493,KESIN,HIGH,SKU birebir,240184726493,HC-87 Type-c to usb PD 100Watt RJ45 Ethernet USB Ç,evet,0,120.0000,18.8060,0.150,0.15,1.20,120.00,28.36,0.150,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,18.06,0.00,0.00,3.61,18.96,20.01,
+528,240987654321,KESIN,HIGH,SKU birebir,240987654321,Anunnaki AHD Video Balun 1080P Kamera - BNC CAT5 C,evet,0,2.9000,0.4545,0.080,0.08,0.64,2.90,0.79,0.080,8504.31.80.90.11,sistem,3.70,0.00,0.00,20.00,0.51,0.02,0.00,0.11,0.55,1.13,
+529,242143424242,ESLESMEDI,UNKNOWN,aday yok,,,,,22.0000,3.4478,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+530,243345346344,ESLESMEDI,UNKNOWN,aday yok,,,,,230.0000,36.0448,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+531,245084512348,KESIN,HIGH,SKU birebir,245084512348,Anunnaki AN1030 Gigabit PoE Injector / 30W 1000Mbp,evet,4,24.5000,3.8396,0.100,0.10,0.80,36.00,9.45,0.100,8504.40.83.90.19,sistem,3.30,11.00,0.00,20.00,3.76,0.54,0.00,0.86,4.48,5.28,RMB farkı: sistem 36 → Excel 24.5
+532,245775421509,KESIN,HIGH,SKU birebir,245775421509,4k Çift Çıkışlı Hdmı Video Capture Video Yakalama ,evet,0,31.2667,4.9000,0.100,0.10,0.80,28.00,6.61,0.050,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,4.77,0.00,0.00,0.95,5.00,5.70,RMB farkı: sistem 28 → Excel 31.2667 · ağırlık farkı: sistem 0.05 → Excel 0.1
+533,245780097653,ESLESMEDI,UNKNOWN,aday yok,,,,,52.0000,8.1493,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+534,245780987643,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+535,248530004853,KESIN,HIGH,SKU birebir,248530004853,PoE to Type-C 5V 2.4A Dönüştürücü Dış Ortam Solar ,evet,0,11.4000,1.7866,0.050,0.05,0.40,11.40,3.15,0.050,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,1.75,0.15,0.00,0.38,1.98,2.36,
+536,254047454504,KESIN,HIGH,SKU birebir,254047454504,USB Bluetooth Dongle Pc Laptop Kablosuz Bluetooth ,evet,0,3.1000,0.4858,0.035,0.04,0.28,3.10,0.94,0.030,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,0.50,0.00,0.00,0.10,0.52,0.77,ağırlık farkı: sistem 0.03 → Excel 0.035
+537,254321368097,ESLESMEDI,UNKNOWN,aday yok,,,,,7.8000,1.2224,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+538,256017364016,KESIN,HIGH,SKU birebir,256017364016,Telefon Ekran YANSITMA Type-c to Hdmi Kablosuz Gör,evet,2,160.0000,25.0746,0.100,0.10,0.80,160.00,36.81,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,23.98,0.00,0.00,4.80,25.17,25.87,
+539,256019384614,KESIN,HIGH,SKU birebir,256019384614,8 in 1 Type-c Hub 87W PD Hdmi Ethernet Typec Çokla,evet,0,17.5000,2.7425,0.090,0.09,0.72,17.00,4.11,0.100,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,2.70,0.00,0.00,0.54,2.83,3.46,RMB farkı: sistem 17 → Excel 17.5 · ağırlık farkı: sistem 0.1 → Excel 0.09
+540,256087096321,KESIN,HIGH,SKU birebir,256087096321,Anunnaki USB Type‑C to RJ45 2.5Gbps Gigabit Ethern,evet,1,35.0000,5.4851,0.050,0.05,0.40,35.00,8.24,0.050,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,5.27,0.00,0.00,1.05,5.54,5.89,
+541,256105726451,KESIN,HIGH,SKU birebir,256105726451,Kablosuz HDMI Verici Alıcı Görüntü Aktarıcı 4k Ekr,evet,0,150.0000,23.5075,0.127,0.13,1.01,150.00,32.64,0.200,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,22.51,0.00,0.00,4.50,23.63,24.52,ağırlık farkı: sistem 0.2 → Excel 0.1267
+542,256184726493,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+543,256790987654,KESIN,HIGH,SKU birebir,256790987654,Scart-Kablo Hd Adaptörü 720P 1080P Video Ses Dönüş,evet,0,22.0000,3.4478,0.060,0.06,0.48,22.00,5.22,0.060,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,3.34,0.12,0.00,0.69,3.63,4.07,
+544,257998764326,ESLESMEDI,UNKNOWN,aday yok,,,,,177.0000,27.7388,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+545,258704976452,ESLESMEDI,UNKNOWN,aday yok,,,,,2.2000,0.3448,0.025,0.03,0.20,,,,,,,,,,,,,,,,
+546,263579087555,ESLESMEDI,UNKNOWN,aday yok,,,,,20.0000,3.1343,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+547,263828193735,ESLESMEDI,UNKNOWN,aday yok,,,,,16.0000,2.5075,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+548,263838372726,ESLESMEDI,UNKNOWN,aday yok,,,,,8.0000,1.2537,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+549,265443215807,KESIN,HIGH,SKU birebir,265443215807,Cat6 4K 120 Metre Kvm Usb Extender HDM Uzun Mesafe,evet,3,125.5000,19.6679,0.425,0.42,3.40,125.00,29.84,0.450,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,19.16,0.71,0.00,3.97,20.80,23.89,ağırlık farkı: sistem 0.45 → Excel 0.425
+550,266038471826,ESLESMEDI,UNKNOWN,aday yok,,,,,4.7000,0.7366,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+551,267909985432,KESIN,HIGH,SKU birebir,267909985432,"Anunnaki HDMI M to HDMI F Dönüştürücü Kablo, 4K 60",evet,3,4.5000,0.7052,0.020,0.02,0.16,4.50,1.08,0.020,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,0.69,0.13,0.00,0.16,0.85,1.02,
+552,268900087654,ESLESMEDI,UNKNOWN,aday yok,,,,,13.0000,2.0373,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+553,270484619725,ESLESMEDI,UNKNOWN,aday yok,,,,,10.0000,1.5672,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+554,271027102777,ESLESMEDI,UNKNOWN,aday yok,,,,,12.0000,1.8806,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+555,271037163918,ESLESMEDI,UNKNOWN,aday yok,,,,,54.0000,8.4627,0.400,0.40,3.20,,,,,,,,,,,,,,,,
+556,271038163915,ESLESMEDI,UNKNOWN,aday yok,,,,,35.0000,5.4851,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+557,271638103736,ESLESMEDI,UNKNOWN,aday yok,,,,,60.0000,9.4030,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+558,271920483718,ESLESMEDI,UNKNOWN,aday yok,,,,,5.2500,0.8228,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+559,272726161636,KESIN,HIGH,SKU birebir,272726161636,Usb Type C To SD Micro SD TF Kart Okuyucu ve USB Ç,evet,3011,2.6000,0.4075,0.045,0.04,0.36,2.50,1.77,0.030,8471.70.98.90.00,sistem,0.00,0.00,0.00,20.00,0.43,0.00,0.00,0.09,0.45,0.77,RMB farkı: sistem 2.5 → Excel 2.6 · ağırlık farkı: sistem 0.03 → Excel 0.045
+560,272736382918,KESIN,HIGH,SKU birebir,272736382918,USB 3.0 To HDMI Çevirici Dönüştürücü Kablo Adaptör,evet,0,18.8333,2.9515,0.080,0.08,0.64,18.00,4.04,0.080,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,2.89,0.00,0.00,0.58,3.03,3.59,RMB farkı: sistem 18 → Excel 18.8333
+561,278098765432,ESLESMEDI,UNKNOWN,aday yok,,,,,38.0000,5.9552,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+562,281029483212,ESLESMEDI,UNKNOWN,aday yok,,,,,9.6600,1.5139,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+563,281037104715,KESIN,HIGH,SKU birebir,281037104715,1x2 PLC Fiber Optik Splitter SC/UPC Coupler G652D ,evet,9,6.8500,1.0735,0.050,0.05,0.40,6.70,1.88,0.050,9013.80.40.00.00,sistem,0.00,0.00,0.00,20.00,1.07,0.00,0.00,0.21,1.12,1.47,RMB farkı: sistem 6.7 → Excel 6.85
+564,281038371033,ESLESMEDI,UNKNOWN,aday yok,,,,,2.5500,0.3996,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+565,282409567893,KESIN,HIGH,SKU birebir,282409567893,Anunnaki FTTH SC Mavi Fiber Optik Yüksek Hız Bağla,evet,23,11.0000,1.7239,0.060,0.06,0.48,11.00,2.76,0.060,8536.70.00.10.00,sistem,3.00,0.00,0.00,20.00,1.70,0.05,0.00,0.35,1.83,2.27,
+566,282456452020,ESLESMEDI,UNKNOWN,aday yok,,,,,21.8500,3.4243,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+567,282456453333,ESLESMEDI,UNKNOWN,aday yok,,,,,8.5500,1.3399,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+568,283737303737,KESIN,HIGH,SKU birebir,283737303737,12X Zoom Teleskop Telefon Kamera İçin Mini El Dürb,evet,0,8.1000,1.2694,0.100,0.10,0.80,8.10,2.04,0.100,9005.80.00.10.00,sistem,4.20,0.00,0.00,20.00,1.31,0.05,0.00,0.27,1.42,2.15,
+569,286086060860,ESLESMEDI,UNKNOWN,aday yok,,,,,23.0000,3.6045,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+570,286542159075,ESLESMEDI,UNKNOWN,aday yok,,,,,14.5000,2.2724,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+571,292736719183,KESIN,HIGH,SKU birebir,292736719183,Playstation 2 Ps2 To Hdmi Çevirici Tv Kablosu Adap,evet,0,6.7500,1.0578,0.060,0.06,0.48,6.50,2.15,0.070,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,1.07,0.04,0.00,0.22,1.16,1.59,RMB farkı: sistem 6.5 → Excel 6.75 · ağırlık farkı: sistem 0.07 → Excel 0.06
+572,293837291017,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+573,298909876545,KESIN,HIGH,SKU birebir,298909876545,Anunnaki AN3011 Outdoor Gigabit PoE Extender Ether,evet,0,22.0000,3.4478,0.100,0.10,0.80,22.00,5.95,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,3.38,0.00,0.00,0.68,3.55,4.25,
+574,299521456987,ESLESMEDI,UNKNOWN,aday yok,,,,,4.2000,0.6582,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+575,299564125365,ESLESMEDI,UNKNOWN,aday yok,,,,,4.8000,0.7522,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+576,299874521456,ESLESMEDI,UNKNOWN,aday yok,,,,,4.6000,0.7209,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+577,340510511051,ESLESMEDI,UNKNOWN,aday yok,,,,,45.0000,7.0522,0.500,0.50,4.00,,,,,,,,,,,,,,,,
+578,400101661011,ESLESMEDI,UNKNOWN,aday yok,,,,,3.5000,0.5485,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+579,401038372810,CONFLICT,CONFLICT,sondaki sıfır farkı,4010383728100,,,,6.8000,1.0657,0.130,0.13,1.04,,,,,,,,,,,,,,,,sayısal kodda sondaki sıfır sayısı farklı · aynı ürüne satır 687 (4010383728100) de eşleşti ve RMB/kg farklı
+580,401301307654,ESLESMEDI,UNKNOWN,aday yok,,,,,5.3000,0.8306,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+581,405874563201,ESLESMEDI,UNKNOWN,aday yok,,,,,1.9000,0.2978,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+582,409193737392,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.700,0.70,5.60,,,,,,,,,,,,,,,,
+583,410282849499,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+584,412551895119,ESLESMEDI,UNKNOWN,aday yok,,,,,165.0000,25.8582,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+585,415060500055,ESLESMEDI,UNKNOWN,aday yok,,,,,50.0000,7.8358,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+586,420726086151,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.690,0.69,5.52,,,,,,,,,,,,,,,,
+587,423897451542,KESIN,HIGH,SKU birebir,423897451542,Bakır Banyo Lavabo Bataryası Kuğu Batarya,evet,0,159.0000,24.9179,1.250,1.25,10.00,158.00,47.02,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,24.98,6.79,0.00,6.36,32.96,44.09,ağırlık farkı: sistem 1 → Excel 1.25
+588,426282927334,KESIN,HIGH,SKU birebir,426282927334,Siyah Mutfak Bataryası Evye Bataryası Dual Flow Su,evet,0,84.0000,13.1642,2.050,2.05,16.40,80.00,21.75,2.100,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,14.59,3.97,0.00,3.71,19.18,37.44,RMB farkı: sistem 80 → Excel 84 · ağırlık farkı: sistem 2.1 → Excel 2.05
+589,427293736352,KESIN,HIGH,SKU birebir,427293736352,Mutfak Bataryası Dokunmatik Sensörlü Altın Paslanm,evet,0,125.0000,19.5896,1.900,1.90,15.20,125.00,30.64,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,20.56,5.59,0.00,5.23,27.08,44.00,ağırlık farkı: sistem 1 → Excel 1.9
+590,427907659115,ESLESMEDI,UNKNOWN,aday yok,,,,,20.0000,3.1343,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+591,428086531470,ESLESMEDI,UNKNOWN,aday yok,,,,,168.0000,26.3284,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+592,432730003273,KESIN,HIGH,SKU birebir,432730003273,Flextail Pirinç Lüx Gold Rose Gold Siyah Şelale Ba,evet,0,200.0000,31.3433,1.350,1.35,10.80,200.00,48.44,1.200,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,31.20,8.49,0.00,7.94,41.18,53.20,ağırlık farkı: sistem 1.2 → Excel 1.35
+593,433504970484,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+594,433504971595,KESIN,HIGH,SKU birebir,433504971595,Şelale Lavabo Banyo Bataryası Pirinç Altın Renk Mu,evet,0,120.0000,18.8060,0.550,0.55,4.40,120.00,38.26,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,18.46,5.02,0.00,4.70,24.38,29.27,ağırlık farkı: sistem 1 → Excel 0.55
+595,433504972606,KESIN,HIGH,SKU birebir,433504972606,Şelale Lavabo Banyo Bataryası Pirinç Beyaz Musluk,evet,0,120.0000,18.8060,0.800,0.80,6.40,120.00,41.87,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,18.71,5.09,0.00,4.76,24.70,31.82,ağırlık farkı: sistem 1 → Excel 0.8
+596,440193727193,ESLESMEDI,UNKNOWN,aday yok,,,,,24.0000,3.7612,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+597,440203837173,KESIN,HIGH,SKU birebir,440203837173,Ankastre Duş Seti Sıva Altı Mat Siyah Gömme Duş Si,evet,0,200.0000,31.3433,3.000,3.00,24.00,200.00,73.48,3.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,32.85,8.94,0.00,8.36,43.28,69.99,
+598,442140583716,ESLESMEDI,UNKNOWN,aday yok,,,,,196.0000,30.7164,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+599,445501038461,KESIN,HIGH,SKU birebir,445501038461,Spiralli Mutfak Eviye Bataryası Siyah Buton Fonksi,evet,0,59.5000,9.3246,1.600,1.60,12.80,63.00,17.34,1.800,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,10.48,2.85,0.00,2.67,13.78,28.02,RMB farkı: sistem 63 → Excel 59.5 · ağırlık farkı: sistem 1.8 → Excel 1.6
+600,454331111120,KESIN,HIGH,sondaki sıfır farkı,45433111112,Gold Banyo Lavabo Bataryası Kare 360 Döner Şelale ,evet,0,140.0000,21.9403,1.133,1.13,9.07,140.00,35.61,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,22.03,5.99,0.00,5.60,29.07,39.16,sayısal kodda sondaki sıfır sayısı farklı · sistemdeki RMB ile teyitli (±%3) · ağırlık farkı: sistem 2 → Excel 1.1333
+601,456788876654,ESLESMEDI,UNKNOWN,aday yok,,,,,45.0000,7.0522,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+602,456809876543,ESLESMEDI,UNKNOWN,aday yok,,,,,25.8750,4.0550,0.250,0.25,2.00,,,,,,,,,,,,,,,,
+603,457876554315,ESLESMEDI,UNKNOWN,aday yok,,,,,13.0000,2.0373,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+604,458008654321,KESIN,HIGH,SKU birebir,458008654321,BF-H5 Plus 10W Çift Bant İki Yüzlü Radyo Taşınabil,evet,14,85.0000,13.3209,0.600,0.60,4.80,90.00,21.89,0.600,8517.69.90.90.24,sistem,0.00,0.00,20.00,20.00,13.29,0.00,2.66,3.19,16.58,21.62,RMB farkı: sistem 90 → Excel 85
+605,467876544678,ESLESMEDI,UNKNOWN,aday yok,,,,,17.0000,2.6642,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+606,467909875432,ESLESMEDI,UNKNOWN,aday yok,,,,,38.0000,5.9552,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+607,468900864217,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.060,0.06,0.48,,,,,,,,,,,,,,,,
+608,468909875432,KESIN,HIGH,SKU birebir,468909875432,Fotoselli Lavabo Bataryası Sıcak&Soğuk Karıştırıcı,evet,0,127.5000,19.9813,2.000,2.00,16.00,130.00,33.27,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,21.03,5.72,0.00,5.35,27.70,45.51,RMB farkı: sistem 130 → Excel 127.5
+609,470764214647,KESIN,HIGH,SKU birebir,470764214647,Klozet & Banyo Taharet Musluk Çıkışlı Spiral Tuval,evet,0,26.0000,4.0746,0.625,0.62,5.00,25.00,9.31,0.500,8481.80.19.00.09,sistem,2.20,25.00,0.00,20.00,4.51,1.23,0.00,1.15,5.93,11.49,RMB farkı: sistem 25 → Excel 26 · ağırlık farkı: sistem 0.5 → Excel 0.625
+610,481038373832,ESLESMEDI,UNKNOWN,aday yok,,,,,250.0000,39.1791,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+611,481928372721,ESLESMEDI,UNKNOWN,aday yok,,,,,250.0000,39.1791,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+612,482029373635,CONFLICT,CONFLICT,satış kaydı ürün bağlantısı,48202937363534,,,,250.0000,39.1791,2.000,2.00,16.00,,,,,,,,,,,,,,,,satış kaydında bu kodla satılan ürüne bağlı (productId) · ürün kartına bağlı olmayan 1 satış kaydı (son 2025-02-18): Mutfak Evye Bataryası Dual Flow Su  · aynı ürüne satır 834 (ART48202937363534) de eşleşti ve RMB/kg farklı
+613,484039203958,KESIN,HIGH,SKU birebir,484039203958,Mix Kuğu Kare Mutfak Eviye Bataryası,evet,384,24.0000,3.7612,0.717,0.72,5.73,30.00,9.20,1.500,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,4.30,1.17,0.00,1.09,5.65,12.03,RMB farkı: sistem 30 → Excel 24 · ağırlık farkı: sistem 1.5 → Excel 0.7167
+614,484838373657,KESIN,HIGH,SKU birebir,484838373657,Mat Siyah Musluk Kare Mutfak Bataryası,evet,0,18.9250,2.9659,0.588,0.59,4.70,30.00,7.88,0.600,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,3.41,0.93,0.00,0.87,4.48,9.71,RMB farkı: sistem 30 → Excel 18.925 · ağırlık farkı: sistem 0.6 → Excel 0.5875
+615,485475021423,ESLESMEDI,UNKNOWN,aday yok,,,,,600.0000,94.0299,0.500,0.50,4.00,,,,,,,,,,,,,,,,
+616,488752369085,ESLESMEDI,UNKNOWN,aday yok,,,,,56.0000,8.7761,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+617,489987580888,KESIN,HIGH,SKU birebir,489987580888,Modern Mat Siyah Kare Çanak Lavabo Bataryası Şelal,evet,0,28.5000,4.4664,1.500,1.50,12.00,34.00,10.13,1.500,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,5.75,1.57,0.00,1.46,7.53,20.89,RMB farkı: sistem 34 → Excel 28.5
+618,490340784908,ESLESMEDI,UNKNOWN,aday yok,,,,,165.0000,25.8582,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+619,510249784529,ESLESMEDI,UNKNOWN,aday yok,,,,,65.0000,10.1866,0.400,0.40,3.20,,,,,,,,,,,,,,,,
+620,510874620135,KESIN,HIGH,SKU birebir,510874620135,RJ45 Ez RJ11 ve RJ12 Jack Ethernet Kablosu Kesme H,evet,0,11.6000,1.8179,0.300,0.30,2.40,11.60,5.13,0.300,8203.20.00.00.11,sistem,1.70,25.00,0.00,20.00,2.03,0.54,0.00,0.51,2.66,5.32,
+621,520183610471,ESLESMEDI,UNKNOWN,aday yok,,,,,70.0000,10.9701,0.250,0.25,2.00,,,,,,,,,,,,,,,,
+622,525962412596,ESLESMEDI,UNKNOWN,aday yok,,,,,4.4000,0.6896,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+623,526251515251,KESIN,HIGH,SKU birebir,526251515251,FNIRSI FNB48P USB Test Cihazı Voltmetre Ampermetre,evet,0,146.0000,22.8806,0.060,0.06,0.48,146.00,34.17,0.060,9030.33.70.90.00,sistem,4.20,5.80,0.00,20.00,21.85,2.19,0.00,4.81,25.13,25.59,
+624,526362710173,ESLESMEDI,UNKNOWN,aday yok,,,,,12.5000,1.9590,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+625,527181626362,ESLESMEDI,UNKNOWN,aday yok,,,,,14.0000,2.1940,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+626,527263729201,ESLESMEDI,UNKNOWN,aday yok,,,,,6.2000,0.9716,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+627,542548089632,ESLESMEDI,UNKNOWN,aday yok,,,,,19.0000,2.9776,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+628,543201937463,ESLESMEDI,UNKNOWN,aday yok,,,,,540.0000,84.6269,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+629,546494048452,ESLESMEDI,UNKNOWN,aday yok,,,,,32.0000,5.0149,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+630,546845484045,ESLESMEDI,UNKNOWN,aday yok,,,,,7.8000,1.2224,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+631,555272910374,ESLESMEDI,UNKNOWN,aday yok,,,,,3.5000,0.5485,0.030,0.03,0.24,,,,,,,,,,,,,,,,
+632,560087654378,ESLESMEDI,UNKNOWN,aday yok,,,,,3.6500,0.5720,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+633,566543579653,ESLESMEDI,UNKNOWN,aday yok,,,,,13.0000,2.0373,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+634,568018373666,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,17.0000,2.6642,0.010,0.01,0.08,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): 56801837366 — zorla eşleştirilmedi
+635,577653134789,ESLESMEDI,UNKNOWN,aday yok,,,,,200.0000,31.3433,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+636,577653578764,ESLESMEDI,UNKNOWN,aday yok,,,,,60.0000,9.4030,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+637,578404845123,ESLESMEDI,UNKNOWN,aday yok,,,,,1.6500,0.2586,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+638,585150852366,MUHTEMEL,MEDIUM,sondaki sıfır farkı,5851508523660,USB-PPI programlama kablosu S7-200 PLC indirme kab,evet,0,47.5000,7.4440,0.300,0.30,2.40,,,,8471.80.00.00.00,ÖNERİ (YUKSEK): USB-PPI PLC kablosu; emsal 6ES7972 USB-MPI 8471.80,0.00,0.00,0.00,20.00,7.39,0.00,0.00,1.48,7.74,9.84,sayısal kodda sondaki sıfır sayısı farklı · sistem GTİP'i 85.37.10.99.00 eski/eksik → öneri 8471.80.00.00.00 (YUKSEK)
+639,585690874568,KESIN,HIGH,SKU birebir,585690874568,Amsamotıon 6ES7 901-3DB30-0XA0 USB PPi Dönüştürücü,evet,0,98.0000,15.3582,0.350,0.35,2.80,98.00,23.32,0.300,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,14.98,0.00,0.00,3.00,15.71,18.16,ağırlık farkı: sistem 0.3 → Excel 0.35
+640,586542134680,ESLESMEDI,UNKNOWN,aday yok,,,,,11.5000,1.8022,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+641,588876533137,ESLESMEDI,UNKNOWN,aday yok,,,,,4.8000,0.7522,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+642,591038372011,KESIN,HIGH,SKU birebir,591038372011,"ICM-20948 İvmeölçer, Jiroskop, Manyetometre, 9 Eks",evet,0,15.0000,2.3507,0.010,0.01,0.08,15.00,3.52,0.010,9031.80.80.90.19,sistem,4.00,0.00,0.00,20.00,2.25,0.09,0.00,0.47,2.45,2.52,
+643,591038373636,ESLESMEDI,UNKNOWN,aday yok,,,,,7.0000,1.0970,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+644,591039373637,ESLESMEDI,UNKNOWN,aday yok,,,,,11.0000,1.7239,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+645,2019452365875,KESIN,HIGH,SKU birebir,2019452365875,Anunnaki 90 Derece Sağ Açılı HDMI Uzatma Kablosu /,evet,0,6.8000,1.0657,0.035,0.04,0.28,6.80,2.05,0.035,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,1.05,0.19,0.00,0.25,1.29,1.58,
+646,2026111130111,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,2026111130111YESIL,Type-C Şarj Kablosu 1m PD 60W 3A 1Gbps Hızlı Şarj ,evet,49,2.0000,0.3134,0.030,0.03,0.24,2.10,0.69,0.050,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,0.33,0.06,0.00,0.08,0.40,0.65,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · RMB farkı: sistem 2.1 → Excel 2 · ağırlık farkı: sistem 0.05 → Excel 0.03
+647,2062617361036,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+648,2062617361037,ESLESMEDI,UNKNOWN,aday yok,,,,,28.0000,4.3881,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+649,2100218273612,KESIN,HIGH,SKU birebir,2100218273612,SC APC Dişi Adaptör 1200nm - 1600nm Hibrit Etherne,evet,54,7.9000,1.2381,0.020,0.02,0.16,7.90,1.87,0.020,8536.70.00.10.00,sistem,3.00,0.00,0.00,20.00,1.20,0.04,0.00,0.25,1.29,1.44,
+650,2103836193047,KESIN,HIGH,SKU birebir,2103836193047,4k 60hz Full Hd 60 Fps Hdmı Video Capture With Loo,evet,0,61.0000,9.5597,0.040,0.04,0.32,42.00,9.86,0.040,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,9.14,0.00,0.00,1.83,9.60,9.88,RMB farkı: sistem 42 → Excel 61
+651,2125456302125,KESIN,HIGH,SKU birebir,2125456302125,Anunnaki 30 cm HDMI Erkek - Dişi Uzatma Kablosu TV,evet,62,2.4500,0.3840,0.050,0.05,0.40,2.70,1.04,0.050,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,0.42,0.08,0.00,0.10,0.51,0.92,RMB farkı: sistem 2.7 → Excel 2.45
+652,2140794670852,ESLESMEDI,UNKNOWN,aday yok,,,,,1.3000,0.2037,0.015,0.01,0.12,,,,,,,,,,,,,,,,
+653,2150981038357,KESIN,HIGH,SKU birebir,2150981038357,1300 Mbps Usb WiFi 6 Adaptör 2.4G+5G ve Bluetooth ,evet,0,22.0000,3.4478,0.060,0.06,0.48,22.00,4.99,0.060,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,3.34,0.00,0.00,0.67,3.51,3.93,
+654,2251038273618,KESIN,HIGH,SKU birebir,2251038273618,Anunnaki 1.5 Metre VGA Kablo (Erkek - Erkek) VGA U,evet,0,1.8500,0.2899,0.050,0.05,0.40,2.40,0.65,0.060,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,0.33,0.06,0.00,0.08,0.40,0.81,RMB farkı: sistem 2.4 → Excel 1.85 · ağırlık farkı: sistem 0.06 → Excel 0.05
+655,2251930284620,KESIN,HIGH,SKU birebir,2251930284620,8K DisplayPort Kablo DP 1.4 1.8 Metre Ultra HD Alt,evet,0,8.5000,1.3321,0.050,0.05,0.40,10.00,2.37,0.050,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,1.32,0.24,0.00,0.31,1.62,2.04,RMB farkı: sistem 10 → Excel 8.5
+656,2344456789098,KESIN,HIGH,SKU birebir,2344456789098,POE To 12V 2A Aktif Poe Güç Kaynağı Dağıtıcı Wifi ,evet,0,6.2500,0.9795,0.063,0.06,0.51,6.00,1.81,0.050,8504.40.95.90.19,sistem,3.30,5.00,0.00,20.00,1.00,0.08,0.00,0.22,1.13,1.61,RMB farkı: sistem 6 → Excel 6.25 · ağırlık farkı: sistem 0.05 → Excel 0.0633
+657,2433453365433,KESIN,HIGH,SKU birebir,2433453365433,3X3 HDMI VIDEO WALL CONTROLLER DUVAR PANEL VIDEO 9,evet,0,200.0000,31.3433,1.200,1.20,9.60,210.00,50.48,1.000,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,31.05,1.15,0.00,6.44,33.69,42.40,RMB farkı: sistem 210 → Excel 200 · ağırlık farkı: sistem 1 → Excel 1.2
+658,2578090764321,ESLESMEDI,UNKNOWN,aday yok,,,,,17.0000,2.6642,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+659,2660580896527,ESLESMEDI,UNKNOWN,aday yok,,,,,3.8000,0.5955,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+660,2680372618394,ESLESMEDI,UNKNOWN,aday yok,,,,,4.0000,0.6269,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+661,2708096543160,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.150,0.15,1.20,,,,,,,,,,,,,,,,
+662,2737191937462,KESIN,HIGH,SKU birebir,2737191937462,"Micro USB - HDMI adaptörü, 1080P Micro USB OTG hdm",evet,1,9.0000,1.4104,0.080,0.08,0.64,9.00,3.19,0.080,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,1.42,0.05,0.00,0.30,1.54,2.12,
+663,2765431369007,ESLESMEDI,UNKNOWN,aday yok,,,,,325.0000,50.9328,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+664,2817243034343,ESLESMEDI,UNKNOWN,aday yok,,,,,5.8000,0.9090,0.070,0.07,0.56,,,,,,,,,,,,,,,,
+665,2821468098876,ESLESMEDI,UNKNOWN,aday yok,,,,,9.0000,1.4104,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+666,2823101010100,ESLESMEDI,UNKNOWN,aday yok,,,,,6.6500,1.0422,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+667,2823333333333,ESLESMEDI,UNKNOWN,aday yok,,,,,7.1300,1.1174,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+668,2824561021300,KESIN,HIGH,SKU birebir,2824561021300,SFP+ 10G SR 850nm 300m Multimode Fiber Optik Modül,evet,2,65.0000,10.1866,0.010,0.01,0.08,65.00,15.19,0.010,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,9.71,0.00,0.00,1.94,10.20,10.27,
+669,2825687452015,KESIN,HIGH,SKU birebir,2825687452015,SFP 10G LR 1310nm 10km Single Mode Fiber Optik Mod,evet,2,70.0000,10.9701,0.010,0.01,0.08,70.00,16.36,0.010,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,10.46,0.00,0.00,2.09,10.98,11.05,
+670,2826570086431,ESLESMEDI,UNKNOWN,aday yok,,,,,5.5000,0.8619,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+671,2827456501236,KESIN,HIGH,SKU birebir,2827456501236,Alfas 10G SFP+ DAC Kablo 1m Pasif 10Gbps Yüksek Hı,evet,0,30.0000,4.7015,0.040,0.04,0.32,30.00,6.34,0.040,8544.42.90.00.19,sistem,3.30,15.00,0.00,20.00,4.52,0.83,0.00,1.07,5.57,5.90,
+672,2829687401236,KESIN,HIGH,SKU birebir,2829687401236,SFP 1.25G LR 1310nm 10km Single Mode Fiber Optik M,evet,0,28.5000,4.4664,0.010,0.01,0.08,28.50,6.67,0.010,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,4.26,0.00,0.00,0.85,4.48,4.55,
+673,2835103716408,KESIN,HIGH,SKU birebir,2835103716408,SC/APC – SC/APC Fiber Optik Patch Kablo Tek Mod G6,evet,21,8.2000,1.2851,0.200,0.20,1.60,8.20,1.99,0.050,8544.70.00.00.00,sistem,0.00,0.00,0.00,20.00,1.42,0.00,0.00,0.28,1.49,2.89,ağırlık farkı: sistem 0.05 → Excel 0.2
+674,2910371639104,ESLESMEDI,UNKNOWN,aday yok,,,,,770.0000,120.6716,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+675,2918384829123,KESIN,HIGH,SKU birebir,2918384829123,1080P HD Görüntülü WiFi Kablosuz Gece Görüş Su Geç,evet,0,155.0000,24.2910,0.300,0.30,2.40,110.00,26.12,0.300,8517.69.10.00.00,sistem,0.00,0.00,0.00,20.00,23.43,0.00,0.00,4.69,24.59,26.69,RMB farkı: sistem 110 → Excel 155
+676,4007509507501,ESLESMEDI,UNKNOWN,aday yok,,,,,35.0000,5.4851,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+677,4007509507502,ESLESMEDI,UNKNOWN,aday yok,,,,,59.0000,9.2463,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+678,4007509507503,ESLESMEDI,UNKNOWN,aday yok,,,,,32.0000,5.0149,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+679,4007509507504,ESLESMEDI,UNKNOWN,aday yok,,,,,100.0000,15.6716,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+680,4007509507505,ESLESMEDI,UNKNOWN,aday yok,,,,,59.0000,9.2463,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+681,4007509507506,ESLESMEDI,UNKNOWN,aday yok,,,,,38.0000,5.9552,0.700,0.70,5.60,,,,,,,,,,,,,,,,
+682,4007509507507,ESLESMEDI,UNKNOWN,aday yok,,,,,45.0000,7.0522,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+683,4007509507509,ESLESMEDI,UNKNOWN,aday yok,,,,,59.0000,9.2463,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+684,4007509507510,ESLESMEDI,UNKNOWN,aday yok,,,,,57.0000,8.9328,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+685,4007509507511,ESLESMEDI,UNKNOWN,aday yok,,,,,97.0000,15.2015,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+686,4007509507512,ESLESMEDI,UNKNOWN,aday yok,,,,,16.5000,2.5858,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+687,4010383728100,KESIN,HIGH,SKU birebir,4010383728100,Uzaktan Kumandalı Selfie Çubuğu 70cm Tripod Ios ve,evet,0,4.4500,0.6974,0.110,0.11,0.88,4.20,2.06,0.120,9620.00.91.00.00,sistem,6.00,0.00,0.00,20.00,0.77,0.05,0.00,0.16,0.85,1.67,aynı ürüne satır 579 (401038372810) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı · RMB farkı: sistem 4.2 → Excel 4.45 · ağırlık farkı: sistem 0.12 → Excel 0.11
+688,4018654321456,ESLESMEDI,UNKNOWN,aday yok,,,,,75.0000,11.7537,0.700,0.70,5.60,,,,,,,,,,,,,,,,
+689,4019371727284,ESLESMEDI,UNKNOWN,aday yok,,,,,29.0000,4.5448,0.080,0.08,0.64,,,,,,,,,,,,,,,,
+690,4023578767457,ESLESMEDI,UNKNOWN,aday yok,,,,,40.0000,6.2687,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+691,4123550416070,ESLESMEDI,UNKNOWN,aday yok,,,,,200.0000,31.3433,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+692,4123550416071,ESLESMEDI,UNKNOWN,aday yok,,,,,200.0000,31.3433,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+693,4152625808645,ESLESMEDI,UNKNOWN,aday yok,,,,,178.0000,27.8955,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+694,4152625808646,ESLESMEDI,UNKNOWN,aday yok,,,,,95.0000,14.8881,1.650,1.65,13.20,,,,,,,,,,,,,,,,
+695,4152625808647,ESLESMEDI,UNKNOWN,aday yok,,,,,72.0000,11.2836,0.700,0.70,5.60,,,,,,,,,,,,,,,,
+696,4152625808648,ESLESMEDI,UNKNOWN,aday yok,,,,,62.0000,9.7164,0.700,0.70,5.60,,,,,,,,,,,,,,,,
+697,4152625808649,ESLESMEDI,UNKNOWN,aday yok,,,,,52.0000,8.1493,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+698,4152625808650,ESLESMEDI,UNKNOWN,aday yok,,,,,52.0000,8.1493,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+699,4189017461041,ESLESMEDI,UNKNOWN,aday yok,,,,,450.0000,70.5224,3.800,3.80,30.40,,,,,,,,,,,,,,,,
+700,4189027361930,ESLESMEDI,UNKNOWN,aday yok,,,,,450.0000,70.5224,3.800,3.80,30.40,,,,,,,,,,,,,,,,
+701,4210123025487,ESLESMEDI,UNKNOWN,aday yok,,,,,3225.0000,505.4104,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+702,4280865325681,ESLESMEDI,UNKNOWN,aday yok,,,,,168.0000,26.3284,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+703,4322546587892,ESLESMEDI,UNKNOWN,aday yok,,,,,245.0000,38.3955,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+704,4322546587893,ESLESMEDI,UNKNOWN,aday yok,,,,,245.0000,38.3955,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+705,4322546587894,ESLESMEDI,UNKNOWN,aday yok,,,,,260.0000,40.7463,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+706,4322546587895,ESLESMEDI,UNKNOWN,aday yok,,,,,260.0000,40.7463,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+707,4322546587896,ESLESMEDI,UNKNOWN,aday yok,,,,,145.0000,22.7239,1.100,1.10,8.80,,,,,,,,,,,,,,,,
+708,4322546587897,ESLESMEDI,UNKNOWN,aday yok,,,,,130.0000,20.3731,1.250,1.25,10.00,,,,,,,,,,,,,,,,
+709,4322546587898,ESLESMEDI,UNKNOWN,aday yok,,,,,130.0000,20.3731,1.250,1.25,10.00,,,,,,,,,,,,,,,,
+710,4322546587899,ESLESMEDI,UNKNOWN,aday yok,,,,,145.0000,22.7239,1.100,1.10,8.80,,,,,,,,,,,,,,,,
+711,4323546587701,ESLESMEDI,UNKNOWN,aday yok,,,,,115.0000,18.0224,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+712,4323546587702,ESLESMEDI,UNKNOWN,aday yok,,,,,115.0000,18.0224,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+713,4323546587703,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+714,4323546587704,ESLESMEDI,UNKNOWN,aday yok,,,,,115.0000,18.0224,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+715,4323546587705,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+716,4323546587706,ESLESMEDI,UNKNOWN,aday yok,,,,,105.0000,16.4552,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+717,4323546587707,ESLESMEDI,UNKNOWN,aday yok,,,,,105.0000,16.4552,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+718,4323546587708,ESLESMEDI,UNKNOWN,aday yok,,,,,105.0000,16.4552,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+719,4323546587709,ESLESMEDI,UNKNOWN,aday yok,,,,,110.0000,17.2388,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+720,4323546587710,ESLESMEDI,UNKNOWN,aday yok,,,,,110.0000,17.2388,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+721,4324556588211,ESLESMEDI,UNKNOWN,aday yok,,,,,279.0000,43.7239,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+722,4324556588322,ESLESMEDI,UNKNOWN,aday yok,,,,,365.0000,57.2015,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+723,4324556588435,ESLESMEDI,UNKNOWN,aday yok,,,,,365.0000,57.2015,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+724,4324587896024,ESLESMEDI,UNKNOWN,aday yok,,,,,277.0000,43.4104,1.250,1.25,10.00,,,,,,,,,,,,,,,,
+725,4324587896135,ESLESMEDI,UNKNOWN,aday yok,,,,,260.0000,40.7463,1.250,1.25,10.00,,,,,,,,,,,,,,,,
+726,4324587896241,ESLESMEDI,UNKNOWN,aday yok,,,,,253.0000,39.6493,1.250,1.25,10.00,,,,,,,,,,,,,,,,
+727,4407846451043,KESIN,HIGH,SKU birebir,4407846451043,360° Dönebilen Çok Fonksiyonlu Robot Siyah Mutfak ,evet,0,36.0000,5.6418,0.600,0.60,4.80,36.00,9.28,0.600,8481.90.00.00.29,sistem,2.20,25.00,0.00,20.00,5.97,1.62,0.00,1.52,7.87,13.21,
+728,4411475436910,KESIN,HIGH,SKU birebir,4411475436910,Akrobat Mutfak ve Banyo Lavabo Bataryası Çift Modl,evet,0,17.0000,2.6642,1.000,1.00,8.00,11.00,3.56,0.675,8481.90.00.00.29,sistem,2.20,25.00,0.00,20.00,3.54,0.96,0.00,0.90,4.63,13.53,aynı ürüne satır 796 (AKR-4411475436910) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı · RMB farkı: sistem 11 → Excel 17 · ağırlık farkı: sistem 0.675 → Excel 1
+729,4411975325809,KESIN,HIGH,SKU birebir,4411975325809,Akrobat Siyah Lavabo Bataryası Çift Modlu 360 Döne,evet,0,17.0000,2.6642,1.000,1.00,8.00,8.50,2.97,0.675,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,3.54,0.96,0.00,0.90,4.63,13.53,aynı ürüne satır 797 (AKR-4411975325809) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı · RMB farkı: sistem 8.5 → Excel 17 (BÜYÜK FARK — teyit) · ağırlık farkı: sistem 0.675 → Excel 1
+730,4657851021535,ESLESMEDI,UNKNOWN,aday yok,,,,,241.5000,37.8470,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+731,4700012517746,ESLESMEDI,UNKNOWN,aday yok,,,,,46.0000,7.2090,1.150,1.15,9.20,,,,,,,,,,,,,,,,
+732,4700012517747,ESLESMEDI,UNKNOWN,aday yok,,,,,43.5000,6.8172,1.275,1.27,10.20,,,,,,,,,,,,,,,,
+733,4708965235807,KESIN,HIGH,SKU birebir,4708965235807,Siyah Banyo Çanak Lavabo Bataryası İthal İskandina,evet,0,105.0000,16.4552,2.000,2.00,16.00,90.00,23.94,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,17.67,4.81,0.00,4.50,23.26,41.07,RMB farkı: sistem 90 → Excel 105
+734,4726215707645,ESLESMEDI,UNKNOWN,aday yok,,,,,116.0000,18.1791,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+735,4726215707646,ESLESMEDI,UNKNOWN,aday yok,,,,,126.0000,19.7463,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+736,4726215707647,ESLESMEDI,UNKNOWN,aday yok,,,,,126.0000,19.7463,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+737,4726215707651,ESLESMEDI,UNKNOWN,aday yok,,,,,180.0000,28.2090,1.300,1.30,10.40,,,,,,,,,,,,,,,,
+738,4740569807543,ESLESMEDI,UNKNOWN,aday yok,,,,,680.0000,106.5672,8.000,8.00,64.00,,,,,,,,,,,,,,,,
+739,4807645137045,KESIN,HIGH,SKU birebir,4807645137045,Flextail Spiralli Inox Mutfak Eviye Bataryası 360°,evet,0,23.5000,3.6828,1.000,1.00,8.00,23.50,6.95,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,4.51,1.23,0.00,1.15,5.91,14.81,
+740,4870056321401,ESLESMEDI,UNKNOWN,aday yok,,,,,130.0000,20.3731,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+741,4870096352197,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+742,4870430174612,ESLESMEDI,UNKNOWN,aday yok,,,,,145.0000,22.7239,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+743,4870560896712,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+744,4870852369086,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+745,4871017163618,ESLESMEDI,UNKNOWN,aday yok,,,,,145.0000,22.7239,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+746,4871028372716,ESLESMEDI,UNKNOWN,aday yok,,,,,145.0000,22.7239,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+747,4871047164910,ESLESMEDI,UNKNOWN,aday yok,,,,,145.0000,22.7239,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+748,4871057164467,ESLESMEDI,UNKNOWN,aday yok,,,,,145.0000,22.7239,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+749,4875070504344,ESLESMEDI,UNKNOWN,aday yok,,,,,230.0000,36.0448,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+750,4875089807112,ESLESMEDI,UNKNOWN,aday yok,,,,,220.0000,34.4776,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+751,4875108954233,ESLESMEDI,UNKNOWN,aday yok,,,,,220.0000,34.4776,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+752,4875236596001,ESLESMEDI,UNKNOWN,aday yok,,,,,230.0000,36.0448,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+753,4875808541255,KESIN,HIGH,SKU birebir,4875808541255,Lüks Gold Şelale Lavabo Bataryası Premium Tek Koll,evet,0,251.0000,39.3358,2.000,2.00,16.00,272.00,65.69,1.500,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,39.46,10.73,0.00,10.04,52.07,69.88,RMB farkı: sistem 272 → Excel 251 · ağırlık farkı: sistem 1.5 → Excel 2
+754,4901089654122,ESLESMEDI,UNKNOWN,aday yok,,,,,285.0000,44.6642,0.700,0.70,5.60,,,,,,,,,,,,,,,,
+755,4901096541233,ESLESMEDI,UNKNOWN,aday yok,,,,,285.0000,44.6642,0.700,0.70,5.60,,,,,,,,,,,,,,,,
+756,4902245784536,KESIN,HIGH,SKU birebir,4902245784536,TTlock Parmak İzli Anahtarlı Kartlı ve Uzaktan Kon,evet,0,272.0000,42.6269,1.000,1.00,8.00,272.00,70.88,1.000,8301.40.19.00.19,sistem,2.70,20.00,0.00,20.00,41.60,9.44,0.00,10.21,53.07,61.66,
+757,4902354678447,KESIN,HIGH,SKU birebir,4902354678447,Parmak İzli Anahtarlı Kartlı ve Uzaktan Kontrollü ,evet,2,272.0000,42.6269,1.000,1.00,8.00,272.00,69.74,1.000,8301.40.19.00.19,sistem,2.70,20.00,0.00,20.00,41.60,9.44,0.00,10.21,53.07,61.66,
+758,4902457086433,KESIN,HIGH,SKU birebir,4902457086433,TTLock Akıllı Kapı Kilidi Elektronik Silindir Şifr,evet,0,268.5000,42.0784,0.767,0.77,6.13,275.00,59.61,0.600,8301.40.11.00.00,sistem,2.70,20.00,0.00,20.00,40.84,9.27,0.00,10.02,52.12,58.70,RMB farkı: sistem 275 → Excel 268.5 · ağırlık farkı: sistem 0.6 → Excel 0.7667
+759,4902580976574,KESIN,HIGH,SKU birebir,4902580976574,TTLock S1 Akıllı Kapı Kilidi Elektronik Silindir Ş,evet,0,275.0000,43.0970,0.650,0.65,5.20,275.00,62.27,0.600,8301.40.11.00.00,sistem,2.70,20.00,0.00,20.00,41.69,9.46,0.00,10.23,53.21,58.79,ağırlık farkı: sistem 0.6 → Excel 0.65
+760,4902837173724,KESIN,HIGH,SKU birebir,4902837173724,Dijital Akıllı Eviye Seti Smart Evye ve Musluk Ful,evet,0,315.0000,49.3657,12.000,12.00,96.00,320.00,151.43,11.000,7324.10.00.00.00,sistem,2.70,25.00,0.00,20.00,59.01,16.35,0.00,15.07,77.71,184.98,RMB farkı: sistem 320 → Excel 315 · ağırlık farkı: sistem 11 → Excel 12
+761,4903580865170,KESIN,HIGH,pazaryeri eşleme kaydı,Z3-SIYAH-4903580865170,Akıllı Kapı Kolu TTLock Z3 Siyah Şifreli Kartlı Mo,evet,0,89.0000,13.9478,0.900,0.90,7.20,129.00,30.99,0.600,8301.40.19.00.19,sistem,2.70,20.00,0.00,20.00,14.18,3.22,0.00,3.48,18.07,25.80,pazaryeri eşleme kaydı (platformSku/barkod) · RMB farkı: sistem 129 → Excel 89 · ağırlık farkı: sistem 0.6 → Excel 0.9
+762,4929293837363,KESIN,HIGH,SKU birebir,4929293837363,UV-13 Pro Yeşil Su Geçirmez Uzun Mesafe 10W Çift B,evet,0,90.0000,14.1045,0.600,0.60,4.80,90.00,28.86,0.600,8517.69.90.90.24,sistem,0.00,0.00,20.00,20.00,14.03,0.00,2.81,3.37,17.51,22.55,
+763,4987654321470,ESLESMEDI,UNKNOWN,aday yok,,,,,340.0000,53.2836,25.000,25.00,200.00,,,,,,,,,,,,,,,,
+764,4990807147073,KESIN,HIGH,SKU birebir,4990807147073,Piyano Gri Robot Tepe Duş Seti Yağmur Tepe Banyo 4,evet,0,83.0000,13.0075,4.000,4.00,32.00,83.00,25.23,4.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,16.39,4.46,0.00,4.17,21.47,57.08,
+765,4999999999999,KESIN,HIGH,SKU birebir,4999999999999,BAOFENG UV-S9 PLUS V2 Telsiz VOX PTT ID 10W 50KM,evet,0,99.0000,15.5149,0.500,0.50,4.00,120.00,28.49,0.500,8517.69.90.90.24,sistem,0.00,0.00,20.00,20.00,15.28,0.00,3.06,3.67,19.07,23.27,RMB farkı: sistem 120 → Excel 99
+766,5102358745692,KESIN,HIGH,SKU birebir,5102358745692,110 IDC Patch Panel Telefon Modülü Ağ için 5 Çift ,evet,1,33.0000,5.1716,0.200,0.20,1.60,33.00,8.00,0.200,8205.59.80.00.19,sistem,2.70,25.00,0.00,20.00,5.13,1.42,0.00,1.31,6.79,8.58,
+767,5104562147820,KESIN,HIGH,SKU birebir,5104562147820,Ez RJ45 RJ11 RJ12 Cat5 ve Cat6 Kolay Taşınabilir E,evet,0,20.7000,3.2440,0.300,0.30,2.40,21.00,7.98,0.300,8203.20.00.00.11,sistem,1.70,25.00,0.00,20.00,3.39,0.91,0.00,0.86,4.45,7.11,RMB farkı: sistem 21 → Excel 20.7
+768,5104562873043,KESIN,HIGH,SKU birebir,5104562873043,Telefon İrtibatlama Profesyonel Çok Fonksiyonlu Kr,evet,0,4.7000,0.7366,0.100,0.10,0.80,4.70,2.21,0.100,8205.59.80.00.19,sistem,2.70,25.00,0.00,20.00,0.80,0.22,0.00,0.20,1.06,1.95,
+769,5292018362625,KESIN,HIGH,SKU birebir,5292018362625,"FNIRSI DSO153 Dijital Taşınabilir Osiloskop, 1MHz/",evet,0,139.0000,21.7836,0.100,0.10,0.80,139.00,32.59,0.100,9030.20.00.90.00,sistem,4.20,0.00,0.00,20.00,20.85,0.88,0.00,4.34,22.76,23.49,
+770,5314680831414,KESIN,HIGH,SKU birebir,5314680831414,Alfas XH-M314 Bluetooth Stereo Amplifikatör / Diji,evet,0,11.4000,1.7866,0.030,0.03,0.24,11.40,2.71,0.030,8518.40.00.00.00,sistem,4.50,0.00,20.00,20.00,1.73,0.08,0.36,0.43,2.26,2.52,
+771,5410214596365,KESIN,HIGH,SKU birebir,5410214596365,Alfas ESP32 Geliştirme Kartı Type-C Wifi Bluetooth,evet,211,18.9000,2.9619,0.010,0.01,0.08,20.60,4.07,0.010,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,2.83,0.06,0.00,0.58,3.03,3.10,RMB farkı: sistem 20.6 → Excel 18.9
+772,5410236587425,KESIN,HIGH,SKU birebir,5410236587425,ESP32 Geliştirme Kartı Micro USB / Wifi Bluetooth ,evet,0,19.0500,2.9854,0.010,0.01,0.08,20.60,4.07,0.010,8537.10.91.00.00,sistem,2.10,0.00,0.00,20.00,2.85,0.06,0.00,0.58,3.06,3.13,RMB farkı: sistem 20.6 → Excel 19.05
+773,5677654321575,ESLESMEDI,UNKNOWN,aday yok,,,,,3.8400,0.6018,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+774,5789562021456,ESLESMEDI,UNKNOWN,aday yok,,,,,72.5000,11.3619,0.400,0.40,3.20,,,,,,,,,,,,,,,,
+775,5899764346865,ESLESMEDI,UNKNOWN,aday yok,,,,,4.8000,0.7522,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+776,20481718373717,ESLESMEDI,UNKNOWN,aday yok,,,,,72.0000,11.2836,0.500,0.50,4.00,,,,,,,,,,,,,,,,
+777,21346786457009,KESIN,HIGH,SKU birebir,21346786457009,AN3112 PoE Extender 1 Giriş 2 Çıkış Gigabit Güç ve,evet,66,23.6667,3.7090,0.125,0.12,1.00,22.00,6.43,0.100,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,3.66,0.00,0.00,0.73,3.83,4.71,RMB farkı: sistem 22 → Excel 23.6667 · ağırlık farkı: sistem 0.1 → Excel 0.125
+778,27363636262726,KESIN,HIGH,SKU birebir,27363636262726,3.5 Sata Harddisk Kutusu - Usb 3.0 Harici Hdd Kutu,evet,0,30.0000,4.7015,0.300,0.30,2.40,28.00,6.90,0.250,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,4.78,0.00,0.00,0.96,5.00,7.10,RMB farkı: sistem 28 → Excel 30 · ağırlık farkı: sistem 0.25 → Excel 0.3
+779,51038456452771,ESLESMEDI,UNKNOWN,aday yok,,,,,5.1000,0.7993,0.250,0.25,2.00,,,,,,,,,,,,,,,,
+780,54608790845123,KESIN,HIGH,SKU birebir,54608790845123,Tec1-12708 Termoelektrik Soğutucu - Peltier Soğutu,evet,0,13.0000,2.0373,0.020,0.02,0.16,13.00,3.06,0.020,8543.70.90.00.19,sistem,3.70,0.00,0.00,20.00,1.96,0.07,0.00,0.41,2.13,2.28,
+781,54608796451245,ESLESMEDI,UNKNOWN,aday yok,,,,,7.7000,1.2067,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+782,456776443310124,ESLESMEDI,UNKNOWN,aday yok,,,,,178.0000,27.8955,1.750,1.75,14.00,,,,,,,,,,,,,,,,
+783,AE-GITARKUM,KESIN,HIGH,SKU birebir,AE-GITARKUM,Anunnaki Kablosuz Profesyonel Şarj Edilebilir Gita,evet,14,32.8333,5.1455,0.183,0.18,1.47,32.00,8.70,0.150,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,5.08,0.00,0.00,1.02,5.33,6.61,RMB farkı: sistem 32 → Excel 32.8333 · ağırlık farkı: sistem 0.15 → Excel 0.1833
+784,AK72601-K,ESLESMEDI,UNKNOWN,aday yok,,,,,370.0000,57.9851,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+785,AK72601KR,ESLESMEDI,UNKNOWN,aday yok,,,,,225.0000,35.2612,4.000,4.00,32.00,,,,,,,,,,,,,,,,
+786,AK72602-R,ESLESMEDI,UNKNOWN,aday yok,,,,,400.0000,62.6866,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+787,AK72602RA,ESLESMEDI,UNKNOWN,aday yok,,,,,290.0000,45.4478,4.000,4.00,32.00,,,,,,,,,,,,,,,,
+788,AK72603-G,ESLESMEDI,UNKNOWN,aday yok,,,,,400.0000,62.6866,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+789,AK72603MG,ESLESMEDI,UNKNOWN,aday yok,,,,,400.0000,62.6866,4.000,4.00,32.00,,,,,,,,,,,,,,,,
+790,AK72604-A,ESLESMEDI,UNKNOWN,aday yok,,,,,400.0000,62.6866,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+791,AK72604ANT,ESLESMEDI,UNKNOWN,aday yok,,,,,268.0000,42.0000,4.000,4.00,32.00,,,,,,,,,,,,,,,,
+792,AK72604BLK,ESLESMEDI,UNKNOWN,aday yok,,,,,225.0000,35.2612,4.000,4.00,32.00,,,,,,,,,,,,,,,,
+793,AK72715,ESLESMEDI,UNKNOWN,aday yok,,,,,370.0000,57.9851,4.000,4.00,32.00,,,,,,,,,,,,,,,,
+794,AKR-44108965254,CONFLICT,CONFLICT,grup kodu farklı/eksik,44108965254,,,,8.5000,1.3321,0.675,0.68,5.40,,,,,,,,,,,,,,,,"baştaki grup kodu farklı/eksik, gövde kod aynı · aynı ürüne satır 413 (44108965254) de eşleşti ve RMB/kg farklı"
+795,AKR-4410371736153,ESLESMEDI,UNKNOWN,aday yok,,,,,38.0000,5.9552,1.300,1.30,10.40,,,,,,,,,,,,,,,,
+796,AKR-4411475436910,CONFLICT,CONFLICT,grup kodu farklı/eksik,4411475436910,,,,11.0000,1.7239,0.675,0.68,5.40,,,,,,,,,,,,,,,,"baştaki grup kodu farklı/eksik, gövde kod aynı · aynı ürüne satır 728 (4411475436910) de eşleşti ve RMB/kg farklı"
+797,AKR-4411975325809,CONFLICT,CONFLICT,grup kodu farklı/eksik,4411975325809,,,,8.5000,1.3321,0.675,0.68,5.40,,,,,,,,,,,,,,,,"baştaki grup kodu farklı/eksik, gövde kod aynı · aynı ürüne satır 729 (4411975325809) de eşleşti ve RMB/kg farklı"
+798,AL-BULB01,KESIN,HIGH,biçim farkı,ALBULB01,360 Ptz Ip Kamera Gece Görüş Kablosuz Bebek Evcil ,evet,0,18.0000,2.8209,0.300,0.30,2.40,25.00,6.28,0.300,8525.89.00.00.00,sistem,4.90,0.00,20.00,20.00,2.99,0.15,0.63,0.75,3.89,6.54,"biçim farkı (büyük/küçük harf, boşluk, tire, nokta, Türkçe harf) · RMB farkı: sistem 25 → Excel 18"
+799,AL-BULB02,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,AL-BULB02-CIFTLENSAMPUL,Çift Lens IP Ampul Kamera Hareketli Gece Görüş Ses,evet,0,32.0000,5.0149,0.400,0.40,3.20,45.00,11.02,0.350,8525.89.00.00.00,sistem,4.90,0.00,20.00,20.00,5.18,0.25,1.09,1.30,6.75,10.28,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · RMB farkı: sistem 45 → Excel 32 · ağırlık farkı: sistem 0.35 → Excel 0.4
+800,AL-CAM01,MUHTEMEL,MEDIUM,satış kaydı ürün bağlantısı,AL-CAM01-BEBEK-KAMERA,"WiFi Bebek Kamerası Sesli, Gece Görüşlü, 360° Döne",evet,0,23.5000,3.6828,0.275,0.28,2.20,30.00,7.44,0.300,8525.89.00.00.00,sistem,4.90,0.00,20.00,20.00,3.78,0.19,0.79,0.95,4.94,7.36,satış kaydında bu kodla satılan ürüne bağlı (productId) · ürün kartına bağlı olmayan 1 satış kaydı (son 2026-07-14): Wifi Bebek İzleme Kamerası Ses Kayı · RMB farkı: sistem 30 → Excel 23.5 · ağırlık farkı: sistem 0.3 → Excel 0.275
+801,AL-CAM02,KESIN,HIGH,SKU birebir,AL-CAM02,5 Antenli Wifi Bebek Izleme Ip Kamerası 5 Antenli ,evet,0,30.3333,4.7537,0.350,0.35,2.80,45.00,10.94,0.300,8525.89.00.00.00,sistem,4.90,0.00,20.00,20.00,4.88,0.24,1.02,1.23,6.37,9.45,RMB farkı: sistem 45 → Excel 30.3333 · ağırlık farkı: sistem 0.3 → Excel 0.35
+802,AL-PTZ,CONFLICT,CONFLICT,sistem SKU'su kod+ek,AL-PTZ01; AL-PTZ02; AL-PTZ03; AL-PTZ04,,,,84.0000,13.1642,0.700,0.70,5.60,,,,,,,,,,,,,,,,"sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor → 4 ürün: AL-PTZ01, AL-PTZ02, AL-PTZ03, AL-PTZ04"
+803,AL-PTZ03,KESIN,HIGH,SKU birebir,AL-PTZ03,Ip Ptz Full HD Wifi Güvenlik Kamerası V380 Pro Sma,evet,0,68.5000,10.7351,0.650,0.65,5.20,70.00,16.93,0.400,8525.89.00.00.00,sistem,4.90,0.00,20.00,20.00,10.87,0.53,2.28,2.74,14.20,19.93,RMB farkı: sistem 70 → Excel 68.5 · ağırlık farkı: sistem 0.4 → Excel 0.65
+804,AL-PTZ05,ESLESMEDI,UNKNOWN,aday yok,,,,,65.0000,10.1866,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+805,AL-SOLAR01,KESIN,HIGH,SKU birebir,AL-SOLAR01,Solar Kamera Wifi v380 Pro Güneş Enerjili 10x Zoom,evet,34,119.0000,18.6493,2.000,2.00,16.00,130.00,27.12,1.500,8525.89.00.00.00,sistem,4.90,0.00,20.00,20.00,19.76,0.97,4.15,4.98,25.76,43.39,RMB farkı: sistem 130 → Excel 119 · ağırlık farkı: sistem 1.5 → Excel 2
+806,AL-SOLAR02,ESLESMEDI,UNKNOWN,aday yok,,,,,225.0000,35.2612,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+807,AL-SOLAR03,ESLESMEDI,UNKNOWN,aday yok,,,,,135.0000,21.1567,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+808,AL-W01,ESLESMEDI,UNKNOWN,aday yok,,,,,54.0000,8.4627,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+809,ALFAS-B01,ESLESMEDI,UNKNOWN,aday yok,,,,,25.0000,3.9179,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+810,ALFAS-W02,ESLESMEDI,UNKNOWN,aday yok,,,,,47.0000,7.3657,0.300,0.30,2.40,,,,,,,,,,,,,,,,
+811,ALG304-ANTRASIT,ESLESMEDI,UNKNOWN,aday yok,,,,,21.5000,3.3694,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+812,ALG304-GOLD,ESLESMEDI,UNKNOWN,aday yok,,,,,21.5000,3.3694,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+813,ALG304-KROM,ESLESMEDI,UNKNOWN,aday yok,,,,,20.5000,3.2127,0.200,0.20,1.60,,,,,,,,,,,,,,,,
+814,AN1028MN,ESLESMEDI,UNKNOWN,ad (zayıf),,,,,50.0000,7.8358,1.000,1.00,8.00,,,,,,,,,,,,,,,,"zayıf aday (yalnız ürün adında kod geçiyor): 1028MN, PERPA1028MN — zorla eşleştirilmedi"
+815,ANX1-441327508784,KESIN,HIGH,grup kodu farklı/eksik,441327508784,Fonksiyonel Banyo Lavabo Bataryası - Saç Yıkama-Ab,evet,0,57.0000,8.9328,1.400,1.40,11.20,57.00,15.36,1.400,8481.90.00.00.29,sistem,2.20,25.00,0.00,20.00,9.91,2.69,0.00,2.52,13.03,25.49,"baştaki grup kodu farklı/eksik, gövde kod aynı"
+816,ARP472-472807412658,KESIN,HIGH,grup kodu farklı/eksik,472807412658,Gold Arıtma Çıkışlı Eviye Bataryası 3 Yollu Arıtma,evet,0,75.0000,11.7537,1.300,1.30,10.40,125.00,31.38,1.500,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,12.49,3.40,0.00,3.18,16.45,28.03,"baştaki grup kodu farklı/eksik, gövde kod aynı · RMB farkı: sistem 125 → Excel 75 · ağırlık farkı: sistem 1.5 → Excel 1.3"
+817,ARP472-4728183610347,ESLESMEDI,UNKNOWN,aday yok,,,,,68.0000,10.6567,1.300,1.30,10.40,,,,,,,,,,,,,,,,
+818,ARP472-4728210382669,ESLESMEDI,UNKNOWN,aday yok,,,,,68.0000,10.6567,1.300,1.30,10.40,,,,,,,,,,,,,,,,
+819,ARP700ANTRASIT,ESLESMEDI,UNKNOWN,aday yok,,,,,179.0000,28.0522,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+820,ARP700MATGOLD,ESLESMEDI,UNKNOWN,aday yok,,,,,179.0000,28.0522,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+821,ARP700SIYAH,ESLESMEDI,UNKNOWN,aday yok,,,,,179.0000,28.0522,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+822,ART726K,ESLESMEDI,UNKNOWN,aday yok,,,,,70.0000,10.9701,0.900,0.90,7.20,,,,,,,,,,,,,,,,
+823,ART1006G,ESLESMEDI,UNKNOWN,aday yok,,,,,140.0000,21.9403,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+824,ART4351MG,ESLESMEDI,UNKNOWN,aday yok,,,,,128.0000,20.0597,1.800,1.80,14.40,,,,,,,,,,,,,,,,
+825,ART429017471036,ESLESMEDI,UNKNOWN,aday yok,,,,,177.5000,27.8172,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+826,ART429027471147,ESLESMEDI,UNKNOWN,aday yok,,,,,190.0000,29.7761,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+827,ART431470753146,ESLESMEDI,UNKNOWN,aday yok,,,,,284.5000,44.5858,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+828,ART431470754257,ESLESMEDI,UNKNOWN,aday yok,,,,,259.0000,40.5896,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+829,ART431470754395,ESLESMEDI,UNKNOWN,aday yok,,,,,267.0000,41.8433,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+830,ART432470756412,ESLESMEDI,UNKNOWN,aday yok,,,,,179.0000,28.0522,1.600,1.60,12.80,,,,,,,,,,,,,,,,
+831,ART432470756520,ESLESMEDI,UNKNOWN,aday yok,,,,,194.0000,30.4030,1.600,1.60,12.80,,,,,,,,,,,,,,,,
+832,ART4267192047364,CONFLICT,CONFLICT,grup kodu farklı/eksik,4267192047364,,,,90.0000,14.1045,1.600,1.60,12.80,,,,,,,,,,,,,,,,"baştaki grup kodu farklı/eksik, gövde kod aynı · aynı ürüne satır 7 (426M-4267192047364) de eşleşti ve RMB/kg farklı"
+833,ART4290037471258,ESLESMEDI,UNKNOWN,aday yok,,,,,165.0000,25.8582,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+834,ART48202937363534,CONFLICT,CONFLICT,grup kodu farklı/eksik,48202937363534,,,,230.0000,36.0448,2.000,2.00,16.00,,,,,,,,,,,,,,,,"baştaki grup kodu farklı/eksik, gövde kod aynı · aynı ürüne satır 612 (482029373635) de eşleşti ve RMB/kg farklı"
+835,AS91-4913400001,ESLESMEDI,UNKNOWN,aday yok,,,,,119.0000,18.6493,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+836,AS91-4029371638052,ESLESMEDI,UNKNOWN,aday yok,,,,,235.0000,36.8284,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+837,AS91-4029371638163,ESLESMEDI,UNKNOWN,aday yok,,,,,242.0000,37.9254,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+838,AS91-4029371638274,ESLESMEDI,UNKNOWN,aday yok,,,,,235.0000,36.8284,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+839,AS91-4029371638385,ESLESMEDI,UNKNOWN,aday yok,,,,,235.0000,36.8284,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+840,AS91-4916708643213,ESLESMEDI,UNKNOWN,aday yok,,,,,174.0000,27.2687,1.900,1.90,15.20,,,,,,,,,,,,,,,,
+841,AS520W,KESIN,HIGH,SKU birebir,AS520W,520W 4 Giriş Type-C 4 Giriş Usb 3.0 8 Port Led Ekr,evet,0,122.0000,19.1194,0.400,0.40,3.20,122.00,29.06,0.400,8504.40.83.90.19,sistem,3.30,11.00,0.00,20.00,18.61,2.66,0.00,4.25,22.18,25.38,
+842,AS9023,ESLESMEDI,UNKNOWN,aday yok,,,,,174.0000,27.2687,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+843,AS9134,ESLESMEDI,UNKNOWN,aday yok,,,,,119.0000,18.6493,1.200,1.20,9.60,,,,,,,,,,,,,,,,
+844,AS304167,ESLESMEDI,UNKNOWN,aday yok,,,,,40.0000,6.2687,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+845,AS304168,ESLESMEDI,UNKNOWN,aday yok,,,,,50.0000,7.8358,0.975,0.97,7.80,,,,,,,,,,,,,,,,
+846,AS304169,ESLESMEDI,UNKNOWN,aday yok,,,,,40.0000,6.2687,0.775,0.78,6.20,,,,,,,,,,,,,,,,
+847,AS304170,ESLESMEDI,UNKNOWN,aday yok,,,,,50.0000,7.8358,1.025,1.02,8.20,,,,,,,,,,,,,,,,
+848,AS304171,ESLESMEDI,UNKNOWN,aday yok,,,,,50.0000,7.8358,1.050,1.05,8.40,,,,,,,,,,,,,,,,
+849,AS304172,ESLESMEDI,UNKNOWN,aday yok,,,,,40.0000,6.2687,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+850,AS304173,ESLESMEDI,UNKNOWN,aday yok,,,,,45.0000,7.0522,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+851,AS304174,ESLESMEDI,UNKNOWN,aday yok,,,,,50.0000,7.8358,1.100,1.10,8.80,,,,,,,,,,,,,,,,
+852,AS304175,ESLESMEDI,UNKNOWN,aday yok,,,,,115.0000,18.0224,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+853,AS304176,ESLESMEDI,UNKNOWN,aday yok,,,,,115.0000,18.0224,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+854,AS304177,ESLESMEDI,UNKNOWN,aday yok,,,,,115.0000,18.0224,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+855,AS304178,ESLESMEDI,UNKNOWN,aday yok,,,,,105.0000,16.4552,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+856,AS304179,ESLESMEDI,UNKNOWN,aday yok,,,,,95.0000,14.8881,1.950,1.95,15.60,,,,,,,,,,,,,,,,
+857,ASE4050I,ESLESMEDI,UNKNOWN,aday yok,,,,,83.0000,13.0075,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+858,ASE4555INOX,ESLESMEDI,UNKNOWN,aday yok,,,,,93.0000,14.5746,,,,,,,,,,,,,,,,,,,
+859,ASE5040SIYAH,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,,,,,,,,,,,,,,,,,,,
+860,ASE7240A,ESLESMEDI,UNKNOWN,aday yok,,,,,210.0000,32.9104,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+861,AURA40KAREGUNBLACK,ESLESMEDI,UNKNOWN,aday yok,,,,,414.0000,64.8806,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+862,AURA40KAREMATG,ESLESMEDI,UNKNOWN,aday yok,,,,,414.0000,64.8806,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+863,AURA4040G,ESLESMEDI,UNKNOWN,aday yok,,,,,360.0000,56.4179,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+864,AURA4040NMBG,ESLESMEDI,UNKNOWN,aday yok,,,,,360.0000,56.4179,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+865,AURA4040ROSEG,ESLESMEDI,UNKNOWN,aday yok,,,,,360.0000,56.4179,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+866,AURA4141KNMBG,ESLESMEDI,UNKNOWN,aday yok,,,,,425.1000,66.6201,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+867,AURA4438MB,ESLESMEDI,UNKNOWN,aday yok,,,,,470.0000,73.6567,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+868,AURA5939G,ESLESMEDI,UNKNOWN,aday yok,,,,,429.5000,67.3097,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+869,AURA5939NMBG,ESLESMEDI,UNKNOWN,aday yok,,,,,429.5000,67.3097,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+870,AURA5939ROSE,ESLESMEDI,UNKNOWN,aday yok,,,,,429.5000,67.3097,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+871,AURA513610G,ESLESMEDI,UNKNOWN,aday yok,,,,,436.5000,68.4067,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+872,AURA513610NMBG,ESLESMEDI,UNKNOWN,aday yok,,,,,436.5000,68.4067,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+873,AURA513610ROSE,ESLESMEDI,UNKNOWN,aday yok,,,,,436.5000,68.4067,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+874,AURA-41K,ESLESMEDI,UNKNOWN,aday yok,,,,,425.1000,66.6201,,,,,,,,,,,,,,,,,,,
+875,AURA-236ANTRASIT,ESLESMEDI,UNKNOWN,aday yok,,,,,195.0000,30.5597,1.900,1.90,15.20,,,,,,,,,,,,,,,,
+876,AURA-236INOX,ESLESMEDI,UNKNOWN,aday yok,,,,,158.0000,24.7612,1.900,1.90,15.20,,,,,,,,,,,,,,,,
+877,AURA-40236ANTRASIT,ESLESMEDI,UNKNOWN,aday yok,,,,,195.0000,30.5597,1.900,1.90,15.20,,,,,,,,,,,,,,,,
+878,AURA-40236INOX,ESLESMEDI,UNKNOWN,aday yok,,,,,158.0000,24.7612,1.900,1.90,15.20,,,,,,,,,,,,,,,,
+879,AURA-ANTIK-GOLD,ESLESMEDI,UNKNOWN,aday yok,,,,,450.0000,70.5224,10.000,10.00,80.00,,,,,,,,,,,,,,,,
+880,AURA-D51-ANTRASIT,ESLESMEDI,UNKNOWN,aday yok,,,,,436.5000,68.4067,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+881,AURA-D51-GOLD,ESLESMEDI,UNKNOWN,aday yok,,,,,436.5000,68.4067,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+882,AURA-D51-ROSE,ESLESMEDI,UNKNOWN,aday yok,,,,,436.5000,68.4067,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+883,AURA-G44-SIYAH,ESLESMEDI,UNKNOWN,aday yok,,,,,470.0000,73.6567,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+884,AURA-O60-ANTRASIT,ESLESMEDI,UNKNOWN,aday yok,,,,,429.5000,67.3097,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+885,AURA-O60-GOLD,ESLESMEDI,UNKNOWN,aday yok,,,,,429.5000,67.3097,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+886,AURA-O60-ROSE,ESLESMEDI,UNKNOWN,aday yok,,,,,429.5000,67.3097,6.000,6.00,48.00,,,,,,,,,,,,,,,,
+887,AURA-R40-ANTRASIT,ESLESMEDI,UNKNOWN,aday yok,,,,,360.0000,56.4179,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+888,AURA-R40-GOLD,ESLESMEDI,UNKNOWN,aday yok,,,,,360.0000,56.4179,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+889,AURA-R40-ROSE,ESLESMEDI,UNKNOWN,aday yok,,,,,360.0000,56.4179,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+890,AURA-R416-BG,ESLESMEDI,UNKNOWN,aday yok,,,,,425.1000,66.6201,5.000,5.00,40.00,,,,,,,,,,,,,,,,
+891,BBC170,ESLESMEDI,UNKNOWN,aday yok,,,,,170.0000,26.6418,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+892,BBT259ROSE,ESLESMEDI,UNKNOWN,aday yok,,,,,170.0000,26.6418,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+893,BEC8002,ESLESMEDI,UNKNOWN,aday yok,,,,,24.0000,3.7612,0.700,0.70,5.60,,,,,,,,,,,,,,,,
+894,BF442,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,MUS-BF442BATARYA,Modern Black Mat Siyah Tezgah Üstü Lavabo Bataryas,evet,1,300.0000,47.0149,1.250,1.25,10.00,,,,84.81.80.11.00,sistem,2.20,25.00,0.00,20.00,46.03,12.52,0.00,11.71,60.78,71.91,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor
+895,BF-TYPECUV32,KESIN,HIGH,SKU birebir,BF-TYPECUV32,Boafeng Uv-32 Analog FM Çift Bant Dijital Ekran İk,evet,0,215.0000,33.6940,0.400,0.40,3.20,215.00,50.77,0.400,8517.69.90.90.24,sistem,0.00,0.00,20.00,20.00,32.49,0.00,6.50,7.80,40.59,43.95,
+896,BIL-USBHUB4,KESIN,HIGH,SKU birebir,BIL-USBHUB4,Anunnaki type-c To Usb Hub 4 Port Çoklayıcı Macboo,evet,0,4.0167,0.6295,0.050,0.05,0.40,3.55,1.10,0.040,8471.80.00.00.00,sistem,0.00,0.00,0.00,20.00,0.65,0.00,0.00,0.13,0.68,1.03,RMB farkı: sistem 3.55 → Excel 4.0167 · ağırlık farkı: sistem 0.04 → Excel 0.05
+897,BMB4140,ESLESMEDI,UNKNOWN,aday yok,,,,,30.0000,4.7015,0.230,0.23,1.84,,,,,,,,,,,,,,,,
+898,BMB4330,ESLESMEDI,UNKNOWN,aday yok,,,,,46.0000,7.2090,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+899,BMB42208,ESLESMEDI,UNKNOWN,aday yok,,,,,41.0000,6.4254,0.600,0.60,4.80,,,,,,,,,,,,,,,,
+900,CJ-4230657987633,ESLESMEDI,UNKNOWN,aday yok,,,,,1.6500,0.2586,0.100,0.10,0.80,,,,,,,,,,,,,,,,
+901,CRW-4324587896981,ESLESMEDI,UNKNOWN,aday yok,,,,,274.0000,42.9403,1.300,1.30,10.40,,,,,,,,,,,,,,,,
+902,CSF-4312302847174,KESIN,HIGH,grup kodu farklı/eksik,4312302847174,Mutfak Evye Basınçlı Bardak Yıkama Bataryası Otoma,evet,2,53.0000,8.3060,0.600,0.60,4.80,58.00,14.06,0.600,8481.80.19.00.09,sistem,2.20,25.00,0.00,20.00,8.51,2.31,0.00,2.17,11.22,16.56,"baştaki grup kodu farklı/eksik, gövde kod aynı · RMB farkı: sistem 58 → Excel 53"
+903,CSF-4657851021646,ESLESMEDI,UNKNOWN,aday yok,,,,,158.0000,24.7612,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+904,CSF-4657851021710,ESLESMEDI,UNKNOWN,aday yok,,,,,168.0000,26.3284,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+905,DM32,ESLESMEDI,UNKNOWN,aday yok,,,,,285.0000,44.6642,0.800,0.80,6.40,,,,,,,,,,,,,,,,
+906,EVY75*45,ESLESMEDI,UNKNOWN,aday yok,,,,,58.0000,9.0896,3.000,3.00,24.00,,,,,,,,,,,,,,,,
+907,EVY304SS4237K,ESLESMEDI,UNKNOWN,aday yok,,,,,58.0000,9.0896,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+908,EVY304SS5040K,ESLESMEDI,UNKNOWN,aday yok,,,,,60.0000,9.4030,,,,,,,,,,,,,,,,,,,
+909,EVY304SS6045K,ESLESMEDI,UNKNOWN,aday yok,,,,,60.0000,9.4030,,,,,,,,,,,,,,,,,,,
+910,EVY304SS7545,ESLESMEDI,UNKNOWN,aday yok,,,,,110.0000,17.2388,,,,,,,,,,,,,,,,,,,
+911,FTS-4128000000160,ESLESMEDI,UNKNOWN,aday yok,,,,,79.0000,12.3806,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+912,FTS-4128000000320,ESLESMEDI,UNKNOWN,aday yok,,,,,102.0000,15.9851,1.700,1.70,13.60,,,,,,,,,,,,,,,,
+913,HNG-4000LXATMOSPHERE01,ESLESMEDI,UNKNOWN,aday yok,,,,,302.0000,47.3284,4.000,4.00,32.00,,,,,,,,,,,,,,,,
+914,HNG-4000MAX9,ESLESMEDI,UNKNOWN,aday yok,,,,,650.0000,101.8657,8.000,8.00,64.00,,,,,,,,,,,,,,,,
+915,HNG-4000NEXUS1-SYH,ESLESMEDI,UNKNOWN,aday yok,,,,,1080.0000,169.2537,10.000,10.00,80.00,,,,,,,,,,,,,,,,
+916,HNG-40001080FLEXKROM,ESLESMEDI,UNKNOWN,aday yok,,,,,214.0000,33.5373,1.500,1.50,12.00,,,,,,,,,,,,,,,,
+917,KBB-1005VINTAGEMUSLUK,MUHTEMEL,MEDIUM,grup kodu farklı/eksik,TE-1005VINTAGEMUSLUK,Lavabo Antik Eskitme Vintage Sıcak Soğuk Pirinç Mu,evet,0,100.0000,15.6716,1.400,1.40,11.20,,39.63,,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,16.33,4.44,0.00,4.15,21.51,33.98,"baştaki grup kodu farklı/eksik, gövde kod aynı"
+918,KBB-42809631475,KESIN,HIGH,grup kodu farklı/eksik,42809631475,Flextail Retro Taşlı Altın Renkli Lüks Gold Banyo ,evet,0,100.0000,15.6716,1.200,1.20,9.60,100.00,25.10,1.200,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,16.13,4.39,0.00,4.10,21.26,31.94,"baştaki grup kodu farklı/eksik, gövde kod aynı"
+919,KBB-428193716361,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+920,KBB-428293716472,ESLESMEDI,UNKNOWN,aday yok,,,,,120.0000,18.8060,1.000,1.00,8.00,,,,,,,,,,,,,,,,
+921,LENS,ESLESMEDI,UNKNOWN,aday yok,,,,,2.6750,0.4192,0.010,0.01,0.08,,,,,,,,,,,,,,,,
+922,MB-4356086413709,ESLESMEDI,UNKNOWN,aday yok,,,,,50.0000,7.8358,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+923,MD1008A,ESLESMEDI,UNKNOWN,aday yok,,,,,70.0000,10.9701,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+924,MD3003B1,CONFLICT,CONFLICT,biçim farkı,MD-3003B1,,,,19.0000,2.9776,0.500,0.50,4.00,,,,,,,,,,,,,,,,"biçim farkı (büyük/küçük harf, boşluk, tire, nokta, Türkçe harf) · aynı ürüne satır 927 (MD-3003B1) de eşleşti ve RMB/kg farklı"
+925,MD4030,KESIN,HIGH,sistem SKU'su kod+ek,T-MD4030DEDEKTÖR,MD-4030 Yeraltı Altın Metal Dedektörü Hazine Buluc,evet,5,100.0000,15.6716,2.000,2.00,16.00,100.00,26.20,2.000,8543.70.90.00.11,sistem,3.70,20.00,0.00,20.00,16.93,4.01,0.00,4.19,21.68,39.00,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistemdeki RMB ile teyitli (±%3)
+926,MD4060,KESIN,HIGH,biçim farkı,MD-4060,Profesyonel Yüksek Hassasiyetli Yeraltı Su Geçirme,evet,0,195.0000,30.5597,1.750,1.75,14.00,190.00,56.51,1.500,8543.70.90.00.11,sistem,3.70,20.00,0.00,20.00,30.85,7.31,0.00,7.63,39.62,54.78,"biçim farkı (büyük/küçük harf, boşluk, tire, nokta, Türkçe harf) · RMB farkı: sistem 190 → Excel 195 · ağırlık farkı: sistem 1.5 → Excel 1.75"
+927,MD-3003B1,KESIN,HIGH,SKU birebir,MD-3003B1,Super Scanner MD-3003B1 El Tipi Güvenlik Üst Arama,evet,0,23.0000,3.6045,0.450,0.45,3.60,23.00,9.66,0.400,8543.70.90.00.11,sistem,3.70,20.00,0.00,20.00,3.88,0.92,0.00,0.96,4.97,8.87,aynı ürüne satır 924 (MD3003B1) de eşleşti; değerler farklı — bu satır (SKU birebir) esas alındı · ağırlık farkı: sistem 0.4 → Excel 0.45
+928,MT,ESLESMEDI,UNKNOWN,aday yok,,,,,305.0000,47.7985,3.000,3.00,24.00,,,,,,,,,,,,,,,,
+929,MUS-XR8890B,ESLESMEDI,UNKNOWN,içerme (zayıf),,,,,196.0000,30.7164,2.000,2.00,16.00,,,,,,,,,,,,,,,,zayıf aday (kod içerme (zayıf)): MUS-SIYAHXR8890BBATARYA — zorla eşleştirilmedi
+930,MUS-XR8890C,MUHTEMEL,MEDIUM,sistem SKU'su kod+ek,MUS-XR8890CBATARYA,Gümüş Yaylı Oynar Başlıklı Çift Musluk Evye Batary,evet,0,245.0000,38.3955,2.000,2.00,16.00,200.00,49.61,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,38.57,10.49,0.00,9.81,50.89,68.69,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · RMB farkı: sistem 200 → Excel 245
+931,NUT,ESLESMEDI,UNKNOWN,aday yok,,,,,0.3875,0.0607,0.020,0.02,0.16,,,,,,,,,,,,,,,,
+932,PAM8610,KESIN,HIGH,grup kodu farklı/eksik,AH - PAM8610,Mini Hi-Fi PAM8610 Audio Stereo Amplifikatör 2X10W,evet,0,5.2000,0.8149,0.010,0.01,0.08,5.20,1.23,0.010,8518.40.00.00.00,sistem,4.50,0.00,20.00,20.00,0.79,0.04,0.16,0.20,1.02,1.11,"baştaki grup kodu farklı/eksik, gövde kod aynı · sistemdeki RMB ile teyitli (±%3)"
+933,QUNZH-441250909879,ESLESMEDI,UNKNOWN,aday yok,,,,,11.8000,1.8493,0.675,0.68,5.40,,,,,,,,,,,,,,,,
+934,QUNZH-441358096123,ESLESMEDI,UNKNOWN,aday yok,,,,,14.2000,2.2254,0.680,0.68,5.44,,,,,,,,,,,,,,,,
+935,QUNZH-441469075030,ESLESMEDI,UNKNOWN,aday yok,,,,,14.2000,2.2254,0.680,0.68,5.44,,,,,,,,,,,,,,,,
+936,SPMM1-4153467048963,ESLESMEDI,UNKNOWN,aday yok,,,,,85.0000,13.3209,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+937,SPMM1-4154316407845,ESLESMEDI,UNKNOWN,aday yok,,,,,95.0000,14.8881,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+938,SPMM1-4155164970457,ESLESMEDI,UNKNOWN,aday yok,,,,,85.0000,13.3209,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+939,T-DUVARDEDEKTOR,KESIN,HIGH,SKU birebir,T-DUVARDEDEKTOR,3 in 1 Duvar Tarayıcı Metal Dedektörü Çiviler AC G,evet,12,42.5000,6.6604,0.400,0.40,3.20,40.00,12.85,0.400,9031.80.80.90.19,sistem,4.00,0.00,0.00,20.00,6.74,0.27,0.00,1.40,7.33,10.24,RMB farkı: sistem 40 → Excel 42.5
+940,T-MD3010,KESIN,HIGH,SKU birebir,T-MD3010,MD-3010ii Profesyonel Altın Metal Hazine Dedektörü,evet,11,226.0000,35.4179,3.250,3.25,26.00,220.00,63.00,3.000,8543.70.90.00.11,sistem,3.70,20.00,0.00,20.00,36.98,8.76,0.00,9.15,47.43,75.57,RMB farkı: sistem 220 → Excel 226 · ağırlık farkı: sistem 3 → Excel 3.25
+941,T-SUALTIDEDEKTOR,KESIN,HIGH,SKU birebir,T-SUALTIDEDEKTOR,Scuba Su Geçirmez Altın Dedektörü Vibratörlü Maden,evet,0,253.0000,39.6493,1.250,1.25,10.00,250.00,70.98,1.000,8543.70.90.00.11,sistem,3.70,20.00,0.00,20.00,39.01,9.25,0.00,9.65,50.14,60.97,RMB farkı: sistem 250 → Excel 253 · ağırlık farkı: sistem 1 → Excel 1.25
+942,T-VECTORA,KESIN,HIGH,SKU birebir,T-VECTORA,Nanovna Vektör Ağ Analizörü Hf Vhf Uhf Anten Anali,evet,0,183.0000,28.6791,0.400,0.40,3.20,183.00,43.60,0.600,9030.40.00.90.00,sistem,0.00,0.00,0.00,20.00,27.71,0.00,0.00,5.54,29.08,31.88,ağırlık farkı: sistem 0.6 → Excel 0.4
+943,TE-964,CONFLICT,CONFLICT,sistem SKU'su kod+ek,TE-9640CANAKANTIKMUSLUK; TE-964CANAKANTIKMUSLUK,,,,145.0000,22.7239,1.000,1.00,8.00,,,,,,,,,,,,,,,,"sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor → 2 ürün: TE-9640CANAKANTIKMUSLUK, TE-964CANAKANTIKMUSLUK"
+944,TE-964CANAK,KESIN,HIGH,sistem SKU'su kod+ek,TE-964CANAKANTIKMUSLUK,Antik Avrupa Çanak Lavabo Şelale Bataryası Pirinç ,evet,0,145.0000,22.7239,1.300,1.30,10.40,145.00,47.47,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,22.94,6.24,0.00,5.84,30.26,41.84,sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor · sistemdeki RMB ile teyitli (±%3) · ağırlık farkı: sistem 2 → Excel 1.3
+945,TE-1005,CONFLICT,CONFLICT,sistem SKU'su kod+ek,TE-1005SIYAHGOLD360MUSLUK; TE-1005VINTAGEMUSLUK,,,,110.0000,17.2388,1.000,1.00,8.00,,,,,,,,,,,,,,,,"sistem SKU'su Excel kodu + ek (grup/ad/renk) ile başlıyor → 2 ürün: TE-1005SIYAHGOLD360MUSLUK, TE-1005VINTAGEMUSLUK"
+946,TE-7888GOLD360MSLK,MUHTEMEL,MEDIUM,satış kaydı ürün bağlantısı,7888GOLD,Gold Retro Fiskiyeli 360 Derece Döner Antik Mutfak,evet,0,68.0000,10.6567,1.500,1.50,12.00,150.00,37.94,2.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,11.65,3.17,0.00,2.96,15.33,28.68,satış kaydında bu kodla satılan ürüne bağlı (productId) · ürün kartına bağlı olmayan 1 satış kaydı (son 2025-08-21): Gold Antik Fiskiyeli 360 Derece Dön · RMB farkı: sistem 150 → Excel 68 (BÜYÜK FARK — teyit) · ağırlık farkı: sistem 2 → Excel 1.5
+947,TE.KUL.RXTX,KESIN,HIGH,SKU birebir,TE.KUL.RXTX,Bluetooth 5.0 Ses Alıcı Verici AUX RCA USB Stereo ,evet,0,11.0000,1.7239,0.070,0.07,0.56,11.00,2.93,0.070,8517.62.00.90.19,sistem,0.00,0.00,0.00,20.00,1.71,0.00,0.00,0.34,1.79,2.28,
+948,TTLOCKKAPIKOLUSILVER 490467695447,KESIN,HIGH,pazaryeri eşleme kaydı,TTLOCKKAPIKOLUSILVER,Şifreli Kartlı Telefondan Kontrol PVC Alüminyum Ah,evet,3,133.5000,20.9216,0.750,0.75,6.00,120.00,59.00,1.000,8301.40.19.00.19,sistem,2.70,20.00,0.00,20.00,20.68,4.69,0.00,5.07,26.36,32.81,pazaryeri eşleme kaydı (platformSku/barkod) · RMB farkı: sistem 120 → Excel 133.5 · ağırlık farkı: sistem 1 → Excel 0.75
+949,TTLOCKKAPIKOLUSIYAH1 490456584336,CONFLICT,CONFLICT,satış kaydı ürün bağlantısı,TTLOCKKAPIKOLUSILVER,,,,124.5000,19.5112,0.750,0.75,6.00,,,,,,,,,,,,,,,,renk uyuşmazlığı: Excel ['SIYAH'] ↔ ürün ['SILVER'] (TTLOCKKAPIKOLUSILVER)
+950,UV82,KESIN,HIGH,SKU birebir,UV82,BAOFENG UV-82 TELSİZ,evet,0,62.5000,9.7948,0.600,0.60,4.80,62.00,,0.600,8517.69.90.90.24,sistem,0.00,0.00,20.00,20.00,9.93,0.00,1.99,2.38,12.38,17.42,
+951,XHN-43569607321,ESLESMEDI,UNKNOWN,aday yok,,,,,50.0000,7.8358,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+952,XHN-4356214750896,ESLESMEDI,UNKNOWN,aday yok,,,,,80.0000,12.5373,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+953,XHN-4356369074256,ESLESMEDI,UNKNOWN,aday yok,,,,,55.0000,8.6194,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+954,XHN-4356470963214,ESLESMEDI,UNKNOWN,aday yok,,,,,60.0000,9.4030,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+955,XHN-4356654086450,ESLESMEDI,UNKNOWN,aday yok,,,,,75.0000,11.7537,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+956,XHN-43561470852365,ESLESMEDI,UNKNOWN,aday yok,,,,,75.0000,11.7537,2.000,2.00,16.00,,,,,,,,,,,,,,,,
+957,XR0150B,KESIN,HIGH,grup kodu farklı/eksik,MUS-XR0150B,Siyah Gold Güverte Monte Tek Delik Şelale Havza Ba,evet,0,148.0000,23.1940,1.133,1.13,9.07,148.00,36.01,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,23.22,6.32,0.00,5.91,30.64,40.73,"baştaki grup kodu farklı/eksik, gövde kod aynı · sistemdeki RMB ile teyitli (±%3) · ağırlık farkı: sistem 1 → Excel 1.1333"
+958,XR0150W,KESIN,HIGH,SKU birebir,XR0150W,Beyaz Gold Şelale Banyo Lavabo Bataryası,evet,0,148.0000,23.1940,1.133,1.13,9.07,148.00,35.87,0.900,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,23.22,6.32,0.00,5.91,30.64,40.73,başka yöntemle farklı ürün de çıktı (olası mükerrer ürün kartı): MUS-XR0150W · ağırlık farkı: sistem 0.9 → Excel 1.1333
+959,XR0156BATARYABYZ,KESIN,HIGH,grup kodu farklı/eksik,MUS-XR0156BATARYABYZ,Beyaz Gold Özel Tasarım Soğuk ve Sıcak Güverte Mon,evet,0,165.0000,25.8582,0.800,0.80,6.40,165.00,39.98,1.000,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,25.43,6.92,0.00,6.47,33.57,40.70,"baştaki grup kodu farklı/eksik, gövde kod aynı · sistemdeki RMB ile teyitli (±%3) · ağırlık farkı: sistem 1 → Excel 0.8"
+960,XR0156BATARYASYH,KESIN,HIGH,grup kodu farklı/eksik,MUS-XR0156BATARYASYH,Mat Siyah Pirinç Banyo Lavabo Bataryası 0156B,evet,0,162.5000,25.4664,0.850,0.85,6.80,165.00,39.83,0.900,8481.80.11.00.00,sistem,2.20,25.00,0.00,20.00,25.10,6.83,0.00,6.39,33.14,40.71,"baştaki grup kodu farklı/eksik, gövde kod aynı · RMB farkı: sistem 165 → Excel 162.5 · sistemdeki RMB ile teyitli (±%3) · ağırlık farkı: sistem 0.9 → Excel 0.85"
+961,YP-BR,ESLESMEDI,UNKNOWN,aday yok,,,,,6.7000,1.0500,0.350,0.35,2.80,,,,,,,,,,,,,,,,
+962,YPFITTINGS4,ESLESMEDI,UNKNOWN,aday yok,,,,,0.9500,0.1489,0.050,0.05,0.40,,,,,,,,,,,,,,,,
+963,YPFİTTİNGS,ESLESMEDI,UNKNOWN,aday yok,,,,,0.5000,0.0784,0.040,0.04,0.32,,,,,,,,,,,,,,,,
+964,YPSS1,ESLESMEDI,UNKNOWN,aday yok,,,,,9.6500,1.5123,0.400,0.40,3.20,,,,,,,,,,,,,,,,
+965,YPZINC,ESLESMEDI,UNKNOWN,aday yok,,,,,15.0000,2.3507,0.360,0.36,2.88,,,,,,,,,,,,,,,,

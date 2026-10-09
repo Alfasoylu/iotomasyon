@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 00:15 TR
-current_main_commit: aa561f4
+last_updated: 2026-10-10 01:30 TR
+current_main_commit: c9da41f
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → CFO-013 tek nakit yolu (ödeme takvimi açılışı = nakit kapısı; CFO-006 kalanı) → CFO-027 Cowork belge okuma rutini → CFO-028 komisyon oranı belgeleri → CFO-014 kısım 2 / CFO-018"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → CFO-011 maliyet Excel'i: 27 CONFLICT + 70 MUHTEMEL kararı ve deniz/hava + KDV esası (RF-033) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — CFO-006 SQL tek kural üretimde: nakit/KMH/borç sayıları birebir aynı (15 hesap / 6 kart); kaynak yeterliliği açığındaki 151.470 TL çift sayım düzeltildi (açık daha derin, doğru) — likidite boyutu CFO-013 (tek nakit yolu) bitince birlikte yeniden puanlanır"
+score_change: "unchanged — maliyet Excel eşleştirmesi salt-okunur analiz (veri yazılmadı); RF-033 MEDIUM eklendi (doğrulanırsa HIGH ve 1./3. boyut yeniden puanlanır)"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -55,6 +55,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261009-029 | MEDIUM | OPEN | veri düzeltmesi (Cowork/Alperen) |
 | RF-20261009-030 | LOW | OPEN | veri düzeltmesi (insan) |
 | RF-20261009-031 | LOW | MITIGATED | capture migration kuralı |
+| RF-20261010-033 | MEDIUM | OPEN | sistem USD maliyeti hava kargo + KDV dahil kurulmuş görünüyor (Excel'e göre deniz/KDV hariç ≈%68); karar bekliyor, doğrulanırsa HIGH |
 | RF-20261009-032 | MEDIUM | OPEN | 6 kanal + ePTT komisyonu kayıtsız; motor UNKNOWN, raporlar 0 (CFO-028; kanıt yolu CFO-027) |
 
 ## 2026-10-08 — İlk tam sistem denetimi (bağımsız dış denetçi bakışı)
@@ -409,6 +410,12 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 ### RF-20261008-025 — güncelleme: RESOLVED (2026-10-09)
 - KDV hariç ciro: Nisan–Ekim her gün dolu (not B); Eylül 1.604.768 TL (KDV dahil 1.925.721). Hedef: hız yalnız tam kaynaklı günlerden
   (58.318 TL/gün, projeksiyon 1.807.851 TL, rate_through 04.10, bayrak goal_sources_partial).
+
+### RF-20261010-033 — Ürün USD maliyeti hava kargo + ithalat KDV'si dahil kurulmuş görünüyor (YENİ, MEDIUM, karar bekliyor)
+- **date:** 2026-10-10 · **severity:** MEDIUM (doğrulanırsa HIGH) · **status:** OPEN
+- **finding:** Alperen'in maliyet Excel'iyle eşleşen 290 üründe Excel'den hesaplanan iniş maliyetinin sistemdeki `unitCostUsd`'ye oranı (medyan): deniz/KDV hariç 0,68 · deniz/KDV dahil 0,82 · hava/KDV hariç 0,83 · **hava/KDV dahil 0,99**. Sistem maliyeti hava kargo + indirilebilir ithalat KDV'si dahil kurulmuş gibi. Mal deniz yoluyla geliyor ve ithalat KDV'si indiriliyorsa maliyet ≈%46 yüksek → marj düşük, stok/LCNRV yüksek.
+- **evidence:** `docs/maliyet/2026-10-10-maliyet-excel-eslestirme.md` (Bulgu bölümü), CSV. CFO-007 (KDV esası) ve CFO-025 (çarpan 1,27–84) ile tutarlı.
+- **fix:** Alperen kararı (ürün bazında deniz/hava; maliyet KDV hariç mi) → onaylı veri yazımı (CFO-011). Bu analiz veri değiştirmedi.
 
 ### RF-20261009-032 — Komisyonu kayıtsız kanallar (YENİ, MEDIUM, veri)
 - **date:** 2026-10-09 · **severity:** MEDIUM · **status:** OPEN
