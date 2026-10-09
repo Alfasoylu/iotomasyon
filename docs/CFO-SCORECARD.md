@@ -1,9 +1,12 @@
 ---
-last_updated: 2026-10-09 09:50 TR
-current_main_commit: 90af323
-current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 52/100 (hard gate 12/12 gerekiyor; bugün 5/12)
-next_action: "CFO-014 (UNKNOWN→0 süpürmesi) / CFO-016; RF-029 veri düzeltmesi Cowork'te; D-P01…D-P07 kararları"
+last_updated: 2026-10-09 23:30 TR
+current_main_commit: c0823f9
+current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
+current_score: 58/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-006, CFO-013 → CFO-014 kısım 2 / CFO-018"
+open_critical: 1
+open_high: 5
+score_change: "52→58 — 2026-10-09 akşamı yeniden puanlama (SCORECARD tablosu): 1. boyut 8→9, 2. 10→11, 3. 7→8, 5. 5→6, 7. 4→5, 10. 2→3; gate 5/12 aynı"
 ---
 
 # CFO SCORECARD
@@ -49,23 +52,25 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 
 **Gate durumu: 5/12.** Skor 90'ı geçse bile gate'ler geçmeden sistem "mükemmel" sayılmaz.
 
-## Puan — 2026-10-08 (başlangıç)
+## Puan — güncel (2026-10-09 akşam; başlangıç 2026-10-08 = 48)
 
 | # | Boyut | Ağırlık | Puan | Kanıt (artı) | Kanıt (eksi) |
 |---|---|---|---|---|---|
-| 1 | Financial accuracy & reconciliation | 20 | **8** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye ve borç tek tanım kodda (CFO-001 PR-D / CFO-002, migration 170000/180000 Cowork bekliyor); kur 4, ciro 7, marj 5 tanım; KDV esası belirsiz; latent `remainingOverride`; atıf kimliği bozuk |
-| 2 | Cash / liquidity / debt | 15 | **10** | Ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | 4 nakit/4 kapasite tanımı; düz %4,5 beş yerde; borç hedefi eski; takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş |
-| 3 | Capital allocation | 15 | **7** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | KDV dahil NRV tabanı; kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
+| 1 | Financial accuracy & reconciliation | 20 | **9** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye ve borç tek tanım üretimde, v3 Goal doğrulaması 10.10 bekliyor; kur 4, ciro 7, marj 5 tanım; atıf kimliği bozuk (migration 230000 onay bekliyor) |
+| 2 | Cash / liquidity / debt | 15 | **11** | Ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | SQL görünümlerinde şirket/şahsi ifadeleri ayrı (bugün sonuç aynı; CFO-006 DDL onayı); takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş; vadesi geçmiş kalem projeksiyondan düşüyor (CFO-013) |
+| 3 | Capital allocation | 15 | **8** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
 | 4 | Revenue / profitability | 10 | **5** | KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); 7 ciro formülü; iade marja bağlı değil |
-| 5 | Inventory / procurement | 10 | **5** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
+| 5 | Inventory / procurement | 10 | **6** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam; GTİP 433/433 + yasal gümrük yükü ve `duty_gap` alarmı | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
 | 6 | Decision memory & calibration | 10 | **3** | `cfo_hamle` + beklenen/gerçekleşen ekranı; goal attribution | 3/15 karar ölçülebilir; ölçüm tablosu hiç yazılmıyor; atıf kimliği bozuk |
-| 7 | Data quality / provenance | 7 | **4** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi | Eski motor/yan modüllerde UNKNOWN→0; tahminler measured=true; elle defterler; 66 açık soru, karışık durum sözlüğü |
+| 7 | Data quality / provenance | 7 | **5** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi | Eski motorda UNKNOWN→0 (CFO-018; yan modüller kısım 1'de düzeldi); elle defterler; 66 açık soru, karışık durum sözlüğü |
 | 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; SAĞLIK alarmı (takılan/başarısız/bayat motor) kodda, üretimde migration 150000 bekliyor; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
-| 10 | Security / operational safety | 4 | **2** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Okuma izniyle yazma yolları, yetkisiz action, düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü |
-| | **TOPLAM** | **100** | **52** | | |
+| 10 | Security / operational safety | 4 | **3** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü, uygulama bypassrls ile bağlanıyor |
+| | **TOPLAM** | **100** | **58** | | |
 
 ## Skor geçmişi
+
+Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit sütunu = belgelerin `current_main_commit`'i, skor = TOPLAM; skor değişmediyse frontmatter `score_change: "unchanged — <gerekçe>"` (bilinçli kayıt), değiştiyse `"<eski>→<yeni> — <gerekçe>"`. CI testi `cfo-governance-drift`.
 
 | Tarih | Commit | Skor | Gate | Not |
 |---|---|---|---|---|
@@ -76,3 +81,4 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 2026-10-09 | Üretim senkronu (200000 + 100000) | 50 | 5/12 | Kredi borcu üretimde kalan anapara (RF-005 RESOLVED; H12 hâlâ RF-001…004 nedeniyle ❌). Puan artışı yok: 1. boyut tek tanım eksikliğiyle sınırlı |
 | 2026-10-09 | CFO-010 kısım 2 | 51 | 5/12 | Ödeme durumu tek kaynak (takvim), çift alarm yok, boşluk + mükerrer taksit görünür (2. boyut 9→10). Projeksiyon 99.832 TL fazla çıkış içeriyor (RF-029, veri) |
 | 2026-10-09 | Üretim senkronu (110000/120000/130000) | 52 | 5/12 | KDV hariç ciro + hedef kaynak tazeliği üretimde (4. boyut 4→5); RF-004, RF-025 RESOLVED; H12 hâlâ ❌ (RF-001…003) |
+| 2026-10-09 | c0823f9 | 58 | 5/12 | Yeniden puanlama (PR #237–#243 + üretim 150000–220000): 1. boyut 8→9 net sermaye/borç tek tanım + KDV esası (LCNRV KDV hariç) üretimde, v3 Goal doğrulaması 10.10; 2. 10→11 borç sözleşmesi + 5M sabiti kalktı + tek nakit tabanı; 3. 7→8 LCNRV KDV hariç taban, eşik faiz %4 varsayılanı yok; 5. 5→6 GTİP 433/433 + yasal gümrük yükü + `duty_gap`; 7. 4→5 UNKNOWN→0 kısım 1 + measured bayrakları; 10. 2→3 yazma yolları yazma izni. Değişmeyen (bilinçli): 4 (marj KDV hariç değil, 7 ciro formülü), 6 (atıf kimliği migration 230000 onay bekliyor), 8 (WhatsApp teslimi yapılandırılmadı), 9 (tavan). Gate 5/12: H1/H2 (kur 4 + ciro tanımları), H3 (RF-016 kısım 2), H12 (RF-001/002 v3 doğrulaması) hâlâ ❌ |

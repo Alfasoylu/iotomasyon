@@ -1,9 +1,12 @@
 ---
-last_updated: 2026-10-09 02:50 TR
-current_main_commit: ac761e1
-current_phase: "Faz 1 — Metrik sözleşmesi (D-P01…03 kararlandı)"
-current_score: 51/100
-next_action: "KDV hariç ciro (migration 20261009120000, Cowork) → sabit kurun 433 maliyetli üründe etkisi → CFO-001 PR-D / CFO-002; bekleyen D-P04…D-P07"
+last_updated: 2026-10-09 23:30 TR
+current_main_commit: c0823f9
+current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
+current_score: 58/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-006, CFO-013 → CFO-014 kısım 2 / CFO-018"
+open_critical: 1
+open_high: 5
+score_change: "52→58 — 2026-10-09 akşamı yeniden puanlama (SCORECARD tablosu): 1. boyut 8→9, 2. 10→11, 3. 7→8, 5. 5→6, 7. 4→5, 10. 2→3; gate 5/12 aynı"
 ---
 
 # CFO DECISION LOG
@@ -74,3 +77,4 @@ D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL**. 
 | 2026-10-09 | Net sermaye sözleşmesi uygulaması: satan ama birim maliyeti olmayan stok LCNRV'ye girmez (BILINMIYOR, üst sınır KDV hariç NRV ayrı satırda); maliyet+satış kanıtı olmayan stok BILINMIYOR (0 değil); nakit = artı bakiyeler, KMH = eksi bakiyeler (çift sayım yok) | Code (D-P02 uygulaması) | LCNRV maliyetsiz hesaplanamaz; ihtiyatlılık; UNKNOWN disiplini | migration 20261009170000 |
 | 2026-10-09 | Goal Engine bakiye hedefleri yalnız en yeni tanım sürümünden (net_capital_try v3 = sözleşme); eğilim sürüm karıştırmaz (ilk 14 gün `goal_short_history`) | Code | v2 (DAR) ile v3 aynı seri değil | migration 20261009170000 geri alma |
 | 2026-10-09 | Borç hedefi ayardan: `cfo_settings.debtTargetUsd` (100.000 USD); TL eşiği = hedef × TCMB aylık döviz alış (Goal ile aynı kur); sipariş kapısı aynı eşik ve `cfo_metrik_borc()`; hedef/kur yoksa kapı kapalı (sabit eşiğe düşmez) | Code (Alperen hedefi 2026-10-08 + D-P03) | 5M TL sabiti eski hedef; iki yerde ayrı tanım | migration 20261009180000 geri alma |
+| 2026-10-09 | CFO-GOVERNANCE-DRIFT: 5 yönetişim belgesinin frontmatter'ı (main commit, skor, faz, sıradaki iş, açık CRITICAL/HIGH, `score_change`) birebir aynı ve gerçek main ile tutarlı olmalı; açık sayılar RED-FLAGS **Durum kaydı** tablosundan, skor SCORECARD TOPLAM'ından; her merge SCORECARD geçmişine satır ekler; skor değişmediyse `unchanged — <gerekçe>` zorunlu. Aynı PR'da skor 52→58 yeniden puanlandı (boyut gerekçeleri SCORECARD'da) | Alperen (talep) + Claude Code | belgeler 4 farklı commit, 3 farklı skor gösteriyordu; drift CI'da yakalanmalı | test `__tests__/cfo-governance-drift.test.ts` kaldırılır |

@@ -1,9 +1,12 @@
 ---
-last_updated: 2026-10-09 09:50 TR
-current_main_commit: ac761e1
-current_phase: "Faz 0 — İlk tam sistem denetimi tamamlandı; Faz 1 (Metrik sözleşmesi) sırada"
-current_score: 52/100
-next_action: "Cowork: 20261009120000 (KDV hariç ciro) + 110000 → CFO-025 (sabit kur, 433 ürün) → CFO-001 PR-D / CFO-002"
+last_updated: 2026-10-09 23:30 TR
+current_main_commit: c0823f9
+current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
+current_score: 58/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-006, CFO-013 → CFO-014 kısım 2 / CFO-018"
+open_critical: 1
+open_high: 5
+score_change: "52→58 — 2026-10-09 akşamı yeniden puanlama (SCORECARD tablosu): 1. boyut 8→9, 2. 10→11, 3. 7→8, 5. 5→6, 7. 4→5, 10. 2→3; gate 5/12 aynı"
 ---
 
 # CFO BACKLOG

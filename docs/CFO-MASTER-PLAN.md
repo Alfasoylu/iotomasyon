@@ -1,9 +1,12 @@
 ---
-last_updated: 2026-10-08 23:45 TR
-current_main_commit: cde8760
-current_phase: "Faz 1 — Metrik sözleşmesi (CFO-001 PR-A tamam; tanım kararları bekleniyor)"
-current_score: 50/100 (hard gate'ler GEÇMİYOR — bkz. CFO-SCORECARD.md)
-next_action: "CFO-004 (PR-B); Alperen kararları D-P01…D-P06 → CFO-001 PR-D / CFO-002 PR-E / CFO-003 PR-C"
+last_updated: 2026-10-09 23:30 TR
+current_main_commit: c0823f9
+current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
+current_score: 58/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-006, CFO-013 → CFO-014 kısım 2 / CFO-018"
+open_critical: 1
+open_high: 5
+score_change: "52→58 — 2026-10-09 akşamı yeniden puanlama (SCORECARD tablosu): 1. boyut 8→9, 2. 10→11, 3. 7→8, 5. 5→6, 7. 4→5, 10. 2→3; gate 5/12 aynı"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)
@@ -121,6 +124,18 @@ Skor 90+ VE tüm hard gate'ler geçene kadar sürer; yalnız skor için feature 
 
 Yöntem: 3 paralel salt-okunur kod taraması (sayfalar↔kaynaklar; motor ve finansal mantık; otomasyon/AI/güvenlik/veri girişi) +
 üretim (Supabase `frbxpodiostxuwlrubkt`) salt-okunur ölçümleri. Kanıtlar dosya:satır ya da üretim sorgusuyla verilmiştir.
+
+## 10. Fazlar (yönetişim; `current_phase` bu tablodan)
+
+| Faz | Kapsam | Durum |
+|---|---|---|
+| Faz 0 | İlk tam sistem denetimi (A–P, 5 MD dosyası) | ✅ 2026-10-08 |
+| Faz 1 | Metrik sözleşmesi: net sermaye, borç, kur, KDV esası, ciro tek tanım (CFO-001/002/003/007/008) | devam |
+| Faz 2 | Veri kalitesi ve güvenlik: UNKNOWN≠0, şirket/şahsi, tek nakit yolu, eşikler, yetkiler (CFO-006/013/014/016/019/020/021) | kısmen |
+| Faz 3 | Karar hafızası, atıf ve kalibrasyon (CFO-012/017/022/023) | — |
+| Faz 4 | Eski motor emekliliği ve ölü bileşen temizliği (CFO-018/024) | — |
+
+Yönetişim tutarlılığı (CFO-GOVERNANCE-DRIFT, 2026-10-09): MASTER-PLAN, BACKLOG, SCORECARD, RED-FLAGS, DECISION-LOG frontmatter'ı (`current_main_commit`, `current_score`, `current_phase`, `next_action`, `open_critical`, `open_high`, `score_change`) birebir aynı ve gerçek main ile tutarlı olmalı — CI testi `cfo-governance-drift` aksi halde FAIL.
 
 ## A. Executive CFO Assessment
 

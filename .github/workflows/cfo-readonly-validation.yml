@@ -34,6 +34,9 @@ jobs:
       DIRECT_URL: postgresql://localhost:5432/build_only
     steps:
       - uses: actions/checkout@v4
+        with:
+          # CFO-GOVERNANCE-DRIFT gerçek main'i (HEAD^1 / origin/main) ve main'deki skoru okur
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -54,6 +57,7 @@ jobs:
       - run: node --import tsx __tests__/fx-strategic.test.ts
       - run: node --import tsx __tests__/cfo-ownership.test.ts
       - run: node --import tsx __tests__/rbac-write-paths.test.ts
+      - run: node --import tsx __tests__/cfo-governance-drift.test.ts
       - run: node --import tsx __tests__/cfo-alarm-whatsapp.test.ts
       - run: node --import tsx __tests__/fm-memory-schema.test.ts
       - run: node --import tsx __tests__/fm-sales-backfill.test.ts

@@ -1,9 +1,12 @@
 ---
-last_updated: 2026-10-09 01:10 TR
-current_main_commit: 9bd5bd9
-current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 50/100
-next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
+last_updated: 2026-10-09 23:30 TR
+current_main_commit: c0823f9
+current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
+current_score: 58/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-006, CFO-013 → CFO-014 kısım 2 / CFO-018"
+open_critical: 1
+open_high: 5
+score_change: "52→58 — 2026-10-09 akşamı yeniden puanlama (SCORECARD tablosu): 1. boyut 8→9, 2. 10→11, 3. 7→8, 5. 5→6, 7. 4→5, 10. 2→3; gate 5/12 aynı"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -11,9 +14,47 @@ next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-09, üretim senkronu sonrası):** RF-004, RF-005, RF-017, RF-025, RF-028 RESOLVED · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 7 · MEDIUM 12 (RF-029) · LOW 6 (RF-030, yeni RF-031 MITIGATED) · INFO 1 · toplam 31.
+**Açık özet (2026-10-09 akşam):** CRITICAL 1 · HIGH 5 açık (RESOLVED dışı) — ayrıntı aşağıdaki **Durum kaydı** tablosunda (makine okunur).
 
 ---
+
+## Durum kaydı (makine okunur — tek doğru kaynak; CI `cfo-governance-drift` açık CRITICAL/HIGH sayısını buradan sayar)
+
+Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe append-only kalır). Durumlar: OPEN · IN_PROGRESS · FIX_READY · MITIGATED · RESOLVED (yalnız RESOLVED kapalı sayılır).
+
+| RF | Severity | Status | Not |
+|---|---|---|---|
+| RF-20261008-001 | CRITICAL | IN_PROGRESS | sözleşme üretimde (170000/190000); v3 Goal doğrulaması 10.10 |
+| RF-20261008-002 | HIGH | IN_PROGRESS | 180000 üretimde, 5M sabiti kalktı (PR #238); v3 doğrulaması 10.10 |
+| RF-20261008-003 | HIGH | MITIGATED | TCMB tek stratejik kur (CFO-003); eski motor `usdTryRate || 1` CFO-018'de |
+| RF-20261008-004 | HIGH | RESOLVED | 2026-10-09, 110000 + 160000 üretimde |
+| RF-20261008-005 | HIGH | RESOLVED | 2026-10-09, 100000 üretimde |
+| RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; WhatsApp şablon/alıcı yapılandırması bekliyor |
+| RF-20261008-007 | MEDIUM | RESOLVED | HIGH→MEDIUM; CFO-010 ✅ 2026-10-09 (ödeme durumu tek kaynak takvim) |
+| RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
+| RF-20261008-009 | HIGH | IN_PROGRESS | KDV hariç ciro + Alfashome üretimde; tek ciro fonksiyonu kalan (CFO-008) |
+| RF-20261008-010 | HIGH | IN_PROGRESS | TS tek kural + D-P08 üretimde; SQL görünümleri DDL onayı bekliyor (CFO-006); bugün 15 hesapta sonuç aynı |
+| RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017 migration 230000 onay bekliyor |
+| RF-20261008-012 | MEDIUM | IN_PROGRESS | yazma yolları yazma izni (PR #242); API anahtarı şifreleme, Cowork rolü kalan |
+| RF-20261008-013 | MEDIUM | OPEN | veri: 8 SKU maliyeti (CFO-011, Alperen) |
+| RF-20261008-014 | MEDIUM | OPEN | CFO-012 |
+| RF-20261008-015 | MEDIUM | OPEN | CFO-013 (DDL onayı) |
+| RF-20261008-016 | MEDIUM | IN_PROGRESS | CFO-014 kısım 1 (PR #240); eski motor kısmı CFO-018 |
+| RF-20261008-017 | MEDIUM | RESOLVED | 2026-10-09, CFO-019 |
+| RF-20261008-018 | MEDIUM | OPEN | veri: ölçülmemiş faiz oranları (CFO-015, Alperen) |
+| RF-20261008-019 | MEDIUM | IN_PROGRESS | 5M + 100k yedeği + iki taban kalktı; ORAN_ESIGI / 50k / KPI eşikleri kalan |
+| RF-20261008-020 | MEDIUM | OPEN | yoldaki mal iki kaynak (CFO-018) |
+| RF-20261008-021 | LOW | RESOLVED | 2026-10-09, CFO-021 |
+| RF-20261008-022 | LOW | RESOLVED | 2026-10-09, CFO-021 |
+| RF-20261008-023 | LOW | OPEN | latent |
+| RF-20261008-024 | LOW | OPEN | CFO-024 |
+| RF-20261008-025 | HIGH | RESOLVED | 2026-10-09, 120000 + 130000 üretimde |
+| RF-20261008-026 | MEDIUM | MITIGATED | otomatik TCMB kaydı (CFO-003); Ekim kuru 15'inde, o zamana kadar önceki ay işaretli |
+| RF-20261008-027 | MEDIUM | OPEN | ekonomik bulgu (INFO) + 32 SKU UNKNOWN→0 (MEDIUM) |
+| RF-20261009-028 | HIGH | RESOLVED | 2026-10-09, CFO-010 kısım 2 |
+| RF-20261009-029 | MEDIUM | OPEN | veri düzeltmesi (Cowork/Alperen) |
+| RF-20261009-030 | LOW | OPEN | veri düzeltmesi (insan) |
+| RF-20261009-031 | LOW | MITIGATED | capture migration kuralı |
 
 ## 2026-10-08 — İlk tam sistem denetimi (bağımsız dış denetçi bakışı)
 

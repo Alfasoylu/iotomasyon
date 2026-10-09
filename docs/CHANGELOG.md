@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### CFO yönetişim belgeleri CI ile tutarlı tutuluyor (2026-10-09)
+
+- Beş CFO yönetişim belgesindeki main commit, skor, faz, sıradaki iş ve açık kritik/yüksek red flag sayısı birbiriyle ve gerçek main ile uyuşmazsa CI başarısız oluyor; skor değişmediyse gerekçesi zorunlu.
+- Red flag durumları makine okunur bir tabloda; skor 58/100 olarak yeniden puanlandı.
+
 ### Yazma işlemleri yazma izni istiyor (2026-10-09)
 
 - Finans içe aktarma, satın alma siparişi, XML kaynakları, pazaryeri API ayarları, şirket/sermaye ayarları, katalog profilleri, senkronlar ve mesaj şablonları artık okuma iznine ek olarak ilgili yazma iznini istiyor.
