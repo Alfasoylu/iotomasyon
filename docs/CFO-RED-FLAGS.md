@@ -415,7 +415,9 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
 ### RF-20261008-010 — güncelleme 2 (2026-10-09, D-P08 kararı)
 - Alperen: "Akbank Alp" şahsi; "Garanti Alp" banka hesabı gerçekte yok (Garanti ekranlarıyla doğrulandı) → pasif. Şirket KMH kapasitesi
-  450.000 TL fazla görünüyordu (veri düzeltmesi Cowork); "her şey dahil" açık −52.145 → −252.145.
+  450.000 TL fazla görünüyordu (veri düzeltmesi Cowork); "her şey dahil" açık **−403.698** (Cowork düzeltmesi 2026-10-09: önceki
+  −252.145 hesabı `cfo_kaynak_yeterliligi` genel ticari kaynağında (1.960.853) nakdi iki kez sayıyordu). Kaldıraç önerileri bu rakamla
+  sıkılaştırılmalı; `cfo_kaynak_yeterliligi` mükerrer sayımı ayrı düzeltme (CFO-006 SQL kalanıyla).
   Veritabanı görünümleri (`cfo_nakit_kapisi`, `cfo_kaynak_yeterliligi`, `cfo_onucus_temel`) yalnız tam "ŞAHSİ" yazımını tanır (ILIKE) —
   ASCII "SAHSI" yazılırsa hesap şirket kalır; görünümlerin `personalAccountSql` kuralına bağlanması (migration) bu riski kapatır.
 
