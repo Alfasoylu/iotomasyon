@@ -9,6 +9,14 @@
 
 ## 2026-10
 
+### Ürün maliyetleri tedarik Excel'inden güncellendi (2026-10-10)
+
+- CFO'nun stok maliyeti bu 335 üründe ithalat motorunun hesabına çekildi (motorun seçtiği deniz/hava navlunu + GTİP gümrüğü); net sermaye 2.405.400 → 2.266.989 TL.
+
+- 336 üründe alış fiyatı (RMB), ağırlık, kart/transfer masrafı ve GTİP'e göre gümrük oranı güncellendi; 49 ürünün GTİP'i 12 haneli güncel koda çevrildi.
+- Deniz mi hava mı kararını artık ithalat öneri motoru ürün bazında (yıllık getiriye göre) veriyor.
+- Her değişiklik eski değeriyle kayıtlı.
+
 ### Şirket/şahsi ayrımı veritabanında da tek kural; kaynak yeterliliği nakdi iki kez saymıyor (2026-10-10)
 
 - Nakit kapısı, ön uçuş, kaynak yeterliliği ve borç sözleşmesi şahsi hesap/kartı aynı fonksiyonla ayırıyor; bugünkü nakit, KMH ve borç rakamları değişmedi.

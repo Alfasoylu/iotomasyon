@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 01:30 TR
-current_main_commit: c9da41f
+last_updated: 2026-10-10 02:30 TR
+current_main_commit: e1d8eda
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → CFO-011 maliyet Excel'i: 27 CONFLICT + 70 MUHTEMEL kararı ve deniz/hava + KDV esası (RF-033) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık −138.411 TL maliyet düzeltmesini içerir) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — maliyet Excel eşleştirmesi salt-okunur analiz (veri yazılmadı); RF-033 MEDIUM eklendi (doğrulanırsa HIGH ve 1./3. boyut yeniden puanlanır)"
+score_change: "unchanged — 335 üründe CFO birim maliyeti ithalat motorundan türetildi (net sermaye 2.405.400 → 2.266.989 TL, doğru yönde düzeltme); 1./3. boyut puanı CFO-029 (otomatik türetme) bitince yeniden puanlanır"
 ---
 
 # CFO SCORECARD
@@ -85,3 +85,5 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | ed3c0c9 | 58 | 5/12 | Değişmedi (bilinçli): PR #244 yönetişim CI'ı ve CFO-027 belge kütüphanesi (kod + test; migration 230000 + 240000 aynı akşam üretimde — atıf etkisi ilk bileşenli snapshot ve 2. v3 gününden sonra, belge kütüphanesi boş) hiçbir boyutun üretim davranışını değiştirmedi. Komisyon kaydı boşluğu (RF-032, MEDIUM) 4. boyutun (marj) mevcut puanında zaten yansıyor |
 | 2026-10-10 | aa561f4 | 58 | 5/12 | Değişmedi (bilinçli): CFO-006 SQL tek kural üretimde (sayılar birebir aynı); kaynak yeterliliği açığındaki 151.470 TL çift sayım düzeltildi — likidite boyutu CFO-013 ile birlikte yeniden puanlanacak |
 | 2026-10-10 | c9da41f | 58 | 5/12 | Değişmedi (bilinçli): maliyet Excel'i eşleştirmesi salt-okunur (veri yazılmadı); RF-033 (maliyet hava+KDV dahil görünüyor) MEDIUM — doğrulanınca 1./3. boyut yeniden puanlanır |
+| 2026-10-10 | e1d8eda | 58 | 5/12 | Değişmedi (bilinçli): maliyet Excel'i 336 üründe ithalat motoru girdileri olarak yazıldı; CFO maliyeti (unitCostTry) ve net sermaye aynı — RF-033 kararıyla yeniden puanlanır |
+| 2026-10-10 | e1d8eda | 58 | 5/12 | Değişmedi (bilinçli): 335 üründe CFO maliyeti motor maliyetine çekildi (net sermaye −138.411 TL, doğru yönde); otomatik türetme (CFO-029) bitince 1./3. boyut yeniden puanlanır |
