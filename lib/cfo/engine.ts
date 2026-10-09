@@ -340,17 +340,19 @@ export function computeCfo(input: CfoInput): CfoOverview {
   }
 
   // ── Rolling forecast ──
+  // CFO-013 tek nakit yolu (cfo_nakit_projeksiyon / ödeme takvimiyle aynı): vadesi geçmiş tahsil edilmemiş alacak ve ödenmemiş
+  // olay BUGÜN vadeli sayılır (eskiden `>= today` süzgeciyle düşüyordu → iki dip). Tahmini haftalar yalnız ileriye.
   function windowSums(days: number) {
     const until = addDays(today, days);
     const inflowReal = pending
-      .filter((r) => r.dueDate >= today && r.dueDate <= until)
+      .filter((r) => r.dueDate <= until)
       .reduce((a, r) => a + num(r.amountTry), 0);
     const inflowEst = weeks.filter((w) => w.end >= today && w.end <= until).reduce((a, w) => a + w.net, 0);
     const evIn = input.cashEvents
-      .filter((e) => !e.isSettled && e.eventDate >= today && e.eventDate <= until)
+      .filter((e) => !e.isSettled && e.eventDate <= until)
       .reduce((a, e) => a + num(e.inflowTry), 0);
     const evOut = input.cashEvents
-      .filter((e) => !e.isSettled && e.eventDate >= today && e.eventDate <= until)
+      .filter((e) => !e.isSettled && e.eventDate <= until)
       .reduce((a, e) => a + num(e.outflowTry), 0);
     return { inflow: inflowReal + inflowEst + evIn, outflow: evOut };
   }
@@ -392,12 +394,12 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const due = startOfDay(new Date(s.customsReserveDate));
     const daysLeft = Math.round((due.getTime() - today.getTime()) / 86400000);
     const expectedInflow =
-      pending.filter((r) => r.dueDate >= today && r.dueDate <= due).reduce((a, r) => a + num(r.amountTry), 0) +
+      pending.filter((r) => r.dueDate <= due).reduce((a, r) => a + num(r.amountTry), 0) +
       weeks.filter((w) => w.end >= today && w.end <= due).reduce((a, w) => a + w.net, 0) +
-      input.cashEvents.filter((e) => !e.isSettled && e.eventDate >= today && e.eventDate <= due).reduce((a, e) => a + num(e.inflowTry), 0);
-    // gümrük ödemesinin kendisi hariç — rezerv onu karşılamak için
+      input.cashEvents.filter((e) => !e.isSettled && e.eventDate <= due).reduce((a, e) => a + num(e.inflowTry), 0);
+    // gümrük ödemesinin kendisi hariç — rezerv onu karşılamak için; vadesi geçmiş ödenmemiş olay bugün vadeli (CFO-013)
     const mandatoryOutflow = input.cashEvents
-      .filter((e) => !e.isSettled && e.kind !== "VERGI_GUMRUK" && e.eventDate >= today && e.eventDate <= due)
+      .filter((e) => !e.isSettled && e.kind !== "VERGI_GUMRUK" && e.eventDate <= due)
       .reduce((a, e) => a + num(e.outflowTry), 0);
     const projectedCash = netCashTry + expectedInflow - mandatoryOutflow;
     const gap = Math.max(0, target - (projectedCash + saved));
@@ -572,13 +574,14 @@ export function buildDailyActions(o: CfoOverview, input: CfoInput): DailyAction[
   const out: DailyAction[] = [];
   const today = o.today;
 
+  // CFO-013: vadesi geçmiş ödenmemiş çıkış en öne (eskiden `>= today` ile görünmüyordu)
   const nextOut = input.cashEvents
-    .filter((e) => !e.isSettled && num(e.outflowTry) > 0 && e.eventDate >= today)
+    .filter((e) => !e.isSettled && num(e.outflowTry) > 0)
     .sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime())[0];
   if (nextOut) {
     out.push({
       order: 1, tone: "danger",
-      text: `${nextOut.eventDate.toLocaleDateString("tr-TR")} — ${nextOut.description} için ${Math.round(num(nextOut.outflowTry)).toLocaleString("tr-TR")} TL hazırla.`,
+      text: `${nextOut.eventDate < today ? "VADESİ GEÇTİ: " : ""}${nextOut.eventDate.toLocaleDateString("tr-TR")} — ${nextOut.description} için ${Math.round(num(nextOut.outflowTry)).toLocaleString("tr-TR")} TL hazırla.`,
     });
   }
 
