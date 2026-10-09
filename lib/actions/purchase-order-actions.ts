@@ -105,7 +105,7 @@ export async function createPurchaseOrderAction(
     revalidatePath("/admin/purchase-orders");
     return { ok: true, orderId: order.id };
   } catch (err) {
-    if(err instanceof Error&&err.message==='order_debt_gate')return {ok:false,message:'Yeni sipariş kapalı. Toplam borç güncel kayıtlarla 5 milyon TL altına düşmeden ürünleri CFO gelecek sipariş listesinde tutun.'};
+    if(err instanceof Error&&err.message==='order_debt_gate')return {ok:false,message:'Yeni sipariş kapalı. Finansal borç güncel kayıtlarla hedefin (CFO ayarları, USD × TCMB) altına düşmeden ürünleri CFO gelecek sipariş listesinde tutun.'};
     return {
       ok: false,
       message: userFacingMessage(err, "Sipariş oluşturulamadı. Lütfen tekrar deneyin.", "purchase-order/create"),
@@ -137,7 +137,7 @@ export async function updatePurchaseOrderStatusAction(
     revalidatePath("/admin/purchase-orders");
     return { ok: true };
   } catch(error) {
-    if(error instanceof Error&&error.message==='order_debt_gate')return {ok:false,message:'Taslak yeni siparişe dönüşemez: güncel toplam borç 5 milyon TL altına inmeli.'};
+    if(error instanceof Error&&error.message==='order_debt_gate')return {ok:false,message:'Taslak yeni siparişe dönüşemez: güncel finansal borç hedefin altına inmeli.'};
     return { ok: false, message: "Durum güncellenemedi." };
   }
 }
