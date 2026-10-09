@@ -101,6 +101,12 @@ assert.equal(shouldNotify(f, ["floor_breach"], 12), false, "öğle koşusu hatı
 assert.equal(shouldNotify(f, ["floor_breach"], 16), false, "akşam koşusu hatırlatmaz");
 assert.equal(shouldNotify([...f, ...pay], ["floor_breach"], 13), true, "yeni ödeme alarmı");
 assert.equal(shouldNotify(evaluateCfoAlarms(base({ runs: [] })), ["engine_stale"], 13), true, "motor arızası her saat bildirilir");
+// Vercel cron zinciri (motor öncesi + sonrası, health-notify.ts): takılan koşu süregelse de bildirilir; aynı zincirde gönderilen anahtar tekrar gitmez.
+const stuckA = [{ code: "stuck_run" as const, key: "stuck_run", message: "takılı" }];
+assert.equal(shouldNotify(stuckA, ["stuck_run"], -1), true, "takılan koşu motor arızası: süregelse de bildirilir");
+assert.equal(shouldNotify(stuckA, null, -1, ["stuck_run"]), false, "motor öncesinde gönderildi → motor sonrasında tekrar yok");
+assert.equal(shouldNotify([...stuckA, ...pay], ["floor_breach"], -1, ["stuck_run"]), true, "motor sonrasında yeni ödeme alarmı yine gider");
+assert.equal(shouldNotify(f, ["floor_breach"], -1), false, "hatırlatma penceresi kapalı (saat −1): süregelen alarm gitmez");
 // SQL (CFO-010 kısım 2): ödeme alarmı yalnız takvimden; defter satırının "ODENDI"si alarmı ne susturur ne de çift alarm üretir.
 async function sql() {
   const pg = new PGlite();

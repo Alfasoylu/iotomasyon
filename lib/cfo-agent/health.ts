@@ -104,12 +104,17 @@ export function evaluateCfoAlarms(i: AlarmInput): CfoAlarm[] {
 }
 
 /** E-posta (503) yalnız: motor arızası, önceki motor koşusunda olmayan YENİ alarm, ya da sabah penceresinde günlük hatırlatma. */
-export function shouldNotify(current: CfoAlarm[], previousKeys: string[] | null, hourTr: number): boolean {
-  if (!current.length) return false;
-  if (current.some(a => a.code === "engine_stale" || a.code === "consecutive_failures")) return true;
+/** Motor arızası alarmları: her koşuda bildirilir (süregelen olsa da). */
+export const ENGINE_ALARM_CODES: readonly AlarmCode[] = ["engine_stale", "consecutive_failures", "stuck_run"];
+// alreadySent: aynı zincirde (Vercel cron after(): motor öncesi + sonrası) az önce bildirilmiş anahtarlar — ikinci kez gönderilmez.
+export function shouldNotify(current: CfoAlarm[], previousKeys: string[] | null, hourTr: number, alreadySent: readonly string[] = []): boolean {
+  const sent = new Set(alreadySent);
+  const fresh = current.filter(a => !sent.has(a.key));
+  if (!fresh.length) return false;
+  if (fresh.some(a => ENGINE_ALARM_CODES.includes(a.code))) return true;
   if (hourTr >= REMINDER_WINDOW_TR.fromHour && hourTr < REMINDER_WINDOW_TR.toHour) return true;
   const prev = new Set(previousKeys ?? []);
-  return current.some(a => !prev.has(a.key));
+  return fresh.some(a => !prev.has(a.key));
 }
 
 const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
