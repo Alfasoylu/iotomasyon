@@ -1,9 +1,9 @@
 ---
-last_updated: 2026-10-08 23:45 TR
-current_main_commit: 422a6db
-current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 50/100
-next_action: "Bekleyen tanım kararları D-P01…D-P06 — CFO önerileri ve TL etkileri: docs/CFO-METRIC-CONTRACT.md"
+last_updated: 2026-10-09 02:50 TR
+current_main_commit: ac761e1
+current_phase: "Faz 1 — Metrik sözleşmesi (D-P01…03 kararlandı)"
+current_score: 51/100
+next_action: "KDV hariç ciro (migration 20261009120000, Cowork) → sabit kurun 433 maliyetli üründe etkisi → CFO-001 PR-D / CFO-002; bekleyen D-P04…D-P07"
 ---
 
 # CFO DECISION LOG
@@ -29,6 +29,17 @@ D-P01 → GENİŞ (yoldaki ödenmiş mal dahil) · D-P02 → LCNRV (maliyet ile 
 + kullanılan KMH; yoldaki vergi/navlun ayrı taahhüt) · D-P04 → TCMB döviz alış (ayın 15'i), yoksa önceki ay işaretli, yoksa UNKNOWN ·
 D-P05 → KDV hariç, iade düşülmüş, tüm kanallar (Alfashome dahil, eski tekstil hariç) — veri hazır olana kadar KDV dahil etiketli · D-P06 → teyit gerekli.
 
+## Alınan tanım kararları (Alperen, Cowork aracılığıyla, 2026-10-09)
+
+| ID | Karar | Sayı (üretim 08.10) | Gerekçe (karar sahibinin) | Uygulama |
+|---|---|---|---|---|
+| D-P01 | Net sermaye = **GENİŞ** tanım (yoldaki malın ödenmiş kısmı dahil) | — | — | CFO-001 PR-D |
+| D-P02 | Stok = **maliyet ile KDV hariç NRV'nin düşüğü (LCNRV)** | net sermaye **2.973.814 TL ≈ 61,2k USD** | "Stoku satış fiyatıyla değerlemek yanlıştı" | CFO-001 PR-D |
+| D-P03 | Borç = **krediler + kartlar + kullanılan KMH** (finansal borç). Yoldaki malın gümrüğü defterde iki taraflı (varlık + borç, net 0) kalır | ≈ 5,89M TL ≈ 121,3k USD (PR-A ölçümü; yeniden ölçülecek) | "doğru muhasebe o" | CFO-002 |
+| — | **Öncelik sırası:** önce KDV hariç ciro (RF-025), sonra sabit kurun 433 maliyetli üründeki etkisi ("marjın tabanı orada") | — | Cowork: maliyet doğrulamasında karşılaştırılabilen 8 üründen 4'ünde bulgu doğrulandı; kalan 433 maliyetli üründe yaygınlık bağımsız kaynakla ölçülemedi | CFO-025 (yeni) |
+
+Hâlâ bekleyen: D-P04 (stratejik kur), D-P05 (ciro hedefi KDV/kanal kapsamı), D-P06 (`unitCostTry` KDV esası), D-P07 (alarm kanalı).
+
 ## Sistem tasarım kararları (bu oturuma kadar, özet)
 
 | Tarih | Karar | Kim | Gerekçe | Geri alma |
@@ -44,3 +55,5 @@ D-P05 → KDV hariç, iade düşülmüş, tüm kanallar (Alfashome dahil, eski t
 | 2026-10-08 | CFO geliştirme Markdown üzerinden yönetilir (MASTER-PLAN/BACKLOG/SCORECARD/RED-FLAGS/DECISION-LOG); skor 90+ ve hard gate'ler hedefi | Alperen (protokol) | sürekli, denetlenebilir iyileştirme | — |
 | 2026-10-08 | Hedefler güncellendi: ciro ≥100k USD/ay, net sermaye ≥300k USD, **borç <100k USD** (eski: <5M TL) | Alperen | — | `fm_goal` v2 (CFO-002) bekliyor |
 | 2026-10-08 | Scorecard ağırlıkları önerilen başlangıç ağırlıklarıyla aynen kabul edildi (değiştirme gerekçesi bulunmadı) | Claude Code | protokol | DECISION-LOG kaydıyla değişir |
+| 2026-10-09 | KDV hariç ciro: kaynakta yoksa SKU'nun pazaryeri KDV oranından (2023-07-10 sonrası, baskın ≥ %80), yoksa %20 varsayılanla türetilir; türetme yolu bayrakla (`ex_vat_derived_sku` / `ex_vat_default_rate`); kalite notu U → B | Code (Alperen sırası) | pazaryeri cirosunun %99,7'si %20; Trendyol API'de KDV yok; XML KDV okuyucu rolüne açık değil ve Trendyol ürünlerinde fark yaratmıyor | migration 20261009120000 geri alma |
+

@@ -44,6 +44,7 @@ jobs:
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-reconciliation.test.ts
       - run: node --conditions=react-server --import tsx __tests__/cfo-reader-security.test.ts
       - run: node --import tsx __tests__/fm-canonical-sales.test.ts
+      - run: node --import tsx __tests__/fm-kdv-haric.test.ts
       - run: node --import tsx __tests__/fm-memory-schema.test.ts
       - run: node --import tsx __tests__/fm-sales-backfill.test.ts
       - run: node --import tsx __tests__/fm-tcmb-fx.test.ts

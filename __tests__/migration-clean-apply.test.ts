@@ -32,17 +32,22 @@ async function main() {
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
     alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
     alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;`);
+  // Üretimde henüz olmayan (baseline.json notAppliedInProduction) migration'lar parmak izinden SONRA uygulanır: Step 1 parmak izi
+  // üretimin bugünkü halidir (ör. 20261009120000 fm_sales_canonical'ı değiştirir; Cowork uygulayınca parmak izi yeniden ölçülür).
+  const held = new Set<string>(JSON.parse(readFileSync("prisma/baseline/baseline.json", "utf8")).notAppliedInProduction ?? []);
+  const all = readdirSync("prisma/migrations").filter(d => /^\d/.test(d)).sort();
   const failed: string[] = [];
-  for (const m of readdirSync("prisma/migrations").filter(d => /^\d/.test(d)).sort()) {
-    try { await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8")); } catch { failed.push(m); }
-  }
-  assert.deepEqual(failed, [...KNOWN_OUT_OF_BAND, ...BASELINE_DEPENDENT], "yeni bir migration temiz veritabanına uygulanamıyor (bilinen out-of-band / baseline'a bağlı listeler dışında)");
+  const apply = async (ms: string[]) => { for (const m of ms) { try { await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8")); } catch { failed.push(m); } } };
+  await apply(all.filter(m => !held.has(m)));
 
   const rows = (await db.query<Record<string, string>>(readFileSync("scripts/schema-drift/step1-fingerprint.sql", "utf8"))).rows;
   const actual = rows.map(r => `${r.sc} ${r.k} ${r.n} ${r.h}`);
   const expected = readFileSync("scripts/schema-drift/step1-fingerprint.expected.txt", "utf8").split("\n").filter(l => l && !l.startsWith("#"));
   assert.deepEqual(actual, expected, "Step 1 şeması üretimde doğrulanmış parmak iziyle uyuşmuyor");
-  console.log(`Migration clean-apply: ${failed.length} bilinen out-of-band hata (donmuş liste), Step 1 parmak izi üretimle birebir (${actual.length} grup)`);
+
+  await apply(all.filter(m => held.has(m)));
+  assert.deepEqual(failed, [...KNOWN_OUT_OF_BAND, ...BASELINE_DEPENDENT], "yeni bir migration temiz veritabanına uygulanamıyor (bilinen out-of-band / baseline'a bağlı listeler dışında)");
+  console.log(`Migration clean-apply: ${failed.length} bilinen out-of-band hata (donmuş liste), Step 1 parmak izi üretimle birebir (${actual.length} grup), ${held.size} bekletilen migration temiz uygulandı`);
   } finally { await db.close(); }
 }
 main().catch(e => { console.error(e); process.exitCode = 1; });

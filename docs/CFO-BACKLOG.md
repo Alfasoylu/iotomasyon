@@ -1,9 +1,9 @@
 ---
-last_updated: 2026-10-09 02:10 TR
-current_main_commit: 90af323
+last_updated: 2026-10-09 02:50 TR
+current_main_commit: ac761e1
 current_phase: "Faz 0 — İlk tam sistem denetimi tamamlandı; Faz 1 (Metrik sözleşmesi) sırada"
 current_score: 51/100
-next_action: "CFO-014 (UNKNOWN→0 süpürmesi + FX yedekleri) → CFO-016 güvenlik; RF-029 veri düzeltmesi Cowork; CFO-005 migration 110000 Cowork"
+next_action: "Cowork: 20261009120000 (KDV hariç ciro) + 110000 → CFO-025 (sabit kur, 433 ürün) → CFO-001 PR-D / CFO-002"
 ---
 
 # CFO BACKLOG
@@ -19,16 +19,16 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 
 | Sıra | ID | Başlık | P | Hedef | EV | RR | GI | CX | DU | OR | Skor | Maliyet | Durum | RF |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | IN_PROGRESS (PR-A ✓; karar bekliyor) | 001,011 |
+| 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | PLANNED (PR-A ✓; D-P01 GENİŞ + D-P02 LCNRV kararlandı 2026-10-09 → PR-D, CFO-025 ölçümünden sonra) | 001,011 |
 | 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | ✅ TAMAMLANDI 2026-10-09 — kalan anapara; PR #213 + migration 100000 üretimde | 005 |
 | 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | VALIDATED | 003 |
-| 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | VALIDATED | 002,019,020 |
+| 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | PLANNED (D-P03 kararlandı 2026-10-09: kredi + kart + kullanılan KMH; hedef <100k USD) | 002,019,020 |
 | 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | IN_PROGRESS (TS ✓ PR #214; SQL `cfo_kart_karari` PR #215, migration 20261009110000 Cowork'te) | 004 |
 | 6 | CFO-006 | Şirket/şahsi tek sınıflama; nakit/kapasite/borç bunu kullansın | P1 | G2,G3 | 4 | 4 | 3 | 3 | 1 | 2 | **5** | M | VALIDATED | 010 |
 | 7 | CFO-009 | Alarm teslimi GitHub'dan bağımsız; takılan koşu + kilit hatası alarmı; cfo-cycle bağla | P1 | tümü | 3 | 5 | 2 | 2 | 1 | 2 | **5** | M | IN_PROGRESS (takılan koşu/kilit/yeniden deneme ✓; teslim kanalı D-P07 bekliyor) | 006 |
 | 8 | CFO-010 | Defter bakım yolu: kredi/kart vade devri, alacak/ödeme girişi | P1 | tümü | 4 | 4 | 2 | 3 | 1 | 2 | **4** | L | ✅ TAMAMLANDI 2026-10-09 — ödeme durumu tek kaynak (takvim); defter↔takvim boşluk + mükerrer taksit alarmı; Borçlar takvimden; yetim cfo-actions silindi | 007,028,029 |
 | 9 | CFO-007 | KDV esası kararı + marj/NRV KDV hariç | P1 | G1,G2 | 4 | 4 | 4 | 3 | 3 | 2 | **4** | M | DISCOVERED | 008 |
-| 10 | CFO-008 | Ciro hedefi tanımı (KDV, kanal kapsamı) + tek ciro fonksiyonu | P1 | G1 | 3 | 3 | 5 | 3 | 2 | 1 | **5** | M | DISCOVERED | 009,023 |
+| 10 | CFO-008 | Ciro hedefi tanımı (KDV, kanal kapsamı) + tek ciro fonksiyonu | P1 | G1 | 3 | 3 | 5 | 3 | 2 | 1 | **5** | M | IN_PROGRESS (KDV hariç ciro migration 20261009120000 Cowork'te; hedef tanımı D-P05 bekliyor) | 009,023 |
 | 11 | CFO-011 | Maliyet kapsamı ≥ %95 (8 SKU veri + migration 200000) | P1 | G1 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen; Code ✓ PR #210, migration 200000 üretimde 2026-10-08) | 013 |
 | 12 | CFO-015 | Ölçülmemiş KMH/gümrük/şahsi faiz oranlarını gir | P1 | G3 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen) | 018 |
 | 13 | CFO-012 | Karar hafızası: beklenen değer zorunlu, `cfo_hamle_olcum` yazımı, kalibrasyon | P2 | tümü | 3 | 2 | 3 | 2 | 2 | 1 | **3** | M | VALIDATED | 014 |
@@ -42,6 +42,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 21 | CFO-020 | Ölü stok tek kural + eşikler konfigürasyondan | P3 | G2 | 2 | 2 | 2 | 2 | 1 | 1 | **2** | S | DISCOVERED | 019 |
 | 22 | CFO-022 | Nakit tahmini kalibrasyonu (Goal Engine gözlemleri, 2–4 hafta veri sonrası) | P3 | taban | 3 | 3 | 2 | 2 | 3 | 1 | **2** | M | PLANNED (veri birikiyor) | — |
 | 23 | CFO-021 | CI düzeltmesi (yml:113, alfashome testi) + eski UI metinleri | P4 | — | 1 | 2 | 1 | 1 | 1 | 1 | **1** | S | VALIDATED | 021,022 |
+| 9a | CFO-025 | Sabit kurun 433 maliyetli üründe maliyete etkisi (marj tabanı) — Alperen sırası: KDV hariç cirodan hemen sonra | P0 | G1,G2 | 4 | 4 | 3 | 2 | 3 | 1 | **5** | S (ölçüm) | IN_PROGRESS (ölçüm ✓ 2026-10-09: sabit kur 48,50 → marj etkisi 0,43 puan; asıl belirsizlik USD maliyet/çarpan — Cowork 8 ürün ayrıntısı bekleniyor) | 030 |
 | 24 | CFO-024 | Ölü bileşen temizliği (`cfo_model_hakedis`, `cfo_insight/usage`, ölü ayar alanları, yetim route) | P4 | — | 1 | 1 | 1 | 1 | 1 | 2 | **−1** | S | DISCOVERED | 024 |
 
 Not: CFO-004 skoru en yüksek ama tek başına küçük; CFO-001'in PR-B'si olarak sıraya alındı. CFO-011/015 Code işi değil, veri işi —
@@ -95,7 +96,15 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-008 — Ciro hedefi tanımı + tek ciro fonksiyonu
 - **neden:** KDV dahil ölçüm; 7 ciro formülü; Alfashome hariç, IDEASOFT/tekstil dahil. **uygulama:** karar → `cfo_metrik_ciro(gün aralığı, kdv)`; tüm sayfalar.
-- **durum:** DISCOVERED (karar bekliyor)
+- **durum:** IN_PROGRESS — kısım 1 (2026-10-09, Alperen sırası 1): KDV hariç ciro ölçülebilir hale geliyor — migration `20261009120000_fm_kdv_haric_ciro` (kaynakta yoksa SKU'nun pazaryeri KDV oranı 2023-07-10 sonrası, yoksa %20 bayraklı; kalite U → B), Cowork uygulayacak + 2026-05..08 tek seferlik hafıza tazelemesi. Üretim ölçümü (salt-okuma): Eylül KDV hariç 1.604.768 TL (dahil 1.925.721). Kalan: eksik günlerin "A" notu (RF-025 ikinci yarısı), hedef tanımı D-P05.
+
+### CFO-025 — Sabit kurun maliyete etkisi (433 maliyetli ürün)
+- **neden:** Cowork (2026-10-09): karşılaştırılabilen 8 üründen 4'ünde maliyetin sabit kurla hesaplandığı doğrulandı; kalan 433 maliyetli üründe yaygınlık bağımsız kaynakla ölçülemedi. Marjın, LCNRV'nin ve kâr kurallarının tabanı `unitCostTry`.
+- **uygulama:** salt-okunur ölçüm — her maliyetli ürün için maliyetin hangi kurla üretildiği (kaynak USD maliyet × kur ↔ `unitCostTry`), bugünkü kurla fark (TL, ciro ağırlıklı), etkilenen marj/LCNRV; sonra düzeltme önerisi (veri yazımı insan onayı).
+- **sıra:** Alperen: KDV hariç cirodan hemen sonra. **AI maliyeti:** 0 · **durum:** IN_PROGRESS
+- **ölçüm (2026-10-09, üretim salt-okuma):** 433 maliyetli ürünün 431'inde `unitCostTry = unitCostUsd × 48,50` (404 ürün tam 48,50; 26'sı 48,49–48,52 yuvarlama); kayıtlar 28.08–08.10 arasında yeniden yazılmış. 48,50 ≈ TCMB Eylül (48,5585). Bugünkü kurla fark: `cfo_kur` 48,98 → rafta stok maliyeti +24.634 TL (%0,57); `cfo_settings` 49,20 → +43.920 TL. Son 30 gün satılan maliyet farkı 4.475 TL → **marj etkisi 0,43 puan** (KDV hariç ciro üzerinden). Tek sapma: M-BANYOMİX (50,36; 8 USD → 402,85 TL; stok 1.205 → 485k TL — 4.537 TL kur kaynaklı fark).
+- **asıl belirsizlik kurda değil USD maliyette:** `unitCostUsd / (sourceCostRmb / 6,72)` = ithalat çarpanı 1,27 ile 84,6 arasında; 253 ürün 1,52–1,74; 16 ürün > 3 (küçük RMB'li ürünlerde birim navlun normal) — **TE-RINGFILLLIGHT 16 RMB → 201,37 USD (84×), maliyet 9.767 TL: veri hatası** (stok 0; satılırsa marjı bozar). RF-030.
+- **sonraki adım:** Cowork'ün 8 ürünlük karşılaştırmasındaki 4 sapmanın kaynağı (kur mu, USD maliyet mi, çarpan mı) — kur ise etkisi ölçüldüğü gibi küçük; USD/çarpan ise 433 ürün için çarpan dağılımı + fatura örneklemi. Düzeltme: TL maliyet saklanmasın, `unitCostUsd × stratejik kur` (D-P04) çalışma anında; veri yazımı insan onayı.
 
 ### CFO-009 — Alarm teslimi ve gözlemlenebilirlik
 - **uygulama:** sağlık değerlendirmesini Vercel cron'larının `after()` zincirine de ekle; `running` > 15 dk → başarısız say; kilit hatasında `cfo_run` satırı; `cfo-cycle`'ı mevcut cron'a bağla; teslim kanalı (e-posta/WhatsApp — mevcut WhatsApp altyapısı) karar: Alperen.

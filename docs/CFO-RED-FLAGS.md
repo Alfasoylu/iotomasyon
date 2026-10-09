@@ -11,7 +11,7 @@ next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-09, CFO-019 sonrası):** RF-005, RF-017, RF-028 RESOLVED · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 9 · MEDIUM 12 (yeni RF-029) · LOW 4 · INFO 1 · toplam 29.
+**Açık özet (2026-10-09, CFO-025 ölçümü sonrası):** RF-005, RF-017, RF-028 RESOLVED · RF-025 kısmen FIX READY · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 9 · MEDIUM 12 (RF-029) · LOW 5 (yeni RF-030) · INFO 1 · toplam 30.
 
 ---
 
@@ -310,4 +310,35 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
   ve Supabase hedefi açık izin değişkeni olmadan reddedilir (çıkış 1, prisma hiç başlamaz). Test `migrate-deploy-guard` CI'da.
 - **Kalan sınır (bilinçli):** `npx prisma migrate deploy` doğrudan çağrılırsa koruma atlanır; yönetişim kuralı (Master Plan: üretimde deploy yok,
   Cowork SQL uygular) geçerli. Yeni red flag yok.
+
+---
+
+## 2026-10-09 — CFO-008 kısım 1 (KDV hariç ciro) RED FLAG PASS
+
+### RF-20261008-025 — güncelleme: KISMEN FIX READY (KDV hariç yarısı; migration 20261009120000, Cowork uygulayacak)
+- `fm_sales_canonical` kaynakta KDV hariç tutar olmayan satırda (Trendyol API, Amazon FBA) tutarı türetir: SKU'nun pazaryeri satırlarındaki baskın
+  KDV oranı (yalnız 2023-07-10 sonrası — öncesi %18; ≥ %80 baskınlık), yoksa %20 varsayılan; bayrak `ex_vat_derived_sku` / `ex_vat_default_rate`.
+  Kaynak değer korunur; görünümün diğer tüm sütunları aynı (PGlite eşlik testi `fm-kdv-haric`). Kalite notu U → B.
+- Üretim ölçümü (anlık görüntü üzerinde aynı mantık, salt-okuma): Mayıs–Ekim her ay KDV payı %16,67 (tümü %20). Eylül KDV hariç 1.604.768 TL;
+  Ekim varsayılan oran payı %38,9 (yeni SKU'ların Entegra geçmişi yok; oran yine %20 — tutar etkilenmez, köken bayrakta).
+- **Açık kalan (ikinci yarı):** eksik günlerin "A" notuyla tam sayılması (07.10 = 5.288 TL) — kaynak tazeliği sınırı ayrı iş.
+
+### Bağımsız inceleme
+- Aynı KDV iki kez düşülüyor mu? Hayır: türetme yalnız kaynakta KDV hariç tutar YOKSA; kimlik testi KDV hariç + KDV = KDV dahil. Eski oranla
+  (%18) türetme riski 2023-07-10 filtresiyle kapatıldı (üretimde 8 SKU'nun medyanı %18'e düşüyordu). XML KDV kullanılmadı: okuyucu rolünün
+  `XmlProductData` yetkisi yok (security_invoker görünüm onu kırardı) ve Trendyol ürünlerinde %10 ürün yok. Yeni red flag yok.
+
+---
+
+## 2026-10-09 — CFO-025 ölçüm RED FLAG PASS
+
+### RF-20261009-030 — Ürün maliyetinde ithalat çarpanı 84×: TE-RINGFILLLIGHT (YENİ, LOW, veri)
+- **date:** 2026-10-09 · **severity:** LOW (stok 0) · **status:** OPEN (veri düzeltmesi insan)
+- **finding:** `sourceCostRmb` 16 → `unitCostUsd` 201,37 (FOB'un 84,6 katı; tipik 1,5–1,8) → `unitCostTry` 9.767 TL. Satılırsa marj/kâr kuralları
+  yanlış alarm üretir. 433 ürünün 16'sında çarpan > 3 (çoğu küçük RMB'li ürün; birim navlun payı — makul).
+- **economic_risk:** bugün 0 (stok yok); yeniden stoklanırsa fiyat tabanı yanlış.
+
+### Ölçüm notu (kayıt değişmez): sabit kur
+- Cowork'ün "sabit kur" bulgusu üretimde doğrulandı: 431/433 ürün 48,50. Ancak etkisi küçük: marj 0,43 puan, rafta stok maliyeti +24,6k TL (cfo_kur 48,98).
+  Ayrı bir red flag açılmadı; kalıcı çözüm D-P04 (stratejik kur) ile birlikte (TL maliyet çalışma anında). Bağımsız inceleme: yeni CRITICAL/HIGH yok.
 
