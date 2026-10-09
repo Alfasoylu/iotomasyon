@@ -2163,6 +2163,8 @@ model CfoSnapshot {
   debtTry        Decimal? @db.Decimal(14, 2)
   usdTryRate     Decimal? @db.Decimal(10, 4)
   note           String?
+  /// Net sermaye SÖZLEŞME tanımı (CFO-001; cfo_metrik_net_sermaye() sira 100: GENİŞ + LCNRV + KMH). Migration 20261009170000 öncesi boş.
+  contractNetWorthTry Decimal? @db.Decimal(14, 2)
 
   @@index([takenAt])
   @@map("cfo_snapshot")

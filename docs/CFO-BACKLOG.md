@@ -19,7 +19,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 
 | Sıra | ID | Başlık | P | Hedef | EV | RR | GI | CX | DU | OR | Skor | Maliyet | Durum | RF |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | PLANNED (PR-A ✓; D-P01 GENİŞ + D-P02 LCNRV kararlandı 2026-10-09 → PR-D, CFO-025 ölçümünden sonra) | 001,011 |
+| 1 | CFO-001 | Metrik sözleşmesi: net sermaye tek tanım (+ karar memosu, mutabakat testi) | P0 | G2,G3 | 5 | 5 | 5 | 3 | 3 | 2 | **7** | L | IN_PROGRESS (PR-A ✓; PR-D kod ✓ 2026-10-09 — `cfo_metrik_net_sermaye()` + snapshot + Goal v3 + /cfo; migration 170000 Cowork bekliyor) | 001,011 |
 | 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | ✅ TAMAMLANDI 2026-10-09 — kalan anapara; PR #213 + migration 100000 üretimde | 005 |
 | 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | VALIDATED | 003 |
 | 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | PLANNED (D-P03 kararlandı 2026-10-09: kredi + kart + kullanılan KMH; hedef <100k USD) | 002,019,020 |
@@ -60,6 +60,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **uygulama:** PR-A karar memosu + salt-okunur mutabakat testi (bugünkü tüm tanımları ölçer, farkları TL ile yazar); PR-D `cfo_metrik_net_sermaye` + tek snapshot yazarı + Goal/sayfa/motor aynı kaynak.
 - **kabul:** Goal Engine `wealth_usd` = `/cfo` servet kartı = snapshot (aynı tarih, aynı kur) 1 TL içinde; eşlik testi CI'da.
 - **AI maliyeti:** 0 · **durum:** IN_PROGRESS · **PR:** PR-A (memo `docs/CFO-METRIC-CONTRACT.md` + `scripts/cfo/metric-reconciliation.sql` + CI kontrolü) · **tamamlanma:** —
+- **PR-D (2026-10-09, kod; migration `20261009170000_cfo_metrik_net_sermaye` Cowork bekliyor):** `cfo_metrik_net_sermaye()` tek tanım (GENİŞ + LCNRV + KMH; değeri bilinmeyen stok BILINMIYOR, 0 değil); `cfo_snapshot.contractNetWorthTry`; `fm_balance_day` `net_capital_try` v3; Goal yalnız en yeni sürüm; `/cfo` manşeti sözleşme; mutabakat `net_sozlesme` eşitlik testi (`cfo-net-sermaye`). Üretim bugün 2.900.562 TL. **Kalan (DONE için):** Cowork uygulaması + ilk sözleşme snapshot'ında Goal `wealth_usd` = `/cfo` = snapshot doğrulaması; kur tek kaynak (CFO-003 / D-P04) — bugün Goal TCMB, `/cfo` `cfo_servet.kur` ile USD'ye çevirir (TL eşit, USD farkı kur kaynaklı); `/admin/sermaye` ve motor tüketicileri (CFO-023 eşlik testi).
 - **PR-A sonucu (2026-10-08):** önerilen net sermaye 2.973.814 TL ≈ 61,2k USD (LCNRV, geniş); önerilen borç 5.889.904 TL ≈ 121,3k USD (+3,79M taahhüt ayrı); KDV hariç ciro ölçülemiyor (yeni RF-025).
 
 ### CFO-002 — Borç tek tanım + hedef <100k USD

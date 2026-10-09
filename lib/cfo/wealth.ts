@@ -2,7 +2,8 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Servet — TEK kaynak: `cfo_servet` görünümü.
+ * Servet — `cfo_servet` görünümü (potansiyel değer: stok KDV dahil satış değeriyle) + NET SERMAYE sözleşmesi
+ * `cfo_metrik_net_sermaye()` (CFO-001, 2026-10-09: stok maliyet ile KDV hariç NRV'nin düşüğü; Goal Engine aynı sayıyı ölçer).
  *
  * NEDEN AYRI DOSYA: kokpitteki servet rakamı 10.09.2026'ya kadar
  * `lib/cfo/engine.ts` içinde şöyle hesaplanıyordu:
@@ -42,6 +43,15 @@ export type ServetKalemi = {
   guven: string | null;
 };
 
+/** Net sermaye SÖZLEŞME satırı (`cfo_metrik_net_sermaye()`, CFO-001): sira 100 = toplam; 90+ = BİLGİ (toplama girmez). */
+export type SozlesmeKalemi = {
+  sira: number;
+  tur: string;
+  kalem: string;
+  tutar: unknown;
+  aciklama: string | null;
+};
+
 export type LikiditeDilimi = {
   dilim: string;
   urun: number;
@@ -62,6 +72,8 @@ export type StokYogunlasmasi = {
 export type ServetVerisi = {
   ozet: ServetOzeti | null;
   kalemler: ServetKalemi[];
+  /** Net sermayenin tek tanımı (GENİŞ + LCNRV + KMH). Migration 20261009170000 uygulanmadıysa null — sayfa eski servetle kalır. */
+  sozlesme: SozlesmeKalemi[] | null;
   likidite: LikiditeDilimi[];
   yogunlasma: StokYogunlasmasi[];
   /** Hedef tarihine kalan ay. Burada hesaplanır çünkü "şu an"ı okumak bir yan
@@ -74,9 +86,11 @@ export type ServetVerisi = {
  * render sırasında çağrılması güvenli.
  */
 export async function loadWealth(hedefTarihi?: Date | null): Promise<ServetVerisi> {
-  const [ozet, kalemler, likidite, yogunlasma] = await Promise.all([
+  const [ozet, kalemler, sozlesme, likidite, yogunlasma] = await Promise.all([
     prisma.$queryRaw<ServetOzeti[]>`select * from cfo_servet`,
     prisma.$queryRaw<ServetKalemi[]>`select * from cfo_servet_kalem order by sira`,
+    // Fonksiyon henüz üretimde yoksa (bekletilen migration) sayfa düşmez: eski servet gösterilir.
+    prisma.$queryRaw<SozlesmeKalemi[]>`select * from cfo_metrik_net_sermaye()`.catch(() => null),
     prisma.$queryRaw<LikiditeDilimi[]>`select * from cfo_servet_likidite order by dilim`,
     // Servetin ne kadarının tek bir üründe kilitli olduğunu görmek için ilk 5.
     prisma.$queryRaw<StokYogunlasmasi[]>`
@@ -92,7 +106,7 @@ export async function loadWealth(hedefTarihi?: Date | null): Promise<ServetVeris
       ? (new Date(hedefTarihi).getTime() - Date.now()) / 86400000 / 30.4
       : null;
 
-  return { ozet: ozet[0] ?? null, kalemler, likidite, yogunlasma, hedefAyKalan };
+  return { ozet: ozet[0] ?? null, kalemler, sozlesme, likidite, yogunlasma, hedefAyKalan };
 }
 
 export const DILIM_ETIKET: Record<string, string> = {

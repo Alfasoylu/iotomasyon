@@ -52,7 +52,7 @@ export function WealthSection({
   veri: ServetVerisi;
   hedefUsd: number | null;
 }) {
-  const { ozet, kalemler, likidite, yogunlasma } = veri;
+  const { ozet, kalemler, sozlesme, likidite, yogunlasma } = veri;
 
   if (!ozet) {
     return (
@@ -68,8 +68,13 @@ export function WealthSection({
     );
   }
 
-  const servetTry = n(ozet.servet_try);
-  const servetUsd = n(ozet.servet_usd);
+  // Manşet = net sermaye SÖZLEŞMESİ (CFO-001) varsa; cfo_servet "potansiyel değer" olarak yanında kalır.
+  const netSatir = sozlesme?.find((k) => k.sira === 100) ?? null;
+  const kur = n(ozet.kur);
+  const potansiyelTry = n(ozet.servet_try);
+  const potansiyelUsd = n(ozet.servet_usd);
+  const servetTry = netSatir ? n(netSatir.tutar) : potansiyelTry;
+  const servetUsd = netSatir ? (kur > 0 ? servetTry / kur : 0) : potansiyelUsd;
   const varlik = n(ozet.varlik);
   const borc = n(ozet.borc);
   const riskli = n(ozet.riskli_haric_tutulan);
@@ -113,11 +118,18 @@ export function WealthSection({
       {/* ── Manşet ─────────────────────────────────────────────────── */}
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-4">
-          <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">Servet</p>
+          <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+            {netSatir ? "Net sermaye" : "Servet"}
+          </p>
           <p className="mt-1 text-[22px] font-semibold tabular-nums text-[var(--text-primary)]">
             {fmtUsd(servetUsd)}
           </p>
           <p className="text-[11px] text-[var(--text-muted)]">{fmtTry(servetTry)}</p>
+          {netSatir && (
+            <p className="mt-1 text-[11px] leading-snug text-[var(--text-muted)]">
+              stok maliyet ile KDV hariç satış değerinin düşüğüyle · potansiyel değer {fmtUsd(potansiyelUsd)}
+            </p>
+          )}
         </div>
         <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-4">
           <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">Varlık</p>
@@ -209,9 +221,49 @@ export function WealthSection({
         )}
       </div>
 
+      {/* ── Net sermaye sözleşmesi ─────────────────────────────────── */}
+      {sozlesme && sozlesme.length > 0 && (
+        <>
+          <h3 className="mb-2 text-[13px] font-semibold text-[var(--text-primary)]">
+            Net sermaye nasıl oluşuyor (tek tanım — hedef bunu ölçer)
+          </h3>
+          <CfoTable
+            head={
+              <tr>
+                <Th>Kalem</Th>
+                <Th right>Tutar</Th>
+                <Th>Açıklama</Th>
+              </tr>
+            }
+          >
+            {sozlesme.map((k) => {
+              const bilgi = k.tur === "BILGI";
+              const tutar = k.tutar == null ? null : n(k.tutar);
+              return (
+                <tr key={k.sira} className={bilgi ? "opacity-70" : ""}>
+                  <Td strong={k.tur === "TOPLAM"}>
+                    {k.kalem}
+                    {bilgi && (
+                      <Badge variant="neutral" className="ml-2">
+                        toplama girmez
+                      </Badge>
+                    )}
+                  </Td>
+                  <Td right strong={k.tur === "TOPLAM"} danger={tutar != null && tutar < 0}>
+                    {tutar == null ? "bilinmiyor" : fmtTry(tutar)}
+                  </Td>
+                  <Td muted>{k.aciklama}</Td>
+                </tr>
+              );
+            })}
+          </CfoTable>
+          <div className="mb-6" />
+        </>
+      )}
+
       {/* ── Kalemler ───────────────────────────────────────────────── */}
       <h3 className="mb-2 text-[13px] font-semibold text-[var(--text-primary)]">
-        Servet nasıl oluşuyor
+        {netSatir ? "Potansiyel değer nasıl oluşuyor (stok KDV dahil satış değeriyle)" : "Servet nasıl oluşuyor"}
       </h3>
       <CfoTable
         head={

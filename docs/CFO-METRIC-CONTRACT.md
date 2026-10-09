@@ -8,6 +8,12 @@ next_action: "Alperen kararları D-P01…D-P06 → PR-D (net sermaye) / PR-E (bo
 
 # CFO METRİK SÖZLEŞMESİ — karar memosu (CFO-001 PR-A)
 
+> **Durum 2026-10-09:** D-P01 GENİŞ, D-P02 LCNRV, D-P03 finansal borç kararlandı. **Net sermaye uygulandı (PR-D):** tek tanım
+> `cfo_metrik_net_sermaye()` (migration `20261009170000`, Cowork uygulayacak) — Goal Engine (`fm_balance_day` `net_capital_try` v3),
+> `cfo_snapshot.contractNetWorthTry` ve `/cfo` manşeti aynı fonksiyondan. Üretim 09.10: **2.900.562 TL**. Uygulama ayrıntısı: nakit = artı
+> bakiyeler, KMH = eksi bakiyeler; satan ama maliyeti olmayan stok (24 SKU, ≤ 256.990 TL) ve değeri bilinmeyen stok (32 SKU) BILINMIYOR
+> satırında, toplamda değil. Mutabakat SQL'i `net_sozlesme` sütunuyla bağımsız ikinci uygulamadır (CI eşitlik testi). Sırada: borç (PR-E / CFO-002), kur (CFO-003).
+
 Amaç: stratejik hedeflerin (ciro, net sermaye, borç) ve nakdin **tek** tanımı. Bugün yaşayan tüm tanımlar
 `scripts/cfo/metric-reconciliation.sql` ile tek satırda ölçülür (salt-okunur; CI'da üretim kopyasında koşar; Cowork da çalıştırabilir).
 Aşağıdaki sayılar **2026-10-08 ~23:50 TR üretim** ölçümüdür.

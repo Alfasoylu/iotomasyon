@@ -391,6 +391,13 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
   migration `20261009160000_cfo_kart_karari_bsmv` (Cowork uygulayınca). Üretim etkisi: devreden 1.984.192 TL'nin aylık maliyeti
   109.627 → 101.194 TL (−8.433 TL/ay modelde; nakit etkisi yok). Taban −3M TL kalır (Alperen; karar kaydı).
 
+### RF-20261008-001 — güncelleme (2026-10-09, CFO-001 PR-D; CRITICAL, OPEN → FIX READY)
+- Tek tanım `cfo_metrik_net_sermaye()` (GENİŞ + LCNRV + KMH; Alperen D-P01..03); snapshot `contractNetWorthTry` → `fm_balance_day` v3 →
+  Goal `wealth_usd`; `/cfo` manşeti aynı fonksiyon. Migration `20261009170000` Cowork uygulayınca + ilk sözleşme snapshot'ında
+  üç yer TL olarak eşit olur → RESOLVED. Kalan fark yalnız USD kuru (CFO-003 / D-P04). Üretim bugün 2.900.562 TL ≈ 59,7k USD (48,56).
+- Yeni görünür bilinmeyen: satan ama birim maliyeti olmayan 24 SKU (KDV hariç NRV ≤ 256.990 TL) eskiden LCNRV'de sessizce 0'dı; artık
+  BILINMIYOR satırı (maliyet girilince toplama girer — CFO-011 veri işiyle aynı liste).
+
 ### Gözlem (kayıt değişmez): nakit dibi
 - `cfo_kart_karari` bugün en dibi −3.862.998 TL (2027-01-01) gösteriyor (08.10: −3.578.121, 01.12). Ufuk 120 gün kaydıkça Ocak ödemeleri girdi;
   ayrıca incelenecek (CFO-013 / RF-029 Yapı Kredi mükerrer satırları hâlâ projeksiyonda).
