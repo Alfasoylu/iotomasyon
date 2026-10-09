@@ -1,8 +1,8 @@
 ---
-last_updated: 2026-10-09 02:10 TR
+last_updated: 2026-10-09 09:50 TR
 current_main_commit: 90af323
 current_phase: "Faz 0 — İlk tam sistem denetimi"
-current_score: 51/100 (hard gate 12/12 gerekiyor; bugün 5/12)
+current_score: 52/100 (hard gate 12/12 gerekiyor; bugün 5/12)
 next_action: "CFO-014 (UNKNOWN→0 süpürmesi) / CFO-016; RF-029 veri düzeltmesi Cowork'te; D-P01…D-P07 kararları"
 ---
 
@@ -56,14 +56,14 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 1 | Financial accuracy & reconciliation | 20 | **8** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye 3, borç 5, kur 4, ciro 7, marj 5 tanım; KDV esası belirsiz; latent `remainingOverride`; atıf kimliği bozuk |
 | 2 | Cash / liquidity / debt | 15 | **10** | Ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | 4 nakit/4 kapasite tanımı; düz %4,5 beş yerde; borç hedefi eski; takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş |
 | 3 | Capital allocation | 15 | **7** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | KDV dahil NRV tabanı; kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
-| 4 | Revenue / profitability | 10 | **4** | Ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları | Marj kuralları susuyor (kapsam); KDV düşülmüyor; 7 ciro formülü; iade marja bağlı değil |
+| 4 | Revenue / profitability | 10 | **5** | KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); 7 ciro formülü; iade marja bağlı değil |
 | 5 | Inventory / procurement | 10 | **5** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
 | 6 | Decision memory & calibration | 10 | **3** | `cfo_hamle` + beklenen/gerçekleşen ekranı; goal attribution | 3/15 karar ölçülebilir; ölçüm tablosu hiç yazılmıyor; atıf kimliği bozuk |
 | 7 | Data quality / provenance | 7 | **4** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi | Eski motor/yan modüllerde UNKNOWN→0; tahminler measured=true; elle defterler; 66 açık soru, karışık durum sözlüğü |
 | 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; takılan koşu/kilit hatası görünmez; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **2** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Okuma izniyle yazma yolları, yetkisiz action, düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü |
-| | **TOPLAM** | **100** | **51** | | |
+| | **TOPLAM** | **100** | **52** | | |
 
 ## Skor geçmişi
 
@@ -75,3 +75,4 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 2026-10-09 | CFO-005b + CFO-009 | 50 | 5/12 | Takılan koşu / kilit hatası görünür, başarısız dilim yeniden denenir (8. boyut 3→4); kart erteleme kart faiziyle (üretimde migration bekliyor) |
 | 2026-10-09 | Üretim senkronu (200000 + 100000) | 50 | 5/12 | Kredi borcu üretimde kalan anapara (RF-005 RESOLVED; H12 hâlâ RF-001…004 nedeniyle ❌). Puan artışı yok: 1. boyut tek tanım eksikliğiyle sınırlı |
 | 2026-10-09 | CFO-010 kısım 2 | 51 | 5/12 | Ödeme durumu tek kaynak (takvim), çift alarm yok, boşluk + mükerrer taksit görünür (2. boyut 9→10). Projeksiyon 99.832 TL fazla çıkış içeriyor (RF-029, veri) |
+| 2026-10-09 | Üretim senkronu (110000/120000/130000) | 52 | 5/12 | KDV hariç ciro + hedef kaynak tazeliği üretimde (4. boyut 4→5); RF-004, RF-025 RESOLVED; H12 hâlâ ❌ (RF-001…003) |

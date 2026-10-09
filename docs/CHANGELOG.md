@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### KDV hariç ciro ve tam günlere dayalı ciro hedefi üretimde (2026-10-09)
+- Günlük satış hafızasında KDV hariç ciro artık her gün dolu (Nisan–Ekim; Eylül 1.604.768 TL). Trendyol satırlarında kaynakta olmayan KDV hariç tutar, ürünün pazaryeri KDV oranından (yoksa %20) türetiliyor ve kaynağı işaretleniyor.
+- Aylık ciro hedefinin hızı ve projeksiyonu yalnız tüm satış kaynaklarının tamam olduğu günlerden hesaplanıyor; eksik son günler hızı düşürmüyor (09.10: 51.941 → 58.318 TL/gün).
+- Nakit tabanı delindiğinde kart ödemesi erteleme önerisi kartın kendi faiziyle (KKDF + BSMV dahil) fiyatlanıyor.
+
 ### Migration deploy komutu bekletilen migration'ları uygulamıyor (2026-10-09)
 - `npm run db:migrate:deploy`, üretime bilinçli olarak uygulanmamış migration'lar (yıkıcı yedek tablo silme dahil) varken ya da hedef Supabase üretim veritabanıyken açık izin olmadan çalışmayı reddediyor.
 

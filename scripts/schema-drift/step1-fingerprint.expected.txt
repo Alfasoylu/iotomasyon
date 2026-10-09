@@ -1,9 +1,11 @@
+# 2026-10-09: function bodies hashed without SQL line comments; fm_quality_policy hashed without the free-text reason column (re-measured on production).
+# Re-verified against production 2026-10-09 ~06:30 UTC after 20261009120000 (fm_sales_canonical, KDV hariç) + 20261009130000 (fm_goal_evaluate) — fn/view/seed rows updated.
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-05): the Step 1 fingerprint of a clean apply of prisma/migrations
 # must equal this. Columns: scope kind object_count hash. Regenerate ONLY after re-verifying against production
 # (run scripts/schema-drift/step1-fingerprint.sql there and compare).
 A acl 74 4793eca391
 A con 56 8b2de13c4e
-A fn 12 8028fea86a
+A fn 12 a6aa0da69b
 A fnacl 3 a722a4a92e
 A idx 26 74df98d4b0
 A pol 20 600b7929c6
@@ -15,10 +17,10 @@ A seed:cfo_kargo_barem 1 c2799544dd
 A seed:cfo_kargo_desi_tarife 1 54d61d872f
 A seed:cfo_kargo_kanal_varsayim 1 93a26276c4
 A seed:fm_metric 1 d914c3c81b
-A seed:fm_quality_flag 1 ae1179fb9c
-A seed:fm_quality_policy 1 0095b87391
+A seed:fm_quality_flag 1 eba6ad340d
+A seed:fm_quality_policy 1 767d06a815
 A seed:fm_source_priority 1 10406f50a3
-A view 17 9173256ddf
+A view 17 f33e3aefd6
 B acl 10 59c32b6cfa
 B pol 10 6cf94d13ae
 B rls 10 ce2943d96f

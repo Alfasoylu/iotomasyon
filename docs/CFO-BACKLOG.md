@@ -1,8 +1,8 @@
 ---
-last_updated: 2026-10-09 02:50 TR
+last_updated: 2026-10-09 09:50 TR
 current_main_commit: ac761e1
 current_phase: "Faz 0 — İlk tam sistem denetimi tamamlandı; Faz 1 (Metrik sözleşmesi) sırada"
-current_score: 51/100
+current_score: 52/100
 next_action: "Cowork: 20261009120000 (KDV hariç ciro) + 110000 → CFO-025 (sabit kur, 433 ürün) → CFO-001 PR-D / CFO-002"
 ---
 
@@ -23,12 +23,12 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 2 | CFO-004 | `remainingOverride` TL olarak kullanılmasın | P0 | G2,G3 | 3 | 5 | 3 | 1 | 1 | 1 | **8** | S | ✅ TAMAMLANDI 2026-10-09 — kalan anapara; PR #213 + migration 100000 üretimde | 005 |
 | 3 | CFO-003 | Stratejik kur tek kaynak; sabit yedekler → UNKNOWN | P0 | G1,G2,G3 | 3 | 4 | 4 | 2 | 2 | 1 | **6** | M | VALIDATED | 003 |
 | 4 | CFO-002 | Borç tek tanım + hedef <100k USD + sabitler tek konfigürasyona | P0 | G3 | 5 | 4 | 5 | 3 | 2 | 2 | **7** | M | PLANNED (D-P03 kararlandı 2026-10-09: kredi + kart + kullanılan KMH; hedef <100k USD) | 002,019,020 |
-| 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | IN_PROGRESS (TS ✓ PR #214; SQL `cfo_kart_karari` PR #215, migration 20261009110000 Cowork'te) | 004 |
+| 5 | CFO-005 | Düz %4,5 KMH oranını kaldır (borclar, gumruk, allocation, kart kararı, capital-eff.) | P1 | G3 | 4 | 4 | 3 | 2 | 1 | 1 | **7** | M | ✅ TAMAMLANDI 2026-10-09 — düz %4,5 kalktı: TS (PR #214) + kart kararı kart faiziyle (PR #215, migration 110000 üretimde) | 004 |
 | 6 | CFO-006 | Şirket/şahsi tek sınıflama; nakit/kapasite/borç bunu kullansın | P1 | G2,G3 | 4 | 4 | 3 | 3 | 1 | 2 | **5** | M | VALIDATED | 010 |
 | 7 | CFO-009 | Alarm teslimi GitHub'dan bağımsız; takılan koşu + kilit hatası alarmı; cfo-cycle bağla | P1 | tümü | 3 | 5 | 2 | 2 | 1 | 2 | **5** | M | IN_PROGRESS (takılan koşu/kilit/yeniden deneme ✓; teslim kanalı D-P07 bekliyor) | 006 |
 | 8 | CFO-010 | Defter bakım yolu: kredi/kart vade devri, alacak/ödeme girişi | P1 | tümü | 4 | 4 | 2 | 3 | 1 | 2 | **4** | L | ✅ TAMAMLANDI 2026-10-09 — ödeme durumu tek kaynak (takvim); defter↔takvim boşluk + mükerrer taksit alarmı; Borçlar takvimden; yetim cfo-actions silindi | 007,028,029 |
 | 9 | CFO-007 | KDV esası kararı + marj/NRV KDV hariç | P1 | G1,G2 | 4 | 4 | 4 | 3 | 3 | 2 | **4** | M | DISCOVERED | 008 |
-| 10 | CFO-008 | Ciro hedefi tanımı (KDV, kanal kapsamı) + tek ciro fonksiyonu | P1 | G1 | 3 | 3 | 5 | 3 | 2 | 1 | **5** | M | IN_PROGRESS (KDV hariç ciro 120000 + hedef kaynak tazeliği 130000 Cowork'te; hedef tanımı D-P05 bekliyor) | 009,023 |
+| 10 | CFO-008 | Ciro hedefi tanımı (KDV, kanal kapsamı) + tek ciro fonksiyonu | P1 | G1 | 3 | 3 | 5 | 3 | 2 | 1 | **5** | M | IN_PROGRESS (KDV hariç ciro + hedef kaynak tazeliği üretimde 2026-10-09; kalan: hedef tanımı D-P05) | 009,023 |
 | 11 | CFO-011 | Maliyet kapsamı ≥ %95 (8 SKU veri + migration 200000) | P1 | G1 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen; Code ✓ PR #210, migration 200000 üretimde 2026-10-08) | 013 |
 | 12 | CFO-015 | Ölçülmemiş KMH/gümrük/şahsi faiz oranlarını gir | P1 | G3 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen) | 018 |
 | 13 | CFO-012 | Karar hafızası: beklenen değer zorunlu, `cfo_hamle_olcum` yazımı, kalibrasyon | P2 | tümü | 3 | 2 | 3 | 2 | 2 | 1 | **3** | M | VALIDATED | 014 |
@@ -84,7 +84,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 ### CFO-005 — Düz %4,5 KMH oranını kaldır
 - **neden:** 5 yerde düz oran; borclar satırları toplamı tutmuyor; kart erteleme KKDF/BSMV'siz.
 - **uygulama:** hesap başına ölçülmüş oran (yoksa UNKNOWN) — downside ile aynı yardımcı; `cfo_kart_karari` → card-cost; `cfo_loan.interestRatePct` şema yorumu "yıllık".
-- **kabul:** `kmhMonthlyRatePct` yalnız ayarlar sayfasında (gösterim); borclar satır toplamı = toplam. **durum:** IN_PROGRESS — TS katmanı tamam (2026-10-09; testler `cfo-engine-forecast`, `cfo-downside`); CFO-005b (2026-10-09): `cfo_kart_karari` kart akdi × 1,30 (migration 20261009110000, sha256 99359b09…7314) + şema yorumu YILLIK — Cowork uygulayınca DONE.
+- **kabul:** `kmhMonthlyRatePct` yalnız ayarlar sayfasında (gösterim); borclar satır toplamı = toplam. **durum:** ✅ TAMAMLANDI 2026-10-09 — migration 20261009110000 Cowork tarafından uygulandı (05:57 UTC; checksum 99359b09…); üretimde Enpara ertelemesi 36.000 TL → ~1.989 TL/ay kart faiziyle. Önceki: TS katmanı tamam (2026-10-09; testler `cfo-engine-forecast`, `cfo-downside`); CFO-005b (2026-10-09): `cfo_kart_karari` kart akdi × 1,30 (migration 20261009110000, sha256 99359b09…7314) + şema yorumu YILLIK — Cowork uygulayınca DONE.
 
 ### CFO-006 — Şirket/şahsi tek sınıflama
 - **neden:** 4 nakit + 4 kapasite tanımı; regex/ILIKE/LIKE karışık. **uygulama:** `cfo_bank_account`/`cfo_credit_card` için sahiplik alanı (SIRKET/SAHSI) veya tek SQL fonksiyonu; tüm tüketiciler.
@@ -96,7 +96,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-008 — Ciro hedefi tanımı + tek ciro fonksiyonu
 - **neden:** KDV dahil ölçüm; 7 ciro formülü; Alfashome hariç, IDEASOFT/tekstil dahil. **uygulama:** karar → `cfo_metrik_ciro(gün aralığı, kdv)`; tüm sayfalar.
-- **durum:** IN_PROGRESS — kısım 1 (2026-10-09, Alperen sırası 1): KDV hariç ciro ölçülebilir hale geliyor — migration `20261009120000_fm_kdv_haric_ciro` (kaynakta yoksa SKU'nun pazaryeri KDV oranı 2023-07-10 sonrası, yoksa %20 bayraklı; kalite U → B), Cowork uygulayacak + 2026-05..08 tek seferlik hafıza tazelemesi. Üretim ölçümü (salt-okuma): Eylül KDV hariç 1.604.768 TL (dahil 1.925.721). Kısım 2 (2026-10-09): hedef motoru kaynak tazeliği — migration `20261009130000_fm_goal_kaynak_tazeligi`: hız / projeksiyon / gereken hız yalnız her kaynağın (Trendyol senkronu, Entegra içe aktarımı) o gün bittikten sonra okunduğu günlerden; gözlenen MTD aynen; bayrak `goal_sources_partial`. Üretim 09.10: tam gün 04.10'a kadar → hız 51.941 → 58.318 TL/gün, aylık projeksiyon 1.610.158 → 1.807.851 TL (33,2k → 37,2k USD). Test `fm-goal-kaynak`. Kalan: hedef tanımı D-P05 (KDV/kanal), günlük hafıza satırının kendi notu (gün bazında kaynak kapsamı) — hedef seviyesinde çözüldü.
+- **durum:** IN_PROGRESS — kısım 1 (2026-10-09, Alperen sırası 1): KDV hariç ciro ölçülebilir hale geliyor — migration `20261009120000_fm_kdv_haric_ciro` (kaynakta yoksa SKU'nun pazaryeri KDV oranı 2023-07-10 sonrası, yoksa %20 bayraklı; kalite U → B), Cowork uygulayacak + 2026-05..08 tek seferlik hafıza tazelemesi. Üretim ölçümü (salt-okuma): Eylül KDV hariç 1.604.768 TL (dahil 1.925.721). Kısım 1 ve 2 ÜRETİMDE (2026-10-09, Cowork; 120000 06:16 + tazeleme 06:16:53, 130000 05:48 UTC): Nisan–Ekim KDV hariç ciro boş gün yok (not B), Eylül 1.604.768 TL; hedef hızı 58.318 TL/gün, projeksiyon 1.807.851 TL, bayrak goal_sources_partial. Kısım 2 ayrıntı: hedef motoru kaynak tazeliği — migration `20261009130000_fm_goal_kaynak_tazeligi`: hız / projeksiyon / gereken hız yalnız her kaynağın (Trendyol senkronu, Entegra içe aktarımı) o gün bittikten sonra okunduğu günlerden; gözlenen MTD aynen; bayrak `goal_sources_partial`. Üretim 09.10: tam gün 04.10'a kadar → hız 51.941 → 58.318 TL/gün, aylık projeksiyon 1.610.158 → 1.807.851 TL (33,2k → 37,2k USD). Test `fm-goal-kaynak`. Kalan: hedef tanımı D-P05 (KDV/kanal), günlük hafıza satırının kendi notu (gün bazında kaynak kapsamı) — hedef seviyesinde çözüldü.
 
 ### CFO-025 — Sabit kurun maliyete etkisi (433 maliyetli ürün)
 - **neden:** Cowork (2026-10-09): karşılaştırılabilen 8 üründen 4'ünde maliyetin sabit kurla hesaplandığı doğrulandı; kalan 433 maliyetli üründe yaygınlık bağımsız kaynakla ölçülemedi. Marjın, LCNRV'nin ve kâr kurallarının tabanı `unitCostTry`.
@@ -150,6 +150,7 @@ Faz 0 sonrası (backlog maddesi):
 - ✅ TAMAMLANDI 2026-10-08 — **CFO-001 PR-A** metrik sözleşmesi memosu + salt-okunur mutabakat SQL'i (PR #212). CFO-001'in kendisi karar bekliyor.
 - ✅ TAMAMLANDI 2026-10-08 — **Faz 0 ilk tam denetim** + 5 yönetim dosyası (PR #211).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-009 kısım 1** takılan koşu alarmı, kilit hatası izi, başarısız dilim yeniden denenir (PR #216). Madde açık (teslim kanalı).
+- ✅ TAMAMLANDI 2026-10-09 — **CFO-005** düz %4,5 KMH oranı kalktı: TS (PR #214) + `cfo_kart_karari` kart faiziyle (PR #215; migration 110000 üretimde 2026-10-09).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-019** held-back migration koruması (`db:migrate:deploy` guard; RF-017 RESOLVED).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-010** defter bakım yolu: ödeme durumu tek kaynak = takvim; boşluk + mükerrer taksit alarmı; Borçlar takvimden; yetim `cfo-actions.ts` silindi (PR #216 + bu PR; RF-028 RESOLVED, RF-029 açıldı).
 - ✅ TAMAMLANDI 2026-10-09 — **CFO-005 TS katmanı**: düz %4,5 KMH oranı kalktı, banka başına ölçülmüş oran, kademeli (PR #214). SQL kısmı (PR #215) migration bekliyor.
