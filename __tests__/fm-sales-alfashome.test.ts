@@ -56,7 +56,7 @@ async function main() {
   for (const r of c) assert.ok((r.f as string[]).includes("alfashome_order_level") && (r.f as string[]).includes("ex_vat_default_rate"));
 
   const ekim = (await q(`select sum(revenue_incl_vat_try)::numeric r from fm_sales_canonical where economic_date >= '2026-10-01' and disposition = 'COUNTED'`))[0];
-  assert.equal(Number(ekim.r), 1200 + 600 + 341 + 6355, "Ekim cirosu Alfashome dahil; IDEASOFT (29.09) ile çakışma yok");
+  assert.equal(Number(ekim.r), 1200 + 600 + 341 + 6355, "Ekim cirosu Alfashome dahil; IDEASOFT (soyluelektronik.com) ayrı mağaza, çakışma yok");
   const pol = await q(`select grade from fm_quality_policy where metric_key = 'revenue_incl_vat_try' and channel = 'ALFASHOME'`);
   assert.deepEqual(pol.map(r => r.grade), ["B"]);
   assert.equal((await q(`select 1 from fm_quality_flag where flag in ('alfashome_order_level','alfashome_archived_unverified')`)).length, 2);

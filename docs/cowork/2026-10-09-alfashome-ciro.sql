@@ -1,14 +1,15 @@
 -- Cowork tek dosya — D-P05 Alfashome cirosu hedefe dahil (migration 20261009200000_fm_sales_alfashome)
 -- Önceki toplu paketten (2026-10-09-toplu-uygulama.sql) BAĞIMSIZ; sırası önemli değil. Tek transaction, tekrar çalıştırılabilir.
 -- Etki (üretim salt-okuma 2026-10-09): Ekim Alfashome siparişleri 4/5/6 (pending) = 14.865 TL ciroya girer; Haziran–Ağustos 3 arşivlenmiş
--- sipariş (5.912,50 TL) teyit edilene kadar dışarıda. IDEASOFT ile çakışma yok (IDEASOFT 29.09'da biter, Alfashome 01.10'da başlar).
+-- sipariş (5.912,50 TL) teyit edilene kadar dışarıda. IDEASOFT (soyluelektronik.com) ayrı mağaza; çakışma yok.
 -- Hafıza: günlük fm_memory_refresh_daily (önceki + bu ay) Ekim'i kendisi doldurur; hemen görmek için en alttaki satır.
--- migration checksum (sha256): d5625ee1bc963cdb9213a4cab827343980f3bd873f7da52714fa2bb64f92f045
+-- migration checksum (sha256): a3f3be405d0035fad25641ba07607aa4393cf5e186cd35447017c7c76d7c647c
 BEGIN;
--- D-P05 (Alperen 2026-10-09): ciro hedefine Alfashome DAHİL. alfashome.com siparişleri (alfashome_order, Medusa paneli; günlük
+-- D-P05 (Alperen 2026-10-09): ciro hedefine Alfashome DAHİL. alfashome.com yeni açılan, yalnız musluk çeşitleri satan ayrı site;
+-- siparişleri (alfashome_order, Medusa paneli; günlük
 -- trendyol-sync senkronu) Entegra'ya düşmez → satış katmanında yoktu. Bu migration onları ayrı ALFASHOME kaynağı/kanalı olarak ekler.
--- Mükerrerlik ölçümü (üretim, salt-okuma 2026-10-09): IDEASOFT (Entegra) siparişleri 29.09'da biter, Alfashome panel siparişleri
--- 01.10'da başlar; sipariş anahtarı, tarih ve tutar çakışması yok → aynı satış iki kez sayılmaz (site IdeaSoft → yeni panel geçişi).
+-- Mükerrerlik: IDEASOFT kanalı soyluelektronik.com'dur (Entegra'ya bağlı, ayrı mağaza; Alperen 2026-10-09) — Alfashome ile ilgisi yok.
+-- Üretim ölçümü (salt-okuma 2026-10-09): sipariş anahtarı, tarih ve tutar çakışması yok → aynı satış iki kez sayılmaz.
 -- Kurallar:
 --   * Gelir = sipariş toplamı (KDV dahil); SKU/kalem yok → bayrak alfashome_order_level; KDV hariç tutar %20 varsayılanla türetilir
 --     (20261009120000 kuralı, bayrak ex_vat_default_rate).
@@ -186,7 +187,7 @@ END
 $$;
 
 INSERT INTO public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count)
-SELECT gen_random_uuid()::text, 'd5625ee1bc963cdb9213a4cab827343980f3bd873f7da52714fa2bb64f92f045', now(), '20261009200000_fm_sales_alfashome', NULL, NULL, now(), 1
+SELECT gen_random_uuid()::text, 'a3f3be405d0035fad25641ba07607aa4393cf5e186cd35447017c7c76d7c647c', now(), '20261009200000_fm_sales_alfashome', NULL, NULL, now(), 1
  WHERE NOT EXISTS (SELECT 1 FROM public._prisma_migrations WHERE migration_name = '20261009200000_fm_sales_alfashome');
 COMMIT;
 

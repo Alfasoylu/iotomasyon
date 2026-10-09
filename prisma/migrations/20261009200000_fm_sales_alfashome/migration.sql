@@ -1,7 +1,8 @@
--- D-P05 (Alperen 2026-10-09): ciro hedefine Alfashome DAHİL. alfashome.com siparişleri (alfashome_order, Medusa paneli; günlük
+-- D-P05 (Alperen 2026-10-09): ciro hedefine Alfashome DAHİL. alfashome.com yeni açılan, yalnız musluk çeşitleri satan ayrı site;
+-- siparişleri (alfashome_order, Medusa paneli; günlük
 -- trendyol-sync senkronu) Entegra'ya düşmez → satış katmanında yoktu. Bu migration onları ayrı ALFASHOME kaynağı/kanalı olarak ekler.
--- Mükerrerlik ölçümü (üretim, salt-okuma 2026-10-09): IDEASOFT (Entegra) siparişleri 29.09'da biter, Alfashome panel siparişleri
--- 01.10'da başlar; sipariş anahtarı, tarih ve tutar çakışması yok → aynı satış iki kez sayılmaz (site IdeaSoft → yeni panel geçişi).
+-- Mükerrerlik: IDEASOFT kanalı soyluelektronik.com'dur (Entegra'ya bağlı, ayrı mağaza; Alperen 2026-10-09) — Alfashome ile ilgisi yok.
+-- Üretim ölçümü (salt-okuma 2026-10-09): sipariş anahtarı, tarih ve tutar çakışması yok → aynı satış iki kez sayılmaz.
 -- Kurallar:
 --   * Gelir = sipariş toplamı (KDV dahil); SKU/kalem yok → bayrak alfashome_order_level; KDV hariç tutar %20 varsayılanla türetilir
 --     (20261009120000 kuralı, bayrak ex_vat_default_rate).
