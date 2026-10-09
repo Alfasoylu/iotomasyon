@@ -53,12 +53,16 @@ export async function loadCapitalEfficiency(q: SqlQuery, opts: { budgetTry?: num
     ...cards.map(c => ({ name: `${c.bank} ${c.holder ?? ""} kart`.replace(/\s+/g, " ").trim(), kind: "CARD" as const, payoffTry: Number(c.revolving),
       monthlyRate: cardEffectiveMonthlyRate(num(c.rate)), monthlyPaymentTry: null, personal: isPersonalCard(c.holder) })),
   ];
+  // Taban gözlemi ya da stres testi yoksa açık BİLİNMİYOR: plan yine kurulur ama nedenler sayfada gösterilir (0 = "açık yok" sayılmaz — CFO-014)
+  const liquidityUnknown: string[] = [];
+  if (!floor[0] || (floor[0].state !== "MET" && num(floor[0].gap) == null)) liquidityUnknown.push("net pozisyon tabanı gözlemi yok");
   const liquidityGapTry = floor[0] && floor[0].state !== "MET" ? Math.max(0, num(floor[0].gap) ?? 0) : 0;
   const params = { ...DEFAULT_PARAMS, targetCoverDays: (num(settings[0]?.sea) ?? 67) + 30 };
-  const stressGapTry = downside?.stressGapTry ?? 0;
-  const first = allocate(skuInputs, debts, { liquidityGapTry, budgetTry: 0, stressGapTry }, params);
+  const stressGapTry = downside?.stressGapTry ?? null;
+  if (stressGapTry == null) liquidityUnknown.push(downside == null ? "stres testi yapılamadı (projeksiyon ya da başlangıç nakdi yok)" : "stres açığı ölçülemedi (taban yok ya da projeksiyon eşliği bozuk)");
+  const first = allocate(skuInputs, debts, { liquidityGapTry, budgetTry: 0, stressGapTry: stressGapTry ?? undefined }, params);
   // Plan bütçesi: varsayılan olarak tasfiye/fazla stoktan açığa çıkabilecek nakit (kaynak → kullanım döngüsü).
   const budgetTry = opts.budgetTry ?? first.releasableCashTry;
-  const result = allocate(skuInputs, debts, { liquidityGapTry, budgetTry, stressGapTry }, params);
-  return { ...result, params, liquidityGapTry, stressGapTry, budgetTry, debts, downside };
+  const result = allocate(skuInputs, debts, { liquidityGapTry, budgetTry, stressGapTry: stressGapTry ?? undefined }, params);
+  return { ...result, params, liquidityGapTry, stressGapTry, liquidityUnknown, budgetTry, debts, downside };
 }

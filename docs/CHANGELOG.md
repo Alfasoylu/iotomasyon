@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### Bilinmeyen değerler sıfır sayılmıyor — kısım 1 (2026-10-09)
+
+- Eşik faiz bilinmiyorsa %4 varsayılmıyor; stok büyüt/azalt kararı ve eşiğe dayalı bilgi değerleri "bilinmiyor" gösteriliyor.
+- Stres testi başlangıç nakdi olmadan çalışmıyor; likidite açığı ölçülemiyorsa "bilinmiyor" ve nedeni yazılıyor.
+- Hedef açığı atfı net sermaye ve borcun eski/yeni tanımlarını karıştırmıyor; eksik günleri sıfır saymıyor.
+- `/cfo` 30 günlük nakit ve `/cfo/sermaye` bugünkü ciro, veri yoksa "bilinmiyor" gösteriyor.
+
 ### Tüm maliyetli ürünler için gümrük oranı (2026-10-09)
 
 - Oran tablosuna 35 GTİP eklendi (gümrük vergisi, ilave gümrük vergisi, ÖTV); 433 maliyetli ürünün tamamı yasal gümrük yüküyle karşılaştırılabiliyor.

@@ -144,7 +144,7 @@ export default async function CfoQuestionsPage({searchParams}: {searchParams:Pro
       <Card className="mb-6 p-5">
         <h2 className="text-sm font-semibold text-[var(--text-primary)]">Önce bunu öğren — bilgi değeri sırası</h2>
         <p className="mt-1 mb-3 text-xs text-[var(--text-muted)]">
-          Her bilinmeyen, değiştirebileceği kararın TL değerine göre sıralanır (yaklaşık bilgi değeri; eşik faiz aylık %{(voi.hurdleMonthly*100).toFixed(2)}).
+          Her bilinmeyen, değiştirebileceği kararın TL değerine göre sıralanır (yaklaşık bilgi değeri; eşik faiz {voi.hurdleMonthly == null ? "bilinmiyor — eşiğe dayanan değerler ölçülemedi" : `aylık %${(voi.hurdleMonthly*100).toFixed(2)}`}).
           {" "}{tl(voi.params.askMinTry)} altındaki ya da kararı değiştirmeyen sorular sorulmaz; CFO ihtiyatlı varsayımla karar verir.
           Toplam çözülmeye değer belirsizlik: <strong>{tl(voi.totalVoiTry)}</strong>.
         </p>

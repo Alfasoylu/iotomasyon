@@ -70,4 +70,13 @@ assert.equal(st.plan[0].use.kind, "LIQUIDITY"); assert.equal(st.plan[0].amountTr
 assert.equal(st.plan[1].amountTry, 20000, "kalan bütçe borca");
 assert.equal(allocate([], debts, { liquidityGapTry: 50000, budgetTry: 100000, stressGapTry: 10000 }).plan[0].amountTry, 50000, "stres bazdan küçükse baz geçerli");
 
+// CFO-014: eşik faiz bilinmiyorsa %4 uydurulmaz — büyüt/azalt kararı yok, taşıma maliyeti 0, tasfiye en kötü indirimle; FIX_PRICE/LIQUIDATE eşikten bağımsız
+const nh = classifySku(sku({ sku: "STAR", stock: 20, unitCost: 100, unitNet: 180, dailyVelocity: 1 }), null);
+assert.equal(nh.cls, "UNKNOWN"); assert.match(nh.reason, /eşik faiz bilinmiyor/); assert.equal(nh.dragMonthlyTry, 0);
+assert.equal(classifySku(sku({ sku: "TE-SACBAKIMTARAK", stock: 864, unitCost: 26, unitNet: -13, dailyVelocity: 105 / 30 }), null).cls, "FIX_PRICE");
+const deadNh = classifySku(sku({ sku: "AL-CAM03", stock: 1940, unitCost: 485, unitNet: 1264, dailyVelocity: 0.3 / 30 }), null);
+assert.equal(deadNh.cls, "LIQUIDATE"); assert.equal(deadNh.dragMonthlyTry, 0);
+const noHurdle = allocate([sku({ sku: "STAR", stock: 20, unitCost: 100, unitNet: 180, dailyVelocity: 1 })], [], { liquidityGapTry: 0, budgetTry: 100000 });
+assert.equal(noHurdle.hurdleMonthly, null); assert.deepEqual(noHurdle.plan, [], "eşik yokken stok yenileme önerilmez");
+
 console.log("CFO capital efficiency: hurdle from priciest company debt, TRIM/LIQUIDATE/FIX_PRICE/SCALE/UNKNOWN, break-even discount, liquidity-first allocation (stress gap) passed");

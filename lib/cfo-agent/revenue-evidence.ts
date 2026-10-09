@@ -9,9 +9,9 @@ import type { Evidence } from "./types";
 export function revenueEvidence(rv: Awaited<ReturnType<typeof loadRevenueLevers>>, at: string): Evidence[] {
   const src = "cfo_satis_birim_duz";
   return [
-    evidence(src, "ciro_yolu.bugun_aylik_try (son 90 gün / 3)", rv.currentMonthlyTry, "TRY/month", at, true),
+    evidence(src, "ciro_yolu.bugun_aylik_try (son 90 gün / 3)", rv.currentUnknown ? null : rv.currentMonthlyTry, "TRY/month", at, !rv.currentUnknown),
     evidence("cfo_settings", "ciro_yolu.hedef_aylik_try (hedef USD × stratejik kur TCMB)", rv.targetUnknown ? null : rv.targetMonthlyTry, "TRY/month", at, !rv.targetUnknown),
-    evidence(src, "ciro_yolu.acik_aylik_try", rv.targetUnknown ? null : rv.gapMonthlyTry, "TRY/month", at, !rv.targetUnknown),
+    evidence(src, "ciro_yolu.acik_aylik_try", rv.targetUnknown || rv.currentUnknown ? null : rv.gapMonthlyTry, "TRY/month", at, !rv.targetUnknown && !rv.currentUnknown),
     ...rv.levers.slice(0, 3).map((l, i) => evidence(src, `ciro_yolu.kaldirac.${i + 1} (${l.label}; engel: ${l.blocker})`,
       `ciro ${l.revenueMonthlyTry} TL/ay · katkı ${l.grossMonthlyTry} TL/ay · ek sermaye ${l.capitalNeededTry} · batık ${l.sunkCapitalTry} · güven ${l.confidence} · açık payı %${Math.round(l.gapShare * 100)}`, "text", at, false)),
   ];

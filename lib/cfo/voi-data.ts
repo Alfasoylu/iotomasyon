@@ -14,7 +14,8 @@ const fold = (s: string) => s.toLocaleLowerCase("tr").normalize("NFD").replace(/
 export async function loadVoi(q: SqlQuery, at: Date = new Date()) {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(at);
   const ce = await loadCapitalEfficiency(q, { budgetTry: 0 });
-  const hurdle = ce.hurdleMonthly ?? 0.04;
+  // Eşik faiz bilinmiyorsa null: eşiğe dayanan bilgi değerleri ölçülemedi olarak kalır (%4 varsayılanı yok — CFO-014)
+  const hurdle = ce.hurdleMonthly;
   const [cc] = await q<{ n: number }>(CARD_COLUMNS_SQL);
   const [accounts, flows, dip, projects, fin, questions, cards] = await Promise.all([
     q<{ name: string; updated: unknown; type: string | null }>(`select name, "lastUpdatedAt" as updated, "accountType"::text as type from cfo_bank_account where "isActive"`),

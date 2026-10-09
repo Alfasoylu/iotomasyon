@@ -62,7 +62,9 @@ export function hurdleRate(debts: DebtInput[]): { monthly: number | null; source
   return c.length ? { monthly: c[0].monthlyRate!, source: c[0].name } : { monthly: null, source: null };
 }
 
-export function classifySku(s: SkuInput, hurdle: number, p: Params = DEFAULT_PARAMS): SkuResult {
+/** `hurdle` null = eşik faiz BİLİNMİYOR (faizi ölçülmüş kapatılabilir borç yok): eşiğe dayanan sınıf (SCALE/TRIM/KEEP), taşıma maliyeti
+ *  ve tasfiye eşiği hesaplanmaz — varsayılan oran uydurulmaz (CFO-014). Eşikten bağımsız FIX_PRICE / LIQUIDATE yine verilir. */
+export function classifySku(s: SkuInput, hurdle: number | null, p: Params = DEFAULT_PARAMS): SkuResult {
   const capital = s.unitCost != null && s.unitCost > 0 ? s.stock * s.unitCost : 0;
   const base = { ...s, capitalTry: capital, unitMargin: null, monthlyContributionTry: null, rocMonthly: null, coverDays: null, excessUnits: 0,
     excessCapitalTry: 0, dragMonthlyTry: 0, breakEvenDiscount: null, releaseCashTry: 0, marginalReturnMonthly: null, restockCapitalTry: 0 };
@@ -76,19 +78,20 @@ export function classifySku(s: SkuInput, hurdle: number, p: Params = DEFAULT_PAR
     // Satış kanıtı yok: değer bilinmiyor ama sermaye bağlı. 90 günde hiç satış yoksa ölü sayılır.
     const dead = v === 0 && s.stock > 0;
     return { ...base, coverDays, excessUnits: dead ? s.stock : excessUnits, excessCapitalTry: dead ? capital : excessCapital,
-      dragMonthlyTry: dead ? r2(capital * hurdle) : 0, cls: dead ? "LIQUIDATE" : "UNKNOWN",
+      dragMonthlyTry: dead && hurdle != null ? r2(capital * hurdle) : 0, cls: dead ? "LIQUIDATE" : "UNKNOWN",
       reason: dead ? "90 günde satış yok, satış fiyatı kanıtı yok" : "satış fiyatı kanıtı yok" };
   }
   const unitMargin = s.unitNet - s.unitCost;
   const contribution = unitMargin * v * 30;
   const roc = capital > 0 ? contribution / capital : null;
-  const drag = roc != null && roc < hurdle ? Math.max(0, capital * hurdle - contribution) : 0;
+  const drag = hurdle != null && roc != null && roc < hurdle ? Math.max(0, capital * hurdle - contribution) : 0;
   // Tasfiye eşiği: fazla stok doğrusal satılırsa ortalama bekleme T = (fazla örtü)/2 ay; elde tutmanın bugünkü değeri
   // 1/(1+h)^T. Bundan daha az indirim tasfiyeyi elde tutmaktan iyi yapar (yalnız finansman maliyeti; değer kaybı hariç → tutucu).
   const excessMonths = v > 0 ? excessUnits / v / 30 : Infinity;
   const T = excessMonths / 2;
-  const be = excessUnits > 0 ? (Number.isFinite(T) ? 1 - 1 / Math.pow(1 + hurdle, T) : 1) : null;
-  const disc = be == null ? 0 : Math.min(be, p.maxDiscount);
+  const be = excessUnits > 0 ? (!Number.isFinite(T) ? 1 : hurdle == null ? null : 1 - 1 / Math.pow(1 + hurdle, T)) : null;
+  // Eşik bilinmiyorsa serbest kalacak nakit en kötü indirimle (tutucu) hesaplanır
+  const disc = excessUnits > 0 && be == null ? p.maxDiscount : be == null ? 0 : Math.min(be, p.maxDiscount);
   const release = excessUnits > 0 ? Math.max(0, excessUnits * s.unitNet * (1 - disc)) : 0;
   const common = { ...base, unitMargin: r2(unitMargin), monthlyContributionTry: r2(contribution), rocMonthly: roc, coverDays, excessUnits,
     excessCapitalTry: r2(excessCapital), dragMonthlyTry: r2(drag), breakEvenDiscount: be == null ? null : r2(Math.min(be, 1)), releaseCashTry: r2(release) };
@@ -97,6 +100,7 @@ export function classifySku(s: SkuInput, hurdle: number, p: Params = DEFAULT_PAR
   if (v * 30 < 1 && s.stock > 0) return { ...common, excessUnits: s.stock, excessCapitalTry: r2(capital), cls: "LIQUIDATE",
     releaseCashTry: r2(s.stock * s.unitNet * (1 - p.maxDiscount)), breakEvenDiscount: 1, reason: `ayda <1 satış, ${s.stock} adet duruyor` };
   const marginal = (unitMargin / s.unitCost) * (30 / p.targetCoverDays);
+  if (hurdle == null) return { ...common, cls: "UNKNOWN", reason: "eşik faiz bilinmiyor (faizi ölçülmüş kapatılabilir borç yok) — büyüt/azalt kararı verilmez" };
   if (roc != null && roc >= hurdle * p.scaleMultiple && (coverDays ?? Infinity) < p.targetCoverDays) {
     const need = Math.max(0, Math.ceil(targetUnits - s.stock));
     return { ...common, cls: "SCALE", marginalReturnMonthly: marginal, restockCapitalTry: r2(need * s.unitCost),
@@ -130,7 +134,7 @@ export type Allocation = {
  */
 export function allocate(skus: SkuInput[], debts: DebtInput[], opts: { liquidityGapTry: number; budgetTry: number; unitPriceBySku?: Map<string, number>; stressGapTry?: number }, p: Params = DEFAULT_PARAMS): Allocation & { skus: SkuResult[] } {
   const h = hurdleRate(debts);
-  const hurdle = h.monthly ?? 0.04;
+  const hurdle = h.monthly;
   const res = skus.map(s => classifySku(s, hurdle, p));
   const classes: CapClass[] = ["SCALE", "KEEP", "TRIM", "FIX_PRICE", "LIQUIDATE", "UNKNOWN"];
   const portfolio = Object.fromEntries(classes.map(c => {

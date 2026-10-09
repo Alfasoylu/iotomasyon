@@ -74,7 +74,7 @@ export default async function CfoAllocationPage() {
           </CfoTable>
           <p className="mt-3 text-xs text-[var(--text-muted)]">
             En zararlı tekil şok: {dn.sensitivity[0]?.label} ({fmtTry(dn.sensitivity[0]?.deltaVsBaseTry ?? 0)}). Tahsis planı makul stres dibini tabana
-            {dn.floorTry == null ? " (taban bilinmiyor)" : ` (${fmtTry(dn.floorTry)})`} çekecek {fmtTry(ce.stressGapTry)} nakdi diğer her kullanımdan önce ayırır.
+            {dn.floorTry == null ? " (taban bilinmiyor)" : ` (${fmtTry(dn.floorTry)})`} çekecek {ce.stressGapTry == null ? "(stres açığı bilinmiyor)" : fmtTry(ce.stressGapTry)} nakdi diğer her kullanımdan önce ayırır.
           </p>
         </Card>
       )}
@@ -83,7 +83,7 @@ export default async function CfoAllocationPage() {
       <Card className="mb-6 p-5">
         <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Ciro hedefine giden yol — gelir kaldıraçları</h2>
         <p className="mb-3 text-xs text-[var(--text-muted)]">
-          Bugün aylık ~{fmtTry(rv.currentMonthlyTry)} (son 90 gün ortalaması) ·{" "}
+          Bugün aylık {rv.currentUnknown ? "bilinmiyor (son 90 günde satış satırı yok)" : `~${fmtTry(rv.currentMonthlyTry)}`} (son 90 gün ortalaması) ·{" "}
           {rv.targetUnknown || rv.fx == null ? (
             <>hedef <strong>bilinmiyor</strong> ({rv.fxLabel}) ·</>
           ) : (
@@ -117,8 +117,10 @@ export default async function CfoAllocationPage() {
           {[
             ["Eşik altı değer kaybı", `${fmtTry(ce.dragMonthlyTry)}/ay`, "bu sermaye borç kapatsaydı kazanılacak − bugünkü katkı"],
             ["Açığa çıkarılabilir nakit", fmtTry(ce.releasableCashTry), "fazla + ölü stok, elde tutmaya eşit indirimle"],
-            ["Likidite açığı", Math.max(ce.liquidityGapTry, ce.stressGapTry) > 0 ? fmtTry(Math.max(ce.liquidityGapTry, ce.stressGapTry)) : "yok",
-              ce.stressGapTry > ce.liquidityGapTry ? `makul streste (baz ${fmtTry(ce.liquidityGapTry)})` : "120 gün nakit dibi tabanın altında"],
+            ["Likidite açığı", Math.max(ce.liquidityGapTry, ce.stressGapTry ?? 0) > 0 ? fmtTry(Math.max(ce.liquidityGapTry, ce.stressGapTry ?? 0)) + (ce.liquidityUnknown.length ? " +?" : "")
+                : ce.liquidityUnknown.length ? "bilinmiyor" : "yok",
+              ce.liquidityUnknown.length ? `eksik: ${ce.liquidityUnknown.join("; ")}`
+                : (ce.stressGapTry ?? 0) > ce.liquidityGapTry ? `makul streste (baz ${fmtTry(ce.liquidityGapTry)})` : "120 gün nakit dibi tabanın altında"],
             ["Eşik altı sermaye", fmtTry(ce.portfolio.TRIM.capitalTry + ce.portfolio.LIQUIDATE.capitalTry + ce.portfolio.FIX_PRICE.capitalTry), "TRIM + LIQUIDATE + FIX_PRICE"],
           ].map(([l, v, sub]) => (
             <div key={l} className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-2)] p-3">

@@ -29,8 +29,9 @@ export async function loadCapitalConfig(db: ReadSource, at: string): Promise<Evi
   const views = new Set((await db.query<{ name: string }>(`select viewname as name from pg_views where schemaname='public' and viewname='cfo_stok_deger'`)).map(r => r.name));
   let locked: number | null = null;
   if (views.has("cfo_stok_deger")) {
-    const [r] = await db.query(`select coalesce(sum(maliyet_degeri) filter (where gercek_stok),0)::float8 as v from cfo_stok_deger`);
-    locked = r ? Number(r.v) : null;
+    // Stok satırı yoksa bağlı sermaye BİLİNMİYOR (ölçülmüş 0 değil — CFO-014)
+    const [r] = await db.query(`select (sum(maliyet_degeri) filter (where gercek_stok))::float8 as v from cfo_stok_deger`);
+    locked = r?.v == null ? null : Number(r.v);
   }
   let cfg: CapitalConfigRow | null = null;
   if (present.has("CapitalConfig")) {
