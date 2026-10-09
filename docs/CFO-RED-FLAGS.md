@@ -413,6 +413,11 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
   "Garanti Alp" banka hesapları türü "Vadesiz + KMH" (şirket) — sahibi "Alp" olan kartlar ise şahsi. Hesaplar şahsiyse şirket KMH
   kapasitesi 450.000 TL fazla görünüyor (taban/kapasite alarmları). Karar: D-P08 (Alperen).
 
+### RF-20261008-010 — güncelleme 2 (2026-10-09, D-P08 kararı)
+- Alperen: "Akbank Alp" şahsi, "Garanti Alp" firma. Akbank Alp'in 250.000 TL KMH'si şirket kapasitesinden çıkacak (veri düzeltmesi Cowork).
+  Veritabanı görünümleri (`cfo_nakit_kapisi`, `cfo_kaynak_yeterliligi`, `cfo_onucus_temel`) yalnız tam "ŞAHSİ" yazımını tanır (ILIKE) —
+  ASCII "SAHSI" yazılırsa hesap şirket kalır; görünümlerin `personalAccountSql` kuralına bağlanması (migration) bu riski kapatır.
+
 ### Gözlem (kayıt değişmez): nakit dibi
 - `cfo_kart_karari` bugün en dibi −3.862.998 TL (2027-01-01) gösteriyor (08.10: −3.578.121, 01.12). Ufuk 120 gün kaydıkça Ocak ödemeleri girdi;
   ayrıca incelenecek (CFO-013 / RF-029 Yapı Kredi mükerrer satırları hâlâ projeksiyonda).
