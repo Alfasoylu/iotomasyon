@@ -1,0 +1,1022 @@
+[
+ {
+  "grup": "IP/WiFi güvenlik kamerası",
+  "gtip_onerilen": "8525.89.00.00.00",
+  "urun_sayisi": 11,
+  "stok_degeri_usd": 7015.81,
+  "gerekce": "Kayıt/yayın yapan IP/WiFi/4G kameralar 8525.89'dur (8525.81-83 yalnız yüksek hızlı, radyasyona dayanıklı, gece görüş özel tanımlıları kapsar; IR gece modu 'gece görüş' alt pozisyonu değildir). Mevcut 85.25.81.99 TGTC'de yok.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8525",
+  "stok_1000_ve_ustu_haric": [
+   "AL-CAM03 (stok 1940, 19400 USD)"
+  ]
+ },
+ {
+  "grup": "Karıştırıcı batarya (lavabo/eviye/banyo)",
+  "gtip_onerilen": "8481.80.11.00.00",
+  "urun_sayisi": 66,
+  "stok_degeri_usd": 4171.18,
+  "gerekce": "Sıcak/soğuk karıştıran tek/çift kumandalı bataryalar 8481.80.11 (BTB TR340000230010 karıştırıcı kartuş; sensörlü/arıtma çıkışlı olması değiştirmez).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8481",
+  "stok_1000_ve_ustu_haric": [
+   "M-BANYOMİX (stok 1199, 9592 USD)"
+  ]
+ },
+ {
+  "grup": "Mouse jiggler",
+  "gtip_onerilen": "8479.89.97.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 2470.32,
+  "gerekce": "Motorlu döner tabla ile fareyi hareket ettirir (bilgisayara bağlanmaz). USB dongle (fare emülasyonu) tipi ise 8471.60.70.90.19.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8479"
+ },
+ {
+  "grup": "Metal dedektörü (define/güvenlik/pinpointer)",
+  "gtip_onerilen": "8543.70.90.00.11",
+  "urun_sayisi": 10,
+  "stok_degeri_usd": 2106.26,
+  "gerekce": "TGTC'de metal dedektörleri için özel ulusal pozisyon 8543.70.90.00.11 var. 9015 jeofizik aletler, 9031 ölçme aletleri değildir. Mevcut 90.15.80.91 / 85.06.10.18 yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "PoE switch (ağ anahtarı)",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 5,
+  "stok_degeri_usd": 1938.68,
+  "gerekce": "Ethernet/PoE switch 8517.62 'switching and routing apparatus'; PoE besleme yardımcı fonksiyon (GYK 3b). TR'de 8517.62.00.90.11 akıllı saat, .90.19 diğerleri.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "HDMI splitter/switch/extender/ses ayırıcı",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 6,
+  "stok_degeri_usd": 1062.3,
+  "gerekce": "HDMI dağıtım/çoğaltma/uzatma ve ses ayrıştırma cihazları; BTB TR340000240029 (HDMI/HDBT video dağıtım kutusu) 8543.70.90.00.19.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "Cat6 LAN kablosu (makara, konnektörsüz)",
+  "gtip_onerilen": "8544.49.20.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 1044.0,
+  "gerekce": "305m konnektörsüz FTP Cat6 → 8544.49 (≤1000V, konnektörsüz), telekom tipi ≤80V → .20. Mevcut 85.25.81.99 (kamera) tamamen yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8544"
+ },
+ {
+  "grup": "El telsizi (Baofeng vb.)",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 8,
+  "stok_degeri_usd": 1015.87,
+  "gerekce": "gumruk.com.tr fasıl notu: Baofeng UV-5R, UV-82, BF-888S, UV-B5 lisanssız telsizler 8517.62.00.90.00 (2019 BTB; 2023'ten beri .90.19). Amatör/çift bant telsiz için TR ulusal pozisyonu 8517.69.90.90.24 ve Telsiz İthalat Denetimi Tebliği'ndeki 8525.60.00.00.29 de kullanılıyor. İthalatta BTK/telsiz denetimi gerekir.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Geliştirme kartı (Arduino/ESP32/STM32/Pico)",
+  "gtip_onerilen": "8537.10.91.00.00",
+  "urun_sayisi": 9,
+  "stok_degeri_usd": 858.77,
+  "gerekce": "BTB TR340000240011 (05.02.2024): Arduino UNO R3 klon geliştirme kartı 8537.10.91.00.00. WiFi/BT'li kartlar için de BTB TR340000220182 (WiFi/BT'li kontrol kartı) aynı kod. Mevcut 85.43.70.90 / 84.71.80 TGTC uygulamasına uymuyor.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8537"
+ },
+ {
+  "grup": "Akıllı kapı kilidi / kapı kolu",
+  "gtip_onerilen": "8301.40.19.00.19",
+  "urun_sayisi": 5,
+  "stok_degeri_usd": 847.48,
+  "gerekce": "BTB TR (25.04.2024) parmak izli Smart Lock PL-K2 ve 07.02.2024 akıllı kilit sistemi 8301.40.19.00.19. Elektrikli kilitler 8301'de kalır.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8301"
+ },
+ {
+  "grup": "Frekans/rezonans jeneratörü (wellness)",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 672.51,
+  "gerekce": "7.83Hz Schumann darbe üreteci; BTB'lerde PEMF wellness cihazları 8543.70.90.00.19.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "USB/Type-C şarj-data kablosu",
+  "gtip_onerilen": "8544.42.90.00.19",
+  "urun_sayisi": 15,
+  "stok_degeri_usd": 664.12,
+  "gerekce": "Konnektörlü USB-C kablo → 8544.42.90 (8544.42.10 yalnız telekomünikasyon tipi). TR'de .00.11 güneş paneli bağlantı kutusu, .00.19 diğer.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8544"
+ },
+ {
+  "grup": "Hafıza kartı okuyucu",
+  "gtip_onerilen": "8471.70.98.90.00",
+  "urun_sayisi": 9,
+  "stok_degeri_usd": 495.79,
+  "gerekce": "Ortamı (kart) olmadan da sürücü niteliğindeki okuyucular hafıza birimi sayılır (ABD CBP kararları 8471.70; DVD sürücü mantığı). TR'de 8471.80.00.00.00 uygulaması da yaygın; BTB doğrulanamadı.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471",
+  "stok_1000_ve_ustu_haric": [
+   "272726161636 (stok 3011, 5329.47 USD)"
+  ]
+ },
+ {
+  "grup": "Kablosuz gitar verici-alıcı",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 461.62,
+  "gerekce": "2.4GHz dijital ses verisi ileten verici-alıcı seti; dijital kablosuz ses sistemleri 8517.62. Analog FM tip ise 8525.60.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "PoE extender/repeater",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 5,
+  "stok_degeri_usd": 456.72,
+  "gerekce": "PoE extender veri sinyalini yeniden üretip (repeater/mini switch) iletir → 8517.62 (regeneration).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Saç/saç derisi fırçası",
+  "gtip_onerilen": "9603.29.30.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 429.84,
+  "gerekce": "Silikon dişli saç/şampuan fırçası. Mevcut 85.10.10 (tıraş makinesi) yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9603"
+ },
+ {
+  "grup": "KVM / USB paylaşım switch",
+  "gtip_onerilen": "8471.80.00.00.00",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 315.13,
+  "gerekce": "Birden fazla bilgisayarı tek klavye/ekran/USB setine bağlayan birim → OBİ birimi (8471.80).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "HDMI/DP/VGA video kablosu",
+  "gtip_onerilen": "8544.42.90.00.19",
+  "urun_sayisi": 11,
+  "stok_degeri_usd": 264.88,
+  "gerekce": "Konnektörlü video/uzatma kabloları 8544.42.90. Type-C→HDMI gibi içinde çevirici çip bulunan kablolarda 8543.70 alternatifi var.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8544"
+ },
+ {
+  "grup": "Telefon kılıfı",
+  "gtip_onerilen": "3926.90.97.90.29",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 195.05,
+  "gerekce": "Arka kapak tipi TPU/PC kılıflar 3926.90.97 (cüzdan tipi ise 4202.32). Gerçek silikon kauçuk ise 4016.99.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=3926"
+ },
+ {
+  "grup": "Fiber optik adaptör/konnektör",
+  "gtip_onerilen": "8536.70.00.10.00",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 167.4,
+  "gerekce": "SC/LC fiber adaptör ve konnektörler 8536.70; gövde plastik (seramik manşon yardımcı). Seramik gövde ise .20.00.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8536"
+ },
+ {
+  "grup": "Duvar tarayıcı (metal/kablo/çivi dedektörü)",
+  "gtip_onerilen": "9031.80.80.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 154.2,
+  "gerekce": "Kapasitif+endüktif+AC gerilim tespitli çok fonksiyonlu duvar tarayıcı; ağırlıklı metal arama ise 8543.70.90.00.11.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9031"
+ },
+ {
+  "grup": "Sıkma pensesi (RJ45)",
+  "gtip_onerilen": "8203.20.00.00.11",
+  "urun_sayisi": 4,
+  "stok_degeri_usd": 151.62,
+  "gerekce": "RJ45 kesme-sıkma pensesi; mevcut 85.44.42.90 (kablo) yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8203"
+ },
+ {
+  "grup": "Flex bağlantı hortumu",
+  "gtip_onerilen": "4009.22.00.90.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 129.2,
+  "gerekce": "Paslanmaz örgülü EPDM iç hortumlu, rakorlu batarya bağlantı hortumu; BTB TR340000210024 duş hortumu emsal. Mevcut 84.81.80.11 yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=4009"
+ },
+ {
+  "grup": "9V pil",
+  "gtip_onerilen": "8506.10.98.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 128.5,
+  "gerekce": "GP Greencell 1604G çinko-klorür (Leclanché, MnO2 katot) 9V prizmatik pil.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8506"
+ },
+ {
+  "grup": "Fiber optik patch kablo",
+  "gtip_onerilen": "8544.70.00.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 115.05,
+  "gerekce": "Ayrı ayrı kılıflı fiberden oluşan, konnektörlü patch kablolar 8544.70 (konnektör takılı olması sınıfı değiştirmez). Kılıfsız lif/demet 9001.10.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8544"
+ },
+ {
+  "grup": "Duş hortumu",
+  "gtip_onerilen": "3917.33.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 111.6,
+  "gerekce": "PVC gövdeli, başlıklı duş hortumu. Metal spiralli kauçuk iç hortumlu ise BTB'lere göre 4009.22.00.90.00.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=3917"
+ },
+ {
+  "grup": "USB hub / Type-C çoklayıcı (dock)",
+  "gtip_onerilen": "8471.80.00.00.00",
+  "urun_sayisi": 9,
+  "stok_degeri_usd": 101.4,
+  "gerekce": "BTB TR340000240017 (Samsung çok portlu hub) ve TR340000220113 (Ttec 6-in-1 USB-C) 8471.80.00.00.00.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "RJ45 coupler / pasif ethernet ayırıcı",
+  "gtip_onerilen": "8536.69.90.00.18",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 93.86,
+  "gerekce": "Elektronik devresi olmayan RJ45 birleştirici/ayırıcı konnektör → 8536.69.90.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8536"
+ },
+ {
+  "grup": "Video wall controller",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 92.2,
+  "gerekce": "Görüntüyü çoklu ekrana bölen işlemci; BTB TR340000240029 (LED sinyal/video dağıtım kutusu) emsal.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "Mini ethernet switch/çoklayıcı (aktif)",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 85.95,
+  "gerekce": "1x4 1000Mbps 'splitter' fiilen beslemeli mini switch'tir → 8517.62. Pasif ise 8536.69.90.00.18.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Pasif video adaptör (HDMI/DP/DVI ara konnektör)",
+  "gtip_onerilen": "8536.69.90.00.18",
+  "urun_sayisi": 12,
+  "stok_degeri_usd": 74.77,
+  "gerekce": "Sinyal dönüşümü yapmayan (HDMI dişi-dişi, 90°, mini HDMI, DVI-D↔HDMI, DP++→HDMI) adaptörler konnektördür. Seviye kaydırıcı çip içeren DP→HDMI için 8543.70.90 savunulabilir; kablolu tip 8544.42.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8536"
+ },
+ {
+  "grup": "Kablosuz görüntü aktarıcı (wireless HDMI, Anycast)",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 4,
+  "stok_degeri_usd": 73.62,
+  "gerekce": "WiFi/2.4-5GHz üzerinden görüntü verisi alıp ileten verici/alıcı setleri ve Miracast dongle'ları → 8517.62. Alternatif: yayın tipi verici 8525.60 veya TV alıcısı 8528.71.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "SFP/SFP+ optik transceiver modül",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 63.1,
+  "gerekce": "Optik transceiver modülleri veri dönüştürme/iletim yapar; AB ve TR uygulamasında 8517.62. Parça görüşü 8517.79.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Ağ adaptörü (USB/PCIe Ethernet, WiFi, Bluetooth dongle)",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 8,
+  "stok_degeri_usd": 61.93,
+  "gerekce": "Ağ arayüz kartları, USB-Ethernet, WiFi ve Bluetooth adaptörleri kablolu/kablosuz ağ iletişim cihazı → 8517.62 (HS 2007 sonrası yerleşik uygulama).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "RF/Bluetooth uzaktan kumanda",
+  "gtip_onerilen": "8526.92.00.90.19",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 58.9,
+  "gerekce": "BTB (28.07.2026) JUUKO 433MHz kumanda alıcısı ve AJAX kumandalar 8526.92.00.90.19; Bluetooth deklanşör de radyo frekanslı kumandadır.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8526"
+ },
+ {
+  "grup": "Telefon lensi (klipsli)",
+  "gtip_onerilen": "9002.11.00.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 56.5,
+  "gerekce": "Telefon kamerasına takılan monte edilmiş objektif.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9002"
+ },
+ {
+  "grup": "PoE injector",
+  "gtip_onerilen": "8504.40.83.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 37.8,
+  "gerekce": "Şebeke AC'den 48V DC üretip veri hattına basan güç birimi; esas karakter AC→DC dönüşüm (8504.40). TR 2026 CN'de 8504.40.30 (telekom) kaldırıldı; redresör → 8504.40.83.90.19. Harici adaptörlü pasif injector ise 8536.69.90.00.18 tartışılabilir.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8504"
+ },
+ {
+  "grup": "Bluetooth ses alıcı/verici, araç kiti, CarPlay adaptörü",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 5,
+  "stok_degeri_usd": 36.78,
+  "gerekce": "Bluetooth/WiFi ile ses/veri alıp ileten cihazlar 8517.62 (AB sınıflandırma uygulaması). Amplifikatör ana fonksiyon değil.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Programlayıcı / debugger",
+  "gtip_onerilen": "8471.90.00.00.00",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 29.09,
+  "gerekce": "BTB TR340000240113 (12.06.2024): USB bağlantılı programlayıcı 8471.90.00.00.00.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "Taharet musluğu / tek su musluk",
+  "gtip_onerilen": "8481.80.19.00.09",
+  "urun_sayisi": 5,
+  "stok_degeri_usd": 28.12,
+  "gerekce": "Tek girişli (karıştırmayan) musluk/basınçlı taharet seti; BTB TR350000260028 eviye musluğu 8481.80.19.00.09.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8481"
+ },
+ {
+  "grup": "Elektrik ölçüm/test aleti",
+  "gtip_onerilen": "9030.33.70.90.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 25.53,
+  "gerekce": "BTB TR340000210183 gerilim test cihazı 9030.33.70.90.00. USB test cihazı kayıt fonksiyonlu ise 9030.39.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9030"
+ },
+ {
+  "grup": "Tripod / selfie çubuğu",
+  "gtip_onerilen": "9620.00.91.00.00",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 24.12,
+  "gerekce": "Telefon için tripod/selfie çubuğu; BT kumanda yardımcı (GYK 3b). 9620.00.10 yalnız 8525 kameraları/fasıl 90 aletleri için.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9620"
+ },
+ {
+  "grup": "Sinyal jeneratörü",
+  "gtip_onerilen": "8543.20.00.00.00",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 20.34,
+  "gerekce": "Fonksiyon/PWM/DDS sinyal üreteçleri ölçüm aleti değil 8543.20. 4-20mA kalibratör için 9030.89 görüşü.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "PLC fiber optik splitter",
+  "gtip_onerilen": "9013.80.40.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 20.25,
+  "gerekce": "TGTC'de pasif optik splitter için özel pozisyon var.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9013"
+ },
+ {
+  "grup": "Aktif video çevirici (HDMI↔VGA/AV/Scart vb.)",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 15,
+  "stok_degeri_usd": 16.71,
+  "gerekce": "Dijital↔analog veya format dönüşümü yapan elektronik devreli çeviriciler fasıl 85'te başka yerde yer almayan, kendine özgü fonksiyonlu cihaz → 8543.70.90. Kablolu tiplerde 8544.42 alternatifi.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "Krone/punch-down delme aleti",
+  "gtip_onerilen": "8205.59.80.00.19",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 8.0,
+  "gerekce": "Krone/110 IDC sonlandırma (punch-down) aleti; pense değil.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8205"
+ },
+ {
+  "grup": "PoE splitter / PoE→DC dönüştürücü",
+  "gtip_onerilen": "8504.40.95.90.19",
+  "urun_sayisi": 4,
+  "stok_degeri_usd": 5.85,
+  "gerekce": "PoE hattındaki 24/48V DC'yi 12V/5V'a indiren DC-DC çevirici; veri geçişi pasif. BTB: DC-DC boost kartı 8504.40.95.90.19 (2024).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8504"
+ },
+ {
+  "grup": "AC motor hız/güç kontrol kartı",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 3.25,
+  "gerekce": "Tristör faz kontrollü AC güç/hız regülatörü; frekans/akım türü dönüşümü yok. İleri-geri yön seçimli tip için 8537.10.98 savunulabilir.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "Bisiklet selesi",
+  "gtip_onerilen": "8714.95.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Bisiklet selesi.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8714"
+ },
+ {
+  "grup": "Oyun kolu / konsol / direksiyon",
+  "gtip_onerilen": "9504.50.00.00.00",
+  "urun_sayisi": 7,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB (08.08.2024) FANTECH gamepad 9504.50.00.00.00; PC uyumlu kol/direksiyon/arcade kiti/oyun yüklü retro konsol aynı alt pozisyon.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9504"
+ },
+ {
+  "grup": "RFID kart okuyucu (USB)",
+  "gtip_onerilen": "8471.90.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "125kHz kart ID'sini klavye emülasyonuyla bilgisayara aktaran okuyucu; BTB TR350000210103 (etiket okuyucu) 8471.90.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "DC-DC çevirici / regülatör modülü",
+  "gtip_onerilen": "8504.40.95.90.19",
+  "urun_sayisi": 6,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR (28.05.2024) DC-DC boost kartı ve 13.5V→5V çevirici 8504.40.95.90.19. Mevcut 85.04.40.55 eski CN (akü şarj) kodu.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8504"
+ },
+ {
+  "grup": "Ses amfisi / amplifikatör modülü",
+  "gtip_onerilen": "8518.40.00.00.00",
+  "urun_sayisi": 8,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "TPA3116/TDA7498/PAM8610 vb. ses frekans amplifikatör kartları; BT girişi yardımcı fonksiyon (GYK 3b). TR'de tek 12'li kod. BTB TR350000220059 (amfi kartı) 8518.40.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8518"
+ },
+ {
+  "grup": "Ses dekoder / ses arayüzü",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Dijital ses (DTS/AC3) çözücü ve gitar-telefon arayüzü; yükselteç veya kayıt cihazı değil.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "HDMI video yakalama kartı (USB)",
+  "gtip_onerilen": "8471.80.00.00.00",
+  "urun_sayisi": 4,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Bilgisayara bağlanıp HDMI görüntüsünü veri olarak aktaran yakalama birimi → 8471.80. Bağımsız çalışma yok.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "USB flash bellek / microSD",
+  "gtip_onerilen": "8523.51.10.00.00",
+  "urun_sayisi": 4,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Boş flash bellek/hafıza kartları 8523.51.10 (BTB TR340000220247 taşınabilir SSD 8523.51.10). Mevcut 85.25.81.99 (microSD) yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8523"
+ },
+ {
+  "grup": "Fiber medya dönüştürücü",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Optik↔elektrik sinyal dönüştürüp Ethernet verisi ileten cihaz → 8517.62.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "USB-SATA adaptör / disk kutusu",
+  "gtip_onerilen": "8471.80.00.00.00",
+  "urun_sayisi": 6,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "USB-SATA/NVMe köprü devresi içeren arayüz birimi. Boş disk kutusu için 8473.30.80 (OBİ parçası) alternatifi güçlü.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "Video balun",
+  "gtip_onerilen": "8504.31.80.90.11",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Pasif balun ferrit çekirdekli küçük transformatördür. Konnektör ağırlıklı görüşle 8536.69.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8504"
+ },
+ {
+  "grup": "IR kumanda adaptörü",
+  "gtip_onerilen": "8543.70.90.00.15",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Telefona takılan IR verici; TGTC'de IR kumandalar için özel pozisyon.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "Bilgisayarsız video kaydedici",
+  "gtip_onerilen": "8521.90.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Bağımsız olarak USB belleğe görüntü kaydeden cihaz video kayıt cihazıdır; BTB'ler NVR/kayıt cihazlarını 8521.90'a almış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8521"
+ },
+ {
+  "grup": "Tablet klavyeli kılıf",
+  "gtip_onerilen": "8471.60.60.90.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR340000240039 (29.03.2024): Samsung Tab S9 klavyeli kılıf 8471.60.60.90.00 — bire bir emsal. Mevcut 39.26.90.97 yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "Süper kapasitör",
+  "gtip_onerilen": "8532.29.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Elektrik çift katmanlı kondansatör; tantal/alüminyum elektrolitik/seramik/kâğıt-plastik değil → 8532.29. Mevcut 85.04.40.55 yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8532"
+ },
+ {
+  "grup": "USB→HDMI grafik adaptörü",
+  "gtip_onerilen": "8471.80.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "USB üzerinden ekran kartı işlevi gören (DisplayLink tipi) birim → OBİ makinesi birimi.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "SFP+ DAC kablo",
+  "gtip_onerilen": "8544.42.90.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Uçlarında SFP+ konnektör bulunan bakır twinax kablo; aktif çevirme yok (pasif DAC) → 8544.42.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8544"
+ },
+ {
+  "grup": "Harici DVD sürücü",
+  "gtip_onerilen": "8471.70.30.90.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Harici CD/DVD okuyucu-yazıcı optik disk hafıza birimidir.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "Monoküler dürbün (telefon uyumlu)",
+  "gtip_onerilen": "9005.80.00.10.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Telefona klipsli tek gözlü dürbün/teleskop. Mevcut 85.17.71 (anten) yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9005"
+ },
+ {
+  "grup": "Görüntülü kapı zili",
+  "gtip_onerilen": "8517.69.10.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR340000260124 (TAPO D205 WiFi görüntülü kapı zili, 28.07.2026) ve TR330000250015 8517.69.10.00.00.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Fitness/spor aleti (diğer)",
+  "gtip_onerilen": "9506.91.90.00.00",
+  "urun_sayisi": 6,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Barfiks, sehpa, hula hoop, boks torbası vb.; boks torbası 9506.99 değil 9506.91'dir.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9506"
+ },
+ {
+  "grup": "Kamera montaj aksesuarı (braket, buat, siperlik)",
+  "gtip_onerilen": "8529.90.96.90.00",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Güvenlik kamerasına özgü braket/muhafaza/buat. Genel amaçlı ise malzemesine göre 3926.90.97.90.29 / 7326.90.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8529"
+ },
+ {
+  "grup": "Duş seti (bataryalı)",
+  "gtip_onerilen": "8481.80.11.00.00",
+  "urun_sayisi": 5,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR340000260063 (30.04.2026): VitrA termostatik duş seti (bataryalı) 8481.80.11.00.00. Esas karakter karıştırıcı valf (GYK 3b).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8481",
+  "stok_1000_ve_ustu_haric": [
+   "40005100051 (stok 2523, 25230 USD)"
+  ]
+ },
+ {
+  "grup": "Klozet kapağı amortisörü/menteşe",
+  "gtip_onerilen": "8302.10.00.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Yavaş kapanma amortisörlü klozet menteşesi (adi metal). Plastik gövdeli ise 3926.90.97.90.29.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8302"
+ },
+ {
+  "grup": "Şarjlı hava pompası",
+  "gtip_onerilen": "8414.80.80.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Şişirme/vakumlama yapan şarjlı mini hava pompası; mevcut 84.13 (sıvı pompası) yanlış. Fan tipi ise 8414.59.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8414"
+ },
+ {
+  "grup": "Çocuk mikroskobu seti",
+  "gtip_onerilen": "9011.80.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "1200x'e kadar fonksiyonel optik mikroskop. Oyuncak niteliği baskınsa 9503.00.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9011"
+ },
+ {
+  "grup": "Musluk ucu aparatı (akrobat/robot uzatma)",
+  "gtip_onerilen": "8481.90.00.00.29",
+  "urun_sayisi": 4,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Mevcut musluk ucuna takılan 360° döner çok modlu uzatma/perlatör; kendisi su kesme/karıştırma yapmaz. Ürün gerçek bir musluk ise 8481.80.11.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8481"
+ },
+ {
+  "grup": "Kömürlü mangal/barbekü",
+  "gtip_onerilen": "7321.19.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Kömürlü fırınlı mangal; mevcut 73.21.11.10 gaz yakıtlı içindir.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=7321"
+ },
+ {
+  "grup": "Duş başlığı seti (bataryasız)",
+  "gtip_onerilen": "7324.90.00.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Yalnız tepe duş başlığı + kol ise valf değildir → 7324.90 (pirinçse 7418.20). Set karıştırıcı içeriyorsa 8481.80.11.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=7324"
+ },
+ {
+  "grup": "GSM/4G/5G sinyal güçlendirici",
+  "gtip_onerilen": "8517.62.00.10.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Hücresel sinyali alıp yükselterek yeniden yayan repeater. Anten yükselteci (8543.70.30) veya baz istasyonu (8517.61) görüşleri de var.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "TPMS lastik basınç sensörü",
+  "gtip_onerilen": "9026.20.20.90.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Kablosuz sensör+ekranlı lastik basınç izleme seti; esas fonksiyon basınç ölçümü. Mevcut 87.14.10.90 (motosiklet parçası) yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9026"
+ },
+ {
+  "grup": "Kapı zili / sesli uyarı butonu",
+  "gtip_onerilen": "8531.80.40.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Kablosuz melodili kapı zili ve ışıklı-sesli yarışma butonu sesli/görsel işaret cihazı.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8531"
+ },
+ {
+  "grup": "Akıllı kilit WiFi gateway",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Bluetooth↔WiFi ağ geçidi; kilit değil ağ cihazı. Mevcut 83.01.40.90 yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Akıllı elektronik silindir",
+  "gtip_onerilen": "8301.40.11.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Bina kapısına takılan elektronik silindirli kilit. Kilit gövdesiz salt silindir parça sayılırsa 8301.60.00.00.11.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8301"
+ },
+ {
+  "grup": "Akıllı eviye seti",
+  "gtip_onerilen": "7324.10.00.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Paslanmaz eviye + entegre batarya/şelale seti; esas karakter eviye (GYK 3b).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=7324"
+ },
+ {
+  "grup": "Lityum şarj / powerbank modülü",
+  "gtip_onerilen": "8504.40.60.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "3.7V Li-ion hücre şarj + 5V çıkış modülü; esas fonksiyon akü şarjı.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8504"
+ },
+ {
+  "grup": "Programlanabilir kontrol/röle kartı (uçuş, CNC dahil)",
+  "gtip_onerilen": "8537.10.91.00.00",
+  "urun_sayisi": 4,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Mikrodenetleyicili programlanabilir röle/uçuş/CNC kontrol kartları; BTB'ler (akıllı ev kontrol kartı, WiFi perde modülü) 8537.10.91. Uçuş kontrol kartı için İHA parçası (8807.30) görüşü var.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8537"
+ },
+ {
+  "grup": "Araç teşhis USB arayüzü",
+  "gtip_onerilen": "8471.80.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Bilgisayar yazılımıyla çalışan USB-OBD arayüzü (VAG-COM HEX V2).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "Osiloskop",
+  "gtip_onerilen": "9030.20.00.90.00",
+  "urun_sayisi": 4,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "El tipi/masaüstü dijital osiloskoplar; 3'ü 1 arada (osiloskop+multimetre+jeneratör) üründe esas karakter osiloskop (GYK 3b).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9030"
+ },
+ {
+  "grup": "Bluetooth haberleşme modülü",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "HC-08 BLE seri modül kablosuz veri iletir; parça görüşü 8517.79.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Kesim matı",
+  "gtip_onerilen": "3926.90.97.90.29",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "PVC kesim altlığı; mevcut 82.14.10 (kağıt bıçağı) yanlış. Ofis malzemesi görüşüyle 3926.10.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=3926"
+ },
+ {
+  "grup": "Telekom/RF ölçüm (SWR, VNA)",
+  "gtip_onerilen": "9030.40.00.90.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Anten/RF hat ölçümü için SWR metre ve vektör ağ analizörü.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9030"
+ },
+ {
+  "grup": "OBD2 Bluetooth arıza tespit adaptörü",
+  "gtip_onerilen": "8517.62.00.90.19",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Aracın OBD verisini Bluetooth ile telefona aktaran arayüz; kendisi ölçüm/analiz yapmaz → 8517.62. Teşhis cihazı görüşüyle 9031.80.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "Fırçasız motor sürücü (BLDC)",
+  "gtip_onerilen": "8504.40.95.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB'ler servo/motor sürücüleri 8504.40.95.90.19'a almış (30.04.2026 Delta ASD-A2).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8504"
+ },
+ {
+  "grup": "MP3/USB ses çalar modülü",
+  "gtip_onerilen": "8519.81.00.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "USB/SD/flash'tan ses çalan modül ve araç teyp USB/AUX dönüştürücüsü yarı iletken ortamdan ses yeniden üretir.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8519"
+ },
+ {
+  "grup": "Kağıt giyotin/kesme makinesi",
+  "gtip_onerilen": "8441.10.30.90.00 / 8441.10.70.90.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Kollu A4 giyotin 8441.10.30; sürgülü kesici 8441.10.70.90.00. Elle çalışan basit kesiciler için 8214.10 görüşü.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8441"
+ },
+ {
+  "grup": "Büyüteçli havya sehpası",
+  "gtip_onerilen": "9013.80.80.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Büyüteçli tutucu (yardımcı el); esas karakter büyüteç. Havya sehpası olarak 8515.90.80.90.19 görüşü.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9013"
+ },
+ {
+  "grup": "Gaz/CO dedektörü",
+  "gtip_onerilen": "9027.10.10.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR340000230128 (CO dedektörü) 9027.10.10.00.00.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9027"
+ },
+ {
+  "grup": "Şarj kontrol / BMS kartı",
+  "gtip_onerilen": "8537.10.98.00.19",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR410000250014 (15.08.2025) şarj kontrol modülü 8537.10.98.00.19. BMS için akü parçası (8507.90) alternatifi.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8537"
+ },
+ {
+  "grup": "Boyutsal/fiziksel ölçüm (kalınlık, açı)",
+  "gtip_onerilen": "9031.80.80.90.19",
+  "urun_sayisi": 3,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Ultrasonik ve boya kalınlık ölçer, dijital açı ölçer; fasıl 90'da başka yerde yer almayan ölçme aletleri. Mevcut 85.36.50 / 90.30.33 yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9031"
+ },
+ {
+  "grup": "Sıcaklık-nem ölçer",
+  "gtip_onerilen": "9025.80.40.90.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Termometre+higrometre kombinasyonu → 9025.80 elektronik.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9025"
+ },
+ {
+  "grup": "Peltier termoelektrik modül",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "TEC1-12708; 8541.51 yarı iletken dönüştürücü tanımı tartışmalı.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "Pil kapasite/iç direnç test cihazı",
+  "gtip_onerilen": "9030.33.70.90.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Pil gerilimi, kapasite ve iç direnç ölçen kayıt düzensiz cihaz.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9030"
+ },
+ {
+  "grup": "Sensör modülü (IMU/RTD)",
+  "gtip_onerilen": "9031.80.80.90.19",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Ölçüm yapan sensör kartı. HS2022 yarı iletken dönüştürücü (8541.51) veya modül (8543.70) görüşleri mevcut; BTB yok.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9031"
+ },
+ {
+  "grup": "Mikrodenetleyici entegre (IC)",
+  "gtip_onerilen": "8542.31.90.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "ATMEGA328P-PU tekil monolitik entegre devre.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8542"
+ },
+ {
+  "grup": "Havya",
+  "gtip_onerilen": "8515.11.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Elektrikli kalem havya.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8515"
+ },
+ {
+  "grup": "Ses seviyesi ölçer (desibelmetre)",
+  "gtip_onerilen": "9027.89.90.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "9027 başlık metni 'ses miktarını ölçme' cihazlarını kapsar; HS2022'de 9027.80 → 9027.81/89 bölündü, mevcut 90.27.80.05 artık yok.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9027"
+ },
+ {
+  "grup": "Refraktometre",
+  "gtip_onerilen": "9027.50.00.00.19",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Refraktometre başlık metninde sayılır, optik ışın kullanan → 9027.50.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9027"
+ },
+ {
+  "grup": "Termostat modülü",
+  "gtip_onerilen": "9032.10.20.90.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Sıcaklığa göre röle süren dijital termostat kartı.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9032"
+ },
+ {
+  "grup": "Android el terminali (PDA)",
+  "gtip_onerilen": "8517.13.00.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR340000240216 Zebra TC27 (hücresel) 8517.13.00.00.19. Hücresel modülsüz versiyon 8471.30 olur.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8517"
+ },
+ {
+  "grup": "PLC programlama arayüz kablosu",
+  "gtip_onerilen": "8471.80.00.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "USB↔MPI/PPI/RS485 protokol dönüştürücü elektronik içeren arayüz birimi. Programlayıcı emsali 8471.90; salt kablo görüşü 8544.42.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8471"
+ },
+ {
+  "grup": "Güç transistörü",
+  "gtip_onerilen": "8541.29.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "2SA1943 güç transistörü (150W).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8541"
+ },
+ {
+  "grup": "Endüktif yaklaşım sensörü",
+  "gtip_onerilen": "8536.50.19.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "24VDC PNP NO çıkışlı yakınlık anahtarı devre açıp kapatır.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8536"
+ },
+ {
+  "grup": "Çok portlu şarj istasyonu",
+  "gtip_onerilen": "8504.40.83.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR (07.05.2024) LDNIO çok portlu şarj istasyonu 8504.40.83.90.19.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8504"
+ },
+ {
+  "grup": "Hareket sensörlü anahtar",
+  "gtip_onerilen": "8536.50.19.00.11",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "12-24V DC PIR sensörlü anahtar; TGTC'de hareket algılamalı anahtar alt pozisyonu.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8536"
+ },
+ {
+  "grup": "Fitness aleti (ayarlanabilir dirençli)",
+  "gtip_onerilen": "9506.91.10.00.00",
+  "urun_sayisi": 7,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR160000210014 koşu bandı 9506.91.10. Ayarlanabilir dirençli bisiklet/stepper/kürek/el yayı.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9506"
+ },
+ {
+  "grup": "Debimetre (akış ölçer)",
+  "gtip_onerilen": "9026.10.21.90.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Dijital türbinli akış/hacim sayacı.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9026"
+ },
+ {
+  "grup": "Bahçe sulama zamanlayıcı",
+  "gtip_onerilen": "9107.00.00.00.11",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Zamanlayıcı kontrol cihazı; valf entegre ise 8481.80, programlanabilir kontrolör ise 8537.10.91. Ürün detayı belirsiz.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9107"
+ },
+ {
+  "grup": "Termometre",
+  "gtip_onerilen": "9025.19.00.19.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Dijital problu gıda termometresi (sıvılı değil).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9025"
+ },
+ {
+  "grup": "Değerli taş test cihazı",
+  "gtip_onerilen": "9027.89.90.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Isıl iletkenlikle taş ayırt eden fiziksel analiz cihazı.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9027"
+ },
+ {
+  "grup": "PCIe riser kart",
+  "gtip_onerilen": "8473.30.20.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Bilgisayar anakartı için baskılı devre montajlı parça.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8473"
+ },
+ {
+  "grup": "Plotter bıçağı",
+  "gtip_onerilen": "8208.90.00.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Kesim plotteri bıçağı (vinil/folyo).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8208"
+ },
+ {
+  "grup": "Elektrikli boya tabancası",
+  "gtip_onerilen": "8424.20.00.00.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Mevcut 85.15.11 (havya) yanlış.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8424"
+ },
+ {
+  "grup": "LED aydınlatma (ring light, gece lambası)",
+  "gtip_onerilen": "9405.21.40.00.00",
+  "urun_sayisi": 2,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Ayaklı/masa tipi LED lamba; ring light'ta tripod yardımcı (GYK 3b). Mevcut 94.05.42.31 (diğer LED lamba plastik) alternatif.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9405"
+ },
+ {
+  "grup": "Ozon jeneratörü",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Elektrik deşarjıyla ozon üretir; filtre/arıtma makinesi değil (BTB'lerde hava dezenfektörleri 8543.70.90.00.19).",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "RFID geçiş kontrol cihazı",
+  "gtip_onerilen": "8543.70.90.00.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "BTB TR340000230051 (akıllı kartlı geçiş cihazı) 8543.70.90.00.19. Kilit mekanizmalı tam set ise 8301.40.19.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8543"
+ },
+ {
+  "grup": "Şarjlı damacana su pompası",
+  "gtip_onerilen": "8413.70.35.90.00",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Küçük elektrikli sıvı pompası. Diyafram tip ise 8413.81.00.00.00.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=8413"
+ },
+ {
+  "grup": "Klozet fırçası",
+  "gtip_onerilen": "9603.90.91.90.19",
+  "urun_sayisi": 1,
+  "stok_degeri_usd": 0.0,
+  "gerekce": "Tuvalet fırçası + tutucu set; ev tipi fırça.",
+  "kaynak": "https://www.gumruk.com.tr/gtip/listele.aspx?ID=9603"
+ }
+]

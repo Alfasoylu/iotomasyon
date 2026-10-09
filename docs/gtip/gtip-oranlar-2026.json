@@ -1,0 +1,980 @@
+[
+  {
+    "hs": "8525.89",
+    "gtip_ornek": "8525.89.00.00.00",
+    "tanim": "Diğer TV/dijital kameralar (IP/WiFi güvenlik kamerası tipik sınıflandırması)",
+    "gv_cin_pct": 4.9,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV (IV) %20 muhtemel: liste 'televizyon kameraları/dijital kameralar'ı kapsıyor (eski 8525.80.19/30); GİB 24.03.2022 yazısı GTİP değişse de vergilendirme sürer diyor. Kayıt yapan 'görüntü kaydedici kamera' ise kapsam dışı olabilir. TRT bandrol: yayın alamıyorsa yok.",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8525890000&Area=CN",
+      "https://orgtr.org/iv-sayili-liste/",
+      "https://kpmgvergi.com/yayinlar/mali-bultenler/gumruk/ozel-tuketim-vergisi-kanununa-ekli-iv-sayili-listede-otvye-tabi-olan-bazi-kameralarin-2022-yilinda-farkli-gtip-numaralarinda-yer-alsalar-dahivergilendirilmeye-devam-edilecegi-bildirilmistir/1466"
+    ],
+    "dogrulandi": true,
+    "not": "GV %4,9 TR listesinden (AB TARIC %0 — Türkiye ITA-2'ye taraf değil, AB oranı kullanılamaz). İGV: 10791 Ek-1'de 8525.8x satırı yok → 0. ÖTV kapsamı ürün bazında doğrulanmalı (doğrulanmadı)."
+  },
+  {
+    "hs": "8525.81",
+    "gtip_ornek": "8525.81.00.00.00",
+    "tanim": "Yüksek hızlı kameralar (8525.81)",
+    "gv_cin_pct": 4.9,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV durumu doğrulanmadı",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+    ],
+    "dogrulandi": true,
+    "not": "IP kamera için genelde 8525.89."
+  },
+  {
+    "hs": "8525.83",
+    "gtip_ornek": "8525.83.00.00.00",
+    "tanim": "Gece görüş kameraları (8525.83)",
+    "gv_cin_pct": 4.9,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV durumu doğrulanmadı (8525.89 notuna bakın)",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+    ],
+    "dogrulandi": true,
+    "not": "Termal/gece görüş kameraları burada olabilir."
+  },
+  {
+    "hs": "8525.60",
+    "gtip_ornek": "8525.60.00.00.29",
+    "tanim": "Alıcısı bulunan verici diğer cihazlar (el telsizi/walkie-talkie olası sınıflandırma)",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV (IV) listesinde 'CB / 49 MHz alçak güçlü / amatör telsiz cihazları' %20 satırı eski GTİP (8517.69.90.90.24) ile duruyor — PMR/amatör telsizlerde ÖTV %20 riski, doğrulanmadı.",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama",
+      "https://orgtr.org/iv-sayili-liste/"
+    ],
+    "dogrulandi": true,
+    "not": "El telsizinin 8525.60 mı 8517.62 mi olduğu ürün özelliğine bağlı; ikisinde de GV 0, İGV yok. BTB önerilir."
+  },
+  {
+    "hs": "8517.62",
+    "gtip_ornek": "8517.62.00.90.19",
+    "tanim": "Ağ cihazları: switch, router, PoE switch, ağ kartı, WiFi AP (11.07.2026'dan itibaren .90.19 'Diğerleri'; .90.11 akıllı saatler)",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV yok (8517.62 IV listede değil). Hücresel ağ için olanlar 8517.62.00.10.00 (GV 0).",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8517620000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "Eski kod 8517.62.00.90.00 11.07.2026'da ikiye bölündü (11506/11507). GV 0 (ITA-1)."
+  },
+  {
+    "hs": "8517.71",
+    "gtip_ornek": "8517.71.00.00.00",
+    "tanim": "Her türlü anten ve anten yansıtıcıları; aksam-parçaları",
+    "gv_cin_pct": 5,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "Dipnot (2): Ar-Ge Merkezi Belgeli firmaların üretim girdisi ithalatında GV %0 (nihai kullanım).",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8517710000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "AB TARIC %0 iken TR %5 (ITA-2 farkı)."
+  },
+  {
+    "hs": "8517.79",
+    "gtip_ornek": "8517.79.00.00.00",
+    "tanim": "8517 cihazlarının diğer aksam-parçaları",
+    "gv_cin_pct": 5,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "Dipnot (2) Ar-Ge merkezi istisnası",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8517790000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8544.42",
+    "gtip_ornek": "8544.42.90.00.19",
+    "tanim": "Konnektörlü kablolar ≤1000 V (HDMI, USB, güç kabloları vb.) — Diğerleri",
+    "gv_cin_pct": 3.3,
+    "igv_cin_pct": 15,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8544420000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "GV TR listesi ve AB TARIC (%3,3) ile çift teyitli. İGV %15 RG 10791 Ek-1."
+  },
+  {
+    "hs": "8544.42",
+    "gtip_ornek": "8544.42.10.00.00",
+    "tanim": "Konnektörlü kablolar — telekomünikasyonda kullanılan türde (ör. RJ45 patch kablo olabilir)",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8544420000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "'Telekomünikasyonda kullanılan' yorumu için BTB önerilir."
+  },
+  {
+    "hs": "8544.42",
+    "gtip_ornek": "8544.42.90.00.11",
+    "tanim": "Güneş paneli bağlantı kutuları (junction box)",
+    "gv_cin_pct": 3.3,
+    "igv_cin_pct": 15,
+    "kdv_pct": 20,
+    "anti_damping": "Çin: dampinge karşı önlem — Tebliğ 2026/29 (oran haber kaynaklarında CIF %38,23; DOĞRULANMADI). Soruşturma 2025/8 ile açılmıştı.",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://kpmgvergi.com/yayinlar/mali-bultenler/gumruk/cin-menseli-gunes-panelleri-icin-baglanti-kutulari-esyasina-iliskin-damping-sorusturmasi-acildigi-belirtilmistir/3126"
+    ],
+    "dogrulandi": false,
+    "not": "GV/İGV doğrulandı; AD oranı doğrulanmadı."
+  },
+  {
+    "hs": "8544.70",
+    "gtip_ornek": "8544.70.00.00.00",
+    "tanim": "Fiber optik kablolar",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8544700000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "TR'de Çin'e fiber kablo AD önlemi bulunamadı (AB'de var; TR'ye uygulanmaz)."
+  },
+  {
+    "hs": "8543.70",
+    "gtip_ornek": "8543.70.90.00.11",
+    "tanim": "Maden (metal) dedektörleri",
+    "gv_cin_pct": 3.7,
+    "igv_cin_pct": 20,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8543700000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "El tipi/yer altı metal dedektörü TGTC'de 'Maden dedektörleri' alt pozisyonu. İGV %20 yalnız bu satırda."
+  },
+  {
+    "hs": "8543.70",
+    "gtip_ornek": "8543.70.90.00.19",
+    "tanim": "Diğer elektrikli cihazlar (aktif çevirici/converter, sinyal cihazları vb. 'Diğerleri')",
+    "gv_cin_pct": 3.7,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8543700000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "Geliştirme kartları çoğu zaman 8543.70 değil 8471/8473 veya 8542'de sınıflanır — ürün bazında BTB."
+  },
+  {
+    "hs": "8543.70",
+    "gtip_ornek": "8543.70.90.00.15",
+    "tanim": "Kızılötesi uzaktan kumandalar",
+    "gv_cin_pct": 3.7,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV (IV) %20 (listede ismen var)",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://orgtr.org/iv-sayili-liste/"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8543.70",
+    "gtip_ornek": "8543.70.01-.09.00.00",
+    "tanim": "ITA-2 kapsamlı özel 8543.70 alt pozisyonları (ör. mikrodalga yükselteçler, e-okuyucu, ses DSP, touch-pad...)",
+    "gv_cin_pct": 3.7,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8543700000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "AB'de %0, TR'de %3,7 (ITA-2 farkı)."
+  },
+  {
+    "hs": "8471.80",
+    "gtip_ornek": "8471.80.00.00.00",
+    "tanim": "Otomatik bilgi işlem makinelerinin diğer birimleri",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8471800000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "Kart okuyucu tipik olarak 8471.90 veya 8471.80 (BTB). İkisi de GV 0."
+  },
+  {
+    "hs": "8471.70",
+    "gtip_ornek": "8471.70.98.90.00",
+    "tanim": "Bellek birimleri — diğerleri (harici SSD/HDD birimleri vb.)",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8471700000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "Hard disk: 8471.70.50.90.00 (GV 0)."
+  },
+  {
+    "hs": "8471.90",
+    "gtip_ornek": "8471.90.00.00.00",
+    "tanim": "8471 — diğerleri (kart okuyucular vb.)",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8473.30",
+    "gtip_ornek": "8473.30.80.00.00",
+    "tanim": "84.71 makinelerinin aksam/parça/aksesuarı (boş harici disk kutusu vb.)",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8473300000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "Ağ kartı (NIC) 8517.62'de sınıflanır. Kılıf/çanta (kutular, kılıflar) 8473 dışında."
+  },
+  {
+    "hs": "8523.51",
+    "gtip_ornek": "8523.51.10.00.00",
+    "tanim": "Katı hal kalıcı depolama (microSD, USB flash) — kayıt yapılmamış",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8523510000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8523.51",
+    "gtip_ornek": "8523.51.90.00.00",
+    "tanim": "Katı hal depolama — diğerleri (kayıtlı)",
+    "gv_cin_pct": 3.5,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+    ],
+    "dogrulandi": true,
+    "not": "AB %0, TR %3,5."
+  },
+  {
+    "hs": "8481.80",
+    "gtip_ornek": "8481.80.11.00.00",
+    "tanim": "Sıhhi tesisat — karıştırıcı valfler (lavabo/evye/banyo bataryası, termostatik bataryalar dahil)",
+    "gv_cin_pct": 2.2,
+    "igv_cin_pct": 25,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8481800000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "Toplam GV+İGV %27,2. Çin'e özgü TR AD önlemi bulunamadı (doğrulanmadı)."
+  },
+  {
+    "hs": "8481.80",
+    "gtip_ornek": "8481.80.19.00.01 / .09 / .12",
+    "tanim": "Sıhhi tesisat — musluklar (sensörlü .01, diğer .09), valfler (.12)",
+    "gv_cin_pct": 2.2,
+    "igv_cin_pct": 25,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8481.80",
+    "gtip_ornek": "8481.80.81.00.12",
+    "tanim": "Küresel/konik valfler — bakır/pirinç (11.07.2026'dan itibaren yeni alt kod)",
+    "gv_cin_pct": 2.2,
+    "igv_cin_pct": 25,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-9.pdf"
+    ],
+    "dogrulandi": true,
+    "not": "11508 ile 8481.80.81 üçe bölündü (.11 alüminyum, .12 bakır/pirinç, .19 diğer), hepsi İGV %25; 8481.90 parçalar da %25."
+  },
+  {
+    "hs": "8481.80",
+    "gtip_ornek": "8481.80.61.00.00",
+    "tanim": "Sürgülü valfler — demir dökümden",
+    "gv_cin_pct": 2.2,
+    "igv_cin_pct": 25,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "8481.80 altındaki tüm satırlar 10791 Ek-1'de %25."
+  },
+  {
+    "hs": "8301.40",
+    "gtip_ornek": "8301.40.19.00.19",
+    "tanim": "Kapı kilitleri — diğerleri (akıllı/elektronik kapı kilidi olası sınıflandırma)",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 20,
+    "kdv_pct": 20,
+    "anti_damping": "Silindirli mekanik kapı kilidi (8301.40.11) ve kilit kasası (8301.60.00.00.19) için Çin'e 0,74 USD/adet AD; NGGS 2026/8 sürüyor, önlem yürürlükte. 'Elektromekanik, elektromanyetik, tam elektronik olanlar' kapsam DIŞI → akıllı kilitte AD yok (haber/GAİB kaynaklı, RG metni okunmadı).",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8301400000&Area=CN",
+      "https://www.gaib.org.tr/tr/hububat/duyurular/cin-menseli-kapi-kilitleri-ithalatina-sorusturma-8677.html"
+    ],
+    "dogrulandi": true,
+    "not": "GV/İGV doğrulandı. AD kapsam ifadesi ikincil kaynaktan."
+  },
+  {
+    "hs": "8301.40",
+    "gtip_ornek": "8301.40.11.00.00",
+    "tanim": "Silindirli kapı kilitleri",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 20,
+    "kdv_pct": 20,
+    "anti_damping": "Çin: 0,74 USD/adet kesin AD (NGGS 2026/8 sürerken yürürlükte) — tutar ikincil kaynaktan",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://www.haberler.com/ekonomi/cin-menseli-kapi-kilitleri-icin-nihai-gozden-gecirme-sorusturmasi-acildi-19680239-haberi/"
+    ],
+    "dogrulandi": false,
+    "not": "AD tutarı RG'den teyit edilmedi."
+  },
+  {
+    "hs": "8302.10",
+    "gtip_ornek": "8302.10.00.00.19",
+    "tanim": "Menteşeler — diğerleri",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 15,
+    "kdv_pct": 20,
+    "anti_damping": "Çin: 1,35 USD/kg AD (Tebliğ 2023/12, RG 06.04.2023/32155; 5 yıl → ~04/2028)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://kpmgvergi.com/yayinlar/mali-bultenler/gumruk/cin-menseli-mentese-sabit-askilik-ve-mobilya-donanim-urunlerine-uygulanan-dampinge-karsi-onlem-miktari-degistirilmistir/1966"
+    ],
+    "dogrulandi": true,
+    "not": "8302.10.00.00.11 (soğuk hava deposu) da 1,35 USD/kg; .12 (nakil vasıtası) AD tablosunda yok."
+  },
+  {
+    "hs": "8302.50",
+    "gtip_ornek": "8302.50.00.00.00",
+    "tanim": "Sabit askılıklar, şapka askıları, dirsekler vb.",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 15,
+    "kdv_pct": 20,
+    "anti_damping": "Çin: 1,35 USD/kg AD (Tebliğ 2023/12)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://kpmgvergi.com/yayinlar/mali-bultenler/gumruk/cin-menseli-mentese-sabit-askilik-ve-mobilya-donanim-urunlerine-uygulanan-dampinge-karsi-onlem-miktari-degistirilmistir/1966"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8302.42",
+    "gtip_ornek": "8302.42.00.00.19",
+    "tanim": "Mobilya için diğer donanım (soft-close amortisör/damper vb. olası)",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 15,
+    "kdv_pct": 20,
+    "anti_damping": "Çin: 0,65 USD/kg AD (Tebliğ 2023/12)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-9.pdf"
+    ],
+    "dogrulandi": true,
+    "not": "8302.42.00.00.11 'koltuk amortisörleri' satırı 11508 Liste 3 ile İGV tablosundan çıkarıldı → İGV 0 (11.07.2026'dan)."
+  },
+  {
+    "hs": "8518.40",
+    "gtip_ornek": "8518.40.00.00.00",
+    "tanim": "Elektrikli ses frekans yükselteçleri (amplifikatörler)",
+    "gv_cin_pct": 4.5,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV (IV) %20 (85.18 tüm pozisyon). Dipnot (b): sivil hava taşıtı için GV 0.",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://orgtr.org/iv-sayili-liste/",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8518400000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "AB TARIC %0, TR %4,5 (ITA-2 farkı). 8518 için 10791 Ek-1'de İGV satırı yok."
+  },
+  {
+    "hs": "8518.30",
+    "gtip_ornek": "8518.30.00.90.11 / .19",
+    "tanim": "Kulaklıklar — kablosuz (.11) / diğer (.19) (11.07.2026'dan bölündü)",
+    "gv_cin_pct": 2,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV (IV) %20",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+      "https://orgtr.org/iv-sayili-liste/"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8518.22",
+    "gtip_ornek": "8518.22.00.00.00",
+    "tanim": "Aynı kabine monte birden fazla hoparlör",
+    "gv_cin_pct": 4.5,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV (IV) %20",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://orgtr.org/iv-sayili-liste/"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8504.40",
+    "gtip_ornek": "8504.40.83.90.19",
+    "tanim": "Redresörler — diğer (AC/DC adaptör, USB şarj adaptörü, SMPS güç kaynağı olası)",
+    "gv_cin_pct": 3.3,
+    "igv_cin_pct": 11,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama",
+      "https://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Lang=en&SimDate=20261009&Taric=8504400000&Area=CN"
+    ],
+    "dogrulandi": true,
+    "not": "AB TARIC %0, TR %3,3. LED sürücü .90.11 ve EV şarj istasyonu .90.12: İGV %6,7."
+  },
+  {
+    "hs": "8504.40",
+    "gtip_ornek": "8504.40.95.90.19",
+    "tanim": "Statik konvertörler — diğer (DC-DC konvertör vb.)",
+    "gv_cin_pct": 3.3,
+    "igv_cin_pct": 5,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "UPS .90.11 de İGV %5."
+  },
+  {
+    "hs": "8504.40",
+    "gtip_ornek": "8504.40.87.90.11",
+    "tanim": "İnvertörler <50 kVA (MPPT'siz)",
+    "gv_cin_pct": 3.3,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "≥50 kVA (.90.12) İGV %4,3; MPPT'li 8504.40.84.90 İGV %4,3. Dipnot (1) bazı satırlarda: 87. fasıl imalatında GV %0,8."
+  },
+  {
+    "hs": "8504.40",
+    "gtip_ornek": "8504.40.60.90.19",
+    "tanim": "Akümülatör şarj ediciler — diğer",
+    "gv_cin_pct": 3.3,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "10791 Ek-1'de 8504.40.60 yok → İGV 0."
+  },
+  {
+    "hs": "8536.69",
+    "gtip_ornek": "8536.69.90.00.11",
+    "tanim": "Ev tipi fiş ve soketler",
+    "gv_cin_pct": 2.3,
+    "igv_cin_pct": 5,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "8536.69",
+    "gtip_ornek": "8536.69.90.00.18",
+    "tanim": "Diğer fiş/soket/konnektörler",
+    "gv_cin_pct": 2.3,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "Koaksiyel (8536.69.10) ve baskı devre (8536.69.30) konnektörleri GV 0, İGV 0."
+  },
+  {
+    "hs": "8536.50",
+    "gtip_ornek": "8536.50.19.00.19 / 8536.50.80.00.18",
+    "tanim": "Diğer anahtarlar (≤60 V ve diğer)",
+    "gv_cin_pct": 2.3,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf"
+    ],
+    "dogrulandi": true,
+    "not": "11.07.2026'dan 'hareket algılamalı' alt kodları (.19.00.11 ve .80.00.10) ayrıldı, GV 2,3. Elektronik anahtar 8536.50.03/.05/.07: GV 0."
+  },
+  {
+    "hs": "8536.70",
+    "gtip_ornek": "8536.70.00.10.00",
+    "tanim": "Optik lif konnektörleri — plastikten (seramik .20, bakır .30, çelik .50)",
+    "gv_cin_pct": 3,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "9030.31",
+    "gtip_ornek": "9030.31.00.90.00",
+    "tanim": "Multimetreler (kaydedicisiz)",
+    "gv_cin_pct": 4.2,
+    "igv_cin_pct": 5.8,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "Sivil hava taşıtı alt kodu .10.00 GV 0."
+  },
+  {
+    "hs": "9030.33",
+    "gtip_ornek": "9030.33.20.90.00 / 9030.33.70.90.00",
+    "tanim": "Direnç ölçerler / diğer kaydedicisiz ölçü aletleri (pens ampermetre vb.)",
+    "gv_cin_pct": 4.2,
+    "igv_cin_pct": 5.8,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "9030.20",
+    "gtip_ornek": "9030.20.00.90.00",
+    "tanim": "Osiloskoplar ve osilograflar",
+    "gv_cin_pct": 4.2,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "9030.89",
+    "gtip_ornek": "9030.89.00.90.00",
+    "tanim": "Diğer elektrik ölçü/kontrol aletleri",
+    "gv_cin_pct": 2.1,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "9031.80",
+    "gtip_ornek": "9031.80.80.90.19",
+    "tanim": "Diğer ölçme/kontrol alet ve cihazları",
+    "gv_cin_pct": 4,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "Yük hücreleri .90.11: İGV %6. Geometrik ölçüm 9031.80.20.90: GV 2,8, İGV 0."
+  },
+  {
+    "hs": "9015.80",
+    "gtip_ornek": "9015.80.80.00.00",
+    "tanim": "Diğer (jeofizik vb.) alet ve cihazlar — metal dedektörü karşılaştırması için",
+    "gv_cin_pct": 3.7,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "Hobi/define metal dedektörü TGTC'de 8543.70.90.00.11 'Maden dedektörleri' (İGV %20). 9015.80 jeofizik arama cihazları için; sınıflandırma farkı vergi yükünü %20 değiştirir — BTB önerilir."
+  },
+  {
+    "hs": "9504.50",
+    "gtip_ornek": "9504.50.00.00.00",
+    "tanim": "Video oyun konsolları ve makineleri (oyun kolu/gamepad genelde burada)",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 20,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV (IV) %20 (95.04 tüm pozisyon)",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://orgtr.org/iv-sayili-liste/"
+    ],
+    "dogrulandi": true,
+    "not": ""
+  },
+  {
+    "hs": "9506.91",
+    "gtip_ornek": "9506.91.10.00.00 / 9506.91.90.00.00",
+    "tanim": "Kültür-fizik/jimnastik/fitness eşyası",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 20,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "10791 dipnot (20) yalnız Pakistan için."
+  },
+  {
+    "hs": "9506.99",
+    "gtip_ornek": "9506.99.90.00.00",
+    "tanim": "Diğer spor/açık hava oyun eşyası",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 20,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "9506.99.10 (kriket/polo) GV 0, İGV 20."
+  },
+  {
+    "hs": "3926.90",
+    "gtip_ornek": "3926.90.97.90.29",
+    "tanim": "Plastikten diğer eşya — 'Diğerleri' (plastik telefon/tablet arka kapak-kılıf olası)",
+    "gv_cin_pct": 6.5,
+    "igv_cin_pct": 10,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-8.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "Kılıfın 4202.32'ye mi 3926.90'a mı gireceği ürüne bağlı (kapaklı/cüzdan tipi kılıf 4202'ye kayabilir) — vergi farkı çok büyük, BTB önerilir. 3926.90.97.90.23 = contalar (11.07.2026'dan)."
+  },
+  {
+    "hs": "4202.32",
+    "gtip_ornek": "4202.32.10.00.00",
+    "tanim": "Cep/çanta eşyası — dış yüzü plastik yapraktan (telefon/tablet kılıfı olası)",
+    "gv_cin_pct": 9.7,
+    "igv_cin_pct": 39,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "Dokumaya elverişli maddeden olanlar 4202.32.90: GV 3,7 + İGV 39. Toplam yük çok yüksek."
+  },
+  {
+    "hs": "8473.30",
+    "gtip_ornek": "8473.30.80.00.00",
+    "tanim": "(Kılıf karşılaştırması) 8473.30 'kutular, kılıflar ve benzerleri HARİÇ'",
+    "gv_cin_pct": 0,
+    "igv_cin_pct": 0,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "Tablet/laptop kılıfları 8473.30'a giremez (tanımda hariç)."
+  },
+  {
+    "hs": "8205",
+    "gtip_ornek": "8205.59.80.00.19",
+    "tanim": "Başka yerde belirtilmeyen el aletleri — diğerleri",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 25,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+    ],
+    "dogrulandi": true,
+    "not": "8205.10 (delme/vida açma) GV 1,7; 8205.20/30/40/51/70/90.90 GV 3,7; 8205.59.80/60/90.10 GV 2,7 — hepsi İGV %25."
+  },
+  {
+    "hs": "8203",
+    "gtip_ornek": "8203.20.00.00.19",
+    "tanim": "Pense, kerpeten, cımbız vb. — diğerleri",
+    "gv_cin_pct": 1.7,
+    "igv_cin_pct": 25,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf"
+    ],
+    "dogrulandi": true,
+    "not": "8203.10 (eğe, törpü) İGV 8,8; 8203.20/30/40 İGV 25; GV hepsi 1,7."
+  },
+  {
+    "hs": "9405",
+    "gtip_ornek": "9405.42.39.00.00",
+    "tanim": "LED aydınlatma cihazları — diğer maddelerden (metal armatür vb.)",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 30,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "9405.42.31 (plastik) GV 4,7; 9405.42.10 (projektör) GV 3,7; 9405.11.x tavan armatürleri GV 2,7-4,7; hepsi İGV %30. 9405.9x parçalar İGV %20. Kristal avize (9405.11.50.00.11) ÖTV %20 (eski GTİP ile listede)."
+  },
+  {
+    "hs": "8516.29",
+    "gtip_ornek": "8516.29.99.00.13",
+    "tanim": "Elektrikli ortam ısıtıcıları — diğer ısıtıcı ve sobalar",
+    "gv_cin_pct": 2.7,
+    "igv_cin_pct": 30,
+    "kdv_pct": 20,
+    "anti_damping": "Bulunamadı (kapsamlı AD taraması yapılamadı; beyan öncesi müşavirle teyit)",
+    "diger": "ÖTV (IV) %6,7 (85.16; ütüler hariç)",
+    "kaynaklar": [
+      "https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip",
+      "https://www.resmigazete.gov.tr/eskiler/2025/12/20251231M3-2.pdf",
+      "https://orgtr.org/iv-sayili-liste/",
+      "https://musavirlerkulubu.com.tr/araclar/embed/gtip-sorgulama"
+    ],
+    "dogrulandi": true,
+    "not": "8516.29.10/50/91/99 ve 8516.10 su ısıtıcılar: GV 2,7 + İGV 30."
+  }
+]
