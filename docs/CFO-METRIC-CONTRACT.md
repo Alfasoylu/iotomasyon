@@ -12,7 +12,9 @@ next_action: "Alperen kararları D-P01…D-P06 → PR-D (net sermaye) / PR-E (bo
 > `cfo_metrik_net_sermaye()` (migration `20261009170000`, Cowork uygulayacak) — Goal Engine (`fm_balance_day` `net_capital_try` v3),
 > `cfo_snapshot.contractNetWorthTry` ve `/cfo` manşeti aynı fonksiyondan. Üretim 09.10: **2.900.562 TL**. Uygulama ayrıntısı: nakit = artı
 > bakiyeler, KMH = eksi bakiyeler; satan ama maliyeti olmayan stok (24 SKU, ≤ 256.990 TL) ve değeri bilinmeyen stok (32 SKU) BILINMIYOR
-> satırında, toplamda değil. Mutabakat SQL'i `net_sozlesme` sütunuyla bağımsız ikinci uygulamadır (CI eşitlik testi). Sırada: borç (PR-E / CFO-002), kur (CFO-003).
+> satırında, toplamda değil. Mutabakat SQL'i `net_sozlesme` sütunuyla bağımsız ikinci uygulamadır (CI eşitlik testi). **Borç uygulandı (CFO-002):** `cfo_metrik_borc()` (migration `20261009180000`) — kredi kalan + kart toplam +
+> kullanılan KMH; hedef `cfo_settings.debtTargetUsd` × TCMB; Goal `debt_below_usd` ve sipariş kapısı aynı kaynak. Üretim 09.10: 5.889.904 TL.
+> Sırada: kur (CFO-003 / D-P04).
 
 Amaç: stratejik hedeflerin (ciro, net sermaye, borç) ve nakdin **tek** tanımı. Bugün yaşayan tüm tanımlar
 `scripts/cfo/metric-reconciliation.sql` ile tek satırda ölçülür (salt-okunur; CI'da üretim kopyasında koşar; Cowork da çalıştırabilir).

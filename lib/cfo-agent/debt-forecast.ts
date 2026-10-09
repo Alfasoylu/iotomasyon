@@ -1,5 +1,5 @@
 import { REVIEWED_CFO_SOURCE_BINDINGS } from './acceptance-profile';
-import { NEW_ORDER_DEBT_LIMIT_TRY } from './debt-policy';
+import { debtGate } from './debt-policy';
 import type { ReadSource, Row } from './sources';
 import type { CfoAgentSnapshot } from './types';
 import type { WorkingContext } from './workflow-plan';
@@ -68,9 +68,12 @@ export function forecastDebt(context:WorkingContext):DebtForecast{
       'Mevcut ve bedeli ödenmiş gelecek stokla sınırlı satış; bugünkü ihtiyatlı hız ve tam maliyet hesabı sabit kabul edilir.',
       'Aylık sabit gider, kullanıcı beyanıyla vergi dahil faiz ve diğer giderler günlere eşit pay edilir; takvim çıkışları ayrıca düşülür. Bilinmeyen gider sıfır sayılmaz.',
       'Kredi/kart taksiti yeniden gider sayılmaz; borç anaparası serbest nakitten ödenir. Tarih sipariş izni değildir.']};
+  // Eşik kapıyla aynı kaynaktan (CFO-002: borç hedefi USD × TCMB kuru; migration öncesi eski 5M TL)
+  const limit=(context.orderGate??debtGate(debt,context.financialGoals?.balancesFresh??false)).limitTry;
   if(debt==null)missing.push('Toplam borç');
+  if(limit==null)missing.push('Borç hedefinin TL karşılığı');
   if(!context.financialGoals?.balancesFresh)missing.push('Güncel borç ve banka kaynakları');
-  if(debt!=null&&debt<NEW_ORDER_DEBT_LIMIT_TRY&&context.financialGoals?.balancesFresh)return {...base,status:'below_threshold',estimatedThresholdDate:context.asOf.slice(0,10),estimatedOrderDate:context.asOf.slice(0,10)};
+  if(debt!=null&&limit!=null&&debt<limit&&context.financialGoals?.balancesFresh)return {...base,status:'below_threshold',estimatedThresholdDate:context.asOf.slice(0,10),estimatedOrderDate:context.asOf.slice(0,10)};
   if(input?.historicalDays!==30||input.historicalRevenueTry==null)missing.push('Tam 30 günlük geçmiş satış ortalaması');
   if(context.importPipeline?.coveragePct?.value!==100)missing.push('Gelecek ürünlerin SKU, adet ve tarih kapsamı');
   if(!input?.importsPaid)missing.push('Gelecek partilerin ödenmiş tedarik bedeli');
@@ -96,7 +99,7 @@ export function forecastDebt(context:WorkingContext):DebtForecast{
   }
   base.inboundUnits=context.importPipeline?.coveragePct?.value===100?inbound:null;
   base.missing=[...new Set(missing)];
-  if(base.missing.length||debt==null||!input)return base;
+  if(base.missing.length||debt==null||limit==null||!input)return base;
   let remaining=debt,monthCash=0,liquid=Math.max(0,context.cash.cash.value!-input.cashReserveTry!);
   let thresholdDate:string|null=null;
   const receipts=new Map<number,number>();
@@ -116,7 +119,7 @@ export function forecastDebt(context:WorkingContext):DebtForecast{
     // Keep one month's operating costs before paying additional principal.
     const buffer=input.fixedMonthlyTry!+input.interestMonthlyTry!+input.otherMonthlyTry!;
     const paydown=Math.max(0,liquid-buffer);remaining-=paydown;liquid-=paydown;
-    if(remaining<NEW_ORDER_DEBT_LIMIT_TRY&&!thresholdDate)thresholdDate=new Date(at).toISOString().slice(0,10);
+    if(remaining<limit&&!thresholdDate)thresholdDate=new Date(at).toISOString().slice(0,10);
   }
   return {...base,status:thresholdDate?'scenario':'not_reached',monthlyStockCashTry:monthCash,estimatedThresholdDate:thresholdDate,estimatedOrderDate:thresholdDate};
 }
