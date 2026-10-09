@@ -1,10 +1,10 @@
 // KREDİ KARTI BORÇ MALİYETİ (SAF, deterministik; 2026-10-08 CFO yol haritası #7).
 // Kartta faiz YALNIZ son ekstreden ödenmeyip devreden bakiyeye işler (dönem içi harcama ve gelecek taksitler faizsiz). Eski
 // hesap (computeCfo) tüm kart borcunu KMH oranıyla çarpıyordu; sermaye motoru ise kartları faizsiz sayıyordu — ikisi de yanlış.
-// Efektif aylık maliyet = akdi faiz × (1 + KKDF + BSMV). Kredi kartı faizine KKDF %15 + BSMV %15 uygulanır (mevzuat varsayımı;
-// ekstrenin "vergiler" satırıyla teyit edilir). Devreden bakiye ya da oran girilmemişse UNKNOWN kalır: uydurma oran yok.
+// Efektif aylık maliyet = akdi faiz × (1 + KKDF + BSMV). Kredi kartı faizine KKDF %15 + BSMV %5 → ×1,20 (Alperen kararı 2026-10-09,
+// Cowork itirazı: önceki BSMV %15 / ×1,30 fazlaydı; ekstrenin "vergiler" satırıyla teyit edilir). Devreden bakiye ya da oran girilmemişse UNKNOWN kalır: uydurma oran yok.
 
-export const CARD_TAX = { kkdf: 0.15, bsmv: 0.15 } as const;
+export const CARD_TAX = { kkdf: 0.15, bsmv: 0.05 } as const;
 
 export type CardCostInput = {
   name: string; personal: boolean;
