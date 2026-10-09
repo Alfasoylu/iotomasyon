@@ -1,5 +1,6 @@
 import type { SqlQuery } from "./capital-efficiency-data";
 import { runDownside, stressGapTry, type DayFlow, type Downside, type KmhSlice, type Resources } from "./downside";
+import { isPersonalAccount } from "./ownership";
 
 // Aşağı yön senaryoları veri yükleyicisi (salt-okunur; /cfo/sermaye Prisma ile, AI CFO salt-okunur iş kaynağıyla çağırır).
 // Günlük akış cfo_nakit_projeksiyon(120) ile AYNI kurallarla, ama bileşenlerine ayrılmış okunur (fonksiyon yalnız toplam giriş
@@ -73,7 +74,7 @@ export async function loadDownside(q: SqlQuery): Promise<DownsideData | null> {
 export function kmhSlices(rows: { name: string; type: string | null; lim: unknown; plim: unknown; rate: unknown }[]): KmhSlice[] {
   const pos = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) || Number(v) <= 0 ? null : Number(v));
   return rows.flatMap(r => {
-    const personal = /ŞAHSİ/i.test(r.type ?? ""), rate = pos(r.rate), lim = pos(r.lim), plim = pos(r.plim);
+    const personal = isPersonalAccount(r.type), rate = pos(r.rate), lim = pos(r.lim), plim = pos(r.plim);
     const out: KmhSlice[] = [];
     if (lim) out.push({ name: r.name, tier: personal ? "PERSONAL" : "GENERAL", limitTry: lim, monthlyRate: rate == null ? null : rate / 100 });
     if (plim && !personal) out.push({ name: `${r.name} (amaca bağlı)`, tier: "CUSTOMS", limitTry: plim, monthlyRate: null });

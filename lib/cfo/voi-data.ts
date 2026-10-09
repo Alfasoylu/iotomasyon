@@ -2,6 +2,7 @@ import { classifySku, type SkuInput } from "./capital-efficiency";
 import { loadCapitalEfficiency, type SqlQuery } from "./capital-efficiency-data";
 import { CARD_COLUMNS_SQL } from "./card-cost";
 import { cardCostVoi, deadPriceVoi, DEFAULT_VOI_PARAMS, financeFileVoi, importStatusVoi, rankVoi, skuCostVoi, staleBalanceVoi, textQuestionVoi, type VoiItem } from "./voi";
+import { isPersonalAccount } from "./ownership";
 
 // VOI veri yükleyicisi (salt-okunur, tek yükleyici: /cfo/sorular ve AI CFO aynı kodu çağırır). Sermaye motorunun çıktısını
 // yeniden kullanır (eşik faiz, SKU sınıfları, likidite açığı) — stok verisini ikinci kez yorumlamaz.
@@ -41,7 +42,7 @@ export async function loadVoi(q: SqlQuery, at: Date = new Date()) {
     .map(s => ({ sku: s.sku, stock: s.stock, unitCost: s.unitCost! }));
 
   const flowByBank = new Map(flows.map(f => [fold(f.banka), Number(f.gross)]));
-  const stale = accounts.filter(a => !/şahsi|ŞAHSİ/i.test(`${a.type ?? ""} ${a.name}`)).map(a => {
+  const stale = accounts.filter(a => !isPersonalAccount(a.type)).map(a => {
     const updated = a.updated ? new Date(String(a.updated)) : null;
     const staleDays = updated ? Math.floor((at.getTime() - updated.getTime()) / 86400000) : 999;
     const key = [...flowByBank.keys()].find(k => fold(a.name).startsWith(k) || k.startsWith(fold(a.name)));

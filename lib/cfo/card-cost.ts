@@ -48,8 +48,8 @@ export function cardCarry(cards: CardCostInput[]): CardCarry {
   return { interestMonthlyTry: Math.round(interest), revolvingTry: Math.round(revolving), revolvingWithoutRateTry: Math.round(withoutRate), unknownRevolvingCards: unknown, perCard };
 }
 
-/** Şahsi kart: decision-memory ile aynı kural (sahibi 'Alp'). */
-export const isPersonalCard = (holder: string | null) => (holder ?? "").trim() === "Alp";
+/** Şahsi kart: tek sınıflama (lib/cfo/ownership.ts, CFO-006). */
+export { isPersonalCard } from "./ownership";
 
 /** Devreden/oran sütunları var mı? (migration 20261008180000 uygulanmadan önce ham sorgular bu sütunları okumaz) */
 export const CARD_COLUMNS_SQL = `select count(*)::int as n from information_schema.columns

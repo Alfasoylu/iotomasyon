@@ -1,6 +1,7 @@
 import { allocate, DEFAULT_PARAMS, type DebtInput, type SkuInput } from "./capital-efficiency";
 import { loadDownside } from "./downside-data";
 import { CARD_COLUMNS_SQL, cardEffectiveMonthlyRate, isPersonalCard } from "./card-cost";
+import { isPersonalAccount } from "./ownership";
 
 // Sermaye verimliliği veri yükleyicisi (salt-okunur, TEK yükleyici: /cfo/sermaye sayfası Prisma ile, AI CFO bağlamı salt-okunur
 // iş kaynağı ile çağırır — `q` yalnız SQL çalıştırır). Kaynaklar:
@@ -48,7 +49,7 @@ export async function loadCapitalEfficiency(q: SqlQuery, opts: { budgetTry?: num
     ...kmh.map(k => ({ name: `${k.name} KMH`, kind: "KMH" as const, payoffTry: -Number(k.balance),
       // hesabın ölçülmüş oranı; yoksa UNKNOWN (küresel cfo_settings oranı kullanılmaz — CFO-005)
       monthlyRate: num(k.rate) != null && Number(k.rate) > 0 ? Number(k.rate) / 100 : null, monthlyPaymentTry: null,
-      personal: /ŞAHSİ|şahsi/i.test(`${k.type ?? ""} ${k.name}`) })),
+      personal: isPersonalAccount(k.type) })),
     ...cards.map(c => ({ name: `${c.bank} ${c.holder ?? ""} kart`.replace(/\s+/g, " ").trim(), kind: "CARD" as const, payoffTry: Number(c.revolving),
       monthlyRate: cardEffectiveMonthlyRate(num(c.rate)), monthlyPaymentTry: null, personal: isPersonalCard(c.holder) })),
   ];

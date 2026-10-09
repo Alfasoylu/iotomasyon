@@ -408,6 +408,11 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
   sipariş kapısı, ciro hedefi (sabit 45 kalktı), `/cfo` servet USD'si ve Goal Engine aynı kur. TCMB ayı otomatik kaydedilir (xml-sync after()).
 - Kalan (RESOLVED için): eski motor `usdTryRate || 1` yedeği (CFO-018), SQL eski alanları (`cfo_servet.kur`, snapshot `usdTryRate` döngüsü) — hedef ölçmüyorlar.
 
+### RF-20261008-010 — güncelleme (2026-10-09, CFO-006 TS; HIGH, OPEN → kısmen FIX READY)
+- TS'de tek kural (`lib/cfo/ownership.ts`); SQL görünümleri henüz kendi ifadeleriyle (migration bekliyor). Yeni bulgu: "Akbank Alp" ve
+  "Garanti Alp" banka hesapları türü "Vadesiz + KMH" (şirket) — sahibi "Alp" olan kartlar ise şahsi. Hesaplar şahsiyse şirket KMH
+  kapasitesi 450.000 TL fazla görünüyor (taban/kapasite alarmları). Karar: D-P08 (Alperen).
+
 ### Gözlem (kayıt değişmez): nakit dibi
 - `cfo_kart_karari` bugün en dibi −3.862.998 TL (2027-01-01) gösteriyor (08.10: −3.578.121, 01.12). Ufuk 120 gün kaydıkça Ocak ödemeleri girdi;
   ayrıca incelenecek (CFO-013 / RF-029 Yapı Kredi mükerrer satırları hâlâ projeksiyonda).

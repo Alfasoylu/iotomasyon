@@ -49,6 +49,7 @@ jobs:
       - run: node --import tsx __tests__/cfo-net-sermaye.test.ts
       - run: node --import tsx __tests__/cfo-metrik-borc.test.ts
       - run: node --import tsx __tests__/fx-strategic.test.ts
+      - run: node --import tsx __tests__/cfo-ownership.test.ts
       - run: node --import tsx __tests__/fm-memory-schema.test.ts
       - run: node --import tsx __tests__/fm-sales-backfill.test.ts
       - run: node --import tsx __tests__/fm-tcmb-fx.test.ts
