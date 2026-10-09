@@ -60,7 +60,7 @@ export default async function CfoDocumentsPage() {
 
       {!ready?.t && (
         <Card className="mb-6 p-4 text-sm text-[var(--danger)]">
-          Belge tablosu üretimde henüz yok (migration <code>20261009240000_cfo_belge</code> onay bekliyor). Yükleme açılınca bu sayfa çalışır.
+          Belge tablosu bu veritabanında yok (migration <code>20261009240000_cfo_belge</code> uygulanmamış).
         </Card>
       )}
 

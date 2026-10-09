@@ -3,10 +3,10 @@ last_updated: 2026-10-10 00:30 TR
 current_main_commit: ed3c0c9
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması (10.10 06:00 UTC) → onay bekleyen üretim migration'ları: CFO-017 (230000), CFO-027 (240000 belge kütüphanesi), CFO-006, CFO-013 → CFO-028 komisyon oranı belgeleri → CFO-014 kısım 2 / CFO-018"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → CFO-027 Cowork belge okuma rutini → onay bekleyen: CFO-006, CFO-013 (migration yazılacak) → CFO-028 komisyon oranı belgeleri → CFO-014 kısım 2 / CFO-018"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — CFO-027 belge kütüphanesi kodu + migration 240000 üretimde değil (onay bekliyor); hiçbir boyutun üretim davranışı değişmedi, RF-032 MEDIUM eklendi (HIGH sayısı aynı)"
+score_change: "unchanged — 2026-10-09 akşam üretime alındı: 230000 (CFO-017 atıf bileşenleri) + 240000 (CFO-027 belge kütüphanesi); atıf ilk bileşenli snapshot (10.10) ve 2. v3 gününden önce değişmez, belge kütüphanesi henüz boş — puan etkisi ölçülünce (6. boyut) yeniden puanlanır"
 ---
 
 # CFO SCORECARD
@@ -82,4 +82,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-09 | CFO-010 kısım 2 | 51 | 5/12 | Ödeme durumu tek kaynak (takvim), çift alarm yok, boşluk + mükerrer taksit görünür (2. boyut 9→10). Projeksiyon 99.832 TL fazla çıkış içeriyor (RF-029, veri) |
 | 2026-10-09 | Üretim senkronu (110000/120000/130000) | 52 | 5/12 | KDV hariç ciro + hedef kaynak tazeliği üretimde (4. boyut 4→5); RF-004, RF-025 RESOLVED; H12 hâlâ ❌ (RF-001…003) |
 | 2026-10-09 | c0823f9 | 58 | 5/12 | Yeniden puanlama (PR #237–#243 + üretim 150000–220000): 1. boyut 8→9 net sermaye/borç tek tanım + KDV esası (LCNRV KDV hariç) üretimde, v3 Goal doğrulaması 10.10; 2. 10→11 borç sözleşmesi + 5M sabiti kalktı + tek nakit tabanı; 3. 7→8 LCNRV KDV hariç taban, eşik faiz %4 varsayılanı yok; 5. 5→6 GTİP 433/433 + yasal gümrük yükü + `duty_gap`; 7. 4→5 UNKNOWN→0 kısım 1 + measured bayrakları; 10. 2→3 yazma yolları yazma izni. Değişmeyen (bilinçli): 4 (marj KDV hariç değil, 7 ciro formülü), 6 (atıf kimliği migration 230000 onay bekliyor), 8 (WhatsApp teslimi yapılandırılmadı), 9 (tavan). Gate 5/12: H1/H2 (kur 4 + ciro tanımları), H3 (RF-016 kısım 2), H12 (RF-001/002 v3 doğrulaması) hâlâ ❌ |
-| 2026-10-10 | ed3c0c9 | 58 | 5/12 | Değişmedi (bilinçli): PR #244 yönetişim CI'ı ve CFO-027 belge kütüphanesi (kod + test; migration 240000 üretimde değil) hiçbir boyutun üretim davranışını değiştirmedi. Komisyon kaydı boşluğu (RF-032, MEDIUM) 4. boyutun (marj) mevcut puanında zaten yansıyor |
+| 2026-10-10 | ed3c0c9 | 58 | 5/12 | Değişmedi (bilinçli): PR #244 yönetişim CI'ı ve CFO-027 belge kütüphanesi (kod + test; migration 230000 + 240000 aynı akşam üretimde — atıf etkisi ilk bileşenli snapshot ve 2. v3 gününden sonra, belge kütüphanesi boş) hiçbir boyutun üretim davranışını değiştirmedi. Komisyon kaydı boşluğu (RF-032, MEDIUM) 4. boyutun (marj) mevcut puanında zaten yansıyor |

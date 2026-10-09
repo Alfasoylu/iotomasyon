@@ -1,3 +1,4 @@
+# Re-verified against production 2026-10-09 ~20:50 UTC after 20261009230000 (fm_balance_refresh v3 bileşenler, fm_metric in_transit_try) + 20261009240000 (Claude Code, Alperen approval) — fn + fm_metric seed rows updated.
 # Re-verified against production 2026-10-09 ~16:10 UTC after 20261009150000..210000 (Cowork + Claude Code, Alperen approval) — fn, view, fm_quality_flag/fm_quality_policy seed rows updated (200000 ALFASHOME flags/policy).
 # 2026-10-09: function bodies hashed without SQL line comments; fm_quality_policy hashed without the free-text reason column (re-measured on production).
 # Re-verified against production 2026-10-09 ~06:30 UTC after 20261009120000 (fm_sales_canonical, KDV hariç) + 20261009130000 (fm_goal_evaluate) — fn/view/seed rows updated.
@@ -6,7 +7,7 @@
 # (run scripts/schema-drift/step1-fingerprint.sql there and compare).
 A acl 74 4793eca391
 A con 56 8b2de13c4e
-A fn 12 fa14c2c233
+A fn 12 1b6508aa1d
 A fnacl 3 a722a4a92e
 A idx 26 74df98d4b0
 A pol 20 600b7929c6
@@ -17,7 +18,7 @@ A rls 20 53e5446d8f
 A seed:cfo_kargo_barem 1 c2799544dd
 A seed:cfo_kargo_desi_tarife 1 54d61d872f
 A seed:cfo_kargo_kanal_varsayim 1 93a26276c4
-A seed:fm_metric 1 d914c3c81b
+A seed:fm_metric 1 98bd56ab90
 A seed:fm_quality_flag 1 c2b8eb5dd4
 A seed:fm_quality_policy 1 fe95cb1ca1
 A seed:fm_source_priority 1 10406f50a3

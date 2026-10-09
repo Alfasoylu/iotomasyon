@@ -127,10 +127,10 @@ async function main() {
     const hs = await q<{ c: string | null; nw: string }>(`select "contractNetWorthTry"::text c, "netWorthTry"::text nw from cfo_snapshot where note = 'hata'`);
     assert.deepEqual([hs.length, hs[0].c, n(hs[0].nw)], [1, null, dar], "sözleşme hatası: snapshot yazılır, sözleşme NULL (sahte sayı yok)");
 
-    // 5) CFO-017 (migration 20261009230000, üretimde bekletiliyor): sözleşmenin varlık bileşenleri snapshot'a ve fm_balance_day v3'e;
+    // 5) CFO-017 (migration 20261009230000, üretimde 2026-10-10): sözleşmenin varlık bileşenleri snapshot'a ve fm_balance_day v3'e;
     //    kimlik: v3 nakit + alacak + stok + yoldaki − v3 borç = v3 net sermaye
     const BIL = "20261009230000_cfo_snapshot_bilesen";
-    assert.ok(res.pendingNotInProduction.includes(BIL));
+    assert.ok(res.pendingInProduction.includes(BIL), "üretimde uygulandı (2026-10-10); test yeniden uygular (idempotent)");
     const bil = readFileSync(`prisma/migrations/${BIL}/migration.sql`, "utf8");
     await db.exec(readFileSync("prisma/migrations/20261009180000_cfo_metrik_borc/migration.sql", "utf8")); // borç sözleşmesi (230000 onu da yazar)
     await db.exec(bil); await db.exec(bil);

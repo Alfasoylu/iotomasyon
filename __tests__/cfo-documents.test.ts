@@ -48,7 +48,7 @@ async function db() {
     const res = await bootstrap({ exec: (s: string) => pg.exec(s), query: <T,>(s: string, p?: unknown[]) => pg.query<T>(s, p) });
     for (const m of res.pendingInProduction) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     const MIG = "20261009240000_cfo_belge";
-    assert.ok(res.pendingNotInProduction.includes(MIG), "üretimde bekletiliyor (onay)");
+    assert.ok(res.pendingInProduction.includes(MIG), "üretimde uygulandı (2026-10-10); test yeniden uygular (idempotent)");
     const sql = readFileSync(`prisma/migrations/${MIG}/migration.sql`, "utf8");
     await pg.exec(sql); await pg.exec(sql);
     await pg.exec("set search_path = public");

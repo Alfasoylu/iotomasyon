@@ -29,7 +29,7 @@ async function tableReady() {
 export async function uploadDocumentAction(form: FormData): Promise<ActionResult> {
   const user = await guardWrite();
   if (!user) return { ok: false, message: "Belge yüklemek için CFO yazma yetkisi gerekir." };
-  if (!(await tableReady())) return { ok: false, message: "Belge kütüphanesi tablosu üretimde henüz yok (migration 20261009240000 onay bekliyor)." };
+  if (!(await tableReady())) return { ok: false, message: "Belge kütüphanesi tablosu bu veritabanında yok (migration 20261009240000_cfo_belge uygulanmamış)." };
 
   const str = (k: string) => { const v = form.get(k); return typeof v === "string" ? v.trim() : ""; };
   const input = { category: str("category"), title: str("title"), description: str("description"),
