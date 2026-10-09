@@ -9,6 +9,16 @@
 
 ## 2026-10
 
+### Nakit tabanı tek ayardan (2026-10-09)
+
+- Taban alarmı ve motor bulguları, Goal Engine'in kullandığı CFO ayarındaki net pozisyon tabanını okuyor; ayardan değişen taban alarmlara da yansıyor.
+- Ciro hedefi ayarı yoksa 100.000 USD varsayılmıyor; hedef "bilinmiyor" gösteriliyor.
+
+### CI ve eski metin düzeltmeleri (2026-10-09)
+
+- Alfashome panel testleri CI'da koşuyor; CI'da yalnız ilk dosyayı çalıştıran yanıltıcı satır düzeltildi.
+- Alacaklar sayfasındaki tahsilat tahmini açıklaması ve ayarlardaki kullanılmayan küresel KMH oranı etiketi güncellendi.
+
 ### Bilinmeyen değerler sıfır sayılmıyor — kısım 1 (2026-10-09)
 
 - Eşik faiz bilinmiyorsa %4 varsayılmıyor; stok büyüt/azalt kararı ve eşiğe dayalı bilgi değerleri "bilinmiyor" gösteriliyor.

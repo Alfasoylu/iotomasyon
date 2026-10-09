@@ -142,7 +142,7 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **recommended_fix:** CFO-015 (veri: Alperen).
 
 ### RF-20261008-019 — Hedefler ve eşikler kodda dağınık sabit
-- **severity:** MEDIUM · **status:** OPEN · **commit:** 422a6db
+- **severity:** MEDIUM · **status:** IN_PROGRESS (2026-10-09: 5.000.000 kaldırıldı — CFO-002; iki taban kaynağı tekleşti — alarm/motor `cfo_settings`; 100000 yedeği `revenue-levers-data` + `/cfo/kazananlar`'dan kalktı; kalan ORAN_ESIGI, 50.000 uyarı, KPI renk eşikleri) · **commit:** 422a6db
 - **finding:** 5.000.000 (SQL + TS + metin), 100000 yedeği 6+ yerde, "aylık 100.000 USD" sayfa metni, `ORAN_ESIGI=0.2`, 50_000 uyarı, KPI renk eşikleri, iki taban kaynağı (env `AI_CFO_CASH_FLOOR_TRY` ↔ `cfo_settings.netPositionFloorTry`).
 - **recommended_fix:** CFO-002 + CFO-020.
 
@@ -152,12 +152,12 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **recommended_fix:** CFO-002 kapsamında.
 
 ### RF-20261008-021 — CI satırı yanıltıcı (`node a b c` yalnız ilk dosyayı koşar)
-- **severity:** LOW · **status:** OPEN · **commit:** 422a6db
+- **severity:** LOW · **status:** RESOLVED (2026-10-09, CFO-021) · **commit:** 422a6db
 - **evidence:** `.github/workflows/cfo-readonly-validation.yml:113` (diğer iki test ayrıca 83-84'te koşuyor). `alfashome.test.ts` CI'da yok.
 - **recommended_fix:** CFO-021.
 
 ### RF-20261008-022 — Eskimiş UI metni / doküman drift'i
-- **severity:** LOW · **status:** OPEN · **commit:** 422a6db
+- **severity:** LOW · **status:** RESOLVED (2026-10-09, CFO-021; %85 eşiği ve tarihsel PDKS kayıtları bilerek korundu) · **commit:** 422a6db
 - **finding:** `/cfo/alacaklar:74` "ciro/4"; `/cfo/ayarlar` "KMH / kart aylık faiz"; `/cfo/kazananlar` kapsam %85 yorumu; PDKS "6 saat / saatlik :05" (kod 20 saat, 3×/gün).
 - **recommended_fix:** CFO-021.
 

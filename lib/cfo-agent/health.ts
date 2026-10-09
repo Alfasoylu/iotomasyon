@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCfoConfig } from "./config";
+import { readCashFloor } from "./cash-floor";
 import { istanbulPeriod } from "./period";
 import { LOAN_AMOUNT_TOLERANCE } from "@/lib/cfo/payment-schedule";
 
@@ -8,7 +9,7 @@ import { LOAN_AMOUNT_TOLERANCE } from "@/lib/cfo/payment-schedule";
 //   engine_stale          deterministik motor 20 saattir tamamlanmadı (günde 3 koşu: en uzun boşluk 16:07 → 07:17 TR ≈ 15 saat + GitHub gecikmesi)
 //   consecutive_failures  son iki motor koşusu tamamlanmadı (failed, takılmış ya da beklenmeyen durum)
 //   stuck_run             bir motor koşusu STUCK_RUN_MINUTES'tan uzun süredir 'running' (fonksiyon zaman aşımıyla öldü; CFO-009)
-//   floor_breach          cfo_nakit_projeksiyon(120) dibi tabanın (−3.000.000) altında
+//   floor_breach          cfo_nakit_projeksiyon(120) dibi tabanın altında (taban: cfo_settings.netPositionFloorTry — Goal Engine ile aynı; yoksa AI_CFO_CASH_FLOOR_TRY)
 //   payment_unmarked      vadesi bugün olup 15:00 TR sonrası hâlâ işaretlenmemiş ya da vadesi geçmiş ödeme. TEK kaynak: ödeme takvimi
 //                         (cfo_cash_event, taksit başına satır + isSettled; /cfo/odemeler'de loglu işaretlenir) — projeksiyonla aynı defter.
 //                         cfo_loan/cfo_credit_card."currentMonthState" kullanılmaz: ay dönümünde sıfırlanmıyor, geçen ayın "ODENDI"si bu
@@ -193,7 +194,8 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
   const p = istanbulPeriod(now), afternoon = p.minutes >= 15 * 60;
   const today = p.date;
   const q = <T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql).catch(() => [] as T[]);
-  const [runs, dip, events, xml, ty, entegra, banks, gate, personal, gaps, dups, duty] = await Promise.all([
+  const [floor, runs, dip, events, xml, ty, entegra, banks, gate, personal, gaps, dups, duty] = await Promise.all([
+    readCashFloor(config.cashFloorTry),
     prisma.cfoRun.findMany({ where: { idempotencyKey: { startsWith: "engine:" }, generatedAt: { gte: new Date(now.getTime() - 48 * H) } }, orderBy: { generatedAt: "desc" }, take: 20,
       select: { status: true, generatedAt: true, finishedAt: true, error: true } }),
     q<{ v: unknown; d: string | null }>(`select pozisyon as v, tarih::text as d from cfo_nakit_projeksiyon(120) order by tarih`),
@@ -215,7 +217,7 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
   const due = (r: { label: string; amount: unknown; due: string | null }) => ({ label: String(r.label).trim(), amountTry: num(r.amount), due: r.due == null ? "" : String(r.due) });
   return {
     now, engineEnabled: config.monitorEnabled, runs,
-    minPosition: low ? { valueTry: low.position, date: low.date } : null, floorTry: config.cashFloorTry,
+    minPosition: low ? { valueTry: low.position, date: low.date } : null, floorTry: floor.floorTry,
     capacity: g != null && path.length ? { generalTry: g, customsTry: num(gate[0]?.c) ?? 0, personalTry: num(personal[0]?.t), path } : null,
     payments: events.map(due),
     // Eşikler: XML ve Trendyol günlük senkron (26 saat); Entegra haftalık yükleme (8 gün = 7 + 1 tolerans).

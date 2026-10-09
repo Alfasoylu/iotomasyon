@@ -2,6 +2,7 @@
  * CFO alarmları (lib/cfo-agent/health.ts, 2026-10-08: sitede LLM yok) — saf değerlendirme + bildirim kuralı.
  * Çalıştır: node --import tsx __tests__/ai-cfo-health.test.ts
  */
+import { pickCashFloor } from "../lib/cfo-agent/cash-floor";
 import assert from "node:assert/strict";
 import { PGlite } from "@electric-sql/pglite";
 import { nextScheduledPayment, sameBank, type ScheduleRow } from "../lib/cfo/payment-schedule";
@@ -156,6 +157,10 @@ async function sql() {
   await pg.close();
 }
 
+// Taban tek kaynak (RF-019): cfo_settings değeri varsa o, yoksa env yedeği
+assert.deepEqual(pickCashFloor("-2500000.00", -3_000_000), { floorTry: -2_500_000, source: "cfo_settings" });
+assert.deepEqual(pickCashFloor(null, -3_000_000), { floorTry: -3_000_000, source: "env" });
+assert.deepEqual(pickCashFloor("x", -3_000_000), { floorTry: -3_000_000, source: "env" });
 console.log("CFO alarms: engine stale, consecutive failures, floor breach, unmarked payment, dead sources, KMH capacity breach, notify-on-change + morning-slot reminder passed");
 sql().then(() => console.log("CFO alarms SQL: payments only from the schedule (no double alarm, ODENDI ignored), ledger↔schedule gaps, duplicate installments passed"),
   e => { console.error(e); process.exit(1); });

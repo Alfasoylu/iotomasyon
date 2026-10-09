@@ -436,13 +436,13 @@ export function ImportOrderSection({
   const minAdet = ozet[0]?.min_adet_kural ?? 5;
   const enKucukAdet = satirlar.length > 0 ? Math.min(...satirlar.map((s) => s.onerilen_adet)) : 0;
 
-  // Hedef ayarlardan gelir; henüz tam ay yoksa (hedef null) varsayılan gösterilir.
-  const hedefUsd = hedef ? n(hedef.hedef_usd) : 100_000;
+  // Hedef ayarlardan gelir; henüz tam ay yoksa (hedef null) BİLİNMİYOR gösterilir (100.000 USD varsayılanı yok — RF-019).
+  const hedefUsd = hedef ? n(hedef.hedef_usd) : null;
   const ciroUsd = n(hedef?.ciro_usd);
   const gerekenKat = n(hedef?.gereken_kat);
   // Bu siparişler ciroyu BÜYÜTMEZ, mevcut ciroyu korur. Hedefle ilişkisi bu yüzden
   // "hedefin yüzde kaçını savunuyor" olarak yazılıyor — "hedefe katkı" değil.
-  const korunanPay = hedefUsd > 0 ? (korunanCiroUsd / hedefUsd) * 100 : 0;
+  const korunanPay = hedefUsd != null && hedefUsd > 0 ? (korunanCiroUsd / hedefUsd) * 100 : null;
 
   if (ozet.length === 0 && satirlar.length === 0) {
     return (
@@ -486,8 +486,7 @@ export function ImportOrderSection({
           </div>
           <p className="mt-2 text-[11px] leading-snug text-[var(--text-muted)]">
             Bu iki parti hedefe <strong>yaklaştırmaz</strong>; mevcut cironun{" "}
-            {fmtUsd(korunanCiroUsd)}/ay&apos;lık kısmını (hedefin %{korunanPay.toFixed(0)}
-            &apos;i) stoksuz kalmaktan korur. {gerekenKat.toFixed(2)}× büyüme, adetleri
+            {fmtUsd(korunanCiroUsd)}/ay&apos;lık kısmını ({korunanPay == null ? "hedef bilinmiyor" : <>hedefin %{korunanPay.toFixed(0)}&apos;i</>}) stoksuz kalmaktan korur. {gerekenKat.toFixed(2)}× büyüme, adetleri
             artırmakla değil yeni ürün veya yeni kanalla gelir — ve adetler bugünkü hıza
             göre seçildiği için hedef hızda kapsam süreleri {gerekenKat.toFixed(2)}× kısalır.
           </p>
@@ -601,7 +600,7 @@ export function ImportOrderSection({
         Kurallar <code>cfo_settings</code> içinde: hava termini {hava?.termin_gun ?? 22} gün,
         deniz termini {deniz?.termin_gun ?? 67} gün, minimum ithalat tutarı{" "}
         {ozet[0] ? fmtUsd(n(ozet[0].min_tutar_usd)) : "ayarlardaki alt sınır"}, minimum satır adedi {minAdet}, hedef aylık ciro{" "}
-        {fmtUsd(hedefUsd)}. Terminler 28.08 partisinde ölçülen sürelerdir; tedarikçi veya
+        {hedefUsd == null ? "bilinmiyor" : fmtUsd(hedefUsd)}. Terminler 28.08 partisinde ölçülen sürelerdir; tedarikçi veya
         acente değişirse ayarlardan güncellenmelidir.{" "}
         <Link href="/cfo/odemeler" className="text-[var(--accent)] hover:underline">
           Nakit kapısının günü gününe hâli <ArrowRight size={11} className="inline" />
