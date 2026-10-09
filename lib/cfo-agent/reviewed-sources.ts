@@ -6,7 +6,7 @@ import type { ReadSource } from "./sources";
 // bodies, bank records or cost table contents are copied into this public repo.
 const hashes = {
   ...REVIEWED_CFO_VIEW_HASHES,
-  cfo_nakit_kapisi: "04a8bd254e1e3e06bffe4a9269af882a180aec2f7b6e25aacd93a213cb389d16",
+  cfo_nakit_kapisi: "56a943eedf652851e15a74bb5e19c7516938f3c57708eea436d117d5dbbb546f", // 2026-10-10 CFO-006: sahsi filtre cfo_hesap_sahsi() (uretimde olculdu)
   cfo_nakit_projeksiyon: "3d5a2913aabf4835dd42fe4b28e1f6cdee130b1ee08716e31af1c622c4f17db2",
 };
 export const ALFAS_SOURCE_PROFILE = "alfas_2026_10_04";

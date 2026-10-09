@@ -56,11 +56,19 @@ async function main() {
     // reader: every read-only function it could run before is still executable; nothing else gained
     const readerAfter = new Set((await q<{ f: string }>(`select p.oid::regprocedure::text f ${OWN_FN} and has_function_privilege('cfo_acceptance_reader',p.oid,'execute')`)).map(r => r.f));
     for (const { f } of readerBefore.filter(x => x.ro && !x.f.startsWith("cfo_google("))) assert.ok(readerAfter.has(f), `reader lost read-only ${f}`);
-    for (const f of readerAfter) assert.ok(readerBefore.some(x => x.f === f && x.ro), `reader gained/kept non-read-only ${f}`);
+    // Bilinçli eklenen saf yardımcılar: reader'ın okuduğu cfo_nakit_kapisi / cfo_onucus_temel / cfo_kaynak_yeterliligi bunları çağırır
+    // (CFO-006, 20261010100000). Yalnız IMMUTABLE, tablo okumayan SQL fonksiyonu olarak kabul edilir.
+    const READER_HELPERS = new Set(["cfo_hesap_sahsi(text)", "cfo_kart_sahsi(text)"]);
+    for (const f of READER_HELPERS) {
+      const [h] = await q<{ v: string; l: string; src: string }>(`select p.provolatile v, l.lanname l, p.prosrc src from pg_proc p join pg_language l on l.oid = p.prolang where p.oid = '${f}'::regprocedure`);
+      assert.ok(h.v === "i" && h.l === "sql" && !/\bfrom\b/i.test(h.src), `reader helper ${f} must be an immutable table-free SQL function`);
+    }
+    for (const f of readerAfter) assert.ok(READER_HELPERS.has(f) || readerBefore.some(x => x.f === f && x.ro), `reader gained/kept non-read-only ${f}`);
     assert.ok(readerAfter.size > 0);
     // reader still reads through its policies (e.g. CFO views/tables it had)
     await db.exec("set role cfo_acceptance_reader");
     await db.query("select count(*) from public.cfo_settings");
+    await db.query("select * from public.cfo_nakit_kapisi"); // görünüm cfo_hesap_sahsi() çağırır — reader EXECUTE'u gerekli
     await db.query("select * from public.cfo_kargo_tahmin(current_date, 1, 'yurtici', 100)").catch(e => { throw new Error(`reader read-only function failed: ${e.message}`); });
     await assert.rejects(db.query("select public.cfo_google('{}'::jsonb)"), /permission denied/);
     await db.exec("reset role");

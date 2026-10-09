@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Şirket/şahsi ayrımı veritabanında da tek kural; kaynak yeterliliği nakdi iki kez saymıyor (2026-10-10)
+
+- Nakit kapısı, ön uçuş, kaynak yeterliliği ve borç sözleşmesi şahsi hesap/kartı aynı fonksiyonla ayırıyor; bugünkü nakit, KMH ve borç rakamları değişmedi.
+- Kaynak yeterliliği açığı ticari nakdi iki kez sayıyordu; düzeltildi (açık 151.470 TL daha derin, doğru değer).
+
 ### CFO belge kütüphanesi açıldı (2026-10-09)
 
 - `/cfo/belgeler`: komisyon oranı, kart/banka ekstresi, KDV beyannamesi, platform faturası gibi belgeler sabit kategori ve zorunlu açıklamayla yükleniyor; dosya özel depoda, aynı dosya iki kez yüklenmiyor.

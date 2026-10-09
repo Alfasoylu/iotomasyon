@@ -15,7 +15,8 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:16-alpine
+        # Docker Hub anonim çekme sınırı (toomanyrequests, 2026-10-09) CI'ı test başlamadan düşürdü: aynı resmi imaj ECR Public aynasından
+        image: public.ecr.aws/docker/library/postgres:16-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: synthetic-ci-only
