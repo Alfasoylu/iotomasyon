@@ -386,6 +386,11 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
   ACİL (TAKILDI / BAŞARISIZ / BAYAT) — migration `20261009150000_cfo_gun_ozeti_saglik_alarm` Cowork uygulayınca üretimde.
 - **kalan:** teslim kanalı GitHub e-postası (D-P07), `cfo-cycle` yetim.
 
+### RF-20261008-004 — ek (2026-10-09): kart vergi çarpanı ×1,30 → ×1,20 (Alperen kararı; FIX READY)
+- Cowork itirazı: kart faizine BSMV %5 uygulanır (%15 değil); KKDF %15 → ×1,20. TS (`CARD_TAX`) bu PR'la; SQL `cfo_kart_karari`
+  migration `20261009160000_cfo_kart_karari_bsmv` (Cowork uygulayınca). Üretim etkisi: devreden 1.984.192 TL'nin aylık maliyeti
+  109.627 → 101.194 TL (−8.433 TL/ay modelde; nakit etkisi yok). Taban −3M TL kalır (Alperen; karar kaydı).
+
 ### Gözlem (kayıt değişmez): nakit dibi
 - `cfo_kart_karari` bugün en dibi −3.862.998 TL (2027-01-01) gösteriyor (08.10: −3.578.121, 01.12). Ufuk 120 gün kaydıkça Ocak ödemeleri girdi;
   ayrıca incelenecek (CFO-013 / RF-029 Yapı Kredi mükerrer satırları hâlâ projeksiyonda).

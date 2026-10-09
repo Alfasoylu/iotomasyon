@@ -9,8 +9,8 @@ import { allocate, hurdleRate, type DebtInput } from "../lib/cfo/capital-efficie
 import { cardCostVoi } from "../lib/cfo/voi";
 
 // Efektif oran = akdi × (1 + KKDF + BSMV)
-assert.equal(CARD_TAX.kkdf + CARD_TAX.bsmv, 0.3);
-assert.ok(Math.abs(cardEffectiveMonthlyRate(4.25)! - 0.05525) < 1e-12);
+assert.ok(Math.abs(CARD_TAX.kkdf + CARD_TAX.bsmv - 0.2) < 1e-12, "KKDF %15 + BSMV %5 = ×1,20 (karar 2026-10-09)");
+assert.ok(Math.abs(cardEffectiveMonthlyRate(4.25)! - 0.051) < 1e-12);
 assert.equal(cardEffectiveMonthlyRate(null), null); assert.equal(cardEffectiveMonthlyRate(0), null);
 assert.equal(isPersonalCard("Alp"), true); assert.equal(isPersonalCard("Alfa — Alperen (ana kart)"), false);
 
@@ -21,7 +21,7 @@ const c = cardCarry([
   { name: "Ziraat", personal: false, totalDebtTry: 789661, revolvingTry: null, contractMonthlyRatePct: null },
   { name: "Tam ödenen", personal: false, totalDebtTry: 50000, revolvingTry: 0, contractMonthlyRatePct: 4.25 },
 ]);
-assert.equal(c.interestMonthlyTry, Math.round(618576.31 * 0.05525), "yalnız devreden + oranı bilinen");
+assert.equal(c.interestMonthlyTry, Math.round(618576.31 * 0.051), "yalnız devreden + oranı bilinen");
 assert.equal(c.revolvingTry, Math.round(618576.31 + 405120.28));
 assert.equal(c.revolvingWithoutRateTry, Math.round(405120.28));
 assert.equal(c.unknownRevolvingCards, 1);

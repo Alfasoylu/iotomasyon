@@ -153,7 +153,7 @@ export default async function CfoDebtsPage() {
         </CfoTable>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
           Asgari tutar %{(minPct * 100).toFixed(0)} varsayımıyla hesaplanır. Gerçek ekstre asgarisi girildiğinde varsayım devre dışı kalır.
-          Faiz yalnız son ekstreden devreden bakiyeye işler; dönem içi harcama ve gelecek taksitler faizsizdir. Efektif oran = akdi faiz × (1 + KKDF %15 + BSMV %15).
+          Faiz yalnız son ekstreden devreden bakiyeye işler; dönem içi harcama ve gelecek taksitler faizsizdir. Efektif oran = akdi faiz × (1 + KKDF %15 + BSMV %5) = akdi × 1,20.
           {o.cardsUnknownRevolving > 0 && ` ${o.cardsUnknownRevolving} kartta devreden bakiye girilmemiş — toplam faiz eksik.`}
           {o.cardRevolvingWithoutRateTry > 0 && ` ${fmtTry(o.cardRevolvingWithoutRateTry)} devreden bakiyenin akdi faizi girilmemiş.`}
         </p>
