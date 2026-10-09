@@ -1,9 +1,9 @@
 ---
-last_updated: 2026-10-08 TR
-current_main_commit: 422a6db (+ CFO-001 PR-A)
+last_updated: 2026-10-10 01:45 TR
+current_main_commit: 6a2d888
 current_phase: "Faz 1 — Metrik sözleşmesi (CFO-001) · PR-A: karar memosu + mutabakat ölçümü"
 current_score: 48/100
-next_action: "Alperen kararları D-P01…D-P06 → PR-D (net sermaye) / PR-E (borç) / PR-C (kur) uygulaması"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık maliyet düzeltmelerini içerir: −138.411 + 206.152 TL) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 ---
 
 # CFO METRİK SÖZLEŞMESİ — karar memosu (CFO-001 PR-A)

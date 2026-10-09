@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 02:30 TR
-current_main_commit: e1d8eda
+last_updated: 2026-10-10 01:45 TR
+current_main_commit: 6a2d888
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık −138.411 TL maliyet düzeltmesini içerir) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık maliyet düzeltmelerini içerir: −138.411 + 206.152 TL) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — 335 üründe CFO birim maliyeti ithalat motorundan türetildi (net sermaye 2.405.400 → 2.266.989 TL, doğru yönde düzeltme); 1./3. boyut puanı CFO-029 (otomatik türetme) bitince yeniden puanlanır"
+score_change: "unchanged — maliyeti eksik 20 ürün (Alperen verisi) yazıldı: 7 SKU stok değerine girdi, net sermaye 2.266.989 → 2.473.141 TL (179.044 TL'si başarısız 4K kameranın NRV'si); 7 ürün NO_REORDER. 1./3. boyut CFO-029 bitince yeniden puanlanır"
 ---
 
 # CFO BACKLOG
@@ -130,6 +130,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **kabul:** ay dönümünde `payment_unmarked` doğru tetiklenir. **durum:** ✅ TAMAMLANDI 2026-10-09 — kısım 1 (PR #216) + kısım 2: ödeme durumunun TEK kaynağı takvim (`cfo_cash_event` taksit satırı + `isSettled`, projeksiyonla aynı); `currentMonthState` alarmda/sayfada okunmuyor → ay dönümü devri ve `paidAt` gereksiz; `ledger_stale` = aktif kredi/kartın takvimde bekleyen ödemesi yok; yeni `schedule_duplicate` (banka × ay taksit > aktif kredi; üretimde Yapı Kredi Kas–Oca, RF-029); `/cfo/borclar` "takvimde sonraki ödeme"; ödeme girişi `/cfo/odemeler` (loglu); yetim `cfo-actions.ts` silindi. Üretim salt-okuma: boşluk 0, mükerrer 3 ay. Kalan veri işi: RF-029 satırları (Cowork/Alperen).
 
 ### CFO-011 — Maliyet kapsamı ≥ %95
+- **2026-10-10 — maliyeti eksik 20 ürün (Alperen verisi) uygulandı:** 8 ithal (motor), 6 yurt içi (USD + KDV × 1,2), 7 `CFO_POLICY:NO_REORDER`; maliyetsiz satan stok 19 → 15 SKU (NRV üst sınırı 255.276 → 66.746 TL), stok değerine giren SKU 116 → 123, net sermaye +206.152 TL. Kalan maliyetsiz: balık gözü lens (125 adet), Lxs-p1, Pickit3, gaming kasa (alış fiyatı verilmedi), setler (`MUK-8LI-IP-KAMERA-SETI-SESLI`, `4IPKAMERASET` — bileşenden), tekstil (23YT462, 22YT621). Kayıt `docs/maliyet/2026-10-10-maliyet-eksik-20-urun.md`. Ölçüm sonrası `cfo_maliyet_kapsami` (son 30 tam gün ciro): **%88,7** (maliyetsiz 69.473 TL, güvenilmez 79.442 TL, eşleşmeyen 29.613 TL) → hedef %95'e ulaşılmadı, **CFO-011 TAMAMLANMADI**.
 - **2026-10-10 — maliyet Excel'i (Alperen, 964 SKU) salt-okunur eşleştirme:** KESİN 273 · MUHTEMEL 70 · CONFLICT 27 · EŞLEŞMEDİ 594; eşleşenlerin 52'sinde sistemde hiç maliyet yok. 50 ürünün eski 10 haneli GTİP'ine 12 haneli öneri; gümrük `cfo_gtip_tarife` ile hesaplandı (Excel'den değil). Kayıt + CSV + yapılandırılmış öneri: `docs/maliyet/2026-10-10-maliyet-excel-eslestirme*`. Uygulandı 2026-10-10 (Alperen onayı): 336 üründe RMB/ağırlık/GTİP gümrüğü/kart masrafı yazıldı, deniz/hava kararı ithalat motoruna bırakıldı (`shippingMethodPref` NULL); 1091 değişiklik günlükte; `unitCostTry` değişmedi (kalan: RF-033 — CFO maliyetinin motor maliyetine bağlanması).
 - **durum:** BLOCKED — veri (6 SKU maliyeti, anunnaki-pointer eşlemesi, 2827456501236 set tanımı; Alperen). Code tarafı ✅ TAMAMLANDI 2026-10-08 (PR #210; migration 20261008200000 Cowork 2026-10-08 20:26 UTC uyguladı, satır toplamı = ciro üretimde doğrulandı).
 
