@@ -1,5 +1,6 @@
 import type { SqlQuery } from "./capital-efficiency-data";
 import { evaluateHamle, resolveMetric, summarize, type Hamle, type MetricKey } from "./decision-memory";
+import { personalAccountSql, personalCardSql } from "./ownership";
 
 // Decision Memory veri yükleyicisi (salt-okunur; sayfa ve AI CFO aynı kodu çağırır). Metrikler bugünkü değerdir; geçmiş
 // ölçüm satırları (cfo_hamle_olcum) değiştirilmez — CFO defterine YAZILMAZ.
@@ -12,9 +13,9 @@ export async function loadMetric(q: SqlQuery, key: MetricKey): Promise<number | 
   switch (key) {
     case "debt_try": return one(`select value_try as v from fm_balance_day where metric_key='debt_try' order by economic_date desc limit 1`);
     case "card_try": return one(`select coalesce(sum("totalDebtTry"),0) as v from cfo_credit_card where "isActive"`);
-    case "personal_card_try": return one(`select coalesce(sum("totalDebtTry"),0) as v from cfo_credit_card where "isActive" and holder = 'Alp'`);
+    case "personal_card_try": return one(`select coalesce(sum("totalDebtTry"),0) as v from cfo_credit_card where "isActive" and ${personalCardSql("holder")}`);
     case "card_kmh_try": return one(`select (select coalesce(sum("totalDebtTry"),0) from cfo_credit_card where "isActive")
-      + (select coalesce(sum(-"balanceTry"),0) from cfo_bank_account where "isActive" and "balanceTry" < 0 and coalesce("accountType"::text,'') not ilike '%ŞAHSİ%') as v`);
+      + (select coalesce(sum(-"balanceTry"),0) from cfo_bank_account where "isActive" and "balanceTry" < 0 and not ${personalAccountSql('"accountType"')}) as v`);
     case "kamu_monthly_try": return one(`select coalesce(sum(tutar),0) as v from cfo_pay_obs where kanal::text like 'KURUMSAL%' and odeme_tarihi > current_date - 30`);
     case "fba_90d_try": return one(`select coalesce(sum(tutar_duz),0) as v from cfo_satis_birim_duz where channel = 'AMAZON_FBA' and "orderDate" > current_date - 90`);
   }

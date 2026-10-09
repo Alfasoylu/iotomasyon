@@ -16,6 +16,7 @@
 
 import { cardCarry, isPersonalCard } from "./card-cost";
 import { measuredRateRange, tieredDrawInterest, type KmhSlice } from "./downside";
+import { isPersonalAccount } from "./ownership";
 
 export type Traffic = "YESIL" | "SARI" | "KIRMIZI" | "NOTR";
 
@@ -247,7 +248,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const bankRatePct = numOrNull(b.monthlyRatePct);
     const bankRate = bankRatePct != null && bankRatePct > 0 ? bankRatePct / 100 : null;
     if (bankRate == null) kmhUsedWithoutRateTry += used; else kmhInterestMonthlyTry += used * bankRate;
-    if (limit > 0) kmhSlices.push({ name: b.name, tier: /ŞAHSİ|şahsi/i.test(`${b.accountType} ${b.name}`) ? "PERSONAL" : "GENERAL", limitTry: limit, monthlyRate: bankRate });
+    if (limit > 0) kmhSlices.push({ name: b.name, tier: isPersonalAccount(b.accountType) ? "PERSONAL" : "GENERAL", limitTry: limit, monthlyRate: bankRate });
   }
 
   // ── Kartlar ──
