@@ -11,7 +11,7 @@ next_action: "CFO-001 (RF-20261008-001 CRITICAL'ı kapatır)"
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-09, CFO-025 ölçümü sonrası):** RF-005, RF-017, RF-028 RESOLVED · RF-025 kısmen FIX READY · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 9 · MEDIUM 12 (RF-029) · LOW 5 (yeni RF-030) · INFO 1 · toplam 30.
+**Açık özet (2026-10-09, CFO-025 ölçümü sonrası):** RF-005, RF-017, RF-028 RESOLVED · RF-025 FIX READY (iki migration Cowork'te) · RF-007 HIGH→MEDIUM (kısmen) · CRITICAL 1 · HIGH 9 · MEDIUM 12 (RF-029) · LOW 5 (yeni RF-030) · INFO 1 · toplam 30.
 
 ---
 
@@ -341,4 +341,19 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 ### Ölçüm notu (kayıt değişmez): sabit kur
 - Cowork'ün "sabit kur" bulgusu üretimde doğrulandı: 431/433 ürün 48,50. Ancak etkisi küçük: marj 0,43 puan, rafta stok maliyeti +24,6k TL (cfo_kur 48,98).
   Ayrı bir red flag açılmadı; kalıcı çözüm D-P04 (stratejik kur) ile birlikte (TL maliyet çalışma anında). Bağımsız inceleme: yeni CRITICAL/HIGH yok.
+
+---
+
+## 2026-10-09 — CFO-008 kısım 2 (hedef kaynak tazeliği) RED FLAG PASS
+
+### RF-20261008-025 — güncelleme: FIX READY (iki yarı da; migration 20261009120000 + 20261009130000, Cowork uygulayacak)
+- İkinci yarı: `fm_goal_evaluate` "tamamlanmış gün"ü yalnız hafıza tazeleme anından alıyordu. Entegra haftalık, Trendyol günde bir okunuyor;
+  09.10'da 05–08.10 kısmi (08.10 = 2.943 TL) ama hıza giriyordu. Artık hız/projeksiyon/gereken hız yalnız tüm kaynakların tamam olduğu
+  günlerden (known_at → İstanbul günü − 1); gözlenen MTD aynen; `goal_sources_partial` bayrağı, kalite en iyi B (hiç tam gün yoksa C).
+- Üretim etkisi (salt-okuma, aynı kural): hız 51.941 → 58.318 TL/gün; aylık projeksiyon 1.610.158 → 1.807.851 TL (≈ 33,2k → 37,2k USD).
+  G1 gidişi %12 kötü görünüyordu.
+
+### Bağımsız inceleme
+- Eksik gün 0 sayılmıyor, tahminle de doldurulmuyor (yalnız hız penceresinden çıkıyor). Kaynak bir daha hiç gelmezse (Entegra durursa) pencere
+  daralır ve ay başında tam gün kalmaz → eski davranış + C notu + bayrak; `source_dead` alarmı ayrıca uyarır. Yeni red flag yok.
 

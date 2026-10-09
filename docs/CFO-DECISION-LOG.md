@@ -56,4 +56,5 @@ Hâlâ bekleyen: D-P04 (stratejik kur), D-P05 (ciro hedefi KDV/kanal kapsamı), 
 | 2026-10-08 | Hedefler güncellendi: ciro ≥100k USD/ay, net sermaye ≥300k USD, **borç <100k USD** (eski: <5M TL) | Alperen | — | `fm_goal` v2 (CFO-002) bekliyor |
 | 2026-10-08 | Scorecard ağırlıkları önerilen başlangıç ağırlıklarıyla aynen kabul edildi (değiştirme gerekçesi bulunmadı) | Claude Code | protokol | DECISION-LOG kaydıyla değişir |
 | 2026-10-09 | KDV hariç ciro: kaynakta yoksa SKU'nun pazaryeri KDV oranından (2023-07-10 sonrası, baskın ≥ %80), yoksa %20 varsayılanla türetilir; türetme yolu bayrakla (`ex_vat_derived_sku` / `ex_vat_default_rate`); kalite notu U → B | Code (Alperen sırası) | pazaryeri cirosunun %99,7'si %20; Trendyol API'de KDV yok; XML KDV okuyucu rolüne açık değil ve Trendyol ürünlerinde fark yaratmıyor | migration 20261009120000 geri alma |
+| 2026-10-09 | Ciro hedefi hızı yalnız tüm satış kaynaklarının tamam olduğu günlerden; gözlenen MTD aynen; eksik gün 0 ya da tahmin sayılmaz | Code | eksik günler hızı %12 düşürüyordu (RF-025) | migration 20261009130000 geri alma |
 
