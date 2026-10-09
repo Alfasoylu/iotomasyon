@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 02:00 TR
+last_updated: 2026-10-10 02:30 TR
 current_main_commit: e1d8eda
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → RF-033 / CFO-011: unitCostUsd/unitCostTry'nin ithalat motoru maliyetine (RMB + motorun seçtiği navlun + GTİP gümrüğü) bağlanması kararı → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık −138.411 TL maliyet düzeltmesini içerir) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — maliyet Excel'i 336 üründe RMB/ağırlık/GTİP gümrüğü olarak yazıldı (ithalat motoru girdileri); CFO maliyeti (unitCostTry) değişmedi, net sermaye ve maliyet kapsamı aynı — RF-033 kararıyla 1./3. boyut yeniden puanlanır"
+score_change: "unchanged — 335 üründe CFO birim maliyeti ithalat motorundan türetildi (net sermaye 2.405.400 → 2.266.989 TL, doğru yönde düzeltme); 1./3. boyut puanı CFO-029 (otomatik türetme) bitince yeniden puanlanır"
 ---
 
 # CFO DECISION LOG
@@ -79,3 +79,4 @@ D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL**. 
 | 2026-10-09 | Borç hedefi ayardan: `cfo_settings.debtTargetUsd` (100.000 USD); TL eşiği = hedef × TCMB aylık döviz alış (Goal ile aynı kur); sipariş kapısı aynı eşik ve `cfo_metrik_borc()`; hedef/kur yoksa kapı kapalı (sabit eşiğe düşmez) | Code (Alperen hedefi 2026-10-08 + D-P03) | 5M TL sabiti eski hedef; iki yerde ayrı tanım | migration 20261009180000 geri alma |
 | 2026-10-09 | CFO-GOVERNANCE-DRIFT: 5 yönetişim belgesinin frontmatter'ı (main commit, skor, faz, sıradaki iş, açık CRITICAL/HIGH, `score_change`) birebir aynı ve gerçek main ile tutarlı olmalı; açık sayılar RED-FLAGS **Durum kaydı** tablosundan, skor SCORECARD TOPLAM'ından; her merge SCORECARD geçmişine satır ekler; skor değişmediyse `unchanged — <gerekçe>` zorunlu. Aynı PR'da skor 52→58 yeniden puanlandı (boyut gerekçeleri SCORECARD'da) | Alperen (talep) + Claude Code | belgeler 4 farklı commit, 3 farklı skor gösteriyordu; drift CI'da yakalanmalı | test `__tests__/cfo-governance-drift.test.ts` kaldırılır |
 | 2026-10-10 | CFO belge kütüphanesi (CFO-027, Cowork brief): belge KANITTIR, sayı değil — yükleme ve özet hiçbir defteri değiştirmez; ham dosya motora/AI bağlamına girmez (yalnız açıklama + özet + çıkarılan sayılar, sınırlı); kullanıcı açıklaması AI özetinden üstün, çelişki günlüğe; belgeyi okuyan Cowork (`cfo_belge_ozet_yaz`, maskeli) — sitede LLM yok kararı (2026-10-07) korunur | Alperen + Cowork (brief) + Claude Code | kart/KDV/komisyon kanıtları sistemde yoktu; AI'ın belgeyi doğrudan deftere yazması doğrulanamaz değişiklik olurdu | tablo arşiv/drop; dosyalar private bucket'ta |
+| 2026-10-10 | Ürün maliyet esası: deniz/hava kararını ithalat öneri motoru verir (yıllık ROI, `shippingMethodPref` boş); gümrük GTİP'ten (`cfo_gtip_tarife` yasal yükü); CFO birim maliyeti (`unitCostTry`) = motor maliyeti × `cfo_kur`. 335 ürüne uygulandı, net sermaye −138.411 TL | Alperen ("deniz ve havaya ithalat öneri motoru karar vermeli", "tam yetkilisin") + Claude Code | sistem maliyeti hava + KDV dahil görünüyordu (RF-033); tek maliyet kaynağı motor olmalı | `cfo_change_log` eski değerleri (area `maliyet`) |

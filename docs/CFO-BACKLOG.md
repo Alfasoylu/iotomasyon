@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 02:00 TR
+last_updated: 2026-10-10 02:30 TR
 current_main_commit: e1d8eda
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC) → RF-033 / CFO-011: unitCostUsd/unitCostTry'nin ithalat motoru maliyetine (RMB + motorun seçtiği navlun + GTİP gümrüğü) bağlanması kararı → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık −138.411 TL maliyet düzeltmesini içerir) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — maliyet Excel'i 336 üründe RMB/ağırlık/GTİP gümrüğü olarak yazıldı (ithalat motoru girdileri); CFO maliyeti (unitCostTry) değişmedi, net sermaye ve maliyet kapsamı aynı — RF-033 kararıyla 1./3. boyut yeniden puanlanır"
+score_change: "unchanged — 335 üründe CFO birim maliyeti ithalat motorundan türetildi (net sermaye 2.405.400 → 2.266.989 TL, doğru yönde düzeltme); 1./3. boyut puanı CFO-029 (otomatik türetme) bitince yeniden puanlanır"
 ---
 
 # CFO BACKLOG
@@ -49,6 +49,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 9b | CFO-026 | GTİP düzeltmesi + yasal gümrük yükü (GV/İGV/ÖTV/KDV) ile kayıtlı maliyet karşılaştırması | P1 | G1,G2 | 4 | 4 | 3 | 2 | 3 | 1 | **4** | M | IN_PROGRESS (2026-10-09 üretimde ✓: GTİP 433/433 12 haneli, teyit turu (telsiz/kart okuyucu/ÖTV), migration 210000 oran tablosu 97 satır + `duty_gap`; 51 ürünün oranı ✓ 2026-10-09 migration 220000 üretimde — 433/433 oranlı; depo baseline senkronu ✓ PR #237; kalan: IP kamera ÖTV özelgesi (GİB), stoklu ürünlerde boş `customsRatePct`) — önceki not: (analiz ✓; GTİP düzeltmesi 405 ürün + oran tablosu/`cfo_gtip_yuk`/`duty_gap` alarmı ✓ kod 2026-10-09 — Cowork uygulayacak; kalan: 28 düşük güven + ÖTV teyidi) | — |
 | 9c | CFO-027 | CFO belge kütüphanesi (Cowork brief): sabit kategori, zorunlu açıklama, private dosya, Cowork özet yolu (maskeli), belge = kanıt | P1 | tümü | 3 | 3 | 2 | 2 | 2 | 1 | **4** | M | IN_PROGRESS (kod + test ✓; migration 240000 üretimde 2026-10-09 akşam — tablo/RLS/yetki/maskeleme doğrulandı; kalan: Cowork okuma rutini, onaylı sayı → defter akışı) | 032 |
 | 9d | CFO-028 | Komisyonu kayıtsız 6 kanal (N11, Amazon, Pazarama, Idefix, Temu, Koçtaş) + ePTT: oran belgesi → onaylı kanal oranı | P1 | G1 | 4 | 3 | 3 | 2 | 1 | 1 | **5** | S (veri) | DISCOVERED (ölçüm ✓ 2026-10-09; oran belgeleri Alperen/Cowork) | 032 |
+| 9e | CFO-029 | CFO birim maliyeti (unitCostTry) ithalat motorundan otomatik türetilsin (kur/yol/GTİP değişince); Excel dışı maliyetli ürünler | P1 | G1,G2 | 4 | 4 | 3 | 2 | 2 | 1 | **6** | M | DISCOVERED (335 ürün tek seferlik türetildi 2026-10-10) | 033 |
 | 24 | CFO-024 | Ölü bileşen temizliği (`cfo_model_hakedis`, `cfo_insight/usage`, ölü ayar alanları, yetim route) | P4 | — | 1 | 1 | 1 | 1 | 1 | 2 | **−1** | S | DISCOVERED | 024 |
 
 Not: CFO-004 skoru en yüksek ama tek başına küçük; CFO-001'in PR-B'si olarak sıraya alındı. CFO-011/015 Code işi değil, veri işi —
@@ -163,6 +164,9 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 ### CFO-028 — Komisyonu kayıtsız kanallar
 - **ölçüm (2026-10-09, üretim salt-okuma, son 30 gün):** N11, Amazon, Pazarama, Idefix, Temu, MIRAKL_KOCTAS — 165 satır, 186.213 TL ciro, komisyon çoğunlukla NULL (toplam 0); ePTT %2,32 ama 98/128 satır NULL. Trendyol %15,39, HB %14,61 (ölçülü). Motor (`snapshot.ts`) bu kanalları UNKNOWN sayar (0 değil); `commissionTry` toplayan raporlar 0 gösterir → kanal marjı şişkin görünür. Cowork tahmini ~312,6k TL/yıl.
 - **uygulama:** CFO-027 ile oran belgesi (KOMISYON_ORANI) → Cowork özeti → onaylı kanal oranı (belge kimliği kanıt); veri kaynağı (Entegra) komisyon alanı kontrolü. **durum:** DISCOVERED
+
+### CFO-029 — CFO birim maliyeti ithalat motorundan
+- **neden:** RF-033 — sistem maliyeti hava + KDV dahil kurulmuştu; motor (`lib/importer-cost.ts`) deniz/havayı ROI ile seçiyor ama `unitCostTry` elle/tek seferlik. **yapıldı (2026-10-10):** 335 ürün tek seferlik türetildi (net sermaye −138.411 TL). **uygulama:** günlük iş `calcImportCost` ile `unitCostUsd/unitCostTry`'yi yeniden hesaplar (değişiklik günlüklü, eşik üstü fark alarm); Excel dışı ~100 maliyetli ürün için RMB/ağırlık kanıtı. **durum:** DISCOVERED
 
 ### CFO-024 — Ölü bileşen temizliği. **durum:** DISCOVERED
 
