@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 01:45 TR
-current_main_commit: 6a2d888
+last_updated: 2026-10-10 02:30 TR
+current_main_commit: 6283500
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 06:00 UTC; net sermaye artık maliyet düzeltmelerini içerir: −138.411 + 206.152 TL) → CFO-029 birim maliyetin ithalat motorundan otomatik türetilmesi → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — maliyeti eksik 20 ürün (Alperen verisi) yazıldı: 7 SKU stok değerine girdi, net sermaye 2.266.989 → 2.473.141 TL (179.044 TL'si başarısız 4K kameranın NRV'si); 7 ürün NO_REORDER. 1./3. boyut CFO-029 bitince yeniden puanlanır"
+score_change: "unchanged — CFO-029 otomatik maliyet türetme kodu + testi (ilk üretim koşusu 05:00 TR; kuru çalıştırma 143 ürün, stok maliyeti +15.417 TL KDV dahil); 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
 ---
 
 # CFO DECISION LOG
@@ -81,3 +81,4 @@ D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL**. 
 | 2026-10-10 | CFO belge kütüphanesi (CFO-027, Cowork brief): belge KANITTIR, sayı değil — yükleme ve özet hiçbir defteri değiştirmez; ham dosya motora/AI bağlamına girmez (yalnız açıklama + özet + çıkarılan sayılar, sınırlı); kullanıcı açıklaması AI özetinden üstün, çelişki günlüğe; belgeyi okuyan Cowork (`cfo_belge_ozet_yaz`, maskeli) — sitede LLM yok kararı (2026-10-07) korunur | Alperen + Cowork (brief) + Claude Code | kart/KDV/komisyon kanıtları sistemde yoktu; AI'ın belgeyi doğrudan deftere yazması doğrulanamaz değişiklik olurdu | tablo arşiv/drop; dosyalar private bucket'ta |
 | 2026-10-10 | Ürün maliyet esası: deniz/hava kararını ithalat öneri motoru verir (yıllık ROI, `shippingMethodPref` boş); gümrük GTİP'ten (`cfo_gtip_tarife` yasal yükü); CFO birim maliyeti (`unitCostTry`) = motor maliyeti × `cfo_kur`. 335 ürüne uygulandı, net sermaye −138.411 TL | Alperen ("deniz ve havaya ithalat öneri motoru karar vermeli", "tam yetkilisin") + Claude Code | sistem maliyeti hava + KDV dahil görünüyordu (RF-033); tek maliyet kaynağı motor olmalı | `cfo_change_log` eski değerleri (area `maliyet`) |
 | 2026-10-10 | Yurt içi (İstoç/Euromix) alınan ürünün maliyeti: tedarikçi "USD + KDV" fiyatı × 1,2 (D-P06 KDV dahil kayıt) × `cfo_kur`; `shippingMethodPref` = `IC_PIYASA`, `supplier` dolu, RMB boş (ithalat motoru hesaplamaz). "Tekrar getirilmeyecek" kararı serbest metinle değil `privateNote` içindeki `CFO_POLICY:NO_REORDER` işaretiyle kaydedilir (AI CFO sipariş önermez, maliyet sormaz) | Alperen (maliyet eksik 20 ürün listesi, "tam yetkilisin") + Claude Code | iç piyasa ürünleri RMB'siz kaldığı için maliyetsiz görünüyordu; "TEKRAR GETIRILMEYECEK" serbest notu politika kalıbına uymuyordu | `cfo_change_log` eski değerleri (area `maliyet`); işaret nottan silinir |
+| 2026-10-10 | CFO-029: CFO birim maliyeti her XML senkronunda (TCMB kurundan sonra) ithalat motorundan yeniden türetilir. Gümrük % GTİP tarifesinden ve elle girilen farklı oranın ÜSTÜNE yazar (tarife yoksa kayıtlı %, ikisi de yoksa ürün atlanır — varsayılan %30 maliyete girmez); yurt içi ürün TL = USD × kur; kur varsayılansa yazma yok; Türkçe tercih (deniz/hava) motorca tanınır; stoklu üründe %25+ ya da stok maliyetinde ±50.000 TL+ değişim `cost_jump` alarmı | Claude Code (Alperen: "sıradaki göreve geç", "tam yetkilisin"; CFO-029 backlog uygulaması) | maliyet tek seferlik türetilmişti; kur/GTİP/yol değişince bayatlıyordu ve 143 Excel dışı üründe eski varsayım kalmıştı | `xml-sync` after() adımı kaldırılır; değişiklikler `cfo_change_log` (source `CFO-029 maliyet türetme`) eski değerlerinden geri yazılır |

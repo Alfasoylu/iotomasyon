@@ -8,7 +8,7 @@ import type { CfoAlarm } from "./health";
 
 /** Öncelik: motor ve para kaybettiren alarmlar önce. */
 const PRIORITY = ["engine_stale", "consecutive_failures", "stuck_run", "floor_breach", "capacity_breach", "payment_unmarked", "schedule_duplicate",
-  "ledger_stale", "duty_gap", "source_dead"];
+  "ledger_stale", "duty_gap", "cost_jump", "source_dead"];
 const rank = (code: string) => { const i = PRIORITY.indexOf(code); return i < 0 ? PRIORITY.length : i; };
 
 export function alarmTemplateParams(alarms: CfoAlarm[]): [string, string] {

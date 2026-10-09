@@ -179,7 +179,7 @@ function buildCostFor(
 
 /**
  * Otomatik kargo seçimi:
- *   - Kullanıcı tercihi varsa (AIR/SEA) → onu döndür.
+ *   - Kullanıcı tercihi varsa (AIR/SEA; Türkçe kayıt DENIZ/HAVA da — üretimde "deniz"/"DENIZ" 29 ürün) → onu döndür.
  *   - Trendyol fiyatı + kur verilmişse → AIR ve SEA için annualRoiPct hesapla,
  *     daha yüksek olan kazansın (zarar bile etse en az zarar olanı seçer).
  *   - Aksi halde ağırlık fallback: ≥5 kg → SEA, < 5 kg → AIR.
@@ -196,9 +196,9 @@ export function resolveShipping(
     usdTryRate?: number;
   },
 ): ShippingMethod {
-  const up = pref?.toUpperCase();
-  if (up === "SEA") return "SEA";
-  if (up === "AIR") return "AIR";
+  const up = pref?.trim().toUpperCase().replace(/İ/g, "I");
+  if (up === "SEA" || up === "DENIZ") return "SEA";
+  if (up === "AIR" || up === "HAVA") return "AIR";
 
   // ROI tabanlı seçim (yeterli veri varsa)
   if (

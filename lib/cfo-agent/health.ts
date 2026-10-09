@@ -3,6 +3,7 @@ import { getCfoConfig } from "./config";
 import { readCashFloor } from "./cash-floor";
 import { istanbulPeriod } from "./period";
 import { LOAN_AMOUNT_TOLERANCE } from "@/lib/cfo/payment-schedule";
+import { COST_DERIVATION_SOURCE, COST_JUMP_PCT, COST_JUMP_STOCK_TRY } from "@/lib/cfo/cost-derivation";
 
 // Alarm — Cowork CFO'nun iki koşusu (08:00 / 16:49 TR) arasında Alperen'e ulaşan TEK kanal (2026-10-08 mimari kararı).
 // Sitede LLM yok: "içgörü yok", bütçe ve token alarmları kaldırıldı (AI çağrısı olmaması normaldir). Alarmlar:
@@ -19,12 +20,14 @@ import { LOAN_AMOUNT_TOLERANCE } from "@/lib/cfo/payment-schedule";
 //   schedule_duplicate    bir bankanın aynı aydaki bekleyen kredi taksiti satırı, o bankadaki aktif kredi sayısından fazla → mükerrer
 //                         satır projeksiyonu fazla çıkışla kötüleştiriyor (09.10: Yapı Kredi Kas–Oca 25'i + eski 28'i kaydı, 3 × 33.277 TL)
 //   source_dead           Entegra / XML / Trendyol senkronu ya da banka bakiyesi eşik süreden eski
+//   cost_jump             CFO-029 maliyet türetmesi son 26 saatte stoklu bir üründe birim maliyeti %25+ değiştirdi ya da değerlenen stok
+//                         maliyetini ±50.000 TL+ oynattı (kur/yol/GTİP değişimi ya da girdi hatası) — Cowork teyit eder
 //   capacity_breach       nakit pozisyonu (cfo_nakit_projeksiyon, faizsiz) şirket KMH kapasitesini aşıyor — Cowork CFO sırası
 //                         2026-10-08: önce kapasite alarmı, sonra kademeli faiz, en son kuralı faizli dibe bağlama
 // Bildirim (GitHub işi kırmızı → e-posta) yalnız arıza, YENİ alarm ya da sabah koşusundaki (06:00–10:59 TR) günlük hatırlatmada:
 // süregelen bir taban alarmı her koşuda e-posta üretmez; yine de her koşuda cfo_gun_ozeti'nde görünür.
 
-export type AlarmCode = "engine_stale" | "consecutive_failures" | "stuck_run" | "floor_breach" | "payment_unmarked" | "ledger_stale" | "schedule_duplicate" | "source_dead" | "capacity_breach" | "duty_gap";
+export type AlarmCode = "engine_stale" | "consecutive_failures" | "stuck_run" | "floor_breach" | "payment_unmarked" | "ledger_stale" | "schedule_duplicate" | "source_dead" | "capacity_breach" | "duty_gap" | "cost_jump";
 export type CfoAlarm = { code: AlarmCode; key: string; message: string };
 export type EngineRunInfo = { status: string; generatedAt: Date; finishedAt: Date | null; error: string | null };
 export type DueItem = { label: string; amountTry: number | null; due: string };
@@ -42,6 +45,8 @@ export type AlarmInput = {
   capacity?: { generalTry: number; customsTry: number; personalTry: number | null; path: { date: string; position: number }[] } | null;
   /** CFO-026: stoklu ve kayıtlı gümrük %'si yasal yükün (GV + İGV + KDV, cfo_gtip_yuk) DUTY_GAP_POINTS'ten fazla altında kalan ürünler */
   dutyGap?: { count: number; missingTry: number; worst: { sku: string; kayitliPct: number; yasalPct: number } | null } | null;
+  /** CFO-029: son 26 saatteki otomatik maliyet türetmesi — %25+ değişen stoklu ürün sayısı, stok maliyeti farkı (KDV dahil), en büyük etki */
+  costJump?: { big: number; deltaTry: number; worst: string | null; day: string | null } | null;
 };
 /** Kayıtlı gümrük % yasal yükün bu kadar puan altındaysa maliyet eksik sayılır (yuvarlama/masraf payı toleransı). */
 export const DUTY_GAP_POINTS = 5;
@@ -109,6 +114,10 @@ export function evaluateCfoAlarms(i: AlarmInput): CfoAlarm[] {
     const w = i.dutyGap.worst;
     out.push({ code: "duty_gap", key: "duty_gap", message: `${i.dutyGap.count} stoklu üründe kayıtlı gümrük % yasal yükün (GV + İGV + KDV) ${DUTY_GAP_POINTS}+ puan altında — stok maliyeti ~${tl(i.dutyGap.missingTry)} eksik${w ? `; en büyük: ${w.sku} (kayıtlı %${w.kayitliPct}, yasal %${w.yasalPct})` : ""} (cfo_gtip_yuk)` });
   }
+  if (i.costJump && (i.costJump.big > 0 || Math.abs(i.costJump.deltaTry) >= COST_JUMP_STOCK_TRY)) {
+    const c = i.costJump;
+    out.push({ code: "cost_jump", key: `cost_jump:${c.day ?? "?"}`, message: `Maliyet türetmesi (CFO-029, son 26 saat): ${c.big} stoklu üründe birim maliyet %${COST_JUMP_PCT}+ değişti; değerlenen stok maliyeti ${c.deltaTry >= 0 ? "+" : "−"}${tl(Math.abs(c.deltaTry))} (KDV dahil)${c.worst ? `; en büyük: ${c.worst}` : ""} — cfo_change_log (maliyet)` });
+  }
   if (i.staleBankAccounts.length)
     out.push({ code: "source_dead", key: "source_dead:banka", message: `Banka bakiyesi 7 günden eski: ${i.staleBankAccounts.join(", ")}` });
   return out;
@@ -153,6 +162,21 @@ export function dutyGapSql(): string {
     from g`;
 }
 
+/** CFO-029: son 26 saatte otomatik türetmenin değiştirdiği birim TL maliyetleri (günlükten) — değerlenen stok 1–999. */
+export function costJumpSql(): string {
+  return `with c as (select left(l.item, length(l.item) - 12) as sku, l."oldValue"::numeric as o, l."newValue"::numeric as n, l."changedAt" as at
+        from public.cfo_change_log l
+       where l.source = '${COST_DERIVATION_SOURCE}' and l.item like '% unitCostTry' and l."changedAt" >= now() - interval '26 hours'
+         and l."oldValue" ~ '^[0-9]+(\\.[0-9]+)?$' and l."newValue" ~ '^[0-9]+(\\.[0-9]+)?$'),
+    d as (select c.sku, c.o, c.n, c.at, case when p."stockQuantity" > 0 and p."stockQuantity" < 1000 then p."stockQuantity" else 0 end as stok
+        from c join public."Product" p on p.sku = c.sku)
+    select count(*) filter (where stok > 0 and o > 0 and abs(n / o - 1) * 100 >= ${COST_JUMP_PCT})::int as big,
+      coalesce(sum(stok * (n - o)), 0) as delta,
+      (select sku || ' ' || o::text || ' → ' || n::text || ' TL × ' || stok from d where stok > 0 order by abs(stok * (n - o)) desc limit 1) as worst,
+      to_char(max(at) at time zone 'Europe/Istanbul', 'YYYY-MM-DD') as day
+    from d`;
+}
+
 /** Mükerrer taksit (CFO-010): projeksiyon ufkunda (120 gün) banka × ay bekleyen KREDI_TAKSITI satırı > o bankadaki aktif kredi. */
 export function scheduleDuplicateSql(today: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) throw new Error("today must be YYYY-MM-DD");
@@ -194,7 +218,7 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
   const p = istanbulPeriod(now), afternoon = p.minutes >= 15 * 60;
   const today = p.date;
   const q = <T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql).catch(() => [] as T[]);
-  const [floor, runs, dip, events, xml, ty, entegra, banks, gate, personal, gaps, dups, duty] = await Promise.all([
+  const [floor, runs, dip, events, xml, ty, entegra, banks, gate, personal, gaps, dups, duty, jump] = await Promise.all([
     readCashFloor(config.cashFloorTry),
     prisma.cfoRun.findMany({ where: { idempotencyKey: { startsWith: "engine:" }, generatedAt: { gte: new Date(now.getTime() - 48 * H) } }, orderBy: { generatedAt: "desc" }, take: 20,
       select: { status: true, generatedAt: true, finishedAt: true, error: true } }),
@@ -210,6 +234,7 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
     q<ScheduleDuplicate>(scheduleDuplicateSql(today)),
     // cfo_gtip_yuk (migration 20261009210000) yoksa q() boş döner → alarm değerlendirilmez
     q<{ n: unknown; t: unknown; sku: string | null; k: unknown; y: unknown }>(dutyGapSql()),
+    q<{ big: unknown; delta: unknown; worst: string | null; day: string | null }>(costJumpSql()),
   ]);
   const path = dip.map(r => ({ date: String(r.d), position: num(r.v) })).filter((r): r is { date: string; position: number } => r.position != null);
   const low = path.reduce<{ date: string; position: number } | null>((m, d) => (!m || d.position < m.position ? d : m), null);
@@ -227,6 +252,7 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
     staleLedger: gaps.map(due),
     dutyGap: duty[0] ? { count: num(duty[0].n) ?? 0, missingTry: num(duty[0].t) ?? 0,
       worst: duty[0].sku ? { sku: String(duty[0].sku), kayitliPct: num(duty[0].k) ?? 0, yasalPct: num(duty[0].y) ?? 0 } : null } : null,
+    costJump: jump[0] ? { big: num(jump[0].big) ?? 0, deltaTry: num(jump[0].delta) ?? 0, worst: jump[0].worst, day: jump[0].day } : null,
     scheduleDuplicates: dups.map(d => ({ bank: String(d.bank), month: String(d.month), count: Number(d.count), expected: Number(d.expected), rows: String(d.rows) })),
   };
 }

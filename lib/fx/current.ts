@@ -13,7 +13,8 @@ import { pickCurrentFx, type CurrentFx, type FxRows } from "./pick";
 
 export type { CurrentFx } from "./pick";
 
-export const getCurrentFx = cache(async (): Promise<CurrentFx> => {
+/** Önbelleksiz okuma — istek dışı işler (ör. xml-sync after() adımı, CFO-029 maliyet türetme) için. */
+export async function loadCurrentFx(): Promise<CurrentFx> {
   const [kur, settings, manual] = await Promise.all([
     prisma.$queryRaw<Array<{ ay: Date; usd_try: unknown }>>`select ay, usd_try from cfo_kur where usd_try > 0 order by ay desc limit 1`.catch(() => []),
     prisma.cfoSettings.findFirst({ select: { usdTryRate: true, usdRmbRate: true } }).catch(() => null),
@@ -25,4 +26,6 @@ export const getCurrentFx = cache(async (): Promise<CurrentFx> => {
     manual: manual.map(r => ({ month: `${r.year}-${String(r.month).padStart(2, "0")}`, usdTry: Number(r.usdTryRate), rmbPerUsd: r.rmbUsdRate == null ? null : Number(r.rmbUsdRate) })),
   };
   return pickCurrentFx(rows, { usdTry: DEFAULT_USD_TRY_RATE, rmbPerUsd: DEFAULT_RMB_USD_RATE });
-});
+}
+
+export const getCurrentFx = cache(loadCurrentFx);
