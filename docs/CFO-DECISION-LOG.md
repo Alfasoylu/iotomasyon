@@ -41,7 +41,11 @@ D-P05 → KDV hariç, iade düşülmüş, tüm kanallar (Alfashome dahil, eski t
 
 | D-P08 | **"Akbank Alp" ŞAHSİ; "Garanti Alp" banka hesabı GERÇEKTE YOK → pasif** (Alperen 2026-10-09, Garanti ekranları: 286-6293619 Alfa Soylu Ltd. KMH 500.000 = "Garanti"; 286-6673313 Alperen şahsi KMH 150.000 = "Garanti Alperen (şahsi)"). Şahsi bakiye takip edilmez | şirket genel KMH 1.809.300 → 1.359.300; şahsi KMH 1.100.000 → 1.350.000; "her şey dahil" açık −52.145 → −252.145 | veri düzeltmesi Cowork: `docs/cowork/2026-10-09-d-p08-akbank-alp-sahsi.sql` | CFO-006 |
 
-Hâlâ bekleyen: D-P05 (ciro hedefi KDV/kanal kapsamı), D-P06 (`unitCostTry` KDV esası), D-P07 (alarm kanalı).
+| D-P05 | Ciro hedefi **KDV DAHİL** ölçülür (Alperen 2026-10-09) — Goal Engine bugünkü ölçümü (`revenue_incl_vat_try`) doğru; KDV hariç ciro yan gösterge | değişiklik yok | kanal kapsamı (Alfashome dahil mi) ayrıca sorulacak | CFO-008 |
+| D-P06 | `Product.unitCostTry` **KDV DAHİL** kayıtlı (Alperen 2026-10-09). Marj (KDV dahil ciro − KDV dahil maliyet) tutarlı; ama net sermaye LCNRV'si KDV dahil maliyeti KDV hariç NRV ile karşılaştırıyordu → maliyet / 1,2 | stok LCNRV 3.918.459 → 3.370.965 (−547.494); net sermaye 2.900.562 → ~2.353.068 | migration 20261009190000 (Cowork) | CFO-001, CFO-007 |
+| D-P07 | Alarmlar **WhatsApp**'la, Alfashome'un WhatsApp numarasından Alperen'e (Alperen 2026-10-09) | — | kod hazır (alarm-whatsapp); önkoşul: onaylı şablon + ortam değişkenleri (aşağıda) | CFO-009 |
+
+Hâlâ bekleyen: D-P05 kanal kapsamı (Alfashome cirosu hedefe dahil mi?).
 
 ## Sistem tasarım kararları (bu oturuma kadar, özet)
 
