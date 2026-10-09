@@ -1,7 +1,7 @@
 -- CFO-026 (Alperen 2026-10-09: "GTİP'leri belirle, mevzuatı araştır"; "tam yetkilisin, onaylıyorum"): GTİP bazında yasal gümrük yükü.
 -- cfo_gtip_tarife: Çin menşei ("7 = diğer ülkeler" sütunu) GV / İGV / KDV / ÖTV (IV sayılı liste, muhtemel) — 2026 İthalat Rejimi Kararı
 -- (RG 31.12.2025 CB 10790), İGV Kararı (CB 10791, 11508 ile güncel), KDV Kanunu md. 21. Kaynak/araştırma: docs/gtip/ithalat-vergi-rejimi-2026.md,
--- docs/gtip/gtip-oranlar-2026.json. Anahtar = GTİP rakamları (12 hane) ya da 6 haneli başlık (yalnız araştırmada ≥2 alt pozisyon aynı oranı verdiyse: 8473.30, 8481.80, 8301.40).
+-- docs/gtip/gtip-oranlar-2026.json, docs/gtip/gtip-teyit.json (2. tur: telsiz 8517.69.90.90.24 ÖTV %20, 8526.92 RF kumanda ÖTV %20, eksik kodlar). Anahtar = GTİP rakamları (12 hane) ya da 6 haneli başlık (yalnız araştırmada ≥2 alt pozisyon aynı oranı verdiyse: 8473.30, 8481.80, 8301.40).
 -- cfo_gtip_yuk: maliyetli her ürün için en uzun önek eşleşmesiyle oran; yasal yük % = (1 + GV + İGV) × (1 + KDV) − 1 (masrafsız, ÖTV hariç;
 -- ÖTV'li hali ayrı sütun) ve kayıtlı gümrük % ile fark; stok etkisi (stok 0 < adet < 1000, dropship yer tutucu hariç).
 -- Hesap zinciri: CIF → GV = CIF×GV → İGV = CIF×İGV → (ÖTV) → KDV matrahı = CIF + GV + İGV (+ÖTV) → KDV. Ticari ithalatta hızlı kargo
@@ -96,7 +96,40 @@ INSERT INTO public.cfo_gtip_tarife (gtip, gv_pct, igv_pct, kdv_pct, otv_pct, tan
   ('950450000000', 0, 20, 20, 20.0, 'Video oyun konsolları ve makineleri (oyun kolu/gamepad genelde burada)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
   ('950691100000', 2.7, 20, 20, NULL, 'Kültür-fizik/jimnastik/fitness eşyası', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
   ('950691900000', 2.7, 20, 20, NULL, 'Kültür-fizik/jimnastik/fitness eşyası', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
-  ('950699900000', 2.7, 20, 20, NULL, 'Diğer spor/açık hava oyun eşyası', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true)
+  ('950699900000', 2.7, 20, 20, NULL, 'Diğer spor/açık hava oyun eşyası', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('853710910000', 2.1, 0, 20, NULL, 'Programlanabilir hafızalı kumanda cihazları (geliştirme kartı)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('847989979019', 1.7, 0, 20, NULL, 'Kendine özgü fonksiyonlu makine – diğerleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('960329300000', 3.7, 23, 20, NULL, 'Saç fırçaları', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('400922009000', 3, 5, 20, NULL, 'Bağlantı elemanlı, metal takviyeli kauçuk hortum (flex/duş hortumu) – diğerleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('850610980000', 4.7, 0, 20, NULL, 'Manganez dioksitli pil (alkalin) – diğerleri (9V dahil)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('854449200000', 0, 0, 20, NULL, '≤80 V telekomünikasyon kablosu, konnektörsüz (Cat6 makara)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('391733000000', 6.5, 10, 20, NULL, 'Bağlantı elemanlı plastik hortum (takviyesiz)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('852990969000', 3, 0, 20, NULL, '85.25–85.28 cihazlarına ait diğer aksam-parçalar', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('848190000029', 2.2, 25, 20, NULL, 'Musluk/valf aksamı – metal döküm olmayan – diğerleri (11.07.2026 yeni kod)', 'https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf', true),
+  ('848190000022', 2.2, 25, 20, NULL, 'Musluk/valf aksamı – metal döküm olmayan – pirinç (11.07.2026 yeni kod)', 'https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf', true),
+  ('392610000000', 6.5, 25, 20, NULL, 'Plastikten okul ve büro malzemeleri (karşılaştırma)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('841480809019', 2.2, 0, 20, NULL, 'Diğer hava pompaları – diğerleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('841459359000', 2.3, 0, 20, NULL, 'Santrifüj fanlar – diğerleri (alternatif)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('901180000000', 6.7, 0, 20, NULL, 'Diğer optik mikroskoplar', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('950300700011', 4.7, 25, 20, NULL, 'Takım halindeki oyuncaklar (alternatif)', 'https://www.resmigazete.gov.tr/eskiler/2026/07/20260711-7.pdf', true),
+  ('848180590019', 2.2, 25, 20, NULL, 'Proses kontrol valfleri – diğerleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('732490000019', 3.2, 10, 20, NULL, 'Demir/çelikten sıhhi eşya – diğerleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('741820000011', 3, 25, 20, NULL, 'Bakırdan sıhhi eşya (alternatif)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('851762001000', 0, 0, 20, NULL, 'Veri alım-iletim makineleri – hücresel ağ için', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('851769909024', 0, 0, 20, 20, 'CB, 49 MHz ve diğer amatör telsiz cihazları', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('853710980019', 2.1, 0, 20, NULL, '≤1000 V elektrik kumanda cihazları – diğerleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('901380800000', 4.7, 0, 20, NULL, 'Diğer optik alet ve cihazlar (büyüteç)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('854151000000', 0, 0, 20, NULL, 'Yarı iletken tabanlı dönüştürücüler', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('852692009019', 3.7, 0, 20, 20, 'Radyo ile uzaktan kumanda cihazları – diğerleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('910700000011', 4.7, 10, 20, NULL, 'Elektrikli/elektronik zaman şalterleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('902789900000', 0, 0, 20, NULL, 'Fiziksel/kimyasal analiz cihazları – diğerleri', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('940521400000', 4.7, 30, 20, NULL, 'LED masa/yer lambaları – plastik veya seramik', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('940542310000', 4.7, 30, 20, NULL, 'Diğer LED aydınlatma – plastik', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('841350809000', 1.7, 5, 20, NULL, 'Diğer doğrusal deplasmanlı (diyafram vb.) pompalar', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('841370359000', 1.7, 10, 20, NULL, 'Çıkış ağzı ≤15 mm diğer santrifüj pompalar', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('847160709019', 0, 0, 20, NULL, 'Giriş/çıkış birimleri – diğerleri (yalnız PC gamepad)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('820570000000', 3.7, 25, 20, NULL, 'Mengene, kıskaç vb. (alternatif)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true),
+  ('761699909019', 6, 5, 20, NULL, 'Alüminyumdan diğer eşya – diğerleri (alternatif)', 'https://www.ddp.com.tr/TR/wp-content/uploads/2026/01/ith-rejim-karari.zip', true)
 ON CONFLICT (gtip) DO NOTHING;
 
 CREATE OR REPLACE VIEW public.cfo_gtip_yuk WITH (security_invoker = true) AS
