@@ -46,6 +46,7 @@ jobs:
       - run: node --import tsx __tests__/fm-canonical-sales.test.ts
       - run: node --import tsx __tests__/fm-kdv-haric.test.ts
       - run: node --import tsx __tests__/fm-sales-alfashome.test.ts
+      - run: npm run check:alfashome
       - run: node --conditions=react-server --import tsx __tests__/cfo-gtip-tarife.test.ts
       - run: node --import tsx __tests__/fm-goal-kaynak.test.ts
       - run: node --import tsx __tests__/cfo-net-sermaye.test.ts
@@ -120,7 +121,7 @@ jobs:
           PY
           npx prisma db push --schema /tmp/cfo-workflow-synthetic.prisma
           node --conditions=react-server --import tsx __tests__/cfo-workflow-postgres.test.ts
-          node --conditions=react-server --import tsx __tests__/cfo-cost-answer.test.ts __tests__/cfo-tahsilat-tahmini.test.ts 'app/(app)/cfo/odemeler/page.tsx' __tests__/cfo-engine-forecast.test.ts lib/cfo/engine.ts lib/cfo/queries.ts 'app/(app)/cfo/nakit-akisi/page.tsx'
+          node --conditions=react-server --import tsx __tests__/cfo-cost-answer.test.ts
       - run: node --import tsx __tests__/cfo-private-files.test.ts
       - run: npm run check:rbac
       - run: npm run check:entegra

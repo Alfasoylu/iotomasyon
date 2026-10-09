@@ -71,7 +71,7 @@ export default async function CfoReceivablesPage() {
           ))}
         </CfoTable>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          Bu takvimde olmayan kanallar için haftalık (ciro/4) tahmini devreye girer — Nakit Akışı sayfasına bakın.
+          Bu takvimde olmayan kanallar için kanal temposu tahmini (cfo_tahsilat_tahmini; görünüm yoksa son 14 gün cirosu / 4) devreye girer — Nakit Akışı sayfasına bakın.
         </p>
       </Card>
     </>

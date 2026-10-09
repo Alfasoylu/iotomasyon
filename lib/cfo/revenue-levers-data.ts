@@ -27,7 +27,9 @@ export async function loadRevenueLevers(q: SqlQuery) {
   const strategic = pickStrategicFx(sfx[0], new Date());
   const fx = strategic?.usdTry ?? null;
   const landedFx = num(kur[0]?.v) ?? fx;
-  const targetMonthlyTry = fx == null ? null : (num(set[0]?.usd) ?? 100000) * fx;
+  // Hedef ayarı ya da kur yoksa hedef BİLİNMİYOR (100.000 USD varsayılanı yok — RF-019)
+  const targetUsd = num(set[0]?.usd);
+  const targetMonthlyTry = fx == null || targetUsd == null ? null : targetUsd * fx;
   // Son 90 günde hiç satış satırı yoksa bugünkü ciro BİLİNMİYOR (kaynak boş olabilir): plan 0 ile kurulur ama işaretlenir (CFO-014)
   const currentUnknown = num(cur[0]?.v) == null;
   const currentMonthlyTry = num(cur[0]?.v) ?? 0;

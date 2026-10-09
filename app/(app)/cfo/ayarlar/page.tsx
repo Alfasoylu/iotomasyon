@@ -31,7 +31,7 @@ export default async function CfoSettingsPage() {
         {s ? (
           <CfoTable head={<tr><Th>Parametre</Th><Th right>Değer</Th><Th>Açıklama</Th></tr>}>
             <P label="USD/TRY kuru" value={num(s.usdTryRate).toLocaleString("tr-TR")} note="Tüm USD çevrimleri" />
-            <P label="KMH / kart aylık faiz" value={`%${num(s.kmhMonthlyRatePct)}`} note="Kısa vadeli finansman maliyeti" />
+            <P label="Küresel KMH aylık faizi (kullanılmıyor)" value={`%${num(s.kmhMonthlyRatePct)}`} note="Hesaplara girmez: KMH faizi hesap başına ölçülmüş orandan, kart faizi kartın akdi oranından (CFO-005)" />
             <P label="Kart asgari ödeme oranı" value={`%${num(s.cardMinPct)}`} note="Gerçek ekstre asgarisi yoksa kullanılır" />
             <P label="Pazaryeri ödeme vadesi" value={`${s.marketplaceTermDays} gün`} note="Nakit dönüş süresi hesabında" />
             <P label="Ciro → nakit oranı" value={`%${num(s.cashConversionPct)}`} note="Cironun nakde dönen kısmı" />

@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { GoalRow } from "@/lib/fm/goals";
 import { getCfoConfig, type CfoConfig } from "./config";
+import { readCashFloor } from "./cash-floor";
 import { buildCfoAgentSnapshot } from "./snapshot";
 import { detectCfoAnomalies, silencedRules } from "./anomalies";
 import { loadCfoContext } from "./context";
@@ -52,8 +53,11 @@ async function contextMetrics(snapshot: CfoAgentSnapshot, config: CfoConfig): Pr
 }
 
 export async function runCfoEngine(trigger: EngineTrigger, deps: RunnerDependencies = {}): Promise<RunnerOutcome> {
-  const now = deps.now ?? new Date(), config = deps.config ?? getCfoConfig(), period = istanbulPeriod(now);
+  const now = deps.now ?? new Date(), period = istanbulPeriod(now);
+  let config = deps.config ?? getCfoConfig();
   if (!config.monitorEnabled) return { status: "disabled" };
+  // Taban tek kaynaktan (cfo_settings; Goal Engine ile aynı) — enjekte edilen config (testler) olduğu gibi kalır
+  if (!deps.config) config = { ...config, cashFloorTry: (await readCashFloor(config.cashFloorTry)).floorTry };
   const lock = deps.lock ?? createMonitorLock(), store = deps.store ?? cfoStore;
   let id: string | null = null;
   try {
