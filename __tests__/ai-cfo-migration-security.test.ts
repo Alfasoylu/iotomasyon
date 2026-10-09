@@ -29,7 +29,7 @@ async function main() {
     assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation", "20261007200000_drop_legacy_backup_tables",
       "20261009150000_cfo_gun_ozeti_saglik_alarm", "20261009160000_cfo_kart_karari_bsmv",
       "20261009170000_cfo_metrik_net_sermaye", "20261009180000_cfo_metrik_borc",
-      "20261009190000_cfo_net_sermaye_maliyet_kdv_haric"], "only the held-back migrations stay out of production");
+      "20261009190000_cfo_net_sermaye_maliyet_kdv_haric", "20261009200000_fm_sales_alfashome"], "only the held-back migrations stay out of production");
     // production default ACL for objects postgres creates in public (after the security phase)
     await db.exec(`alter default privileges in schema public grant all on tables to service_role;
       alter default privileges in schema public grant all on sequences to service_role;

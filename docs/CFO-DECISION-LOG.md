@@ -45,7 +45,7 @@ D-P05 → KDV hariç, iade düşülmüş, tüm kanallar (Alfashome dahil, eski t
 | D-P06 | ~~`Product.unitCostTry` KDV DAHİL~~ → **ASKIDA / İTİRAZ (Cowork ölçümü 2026-10-09)**: 431/432 maliyetli üründe `unitCostTry ÷ unitCostUsd = 48,5` (sabit kur, KDV eklenmemiş; 58,20 = 48,5×1,2 olan ürün yok); KDV oranı alanı 1/433 dolu; maliyetli ürünlerin tamamı USD ithalat — ithalat KDV'si indirilir, maliyete girmez. "Hepsi KDV dahil" uygulanırsa her maliyet %16,67 düşer ve marj şişer | migration 20261009190000 (maliyet /1,2) **UYGULANMAYACAK** — bekletme listesinde, toplu pakete alınmadı; soru Alperen'de: "yurt içi" mi "hepsi" mi? Öneri: 190000 geri çekilsin (maliyet KDV hariç kabul) | yok (cevap bekleniyor) | CFO-001, CFO-007 |
 | D-P07 | Alarmlar **WhatsApp**'la, Alfashome'un WhatsApp numarasından Alperen'e (Alperen 2026-10-09) | — | kod hazır (alarm-whatsapp); önkoşul: onaylı şablon + ortam değişkenleri (aşağıda) | CFO-009 |
 
-D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL** (IDEASOFT/Entegra kanalıyla mükerrerlik kontrolüyle; Eylül IDEASOFT 23.991 TL ≈ %1,2). Hâlâ bekleyen: D-P06 "yurt içi mi hepsi mi".
+D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL**. Uygulama: migration `20261009200000_fm_sales_alfashome` (Cowork dosyası `docs/cowork/2026-10-09-alfashome-ciro.sql`) — `alfashome_order` ayrı ALFASHOME kanalı olarak satış katmanına girer. Mükerrerlik ölçümü: IDEASOFT (Entegra) 29.09'da biter, Alfashome panel siparişleri 01.10'da başlar, anahtar/tarih/tutar çakışması yok (site geçişi). Ekim etkisi +14.865 TL; arşivlenmiş 3 kurulum dönemi siparişi (5.912,50 TL) teyide kadar dışarıda (soru Alperen'de). Hâlâ bekleyen: D-P06 "yurt içi mi hepsi mi".
 
 ## Sistem tasarım kararları (bu oturuma kadar, özet)
 
