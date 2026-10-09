@@ -20,7 +20,8 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: (s: string) => db.exec(s), query: <T,>(s: string, p?: unknown[]) => db.query<T>(s, p) });
     for (const m of res.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
-    assert.ok(res.pendingNotInProduction.includes(BORC), "üretimde bekletiliyor (Cowork uygulayacak)");
+    // Üretim 170000 + 180000'i uyguladı (2026-10-09); kopya onları içerir, test yine de ikisini sırayla yeniden uygular (idempotent).
+    assert.ok(res.pendingInProduction.includes(NET) && res.pendingInProduction.includes(BORC), "üretimde uygulandı");
     await db.exec("set search_path = public");
     const q = async <T,>(s: string) => (await db.query<T>(s)).rows;
     const source = { query: async <T,>(sql: string, ...params: unknown[]) => (await db.query<T>(sql, params)).rows };
@@ -44,11 +45,11 @@ async function main() {
       insert into fm_fx_monthly (month, usd_try_forex_buying, ref_date, bulletin_no, is_fallback_day, source_url, fetched_at)
         values (date_trunc('month', current_date)::date, 48.5, current_date, 'x', false, 'synthetic', now());`);
 
-    // Migration öncesi (üretim bugün): kapı eski yol — cfo_servet.borc (gümrük dahil) < 5M TL
+    // Sözleşme fonksiyonu yoksa (180000 öncesi şema) kapı eski yola düşer — cfo_servet.borc (gümrük dahil) < 5M TL
+    await db.exec(`alter function cfo_metrik_borc() rename to cfo_metrik_borc_x`);
     const g0 = await readOrderDebtGate(source, now);
+    await db.exec(`alter function cfo_metrik_borc_x() rename to cfo_metrik_borc`);
     assert.deepEqual([g0.debtSource, g0.limitTry, g0.totalDebtTry], ["cfo_servet.borc", 5_000_000, 4_000_000 + 1_000_000 + 350_000]);
-    await q(`select fm_goal_evaluate()`);
-    assert.equal((await q(`select 1 from fm_goal where goal_key = 'debt_below_5m_try' and valid_to is null`)).length, 1, "eski hedef açık");
 
     for (const m of [NET, BORC]) { const sql = readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"); await db.exec(sql); await db.exec(sql); }
 

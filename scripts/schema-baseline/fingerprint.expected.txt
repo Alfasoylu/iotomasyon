@@ -1,3 +1,6 @@
+# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-09 ~14:00 UTC, read-only catalog SELECT) after Cowork CFO applied 20261009150000..180000
+# (checksums b86c9ece… / 9d1c6afd… / bbb65f70… / db04329d…) and Claude Code applied 20261009190000 (3b22ba05…), 20261009200000 (a3f3be40…) and
+# 20261009210000 (6e540e1a…) with Alperen's approval ("Tam yetkilisin" / "Devam et", 2026-10-09; bodies without SQL comments, executable code identical).
 # 2026-10-09: fingerprint.sql hashes function bodies without SQL line comments; re-measured on production after Cowork applied 110000/120000/130000 and fixed cfo_gumruk_dilim out-of-band (captured as 20261009140000).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-09 ~06:30 UTC, read-only catalog SELECT) after Cowork CFO applied
 # 20261009110000_cfo_kart_karari_kart_faizi, 20261009120000_fm_kdv_haric_ciro, 20261009130000_fm_goal_kaynak_tazeligi verbatim (99359b09… / 86d9416b… / 394fd496…).
@@ -14,20 +17,20 @@
 # The 3 backup tables are still present (20261007200000_drop_legacy_backup_tables is held back in baseline.json until it runs).
 # A bootstrapped clean database (prisma/baseline/2026-10-06.sql + baseline.json pending/late migrations) must produce exactly these rows from scripts/schema-baseline/fingerprint.sql.
 # Columns: kind object_count short_md5. Regenerate ONLY by re-running fingerprint.sql on production (docs/BASELINE-CAPTURE.md).
-acl 344 e304ce3368
-con 340 007c77859c
+acl 348 8e363a3208
+con 342 3e41f43778
 enum 32 ac59222f85
 ext 1 56e042523e
-fn 36 78c033e3c3
-fnacl 53 2c76819d71
-idx 437 d1baea3d4e
-pol 80 32812b7f8a
+fn 38 0012748ad0
+fnacl 55 56db3c6337
+idx 438 9162d7772d
+pol 82 c46b7cce18
 rel:m 1 0ad09bf43e
-rel:r 151 59c7db9733
-rel:v 59 7aaa2c5ba8
-rls 151 55a126580a
+rel:r 152 b7eba42923
+rel:v 60 326689fbf5
+rls 152 a1f65e709d
 schemaacl 3 45e3344ecd
 seq 15 cda7319017
 seqacl 15 40c6ef1c15
 trg 2 90b8397906
-view 60 15dc7e05b1
+view 61 e8c0366499

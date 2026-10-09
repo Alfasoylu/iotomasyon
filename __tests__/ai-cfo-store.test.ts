@@ -23,7 +23,8 @@ async function main() {
   const apply = async (ms: string[]) => { for (const m of ms) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8")); };
   const VIEW = "20261008100000_cfo_gun_ozeti"; // cfo_run üzerinde görünüm → ai_cfo_v1'den sonra (baseline.json appliedAfterCapture)
   const VIEW_TZ = "20261008130000_cfo_gun_ozeti_tz";
-  await apply(res.pendingInProduction.filter(m => m !== AI && m !== VIEW && m !== VIEW_TZ));
+  const ALARM = "20261009150000_cfo_gun_ozeti_saglik_alarm"; // görünümün SAĞLIK alarmlı sürümü; aşağıda önceki tanımdan sonra uygulanır
+  await apply(res.pendingInProduction.filter(m => m !== AI && m !== VIEW && m !== VIEW_TZ && m !== ALARM));
   const server = new PGLiteSocketServer({ db: pg, port: 0, host: "127.0.0.1" });
   await server.start();
   const conn = server.getServerConn();
@@ -109,9 +110,8 @@ async function main() {
     assert.equal(rows[6].tl_etkisi, null); assert.equal(rows[6].metin, "yok state (TAHMİNİ)");
     assert.ok(!rows.some(r => r.metin.includes("eski LLM")), "LLM dönemi monitor koşuları görünmez");
     assert.equal(rows[0].aciliyet, null, "önceki tanım: SAĞLIK satırı aciliyetsiz (09.10 ölü koşu yalnız metinde)");
-    // SAĞLIK alarmı (20261009150000, Cowork 09.10 bulgusu; üretimde bekletiliyor → baseline.json notAppliedInProduction)
-    const ALARM = "20261009150000_cfo_gun_ozeti_saglik_alarm";
-    assert.ok(res.pendingNotInProduction.includes(ALARM));
+    // SAĞLIK alarmı (20261009150000, Cowork 09.10 bulgusu; üretimde uygulandı → baseline.json appliedAfterCapture, en sonda)
+    assert.ok(res.pendingInProduction.includes(ALARM));
     await apply([ALARM, ALARM]); // idempotent
     const saglik = async () => (await pg.query<{ aciliyet: string | null; metin: string }>(`select aciliyet, metin from cfo_gun_ozeti where tur = 'SAGLIK'`)).rows[0];
     // son motor koşusu = tamamlanmış id2 (6 saat önce); diğer motor satırları daha eski

@@ -23,13 +23,11 @@ async function main() {
     // production before step 8 = every production-applied migration except ai_cfo_v1 (now listed in baseline.json appliedAfterCapture)
     assert.ok(res.pendingInProduction.includes("20261005190000_ai_cfo_v1"), "ai_cfo_v1 is applied in production (step 8A)");
     // cfo_gun_ozeti (görünüm, cfo_run'a bağlı) ai_cfo_v1'den sonra gelir; bu test ai_cfo_v1 öncesini yeniden üretir.
-    for (const m of res.pendingInProduction.filter(x => x !== "20261005190000_ai_cfo_v1" && x !== "20261008100000_cfo_gun_ozeti" && x !== "20261008130000_cfo_gun_ozeti_tz")) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    for (const m of res.pendingInProduction.filter(x => x !== "20261005190000_ai_cfo_v1" && x !== "20261008100000_cfo_gun_ozeti" && x !== "20261008130000_cfo_gun_ozeti_tz" && x !== "20261009150000_cfo_gun_ozeti_saglik_alarm")) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     // market_scout_foundation (PR3) and drop_legacy_backup_tables (waits for the operator to run it) are held back; they touch only
     // market_* objects / 3 unused backup tables and do not affect this check. alfashome_order and cfo_ledger_tables_capture are applied.
-    assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation", "20261007200000_drop_legacy_backup_tables",
-      "20261009150000_cfo_gun_ozeti_saglik_alarm", "20261009160000_cfo_kart_karari_bsmv",
-      "20261009170000_cfo_metrik_net_sermaye", "20261009180000_cfo_metrik_borc",
-      "20261009190000_cfo_net_sermaye_maliyet_kdv_haric", "20261009200000_fm_sales_alfashome", "20261009210000_cfo_gtip_tarife"], "only the held-back migrations stay out of production");
+    assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation", "20261007200000_drop_legacy_backup_tables"],
+      "only the held-back migrations stay out of production");
     // production default ACL for objects postgres creates in public (after the security phase)
     await db.exec(`alter default privileges in schema public grant all on tables to service_role;
       alter default privileges in schema public grant all on sequences to service_role;
