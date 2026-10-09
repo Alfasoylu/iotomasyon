@@ -60,7 +60,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 5 | Inventory / procurement | 10 | **5** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
 | 6 | Decision memory & calibration | 10 | **3** | `cfo_hamle` + beklenen/gerçekleşen ekranı; goal attribution | 3/15 karar ölçülebilir; ölçüm tablosu hiç yazılmıyor; atıf kimliği bozuk |
 | 7 | Data quality / provenance | 7 | **4** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi | Eski motor/yan modüllerde UNKNOWN→0; tahminler measured=true; elle defterler; 66 açık soru, karışık durum sözlüğü |
-| 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; takılan koşu/kilit hatası görünmez; yetim `cfo-cycle` |
+| 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; SAĞLIK alarmı (takılan/başarısız/bayat motor) kodda, üretimde migration 150000 bekliyor; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **2** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Okuma izniyle yazma yolları, yetkisiz action, düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü |
 | | **TOPLAM** | **100** | **52** | | |

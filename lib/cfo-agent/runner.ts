@@ -58,6 +58,7 @@ export async function runCfoEngine(trigger: EngineTrigger, deps: RunnerDependenc
   let id: string | null = null;
   try {
     if (!await lock.acquire()) return { status: "locked" };
+    if (store.sweepStuck) await store.sweepStuck(now).catch(() => 0); // ölü koşular sonsuza dek 'running' kalmasın (CFO-009)
     id = await store.begin(runPeriodKey(trigger, period), now);
     if (!id) return { status: "duplicate" };
     const snapshot = await (deps.snapshot ?? (() => buildCfoAgentSnapshot({ now, config })))();

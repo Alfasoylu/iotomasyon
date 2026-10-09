@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   if (denied) return denied;
   // alfashome siparişleri CFO döngüsünden ÖNCE yazılır (ALFASHOME kanalı; hata döngüyü durdurmaz).
   await safeSyncAlfasOrders();
-  scheduleCfoCycle("daily_trendyol", { engine: "sync_trendyol" });
+  scheduleCfoCycle("daily_trendyol", { engine: "sync_trendyol", maxDurationSec: maxDuration });
 
   const config = await prisma.trendyolConfig.findFirst();
   if (!config || !config.isEnabled) {

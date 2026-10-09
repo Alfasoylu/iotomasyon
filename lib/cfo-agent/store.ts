@@ -40,6 +40,8 @@ export interface CfoStore {
   previous(now: Date, dayStart: Date): Promise<PreviousRuns>;
   record(id: string, snapshot: CfoAgentSnapshot | null, snapshotHash: string, data: EngineRecord): Promise<void>;
   finish(id: string, status: string, now: Date, error?: string): Promise<void>;
+  /** Fonksiyon zaman aşımıyla öldüğü için 'running' kalmış motor koşularını 'failed' (killed_timeout) kapatır; kapatılan sayısı (CFO-009). */
+  sweepStuck?(now: Date): Promise<number>;
 }
 
 export const cfoStore: CfoStore = {
@@ -79,5 +81,13 @@ export const cfoStore: CfoStore = {
   },
   async finish(id, status, now, error) {
     await prisma.cfoRun.update({ where: { id }, data: { status, finishedAt: now, avoidedCalls: 0, avoidedCostTry: null, error: error ?? null } });
+  },
+  async sweepStuck(now) {
+    // 09.10: xml-sync after() içinde başlayan koşu Vercel süre sınırında öldü, satır 4+ saat 'running' kaldı (cfo_gun_ozeti bilgi satırı).
+    // Kilit tutulurken çağrılır: meşru bir koşu ~2 dk sürer, RETRY_STUCK_MINUTES'tan eski 'running' ancak ölü bir koşudur.
+    const r = await prisma.cfoRun.updateMany({
+      where: { idempotencyKey: { startsWith: ENGINE_KEY_PREFIX }, status: "running", generatedAt: { lt: new Date(now.getTime() - RETRY_STUCK_MINUTES * 60000) } },
+      data: { status: "failed", finishedAt: now, error: "killed_timeout" } });
+    return r.count;
   },
 };

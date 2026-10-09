@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import { PGlite } from "@electric-sql/pglite";
 import { nextScheduledPayment, sameBank, type ScheduleRow } from "../lib/cfo/payment-schedule";
+import { engineBudgetOk, ENGINE_MIN_BUDGET_MS } from "../lib/cfo-agent/engine-budget";
 import { evaluateCfoAlarms, shouldNotify, unmarkedPaymentsSql, ledgerGapSql, scheduleDuplicateSql, type AlarmInput, type EngineRunInfo } from "../lib/cfo-agent/health";
 
 const now = new Date("2026-10-08T10:00:00Z");
@@ -60,6 +61,13 @@ assert.equal(nextScheduledPayment(sch, { kind: "KREDI_TAKSITI", bank: "Ziraat", 
 assert.equal(nextScheduledPayment(sch, { kind: "KREDI_TAKSITI", bank: "Fibabanka", expectedTry: 32793 }), null, "takvimde yok");
 assert.equal(nextScheduledPayment(sch, { kind: "KART_ODEMESI", bank: "Yapı Kredi" })?.amountTry, 1000, "Türkçe I/ı katlanır, açıklamadan eşleşir");
 assert.equal(sameBank({ bank: "Garanti", description: null }, ""), false);
+
+// Senkron sonrası motor süre bütçesi (CFO-009, 09.10: xml-sync sonrası motor 300 sn sınırında öldü)
+assert.equal(ENGINE_MIN_BUDGET_MS, 150000);
+assert.equal(engineBudgetOk(0, 100_000), true, "senkron 100 sn → 200 sn kaldı, motor başlar");
+assert.equal(engineBudgetOk(0, 150_000), true, "tam 150 sn kaldı");
+assert.equal(engineBudgetOk(0, 151_000), false, "149 sn kaldı → motor başlamaz");
+assert.equal(engineBudgetOk(0, 260_000, 800), true, "uzun süre sınırlı route");
 
 const dead = evaluateCfoAlarms(base({ sources: [{ name: "XML", lastAt: h(30), maxAgeHours: 26 }, { name: "Trendyol", lastAt: null, maxAgeHours: 26 }, fresh[2]],
   staleBankAccounts: ["Ziraat USD"] }));

@@ -82,6 +82,13 @@ async function main() {
     assert.equal(await cfoStore.begin("2026-10-06T12:scheduled", new Date(t0.getTime() + 120000)), null, "koşan (taze) koşu tekrar açılmaz");
     assert.equal(await cfoStore.begin("2026-10-06T12:scheduled", new Date(t0.getTime() + 20 * 60000)), f1, "takılmış koşu yeniden denenir");
     await cfoStore.finish(f1!, "failed", t0, "engine_failed");
+    // Ölü koşu süpürmesi (CFO-009, 09.10): süre sınırında öldürülen 'running' satır bir sonraki koşunun başında failed/killed_timeout olur
+    const s1 = await cfoStore.begin("2026-10-06T13:sync_xml", t0);
+    assert.equal(await cfoStore.sweepStuck!(new Date(t0.getTime() + 10 * 60000)), 0, "taze koşuya dokunulmaz");
+    assert.equal(await cfoStore.sweepStuck!(new Date(t0.getTime() + 20 * 60000)), 1, "15 dk'dan eski running kapanır");
+    const swept = (await client.$queryRawUnsafe<{ status: string; error: string | null; fin: boolean }[]>(`select status, error, "finishedAt" is not null fin from cfo_run where id = '${s1}'`))[0];
+    assert.deepEqual([swept.status, swept.error, swept.fin], ["failed", "killed_timeout", true]);
+    assert.equal(await cfoStore.sweepStuck!(new Date(t0.getTime() + 30 * 60000)), 0, "tamamlanmış/başarısız satıra dokunulmaz");
     const snaps = await client.$queryRawUnsafe<{ n: number }[]>(`select count(*)::int n from cfo_run where snapshot is not null`);
     assert.equal(snaps[0].n, 1, "snapshot yalnız bir kez");
     const center = await loadCfoControlCenter();
@@ -101,10 +108,34 @@ async function main() {
     assert.equal(Number(rows[5].tl_etkisi), 59693.13); assert.equal(rows[5].metin, "59693.13 TRY");
     assert.equal(rows[6].tl_etkisi, null); assert.equal(rows[6].metin, "yok state (TAHMİNİ)");
     assert.ok(!rows.some(r => r.metin.includes("eski LLM")), "LLM dönemi monitor koşuları görünmez");
+    assert.equal(rows[0].aciliyet, null, "önceki tanım: SAĞLIK satırı aciliyetsiz (09.10 ölü koşu yalnız metinde)");
+    // SAĞLIK alarmı (20261009150000, Cowork 09.10 bulgusu; üretimde bekletiliyor → baseline.json notAppliedInProduction)
+    const ALARM = "20261009150000_cfo_gun_ozeti_saglik_alarm";
+    assert.ok(res.pendingNotInProduction.includes(ALARM));
+    await apply([ALARM, ALARM]); // idempotent
+    const saglik = async () => (await pg.query<{ aciliyet: string | null; metin: string }>(`select aciliyet, metin from cfo_gun_ozeti where tur = 'SAGLIK'`)).rows[0];
+    // son motor koşusu = tamamlanmış id2 (6 saat önce); diğer motor satırları daha eski
+    await pg.exec(`update cfo_run set "generatedAt" = (now() at time zone 'UTC') - interval '7 hours', "finishedAt" = (now() at time zone 'UTC') - interval '7 hours' where "idempotencyKey" like 'engine:%';
+      update cfo_run set "generatedAt" = (now() at time zone 'UTC') - interval '6 hours', "finishedAt" = (now() at time zone 'UTC') - interval '6 hours' where id = '${id2}'`);
+    const ok = await saglik();
+    assert.deepEqual([ok.aciliyet, /^Son koşu/.test(ok.metin)], [null, true], "taze tamamlanmış son koşu → alarm yok, metin aynı");
+    await pg.exec(`insert into cfo_run (id,type,status,"periodKey","idempotencyKey","triggerReasons","schemaVersion","calculationVersion","generatedAt")
+      values ('stuck','monitor','running','2026-10-09T05:sync_xml','engine:2026-10-09T05:sync_xml','{}','2','v', (now() at time zone 'UTC') - interval '5 minutes')`);
+    assert.equal((await saglik()).aciliyet, null, "5 dk'lık running henüz alarm değil");
+    await pg.exec(`update cfo_run set "generatedAt" = (now() at time zone 'UTC') - interval '4 hours' where id = 'stuck'`);
+    const st = await saglik();
+    assert.equal(st.aciliyet, "ACİL"); assert.match(st.metin, /^MOTOR TAKILDI: .*Son koşu .*running/);
+    await pg.exec(`update cfo_run set status = 'failed', error = 'killed_timeout' where id = 'stuck'`);
+    const fl = await saglik();
+    assert.equal(fl.aciliyet, "ACİL"); assert.match(fl.metin, /^MOTOR BAŞARISIZ: .*killed_timeout/);
+    await pg.exec(`delete from cfo_run where id = 'stuck'; update cfo_run set "generatedAt" = "generatedAt" - interval '1 day', "finishedAt" = "finishedAt" - interval '1 day' where "idempotencyKey" like 'engine:%'`);
+    const by = await saglik();
+    assert.equal(by.aciliyet, "ACİL"); assert.match(by.metin, /^MOTOR BAYAT: /);
+    assert.deepEqual((await pg.query<{ tur: string }>(`select tur from cfo_gun_ozeti`)).rows.map(r => r.tur), ["SAGLIK", "ALARM", "BULGU", "KAPANAN", "SUSAN", "METRIK", "METRIK"], "diğer satırlar aynı");
     // anon/authenticated/PUBLIC görünümü okuyamaz
     const acl = (await pg.query<{ g: string }>(`select grantee g from information_schema.role_table_grants where table_name='cfo_gun_ozeti' and grantee in ('anon','authenticated','PUBLIC')`)).rows;
     assert.deepEqual(acl, []);
-    console.log("CFO engine store: engine key prefix, record/finish, previous() hash + evaluations, snapshot dedupe, control center, cfo_gun_ozeti rows + ACL passed (production reproduction)");
+    console.log("CFO engine store: engine key prefix, record/finish, previous() hash + evaluations, snapshot dedupe, control center, cfo_gun_ozeti rows + SAĞLIK alarm (takıldı/başarısız/bayat) + ACL passed (production reproduction)");
   } finally {
     await client.$disconnect().catch(() => undefined);
     await server.stop().catch(() => undefined);
