@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
   calculateImportDecision,
@@ -22,7 +22,7 @@ export async function createImportDecisionSnapshotAction(
   notes?: string,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) {
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.PROCUREMENT_RECOMMEND))) {
     return { ok: false, message: "Bu işlem için yetkiniz yok." };
   }
 

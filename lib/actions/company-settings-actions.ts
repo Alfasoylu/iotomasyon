@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/types/actions";
@@ -41,7 +41,7 @@ export async function updateCompanySettingsAction(
   values: CompanySettingsInput,
 ): Promise<ActionResult<keyof CompanySettingsInput>> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.PROFITABILITY_CONFIGURE))) return PERM_DENIED;
 
   const parsed = companySettingsSchema.safeParse(values);
   if (!parsed.success) {

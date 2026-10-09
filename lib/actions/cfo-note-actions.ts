@@ -43,6 +43,11 @@ export type NoteInput = {
 };
 
 /** Yeni kalıcı bilgi ekler. */
+/** "cfo-" ile başlayan kaynaklar SİSTEMİNDİR (cfo-workflow-v1 iş kalemleri, cfo-workflow-journal, cfo-health-notify …): motor ve
+ *  ithalat planlayıcı bu notları iş kaydı olarak okur. Kullanıcı bu kaynağı veremez / sistem notunun kaynağını değiştiremez (RF-012). */
+const RESERVED_SOURCE = /^\s*cfo-/i;
+const isReservedNoteSource = (s: string | null | undefined) => s != null && RESERVED_SOURCE.test(s);
+
 export async function createNoteAction(input: NoteInput): Promise<ActionResult> {
   const user = await guardWrite();
   if (!user) return { ok: false, message: "Bu işlem için yetkiniz yok." };
@@ -51,6 +56,8 @@ export async function createNoteAction(input: NoteInput): Promise<ActionResult> 
   const body = input.body.trim();
   if (title.length < 3) return { ok: false, message: "Başlık çok kısa." };
   if (body.length < 3) return { ok: false, message: "Not içeriği boş olamaz." };
+
+  if (isReservedNoteSource(input.source)) return { ok: false, message: "\"cfo-\" ile başlayan kaynak sisteme ayrılmıştır." };
 
   const note = await prisma.cfoNote.create({
     data: {
@@ -87,6 +94,9 @@ export async function updateNoteAction(id: string, input: Partial<NoteInput>): P
 
   const existing = await prisma.cfoNote.findUnique({ where: { id } });
   if (!existing) return { ok: false, message: "Not bulunamadı." };
+
+  if (input.source !== undefined && (isReservedNoteSource(input.source) || (isReservedNoteSource(existing.source) && input.source !== existing.source)))
+    return { ok: false, message: "Sistem notunun kaynağı değiştirilemez; \"cfo-\" ile başlayan kaynak sisteme ayrılmıştır." };
 
   const nextBody = input.body?.trim() ?? existing.body;
   const nextTitle = input.title?.trim() ?? existing.title;

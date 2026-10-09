@@ -16,7 +16,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { importTrendyolFinanceFile, type ImportOutcome } from "@/lib/trendyol-finance/import";
 import { userFacingMessage } from "@/lib/safe-error-message";
@@ -31,7 +31,7 @@ const MAX_FILES = 40;
 
 export async function POST(req: NextRequest) {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) {
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.CFO_WRITE))) {
     return NextResponse.json({ error: "Bu işlem için yetkiniz yok." }, { status: 403 });
   }
 

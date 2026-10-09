@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { testHepsiburadaConnection } from "@/lib/hepsiburada-api";
 import type { ActionResult } from "@/types/actions";
@@ -23,7 +23,7 @@ export async function saveHepsiburadaConfigAction(
   values: HepsiburadaConfigValues,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.MARKETPLACE_POLICIES_MANAGE))) return PERM_DENIED;
 
   const parsed = configSchema.safeParse(values);
   if (!parsed.success) return { ok: false, message: "Form alanlarını kontrol edin." };

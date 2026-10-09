@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { ActionResult } from "@/types/actions";
 
@@ -13,7 +13,7 @@ export async function saveCapitalConfigAction(
   desiredTurnoverMonths: string,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.CFO_WRITE))) return PERM_DENIED;
 
   const total = parseFloat(totalCapitalTry);
   const reserve = parseFloat(reservePct);

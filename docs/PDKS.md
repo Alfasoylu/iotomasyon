@@ -338,6 +338,8 @@ Müşterinin (tenant) ürünü kendi başına alıp kurabildiği akış. Hedef d
 
 ## Yapılanlar (delta günlüğü)
 
+- **2026-10-09 — CFO-016 kısım 1 (RF-012 güvenlik):** keşif: 17 yazma yolu yalnız okuma izniyle (EXECUTIVE_READ / CAMPAIGNS_READ) korunuyordu, `openQuestionCount` oturumsuz, `cfoNote.source` kullanıcıdan ("cfo-workflow-v1" verilerek motora sahte iş kalemi yazılabilirdi). Düzeltme: `lib/auth.ts` `checkAllPermissions` — okuma + uygun yazma izni birlikte; sales/returns senkronu ve toplu içe aktarma redirect yerine sonuç/403 döner; sistem kaynakları ("cfo-") kullanıcıya kapalı. Üretim (salt-okuma): ADMIN dışı kimsede `executive.read`/`campaigns.read` yok → kimse kilitlenmez. Test `rbac-write-paths` (CI).
+
 - **2026-10-09 — RF-019 / CFO-020 kısım 1 — tek taban:** `floor_breach` alarmı ve motor bulguları `AI_CFO_CASH_FLOOR_TRY` (env, −3.000.000) yerine `cfo_settings.netPositionFloorTry` okur (`lib/cfo-agent/cash-floor.ts`; Goal Engine/iş planı/ayarlar ile aynı; env yalnız yedek) — ayarlardan taban değişince alarm artık izler. 100.000 USD hedef yedeği `revenue-levers-data` ve `/cfo/kazananlar` ithalat kartından kalktı (hedef yoksa BİLİNMİYOR). CFO-006 SQL ölçümü: 15 hesapta 4 kural aynı sonuç, NULL türlü hesap yok (DDL onay bekler). Test `ai-cfo-health` (`pickCashFloor`).
 
 - **2026-10-09 — CFO-021 ✅ (CI + eski UI metinleri):** `.github/workflows/cfo-readonly-validation.yml` çok dosyalı `node` satırı (yalnız ilki koşuyordu) düzeltildi, `check:alfashome` CI'a eklendi; `/cfo/alacaklar` tahmin açıklaması kanal temposu; `/cfo/ayarlar` küresel KMH oranı "kullanılmıyor". RF-021/RF-022 RESOLVED.

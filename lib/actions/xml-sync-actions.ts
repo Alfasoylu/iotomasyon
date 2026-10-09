@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, checkPermission } from "@/lib/auth";
+import { requireUser, checkAllPermissions } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { runSync } from "@/lib/xml-sync-runner";
 import type { ActionResult } from "@/types/actions";
@@ -21,7 +21,7 @@ export async function saveXmlSourceAction(
   authHeader: string,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.XML_CONFIGURE))) return PERM_DENIED;
 
   name = name.trim();
   url = url.trim();
@@ -66,7 +66,7 @@ export async function saveXmlSourceAction(
 
 export async function deleteXmlSourceAction(sourceId: string): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.XML_CONFIGURE))) return PERM_DENIED;
 
   try {
     await prisma.xmlSyncSource.delete({ where: { id: sourceId } });
@@ -81,7 +81,7 @@ export async function deleteXmlSourceAction(sourceId: string): Promise<ActionRes
 
 export async function triggerXmlSyncAction(sourceId: string): Promise<ActionResult> {
   const user = await requireUser();
-  if (!(await checkPermission(user, PERMISSIONS.EXECUTIVE_READ))) return PERM_DENIED;
+  if (!(await checkAllPermissions(user, PERMISSIONS.EXECUTIVE_READ, PERMISSIONS.XML_SYNC))) return PERM_DENIED;
 
   const source = await prisma.xmlSyncSource.findUnique({ where: { id: sourceId } });
   if (!source) return { ok: false, message: "Kaynak bulunamadı." };
