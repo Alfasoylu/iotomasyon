@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Depo, üretimdeki migration'larla senkron (2026-10-09)
+
+- `baseline.json`: 150000–210000 artık üretimde sayılıyor; bekletilen yalnız `market_scout_foundation` ve `drop_legacy_backup_tables`.
+- Üretim parmak izleri (genel + Step 1) salt-okunur SELECT ile yeniden ölçüldü; temiz bootstrap üretimle birebir.
+- Net sermaye, borç, Goal Engine, AI CFO ve GTİP testleri üretim durumuna göre güncellendi (borç hedefi `debt_below_usd`, kart çarpanı 1,20); yerel CI yeşil.
+
 ### GTİP, gümrük oranları, KDV hariç stok değeri ve Alfashome cirosu üretimde (2026-10-09)
 - Maliyetli 433 ürünün tamamının GTİP'i 2026 tarifesine göre 12 haneli doğru koda çekildi (her değişiklik eski/yeni değeriyle değişiklik günlüğünde); el telsizleri 8517.69.90.90.24.
 - GTİP bazında yasal gümrük yükü tablosu (97 kod: gümrük vergisi, ilave gümrük vergisi, KDV, ÖTV) ve ürün bazında yasal yük görünümü; kayıtlı gümrük oranı yasal yükün belirgin altındaki stoklu ürünler alarm üretir (bugün 3 ürün, ≈5.870 TL).

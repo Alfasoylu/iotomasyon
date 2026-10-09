@@ -18,7 +18,7 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: (s: string) => db.exec(s), query: <T,>(s: string, p?: unknown[]) => db.query<T>(s, p) });
     for (const m of res.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
-    assert.ok(res.pendingNotInProduction.includes(MIG), "üretimde bekletiliyor (Cowork uygulayacak)");
+    assert.ok(res.pendingInProduction.includes(MIG), "üretimde uygulandı (2026-10-09); test yeniden uygular (idempotent)");
     const sql = readFileSync(`prisma/migrations/${MIG}/migration.sql`, "utf8");
     await db.exec(sql); await db.exec(sql);
     const q = async <T,>(s: string) => (await db.query<T>(s)).rows;

@@ -165,10 +165,10 @@ async function main() {
       `select karar, yeni_odeme::text, kazanc::text, aylik_faiz::text, gerekce from cfo_kart_karari() where karar = 'ASGARIYE CEK'`)).rows;
     assert.equal(kart.length, 1, "taban deliniyor → kart asgariye çekilir");
     assert.deepEqual([Number(kart[0].yeni_odeme), Number(kart[0].kazanc)], [20000, 80000]);
-    assert.equal(Number(kart[0].aylik_faiz), Math.round(80000 * 0.0425 * 1.3 * 100) / 100, "kart akdi × 1,30 — KMH %4,5 değil");
-    // Çarpan 1,20 (KKDF %15 + BSMV %5; karar 2026-10-09, migration 20261009160000 — üretimde bekletiliyor)
+    // Çarpan 1,20 (KKDF %15 + BSMV %5; karar 2026-10-09, migration 20261009160000 — üretimde uygulandı; yeniden uygulama idempotent)
+    assert.equal(Number(kart[0].aylik_faiz), Math.round(80000 * 0.0425 * 1.2 * 100) / 100, "kart akdi × 1,20 — KMH %4,5 değil");
     const BSMV = "20261009160000_cfo_kart_karari_bsmv";
-    assert.ok(res.pendingNotInProduction.includes(BSMV));
+    assert.ok(res.pendingInProduction.includes(BSMV));
     await pg.exec(readFileSync(`prisma/migrations/${BSMV}/migration.sql`, "utf8"));
     const kart12 = (await pg.query<{ aylik_faiz: string; gerekce: string }>(`select aylik_faiz::text, gerekce from cfo_kart_karari() where karar = 'ASGARIYE CEK'`)).rows[0];
     assert.equal(Number(kart12.aylik_faiz), Math.round(80000 * 0.0425 * 1.2 * 100) / 100, "kart akdi × 1,20");

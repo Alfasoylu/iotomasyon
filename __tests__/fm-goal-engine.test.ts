@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite/vector";
 import { bootstrap } from "../scripts/schema-baseline/bootstrap";
-import { NEW_ORDER_DEBT_LIMIT_TRY } from "../lib/cfo-agent/debt-policy";
 
 // Goal Engine v1 (20261006130000_fm_goal_engine) on the clean-DB reproduction of production (baseline + newer migrations).
 // Synthetic data only. Unknown stays UNKNOWN (never 0), grades are the worst input, observations are idempotent and versioned.
@@ -58,12 +57,13 @@ async function main() {
     assert.ok(rev.flags.includes("goal_fx_prior_month"));
     assert.equal(rev.period_start, "2026-10-01");
 
-    const debt = g.debt_below_5m_try;
+    const debt = g.debt_below_usd; // CFO-002 (20261009180000): 5M TL hedefi emekli → cfo_settings."debtTargetUsd" (varsayılan 100k) × TCMB
     assert.equal(debt.state, "NOT_MET");
-    assert.equal(n(debt.target_value_try), NEW_ORDER_DEBT_LIMIT_TRY, "SQL threshold must equal the order-gate constant");
+    assert.equal(n(debt.target_value_try), 4200000, "debtTargetUsd × TCMB (order gate uses the same setting and rate)");
+    assert.equal((await q<{ c: number }>(`select count(*)::int c from fm_goal where goal_key = 'debt_below_5m_try' and valid_to is null`))[0].c, 0, "old 5M TL goal stays retired");
     assert.equal(n(debt.current_rate_try_per_day), -20000);
     assert.ok(debt.flags.includes("goal_trend_decreasing"));
-    // 8.82M → 5M at 20k/day = 191 days, beyond 4 × 19-day trend span → no date is invented
+    // 8.82M → 4.2M at 20k/day = 231 days, beyond 4 × 19-day trend span → no date is invented
     assert.equal(debt.projected_on, null);
     assert.ok(debt.flags.includes("goal_projection_horizon_exceeded"));
     assert.equal(debt.grade, "C");
@@ -98,8 +98,8 @@ async function main() {
     // stale balances (last 10-10, as_of 10-15 → >3 days) → UNKNOWN
     await evaluate("2026-10-15");
     g = await goals();
-    assert.equal(g.debt_below_5m_try.state, "UNKNOWN");
-    assert.ok(g.debt_below_5m_try.flags.includes("goal_balance_stale"));
+    assert.equal(g.debt_below_usd.state, "UNKNOWN");
+    assert.ok(g.debt_below_usd.flags.includes("goal_balance_stale"));
 
     // ---- D: first day of month → previous month's final result
     await db.exec(`insert into fm_ingest_run (kind, status, finished_at, lineage) values ('sales_refresh', 'succeeded', '2026-10-01 01:00:00+00', '{}');`);
@@ -133,11 +133,11 @@ async function main() {
 
     // ---- F2: a threshold date inside the trend horizon is projected
     await db.exec(`insert into fm_balance_day (economic_date, metric_key, definition_version, value_try, source, known_at)
-      select d, 'debt_try', 2, 5600000 - 20000 * (d - '2026-11-20'::date), 'cfo_snapshot', d from generate_series('2026-11-20'::date, '2026-12-19'::date, '1 day') g(t), lateral (select t::date d) x;`);
+      select d, 'debt_try', 2, 4800000 - 20000 * (d - '2026-11-20'::date), 'cfo_snapshot', d from generate_series('2026-11-20'::date, '2026-12-19'::date, '1 day') g(t), lateral (select t::date d) x;`);
     await evaluate("2026-12-20");
-    const near = (await q<Goal>(`select goal_key, goal_version, state, grade, flags, observed_value_try, target_value_try, progress_pct, gap_try, current_rate_try_per_day, required_rate_try_per_day, projected_value_try, projected_on::text projected_on, period_start::text period_start, inputs from fm_goal_observation where goal_key='debt_below_5m_try' and as_of='2026-12-20'`))[0];
+    const near = (await q<Goal>(`select goal_key, goal_version, state, grade, flags, observed_value_try, target_value_try, progress_pct, gap_try, current_rate_try_per_day, required_rate_try_per_day, projected_value_try, projected_on::text projected_on, period_start::text period_start, inputs from fm_goal_observation where goal_key='debt_below_usd' and as_of='2026-12-20'`))[0];
     assert.equal(near.state, "NOT_MET");
-    assert.equal(near.projected_on, "2026-12-20"); // 5.02M at 12-19, −20k/day → 1 day
+    assert.equal(near.projected_on, "2026-12-20"); // 4.22M at 12-19, −20k/day → 4.2M in 1 day
     assert.ok(!near.flags.includes("goal_projection_horizon_exceeded"));
 
     // ---- G: daily memory refresh (empty raw sources → 0 rows, still succeeds); second call inside the interval is skipped

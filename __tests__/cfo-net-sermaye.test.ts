@@ -19,7 +19,9 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: (s: string) => db.exec(s), query: <T,>(s: string, p?: unknown[]) => db.query<T>(s, p) });
     for (const m of res.pendingInProduction) await db.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
-    assert.ok(res.pendingNotInProduction.includes(MIG), "üretimde bekletiliyor (Cowork uygulayacak)");
+    // Üretim 170000 → 180000 → 190000'ı uyguladı (2026-10-09); kopya da onları içerir. Adımları ayrı doğrulamak için test 170000'ı ve
+    // sonra 190000'ı sırayla yeniden uygular (hepsi CREATE OR REPLACE / IF NOT EXISTS, idempotent).
+    assert.ok(res.pendingInProduction.includes(MIG), "üretimde uygulandı");
     await db.exec("set search_path = public");
     const q = async <T,>(s: string) => (await db.query<T>(s)).rows;
 
@@ -54,8 +56,10 @@ async function main() {
       insert into fm_fx_monthly (month, usd_try_forex_buying, ref_date, bulletin_no, is_fallback_day, source_url, fetched_at)
         values (date_trunc('month', current_date)::date, 48.5, current_date, 'x', false, 'synthetic', now());`);
 
-    // Migration öncesi (üretim bugün): v2 DAR snapshot'ları → Goal v2 ile ölçer
-    for (const d of [20, 15, 10, 5]) await db.exec(`select cfo_take_snapshot('v2-${d}'); update cfo_snapshot set "takenAt" = now() - interval '${d} days' where note = 'v2-${d}'`);
+    // Migration öncesi snapshot'lar (üretim geçmişi): yalnız v2 DAR alanları dolu, sözleşme alanları yok → Goal v2 ile ölçer
+    for (const d of [20, 15, 10, 5]) await db.exec(`select cfo_take_snapshot('v2-${d}'); update cfo_snapshot set "takenAt" = now() - interval '${d} days',
+      "contractNetWorthTry" = null, "contractDebtTry" = null where note = 'v2-${d}'`);
+    await db.exec(`delete from fm_balance_day`);
     const mig = readFileSync(`prisma/migrations/${MIG}/migration.sql`, "utf8");
     await db.exec(mig);
     await db.exec(mig); // idempotent
@@ -87,7 +91,7 @@ async function main() {
 
     // D-P06 (migration 20261009190000): maliyet KDV dahil kayıtlı → KDV hariç NRV ile karşılaştırmak için maliyet / 1,2
     const MIG2 = "20261009190000_cfo_net_sermaye_maliyet_kdv_haric";
-    assert.ok(res.pendingNotInProduction.includes(MIG2));
+    assert.ok(res.pendingInProduction.includes(MIG2));
     const mig2 = readFileSync(`prisma/migrations/${MIG2}/migration.sql`, "utf8");
     await db.exec(mig2); await db.exec(mig2);
     const rows2 = await q<Row>(`select * from cfo_metrik_net_sermaye()`);
