@@ -98,7 +98,7 @@ Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 - **recommended_fix:** CFO-006.
 
 ### RF-20261008-011 — Net sermaye atfı kimliği bozuk (iki snapshot yazarı)
-- **severity:** MEDIUM · **status:** OPEN · **commit:** 422a6db
+- **severity:** MEDIUM · **status:** IN_PROGRESS (2026-10-09: kod + migration 230000 hazır, üretim onayı bekliyor; o zamana kadar atıf açıklanamayan farkı gösterir) · **commit:** 422a6db
 - **finding:** `fm_balance_day` bileşenleri (nakit + alacak + stok − borç) `net_capital_try`'yi vermiyor; TS ve SQL snapshot yazarları stok/borç ve kuru farklı tanımlıyor. `goal-attribution.ts` öncülü yanlış.
 - **evidence:** 07.10: 59.693 + 1.042.702 + 14.556.343 − 9.283.200 = 6.375.538 ≠ 2.617.204.
 - **economic_risk:** "Net sermaye neden düştü" cevabı yanlış bileşene atfedilir.

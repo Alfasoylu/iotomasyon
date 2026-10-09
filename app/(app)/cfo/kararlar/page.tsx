@@ -52,13 +52,14 @@ export default async function CfoDecisionsPage() {
           <p className="mb-3 text-xs text-[var(--text-muted)]">
             Stok değeri satış fiyatından yeniden hesaplandığı için adet değişmeden oynar. Değişim; nakit, alacak, borç, stok MİKTARI
             (Δadet × bugünkü birim değer) ve stok DEĞERLEMESİ olarak bölünür. Hedefe ilerleme yalnız operasyonel kısımla ölçülür.
+            {" "}Tanım: {ga.definitionVersion === 3 ? "v3 sözleşme (nakit + alacak + LCNRV stok + yoldaki − borç = net sermaye)" : "v2 eski snapshot alanları (yoldaki mal stoğun içinde, net sermayede yok → açıklanamayan fark)"}.
           </p>
           <CfoTable head={<tr><Th>Pencere</Th><Th right>Bildirilen değişim</Th><Th right>Nakit</Th><Th right>Alacak</Th><Th right>Borç azalışı</Th>
             <Th right>Stok miktarı</Th><Th right>Stok değerleme</Th><Th right>Operasyonel/gün</Th><Th>Hedefe göre</Th></tr>}>
             {ga.windows.map(w => (
               <tr key={w.window}>
                 <Td strong>{w.attribution.from} → {w.attribution.to} ({w.attribution.days} gün)</Td>
-                <Td right>{tl(w.attribution.netChange)}</Td><Td right>{tl(w.attribution.cash)}</Td><Td right>{tl(w.attribution.receivables)}</Td>
+                <Td right>{tl(w.attribution.netChange)}{!w.attribution.identityOk && <span className="block text-[11px] text-[var(--danger)]">açıklanamayan {tl(w.attribution.unexplained)}</span>}</Td><Td right>{tl(w.attribution.cash)}</Td><Td right>{tl(w.attribution.receivables)}</Td>
                 <Td right>{tl(w.attribution.debt)}</Td><Td right>{tl(w.attribution.inventoryQuantity)}</Td>
                 <Td right>{tl(w.attribution.inventoryValuation)}<span className="block text-[11px] text-[var(--text-muted)]">değişimin %{Math.round(w.attribution.valuationShare * 100)}&apos;i</span></Td>
                 <Td right strong>{tl(w.pace.operationalPerDay)}</Td>

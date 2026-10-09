@@ -127,6 +127,23 @@ async function main() {
     const hs = await q<{ c: string | null; nw: string }>(`select "contractNetWorthTry"::text c, "netWorthTry"::text nw from cfo_snapshot where note = 'hata'`);
     assert.deepEqual([hs.length, hs[0].c, n(hs[0].nw)], [1, null, dar], "sözleşme hatası: snapshot yazılır, sözleşme NULL (sahte sayı yok)");
 
+    // 5) CFO-017 (migration 20261009230000, üretimde bekletiliyor): sözleşmenin varlık bileşenleri snapshot'a ve fm_balance_day v3'e;
+    //    kimlik: v3 nakit + alacak + stok + yoldaki − v3 borç = v3 net sermaye
+    const BIL = "20261009230000_cfo_snapshot_bilesen";
+    assert.ok(res.pendingNotInProduction.includes(BIL));
+    const bil = readFileSync(`prisma/migrations/${BIL}/migration.sql`, "utf8");
+    await db.exec(readFileSync("prisma/migrations/20261009180000_cfo_metrik_borc/migration.sql", "utf8")); // borç sözleşmesi (230000 onu da yazar)
+    await db.exec(bil); await db.exec(bil);
+    await db.exec(`delete from cfo_snapshot where note = 'bilesen'; select cfo_take_snapshot('bilesen'); select fm_balance_refresh('2020-01-01')`);
+    const sb = (await q<Record<string, string | null>>(`select "contractCashTry"::text c, "contractReceivablesTry"::text r, "contractStockTry"::text s,
+      "contractInTransitTry"::text y, "contractDebtTry"::text d, "contractNetWorthTry"::text n from cfo_snapshot where note = 'bilesen'`))[0];
+    assert.deepEqual([sb.c, sb.r, sb.s, sb.y].map(n), [150000, 60000, 1066.67, 1000000], "snapshot sözleşme bileşenleri (nakit, alacak, LCNRV stok, yoldaki)");
+    assert.equal(Math.round((n(sb.c)! + n(sb.r)! + n(sb.s)! + n(sb.y)! - n(sb.d)!) * 100) / 100, n(sb.n), "kimlik: bileşenler − borç = net sermaye");
+    const v3c = Object.fromEntries((await q<{ k: string; v: string }>(`select metric_key k, value_try::text v from fm_balance_day
+      where definition_version = 3 and economic_date = current_date`)).map(r => [r.k, n(r.v)]));
+    assert.equal(Math.round((v3c.cash_try! + v3c.receivables_try! + v3c.inventory_value_try! + v3c.in_transit_try! - v3c.debt_try!) * 100) / 100,
+      v3c.net_capital_try, "fm_balance_day v3: bileşenler net sermayeyi verir");
+
     // 4) Yetki: anon/authenticated çalıştıramaz
     const ex = (await q<{ a: boolean; u: boolean }>(`select has_function_privilege('anon','public.cfo_metrik_net_sermaye()','execute') a,
       has_function_privilege('authenticated','public.cfo_metrik_net_sermaye()','execute') u`))[0];

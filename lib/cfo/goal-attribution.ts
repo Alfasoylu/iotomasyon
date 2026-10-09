@@ -5,11 +5,14 @@
 //   nakit, alacak, borç (ters işaret), stok MİKTAR etkisi (Δadet × bugünkü birim değer), stok DEĞERLEME etkisi (kalan)
 // ve operasyonel (değerleme hariç) günlük hızı hedefin gerektirdiği hızla karşılaştırır.
 
-export type BalanceRow = { date: string; cash: number; receivables: number; inventory: number; debt: number; net: number };
+/** inTransit: yoldaki ödenmiş mal (yalnız v3 sözleşme bileşenlerinde ayrı; v2'de stoğun içinde → 0). */
+export type BalanceRow = { date: string; cash: number; receivables: number; inventory: number; debt: number; net: number; inTransit?: number };
 export type Attribution = {
   from: string; to: string; days: number;
-  netChange: number; cash: number; receivables: number; debt: number;
+  netChange: number; cash: number; receivables: number; debt: number; inTransit: number;
   inventoryQuantity: number; inventoryValuation: number;
+  /** kimlik farkı: net değişim − bileşen değişimleri toplamı (CFO-017). |fark| > 1 TL ise bileşenler net sermayeyi açıklamıyor (tanım farkı) */
+  unexplained: number; identityOk: boolean;
   /** değerleme hariç değişim (nakit + alacak − borç değişimi + stok miktar etkisi) */
   operational: number;
   operationalPerDay: number; reportedPerDay: number;
@@ -20,12 +23,14 @@ export type Attribution = {
 export function attribute(first: BalanceRow, last: BalanceRow, inventoryQuantityEffect: number): Attribution {
   const days = Math.max(1, Math.round((Date.parse(last.date) - Date.parse(first.date)) / 86400000));
   const cash = last.cash - first.cash, receivables = last.receivables - first.receivables, debt = -(last.debt - first.debt);
-  const inv = last.inventory - first.inventory;
+  const inv = last.inventory - first.inventory, inTransit = (last.inTransit ?? 0) - (first.inTransit ?? 0);
   const valuation = inv - inventoryQuantityEffect;
-  const operational = cash + receivables + debt + inventoryQuantityEffect;
+  const operational = cash + receivables + debt + inTransit + inventoryQuantityEffect;
   const netChange = last.net - first.net;
+  const unexplained = Math.round((netChange - (cash + receivables + debt + inv + inTransit)) * 100) / 100;
   const denom = Math.abs(operational) + Math.abs(valuation);
-  return { from: first.date, to: last.date, days, netChange, cash, receivables, debt, inventoryQuantity: inventoryQuantityEffect, inventoryValuation: valuation,
+  return { from: first.date, to: last.date, days, netChange, cash, receivables, debt, inTransit, unexplained, identityOk: Math.abs(unexplained) <= 1,
+    inventoryQuantity: inventoryQuantityEffect, inventoryValuation: valuation,
     operational, operationalPerDay: operational / days, reportedPerDay: netChange / days, valuationShare: denom > 0 ? Math.abs(valuation) / denom : 0 };
 }
 
