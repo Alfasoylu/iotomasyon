@@ -6,7 +6,8 @@
 //   İTHAL   RMB > 0 ve ağırlık > 0 (ve IC_PIYASA değil): gümrük % = GTİP tarifesi (en uzun önek), tarife yoksa kayıtlı %;
 //           ikisi de yoksa ürün ATLANIR (varsayılan %30 maliyete yazılmaz — CFO-003: sabit yedek bilinmeyeni gizlemez).
 //   YURTİÇİ shippingMethodPref = IC_PIYASA ve unitCostUsd > 0 (İstoç vb. "USD + KDV" × 1,2): yalnız TL = USD × kur.
-//   Kur kaynağı "varsayılan" ise HİÇBİR ŞEY yazılmaz (kur_bilinmiyor).
+//   RMB/USD tek kaynak lib/fx/current.ts (elle girilen aylık kur, sabit yedek yok); RMB bilinmiyor ya da USD/TRY "varsayılan" ise
+//   HİÇBİR ŞEY yazılmaz (kur_bilinmiyor). İthalatçı görünümü ve sermaye sağlığı aynı kuru kullanır.
 // Yuvarlama 2026-10-10 tek seferlik türetmeyle aynı: USD 4 hane, TL = round(toplam USD × kur, 2), gümrük % 1 hane.
 import { calcImportCost, DROPSHIP_STOCK_THRESHOLD } from "../importer-cost";
 
@@ -27,7 +28,7 @@ export type CostRow = {
   tariffBurdenPct: number | null;
   stock: number;
 };
-export type CostFx = { usdTry: number; rmbPerUsd: number; usdTrySource: string; rmbSource: string };
+export type CostFx = { usdTry: number; rmbPerUsd: number | null; usdTrySource: string; rmbSource: string };
 export type CostField = "customsRatePct" | "unitCostUsd" | "unitCostTry";
 export type CostUpdate = {
   sku: string; kind: "ITHAL" | "YURTICI"; method: "SEA" | "AIR" | null;
@@ -48,7 +49,8 @@ const valuedStock = (s: number) => (s > 0 && s < DROPSHIP_STOCK_THRESHOLD ? s : 
 
 export function deriveUnitCosts(rows: CostRow[], fx: CostFx): CostDerivation {
   const out: CostDerivation = { status: "ok", fx, updates: [], skipped: [], unchanged: 0, deltaStockTry: 0, bigMovers: [] };
-  if (fx.usdTrySource === "varsayılan" || fx.rmbSource === "varsayılan" || !(fx.usdTry > 0) || !(fx.rmbPerUsd > 0)) return { ...out, status: "kur_bilinmiyor" };
+  // RMB/USD tek kaynak (lib/fx/current.ts: elle girilen aylık kur); bilinmiyorsa (null) ya da USD/TRY varsayılandaysa hiçbir şey yazılmaz
+  if (fx.usdTrySource === "varsayılan" || fx.rmbPerUsd == null || !(fx.rmbPerUsd > 0) || !(fx.usdTry > 0)) return { ...out, status: "kur_bilinmiyor" };
   for (const p of rows) {
     const old = { customsRatePct: p.customsRatePct, unitCostUsd: p.unitCostUsd, unitCostTry: p.unitCostTry };
     const next: Record<CostField, string | null> = { ...old };

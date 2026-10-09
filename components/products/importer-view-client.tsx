@@ -126,7 +126,7 @@ function profitColor(p: number | null): string {
 function recalcProduct(
   p: ImporterProduct,
   patch: Partial<Pick<ImporterProduct, "sourceCostRmb" | "weightKg" | "customsRatePct" | "importPaymentFeePct" | "shippingMethodPref" | "onlineSalesPotential">>,
-  rates: { rmbUsdRate: number; usdTryRate: number },
+  rates: { rmbUsdRate: number | null; usdTryRate: number },
 ): ImporterProduct {
   const m = { ...p, ...patch };
   const costResult = calcImportCost({
@@ -267,7 +267,7 @@ type FilterKey =
 
 export function ImporterViewClient() {
   const [products, setProducts] = useState<ImporterProduct[]>([]);
-  const [rates, setRates] = useState({ usdTryRate: 45, rmbUsdRate: 7.2 });
+  const [rates, setRates] = useState<{ usdTryRate: number; rmbUsdRate: number | null }>({ usdTryRate: 45, rmbUsdRate: null }); // RMB: tek kaynak, sabit yedek yok
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [params, setParams] = useState<BudgetParams>(DEFAULT_BUDGET_PARAMS);
@@ -342,7 +342,7 @@ export function ImporterViewClient() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((data: { products: ImporterProduct[]; usdTryRate: number; rmbUsdRate: number }) => {
+      .then((data: { products: ImporterProduct[]; usdTryRate: number; rmbUsdRate: number | null }) => {
         setProducts(data.products);
         setRates({ usdTryRate: data.usdTryRate, rmbUsdRate: data.rmbUsdRate });
         setLoading(false);

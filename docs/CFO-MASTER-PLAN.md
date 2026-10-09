@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 02:30 TR
+last_updated: 2026-10-10 03:00 TR
 current_main_commit: 6283500
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu, RMB/USD tek kaynak 6,7) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — CFO-029 otomatik maliyet türetme kodu + testi (ilk üretim koşusu 05:00 TR; kuru çalıştırma 143 ürün, stok maliyeti +15.417 TL KDV dahil); 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
+score_change: "unchanged — RMB/USD tek kaynağa bağlandı (MonthlyExchangeRate 6,7, sabit yedek yok) ve 335 Excel ürünü 6,8 → 6,7 düzeltildi (net sermaye +7.405,67 TL, ölçümle birebir); CFO-029 kodu test edildi, ilk koşu 05:00 TR. 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)

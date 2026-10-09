@@ -85,7 +85,7 @@ export async function safeDeriveUnitCosts(): Promise<CostRunResult | null> {
     const result = await runCostDerivation(prismaDb, await loadCurrentFx());
     if (result.status === "kur_bilinmiyor")
       await prisma.cfoChangeLog.create({ data: { area: "maliyet", item: "CFO-029 maliyet türetme atlandı", source: COST_DERIVATION_SOURCE, kind: "arastirma",
-        note: "Güncel kur varsayılan değerde (cfo_kur / MonthlyExchangeRate yok); birim maliyetler değiştirilmedi." } }).catch(() => undefined);
+        note: "RMB/USD kuru girilmemiş (MonthlyExchangeRate) ya da USD/TRY varsayılan değerde; birim maliyetler değiştirilmedi." } }).catch(() => undefined);
     return result;
   } catch (e) {
     await prisma.cfoChangeLog.create({ data: { area: "maliyet", item: "CFO-029 maliyet türetme hatası", source: COST_DERIVATION_SOURCE, kind: "arastirma",

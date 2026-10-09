@@ -18,15 +18,20 @@ assert.equal(resolveShipping("DENİZ", 0.1), "SEA");
 assert.equal(resolveShipping(" hava ", 50), "AIR");
 assert.equal(resolveShipping("IC_PIYASA", 6), "SEA", "tanınmayan tercih eski kurala düşer (≥5 kg deniz)");
 
-const fx: CostFx = { usdTry: 48.98, rmbPerUsd: 6.8, usdTrySource: "cfo_kur 2026-10", rmbSource: "elle 2026-06" };
+const fx: CostFx = { usdTry: 48.98, rmbPerUsd: 6.7, usdTrySource: "cfo_kur 2026-10", rmbSource: "elle 2026-10" };
 const row = (o: Partial<CostRow>): CostRow => ({ sku: "X", sourceCostRmb: 100, weightKg: 1, importPaymentFeePct: 5, shippingMethodPref: null,
   customsRatePct: null, unitCostUsd: null, unitCostTry: null, trendyolPriceTry: null, xmlTrendyolPriceUsd: null, tariffBurdenPct: 47.2, stock: 10, ...o });
 const engine = (rmb: number, kg: number, cus: number, pref: string | null, ty: number | null) =>
-  calcImportCost({ sourceCostRmb: rmb, weightKg: kg, customsRatePct: cus, importPaymentFeePct: 5, shippingMethodPref: pref, rmbUsdRate: 6.8, trendyolPriceTry: ty, usdTryRate: 48.98 })!;
+  calcImportCost({ sourceCostRmb: rmb, weightKg: kg, customsRatePct: cus, importPaymentFeePct: 5, shippingMethodPref: pref, rmbUsdRate: 6.7, trendyolPriceTry: ty, usdTryRate: 48.98 })!;
 
-// Kur varsayılandaysa hiçbir şey yazılmaz
+// RMB/USD tek kaynak: bilinmiyorsa (null) ya da USD/TRY varsayılandaysa hiçbir şey yazılmaz — sabit yedek (7,2) yok
 assert.equal(deriveUnitCosts([row({})], { ...fx, usdTrySource: "varsayılan" }).status, "kur_bilinmiyor");
-assert.equal(deriveUnitCosts([row({})], { ...fx, rmbSource: "varsayılan" }).updates.length, 0);
+const noRmb = deriveUnitCosts([row({})], { ...fx, rmbPerUsd: null, rmbSource: "bilinmiyor" });
+assert.deepEqual([noRmb.status, noRmb.updates.length], ["kur_bilinmiyor", 0]);
+assert.equal(calcImportCost({ sourceCostRmb: 100, weightKg: 1, customsRatePct: 20, importPaymentFeePct: 5, shippingMethodPref: null, rmbUsdRate: null }), null, "motor: RMB kuru yoksa maliyet null");
+assert.equal(calcImportCost({ sourceCostRmb: 100, weightKg: 1, customsRatePct: 20, importPaymentFeePct: 5, shippingMethodPref: null, rmbUsdRate: 0 }), null, "0 kur → null (7,2'ye düşmez)");
+// Alperen kuralı: RMB/USD 6,7 (maliyet Excel'i) — 6,8'e göre ürün bedeli 6,8/6,7 kat
+assert.ok(Math.abs(engine(100, 1, 20, "SEA", null).productUsd - (100 / 6.7) * 1.05) < 1e-9);
 
 // İthal: gümrük tarifeden (kayıtlıdan farklıysa yazılır), maliyet motordan; TL = round(toplam × kur, 2)
 const e1 = engine(275, 0.6, 47.2, null, 4255);
@@ -64,7 +69,7 @@ assert.deepEqual(d5.bigMovers.map(u => u.sku), ["BIG"]);
 assert.equal(d5.updates.find(u => u.sku === "DROP")!.deltaStockTry, 0);
 const log = derivationLog(d5);
 assert.equal(log.rows.length, 6, "her ürün için gümrük + USD + TL");
-assert.match(log.summary, /^2 ürün \(2 ithal, 0 yurt içi\), 6 alan; .*%25\+ değişen stoklu ürün 1; .*USD\/TRY 48\.98 \(cfo_kur 2026-10\)/);
+assert.match(log.summary, /^2 ürün \(2 ithal, 0 yurt içi\), 6 alan; .*%25\+ değişen stoklu ürün 1; .*USD\/TRY 48\.98 \(cfo_kur 2026-10\), RMB\/USD 6\.7 \(elle 2026-10\)/);
 
 async function main() {
   const pg = new PGlite({ extensions: { vector } });
@@ -121,6 +126,7 @@ async function main() {
     assert.deepEqual([r3.planned, r3.updated], [0, 0]);
     assert.equal((await q<{ n: number }>(`select count(*)::int n from cfo_change_log where source = '${COST_DERIVATION_SOURCE}' and kind = 'analiz'`))[0].n, 2, "değişiklik yoksa özet de yok");
     assert.deepEqual((await runCostDerivation(db, { ...fx, usdTrySource: "varsayılan" })).status, "kur_bilinmiyor");
+    assert.deepEqual((await runCostDerivation(db, { ...fx, rmbPerUsd: null, rmbSource: "bilinmiyor" })).status, "kur_bilinmiyor");
 
     // cost_jump: GRD 501 → ~178 TL (stok 2, %25+) — alarm ve en büyük etki
     const [j] = await q<{ big: number; delta: string; worst: string; day: string }>(costJumpSql());

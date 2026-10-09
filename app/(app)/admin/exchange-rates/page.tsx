@@ -54,7 +54,7 @@ export default async function ExchangeRatesPage() {
       <Card className="rounded-lg border-[var(--info-border)] bg-[var(--info-dim)] p-4 text-sm text-[var(--text-secondary)]">
         <p>
           <span className="font-semibold text-[var(--text-primary)]">Panelin şu an kullandığı kur:</span>{" "}
-          1 USD = ₺{fx.usdTry.toFixed(2)} ({fx.usdTrySource}) · 1 USD = ¥{fx.rmbPerUsd.toFixed(2)} ({fx.rmbSource})
+          1 USD = ₺{fx.usdTry.toFixed(2)} ({fx.usdTrySource}) · 1 USD = {fx.rmbPerUsd != null ? `¥${fx.rmbPerUsd.toFixed(2)}` : "¥ — (RMB kuru girilmemiş; RMB maliyetleri hesaplanmaz)"} ({fx.rmbSource})
         </p>
         <p className="mt-1 text-xs">
           USD/TRY artık CFO&apos;nun aylık kur defterinden (<code>cfo_kur</code>) okunur — sermaye, ithalat, kârlılık ve XML fiyat

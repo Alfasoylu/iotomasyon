@@ -64,7 +64,7 @@ export interface PricingInput {
   platformPolicy: PlatformPolicyInput;
 
   /** Güncel kurlar — DB'den okunmalı. */
-  rmbUsdRate: number;
+  rmbUsdRate: number | null;
   usdTryRate: number;
 }
 

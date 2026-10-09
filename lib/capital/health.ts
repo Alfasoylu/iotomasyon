@@ -16,7 +16,7 @@ import { capitalScore, type CapitalScore } from "./score";
 // Talep (aylık kâr / acil sipariş için) Forecast V2 köprüsünden; bayrak kapalıyken eski 3 tablo + mevsim tahmini.
 // Salt-okunur.
 
-export type CapitalFx = { usdTry: number; rmbPerUsd: number; fromCfo: boolean; source: string };
+export type CapitalFx = { usdTry: number; rmbPerUsd: number | null; fromCfo: boolean; source: string };
 
 /** Tek kur kaynağı (lib/fx/current.ts): USD/TRY CFO kur defterinden. */
 export async function loadCapitalFx(): Promise<CapitalFx> {

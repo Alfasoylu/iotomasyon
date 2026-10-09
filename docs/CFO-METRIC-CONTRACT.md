@@ -1,9 +1,9 @@
 ---
-last_updated: 2026-10-10 02:30 TR
+last_updated: 2026-10-10 03:00 TR
 current_main_commit: 6283500
 current_phase: "Faz 1 — Metrik sözleşmesi (CFO-001) · PR-A: karar memosu + mutabakat ölçümü"
 current_score: 48/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu, RMB/USD tek kaynak 6,7) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 ---
 
 # CFO METRİK SÖZLEŞMESİ — karar memosu (CFO-001 PR-A)

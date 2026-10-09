@@ -118,7 +118,7 @@ function calcProfit(product: {
   importPaymentFeePct: unknown;
   shippingMethodPref: unknown;
   trendyolPriceTry: number | null;
-}, usdTryRate: number, rmbUsdRate: number): ProfitResult {
+}, usdTryRate: number, rmbUsdRate: number | null): ProfitResult {
   const priceTry = product.trendyolPriceTry;
   if (!priceTry || priceTry <= 0) return null;
 
@@ -214,7 +214,7 @@ export default async function ProductsPage({
   // leaking them in the rendered output.
   const latestRate = canViewFinance ? await getCurrentFx() : null;
   const usdTryRate = latestRate?.usdTry ?? 45;
-  const rmbUsdRate = latestRate?.rmbPerUsd ?? 7.0;
+  const rmbUsdRate = latestRate?.rmbPerUsd ?? null; // tek kaynak (lib/fx/current.ts); yoksa kâr hesaplanmaz — sabit yedek yok
 
   // Phase 74 — pre-compute profit + health for all products, then filter by durumFilter.
   // Finance fields (trendyolPriceTry, profit) are NULL for non-finance viewers —

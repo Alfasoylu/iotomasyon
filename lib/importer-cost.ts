@@ -43,7 +43,7 @@ import { calcShippingFromPriceTiers } from "./marketplace-pricing";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-export const DEFAULT_RMB_USD_RATE = 7.2;
+// RMB/USD için SABİT YEDEK YOK (2026-10-10): kur lib/fx/current.ts tek kaynağından gelir; bilinmiyorsa (null/0) maliyet null döner.
 export const DEFAULT_USD_TRY_RATE = 45;
 export const DEFAULT_CUSTOMS_PCT = 30;        // %
 export const AIR_FREIGHT_PER_KG = 8;          // USD/kg
@@ -128,11 +128,11 @@ export const DEFAULT_BUDGET_PARAMS: BudgetParams = {
  */
 export function rmbToUsd(
   sourceCostRmb: number | null | undefined,
-  rmbUsdRate: number,
+  rmbUsdRate: number | null | undefined,
 ): number | null {
   if (sourceCostRmb == null || sourceCostRmb <= 0) return null;
-  const rate = rmbUsdRate > 0 ? rmbUsdRate : DEFAULT_RMB_USD_RATE;
-  return sourceCostRmb / rate;
+  if (rmbUsdRate == null || !(rmbUsdRate > 0)) return null;
+  return sourceCostRmb / rmbUsdRate;
 }
 
 /**
@@ -169,8 +169,7 @@ function buildCostFor(
   rmbUsdRate: number,
 ): ImportCostResult {
   const freightPerKg = method === "SEA" ? SEA_FREIGHT_PER_KG : AIR_FREIGHT_PER_KG;
-  const rate = rmbUsdRate > 0 ? rmbUsdRate : DEFAULT_RMB_USD_RATE;
-  const productUsd = (sourceCostRmb / rate) * (1 + payFeePct / 100);
+  const productUsd = (sourceCostRmb / rmbUsdRate) * (1 + payFeePct / 100);
   const freightUsd = weightKg * freightPerKg;
   const customsUsd = (productUsd + freightUsd) * (customsPct / 100);
   const totalCostUsd = productUsd + freightUsd + customsUsd;
@@ -231,7 +230,8 @@ export function calcImportCost(input: {
   customsRatePct: number | null;
   importPaymentFeePct: number | null;
   shippingMethodPref: string | null;
-  rmbUsdRate: number;
+  /** RMB/USD — tek kaynak lib/fx/current.ts; null/0 → maliyet bilinmiyor (null), sabit yedek yok. */
+  rmbUsdRate: number | null;
   /** Opsiyonel — verilirse otomatik kargo seçimi ROI bazlı yapılır. */
   trendyolPriceTry?: number | null;
   /** Opsiyonel — trendyolPriceTry ile birlikte ROI seçimi için gerekli. */
@@ -240,6 +240,7 @@ export function calcImportCost(input: {
   const { sourceCostRmb, weightKg, customsRatePct, importPaymentFeePct, shippingMethodPref, rmbUsdRate } = input;
   if (!sourceCostRmb || sourceCostRmb <= 0) return null;
   if (!weightKg || weightKg <= 0) return null;
+  if (rmbUsdRate == null || !(rmbUsdRate > 0)) return null;
 
   const shippingMethod = resolveShipping(shippingMethodPref, weightKg, {
     sourceCostRmb,

@@ -251,7 +251,7 @@ export default async function ProductDetailPage({
   // Phase 11C — Import decision
   const usdTryRate = latestRate ? latestRate.usdTry : DEFAULT_USD_TRY_RATE;
   // Phase 31 — RMB/USD rate from latest exchange rate entry
-  const rmbUsdRate = latestRate ? latestRate.rmbPerUsd : 7.0; // 1 USD ≈ 7 RMB varsayılanı
+  const rmbUsdRate = latestRate?.rmbPerUsd ?? null; // tek kaynak (lib/fx/current.ts); yoksa RMB maliyeti hesaplanmaz — sabit yedek yok
   // Forecast V2 (flag): null while FORECAST_V2_ENABLED is off → legacy manual-potential monthlyUnits below is unchanged.
   const v2 = await forecastV2ForConsumers();
   const v2Info = v2 ? forecastV2View(v2, product.id) : null;
@@ -771,6 +771,7 @@ export default async function ProductDetailPage({
               : null;
 
         const hasTrendyolKarData =
+          rmbUsdRate != null &&
           product.sourceCostRmb != null &&
           product.weightKg != null &&
           trendyolPriceTry != null;

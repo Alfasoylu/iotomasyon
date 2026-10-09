@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 02:30 TR
+last_updated: 2026-10-10 03:00 TR
 current_main_commit: 6283500
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu, RMB/USD tek kaynak 6,7) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — CFO-029 otomatik maliyet türetme kodu + testi (ilk üretim koşusu 05:00 TR; kuru çalıştırma 143 ürün, stok maliyeti +15.417 TL KDV dahil); 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
+score_change: "unchanged — RMB/USD tek kaynağa bağlandı (MonthlyExchangeRate 6,7, sabit yedek yok) ve 335 Excel ürünü 6,8 → 6,7 düzeltildi (net sermaye +7.405,67 TL, ölçümle birebir); CFO-029 kodu test edildi, ilk koşu 05:00 TR. 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
 ---
 
 # CFO BACKLOG
@@ -167,6 +167,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **uygulama:** CFO-027 ile oran belgesi (KOMISYON_ORANI) → Cowork özeti → onaylı kanal oranı (belge kimliği kanıt); veri kaynağı (Entegra) komisyon alanı kontrolü. **durum:** DISCOVERED
 
 ### CFO-029 — CFO birim maliyeti ithalat motorundan
+- **2026-10-10 — RMB/USD tek kaynak (Alperen):** RMB/USD yalnız `MonthlyExchangeRate` (2026-10 = 6,7), sabit yedek yok (kur yoksa maliyet null); 335 Excel ürünü 6,8 → 6,7 korumalı düzeltildi (net sermaye 2.473.141 → 2.480.547 TL, +7.405,67). CFO-029 kuru çalıştırması yeniden: 149 ürün / 436 alan (8 eksik-20 + 141 Excel dışı), +26.001 TL KDV dahil. Kayıt `docs/maliyet/2026-10-10-rmb-6-7-tek-kaynak.md`.
 - **2026-10-10 — kod + test (Claude Code):** `lib/cfo/cost-derivation.ts` (saf) + `-data.ts` (tek SQL, korumalı yazma + günlük + özet), xml-sync `after()` içinde TCMB kurundan hemen sonra; gümrük % GTİP tarifesinden (tarife/kayıt yoksa ürün atlanır, varsayılan %30 yazılmaz); yurt içi (`IC_PIYASA`) TL = USD × kur; kur varsayılansa yazma yok; `resolveShipping` Türkçe tercih (deniz/hava); alarm `cost_jump` (%25 / ±50.000 TL). Test `__tests__/cfo-cost-derivation.test.ts` (PGlite üretim kopyası). Kuru çalıştırma (üretim verisi): 143 ürün / 422 alan, stok maliyeti +15.417 TL (KDV dahil), atlanan 3. Kayıt `docs/maliyet/2026-10-10-cfo-029-otomatik-maliyet.md`. **Kalan:** ilk üretim koşusunun doğrulanması (10.10 sabah), atlanan 3 ürünün gümrüğü (FT232 tarife satırı).
 - **neden:** RF-033 — sistem maliyeti hava + KDV dahil kurulmuştu; motor (`lib/importer-cost.ts`) deniz/havayı ROI ile seçiyor ama `unitCostTry` elle/tek seferlik. **yapıldı (2026-10-10):** 335 ürün tek seferlik türetildi (net sermaye −138.411 TL). **uygulama:** günlük iş `calcImportCost` ile `unitCostUsd/unitCostTry`'yi yeniden hesaplar (değişiklik günlüklü, eşik üstü fark alarm); Excel dışı ~100 maliyetli ürün için RMB/ağırlık kanıtı. **durum:** IN_PROGRESS (kod + test ✓; ilk üretim koşusu doğrulanınca TAMAMLANDI)
 
