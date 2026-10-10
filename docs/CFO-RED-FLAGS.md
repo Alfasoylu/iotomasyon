@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 06:10 TR
-current_main_commit: c1e8413
+last_updated: 2026-10-10 07:45 TR
+current_main_commit: 6d05a8e
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
-next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → CFO-001/CFO-002 v3 doğrulaması + CFO-017 (10.10 sabahı) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-031 kalan: 1.000+ adetlik stokların gerçekliği (AL-CAM03 10.07’den beri senkronsuz) Alperen → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038 doğrulaması: 12:00 UTC trendyol-sync sonrası CFO çalışma döngüsü tamamlanıyor mu → CFO-001/CFO-002 v3 doğrulaması + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
-open_high: 4
-score_change: "61→60 — RF-036 (CRITICAL, yeni): net sermaye sözleşmesi sanal stok istisnasını (cfo_stok_istisna 40005100051, beyan 9.700 TL) uygulamıyordu; 2.513 sanal adet 1.025.723 TL LCNRV olarak servette (net sermaye ≈%42 fazla); düzeltme migration 130000 bekletilen (Alperen onayı) → finansal doğruluk 9→8. CFO-029 ilk üretim koşusu doğrulandı (153 ürün / 440 alan / +26.334 TL), etki toplamı ve cost_jump net sermaye stok kuralına hizalandı (RF-037); RF-033 ve RF-034 RESOLVED"
+open_high: 5
+score_change: "unchanged — RF-038 (HIGH, yeni + aynı PR’da düzeltildi): CFO çalışma döngüsü 09.10 02:34’ten beri her senkronda bağlam aşamasında 3B001 ile düşüyordu (eşzamanlı sorgular savepoint’leri iç içe geçiriyordu); sorgular sıraya alındı, gerçek PostgreSQL’de yeniden üretilip düzeltildi — otomasyon boyutu (4/5) üretimde gözlenince yeniden değerlendirilir"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -61,6 +61,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261010-035 | LOW | OPEN | latent: eksi bakiyeli KMH hesabında "nakit/dip + boş KMH" kullanımı iki kez düşer (kaynak yeterliliği, ön uçuş, gümrük dilimi); bugün etki 0 → CFO-030 |
 | RF-20261010-036 | CRITICAL | OPEN | sanal stok (cfo_stok_istisna 40005100051) net sermayede 1.025.723 TL; düzeltme migration 130000 (CFO-031) bekletilen — Alperen onayı + beyan teyidi |
 | RF-20261010-037 | MEDIUM | IN_PROGRESS | gerçek stok 4 kural; CFO-029 etki/alarm net sermaye kuralına hizalandı ✓ kod; kalan: 1.000–5.000 adetlik 3 SKU (1,18M TL) gerçek mi (AL-CAM03 10.07'den beri senkronsuz) — Alperen |
+| RF-20261010-038 | HIGH | MITIGATED | CFO çalışma döngüsü 09.10 02:34'ten beri bağlam aşamasında 3B001; düzeltme kodda (savepoint-source.ts, sorgular sıralı); RESOLVED: üretimde ilk tamamlanan döngü |
 
 ## 2026-10-08 — İlk tam sistem denetimi (bağımsız dış denetçi bakışı)
 
@@ -622,4 +623,19 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 - **açık soru (Alperen):** 1.000–5.000 adetlik 3 SKU net sermayede 1.175.248 TL LCNRV: AL-CAM03 1.940 adet (791.843 TL; XML'de yok, stok 10.07'den
   beri senkronlanmadı, 443 adet logsuz elle düzeltme), M-BANYOMİX 1.194 (316.908 TL), 272726161636 3.001 (66.497 TL). İthalatçı ≥1.000'i dropship
   sayıyor. Gerçek mi? Değilse `cfo_stok_istisna`'ya beyanla eklenir (migration 130000 sonrası net sermayeden otomatik çıkar).
+
+## 2026-10-10 — CFO çalışma döngüsü 3B001 RED FLAG PASS
+
+### RF-20261010-038 — CFO çalışma döngüsü her senkronda bağlam aşamasında düşüyor (YENİ, HIGH, MITIGATED aynı gün)
+- **date:** 2026-10-10 · **severity:** HIGH · **status:** MITIGATED
+- **finding:** `cfo_change_log` "CFO çalışma döngüsü — cycle_unavailable" 09.10 02:34, 09.10 12:20, 10.10 02:33; tanı `{"stage":"context","code":"P2010",
+  "databaseCode":"3B001"}` (invalid_savepoint_specification). `loadOperatingContext` her sorguyu işlem içinde SAVEPOINT ile sarıyor; bağlam/sermaye
+  yükleyicileri sorguları eşzamanlı çağırıyor (`Promise.all`) → savepoint'ler iç içe geçiyor: A'nın RELEASE'i B'nin savepoint'ini de siliyor,
+  B'nin RELEASE'i 3B001. Sonuç: çalışma planı (gündem, iş kalemleri, cevap okuma) iki gündür üretilmiyor; Goal Engine adımı döngüden önce koştuğu için
+  hedef değerlendirmeleri etkilenmedi. Ayrıca senkron sonrası motor süre bütçesinde atlandı (10.10 02:33: senkron 174 sn; 09.10 12:20: 190 sn —
+  RF-006 kapsamı; GitHub zamanlaması saatlerce gecikiyor).
+- **fix (kod):** `lib/cfo-agent/savepoint-source.ts` — sorgular SIRAYA alınır (tek bağlantıda zaten sıralı; yalnız savepoint sınırları korunur).
+  Yerel PostgreSQL 16 + Prisma ile yeniden üretildi (eski sarmalayıcı: 3B001; yeni: 4 eşzamanlı sorgu doğru, hatalı sorgu yalnız kendini düşürür).
+  Regresyon `cfo-workflow-postgres` (CI, gerçek PostgreSQL).
+- RESOLVED için: üretimde ilk tamamlanan döngü (12:00 UTC trendyol-sync ya da GitHub zamanlaması).
 

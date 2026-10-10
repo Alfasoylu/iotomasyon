@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### CFO çalışma döngüsü yeniden çalışıyor (2026-10-10)
+
+- Günlük CFO çalışma planı 9 Ekim'den beri her senkronda veri okuma aşamasında hata verip duruyordu. Aynı anda gönderilen sorgular veritabanı işlemini bozuyordu.
+- Sorgular artık sırayla çalışıyor. Hata gerçek veritabanında yeniden üretildi, düzeltmenin çalıştığı doğrulandı ve otomatik testle korunuyor.
+
 ### Ürün maliyetleri her gece ithalat motorundan (ilk koşu doğrulandı, 2026-10-10)
 
 - İlk otomatik koşu 153 ürünün maliyetini güncel kur, deniz/hava seçimi ve GTİP gümrüğüyle yeniden hesapladı. Sonuç ön hesapla tutarlı.

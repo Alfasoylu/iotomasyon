@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { runCfoCycle,safeCfoCycle } from '../lib/cfo-agent/workflow';
 import { HEARTBEAT_ID,WORK_SOURCE,saveWorkPlan } from '../lib/cfo-agent/workflow-store';
 import { CycleFailure,cycleDiagnostic,readCycleDiagnostic } from '../lib/cfo-agent/workflow-diagnostics';
+import { savepointSource } from '../lib/cfo-agent/savepoint-source';
 
 async function main(){
   // This test deliberately exercises the real Prisma adapter, not a SQL mock.
@@ -88,7 +89,12 @@ async function main(){
     assert.deepEqual(safe,{version:1,stage:'context',code:'P2010',databaseCode:'57014'});
     assert(!JSON.stringify(safe).includes('PRIVATE'));
     assert.equal(readCycleDiagnostic('legacy-trigger'),null);
-    console.log('CFO real PostgreSQL/Prisma: complete cycle, lock exclusion, parameters, repeat runs, answer rollback, safe diagnostics and recovery passed');
+    // 3B001 regresyonu (üretim 09.10–10.10: döngü "context" aşamasında düşüyordu): bağlam kaynağına EŞZAMANLI sorgular (Promise.all)
+    // savepoint'leri iç içe geçirmez; hatalı sorgu yalnız kendini düşürür, işlem ve sonraki sorgular sağlam kalır.
+    const concurrent=await prisma.$transaction(async tx=>{const db=savepointSource(tx);
+      return Promise.all([db.query('select 1 as v'),db.query('select 2 as v from pg_sleep(0.02)'),db.query('select * from yok_tablo_3b001').catch(()=>'hata'),db.query('select 4 as v')]);});
+    assert.deepEqual(concurrent,[[{v:1}],[{v:2}],'hata',[{v:4}]]);
+    console.log('CFO real PostgreSQL/Prisma: complete cycle, lock exclusion, parameters, repeat runs, answer rollback, safe diagnostics, recovery and concurrent savepoint context (3B001) passed');
   }finally{await prisma.$disconnect();}
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
