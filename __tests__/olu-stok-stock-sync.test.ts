@@ -9,7 +9,8 @@ import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite/vector";
 import { bootstrap } from "../scripts/schema-baseline/bootstrap";
-import { planStockSync } from "../lib/olu-stok/stock-plan";
+import { planStockSync, PTTAVM_MAX_QTY } from "../lib/olu-stok/stock-plan";
+import { interpretLookup } from "../lib/pttavm/lookup";
 import { parseApproved } from "../lib/trendyol/approved";
 
 async function main() {
@@ -21,6 +22,15 @@ async function main() {
   assert.deepEqual(r.items.map(i => [i.barcode, i.quantity]), [["ALFOS-A", 7], ["ALFOS-D", 20000]]);
   assert.deepEqual(r.skipped.map(s => `${s.sku}:${s.reason}`), ["B:değişmedi", "C:XML stoğu bayat", "Z:ürün yok"]);
   assert.ok(r.items.every(i => i.salePrice === undefined && i.listPrice === undefined), "fiyat asla otomatik gönderilmez");
+
+  assert.equal(planStockSync([{ id: "4", sku: "D", barcode: "ALFOS-D", lastQty: null }], xml, now, PTTAVM_MAX_QTY).items[0].quantity, 9999, "PttAVM üst sınırı");
+
+  // (2b) PttAVM barkod sorgusu yorumu (şemadan bağımsız): bulundu/varyant/kategori; bulunamayan barkod
+  const pj = { data: [{ Barcode: "STK-1", CategoryId: 512, ProductName: "Eski ad", Images: [{ Url: "https://ptt/1.jpg" }], Variants: [] }] };
+  assert.deepEqual(interpretLookup(pj, "STK-1"), { found: true, hasVariants: false, categoryId: 512, names: ["Eski ad"], images: ["https://ptt/1.jpg"] });
+  assert.equal(interpretLookup(pj, "ALFOS-STK-1").found, false);
+  assert.equal(interpretLookup({ items: [{ barcode: "V", variants: [{ variantBarcode: "V-1" }] }] }, "V").hasVariants, true);
+  assert.equal(interpretLookup(null, "X").found, false);
 
   // (2) Onaylı ürün yanıtı
   const json = { content: [{ contentId: 12715815, brand: { id: 315675 }, category: { id: 91266 }, title: "Eski başlık", description: "d",
