@@ -1,12 +1,12 @@
 ---
 last_updated: 2026-10-10 23:00 TR
-current_main_commit: 3fdd498
+current_main_commit: 68c003c
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — CFO-018 adım 2: nakit ufku ve ay sonları tek nakit yolundan (kırmızı eşiği kapasite alarmıyla aynı); gecikmiş ödenmemiş olaylar listede"
+score_change: "unchanged — Alperen 4 kararı: gümrük kapasitesi amaca bağlı limit dahil, borç servis oranı KDV hariç, ölü görünüm migration (onay adımında), API kimlik bilgisi şifreleme (anahtar eklenince devrede)"
 ---
 
 # CFO SCORECARD
@@ -122,3 +122,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 8645f92 | 67 | 7/12 | Değişmedi (bilinçli): CFO-020 ✅ (#281); ardından CFO-018 kısım 3 — eski motor KMH çift düşümü |
 | 2026-10-10 | accc576 | 67 | 7/12 | Değişmedi (bilinçli): CFO-018 kısım 3 (#282); ardından kısım 4 — kart toplamı sözleşmeden |
 | 2026-10-10 | 3fdd498 | 67 | 7/12 | Değişmedi (bilinçli): CFO-018 kısım 4 (#283); ardından adım 2 — nakit ufku tek yoldan |
+| 2026-10-10 | 68c003c | 67 | 7/12 | Değişmedi (bilinçli): CFO-018 adım 2 (#284); ardından Alperen 4 kararı (gümrük kapasitesi, KDV hariç borç servisi, ölü görünüm, kimlik şifreleme) |

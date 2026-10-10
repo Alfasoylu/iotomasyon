@@ -27,8 +27,11 @@ export async function loadCfoData(): Promise<{ raw: CfoInput; overview: CfoOverv
   // CFO-008: son 14 tam günün cirosu tek kaynaktan (Goal Engine satırları); kaynak okunamazsa eski elle girilen alan
   const q: SqlQuery = <T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql);
   const r14 = await lastCompleteDays(q, 14).catch(() => undefined);
-  const revenue14 = r14 === undefined ? undefined : r14 ? { amountTry: r14.inclTry, through: r14.to, source: `${r14.source}, ${r14.from} – ${r14.to}` } : null;
-  const raw: CfoInput = { settings, banks, cards, loans, expenses, receivables, cashEvents, imports, forecast: await loadCollectionForecast(), fx, revenue14 };
+  const revenue14 = r14 === undefined ? undefined : r14 ? { amountTry: r14.inclTry, amountExclTry: r14.exclTry, through: r14.to, source: `${r14.source}, ${r14.from} – ${r14.to}` } : null;
+  // Amaca bağlı (gümrük) KMH — Prisma modelinde yok; cfo_nakit_kapisi.amacli_kmh_try ile aynı kural (aktif şirket hesapları). Okunamazsa 0.
+  const [pl] = await prisma.$queryRaw<{ t: unknown }[]>`select coalesce(sum("purposeLimitTry"), 0) as t from cfo_bank_account where "isActive" and not cfo_hesap_sahsi("accountType")`.catch(() => [{ t: 0 }]);
+  const raw: CfoInput = { settings, banks, cards, loans, expenses, receivables, cashEvents, imports, forecast: await loadCollectionForecast(), fx, revenue14,
+    customsPurposeLimitTry: Number(pl?.t ?? 0) };
   return { raw, overview: computeCfo(raw) };
 }
 

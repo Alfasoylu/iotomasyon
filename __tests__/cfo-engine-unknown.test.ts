@@ -12,14 +12,18 @@ const loan = (name: string, earlyPayoffTry: number | null, monthlyPaymentTry: nu
 const card = (bank: string, totalDebtTry: number, minOverrideTry: number | null = null) =>
   ({ id: bank, bank, holder: null, totalDebtTry, statementDebtTry: null, minOverrideTry, currentMonthState: "ODENDI" }) as unknown as CfoInput["cards"][number];
 const base = (o: Partial<CfoInput>): CfoInput => ({ settings: null, banks: [], cards: [], loans: [], expenses: [], receivables: [], cashEvents: [], imports: [],
-  today, forecast: [], revenue14: { amountTry: 140000, through: "2026-10-09", source: "test" } as CfoInput["revenue14"], ...o });
+  today, forecast: [], revenue14: { amountTry: 140000, amountExclTry: 120000, through: "2026-10-09", source: "test" } as CfoInput["revenue14"], ...o });
 
 // Tam veri: davranış aynı (oranlar ayardan, kredi/kart toplamları)
 const full = computeCfo(base({ settings: S({ cardMinPct: 20, cashConversionPct: 70 }), loans: [loan("A", 500000, 20000)], cards: [card("Garanti", 100000)] }));
 assert.deepEqual([full.loanEarlyPayoffTry, full.loanMonthlyServiceTry, full.cardMinTotalTry, full.totalFinancialDebtTry], [500000, 20000, 20000, 600000]);
-assert.equal(full.monthlyCashCollectionTry, 140000 / 14 * 30 * 0.7);
-assert.equal(Math.round(full.monthlyOperatingCashTry!), Math.round(210000 - 40000));
-assert.equal(full.debtServiceRatio, 40000 / 210000);
+// Alperen 10.10: tahsilat / faaliyet nakdi / borç servis oranı KDV HARİÇ ciroyla (120.000; KDV dahil 140.000 değil)
+assert.equal(full.monthlyCashCollectionTry, 120000 / 14 * 30 * 0.7);
+assert.equal(Math.round(full.monthlyOperatingCashTry!), Math.round(180000 - 40000));
+assert.ok(Math.abs(full.debtServiceRatio! - 40000 / 180000) < 1e-12);
+assert.equal(full.monthlyRunRateTry, 140000 / 14 * 30, "manşet ciro temposu KDV dahil kalır (ciro hedefiyle aynı)");
+const inclOnly = computeCfo(base({ settings: S({ cardMinPct: 20, cashConversionPct: 70 }), revenue14: { amountTry: 140000, through: "2026-10-09", source: "test" } }));
+assert.deepEqual([inclOnly.monthlyCashCollectionTry, inclOnly.debtServiceRatio], [null, null], "KDV hariç yoksa KDV dahile düşülmez");
 
 // Erken kapama / taksit eksik kredi 0 SAYILMAZ → toplam borç, net borç, servis BİLİNMİYOR + Dikkat satırı
 const miss = computeCfo(base({ settings: S({ cardMinPct: 20, cashConversionPct: 70 }), loans: [loan("A", 500000, 20000), loan("B", null, null)] }));

@@ -160,10 +160,10 @@ export default async function CfoPage() {
           hint={`Net gerçekleşebilir · yoldaki ${fmtTry(yoldaki)} ayrı satırda`} />
         <MetricCard label="Aylık borç servisi" value={fmtTry(o.loanMonthlyServiceTry == null || o.cardMinTotalTry == null ? null : o.loanMonthlyServiceTry + o.cardMinTotalTry)} icon={CreditCard}
           status={o.debtServiceRatio == null ? "neutral" : o.debtServiceRatio <= 0.4 ? "ok" : o.debtServiceRatio <= 0.6 ? "warn" : "danger"}
-          hint={o.debtServiceRatio != null ? `Tahsilatın ${fmtPct(o.debtServiceRatio)}'i` : "Ciro verisi gerekli"} />
+          hint={o.debtServiceRatio != null ? `KDV hariç tahsilatın ${fmtPct(o.debtServiceRatio)}'i` : "Ciro verisi gerekli"} />
         <MetricCard label="Aylık faaliyet nakdi" value={fmtTry(o.monthlyOperatingCashTry)} icon={TrendingUp}
           status={o.monthlyOperatingCashTry == null ? "neutral" : o.monthlyOperatingCashTry > 0 ? "ok" : "danger"}
-          hint={o.monthlyOperatingCashTry == null ? "Bilinmiyor — tahsilat, nakde dönüşüm oranı ya da borç servisi eksik" : "Tahsilat − sabit gider − borç servisi"} />
+          hint={o.monthlyOperatingCashTry == null ? "Bilinmiyor — tahsilat, nakde dönüşüm oranı ya da borç servisi eksik" : "KDV hariç tahsilat − sabit gider − borç servisi"} />
       </section>
 
       {/* ── Servet ── */}

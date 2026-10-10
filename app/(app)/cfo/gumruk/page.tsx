@@ -40,7 +40,7 @@ export default async function CfoCustomsPage() {
             <Row label="Tarihe kadar zorunlu ödemeler" value={fmtTry(o.customs.mandatoryOutflow)} note="Gümrük ödemesinin kendisi hariç" />
             <Row label="Projeksiyon nakit" value={fmtTry(o.customs.projectedCash)} note="Rezerv ayrılmadan önceki pozisyon" strong />
             <Row label="FİNANSMAN AÇIĞI" value={fmtTry(o.customs.gap)} note="Hedef − (projeksiyon + ayrılmış)" strong danger={o.customs.gap > 0} />
-            <Row label="KMH limiti (şirket)" value={fmtTry(o.kmhCapacityTry)} note="Açığı karşılayabilecek kapasite — tahmini nakit kullanılan KMH'yi zaten içerir" />
+            <Row label="Gümrük kapasitesi" value={fmtTry(o.customs.capacityTry)} note={`Genel KMH ${fmtTry(o.kmhCapacityTry)} + amaca bağlı gümrük limiti ${fmtTry(o.customs.capacityTry - o.kmhCapacityTry)} — tahmini nakit kullanılan KMH'yi zaten içerir`} />
             <Row label="Açık sonrası kalan kapasite" value={fmtTry(o.customs.remainingCapacity)} note={o.customs.remainingCapacity < 0 ? "KMH YETMİYOR" : "KMH ile karşılanabilir"} strong danger={o.customs.remainingCapacity < 0} />
             <Row label="Açığın 1 aylık faiz maliyeti" value={`${o.customs.interestUnknownTry > 0 ? "en az " : ""}${fmtTry(o.customs.interestCostMonthly)}`} note={o.customs.interestUnknownTry > 0 ? `${fmtTry(o.customs.interestUnknownTry)} oranı ölçülmemiş KMH / kapasite dışı` : "kademeli: hesap başına ölçülmüş oran"} />
           </CfoTable>

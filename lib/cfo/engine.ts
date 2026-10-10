@@ -100,7 +100,10 @@ export interface CfoInput {
   fx?: { usdTry: number | null; source: string };
   /** CFO-008: son 14 TAM günün cirosu tek kaynaktan (lib/cfo/revenue.ts — Goal Engine satırları; KDV dahil). null = tam gün yok (BİLİNMİYOR).
    *  Verilmezse yalnız elle girilen cfo_settings.last14dRevenueTry (eski yol). */
-  revenue14?: { amountTry: number; through: string; source: string } | null;
+  revenue14?: { amountTry: number; amountExclTry?: number | null; through: string; source: string } | null;
+  /** Amaca bağlı (gümrük) KMH limiti — şirket hesaplarının `purposeLimitTry` toplamı (cfo_nakit_kapisi.amacli_kmh_try ile aynı kural).
+   *  Alperen kararı 10.10: gümrük rezervi kapasitesine DAHİL (genel KMH + amaca bağlı). Verilmezse 0 (yalnız genel KMH). */
+  customsPurposeLimitTry?: number | null;
   today?: Date;
 }
 
@@ -227,7 +230,7 @@ export interface CfoOverview {
     target: number; saved: number; dueDate: Date | null; daysLeft: number | null;
     tranches: { date: Date; amount: number; ref: string | null; description: string; cumulative: number; projectedCash: number; gap: number }[];
     expectedInflow: number; mandatoryOutflow: number; projectedCash: number;
-    gap: number; remainingCapacity: number; traffic: Traffic;
+    gap: number; remainingCapacity: number; /** genel KMH + amaca bağlı gümrük limiti (Alperen 10.10) */ capacityTry: number; traffic: Traffic;
     /** açığın KMH'den (mevcut kullanımın üstüne, çekiliş sırasıyla) finansmanının aylık faizi — yalnız ölçülmüş oranlı dilimler */
     interestCostMonthly: number;
     /** açığın oranı ölçülmemiş dilime / kapasite dışına düşen kısmı (>0 ise faiz alt sınır) */
@@ -362,7 +365,11 @@ export function computeCfo(input: CfoInput): CfoOverview {
   // CFO-014 kısım 2 (RF-016): nakde dönüşüm oranı ayarda yoksa %70 VARSAYILMAZ → aylık tahsilat BİLİNMİYOR.
   const cashConvRaw = s ? numOrNull(s.cashConversionPct) : null;
   const cashConv = cashConvRaw != null && cashConvRaw > 0 ? cashConvRaw / 100 : null;
-  const monthlyCashCollectionTry = monthlyRunRateTry != null && cashConv != null ? monthlyRunRateTry * cashConv : null;
+  // Alperen kararı 10.10 (D-P05 ile aynı esas): tahsilat / faaliyet nakdi / borç servis oranı KDV HARİÇ ciroyla — KDV vergi dairesine
+  // borçtur, borç servisine ayrılabilecek nakit değildir. KDV hariç tutar yoksa (elle girilen eski alan) BİLİNMİYOR; KDV dahile düşülmez.
+  const last14Excl = input.revenue14 !== undefined ? (input.revenue14?.amountExclTry ?? null) : null;
+  const monthlyRunRateExclTry = last14Excl != null ? (last14Excl / 14) * 30 : null;
+  const monthlyCashCollectionTry = monthlyRunRateExclTry != null && cashConv != null ? monthlyRunRateExclTry * cashConv : null;
   const weeklyEstimateGrossTry = last14 != null ? last14 / 4 : null;
   const revenueAsOf = input.revenue14 !== undefined ? (input.revenue14 ? new Date(`${input.revenue14.through}T00:00:00`) : null) : s?.last14dRevenueDate ?? null;
   const revenueDataAgeDays =
@@ -475,10 +482,11 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const { expectedInflow, mandatoryOutflow, projectedCash } = at(bind.date);
     const target = bind.cumulative, gap = bind.gap, due = bind.date;
     const daysLeft = Math.round((due.getTime() - today.getTime()) / 86400000);
-    const remainingCapacity = kmhCapacityTry - gap;
+    const customsCapacity = kmhCapacityTry + Math.max(0, num(input.customsPurposeLimitTry));
+    const remainingCapacity = customsCapacity - gap;
     customs = {
       target, saved, dueDate: due, daysLeft, tranches, expectedInflow, mandatoryOutflow, projectedCash,
-      gap, remainingCapacity, traffic: trafficForGap(gap, kmhCapacityTry),
+      gap, remainingCapacity, capacityTry: customsCapacity, traffic: trafficForGap(gap, customsCapacity),
       ...(() => { const d = tieredDrawInterest(kmhSlices, usedKmhTry, Math.max(0, gap - usedKmhTry)); return { interestCostMonthly: d.monthlyInterestTry, interestUnknownTry: d.unknownRateTry + d.beyondCapacityTry }; })(),
     };
   }

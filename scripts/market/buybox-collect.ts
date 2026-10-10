@@ -1,6 +1,7 @@
 import { Client } from "pg";
 import { collectBuybox, chunkBarcodes } from "../../lib/market/providers/trendyol-buybox";
 import type { Db } from "../../lib/market/store";
+import { decryptSecret } from "../../lib/crypto/secret-box";
 
 // Manual buybox collection for OUR active barcodes (NOT scheduled). Dry run by default: prints counts only.
 //   MARKET_SCOUT_DATABASE_URL=… MARKET_SCOUT_TRENDYOL_STOREFRONT_CODE=XX node --import tsx scripts/market/buybox-collect.ts [--apply]
@@ -17,7 +18,7 @@ async function main() {
     const cfg = (await db.query<{ supplierId: string; apiKey: string; apiSecret: string }>(`select "supplierId", "apiKey", "apiSecret" from public."TrendyolConfig" where "isEnabled" limit 1`)).rows[0];
     const store = process.env.MARKET_SCOUT_TRENDYOL_STOREFRONT_CODE ?? "";
     if (!cfg || !/^[A-Z]{2}$/.test(store)) throw new Error("buybox_not_configured");
-    const r = await collectBuybox(db, { sellerId: cfg.supplierId, apiKey: cfg.apiKey, apiSecret: cfg.apiSecret, storeFrontCode: store }, barcodes, { trigger: "MANUAL" });
+    const r = await collectBuybox(db, { sellerId: cfg.supplierId, apiKey: decryptSecret(cfg.apiKey), apiSecret: decryptSecret(cfg.apiSecret), storeFrontCode: store }, barcodes, { trigger: "MANUAL" });
     process.stdout.write(JSON.stringify(r) + "\n");
   } finally { await client.end(); }
 }
