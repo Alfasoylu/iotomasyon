@@ -59,7 +59,8 @@ kaldırılmıştır; tekrar eklenmemelidir.
 Yukarıdaki yasağın TEK istisnası: `cfo_olu_stok` listesindeki SKU'lar için Trendyol ve PttAVM'de
 fiyat düşürme, Trendyol onaylı ürün içeriği (başlık/açıklama/görsel) ve Entegra'dan bağımsız yeni ilan
 (ayrı SKU/barkod `ALFOS-…`, stok Entegra XML'den). Koşullar — hepsi zorunlu:
-- Tek kapı `lib/actions/olu-stok-actions.ts`; istemciler `lib/trendyol/write.ts`, `lib/pttavm/write.ts`
+- Tek kapı `lib/actions/olu-stok-actions.ts`; istemciler `lib/trendyol/write.ts`, `lib/pttavm/write.ts` (PttAVM REST ya da yalnız
+  fiyat/stok için SOAP `StokFiyatGuncelle3` — güncel kayıt okunup değişmeyen alanlar aynen gönderilir)
   başka yerden çağrılmaz. AI CFO yazma YAPMAZ. Tek otomatik yazma: gece XML senkronundan sonra
   `lib/olu-stok/stock-sync.ts` — YALNIZ `olu_stok_bagimsiz_ilan`'daki `ALFOS-…` barkodlara, YALNIZ stok adedi,
   yalnız taze XML'den (≤ 36 saat), en fazla `OLU_STOK_BAGIMSIZ_STOK_TAVANI` adet (varsayılan 3; çift ilan fazla satış

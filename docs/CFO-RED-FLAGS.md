@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 21:45 TR
-current_main_commit: 58360f8
+last_updated: 2026-10-10 22:15 TR
+current_main_commit: 2690f30
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — ürün görseli yükleme mevcut bucket'a taşındı (üretimde kırıktı) + bağımsız ilan stok tavanı; ölçüm değişmedi"
+score_change: "unchanged — RF-019 RESOLVED (KPI renkleri motor kuralına bağlandı; MEDIUM, skor boyutlarını değiştirmez)"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -42,7 +42,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-016 | MEDIUM | IN_PROGRESS | CFO-014 kısım 1 (PR #240) + kısım 2 2026-10-10 (eski motor: kredi erken kapama/taksit, kart asgari %20, nakde dönüşüm %70, faaliyet nakdi, eski stok alanları, yedek haftalık tahmin, kaldıraç teslim süresi 67/22 → BİLİNMİYOR + Dikkat satırı; testli); kalan: `cfo_servet_kalem` COALESCE 0 (bilinmeyen banka bakiyesi sessiz düşer — migration) |
 | RF-20261008-017 | MEDIUM | RESOLVED | 2026-10-09, CFO-019 |
 | RF-20261008-018 | MEDIUM | OPEN | veri: ölçülmemiş faiz oranları (CFO-015, Alperen) |
-| RF-20261008-019 | MEDIUM | IN_PROGRESS | 5M + 100k yedeği + iki taban kalktı; 10.10 CFO-023: ORAN_ESIGI ayardan, "aylık 100.000 USD" metinleri ayardan, kazananlar kapsam eşiği = motor ✓; 50k / KPI eşikleri kalan |
+| RF-20261008-019 | MEDIUM | RESOLVED | 5M + 100k yedeği + iki taban kalktı; 10.10 CFO-023: ORAN_ESIGI ayardan, "aylık 100.000 USD" metinleri ayardan, kazananlar kapsam eşiği = motor ✓; 10.10 CFO-020: KMH kartı = motor kapasite kuralı, /cfo/odemeler 50k → taban alarmı, kart rengi = devreden faiz ✓ |
 | RF-20261008-020 | MEDIUM | RESOLVED | 2026-10-10 — hedef/kapı şişmesi yok (ödenmemiş gümrük/navlun sözleşmede yalnız bilgi satırı, D-P03, üretimde doğrulandı); gümrük rezervi ödeme takviminden (CFO-018 kısım 1); AI CFO borç tahmini artık `cfo_import_project.customsEstimateTry` / eski `cfo_servet_kalem` etiketine dayanmıyor — gümrük çıkışı borç kapatmaz, eksik veri üretmez (testli); veri: 07.26sea GUMRUKTE 3.287.072,31 = takvim dilimleri, ROMANYA-2408 400k defter = takvim |
 | RF-20261008-021 | LOW | RESOLVED | 2026-10-09, CFO-021 |
 | RF-20261008-022 | LOW | RESOLVED | 2026-10-09, CFO-021 |
@@ -736,3 +736,16 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   (%42 çekilebilir). ACL korundu; AI CFO incelenmiş `cfo_nakit_kapisi` hash'i 31466cf0… koda işlendi (motor "reviewed_source_changed" düşmesin).
 - **TS:** kapasite alarmı (`health.ts`) ve stres testi (`downside-data.ts`) yol pozisyonu + `kmh_limit_try` (önce `bos_kmh_try` — aynı çift düşüş).
 - Yeni red flag yok.
+
+## 2026-10-10 — CFO-020 KPI eşikleri motor kuralına bağlandı
+
+### RF-20261008-019 — RESOLVED (2026-10-10, CFO-020/CFO-023)
+- **düzeltme (kod):** `/cfo` "Boş KMH kapasitesi" kartı sabit 1.500.000 / 750.000 TL yerine motorun `capacity_breach` alarmıyla AYNI kural
+  (`lib/cfo-agent/capacity.ts` `capacityStatus`: 120 günlük nakit yolu genel KMH'yi aşarsa sarı, şirket kapasitesini aşarsa kırmızı, yol
+  bilinmiyorsa nötr); alarm (`health.ts`) aynı fonksiyonu ve aynı SQL'i kullanır. `/cfo/odemeler` nakit rengi sabit 50.000 TL sarısı yerine motorun
+  `floor_breach` tabanı (`cfo_settings.netPositionFloorTry`). "Kredi kartı borcu" rengi sabit 1.000.000 TL yerine devreden faiz (motor) işliyor mu.
+- **üretim etkisi (salt-okunur, 10.10):** yol 14.10'da şirket KMH kapasitesini (genel 1.359.300 + amaca bağlı 750.000) aşıyor (dip −3.505.962,
+  01.12) → kart artık KIRMIZI (eski sabit eşikle 1,36M boş KMH SARI görünüyordu; motor aynı anda capacity_breach alarmı üretiyordu — ekran ↔ alarm
+  çelişkisi kapandı).
+- **koruma:** `cfo-page-parity` sabit TL KPI eşiği kalıbını yasaklar + 3 yeni bağ; `cfo-capacity` testi (CI).
+

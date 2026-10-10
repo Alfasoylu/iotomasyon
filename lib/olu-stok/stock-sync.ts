@@ -7,7 +7,7 @@
 import { prisma } from "@/lib/prisma";
 import { updatePriceAndInventory, trendyolWriteEnabled } from "@/lib/trendyol/write";
 import { pttavmConfig } from "@/lib/pttavm/client";
-import { pttavmWriteEnabled, updateStockPrices } from "@/lib/pttavm/write";
+import { pttavmWriteEnabled, soapUpdatePriceStock, updateStockPrices } from "@/lib/pttavm/write";
 import { independentCap, planStockSync, PTTAVM_MAX_QTY, TRENDYOL_MAX_QTY } from "./stock-plan";
 
 type Channel = "TRENDYOL" | "PTTAVM";
@@ -35,7 +35,11 @@ async function syncChannel(channel: Channel, now: Date): Promise<ChannelResult> 
     const cfg = await trendyolCfg(); if (!cfg) return { channel, sent: 0, skipped: skipped.length, note: "Trendyol API yapılandırması eksik" };
     trackingId = (await updatePriceAndInventory(cfg, items.map(i => ({ barcode: i.barcode, quantity: i.quantity })))).batchRequestId;
   } else {
-    trackingId = (await updateStockPrices(ptt!, items.map(i => ({ barcode: i.barcode, quantity: i.quantity })))).trackingId;
+    if (ptt!.mode === "soap") {
+      // Kullanıcı adı/şifre: ürün başına BarkodKontrol + StokFiyatGuncelle3 (fiyat ve diğer alanlar aynen geri gönderilir).
+      for (const i of items) await soapUpdatePriceStock(ptt!, i.barcode, { quantity: i.quantity });
+      trackingId = "soap";
+    } else trackingId = (await updateStockPrices(ptt!, items.map(i => ({ barcode: i.barcode, quantity: i.quantity })))).trackingId;
   }
   for (const i of items) await prisma.$executeRaw`
     update olu_stok_bagimsiz_ilan set son_stok = ${i.quantity}, son_stok_at = now(), son_stok_islem = ${trackingId} where id = ${i.id}`;

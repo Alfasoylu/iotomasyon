@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCfoConfig } from "./config";
 import { readCashFloor } from "./cash-floor";
 import { istanbulPeriod } from "./period";
+import { CAPACITY_GATE_SQL, CAPACITY_PATH_SQL, CAPACITY_PERSONAL_SQL, capacityStatus } from "./capacity";
 import { LOAN_AMOUNT_TOLERANCE } from "@/lib/cfo/payment-schedule";
 import { COST_DERIVATION_SOURCE, COST_JUMP_PCT, COST_JUMP_STOCK_TRY } from "@/lib/cfo/cost-derivation";
 
@@ -96,16 +97,16 @@ export function evaluateCfoAlarms(i: AlarmInput): CfoAlarm[] {
   // Kapasite: pozisyonun eksisi = KMH ihtiyacı. Genel KMH her işe; amaca bağlı limit yalnız gümrük Ziraat'ten ödenirse; şahsi
   // hesaplar son çare. İlk aşım günü ve aşım tutarı yazılır (alarm anahtarı günsüz: tarih kayınca yeni e-posta üretmez).
   if (i.capacity) {
-    const { generalTry: g, customsTry: c, personalTry: p, path } = i.capacity;
-    const first = (limit: number) => path.find(d => -d.position > limit);
-    const beyondCompany = first(g + c), beyondGeneral = first(g);
-    if (beyondCompany) {
-      const worst = path.reduce((m, d) => (d.position < m.position ? d : m), beyondCompany);
+    // Tek kural lib/cfo-agent/capacity.ts — /cfo "Boş KMH kapasitesi" kartı aynı fonksiyonla boyanır (CFO-020/023).
+    const { generalTry: g, customsTry: c, personalTry: p } = i.capacity;
+    const cap = capacityStatus(i.capacity);
+    if (cap.status === "danger" && cap.breach && cap.worst) {
+      const worst = cap.worst;
       const allTry = g + c + (p ?? 0), personal = p == null ? "şahsi kapasite bilinmiyor" : -worst.position > allTry
         ? `şahsi hesaplar (${tl(p)}) dahil FONLANAMIYOR (en kötü gün ${worst.date}: ${tl(-worst.position - allTry)} açık)` : `şahsi hesaplar (${tl(p)}) gerekiyor`;
-      out.push({ code: "capacity_breach", key: "capacity_breach:company", message: `Nakit pozisyonu ${beyondCompany.date}'de ${tl(beyondCompany.position)} — şirket KMH kapasitesini (genel ${tl(g)} + amaca bağlı ${tl(c)}) ${tl(-beyondCompany.position - g - c)} aşıyor; ${personal}` });
-    } else if (beyondGeneral) {
-      out.push({ code: "capacity_breach", key: "capacity_breach:general", message: `Nakit pozisyonu ${beyondGeneral.date}'de ${tl(beyondGeneral.position)} — genel KMH'yi (${tl(g)}) ${tl(-beyondGeneral.position - g)} aşıyor; yalnız gümrük Ziraat'ten ödenirse amaca bağlı limit (${tl(c)}) kapatır` });
+      out.push({ code: "capacity_breach", key: "capacity_breach:company", message: `Nakit pozisyonu ${cap.breach.date}'de ${tl(cap.breach.positionTry)} — şirket KMH kapasitesini (genel ${tl(g)} + amaca bağlı ${tl(c)}) ${tl(cap.breach.overTry)} aşıyor; ${personal}` });
+    } else if (cap.status === "warn" && cap.breach) {
+      out.push({ code: "capacity_breach", key: "capacity_breach:general", message: `Nakit pozisyonu ${cap.breach.date}'de ${tl(cap.breach.positionTry)} — genel KMH'yi (${tl(g)}) ${tl(cap.breach.overTry)} aşıyor; yalnız gümrük Ziraat'ten ödenirse amaca bağlı limit (${tl(c)}) kapatır` });
     }
   }
   // Maliyet eksik: kayıtlı gümrük % yasal yükün altında → marj ve stok değeri olduğundan iyi görünür (CFO-026). Anahtar sayısız:
@@ -223,15 +224,15 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
     readCashFloor(config.cashFloorTry),
     prisma.cfoRun.findMany({ where: { idempotencyKey: { startsWith: "engine:" }, generatedAt: { gte: new Date(now.getTime() - 48 * H) } }, orderBy: { generatedAt: "desc" }, take: 20,
       select: { status: true, generatedAt: true, finishedAt: true, error: true } }),
-    q<{ v: unknown; d: string | null }>(`select pozisyon as v, tarih::text as d from cfo_nakit_projeksiyon(120) order by tarih`),
+    q<{ v: unknown; d: string | null }>(CAPACITY_PATH_SQL),
     q<{ label: string; amount: unknown; due: string }>(unmarkedPaymentsSql(today, afternoon)),
     prisma.xmlSyncLog.findFirst({ where: { status: "SUCCESS" }, orderBy: { completedAt: "desc" }, select: { completedAt: true } }).catch(() => null),
     prisma.trendyolSalesRecord.findFirst({ orderBy: { syncedAt: "desc" }, select: { syncedAt: true } }).catch(() => null),
     prisma.entegraImportLog.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }).catch(() => null),
     prisma.cfoBankAccount.findMany({ where: { isActive: true, lastUpdatedAt: { lt: new Date(now.getTime() - 7 * 24 * H) } }, orderBy: { sortOrder: "asc" }, select: { name: true } }),
     // CFO-030: yol pozisyonu kullanılan KMH'yi zaten içerir → kapasite TAM ticari limit (bos_kmh = limit − kullanılan iki kez düşürürdü)
-    q<{ g: unknown; c: unknown }>(`select kmh_limit_try as g, amacli_kmh_try as c from cfo_nakit_kapisi`),
-    q<{ t: unknown }>(`select tutar as t from cfo_kaynak_yeterliligi() where kalem ilike 'Sahsi KMH%' limit 1`),
+    q<{ g: unknown; c: unknown }>(CAPACITY_GATE_SQL),
+    q<{ t: unknown }>(CAPACITY_PERSONAL_SQL),
     q<{ label: string; amount: unknown; due: string }>(ledgerGapSql(today)),
     q<ScheduleDuplicate>(scheduleDuplicateSql(today)),
     // cfo_gtip_yuk (migration 20261009210000) yoksa q() boş döner → alarm değerlendirilmez

@@ -13,7 +13,7 @@ import { getProductsByBarcodes, pttavmConfig } from "@/lib/pttavm/client";
 import { interpretLookup } from "@/lib/pttavm/lookup";
 import { detectImageType } from "@/lib/storage/image-type";
 import { getStorageConfig, uploadObject } from "@/lib/storage/supabase-storage";
-import { trackingResult, updateStockPrices, upsertProducts } from "@/lib/pttavm/write";
+import { soapUpdatePriceStock, trackingResult, updateStockPrices, upsertProducts } from "@/lib/pttavm/write";
 import { distinctListingErrors, floorPrice, independentCode } from "@/lib/olu-stok/plan";
 import { findApprovedByBarcode } from "@/lib/trendyol/approved";
 import { loadChannels, loadDeadStock } from "@/lib/olu-stok/load";
@@ -63,7 +63,9 @@ export async function applyPriceChangeAction(input: z.input<typeof priceSchema>)
       trackingId = (await updatePriceAndInventory(cfg, [{ barcode, salePrice: newPrice, listPrice }])).batchRequestId;
     } else {
       const cfg = pttavmConfig(); if (!cfg) return { ok: false, message: "PttAVM API anahtarları tanımlı değil." };
-      trackingId = (await updateStockPrices(cfg, [{ barcode, priceWithVAT: newPrice }])).trackingId;
+      // Kullanıcı adı/şifre (SOAP): BarkodKontrol → değişmeyen alanlar aynen → StokFiyatGuncelle3; REST anahtarı varsa stock-prices.
+      trackingId = cfg.mode === "soap" ? ((await soapUpdatePriceStock(cfg, barcode, { priceWithVat: newPrice })).urunId ?? "soap")
+        : (await updateStockPrices(cfg, [{ barcode, priceWithVAT: newPrice }])).trackingId;
     }
   } catch (e) {
     await log("fiyat", `${channel} ${sku} fiyat`, oldPrice?.toString() ?? null, `${newPrice} (HATA)`, g.user!.email, errMsg(e));
@@ -185,6 +187,7 @@ export async function applyPttContentAction(input: z.input<typeof pttContentSche
   if (!p.success) return { ok: false, message: p.error.issues[0]?.message ?? "Geçersiz veri." };
   const g = await guard(p.data.confirm); if ("error" in g) return g.error!;
   const cfg = pttavmConfig(); if (!cfg) return { ok: false, message: "PttAVM API anahtarları tanımlı değil." };
+  if (cfg.mode !== "rest") return { ok: false, message: "PttAVM yeni ilan/içerik REST anahtarı ister (Satıcı Paneli → Hesap Yönetimi → Entegrasyon Bilgileri; entegratörü PttAVM tanımlar). Kullanıcı adı/şifreyle yalnız fiyat/stok güncellenir." };
   const { sku, barcode, name, longDescription, images } = p.data;
   let look;
   try { look = interpretLookup(await getProductsByBarcodes(cfg, [barcode]), barcode); } catch (e) { return { ok: false, message: `PttAVM barkod sorgusu: ${errMsg(e)}` }; }
@@ -212,6 +215,7 @@ export async function createIndependentPttListingAction(input: z.input<typeof pt
   if (!p.success) return { ok: false, message: p.error.issues[0]?.message ?? "Geçersiz veri." };
   const g = await guard(p.data.confirm); if ("error" in g) return g.error!;
   const cfg = pttavmConfig(); if (!cfg) return { ok: false, message: "PttAVM API anahtarları tanımlı değil." };
+  if (cfg.mode !== "rest") return { ok: false, message: "PttAVM yeni ilan/içerik REST anahtarı ister (Satıcı Paneli → Hesap Yönetimi → Entegrasyon Bilgileri; entegratörü PttAVM tanımlar). Kullanıcı adı/şifreyle yalnız fiyat/stok güncellenir." };
   const [ctx, channels] = await Promise.all([loadDeadStock(), loadChannels()]);
   const c = ctx.get(p.data.sku);
   if (!c) return { ok: false, message: `${p.data.sku} ölü stok listesinde değil.` };
