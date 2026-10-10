@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### CFO nakit ufku ve gümrük kartı KMH kapasitesini doğru hesaplıyor (2026-10-10)
+
+- Banka hesabı eksiye düştüğünde CFO ekranındaki nakit ufku, ay sonu ve gümrük rezervi kartları kullanılan KMH'yi iki kez düşüyordu (yanlış "kırmızı"). Artık açık şirketin tam KMH limitiyle karşılaştırılıyor ve gümrük açığının faizi yalnız ek kullanıma hesaplanıyor. Bugün kullanılan KMH olmadığı için ekranda değişiklik yok.
+
 ### Ölü stok tutarı tek kurala bağlandı (2026-10-10)
 
 - Ölü stok ekranları ve sermaye sağlığı artık yalnız maliyeti bilinen ürünlerin bağlı sermayesini topluyor (bugün 27 ürün, 122.172 TL). Maliyeti bilinmeyen 68 ürün (satış fiyatıyla 2,02M TL) ayrıca gösteriliyor, toplama girmiyor; eskiden "Bağlı sermaye 2,14M TL" bu iki farklı esası birlikte topluyordu.

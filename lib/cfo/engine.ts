@@ -169,6 +169,9 @@ export interface CfoOverview {
   usedKmhTry: number;
   totalKmhLimitTry: number;
   freeKmhTry: number;
+  /** Açık karşılama kapasitesi = bakiyesi bilinen şirket hesaplarının TAM KMH limiti (cfo_nakit_kapisi.kmh_limit_try ile aynı).
+   *  Pozisyon (netCashTry + akış) kullanılan KMH'yi zaten içerir → kapasite boş KMH değil tam limittir (CFO-030 / CFO-018). */
+  kmhCapacityTry: number;
   kmhInterestMonthlyTry: number;
   banksMissingBalance: number;
   /** Şahsi hesaplar (cfo_hesap_sahsi kuralı) — manşet nakit/KMH'ye DAHİL DEĞİL; yalnız bilgi ve "son çare" kapasitesi */
@@ -259,7 +262,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
   // cfo_nakit_kapisi.kmh_limit_try, nakit projeksiyonu ve ödeme takvimi açılışı da şahsiyi hariç tutar). Eskiden /cfo "boş KMH" kartı ve
   // ufuk trafik ışıkları 5 şahsi KMH'yi (1,35M limit) şirket kapasitesi sayıyordu. Şahsi hesaplar ayrı alanda; kademeli faizde
   // PERSONAL dilimi "son çare" olarak kalır (lib/cfo/downside.ts).
-  let netCashTry = 0, usedKmhTry = 0, totalKmhLimitTry = 0, freeKmhTry = 0, banksMissingBalance = 0, kmhInterestMonthlyTry = 0, kmhUsedWithoutRateTry = 0;
+  let netCashTry = 0, usedKmhTry = 0, totalKmhLimitTry = 0, freeKmhTry = 0, kmhCapacityTry = 0, banksMissingBalance = 0, kmhInterestMonthlyTry = 0, kmhUsedWithoutRateTry = 0;
   const personal = { cashTry: 0, usedKmhTry: 0, freeKmhTry: 0, kmhLimitTry: 0, accounts: 0, missingBalance: 0 };
   const kmhSlices: KmhSlice[] = [];
   for (const b of input.banks) {
@@ -278,6 +281,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     totalKmhLimitTry += limit;
     if (bal == null) { banksMissingBalance++; continue; } // muhafazakâr: bilinmeyen bakiye boş limite sayılmaz
     netCashTry += bal;
+    kmhCapacityTry += limit;
     const used = bal < 0 ? -bal : 0;
     usedKmhTry += used;
     freeKmhTry += Math.max(0, limit - used);
@@ -415,7 +419,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const gap = position < 0 ? -position : 0;
     return {
       label: `${days} gün`, days, inflow, outflow, net, position, gap,
-      traffic: trafficForGap(gap, freeKmhTry),
+      traffic: trafficForGap(gap, kmhCapacityTry),
     };
   });
 
@@ -432,8 +436,8 @@ export function computeCfo(input: CfoInput): CfoOverview {
     return {
       label: `${TR_AY[eom.getMonth()]} ${eom.getFullYear()}`,
       date: eom, days, inflow, outflow, net, position,
-      freeCapacityAfter: freeKmhTry - gap,
-      traffic: trafficForGap(gap, freeKmhTry),
+      freeCapacityAfter: kmhCapacityTry - gap,
+      traffic: trafficForGap(gap, kmhCapacityTry),
     };
   });
 
@@ -471,11 +475,11 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const { expectedInflow, mandatoryOutflow, projectedCash } = at(bind.date);
     const target = bind.cumulative, gap = bind.gap, due = bind.date;
     const daysLeft = Math.round((due.getTime() - today.getTime()) / 86400000);
-    const remainingCapacity = freeKmhTry - gap;
+    const remainingCapacity = kmhCapacityTry - gap;
     customs = {
       target, saved, dueDate: due, daysLeft, tranches, expectedInflow, mandatoryOutflow, projectedCash,
-      gap, remainingCapacity, traffic: trafficForGap(gap, freeKmhTry),
-      ...(() => { const d = tieredDrawInterest(kmhSlices, usedKmhTry, gap); return { interestCostMonthly: d.monthlyInterestTry, interestUnknownTry: d.unknownRateTry + d.beyondCapacityTry }; })(),
+      gap, remainingCapacity, traffic: trafficForGap(gap, kmhCapacityTry),
+      ...(() => { const d = tieredDrawInterest(kmhSlices, usedKmhTry, Math.max(0, gap - usedKmhTry)); return { interestCostMonthly: d.monthlyInterestTry, interestUnknownTry: d.unknownRateTry + d.beyondCapacityTry }; })(),
     };
   }
 
@@ -534,7 +538,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
 
   return {
     today, usdTry, usdTrySource, kmh: { slices: kmhSlices, range: measuredRateRange(kmhSlices) }, kmhUsedWithoutRateTry,
-    netCashTry, usedKmhTry, totalKmhLimitTry, freeKmhTry, kmhInterestMonthlyTry, banksMissingBalance, personal,
+    netCashTry, usedKmhTry, totalKmhLimitTry, freeKmhTry, kmhCapacityTry, kmhInterestMonthlyTry, banksMissingBalance, personal,
     cardDebtTry, cardMinTotalTry, cardCarryCostTry, cardRevolvingTry: carry.revolvingTry, cardRevolvingWithoutRateTry: carry.revolvingWithoutRateTry,
     cardsUnknownRevolving: carry.unknownRevolvingCards,
     cardTopRevolving: carry.perCard.filter(c => (c.revolvingTry ?? 0) > 0 && c.effectiveMonthlyRate != null)
