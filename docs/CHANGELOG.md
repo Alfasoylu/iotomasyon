@@ -9,6 +9,14 @@
 
 ## 2026-10
 
+### Kararlar beklenen değerle kaydediliyor ve kendiliğinden ölçülüyor (2026-10-10)
+
+- Kararlar sayfasında yeni karar formu var. Ölçülecek metrik, başlangıç değeri, beklenen değer ve ölçüm tarihi girilmeden karar kaydedilmiyor.
+- Bugünden sonra beklenen değer olmadan deftere yazılan açık karar listenin başında "Beklenen değer eksik" olarak görünüyor.
+- Ölçüm ya da hedef tarihi gelen karar her gece otomatik ölçülüp karar ölçüm tablosuna eklenir (ilk kontrol noktası 31 Ekim). Borç, kamu tahsilatı ve FBA o günün değeriyle, kart ve KMH bakiyesi ölçüm günündeki değerle yazılır. Aynı ölçüm iki kez yazılmaz; test ortamında doğrulandı.
+- Sayfada tahmin isabeti gösteriliyor: hedefe ulaşma oranı, ortalama hata, iyimser ya da temkinli eğilim, beklenen değeri olan karar oranı.
+- Sermaye planının kredi ve kart borcu kapama önerileri, beklenen değeri hazır karar taslağı olarak sunuluyor. Onaylanıp kaydedilen öneri karar oluyor.
+
 ### Ciro artık her CFO ekranında tek kaynaktan (2026-10-10)
 
 - Kokpit, ayarlar, sermaye planı, ithalat hedef kartı ve yönetim sermaye sayfası ciroyu hedef motorunun kullandığı satış satırlarından okuyor: iade, iptal ve test siparişleri hariç; tüm kanallar ve Alfashome dahil; yalnız tamamlanmış günler.

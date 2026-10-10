@@ -18,6 +18,7 @@ const WRITE_PATHS: [string, string, number][] = [
   ["lib/actions/alfashome-actions.ts", "MARKETPLACE_POLICIES_MANAGE", 2],
   ["lib/actions/company-settings-actions.ts", "PROFITABILITY_CONFIGURE", 1],
   ["lib/actions/capital-actions.ts", "CFO_WRITE", 1],
+  ["lib/actions/cfo-hamle-actions.ts", "CFO_WRITE", 1],
   ["lib/actions/catalog-profile-actions.ts", "CATALOGS_CREATE", 2],
   ["lib/actions/import-snapshot-actions.ts", "PROCUREMENT_RECOMMEND", 1],
   ["lib/actions/sales-sync-actions.ts", "MARKETPLACE_LISTINGS_WRITE", 1],

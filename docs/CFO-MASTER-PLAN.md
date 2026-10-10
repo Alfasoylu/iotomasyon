@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:45 TR
-current_main_commit: 0ffbb2c
+last_updated: 2026-10-10 05:20 TR
+current_main_commit: 80485f5
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 60/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 sabit kurlu maliyetler"
+current_score: 61/100
+next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11 gözlem) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
 open_critical: 1
 open_high: 4
-score_change: "59→60 — CFO-008 tek ciro kaynağı: manşet ciro gösteren tüm CFO yüzeyleri (/cfo, /cfo/ayarlar, /cfo/sermaye gelir kaldıraçları, /cfo/kazananlar hedef kartı, /admin/sermaye, borç tahmini, AI CFO Alfashome kanıtı) Goal Engine satırlarından (fm_sales_canonical_snapshot), testli ve üretimde ölçüldü → gelir boyutu 5→6; AI CFO günlük satış karşılaştırması kalan"
+score_change: "60→61 — CFO-012 karar hafızası: yeni karar yalnız beklenen SAYI + başlangıç + ölçülebilir metrik + tarih ile kaydedilir (/cfo/kararlar formu, sunucuda doğrulama; kural tarihinden sonra eksik kayıt okuma tarafında bayraklı), kontrol noktası gelen kararlar her gece cfo_hamle_olcum'a ölçülür (borç/kamu/FBA o günün değeri, kart/KMH bugünkü bakiye; tekrar yazmaz), kalibrasyon skoru (isabet, hata, eğilim, kapsam) sayfada ve AI CFO kanıtında, sermaye motorunun borç kapama adımları onaya sunulan karar taslağı → karar hafızası boyutu 3→4; ilk otomatik ölçüm 31.10/01.11"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)
