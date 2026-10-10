@@ -9,6 +9,14 @@
 
 ## 2026-10
 
+### Net sermaye, borç ve ciro tek tanımları canlıda doğrulandı (2026-10-10)
+
+- Günlük finans hafızasına yazılan borç (5.889.903,80 TL) ve net sermaye, yazıldıkları andaki resmi hesapla birebir aynı; hedef motoru (100k USD borç, 300k USD net sermaye) artık bu tek tanımla değerlendiriyor.
+- Net sermayenin bileşenleri (nakit + alacak + stok + yoldaki mal − borç) toplamı net sermayeye kuruşu kuruşuna eşit.
+- AI CFO'nun ciro karşılaştırmaları (son tam gün, son 7 ve 30 gün) sitedeki tek ciro kaynağıyla birebir.
+- CFO çalışma döngüsü yeniden her gün tamamlanıyor (09.10'dan beri bağlam aşamasında düşüyordu).
+- Romanya-2408 ödenmemiş vergi defterde 400 bin TL'ye düzeltildi (takvimle aynı); 07.26sea ithalat projesi "gümrükte" ve gümrük tahmini 3.287.072 TL olarak işlendi; 1.000+ adetlik 3 ürünün stoku teyit edildi.
+
 ### KMH kapasitesi eksi bakiyede doğru hesaplanıyor (2026-10-10)
 
 - Kaynak yeterliliği, sabah ön uçuşu, gümrük dilimi hesabı, kapasite alarmı ve stres testi artık kullanılabilir kaynağı "hesap bakiyeleri + tam KMH limiti" olarak hesaplıyor (Ödemeler sayfasıyla aynı). Önceden bir hesap eksiye düştüğünde kullanılan KMH iki kez düşülüyor, kaynak olduğundan az görünüyordu.
