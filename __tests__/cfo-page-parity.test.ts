@@ -63,4 +63,11 @@ assert.equal(hits("if (nakit < taban.floorTry) return \"danger\";"), 0);
 assert.equal(hits("// eskiden 48,50 sabitti; 100.000 USD yedeği kaldırıldı"), 0);
 assert.equal(hits("kapsam >= 60 ? \"warn\" : \"danger\""), 0);
 assert.equal(hits("const url = \"https://x.test/a\"; const k = kapsam < KAPSAM_ESIGI;"), 0);
+// CFO-018 kısım 4: /cfo/borclar kart toplamı borç sözleşmesinden (sira 2) ve şahsi kart dahil olduğu açıkça yazılı; "TOPLAM (şirket)" etiketi yasak
+{
+  const borclar = read("app/(app)/cfo/borclar/page.tsx");
+  assert.ok(!/TOPLAM \(şirket\)<\/Td>\s*<Td right strong>\{fmtTry\(o\.cardDebtTry\)/.test(borclar), "kart toplamı şahsi kartı içerir — 'şirket' etiketi yanlış");
+  assert.match(borclar, /sira === 2\)/, "kart toplamı cfo_metrik_borc sira 2'den");
+  assert.match(borclar, /isPersonalCard\(c\.holder\)/, "şahsi kısım ownership.ts tek kuralıyla");
+}
 console.log(`cfo-page-parity: ${walk("app").length} dosya tarandı, ${BINDINGS.length} bağ doğrulandı`);

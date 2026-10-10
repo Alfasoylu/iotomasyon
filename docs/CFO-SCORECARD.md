@@ -1,12 +1,12 @@
 ---
 last_updated: 2026-10-10 23:00 TR
-current_main_commit: 8645f92
+current_main_commit: accc576
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — CFO-018 kısım 3: eski motorda kullanılan KMH çift düşümü kalktı (açık tam şirket limitiyle karşılaştırılır; CFO-030 ile aynı kural)"
+score_change: "unchanged — CFO-018 kısım 4: /cfo/borclar kart toplamı borç sözleşmesinden, şahsi kart kısmı ayrı (etiket \"şirket\" yanlıştı)"
 ---
 
 # CFO SCORECARD
@@ -120,3 +120,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | cacefd1 | 67 | 7/12 | Değişmedi (bilinçli): pazaryeri bağlantıları doğrulandı (#279); ardından CFO-028 adım 2 — N11 komisyonu API ölçümlü oranla kanal marjında (Koçtaş UNKNOWN) |
 | 2026-10-10 | 633c58a | 67 | 7/12 | Değişmedi (bilinçli): CFO-028 adım 2 N11 komisyonu (#280); ardından CFO-020 ✅ ölü stok TL tek kural |
 | 2026-10-10 | 8645f92 | 67 | 7/12 | Değişmedi (bilinçli): CFO-020 ✅ (#281); ardından CFO-018 kısım 3 — eski motor KMH çift düşümü |
+| 2026-10-10 | accc576 | 67 | 7/12 | Değişmedi (bilinçli): CFO-018 kısım 3 (#282); ardından kısım 4 — kart toplamı sözleşmeden |
