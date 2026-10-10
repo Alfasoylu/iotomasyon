@@ -126,7 +126,7 @@ export default async function CfoPage() {
       <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard
           label="Net banka pozisyonu" value={fmtTry(o.netCashTry)} icon={Landmark}
-          status={o.netCashTry >= 0 ? "ok" : o.netCashTry + o.freeKmhTry >= 0 ? "warn" : "danger"}
+          status={o.netCashTry >= 0 ? "ok" : o.netCashTry + o.kmhCapacityTry >= 0 ? "warn" : "danger"}
           hint={o.banksMissingBalance > 0 ? `${o.banksMissingBalance} hesabın bakiyesi bilinmiyor` : "Negatif = kullanılan KMH"}
           href="/cfo/borclar"
         />
@@ -197,7 +197,7 @@ export default async function CfoPage() {
           ))}
         </CfoTable>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          SARI = açık boş KMH ile kapanır ({fmtTry(o.freeKmhTry)}). KIRMIZI = KMH kapasitesi yetmiyor.
+          SARI = açık KMH limitiyle kapanır ({fmtTry(o.kmhCapacityTry)}; pozisyon kullanılan KMH&apos;yi zaten içerir). KIRMIZI = KMH kapasitesi yetmiyor.
           Pazaryeri tahsilat tahmini aynı haftadaki gerçek hakedişlerden düşülür — çift sayım yok.
         </p>
       </Card>
@@ -256,7 +256,7 @@ export default async function CfoPage() {
 
       {h60 && h60.traffic === "KIRMIZI" && (
         <p className="mt-4 rounded border border-[var(--danger-border)] bg-[var(--danger-dim)] px-4 py-3 text-sm text-[var(--text-primary)]">
-          <strong>60 günlük pencerede {fmtTry(h60.gap)} açık var</strong> ve boş KMH kapasitesi ({fmtTry(o.freeKmhTry)}) bunu karşılamıyor.
+          <strong>60 günlük pencerede {fmtTry(h60.gap)} açık var</strong> ve KMH limiti ({fmtTry(o.kmhCapacityTry)}) bunu karşılamıyor.
           Yeni stok alımı ve erken kredi kapama bu açık kapanana kadar ertelenmeli.
         </p>
       )}

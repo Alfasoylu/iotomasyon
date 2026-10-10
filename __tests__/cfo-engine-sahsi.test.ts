@@ -30,4 +30,16 @@ const p = computeCfo({ settings: null, banks: [bank("Ziraat", "Vadesiz + KMH", -
   cards: [], loans: [], expenses: [], receivables: [], cashEvents: [], imports: [], today, forecast: [] });
 assert.deepEqual([p.netCashTry, p.usedKmhTry, p.freeKmhTry, p.kmhInterestMonthlyTry, p.banksMissingBalance], [-100000, 100000, 150000, 4000, 0]);
 assert.deepEqual([p.personal.cashTry, p.personal.usedKmhTry, p.personal.freeKmhTry, p.personal.missingBalance], [-50000, 50000, 700000, 1]);
+// CFO-018 kısım 3 (KMH çift düşüm): pozisyon kullanılan KMH'yi zaten içerir → açık TAM şirket limitiyle karşılaştırılır (boş KMH ile değil).
+// Limit 1.000, bakiye −600, akış yok: açık 600 ≤ limit 1.000 → SARI (eskiden boş 400 ile karşılaştırılıp KIRMIZI), ay sonu kalan 400.
+const k = computeCfo({ settings: null, banks: [bank("Garanti", "Vadesiz + KMH", -600, 1000, 4), bank("Y (şahsi)", S, 0, 5000, 5), bank("Z", "Vadesiz + KMH", null, 9000)],
+  cards: [], loans: [], expenses: [], receivables: [], cashEvents: [], imports: [], today, forecast: [] });
+assert.deepEqual([k.kmhCapacityTry, k.freeKmhTry, k.usedKmhTry, k.totalKmhLimitTry], [1000, 400, 600, 10000], "kapasite = bakiyesi bilinen şirket hesaplarının tam limiti (şahsi ve bakiyesi bilinmeyen hariç)");
+assert.deepEqual(k.horizons.map(h => [h.gap, h.traffic]), [[600, "SARI"], [600, "SARI"], [600, "SARI"], [600, "SARI"]]);
+assert.ok(k.monthEnds.every(m => m.freeCapacityAfter === 400 && m.traffic === "SARI"));
+// Gümrük dilimi 500: açık = 500 − (−600) = 1.100 > limit 1.000 → KIRMIZI, kalan −100; ek çekiliş yalnız 1.100 − 600 = 500 (400'ü %4 genel dilimde, 100'ü kapasite ötesi)
+const g = computeCfo({ settings: null, banks: [bank("Garanti", "Vadesiz + KMH", -600, 1000, 4)], cards: [], loans: [], expenses: [], receivables: [], imports: [], today, forecast: [],
+  cashEvents: [{ id: "c1", kind: "VERGI_GUMRUK", eventDate: new Date(2026, 9, 20), outflowTry: 500, inflowTry: 0, isSettled: false, description: "gümrük", relatedImport: null } as unknown as CfoInput["cashEvents"][number]] });
+assert.deepEqual([g.customs?.gap, g.customs?.remainingCapacity, g.customs?.traffic], [1100, -100, "KIRMIZI"]);
+assert.deepEqual([g.customs?.interestCostMonthly, g.customs?.interestUnknownTry], [16, 100], "faiz yalnız ek çekilişe (kullanılan 600 zaten kmhInterestMonthlyTry'da)");
 console.log("CFO eski motor şirket/şahsi: manşet nakit ve KMH yalnız şirket (= cfo_nakit_kapisi üretim 10.10), şahsi ayrı alan + son çare dilimi passed");
