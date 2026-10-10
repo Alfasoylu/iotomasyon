@@ -46,7 +46,7 @@ export async function loadRevenueLevers(q: SqlQuery) {
       scale.reduce((s, r) => s + (r.monthlyContributionTry ?? 0), 0), sea),
   ];
   // hedef bilinmiyorsa açık 0 değil: plan hedefsiz kurulur ve targetUnknown işaretlenir
-  return { ...rankLevers(levers, currentMonthlyTry, targetMonthlyTry ?? currentMonthlyTry), targetUnknown: targetMonthlyTry == null, currentUnknown, fx,
+  return { ...rankLevers(levers, currentMonthlyTry, targetMonthlyTry ?? currentMonthlyTry), targetUnknown: targetMonthlyTry == null, targetUsd, currentUnknown, fx,
     revenueSource: cur ? `${cur.source}, ${cur.from} – ${cur.to}${cur.complete ? "" : " (eksik gün var)"}` : null,
     fxLabel: strategic?.label ?? "stratejik kur BİLİNMİYOR (fm_fx_monthly boş)", stockoutTop: so.slice(0, 10).map(r => ({ sku: r.sku, revMonthlyTry: Math.round((num(r.rev90) ?? 0) / 3) })) };
 }

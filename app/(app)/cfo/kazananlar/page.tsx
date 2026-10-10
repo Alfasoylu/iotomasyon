@@ -8,8 +8,10 @@
  * Sayfa hesap yapmaz, dondurulmuş satırı gösterir. Ama üç şeyi ısrarla görünür kılar,
  * çünkü rakamın kendisi kadar rakamın ne kadar sağlam olduğu da karar değiştirir:
  *
- *   • KAPSAM — maliyeti bilinmeyen ürün hesaba girmiyor. %85'in altında ay
- *     "kâr arttı" demeye yetmez; ölçüm iyileşmiş de olabilir.
+ *   • KAPSAM — maliyeti bilinmeyen ürün hesaba girmiyor. Motorun maliyet kapsamı eşiğinin
+ *     (`getCfoConfig().minCostCoveragePct`, varsayılan %95 — motor bu eşiğin altında marj/kâr
+ *     kurallarını susturur) altındaki ay "kâr arttı" demeye yetmez; ölçüm iyileşmiş de olabilir.
+ *     Sayfada ayrı eşik yok (CFO-023: eskiden %85'ti, motor %95 — aynı ay iki ekranda farklı hükümdü).
  *   • ORAN GÜVENİ — kanalın net tahsilat oranı ölçülmediyse (Pazarama, Temu)
  *     o satırın kârı varsayıma dayanır. Satır bazında rozetle duruyor.
  *   • TOP-10 DIŞI — payı %100'ü aşan ayda ilk 10 dışındaki ürünler zarar yazmıştır.
@@ -20,6 +22,7 @@ import { Trophy, ArrowRight, TriangleAlert } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { getCfoConfig } from "@/lib/cfo-agent/config";
 import { fmtTry, fmtNum } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
@@ -86,6 +89,7 @@ export default async function CfoWinnersPage({
   searchParams: Promise<{ ay?: string }>;
 }) {
   await requirePermission(PERMISSIONS.CFO_READ);
+  const KAPSAM_ESIGI = getCfoConfig().minCostCoveragePct;
 
   const { ay } = await searchParams;
 
@@ -216,7 +220,7 @@ export default async function CfoWinnersPage({
       {/* ── Ay seçimi ─────────────────────────────────────────────── */}
       <div className="mb-4 flex flex-wrap gap-1.5">
         {aylar.map((a) => {
-          const dusuk = n(a.kapsam_pct) < 85;
+          const dusuk = n(a.kapsam_pct) < KAPSAM_ESIGI;
           const aktif = a.ay_str === secili.ay_str;
           return (
             <Link
@@ -256,8 +260,8 @@ export default async function CfoWinnersPage({
           {kart(
             "Maliyet kapsamı",
             `%${kapsam.toFixed(1)}`,
-            kapsam >= 85 ? "ciro bazında, güvenilir" : "maliyeti bilinmeyen ürünler hesap dışı",
-            kapsam >= 85 ? "ok" : kapsam >= 60 ? "warn" : "danger",
+            kapsam >= KAPSAM_ESIGI ? "ciro bazında, güvenilir" : "maliyeti bilinmeyen ürünler hesap dışı",
+            kapsam >= KAPSAM_ESIGI ? "ok" : kapsam >= 60 ? "warn" : "danger",
           )}
           {kart(
             "Ayın birincisi",
@@ -282,7 +286,7 @@ export default async function CfoWinnersPage({
 
         {/* Rakamın kendisi kadar sağlamlığı da karar değiştirir — uyarılar tabloyla aynı ekranda. */}
         <div className="mt-3 space-y-2">
-          {kapsam < 85 &&
+          {kapsam < KAPSAM_ESIGI &&
             uyari(
               `Maliyet kapsamı %${kapsam.toFixed(1)}. Bu ayın kârı, maliyeti bilinen ürünlerin kârıdır — ` +
                 `gerçek toplam bundan farklıdır. Kapsamı farklı aylar birbiriyle KARŞILAŞTIRILAMAZ: ` +
@@ -401,7 +405,7 @@ export default async function CfoWinnersPage({
       <Card className="p-5">
         <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Aylık seyir</h2>
         <p className="mb-4 text-[11px] text-[var(--text-muted)]">
-          Kapsamı %85&apos;in altındaki aylar soluk. Bu aylar diğerleriyle aynı ölçekte değil —
+          Kapsamı %{KAPSAM_ESIGI}&apos;in (motor eşiği) altındaki aylar soluk. Bu aylar diğerleriyle aynı ölçekte değil —
           aradaki büyümenin ne kadarı kâr, ne kadarı ölçüm iyileşmesi ayrılamaz.
         </p>
         <CfoTable
@@ -420,7 +424,7 @@ export default async function CfoWinnersPage({
             const k = n(a.kapsam_pct);
             const t = n(a.ay_toplam_kar);
             const pay = n(a.top10_payi_pct);
-            const zayif = k < 85;
+            const zayif = k < KAPSAM_ESIGI;
             return (
               <tr key={a.ay_str} className={zayif ? "opacity-50" : ""}>
                 <Td strong>

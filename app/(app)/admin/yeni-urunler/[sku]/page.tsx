@@ -10,6 +10,7 @@ import { PackagePlus, ArrowLeft, ExternalLink } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { getCurrentFx } from "@/lib/fx/current";
 import { fmtNum, fmtUsd } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
@@ -75,9 +76,11 @@ export default async function AdayPage({ params }: { params: Promise<{ sku: stri
   };
   const hazir = promptHazirMi(girdi);
 
+  // Kur TEK kaynaktan (lib/fx/current: cfo_kur → cfo_settings → elle → varsayılan) — sayfada sabit kur yok (CFO-023 / RF-003).
+  const fx = await getCurrentFx();
   const marj =
     n(aday.satis_try) > 0 && n(aday.gumruklu_usd) > 0
-      ? ((n(aday.satis_try) * 0.8 - n(aday.kargo_try) - n(aday.gumruklu_usd) * 48.5) /
+      ? ((n(aday.satis_try) * 0.8 - n(aday.kargo_try) - n(aday.gumruklu_usd) * fx.usdTry) /
           (n(aday.satis_try) * 0.8)) * 100
       : null;
 
@@ -192,7 +195,7 @@ export default async function AdayPage({ params }: { params: Promise<{ sku: stri
         {marj != null && marj < 15 && (
           <p className="mt-3 rounded-md border border-[var(--danger-border)] bg-[var(--danger-dim)] px-3 py-2 text-[11px] leading-snug text-[var(--danger)]">
             Tahmini marj %{marj.toFixed(1)} — komisyon %20 ve kargo düşüldükten sonra. Bu fiyatla
-            ilan açmak zarar yazabilir; fiyatı gözden geçirin. (Kur 48,50 varsayıldı.)
+            ilan açmak zarar yazabilir; fiyatı gözden geçirin. (Kur {fx.usdTry.toFixed(2)} · {fx.usdTrySource}.)
           </p>
         )}
 

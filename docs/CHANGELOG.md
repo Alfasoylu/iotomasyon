@@ -9,6 +9,14 @@
 
 ## 2026-10
 
+### CFO sayfalarında eşik, kur ve hedef motorla aynı kaynaktan (2026-10-10)
+
+- Ölü stok sayfasındaki kırmızı eşik artık CFO ayarlarındaki ölü stok oranından okunuyor (listeyi üreten görünümle aynı kural; bugünkü ayar %20, görünüm değişmedi).
+- Ayın Kazananları sayfası maliyet kapsamını motorla aynı eşikle (%95) değerlendiriyor; kapsamı %86–87 olan Mart ve Mayıs 2026 artık "güvenilir" gösterilmiyor.
+- Yeni ürün adayı sayfasındaki tahmini marj sabit 48,50 kur yerine sistemin güncel kurunu (kaynağıyla) kullanıyor.
+- Sermaye ve Çalışan CFO sayfalarındaki aylık ciro hedefi metni sabit "100.000 USD" yerine CFO ayarlarındaki hedeften geliyor.
+- Yeni otomatik test, bu sabitlerin sayfalara geri dönmesini engelliyor.
+
 ### CFO motoru ve günlük çalışma planı kendi zamanlanmış görevlerinde (2026-10-10)
 
 - CFO motoru senkronlardan bağımsız, günde iki kez kendi zamanlanmış görevine alındı: sabah 06–07 ve öğleden sonra 16–17 (TR). Önceden senkronlardan sonra süre yetmediği için atlanıyordu.
