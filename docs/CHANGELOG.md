@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### Ölü stok tutarı tek kurala bağlandı (2026-10-10)
+
+- Ölü stok ekranları ve sermaye sağlığı artık yalnız maliyeti bilinen ürünlerin bağlı sermayesini topluyor (bugün 27 ürün, 122.172 TL). Maliyeti bilinmeyen 68 ürün (satış fiyatıyla 2,02M TL) ayrıca gösteriliyor, toplama girmiyor; eskiden "Bağlı sermaye 2,14M TL" bu iki farklı esası birlikte topluyordu.
+
 ### N11 komisyonu CFO kanal kârlılığına girdi (2026-10-10)
 
 - N11 siparişlerinde Entegra komisyonu 0 geldiği için CFO N11 kârını komisyonsuz hesaplıyordu. Artık N11 API'sinden ölçülen %15,9 etkin oran tahmini komisyon olarak kanal marjına giriyor (son 30 günde yaklaşık 15.400 TL). Oran 90 gün geçerli; yenilenmezse kanal yeniden "bilinmiyor" olur.

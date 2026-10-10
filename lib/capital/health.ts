@@ -6,13 +6,14 @@ import { getCurrentFx } from "@/lib/fx/current";
 import { forecastMonthlySales, buildMonthlySalesMap, effectiveMonthlyUnits as pickEffectiveMonthly } from "@/lib/sales-forecast";
 import { forecastV2ForConsumers, v2DecisionDemand } from "@/lib/forecast/consumer";
 import { capitalScore, type CapitalScore } from "./score";
+import { deadStockValue, isCostBasis } from "@/lib/cfo/dead-stock-value";
 
 // Sermaye sağlığı — TEK hesap (2026-10-07 panel taraması: /admin/sermaye-saglik, /admin/capital, /admin/executive ve
 // dashboard manşeti dört ayrı kopyaydı; üç farklı kur, iki farklı "ölü stok" ve iki farklı bağlı sermaye kuralı vardı).
 // Artık sayılar CFO'nun kaynaklarından gelir:
 //   kur            → lib/fx/current.ts (USD/TRY CFO kur defteri cfo_kur; elle girilen aylık kur bayattı)
 //   bağlı sermaye  → cfo_stok_deger.maliyet_degeri (gercek_stok) = stok × birim maliyet; yer tutucu stoklar hariç
-//   ölü stok       → cfo_olu_stok (CFO'nun ölü stok kuralı; /cfo/olu-stok ile aynı liste)
+//   ölü stok       → cfo_olu_stok (CFO'nun ölü stok kuralı; /cfo/olu-stok ile aynı liste); TL yalnız maliyet esaslı (dead-stock-value)
 // Talep (aylık kâr / acil sipariş için) Forecast V2 köprüsünden; bayrak kapalıyken eski 3 tablo + mevsim tahmini.
 // Salt-okunur.
 
@@ -31,13 +32,13 @@ export type HealthProduct = {
   lockedTry: number; costMissing: boolean; realStock: boolean;
   monthlyProfitTry: number; prevMonthlyProfitTry: number; stockDays: number | null;
 };
-export type DeadRow = { sku: string; productId: string | null; name: string; stock: number; lockedTry: number; alarm: string; reason: string | null; lastSale: string | null };
+export type DeadRow = { sku: string; productId: string | null; name: string; stock: number; lockedTry: number | null; saleValueTry: number | null; alarm: string; reason: string | null; lastSale: string | null };
 
 export type CapitalHealth = {
   fx: CapitalFx; v2On: boolean; products: HealthProduct[];
   lockedTry: number; costMissingCount: number;
   monthlyExpectedTry: number; prevMonthlyExpectedTry: number; annualRoiPct: number; prevAnnualRoiPct: number;
-  dead: { rows: DeadRow[]; totalTry: number };
+  dead: { rows: DeadRow[]; totalTry: number; unknownCostCount: number; saleValueTry: number };
   urgentCount: number; liquidation: HealthProduct[]; stars: HealthProduct[];
   categories: { name: string; lockedTry: number; productCount: number; monthlyProfitTry: number }[];
   score: CapitalScore;
@@ -78,8 +79,8 @@ export async function loadCapitalHealth(now = new Date()): Promise<CapitalHealth
        GROUP BY "productId", period`, since30, since60),
     prisma.$queryRaw<Array<{ id: string; gercek_stok: boolean; maliyet_degeri: unknown; birim_maliyet: unknown }>>`
       select id, gercek_stok, maliyet_degeri, birim_maliyet from cfo_stok_deger`,
-    prisma.$queryRaw<Array<{ sku: string; ad: string; stok: number; bagli_sermaye: unknown; alarm: string; alarm_sebep: string | null; son_satis: Date | null }>>`
-      select sku, ad, stok, bagli_sermaye, alarm, alarm_sebep, son_satis from cfo_olu_stok order by bagli_sermaye desc nulls last`,
+    prisma.$queryRaw<Array<{ sku: string; ad: string; stok: number; bagli_sermaye: unknown; deger_kaynagi: string | null; alarm: string; alarm_sebep: string | null; son_satis: Date | null }>>`
+      select sku, ad, stok, bagli_sermaye, deger_kaynagi, alarm, alarm_sebep, son_satis from cfo_olu_stok order by bagli_sermaye desc nulls last`,
   ]);
 
   const monthlyByProduct = buildMonthlySalesMap(monthlyRows.map(r => ({ productId: r.productId, month: r.month, units: r.units })));
@@ -119,7 +120,8 @@ export async function loadCapitalHealth(now = new Date()): Promise<CapitalHealth
 
   const bySku = new Map(products.map(p => [p.sku.toLowerCase(), p.id]));
   const dead: DeadRow[] = deadRows.map(r => ({
-    sku: r.sku, productId: bySku.get(String(r.sku).toLowerCase()) ?? null, name: r.ad, stock: Number(r.stok), lockedTry: Number(r.bagli_sermaye ?? 0),
+    sku: r.sku, productId: bySku.get(String(r.sku).toLowerCase()) ?? null, name: r.ad, stock: Number(r.stok),
+    lockedTry: isCostBasis(r) ? Number(r.bagli_sermaye) : null, saleValueTry: isCostBasis(r) || r.bagli_sermaye == null ? null : Number(r.bagli_sermaye),
     alarm: r.alarm, reason: r.alarm_sebep, lastSale: r.son_satis ? new Date(r.son_satis).toISOString().slice(0, 10) : null,
   }));
 
@@ -127,7 +129,8 @@ export async function loadCapitalHealth(now = new Date()): Promise<CapitalHealth
   const monthlyExpectedTry = enriched.reduce((s, p) => s + Math.max(0, p.monthlyProfitTry), 0);
   const prevMonthlyExpectedTry = enriched.reduce((s, p) => s + Math.max(0, p.prevMonthlyProfitTry), 0);
   const roi = (m: number) => (lockedTry > 0 ? ((m * 12) / lockedTry) * 100 : 0);
-  const deadTotal = dead.reduce((s, r) => s + r.lockedTry, 0);
+  // CFO-020: ölü stok TL yalnız maliyet esaslı (lib/cfo/dead-stock-value.ts) — satış değeriyle dolan satırlar ayrı, bağlı sermayeye bölünmez.
+  const deadValue = deadStockValue(deadRows), deadTotal = deadValue.costTry;
   const urgentCount = enriched.filter(p => p.stockDays != null && p.stockDays > 0 && p.stockDays < 14).length;
   const liquidationAll = enriched.filter(p => p.lockedTry > 0 && p.t30g === 0 && p.lifetimeSold > 0).sort((a, b) => b.lockedTry - a.lockedTry);
 
@@ -141,7 +144,7 @@ export async function loadCapitalHealth(now = new Date()): Promise<CapitalHealth
   return {
     fx, v2On: v2 != null, products: enriched, lockedTry, costMissingCount: enriched.filter(p => p.costMissing).length,
     monthlyExpectedTry, prevMonthlyExpectedTry, annualRoiPct: roi(monthlyExpectedTry), prevAnnualRoiPct: roi(prevMonthlyExpectedTry),
-    dead: { rows: dead, totalTry: deadTotal }, urgentCount, liquidation: liquidationAll,
+    dead: { rows: dead, totalTry: deadTotal, unknownCostCount: deadValue.unknownCostSku, saleValueTry: deadValue.saleValueTry }, urgentCount, liquidation: liquidationAll,
     stars: enriched.filter(p => p.monthlyProfitTry > 0).sort((a, b) => b.monthlyProfitTry - a.monthlyProfitTry),
     categories: [...cat.values()].sort((a, b) => b.lockedTry - a.lockedTry),
     score: capitalScore({ annualRoiPct: roi(monthlyExpectedTry), deadRatio: lockedTry > 0 ? deadTotal / lockedTry : 0, urgentCount, liquidationCount: liquidationAll.length }),
