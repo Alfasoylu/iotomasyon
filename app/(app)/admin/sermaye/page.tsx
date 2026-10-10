@@ -199,7 +199,7 @@ export default async function SermayePage() {
             label="Ölü Stok (CFO kuralı)"
             value={fmtTry(deadTry)}
             valueColor="text-[var(--warn)]"
-            sub={`${h.dead.rows.length} ürün · bağlı sermayenin ${fmtPct(h.lockedTry > 0 ? (deadTry / h.lockedTry) * 100 : 0, 0)}'i`}
+            sub={`${h.dead.rows.length - h.dead.unknownCostCount} ürün maliyetle · bağlı sermayenin ${fmtPct(h.lockedTry > 0 ? (deadTry / h.lockedTry) * 100 : 0, 0)}'i${h.dead.unknownCostCount > 0 ? ` · ${h.dead.unknownCostCount} ürün maliyet bilinmiyor (satış değeri ${fmtTry(h.dead.saleValueTry)}, toplama girmez)` : ""}`}
           />
         </div>
 
@@ -254,14 +254,14 @@ export default async function SermayePage() {
             csv={{
               filename: "olu-stok.csv",
               columns: [
-                { header: "SKU", key: "sku" }, { header: "Ürün", key: "name" }, { header: "Bağlı Sermaye (TRY)", key: "locked" },
+                { header: "SKU", key: "sku" }, { header: "Ürün", key: "name" }, { header: "Bağlı Sermaye (TRY, maliyet)", key: "locked" }, { header: "Satış değeri (TRY, maliyet yok)", key: "sale" },
                 { header: "Stok", key: "stock" }, { header: "Alarm", key: "alarm" }, { header: "Sebep", key: "reason" }, { header: "Son satış", key: "last" },
               ],
-              rows: h.dead.rows.map((r) => ({ sku: r.sku, name: r.name, locked: r.lockedTry.toFixed(2), stock: r.stock, alarm: r.alarm, reason: r.reason ?? "", last: r.lastSale ?? "" })),
+              rows: h.dead.rows.map((r) => ({ sku: r.sku, name: r.name, locked: r.lockedTry?.toFixed(2) ?? "", sale: r.saleValueTry?.toFixed(2) ?? "", stock: r.stock, alarm: r.alarm, reason: r.reason ?? "", last: r.lastSale ?? "" })),
             }}
             rows={h.dead.rows.slice(0, 10).map((r) => ({
               id: r.sku, href: r.productId ? `/products/${r.productId}` : null, primary: r.name, secondary: r.sku,
-              valueLabel: "bağlı sermaye", value: fmtTry(r.lockedTry), meta: `stok ${r.stock} · ${r.alarm}${r.lastSale ? ` · son satış ${r.lastSale}` : " · hiç satış yok"}`,
+              valueLabel: r.lockedTry != null ? "bağlı sermaye" : "satış değeri · maliyet yok", value: fmtTry(r.lockedTry ?? r.saleValueTry ?? 0), meta: `stok ${r.stock} · ${r.alarm}${r.lastSale ? ` · son satış ${r.lastSale}` : " · hiç satış yok"}`,
             }))}
             emptyMsg="Ölü stok yok"
           />

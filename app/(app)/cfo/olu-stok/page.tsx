@@ -35,6 +35,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CfoTable, Th, Td } from "@/components/cfo/data-table";
 import { RowActions } from "./row-actions";
+import { deadStockValue, isCostBasis } from "@/lib/cfo/dead-stock-value";
 
 export const dynamic = "force-dynamic";
 
@@ -117,6 +118,9 @@ export default async function CfoDeadStockPage() {
   const ORAN_ESIGI = n(esik[0]?.oran);
 
   const o = ozetRows[0];
+  // CFO-020: TL toplamı tek kural — yalnız maliyet esaslı satırlar (lib/cfo/dead-stock-value.ts); satış değeriyle dolan satırlar ayrı.
+  const deger = deadStockValue(rows), kirmiziDeger = deadStockValue(rows.filter((r) => r.alarm === "KIRMIZI"));
+  const maliyetsizNot = (d: typeof deger) => (d.unknownCostSku > 0 ? ` · ${fmtNum(d.unknownCostSku)} SKU maliyet bilinmiyor (satış değeri ${fmtTry(d.saleValueTry)}, toplama girmez)` : "");
   const gecikmis = rows.filter((r) => r.kontrol_gecikti);
   const temizlenenToplam = released.reduce((a, r) => a + (n(r.tutar) ?? 0), 0);
 
@@ -180,14 +184,14 @@ export default async function CfoDeadStockPage() {
       <Card className="mb-6 p-5">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {kart(
-            "Bağlı sermaye",
-            fmtTry(n(o?.bagli_sermaye)),
-            `${fmtNum(Number(o?.toplam_sku ?? 0))} SKU`,
+            "Bağlı sermaye (maliyet)",
+            fmtTry(deger.costTry),
+            `${fmtNum(deger.costSku)} / ${fmtNum(Number(o?.toplam_sku ?? 0))} SKU maliyetle${maliyetsizNot(deger)}`,
           )}
           {kart(
             "Kırmızı",
-            fmtTry(n(o?.kirmizi_bagli)),
-            `${fmtNum(Number(o?.kirmizi ?? 0))} SKU · acil elden geçmeli`,
+            fmtTry(kirmiziDeger.costTry),
+            `${fmtNum(Number(o?.kirmizi ?? 0))} SKU · acil elden geçmeli${maliyetsizNot(kirmiziDeger)}`,
             "danger",
           )}
           {kart(
@@ -267,7 +271,10 @@ export default async function CfoDeadStockPage() {
                   )}
                 </Td>
                 <Td right>{fmtNum(r.stok)}</Td>
-                <Td right strong>{fmtTry(n(r.bagli_sermaye))}</Td>
+                <Td right strong>
+                  {fmtTry(n(r.bagli_sermaye))}
+                  {!isCostBasis(r) && <span className="block text-[10px] font-normal text-[var(--text-muted)]">satış değeri · maliyet yok</span>}
+                </Td>
                 <Td right muted>
                   {fmtNum(Number(r.adet_30g ?? 0))} / {fmtNum(Number(r.adet_90g ?? 0))}
                   <br />

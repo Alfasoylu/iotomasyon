@@ -1,12 +1,12 @@
 ---
 last_updated: 2026-10-10 23:00 TR
-current_main_commit: cacefd1
+current_main_commit: 633c58a
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — CFO-028 adım 2: N11 komisyonu API ölçümlü oranla (%15,88, 90 gün geçerli) kanal marjında; Koçtaş örneklem yetersiz, UNKNOWN kalır (boyut 4 tüm kanallar kapanınca yeniden değerlendirilir)"
+score_change: "unchanged — CFO-020 ✅ ölü stok TL tek kural (yalnız maliyet esaslı; 68 maliyetsiz SKU satış değeriyle ayrı, toplama girmez)"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)
@@ -190,7 +190,7 @@ Ek: modül → girdi → çıktı → tüketici (özet)
 | `/cfo/sorular` | VOI, açık sorular | voi | YENİ | Sorular durum sözlüğü karışık (ACIK/OPEN, CEVAPLANDI/ANSWERED, KAPALI/KAPANDI) |
 | `/cfo/kazananlar` | Aylık kazananlar, ciro hedefi, ithalat önerisi | `cfo_ay_kazanan*`, `cfo_ciro_hedef` | görünüm | Ciro hedefi `cfo_settings.usdTryRate` + son tam ay (Goal Engine TCMB + MTD); kapsam eşiği yorumda %85 ↔ motor %95 (✓ 10.10 CFO-023: sayfa motorun `minCostCoveragePct`'ini okur); maliyetsiz SKU'yu kârdan düşürür |
 | `/cfo/odemeler` | Haftalık giriş/çıkış, dip, kapasite, alacak-borç net | `cfo_odeme_gunluk`, `cfo_yaklasan_odeme`, `cfo_nakit_dibi` | görünüm | Açılış şahsi dahil + vadesi geçmiş ödenmemişler dahil ↔ projeksiyon bugünden itibaren; kapasite tam ticari limit + bakiyesi bilinmeyen bankanın limiti |
-| `/cfo/olu-stok` | Ölü stok | `cfo_olu_stok*` | görünüm | Eşik `0.2` sayfada sabit ↔ `cfo_settings.deadStockSalesRatioPct` (✓ 10.10 CFO-023: görünümle aynı ifade); 4 ayrı ölü stok kuralı |
+| `/cfo/olu-stok` | Ölü stok | `cfo_olu_stok*` | görünüm | Eşik `0.2` sayfada sabit ↔ `cfo_settings.deadStockSalesRatioPct` (✓ 10.10 CFO-023: görünümle aynı ifade); 4 ayrı ölü stok kuralı (✓ 10.10 CFO-020: liste tek görünüm, TL tek kural — yalnız maliyet esaslı) |
 | `/cfo/ayarlar` | Parametreler | `cfo_settings` | ESKİ | Ölü alanlar (`stockCostUsd`, `blockedStockUsd`); "KMH / kart aylık faiz" etiketi yanlış (kart kullanmıyor) |
 | `/cfo/calisan`, `/cfo/calisma-durumu` | İş akışı, hedefler, borç tahmini; kapsam | agent | AGENT | "aylık 100.000 USD" metinde sabit (✓ 10.10 CFO-023: `cfo_settings.monthlyRevenueTargetUsd`; `/cfo/sermaye` etiketi de) |
 | `/cfo/defter` | Notlar | `cfoNote` | — | — |
