@@ -4,7 +4,7 @@
  * Ağ yok (sahte fetch). Çalıştır: node --import tsx __tests__/pttavm-write.test.ts
  */
 import assert from "node:assert/strict";
-import { pttavmWriteEnabled, setProductActive, trackingResult, updateStockPrices, validateStockPriceItems } from "../lib/pttavm/write";
+import { pttavmWriteEnabled, setProductActive, trackingResult, updateStockPrices, upsertProducts, validateStockPriceItems, validateUpsert } from "../lib/pttavm/write";
 import type { PttavmConfig } from "../lib/pttavm/client";
 
 async function main() {
@@ -45,6 +45,20 @@ async function main() {
   await trackingResult(rest, "trk-1", f);
   assert.equal(calls[2].url, "https://integration-api.pttavm.com/api/v1/products/tracking-result/trk-1");
   await assert.rejects(trackingResult(rest, "../x", f), /geçersiz/);
+  // Ürün ekleme/güncelleme (upsert): yeni üründe zorunlular, varyantlı ürün reddi, yalnız verilen alanlar
+  const ue = validateUpsert([{ barcode: "N1", isNew: true }, { barcode: "V1", isNew: false, hasVariants: true, name: "x" }, { barcode: "U1", isNew: false },
+    { barcode: "P1", isNew: false, priceWithVat: 100, vatRate: 0 }, { barcode: "L1", isNew: false, name: "x".repeat(201) }]);
+  for (const re of [/kategori zorunlu/, /ad zorunlu/, /fiyat, KDV ve stok/, /en az bir görsel/, /ean zorunlu/, /varyantları siler/, /en az bir alan/, /KDV > 0/, /1–200/]) assert.ok(ue.some(e => re.test(e)), String(re));
+  const neu = { barcode: "ALFOS-X", isNew: true, categoryId: 7, ean: "ALFOS-X", name: "Yeni ad", priceWithVat: 250, vatRate: 20, quantity: 4, images: ["https://cdn.y/a.jpg"] };
+  assert.deepEqual(validateUpsert([neu]), []);
+  await upsertProducts(rest, [neu], f);
+  assert.equal(calls[3].url, "https://integration-api.pttavm.com/api/v1/products/upsert");
+  assert.deepEqual(JSON.parse(String(calls[3].init.body)), { items: [{ barcode: "ALFOS-X", categoryId: 7, ean: "ALFOS-X", name: "Yeni ad", priceWithVat: 250, vatRate: 20, quantity: 4, images: [{ url: "https://cdn.y/a.jpg" }] }] });
+  await upsertProducts(rest, [{ barcode: "B9", isNew: false, longDescription: "<p>yeni</p>" }], f);
+  assert.deepEqual(JSON.parse(String(calls[4].init.body)), { items: [{ barcode: "B9", longDescription: "<p>yeni</p>" }] });
+  delete process.env.PTTAVM_WRITE_ENABLED;
+  await assert.rejects(upsertProducts(rest, [neu], f), /yazma kapalı/);
+  assert.equal(calls.length, 5);
   if (prev === undefined) delete process.env.PTTAVM_WRITE_ENABLED; else process.env.PTTAVM_WRITE_ENABLED = prev;
   console.log("PttAVM yazma: bayrak kapalıyken istek yok, resmî kurallar, stock-prices gövdesi, aktif/pasif, işlem takibi passed");
 }

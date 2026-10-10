@@ -68,3 +68,53 @@ export async function trackingResult(cfg: PttavmConfig, trackingId: string, f: F
   if (!/^[\w-]{4,100}$/.test(trackingId)) throw new Error("geçersiz trackingId");
   return send(cfg, "POST", `/products/tracking-result/${trackingId}`, {}, f);
 }
+
+// ── Ürün ekleme / güncelleme (POST /products/upsert) ─────────────────────────
+// Kaynak: developers.pttavm.com/tr/katalog-entegrasyonu/ueruen-ekleme-guncelleme. Sisteme kayıtlı olmayan barkod YENİ ürün olur;
+// kayıtlıysa yalnız gönderilen alanlar güncellenir. Varyant gönderilmez (varyant gönderilmezse mevcut varyant SİLİNİR — bu yüzden
+// varyantlı ürünlerde upsert reddedilir: hasVariants). Kurallar: ≤ 1000, ad ≤ 200, KDV 0/1/10/20 (KDV dahil fiyatta > 0), stok ≥ 0,
+// desi 0–300, indirim 0–70, yeni üründe kategori + ad + fiyat + stok + ≥ 1 görsel zorunlu.
+export type PttUpsertItem = { barcode: string; isNew: boolean; hasVariants?: boolean; categoryId?: number; ean?: string; name?: string;
+  priceWithVat?: number; vatRate?: number; quantity?: number; longDescription?: string; shortDescription?: string; images?: string[];
+  desi?: number; discount?: number; brand?: string; productCode?: string; active?: boolean };
+
+const isUrl = (u: string) => /^https?:\/\/[^\s/]+\.[^\s]+$/.test(u);
+
+export function validateUpsert(items: PttUpsertItem[]): string[] {
+  const errors: string[] = [];
+  if (!items.length) errors.push("boş ürün listesi gönderilemez");
+  if (items.length > PTTAVM_MAX_ITEMS) errors.push(`tek istekte en fazla ${PTTAVM_MAX_ITEMS} ürün`);
+  const seen = new Set<string>();
+  for (const it of items) {
+    const b = it.barcode?.trim() ?? "";
+    if (!b) { errors.push("barkodsuz ürün işleme alınmaz"); continue; }
+    if (seen.has(b)) errors.push(`${b}: aynı barkod iki kez`); seen.add(b);
+    if (it.hasVariants) errors.push(`${b}: varyantlı üründe upsert varyantları siler — desteklenmiyor`);
+    if (it.name != null && (!it.name.trim() || it.name.length > 200)) errors.push(`${b}: ürün adı 1–200 karakter olmalı`);
+    if (it.vatRate != null && !(PTTAVM_ALLOWED_VAT as readonly number[]).includes(it.vatRate)) errors.push(`${b}: KDV 0, 1, 10 ya da 20 olmalı`);
+    if (it.priceWithVat != null && (!(it.priceWithVat > 1) || !(it.vatRate != null && it.vatRate > 0))) errors.push(`${b}: KDV dahil fiyat > 1 ve KDV > 0 olmalı`);
+    if (it.quantity != null && (!Number.isInteger(it.quantity) || it.quantity < 0 || it.quantity > 9999)) errors.push(`${b}: stok 0–9999 tam sayı olmalı`);
+    if (it.desi != null && (it.desi < 0 || it.desi > 300)) errors.push(`${b}: desi 0–300 olmalı`);
+    if (it.discount != null && (it.discount < 0 || it.discount > 70)) errors.push(`${b}: indirim 0–70 arası olmalı`);
+    if (it.images != null && (!it.images.length || !it.images.every(isUrl))) errors.push(`${b}: geçerli görsel adresi gerekli`);
+    if (it.isNew) {
+      if (!(Number.isInteger(it.categoryId) && it.categoryId! > 0)) errors.push(`${b}: yeni üründe kategori zorunlu`);
+      if (!it.name?.trim()) errors.push(`${b}: yeni üründe ad zorunlu`);
+      if (it.priceWithVat == null || it.quantity == null || it.vatRate == null) errors.push(`${b}: yeni üründe fiyat, KDV ve stok zorunlu`);
+      if (!it.images?.length) errors.push(`${b}: yeni üründe en az bir görsel zorunlu`);
+      if (!it.ean?.trim()) errors.push(`${b}: yeni üründe ean zorunlu`);
+    } else if (it.name == null && it.longDescription == null && it.shortDescription == null && it.images == null && it.priceWithVat == null && it.quantity == null && it.active == null)
+      errors.push(`${b}: güncellenecek en az bir alan gerekli`);
+  }
+  return errors;
+}
+
+export async function upsertProducts(cfg: PttavmConfig, items: PttUpsertItem[], f: Fetch = fetch): Promise<StockPriceResult> {
+  if (!pttavmWriteEnabled(cfg)) throw new Error("PttAVM yazma kapalı (PTTAVM_WRITE_ENABLED=true ve REST anahtarları gerekli)");
+  const errors = validateUpsert(items);
+  if (errors.length) throw new Error(`PttAVM ürün isteği geçersiz: ${errors.join("; ")}`);
+  const WIRE = ["categoryId", "ean", "name", "priceWithVat", "vatRate", "quantity", "longDescription", "shortDescription", "desi", "discount", "brand", "productCode", "active"] as const;
+  const body = { items: items.map(i => ({ barcode: i.barcode.trim(), ...Object.fromEntries(WIRE.filter(k => i[k] != null).map(k => [k, i[k]])),
+    ...(i.images ? { images: i.images.map(url => ({ url })) } : {}) })) };
+  return send<StockPriceResult>(cfg, "POST", "/products/upsert", body, f);
+}

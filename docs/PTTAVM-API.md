@@ -50,8 +50,12 @@ aynı istek 5 dk içinde tekrarlanmaz), `PUT /products/{id}/status` (aktif/pasif
 Yalnız REST anahtarları + `PTTAVM_WRITE_ENABLED=true` iken; tek çağıran `lib/actions/olu-stok-actions.ts` (insan onaylı,
 `/cfo/olu-stok/eylem`). Test `pttavm-write`.
 
+`POST /products/upsert` (ölü stok yeni ilan + içerik): kayıtlı olmayan barkod YENİ ürün olur, varyant gönderilmezse mevcut varyantlar
+silinir → `lib/pttavm/lookup.ts` önce barkod sorgusu yapar (içerikte ürün VAR + varyantsız, yeni ilanda ALFOS- barkod BOŞ); yanıt
+yorumlanamazsa gönderilmez. Testler `pttavm-write`, `olu-stok-stock-sync`.
+
 ## Hâlâ KURULMAYANLAR
-`POST /products/upsert` (yeni ürün/içerik — sonraki adım), `POST /orders/{id}/invoice`, kargo `create-barcode` /
+`POST /orders/{id}/invoice`, kargo `create-barcode` /
 `update-no-shipping-order`; SOAP yazma uçlarının tamamı (`StokGuncelle*`, `StokFiyatGuncelle*`, `UpdateProducts*`, `AktifYap`,
 `SaveInvoince`, `OlmayanUrunAdetleriSifirla`). Salt-okuma istemcisi (`client.ts`) yazma uçlarını reddetmeye devam eder (test `pttavm-client`).
 

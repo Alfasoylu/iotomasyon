@@ -9,6 +9,13 @@
 
 ## 2026-10
 
+### Ölü stok: PttAVM yeni ilan ve içerik, AI görsel yükleme (2026-10-10)
+
+- PttAVM'de de ölü stok ürünü için başlık/açıklama/görsel güncellenebiliyor ve Entegra'dan bağımsız yeni ilan açılabiliyor; gönderimden önce ürünün PttAVM'de var olduğu (içerik) ya da yeni barkodun boş olduğu (yeni ilan) ve varyantsız olduğu kontrol ediliyor.
+- Yeni ilanlar için AI ile üretilmiş görseller ekrandan yüklenebiliyor; adresler forma kendiliğinden ekleniyor.
+- Bağımsız ilanların gece stok eşitlemesi PttAVM'yi de kapsıyor.
+- Gönderimler ortam bayrakları açılana kadar kapalı (birim testlerle doğrulandı; canlı gönderim henüz yapılmadı).
+
 ### Ölü stok bağımsız ilanları: kopya engeli ve gece stok eşitlemesi (2026-10-10)
 
 - Yeni (Entegra dışı) Trendyol ilanı mevcut ilanın kopyası olamaz: başlık en fazla %60 benzeyebilir, mevcut görseller kabul edilmez.
