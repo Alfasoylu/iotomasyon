@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 10:56 TR
-current_main_commit: cb66df1
+last_updated: 2026-10-10 11:03 TR
+current_main_commit: 19e4e78
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
 next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — CFO-023 kısım 1: beş sayfa sabiti (ölü stok oran eşiği, kazananlar kapsam eşiği %85, yeni ürün marjında 48,5 kur, sermaye/çalışan sayfalarında 100.000 USD) motorun kaynağına bağlandı ve statik eşlik testiyle korunuyor; değer eşliği (aynı sayı her yüzeyde) CFO-001/002/008 üretim doğrulamalarıyla tamamlanınca tutarlılık yeniden değerlendirilir"
+score_change: "unchanged — RF-020 MITIGATED + CFO-018 kısım 1: gümrük rezervi elle tek hedef/tarih yerine ödeme takviminin dilimlerinden (tek nakit yolu); ödenmemiş gümrük borç/net sermaye sözleşmesinde yalnız bilgi satırı (üretimde doğrulandı); kalan veri farkları (ROMANYA-2408, bayat cfo_import_project) insanda"
 ---
 
 # CFO DECISION LOG

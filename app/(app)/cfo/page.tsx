@@ -210,7 +210,7 @@ export default async function CfoPage() {
             <Link href="/cfo/gumruk" className="text-xs text-[var(--accent)]">Detay <ArrowRight size={12} className="inline" /></Link>
           </div>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
-            <Field label="Hedef" value={fmtTry(o.customs.target)} />
+            <Field label="Hedef" value={fmtTry(o.customs.target)} sub={`ödeme takviminden · ${o.customs.tranches.length} dilim`} />
             <Field label="Ayrılmış" value={fmtTry(o.customs.saved)} />
             <Field label="İhtiyaç tarihi" value={fmtDate(o.customs.dueDate)} sub={o.customs.daysLeft != null ? `${o.customs.daysLeft} gün` : undefined} />
             <Field label="Projeksiyon nakit" value={fmtTry(o.customs.projectedCash)} />

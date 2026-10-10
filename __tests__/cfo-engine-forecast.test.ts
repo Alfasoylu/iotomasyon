@@ -33,11 +33,27 @@ const k = computeCfo(base({ settings: { kmhMonthlyRatePct: 4.5 } as unknown as C
 assert.equal(Math.round(k.kmhInterestMonthlyTry), Math.round(100000 * 0.04083), "yalnız ölçülmüş oranlı kullanım faizlenir");
 assert.equal(k.kmhUsedWithoutRateTry, 50000);
 assert.deepEqual(k.kmh.range, { minPct: 4.083, maxPct: 4.083, unmeasured: 1 });
-const custom = computeCfo(base({ settings: { kmhMonthlyRatePct: 4.5, customsReserveTarget: 200000, customsReserveSaved: 0, customsReserveDate: day(5) } as unknown as CfoInput["settings"],
-  banks: [bank("Ziraat", 0, 250000, 4.083), bank("Garanti", 0, 500000, null)], receivables: [] }));
+const ev = (id: string, n: number, outflowTry: number, o: Record<string, unknown> = {}) => ({ id, eventDate: day(n), kind: "VERGI_GUMRUK", description: id,
+  inflowTry: 0, outflowTry, relatedImport: "07.26sea", isSettled: false, ...o }) as unknown as CfoInput["cashEvents"][number];
+const custom = computeCfo(base({ settings: { kmhMonthlyRatePct: 4.5, customsReserveSaved: 0 } as unknown as CfoInput["settings"],
+  banks: [bank("Ziraat", 0, 250000, 4.083), bank("Garanti", 0, 500000, null)], receivables: [], cashEvents: [ev("g1", 5, 200000)] }));
 assert.equal(Math.round(custom.customs!.interestCostMonthly), Math.round(200000 * 0.04083), "açık ölçülmüş Ziraat diliminden");
 assert.equal(custom.customs!.interestUnknownTry, 0);
 const alloc = buildAllocation(custom, []);
 assert.equal(alloc.find(a => a.name === "KMH azaltma")!.certainSavingMonthly, 0, "KMH kullanılmıyorsa tasarruf yok");
 assert.equal(Math.round(alloc.find(a => a.name === "Gümrük rezervi")!.certainSavingMonthly!), Math.round(100000 * 0.04083));
-console.log("CFO engine weekly forecast: channel tempo from cfo_tahsilat_tahmini (no overlap with receivables, horizons), last14/4 fallback passed");
+// Gümrük rezervi TEK kaynak ödeme takvimi (RF-020, 2026-10-10): elle girilen tek hedef/tarih okunmaz; dilimler birikimli,
+// her dilim kendi tarihine kadarki tahsilatla karşılaştırılır, bağlayıcı dilim = en büyük açık.
+const legacy = { customsReserveTarget: 250000, customsReserveDate: day(4), customsReserveSaved: 10000 } as unknown as CfoInput["settings"];
+assert.equal(computeCfo(base({ settings: legacy, forecast: [] })).customs, null, "takvimde gümrük yoksa elle hedef kart üretmez");
+const two = computeCfo(base({ settings: legacy, forecast: [], cashEvents: [ev("d2", 11, 150000), ev("d1", 4, 100000), ev("odendi", 3, 999999, { isSettled: true }),
+  ev("kira", 6, 5000, { kind: "SABIT_GIDER", relatedImport: null })] }))!.customs!;
+// d1 (4. gün): alacak 50.000 → açık 100.000 − (50.000 + 10.000) = 40.000; d2 (11. gün): 250.000 − (50.000 + 30.000 − 5.000 + 10.000) = 165.000
+assert.deepEqual(two.tranches.map(t => [t.description, t.cumulative, t.projectedCash, t.gap]), [["d1", 100000, 50000, 40000], ["d2", 250000, 75000, 165000]]);
+assert.deepEqual([two.target, two.gap, two.dueDate!.getTime(), two.daysLeft, two.saved, two.mandatoryOutflow], [250000, 165000, day(11).getTime(), 11, 10000, 5000]);
+const late = computeCfo(base({ forecast: [], receivables: [], cashEvents: [ev("gec", -3, 80000)] })).customs!;
+assert.deepEqual([late.dueDate!.getTime(), late.daysLeft, late.gap], [today.getTime(), 0, 80000], "vadesi geçmiş ödenmemiş dilim bugün vadeli");
+const covered = computeCfo(base({ forecast: [], receivables: [rec("r", 1, 500000)], cashEvents: [ev("a", 3, 100000), ev("b", 8, 100000)] })).customs!;
+assert.deepEqual([covered.gap, covered.target, covered.dueDate!.getTime()], [0, 200000, day(8).getTime()], "açık yoksa toplam yükümlülük son dilimde");
+
+console.log("CFO engine weekly forecast: channel tempo from cfo_tahsilat_tahmini (no overlap with receivables, horizons), last14/4 fallback, customs reserve from payment calendar tranches passed");

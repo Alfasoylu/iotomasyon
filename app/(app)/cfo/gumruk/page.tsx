@@ -32,7 +32,7 @@ export default async function CfoCustomsPage() {
             <TrafficBadge value={o.customs.traffic} />
           </div>
           <CfoTable head={<tr><Th>Kalem</Th><Th right>Tutar</Th><Th>Not</Th></tr>}>
-            <Row label="Hedef" value={fmtTry(o.customs.target)} note="İthalat gümrük + vergi tahmini" />
+            <Row label="Hedef" value={fmtTry(o.customs.target)} note="Bağlayıcı dilime kadar ödenecek gümrük/vergi (ödeme takvimi, birikimli)" />
             <Row label="Ayrılmış rezerv" value={fmtTry(o.customs.saved)} note="Serbest nakde dahil edilmez" />
             <Row label="İhtiyaç tarihi" value={fmtDate(o.customs.dueDate)} note={o.customs.daysLeft != null ? `${o.customs.daysLeft} gün kaldı` : ""} />
             <Row label="Bugünkü net nakit" value={fmtTry(o.netCashTry)} note="Negatif = kullanılan KMH" />
@@ -43,6 +43,21 @@ export default async function CfoCustomsPage() {
             <Row label="Boş KMH kapasitesi" value={fmtTry(o.freeKmhTry)} note="Açığı karşılayabilecek kapasite" />
             <Row label="Açık sonrası kalan kapasite" value={fmtTry(o.customs.remainingCapacity)} note={o.customs.remainingCapacity < 0 ? "KMH YETMİYOR" : "KMH ile karşılanabilir"} strong danger={o.customs.remainingCapacity < 0} />
             <Row label="Açığın 1 aylık faiz maliyeti" value={`${o.customs.interestUnknownTry > 0 ? "en az " : ""}${fmtTry(o.customs.interestCostMonthly)}`} note={o.customs.interestUnknownTry > 0 ? `${fmtTry(o.customs.interestUnknownTry)} oranı ölçülmemiş KMH / kapasite dışı` : "kademeli: hesap başına ölçülmüş oran"} />
+          </CfoTable>
+
+          {/* Kaynak ödeme takvimi (RF-020): her dilim kendi tarihine kadarki tahsilatla karşılaştırılır; en büyük açık bağlayıcıdır */}
+          <h3 className="mb-2 mt-5 text-xs font-semibold text-[var(--text-secondary)]">Ödeme takvimindeki gümrük/vergi dilimleri</h3>
+          <CfoTable head={<tr><Th>Tarih</Th><Th>Kalem</Th><Th right>Tutar</Th><Th right>Birikimli</Th><Th right>Projeksiyon nakit</Th><Th right>Açık</Th></tr>}>
+            {o.customs.tranches.map((t, i) => (
+              <tr key={i}>
+                <Td>{fmtDate(t.date)}</Td>
+                <Td>{t.ref ? `${t.ref} — ` : ""}{t.description.length > 90 ? `${t.description.slice(0, 90)}…` : t.description}</Td>
+                <Td right>{fmtTry(t.amount)}</Td>
+                <Td right>{fmtTry(t.cumulative)}</Td>
+                <Td right>{fmtTry(t.projectedCash)}</Td>
+                <Td right>{t.gap > 0 ? <span className="text-[var(--danger)]">{fmtTry(t.gap)}</span> : "—"}</Td>
+              </tr>
+            ))}
           </CfoTable>
 
           {o.customs.gap > 0 && (
@@ -67,7 +82,7 @@ export default async function CfoCustomsPage() {
         </Card>
       ) : (
         <Card className="mb-6 p-6 text-sm text-[var(--text-muted)]">
-          Gümrük rezerv hedefi ve tarihi girilmemiş — Ayarlar sayfasından tanımlayın.
+          Ödeme takviminde ödenmemiş gümrük/vergi çıkışı yok — rezerv takvimden hesaplanır (Ödemeler sayfasından girilir).
         </Card>
       )}
 

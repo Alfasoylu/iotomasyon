@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 10:56 TR
-current_main_commit: cb66df1
+last_updated: 2026-10-10 11:03 TR
+current_main_commit: 19e4e78
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
 next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — CFO-023 kısım 1: beş sayfa sabiti (ölü stok oran eşiği, kazananlar kapsam eşiği %85, yeni ürün marjında 48,5 kur, sermaye/çalışan sayfalarında 100.000 USD) motorun kaynağına bağlandı ve statik eşlik testiyle korunuyor; değer eşliği (aynı sayı her yüzeyde) CFO-001/002/008 üretim doğrulamalarıyla tamamlanınca tutarlılık yeniden değerlendirilir"
+score_change: "unchanged — RF-020 MITIGATED + CFO-018 kısım 1: gümrük rezervi elle tek hedef/tarih yerine ödeme takviminin dilimlerinden (tek nakit yolu); ödenmemiş gümrük borç/net sermaye sözleşmesinde yalnız bilgi satırı (üretimde doğrulandı); kalan veri farkları (ROMANYA-2408, bayat cfo_import_project) insanda"
 ---
 
 # CFO SCORECARD
@@ -101,3 +101,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 6d05a8e | 60 | 5/12 | Değişmedi (bilinçli): RF-038 (HIGH) — CFO çalışma döngüsü 09.10'dan beri bağlam aşamasında 3B001 ile düşüyordu; aynı PR'da düzeltildi (sorgular sıraya alındı, gerçek PostgreSQL regresyon testi). Otomasyon boyutu ilk başarılı üretim döngüsü gözlenince yeniden değerlendirilir |
 | 2026-10-10 | e40f257 | 60 | 5/12 | Değişmedi (bilinçli): RF-006 kısmı — motorun kendi Vercel cron'u (03:xx/13:xx UTC) ve çalışma döngüsü cron'u (06:xx UTC); senkron zincirinde motor süre bütçesine sığmıyordu (174–190 sn). Otomasyon boyutu ilk cron koşuları gözlenince ve WhatsApp alarm teslimi yapılandırılınca yeniden değerlendirilir |
 | 2026-10-10 | cb66df1 | 60 | 5/12 | Değişmedi (bilinçli): CFO-023 kısım 1 — beş sayfa sabiti motorun kaynağına bağlandı (`/cfo/olu-stok` eşiği `deadStockSalesRatioPct`, `/cfo/kazananlar` kapsam eşiği motorun `minCostCoveragePct`'i, `/admin/yeni-urunler` marjı güncel kur, `/cfo/sermaye` + `/cfo/calisan` hedefi `monthlyRevenueTargetUsd`) + statik eşlik testi `cfo-page-parity`; değer eşliği CFO-001/002/008 üretim doğrulamalarıyla tamamlanınca tutarlılık yeniden değerlendirilir |
+| 2026-10-10 | 19e4e78 | 60 | 5/12 | Değişmedi (bilinçli): RF-020 MITIGATED — ödenmemiş gümrük/navlun (3,79M) borç ve net sermaye sözleşmesinde yalnız bilgi satırı (üretimde doğrulandı); CFO-018 kısım 1: gümrük rezervi ödeme takviminin dilimlerinden (elle tek tarih 09.10 yerine 14.10/21.10/10.11). Veri farkları (ROMANYA-2408 500k↔400k, `cfo_import_project` 24.08'den bayat) insanda |

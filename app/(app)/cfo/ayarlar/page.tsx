@@ -39,7 +39,8 @@ export default async function CfoSettingsPage() {
             <P label="Son 14 tam gün cirosu" value={o.last14dRevenueTry == null ? "bilinmiyor" : fmtTry(o.last14dRevenueTry)}
               note={`${o.revenueSource}${o.revenueDataAgeDays != null ? ` (son tam gün ${o.revenueDataAgeDays} gün önce)` : ""}`} />
             <P label="Aylık ciro run-rate" value={o.monthlyRunRateTry == null ? "bilinmiyor" : fmtTry(o.monthlyRunRateTry)} note="Son 14 tam günden türetilir" />
-            <P label="Gümrük rezerv hedefi" value={fmtTry(num(s.customsReserveTarget))} note={`İhtiyaç tarihi: ${fmtDate(s.customsReserveDate)}`} />
+            {/* RF-020 (2026-10-10): rezerv hedefi ve tarihi ödeme takviminden (ödenmemiş VERGI_GUMRUK dilimleri) — bu iki alan artık okunmuyor */}
+            <P label="Gümrük rezerv hedefi (eski elle alan)" value={fmtTry(num(s.customsReserveTarget))} note={`İhtiyaç tarihi: ${fmtDate(s.customsReserveDate)} — kullanılmıyor; rezerv ödeme takviminden (/cfo/gumruk)`} />
             <P label="Ayrılmış rezerv" value={fmtTry(num(s.customsReserveSaved))} note="Serbest nakde dahil edilmez" />
             {/* Bu iki sabit 10.09.2026'dan beri SERVETE GİRMİYOR — servet cfo_servet
                 görünümünden, gerçek stoktan hesaplanıyor. Kayıt olarak duruyorlar. */}
