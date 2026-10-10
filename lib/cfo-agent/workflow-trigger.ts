@@ -11,6 +11,13 @@ import { prisma } from '@/lib/prisma';
 // Sağlık + WhatsApp alarmı motordan ÖNCE (takılan/eskiyen motor burada görülür; motor yine takılsa da alarm gitmiş olur) ve
 // motordan SONRA (bu koşunun yeni alarmları; öncekinde gönderilen anahtar tekrar gönderilmez). GitHub zamanlamasından bağımsız (CFO-009).
 // maxDurationSec: çağıran route'un süre sınırı. Motor yalnız yeterli süre kaldıysa başlar (engine-budget.ts); atlanırsa defterde iz kalır.
+/** Motor + sağlık alarmı (önce/sonra): senkron zinciri ve ayrı motor cron'u (/api/cron/cfo-engine, RF-006) aynı sırayla çağırır. */
+export async function runEngineWithHealth(engine:EngineTrigger,startedAt:number=Date.now()){
+  const pre=await safeHealthNotify(`${engine}/once`,{before:new Date(startedAt)});
+  const result=await safeCfoEngineRun(engine);
+  await safeHealthNotify(`${engine}/sonra`,{before:new Date(startedAt),alreadySent:pre?.notify?pre.alarms.map(a=>a.key):[]});
+  return result;
+}
 export function scheduleCfoCycle(trigger:string,opts:{engine?:EngineTrigger;maxDurationSec?:number}={}){
   const startedAt=Date.now();
   after(async()=>{
@@ -18,8 +25,9 @@ export function scheduleCfoCycle(trigger:string,opts:{engine?:EngineTrigger;maxD
     const post=async()=>{await safeHealthNotify(`${opts.engine}/sonra`,{before:new Date(startedAt),alreadySent:pre?.notify?pre.alarms.map(a=>a.key):[]});};
     await safeCfoCycle(trigger);
     if(!opts.engine)return;
+    // Bütçe yetmezse motor atlanır; günlük ayrı motor cron'u (vercel.json /api/cron/cfo-engine 03:xx ve 13:xx UTC) kendi 300 sn'siyle koşar.
     if(engineBudgetOk(startedAt,Date.now(),opts.maxDurationSec??300)){await safeCfoEngineRun(opts.engine);await post();return;}
     try{await prisma.cfoChangeLog.create({data:{area:'erisim',item:'CFO motoru atlandı (süre bütçesi)',source:'cfo-engine-budget',kind:'arastirma',
-      note:`${opts.engine}: senkron ${Math.round((Date.now()-startedAt)/1000)} sn sürdü; motor ~150 sn ister, fonksiyon sınırı ${opts.maxDurationSec??300} sn. Sıradaki zamanlanmış koşu çalıştırır.`}});}catch{}
+      note:`${opts.engine}: senkron ${Math.round((Date.now()-startedAt)/1000)} sn sürdü; motor ~150 sn ister, fonksiyon sınırı ${opts.maxDurationSec??300} sn. Günlük motor cron'u (/api/cron/cfo-engine) çalıştırır.`}});}catch{}
   });
 }

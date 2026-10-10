@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 07:45 TR
-current_main_commit: 6d05a8e
+last_updated: 2026-10-10 10:50 TR
+current_main_commit: e40f257
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
-next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038 doğrulaması: 12:00 UTC trendyol-sync sonrası CFO çalışma döngüsü tamamlanıyor mu → CFO-001/CFO-002 v3 doğrulaması + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — RF-038 (HIGH, yeni + aynı PR’da düzeltildi): CFO çalışma döngüsü 09.10 02:34’ten beri her senkronda bağlam aşamasında 3B001 ile düşüyordu (eşzamanlı sorgular savepoint’leri iç içe geçiriyordu); sorgular sıraya alındı, gerçek PostgreSQL’de yeniden üretilip düzeltildi — otomasyon boyutu (4/5) üretimde gözlenince yeniden değerlendirilir"
+score_change: "unchanged — RF-006 kısmı: CFO motoru kendi Vercel cron’unda (03:xx/13:xx UTC, tam 300 sn) ve yetim çalışma döngüsü cron’a bağlandı (06:xx UTC, sabah snapshot’ından sonra Goal v3); senkron zincirinde süre bütçesi yüzünden atlanıyordu — otomasyon boyutu (4/5) ilk cron koşuları gözlenince ve alarm teslimi (WhatsApp yapılandırması) tamamlanınca yeniden değerlendirilir"
 ---
 
 # CFO DECISION LOG

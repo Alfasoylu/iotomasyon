@@ -12,7 +12,8 @@ name: CFO motoru (günde 3) + sağlık alarmı
 #      Süregelen alarm (ör. taban delinmiş) her koşuda e-posta üretmez; cfo_gun_ozeti'nde görünür.
 # Senkron sonrası koşular ayrıca vercel.json xml-sync (05:00 TR) ve trendyol-sync (15:00–15:59 TR) after() içinde (ayrı idempotency anahtarı).
 # ⚠️ GitHub zamanlayıcısı bu repoda güvenilmez (ölçüm 2026-10-08: */5 iş günde 2–3 kez koşuyor). Cowork'ün iki okumasından önceki
-# GÜVENİLİR koşular Vercel cron'larıdır (05:xx ve 15:xx TR); bu iş ek koşu + sağlık e-postası içindir.
+# GÜVENİLİR koşular Vercel cron'larıdır: motorun kendi cron'u /api/cron/cfo-engine 03:xx ve 13:xx UTC (06–07 / 16–17 TR; senkron zincirinde
+# süre bütçesine sığmıyordu — RF-006, 2026-10-10) ve çalışma döngüsü /api/cron/cfo-cycle 06:xx UTC; bu iş ek koşu + sağlık e-postası içindir.
 # Gerekli repo secret'ları: CRON_SECRET + SITE_BASE_URL (yoksa PDKS_BASE_URL). ⚠️ Zamanlanmış workflow yalnız varsayılan dalda (main) çalışır.
 
 on:
