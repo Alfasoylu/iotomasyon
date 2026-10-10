@@ -5,6 +5,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
 import { num, numOrNull, remainingInstallments } from "@/lib/cfo/engine";
 import { cardEffectiveMonthlyRate } from "@/lib/cfo/card-cost";
+import { isPersonalCard } from "@/lib/cfo/ownership";
 import { nextScheduledPayment } from "@/lib/cfo/payment-schedule";
 import { fmtTry, fmtPct, fmtDate, daysFromNow } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
@@ -37,6 +38,11 @@ export default async function CfoDebtsPage() {
   ]);
   const toplamBorc = sozlesme?.find((r) => r.sira === 100);
   const toplamTry = toplamBorc?.tutar == null ? null : Number(toplamBorc.tutar);
+  // Kart toplamı borç sözleşmesinden (cfo_metrik_borc sira 2: totalDebtTry, bilinmeyen toplama girmez; şahsi kart DAHİL — D-P03).
+  // Şahsi kısım aynı kuralla (isPersonalCard = holder "Alp", sözleşmenin sira 92'si ile aynı) ayrıca gösterilir. Sözleşme okunamazsa eski motor.
+  const kartSozlesme = sozlesme?.find((r) => r.sira === 2)?.tutar;
+  const kartToplam = kartSozlesme == null ? o.cardDebtTry : Number(kartSozlesme);
+  const kartSahsi = raw.cards.filter((c) => isPersonalCard(c.holder)).reduce((a, c) => a + (numOrNull(c.totalDebtTry) ?? 0), 0);
   const minPct = raw.settings ? num(raw.settings.cardMinPct) / 100 : 0.2;
   // Aktif kredilerin en geç biten taksit tarihi — "borçtan ne zaman çıkılır" sorusunun cevabı.
   // Planlanmış ödemeler: kredi/kart/sabit gider dışındaki tek seferlik taahhütler.
@@ -166,7 +172,7 @@ export default async function CfoDebtsPage() {
             const min = numOrNull(c.minOverrideTry) ?? (debt != null ? Math.round(debt * minPct) : null);
             return (
               <tr key={c.id}>
-                <Td strong>{c.bank}{c.holder ? ` — ${c.holder}` : ""}</Td>
+                <Td strong>{c.bank}{c.holder ? ` — ${c.holder}` : ""}{isPersonalCard(c.holder) && <span className="ml-1"><Badge variant="neutral">şahsi</Badge></span>}</Td>
                 <Td right>{debt == null ? "—" : fmtTry(debt)}</Td>
                 <Td right>
                   {min == null ? "—" : fmtTry(min)}
@@ -191,8 +197,8 @@ export default async function CfoDebtsPage() {
             );
           })}
           <tr className="bg-[var(--surface-1)] font-semibold">
-            <Td strong>TOPLAM (şirket)</Td>
-            <Td right strong>{fmtTry(o.cardDebtTry)}</Td>
+            <Td strong>TOPLAM (şahsi kart dahil — borç sözleşmesi){kartSahsi > 0 && <span className="block text-[11px] font-normal text-[var(--text-muted)]">şahsi kısım {fmtTry(kartSahsi)} · şirket {fmtTry(kartToplam - kartSahsi)}</span>}</Td>
+            <Td right strong>{fmtTry(kartToplam)}</Td>
             <Td right strong>{fmtTry(o.cardMinTotalTry)}</Td>
             <Td>—</Td><Td>—</Td><Td>—</Td>
             <Td right strong>{fmtTry(o.cardCarryCostTry)}</Td>

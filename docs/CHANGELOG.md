@@ -9,6 +9,10 @@
 
 ## 2026-10
 
+### Borçlar sayfasında kart toplamı doğru etiketlendi (2026-10-10)
+
+- Kredi kartı tablosunun toplamı "şirket" yazıyordu ama şahsi kartları da içeriyordu. Toplam artık borç tanımından okunuyor, "şahsi kart dahil" diye etiketli ve altında şahsi (402.925 TL) / şirket kısmı ayrı gösteriliyor.
+
 ### CFO nakit ufku ve gümrük kartı KMH kapasitesini doğru hesaplıyor (2026-10-10)
 
 - Banka hesabı eksiye düştüğünde CFO ekranındaki nakit ufku, ay sonu ve gümrük rezervi kartları kullanılan KMH'yi iki kez düşüyordu (yanlış "kırmızı"). Artık açık şirketin tam KMH limitiyle karşılaştırılıyor ve gümrük açığının faizi yalnız ek kullanıma hesaplanıyor. Bugün kullanılan KMH olmadığı için ekranda değişiklik yok.
