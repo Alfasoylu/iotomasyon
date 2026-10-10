@@ -8,7 +8,8 @@ import type { ReadSource } from "./sources";
 // reviewed profile never goes dark); the old hash is removed in the production-sync PR right after the DDL.
 export const REVIEWED_SOURCE_HASHES: Record<string, string | readonly string[]> = {
   ...REVIEWED_CFO_VIEW_HASHES,
-  cfo_nakit_kapisi: "56a943eedf652851e15a74bb5e19c7516938f3c57708eea436d117d5dbbb546f", // 2026-10-10 CFO-006: sahsi filtre cfo_hesap_sahsi() (uretimde olculdu)
+  // 2026-10-10 CFO-030 (migration 20261010140000, uretimde olculdu): kmh_limit_try sutunu eklendi (kapasite = pozisyon + tam limit)
+  cfo_nakit_kapisi: "31466cf02d49637248f3936588b4d063faa8eb7b4d863174b6855f406543c9c8",
   // 2026-10-10 CFO-013 tek nakit yolu (migration 20261010110000, uretimde olculdu): vadesi gecmisler bugune, diger tahsilat dahil
   cfo_nakit_projeksiyon: "9f3b9b2e877d154f6eeb7516b6e594e4d30772025bd075be8fa023aaf155ca6a",
 };

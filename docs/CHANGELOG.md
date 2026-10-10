@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### KMH kapasitesi eksi bakiyede doğru hesaplanıyor (2026-10-10)
+
+- Kaynak yeterliliği, sabah ön uçuşu, gümrük dilimi hesabı, kapasite alarmı ve stres testi artık kullanılabilir kaynağı "hesap bakiyeleri + tam KMH limiti" olarak hesaplıyor (Ödemeler sayfasıyla aynı). Önceden bir hesap eksiye düştüğünde kullanılan KMH iki kez düşülüyor, kaynak olduğundan az görünüyordu.
+- Bugün eksi bakiyeli hesap olmadığı için rakamlar değişmedi; 14 Ekim gümrük ödemesinden sonra hesaplar eksiye düştüğünde doğru kalacak.
+
 ### Kur tek kaynaktan — veritabanı tarafı da canlıda (2026-10-10)
 
 - Veritabanındaki servet, ciro hedefi ve günlük snapshot hesapları artık sabit 48,50 / 1 kur yedeği ya da ayar kuru yerine TCMB döviz alış kurunu (Eylül 48,5585) kullanıyor; ithalat önerisi sistemin işlem kurunu (48,98) kullanıyor. Kur yoksa değer "bilinmiyor" görünür, uydurma kurla hesaplanmaz.

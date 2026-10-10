@@ -229,7 +229,8 @@ export async function loadAlarmInput(now = new Date(), env: Record<string, strin
     prisma.trendyolSalesRecord.findFirst({ orderBy: { syncedAt: "desc" }, select: { syncedAt: true } }).catch(() => null),
     prisma.entegraImportLog.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }).catch(() => null),
     prisma.cfoBankAccount.findMany({ where: { isActive: true, lastUpdatedAt: { lt: new Date(now.getTime() - 7 * 24 * H) } }, orderBy: { sortOrder: "asc" }, select: { name: true } }),
-    q<{ g: unknown; c: unknown }>(`select bos_kmh_try as g, amacli_kmh_try as c from cfo_nakit_kapisi`),
+    // CFO-030: yol pozisyonu kullanılan KMH'yi zaten içerir → kapasite TAM ticari limit (bos_kmh = limit − kullanılan iki kez düşürürdü)
+    q<{ g: unknown; c: unknown }>(`select kmh_limit_try as g, amacli_kmh_try as c from cfo_nakit_kapisi`),
     q<{ t: unknown }>(`select tutar as t from cfo_kaynak_yeterliligi() where kalem ilike 'Sahsi KMH%' limit 1`),
     q<{ label: string; amount: unknown; due: string }>(ledgerGapSql(today)),
     q<ScheduleDuplicate>(scheduleDuplicateSql(today)),

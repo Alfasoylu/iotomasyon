@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 12:52 TR
-current_main_commit: 7f69fec
+last_updated: 2026-10-10 13:16 TR
+current_main_commit: 5a1e46c
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 62/100
 next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; net sermaye 1.383.530,52) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 1
 open_high: 4
-score_change: "61→62 — CFO-003 ✅ / RF-003 RESOLVED: migration 120000 üretimde (Alperen açık onayı) — SQL sabit kur yedekleri (48,5 / 1) ve snapshot kur döngüsü kalktı; servet ve ciro hedefi TCMB stratejik kuru (48,5585), ithalat önerisi işlem kuru (48,98); finansal doğruluk 9→10; açık HIGH 5→4"
+score_change: "unchanged — CFO-030 ✅ / RF-035 RESOLVED (LOW): migration 140000 üretimde (Alperen açık onayı) — KMH kapasitesi pozisyon + tam limit (kaynak yeterliliği, ön uçuş, gümrük dilimi, kapasite alarmı, stres testi); bugün sayılar aynı (eksi bakiye yok), 14.10 sonrası kullanılan KMH iki kez düşmez — latent hata önlendi, ölçülen değer değişmediği için skor aynı"
 ---
 
 # CFO BACKLOG
@@ -50,7 +50,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 9c | CFO-027 | CFO belge kütüphanesi (Cowork brief): sabit kategori, zorunlu açıklama, private dosya, Cowork özet yolu (maskeli), belge = kanıt | P1 | tümü | 3 | 3 | 2 | 2 | 2 | 1 | **4** | M | IN_PROGRESS (kod + test ✓; migration 240000 üretimde 2026-10-09 akşam — tablo/RLS/yetki/maskeleme doğrulandı; kalan: Cowork okuma rutini, onaylı sayı → defter akışı) | 032 |
 | 9d | CFO-028 | Komisyonu kayıtsız 6 kanal (N11, Amazon, Pazarama, Idefix, Temu, Koçtaş) + ePTT: oran belgesi → onaylı kanal oranı | P1 | G1 | 4 | 3 | 3 | 2 | 1 | 1 | **5** | S (veri) | IN_PROGRESS (ölçüm ✓; karar 10.10 ✓: EPTT tahmini komisyon kanal marjında ✓, 2 belge kategorisi ✓; kalan 6 kanal + FBA oran belgesi Alperen/Cowork) | 032 |
 | 9e | CFO-029 | CFO birim maliyeti (unitCostTry) ithalat motorundan otomatik türetilsin (kur/yol/GTİP değişince); Excel dışı maliyetli ürünler | P1 | G1,G2 | 4 | 4 | 3 | 2 | 2 | 1 | **6** | M | ✅ TAMAMLANDI 2026-10-10 — ilk üretim koşusu 10.10 02:32 UTC kuru çalıştırmayla tutarlı (153 ürün / 440 alan / +26.334 TL KDV dahil; 494 USD maliyetli ürünün tamamı güncel kurda); etki toplamı ve `cost_jump` net sermaye stok kuralına hizalandı (RF-037, PR bu) | 033 |
-| 9f | CFO-030 | KMH kapasitesi tek ayrıştırma (pozisyon + tam limit); kaynak yeterliliği/ön uçuş/gümrük dilimi eksi bakiyede kullanımı iki kez düşürmesin | P3 | G2 | 2 | 3 | 2 | 2 | 1 | 1 | **2** | S | DISCOVERED (2026-10-10, latent: bugün eksi bakiyeli şirket hesabı yok, etki 0) | 035 |
+| 9f | CFO-030 | KMH kapasitesi tek ayrıştırma (pozisyon + tam limit); kaynak yeterliliği/ön uçuş/gümrük dilimi eksi bakiyede kullanımı iki kez düşürmesin | P3 | G2 | 2 | 3 | 2 | 2 | 1 | 1 | **2** | S | ✅ TAMAMLANDI 2026-10-10 — migration 140000 üretimde (Alperen açık onayı): kapasite = pozisyon + tam ticari limit (kaynak yeterliliği, ön uçuş, gümrük dilimi, kapasite alarmı, stres testi) | 035 |
 | 9g | CFO-031 | Sanal stok istisnası net sermayede (RF-036) + gerçek stok tek kuralı (RF-037) | P0 | G2 | 5 | 5 | 5 | 1 | 1 | 2 | **11** | S | IN_PROGRESS (2026-10-10: migration 130000 ✓ üretimde — Alperen açık onayı; net sermaye 2.401.170 → 1.383.531 TL (RF-036 RESOLVED); CFO-029 alarmı tek kural ✓; kalan: 1.000+ adetlik 3 SKU gerçekliği, Alperen) | 036,037 |
 | 24 | CFO-024 | Ölü bileşen temizliği (`cfo_model_hakedis`, `cfo_insight/usage`, ölü ayar alanları, yetim route, okuyanı kalmayan `cfo_ciro_hedef` görünümü — CFO-008, 10.10) | P4 | — | 1 | 1 | 1 | 1 | 1 | 2 | **−1** | S | DISCOVERED | 024 |
 
@@ -206,7 +206,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **kalan:** (1) ~~migration 130000~~ ✓; (2) 1.000–5.000 adetlik 3 SKU (AL-CAM03 1.940 — 10.07'den beri senkronsuz, M-BANYOMİX 1.194, 272726161636 3.001; 1,18M TL) gerçek mi; değilse istisnaya beyanla eklenir. **AI maliyeti:** 0 · **durum:** IN_PROGRESS
 
 ### CFO-030 — KMH kapasitesi tek ayrıştırma
-- **neden:** RF-035 — `cfo_nakit_kapisi` nakit (eksi bakiye dahil) + boş KMH (limit − kullanılan) toplanınca eksi bakiyeli hesapta kullanım iki kez düşer; `/cfo/odemeler` pozisyon + tam limit ile doğru. **uygulama:** tek görünüm/fonksiyon "kapasite = şirket pozisyonu + tam ticari limit (bakiyesi bilinen hesaplar)"; `cfo_kaynak_yeterliligi`, `cfo_onucus_temel`, `cfo_gumruk_dilim` ve sayfa oradan okur; test: eksi bakiyeli hesapla iki yol aynı. **kabul:** eksi bakiyeli PGlite senaryosunda kaynak yeterliliği = sayfa kapasitesi. **durum:** DISCOVERED (2026-10-10)
+- **neden:** RF-035 — `cfo_nakit_kapisi` nakit (eksi bakiye dahil) + boş KMH (limit − kullanılan) toplanınca eksi bakiyeli hesapta kullanım iki kez düşer; `/cfo/odemeler` pozisyon + tam limit ile doğru. **uygulama:** tek görünüm/fonksiyon "kapasite = şirket pozisyonu + tam ticari limit (bakiyesi bilinen hesaplar)"; `cfo_kaynak_yeterliligi`, `cfo_onucus_temel`, `cfo_gumruk_dilim` ve sayfa oradan okur; test: eksi bakiyeli hesapla iki yol aynı. **kabul:** eksi bakiyeli PGlite senaryosunda kaynak yeterliliği = sayfa kapasitesi. **durum:** ✅ TAMAMLANDI 2026-10-10 — migration `20261010140000_cfo_kmh_kapasite_tek` üretimde (Claude Code, Alperen açık onayı "Evet, uygula"; checksum c4e8595a…): `cfo_nakit_kapisi.kmh_limit_try` (bakiyesi bilinen aktif şirket hesaplarının TAM KMH limiti, sona eklenen sütun); `cfo_kaynak_yeterliligi` (GENEL TİCARİ KAYNAK, ACIK satırları), `cfo_onucus_temel` (satır 8 kaynak/açık), `cfo_gumruk_dilim` (genel kaynak, ödeme anı kaynağı, SINIR 2) pozisyon + tam limit; TS: kapasite alarmı (`lib/cfo-agent/health.ts`) ve stres testi (`lib/cfo/downside-data.ts`) aynı kuraldan; AI CFO incelenmiş görünüm hash'i 31466cf0… (üretimde ölçüldü). Ön koşul: 4 nesne üretim kopyasıyla birebir; sonrası birebir; ACL'ler korundu. Üretim 10.10: eksi bakiye yok → limit = boş = 1.359.300, sayılar değişmedi (GENEL TİCARİ KAYNAK 1.510.770, ön uçuş 8 KIRMIZI açık −2.146.662). 14.10 dilimi sonrası pozisyon eksiye düşünce kullanılan KMH artık iki kez düşmez. Test `cfo-kmh-kapasite` (CI): eksi bakiyeli hesapta önce 200.000 eksik (hata), sonra kaynak yeterliliği = gümrük dilimi = `/cfo/odemeler` (800.000).
 
 ### CFO-024 — Ölü bileşen temizliği. **durum:** DISCOVERED
 
