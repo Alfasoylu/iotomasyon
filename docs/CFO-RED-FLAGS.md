@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 05:40 TR
-current_main_commit: eb5595c
+last_updated: 2026-10-10 06:10 TR
+current_main_commit: c1e8413
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 61/100
-next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-008 kapanışı: ilk üretim AI CFO koşusunda tek kaynak satış karşılaştırması gözlemi (10.10 07:17 TR) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11) → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
-open_critical: 1
+current_score: 60/100
+next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → CFO-001/CFO-002 v3 doğrulaması + CFO-017 (10.10 sabahı) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-031 kalan: 1.000+ adetlik stokların gerçekliği (AL-CAM03 10.07’den beri senkronsuz) Alperen → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+open_critical: 2
 open_high: 4
-score_change: "unchanged — CFO-008 kalanı (AI CFO satış dönemleri ve REVENUE_DEVIATION karşılaştırması tek ciro kaynağından, yalnız tam günler) gelir boyutu puanında 10.10 tek ciro adımıyla zaten sayıldı; üretimdeki ilk AI CFO koşusu gözlenince RF-009 RESOLVED ve H2 (ciro tanımı) yeniden değerlendirilir"
+score_change: "61→60 — RF-036 (CRITICAL, yeni): net sermaye sözleşmesi sanal stok istisnasını (cfo_stok_istisna 40005100051, beyan 9.700 TL) uygulamıyordu; 2.513 sanal adet 1.025.723 TL LCNRV olarak servette (net sermaye ≈%42 fazla); düzeltme migration 130000 bekletilen (Alperen onayı) → finansal doğruluk 9→8. CFO-029 ilk üretim koşusu doğrulandı (153 ürün / 440 alan / +26.334 TL), etki toplamı ve cost_jump net sermaye stok kuralına hizalandı (RF-037); RF-033 ve RF-034 RESOLVED"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -55,10 +55,12 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261009-029 | MEDIUM | OPEN | veri düzeltmesi (Cowork/Alperen) |
 | RF-20261009-030 | LOW | OPEN | veri düzeltmesi (insan) |
 | RF-20261009-031 | LOW | MITIGATED | capture migration kuralı |
-| RF-20261010-033 | MEDIUM | MITIGATED | 335 + 8 üründe CFO maliyeti ithalat motorundan; CFO-029 otomatik türetme kodu hazır (Excel dışı 143 ürün dahil, ilk üretim koşusu 10.10 05:00 TR) — RESOLVED ilk koşu doğrulanınca |
+| RF-20261010-033 | MEDIUM | RESOLVED | 335 + 8 üründe CFO maliyeti ithalat motorundan; CFO-029 otomatik türetme kodu hazır (Excel dışı 143 ürün dahil, ilk üretim koşusu 10.10 05:00 TR) — RESOLVED ilk koşu doğrulanınca |
 | RF-20261009-032 | MEDIUM | IN_PROGRESS | 10.10 karar (Alperen): EPTT tahmini komisyon kanal marjında (measured=false) ✓; 6 kanal + FBA oran belgesine kadar UNKNOWN (%20 yer tutucu yok); kalan: oran belgeleri / hakediş dökümleri (CFO-027 yolu) |
-| RF-20261010-034 | MEDIUM | MITIGATED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
+| RF-20261010-034 | MEDIUM | RESOLVED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
 | RF-20261010-035 | LOW | OPEN | latent: eksi bakiyeli KMH hesabında "nakit/dip + boş KMH" kullanımı iki kez düşer (kaynak yeterliliği, ön uçuş, gümrük dilimi); bugün etki 0 → CFO-030 |
+| RF-20261010-036 | CRITICAL | OPEN | sanal stok (cfo_stok_istisna 40005100051) net sermayede 1.025.723 TL; düzeltme migration 130000 (CFO-031) bekletilen — Alperen onayı + beyan teyidi |
+| RF-20261010-037 | MEDIUM | IN_PROGRESS | gerçek stok 4 kural; CFO-029 etki/alarm net sermaye kuralına hizalandı ✓ kod; kalan: 1.000–5.000 adetlik 3 SKU (1,18M TL) gerçek mi (AL-CAM03 10.07'den beri senkronsuz) — Alperen |
 
 ## 2026-10-08 — İlk tam sistem denetimi (bağımsız dış denetçi bakışı)
 
@@ -583,4 +585,41 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   `cfo_satis_siparis` sipariş tutarı payı) bilinçli ayrı — manşet ciro değil.
 - RESOLVED için: ilk üretim AI CFO koşusunda (10.10 04:17 UTC) karşılaştırma anahtarlarının `lastCompleteDay:2026-10-0x` ve değerlerin kanonik
   toplamla aynı olduğunun gözlenmesi. `cfo_ciro_hedef` (okuyan kod yok) CFO-024 ile kaldırılacak.
+
+## 2026-10-10 — CFO-029 ilk üretim koşusu + sanal stok RED FLAG PASS
+
+### RF-20261010-033 — güncelleme: RESOLVED (2026-10-10, CFO-029 ilk otomatik koşu)
+- 10.10 02:32 UTC xml-sync sonrası CFO-029: 153 ürün (149 ithal + 4 yalnız USD — CFO-025) / 440 alan, değerlenen stok farkı +26.334,22 TL KDV dahil;
+  kuru çalıştırma 149 / 436 / +26.001,44 (+4 yalnız USD ürün, +332,78 TL — CFO-025 aynı PR'da yayına girdi). Ürün değerleri kuru çalıştırma tablosuyla birebir
+  (AL-PTZ04 3.977,14; TE-UV82TELSIZ 695,00; 4140404044444 3.491,67 …). USD maliyetli 494 ürünün 494'ü TL = USD × 48,98; 48,50'de kalan ürün yok.
+  Hava + KDV dahil görünen maliyet artık motor maliyeti (her gece yeniden türetilir).
+
+### RF-20261010-034 — güncelleme: RESOLVED (2026-10-10)
+- Kalan 8 + 141 ürün ilk koşuda RMB/USD 6,7 (`MonthlyExchangeRate` 2026-10) ile türetildi; özet notu "RMB/USD 6.7 (elle 2026-10)". Dört değer → tek kaynak.
+
+### RF-20261010-036 — Sanal stok net sermayede gerçek stok sayılıyor (YENİ, CRITICAL)
+- **date:** 2026-10-10 · **severity:** CRITICAL · **status:** OPEN (FIX READY: migration `20261010130000_cfo_sanal_stok_istisna`, bekletilen)
+- **finding:** `cfo_stok_istisna` (insan beyanı — 40005100051 Krom Banyo Bataryası: "Stok SANAL … bağlı sermaye SANAL", gerçek bağlı 9.700 TL;
+  Alperen 31.08, uygulamada teyit 07.09) yalnız ölü stok kurallarında uygulanıyor. `cfo_stok_deger.gercek_stok` bu SKU'yu gerçek sayıyor →
+  net sermaye sözleşmesi stok satırı (LCNRV), Goal Engine `net_capital_try` v3 ve hedef ilerlemesi, snapshot, sermaye verimliliği (fazla stok →
+  "serbest bırakılabilir nakit" = plan bütçesi), sermaye sağlığı ve AI CFO bağlı sermaye kanıtı 2.513 sanal adeti değerliyor.
+- **evidence (üretim, salt-okunur, 10.10 02:40 UTC):** 40005100051 LCNRV 1.025.723 TL (stok satırının %31'i). Net sermaye 2.401.170 → düzeltmeyle
+  ≈1.383.531 TL (−1.017.640; TCMB 48,5585 ile ≈49,4k → ≈28,5k USD).
+- **fix (kod, bu PR):** migration 130000 — `gercek_stok` istisna SKU'yu dışlar (tüm tüketiciler aynı kuraldan); `cfo_metrik_net_sermaye` stok
+  satırına yalnız beyan edilen bağlı sermayeyi (/1,2) ekler (CFO-017 kimliği korunur). Test `cfo-sanal-stok` (PGlite, CI). **Üretim uygulaması
+  Alperen onayı bekliyor** (otomatik izin sınıflandırıcısı üretim DDL'ini durduruyor).
+- **açık soru (Alperen):** 40005100051 adedi XML senkronunda günde ~20 düşüyor (05.10 2.611 → 10.10 2.513); beyan "stok manuel tutuluyor,
+  düşülmüyor" diyordu. Beyan hâlâ geçerli mi (stok sanal)? Migration beyanı uygular.
+
+### RF-20261010-037 — Gerçek stok dört farklı kuralla belirleniyor (YENİ, MEDIUM)
+- **date:** 2026-10-10 · **severity:** MEDIUM · **status:** IN_PROGRESS
+- **finding:** "hangi stok gerçek" kuralı: (1) net sermaye / `cfo_stok_deger` — kukla adetler (500/998/999/1000/9999/10000) hariç ve ≤5.000;
+  (2) AI CFO `isDummyStock` — yalnız kukla adetler; (3) CFO-029 etki toplamı ve `cost_jump` alarmı — yalnız 1–999; (4) ithalatçı
+  (`lib/importer-cost.ts`) — ≥1.000 "sipariş üzerine temin" (dropship). CFO-029'un ilk koşusunda M-BANYOMİX (1.194 adet; %120 elle gümrük → %52,6
+  GTİP yasal yükü, birim TL 402,85 → 318,50) net sermayeyi −83.928 TL değiştirdi ama (3) kuralı yüzünden ne kuru çalıştırma toplamında ne alarmda
+  görüldü: koşunun net sermayeye gerçek etkisi −65.470 TL (kuru çalıştırmanın ima ettiği ≈ +21.900 değil).
+- **fix (kod, bu PR):** CFO-029 etki toplamı ve `cost_jump` alarmı net sermayenin kuralından (`cfo_stok_deger.gercek_stok`) — tek kaynak.
+- **açık soru (Alperen):** 1.000–5.000 adetlik 3 SKU net sermayede 1.175.248 TL LCNRV: AL-CAM03 1.940 adet (791.843 TL; XML'de yok, stok 10.07'den
+  beri senkronlanmadı, 443 adet logsuz elle düzeltme), M-BANYOMİX 1.194 (316.908 TL), 272726161636 3.001 (66.497 TL). İthalatçı ≥1.000'i dropship
+  sayıyor. Gerçek mi? Değilse `cfo_stok_istisna`'ya beyanla eklenir (migration 130000 sonrası net sermayeden otomatik çıkar).
 

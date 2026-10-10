@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 05:40 TR
-current_main_commit: eb5595c
+last_updated: 2026-10-10 06:10 TR
+current_main_commit: c1e8413
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 61/100
-next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-008 kapanışı: ilk üretim AI CFO koşusunda tek kaynak satış karşılaştırması gözlemi (10.10 07:17 TR) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11) → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
-open_critical: 1
+current_score: 60/100
+next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → CFO-001/CFO-002 v3 doğrulaması + CFO-017 (10.10 sabahı) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-031 kalan: 1.000+ adetlik stokların gerçekliği (AL-CAM03 10.07’den beri senkronsuz) Alperen → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+open_critical: 2
 open_high: 4
-score_change: "unchanged — CFO-008 kalanı (AI CFO satış dönemleri ve REVENUE_DEVIATION karşılaştırması tek ciro kaynağından, yalnız tam günler) gelir boyutu puanında 10.10 tek ciro adımıyla zaten sayıldı; üretimdeki ilk AI CFO koşusu gözlenince RF-009 RESOLVED ve H2 (ciro tanımı) yeniden değerlendirilir"
+score_change: "61→60 — RF-036 (CRITICAL, yeni): net sermaye sözleşmesi sanal stok istisnasını (cfo_stok_istisna 40005100051, beyan 9.700 TL) uygulamıyordu; 2.513 sanal adet 1.025.723 TL LCNRV olarak servette (net sermaye ≈%42 fazla); düzeltme migration 130000 bekletilen (Alperen onayı) → finansal doğruluk 9→8. CFO-029 ilk üretim koşusu doğrulandı (153 ürün / 440 alan / +26.334 TL), etki toplamı ve cost_jump net sermaye stok kuralına hizalandı (RF-037); RF-033 ve RF-034 RESOLVED"
 ---
 
 # CFO SCORECARD
@@ -56,7 +56,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 
 | # | Boyut | Ağırlık | Puan | Kanıt (artı) | Kanıt (eksi) |
 |---|---|---|---|---|---|
-| 1 | Financial accuracy & reconciliation | 20 | **9** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye ve borç tek tanım üretimde, v3 Goal doğrulaması 10.10 bekliyor; kur 4, ciro 7, marj 5 tanım; atıf kimliği bozuk (migration 230000 onay bekliyor) |
+| 1 | Financial accuracy & reconciliation | 20 | **8** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye ve borç tek tanım üretimde, v3 Goal doğrulaması 10.10 bekliyor; kur 4, ciro 7, marj 5 tanım; atıf kimliği bozuk (migration 230000 onay bekliyor); **RF-036 (10.10, CRITICAL): sanal stok (cfo_stok_istisna 40005100051) net sermayede 1.025.723 TL LCNRV — net sermaye ≈%42 fazla, düzeltme migration 130000 bekletilen**; 1.000+ adetlik 3 SKU'nun (1,18M TL) gerçekliği teyitsiz (RF-037) |
 | 2 | Cash / liquidity / debt | 15 | **12** | TEK NAKİT YOLU üretimde (CFO-013, 10.10: projeksiyon dibi = takvim dibi, günlük fark ≤0,52 TL, her gün eşitlik testli; vadesi geçmiş kalem bugüne); şirket/şahsi tek kural TS + SQL + ödeme kapasitesi (CFO-006 ✅); ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik | takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş (RF-018, veri); KMH kapasitesi iki ayrıştırma (RF-035 latent: kaynak yeterliliği eksi bakiyede kullanımı iki kez düşer; bugün etki 0) |
 | 3 | Capital allocation | 15 | **8** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
 | 4 | Revenue / profitability | 10 | **6** | TEK CİRO KAYNAĞI (CFO-008, 10.10): manşet ciro tüm CFO yüzeylerinde Goal Engine satırlarından (`lib/cfo/revenue.ts`, tamlık sınırlı, testli); KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları; EPTT komisyonu kanal marjında (Entegra oranı × toplam, tahmini işaretli, CFO-028) | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); iade marja bağlı değil; 6 kanal + FBA komisyonu UNKNOWN (oran belgesi yok); EPTT tahmini ölçülmemiş (~0,4 puan düşük) |
@@ -66,7 +66,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; SAĞLIK alarmı (takılan/başarısız/bayat motor) kodda, üretimde migration 150000 bekliyor; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **3** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü, uygulama bypassrls ile bağlanıyor |
-| | **TOPLAM** | **100** | **61** | | |
+| | **TOPLAM** | **100** | **60** | | |
 
 ## Skor geçmişi
 
@@ -97,3 +97,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 0ffbb2c | 60 | 5/12 | 59→60: CFO-008 tek ciro kaynağı (Goal Engine satırları) /cfo, /cfo/ayarlar, gelir kaldıraçları, hedef kartı, /admin/sermaye, borç tahmini ve Alfashome kanıtında; üretim: Eylül 1.931.793 (eski kart 1.777.442), aylık 2.015.623 (eski 1.859.349), /admin/sermaye 90g 6.046.869 (eski yalnız Trendyol 4.104.926) → gelir boyutu 5→6. Gate'ler aynı (H2/H8 AI CFO günlük satış karşılaştırması ve SQL görünümleri nedeniyle açık) |
 | 2026-10-10 | 80485f5 | 61 | 5/12 | 60→61: CFO-012 karar hafızası — beklenen SAYI'lı karar kaydı (form + doğrulama + eksik kayıt bayrağı), gece kontrol noktası ölçümü (`cfo_hamle_olcum`, yalnız ekleme), kalibrasyon skoru (isabet/hata/eğilim/kapsam), motor borç kapama önerisi → karar taslağı → karar hafızası 3→4. H6 gate ❌ kalır: ilk otomatik ölçüm 31.10/01.11'de gözlenecek, eski kararlar beklenen SAYI'sız |
 | 2026-10-10 | eb5595c | 61 | 5/12 | Değişmedi (bilinçli): CFO-008 kalanı — AI CFO satış dönemleri ve REVENUE_DEVIATION karşılaştırması tek ciro kaynağından (yalnız tam günler; tahmini gün tam sayılmaz). Gelir boyutu tek ciro adımında (0ffbb2c) sayıldı; ilk üretim AI CFO koşusu gözlenince RF-009 RESOLVED + H2 yeniden değerlendirilir |
+| 2026-10-10 | c1e8413 | 60 | 5/12 | 61→60: RF-036 (CRITICAL, yeni) — net sermaye sanal stok istisnasını uygulamıyordu (40005100051, 1.025.723 TL; düzeltme migration 130000 bekletilen) → finansal doğruluk 9→8; H1/H12 ❌ kalır. CFO-029 ilk üretim koşusu kuru çalıştırmayla tutarlı (153/440, +26.334 TL KDV dahil) ama net sermayeye gerçek etkisi −65.470 TL (M-BANYOMİX 1.194 adet, %120 elle gümrük → %52,6 yasal); etki toplamı/alarm net sermaye kuralına hizalandı (RF-037). RF-033/034 RESOLVED |

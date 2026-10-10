@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 05:40 TR
-current_main_commit: eb5595c
+last_updated: 2026-10-10 06:10 TR
+current_main_commit: c1e8413
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 61/100
-next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-008 kapanışı: ilk üretim AI CFO koşusunda tek kaynak satış karşılaştırması gözlemi (10.10 07:17 TR) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11) → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
-open_critical: 1
+current_score: 60/100
+next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → CFO-001/CFO-002 v3 doğrulaması + CFO-017 (10.10 sabahı) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-031 kalan: 1.000+ adetlik stokların gerçekliği (AL-CAM03 10.07’den beri senkronsuz) Alperen → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+open_critical: 2
 open_high: 4
-score_change: "unchanged — CFO-008 kalanı (AI CFO satış dönemleri ve REVENUE_DEVIATION karşılaştırması tek ciro kaynağından, yalnız tam günler) gelir boyutu puanında 10.10 tek ciro adımıyla zaten sayıldı; üretimdeki ilk AI CFO koşusu gözlenince RF-009 RESOLVED ve H2 (ciro tanımı) yeniden değerlendirilir"
+score_change: "61→60 — RF-036 (CRITICAL, yeni): net sermaye sözleşmesi sanal stok istisnasını (cfo_stok_istisna 40005100051, beyan 9.700 TL) uygulamıyordu; 2.513 sanal adet 1.025.723 TL LCNRV olarak servette (net sermaye ≈%42 fazla); düzeltme migration 130000 bekletilen (Alperen onayı) → finansal doğruluk 9→8. CFO-029 ilk üretim koşusu doğrulandı (153 ürün / 440 alan / +26.334 TL), etki toplamı ve cost_jump net sermaye stok kuralına hizalandı (RF-037); RF-033 ve RF-034 RESOLVED"
 ---
 
 # CFO DECISION LOG
@@ -90,3 +90,4 @@ D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL**. 
 | 2026-10-10 | CFO-008 TEK CİRO KAYNAĞI: manşet ciro (hedef, hız, 14/30/90 gün, aylık, kanal toplamı) yalnız Goal Engine satırlarından (`fm_sales_canonical_snapshot`, disposition COUNTED; `lib/cfo/revenue.ts`), tamlık Goal kuralıyla; eksik gün 0 sayılmaz. Satır/SKU düzeyi kârlılık tabanları (cfo_satis_birim_duz, cfo_aylik_urun_kar) ayrı amaçla kalır, manşet ciro olarak gösterilmez | Code (D-P05 + CFO-008 kabul ölçütü) | 7 formül: elle 14 gün (23.08), 90g/3 birim_duz, maliyetsiz SKU hariç ay, yalnız Trendyol, Entegra damgalı 30 gün, ödeme durumlu Alfashome | git revert (görünüm değişmedi) |
 | 2026-10-10 | CFO-012 KARAR HAFIZASI: 10.10'dan itibaren yeni karar ölçülebilir metrik + başlangıç + beklenen SAYI + ölçüm tarihi olmadan kaydedilmez (form doğrulaması; doğrudan SQL ile eksik yazılan açık karar "Beklenen değer eksik"). Kontrol noktası = ilk ölçüm tarihi + hedef tarihi; geçmiş tarihli okunabilen metrik (borç, kamu, FBA) o günün değeriyle ertesi gün, kart/KMH bakiyesi kontrol noktası gelince bugünkü değerle (tarih = ölçüm günü, uydurma geçmiş yok). Ölçüm yalnız eklenir, veri yoksa yazılmaz. Motor önerisi karar sayılmaz; onaylanıp kaydedilince karar olur (borç kapama taslağı: beklenen = bugün − plan tutarı, ölçüm 60 gün) | Code (CFO-012, backlog onaylı) | 15 kararın 3'ünde beklenen SAYI vardı, ölçüm yazılmıyordu → isabet ölçülemiyordu (RF-014) | kod geri alınabilir; yazılan ölçüm satırları silinmez (append-only) |
 | 2026-10-10 | CFO-008 AI CFO SATIŞ: AI CFO satış dönemleri ve REVENUE_DEVIATION aynı tek ciro kaynağından. Karşılaştırma yalnız tüm kaynakların TAM olduğu günlerde (son tam gün / 7 / 30 ↔ aynı haftanın günleri); tam günden sonraki günler Trendyol × son 28 tam günün oranıyla TAHMİN (gösterilir, karşılaştırılmaz, `complete=false`); gün içi bilinmiyor | Code (CFO-008, backlog onaylı) | tahmin ↔ gerçek karşılaştırması sahte sapma üretiyordu (09.10: +%45) | kod geri alınabilir |
+| 2026-10-10 | GERÇEK STOK TEK KURAL (RF-036/037): "stok gerçek mi" sorusunun tek cevabı `cfo_stok_deger.gercek_stok` (kukla adetler ve >5.000 hariç, `cfo_stok_istisna` beyanı hariç); net sermaye, Goal v3, sermaye verimliliği/sağlığı, CFO-029 etki toplamı ve `cost_jump` bunu okur. İstisna SKU net sermayeye yalnız beyan edilen bağlı sermayeyle (/1,2) girer. İthalatçının ≥1.000 dropship kuralı sipariş/ithalat kararı içindir, değerlemeye girmez | Code (insan beyanı cfo_stok_istisna'yı uygular; migration üretimi Alperen onayına bağlı) | sanal 2.513 adet net sermayeyi 1,02M TL şişiriyordu; CFO-029 alarmı 1.194 adetlik gerçek stoğu görmüyordu | migration 130000 geri alma notu; CFO-029 kuralı kodda |

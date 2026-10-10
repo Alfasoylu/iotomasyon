@@ -16,9 +16,10 @@ export function costRowsSql(): string {
   return `SELECT p.sku, p."sourceCostRmb"::text AS rmb, p."weightKg"::text AS kg, p."importPaymentFeePct"::text AS fee, p."shippingMethodPref" AS pref,
        p."customsRatePct"::text AS cus, p."unitCostUsd"::text AS usd, p."unitCostTry"::text AS try_, p."stockQuantity" AS stock,
        (SELECT mp."priceTry"::text FROM public."MarketplacePrice" mp WHERE mp."productId" = p.id AND mp.marketplace::text = 'TRENDYOL' LIMIT 1) AS ty,
-       x."xmlTrendyolPrice"::text AS xml, t.yuk::text AS yuk
+       x."xmlTrendyolPrice"::text AS xml, t.yuk::text AS yuk, COALESCE(sd.gercek_stok, false) AS valued
   FROM public."Product" p
   LEFT JOIN public."XmlProductData" x ON x."productId" = p.id
+  LEFT JOIN public.cfo_stok_deger sd ON sd.id = p.id
   LEFT JOIN LATERAL (
     SELECT round(((1 + (tr.gv_pct + tr.igv_pct) / 100) * (1 + coalesce(tr.otv_pct, 0) / 100) * (1 + tr.kdv_pct / 100) - 1) * 100, 1) AS yuk
       FROM public.cfo_gtip_tarife tr
@@ -30,12 +31,12 @@ export function costRowsSql(): string {
 }
 
 type RawRow = { sku: string; rmb: string | null; kg: string | null; fee: string | null; pref: string | null; cus: string | null; usd: string | null;
-  try_: string | null; stock: unknown; ty: string | null; xml: string | null; yuk: string | null };
+  try_: string | null; stock: unknown; ty: string | null; xml: string | null; yuk: string | null; valued?: boolean | null };
 const n = (s: string | null) => (s == null ? null : Number(s));
 export function toCostRows(raw: RawRow[]): CostRow[] {
   return raw.map(r => ({ sku: r.sku, sourceCostRmb: n(r.rmb), weightKg: n(r.kg), importPaymentFeePct: n(r.fee), shippingMethodPref: r.pref,
     customsRatePct: r.cus, unitCostUsd: r.usd, unitCostTry: r.try_, trendyolPriceTry: n(r.ty), xmlTrendyolPriceUsd: n(r.xml),
-    tariffBurdenPct: n(r.yuk), stock: Number(r.stock ?? 0) }));
+    tariffBurdenPct: n(r.yuk), stock: Number(r.stock ?? 0), valuedStock: r.valued === true }));
 }
 
 /** $1 güncellemeler (jsonb), $2 kaynak, $3 alan günlüğü (jsonb), $4 özet notu. Tek ifade = tek işlem. */

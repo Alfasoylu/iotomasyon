@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Ürün maliyetleri her gece ithalat motorundan (ilk koşu doğrulandı, 2026-10-10)
+
+- İlk otomatik koşu 153 ürünün maliyetini güncel kur, deniz/hava seçimi ve GTİP gümrüğüyle yeniden hesapladı. Sonuç ön hesapla tutarlı.
+- Dolar maliyeti olan 494 ürünün tamamı artık güncel kurla; eski sabit 48,50 kuruyla kalan ürün yok.
+- Maliyet sıçraması uyarısı artık net sermayenin saydığı stoğu esas alıyor. Önceden 1.000 adetten büyük gerçek stoklar (ör. 1.194 adetlik banyo bataryası) uyarıya girmiyordu.
+
 ### AI CFO ciro karşılaştırması artık yalnız tam günlerle (2026-10-10)
 
 - AI CFO'nun dün / son 7 / son 30 gün cirosu diğer CFO ekranlarıyla aynı satış kaynağından okunuyor.
