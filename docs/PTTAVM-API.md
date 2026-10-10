@@ -54,9 +54,19 @@ Yalnız REST anahtarları + `PTTAVM_WRITE_ENABLED=true` iken; tek çağıran `li
 silinir → `lib/pttavm/lookup.ts` önce barkod sorgusu yapar (içerikte ürün VAR + varyantsız, yeni ilanda ALFOS- barkod BOŞ); yanıt
 yorumlanamazsa gönderilmez. Testler `pttavm-write`, `olu-stok-stock-sync`.
 
+### SOAP ile fiyat/stok (REST anahtarı yokken — 2026-10-10)
+Alperen'de yalnız SOAP bilgileri var (API kullanıcı adı, mağaza id, API şifre). REST `Api-Key` + `access-token` Satıcı Paneli → Hesap
+Yönetimi → Entegrasyon Bilgileri'nde bir **entegratör** yetkilendirilince görünür; entegratör firmayı PttAVM personeli tanımlar
+(API key dokümanı). Bu yüzden SOAP modunda yalnız fiyat/stok yazılır: `soapUpdatePriceStock` → önce `BarkodKontrol` (güncel aktiflik, stok,
+fiyat, KDV oranı, iskonto) → `StokFiyatGuncelle3(item: StokUrun)` yalnız istenen alan değişir, diğerleri AYNEN geri gönderilir
+(DataContract'ta gönderilmeyen alan sunucuda varsayılana — stok 0, pasif — düşebilir). Kayıt okunamaz/eşleşmez ya da ürün varyantlıysa
+gönderilmez; `Success=false` hata. Ölü stok fiyat değişikliği ve bağımsız ilan gece stok eşitlemesi SOAP modunda bunu kullanır.
+**Canlı doğrulanmadı** (alan adları WSDL + açık kaynak istemcilerden); ilk gönderimden sonra panelden kontrol edilmeli.
+Yeni ilan / içerik (`/products/upsert`) REST anahtarı ister — SOAP modunda eylem açık mesajla reddeder.
+
 ## Hâlâ KURULMAYANLAR
 `POST /orders/{id}/invoice`, kargo `create-barcode` /
-`update-no-shipping-order`; SOAP yazma uçlarının tamamı (`StokGuncelle*`, `StokFiyatGuncelle*`, `UpdateProducts*`, `AktifYap`,
+`update-no-shipping-order`; SOAP yazma uçları (`StokFiyatGuncelle3` dışında: `StokGuncelle*`, diğer `StokFiyatGuncelle*`, `UpdateProducts*`, `AktifYap`,
 `SaveInvoince`, `OlmayanUrunAdetleriSifirla`). Salt-okuma istemcisi (`client.ts`) yazma uçlarını reddetmeye devam eder (test `pttavm-client`).
 
 ## Teşhis

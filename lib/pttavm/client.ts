@@ -51,7 +51,7 @@ function restHeaders(cfg: PttavmConfig): Record<string, string> {
   return { "Api-Key": cfg.apiKey!, "access-token": cfg.accessToken!, "X-Correlation-Id": randomUUID(), "Content-Type": "application/json", Accept: "application/json" };
 }
 /** Yazma modülü (lib/pttavm/write.ts) aynı başlık + zaman aşımı kurallarını kullanır. */
-export { timed as pttavmTimed, restHeaders as pttavmRestHeaders, REST_BASE as PTTAVM_REST_BASE };
+export { timed as pttavmTimed, restHeaders as pttavmRestHeaders, REST_BASE as PTTAVM_REST_BASE, SOAP_URL as PTTAVM_SOAP_URL };
 export async function restGet<T>(cfg: PttavmConfig, path: string, params: Record<string, string | number | boolean> = {}, f: Fetch = fetch, base = REST_BASE): Promise<T> {
   const url = new URL(base + path);
   for (const [k, val] of Object.entries(params)) url.searchParams.set(k, String(val));
@@ -74,8 +74,11 @@ export async function restPostRead<T>(cfg: PttavmConfig, path: string, body: unk
 const SOAP_READ_OPS = new Set(["GetVersion", "KullaniciTedarikciBilgisiGetir", "SiparisKontrolListesiV2", "SiparisDetay", "KargoBilgiListesi",
   "GetCargoProfiles", "BarkodKontrol", "GetMainCategories", "GetCategory", "GetProductsWithVariants", "StokKontrolListesi"]);
 export function soapEnvelope(cfg: PttavmConfig, op: string, args: Record<string, string | number> = {}): string {
-  const body = Object.entries(args).map(([k, v]) => `<tem:${k}>${escapeXml(String(v))}</tem:${k}>`).join("");
-  return `<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">`
+  return soapEnvelopeRaw(cfg, op, Object.entries(args).map(([k, v]) => `<tem:${k}>${escapeXml(String(v))}</tem:${k}>`).join(""));
+}
+/** Ham gövdeli zarf (iç içe DataContract alanları için; ad alanı `ept` = ePttAVMService). Çağıran içeriği kaçışlamaktan sorumlu. */
+export function soapEnvelopeRaw(cfg: PttavmConfig, op: string, body: string): string {
+  return `<?xml version="1.0" encoding="utf-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/" xmlns:ept="http://schemas.datacontract.org/2004/07/ePttAVMService">`
     + `<soapenv:Header><wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">`
     + `<wsse:UsernameToken><wsse:Username>${escapeXml(cfg.username!)}</wsse:Username>`
     + `<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${escapeXml(cfg.password!)}</wsse:Password>`

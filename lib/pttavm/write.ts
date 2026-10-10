@@ -5,14 +5,18 @@
  * Kaynak: developers.pttavm.com/tr — Listeleme → Fiyat Stok Güncelle (POST /products/stock-prices), Katalog → Aktif Yap
  * (PUT /products/{id}/status), Fiyat Stok Güncelleme Kontrolü (POST /products/tracking-result/{id}).
  */
-import { PTTAVM_REST_BASE, PttavmError, pttavmRestHeaders, pttavmTimed, type PttavmConfig } from "./client";
+import { PTTAVM_REST_BASE, PTTAVM_SOAP_URL, PttavmError, camelize, pttavmRestHeaders, pttavmTimed, soapCall, soapEnvelopeRaw, type PttavmConfig } from "./client";
+import { escapeXml, parseXml, pick, type XmlNode } from "./xml";
 
 export const PTTAVM_ALLOWED_VAT = [0, 1, 10, 20] as const;
 export const PTTAVM_MAX_ITEMS = 1000;
 
+/** Yazma bayrağı (REST ya da SOAP). Kullanıcı adı/şifreyle (SOAP) yalnız fiyat/stok güncellenebilir (soapUpdatePriceStock);
+ *  REST anahtarı gerektirenler (stock-prices toplu, upsert, aktif/pasif) restWriteEnabled ile ayrıca korunur. */
 export function pttavmWriteEnabled(cfg: PttavmConfig | null, env: Record<string, string | undefined> = process.env): cfg is PttavmConfig {
-  return !!cfg && cfg.mode === "rest" && env.PTTAVM_WRITE_ENABLED?.trim() === "true";
+  return !!cfg && env.PTTAVM_WRITE_ENABLED?.trim() === "true";
 }
+function restWriteEnabled(cfg: PttavmConfig | null): boolean { return pttavmWriteEnabled(cfg) && cfg!.mode === "rest"; }
 
 export type StockPriceItem = { barcode: string; priceWithVAT?: number; vatRate?: number; quantity?: number; active?: boolean; discount?: number };
 
@@ -47,7 +51,7 @@ async function send<T>(cfg: PttavmConfig, method: "POST" | "PUT", path: string, 
 export type StockPriceResult = { trackingId: string | null; countOfProductsToBeProcessed: number | null; success: boolean; message: string | null };
 
 export async function updateStockPrices(cfg: PttavmConfig, items: StockPriceItem[], f: Fetch = fetch): Promise<StockPriceResult> {
-  if (!pttavmWriteEnabled(cfg)) throw new Error("PttAVM yazma kapalı (PTTAVM_WRITE_ENABLED=true ve REST anahtarları gerekli)");
+  if (!restWriteEnabled(cfg)) throw new Error("PttAVM yazma kapalı (PTTAVM_WRITE_ENABLED=true ve REST anahtarları gerekli)");
   const errors = validateStockPriceItems(items);
   if (errors.length) throw new Error(`PttAVM fiyat/stok isteği geçersiz: ${errors.join("; ")}`);
   const body = { items: items.map(i => ({ barcode: i.barcode.trim(),
@@ -57,7 +61,7 @@ export async function updateStockPrices(cfg: PttavmConfig, items: StockPriceItem
 }
 
 export async function setProductActive(cfg: PttavmConfig, productId: number, isActive: boolean, f: Fetch = fetch): Promise<{ success: boolean; errorMessage: string | null }> {
-  if (!pttavmWriteEnabled(cfg)) throw new Error("PttAVM yazma kapalı (PTTAVM_WRITE_ENABLED=true ve REST anahtarları gerekli)");
+  if (!restWriteEnabled(cfg)) throw new Error("PttAVM yazma kapalı (PTTAVM_WRITE_ENABLED=true ve REST anahtarları gerekli)");
   if (!Number.isInteger(productId) || productId <= 0) throw new Error("geçersiz ürün id");
   return send(cfg, "PUT", `/products/${productId}/status`, { isActive }, f);
 }
@@ -110,11 +114,62 @@ export function validateUpsert(items: PttUpsertItem[]): string[] {
 }
 
 export async function upsertProducts(cfg: PttavmConfig, items: PttUpsertItem[], f: Fetch = fetch): Promise<StockPriceResult> {
-  if (!pttavmWriteEnabled(cfg)) throw new Error("PttAVM yazma kapalı (PTTAVM_WRITE_ENABLED=true ve REST anahtarları gerekli)");
+  if (!restWriteEnabled(cfg)) throw new Error("PttAVM yazma kapalı (PTTAVM_WRITE_ENABLED=true ve REST anahtarları gerekli)");
   const errors = validateUpsert(items);
   if (errors.length) throw new Error(`PttAVM ürün isteği geçersiz: ${errors.join("; ")}`);
   const WIRE = ["categoryId", "ean", "name", "priceWithVat", "vatRate", "quantity", "longDescription", "shortDescription", "desi", "discount", "brand", "productCode", "active"] as const;
   const body = { items: items.map(i => ({ barcode: i.barcode.trim(), ...Object.fromEntries(WIRE.filter(k => i[k] != null).map(k => [k, i[k]])),
     ...(i.images ? { images: i.images.map(url => ({ url })) } : {}) })) };
   return send<StockPriceResult>(cfg, "POST", "/products/upsert", body, f);
+}
+
+// ── SOAP fiyat/stok (kullanıcı adı/şifre; REST anahtarı yokken) ───────────────
+// StokFiyatGuncelle3(item: StokUrun). DataContract alanı gönderilmezse sunucuda VARSAYILANA düşebilir (Miktar 0, Aktif false, İskonto 0) →
+// önce BarkodKontrol ile güncel kayıt okunur; değişmeyen alanlar (Aktif, İskonto, KDV oranı, stok ya da fiyat) AYNEN geri gönderilir.
+// Kayıt okunamazsa, barkod eşleşmezse ya da ürün varyantlıysa gönderilmez. Alan sırası DataContract alfabetik sırası.
+export type SoapCurrent = { barcode: string; active: boolean; quantity: number; priceWithVat: number; vatRate: number; discount: number; hasVariants: boolean };
+const toNum = (v: unknown) => (v == null || v === "" ? null : Number(String(v).replace(",", ".")));
+
+export function parseSoapCurrent(node: unknown, barcode: string): SoapCurrent | null {
+  const d = node as Record<string, unknown> | null;
+  if (!d || typeof d !== "object") return null;
+  const b = String(d.barkod ?? "").trim();
+  const active = String(d.aktif ?? "").toLowerCase();
+  const q = toNum(d.miktar), p = toNum(d.kDVli), r = toNum(d.kDVOran), disc = toNum(d.iskonto) ?? 0; // camelize: KDVli → kDVli
+  if (b !== barcode.trim() || !["true", "false"].includes(active) || q == null || p == null || r == null || !Number.isFinite(q + p + r)) return null;
+  const v = d.variantListesi as Record<string, unknown> | string | null | undefined;
+  const hasVariants = !!v && typeof v === "object" && Object.keys(v).length > 0;
+  return { barcode: b, active: active === "true", quantity: q, priceWithVat: p, vatRate: r, discount: disc, hasVariants };
+}
+
+export function stokUrunXml(c: SoapCurrent, next: { priceWithVat?: number; quantity?: number }): string {
+  const price = next.priceWithVat ?? c.priceWithVat, qty = next.quantity ?? c.quantity;
+  const net = Math.round((price / (1 + c.vatRate / 100)) * 100) / 100;
+  const f = (n: number) => String(Math.round(n * 100) / 100);
+  return `<tem:item><ept:Aktif>${c.active}</ept:Aktif><ept:Barkod>${escapeXml(c.barcode)}</ept:Barkod><ept:Iskonto>${f(c.discount)}</ept:Iskonto>`
+    + `<ept:KDVOran>${f(c.vatRate)}</ept:KDVOran><ept:KDVli>${f(price)}</ept:KDVli><ept:KDVsiz>${f(net)}</ept:KDVsiz><ept:Miktar>${Math.trunc(qty)}</ept:Miktar></tem:item>`;
+}
+
+export async function soapUpdatePriceStock(cfg: PttavmConfig, barcode: string, next: { priceWithVat?: number; quantity?: number }, f: Fetch = fetch):
+  Promise<{ before: SoapCurrent; urunId: string | null; warnings: string[] }> {
+  if (!pttavmWriteEnabled(cfg)) throw new Error("PttAVM yazma kapalı (PTTAVM_WRITE_ENABLED=true gerekli)");
+  if (cfg.mode !== "soap") throw new Error("SOAP güncellemesi yalnız kullanıcı adı/şifre modunda");
+  if (next.priceWithVat == null && next.quantity == null) throw new Error("fiyat ya da stok gerekli");
+  if (next.priceWithVat != null && !(next.priceWithVat > 1)) throw new Error("fiyat 1'den büyük olmalı");
+  if (next.quantity != null && (!Number.isInteger(next.quantity) || next.quantity < 0 || next.quantity > 9999)) throw new Error("stok 0–9999 tam sayı olmalı");
+  const before = parseSoapCurrent(camelize(await soapCall(cfg, "BarkodKontrol", { Barkod: barcode.trim() }, f)), barcode);
+  if (!before) throw new Error(`PttAVM'de ${barcode} okunamadı ya da eşleşmedi — güncel değerler bilinmeden gönderilmez`);
+  if (before.hasVariants) throw new Error("varyantlı ürün — SOAP güncellemesi varyantları etkileyebilir, gönderilmedi");
+  const res = await pttavmTimed(f, PTTAVM_SOAP_URL, { method: "POST", headers: { "Content-Type": "text/xml; charset=utf-8", SOAPAction: '"http://tempuri.org/IService/StokFiyatGuncelle3"' },
+    body: soapEnvelopeRaw(cfg, "StokFiyatGuncelle3", stokUrunXml(before, next)) });
+  const text = await res.text();
+  let doc: XmlNode;
+  try { doc = parseXml(text); } catch { throw new PttavmError(res.status, text); }
+  const fault = pick(doc, "Envelope", "Body", "Fault");
+  if (fault) throw new PttavmError(res.status, String(pick(fault, "faultstring") ?? "SOAP Fault"));
+  const r = camelize(pick(doc, "Envelope", "Body", "StokFiyatGuncelle3Response", "StokFiyatGuncelle3Result")) as Record<string, unknown> | null;
+  if (!res.ok || !r || String(r.success).toLowerCase() !== "true") throw new PttavmError(res.status, String(r?.errorMessage ?? text));
+  const w = r.warningMessages as Record<string, unknown> | null;
+  const warnings = w && typeof w === "object" ? Object.values(w).flat().map(String) : [];
+  return { before, urunId: r.urunId == null ? null : String(r.urunId), warnings };
 }

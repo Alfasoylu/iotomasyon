@@ -17,7 +17,7 @@ async function main() {
   // Bayrak: REST + PTTAVM_WRITE_ENABLED=true şart
   assert.equal(pttavmWriteEnabled(rest, {}), false);
   assert.equal(pttavmWriteEnabled(rest, { PTTAVM_WRITE_ENABLED: "true" }), true);
-  assert.equal(pttavmWriteEnabled(soap, { PTTAVM_WRITE_ENABLED: "true" }), false, "SOAP ile yazma yok");
+  assert.equal(pttavmWriteEnabled(soap, { PTTAVM_WRITE_ENABLED: "true" }), true, "SOAP ile yalnız fiyat/stok (soapUpdatePriceStock); REST uçları ayrıca REST ister");
   const prev = process.env.PTTAVM_WRITE_ENABLED;
   delete process.env.PTTAVM_WRITE_ENABLED;
   await assert.rejects(updateStockPrices(rest, [{ barcode: "B1", priceWithVAT: 100 }], f), /yazma kapalı/);
@@ -62,4 +62,40 @@ async function main() {
   if (prev === undefined) delete process.env.PTTAVM_WRITE_ENABLED; else process.env.PTTAVM_WRITE_ENABLED = prev;
   console.log("PttAVM yazma: bayrak kapalıyken istek yok, resmî kurallar, stock-prices gövdesi, aktif/pasif, işlem takibi passed");
 }
-main().catch(e => { console.error(e); process.exitCode = 1; });
+main().then(() => soapTests()).catch(e => { console.error(e); process.exitCode = 1; }); // sırayla: ikisi de PTTAVM_WRITE_ENABLED'i değiştirir
+
+// SOAP fiyat/stok (kullanıcı adı/şifre): önce BarkodKontrol okunur, değişmeyen alanlar aynen geri gönderilir; okunamazsa/varyantlıysa gönderilmez.
+import { parseSoapCurrent, soapUpdatePriceStock, stokUrunXml } from "../lib/pttavm/write";
+async function soapTests() {
+  const soap = { mode: "soap" as const, username: "u", password: "p" };
+  const kontrol = (extra = "") => `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><BarkodKontrolResponse xmlns="http://tempuri.org/"><BarkodKontrolResult xmlns:a="http://schemas.datacontract.org/2004/07/ePttAVMService">
+    <a:Aktif>true</a:Aktif><a:Barkod>B1</a:Barkod><a:Iskonto>5</a:Iskonto><a:KDVOran>20</a:KDVOran><a:KDVli>240</a:KDVli><a:Miktar>7</a:Miktar>${extra}</BarkodKontrolResult></BarkodKontrolResponse></s:Body></s:Envelope>`;
+  const ok = `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><StokFiyatGuncelle3Response xmlns="http://tempuri.org/"><StokFiyatGuncelle3Result xmlns:a="http://schemas.datacontract.org/2004/07/ePttAVMService"><a:ErrorMessage/><a:Success>true</a:Success><a:UrunId>99</a:UrunId></StokFiyatGuncelle3Result></StokFiyatGuncelle3Response></s:Body></s:Envelope>`;
+  const bodies: string[] = [];
+  const mk = (first: string, second = ok) => { let i = 0; return (async (_u: string, init: RequestInit) => { bodies.push(String(init.body)); return new Response(i++ === 0 ? first : second, { status: 200 }); }) as unknown as typeof fetch; };
+  const prevFlag = process.env.PTTAVM_WRITE_ENABLED;
+  delete process.env.PTTAVM_WRITE_ENABLED;
+  await assert.rejects(soapUpdatePriceStock(soap, "B1", { priceWithVat: 200 }, mk(kontrol())), /yazma kapalı/);
+  assert.equal(bodies.length, 0);
+  process.env.PTTAVM_WRITE_ENABLED = "true";
+  // REST'e özgü uçlar SOAP modunda kapalı kalır
+  await assert.rejects(updateStockPrices(soap, [{ barcode: "B1", quantity: 1 }], mk(kontrol())), /REST anahtarları/);
+  const r = await soapUpdatePriceStock(soap, "B1", { priceWithVat: 216 }, mk(kontrol()));
+  assert.equal(r.urunId, "99");
+  assert.match(bodies[0], /<tem:BarkodKontrol><tem:Barkod>B1<\/tem:Barkod><\/tem:BarkodKontrol>/);
+  assert.match(bodies[1], /<tem:StokFiyatGuncelle3><tem:item><ept:Aktif>true<\/ept:Aktif><ept:Barkod>B1<\/ept:Barkod><ept:Iskonto>5<\/ept:Iskonto><ept:KDVOran>20<\/ept:KDVOran><ept:KDVli>216<\/ept:KDVli><ept:KDVsiz>180<\/ept:KDVsiz><ept:Miktar>7<\/ept:Miktar><\/tem:item>/,
+    "aktiflik, iskonto, KDV oranı ve STOK aynen; yalnız fiyat değişir");
+  await soapUpdatePriceStock(soap, "B1", { quantity: 3 }, mk(kontrol()));
+  assert.match(bodies[3], /<ept:KDVli>240<\/ept:KDVli><ept:KDVsiz>200<\/ept:KDVsiz><ept:Miktar>3<\/ept:Miktar>/, "stok değişince fiyat aynen");
+  const n = bodies.length;
+  await assert.rejects(soapUpdatePriceStock(soap, "B2", { priceWithVat: 200 }, mk(kontrol())), /okunamadı ya da eşleşmedi/);
+  await assert.rejects(soapUpdatePriceStock(soap, "B1", { priceWithVat: 200 }, mk(kontrol("<a:VariantListesi><a:Variant><a:Miktar>1</a:Miktar></a:Variant></a:VariantListesi>"))), /varyantlı/);
+  assert.equal(bodies.length, n + 2, "yalnız okuma isteği gitti, güncelleme gitmedi");
+  const fail = ok.replace("<a:ErrorMessage/>", "<a:ErrorMessage>Barkod bulunamadı</a:ErrorMessage>").replace(">true</a:Success>", ">false</a:Success>");
+  await assert.rejects(soapUpdatePriceStock(soap, "B1", { priceWithVat: 200 }, mk(kontrol(), fail)), /Barkod bulunamadı/);
+  await assert.rejects(soapUpdatePriceStock(soap, "B1", { priceWithVat: 1 }, mk(kontrol())), /1'den büyük/);
+  assert.equal(parseSoapCurrent(null, "B1"), null);
+  assert.match(stokUrunXml({ barcode: "A&B", active: false, quantity: 0, priceWithVat: 100, vatRate: 10, discount: 0, hasVariants: false }, {}), /<ept:Aktif>false<\/ept:Aktif><ept:Barkod>A&amp;B<\/ept:Barkod>/);
+  if (prevFlag === undefined) delete process.env.PTTAVM_WRITE_ENABLED; else process.env.PTTAVM_WRITE_ENABLED = prevFlag;
+  console.log("PttAVM SOAP fiyat/stok: önce okuma, değişmeyen alanlar aynen, eşleşmeyen/varyantlı ürün gönderilmez, başarısız sonuç hata passed");
+}
