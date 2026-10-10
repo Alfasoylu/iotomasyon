@@ -212,8 +212,12 @@ export interface CfoOverview {
   monthEnds: MonthEndRow[];
 
   // Gümrük rezervi
+  /** Gümrük rezervi — TEK kaynak ödeme takvimi (cfo_cash_event, ödenmemiş VERGI_GUMRUK; CFO-013 tek nakit yolu, RF-020). Her dilim
+   *  tarihinde birikimli gümrük, o tarihe kadarki projeksiyonla karşılaştırılır; açığın en büyük olduğu dilim bağlayıcıdır ve
+   *  hedef/tarih/projeksiyon/açık o dilimin değerleridir. `tranches` tüm dilimler (aynı hesap). Ayrılmış rezerv elle (cfo_settings). */
   customs: {
     target: number; saved: number; dueDate: Date | null; daysLeft: number | null;
+    tranches: { date: Date; amount: number; ref: string | null; description: string; cumulative: number; projectedCash: number; gap: number }[];
     expectedInflow: number; mandatoryOutflow: number; projectedCash: number;
     gap: number; remainingCapacity: number; traffic: Traffic;
     /** açığın KMH'den (mevcut kullanımın üstüne, çekiliş sırasıyla) finansmanının aylık faizi — yalnız ölçülmüş oranlı dilimler */
@@ -401,25 +405,42 @@ export function computeCfo(input: CfoInput): CfoOverview {
   });
 
   // ── Gümrük rezervi ──
+  // TEK kaynak ödeme takvimi (2026-10-10, RF-020): eskiden elle girilen tek hedef + tek tarih (cfo_settings.customsReserveTarget/Date)
+  // okunuyordu — 07.26sea vergisi takvimde iki dilimken (14.10 + 21.10) kart 09.10'u "geçmiş" gösterip aradaki tahsilatları saymıyordu.
+  // Takvimde ödenmemiş gümrük/vergi çıkışı yoksa kart yok (elle hedef yedeği yok). Vadesi geçmiş ödenmemiş dilim bugün vadeli (CFO-013).
+  const customsEvents = input.cashEvents
+    .filter((e) => !e.isSettled && e.kind === "VERGI_GUMRUK" && num(e.outflowTry) > 0)
+    .map((e) => ({ date: e.eventDate < today ? today : startOfDay(new Date(e.eventDate)), amount: num(e.outflowTry), ref: e.relatedImport, description: e.description }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
   let customs: CfoOverview["customs"] = null;
-  if (s && numOrNull(s.customsReserveTarget) != null && s.customsReserveDate) {
-    const target = num(s.customsReserveTarget);
-    const saved = num(s.customsReserveSaved);
-    const due = startOfDay(new Date(s.customsReserveDate));
+  if (customsEvents.length > 0) {
+    const saved = num(s?.customsReserveSaved);
+    const at = (due: Date) => {
+      const expectedInflow =
+        pending.filter((r) => r.dueDate <= due).reduce((a, r) => a + num(r.amountTry), 0) +
+        weeks.filter((w) => w.end >= today && w.end <= due).reduce((a, w) => a + w.net, 0) +
+        input.cashEvents.filter((e) => !e.isSettled && e.eventDate <= due).reduce((a, e) => a + num(e.inflowTry), 0);
+      // gümrük ödemelerinin kendisi hariç — rezerv onları karşılamak için (birikimli dilim toplamında)
+      const mandatoryOutflow = input.cashEvents
+        .filter((e) => !e.isSettled && e.kind !== "VERGI_GUMRUK" && e.eventDate <= due)
+        .reduce((a, e) => a + num(e.outflowTry), 0);
+      return { expectedInflow, mandatoryOutflow, projectedCash: netCashTry + expectedInflow - mandatoryOutflow };
+    };
+    let cumulative = 0;
+    const tranches = customsEvents.map((e) => {
+      cumulative += e.amount;
+      const p = at(e.date);
+      return { ...e, cumulative, projectedCash: p.projectedCash, gap: Math.max(0, cumulative - (p.projectedCash + saved)) };
+    });
+    // bağlayıcı dilim: açığı en büyük olan (eşitlikte en erken); hiç açık yoksa son dilim (toplam yükümlülük)
+    const maxGap = Math.max(...tranches.map((t) => t.gap));
+    const bind = maxGap > 0 ? tranches.find((t) => t.gap === maxGap)! : tranches[tranches.length - 1];
+    const { expectedInflow, mandatoryOutflow, projectedCash } = at(bind.date);
+    const target = bind.cumulative, gap = bind.gap, due = bind.date;
     const daysLeft = Math.round((due.getTime() - today.getTime()) / 86400000);
-    const expectedInflow =
-      pending.filter((r) => r.dueDate <= due).reduce((a, r) => a + num(r.amountTry), 0) +
-      weeks.filter((w) => w.end >= today && w.end <= due).reduce((a, w) => a + w.net, 0) +
-      input.cashEvents.filter((e) => !e.isSettled && e.eventDate <= due).reduce((a, e) => a + num(e.inflowTry), 0);
-    // gümrük ödemesinin kendisi hariç — rezerv onu karşılamak için; vadesi geçmiş ödenmemiş olay bugün vadeli (CFO-013)
-    const mandatoryOutflow = input.cashEvents
-      .filter((e) => !e.isSettled && e.kind !== "VERGI_GUMRUK" && e.eventDate <= due)
-      .reduce((a, e) => a + num(e.outflowTry), 0);
-    const projectedCash = netCashTry + expectedInflow - mandatoryOutflow;
-    const gap = Math.max(0, target - (projectedCash + saved));
     const remainingCapacity = freeKmhTry - gap;
     customs = {
-      target, saved, dueDate: due, daysLeft, expectedInflow, mandatoryOutflow, projectedCash,
+      target, saved, dueDate: due, daysLeft, tranches, expectedInflow, mandatoryOutflow, projectedCash,
       gap, remainingCapacity, traffic: trafficForGap(gap, freeKmhTry),
       ...(() => { const d = tieredDrawInterest(kmhSlices, usedKmhTry, gap); return { interestCostMonthly: d.monthlyInterestTry, interestUnknownTry: d.unknownRateTry + d.beyondCapacityTry }; })(),
     };

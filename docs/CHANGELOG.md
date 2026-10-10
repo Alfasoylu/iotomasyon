@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Gümrük rezervi ödeme takviminden, dilim dilim (2026-10-10)
+
+- Gümrük rezervi kartı (CFO ana sayfa ve Gümrük sayfası) artık elle girilen tek hedef ve tek tarih yerine ödeme takvimindeki ödenmemiş gümrük/vergi dilimlerinden hesaplanıyor. Önceden kart 9 Ekim'i "geçmiş" gösteriyor, 14 ve 21 Ekim dilimleri arasındaki tahsilatları ve Romanya dilimini saymıyordu.
+- Her dilim kendi tarihine kadar beklenen tahsilatla karşılaştırılıyor; en büyük açığın olduğu dilim kartta gösteriliyor. Gümrük sayfasında tüm dilimler birikimli tutar ve açıkla listeleniyor.
+- Ayarlardaki eski "gümrük rezerv hedefi/tarihi" alanları artık kullanılmıyor (sayfada belirtiliyor); "ayrılmış rezerv" elle girilmeye devam ediyor.
+
 ### CFO sayfalarında eşik, kur ve hedef motorla aynı kaynaktan (2026-10-10)
 
 - Ölü stok sayfasındaki kırmızı eşik artık CFO ayarlarındaki ölü stok oranından okunuyor (listeyi üreten görünümle aynı kural; bugünkü ayar %20, görünüm değişmedi).

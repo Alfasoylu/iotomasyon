@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 10:56 TR
-current_main_commit: cb66df1
+last_updated: 2026-10-10 11:03 TR
+current_main_commit: 19e4e78
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
 next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — CFO-023 kısım 1: beş sayfa sabiti (ölü stok oran eşiği, kazananlar kapsam eşiği %85, yeni ürün marjında 48,5 kur, sermaye/çalışan sayfalarında 100.000 USD) motorun kaynağına bağlandı ve statik eşlik testiyle korunuyor; değer eşliği (aynı sayı her yüzeyde) CFO-001/002/008 üretim doğrulamalarıyla tamamlanınca tutarlılık yeniden değerlendirilir"
+score_change: "unchanged — RF-020 MITIGATED + CFO-018 kısım 1: gümrük rezervi elle tek hedef/tarih yerine ödeme takviminin dilimlerinden (tek nakit yolu); ödenmemiş gümrük borç/net sermaye sözleşmesinde yalnız bilgi satırı (üretimde doğrulandı); kalan veri farkları (ROMANYA-2408, bayat cfo_import_project) insanda"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -43,7 +43,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-017 | MEDIUM | RESOLVED | 2026-10-09, CFO-019 |
 | RF-20261008-018 | MEDIUM | OPEN | veri: ölçülmemiş faiz oranları (CFO-015, Alperen) |
 | RF-20261008-019 | MEDIUM | IN_PROGRESS | 5M + 100k yedeği + iki taban kalktı; 10.10 CFO-023: ORAN_ESIGI ayardan, "aylık 100.000 USD" metinleri ayardan, kazananlar kapsam eşiği = motor ✓; 50k / KPI eşikleri kalan |
-| RF-20261008-020 | MEDIUM | OPEN | yoldaki mal iki kaynak (CFO-018) |
+| RF-20261008-020 | MEDIUM | MITIGATED | 10.10: hedef/kapı şişmesi yok (ödenmemiş gümrük/navlun her iki sözleşmede yalnız bilgi satırı, D-P03 — üretimde doğrulandı); gümrük rezervi ödeme takviminden (CFO-018 kısım 1) ✓; kalan: `cfo_import_project` bayat (borç tahmini + parti tablosu), ROMANYA-2408 defter 500k ↔ takvim 400k (veri, insan) |
 | RF-20261008-021 | LOW | RESOLVED | 2026-10-09, CFO-021 |
 | RF-20261008-022 | LOW | RESOLVED | 2026-10-09, CFO-021 |
 | RF-20261008-023 | LOW | OPEN | latent |
@@ -668,3 +668,22 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   `getCurrentFx`, kaynak etiketi sayfada). app/ altında yorum dışı 48,5 kalmadı (eşlik testi korur). SQL tarafı 48,5 / 1 yedekleri migration 120000'de
   (bekletilen) — RESOLVED onun üretim uygulamasıyla.
 - Yeni red flag yok.
+
+## 2026-10-10 — Yoldaki mal / gümrük rezervi tek kaynak RED FLAG PASS
+
+### RF-20261008-020 — güncelleme (2026-10-10; MEDIUM, OPEN → MITIGATED)
+- **ölçüm (üretim, salt-okunur):** ödenmemiş gümrük/navlun 3.787.072 TL `cfo_metrik_borc()` sira 90 ve `cfo_metrik_net_sermaye()` sira 91'de
+  yalnız BİLGİ satırı — finansal borç (5.889.903,80) ve net sermaye toplamına girmiyor (D-P03). "Borç hedefini/kapıyı 3,79M şişiriyor" kısmı
+  CFO-002 ile kapanmış. Aynı yükümlülük dört yerde: ödeme takvimi (`cfo_cash_event` VERGI_GUMRUK: 07.26sea 14.10 1.965.468 + 21.10
+  1.321.604; ROMANYA-2408 10.11 400.000 "tutar kesin" 09.10), defter `cfo_yoldaki_mal` (07.26sea 3.287.072 = takvim ✓; ROMANYA-2408
+  500.000 ✗), `cfo_import_project` (24.08'den beri güncellenmemiş: 07.26sea YOLDA / 3.031.250; ROMANYA-2408 500.000; ROMANYA-PARCA
+  103.818) ve elle `cfo_settings.customsReserveTarget/Date` (3.287.072 / 09.10 — tek tarih).
+- **bulgu:** `/cfo` ve `/cfo/gumruk` gümrük rezervi kartı elle girilen tek tarihten hesaplıyordu → bugün "ihtiyaç tarihi 09.10, −1 gün",
+  14.10 ve 21.10 arasındaki tahsilatlar sayılmıyor, ROMANYA dilimi hiç yok.
+- **düzeltme (kod, CFO-018 kısım 1):** rezerv ödeme takviminin ödenmemiş VERGI_GUMRUK dilimlerinden (CFO-013 tek nakit yolu); dilim başına
+  birikimli açık, bağlayıcı dilim = en büyük açık; takvimde yoksa kart yok (elle yedek yok). Tek nakit yolunda (SQL projeksiyonu) pozisyon:
+  14.10 −1.682.643, 21.10 −2.975.310 (taban −3.000.000'a 24.690 TL), 09.11 −3.069.134 (taban ihlali), dip 01.12 −3.724.848.
+- **kalan (veri, insan/Cowork — üretim ham verisine Code yazmadı):** ROMANYA-2408 `cfo_yoldaki_mal.odenmemis_vergi_try` 500.000 → takvimdeki
+  kesin 400.000 (bilgi satırı 100.000 fazla); `cfo_import_project` 07.26sea durum/gümrük tahmini güncellenmeli ya da tüketicileri (borç
+  tahmini `importsPaid`/gümrük eşleştirmesi, `/cfo/gumruk` parti tablosu) takvim/deftere taşınmalı (CFO-018).
+- Yeni red flag yok (taban ihlali zaten `floor_breach` alarmı + projeksiyon dibinde görünür).
