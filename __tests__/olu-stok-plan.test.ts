@@ -4,7 +4,7 @@
  * Çalıştır: node --import tsx __tests__/olu-stok-plan.test.ts
  */
 import assert from "node:assert/strict";
-import { DUPLICATE_LISTING_RISK, economicsFromNetRate, floorPrice, independentCode, planAll, planFor, stepPct, type ChannelEconomics, type DeadStockRow } from "../lib/olu-stok/plan";
+import { DUPLICATE_LISTING_RISK, distinctListingErrors, economicsFromNetRate, titleSimilarity, floorPrice, independentCode, planAll, planFor, stepPct, type ChannelEconomics, type DeadStockRow } from "../lib/olu-stok/plan";
 
 const TY: ChannelEconomics = { channel: "TRENDYOL", commissionRate: 0.2, serviceFeeRate: 0.05, shippingTry: 50 };
 const PTT: ChannelEconomics = { channel: "PTTAVM", commissionRate: null, serviceFeeRate: 0, shippingTry: 50 };
@@ -42,3 +42,12 @@ assert.equal(economicsFromNetRate("PTTAVM", null).commissionRate, null);
 assert.equal(independentCode("AB 12/ç"), "ALFOS-AB12c");
 assert.equal(independentCode("X".repeat(60)).length, 40);
 console.log("Ölü stok planı: net oran tabanı + bağımsız kod passed");
+
+// Bağımsız ilan farklılığı: aynı/benzer başlık ve aynı görsel reddedilir
+assert.equal(titleSimilarity("Akıllı Priz Wi-Fi 16A", "akıllı priz wifi 16a"), 0.5, "3 ortak / 6 kelime");
+assert.equal(titleSimilarity("Akıllı Priz", "Güneş Paneli"), 0);
+const orig = { titles: ["Tuya Akıllı Priz 16A Enerji Ölçerli"], images: ["https://cdn.x.com/a.jpg?v=1"] };
+assert.match(distinctListingErrors(orig, { title: "Tuya Akıllı Priz 16A Enerji Ölçerli Beyaz", images: ["https://cdn.x.com/n.jpg"] })[0], /çok benziyor/);
+assert.match(distinctListingErrors(orig, { title: "Wi-Fi Uzaktan Kontrollü Fiş, Tüketim Takipli", images: ["http://cdn.x.com/a.jpg"] })[0], /görsel mevcut ilanla aynı/);
+assert.deepEqual(distinctListingErrors(orig, { title: "Wi-Fi Uzaktan Kontrollü Fiş, Tüketim Takipli", images: ["https://cdn.y.com/ai-1.jpg"] }), []);
+console.log("Ölü stok planı: bağımsız ilan başlık/görsel farklılığı passed");

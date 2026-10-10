@@ -70,3 +70,28 @@ export function independentCode(sku: string): string {
   const clean = sku.normalize("NFKD").replace(/[^\w.-]/g, "").replace(/_/g, "-");
   return `ALFOS-${clean}`.slice(0, 40);
 }
+
+/** Başlık benzerliği: Türkçe küçük harf, noktalama yok, kelime kümesi Jaccard (0–1). */
+export function titleSimilarity(a: string, b: string): number {
+  const words = (s: string) => new Set(s.toLocaleLowerCase("tr-TR").replace(/[^\p{L}\d\s]/gu, " ").split(/\s+/).filter(w => w.length > 1));
+  const x = words(a), y = words(b);
+  if (!x.size || !y.size) return 0;
+  let common = 0; for (const w of x) if (y.has(w)) common++;
+  return common / (x.size + y.size - common);
+}
+export const MAX_TITLE_SIMILARITY = 0.6;
+
+/** Bağımsız ilan mevcut ilanın kopyası olamaz (Alperen 2026-10-10: "farklı SKU, farklı AI görselleri, farklı başlık"): başlık benzerliği
+ *  ≤ %60 ve hiçbir görsel mevcut ürün/ilan görseliyle aynı olamaz (sorgu dizesi yok sayılır). */
+export function distinctListingErrors(original: { titles: string[]; images: string[] }, proposed: { title: string; images: string[] }): string[] {
+  const errors: string[] = [];
+  for (const t of original.titles.filter(Boolean)) {
+    const s = titleSimilarity(t, proposed.title);
+    if (s > MAX_TITLE_SIMILARITY) { errors.push(`başlık mevcut ilana çok benziyor (%${Math.round(s * 100)} > %${MAX_TITLE_SIMILARITY * 100}): "${t}"`); break; }
+  }
+  const key = (u: string) => u.trim().split("?")[0].replace(/^https?:\/\//, "").toLowerCase();
+  const old = new Set(original.images.filter(Boolean).map(key));
+  const same = proposed.images.filter(u => old.has(key(u)));
+  if (same.length) errors.push(`${same.length} görsel mevcut ilanla aynı — yeni (AI ile üretilmiş) görsel gerekli`);
+  return errors;
+}

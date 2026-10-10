@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Ölü stok bağımsız ilanları: kopya engeli ve gece stok eşitlemesi (2026-10-10)
+
+- Yeni (Entegra dışı) Trendyol ilanı mevcut ilanın kopyası olamaz: başlık en fazla %60 benzeyebilir, mevcut görseller kabul edilmez.
+- Marka, kategori ve ürün özellikleri mevcut Trendyol ilanından otomatik alınır; içerik güncellemesinde Trendyol ürün numarası barkoddan bulunur.
+- Açılan bağımsız ilanlar kayıt tablosunda tutulur (üretimde kuruldu); stokları her gece Entegra XML'inden yalnız adet olarak eşitlenir, fiyat otomatik değişmez. XML o gece güncellenmediyse hiçbir şey gönderilmez.
+
 ### Ölü stok için fiyat, içerik ve yeni ilan ekranı (2026-10-10)
 
 - `/cfo/olu-stok/eylem`: ölü stoktaki her ürün için öneri (indirimli fiyat, başabaş tabanı, içerik eksikleri, Entegra'dan bağımsız yeni ilan) ve onaylı gönderim formu.

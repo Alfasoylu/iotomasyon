@@ -60,7 +60,11 @@ Yukarıdaki yasağın TEK istisnası: `cfo_olu_stok` listesindeki SKU'lar için 
 fiyat düşürme, Trendyol onaylı ürün içeriği (başlık/açıklama/görsel) ve Entegra'dan bağımsız yeni ilan
 (ayrı SKU/barkod `ALFOS-…`, stok Entegra XML'den). Koşullar — hepsi zorunlu:
 - Tek kapı `lib/actions/olu-stok-actions.ts`; istemciler `lib/trendyol/write.ts`, `lib/pttavm/write.ts`
-  başka yerden çağrılmaz. Otomatik iş, cron ve AI CFO yazma YAPMAZ.
+  başka yerden çağrılmaz. AI CFO yazma YAPMAZ. Tek otomatik yazma: gece XML senkronundan sonra
+  `lib/olu-stok/stock-sync.ts` — YALNIZ `olu_stok_bagimsiz_ilan`'daki `ALFOS-…` barkodlara, YALNIZ stok adedi,
+  yalnız taze XML'den (≤ 36 saat); fiyat ve içerik asla otomatik değişmez (Alperen onayı 2026-10-10).
+- Bağımsız ilan mevcut ilanın kopyası olamaz: farklı SKU/barkod, başlık benzerliği ≤ %60, mevcut ürün/ilan
+  görselleri kullanılamaz (yeni, AI ile üretilmiş görsel) — sunucuda zorlanır.
 - Her eylem insan onaylı: `marketplaceListings.write` izni + "ONAYLIYORUM" + sunucuda başabaş tabanı
   kontrolü (taban bilinmiyorsa fiyat değişmez) + ±%50 üstü değişimde ikinci onay.
 - Her eylem (hata dahil) `cfo_change_log`'a yazılır (kim, eski → yeni, işlem no).

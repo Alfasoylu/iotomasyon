@@ -11,7 +11,8 @@ import type { TrendyolConfig } from "@/lib/trendyol-api";
 import { createProducts, getBatchResult, updateApprovedContent, updatePriceAndInventory } from "@/lib/trendyol/write";
 import { pttavmConfig } from "@/lib/pttavm/client";
 import { trackingResult, updateStockPrices } from "@/lib/pttavm/write";
-import { floorPrice, independentCode } from "@/lib/olu-stok/plan";
+import { distinctListingErrors, floorPrice, independentCode } from "@/lib/olu-stok/plan";
+import { findApprovedByBarcode } from "@/lib/trendyol/approved";
 import { loadChannels, loadDeadStock } from "@/lib/olu-stok/load";
 
 const CONFIRM = "ONAYLIYORUM";
@@ -69,7 +70,8 @@ export async function applyPriceChangeAction(input: z.input<typeof priceSchema>)
 }
 
 // ── Trendyol onaylı ürün içeriği (başlık / açıklama / görsel) ────────────────
-const contentSchema = z.object({ sku: z.string().min(1), contentId: z.number().int().positive(), title: z.string().trim().max(100).optional(),
+// contentId verilmezse ürünün barkodundan onaylı ürün filtresiyle bulunur.
+const contentSchema = z.object({ sku: z.string().min(1), contentId: z.number().int().positive().optional(), title: z.string().trim().max(100).optional(),
   description: z.string().trim().max(30000).optional(), images: z.array(z.string().url()).max(8).optional(), confirm: z.string() });
 
 export async function applyContentAction(input: z.input<typeof contentSchema>): Promise<Result> {
@@ -77,7 +79,14 @@ export async function applyContentAction(input: z.input<typeof contentSchema>): 
   if (!p.success) return { ok: false, message: p.error.issues[0]?.message ?? "Geçersiz veri." };
   const g = await guard(p.data.confirm); if ("error" in g) return g.error!;
   const cfg = await trendyolCfg(); if (!cfg) return { ok: false, message: "Trendyol API yapılandırması eksik veya pasif." };
-  const { sku, contentId, title, description, images } = p.data;
+  const { sku, title, description, images } = p.data;
+  let contentId = p.data.contentId;
+  if (!contentId) {
+    const barcode = (await loadDeadStock()).get(sku)?.barcode;
+    if (!barcode) return { ok: false, message: "Üründe barkod yok — contentId'yi elle girin." };
+    contentId = (await findApprovedByBarcode(cfg, barcode).catch(() => null))?.contentId;
+    if (!contentId) return { ok: false, message: `Trendyol'da ${barcode} barkodlu onaylı ürün bulunamadı.` };
+  }
   const fields = [title && "başlık", description && "açıklama", images?.length && "görsel"].filter(Boolean).join(", ");
   try {
     const { batchRequestId } = await updateApprovedContent(cfg, [{ contentId, title: title || undefined, description: description || undefined, images: images?.length ? images : undefined }]);
@@ -90,10 +99,13 @@ export async function applyContentAction(input: z.input<typeof contentSchema>): 
 }
 
 // ── Entegra'dan bağımsız yeni Trendyol ilanı (ayrı SKU/barkod, stok XML'den) ─
+// Alperen 2026-10-10: farklı SKU + farklı (AI) görseller + farklı başlık. Marka/kategori/özellikler verilmezse Entegra'nın mevcut ilanından
+// (ürün barkodu → onaylı ürün filtresi) kopyalanır. Başlık ve görseller mevcut ürün/ilandan FARKLI olmalı (distinctListingErrors).
+// Gönderim olu_stok_bagimsiz_ilan'a kaydedilir; stok her gece XML'den eşitlenir (lib/olu-stok/stock-sync.ts).
 const listingSchema = z.object({ sku: z.string().min(1), title: z.string().trim().min(1).max(100), description: z.string().trim().min(1).max(30000),
-  brandId: z.number().int().positive(), categoryId: z.number().int().positive(), listPrice: z.number().positive(), salePrice: z.number().positive(),
+  brandId: z.number().int().positive().optional(), categoryId: z.number().int().positive().optional(), listPrice: z.number().positive(), salePrice: z.number().positive(),
   vatRate: z.number().int(), dimensionalWeight: z.number().positive(), images: z.array(z.string().url()).min(1).max(8),
-  attributes: z.array(z.object({ attributeId: z.number().int(), attributeValueId: z.number().int().optional(), customAttributeValue: z.string().optional() })).default([]),
+  attributes: z.array(z.object({ attributeId: z.number().int(), attributeValueId: z.number().int().optional(), customAttributeValue: z.string().optional() })).optional(),
   acknowledgeDuplicateRisk: z.literal(true, { message: "Mükerrer ilan riskini onaylayın." }), confirm: z.string() });
 
 export async function createIndependentListingAction(input: z.input<typeof listingSchema>): Promise<Result> {
@@ -101,18 +113,32 @@ export async function createIndependentListingAction(input: z.input<typeof listi
   if (!p.success) return { ok: false, message: p.error.issues[0]?.message ?? "Geçersiz veri." };
   const g = await guard(p.data.confirm); if ("error" in g) return g.error!;
   const cfg = await trendyolCfg(); if (!cfg) return { ok: false, message: "Trendyol API yapılandırması eksik veya pasif." };
+  const reg = await prisma.$queryRaw<{ t: string | null }[]>`select to_regclass('public.olu_stok_bagimsiz_ilan')::text t`;
+  if (!reg[0]?.t) return { ok: false, message: "Bağımsız ilan kayıt tablosu yok (migration 20261010150000) — stok eşitlenemeyeceği için ilan açılmaz." };
   const [ctx, channels] = await Promise.all([loadDeadStock(), loadChannels()]);
   const c = ctx.get(p.data.sku);
   if (!c) return { ok: false, message: `${p.data.sku} ölü stok listesinde değil.` };
   const floor = floorPrice(c.row.unitCostTry, channels.find(x => x.channel === "TRENDYOL")!);
   if (floor == null) return { ok: false, message: "Başabaş tabanı bilinmiyor — önce birim maliyet girilmeli." };
   if (p.data.salePrice < floor) return { ok: false, message: `Satış fiyatı başabaş tabanının (${floor} TL) altında.` };
+  const src = c.barcode ? await findApprovedByBarcode(cfg, c.barcode).catch(() => null) : null;
+  const brandId = p.data.brandId ?? src?.brandId ?? null, categoryId = p.data.categoryId ?? src?.categoryId ?? null;
+  const attributes = p.data.attributes ?? src?.attributes ?? [];
+  if (!brandId || !categoryId) return { ok: false, message: "Marka/kategori mevcut ilandan bulunamadı — elle girin." };
+  const distinct = distinctListingErrors({ titles: [c.row.name, src?.title ?? ""], images: [c.imageUrl ?? "", ...(src?.images ?? [])] },
+    { title: p.data.title, images: p.data.images });
+  if (distinct.length) return { ok: false, message: `Yeni ilan mevcut ilandan yeterince farklı değil: ${distinct.join("; ")}` };
   const code = independentCode(p.data.sku);
-  const { sku, title, description, brandId, categoryId, listPrice, salePrice, vatRate, dimensionalWeight, images, attributes } = p.data;
+  const { sku, title, description, listPrice, salePrice, vatRate, dimensionalWeight, images } = p.data;
   try {
-    const { batchRequestId } = await createProducts(cfg, [{ title, description, brandId, categoryId, listPrice, salePrice, vatRate, dimensionalWeight, images, attributes, barcode: code, productMainId: code, stockCode: code, quantity: c.xmlStock }]);
-    await log("urun", `TRENDYOL ${sku} yeni ilan`, null, `${code} @ ${p.data.salePrice} TL, stok ${c.xmlStock}`, g.user!.email, `bağımsız ilan (Entegra dışı); taban ${floor}; işlem ${batchRequestId}`);
-    return { ok: true, trackingId: batchRequestId, message: `Yeni ilan gönderildi (${code}, stok ${c.xmlStock}) — Trendyol onayından sonra yayına girer.` };
+    const { batchRequestId } = await createProducts(cfg, [{ title, description, brandId, categoryId, listPrice, salePrice, vatRate, dimensionalWeight, images, attributes,
+      barcode: code, productMainId: code, stockCode: code, quantity: c.xmlStock }]);
+    await prisma.$executeRaw`insert into olu_stok_bagimsiz_ilan (sku, kanal, barkod, baslik, kaynak_barkod, satis_fiyati, islem_no, olusturan, son_stok, son_stok_at, son_stok_islem)
+      values (${sku}, 'TRENDYOL', ${code}, ${title}, ${c.barcode}, ${salePrice}, ${batchRequestId}, ${g.user!.email}, ${c.xmlStock}, now(), ${batchRequestId})
+      on conflict (kanal, barkod) do update set baslik = excluded.baslik, satis_fiyati = excluded.satis_fiyati, islem_no = excluded.islem_no, durum = 'GONDERILDI'`;
+    await log("urun", `TRENDYOL ${sku} yeni ilan`, null, `${code} @ ${salePrice} TL, stok ${c.xmlStock}`, g.user!.email,
+      `bağımsız ilan (Entegra dışı); kaynak ${c.barcode ?? "-"}${src ? " (marka/kategori/özellik kopyalandı)" : ""}; taban ${floor}; işlem ${batchRequestId}`);
+    return { ok: true, trackingId: batchRequestId, message: `Yeni ilan gönderildi (${code}, stok ${c.xmlStock}) — Trendyol onayından sonra yayına girer; stok her gece XML'den eşitlenir.` };
   } catch (e) {
     await log("urun", `TRENDYOL ${sku} yeni ilan`, null, `${code} (HATA)`, g.user!.email, errMsg(e));
     return { ok: false, message: `Trendyol reddetti: ${errMsg(e)}` };
