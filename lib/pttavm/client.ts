@@ -50,6 +50,8 @@ async function timed(f: Fetch, url: string, init: RequestInit): Promise<Response
 function restHeaders(cfg: PttavmConfig): Record<string, string> {
   return { "Api-Key": cfg.apiKey!, "access-token": cfg.accessToken!, "X-Correlation-Id": randomUUID(), "Content-Type": "application/json", Accept: "application/json" };
 }
+/** Yazma modülü (lib/pttavm/write.ts) aynı başlık + zaman aşımı kurallarını kullanır. */
+export { timed as pttavmTimed, restHeaders as pttavmRestHeaders, REST_BASE as PTTAVM_REST_BASE };
 export async function restGet<T>(cfg: PttavmConfig, path: string, params: Record<string, string | number | boolean> = {}, f: Fetch = fetch, base = REST_BASE): Promise<T> {
   const url = new URL(base + path);
   for (const [k, val] of Object.entries(params)) url.searchParams.set(k, String(val));

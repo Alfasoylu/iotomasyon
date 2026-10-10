@@ -54,6 +54,19 @@ Forbidden — her durumda, açık onayla bile yapmayın (Entegra'nın işi):
 Eski API endpoint'leri (örn. `/admin/trendyol-stock-sync` push sayfası)
 kaldırılmıştır; tekrar eklenmemelidir.
 
+### İstisna — ölü stok (Alperen kararı 2026-10-10, docs/CFO-DECISION-LOG.md)
+
+Yukarıdaki yasağın TEK istisnası: `cfo_olu_stok` listesindeki SKU'lar için Trendyol ve PttAVM'de
+fiyat düşürme, Trendyol onaylı ürün içeriği (başlık/açıklama/görsel) ve Entegra'dan bağımsız yeni ilan
+(ayrı SKU/barkod `ALFOS-…`, stok Entegra XML'den). Koşullar — hepsi zorunlu:
+- Tek kapı `lib/actions/olu-stok-actions.ts`; istemciler `lib/trendyol/write.ts`, `lib/pttavm/write.ts`
+  başka yerden çağrılmaz. Otomatik iş, cron ve AI CFO yazma YAPMAZ.
+- Her eylem insan onaylı: `marketplaceListings.write` izni + "ONAYLIYORUM" + sunucuda başabaş tabanı
+  kontrolü (taban bilinmiyorsa fiyat değişmez) + ±%50 üstü değişimde ikinci onay.
+- Her eylem (hata dahil) `cfo_change_log`'a yazılır (kim, eski → yeni, işlem no).
+- Ortam bayrağı kapalıyken (`TRENDYOL_WRITE_ENABLED`, `PTTAVM_WRITE_ENABLED`) hiçbir istek gitmez.
+- Entegra'nın yönettiği ilanlarda stok ve sipariş durumu yazma yasağı aynen sürer.
+
 ## Documentation Rules
 
 If implementation changes:

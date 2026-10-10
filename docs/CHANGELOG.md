@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Ölü stok için fiyat, içerik ve yeni ilan ekranı (2026-10-10)
+
+- `/cfo/olu-stok/eylem`: ölü stoktaki her ürün için öneri (indirimli fiyat, başabaş tabanı, içerik eksikleri, Entegra'dan bağımsız yeni ilan) ve onaylı gönderim formu.
+- Trendyol (fiyat, başlık/açıklama/görsel, yeni ilan) ve PttAVM (fiyat) gönderimleri yalnız yetkili kullanıcı "ONAYLIYORUM" yazınca gider; fiyat başabaş tabanının altına inemez; her işlem değişiklik günlüğüne yazılır.
+- Gönderim, ortam bayrakları açılana kadar kapalı (birim testlerle doğrulandı; canlı gönderim henüz yapılmadı).
+
 ### Net sermaye, borç ve ciro tek tanımları canlıda doğrulandı (2026-10-10)
 
 - Günlük finans hafızasına yazılan borç (5.889.903,80 TL) ve net sermaye, yazıldıkları andaki resmi hesapla birebir aynı; hedef motoru (100k USD borç, 300k USD net sermaye) artık bu tek tanımla değerlendiriyor.

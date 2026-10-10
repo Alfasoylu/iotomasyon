@@ -148,6 +148,12 @@ export default async function CfoDeadStockPage() {
         subtitle="Satmayan ürün değil, çalışmayan para. Bağlı sermayeyi serbest bırakma kuyruğu."
       />
 
+      <p className="mb-4 text-[12px]">
+        <Link href="/cfo/olu-stok/eylem" className="inline-flex items-center gap-1 text-[var(--accent)] underline">
+          Eylem planı — fiyat düşürme, içerik, bağımsız yeni ilan (insan onaylı) <ArrowRight size={12} />
+        </Link>
+      </p>
+
       {/* Satış verisi haftalık yükleniyor; boşluk gizlenmez, XML'in kapattığı
           söylenir. Sessiz boşluk yanlış "hiç satmadı" alarmı üretiyordu. */}
       {Number(o?.satis_verisi_bayat_gun ?? 0) > 2 && (

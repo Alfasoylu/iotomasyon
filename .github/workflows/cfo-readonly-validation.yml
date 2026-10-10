@@ -75,6 +75,9 @@ jobs:
       - run: node --import tsx __tests__/cfo-debt-forecast-customs.test.ts
       - run: node --import tsx __tests__/cfo-engine-sahsi.test.ts
       - run: node --import tsx __tests__/pttavm-client.test.ts
+      - run: node --import tsx __tests__/pttavm-write.test.ts
+      - run: node --import tsx __tests__/trendyol-write.test.ts
+      - run: node --import tsx __tests__/olu-stok-plan.test.ts
       - run: node --import tsx __tests__/fm-memory-schema.test.ts
       - run: node --import tsx __tests__/fm-sales-backfill.test.ts
       - run: node --import tsx __tests__/fm-tcmb-fx.test.ts
