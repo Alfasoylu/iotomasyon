@@ -1,12 +1,12 @@
 ---
 last_updated: 2026-10-10 23:00 TR
-current_main_commit: 7d5ca3e
+current_main_commit: cacefd1
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — pazaryeri bağlantıları doğrulandı, CFO-028 için N11/Koçtaş/PttAVM oranları ölçüldü (motora bağlanınca boyut 4 yeniden değerlendirilir)"
+score_change: "unchanged — CFO-028 adım 2: N11 komisyonu API ölçümlü oranla (%15,88, 90 gün geçerli) kanal marjında; Koçtaş örneklem yetersiz, UNKNOWN kalır (boyut 4 tüm kanallar kapanınca yeniden değerlendirilir)"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)

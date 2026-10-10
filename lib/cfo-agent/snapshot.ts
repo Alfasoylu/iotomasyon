@@ -18,7 +18,7 @@ import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type Read
 import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources";
 import { assumedShippingChannel, shippingBandsFor, shippingChannelFor, shippingTariffSql, type ShippingOptions } from "./shipping";
 import { istanbulPeriod } from "./period";
-import { COMMISSION_ESTIMATE_REASON, ESTIMATED_COMMISSION_CHANNELS, estimatedCommissionSql } from "../cfo/commission-estimate";
+import { commissionEstimateReason, estimatedCommissionChannels, estimatedCommissionSql } from "../cfo/commission-estimate";
 import { REVENUE_FRESHNESS_SQL, comparisonWindows, freshness, istanbulToday, revenueDaily, revenueDays, revenuePeriod, shiftDay } from "../cfo/revenue";
 
 const iso = (v:unknown) => v == null || !Number.isFinite(Date.parse(String(v))) ? null : new Date(String(v)).toISOString();
@@ -231,9 +231,10 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     // tek başına 419 satırı yanlışlıkla "mükerrer" sayıyordu (aynı siparişte ayrı koliye giden adetler, ayrı satır kimliği);
     // externalLineId ile gerçek mükerrer 0. Sütun yoksa eski anahtar.
     const lineKey=catalog.column("cfo_satis_birim_duz","externalLineId");
-    // CFO-028 (2026-10-10): EPTT tutarı boşken Entegra oranı × toplam = TAHMİNİ komisyon (lib/cfo/commission-estimate.ts). Yalnız kanal
+    // CFO-028 (2026-10-10): EPTT tutarı boşken Entegra oranı × toplam, N11 tutar boş/0 iken API ölçümlü oran × toplam = TAHMİNİ komisyon
+    // (lib/cfo/commission-estimate.ts; API oranı 90 gün geçerli). Yalnız kanal
     // marjına (ölçülmüş SKU oranı yoksa) girer; aşağıdaki 120 günlük SKU oran ölçümü commissionTry'ı okumaya devam eder.
-    const pctCol=catalog.column("cfo_satis_birim_duz","commissionPct");
+    const pctCol=catalog.column("cfo_satis_birim_duz","commissionPct"),estimateChannels=estimatedCommissionChannels();
     const estLine=pctCol?estimatedCommissionSql({channel:`s.${sales.channel}`,commissionTry:`s.${sales.commissionTry}`,commissionPct:`s.${pctCol}`,totalAmountTry:`s.${sales.totalAmountTry}`}):"null::numeric";
     const dupKey=(alias:string)=>`${alias}${sales.channel},${alias}${sales.orderNumber},${alias}${sales.modelNumber}${lineKey?`,${alias}${lineKey}`:""}`;
     const rows=await db.query(`${PERIOD_CTE}, product_keys as (select pr.*, count(*) over(partition by ${foldedSkuSql("pr.sku")}) as key_count from "Product" pr), canonical_base as (select s.*,count(*) over(partition by ${dupKey("s.")}) as copies,
@@ -299,11 +300,11 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       const commission=measuredCommission(channel,n(cm??{},"accepted")??0,n(cm??{},"commission"),n(cm??{},"gross"),null,null,percentage(n(ch??{},"present"),n(ch??{},"records"))??0);
       const avgPrice=metric(trusted?divide(revenue,units):null,false,trusted?undefined:"untrusted_sku_grain");
       // Tahmin kanalı + her satırda kayıtlı tutar ya da oran var → kayıtlı + tahmini toplam (measured=false); bir satır bile bilinmiyorsa yok.
-      const lineEstimate=ESTIMATED_COMMISSION_CHANNELS.includes(channel)&&n(r,"commission_unknown")===0&&(n(r,"records")??0)>0
+      const lineEstimate=estimateChannels.includes(channel)&&n(r,"commission_unknown")===0&&(n(r,"records")??0)>0
         ?D(n(r,"commission_recorded")??0).add(n(r,"commission_estimated")??0).toNumber():null;
       const profit=contribution({grossRevenue:metric(trusted?revenue:null),vat:metric(r.vat),refunds:metric(r.refund),advertising:metric(r.ads),
         productCost:metric(!isSet&&trusted&&cost.value!=null&&units!=null?D(cost.value).mul(units).toNumber():null,true),
-        commission:commission.value==null&&lineEstimate!=null?metric(trusted?lineEstimate:null,true,COMMISSION_ESTIMATE_REASON)
+        commission:commission.value==null&&lineEstimate!=null?metric(trusted?lineEstimate:null,true,commissionEstimateReason(channel))
           :metric(trusted&&commission.value!=null&&revenue!=null?D(revenue).mul(commission.value).toNumber():null,commission.estimated,commission.reason),
         shipping:metric(r.shipping,!actualShipping),otherVariableCosts:metric(r.other,!other)},config.grossIncludesRefunds);
       profits.push({channel,sku,period:String(r.period),profit});
