@@ -1,0 +1,42 @@
+name: Pazaryeri API teşhisi
+
+# Yalnız elle (Actions → "Pazaryeri API teşhisi" → Run workflow). Seçilen pazaryerinin SALT-OKUMA bağlantı teşhisini çalıştırır
+# (/api/cron/<kanal>-tani): bağlantı, son N gün sipariş özeti (yalnız sayı/tutar), ürün/kargo/kategori okuması. Yazma yok.
+on:
+  workflow_dispatch:
+    inputs:
+      kanal:
+        description: "pttavm"
+        required: true
+        default: pttavm
+        type: choice
+        options: [pttavm]
+      gun:
+        description: "Sipariş penceresi (gün, 1–90)"
+        required: false
+        default: "30"
+
+permissions:
+  contents: read
+
+jobs:
+  tani:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Teşhis
+        env:
+          KANAL: ${{ inputs.kanal }}
+          GUN: ${{ inputs.gun }}
+          BASE_URL: ${{ secrets.SITE_BASE_URL || secrets.PDKS_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$BASE_URL" ] || [ -z "$CRON_SECRET" ]; then echo "::error::SITE_BASE_URL/PDKS_BASE_URL veya CRON_SECRET tanımlı değil"; exit 1; fi
+          case "$KANAL" in pttavm) path="api/cron/pttavm-tani";; *) echo "::error::bilinmeyen kanal"; exit 1;; esac
+          code=$(curl -sS -m 150 -L --location-trusted -o /tmp/out.txt -w "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${BASE_URL%/}/${path}?gun=${GUN:-30}") || code="000"
+          echo "HTTP ${code}"
+          cat /tmp/out.txt || true
+          echo
+          test "$code" = "200"
