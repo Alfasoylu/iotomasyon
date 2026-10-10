@@ -359,7 +359,7 @@ export default async function CfoDebtsPage() {
         </CfoTable>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
           Kredi taksitleri ve kart ödemeleri bu listede YOKTUR — çift sayımı önlemek için ayrı tutulur.
-          Yıllık: {fmtTry(o.fixedExpenseMonthlyTry * 12)}. Borç servis oranı: {fmtPct(o.debtServiceRatio)}
+          Yıllık: {fmtTry(o.fixedExpenseMonthlyTry * 12)}. Borç servis oranı (KDV hariç tahsilata göre): {fmtPct(o.debtServiceRatio)}
         </p>
       </Card>
     </>

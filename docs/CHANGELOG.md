@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Gümrük kapasitesi, KDV hariç borç servisi, API anahtarı şifreleme (2026-10-10)
+
+- Gümrük rezervi kartı artık genel KMH'ye ek olarak gümrüğe ayrılmış limiti (750.000 TL) de kapasite sayıyor; nakit ufku ve kapasite alarmıyla aynı.
+- Borç servis oranı ve aylık faaliyet nakdi KDV hariç tahsilata göre hesaplanıyor (KDV vergi dairesine ödenecek para).
+- Pazaryeri API anahtarları veritabanında şifreli saklanabiliyor; şifreleme anahtarı Vercel'e eklenince devreye giriyor (o zamana kadar davranış aynı).
+
 ### CFO nakit ufku tek nakit yolundan; gecikmiş ödemeler listede (2026-10-10)
 
 - `/cfo`, Nakit Akışı ve Borçlar sayfalarındaki 7/30/60/90 günlük ufuk ve ay sonu tabloları artık ödeme takvimi ve kapasite alarmıyla aynı nakit yolundan hesaplanıyor; kırmızı eşiği alarmla aynı. Bugün 30 günlük pozisyon (−2,94M TL) şirket KMH kapasitesini (2,11M TL) aştığı için kırmızı.

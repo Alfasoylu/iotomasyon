@@ -42,4 +42,10 @@ const g = computeCfo({ settings: null, banks: [bank("Garanti", "Vadesiz + KMH", 
   cashEvents: [{ id: "c1", kind: "VERGI_GUMRUK", eventDate: new Date(2026, 9, 20), outflowTry: 500, inflowTry: 0, isSettled: false, description: "gümrük", relatedImport: null } as unknown as CfoInput["cashEvents"][number]] });
 assert.deepEqual([g.customs?.gap, g.customs?.remainingCapacity, g.customs?.traffic], [1100, -100, "KIRMIZI"]);
 assert.deepEqual([g.customs?.interestCostMonthly, g.customs?.interestUnknownTry], [16, 100], "faiz yalnız ek çekilişe (kullanılan 600 zaten kmhInterestMonthlyTry'da)");
+// Alperen kararı 10.10: amaca bağlı gümrük limiti gümrük kapasitesine dahil → 1.000 + 500 = 1.500 ≥ açık 1.100 → SARI, kalan 400
+const gp = computeCfo({ settings: null, banks: [bank("Garanti", "Vadesiz + KMH", -600, 1000, 4)], cards: [], loans: [], expenses: [], receivables: [], imports: [], today, forecast: [],
+  customsPurposeLimitTry: 500,
+  cashEvents: [{ id: "c1", kind: "VERGI_GUMRUK", eventDate: new Date(2026, 9, 20), outflowTry: 500, inflowTry: 0, isSettled: false, description: "gümrük", relatedImport: null } as unknown as CfoInput["cashEvents"][number]] });
+assert.deepEqual([gp.customs?.capacityTry, gp.customs?.remainingCapacity, gp.customs?.traffic], [1500, 400, "SARI"]);
+assert.equal(g.customs?.capacityTry, 1000, "amaca bağlı limit verilmezse yalnız genel KMH");
 console.log("CFO eski motor şirket/şahsi: manşet nakit ve KMH yalnız şirket (= cfo_nakit_kapisi üretim 10.10), şahsi ayrı alan + son çare dilimi passed");
