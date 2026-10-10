@@ -98,6 +98,9 @@ export interface CfoInput {
   /** CFO-003: USD/TRY işlem kuru TEK kaynaktan (lib/fx/current.ts — cfo_kur → cfo_settings → elle aylık kur). usdTry null = BİLİNMİYOR
    *  (kaynak "varsayılan" sabite düştüyse). Verilmezse yalnız cfo_settings.usdTryRate (> 0) okunur; eski `|| 1` yedeği (1 USD = 1 TL) yok. */
   fx?: { usdTry: number | null; source: string };
+  /** CFO-008: son 14 TAM günün cirosu tek kaynaktan (lib/cfo/revenue.ts — Goal Engine satırları; KDV dahil). null = tam gün yok (BİLİNMİYOR).
+   *  Verilmezse yalnız elle girilen cfo_settings.last14dRevenueTry (eski yol). */
+  revenue14?: { amountTry: number; through: string; source: string } | null;
   today?: Date;
 }
 
@@ -200,6 +203,8 @@ export interface CfoOverview {
   /** Haftalık tahminin kaynağı: kanal temposu (cfo_tahsilat_tahmini) ya da yedek last14/4 (elle girilen ciro). */
   weeklyEstimateSource: "kanal_temposu" | "last14";
   revenueDataAgeDays: number | null;
+  /** 14 gün cirosunun kaynağı (CFO-008): tek kaynak etiketi ya da "elle (cfo_settings)" */
+  revenueSource: string;
 
   // Forecast
   weeks: WeekBucket[];
@@ -314,14 +319,16 @@ export function computeCfo(input: CfoInput): CfoOverview {
     : inTransitImports.reduce((a, i) => a + num(i.totalCostUsd) * (usdTry ?? 0), 0);
 
   // ── Satış ──
-  const last14 = s ? numOrNull(s.last14dRevenueTry) : null;
+  // CFO-008: tek ciro kaynağı (Goal Engine satırları) verildiyse elle girilen 14 gün cirosu kullanılmaz
+  const last14 = input.revenue14 !== undefined ? (input.revenue14?.amountTry ?? null) : s ? numOrNull(s.last14dRevenueTry) : null;
   const monthlyRunRateTry = last14 != null ? (last14 / 14) * 30 : null;
   const cashConv = (s ? num(s.cashConversionPct) : 70) / 100;
   const monthlyCashCollectionTry = monthlyRunRateTry != null ? monthlyRunRateTry * cashConv : null;
   const weeklyEstimateGrossTry = last14 != null ? last14 / 4 : 0;
+  const revenueAsOf = input.revenue14 !== undefined ? (input.revenue14 ? new Date(`${input.revenue14.through}T00:00:00`) : null) : s?.last14dRevenueDate ?? null;
   const revenueDataAgeDays =
-    s?.last14dRevenueDate != null
-      ? Math.round((today.getTime() - startOfDay(new Date(s.last14dRevenueDate)).getTime()) / 86400000)
+    revenueAsOf != null
+      ? Math.round((today.getTime() - startOfDay(new Date(revenueAsOf)).getTime()) / 86400000)
       : null;
 
   // ── Haftalık tahmin kovaları (çift sayım korumalı) ──
@@ -479,7 +486,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     fixedExpenseMonthlyTry, totalFinancialDebtTry, netDebtTry, debtServiceRatio,
     receivablesPendingTry, receivablesByChannel,
     sellableStockTry, blockedStockTry, inTransitStockTry,
-    last14dRevenueTry: last14, monthlyRunRateTry, monthlyCashCollectionTry, weeklyEstimateGrossTry, weeklyEstimateSource, revenueDataAgeDays,
+    last14dRevenueTry: last14, revenueSource: input.revenue14 !== undefined ? (input.revenue14?.source ?? "bilinmiyor (tam gün yok)") : "elle (cfo_settings)", monthlyRunRateTry, monthlyCashCollectionTry, weeklyEstimateGrossTry, weeklyEstimateSource, revenueDataAgeDays,
     weeks, horizons, monthEnds, customs,
     narrowWorthTry, narrowWorthUsd, wideWorthTry, wideWorthUsd, target,
     monthlyOperatingCashTry, needsAttention,

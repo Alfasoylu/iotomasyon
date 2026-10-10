@@ -11,7 +11,7 @@ import { COST_DERIVATION_SOURCE, DOMESTIC_PREF, deriveUnitCosts, derivationLog, 
 export type CostDb = { query: <T>(sql: string, ...params: unknown[]) => Promise<T[]> };
 export type CostRunResult = { status: CostDerivation["status"] | "hata"; updated: number; fields: number; planned: number; skipped: number; deltaStockTry: number; bigMovers: number };
 
-/** İthal (RMB + ağırlık) ve yurt içi (IC_PIYASA) ürünler; gümrük yükü cfo_gtip_yuk ile aynı en uzun önek, KDV + ÖTV dahil. */
+/** İthal (RMB + ağırlık), yurt içi (IC_PIYASA) ve yalnız USD maliyetli (CFO-025) ürünler; gümrük yükü cfo_gtip_yuk ile aynı en uzun önek, KDV + ÖTV dahil. */
 export function costRowsSql(): string {
   return `SELECT p.sku, p."sourceCostRmb"::text AS rmb, p."weightKg"::text AS kg, p."importPaymentFeePct"::text AS fee, p."shippingMethodPref" AS pref,
        p."customsRatePct"::text AS cus, p."unitCostUsd"::text AS usd, p."unitCostTry"::text AS try_, p."stockQuantity" AS stock,
@@ -25,7 +25,7 @@ export function costRowsSql(): string {
      WHERE regexp_replace(coalesce(p.gtip1, ''), '[^0-9]', '', 'g') <> ''
        AND regexp_replace(coalesce(p.gtip1, ''), '[^0-9]', '', 'g') LIKE tr.gtip || '%'
      ORDER BY length(tr.gtip) DESC LIMIT 1) t ON true
- WHERE (p."sourceCostRmb" > 0 AND p."weightKg" > 0) OR p."shippingMethodPref" = '${DOMESTIC_PREF}'
+ WHERE (p."sourceCostRmb" > 0 AND p."weightKg" > 0) OR p."shippingMethodPref" = '${DOMESTIC_PREF}' OR p."unitCostUsd" > 0
  ORDER BY p.sku`;
 }
 

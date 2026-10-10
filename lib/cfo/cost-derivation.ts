@@ -6,6 +6,8 @@
 //   İTHAL   RMB > 0 ve ağırlık > 0 (ve IC_PIYASA değil): gümrük % = GTİP tarifesi (en uzun önek), tarife yoksa kayıtlı %;
 //           ikisi de yoksa ürün ATLANIR (varsayılan %30 maliyete yazılmaz — CFO-003: sabit yedek bilinmeyeni gizlemez).
 //   YURTİÇİ shippingMethodPref = IC_PIYASA ve unitCostUsd > 0 (İstoç vb. "USD + KDV" × 1,2): yalnız TL = USD × kur.
+//   USD     (CFO-025, 2026-10-10) RMB ya da ağırlık yok ama unitCostUsd > 0: yalnız TL = USD × kur (USD girdisi kaynakta doğrulanmalı;
+//           önceden TL sabit 48,50 ile saklı kalıyordu — 40005100051 / AL-CAM03 / TE-0124RUSTIKEVYEBATARYA / 247560000).
 //   RMB/USD tek kaynak lib/fx/current.ts (elle girilen aylık kur, sabit yedek yok); RMB bilinmiyor ya da USD/TRY "varsayılan" ise
 //   HİÇBİR ŞEY yazılmaz (kur_bilinmiyor). İthalatçı görünümü ve sermaye sağlığı aynı kuru kullanır.
 // Yuvarlama 2026-10-10 tek seferlik türetmeyle aynı: USD 4 hane, TL = round(toplam USD × kur, 2), gümrük % 1 hane.
@@ -31,7 +33,7 @@ export type CostRow = {
 export type CostFx = { usdTry: number; rmbPerUsd: number | null; usdTrySource: string; rmbSource: string };
 export type CostField = "customsRatePct" | "unitCostUsd" | "unitCostTry";
 export type CostUpdate = {
-  sku: string; kind: "ITHAL" | "YURTICI"; method: "SEA" | "AIR" | null;
+  sku: string; kind: "ITHAL" | "YURTICI" | "USD"; method: "SEA" | "AIR" | null;
   old: Record<CostField, string | null>; next: Record<CostField, string | null>;
   changes: { field: CostField; old: string | null; new: string }[];
   /** Değerlenen stok (1–999; ≥1000 dropship yer tutucusu sayılmaz) × TL farkı — KDV dahil. */
@@ -60,8 +62,13 @@ export function deriveUnitCosts(rows: CostRow[], fx: CostFx): CostDerivation {
       if (usd == null || !(usd > 0)) continue;
       kind = "YURTICI";
       next.unitCostTry = r(usd * fx.usdTry, 2).toFixed(2);
+    } else if (!((p.sourceCostRmb ?? 0) > 0) || !((p.weightKg ?? 0) > 0)) {
+      // CFO-025: motor girdisi yok — TL'yi kayıtlı USD'den güncel kurla türet (sabit kurla saklı TL kalmasın); USD de yoksa dokunma
+      const usd = num(p.unitCostUsd);
+      if (usd == null || !(usd > 0)) continue;
+      kind = "USD";
+      next.unitCostTry = r(usd * fx.usdTry, 2).toFixed(2);
     } else {
-      if (!((p.sourceCostRmb ?? 0) > 0) || !((p.weightKg ?? 0) > 0)) continue;
       const stored = num(p.customsRatePct);
       const customs = p.tariffBurdenPct ?? stored;
       if (customs == null) { out.skipped.push({ sku: p.sku, reason: "gumruk_bilinmiyor" }); continue; }
@@ -100,9 +107,10 @@ export function derivationLog(d: CostDerivation): { rows: { sku: string; field: 
   const rows = d.updates.flatMap(u => u.changes.map(c => ({ sku: u.sku, field: c.field, old: c.old, new: c.new,
     note: u.kind === "ITHAL"
       ? `İthalat motoru (calcImportCost): ${u.method === "SEA" ? "deniz" : "hava"}; gümrük % GTİP tarifesi (KDV+ÖTV dahil); ${fxNote}`
+      : u.kind === "USD" ? `Yalnız USD maliyet (RMB/ağırlık yok; CFO-025): unitCostUsd × USD/TRY — USD girdisi doğrulanmalı; ${fxNote}`
       : `Yurt içi alış (IC_PIYASA): unitCostUsd × USD/TRY; ${fxNote}` })));
-  const ithal = d.updates.filter(u => u.kind === "ITHAL").length, yurtici = d.updates.length - ithal;
-  const summary = `${d.updates.length} ürün (${ithal} ithal, ${yurtici} yurt içi), ${rows.length} alan; değerlenen stok maliyeti farkı (KDV dahil) `
+  const ithal = d.updates.filter(u => u.kind === "ITHAL").length, usdOnly = d.updates.filter(u => u.kind === "USD").length, yurtici = d.updates.length - ithal - usdOnly;
+  const summary = `${d.updates.length} ürün (${ithal} ithal, ${yurtici} yurt içi, ${usdOnly} yalnız USD), ${rows.length} alan; değerlenen stok maliyeti farkı (KDV dahil) `
     + `${d.deltaStockTry >= 0 ? "+" : ""}${d.deltaStockTry.toFixed(2)} TL; %${COST_JUMP_PCT}+ değişen stoklu ürün ${d.bigMovers.length}; `
     + `gümrüğü bilinmediği için atlanan ${d.skipped.length}; değişmeyen ${d.unchanged}. ${fxNote}`;
   return { rows, summary };
