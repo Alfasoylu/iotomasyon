@@ -82,7 +82,11 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   // (üretim 09.10: tahmini 73.683 ↔ gerçek 50.953 → sahte %45 sapma). Artık tüm kaynakların tam olduğu günler gerçek; sonraki günler
   // (yalnız Trendyol API okunmuş) Trendyol × son 28 tam günün oranı, estimated=true ve complete=false; REVENUE_DEVIATION karşılaştırması
   // yalnız TAM günlerde (son tam gün / son 7 / son 30 ↔ aynı haftanın günleri). Gün içi (son saat, bugün) günlük kaynakta yok → bilinmiyor.
-  {
+  // Kaynak yoksa (ör. Prisma şemasından kurulan test veritabanı; görünüm/materialized view yok) sorgu atılmaz — işlem içinde hata tüm
+  // döngüyü düşürürdü; dönemler "source_unavailable" kalır ve eksik alan listesine yazılır (eski catalog.require davranışı).
+  const canonicalSource=(await db.query(`select to_regclass('public.fm_sales_canonical_snapshot')::text as t`))[0]?.t!=null;
+  if(!canonicalSource) missing.push("fm_sales_canonical_snapshot");
+  if(canonicalSource) {
     const q=<T,>(sql:string)=>db.query(sql) as Promise<T[]>;
     const today=istanbulToday(now), yesterday=shiftDay(today,-1);
     const f=freshness((await db.query(REVENUE_FRESHNESS_SQL))[0],today);
