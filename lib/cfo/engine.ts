@@ -174,18 +174,21 @@ export interface CfoOverview {
 
   // Borçlar
   cardDebtTry: number;
-  cardMinTotalTry: number;
+  /** null = en az bir kartın asgari ödemesi bilinmiyor (override yok + kart asgari oranı ayarda yok) — CFO-014 */
+  cardMinTotalTry: number | null;
   /** devreden bakiyesi ve oranı bilinen kartların aylık faiz + KKDF/BSMV maliyeti */
   cardCarryCostTry: number;
   cardRevolvingTry: number; cardRevolvingWithoutRateTry: number; cardsUnknownRevolving: number;
   /** devreden bakiyesi ve oranı bilinen en pahalı kart (şahsi dahil) */
   cardTopRevolving: { name: string; revolvingTry: number; effectiveMonthlyRate: number } | null;
-  loanEarlyPayoffTry: number;
-  loanMonthlyServiceTry: number;
+  /** null = en az bir aktif kredinin erken kapama tutarı yok (0 sayılmaz) — CFO-014 */
+  loanEarlyPayoffTry: number | null;
+  loanMonthlyServiceTry: number | null;
   loansMissingRate: number;
+  loansMissingPayoff: number;
   fixedExpenseMonthlyTry: number;
-  totalFinancialDebtTry: number;
-  netDebtTry: number;
+  totalFinancialDebtTry: number | null;
+  netDebtTry: number | null;
   debtServiceRatio: number | null;
 
   // Alacak & stok
@@ -199,7 +202,7 @@ export interface CfoOverview {
   last14dRevenueTry: number | null;
   monthlyRunRateTry: number | null;
   monthlyCashCollectionTry: number | null;
-  weeklyEstimateGrossTry: number;
+  weeklyEstimateGrossTry: number | null;
   /** Haftalık tahminin kaynağı: kanal temposu (cfo_tahsilat_tahmini) ya da yedek last14/4 (elle girilen ciro). */
   weeklyEstimateSource: "kanal_temposu" | "last14";
   revenueDataAgeDays: number | null;
@@ -232,7 +235,7 @@ export interface CfoOverview {
   target: { usd: number; remainingUsd: number; monthsLeft: number | null; requiredMonthlyUsd: number | null; progress: number } | null;
 
   // Aksiyon
-  monthlyOperatingCashTry: number;
+  monthlyOperatingCashTry: number | null;
   needsAttention: Array<{ area: string; item: string; reason: string }>;
 }
 
@@ -245,7 +248,9 @@ export function computeCfo(input: CfoInput): CfoOverview {
   // CFO-003: tek kur kaynağı; bilinmiyorsa null (USD'den türeyen eski alanlar da BİLİNMİYOR — 1 TL ya da 0 değil)
   const usdTry: number | null = input.fx ? input.fx.usdTry : (s && num(s.usdTryRate) > 0 ? num(s.usdTryRate) : null);
   const usdTrySource = input.fx ? input.fx.source : usdTry != null ? "cfo_settings" : "bilinmiyor";
-  const cardMinPct = (s ? num(s.cardMinPct) : 20) / 100;
+  // CFO-014 kısım 2 (RF-016): ayarda yoksa kart asgari oranı %20 VARSAYILMAZ — oran bilinmiyorsa asgari ödeme (override yoksa) BİLİNMİYOR.
+  const cardMinPctRaw = s ? numOrNull(s.cardMinPct) : null;
+  const cardMinPct = cardMinPctRaw != null && cardMinPctRaw > 0 ? cardMinPctRaw / 100 : null;
 
   // ── Bankalar ──
   let netCashTry = 0, usedKmhTry = 0, totalKmhLimitTry = 0, freeKmhTry = 0, banksMissingBalance = 0, kmhInterestMonthlyTry = 0, kmhUsedWithoutRateTry = 0;
@@ -268,13 +273,15 @@ export function computeCfo(input: CfoInput): CfoOverview {
   }
 
   // ── Kartlar ──
-  let cardDebtTry = 0, cardMinTotalTry = 0;
+  let cardDebtTry = 0, cardMinSumTry = 0, cardsMinUnknown = 0;
   for (const c of input.cards) {
     const debt = numOrNull(c.totalDebtTry) ?? numOrNull(c.statementDebtTry);
     if (debt == null) continue;
     cardDebtTry += debt;
-    cardMinTotalTry += numOrNull(c.minOverrideTry) ?? Math.round(debt * cardMinPct);
+    const min = numOrNull(c.minOverrideTry) ?? (cardMinPct == null ? null : Math.round(debt * cardMinPct));
+    if (min == null) cardsMinUnknown++; else cardMinSumTry += min;
   }
+  const cardMinTotalTry: number | null = cardsMinUnknown ? null : cardMinSumTry;
   // Faiz yalnız devreden bakiyeye işler (lib/cfo/card-cost.ts); devreden ya da oran bilinmiyorsa maliyet UNKNOWN kalır.
   const carry = cardCarry(input.cards.map(c => ({ name: `${c.bank} ${c.holder ?? ""}`.trim(), personal: isPersonalCard(c.holder),
     totalDebtTry: numOrNull(c.totalDebtTry) ?? numOrNull(c.statementDebtTry), revolvingTry: numOrNull(c.revolvingTry ?? null),
@@ -282,17 +289,22 @@ export function computeCfo(input: CfoInput): CfoOverview {
   const cardCarryCostTry = carry.interestMonthlyTry;
 
   // ── Krediler ──
-  let loanEarlyPayoffTry = 0, loanMonthlyServiceTry = 0, loansMissingRate = 0;
+  // CFO-014 kısım 2 (RF-016): erken kapama / taksit tutarı girilmemiş aktif kredi 0 TL sayılmaz — toplam BİLİNMİYOR (borç eksik
+  // görünüp hedef/kapıyı iyimser göstermesin); eksik kredi "Dikkat" listesinde.
+  let loanPayoffSumTry = 0, loanServiceSumTry = 0, loansMissingRate = 0, loansMissingPayoff = 0, loansMissingPayment = 0;
   for (const l of input.loans) {
     if (l.status !== "AKTIF") continue;
-    loanEarlyPayoffTry += num(l.earlyPayoffTry);
-    loanMonthlyServiceTry += num(l.monthlyPaymentTry);
+    const payoff = numOrNull(l.earlyPayoffTry), payment = numOrNull(l.monthlyPaymentTry);
+    if (payoff == null) loansMissingPayoff++; else loanPayoffSumTry += payoff;
+    if (payment == null) loansMissingPayment++; else loanServiceSumTry += payment;
     if (numOrNull(l.interestRatePct) == null) loansMissingRate++;
   }
+  const loanEarlyPayoffTry: number | null = loansMissingPayoff ? null : loanPayoffSumTry;
+  const loanMonthlyServiceTry: number | null = loansMissingPayment ? null : loanServiceSumTry;
 
   const fixedExpenseMonthlyTry = input.expenses.filter((e) => e.isActive).reduce((a, e) => a + num(e.monthlyTry), 0);
-  const totalFinancialDebtTry = usedKmhTry + cardDebtTry + loanEarlyPayoffTry;
-  const netDebtTry = totalFinancialDebtTry - Math.max(0, netCashTry);
+  const totalFinancialDebtTry = loanEarlyPayoffTry == null ? null : usedKmhTry + cardDebtTry + loanEarlyPayoffTry;
+  const netDebtTry = totalFinancialDebtTry == null ? null : totalFinancialDebtTry - Math.max(0, netCashTry);
 
   // ── Alacaklar ──
   const pending = input.receivables.filter((r) => !r.isCollected);
@@ -316,8 +328,8 @@ export function computeCfo(input: CfoInput): CfoOverview {
   // Gerçek stok değeri: `cfo_stok_deger` → `cfo_servet` (lib/cfo/wealth.ts).
   // Buradaki alanlar yalnız geriye dönük uyumluluk için duruyor; yeni bir yerde
   // kullanmadan önce wealth.ts'e bak.
-  const sellableStockTry = !s ? 0 : usdTry == null ? null : num(s.stockCostUsd) * usdTry;
-  const blockedStockTry = !s ? 0 : usdTry == null ? null : num(s.blockedStockUsd) * usdTry;
+  const sellableStockTry = !s || usdTry == null ? null : num(s.stockCostUsd) * usdTry;
+  const blockedStockTry = !s || usdTry == null ? null : num(s.blockedStockUsd) * usdTry;
   const inTransitImports = input.imports.filter((i) => i.status === "YOLDA" || i.status === "GUMRUKTE");
   const inTransitStockTry = usdTry == null && inTransitImports.length ? null
     : inTransitImports.reduce((a, i) => a + num(i.totalCostUsd) * (usdTry ?? 0), 0);
@@ -326,9 +338,11 @@ export function computeCfo(input: CfoInput): CfoOverview {
   // CFO-008: tek ciro kaynağı (Goal Engine satırları) verildiyse elle girilen 14 gün cirosu kullanılmaz
   const last14 = input.revenue14 !== undefined ? (input.revenue14?.amountTry ?? null) : s ? numOrNull(s.last14dRevenueTry) : null;
   const monthlyRunRateTry = last14 != null ? (last14 / 14) * 30 : null;
-  const cashConv = (s ? num(s.cashConversionPct) : 70) / 100;
-  const monthlyCashCollectionTry = monthlyRunRateTry != null ? monthlyRunRateTry * cashConv : null;
-  const weeklyEstimateGrossTry = last14 != null ? last14 / 4 : 0;
+  // CFO-014 kısım 2 (RF-016): nakde dönüşüm oranı ayarda yoksa %70 VARSAYILMAZ → aylık tahsilat BİLİNMİYOR.
+  const cashConvRaw = s ? numOrNull(s.cashConversionPct) : null;
+  const cashConv = cashConvRaw != null && cashConvRaw > 0 ? cashConvRaw / 100 : null;
+  const monthlyCashCollectionTry = monthlyRunRateTry != null && cashConv != null ? monthlyRunRateTry * cashConv : null;
+  const weeklyEstimateGrossTry = last14 != null ? last14 / 4 : null;
   const revenueAsOf = input.revenue14 !== undefined ? (input.revenue14 ? new Date(`${input.revenue14.through}T00:00:00`) : null) : s?.last14dRevenueDate ?? null;
   const revenueDataAgeDays =
     revenueAsOf != null
@@ -353,7 +367,9 @@ export function computeCfo(input: CfoInput): CfoOverview {
       const est = forecast.filter((f) => f.date >= start && f.date <= end).reduce((a, f) => a + f.amountTry, 0);
       weeks.push({ start, end, gross: actual + est, actual, net: est });
     } else {
-      weeks.push({ start, end, gross: weeklyEstimateGrossTry, actual, net: Math.max(0, weeklyEstimateGrossTry - actual) });
+      // Yedek yol ve ciro bilinmiyorsa: tahmini ek tahsilat SAYILMAZ (muhafazakâr; sayfada brüt tahmin "—", yalnız gerçek hakediş).
+      const gross = weeklyEstimateGrossTry ?? actual;
+      weeks.push({ start, end, gross, actual, net: Math.max(0, gross - actual) });
     }
   }
 
@@ -451,7 +467,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
   // dolayısıyla GERÇEK servet DEĞİLDİR. Kokpit ve snapshot artık cfo_servet
   // görünümünü okuyor. Bu alanlar silinmedi çünkü target/progress hesabı hâlâ
   // burada; ama hiçbir ekran bunları basmıyor.
-  const narrowWorthTry = sellableStockTry == null ? null : netCashTry + receivablesPendingTry + sellableStockTry - cardDebtTry - loanEarlyPayoffTry;
+  const narrowWorthTry = sellableStockTry == null || loanEarlyPayoffTry == null ? null : netCashTry + receivablesPendingTry + sellableStockTry - cardDebtTry - loanEarlyPayoffTry;
   const wideWorthTry = narrowWorthTry == null || inTransitStockTry == null || blockedStockTry == null ? null : narrowWorthTry + inTransitStockTry + blockedStockTry;
   const narrowWorthUsd = narrowWorthTry == null || usdTry == null ? null : narrowWorthTry / usdTry;
   const wideWorthUsd = wideWorthTry == null || usdTry == null ? null : wideWorthTry / usdTry;
@@ -470,24 +486,28 @@ export function computeCfo(input: CfoInput): CfoOverview {
     };
   }
 
+  // CFO-014 kısım 2 (RF-016): tahsilat bilinmiyorken 0 sayılıp faaliyet nakdi "−giderler" (sahte kırmızı) gösterilmez → BİLİNMİYOR.
+  const debtServiceTry = loanMonthlyServiceTry == null || cardMinTotalTry == null ? null : loanMonthlyServiceTry + cardMinTotalTry + kmhInterestMonthlyTry;
   const monthlyOperatingCashTry =
-    (monthlyCashCollectionTry ?? 0) - fixedExpenseMonthlyTry - loanMonthlyServiceTry - cardMinTotalTry - kmhInterestMonthlyTry;
+    monthlyCashCollectionTry == null || debtServiceTry == null ? null : monthlyCashCollectionTry - fixedExpenseMonthlyTry - debtServiceTry;
   const debtServiceRatio =
-    monthlyCashCollectionTry && monthlyCashCollectionTry > 0
-      ? (loanMonthlyServiceTry + cardMinTotalTry + kmhInterestMonthlyTry) / monthlyCashCollectionTry
-      : null;
+    debtServiceTry != null && monthlyCashCollectionTry && monthlyCashCollectionTry > 0 ? debtServiceTry / monthlyCashCollectionTry : null;
 
   // ── Dikkat gerektirenler ──
   const needsAttention: CfoOverview["needsAttention"] = [];
   for (const b of input.banks) {
     if (numOrNull(b.balanceTry) == null) needsAttention.push({ area: "Banka", item: b.name, reason: "Bakiye bilinmiyor — boş limite sayılmadı" });
   }
+  if (cardsMinUnknown) needsAttention.push({ area: "Kredi kartı", item: `${cardsMinUnknown} kart`, reason: "Asgari ödeme bilinmiyor — kart asgari oranı (ayarlar) ve kart bazında asgari tutar yok" });
+  if (s && cashConv == null) needsAttention.push({ area: "Ayarlar", item: "Nakde dönüşüm oranı", reason: "Girilmemiş — aylık tahsilat ve faaliyet nakdi bilinmiyor (%70 varsayılmadı)" });
   for (const c of input.cards) {
     if (c.currentMonthState === "TEYIT_EDILMELI") needsAttention.push({ area: "Kredi kartı", item: `${c.bank} ${c.holder ?? ""}`.trim(), reason: "Bu ayki ödeme durumu teyit edilmeli" });
     if (numOrNull(c.totalDebtTry) == null && numOrNull(c.statementDebtTry) == null) needsAttention.push({ area: "Kredi kartı", item: `${c.bank} ${c.holder ?? ""}`.trim(), reason: "Güncel borç girilmemiş" });
   }
   for (const l of input.loans) {
     if (l.status !== "AKTIF") continue;
+    if (numOrNull(l.earlyPayoffTry) == null) needsAttention.push({ area: "Kredi", item: `${l.bank} — ${l.name}`, reason: "Erken kapama tutarı yok — toplam borç bilinmiyor (0 sayılmadı)" });
+    if (numOrNull(l.monthlyPaymentTry) == null) needsAttention.push({ area: "Kredi", item: `${l.bank} — ${l.name}`, reason: "Aylık taksit yok — borç servisi bilinmiyor" });
     if (numOrNull(l.interestRatePct) == null) needsAttention.push({ area: "Kredi", item: `${l.bank} — ${l.name}`, reason: "Faiz oranı yok — erken kapama getirisi hesaplanamıyor" });
     if (l.currentMonthState === "TEYIT_EDILMELI") needsAttention.push({ area: "Kredi", item: `${l.bank} — ${l.name}`, reason: "Bu ayki taksit durumu teyit edilmeli" });
   }
@@ -503,7 +523,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     cardTopRevolving: carry.perCard.filter(c => (c.revolvingTry ?? 0) > 0 && c.effectiveMonthlyRate != null)
       .sort((a, b) => b.effectiveMonthlyRate! - a.effectiveMonthlyRate!)
       .map(c => ({ name: c.name, revolvingTry: c.revolvingTry!, effectiveMonthlyRate: c.effectiveMonthlyRate! }))[0] ?? null,
-    loanEarlyPayoffTry, loanMonthlyServiceTry, loansMissingRate,
+    loanEarlyPayoffTry, loanMonthlyServiceTry, loansMissingRate, loansMissingPayoff,
     fixedExpenseMonthlyTry, totalFinancialDebtTry, netDebtTry, debtServiceRatio,
     receivablesPendingTry, receivablesByChannel,
     sellableStockTry, blockedStockTry, inTransitStockTry,

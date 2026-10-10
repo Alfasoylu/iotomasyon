@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 15:55 TR
-current_main_commit: ccc0d2e
+last_updated: 2026-10-10 16:40 TR
+current_main_commit: 24f5f38
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
-current_score: 65/100
+current_score: 66/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "62→65 — 12:35 UTC üretim doğrulaması: CFO-001 ✅ / CFO-002 ✅ (v3 net sermaye + borç fm_balance_day = yazıldığı andaki sözleşme fonksiyonu, Goal v3 değerlendirdi; RF-001 CRITICAL + RF-002 HIGH RESOLVED), CFO-008 ✅ (AI CFO karşılaştırmaları kanonik ciroyla kuruşu kuruşuna; RF-009 RESOLVED), RF-038 RESOLVED (döngü üretimde tamamlandı), CFO-031 ✅ (3 SKU stoku Alperen teyidi; RF-037 RESOLVED); boyut 1: 10→13; gate 5/12→7/12 (H1, H12)"
+score_change: "65→66 — CFO-014 kısım 2 (RF-016): eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (kredi erken kapama/taksit, kart asgari %20, nakde dönüşüm %70, faaliyet nakdi sahte kırmızı, eski stok alanları, yedek haftalık tahmin, kaldıraç teslim süresi 67/22) — testli; boyut 7: 5→6"
 ---
 
 # CFO SCORECARD
@@ -62,11 +62,11 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 4 | Revenue / profitability | 10 | **6** | TEK CİRO KAYNAĞI (CFO-008, 10.10): manşet ciro tüm CFO yüzeylerinde Goal Engine satırlarından (`lib/cfo/revenue.ts`, tamlık sınırlı, testli); KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları; EPTT komisyonu kanal marjında (Entegra oranı × toplam, tahmini işaretli, CFO-028) | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); iade marja bağlı değil; 6 kanal + FBA komisyonu UNKNOWN (oran belgesi yok); EPTT tahmini ölçülmemiş (~0,4 puan düşük) |
 | 5 | Inventory / procurement | 10 | **6** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam; GTİP 433/433 + yasal gümrük yükü ve `duty_gap` alarmı | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
 | 6 | Decision memory & calibration | 10 | **4** | `cfo_hamle` + beklenen/gerçekleşen ekranı; goal attribution; CFO-012 (10.10): yeni karar yalnız beklenen SAYI + başlangıç + ölçülebilir metrik + tarih ile (form + sunucu doğrulaması; kural tarihinden sonra eksik kayıt "Beklenen değer eksik" bayrağı), kontrol noktası ölçümleri her gece `cfo_hamle_olcum`'a (o günün borç/kamu/FBA değeri, kart/KMH bugünkü bakiye; tekrar yazmaz; PGlite testli), kalibrasyon skoru (isabet, hata, eğilim, kapsam) sayfa + AI CFO kanıtında, sermaye motorunun borç kapama adımları karar taslağı (onayla kaydedilir) | Otomatik ölçüm üretimde henüz gözlenmedi (ilk kontrol noktası 31.10); eski 12 kararın beklenen SAYI'sı yok (kalibrasyon kapsamı 3/15); stok/likidite önerileri 6 metrikle ölçülemiyor; atıf kimliği bozuk |
-| 7 | Data quality / provenance | 7 | **5** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi | Eski motorda UNKNOWN→0 (CFO-018; yan modüller kısım 1'de düzeldi); elle defterler; 66 açık soru, karışık durum sözlüğü |
+| 7 | Data quality / provenance | 7 | **6** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi; eski motor UNKNOWN≠0 (2026-10-10, CFO-014 kısım 2: kredi erken kapama/taksit, kart asgari oranı, nakde dönüşüm, faaliyet nakdi, eski stok alanları, yedek haftalık tahmin, kaldıraç teslim süresi — eksikse null + "Dikkat" satırı, testli) | cfo_servet_kalem COALESCE 0 (bilinmeyen banka bakiyesi toplamdan sessiz düşer; migration); elle defterler; 66 açık soru, karışık durum sözlüğü |
 | 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; SAĞLIK alarmı (takılan/başarısız/bayat motor) kodda, üretimde migration 150000 bekliyor; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **3** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü, uygulama bypassrls ile bağlanıyor |
-| | **TOPLAM** | **100** | **65** | | |
+| | **TOPLAM** | **100** | **66** | | |
 
 ## Skor geçmişi
 
@@ -108,3 +108,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 5a1e46c | 62 | 5/12 | Değişmedi (bilinçli): CFO-030 ✅ / RF-035 RESOLVED (LOW) — migration 140000 üretimde (Alperen açık onayı; c4e8595a…): KMH kapasitesi pozisyon + tam ticari limit (SQL 3 fonksiyon + kapasite alarmı + stres testi); bugün sayılar aynı, 14.10 gümrük dilimi sonrası çift düşüş önlendi |
 | 2026-10-10 | 9979a79 | 62 | 5/12 | Değişmedi (bilinçli): CFO-009 / D-P07 — `cfo_alarm` şablonu Meta’da aktif (Alperen; Pazarlama, tr, 2 değişken), `CFO_ALARM_WHATSAPP_TO` Vercel’de; kanal kanıtı için elle tetiklenen deneme gönderimi (`/api/cron/cfo-alarm-test` + `cfo-alarm-test.yml`; alarm üretmez, DB’ye yazmaz) + günlük ödeme özeti (en yakın 5 ödeme, 05:xx UTC) |
 | 2026-10-10 | ccc0d2e | 65 | 7/12 | 62→65: 12:35 UTC üretim doğrulaması — CFO-001/002 ✅ (v3 net sermaye/borç = sözleşme fonksiyonu, Goal v3), CFO-008 ✅ (motor karşılaştırmaları kanonikle birebir), RF-038 döngü tamamlandı, CFO-031 ✅ (3 SKU teyidi); RF-001/002/009/037/038 RESOLVED; boyut 1: 10→13; H1 + H12 ✅ |
+| 2026-10-10 | 24f5f38 | 66 | 7/12 | 65→66: CFO-014 kısım 2 (RF-016) — eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (testli `cfo-engine-unknown`); boyut 7: 5→6. H3 ❌ kalır (cfo_servet_kalem COALESCE 0 migration bekliyor) |

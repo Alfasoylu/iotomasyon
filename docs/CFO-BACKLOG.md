@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 15:55 TR
-current_main_commit: ccc0d2e
+last_updated: 2026-10-10 16:40 TR
+current_main_commit: 24f5f38
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
-current_score: 65/100
+current_score: 66/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "62→65 — 12:35 UTC üretim doğrulaması: CFO-001 ✅ / CFO-002 ✅ (v3 net sermaye + borç fm_balance_day = yazıldığı andaki sözleşme fonksiyonu, Goal v3 değerlendirdi; RF-001 CRITICAL + RF-002 HIGH RESOLVED), CFO-008 ✅ (AI CFO karşılaştırmaları kanonik ciroyla kuruşu kuruşuna; RF-009 RESOLVED), RF-038 RESOLVED (döngü üretimde tamamlandı), CFO-031 ✅ (3 SKU stoku Alperen teyidi; RF-037 RESOLVED); boyut 1: 10→13; gate 5/12→7/12 (H1, H12)"
+score_change: "65→66 — CFO-014 kısım 2 (RF-016): eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (kredi erken kapama/taksit, kart asgari %20, nakde dönüşüm %70, faaliyet nakdi sahte kırmızı, eski stok alanları, yedek haftalık tahmin, kaldıraç teslim süresi 67/22) — testli; boyut 7: 5→6"
 ---
 
 # CFO BACKLOG
@@ -170,6 +170,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 ### CFO-014 — UNKNOWN→0 süpürmesi
 - **uygulama:** listelenen yollar (RF-016) UNKNOWN taşır; tahmin kanıtları `measured=false`. **durum:** IN_PROGRESS — kısım 1 (2026-10-09): eşik faiz %4 varsayılanı kalktı (`capital-efficiency` / `voi-data`: eşik yoksa büyüt/azalt kararı ve eşiğe dayalı bilgi değeri BİLİNMİYOR; FIX_PRICE/LIQUIDATE eşikten bağımsız; tasfiye nakdi en kötü indirimle); downside başlangıç nakdi yoksa stres testi yok (0 TL ile başlamaz), stres açığı taban/eşlik yoksa `null` ve `/cfo/sermaye` likidite açığı "bilinmiyor" + eksik nedeni; hedef atfı (`goal-attribution-data`) her metrikte yalnız en yeni tanım sürümü (v2/v3 karışmaz — yarınki ilk v3 satırıyla oluşacak hatayı önler) ve eksik bileşenli gün 0 değil atlanır; bugünkü ciro yoksa `currentUnknown` (kanıt ölçülmemiş, sayfa "bilinmiyor"); kanıt bayrakları: eski geniş servet/kur `measured=false`, `servet.dar_try` en yeni tanım sürümü, stokta bağlı sermaye satır yoksa null; `/cfo` "30 gün sonundaki nakit" projeksiyon yoksa "bilinmiyor". Üretim: eşik faiz bugün biliniyor (5 kredi + 5 kart oranlı) → sayılar değişmez; düzeltmeler gizli varsayılanları kaldırır. Kasıtlı korunan: `gunluk_hiz` null = 90 günde satış yok (görünüm `adet/90`, sol birleşim) → 0 doğru. **Kalan (kısım 2):** eski motor `engine.ts` (`num()` null→0, `usdTryRate || 1`, kart asgari %20, nakde dönüşüm %70, erken kapama) → CFO-018 ile; `revenue-levers` hedef 100000 yedeği ve teslim süresi varsayılanları (67/22 gün), `cfo_servet_kalem` COALESCE 0 (migration), alfashome/findings küçük `?? 0`'lar.
 
+- **2026-10-10 — kısım 2 (Claude Code, kod + test):** eski motor (`lib/cfo/engine.ts`) — aktif kredinin erken kapama / taksit tutarı yoksa 0 sayılmaz: `loanEarlyPayoffTry`, `loanMonthlyServiceTry`, `totalFinancialDebtTry`, `netDebtTry` BİLİNMİYOR (null) + "Dikkat" satırı; kart asgari oranı ayarda yoksa %20 varsayılmaz (kart bazında asgari varsa o; yoksa `cardMinTotalTry` null); nakde dönüşüm oranı yoksa %70 varsayılmaz (aylık tahsilat null); tahsilat bilinmiyorken faaliyet nakdi "−giderler" (sahte kırmızı) değil null, `/cfo` kartı nötr + neden; ayar satırı yoksa eski sabit stok alanları 0 değil null; yedek yolda ciro yoksa haftalık brüt tahmin null ve tahmini tahsilat üretilmez. Gelir kaldıraçları: teslim süresi ayarda yoksa 67/22 gün varsayılmaz (`daysToRevenue` null, `/cfo/sermaye` "teslim süresi bilinmiyor"). Üretimde bugün değer değişmez (tüm krediler erken kapama + taksitli; ayarlar dolu). Test `cfo-engine-unknown` (CI) + `cfo-revenue-levers`. Kalan: `cfo_servet_kalem` COALESCE 0 (migration); `findings` `inbound_quantity ?? 0` bilinçli (yoldaki adet yoksa 0 = gelen yok).
 ### CFO-015 — Ölçülmemiş faiz oranları
 - **durum:** BLOCKED — veri (Garanti, Garanti Alp, Akbank Alp, Ziraat amaca bağlı, 4 şahsi KMH ekstre oranları; Alperen).
 

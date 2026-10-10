@@ -95,7 +95,7 @@ export default async function CfoAllocationPage() {
           {rv.levers.map((l, i) => (
             <tr key={l.key}>
               <Td strong>{i + 1}</Td>
-              <Td strong>{l.label}<span className="block text-[11px] font-normal text-[var(--text-muted)]">{l.basis} · ~{l.daysToRevenue} gün</span></Td>
+              <Td strong>{l.label}<span className="block text-[11px] font-normal text-[var(--text-muted)]">{l.basis} · {l.daysToRevenue == null ? "teslim süresi bilinmiyor (ayarlar)" : `~${l.daysToRevenue} gün`}</span></Td>
               <Td right>{fmtTry(l.revenueMonthlyTry)}</Td><Td right>{fmtTry(l.grossMonthlyTry)}</Td>
               <Td right>{l.capitalNeededTry ? fmtTry(l.capitalNeededTry) : "yok"}</Td><Td right>{l.sunkCapitalTry ? fmtTry(l.sunkCapitalTry) : "—"}</Td>
               <Td right>{l.confidence.toFixed(1)}</Td><Td right>%{Math.round(l.gapShare * 100)}</Td><Td muted>{l.blocker}</Td>

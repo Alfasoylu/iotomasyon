@@ -32,4 +32,7 @@ assert.deepEqual(plan.levers.map(l => l.key), ["new-products", "stockout", "scal
 assert.ok(Math.abs(plan.levers[0].gapShare - (Math.round(14726800 / 6) * 0.4) / (100000 * FX - 1894641)) < 1e-9);
 assert.ok(plan.coveredShare > 0 && plan.coveredShare <= 1);
 assert.equal(rankLevers([np], 10_000_000, 4_898_000).gapMonthlyTry, 0, "hedef aşılmışsa açık 0");
+// CFO-014 kısım 2: teslim süresi ayarda yoksa 67/22 gün varsayılmaz — süre BİLİNMİYOR (null), kaldıraç yine hesaplanır
+assert.equal(stockoutLever([{ sku: "x", rev90: 9000, units90: 30, unitCost: 100 }], null, 45)!.daysToRevenue, null);
+assert.equal(scaleProtectLever(1000, 500, 200, null)!.daysToRevenue, null);
 console.log("CFO revenue levers: sunk-capital listing first, stockout recovery, scale protection, gap share passed");
