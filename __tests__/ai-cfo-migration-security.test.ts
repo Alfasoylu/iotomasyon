@@ -27,7 +27,7 @@ async function main() {
     // market_scout_foundation (PR3) and drop_legacy_backup_tables (waits for the operator to run it) are held back; they touch only
     // market_* objects / 3 unused backup tables and do not affect this check. alfashome_order and cfo_ledger_tables_capture are applied.
     assert.deepEqual(res.pendingNotInProduction, ["20261007100000_market_scout_foundation", "20261007200000_drop_legacy_backup_tables",
-      "20261010120000_cfo_kur_tek_kaynak", "20261010130000_cfo_sanal_stok_istisna"],
+      "20261010120000_cfo_kur_tek_kaynak"],
       "only the held-back migrations stay out of production");
     // production default ACL for objects postgres creates in public (after the security phase)
     await db.exec(`alter default privileges in schema public grant all on tables to service_role;

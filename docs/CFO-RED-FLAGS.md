@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 11:25 TR
-current_main_commit: 7093c47
+last_updated: 2026-10-10 11:47 TR
+current_main_commit: 459edd9
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 60/100
-next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen AÇIK onayı) → RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
-open_critical: 2
+current_score: 61/100
+next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; düzeltilmiş net sermaye 1.383.530,52 ile) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+open_critical: 1
 open_high: 5
-score_change: "unchanged — Durum kaydı mutabakatı: açık özet satırı (eski CRITICAL 1 · HIGH 4) Durum kaydından yeniden sayıldı (CRITICAL 2 · HIGH 5, kimlikleriyle) ve drift testine bağlandı; RF-006 otomasyonu kanıtlanmadı (ilk cron koşusu 13:xx UTC), RF-036 sanal stok hâlâ net sermayede (migration 130000 açık onay bekliyor) — skor bunlar kanıtlanınca yeniden değerlendirilir"
+score_change: "60→61 — RF-036 RESOLVED: migration 130000 üretimde (Alperen açık onayı) — sanal stok (40005100051) net sermayeden çıktı, 2.401.170 → 1.383.531 TL, kimlik farkı 0; finansal doğruluk 8→9 (RF-036 ile düşen puan geri). RF-006 otomasyonu hâlâ kanıtlanmadı"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -14,7 +14,7 @@ score_change: "unchanged — Durum kaydı mutabakatı: açık özet satırı (es
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet:** CRITICAL 2 (RF-20261008-001, RF-20261010-036) · HIGH 5 (RF-20261008-002, RF-20261008-003, RF-20261008-006, RF-20261008-009, RF-20261010-038) açık (RESOLVED dışı) — tek doğru kaynak aşağıdaki **Durum kaydı** tablosu; bu satır ve frontmatter `open_critical`/`open_high` CI'da (`cfo-governance-drift`) ondan yeniden sayılır.
+**Açık özet:** CRITICAL 1 (RF-20261008-001) · HIGH 5 (RF-20261008-002, RF-20261008-003, RF-20261008-006, RF-20261008-009, RF-20261010-038) açık (RESOLVED dışı) — tek doğru kaynak aşağıdaki **Durum kaydı** tablosu; bu satır ve frontmatter `open_critical`/`open_high` CI'da (`cfo-governance-drift`) ondan yeniden sayılır.
 
 ---
 
@@ -59,7 +59,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261009-032 | MEDIUM | IN_PROGRESS | 10.10 karar (Alperen): EPTT tahmini komisyon kanal marjında (measured=false) ✓; 6 kanal + FBA oran belgesine kadar UNKNOWN (%20 yer tutucu yok); kalan: oran belgeleri / hakediş dökümleri (CFO-027 yolu) |
 | RF-20261010-034 | MEDIUM | RESOLVED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
 | RF-20261010-035 | LOW | OPEN | latent: eksi bakiyeli KMH hesabında "nakit/dip + boş KMH" kullanımı iki kez düşer (kaynak yeterliliği, ön uçuş, gümrük dilimi); bugün etki 0 → CFO-030 |
-| RF-20261010-036 | CRITICAL | OPEN | sanal stok (cfo_stok_istisna 40005100051) net sermayede 1.025.723 TL; 10.10 08:25 UTC yeniden ölçüldü: hâlâ `gercek_stok=true`, 2.513 adet, maliyet 1.230.867 TL, net sermaye 2.401.170,03 (düzeltilmiş ≈1.383.530) — düzeltme migration 130000 (CFO-031) bekletilen, AÇIK üretim onayı bekliyor |
+| RF-20261010-036 | CRITICAL | RESOLVED | 2026-10-10, migration 130000 üretimde (Alperen açık onayı "Evet, uygula"; checksum 32b55afe…): 40005100051 `gercek_stok=false`, stok satırına yalnız beyan edilen bağlı 8.083,33 TL; net sermaye 2.401.170,03 → 1.383.530,52 (kimlik farkı 0) |
 | RF-20261010-037 | MEDIUM | IN_PROGRESS | gerçek stok 4 kural; CFO-029 etki/alarm net sermaye kuralına hizalandı ✓ kod; kalan: 1.000–5.000 adetlik 3 SKU (1,18M TL) gerçek mi (AL-CAM03 10.07'den beri senkronsuz) — Alperen |
 | RF-20261010-038 | HIGH | MITIGATED | CFO çalışma döngüsü 09.10 02:34'ten beri bağlam aşamasında 3B001; düzeltme kodda (savepoint-source.ts, sorgular sıralı); RESOLVED: üretimde ilk tamamlanan döngü |
 
@@ -699,3 +699,16 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 - **RF-20261008-006 — otomasyon kanıtlanmadı:** kod birleşti ve CI yeşil, fakat ilk gerçek zamanlanmış koşu henüz yok (yukarıdaki satır).
   RESOLVED/MITIGATED'e geçiş yalnız `cfo_run`'da cron kaynaklı tamamlanmış motor koşusu + `cfo-cycle` tamamlanması gözlenince.
 - **RF-20261010-036 — sanal stok:** yeniden ölçüldü (yukarıdaki satır); migration 130000 yalnız Alperen'in açık üretim onayıyla uygulanır.
+
+## 2026-10-10 — Sanal stok düzeltmesi üretimde RED FLAG PASS
+
+### RF-20261010-036 — güncelleme: RESOLVED (2026-10-10, migration 130000)
+- **onay:** Alperen açık onay ("Evet, uygula", 2026-10-10 ~08:50 UTC); 40005100051 sanal beyanı `cfo_stok_istisna` notunda (stok manuel, fiilen M-BANYOMİX gidiyor).
+- **ön koşul (salt-okunur):** üretim `cfo_stok_deger` ve `cfo_metrik_net_sermaye()` gövdeleri migration'ın tabanıyla birebir (fark yalnız `NOT EXISTS` ve `i` CTE'si);
+  bekletilen 120000 başka nesnelere dokunuyor (çakışma yok); görünüm reloptions yok, ACL'ler `CREATE OR REPLACE` ile korunur.
+- **uygulama:** tek işlem — migration dosyası birebir + `_prisma_migrations` satırı (checksum 32b55afe… = repo dosyası sha256).
+- **doğrulama:** 40005100051 `gercek_stok=false`; sira 3 stok 3.336.030,79 → 2.318.391,28 (beyan edilen 9.700 TL / 1,2 = 8.083,33 dahil); NET SERMAYE
+  2.401.170,03 → **1.383.530,52 TL**; kimlik nakit 151.553,36 + alacak 1.045.155,68 + stok 2.318.391,28 + yoldaki 3.758.334,00 − kredi 3.373.797,12 − kart 2.516.106,68 = 1.383.530,52 (fark 0);
+  görünüm ACL (service_role, cfo_acceptance_reader) ve fonksiyon ACL değişmedi; parmak izi yalnız fn/view satırlarında değişti (yeniden ölçüldü).
+- **etki:** bir sonraki snapshot / Goal v3 tazelemesi düzeltilmiş net sermayeyi yazar (bugünkü 05:13 snapshot eski tanımla, 2.401.170,03 — tarihsel).
+  Sermaye verimliliği / sağlığı ve AI CFO kanıtları aynı `gercek_stok` kuralından okur. RF-037 (1.000+ adetlik 3 SKU) ayrı, açık.
