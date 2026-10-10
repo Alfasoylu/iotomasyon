@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { lastCompleteDays } from "@/lib/cfo/revenue";
 import { calculateProfitability } from "@/lib/profitability";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -97,7 +98,10 @@ export async function OperationsSection() {
     .slice(0, 5);
 
   const activeSales90d = salesRecords90d.filter((r) => !isCancelledStatus(r.status));
-  const totalRevenue90d = activeSales90d.reduce((sum, r) => sum + Number(r.totalPriceTry), 0);
+  // CFO-008: manşet ciro TEK kaynaktan (lib/cfo/revenue.ts — Goal Engine satırları, tüm kanallar, son 90 TAM gün, KDV dahil). Önceden yalnız
+  // Trendyol API (cironun ~%61'i) ve iade/teslim edilemeyen satırlar dahildi. Ürün kırılımı aşağıda Trendyol API satırlarından kalır.
+  const rev90 = await lastCompleteDays(<T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql), 90).catch(() => null);
+  const totalRevenue90d = rev90?.inclTry ?? 0;
   const unmatchedCount90d = activeSales90d.filter((r) => !r.productId).length;
   const revenueByProduct = new Map<string, { name: string; sku: string | null; revenue: number }>();
   for (const r of activeSales90d) {
@@ -149,15 +153,15 @@ export async function OperationsSection() {
 
         <div className="grid gap-4 p-6 sm:grid-cols-3">
           <KpiCard
-            label="Toplam Ciro (90G)"
-            value={totalRevenue90d > 0 ? fmt(totalRevenue90d) : "Veri yok"}
-            sub={`${activeSales90d.length} satır (iptal hariç)`}
+            label="Toplam Ciro (son 90 tam gün)"
+            value={rev90 && totalRevenue90d > 0 ? fmt(totalRevenue90d) : "bilinmiyor"}
+            sub={rev90 ? `tüm kanallar, KDV dahil · ${rev90.from} – ${rev90.to}${rev90.complete ? "" : " (eksik gün)"}` : "ciro kaynağı okunamadı"}
             tone={totalRevenue90d > 0 ? "dark" : "neutral"}
           />
           <KpiCard
             label="Eşleşen Ürün Çeşidi"
             value={String(distinctProducts90d)}
-            sub="productId bağlı kayıtlar"
+            sub="Trendyol API satırları, productId bağlı"
             tone="neutral"
           />
           <KpiCard

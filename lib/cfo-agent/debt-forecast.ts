@@ -1,4 +1,5 @@
-import { REVIEWED_CFO_SOURCE_BINDINGS } from './acceptance-profile';
+import { lastCompleteDays } from '../cfo/revenue';
+import type { SqlQuery } from '../cfo/capital-efficiency-data';
 import { debtGate } from './debt-policy';
 import type { ReadSource, Row } from './sources';
 import type { CfoAgentSnapshot } from './types';
@@ -8,17 +9,13 @@ export type ForecastInputs={historicalRevenueTry:number|null;historicalDays:numb
   importsPaid:boolean;extraOutflows:{date:string;amount:number;debtSettlement:boolean}[];horizonDays:number;missing:string[]};
 export async function readForecastInputs(db:ReadSource,snapshot:CfoAgentSnapshot):Promise<ForecastInputs>{
   const result:ForecastInputs={historicalRevenueTry:null,historicalDays:0,historicalEnd:null,fixedMonthlyTry:null,interestMonthlyTry:null,otherMonthlyTry:null,cashReserveTry:null,settlementDays:null,importsPaid:false,extraOutflows:[],horizonDays:0,missing:[]};
-  // Anchor the historical window at the last imported day, not today's missing rows.
-  const end=snapshot.dataQuality.sourceWatermarks?.find(w=>w.source==='Entegra')?.orderDate;
-  if(end&&!snapshot.dataQuality.missingFields?.includes('canonical_sales_semantics_not_validated')&&snapshot.dataQuality.duplicateCanonicalRows===0){
-    // Görünümün gerçek sütunları siparis_tarihi / siparis_tutari (REVIEWED_CFO_SOURCE_BINDINGS). Eski "orderDate"/"totalAmountTry"
-    // adları üretimde yoktu: sorgu her koşuda düşüyor, borç tahmini hep "Geçmiş satış penceresi okunamadı" diyordu (2026-10-07).
-    const col=REVIEWED_CFO_SOURCE_BINDINGS.cfo_satis_siparis;
-    try{const [r]=await db.query<Row>(`select sum("${col.totalAmountTry}")::numeric as revenue,count(distinct "${col.orderDate}"::date)::int as days
-      from cfo_satis_siparis where "${col.orderDate}">=date_trunc('day',$1::timestamp)-interval '30 days' and "${col.orderDate}"<date_trunc('day',$1::timestamp)`,end);
-      result.historicalRevenueTry=r?.revenue==null?null:Number(r.revenue);result.historicalDays=Number(r?.days??0);result.historicalEnd=end;
-    }catch{result.missing.push('Geçmiş satış penceresi okunamadı');}
-  }
+  // CFO-008 (2026-10-10): geçmiş ciro penceresi TEK kaynaktan (lib/cfo/revenue.ts — Goal Engine satırları, KDV dahil): tüm satış
+  // kaynaklarının tam olduğu son 30 gün. Önceden cfo_satis_siparis (yalnız Entegra, Alfashome yok, İadesi Onaylanan sayılıyordu) Entegra
+  // damgasına göre — pencere bugünden bir haftaya kadar gerideydi.
+  try{const q=(<T,>(sql:string)=>db.query(sql) as Promise<T[]>) as SqlQuery;
+    const r=await lastCompleteDays(q,30,new Date(snapshot.generatedAt));
+    if(r){result.historicalRevenueTry=r.inclTry;result.historicalDays=30;result.historicalEnd=r.to;}else result.missing.push('Geçmiş satış penceresi: tam gün yok');
+  }catch{result.missing.push('Geçmiş satış penceresi okunamadı');}
   try{const [r]=await db.query<Row>('select sum("monthlyTry")::numeric as total from cfo_fixed_expense where "isActive"');result.fixedMonthlyTry=r?.total==null?null:Number(r.total);}catch{result.missing.push('Aylık sabit giderler');}
   // Nominal rates alone omit taxes/fees. Use an explicitly verified effective budget,
   // stored in a structured owner note; ordinary answer text is never parsed as money.

@@ -8,6 +8,8 @@ import { readOrderDebtGate } from '@/lib/cfo-agent/debt-policy';
 import { readWork,WORK_SOURCE,HEARTBEAT_ID } from '@/lib/cfo-agent/workflow-store';
 import { fmtTry } from '@/lib/cfo/format';
 import { ImportOrderSection,type OneriOzeti,type OneriSatiri,type CiroHedefi,type YoldakiKapsam } from './import-order';
+import { lastFullMonth, revenueTargetCard } from '@/lib/cfo/revenue';
+import { pickStrategicFx, STRATEGIC_FX_SQL_NOW } from '@/lib/fx/strategic';
 
 /** One destination: existing batch rows and incomplete future candidates share owner decisions and notes. */
 export default async function ImportPlannerSection(){
@@ -15,7 +17,13 @@ export default async function ImportPlannerSection(){
   const [ozet,satirlar,hedef,yoldaki,notes,planner,gate]=await Promise.all([
     prisma.$queryRaw<OneriOzeti[]>`select * from cfo_ithalat_oneri_ozet order by mod`,
     prisma.$queryRaw<OneriSatiri[]>`select * from cfo_ithalat_oneri order by mod,sira`,
-    prisma.$queryRaw<CiroHedefi[]>`select * from cfo_ciro_hedef`,
+    // CFO-008: hedef kartı TEK ciro kaynağından (Goal Engine satırları, geçen tam ay, KDV dahil) ÷ stratejik kur (TCMB) — cfo_ciro_hedef
+    // (maliyetsiz SKU'lar hariç, ayar kuru / 48,5 yedeği) okunmaz.
+    Promise.all([lastFullMonth(<T,>(sql:string)=>prisma.$queryRawUnsafe<T[]>(sql)),
+      prisma.$queryRawUnsafe<{usd:unknown}[]>(`select "monthlyRevenueTargetUsd" as usd from cfo_settings limit 1`),
+      prisma.$queryRawUnsafe<{month:unknown;rate:unknown}[]>(STRATEGIC_FX_SQL_NOW)])
+      .then(([m,t,f])=>{const c=revenueTargetCard(m,t[0]?.usd==null?null:Number(t[0].usd),pickStrategicFx(f[0],new Date())?.usdTry??null);return c?[c as CiroHedefi]:[];})
+      .catch(()=>[] as CiroHedefi[]),
     prisma.$queryRaw<YoldakiKapsam[]>`select * from cfo_yoldaki_kapsam order by eta nulls last,kod`,
     prisma.cfoNote.findMany({where:{source:WORK_SOURCE,archivedAt:null},select:{id:true,body:true}}),
     readImportPlanner(db),readOrderDebtGate(db,new Date()),

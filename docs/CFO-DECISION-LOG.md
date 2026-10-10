@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:40 TR
-current_main_commit: ed52e04
+last_updated: 2026-10-10 04:45 TR
+current_main_commit: 0ffbb2c
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 (bekletilen) üretime uygulanması — Alperen izni/uygulaması → CFO-008 tek ciro fonksiyonu → CFO-025 sabit kurlu maliyetler"
+current_score: 60/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 sabit kurlu maliyetler"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR; /cfo rozeti işlem kuru) yayında; SQL kalanı (snapshot/servet/ciro hedefi TCMB, ithalat işlem kuru, 48,5 / 1 yedeği yok) migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır"
+score_change: "59→60 — CFO-008 tek ciro kaynağı: manşet ciro gösteren tüm CFO yüzeyleri (/cfo, /cfo/ayarlar, /cfo/sermaye gelir kaldıraçları, /cfo/kazananlar hedef kartı, /admin/sermaye, borç tahmini, AI CFO Alfashome kanıtı) Goal Engine satırlarından (fm_sales_canonical_snapshot), testli ve üretimde ölçüldü → gelir boyutu 5→6; AI CFO günlük satış karşılaştırması kalan"
 ---
 
 # CFO DECISION LOG
@@ -87,3 +87,4 @@ D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL**. 
 | 2026-10-10 | CFO-013 ÜRETİMDE + CFO-006 KAPANIŞI: migration 110000 Alperen onayıyla uygulandı (dip eşitliği üretimde gözlendi). Şirket/şahsi kapsamı: likidite (dip, kapasite, mutabakat, ödeme takvimi) yalnız şirket hesapları; hedef metrikleri (net sermaye, borç) D-P03 gereği şahsi kart/KMH dahil, nakit simetrik dahil. `/cfo/odemeler` kapasitesi `cfo_hesap_sahsi` ile; bakiyesi bilinmeyen hesabın limiti kapasiteye girmez | Code (Alperen onayı "Onaylıyorum", 2026-10-10) | sayfa kendi `like` kuralı + şahsi bakiye dahil açılış (−83,29 TL fark) | migration 110000 geri alma (önceki tanımlar `prisma/baseline/2026-10-06.sql`); sayfa: git revert |
 | 2026-10-10 | CFO-028 KOMİSYON: EPTT'de tutar boşken Entegra oranı × KDV dahil toplam TAHMİNİ komisyon (measured=false) — kanal marjına girer, SKU oran ölçümüne girmez, ham kayıt değişmez. N11/Amazon/Pazarama/Koçtaş/Idefix/Temu/FBA oran belgesi ya da hakediş dökümü gelene kadar UNKNOWN; %20 yer tutucu (`MarketplacePlatformPolicy`) onaylı oran sayılmaz | Alperen ("Onaylıyorum", 2026-10-10) | EPTT'de bilinen sapma: oran gerçeğin ~0,4 puan altında (125 satır) | `ESTIMATED_COMMISSION_CHANNELS` boşaltılır (git revert) |
 | 2026-10-10 | CFO-003 KUR SINIFLAMASI (SQL): hedef ve servet ölçen USD dönüşümleri (snapshot USD alanları, `cfo_servet`, `cfo_ciro_hedef`) STRATEJİK kur (TCMB, D-P04); ithalat fiyatlama (`cfo_ithalat_oneri(_ozet)`) ve eski motor İŞLEM kuru (`lib/fx/current.ts` sırası). Kur yoksa NULL/BİLİNMİYOR — 48,5 ve 1 sabit yedeği yok | Code (D-P04 + CFO-003 kabul ölçütü) | ayar kuru 49,1976 ile cfo_kur 48,98 ve TCMB 48,5585 üç ayrı yerde kullanılıyordu | migration 120000 geri alma (baseline tanımları); kod git revert |
+| 2026-10-10 | CFO-008 TEK CİRO KAYNAĞI: manşet ciro (hedef, hız, 14/30/90 gün, aylık, kanal toplamı) yalnız Goal Engine satırlarından (`fm_sales_canonical_snapshot`, disposition COUNTED; `lib/cfo/revenue.ts`), tamlık Goal kuralıyla; eksik gün 0 sayılmaz. Satır/SKU düzeyi kârlılık tabanları (cfo_satis_birim_duz, cfo_aylik_urun_kar) ayrı amaçla kalır, manşet ciro olarak gösterilmez | Code (D-P05 + CFO-008 kabul ölçütü) | 7 formül: elle 14 gün (23.08), 90g/3 birim_duz, maliyetsiz SKU hariç ay, yalnız Trendyol, Entegra damgalı 30 gün, ödeme durumlu Alfashome | git revert (görünüm değişmedi) |

@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Ciro artık her CFO ekranında tek kaynaktan (2026-10-10)
+
+- Kokpit, ayarlar, sermaye planı, ithalat hedef kartı ve yönetim sermaye sayfası ciroyu hedef motorunun kullandığı satış satırlarından okuyor: iade, iptal ve test siparişleri hariç; tüm kanallar ve Alfashome dahil; yalnız tamamlanmış günler.
+- Önceki farklar giderildi. Kokpit elle girilmiş 23 Ağustos rakamını kullanıyordu. Hedef kartı maliyeti olmayan ürünleri düşüyordu (Eylül 1,78M yerine 1,93M TL). Yönetim sayfası yalnız Trendyol'u sayıyordu.
+- AI CFO'nun Alfashome cirosu artık görünüyor; önceden ödeme durumu boş olduğu için 0 görünüyordu.
+
 ### CFO kokpiti tek işlem kurunu kullanıyor; kur yoksa "bilinmiyor" (2026-10-10)
 
 - Eski CFO hesap motoru dolar kurunu ayarlardaki 49,20 yerine diğer sayfalarla aynı işlem kurundan (48,98) alıyor. Kur hiç yoksa 1 TL varsaymıyor, "bilinmiyor" gösteriyor.

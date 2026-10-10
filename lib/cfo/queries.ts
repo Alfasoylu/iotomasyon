@@ -2,6 +2,8 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { computeCfo, type CfoInput, type CfoOverview } from "@/lib/cfo/engine";
 import { getCurrentFx } from "@/lib/fx/current";
+import { lastCompleteDays } from "@/lib/cfo/revenue";
+import type { SqlQuery } from "@/lib/cfo/capital-efficiency-data";
 
 /**
  * Tek noktadan CFO verisi yükleme. Tüm /cfo sayfaları bunu çağırır;
@@ -22,7 +24,11 @@ export async function loadCfoData(): Promise<{ raw: CfoInput; overview: CfoOverv
   // CFO-003: USD/TRY işlem kuru tek kaynaktan; sabit varsayılana düştüyse BİLİNMİYOR
   const cur = await getCurrentFx();
   const fx = { usdTry: cur.usdTrySource === "varsayılan" ? null : cur.usdTry, source: cur.usdTrySource };
-  const raw: CfoInput = { settings, banks, cards, loans, expenses, receivables, cashEvents, imports, forecast: await loadCollectionForecast(), fx };
+  // CFO-008: son 14 tam günün cirosu tek kaynaktan (Goal Engine satırları); kaynak okunamazsa eski elle girilen alan
+  const q: SqlQuery = <T,>(sql: string) => prisma.$queryRawUnsafe<T[]>(sql);
+  const r14 = await lastCompleteDays(q, 14).catch(() => undefined);
+  const revenue14 = r14 === undefined ? undefined : r14 ? { amountTry: r14.inclTry, through: r14.to, source: `${r14.source}, ${r14.from} – ${r14.to}` } : null;
+  const raw: CfoInput = { settings, banks, cards, loans, expenses, receivables, cashEvents, imports, forecast: await loadCollectionForecast(), fx, revenue14 };
   return { raw, overview: computeCfo(raw) };
 }
 

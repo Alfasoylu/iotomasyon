@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:40 TR
-current_main_commit: ed52e04
+last_updated: 2026-10-10 04:45 TR
+current_main_commit: 0ffbb2c
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 (bekletilen) üretime uygulanması — Alperen izni/uygulaması → CFO-008 tek ciro fonksiyonu → CFO-025 sabit kurlu maliyetler"
+current_score: 60/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 sabit kurlu maliyetler"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR; /cfo rozeti işlem kuru) yayında; SQL kalanı (snapshot/servet/ciro hedefi TCMB, ithalat işlem kuru, 48,5 / 1 yedeği yok) migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır"
+score_change: "59→60 — CFO-008 tek ciro kaynağı: manşet ciro gösteren tüm CFO yüzeyleri (/cfo, /cfo/ayarlar, /cfo/sermaye gelir kaldıraçları, /cfo/kazananlar hedef kartı, /admin/sermaye, borç tahmini, AI CFO Alfashome kanıtı) Goal Engine satırlarından (fm_sales_canonical_snapshot), testli ve üretimde ölçüldü → gelir boyutu 5→6; AI CFO günlük satış karşılaştırması kalan"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -32,7 +32,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; WhatsApp şablon/alıcı yapılandırması bekliyor |
 | RF-20261008-007 | MEDIUM | RESOLVED | HIGH→MEDIUM; CFO-010 ✅ 2026-10-09 (ödeme durumu tek kaynak takvim) |
 | RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
-| RF-20261008-009 | HIGH | IN_PROGRESS | KDV hariç ciro + Alfashome üretimde; tek ciro fonksiyonu kalan (CFO-008) |
+| RF-20261008-009 | HIGH | MITIGATED | 10.10 CFO-008: tek ciro kaynağı (Goal Engine satırları) tüm manşet ciro yüzeylerinde ✓; kalan: AI CFO snapshot günlük satış karşılaştırması (cfo_satis_siparis + API oran tahmini) |
 | RF-20261008-010 | HIGH | RESOLVED | 2026-10-10, CFO-006 ✅ — TS + SQL tek kural (100000), takvim/mutabakat açılışı şahsi hariç (110000), `/cfo/odemeler` kapasitesi `cfo_hesap_sahsi` |
 | RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017 migration 230000 üretimde (2026-10-09 akşam, kimlik farkı 0,00); ilk bileşenli snapshot 10.10 |
 | RF-20261008-012 | MEDIUM | IN_PROGRESS | yazma yolları yazma izni (PR #242); API anahtarı şifreleme, Cowork rolü kalan |
@@ -538,3 +538,18 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   sınıflandırıcısı üretim DDL'ini durdurdu; Alperen izni ya da elle uygulama). Beklenen etki: servet USD 127.813 → ≈129.495, Eylül ciro
   USD 36.129 → ≈36.604, ithalat önerisi kuru 49,1976 → 48,98; TL tutarları değişmez.
 - RESOLVED için: migration 120000 üretimde + parmak izi senkronu.
+
+## 2026-10-10 — CFO-008 tek ciro kaynağı RED FLAG PASS
+
+### RF-20261008-009 — güncelleme (2026-10-10, CFO-008; HIGH, IN_PROGRESS → MITIGATED)
+- `lib/cfo/revenue.ts`: TEK ciro kaynağı = Goal Engine'in okuduğu satırlar (`fm_sales_canonical_snapshot`, disposition COUNTED — iptal/iade/tedarik
+  edilemedi/test/mükerrer hariç; Trendyol API + Entegra (IDEASOFT dahil) + Alfashome; KDV dahil, KDV hariç yan gösterge), tamlık Goal Engine kuralıyla
+  (hafıza tazeleme − 1, her kaynağın okunma günü − 1; eksik gün 0 sayılmaz). Migration yok (okuyucu rolünün okuma yetkisi zaten var).
+- Bağlanan yüzeyler (önce → sonra, üretim 10.10 salt-okunur): `/cfo` + `/cfo/ayarlar` 14 gün (elle 1.147.735 @ 23.08 → 903.254, son tam gün 04.10);
+  gelir kaldıraçları aylık (cfo_satis_birim_duz 1.859.349 → 2.015.623); `/cfo/kazananlar` hedef kartı Eylül (cfo_ciro_hedef, maliyetsiz SKU'lar hariç
+  1.777.442 → 1.931.793; USD stratejik kurla); `/admin/sermaye` 90 gün (yalnız Trendyol 4.104.926 → tüm kanallar 6.046.869); borç tahmini (Entegra
+  damgalı 30 gün → son 30 tam gün); AI CFO Alfashome kanıtı (ödeme durumu boş → 0 gösteriyordu; artık Goal kuralı, Ekim 3 sipariş 14.865 TL —
+  kanonik snapshot bir sonraki hafıza tazelemesinde Alfashome satırlarını alacak).
+- Doğrulama: 1–9 Ekim tek kaynak 479.615,74 = Goal hafızası (`fm_memory_sales_company_day`) 479.615,74. Test `cfo-revenue` (CI).
+- RESOLVED için: AI CFO snapshot günlük satış karşılaştırması (REVENUE_DEVIATION, `/admin/ai-cfo` "Dün ciro") tek kaynağa; artık sayfa okumayan
+  `cfo_ciro_hedef` görünümü kaldırılabilir (migration). Satır düzeyi kârlılık görünümleri (cfo_satis_birim_duz, cfo_aylik_urun_kar) bilinçli ayrı — manşet ciro değil.

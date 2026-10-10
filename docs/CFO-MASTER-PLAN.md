@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:40 TR
-current_main_commit: ed52e04
+last_updated: 2026-10-10 04:45 TR
+current_main_commit: 0ffbb2c
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 (bekletilen) üretime uygulanması — Alperen izni/uygulaması → CFO-008 tek ciro fonksiyonu → CFO-025 sabit kurlu maliyetler"
+current_score: 60/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 sabit kurlu maliyetler"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR; /cfo rozeti işlem kuru) yayında; SQL kalanı (snapshot/servet/ciro hedefi TCMB, ithalat işlem kuru, 48,5 / 1 yedeği yok) migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır"
+score_change: "59→60 — CFO-008 tek ciro kaynağı: manşet ciro gösteren tüm CFO yüzeyleri (/cfo, /cfo/ayarlar, /cfo/sermaye gelir kaldıraçları, /cfo/kazananlar hedef kartı, /admin/sermaye, borç tahmini, AI CFO Alfashome kanıtı) Goal Engine satırlarından (fm_sales_canonical_snapshot), testli ve üretimde ölçüldü → gelir boyutu 5→6; AI CFO günlük satış karşılaştırması kalan"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)

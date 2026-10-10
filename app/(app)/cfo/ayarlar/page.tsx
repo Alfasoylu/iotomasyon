@@ -35,8 +35,10 @@ export default async function CfoSettingsPage() {
             <P label="Kart asgari ödeme oranı" value={`%${num(s.cardMinPct)}`} note="Gerçek ekstre asgarisi yoksa kullanılır" />
             <P label="Pazaryeri ödeme vadesi" value={`${s.marketplaceTermDays} gün`} note="Nakit dönüş süresi hesabında" />
             <P label="Ciro → nakit oranı" value={`%${num(s.cashConversionPct)}`} note="Cironun nakde dönen kısmı" />
-            <P label="Son 14 gün cirosu" value={fmtTry(num(s.last14dRevenueTry))} note={`Güncelleme: ${fmtDate(s.last14dRevenueDate)}${o.revenueDataAgeDays != null ? ` (${o.revenueDataAgeDays} gün önce)` : ""}`} />
-            <P label="Aylık ciro run-rate" value={fmtTry(o.monthlyRunRateTry)} note="Son 14 günden türetilir" />
+            {/* CFO-008: tek ciro kaynağı (Goal Engine satırları, son 14 TAM gün, KDV dahil); elle girilen alan yalnız kaynak okunamazsa */}
+            <P label="Son 14 tam gün cirosu" value={o.last14dRevenueTry == null ? "bilinmiyor" : fmtTry(o.last14dRevenueTry)}
+              note={`${o.revenueSource}${o.revenueDataAgeDays != null ? ` (son tam gün ${o.revenueDataAgeDays} gün önce)` : ""}`} />
+            <P label="Aylık ciro run-rate" value={o.monthlyRunRateTry == null ? "bilinmiyor" : fmtTry(o.monthlyRunRateTry)} note="Son 14 tam günden türetilir" />
             <P label="Gümrük rezerv hedefi" value={fmtTry(num(s.customsReserveTarget))} note={`İhtiyaç tarihi: ${fmtDate(s.customsReserveDate)}`} />
             <P label="Ayrılmış rezerv" value={fmtTry(num(s.customsReserveSaved))} note="Serbest nakde dahil edilmez" />
             {/* Bu iki sabit 10.09.2026'dan beri SERVETE GİRMİYOR — servet cfo_servet
