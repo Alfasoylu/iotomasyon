@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:30 TR
-current_main_commit: ff42814
+last_updated: 2026-10-10 04:00 TR
+current_main_commit: 1d41775
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kararlarının uygulanması (EPTT tahmini komisyon, 2 belge kategorisi; diğer kanallar oran belgesine kadar UNKNOWN) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kalan: 6 kanal + FBA oran belgesi / hakediş dökümü (Alperen → /cfo/belgeler) → CFO-027 Cowork belge okuma (11 belge kuyrukta) → CFO-030 (latent KMH kapasite ayrıştırması, migration onayı)"
 open_critical: 1
 open_high: 4
-score_change: "58→59 — CFO-013 tek nakit yolu üretimde (migration 110000: projeksiyon dibi = takvim dibi, en büyük günlük fark 0,52 TL, her gün eşitlik testli) + CFO-006 son parçası (ödeme kapasitesi açılışı şahsi hariç, tek kural): likidite boyutu 11→12; RF-010 (HIGH) ve RF-015 RESOLVED"
+score_change: "unchanged — CFO-028 EPTT tahmini komisyon kanal marjında (measured=false; son 30 gün kayıtlı 4.466 + tahmini 20.445 TL, cironun %13,4'ü); tahmin ölçülmemiş ve 6 kanal + FBA hâlâ UNKNOWN olduğu için marj boyutu (4) değişmedi; 2 belge kategorisi düzeltildi"
 ---
 
 # CFO SCORECARD
@@ -59,7 +59,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 1 | Financial accuracy & reconciliation | 20 | **9** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye ve borç tek tanım üretimde, v3 Goal doğrulaması 10.10 bekliyor; kur 4, ciro 7, marj 5 tanım; atıf kimliği bozuk (migration 230000 onay bekliyor) |
 | 2 | Cash / liquidity / debt | 15 | **12** | TEK NAKİT YOLU üretimde (CFO-013, 10.10: projeksiyon dibi = takvim dibi, günlük fark ≤0,52 TL, her gün eşitlik testli; vadesi geçmiş kalem bugüne); şirket/şahsi tek kural TS + SQL + ödeme kapasitesi (CFO-006 ✅); ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik | takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş (RF-018, veri); KMH kapasitesi iki ayrıştırma (RF-035 latent: kaynak yeterliliği eksi bakiyede kullanımı iki kez düşer; bugün etki 0) |
 | 3 | Capital allocation | 15 | **8** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
-| 4 | Revenue / profitability | 10 | **5** | KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); 7 ciro formülü; iade marja bağlı değil |
+| 4 | Revenue / profitability | 10 | **5** | KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları; EPTT komisyonu kanal marjında (Entegra oranı × toplam, tahmini işaretli, CFO-028) | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); 7 ciro formülü; iade marja bağlı değil; 6 kanal + FBA komisyonu UNKNOWN (oran belgesi yok); EPTT tahmini ölçülmemiş (~0,4 puan düşük) |
 | 5 | Inventory / procurement | 10 | **6** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam; GTİP 433/433 + yasal gümrük yükü ve `duty_gap` alarmı | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
 | 6 | Decision memory & calibration | 10 | **3** | `cfo_hamle` + beklenen/gerçekleşen ekranı; goal attribution | 3/15 karar ölçülebilir; ölçüm tablosu hiç yazılmıyor; atıf kimliği bozuk |
 | 7 | Data quality / provenance | 7 | **5** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi | Eski motorda UNKNOWN→0 (CFO-018; yan modüller kısım 1'de düzeldi); elle defterler; 66 açık soru, karışık durum sözlüğü |
@@ -92,3 +92,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 81ed6dc | 58 | 5/12 | Değişmedi (bilinçli): PR #250 — CFO-029 otomatik maliyet + RMB/USD tek kaynak (6,7, sabit yedek yok; 335 ürün düzeltildi, net sermaye +7.405,67 TL) üretimde, ilk otomatik koşu 10.10 05:00 TR; CFO-013 tek nakit yolu kodu hazır, DDL onayı bekliyor. 1./3. boyut ilk koşu ve CFO-013 uygulanınca yeniden puanlanır |
 | 2026-10-10 | bc29fdd | 58 | 5/12 | Değişmedi (bilinçli): PR #251 CFO-013 tek nakit yolu kodu (migration 110000 bekletilen, üretim DDL onayı bekliyor; eski motor ve hash geçişi yayında) üretim davranışını değiştirmedi; CFO-028 ölçümü salt-okunur. Likidite (CFO-013 uygulanınca) ve marj (CFO-028 kararıyla) boyutları yeniden puanlanacak |
 | 2026-10-10 | ff42814 | 59 | 5/12 | 58→59: CFO-013 tek nakit yolu üretimde (migration 110000, Alperen onayı; projeksiyon dibi = takvim dibi) + CFO-006 son parçası (ödeme kapasitesi tek kural) → likidite 11→12; RF-010 (HIGH) ve RF-015 RESOLVED. Gate'ler değişmedi (H2/H8 diğer metriklerde açık) |
+| 2026-10-10 | 1d41775 | 59 | 5/12 | Değişmedi (bilinçli): CFO-028 kararları — EPTT tahmini komisyon (oran × toplam, measured=false) kanal marjına girdi, SKU oran ölçümü değişmedi; 2 belge kategorisi düzeltildi. 6 kanal + FBA UNKNOWN kaldığı için marj boyutu aynı |

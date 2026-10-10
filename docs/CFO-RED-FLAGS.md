@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:30 TR
-current_main_commit: ff42814
+last_updated: 2026-10-10 04:00 TR
+current_main_commit: 1d41775
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kararlarının uygulanması (EPTT tahmini komisyon, 2 belge kategorisi; diğer kanallar oran belgesine kadar UNKNOWN) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kalan: 6 kanal + FBA oran belgesi / hakediş dökümü (Alperen → /cfo/belgeler) → CFO-027 Cowork belge okuma (11 belge kuyrukta) → CFO-030 (latent KMH kapasite ayrıştırması, migration onayı)"
 open_critical: 1
 open_high: 4
-score_change: "58→59 — CFO-013 tek nakit yolu üretimde (migration 110000: projeksiyon dibi = takvim dibi, en büyük günlük fark 0,52 TL, her gün eşitlik testli) + CFO-006 son parçası (ödeme kapasitesi açılışı şahsi hariç, tek kural): likidite boyutu 11→12; RF-010 (HIGH) ve RF-015 RESOLVED"
+score_change: "unchanged — CFO-028 EPTT tahmini komisyon kanal marjında (measured=false; son 30 gün kayıtlı 4.466 + tahmini 20.445 TL, cironun %13,4'ü); tahmin ölçülmemiş ve 6 kanal + FBA hâlâ UNKNOWN olduğu için marj boyutu (4) değişmedi; 2 belge kategorisi düzeltildi"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -56,7 +56,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261009-030 | LOW | OPEN | veri düzeltmesi (insan) |
 | RF-20261009-031 | LOW | MITIGATED | capture migration kuralı |
 | RF-20261010-033 | MEDIUM | MITIGATED | 335 + 8 üründe CFO maliyeti ithalat motorundan; CFO-029 otomatik türetme kodu hazır (Excel dışı 143 ürün dahil, ilk üretim koşusu 10.10 05:00 TR) — RESOLVED ilk koşu doğrulanınca |
-| RF-20261009-032 | MEDIUM | OPEN | 6 kanal + ePTT komisyonu kayıtsız; motor UNKNOWN, raporlar 0 (CFO-028; kanıt yolu CFO-027). 10.10 ölçüm: EPTT oran var tutar yok (≈308k TL/yıl), 6 kanal + FBA veri yok (≈290–390k TL/yıl); karar önerisi `docs/maliyet/2026-10-10-komisyon-kayitsiz-kanallar.md` |
+| RF-20261009-032 | MEDIUM | IN_PROGRESS | 10.10 karar (Alperen): EPTT tahmini komisyon kanal marjında (measured=false) ✓; 6 kanal + FBA oran belgesine kadar UNKNOWN (%20 yer tutucu yok); kalan: oran belgeleri / hakediş dökümleri (CFO-027 yolu) |
 | RF-20261010-034 | MEDIUM | MITIGATED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
 | RF-20261010-035 | LOW | OPEN | latent: eksi bakiyeli KMH hesabında "nakit/dip + boş KMH" kullanımı iki kez düşer (kaynak yeterliliği, ön uçuş, gümrük dilimi); bugün etki 0 → CFO-030 |
 
@@ -513,3 +513,13 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 - **evidence:** üretim 10.10 tanım taraması; bugün eksi bakiyeli şirket hesabı yok → fark 0.
 - **economic_risk:** yön temkinli (açık olduğundan derin) ama KMH kullanıldığı gün kaynak yeterliliği/ön uçuş gereksiz KIRMIZI verip siparişi durdurabilir.
 - **recommended_fix:** CFO-030 — kapasite tek ayrıştırma (pozisyon + tam limit) tek görünümde; tüketiciler oradan okur (migration, onay gerekir).
+
+## 2026-10-10 — CFO-028 kararları RED FLAG PASS
+
+### RF-20261009-032 — güncelleme (2026-10-10, CFO-028 kararları; MEDIUM, OPEN → IN_PROGRESS)
+- Alperen "Onaylıyorum": (1) EPTT tutarı boşken Entegra oranı × KDV dahil toplam = TAHMİNİ komisyon — `lib/cfo/commission-estimate.ts` (tek SQL kuralı + TS
+  aynası), `lib/cfo-agent/snapshot.ts` kanal marjı (ölçülmüş SKU oranı yoksa; kayıtlı tutar önce; bir satırda oran da yoksa kanal komisyonu bilinmiyor),
+  `/cfo/belgeler` ayrı "Tahmini" sütunu. SKU oran ölçümü (120 gün kuralı) yalnız `commissionTry` okumaya devam eder; ham kayıt değişmedi.
+  Üretim (salt-okunur, son 30 gün EPTT): ciro 186.224, kayıtlı 4.466 (30 satır) + tahmini 20.445 (91 satır) = 24.911 TL (%13,4); bilinmeyen satır 0.
+- (2) N11, Amazon, Pazarama, Koçtaş, Idefix, Temu, FBA: UNKNOWN kalır, %20 yer tutucu kullanılmaz. (3) 2 belge kategorisi düzeltildi (günlüklü).
+- RESOLVED için: 6 kanal + FBA'nın onaylı oranı (belge) ya da hakediş dökümü.

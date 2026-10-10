@@ -18,6 +18,7 @@ import { businessSource, cashFunctions, SourceCatalog, sourceBindings, type Read
 import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources";
 import { assumedShippingChannel, shippingBandsFor, shippingChannelFor, shippingTariffSql, type ShippingOptions } from "./shipping";
 import { istanbulPeriod } from "./period";
+import { COMMISSION_ESTIMATE_REASON, ESTIMATED_COMMISSION_CHANNELS, estimatedCommissionSql } from "../cfo/commission-estimate";
 
 const iso = (v:unknown) => v == null || !Number.isFinite(Date.parse(String(v))) ? null : new Date(String(v)).toISOString();
 const n = (r:Row, key:string) => numeric(r[key]);
@@ -246,6 +247,10 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
     // tek başına 419 satırı yanlışlıkla "mükerrer" sayıyordu (aynı siparişte ayrı koliye giden adetler, ayrı satır kimliği);
     // externalLineId ile gerçek mükerrer 0. Sütun yoksa eski anahtar.
     const lineKey=catalog.column("cfo_satis_birim_duz","externalLineId");
+    // CFO-028 (2026-10-10): EPTT tutarı boşken Entegra oranı × toplam = TAHMİNİ komisyon (lib/cfo/commission-estimate.ts). Yalnız kanal
+    // marjına (ölçülmüş SKU oranı yoksa) girer; aşağıdaki 120 günlük SKU oran ölçümü commissionTry'ı okumaya devam eder.
+    const pctCol=catalog.column("cfo_satis_birim_duz","commissionPct");
+    const estLine=pctCol?estimatedCommissionSql({channel:`s.${sales.channel}`,commissionTry:`s.${sales.commissionTry}`,commissionPct:`s.${pctCol}`,totalAmountTry:`s.${sales.totalAmountTry}`}):"null::numeric";
     const dupKey=(alias:string)=>`${alias}${sales.channel},${alias}${sales.orderNumber},${alias}${sales.modelNumber}${lineKey?`,${alias}${lineKey}`:""}`;
     const rows=await db.query(`${PERIOD_CTE}, product_keys as (select pr.*, count(*) over(partition by ${foldedSkuSql("pr.sku")}) as key_count from "Product" pr), canonical_base as (select s.*,count(*) over(partition by ${dupKey("s.")}) as copies,
       sum(s.${sales.tutar_duz}::numeric) over(partition by s.${sales.channel},s.${sales.orderNumber}) as order_line_gross,
@@ -266,6 +271,8 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       sum(${sales.commissionTry}::numeric) filter(where commission_valid) as commission,sum(${sales.totalAmountTry}::numeric) filter(where commission_valid) as commission_gross,
       count(*) filter(where commission_valid)::int as commission_records,
       count(*) filter(where ${sales.commissionTry} is not null)::int as commission_present,
+      sum(${sales.commissionTry}::numeric) as commission_recorded,sum(${estLine}) as commission_estimated,
+      count(*) filter(where ${sales.commissionTry} is null and ${estLine} is null)::int as commission_unknown,
       count(*) filter(where ${sales.commissionTry}>0 and not commission_valid)::int as commission_outliers,
       count(*) filter(where ${sales.guven} is null or ${sales.guven}::text in ('KARMA','BILINMIYOR'))::int as untrusted,
       count(*) filter(where copies>1)::int as duplicates,
@@ -307,9 +314,13 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
       const cost=isSet?(sets.get(sku)??unknown("set_components_unavailable")):metric(p?.cost,true,"current_cost_estimate");
       const commission=measuredCommission(channel,n(cm??{},"accepted")??0,n(cm??{},"commission"),n(cm??{},"gross"),null,null,percentage(n(ch??{},"present"),n(ch??{},"records"))??0);
       const avgPrice=metric(trusted?divide(revenue,units):null,false,trusted?undefined:"untrusted_sku_grain");
+      // Tahmin kanalı + her satırda kayıtlı tutar ya da oran var → kayıtlı + tahmini toplam (measured=false); bir satır bile bilinmiyorsa yok.
+      const lineEstimate=ESTIMATED_COMMISSION_CHANNELS.includes(channel)&&n(r,"commission_unknown")===0&&(n(r,"records")??0)>0
+        ?D(n(r,"commission_recorded")??0).add(n(r,"commission_estimated")??0).toNumber():null;
       const profit=contribution({grossRevenue:metric(trusted?revenue:null),vat:metric(r.vat),refunds:metric(r.refund),advertising:metric(r.ads),
         productCost:metric(!isSet&&trusted&&cost.value!=null&&units!=null?D(cost.value).mul(units).toNumber():null,true),
-        commission:metric(trusted&&commission.value!=null&&revenue!=null?D(revenue).mul(commission.value).toNumber():null,commission.estimated,commission.reason),
+        commission:commission.value==null&&lineEstimate!=null?metric(trusted?lineEstimate:null,true,COMMISSION_ESTIMATE_REASON)
+          :metric(trusted&&commission.value!=null&&revenue!=null?D(revenue).mul(commission.value).toNumber():null,commission.estimated,commission.reason),
         shipping:metric(r.shipping,!actualShipping),otherVariableCosts:metric(r.other,!other)},config.grossIncludesRefunds);
       profits.push({channel,sku,period:String(r.period),profit});
       if(r.period!=="current")continue;
