@@ -19,10 +19,10 @@ import { resolveCfoSourceProfile, reviewedCfoSources } from "./reviewed-sources"
 import { assumedShippingChannel, shippingBandsFor, shippingChannelFor, shippingTariffSql, type ShippingOptions } from "./shipping";
 import { istanbulPeriod } from "./period";
 import { COMMISSION_ESTIMATE_REASON, ESTIMATED_COMMISSION_CHANNELS, estimatedCommissionSql } from "../cfo/commission-estimate";
+import { REVENUE_FRESHNESS_SQL, comparisonWindows, freshness, istanbulToday, revenueDaily, revenueDays, revenuePeriod, shiftDay } from "../cfo/revenue";
 
 const iso = (v:unknown) => v == null || !Number.isFinite(Date.parse(String(v))) ? null : new Date(String(v)).toISOString();
 const n = (r:Row, key:string) => numeric(r[key]);
-const periodKeys = ["lastHour","today","yesterday","last7Days","last30Days","monthToDate","previousDay","previous7","previous30"] as const;
 // All boundaries are Istanbul-local and all comparisons align weekdays.
 export const PERIOD_CTE = `with clock as (select $1::timestamptz at time zone 'Europe/Istanbul' as local_now), periods as (
   select 'lastHour' as period, date_trunc('hour',local_now)-interval '1 hour' as start_at,date_trunc('hour',local_now) as end_at from clock union all
@@ -76,57 +76,41 @@ export async function buildCfoAgentSnapshot(options: {now?:Date;config?:CfoConfi
   const financialFresh=snapshot.dataQuality.sourceWatermarks.find(w=>w.source==="Entegra")?.stale===false && config.canonicalValidated;
 
   const orders=catalog.require("cfo_satis_siparis",["channel","orderNumber","orderDate","totalAmountTry"]);
-  const orderLocalTime=catalog.localTime("cfo_satis_siparis","orderDate","s");
-  if(orders&&orderLocalTime) {
-    const rows=await db.query(`${PERIOD_CTE}, canonical as (select s.*,row_number() over(partition by ${orders.channel},${orders.orderNumber} order by ${orders.orderDate} desc) as rn,
-      count(*) over(partition by ${orders.channel},${orders.orderNumber}) as copies from cfo_satis_siparis s)
-      select p.period,count(distinct (s.${orders.channel},s.${orders.orderNumber})) filter(where s.rn=1)::int as orders,
-      sum(s.${orders.totalAmountTry}::numeric) filter(where s.rn=1) as revenue,
-      count(distinct (${orderLocalTime})::date)::int as days,
-      count(*) filter(where s.copies>1)::int as duplicates
-      from periods p left join canonical s on ${orderLocalTime}>=p.start_at and ${orderLocalTime}<p.end_at
-      group by p.period`,asOf);
-    // Weekly Entegra gap (2026-10-07): days after Entegra's last complete day are estimated from the Trendyol API
-    // (direct, fresh) scaled by Entegra's trailing-28-day all-channels/Trendyol ratio. The upload day itself is partial,
-    // so the cutoff is the day before Entegra's latest order. Estimated periods carry estimated=true.
-    const trendyolFresh=snapshot.dataQuality.sourceWatermarks.find(w=>w.source==="Trendyol")?.stale===false;
-    const apiTime=catalog.localTime("TrendyolSalesRecord","orderDate");
-    const gap=trendyolFresh&&apiTime?await db.query(`${PERIOD_CTE}, ent as (select s.${orders.channel} as channel,s.${orders.orderNumber} as order_number,${orderLocalTime} as t,s.${orders.totalAmountTry}::numeric as total from cfo_satis_siparis s),
-      cut as (select max(t)::date-1 as c from ent),
-      ratio as (select sum(total)/nullif(sum(total) filter(where channel='TRENDYOL'),0) as r from ent,cut where t::date between cut.c-27 and cut.c),
-      api as (select ${apiTime} as t,"totalPriceTry"::numeric as total,"orderId" as order_id from "TrendyolSalesRecord" where status is distinct from 'Cancelled')
-      select p.period,(select r from ratio) as ratio,
-        (select coalesce(sum(total),0) from ent,cut where t>=p.start_at and t<p.end_at and t::date>cut.c) as ent_after,
-        (select count(distinct t::date)::int from ent,cut where t>=p.start_at and t<p.end_at and t::date>cut.c) as ent_after_days,
-        (select count(distinct (channel,order_number))::int from ent,cut where t>=p.start_at and t<p.end_at and t::date>cut.c) as ent_after_orders,
-        (select sum(a.total) from api a,cut where a.t>=p.start_at and a.t<p.end_at and a.t::date>cut.c) as api_after,
-        (select count(distinct a.t::date)::int from api a,cut where a.t>=p.start_at and a.t<p.end_at and a.t::date>cut.c) as api_days,
-        (select count(distinct a.order_id)::int from api a,cut where a.t>=p.start_at and a.t<p.end_at and a.t::date>cut.c) as api_orders
-      from periods p`,asOf):[];
-    const estimatedPeriods=new Set<string>();
-    for(const g of gap) {
-      const r=rows.find(x=>x.period===g.period),ratio=n(g,"ratio"),apiAfter=n(g,"api_after");
-      if(!r||ratio==null||apiAfter==null||(n(g,"api_days")??0)===0)continue;
-      r.revenue=(n(r,"revenue")??0)-(n(g,"ent_after")??0)+apiAfter*ratio;
-      r.days=(n(r,"days")??0)-(n(g,"ent_after_days")??0)+(n(g,"api_days")??0);
-      r.orders=(n(r,"orders")??0)-(n(g,"ent_after_orders")??0)+Math.round((n(g,"api_orders")??0)*ratio);
-      estimatedPeriods.add(String(g.period));
+  // CFO-008 kalan (RF-20261008-009, 2026-10-10): satış dönemleri ve ciro karşılaştırmaları TEK CİRO KAYNAĞINDAN (lib/cfo/revenue.ts:
+  // fm_sales_canonical_snapshot COUNTED — Goal Engine'in ve tüm CFO sayfalarının okuduğu satırlar; tamlık Goal kuralıyla). Önceden
+  // cfo_satis_siparis (yalnız Entegra) + Trendyol API tahmini; tahmini dün GERÇEK geçen haftayla karşılaştırılıp tam sayılıyordu
+  // (üretim 09.10: tahmini 73.683 ↔ gerçek 50.953 → sahte %45 sapma). Artık tüm kaynakların tam olduğu günler gerçek; sonraki günler
+  // (yalnız Trendyol API okunmuş) Trendyol × son 28 tam günün oranı, estimated=true ve complete=false; REVENUE_DEVIATION karşılaştırması
+  // yalnız TAM günlerde (son tam gün / son 7 / son 30 ↔ aynı haftanın günleri). Gün içi (son saat, bugün) günlük kaynakta yok → bilinmiyor.
+  // Kaynak yoksa (ör. Prisma şemasından kurulan test veritabanı; görünüm/materialized view yok) sorgu atılmaz — işlem içinde hata tüm
+  // döngüyü düşürürdü; dönemler "source_unavailable" kalır ve eksik alan listesine yazılır (eski catalog.require davranışı).
+  const canonicalSource=(await db.query(`select to_regclass('public.fm_sales_canonical_snapshot')::text as t`))[0]?.t!=null;
+  if(!canonicalSource) missing.push("fm_sales_canonical_snapshot");
+  if(canonicalSource) {
+    const q=<T,>(sql:string)=>db.query(sql) as Promise<T[]>;
+    const today=istanbulToday(now), yesterday=shiftDay(today,-1);
+    const f=freshness((await db.query(REVENUE_FRESHNESS_SQL))[0],today);
+    const through=f.allSourcesThrough;
+    const from=shiftDay([through??today,shiftDay(today,-31)].sort()[0],-70);
+    const days=await revenueDaily(q,from,today);
+    const dup=days.reduce((a,x)=>a+x.dup,0);
+    snapshot.dataQuality.duplicateCanonicalRows=dup;
+    const values=revenueDays(days,f,from,today);
+    const ok=config.canonicalValidated&&dup===0;
+    const reasonOf=(p:{value:number|null;estimated:boolean},key:string)=>!config.canonicalValidated?"canonical_unvalidated":dup?"duplicate_canonical_orders"
+      :p.value==null?(key==="today"?"intraday_not_in_daily_source":"no_observations"):p.estimated?"estimated_from_trendyol_after_complete_day":undefined;
+    const ranges:Record<"today"|"yesterday"|"last7Days"|"last30Days"|"monthToDate",[string,string]>={today:[today,today],yesterday:[yesterday,yesterday],
+      last7Days:[shiftDay(today,-7),yesterday],last30Days:[shiftDay(today,-30),yesterday],monthToDate:[`${today.slice(0,8)}01`,today]};
+    for(const [key,[a,b]] of Object.entries(ranges)) {
+      const p=revenuePeriod(values,a,b,through);
+      (snapshot.sales as unknown as Record<string,SalesPeriod>)[key]={grossRevenue:metric(ok?p.value:null,p.estimated,reasonOf(p,key)),orders:p.orders,
+        aov:metric(divide(ok?p.value:null,p.orders),p.estimated),complete:ok&&p.complete};
     }
-    for(const r of rows) {
-      const key=String(r.period) as typeof periodKeys[number];
-      if(!periodKeys.includes(key))continue;
-      const count=n(r,"orders"), revenue=count===0?null:n(r,"revenue");
-      const dup=n(r,"duplicates")??0; snapshot.dataQuality.duplicateCanonicalRows=Math.max(snapshot.dataQuality.duplicateCanonicalRows,dup);
-      const expected=key==="last7Days"||key==="previous7"?7:key==="last30Days"||key==="previous30"?30:1;
-      const complete=financialFresh && dup===0 && (n(r,"days")??0)>=expected;
-      const est=estimatedPeriods.has(key);
-      const period:SalesPeriod={grossRevenue:metric(config.canonicalValidated&&dup===0?revenue:null,est,!config.canonicalValidated?"canonical_unvalidated":dup?"duplicate_canonical_orders":revenue==null?"no_observations":est?"entegra_gap_estimated_from_trendyol_api":undefined),orders:count,aov:metric(divide(revenue,count),est),complete};
-      if(key in snapshot.sales && !key.startsWith("previous")) (snapshot.sales as unknown as Record<string,unknown>)[key]=period;
-    }
-    for(const [current,previous] of [["yesterday","previousDay"],["last7Days","previous7"],["last30Days","previous30"]]) {
-      const a=rows.find(r=>r.period===current),b=rows.find(r=>r.period===previous),days=current==="yesterday"?1:current==="last7Days"?7:30;
-      snapshot.sales.comparisons.push({entity:"company",current:metric(config.canonicalValidated?n(a??{},"revenue"):null,estimatedPeriods.has(current)),previous:metric(config.canonicalValidated?n(b??{},"revenue"):null,estimatedPeriods.has(previous)),
-        complete:!!a&&!!b&&(n(a,"days")??0)>=days&&(n(b,"days")??0)>=days&&snapshot.dataQuality.duplicateCanonicalRows===0,sourceFresh:financialFresh,period:`${current}:${asOf.slice(0,10)}`});
+    snapshot.sales.lastHour={grossRevenue:unknown("intraday_not_in_daily_source"),orders:null,aov:unknown("intraday_not_in_daily_source"),complete:false};
+    if(through) for(const w of comparisonWindows(through)) {
+      const a=revenuePeriod(values,...w.current,through),b=revenuePeriod(values,...w.previous,through);
+      snapshot.sales.comparisons.push({entity:"company",current:metric(ok?a.value:null),previous:metric(ok?b.value:null),complete:ok&&a.complete&&b.complete&&a.value!=null&&b.value!=null,
+        sourceFresh:through>=shiftDay(today,-8),period:`${w.key}:${through}`});
     }
   }
 

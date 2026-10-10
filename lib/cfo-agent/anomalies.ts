@@ -41,7 +41,7 @@ export function detectCfoAnomalies(snapshot:CfoAgentSnapshot,config:CfoConfig=ge
   for(const c of snapshot.sales.comparisons) {
     if(!c.complete||!c.sourceFresh||c.current.value==null||c.previous.value==null||c.previous.value<=0)continue;
     const difference=D(c.current.value).sub(c.previous.value),pct=difference.div(c.previous.value).mul(100).abs();
-    if(pct.gt(config.revenueDeviationPct)&&difference.abs().gte(config.minRevenueDifferenceTry))add("REVENUE_DEVIATION","sales","warning",c.entity,c.period,[m("cfo_satis_siparis",`${c.period}.current`,c.current,"TRY"),m("cfo_satis_siparis",`${c.period}.same_weekdays`,c.previous,"TRY")]);
+    if(pct.gt(config.revenueDeviationPct)&&difference.abs().gte(config.minRevenueDifferenceTry))add("REVENUE_DEVIATION","sales","warning",c.entity,c.period,[m("fm_sales_canonical_snapshot",`${c.period}.current`,c.current,"TRY"),m("fm_sales_canonical_snapshot",`${c.period}.same_weekdays`,c.previous,"TRY")]);
   }
   for(const c of snapshot.channels) {
     if(!financialAllowed||!c.sourceFresh||c.profitability.contributionMargin.value==null||c.previousMargin.value==null)continue;

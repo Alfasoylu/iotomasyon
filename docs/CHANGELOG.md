@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### AI CFO ciro karşılaştırması artık yalnız tam günlerle (2026-10-10)
+
+- AI CFO'nun dün / son 7 / son 30 gün cirosu diğer CFO ekranlarıyla aynı satış kaynağından okunuyor.
+- Ciro sapması uyarısı yalnız tüm satış kaynaklarının tamamlandığı günleri karşılaştırıyor. Önceden tahmini dün cirosunu gerçek geçen haftayla karşılaştırıp sahte sapma gösterebiliyordu (9 Ekim: +%45).
+- Tamamlanmamış günler Trendyol verisinden tahmin olarak gösteriliyor ve "eksik" işaretli; uyarıya girmiyor.
+
 ### Kararlar beklenen değerle kaydediliyor ve kendiliğinden ölçülüyor (2026-10-10)
 
 - Kararlar sayfasında yeni karar formu var. Ölçülecek metrik, başlangıç değeri, beklenen değer ve ölçüm tarihi girilmeden karar kaydedilmiyor.

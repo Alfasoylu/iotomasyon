@@ -200,23 +200,37 @@ async function main() {
     // Weekly Entegra upload (2026-10-07): last order 2026-09-29, now 2026-10-06 (~6.9 days) is still fresh under the
     // 8-day weekly threshold; two days later it is stale. Days the upload has not reached keep periods incomplete.
     assert.equal(entegra!.stale, false, "Entegra within the weekly window is fresh");
-    assert.equal(s.sales.yesterday.complete, false, "a day the weekly upload has not reached stays incomplete (no false revenue drop)");
+    // CFO-008 kalan (RF-009, 2026-10-10): satış dönemleri ve ciro karşılaştırmaları TEK CİRO KAYNAĞINDAN (Goal Engine satırları,
+    // fm_sales_canonical_snapshot; tamlık Goal kuralı). Hafıza hiç tazelenmediyse tam gün yok → dönem bilinmiyor, karşılaştırma yok.
+    assert.equal(s.sales.yesterday.complete, false, "a day the sources have not completed stays incomplete (no false revenue drop)");
+    assert.equal(s.sales.yesterday.grossRevenue.value, null);
+    assert.deepEqual(s.sales.comparisons, [], "no complete day → no comparison");
     const late = await buildCfoAgentSnapshot({ db, now: new Date("2026-10-08T08:00:00Z"), config, compact: false });
     assert.equal(late.dataQuality.sourceWatermarks.find(w => w.source === "Entegra")?.stale, true, "Entegra older than 8 days is stale");
     assert.ok(late.dataQuality.staleSources.includes("Entegra"));
-    // Gap between weekly Entegra uploads (2026-10-07): days after Entegra's last complete day (latest order 09-29 is the
-    // partial upload day → cutoff 09-28) come from the Trendyol API × Entegra's trailing 28-day all/Trendyol ratio
-    // (09-28: 3600 TY + 3600 HB → 2). Cancelled API lines are ignored; the result is flagged estimated.
-    assert.equal(s.sales.yesterday.grossRevenue.estimated, false, "no API rows yet → no estimate");
-    await pg.exec(`insert into "TrendyolSalesRecord" (id,"orderId","lineId","orderDate",status,"productName",quantity,"unitPriceTry","totalPriceTry","syncedAt") values
-      ('ty1','9001',1,'2026-10-05 10:00','Delivered','MD-X',1,1000,1000,'2026-10-06 07:00'),
-      ('ty2','9002',1,'2026-10-05 11:00','Cancelled','MD-X',1,5000,5000,'2026-10-06 07:00')`);
+    // Haftalık Entegra yüklemesi 30.09'da (29.09'a kadar tam), Trendyol API 06.10'da okundu (05.10'a kadar), hafıza 06.10'da tazelendi →
+    // tüm kaynaklar 29.09'a kadar tam. Sonrası yalnız Trendyol API: Trendyol × son 28 tam günün tüm/Trendyol oranı (11.400 / 7.200),
+    // tahmini ve EKSİK; iptal satırı sayılmaz. Karşılaştırmalar yalnız tam günlerde (29.09 ↔ 22.09 …), tahmin karşılaştırılmaz.
+    await pg.exec(`update "MarketplaceSalesRecord" set "importedAt" = '2026-09-30 09:00';
+      insert into "TrendyolSalesRecord" (id,"orderId","lineId","orderDate",status,"productName",quantity,"unitPriceTry","totalPriceTry","syncedAt") values
+        ('ty1','9001',1,'2026-10-05 10:00','Delivered','MD-X',1,1000,1000,'2026-10-06 07:00'),
+        ('ty2','9002',1,'2026-10-05 11:00','Cancelled','MD-X',1,5000,5000,'2026-10-06 07:00');
+      insert into fm_ingest_run (kind, status, finished_at, lineage) values ('sales_refresh', 'succeeded', '2026-10-06 02:32:57+00', '{}');
+      refresh materialized view fm_sales_canonical_snapshot;`);
     const gap = await buildCfoAgentSnapshot({ db, now, config, compact: false });
-    assert.equal(gap.sales.yesterday.grossRevenue.value, 2000, "1000 TY API × ratio 2 (cancelled excluded)");
+    const ratio = 11400 / 7200;
+    assert.equal(gap.sales.yesterday.grossRevenue.value, Math.round(1000 * ratio * 100) / 100, "1000 TY API × oran (iptal hariç)");
     assert.equal(gap.sales.yesterday.grossRevenue.estimated, true);
-    assert.equal(gap.sales.yesterday.grossRevenue.reason, "entegra_gap_estimated_from_trendyol_api");
-    assert.equal(gap.sales.last7Days.grossRevenue.value, 2000, "partial upload day 09-29 (4200 Entegra) replaced by the estimate");
-    assert.equal(gap.sales.last7Days.complete, false, "estimated days still need full day coverage");
+    assert.equal(gap.sales.yesterday.grossRevenue.reason, "estimated_from_trendyol_after_complete_day");
+    assert.equal(gap.sales.yesterday.complete, false, "tahmin tam sayılmaz");
+    assert.equal(gap.sales.last7Days.grossRevenue.value, Math.round((4200 + 1000 * ratio) * 100) / 100, "29.09 gerçek (TY 3.600 + FBA 600) + 30.09–04.10 Trendyol'suz 0 + 05.10 tahmin");
+    assert.equal(gap.sales.last7Days.complete, false);
+    assert.equal(gap.sales.today.grossRevenue.reason, "intraday_not_in_daily_source", "gün içi günlük kaynakta yok → bilinmiyor (0 değil)");
+    assert.deepEqual(gap.sales.comparisons.map(c => [c.period, c.current.value, c.current.estimated, c.previous.value, c.complete, c.sourceFresh]), [
+      ["lastCompleteDay:2026-09-29", 4200, false, 0, true, true], ["last7CompleteDays:2026-09-29", 11400, false, 0, true, true],
+      ["last30CompleteDays:2026-09-29", 11400, false, 0, true, true]], "karşılaştırma yalnız tam günler, tahminsiz");
+    const [live] = (await pg.query<{ v: string }>(`select sum(revenue_incl_vat_try)::text v from fm_sales_canonical where disposition = 'COUNTED' and economic_date between '2026-09-23' and '2026-09-29'`)).rows;
+    assert.equal(Number(live.v), 11400, "AI CFO son 7 tam gün = Goal Engine kanonik satırları (tek kaynak)");
 
     // Girdi şartnamesi Blok A eki + B + C (2026-10-07): production şemasının görünümlerinden salt-okunur yüklenir.
     const { loadCfoContext } = await import("../lib/cfo-agent/context");
