@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Kur tek kaynaktan — veritabanı tarafı da canlıda (2026-10-10)
+
+- Veritabanındaki servet, ciro hedefi ve günlük snapshot hesapları artık sabit 48,50 / 1 kur yedeği ya da ayar kuru yerine TCMB döviz alış kurunu (Eylül 48,5585) kullanıyor; ithalat önerisi sistemin işlem kurunu (48,98) kullanıyor. Kur yoksa değer "bilinmiyor" görünür, uydurma kurla hesaplanmaz.
+- Snapshot'ın kendi yazdığı kuru geri okuması (kendini besleyen kur döngüsü) kalktı. TL tutarlar değişmedi.
+
 ### Sanal stok net sermayeden çıkarıldı (2026-10-10)
 
 - Fiilen stoğu olmayan (sanal) 40005100051 kodlu ürünün 2.513 adeti net sermayede gerçek stok gibi değerleniyordu. Düzeltme Alperen'in onayıyla canlıya alındı; bu ürün için artık yalnız beyan edilen gerçek bağlı sermaye (9.700 TL) sayılıyor.

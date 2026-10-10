@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 11:47 TR
-current_main_commit: 459edd9
+last_updated: 2026-10-10 12:52 TR
+current_main_commit: 7f69fec
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 61/100
-next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; düzeltilmiş net sermaye 1.383.530,52 ile) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+current_score: 62/100
+next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; net sermaye 1.383.530,52) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 1
-open_high: 5
-score_change: "60→61 — RF-036 RESOLVED: migration 130000 üretimde (Alperen açık onayı) — sanal stok (40005100051) net sermayeden çıktı, 2.401.170 → 1.383.531 TL, kimlik farkı 0; finansal doğruluk 8→9 (RF-036 ile düşen puan geri). RF-006 otomasyonu hâlâ kanıtlanmadı"
+open_high: 4
+score_change: "61→62 — CFO-003 ✅ / RF-003 RESOLVED: migration 120000 üretimde (Alperen açık onayı) — SQL sabit kur yedekleri (48,5 / 1) ve snapshot kur döngüsü kalktı; servet ve ciro hedefi TCMB stratejik kuru (48,5585), ithalat önerisi işlem kuru (48,98); finansal doğruluk 9→10; açık HIGH 5→4"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -14,7 +14,7 @@ score_change: "60→61 — RF-036 RESOLVED: migration 130000 üretimde (Alperen 
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet:** CRITICAL 1 (RF-20261008-001) · HIGH 5 (RF-20261008-002, RF-20261008-003, RF-20261008-006, RF-20261008-009, RF-20261010-038) açık (RESOLVED dışı) — tek doğru kaynak aşağıdaki **Durum kaydı** tablosu; bu satır ve frontmatter `open_critical`/`open_high` CI'da (`cfo-governance-drift`) ondan yeniden sayılır.
+**Açık özet:** CRITICAL 1 (RF-20261008-001) · HIGH 4 (RF-20261008-002, RF-20261008-006, RF-20261008-009, RF-20261010-038) açık (RESOLVED dışı) — tek doğru kaynak aşağıdaki **Durum kaydı** tablosu; bu satır ve frontmatter `open_critical`/`open_high` CI'da (`cfo-governance-drift`) ondan yeniden sayılır.
 
 ---
 
@@ -26,7 +26,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 |---|---|---|---|
 | RF-20261008-001 | CRITICAL | IN_PROGRESS | sözleşme üretimde (170000/190000); v3 Goal doğrulaması 10.10 |
 | RF-20261008-002 | HIGH | IN_PROGRESS | 180000 üretimde, 5M sabiti kalktı (PR #238); v3 doğrulaması 10.10 |
-| RF-20261008-003 | HIGH | MITIGATED | TCMB tek stratejik kur (CFO-003); 10.10: eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR (`|| 1` kalktı) ✓; SQL 48,5 / 1 yedekleri + snapshot kur döngüsü → migration 120000 (bekletilen, üretim uygulaması bekliyor); 10.10 CFO-023: `/admin/yeni-urunler` marjı 48,5 sabiti → güncel kur ✓ |
+| RF-20261008-003 | HIGH | RESOLVED | 2026-10-10, CFO-003 ✅ — TS tek kaynak + migration 120000 üretimde (Alperen açık onayı; 28a1f877…): SQL 48,5 / 1 yedekleri ve snapshot kur döngüsü kalktı; servet/hedef TCMB 48,5585, ithalat işlem kuru 48,98 |
 | RF-20261008-004 | HIGH | RESOLVED | 2026-10-09, 110000 + 160000 üretimde |
 | RF-20261008-005 | HIGH | RESOLVED | 2026-10-09, 100000 üretimde |
 | RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; 10.10: motorun kendi Vercel cron'u (03:xx/13:xx UTC) + çalışma döngüsü cron'u (06:xx UTC) — senkron zincirinde motor atlanıyordu; **otomasyon KANITLANMADI** (kod + CI ✓; 10.10 08:25 UTC'de son motor koşusu 09.10 23:48 UTC, bağımsız cron'dan henüz koşu yok; ilk beklenen 13:xx UTC, doğrulama 14:10 UTC ve 11.10 07:10 UTC); kalan: ilk iki gün cron koşuları + WhatsApp şablon/alıcı yapılandırması |
@@ -712,3 +712,15 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   görünüm ACL (service_role, cfo_acceptance_reader) ve fonksiyon ACL değişmedi; parmak izi yalnız fn/view satırlarında değişti (yeniden ölçüldü).
 - **etki:** bir sonraki snapshot / Goal v3 tazelemesi düzeltilmiş net sermayeyi yazar (bugünkü 05:13 snapshot eski tanımla, 2.401.170,03 — tarihsel).
   Sermaye verimliliği / sağlığı ve AI CFO kanıtları aynı `gercek_stok` kuralından okur. RF-037 (1.000+ adetlik 3 SKU) ayrı, açık.
+
+## 2026-10-10 — Kur tek kaynak (migration 120000) üretimde RED FLAG PASS
+
+### RF-20261008-003 — güncelleme: RESOLVED (2026-10-10, CFO-003)
+- **onay:** Alperen açık onay ("Evet, uygula", 2026-10-10).
+- **ön koşul:** üretim kopyası (bootstrap + üretimde uygulanmış migration'lar) ile üretimde 5 nesnenin (cfo_servet, cfo_ciro_hedef, cfo_ithalat_oneri, cfo_ithalat_oneri_ozet,
+  cfo_take_snapshot) normalize gövde hash'leri birebir; migration öncesi/sonrası farkı yalnız kur ifadeleri (sonraki migration'ların değişiklikleri korunuyor).
+- **uygulama:** tek işlem, migration dosyası birebir + `_prisma_migrations` (28a1f877… = dosya sha256). Sonrası 5 hash üretim kopyasının "sonra" hash'leriyle birebir; ACL'ler korundu.
+- **doğrulama:** `cfo_servet.kur` 48,5585 (TCMB Eylül; önceki: son snapshot'ın cfo_settings'ten gelen 49,1976'sı — döngü), servet_usd 97.879,93; `cfo_ciro_hedef`
+  Eylül 1.777.442 TL = 36.604 USD (%36,6); ithalat önerisi DENİZ 11.882,60 USD = 582.009,75 TL ve HAVA 9.984,83 USD = 489.056,97 TL (işlem kuru 48,98, `cfo_kur`).
+  Sonraki snapshot USD alanlarını stratejik kurla yazar.
+- **kalan (CFO dışı, LOW not):** `/products/[id]` MonthlyExchangeRate yoksa 45 varsayılanı (üretimde kur kayıtlı, devreye girmiyor). Yeni red flag yok.
