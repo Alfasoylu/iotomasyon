@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 19:30 TR
-current_main_commit: c5ed6fa
+last_updated: 2026-10-10 20:30 TR
+current_main_commit: 54af119
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — ölü stok: PttAVM yeni ilan/içerik (upsert, varlık + varyant korumalı), AI görsel yükleme, PttAVM stok eşitlemesi; ölçüm değişmedi"
+score_change: "unchanged — N11 istemcisi (salt-okuma + soru yanıtı) + teşhis ucu; bağlantı doğrulanmadı (CFO-028 N11 komisyon oranı doğrulamadan sonra ölçülür)"
 ---
 
 # CFO SCORECARD
@@ -112,3 +112,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | e863f1e | 67 | 7/12 | Değişmedi (bilinçli): PttAVM salt-okuma istemcisi (REST + SOAP) + teşhis ucu — bağlantı doğrulanınca EPTT komisyonu (CFO-028) satır komisyonundan ölçülebilir |
 | 2026-10-10 | 8536015 | 67 | 7/12 | Değişmedi (bilinçli): ölü stok eylem yapısı — Trendyol V2 + PttAVM yazma istemcileri, insan onaylı tek kapı, başabaş tabanı = maliyet / kalibre net oran; yazma bayrakları kapalı, ölçüm değişmedi |
 | 2026-10-10 | c5ed6fa | 67 | 7/12 | Değişmedi (bilinçli): ölü stok bağımsız ilan kaydı (migration 150000 üretimde) + gece XML stok eşitlemesi + kopya engeli; ardından PttAVM yeni ilan/içerik ve AI görsel yükleme — ölçüm değişmedi |
+| 2026-10-10 | 54af119 | 67 | 7/12 | Değişmedi (bilinçli): PttAVM yeni ilan/içerik + AI görsel yükleme (#274); ardından N11 istemcisi (sipariş komisyon oranı, soru-cevap) — bağlantı doğrulanmadı, ölçüm değişmedi |

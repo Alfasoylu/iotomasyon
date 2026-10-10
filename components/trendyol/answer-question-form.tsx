@@ -2,14 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { answerTrendyolQuestionAction } from "@/lib/actions/trendyol-question-actions";
+import { answerN11QuestionAction } from "@/lib/actions/n11-question-actions";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   questionId: string;
+  /** Hangi pazaryerine yanıt gider (varsayılan Trendyol). */
+  platform?: "TRENDYOL" | "N11";
   onSuccess?: () => void;
 }
 
-export function AnswerQuestionForm({ questionId, onSuccess }: Props) {
+export function AnswerQuestionForm({ questionId, platform = "TRENDYOL", onSuccess }: Props) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [result, setResult] = useState<{ ok: boolean; message?: string } | null>(null);
@@ -18,7 +21,8 @@ export function AnswerQuestionForm({ questionId, onSuccess }: Props) {
   function handleSubmit() {
     if (!text.trim()) return;
     startTransition(async () => {
-      const res = await answerTrendyolQuestionAction({ questionId, text: text.trim() });
+      const send = platform === "N11" ? answerN11QuestionAction : answerTrendyolQuestionAction;
+      const res = await send({ questionId, text: text.trim() });
       setResult(res);
       if (res.ok) {
         setText("");

@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### N11 bağlantısı: müşteri soruları ve komisyon okuması (2026-10-10)
+
+- N11 müşteri soruları sitede listeleniyor ve yanıtlanabiliyor (Pazaryerleri → N11 Soruları); her yanıt kimin verdiğiyle kayda geçiyor.
+- N11 siparişlerinden komisyon oranı okunabiliyor (bugün N11 komisyonu kayıtsızdı); bağlantı testi elle çalıştırılan teşhisle yapılacak.
+- N11 anahtarları Vercel'e girilene kadar ekran "anahtar tanımlı değil" gösterir (birim testlerle doğrulandı; canlı bağlantı henüz yapılmadı).
+
 ### Ölü stok: PttAVM yeni ilan ve içerik, AI görsel yükleme (2026-10-10)
 
 - PttAVM'de de ölü stok ürünü için başlık/açıklama/görsel güncellenebiliyor ve Entegra'dan bağımsız yeni ilan açılabiliyor; gönderimden önce ürünün PttAVM'de var olduğu (içerik) ya da yeni barkodun boş olduğu (yeni ilan) ve varyantsız olduğu kontrol ediliyor.
