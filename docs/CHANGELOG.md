@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Red flag özet sayısı tek kaynaktan, otomatik kontrollü (2026-10-10)
+
+- Red flag belgesinin başındaki açık sayı özeti eski kalmıştı (1 kritik + 4 yüksek); kayıt tablosundan yeniden sayıldı: 2 kritik + 5 yüksek, hangi kayıtlar olduğu da yazıyor.
+- Otomatik kontrol artık bu özet satırını kayıt tablosuyla karşılaştırıyor; sayı ya da kayıt listesi kayarsa birleştirme engelleniyor. Eski denetim anına ait sayılar "tarihsel" olarak işaretlendi.
+
 ### Gümrük rezervi ödeme takviminden, dilim dilim (2026-10-10)
 
 - Gümrük rezervi kartı (CFO ana sayfa ve Gümrük sayfası) artık elle girilen tek hedef ve tek tarih yerine ödeme takvimindeki ödenmemiş gümrük/vergi dilimlerinden hesaplanıyor. Önceden kart 9 Ekim'i "geçmiş" gösteriyor, 14 ve 21 Ekim dilimleri arasındaki tahsilatları ve Romanya dilimini saymıyordu.
