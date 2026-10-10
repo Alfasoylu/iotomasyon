@@ -2,16 +2,17 @@ name: CFO alarm WhatsApp denemesi
 
 # Yalnız elle (Actions → "CFO alarm WhatsApp denemesi" → Run workflow). /api/cron/cfo-alarm-test onaylı cfo_alarm şablonuyla
 # CFO_ALARM_WHATSAPP_TO alıcısına "DENEME — gerçek alarm değil" mesajı yollar; alarm üretmez, veritabanına yazmaz.
+# tur=tani: WhatsApp teşhisi (Meta'ya salt-okuma; numaranın WABA'sı, şablon dil/durum; maskeli).
 # tur=odeme_ozeti: günlük ödeme özetini (en yakın 5 ödeme) hemen gönderir (/api/cron/cfo-odeme-ozeti?force=1; değişiklik günlüğüne iz).
 on:
   workflow_dispatch:
     inputs:
       tur:
-        description: "deneme | odeme_ozeti"
+        description: "deneme | odeme_ozeti | tani"
         required: true
         default: deneme
         type: choice
-        options: [deneme, odeme_ozeti]
+        options: [deneme, odeme_ozeti, tani]
 
 permissions:
   contents: read
@@ -28,7 +29,7 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           if [ -z "$BASE_URL" ] || [ -z "$CRON_SECRET" ]; then echo "::error::SITE_BASE_URL/PDKS_BASE_URL veya CRON_SECRET tanımlı değil"; exit 1; fi
-          if [ "$TUR" = "odeme_ozeti" ]; then path="api/cron/cfo-odeme-ozeti?force=1"; else path="api/cron/cfo-alarm-test"; fi
+          case "$TUR" in odeme_ozeti) path="api/cron/cfo-odeme-ozeti?force=1";; tani) path="api/cron/cfo-whatsapp-tani";; *) path="api/cron/cfo-alarm-test";; esac
           code=$(curl -sS -m 60 -L --location-trusted -o /tmp/out.txt -w "%{http_code}" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "${BASE_URL%/}/${path}") || code="000"
