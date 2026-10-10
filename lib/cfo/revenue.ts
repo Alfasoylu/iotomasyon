@@ -38,6 +38,8 @@ export type RevenueFreshness = {
   memoryThrough: string | null;
   /** her satış kaynağının tam olduğu son gün (Trendyol API, Entegra ve hafıza sınırının en küçüğü) */
   allSourcesThrough: string | null;
+  /** Trendyol API'nin tam olduğu son gün (okunma günü − 1); tam günden sonraki günlerin tahmini için */
+  tyThrough: string | null;
   refreshedAt: string | null;
 };
 
@@ -67,7 +69,8 @@ export function freshness(r: Row | undefined, today: string): RevenueFreshness {
   const memoryThrough = day(r?.memory_through);
   const yesterday = shiftDay(today, -1);
   const allSourcesThrough = memoryThrough == null ? null : minDay(memoryThrough, yesterday, day(r?.ty_through), day(r?.mp_through));
-  return { memoryThrough, allSourcesThrough, refreshedAt: typeof r?.refreshed_at === "string" ? r.refreshed_at : null };
+  return { memoryThrough, allSourcesThrough, tyThrough: memoryThrough == null ? null : minDay(memoryThrough, yesterday, day(r?.ty_through)),
+    refreshedAt: typeof r?.refreshed_at === "string" ? r.refreshed_at : null };
 }
 
 export function toRevenueRange(r: Row | undefined, from: string, to: string, today: string): RevenueRange {
@@ -121,3 +124,63 @@ export function revenueTargetCard(m: RevenueRange, targetUsd: number | null, fxU
     hedef_pct: Math.round((ciroUsd / targetUsd) * 1000) / 10, acik_usd: Math.round(targetUsd - ciroUsd),
     gereken_kat: ciroUsd > 0 ? Math.round((targetUsd / ciroUsd) * 100) / 100 : null, adet: null, complete: m.complete, kaynak: m.source };
 }
+
+// ── Günlük seri (CFO-008 kalan, RF-009): AI CFO satış dönemleri ve ciro karşılaştırmaları aynı kaynaktan ──
+/** Gün bazında KDV dahil ciro + Trendyol payı + sipariş; $1/$2 = gün aralığı (dahil). dup = aynı satır anahtarı (0 olmalı). */
+export const REVENUE_DAILY_SQL = `select economic_date::text as d, coalesce(sum(revenue_incl_vat_try), 0) as total,
+       coalesce(sum(revenue_incl_vat_try) filter (where channel = 'TRENDYOL'), 0) as ty,
+       count(distinct order_key)::int as orders, (count(distinct order_key) filter (where channel = 'TRENDYOL'))::int as ty_orders,
+       (count(*) - count(distinct sale_key))::int as dup
+  from fm_sales_canonical_snapshot
+ where disposition = 'COUNTED' and economic_date between $1::date and $2::date
+ group by economic_date order by economic_date`;
+
+export type DayRevenue = { d: string; total: number; ty: number; orders: number; tyOrders: number; dup: number };
+export type DayValue = { total: number; orders: number; estimated: boolean };
+
+export async function revenueDaily(q: SqlQuery, from: string, to: string): Promise<DayRevenue[]> {
+  const rows = await q<Row>(REVENUE_DAILY_SQL.replace("$1::date", `'${guard(from)}'::date`).replace("$2::date", `'${guard(to)}'::date`));
+  return rows.map(r => ({ d: String(r.d).slice(0, 10), total: num(r.total), ty: num(r.ty), orders: num(r.orders), tyOrders: num(r.ty_orders), dup: num(r.dup) }));
+}
+
+/** Saf: gün değerleri. Tüm kaynakların tam olduğu günler GERÇEK (satırı olmayan gün 0); sonrasında Trendyol API'nin okunduğu günler
+ *  Trendyol × (son 28 tam günün tüm kanal / Trendyol oranı) TAHMİN (estimated); Trendyol da okunmamış gün yok (bilinmiyor, 0 değil). */
+export function revenueDays(days: DayRevenue[], f: Pick<RevenueFreshness, "allSourcesThrough" | "tyThrough">, from: string, to: string): Map<string, DayValue> {
+  const through = f.allSourcesThrough;
+  const by = new Map(days.map(x => [x.d, x]));
+  let ratio: number | null = null;
+  if (through) {
+    let all = 0, ty = 0;
+    for (const x of days) if (x.d >= shiftDay(through, -27) && x.d <= through) { all += x.total; ty += x.ty; }
+    ratio = ty > 0 ? all / ty : null;
+  }
+  const out = new Map<string, DayValue>();
+  for (let d = from; d <= to; d = shiftDay(d, 1)) {
+    const x = by.get(d);
+    if (through && d <= through) out.set(d, { total: x?.total ?? 0, orders: x?.orders ?? 0, estimated: false });
+    else if (through && f.tyThrough && d <= f.tyThrough && ratio != null)
+      out.set(d, { total: (x?.ty ?? 0) * ratio, orders: Math.round((x?.tyOrders ?? 0) * ratio), estimated: true });
+  }
+  return out;
+}
+
+/** Saf: dönem toplamı (dahil gün aralığı). Değeri olan gün yoksa null; tam = bitiş ≤ tüm kaynakların tam olduğu gün. */
+export function revenuePeriod(values: Map<string, DayValue>, from: string, to: string, through: string | null) {
+  let total = 0, orders = 0, n = 0, estimated = false;
+  for (let d = from; d <= to; d = shiftDay(d, 1)) {
+    const v = values.get(d);
+    if (!v) continue;
+    total += v.total; orders += v.orders; n++; estimated ||= v.estimated;
+  }
+  return { value: n ? Math.round(total * 100) / 100 : null, orders: n ? orders : null, estimated, complete: through != null && to <= through && !estimated, days: n };
+}
+
+/** Saf: ciro karşılaştırma pencereleri — yalnız TAM günler (son tam gün ↔ 7 gün önce; son 7 ↔ önceki 7; son 30 ↔ 35 gün önce biten 30). */
+export function comparisonWindows(through: string): { key: string; current: [string, string]; previous: [string, string] }[] {
+  return [
+    { key: "lastCompleteDay", current: [through, through], previous: [shiftDay(through, -7), shiftDay(through, -7)] },
+    { key: "last7CompleteDays", current: [shiftDay(through, -6), through], previous: [shiftDay(through, -13), shiftDay(through, -7)] },
+    { key: "last30CompleteDays", current: [shiftDay(through, -29), through], previous: [shiftDay(through, -64), shiftDay(through, -35)] },
+  ];
+}
+

@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 05:20 TR
-current_main_commit: 80485f5
+last_updated: 2026-10-10 05:40 TR
+current_main_commit: eb5595c
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 61/100
-next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11 gözlem) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
+next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-008 kapanışı: ilk üretim AI CFO koşusunda tek kaynak satış karşılaştırması gözlemi (10.10 07:17 TR) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11) → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
 open_critical: 1
 open_high: 4
-score_change: "60→61 — CFO-012 karar hafızası: yeni karar yalnız beklenen SAYI + başlangıç + ölçülebilir metrik + tarih ile kaydedilir (/cfo/kararlar formu, sunucuda doğrulama; kural tarihinden sonra eksik kayıt okuma tarafında bayraklı), kontrol noktası gelen kararlar her gece cfo_hamle_olcum'a ölçülür (borç/kamu/FBA o günün değeri, kart/KMH bugünkü bakiye; tekrar yazmaz), kalibrasyon skoru (isabet, hata, eğilim, kapsam) sayfada ve AI CFO kanıtında, sermaye motorunun borç kapama adımları onaya sunulan karar taslağı → karar hafızası boyutu 3→4; ilk otomatik ölçüm 31.10/01.11"
+score_change: "unchanged — CFO-008 kalanı (AI CFO satış dönemleri ve REVENUE_DEVIATION karşılaştırması tek ciro kaynağından, yalnız tam günler) gelir boyutu puanında 10.10 tek ciro adımıyla zaten sayıldı; üretimdeki ilk AI CFO koşusu gözlenince RF-009 RESOLVED ve H2 (ciro tanımı) yeniden değerlendirilir"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -32,7 +32,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; WhatsApp şablon/alıcı yapılandırması bekliyor |
 | RF-20261008-007 | MEDIUM | RESOLVED | HIGH→MEDIUM; CFO-010 ✅ 2026-10-09 (ödeme durumu tek kaynak takvim) |
 | RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
-| RF-20261008-009 | HIGH | MITIGATED | 10.10 CFO-008: tek ciro kaynağı (Goal Engine satırları) tüm manşet ciro yüzeylerinde ✓; kalan: AI CFO snapshot günlük satış karşılaştırması (cfo_satis_siparis + API oran tahmini) |
+| RF-20261008-009 | HIGH | MITIGATED | 10.10 CFO-008: tek ciro kaynağı (Goal Engine satırları) tüm manşet ciro yüzeylerinde ✓; AI CFO satış dönemleri + REVENUE_DEVIATION aynı kaynaktan, yalnız tam günler ✓ kod; RESOLVED: ilk üretim AI CFO koşusunda gözlem |
 | RF-20261008-010 | HIGH | RESOLVED | 2026-10-10, CFO-006 ✅ — TS + SQL tek kural (100000), takvim/mutabakat açılışı şahsi hariç (110000), `/cfo/odemeler` kapasitesi `cfo_hesap_sahsi` |
 | RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017 migration 230000 üretimde (2026-10-09 akşam, kimlik farkı 0,00); ilk bileşenli snapshot 10.10 |
 | RF-20261008-012 | MEDIUM | IN_PROGRESS | yazma yolları yazma izni (PR #242); API anahtarı şifreleme, Cowork rolü kalan |
@@ -569,4 +569,18 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   ayrı satır. Canlı bakiye geçmiş tarihe yazılır mı? Hayır — tarih = ölçüm günü. Yetkisiz yazma? Form yazma izni ister (`rbac-write-paths`).
   Kalan risk: eski 12 karar beklenen SAYI'sız (kalibrasyon kapsamı 3/15) — geriye dönük uydurulmaz.
 - RESOLVED için: ilk otomatik ölçümün üretimde gözlenmesi (H11 31.10 gecesi, H09/H10 01.11 gecesi).
+
+## 2026-10-10 — CFO-008 kalan (AI CFO satış karşılaştırması) RED FLAG PASS
+
+### RF-20261008-009 — güncelleme 2 (2026-10-10, CFO-008 kalan; HIGH, MITIGATED kalır → üretim gözleminde RESOLVED)
+- AI CFO snapshot satış dönemleri (dün, son 7/30 gün, ay başından) ve REVENUE_DEVIATION karşılaştırması `cfo_satis_siparis` (yalnız Entegra)
+  + Trendyol API tahmininden → TEK ciro kaynağına (`lib/cfo/revenue.ts` günlük serisi, `fm_sales_canonical_snapshot` COUNTED). Kanıt kaynağı da.
+- **Yeni bulgu (düzeltildi):** eski yol tahmini dünü GERÇEK geçen haftayla karşılaştırıp "tam" sayıyordu → sahte sapma alarmı riski (üretim 09.10:
+  tahmini 73.683 ↔ gerçek 50.953, +%45). Artık tahmini gün `complete=false`; karşılaştırma yalnız tüm kaynakların tam olduğu günlerde.
+- Üretim ölçümü (10.10, salt-okunur): son tam gün 04.10 66.937 ↔ 66.179 (+%1,1); son 7 tam gün −%1,3; son 30 tam gün −%8,8.
+- Bağımsız inceleme: Entegra haftalık yükleme gecikmesinde alarm susar mı? Evet, tam gün ilerlemez → karşılaştırma aynı dönem anahtarında kalır
+  (`…:<son tam gün>`), yeni alarm üretmez; kaynak 8 günden eskiyse `sourceFresh=false`. Satır düzeyi kârlılık (`cfo_satis_birim_duz`,
+  `cfo_satis_siparis` sipariş tutarı payı) bilinçli ayrı — manşet ciro değil.
+- RESOLVED için: ilk üretim AI CFO koşusunda (10.10 04:17 UTC) karşılaştırma anahtarlarının `lastCompleteDay:2026-10-0x` ve değerlerin kanonik
+  toplamla aynı olduğunun gözlenmesi. `cfo_ciro_hedef` (okuyan kod yok) CFO-024 ile kaldırılacak.
 

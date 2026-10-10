@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 05:20 TR
-current_main_commit: 80485f5
+last_updated: 2026-10-10 05:40 TR
+current_main_commit: eb5595c
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 61/100
-next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11 gözlem) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
+next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-008 kapanışı: ilk üretim AI CFO koşusunda tek kaynak satış karşılaştırması gözlemi (10.10 07:17 TR) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11) → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
 open_critical: 1
 open_high: 4
-score_change: "60→61 — CFO-012 karar hafızası: yeni karar yalnız beklenen SAYI + başlangıç + ölçülebilir metrik + tarih ile kaydedilir (/cfo/kararlar formu, sunucuda doğrulama; kural tarihinden sonra eksik kayıt okuma tarafında bayraklı), kontrol noktası gelen kararlar her gece cfo_hamle_olcum'a ölçülür (borç/kamu/FBA o günün değeri, kart/KMH bugünkü bakiye; tekrar yazmaz), kalibrasyon skoru (isabet, hata, eğilim, kapsam) sayfada ve AI CFO kanıtında, sermaye motorunun borç kapama adımları onaya sunulan karar taslağı → karar hafızası boyutu 3→4; ilk otomatik ölçüm 31.10/01.11"
+score_change: "unchanged — CFO-008 kalanı (AI CFO satış dönemleri ve REVENUE_DEVIATION karşılaştırması tek ciro kaynağından, yalnız tam günler) gelir boyutu puanında 10.10 tek ciro adımıyla zaten sayıldı; üretimdeki ilk AI CFO koşusu gözlenince RF-009 RESOLVED ve H2 (ciro tanımı) yeniden değerlendirilir"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)
