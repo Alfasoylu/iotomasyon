@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 12:52 TR
-current_main_commit: 7f69fec
+last_updated: 2026-10-10 13:16 TR
+current_main_commit: 5a1e46c
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 62/100
 next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; net sermaye 1.383.530,52) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 1
 open_high: 4
-score_change: "61→62 — CFO-003 ✅ / RF-003 RESOLVED: migration 120000 üretimde (Alperen açık onayı) — SQL sabit kur yedekleri (48,5 / 1) ve snapshot kur döngüsü kalktı; servet ve ciro hedefi TCMB stratejik kuru (48,5585), ithalat önerisi işlem kuru (48,98); finansal doğruluk 9→10; açık HIGH 5→4"
+score_change: "unchanged — CFO-030 ✅ / RF-035 RESOLVED (LOW): migration 140000 üretimde (Alperen açık onayı) — KMH kapasitesi pozisyon + tam limit (kaynak yeterliliği, ön uçuş, gümrük dilimi, kapasite alarmı, stres testi); bugün sayılar aynı (eksi bakiye yok), 14.10 sonrası kullanılan KMH iki kez düşmez — latent hata önlendi, ölçülen değer değişmediği için skor aynı"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -58,7 +58,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261010-033 | MEDIUM | RESOLVED | 335 + 8 üründe CFO maliyeti ithalat motorundan; CFO-029 otomatik türetme kodu hazır (Excel dışı 143 ürün dahil, ilk üretim koşusu 10.10 05:00 TR) — RESOLVED ilk koşu doğrulanınca |
 | RF-20261009-032 | MEDIUM | IN_PROGRESS | 10.10 karar (Alperen): EPTT tahmini komisyon kanal marjında (measured=false) ✓; 6 kanal + FBA oran belgesine kadar UNKNOWN (%20 yer tutucu yok); kalan: oran belgeleri / hakediş dökümleri (CFO-027 yolu) |
 | RF-20261010-034 | MEDIUM | RESOLVED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
-| RF-20261010-035 | LOW | OPEN | latent: eksi bakiyeli KMH hesabında "nakit/dip + boş KMH" kullanımı iki kez düşer (kaynak yeterliliği, ön uçuş, gümrük dilimi); bugün etki 0 → CFO-030 |
+| RF-20261010-035 | LOW | RESOLVED | 2026-10-10, CFO-030 ✅ — migration 140000 üretimde (Alperen açık onayı; c4e8595a…): kapasite = pozisyon + tam ticari limit (SQL 3 fonksiyon + kapasite alarmı + stres testi); bugün sayılar aynı |
 | RF-20261010-036 | CRITICAL | RESOLVED | 2026-10-10, migration 130000 üretimde (Alperen açık onayı "Evet, uygula"; checksum 32b55afe…): 40005100051 `gercek_stok=false`, stok satırına yalnız beyan edilen bağlı 8.083,33 TL; net sermaye 2.401.170,03 → 1.383.530,52 (kimlik farkı 0) |
 | RF-20261010-037 | MEDIUM | IN_PROGRESS | gerçek stok 4 kural; CFO-029 etki/alarm net sermaye kuralına hizalandı ✓ kod; kalan: 1.000–5.000 adetlik 3 SKU (1,18M TL) gerçek mi (AL-CAM03 10.07'den beri senkronsuz) — Alperen |
 | RF-20261010-038 | HIGH | MITIGATED | CFO çalışma döngüsü 09.10 02:34'ten beri bağlam aşamasında 3B001; düzeltme kodda (savepoint-source.ts, sorgular sıralı); RESOLVED: üretimde ilk tamamlanan döngü |
@@ -724,3 +724,15 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   Eylül 1.777.442 TL = 36.604 USD (%36,6); ithalat önerisi DENİZ 11.882,60 USD = 582.009,75 TL ve HAVA 9.984,83 USD = 489.056,97 TL (işlem kuru 48,98, `cfo_kur`).
   Sonraki snapshot USD alanlarını stratejik kurla yazar.
 - **kalan (CFO dışı, LOW not):** `/products/[id]` MonthlyExchangeRate yoksa 45 varsayılanı (üretimde kur kayıtlı, devreye girmiyor). Yeni red flag yok.
+
+## 2026-10-10 — KMH kapasitesi tek ayrıştırma (migration 140000) RED FLAG PASS
+
+### RF-20261010-035 — güncelleme: RESOLVED (2026-10-10, CFO-030)
+- **onay:** Alperen açık onay ("Evet, uygula", 2026-10-10). Gerekçe zamanlaması: 14.10 gümrük dilimi (1.965.468 TL) sonrası şirket pozisyonu eksiye düşecek
+  (projeksiyon −1.682.643); eski tanımla kaynak yeterliliği / ön uçuş tam o gün kullanılan KMH kadar fazla açık gösterecekti.
+- **ön koşul:** 4 nesnenin (cfo_nakit_kapisi, cfo_kaynak_yeterliligi, cfo_onucus_temel, cfo_gumruk_dilim) normalize hash'i üretim kopyasıyla birebir; sonrası birebir.
+- **uygulama + doğrulama:** tek işlem + `_prisma_migrations` (c4e8595a…). Bugün nakit 151.470,07 · boş KMH 1.359.300 · tam limit 1.359.300 (eksi bakiye yok → aynı);
+  kaynak yeterliliği GENEL TİCARİ KAYNAK 1.510.770, ACIK −2.146.662 (dip ihtiyacı 3.505.962), ön uçuş 8 KIRMIZI; gümrük dilimi (14.10) BAĞLAYICI AZAMİ 823.107 TL
+  (%42 çekilebilir). ACL korundu; AI CFO incelenmiş `cfo_nakit_kapisi` hash'i 31466cf0… koda işlendi (motor "reviewed_source_changed" düşmesin).
+- **TS:** kapasite alarmı (`health.ts`) ve stres testi (`downside-data.ts`) yol pozisyonu + `kmh_limit_try` (önce `bos_kmh_try` — aynı çift düşüş).
+- Yeni red flag yok.

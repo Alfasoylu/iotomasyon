@@ -46,7 +46,8 @@ async function main() {
     await pg.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin;
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: (q: string) => pg.exec(q), query: <T,>(q: string, p?: unknown[]) => pg.query<T>(q, p) });
-    for (const m of res.pendingInProduction) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    // 140000 (CFO-030) cfo_nakit_kapisi'na sütun ekler; 100000 bu testte yeniden uygulandığı için (görünümden sütun düşürülemez) dışarıda — kendi testi cfo-kmh-kapasite
+    for (const m of res.pendingInProduction.filter(x => x !== "20261010140000_cfo_kmh_kapasite_tek")) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     const MIG = "20261010100000_cfo_sahiplik_tek_kural";
     const sql = readFileSync(`prisma/migrations/${MIG}/migration.sql`, "utf8");
     await pg.exec(sql); await pg.exec(sql);

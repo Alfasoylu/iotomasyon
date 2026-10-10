@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 12:52 TR
-current_main_commit: 7f69fec
+last_updated: 2026-10-10 13:16 TR
+current_main_commit: 5a1e46c
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 62/100
 next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; net sermaye 1.383.530,52) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 1
 open_high: 4
-score_change: "61→62 — CFO-003 ✅ / RF-003 RESOLVED: migration 120000 üretimde (Alperen açık onayı) — SQL sabit kur yedekleri (48,5 / 1) ve snapshot kur döngüsü kalktı; servet ve ciro hedefi TCMB stratejik kuru (48,5585), ithalat önerisi işlem kuru (48,98); finansal doğruluk 9→10; açık HIGH 5→4"
+score_change: "unchanged — CFO-030 ✅ / RF-035 RESOLVED (LOW): migration 140000 üretimde (Alperen açık onayı) — KMH kapasitesi pozisyon + tam limit (kaynak yeterliliği, ön uçuş, gümrük dilimi, kapasite alarmı, stres testi); bugün sayılar aynı (eksi bakiye yok), 14.10 sonrası kullanılan KMH iki kez düşmez — latent hata önlendi, ölçülen değer değişmediği için skor aynı"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)

@@ -8,7 +8,7 @@ import { isPersonalAccount } from "./ownership";
 // Vadesi geçmiş kalemler bugüne taşınır (CFO-013, migration 110000 — fonksiyonla aynı).
 // Eşlik denetimi: her gün giriş ve çıkış fonksiyonla 1 TL içinde aynı olmalı; değilse `parity.mismatchDays` > 0 ve sonuç
 // "projeksiyonla uyuşmuyor" işaretlenir (fonksiyon değişmiş demektir — bu SQL güncellenmeli).
-// Kaynaklar: cfo_nakit_kapisi (nakit, boş genel KMH, amaca bağlı KMH), cfo_kaynak_yeterliligi ('Sahsi KMH' kalemi), taban Goal
+// Kaynaklar: cfo_nakit_kapisi (nakit = pozisyon, TAM genel KMH limiti — CFO-030, amaca bağlı KMH), cfo_kaynak_yeterliligi ('Sahsi KMH' kalemi), taban Goal
 // Engine net_position_floor_try gözleminin inputs.floor_try'si.
 // KMH faizi KADEMELİ (Cowork 2026-10-08): dilimler cfo_bank_account'tan — her aktif hesabın kmhLimitTry'si kendi monthlyRatePct'iyle
 // (ekstreden ölçülen aylık oran; boşsa UNKNOWN), purposeLimitTry gümrük dilimi (ayrı ürün; oranı ölçülmedi → UNKNOWN), 'ŞAHSİ'
@@ -53,7 +53,7 @@ export async function loadDownside(q: SqlQuery): Promise<DownsideData | null> {
   if (!have?.p || !have.k) return null;
   const [rows, gate, personal, accounts, floor] = await Promise.all([
     q<{ date: string; ledger_in: unknown; forecast_in: unknown; out: unknown; fx_out: unknown; p_in: unknown; p_out: unknown }>(FLOW_SQL),
-    q<{ nakit: unknown; genel: unknown; amacli: unknown }>(`select nakit_try as nakit, bos_kmh_try as genel, amacli_kmh_try as amacli from cfo_nakit_kapisi`),
+    q<{ nakit: unknown; genel: unknown; amacli: unknown }>(`select nakit_try as nakit, kmh_limit_try as genel, amacli_kmh_try as amacli from cfo_nakit_kapisi`),
     have.y ? q<{ tutar: unknown }>(`select tutar from cfo_kaynak_yeterliligi() where kalem ilike 'Sahsi KMH%' limit 1`) : Promise.resolve([] as { tutar: unknown }[]),
     q<{ name: string; type: string | null; lim: unknown; plim: unknown; rate: unknown }>(
       `select name, "accountType"::text as type, "kmhLimitTry" as lim, "purposeLimitTry" as plim, "monthlyRatePct" as rate
