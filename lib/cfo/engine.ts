@@ -171,6 +171,8 @@ export interface CfoOverview {
   freeKmhTry: number;
   kmhInterestMonthlyTry: number;
   banksMissingBalance: number;
+  /** Şahsi hesaplar (cfo_hesap_sahsi kuralı) — manşet nakit/KMH'ye DAHİL DEĞİL; yalnız bilgi ve "son çare" kapasitesi */
+  personal: { cashTry: number; usedKmhTry: number; freeKmhTry: number; kmhLimitTry: number; accounts: number; missingBalance: number };
 
   // Borçlar
   cardDebtTry: number;
@@ -253,11 +255,26 @@ export function computeCfo(input: CfoInput): CfoOverview {
   const cardMinPct = cardMinPctRaw != null && cardMinPctRaw > 0 ? cardMinPctRaw / 100 : null;
 
   // ── Bankalar ──
+  // CFO-006 / sayfa eşliği (2026-10-10): manşet nakit ve KMH yalnız ŞİRKET hesapları (cfo_hesap_sahsi ile aynı kural; sözleşme
+  // cfo_nakit_kapisi.kmh_limit_try, nakit projeksiyonu ve ödeme takvimi açılışı da şahsiyi hariç tutar). Eskiden /cfo "boş KMH" kartı ve
+  // ufuk trafik ışıkları 5 şahsi KMH'yi (1,35M limit) şirket kapasitesi sayıyordu. Şahsi hesaplar ayrı alanda; kademeli faizde
+  // PERSONAL dilimi "son çare" olarak kalır (lib/cfo/downside.ts).
   let netCashTry = 0, usedKmhTry = 0, totalKmhLimitTry = 0, freeKmhTry = 0, banksMissingBalance = 0, kmhInterestMonthlyTry = 0, kmhUsedWithoutRateTry = 0;
+  const personal = { cashTry: 0, usedKmhTry: 0, freeKmhTry: 0, kmhLimitTry: 0, accounts: 0, missingBalance: 0 };
   const kmhSlices: KmhSlice[] = [];
   for (const b of input.banks) {
     const bal = numOrNull(b.balanceTry);
     const limit = num(b.kmhLimitTry);
+    const isPersonal = isPersonalAccount(b.accountType);
+    if (isPersonal) {
+      personal.accounts++; personal.kmhLimitTry += limit;
+      if (bal == null) { personal.missingBalance++; continue; }
+      const used = bal < 0 ? -bal : 0;
+      personal.cashTry += bal; personal.usedKmhTry += used; personal.freeKmhTry += Math.max(0, limit - used);
+      const pr = numOrNull(b.monthlyRatePct);
+      if (limit > 0) kmhSlices.push({ name: b.name, tier: "PERSONAL", limitTry: limit, monthlyRate: pr != null && pr > 0 ? pr / 100 : null });
+      continue;
+    }
     totalKmhLimitTry += limit;
     if (bal == null) { banksMissingBalance++; continue; } // muhafazakâr: bilinmeyen bakiye boş limite sayılmaz
     netCashTry += bal;
@@ -269,7 +286,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
     const bankRatePct = numOrNull(b.monthlyRatePct);
     const bankRate = bankRatePct != null && bankRatePct > 0 ? bankRatePct / 100 : null;
     if (bankRate == null) kmhUsedWithoutRateTry += used; else kmhInterestMonthlyTry += used * bankRate;
-    if (limit > 0) kmhSlices.push({ name: b.name, tier: isPersonalAccount(b.accountType) ? "PERSONAL" : "GENERAL", limitTry: limit, monthlyRate: bankRate });
+    if (limit > 0) kmhSlices.push({ name: b.name, tier: "GENERAL", limitTry: limit, monthlyRate: bankRate });
   }
 
   // ── Kartlar ──
@@ -517,7 +534,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
 
   return {
     today, usdTry, usdTrySource, kmh: { slices: kmhSlices, range: measuredRateRange(kmhSlices) }, kmhUsedWithoutRateTry,
-    netCashTry, usedKmhTry, totalKmhLimitTry, freeKmhTry, kmhInterestMonthlyTry, banksMissingBalance,
+    netCashTry, usedKmhTry, totalKmhLimitTry, freeKmhTry, kmhInterestMonthlyTry, banksMissingBalance, personal,
     cardDebtTry, cardMinTotalTry, cardCarryCostTry, cardRevolvingTry: carry.revolvingTry, cardRevolvingWithoutRateTry: carry.revolvingWithoutRateTry,
     cardsUnknownRevolving: carry.unknownRevolvingCards,
     cardTopRevolving: carry.perCard.filter(c => (c.revolvingTry ?? 0) > 0 && c.effectiveMonthlyRate != null)

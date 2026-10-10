@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 16:40 TR
+last_updated: 2026-10-10 17:05 TR
 current_main_commit: 24f5f38
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
-current_score: 66/100
+current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "65→66 — CFO-014 kısım 2 (RF-016): eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (kredi erken kapama/taksit, kart asgari %20, nakde dönüşüm %70, faaliyet nakdi sahte kırmızı, eski stok alanları, yedek haftalık tahmin, kaldıraç teslim süresi 67/22) — testli; boyut 7: 5→6"
+score_change: "65→67 — CFO-014 kısım 2 (RF-016): eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (boyut 7: 5→6); sayfa eşliği: eski motor manşet nakit/KMH yalnız şirket (= cfo_nakit_kapisi; /cfo boş KMH 2,71M → 1,36M, şahsi 1,35M ayrı satır) + AI CFO borç tahmini gümrükte takılmıyor (RF-020 RESOLVED) (boyut 2: 12→13)"
 ---
 
 # CFO SCORECARD
@@ -57,7 +57,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | # | Boyut | Ağırlık | Puan | Kanıt (artı) | Kanıt (eksi) |
 |---|---|---|---|---|---|
 | 1 | Financial accuracy & reconciliation | 20 | **13** | Net sermaye + borç tek tanım üretimde DOĞRULANDI (10.10: `fm_balance_day` v3 = sözleşme fonksiyonu, Goal v3 aynı değer; RF-001/002 RESOLVED); atıf kimliği üretimde (bileşenler toplamı − net sermaye = 0,00); tek ciro kaynağı üretim motorunda kanonikle birebir (RF-009 RESOLVED); kur tek kaynak (RF-003); sanal stok istisnası (RF-036) + 3 SKU stoku teyitli (RF-037); kanonik satış + aylık mutabakat; maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi | Marj 5 tanım; 2. v3 günü atıf (CFO-017, 11.10); maliyet kapsamı %87,5 (stok değerinde maliyetsiz SKU); yoldaki mal iki kaynak (takvim ↔ ithalat tablosu, CFO-018) |
-| 2 | Cash / liquidity / debt | 15 | **12** | TEK NAKİT YOLU üretimde (CFO-013, 10.10: projeksiyon dibi = takvim dibi, günlük fark ≤0,52 TL, her gün eşitlik testli; vadesi geçmiş kalem bugüne); şirket/şahsi tek kural TS + SQL + ödeme kapasitesi (CFO-006 ✅); ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik | takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş (RF-018, veri); KMH kapasitesi iki ayrıştırma (RF-035 latent: kaynak yeterliliği eksi bakiyede kullanımı iki kez düşer; bugün etki 0) |
+| 2 | Cash / liquidity / debt | 15 | **13** | TEK NAKİT YOLU üretimde (CFO-013, 10.10: projeksiyon dibi = takvim dibi, günlük fark ≤0,52 TL, her gün eşitlik testli; vadesi geçmiş kalem bugüne); şirket/şahsi tek kural TS + SQL + ödeme kapasitesi (CFO-006 ✅); ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik; eski motor manşet nakit/KMH yalnız şirket (2026-10-10: `/cfo` boş KMH ve ufuk trafik ışıkları = `cfo_nakit_kapisi` 1.359.300 / 151.470,07 — eskiden şahsi 1,35M dahil 2,71M; şahsi ayrı satır, kademeli faizde son çare dilimi; testli); AI CFO borç tahmini gümrük dilimlerinde takılmıyor (RF-020 RESOLVED) | takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş (RF-018, veri); KMH kapasitesi iki ayrıştırma (RF-035 latent: kaynak yeterliliği eksi bakiyede kullanımı iki kez düşer; bugün etki 0) |
 | 3 | Capital allocation | 15 | **8** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
 | 4 | Revenue / profitability | 10 | **6** | TEK CİRO KAYNAĞI (CFO-008, 10.10): manşet ciro tüm CFO yüzeylerinde Goal Engine satırlarından (`lib/cfo/revenue.ts`, tamlık sınırlı, testli); KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları; EPTT komisyonu kanal marjında (Entegra oranı × toplam, tahmini işaretli, CFO-028) | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); iade marja bağlı değil; 6 kanal + FBA komisyonu UNKNOWN (oran belgesi yok); EPTT tahmini ölçülmemiş (~0,4 puan düşük) |
 | 5 | Inventory / procurement | 10 | **6** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam; GTİP 433/433 + yasal gümrük yükü ve `duty_gap` alarmı | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
@@ -66,7 +66,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; SAĞLIK alarmı (takılan/başarısız/bayat motor) kodda, üretimde migration 150000 bekliyor; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **3** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü, uygulama bypassrls ile bağlanıyor |
-| | **TOPLAM** | **100** | **66** | | |
+| | **TOPLAM** | **100** | **67** | | |
 
 ## Skor geçmişi
 
@@ -108,4 +108,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 5a1e46c | 62 | 5/12 | Değişmedi (bilinçli): CFO-030 ✅ / RF-035 RESOLVED (LOW) — migration 140000 üretimde (Alperen açık onayı; c4e8595a…): KMH kapasitesi pozisyon + tam ticari limit (SQL 3 fonksiyon + kapasite alarmı + stres testi); bugün sayılar aynı, 14.10 gümrük dilimi sonrası çift düşüş önlendi |
 | 2026-10-10 | 9979a79 | 62 | 5/12 | Değişmedi (bilinçli): CFO-009 / D-P07 — `cfo_alarm` şablonu Meta’da aktif (Alperen; Pazarlama, tr, 2 değişken), `CFO_ALARM_WHATSAPP_TO` Vercel’de; kanal kanıtı için elle tetiklenen deneme gönderimi (`/api/cron/cfo-alarm-test` + `cfo-alarm-test.yml`; alarm üretmez, DB’ye yazmaz) + günlük ödeme özeti (en yakın 5 ödeme, 05:xx UTC) |
 | 2026-10-10 | ccc0d2e | 65 | 7/12 | 62→65: 12:35 UTC üretim doğrulaması — CFO-001/002 ✅ (v3 net sermaye/borç = sözleşme fonksiyonu, Goal v3), CFO-008 ✅ (motor karşılaştırmaları kanonikle birebir), RF-038 döngü tamamlandı, CFO-031 ✅ (3 SKU teyidi); RF-001/002/009/037/038 RESOLVED; boyut 1: 10→13; H1 + H12 ✅ |
-| 2026-10-10 | 24f5f38 | 66 | 7/12 | 65→66: CFO-014 kısım 2 (RF-016) — eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (testli `cfo-engine-unknown`); boyut 7: 5→6. H3 ❌ kalır (cfo_servet_kalem COALESCE 0 migration bekliyor). Aynı PR: CFO-018 kısım 2 — AI CFO borç tahmini gümrük dilimlerinde kalıcı "eksik veri"ye düşmüyor (RF-020 RESOLVED, MEDIUM) |
+| 2026-10-10 | 24f5f38 | 67 | 7/12 | 65→67: CFO-014 kısım 2 (RF-016) — eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (`cfo-engine-unknown`; boyut 7: 5→6; H3 ❌ kalır — cfo_servet_kalem COALESCE 0 migration). Sayfa eşliği: eski motor manşet nakit/KMH yalnız şirket (`/cfo` boş KMH 2,71M → 1,36M = sözleşme; `cfo-engine-sahsi`) + AI CFO borç tahmini gümrükte takılmıyor (RF-020 RESOLVED; `cfo-debt-forecast-customs`) — boyut 2: 12→13 |

@@ -129,7 +129,7 @@ export default async function CfoPage() {
         <MetricCard
           label="Boş KMH kapasitesi" value={fmtTry(o.freeKmhTry)} icon={PiggyBank}
           status={o.freeKmhTry >= 1_500_000 ? "ok" : o.freeKmhTry >= 750_000 ? "warn" : "danger"}
-          hint={`Toplam limit ${fmtTry(o.totalKmhLimitTry)}`}
+          hint={`Şirket limiti ${fmtTry(o.totalKmhLimitTry)}${o.personal.accounts ? ` · şahsi ${fmtTry(o.personal.freeKmhTry)} boş (son çare, dahil değil)` : ""}`}
         />
         <MetricCard
           label="Kredi kartı borcu" value={fmtTry(o.cardDebtTry)} icon={CreditCard}

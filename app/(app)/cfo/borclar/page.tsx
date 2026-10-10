@@ -122,7 +122,7 @@ export default async function CfoDebtsPage() {
             );
           })}
           <tr className="bg-[var(--surface-1)] font-semibold">
-            <Td strong>TOPLAM</Td>
+            <Td strong>TOPLAM (şirket)</Td>
             <Td right strong danger={o.netCashTry < 0}>{fmtTry(o.netCashTry)}</Td>
             <Td right strong>{fmtTry(o.totalKmhLimitTry)}</Td>
             <Td right strong>{fmtTry(o.usedKmhTry)}</Td>
@@ -130,6 +130,16 @@ export default async function CfoDebtsPage() {
             <Td right strong>{fmtTry(o.kmhInterestMonthlyTry)}{o.kmhUsedWithoutRateTry > 0 ? " + ?" : ""}</Td>
             <Td>—</Td><Td>—</Td>
           </tr>
+          {o.personal.accounts > 0 && (
+            <tr className="text-[var(--text-muted)]">
+              <Td>Şahsi hesaplar ({o.personal.accounts}) — toplama dahil değil, son çare kapasitesi</Td>
+              <Td right>{fmtTry(o.personal.cashTry)}</Td>
+              <Td right>{fmtTry(o.personal.kmhLimitTry)}</Td>
+              <Td right>{fmtTry(o.personal.usedKmhTry)}</Td>
+              <Td right>{fmtTry(o.personal.freeKmhTry)}</Td>
+              <Td right>—</Td><Td>—</Td><Td>—</Td>
+            </tr>
+          )}
         </CfoTable>
         {o.kmhUsedWithoutRateTry > 0 && (
           <p className="mt-2 text-xs text-[var(--warn)]">
@@ -181,7 +191,7 @@ export default async function CfoDebtsPage() {
             );
           })}
           <tr className="bg-[var(--surface-1)] font-semibold">
-            <Td strong>TOPLAM</Td>
+            <Td strong>TOPLAM (şirket)</Td>
             <Td right strong>{fmtTry(o.cardDebtTry)}</Td>
             <Td right strong>{fmtTry(o.cardMinTotalTry)}</Td>
             <Td>—</Td><Td>—</Td><Td>—</Td>

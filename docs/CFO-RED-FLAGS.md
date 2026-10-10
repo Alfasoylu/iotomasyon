@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 16:40 TR
+last_updated: 2026-10-10 17:05 TR
 current_main_commit: 24f5f38
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
-current_score: 66/100
+current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "65→66 — CFO-014 kısım 2 (RF-016): eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (kredi erken kapama/taksit, kart asgari %20, nakde dönüşüm %70, faaliyet nakdi sahte kırmızı, eski stok alanları, yedek haftalık tahmin, kaldıraç teslim süresi 67/22) — testli; boyut 7: 5→6"
+score_change: "65→67 — CFO-014 kısım 2 (RF-016): eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (boyut 7: 5→6); sayfa eşliği: eski motor manşet nakit/KMH yalnız şirket (= cfo_nakit_kapisi; /cfo boş KMH 2,71M → 1,36M, şahsi 1,35M ayrı satır) + AI CFO borç tahmini gümrükte takılmıyor (RF-020 RESOLVED) (boyut 2: 12→13)"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -33,7 +33,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-007 | MEDIUM | RESOLVED | HIGH→MEDIUM; CFO-010 ✅ 2026-10-09 (ödeme durumu tek kaynak takvim) |
 | RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
 | RF-20261008-009 | HIGH | RESOLVED | 2026-10-10, CFO-008 ✅ — üretim motor koşusu (10:37 UTC) `sales.comparisons` anahtarları `lastCompleteDay/last7CompleteDays/last30CompleteDays:2026-10-04`, değerler `fm_sales_canonical_snapshot` COUNTED toplamıyla birebir (66.936,93 · 455.393,63 · 1.901.040,26 TL) |
-| RF-20261008-010 | HIGH | RESOLVED | 2026-10-10, CFO-006 ✅ — TS + SQL tek kural (100000), takvim/mutabakat açılışı şahsi hariç (110000), `/cfo/odemeler` kapasitesi `cfo_hesap_sahsi` |
+| RF-20261008-010 | HIGH | RESOLVED | 2026-10-10, CFO-006 ✅ — TS + SQL tek kural (100000), takvim/mutabakat açılışı şahsi hariç (110000), `/cfo/odemeler` kapasitesi `cfo_hesap_sahsi`; 2026-10-10 ek: eski motor manşet nakit/KMH da artık yalnız şirket (`/cfo` boş KMH 2,71M → 1,36M = `cfo_nakit_kapisi`) |
 | RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017: ilk bileşenli snapshot 10.10 05:13 UTC ✓ (nakit 151.553,36 + alacak 1.045.155,68 + stok 3.336.030,79 + yoldaki 3.758.334 − borç 5.889.903,80 = 2.401.170,03, fark 0,00); kalan: 2. v3 günü atıf (11.10) |
 | RF-20261008-012 | MEDIUM | IN_PROGRESS | yazma yolları yazma izni (PR #242); API anahtarı şifreleme, Cowork rolü kalan |
 | RF-20261008-013 | MEDIUM | OPEN | veri: 8 SKU maliyeti (CFO-011, Alperen) |
