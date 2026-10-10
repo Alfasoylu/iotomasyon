@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 13:16 TR
-current_main_commit: 5a1e46c
+last_updated: 2026-10-10 14:50 TR
+current_main_commit: 9979a79
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 62/100
 next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; net sermaye 1.383.530,52) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-030 ✅ / RF-035 RESOLVED (LOW): migration 140000 üretimde (Alperen açık onayı) — KMH kapasitesi pozisyon + tam limit (kaynak yeterliliği, ön uçuş, gümrük dilimi, kapasite alarmı, stres testi); bugün sayılar aynı (eksi bakiye yok), 14.10 sonrası kullanılan KMH iki kez düşmez — latent hata önlendi, ölçülen değer değişmediği için skor aynı"
+score_change: "unchanged — CFO-009 / D-P07: WhatsApp alarm kanalı deneme gönderim ucu (/api/cron/cfo-alarm-test, yalnız elle tetiklenen iş akışı; alarm üretmez, veritabanına yazmaz) — kanal kanıtı için; ölçülen finans değeri değişmedi"
 ---
 
 # CFO SCORECARD
@@ -106,3 +106,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 459edd9 | 61 | 5/12 | 60→61: RF-036 RESOLVED — migration 130000 üretimde (Alperen açık onayı "Evet, uygula"; checksum 32b55afe…): sanal stok 40005100051 net sermayeden çıktı, stok 3.336.031 → 2.318.391, net sermaye 2.401.170,03 → 1.383.530,52 TL, kimlik farkı 0 → finansal doğruluk 8→9. Otomasyon boyutu bilerek aynı (cron koşusu henüz yok) |
 | 2026-10-10 | 7f69fec | 62 | 5/12 | 61→62: CFO-003 ✅ / RF-003 RESOLVED — migration 120000 üretimde (Alperen açık onayı; 28a1f877…): SQL sabit kur yedekleri (48,5 / 1) ve snapshot kur döngüsü kalktı; servet/ciro hedefi TCMB 48,5585, ithalat işlem kuru 48,98 → finansal doğruluk 9→10. Otomasyon boyutu aynı (cron koşusu henüz yok) |
 | 2026-10-10 | 5a1e46c | 62 | 5/12 | Değişmedi (bilinçli): CFO-030 ✅ / RF-035 RESOLVED (LOW) — migration 140000 üretimde (Alperen açık onayı; c4e8595a…): KMH kapasitesi pozisyon + tam ticari limit (SQL 3 fonksiyon + kapasite alarmı + stres testi); bugün sayılar aynı, 14.10 gümrük dilimi sonrası çift düşüş önlendi |
+| 2026-10-10 | 9979a79 | 62 | 5/12 | Değişmedi (bilinçli): CFO-009 / D-P07 — `cfo_alarm` şablonu Meta’da aktif (Alperen; Pazarlama, tr, 2 değişken), `CFO_ALARM_WHATSAPP_TO` Vercel’de; kanal kanıtı için elle tetiklenen deneme gönderimi (`/api/cron/cfo-alarm-test` + `cfo-alarm-test.yml`; alarm üretmez, DB’ye yazmaz) |
