@@ -40,7 +40,7 @@ export default async function DeadStockActionPage() {
           Kesinti (kalibre, banka ekstresi): Trendyol {rate("TRENDYOL") != null ? `%${(rate("TRENDYOL")! * 100).toFixed(1)}` : "bilinmiyor"} · PttAVM{" "}
           {rate("PTTAVM") != null ? `%${(rate("PTTAVM")! * 100).toFixed(1)}` : "bilinmiyor"}. Taban bunun altına inmez.
         </p>
-        <p className="mt-1 text-[var(--warn)]">⚠ {DUPLICATE_LISTING_RISK}. Yeni ilan ayrı SKU/barkod (ALFOS-…), yeni başlık (≤ %60 benzer) ve yeni AI görselleriyle açılır; stoğu her gece Entegra XML'inden eşitlenir (fiyat otomatik değişmez).</p>
+        <p className="mt-1 text-[var(--warn)]">⚠ {DUPLICATE_LISTING_RISK}. Yeni ilan ayrı SKU/barkod (ALFOS-…), yeni başlık (≤ %60 benzer) ve yeni AI görselleriyle açılır; stoğu her gece Entegra XML'inden eşitlenir, en fazla tavan kadar (varsayılan 3 — çift ilanda fazla satışı sınırlar; fiyat otomatik değişmez).</p>
         <p className="mt-1"><Link className="underline" href="/cfo/olu-stok">← Ölü stok listesi</Link></p>
       </Card>
       <div className="space-y-3">

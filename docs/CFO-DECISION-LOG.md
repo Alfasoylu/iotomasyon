@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 21:15 TR
-current_main_commit: a0c54fc
+last_updated: 2026-10-10 21:45 TR
+current_main_commit: 58360f8
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — Koçtaş (Mirakl) istemcisi: satır komisyon tutarı, müşteri mesajı yanıtı, ödeme hareketleri; bağlantı doğrulanmadı"
+score_change: "unchanged — ürün görseli yükleme mevcut bucket'a taşındı (üretimde kırıktı) + bağımsız ilan stok tavanı; ölçüm değişmedi"
 ---
 
 # CFO DECISION LOG

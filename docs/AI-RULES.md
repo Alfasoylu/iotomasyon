@@ -62,7 +62,8 @@ fiyat düşürme, Trendyol onaylı ürün içeriği (başlık/açıklama/görsel
 - Tek kapı `lib/actions/olu-stok-actions.ts`; istemciler `lib/trendyol/write.ts`, `lib/pttavm/write.ts`
   başka yerden çağrılmaz. AI CFO yazma YAPMAZ. Tek otomatik yazma: gece XML senkronundan sonra
   `lib/olu-stok/stock-sync.ts` — YALNIZ `olu_stok_bagimsiz_ilan`'daki `ALFOS-…` barkodlara, YALNIZ stok adedi,
-  yalnız taze XML'den (≤ 36 saat); fiyat ve içerik asla otomatik değişmez (Alperen onayı 2026-10-10).
+  yalnız taze XML'den (≤ 36 saat), en fazla `OLU_STOK_BAGIMSIZ_STOK_TAVANI` adet (varsayılan 3; çift ilan fazla satış
+  sınırı); fiyat ve içerik asla otomatik değişmez (Alperen onayı 2026-10-10).
 - Bağımsız ilan mevcut ilanın kopyası olamaz: farklı SKU/barkod, başlık benzerliği ≤ %60, mevcut ürün/ilan
   görselleri kullanılamaz (yeni, AI ile üretilmiş görsel) — sunucuda zorlanır.
 - Her eylem insan onaylı: `marketplaceListings.write` izni + "ONAYLIYORUM" + sunucuda başabaş tabanı
