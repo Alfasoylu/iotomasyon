@@ -19,6 +19,7 @@ const FORBIDDEN: [RegExp, string][] = [
   [/\b100[.]?000\s*USD/, "sabit 100.000 USD hedefi — hedef cfo_settings.monthlyRevenueTargetUsd"],
   [/ORAN_ESIGI\s*=\s*0\./, "sabit ölü stok oran eşiği — cfo_settings.deadStockSalesRatioPct (görünümle aynı ifade)"],
   [/kapsam\w*\)?\s*[<>]=?\s*(8\d|9\d)\b/i, "sabit maliyet kapsamı eşiği — motorun getCfoConfig().minCostCoveragePct"],
+  [/(freeKmh\w*|nakit|cardDebt\w*)\s*[<>]=?\s*\d[\d_]{3,}/, "sabit TL KPI eşiği — KMH: lib/cfo-agent/capacity.ts (capacityStatus), nakit: cash-floor (netPositionFloorTry), kart: devreden faiz"],
 ];
 const violations: string[] = [];
 for (const f of walk("app")) {
@@ -39,6 +40,9 @@ const BINDINGS: { file: string; must: (string | RegExp)[]; why: string }[] = [
   { file: "lib/cfo/revenue-levers-data.ts", must: [`"monthlyRevenueTargetUsd"`, /targetUnknown: targetMonthlyTry == null, targetUsd\b/], why: "ciro hedefi ayarlardan; yoksa BİLİNMİYOR" },
   { file: "app/(app)/cfo/sermaye/page.tsx", must: ["rv.targetUsd"], why: "/cfo/sermaye hedef etiketi = kaldıraç hesabının hedefi" },
   { file: "app/(app)/cfo/calisan/page.tsx", must: ["monthlyRevenueTargetUsd"], why: "/cfo/calisan hedef metni ayarlardan" },
+  { file: "lib/cfo-agent/health.ts", must: ["capacityStatus(i.capacity)", "CAPACITY_PATH_SQL"], why: "motor capacity_breach alarmı tek kural" },
+  { file: "app/(app)/cfo/page.tsx", must: ["capacityStatus(capacity)", "loadCapacity()"], why: "/cfo Boş KMH kartı = motor kapasite kuralı" },
+  { file: "app/(app)/cfo/odemeler/page.tsx", must: ["readCashFloor(getCfoConfig().cashFloorTry)", "taban.floorTry"], why: "/cfo/odemeler nakit rengi = motor taban alarmı" },
 ];
 for (const b of BINDINGS) {
   const src = b.file.endsWith(".sql") ? read(b.file) : code(read(b.file));
@@ -52,6 +56,10 @@ assert.equal(hits("<p>(Kur 48,50 varsayıldı.)</p>"), 1);
 assert.equal(hits("<>hedef (100.000 USD × {fx})</>"), 1);
 assert.equal(hits("const ORAN_ESIGI = 0.2;"), 1);
 assert.equal(hits("const dusuk = n(a.kapsam_pct) < 85;"), 1);
+assert.equal(hits("status={o.freeKmhTry >= 1_500_000 ? \"ok\" : \"warn\"}"), 1);
+assert.equal(hits("if (nakit < 50_000) return \"warn\";"), 1);
+assert.equal(hits("o.cardDebtTry <= 1_000_000"), 1);
+assert.equal(hits("if (nakit < taban.floorTry) return \"danger\";"), 0);
 assert.equal(hits("// eskiden 48,50 sabitti; 100.000 USD yedeği kaldırıldı"), 0);
 assert.equal(hits("kapsam >= 60 ? \"warn\" : \"danger\""), 0);
 assert.equal(hits("const url = \"https://x.test/a\"; const k = kapsam < KAPSAM_ESIGI;"), 0);

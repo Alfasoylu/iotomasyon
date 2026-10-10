@@ -21,6 +21,8 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { fmtTry } from "@/lib/cfo/format";
 import { PAYMENT_CAPACITY_SQL, type PaymentCapacity } from "@/lib/cfo/payment-capacity";
+import { readCashFloor } from "@/lib/cfo-agent/cash-floor";
+import { getCfoConfig } from "@/lib/cfo-agent/config";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -169,7 +171,7 @@ export default async function CfoPaymentsPage({
   const secili = UFUKLAR.find((u) => u.key === ufuk) ?? UFUKLAR[0];
   const gun = secili.days;
 
-  const [gunler, hareketler, dipler, kapasiteRows, denetim, alacakBorc, bakiyeYasi] = await Promise.all([
+  const [gunler, hareketler, dipler, kapasiteRows, denetim, alacakBorc, bakiyeYasi, taban] = await Promise.all([
     prisma.$queryRaw<Gun[]>`
       select tarih, kalan_gun, tarih_str, gun_adi, odeme_adet, cikacak, girecek,
              gun_sonu_nakit, gun_ici_dip, kesin_odeme_var, tumu_islendi
@@ -195,6 +197,8 @@ export default async function CfoPaymentsPage({
         union all
         select current_date - "lastUpdatedAt"::date from cfo_credit_card where "isActive"
       ) t`,
+    // Net pozisyon tabanı — motorun floor_breach alarmıyla aynı tek kaynak (cfo_settings.netPositionFloorTry; RF-019/CFO-020).
+    readCashFloor(getCfoConfig().cashFloorTry),
   ]);
 
   const k = kapasiteRows[0];
@@ -253,11 +257,12 @@ export default async function CfoPaymentsPage({
     birikenTahmin = 0; birikenGun = 0;
   });
 
-  /** Nakit negatifse: ticari limitle kapanıyor mu, şahsiye mi iniyor mu? */
+  /** Nakit negatifse: ticari limitle kapanıyor mu, şahsiye mi iniyor mu? Tabanın altı motorun floor_breach alarmıyla aynı (kırmızı).
+   *  Eskiden pozitif nakitte sabit 50.000 TL sarı eşiği vardı — motorda karşılığı yoktu (RF-019; CFO-020/023). */
   function nakitRengi(nakit: number) {
     if (nakit < 0 && Math.abs(nakit) > ticariKmh) return "danger" as const;
+    if (nakit < taban.floorTry) return "danger" as const;
     if (nakit < 0) return "warn" as const;
-    if (nakit < 50_000) return "warn" as const;
     return "ok" as const;
   }
 

@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### CFO ekranı renkleri alarmla aynı kurala bağlandı (2026-10-10)
+
+- "Boş KMH kapasitesi" kartı artık sabit tutar eşiğiyle değil, motorun kapasite alarmıyla aynı kuralla renkleniyor: önümüzdeki 120 günde nakit genel KMH'yi aşacaksa sarı, şirketin tüm KMH kapasitesini aşacaksa kırmızı. Bugün 14 Ekim'de şirket kapasitesi aşıldığı için kart kırmızı (eskiden sarı görünüyordu, alarm ise kırmızıydı).
+- Ödeme takvimindeki nakit rengi sabit 50.000 TL eşiği yerine CFO ayarlarındaki net pozisyon tabanını kullanıyor; kredi kartı borcu kartı devreden faiz işliyorsa kırmızı.
+
 ### Ürün görseli yükleme düzeltildi; bağımsız ilanlarda stok tavanı (2026-10-10)
 
 - Ürün düzenleme ekranındaki görsel yükleme, canlıda bulunmayan bir depolama alanına yazdığı için çalışmıyordu; artık mevcut ürün görseli deposuna yüklüyor.

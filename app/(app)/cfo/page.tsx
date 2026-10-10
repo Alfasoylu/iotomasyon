@@ -17,6 +17,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
 import { loadWealth } from "@/lib/cfo/wealth";
 import { buildDailyActions } from "@/lib/cfo/engine";
+import { capacityStatus, loadCapacity } from "@/lib/cfo-agent/capacity";
 import { fmtTry, fmtPct, fmtDate, fmtNum } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { MetricCard } from "@/components/ui/metric-card";
@@ -38,7 +39,10 @@ const ACTION_STYLE = {
 export default async function CfoPage() {
   const viewer = await requirePermission(PERMISSIONS.CFO_READ);
 
-  const { raw, overview: o } = await loadCfoData();
+  const [{ raw, overview: o }, capacity] = await Promise.all([loadCfoData(), loadCapacity()]);
+  // KMH kartı motorun capacity_breach alarmıyla AYNI kural (lib/cfo-agent/capacity.ts): 120 günlük nakit yolu genel KMH'yi aşarsa sarı,
+  // şirket kapasitesini (genel + amaca bağlı) aşarsa kırmızı; yol bilinmiyorsa nötr (yeşil gösterilmez). Sabit TL eşiği yok (CFO-020/023).
+  const cap = capacityStatus(capacity);
   // Hedef tarihi ayarlardan geldiği için servet yüklemesi buna bağlı; sıralı.
   const servet = await loadWealth(raw.settings?.wealthTargetDate ?? null);
 
@@ -128,12 +132,12 @@ export default async function CfoPage() {
         />
         <MetricCard
           label="Boş KMH kapasitesi" value={fmtTry(o.freeKmhTry)} icon={PiggyBank}
-          status={o.freeKmhTry >= 1_500_000 ? "ok" : o.freeKmhTry >= 750_000 ? "warn" : "danger"}
-          hint={`Şirket limiti ${fmtTry(o.totalKmhLimitTry)}${o.personal.accounts ? ` · şahsi ${fmtTry(o.personal.freeKmhTry)} boş (son çare, dahil değil)` : ""}`}
+          status={cap.status === "unknown" ? "neutral" : cap.status}
+          hint={`${cap.breach ? `${fmtDate(cap.breach.date)}'de ${cap.breach.scope === "company" ? "şirket kapasitesi" : "genel KMH"} ${fmtTry(cap.breach.overTry)} aşılıyor · ` : cap.status === "unknown" ? "120 günlük yol bilinmiyor · " : "120 gün yetiyor · "}Şirket limiti ${fmtTry(o.totalKmhLimitTry)}${o.personal.accounts ? ` · şahsi ${fmtTry(o.personal.freeKmhTry)} boş (son çare, dahil değil)` : ""}`}
         />
         <MetricCard
           label="Kredi kartı borcu" value={fmtTry(o.cardDebtTry)} icon={CreditCard}
-          status={o.cardDebtTry === 0 ? "ok" : o.cardDebtTry <= 1_000_000 ? "warn" : "danger"}
+          status={o.cardDebtTry === 0 ? "ok" : o.cardCarryCostTry > 0 || o.cardRevolvingWithoutRateTry > 0 ? "danger" : "warn" /* faiz işliyorsa kırmızı (motorun devreden faizi); sabit 1M TL eşiği yok — CFO-020/023 */}
           hint={o.cardsUnknownRevolving > 0 || o.cardRevolvingWithoutRateTry > 0 ? `Devreden faiz ${fmtTry(o.cardCarryCostTry)}/ay + bilinmeyen` : `Devreden faiz ${fmtTry(o.cardCarryCostTry)}/ay`}
           href="/cfo/borclar"
         />
