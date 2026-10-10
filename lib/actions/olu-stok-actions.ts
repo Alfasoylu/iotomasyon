@@ -17,6 +17,7 @@ import { trackingResult, updateStockPrices, upsertProducts } from "@/lib/pttavm/
 import { distinctListingErrors, floorPrice, independentCode } from "@/lib/olu-stok/plan";
 import { findApprovedByBarcode } from "@/lib/trendyol/approved";
 import { loadChannels, loadDeadStock } from "@/lib/olu-stok/load";
+import { independentCap, independentQty, PTTAVM_MAX_QTY, TRENDYOL_MAX_QTY } from "@/lib/olu-stok/stock-plan";
 
 const CONFIRM = "ONAYLIYORUM";
 const DENIED = { ok: false, message: "Bu işlem için yetkiniz yok (marketplaceListings.write)." } as const;
@@ -132,16 +133,17 @@ export async function createIndependentListingAction(input: z.input<typeof listi
     { title: p.data.title, images: p.data.images });
   if (distinct.length) return { ok: false, message: `Yeni ilan mevcut ilandan yeterince farklı değil: ${distinct.join("; ")}` };
   const code = independentCode(p.data.sku);
+  const tyQty = independentQty(c.xmlStock, independentCap(), TRENDYOL_MAX_QTY);
   const { sku, title, description, listPrice, salePrice, vatRate, dimensionalWeight, images } = p.data;
   try {
     const { batchRequestId } = await createProducts(cfg, [{ title, description, brandId, categoryId, listPrice, salePrice, vatRate, dimensionalWeight, images, attributes,
-      barcode: code, productMainId: code, stockCode: code, quantity: c.xmlStock }]);
+      barcode: code, productMainId: code, stockCode: code, quantity: tyQty }]);
     await prisma.$executeRaw`insert into olu_stok_bagimsiz_ilan (sku, kanal, barkod, baslik, kaynak_barkod, satis_fiyati, islem_no, olusturan, son_stok, son_stok_at, son_stok_islem)
-      values (${sku}, 'TRENDYOL', ${code}, ${title}, ${c.barcode}, ${salePrice}, ${batchRequestId}, ${g.user!.email}, ${c.xmlStock}, now(), ${batchRequestId})
+      values (${sku}, 'TRENDYOL', ${code}, ${title}, ${c.barcode}, ${salePrice}, ${batchRequestId}, ${g.user!.email}, ${tyQty}, now(), ${batchRequestId})
       on conflict (kanal, barkod) do update set baslik = excluded.baslik, satis_fiyati = excluded.satis_fiyati, islem_no = excluded.islem_no, durum = 'GONDERILDI'`;
-    await log("urun", `TRENDYOL ${sku} yeni ilan`, null, `${code} @ ${salePrice} TL, stok ${c.xmlStock}`, g.user!.email,
+    await log("urun", `TRENDYOL ${sku} yeni ilan`, null, `${code} @ ${salePrice} TL, stok ${tyQty} (XML ${c.xmlStock}, tavan ${independentCap()})`, g.user!.email,
       `bağımsız ilan (Entegra dışı); kaynak ${c.barcode ?? "-"}${src ? " (marka/kategori/özellik kopyalandı)" : ""}; taban ${floor}; işlem ${batchRequestId}`);
-    return { ok: true, trackingId: batchRequestId, message: `Yeni ilan gönderildi (${code}, stok ${c.xmlStock}) — Trendyol onayından sonra yayına girer; stok her gece XML'den eşitlenir.` };
+    return { ok: true, trackingId: batchRequestId, message: `Yeni ilan gönderildi (${code}, stok ${tyQty} — XML ${c.xmlStock}, tavan ${independentCap()}) — Trendyol onayından sonra yayına girer; stok her gece XML'den eşitlenir.` };
   } catch (e) {
     await log("urun", `TRENDYOL ${sku} yeni ilan`, null, `${code} (HATA)`, g.user!.email, errMsg(e));
     return { ok: false, message: `Trendyol reddetti: ${errMsg(e)}` };
@@ -227,7 +229,7 @@ export async function createIndependentPttListingAction(input: z.input<typeof pt
   if (!categoryId) return { ok: false, message: "Kategori mevcut ilandan bulunamadı — elle girin." };
   const distinct = distinctListingErrors({ titles: [c.row.name, ...(src?.names ?? [])], images: [c.imageUrl ?? "", ...(src?.images ?? [])] }, { title: p.data.name, images: p.data.images });
   if (distinct.length) return { ok: false, message: `Yeni ilan mevcut ilandan yeterince farklı değil: ${distinct.join("; ")}` };
-  const qty = Math.min(9999, Math.max(0, c.xmlStock));
+  const qty = independentQty(c.xmlStock, independentCap(), PTTAVM_MAX_QTY);
   try {
     const r = await upsertProducts(cfg, [{ barcode: code, isNew: true, ean: code, productCode: code, categoryId, name: p.data.name, longDescription: p.data.longDescription,
       priceWithVat: p.data.priceWithVat, vatRate: p.data.vatRate, quantity: qty, desi: p.data.desi, brand: p.data.brand, images: p.data.images }]);

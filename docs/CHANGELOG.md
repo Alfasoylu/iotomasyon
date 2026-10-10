@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Ürün görseli yükleme düzeltildi; bağımsız ilanlarda stok tavanı (2026-10-10)
+
+- Ürün düzenleme ekranındaki görsel yükleme, canlıda bulunmayan bir depolama alanına yazdığı için çalışmıyordu; artık mevcut ürün görseli deposuna yüklüyor.
+- Ölü stok için açılan bağımsız ilanlar en fazla 3 adet stok gösteriyor (ayarlanabilir); aynı ürün Entegra ilanında da satıldığı için bir günde fazla satış en fazla bu kadarla sınırlı.
+
 ### Koçtaş bağlantısı: müşteri mesajları ve komisyon okuması (2026-10-10)
 
 - Koçtaş müşteri mesajları (sipariş ve ürün konuları) sitede listeleniyor ve yanıtlanabiliyor (Pazaryerleri → Koçtaş Mesajları); her yanıt kimin verdiğiyle kayda geçiyor.

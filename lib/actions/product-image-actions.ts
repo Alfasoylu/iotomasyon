@@ -158,13 +158,15 @@ export async function uploadProductImageAction(
     return { ok: false, error: "Ürün bulunamadı" };
   }
 
-  const path = `${productId}/${Date.now()}.${detected.ext}`;
+  // Üretimde "product-images" bucket'ı hiç yoktu (yükleme başarısızdı) → mevcut public `urun-gorsel` (yalnız görsel MIME, ≤ 10 MB),
+  // ürün görselleri kendi klasöründe: urun/<productId>/ (Alperen onayı 2026-10-10).
+  const path = `urun/${productId}/${Date.now()}.${detected.ext}`;
 
   // Yükleme main'deki ortak yardımcıyla; Content-Type istemcinin bildirdiği değil,
   // magic byte'lardan tespit edilen tür.
   const res = await uploadObject(
     storage.config,
-    "product-images",
+    "urun-gorsel",
     path,
     new File([bytes], `upload.${detected.ext}`, { type: detected.mime }),
   );

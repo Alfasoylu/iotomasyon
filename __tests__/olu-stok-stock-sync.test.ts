@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite/vector";
 import { bootstrap } from "../scripts/schema-baseline/bootstrap";
-import { planStockSync, PTTAVM_MAX_QTY } from "../lib/olu-stok/stock-plan";
+import { DEFAULT_INDEPENDENT_CAP, independentCap, independentQty, planStockSync, PTTAVM_MAX_QTY } from "../lib/olu-stok/stock-plan";
 import { interpretLookup } from "../lib/pttavm/lookup";
 import { parseApproved } from "../lib/trendyol/approved";
 
@@ -24,6 +24,13 @@ async function main() {
   assert.ok(r.items.every(i => i.salePrice === undefined && i.listPrice === undefined), "fiyat asla otomatik gönderilmez");
 
   assert.equal(planStockSync([{ id: "4", sku: "D", barcode: "ALFOS-D", lastQty: null }], xml, now, PTTAVM_MAX_QTY).items[0].quantity, 9999, "PttAVM üst sınırı");
+
+  // (1b) Çift ilan fazla satış tavanı: bağımsız ilan en fazla TAVAN adet gösterir (varsayılan 3; 0 = satışa kapalı; geçersiz → varsayılan)
+  assert.deepEqual([independentCap({}), independentCap({ OLU_STOK_BAGIMSIZ_STOK_TAVANI: "0" }), independentCap({ OLU_STOK_BAGIMSIZ_STOK_TAVANI: "5" }),
+    independentCap({ OLU_STOK_BAGIMSIZ_STOK_TAVANI: "-1" }), independentCap({ OLU_STOK_BAGIMSIZ_STOK_TAVANI: "x" })], [DEFAULT_INDEPENDENT_CAP, 0, 5, 3, 3]);
+  assert.deepEqual([independentQty(50, 3, 9999), independentQty(2, 3, 9999), independentQty(-4, 3, 9999), independentQty(50, 0, 9999)], [3, 2, 0, 0]);
+  const capped = planStockSync([{ id: "1", sku: "A", barcode: "ALFOS-A", lastQty: 10 }, { id: "4", sku: "D", barcode: "ALFOS-D", lastQty: 3 }], xml, now, 20000, 3);
+  assert.deepEqual(capped.items.map(i => [i.barcode, i.quantity]), [["ALFOS-A", 3]], "D zaten tavanda (3) → gönderilmez");
 
   // (2b) PttAVM barkod sorgusu yorumu (şemadan bağımsız): bulundu/varyant/kategori; bulunamayan barkod
   const pj = { data: [{ Barcode: "STK-1", CategoryId: 512, ProductName: "Eski ad", Images: [{ Url: "https://ptt/1.jpg" }], Variants: [] }] };
