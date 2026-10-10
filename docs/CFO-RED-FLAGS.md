@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:15 TR
-current_main_commit: 81ed6dc
+last_updated: 2026-10-10 03:20 TR
+current_main_commit: bc29fdd
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000 hazır, bekletilen) → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000, main'de bekletilen) → CFO-028 kararları (EPTT tahmini komisyon, diğer kanal oran belgeleri) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — CFO-013 tek nakit yolu kodu + testi hazır (migration 110000 bekletilen, üretim DDL onayı bekliyor; bugünkü etki yalnız takvim açılışında 83,29 TL); PR #250 (CFO-029 + RMB tek kaynak) üretimde, ilk koşu doğrulanınca 1./3. boyut yeniden puanlanır"
+score_change: "unchanged — CFO-013 kodu main'de (DDL bekletilen, onay bekliyor); CFO-028 salt-okunur ölçüm: EPTT komisyon oranı var tutar yok (≈308k TL/yıl görünmüyor), 6 kanal + FBA veri yok (≈290–390k TL/yıl) — karar Alperen'de; 4. boyut (marj) karar uygulanınca yeniden puanlanır"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -56,7 +56,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261009-030 | LOW | OPEN | veri düzeltmesi (insan) |
 | RF-20261009-031 | LOW | MITIGATED | capture migration kuralı |
 | RF-20261010-033 | MEDIUM | MITIGATED | 335 + 8 üründe CFO maliyeti ithalat motorundan; CFO-029 otomatik türetme kodu hazır (Excel dışı 143 ürün dahil, ilk üretim koşusu 10.10 05:00 TR) — RESOLVED ilk koşu doğrulanınca |
-| RF-20261009-032 | MEDIUM | OPEN | 6 kanal + ePTT komisyonu kayıtsız; motor UNKNOWN, raporlar 0 (CFO-028; kanıt yolu CFO-027) |
+| RF-20261009-032 | MEDIUM | OPEN | 6 kanal + ePTT komisyonu kayıtsız; motor UNKNOWN, raporlar 0 (CFO-028; kanıt yolu CFO-027). 10.10 ölçüm: EPTT oran var tutar yok (≈308k TL/yıl), 6 kanal + FBA veri yok (≈290–390k TL/yıl); karar önerisi `docs/maliyet/2026-10-10-komisyon-kayitsiz-kanallar.md` |
 | RF-20261010-034 | MEDIUM | MITIGATED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
 
 ## 2026-10-08 — İlk tam sistem denetimi (bağımsız dış denetçi bakışı)

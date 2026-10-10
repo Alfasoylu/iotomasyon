@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:15 TR
-current_main_commit: 81ed6dc
+last_updated: 2026-10-10 03:20 TR
+current_main_commit: bc29fdd
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000 hazır, bekletilen) → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000, main'de bekletilen) → CFO-028 kararları (EPTT tahmini komisyon, diğer kanal oran belgeleri) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — CFO-013 tek nakit yolu kodu + testi hazır (migration 110000 bekletilen, üretim DDL onayı bekliyor; bugünkü etki yalnız takvim açılışında 83,29 TL); PR #250 (CFO-029 + RMB tek kaynak) üretimde, ilk koşu doğrulanınca 1./3. boyut yeniden puanlanır"
+score_change: "unchanged — CFO-013 kodu main'de (DDL bekletilen, onay bekliyor); CFO-028 salt-okunur ölçüm: EPTT komisyon oranı var tutar yok (≈308k TL/yıl görünmüyor), 6 kanal + FBA veri yok (≈290–390k TL/yıl) — karar Alperen'de; 4. boyut (marj) karar uygulanınca yeniden puanlanır"
 ---
 
 # CFO BACKLOG
@@ -165,7 +165,8 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 
 ### CFO-028 — Komisyonu kayıtsız kanallar
 - **ölçüm (2026-10-09, üretim salt-okuma, son 30 gün):** N11, Amazon, Pazarama, Idefix, Temu, MIRAKL_KOCTAS — 165 satır, 186.213 TL ciro, komisyon çoğunlukla NULL (toplam 0); ePTT %2,32 ama 98/128 satır NULL. Trendyol %15,39, HB %14,61 (ölçülü). Motor (`snapshot.ts`) bu kanalları UNKNOWN sayar (0 değil); `commissionTry` toplayan raporlar 0 gösterir → kanal marjı şişkin görünür. Cowork tahmini ~312,6k TL/yıl.
-- **uygulama:** CFO-027 ile oran belgesi (KOMISYON_ORANI) → Cowork özeti → onaylı kanal oranı (belge kimliği kanıt); veri kaynağı (Entegra) komisyon alanı kontrolü. **durum:** DISCOVERED
+- **uygulama:** CFO-027 ile oran belgesi (KOMISYON_ORANI) → Cowork özeti → onaylı kanal oranı (belge kimliği kanıt); veri kaynağı (Entegra) komisyon alanı kontrolü. **durum:** VALIDATED (ölçüm ✓; karar Alperen'de)
+- **2026-10-10 — kaynak alanı kontrolü (salt-okunur, Claude Code):** Entegra "Komisyon Tutarı" / "Komisyon Oranı" (`lib/entegra/parse.ts`). 90 gün: **EPTT** oran her satırda (ort. %14,31) ama tutar 275/328 satırda boş → oran × toplam = 75.903 TL/90 gün (≈308k TL/yıl) marjda görünmüyor; tutar+oran dolu 125 satırda oran %14,02 vs gerçek %14,42 (−0,4 puan). PttAVM oran belgesi Cowork özetinde (kategori oranları KDV dahil, defter ort. %14,47 ile tutarlı). **N11, Amazon, Pazarama, Koçtaş, Idefix, Temu, Amazon FBA:** oran da tutar da yok (482.844 TL/90 gün ciro; %15–20 ile ≈290–390k TL/yıl). `MarketplacePlatformPolicy` %20 tüm kanallarda yer tutucu (kullanılamaz). 2 belge yanlış kategoride (Garanti ekstresi `KOMISYON_ORANI`, Trendyol komisyon ekranı `PLATFORM_FATURASI`). Karar önerisi: (1) EPTT tahmini komisyon = Entegra oranı × toplam, `measured=false`, SKU ölçümüne girmez; (2) diğer kanallar oran belgesi/hakediş gelene kadar UNKNOWN; (3) 2 belge kategorisi düzeltmesi. Kayıt `docs/maliyet/2026-10-10-komisyon-kayitsiz-kanallar.md`.
 
 ### CFO-029 — CFO birim maliyeti ithalat motorundan
 - **2026-10-10 — RMB/USD tek kaynak (Alperen):** RMB/USD yalnız `MonthlyExchangeRate` (2026-10 = 6,7), sabit yedek yok (kur yoksa maliyet null); 335 Excel ürünü 6,8 → 6,7 korumalı düzeltildi (net sermaye 2.473.141 → 2.480.547 TL, +7.405,67). CFO-029 kuru çalıştırması yeniden: 149 ürün / 436 alan (8 eksik-20 + 141 Excel dışı), +26.001 TL KDV dahil. Kayıt `docs/maliyet/2026-10-10-rmb-6-7-tek-kaynak.md`.
