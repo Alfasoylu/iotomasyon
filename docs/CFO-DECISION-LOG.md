@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 17:05 TR
-current_main_commit: 24f5f38
+last_updated: 2026-10-10 17:40 TR
+current_main_commit: e863f1e
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "65→67 — CFO-014 kısım 2 (RF-016): eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (boyut 7: 5→6); sayfa eşliği: eski motor manşet nakit/KMH yalnız şirket (= cfo_nakit_kapisi; /cfo boş KMH 2,71M → 1,36M, şahsi 1,35M ayrı satır) + AI CFO borç tahmini gümrükte takılmıyor (RF-020 RESOLVED) (boyut 2: 12→13)"
+score_change: "unchanged — PttAVM salt-okuma istemcisi + teşhis ucu (bağlantı henüz doğrulanmadı; CFO-028 EPTT komisyonu ölçüme bağlanınca boyut 4 yeniden değerlendirilir)"
 ---
 
 # CFO DECISION LOG
