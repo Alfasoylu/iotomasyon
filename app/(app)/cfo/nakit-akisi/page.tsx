@@ -3,6 +3,7 @@ import { TrendingUp } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
+import { loadCashHorizons } from "@/lib/cfo/cash-path";
 import { num } from "@/lib/cfo/engine";
 import { fmtTry, fmtDate, relDays } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
@@ -20,11 +21,14 @@ const KIND_LABEL: Record<string, string> = {
 
 export default async function CfoCashFlowPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
-  const { raw, overview: o } = await loadCfoData();
+  const [{ raw, overview: o }, yol] = await Promise.all([loadCfoData(), loadCashHorizons()]);
 
+  // CFO-013 tek nakit yolu: vadesi geçmiş ÖDENMEMİŞ olay projeksiyonda bugün vadeli sayılır — listede de görünür (eskiden `>= today`
+  // süzgeci gizliyordu; ufuk toplamında olan bir çıkış tabloda yoktu). Gecikmişler başta, rozetle.
   const upcoming = raw.cashEvents
-    .filter((e) => !e.isSettled && e.eventDate >= o.today)
+    .filter((e) => !e.isSettled)
     .slice(0, 60);
+  const overdue = upcoming.filter((e) => e.eventDate < o.today).length;
 
   return (
     <>
@@ -42,7 +46,7 @@ export default async function CfoCashFlowPage() {
             <Th right>Pozisyon</Th><Th right>Açık</Th><Th>Durum</Th>
           </tr>
         }>
-          {o.horizons.map((h) => (
+          {yol.horizons.map((h) => (
             <tr key={h.days}>
               <Td strong>{h.label}</Td>
               <Td right>{fmtTry(h.inflow)}</Td>
@@ -55,7 +59,7 @@ export default async function CfoCashFlowPage() {
           ))}
         </CfoTable>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          Başlangıç noktası bugünkü net banka pozisyonu ({fmtTry(o.netCashTry)}).
+          Başlangıç noktası bugünkü net banka pozisyonu ({fmtTry(o.netCashTry)}). Kaynak tek nakit yolu (<code>cfo_nakit_projeksiyon</code>; ödeme takvimi ve kapasite alarmıyla aynı).
         </p>
       </Card>
 
@@ -91,7 +95,10 @@ export default async function CfoCashFlowPage() {
       <Card className="p-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">Yaklaşan olaylar</h2>
-          <Badge variant="neutral">{upcoming.length} kayıt</Badge>
+          <span className="flex gap-2">
+            {overdue > 0 && <Badge variant="danger">{overdue} gecikmiş</Badge>}
+            <Badge variant="neutral">{upcoming.length} kayıt</Badge>
+          </span>
         </div>
         <CfoTable
           head={<tr><Th>Tarih</Th><Th>Tür</Th><Th>Açıklama</Th><Th right>Giriş</Th><Th right>Çıkış</Th><Th>Kesinlik</Th></tr>}
@@ -102,7 +109,7 @@ export default async function CfoCashFlowPage() {
             const days = Math.round((new Date(d).setHours(0, 0, 0, 0) - o.today.getTime()) / 86400000);
             return (
               <tr key={e.id} className={days <= 7 ? "bg-[var(--danger-dim)]" : days <= 30 ? "bg-[var(--warn-dim)]" : ""}>
-                <Td strong>{fmtDate(d)}<span className="ml-2 text-[10px] text-[var(--text-muted)]">{relDays(d)}</span></Td>
+                <Td strong>{fmtDate(d)}<span className="ml-2 text-[10px] text-[var(--text-muted)]">{relDays(d)}</span>{days < 0 && <span className="ml-1"><Badge variant="danger">gecikmiş</Badge></span>}</Td>
                 <Td muted>{KIND_LABEL[e.kind] ?? e.kind}</Td>
                 <Td>{e.description}{e.note ? <span className="block text-[11px] text-[var(--text-muted)]">{e.note}</span> : null}</Td>
                 <Td right>{num(e.inflowTry) > 0 ? fmtTry(num(e.inflowTry)) : "—"}</Td>
@@ -113,7 +120,7 @@ export default async function CfoCashFlowPage() {
           })}
         </CfoTable>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          Kırmızı satır = 7 gün içinde, sarı = 8–30 gün. Pazaryeri tahsilatları bu tabloda değil, Alacaklar sayfasında tutulur.
+          Kırmızı satır = gecikmiş ya da 7 gün içinde, sarı = 8–30 gün. Gecikmiş ödenmemiş olay nakit tahmininde bugün vadeli sayılır. Pazaryeri tahsilatları bu tabloda değil, Alacaklar sayfasında tutulur.
         </p>
       </Card>
     </>

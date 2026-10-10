@@ -18,6 +18,7 @@ import { loadCfoData } from "@/lib/cfo/queries";
 import { loadWealth } from "@/lib/cfo/wealth";
 import { buildDailyActions } from "@/lib/cfo/engine";
 import { capacityStatus, loadCapacity } from "@/lib/cfo-agent/capacity";
+import { loadCashHorizons } from "@/lib/cfo/cash-path";
 import { fmtTry, fmtPct, fmtDate, fmtNum } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { MetricCard } from "@/components/ui/metric-card";
@@ -39,7 +40,7 @@ const ACTION_STYLE = {
 export default async function CfoPage() {
   const viewer = await requirePermission(PERMISSIONS.CFO_READ);
 
-  const [{ raw, overview: o }, capacity] = await Promise.all([loadCfoData(), loadCapacity()]);
+  const [{ raw, overview: o }, capacity, yol] = await Promise.all([loadCfoData(), loadCapacity(), loadCashHorizons()]);
   // KMH kartı motorun capacity_breach alarmıyla AYNI kural (lib/cfo-agent/capacity.ts): 120 günlük nakit yolu genel KMH'yi aşarsa sarı,
   // şirket kapasitesini (genel + amaca bağlı) aşarsa kırmızı; yol bilinmiyorsa nötr (yeşil gösterilmez). Sabit TL eşiği yok (CFO-020/023).
   const cap = capacityStatus(capacity);
@@ -69,8 +70,9 @@ export default async function CfoPage() {
   const yoldaki = servet.kalemler
     .filter((k) => k.tur === "VARLIK" && k.kalem.startsWith("Yoldaki"))
     .reduce((a, k) => a + num(k.tutar), 0);
-  const h30 = o.horizons.find((h) => h.days === 30);
-  const h60 = o.horizons.find((h) => h.days === 60);
+  // CFO-018 adım 2: ufuklar tek nakit yolundan (cfo_nakit_projeksiyon + capacity.ts kapısı) — eski motorun haftalık kovaları değil
+  const h30 = yol.horizons.find((h) => h.days === 30);
+  const h60 = yol.horizons.find((h) => h.days === 60);
 
   return (
     <>
@@ -184,7 +186,7 @@ export default async function CfoPage() {
             <Th right>Net</Th><Th right>Kümülatif pozisyon</Th><Th right>Açık</Th><Th>Durum</Th>
           </tr>
         }>
-          {o.horizons.map((h) => (
+          {yol.horizons.map((h) => (
             <tr key={h.days}>
               <Td strong>{h.label}</Td>
               <Td right>{fmtTry(h.inflow)}</Td>
@@ -197,7 +199,7 @@ export default async function CfoPage() {
           ))}
         </CfoTable>
         <p className="mt-2 text-xs text-[var(--text-muted)]">
-          SARI = açık KMH limitiyle kapanır ({fmtTry(o.kmhCapacityTry)}; pozisyon kullanılan KMH&apos;yi zaten içerir). KIRMIZI = KMH kapasitesi yetmiyor.
+          Kaynak tek nakit yolu (<code>cfo_nakit_projeksiyon</code>, ödeme takvimi ve kapasite alarmıyla aynı). SARI = açık şirket KMH kapasitesiyle kapanır ({fmtTry(yol.capacityTry)}; genel + amaca bağlı limit, pozisyon kullanılan KMH&apos;yi zaten içerir). KIRMIZI = kapasite yetmiyor.
           Pazaryeri tahsilat tahmini aynı haftadaki gerçek hakedişlerden düşülür — çift sayım yok.
         </p>
       </Card>
@@ -256,7 +258,7 @@ export default async function CfoPage() {
 
       {h60 && h60.traffic === "KIRMIZI" && (
         <p className="mt-4 rounded border border-[var(--danger-border)] bg-[var(--danger-dim)] px-4 py-3 text-sm text-[var(--text-primary)]">
-          <strong>60 günlük pencerede {fmtTry(h60.gap)} açık var</strong> ve KMH limiti ({fmtTry(o.kmhCapacityTry)}) bunu karşılamıyor.
+          <strong>60 günlük pencerede {fmtTry(h60.gap)} açık var</strong> ve şirket KMH kapasitesi ({fmtTry(yol.capacityTry)}) bunu karşılamıyor.
           Yeni stok alımı ve erken kredi kapama bu açık kapanana kadar ertelenmeli.
         </p>
       )}

@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### CFO nakit ufku tek nakit yolundan; gecikmiş ödemeler listede (2026-10-10)
+
+- `/cfo`, Nakit Akışı ve Borçlar sayfalarındaki 7/30/60/90 günlük ufuk ve ay sonu tabloları artık ödeme takvimi ve kapasite alarmıyla aynı nakit yolundan hesaplanıyor; kırmızı eşiği alarmla aynı. Bugün 30 günlük pozisyon (−2,94M TL) şirket KMH kapasitesini (2,11M TL) aştığı için kırmızı.
+- Nakit Akışı sayfasındaki yaklaşan olaylar listesi vadesi geçmiş ama ödenmemiş kalemleri de "gecikmiş" rozetiyle gösteriyor.
+
 ### Borçlar sayfasında kart toplamı doğru etiketlendi (2026-10-10)
 
 - Kredi kartı tablosunun toplamı "şirket" yazıyordu ama şahsi kartları da içeriyordu. Toplam artık borç tanımından okunuyor, "şahsi kart dahil" diye etiketli ve altında şahsi (402.925 TL) / şirket kısmı ayrı gösteriliyor.

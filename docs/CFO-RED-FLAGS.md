@@ -1,12 +1,12 @@
 ---
 last_updated: 2026-10-10 23:00 TR
-current_main_commit: accc576
+current_main_commit: 3fdd498
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — CFO-018 kısım 4: /cfo/borclar kart toplamı borç sözleşmesinden, şahsi kart kısmı ayrı (etiket \"şirket\" yanlıştı)"
+score_change: "unchanged — CFO-018 adım 2: nakit ufku ve ay sonları tek nakit yolundan (kırmızı eşiği kapasite alarmıyla aynı); gecikmiş ödenmemiş olaylar listede"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -748,4 +748,10 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   01.12) → kart artık KIRMIZI (eski sabit eşikle 1,36M boş KMH SARI görünüyordu; motor aynı anda capacity_breach alarmı üretiyordu — ekran ↔ alarm
   çelişkisi kapandı).
 - **koruma:** `cfo-page-parity` sabit TL KPI eşiği kalıbını yasaklar + 3 yeni bağ; `cfo-capacity` testi (CI).
+
+### RF-20261010-035 — ek (2026-10-10, CFO-018 kısım 3): TS ikizi de kapandı
+- Eski motor (`lib/cfo/engine.ts`) aynı çift düşümü TS'te taşıyordu (ufuk/ay sonu/gümrük trafiği boş KMH ile); PR #282 ile `kmhCapacityTry` (tam limit) kullanılıyor, gümrük faizi yalnız ek çekilişe. Ufuk ve ay sonu tabloları ayrıca tek nakit yoluna taşındı (CFO-018 adım 2). Durum RESOLVED kalır.
+
+### RF-20261008-023 — ölçüm (2026-10-10, açık görev taraması)
+- `MarketplaceSalesRecord` tüm geçmişte 'Tedarik Edilemedi' 5 satır (son 06.06.2026), 'İadesi Onaylanan' 2 satır (son 12.02.2026); son 120 günde 0. `cfo_satis_birim` yalnız 'İade-İptal'i dışlıyor; kanonik ciro (CFO-008, `fm_sales`) üçünü de dışlıyor. Düzeltme görünüm değişikliği (üretim DDL + bağımlı görünümler) ister → etki 0 iken ertelendi; durum OPEN (LOW, latent).
 
