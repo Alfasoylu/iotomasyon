@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### N11 komisyonu CFO kanal kârlılığına girdi (2026-10-10)
+
+- N11 siparişlerinde Entegra komisyonu 0 geldiği için CFO N11 kârını komisyonsuz hesaplıyordu. Artık N11 API'sinden ölçülen %15,9 etkin oran tahmini komisyon olarak kanal marjına giriyor (son 30 günde yaklaşık 15.400 TL). Oran 90 gün geçerli; yenilenmezse kanal yeniden "bilinmiyor" olur.
+- Koçtaş'ta yalnız 1 sipariş olduğu için oran uygulanmadı.
+
 ### PttAVM, N11 ve Koçtaş bağlantıları canlıda doğrulandı (2026-10-10)
 
 - Üç pazaryerine bağlantı kuruldu ve son 30 günün verisi okundu: PttAVM 154 sipariş, N11 94 paket, Koçtaş 1 sipariş.

@@ -1,12 +1,12 @@
 ---
 last_updated: 2026-10-10 23:00 TR
-current_main_commit: 7d5ca3e
+current_main_commit: cacefd1
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — pazaryeri bağlantıları doğrulandı, CFO-028 için N11/Koçtaş/PttAVM oranları ölçüldü (motora bağlanınca boyut 4 yeniden değerlendirilir)"
+score_change: "unchanged — CFO-028 adım 2: N11 komisyonu API ölçümlü oranla (%15,88, 90 gün geçerli) kanal marjında; Koçtaş örneklem yetersiz, UNKNOWN kalır (boyut 4 tüm kanallar kapanınca yeniden değerlendirilir)"
 ---
 
 # CFO BACKLOG
@@ -193,6 +193,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **kalan:** Cowork okuma rutini (kuyruk → özet); onaylı sayı → defter akışı (belge kimliği kanıt) ayrı iş.
 
 ### CFO-028 — Komisyonu kayıtsız kanallar
+- **2026-10-10 — adım 2 (motor, Claude Code):** N11 Entegra oranı/tutarı 0 → N11 API ölçümlü etkin oran %15,88 × toplam = tahmini komisyon kanal marjında (90 gün geçerli, sonra UNKNOWN; `lib/cfo/commission-estimate.ts`, `snapshot.ts`; test `cfo-commission-estimate`). Üretim 30 gün: +15.387 TL görünür komisyon. **kalan:** Koçtaş (örneklem 1 sipariş → UNKNOWN), Amazon, Pazarama, Idefix, Temu, FBA (API/oran belgesi yok); PttAVM kayıtlı tutar boşlukları Entegra oranıyla zaten tahminli. Oranı otomatik yenileme (n11-tani sonucu → tablo) ileride. **durum:** IN_PROGRESS
 - **ölçüm (2026-10-09, üretim salt-okuma, son 30 gün):** N11, Amazon, Pazarama, Idefix, Temu, MIRAKL_KOCTAS — 165 satır, 186.213 TL ciro, komisyon çoğunlukla NULL (toplam 0); ePTT %2,32 ama 98/128 satır NULL. Trendyol %15,39, HB %14,61 (ölçülü). Motor (`snapshot.ts`) bu kanalları UNKNOWN sayar (0 değil); `commissionTry` toplayan raporlar 0 gösterir → kanal marjı şişkin görünür. Cowork tahmini ~312,6k TL/yıl.
 - **uygulama:** CFO-027 ile oran belgesi (KOMISYON_ORANI) → Cowork özeti → onaylı kanal oranı (belge kimliği kanıt); veri kaynağı (Entegra) komisyon alanı kontrolü. **durum:** VALIDATED (ölçüm ✓; karar Alperen'de)
 - **2026-10-10 — karar (Alperen "Onaylıyorum"):** (1) EPTT tutarı boşken Entegra oranı × KDV dahil toplam = tahmini komisyon (`measured=false`, SKU oran ölçümüne girmez, ham kayıt değişmez) — ✓ uygulandı 2026-10-10 (`lib/cfo/commission-estimate.ts`, `snapshot.ts` kanal marjı, `/cfo/belgeler` Tahmini sütunu; testler `cfo-commission-estimate`, `ai-cfo-source-mapping`; üretim son 30 gün EPTT kayıtlı 4.466 + tahmini 20.445 TL); (2) diğer kanallar oran belgesi/hakediş dökümü gelene kadar UNKNOWN, %20 yer tutucu kullanılmaz; (3) ✓ 2 belgenin kategorisi üretimde düzeltildi (korumalı, `cfo_change_log` 2 satır). Kayıt `docs/maliyet/2026-10-10-komisyon-kayitsiz-kanallar.md`.
