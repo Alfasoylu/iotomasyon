@@ -78,16 +78,17 @@ export default async function CfoCustomsPage() {
           empty={raw.imports.length === 0 ? "Kayıtlı ithalat partisi yok." : undefined}
         >
           {raw.imports.map((i) => {
-            const costTry = num(i.totalCostUsd) * o.usdTry;
+            // CFO-003: işlem kuru bilinmiyorsa TL karşılığı ve ROI bilinmiyor (1 TL ya da 0 değil)
+            const costTry = o.usdTry == null ? null : num(i.totalCostUsd) * o.usdTry;
             const profit = num(i.expectedProfitTry);
-            const roi = costTry > 0 ? profit / costTry : null;
-            const roiWithCustoms = costTry > 0 ? profit / (costTry + num(i.customsEstimateTry)) : null;
+            const roi = costTry != null && costTry > 0 ? profit / costTry : null;
+            const roiWithCustoms = costTry != null && costTry > 0 ? profit / (costTry + num(i.customsEstimateTry)) : null;
             return (
               <tr key={i.id}>
                 <Td strong>{i.code}</Td>
                 <Td><Badge variant={i.status === "YOLDA" ? "info" : i.status === "TESLIM_ALINDI" ? "ok" : "warn"}>{i.status}</Badge></Td>
                 <Td muted>{fmtDate(i.etaDate)}</Td>
-                <Td right>{fmtUsd(num(i.totalCostUsd))}<span className="block text-[10px] text-[var(--text-muted)]">{fmtTry(costTry)}</span></Td>
+                <Td right>{fmtUsd(num(i.totalCostUsd))}<span className="block text-[10px] text-[var(--text-muted)]">{costTry == null ? "TL bilinmiyor (kur yok)" : fmtTry(costTry)}</span></Td>
                 <Td right>{fmtTry(num(i.customsEstimateTry))}</Td>
                 <Td right>{fmtTry(profit)}</Td>
                 <Td right>

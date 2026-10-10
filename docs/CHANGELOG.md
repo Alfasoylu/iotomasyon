@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### CFO kokpiti tek işlem kurunu kullanıyor; kur yoksa "bilinmiyor" (2026-10-10)
+
+- Eski CFO hesap motoru dolar kurunu ayarlardaki 49,20 yerine diğer sayfalarla aynı işlem kurundan (48,98) alıyor. Kur hiç yoksa 1 TL varsaymıyor, "bilinmiyor" gösteriyor.
+- Kokpitteki kur rozeti işlem kuru olduğunu ve kaynağını gösteriyor; hedeflerin TCMB kuru servet kartında ayrı.
+
 ### PttAVM komisyonu kanal kârlılığında görünüyor (tahmini) (2026-10-10)
 
 - Entegra'da PttAVM komisyon tutarı çoğu satırda boş; artık komisyon oranı × satış tutarı tahmini komisyon olarak kanal marjına giriyor ve "tahmini" işaretli. Son 30 günde ≈ 24.900 TL (cironun %13,4'ü).

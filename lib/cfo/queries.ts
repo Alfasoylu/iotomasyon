@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { computeCfo, type CfoInput, type CfoOverview } from "@/lib/cfo/engine";
+import { getCurrentFx } from "@/lib/fx/current";
 
 /**
  * Tek noktadan CFO verisi yükleme. Tüm /cfo sayfaları bunu çağırır;
@@ -18,7 +19,10 @@ export async function loadCfoData(): Promise<{ raw: CfoInput; overview: CfoOverv
     prisma.cfoImportProject.findMany({ orderBy: { etaDate: "asc" } }),
   ]);
 
-  const raw: CfoInput = { settings, banks, cards, loans, expenses, receivables, cashEvents, imports, forecast: await loadCollectionForecast() };
+  // CFO-003: USD/TRY işlem kuru tek kaynaktan; sabit varsayılana düştüyse BİLİNMİYOR
+  const cur = await getCurrentFx();
+  const fx = { usdTry: cur.usdTrySource === "varsayılan" ? null : cur.usdTry, source: cur.usdTrySource };
+  const raw: CfoInput = { settings, banks, cards, loans, expenses, receivables, cashEvents, imports, forecast: await loadCollectionForecast(), fx };
   return { raw, overview: computeCfo(raw) };
 }
 

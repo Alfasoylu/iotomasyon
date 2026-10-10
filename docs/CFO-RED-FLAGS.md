@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:00 TR
-current_main_commit: 1d41775
+last_updated: 2026-10-10 04:40 TR
+current_main_commit: ed52e04
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kalan: 6 kanal + FBA oran belgesi / hakediş dökümü (Alperen → /cfo/belgeler) → CFO-027 Cowork belge okuma (11 belge kuyrukta) → CFO-030 (latent KMH kapasite ayrıştırması, migration onayı)"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 (bekletilen) üretime uygulanması — Alperen izni/uygulaması → CFO-008 tek ciro fonksiyonu → CFO-025 sabit kurlu maliyetler"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-028 EPTT tahmini komisyon kanal marjında (measured=false; son 30 gün kayıtlı 4.466 + tahmini 20.445 TL, cironun %13,4'ü); tahmin ölçülmemiş ve 6 kanal + FBA hâlâ UNKNOWN olduğu için marj boyutu (4) değişmedi; 2 belge kategorisi düzeltildi"
+score_change: "unchanged — CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR; /cfo rozeti işlem kuru) yayında; SQL kalanı (snapshot/servet/ciro hedefi TCMB, ithalat işlem kuru, 48,5 / 1 yedeği yok) migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -26,7 +26,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 |---|---|---|---|
 | RF-20261008-001 | CRITICAL | IN_PROGRESS | sözleşme üretimde (170000/190000); v3 Goal doğrulaması 10.10 |
 | RF-20261008-002 | HIGH | IN_PROGRESS | 180000 üretimde, 5M sabiti kalktı (PR #238); v3 doğrulaması 10.10 |
-| RF-20261008-003 | HIGH | MITIGATED | TCMB tek stratejik kur (CFO-003); eski motor `usdTryRate || 1` CFO-018'de |
+| RF-20261008-003 | HIGH | MITIGATED | TCMB tek stratejik kur (CFO-003); 10.10: eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR (`|| 1` kalktı) ✓; SQL 48,5 / 1 yedekleri + snapshot kur döngüsü → migration 120000 (bekletilen, üretim uygulaması bekliyor) |
 | RF-20261008-004 | HIGH | RESOLVED | 2026-10-09, 110000 + 160000 üretimde |
 | RF-20261008-005 | HIGH | RESOLVED | 2026-10-09, 100000 üretimde |
 | RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; WhatsApp şablon/alıcı yapılandırması bekliyor |
@@ -523,3 +523,18 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   Üretim (salt-okunur, son 30 gün EPTT): ciro 186.224, kayıtlı 4.466 (30 satır) + tahmini 20.445 (91 satır) = 24.911 TL (%13,4); bilinmeyen satır 0.
 - (2) N11, Amazon, Pazarama, Koçtaş, Idefix, Temu, FBA: UNKNOWN kalır, %20 yer tutucu kullanılmaz. (3) 2 belge kategorisi düzeltildi (günlüklü).
 - RESOLVED için: 6 kanal + FBA'nın onaylı oranı (belge) ya da hakediş dökümü.
+
+## 2026-10-10 — CFO-003 kalan RED FLAG PASS
+
+### RF-20261008-003 — güncelleme (2026-10-10, CFO-003 kalan; HIGH, MITIGATED kalır)
+- **Kod (yayında):** eski motor (`lib/cfo/engine.ts`) USD/TRY'yi `lib/fx/current.ts` tek kaynağından alır (`lib/cfo/queries.ts`); kaynak sabit
+  varsayılana düştüyse kur BİLİNMİYOR (null) ve USD'den türeyen eski alanlar (yoldaki ithalat TL'si, servet USD, hedef) null — önceden
+  `cfo_settings.usdTryRate || 1` (kur yoksa 1 USD = 1 TL). `/cfo` rozeti "İşlem kuru · kaynak" (hedeflerin stratejik kuru servet kartında ayrı),
+  `/cfo/gumruk` kur yoksa TL "bilinmiyor". Bugün etki: motor kuru 49,1976 (cfo_settings) → 48,98 (cfo_kur 2026-10; diğer sayfalarla aynı).
+- **Yeni bulgu (SQL):** `cfo_ciro_hedef`, `cfo_ithalat_oneri`, `cfo_ithalat_oneri_ozet` `COALESCE(cfo_settings.usdTryRate, 48.5)`; `cfo_take_snapshot`
+  `COALESCE(NULLIF(usdTryRate,0),1)`; `cfo_servet.kur` son snapshot'ın kuru (cfo_settings'ten gelen kur döngüsü). Migration
+  `20261010120000_cfo_kur_tek_kaynak`: hedef/servet/snapshot STRATEJİK kur (TCMB, Goal Engine kuralı), ithalat önerisi İŞLEM kuru
+  (lib/fx/pick ile aynı sıra, eşlik testli), kur yoksa NULL. Test `cfo-kur-tek-kaynak` (CI). **Üretim uygulaması bekliyor** (otomatik izin
+  sınıflandırıcısı üretim DDL'ini durdurdu; Alperen izni ya da elle uygulama). Beklenen etki: servet USD 127.813 → ≈129.495, Eylül ciro
+  USD 36.129 → ≈36.604, ithalat önerisi kuru 49,1976 → 48,98; TL tutarları değişmez.
+- RESOLVED için: migration 120000 üretimde + parmak izi senkronu.

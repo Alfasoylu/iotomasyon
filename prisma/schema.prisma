@@ -2156,7 +2156,7 @@ model CfoSnapshot {
   id             String   @id @default(cuid())
   takenAt        DateTime @default(now())
   netWorthTry    Decimal  @db.Decimal(14, 2)
-  netWorthUsd    Decimal  @db.Decimal(14, 2)
+  netWorthUsd    Decimal? @db.Decimal(14, 2) // CFO-003: stratejik kur (TCMB) yoksa NULL (migration 20261010120000)
   wideWorthTry   Decimal? @db.Decimal(14, 2)
   wideWorthUsd   Decimal? @db.Decimal(14, 2)
   cashTry        Decimal? @db.Decimal(14, 2)
