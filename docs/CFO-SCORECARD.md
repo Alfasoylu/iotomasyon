@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:15 TR
-current_main_commit: 81ed6dc
+last_updated: 2026-10-10 03:20 TR
+current_main_commit: bc29fdd
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000 hazır, bekletilen) → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000, main'de bekletilen) → CFO-028 kararları (EPTT tahmini komisyon, diğer kanal oran belgeleri) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — CFO-013 tek nakit yolu kodu + testi hazır (migration 110000 bekletilen, üretim DDL onayı bekliyor; bugünkü etki yalnız takvim açılışında 83,29 TL); PR #250 (CFO-029 + RMB tek kaynak) üretimde, ilk koşu doğrulanınca 1./3. boyut yeniden puanlanır"
+score_change: "unchanged — CFO-013 kodu main'de (DDL bekletilen, onay bekliyor); CFO-028 salt-okunur ölçüm: EPTT komisyon oranı var tutar yok (≈308k TL/yıl görünmüyor), 6 kanal + FBA veri yok (≈290–390k TL/yıl) — karar Alperen'de; 4. boyut (marj) karar uygulanınca yeniden puanlanır"
 ---
 
 # CFO SCORECARD
@@ -90,3 +90,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 6a2d888 | 58 | 5/12 | Değişmedi (bilinçli): maliyeti eksik 20 ürün Alperen verisiyle yazıldı (8 ithal motor, 6 yurt içi USD+KDV, 7 NO_REORDER); net sermaye +206.152 TL çünkü 7 SKU ilk kez stok değerine girdi (179.044 TL'si başarısız 4K kamera, NRV ile sınırlı). Maliyet kapsamı arttı ama CFO-011 eşiği (%95) ve CFO-029 bitmeden 1./3. boyut yeniden puanlanmaz |
 | 2026-10-10 | 6283500 | 58 | 5/12 | Değişmedi (bilinçli): CFO-029 kodu (motordan otomatik maliyet, GTİP gümrüğü, korumalı yazma, `cost_jump` alarmı) test edildi ama üretimde henüz koşmadı; 1./3. boyut ilk koşu kuru çalıştırmayla doğrulanınca yeniden puanlanır |
 | 2026-10-10 | 81ed6dc | 58 | 5/12 | Değişmedi (bilinçli): PR #250 — CFO-029 otomatik maliyet + RMB/USD tek kaynak (6,7, sabit yedek yok; 335 ürün düzeltildi, net sermaye +7.405,67 TL) üretimde, ilk otomatik koşu 10.10 05:00 TR; CFO-013 tek nakit yolu kodu hazır, DDL onayı bekliyor. 1./3. boyut ilk koşu ve CFO-013 uygulanınca yeniden puanlanır |
+| 2026-10-10 | bc29fdd | 58 | 5/12 | Değişmedi (bilinçli): PR #251 CFO-013 tek nakit yolu kodu (migration 110000 bekletilen, üretim DDL onayı bekliyor; eski motor ve hash geçişi yayında) üretim davranışını değiştirmedi; CFO-028 ölçümü salt-okunur. Likidite (CFO-013 uygulanınca) ve marj (CFO-028 kararıyla) boyutları yeniden puanlanacak |
