@@ -1,3 +1,4 @@
+# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-10 ~08:55 UTC, read-only catalog SELECT) after Claude Code applied 20261010130000_cfo_sanal_stok_istisna (32b55afe…, Alperen explicit approval "Evet, uygula"; fn/view rows re-measured, acl/fnacl unchanged).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-10 ~00:30 UTC, read-only catalog SELECT) after Claude Code applied 20261010110000_cfo_tek_nakit_yolu (dc105775…, Alperen approval "Onaylıyorum"; fn/view rows re-measured, fnacl unchanged).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-09 ~21:05 UTC, read-only catalog SELECT) after Claude Code applied 20261010100000_cfo_sahiplik_tek_kural (9ef6047f…, Alperen approval; fn/fnacl/view rows re-measured).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-09 ~20:45 UTC, read-only catalog SELECT) after Claude Code applied 20261009230000_cfo_snapshot_bilesen (db798496…)
@@ -25,7 +26,7 @@ acl 352 6b9d2d684b
 con 351 bcebb0638a
 enum 32 ac59222f85
 ext 1 56e042523e
-fn 42 e21f740bd7
+fn 42 77658292e5
 fnacl 61 547cf26101
 idx 441 e3db641ec4
 pol 82 c46b7cce18
@@ -37,4 +38,4 @@ schemaacl 3 45e3344ecd
 seq 15 cda7319017
 seqacl 15 40c6ef1c15
 trg 2 90b8397906
-view 62 135dd9fd10
+view 62 0bde65e08b

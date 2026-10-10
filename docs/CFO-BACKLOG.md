@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 11:25 TR
-current_main_commit: 7093c47
+last_updated: 2026-10-10 11:47 TR
+current_main_commit: 459edd9
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 60/100
-next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen AÇIK onayı) → RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
-open_critical: 2
+current_score: 61/100
+next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; düzeltilmiş net sermaye 1.383.530,52 ile) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+open_critical: 1
 open_high: 5
-score_change: "unchanged — Durum kaydı mutabakatı: açık özet satırı (eski CRITICAL 1 · HIGH 4) Durum kaydından yeniden sayıldı (CRITICAL 2 · HIGH 5, kimlikleriyle) ve drift testine bağlandı; RF-006 otomasyonu kanıtlanmadı (ilk cron koşusu 13:xx UTC), RF-036 sanal stok hâlâ net sermayede (migration 130000 açık onay bekliyor) — skor bunlar kanıtlanınca yeniden değerlendirilir"
+score_change: "60→61 — RF-036 RESOLVED: migration 130000 üretimde (Alperen açık onayı) — sanal stok (40005100051) net sermayeden çıktı, 2.401.170 → 1.383.531 TL, kimlik farkı 0; finansal doğruluk 8→9 (RF-036 ile düşen puan geri). RF-006 otomasyonu hâlâ kanıtlanmadı"
 ---
 
 # CFO BACKLOG
@@ -51,7 +51,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 9d | CFO-028 | Komisyonu kayıtsız 6 kanal (N11, Amazon, Pazarama, Idefix, Temu, Koçtaş) + ePTT: oran belgesi → onaylı kanal oranı | P1 | G1 | 4 | 3 | 3 | 2 | 1 | 1 | **5** | S (veri) | IN_PROGRESS (ölçüm ✓; karar 10.10 ✓: EPTT tahmini komisyon kanal marjında ✓, 2 belge kategorisi ✓; kalan 6 kanal + FBA oran belgesi Alperen/Cowork) | 032 |
 | 9e | CFO-029 | CFO birim maliyeti (unitCostTry) ithalat motorundan otomatik türetilsin (kur/yol/GTİP değişince); Excel dışı maliyetli ürünler | P1 | G1,G2 | 4 | 4 | 3 | 2 | 2 | 1 | **6** | M | ✅ TAMAMLANDI 2026-10-10 — ilk üretim koşusu 10.10 02:32 UTC kuru çalıştırmayla tutarlı (153 ürün / 440 alan / +26.334 TL KDV dahil; 494 USD maliyetli ürünün tamamı güncel kurda); etki toplamı ve `cost_jump` net sermaye stok kuralına hizalandı (RF-037, PR bu) | 033 |
 | 9f | CFO-030 | KMH kapasitesi tek ayrıştırma (pozisyon + tam limit); kaynak yeterliliği/ön uçuş/gümrük dilimi eksi bakiyede kullanımı iki kez düşürmesin | P3 | G2 | 2 | 3 | 2 | 2 | 1 | 1 | **2** | S | DISCOVERED (2026-10-10, latent: bugün eksi bakiyeli şirket hesabı yok, etki 0) | 035 |
-| 9g | CFO-031 | Sanal stok istisnası net sermayede (RF-036) + gerçek stok tek kuralı (RF-037) | P0 | G2 | 5 | 5 | 5 | 1 | 1 | 2 | **11** | S | IN_PROGRESS (2026-10-10: migration 130000 + test ✓ kod, üretim uygulaması Alperen onayı bekliyor — net sermaye ≈ −1.017.640 TL; CFO-029 alarmı tek kural ✓; kalan: 1.000+ adetlik 3 SKU gerçekliği, Alperen) | 036,037 |
+| 9g | CFO-031 | Sanal stok istisnası net sermayede (RF-036) + gerçek stok tek kuralı (RF-037) | P0 | G2 | 5 | 5 | 5 | 1 | 1 | 2 | **11** | S | IN_PROGRESS (2026-10-10: migration 130000 ✓ üretimde — Alperen açık onayı; net sermaye 2.401.170 → 1.383.531 TL (RF-036 RESOLVED); CFO-029 alarmı tek kural ✓; kalan: 1.000+ adetlik 3 SKU gerçekliği, Alperen) | 036,037 |
 | 24 | CFO-024 | Ölü bileşen temizliği (`cfo_model_hakedis`, `cfo_insight/usage`, ölü ayar alanları, yetim route, okuyanı kalmayan `cfo_ciro_hedef` görünümü — CFO-008, 10.10) | P4 | — | 1 | 1 | 1 | 1 | 1 | 2 | **−1** | S | DISCOVERED | 024 |
 
 Not: CFO-004 skoru en yüksek ama tek başına küçük; CFO-001'in PR-B'si olarak sıraya alındı. CFO-011/015 Code işi değil, veri işi —
@@ -202,7 +202,8 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **neden:** RF-036 (CRITICAL) — `cfo_stok_istisna` beyanı (40005100051 stok sanal, bağlı 9.700 TL) yalnız ölü stok kurallarında; net sermaye, Goal v3, sermaye verimliliği ve sağlığı 2.513 sanal adeti değerliyor (1.025.723 TL LCNRV). RF-037 — gerçek stok dört kuralla.
 - **uygulama (2026-10-10, kod):** migration `20261010130000_cfo_sanal_stok_istisna` — `cfo_stok_deger.gercek_stok` istisna SKU'yu dışlar; `cfo_metrik_net_sermaye` stok satırına yalnız beyan edilen bağlı sermaye (/1,2) eklenir (CFO-017 kimliği korunur). Test `cfo-sanal-stok`. CFO-029 etki toplamı + `cost_jump` aynı kuraldan (`cfo_stok_deger.gercek_stok`).
 - **etki (üretim, salt-okunur):** stok LCNRV 3.336.031 → 2.318.391; net sermaye 2.401.170 → ≈1.383.531 TL (≈28,5k USD).
-- **kalan:** (1) migration 130000 üretim uygulaması — Alperen onayı + 40005100051 beyanının teyidi (adet XML'de günde ~20 düşüyor); (2) 1.000–5.000 adetlik 3 SKU (AL-CAM03 1.940 — 10.07'den beri senkronsuz, M-BANYOMİX 1.194, 272726161636 3.001; 1,18M TL) gerçek mi; değilse istisnaya beyanla eklenir. **AI maliyeti:** 0 · **durum:** IN_PROGRESS
+- **üretim (2026-10-10 ~08:50 UTC, Claude Code, Alperen açık onayı "Evet, uygula"):** migration 130000 tek işlemde (checksum 32b55afe…); önce üretim gövdeleri taban tanımla birebir doğrulandı. Sonuç: 40005100051 `gercek_stok=false`, stok 2.318.391,28 (beyan 8.083,33 dahil), net sermaye **1.383.530,52 TL**, kimlik farkı 0, ACL'ler korundu; bekletilen listeden çıktı, parmak izi fn/view yeniden ölçüldü.
+- **kalan:** (1) ~~migration 130000~~ ✓; (2) 1.000–5.000 adetlik 3 SKU (AL-CAM03 1.940 — 10.07'den beri senkronsuz, M-BANYOMİX 1.194, 272726161636 3.001; 1,18M TL) gerçek mi; değilse istisnaya beyanla eklenir. **AI maliyeti:** 0 · **durum:** IN_PROGRESS
 
 ### CFO-030 — KMH kapasitesi tek ayrıştırma
 - **neden:** RF-035 — `cfo_nakit_kapisi` nakit (eksi bakiye dahil) + boş KMH (limit − kullanılan) toplanınca eksi bakiyeli hesapta kullanım iki kez düşer; `/cfo/odemeler` pozisyon + tam limit ile doğru. **uygulama:** tek görünüm/fonksiyon "kapasite = şirket pozisyonu + tam ticari limit (bakiyesi bilinen hesaplar)"; `cfo_kaynak_yeterliligi`, `cfo_onucus_temel`, `cfo_gumruk_dilim` ve sayfa oradan okur; test: eksi bakiyeli hesapla iki yol aynı. **kabul:** eksi bakiyeli PGlite senaryosunda kaynak yeterliliği = sayfa kapasitesi. **durum:** DISCOVERED (2026-10-10)

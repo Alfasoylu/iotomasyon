@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 11:25 TR
-current_main_commit: 7093c47
+last_updated: 2026-10-10 11:47 TR
+current_main_commit: 459edd9
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 60/100
-next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen AÇIK onayı) → RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
-open_critical: 2
+current_score: 61/100
+next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; düzeltilmiş net sermaye 1.383.530,52 ile) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+open_critical: 1
 open_high: 5
-score_change: "unchanged — Durum kaydı mutabakatı: açık özet satırı (eski CRITICAL 1 · HIGH 4) Durum kaydından yeniden sayıldı (CRITICAL 2 · HIGH 5, kimlikleriyle) ve drift testine bağlandı; RF-006 otomasyonu kanıtlanmadı (ilk cron koşusu 13:xx UTC), RF-036 sanal stok hâlâ net sermayede (migration 130000 açık onay bekliyor) — skor bunlar kanıtlanınca yeniden değerlendirilir"
+score_change: "60→61 — RF-036 RESOLVED: migration 130000 üretimde (Alperen açık onayı) — sanal stok (40005100051) net sermayeden çıktı, 2.401.170 → 1.383.531 TL, kimlik farkı 0; finansal doğruluk 8→9 (RF-036 ile düşen puan geri). RF-006 otomasyonu hâlâ kanıtlanmadı"
 ---
 
 # CFO DECISION LOG

@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Sanal stok net sermayeden çıkarıldı (2026-10-10)
+
+- Fiilen stoğu olmayan (sanal) 40005100051 kodlu ürünün 2.513 adeti net sermayede gerçek stok gibi değerleniyordu. Düzeltme Alperen'in onayıyla canlıya alındı; bu ürün için artık yalnız beyan edilen gerçek bağlı sermaye (9.700 TL) sayılıyor.
+- Net sermaye 2.401.170 TL'den 1.383.531 TL'ye düştü (doğru değer). Sermaye verimliliği, ölü stok ve CFO motoru da aynı "gerçek stok" kuralını kullanıyor.
+
 ### Red flag özet sayısı tek kaynaktan, otomatik kontrollü (2026-10-10)
 
 - Red flag belgesinin başındaki açık sayı özeti eski kalmıştı (1 kritik + 4 yüksek); kayıt tablosundan yeniden sayıldı: 2 kritik + 5 yüksek, hangi kayıtlar olduğu da yazıyor.
