@@ -19,6 +19,10 @@
     {
       "path": "/api/cron/cfo-engine",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/cfo-odeme-ozeti",
+      "schedule": "0 5 * * *"
     }
   ]
 }

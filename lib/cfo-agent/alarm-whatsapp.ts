@@ -28,7 +28,7 @@ export type AlarmSendResult = { status: "gonderildi" | "kismen" | "alarm_yok" | 
 
 export async function sendAlarmWhatsapp(alarms: CfoAlarm[], deps: AlarmSendDeps): Promise<AlarmSendResult> {
   if (!alarms.length) return { status: "alarm_yok", sent: 0 };
-  return deliver(alarmTemplateParams(alarms), deps);
+  return deliverAlarmParams(alarmTemplateParams(alarms), deps);
 }
 
 /** Deneme gönderimi (Alperen 2026-10-10: "deneme alarmı oluştur"): aynı şablon + aynı alıcı yolu, metinde gerçek alarm OLMADIĞI yazılı.
@@ -38,10 +38,11 @@ export function testAlarmParams(now: Date): [string, string] {
   return [`DENEME (${t}) — gerçek alarm değil`, "WhatsApp alarm kanalı testi; işlem gerekmez"];
 }
 export async function sendTestAlarmWhatsapp(deps: AlarmSendDeps, now = new Date()): Promise<AlarmSendResult> {
-  return deliver(testAlarmParams(now), deps);
+  return deliverAlarmParams(testAlarmParams(now), deps);
 }
 
-async function deliver(params: [string, string], deps: AlarmSendDeps): Promise<AlarmSendResult> {
+/** Hazır iki parametreyi aynı şablon + alıcı yoluyla gönderir (alarm, deneme, günlük ödeme özeti). */
+export async function deliverAlarmParams(params: [string, string], deps: AlarmSendDeps): Promise<AlarmSendResult> {
   if (!deps.configured()) return { status: "yapilandirilmadi", sent: 0, detail: ["WHATSAPP_TOKEN / WHATSAPP_PHONE_NUMBER_ID tanımlı değil"] };
   const to = deps.parseRecipients(deps.env.to ?? "");
   if (!to.length) return { status: "alici_yok", sent: 0, detail: ["CFO_ALARM_WHATSAPP_TO tanımlı değil ya da geçersiz"] };
