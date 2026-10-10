@@ -129,7 +129,7 @@ export default async function CfoPage() {
         <MetricCard
           label="Boş KMH kapasitesi" value={fmtTry(o.freeKmhTry)} icon={PiggyBank}
           status={o.freeKmhTry >= 1_500_000 ? "ok" : o.freeKmhTry >= 750_000 ? "warn" : "danger"}
-          hint={`Toplam limit ${fmtTry(o.totalKmhLimitTry)}`}
+          hint={`Şirket limiti ${fmtTry(o.totalKmhLimitTry)}${o.personal.accounts ? ` · şahsi ${fmtTry(o.personal.freeKmhTry)} boş (son çare, dahil değil)` : ""}`}
         />
         <MetricCard
           label="Kredi kartı borcu" value={fmtTry(o.cardDebtTry)} icon={CreditCard}
@@ -152,12 +152,12 @@ export default async function CfoPage() {
             güncellemiyordu). Artık gerçek stoktan: net gerçekleşebilir değer. */}
         <MetricCard label="Satılabilir stok" value={fmtTry(stokNrv)} icon={Ship}
           hint={`Net gerçekleşebilir · yoldaki ${fmtTry(yoldaki)} ayrı satırda`} />
-        <MetricCard label="Aylık borç servisi" value={fmtTry(o.loanMonthlyServiceTry + o.cardMinTotalTry)} icon={CreditCard}
+        <MetricCard label="Aylık borç servisi" value={fmtTry(o.loanMonthlyServiceTry == null || o.cardMinTotalTry == null ? null : o.loanMonthlyServiceTry + o.cardMinTotalTry)} icon={CreditCard}
           status={o.debtServiceRatio == null ? "neutral" : o.debtServiceRatio <= 0.4 ? "ok" : o.debtServiceRatio <= 0.6 ? "warn" : "danger"}
           hint={o.debtServiceRatio != null ? `Tahsilatın ${fmtPct(o.debtServiceRatio)}'i` : "Ciro verisi gerekli"} />
         <MetricCard label="Aylık faaliyet nakdi" value={fmtTry(o.monthlyOperatingCashTry)} icon={TrendingUp}
-          status={o.monthlyOperatingCashTry > 0 ? "ok" : "danger"}
-          hint="Tahsilat − sabit gider − borç servisi" />
+          status={o.monthlyOperatingCashTry == null ? "neutral" : o.monthlyOperatingCashTry > 0 ? "ok" : "danger"}
+          hint={o.monthlyOperatingCashTry == null ? "Bilinmiyor — tahsilat, nakde dönüşüm oranı ya da borç servisi eksik" : "Tahsilat − sabit gider − borç servisi"} />
       </section>
 
       {/* ── Servet ── */}

@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 15:55 TR
-current_main_commit: ccc0d2e
+last_updated: 2026-10-10 17:05 TR
+current_main_commit: 24f5f38
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
-current_score: 65/100
+current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "62→65 — 12:35 UTC üretim doğrulaması: CFO-001 ✅ / CFO-002 ✅ (v3 net sermaye + borç fm_balance_day = yazıldığı andaki sözleşme fonksiyonu, Goal v3 değerlendirdi; RF-001 CRITICAL + RF-002 HIGH RESOLVED), CFO-008 ✅ (AI CFO karşılaştırmaları kanonik ciroyla kuruşu kuruşuna; RF-009 RESOLVED), RF-038 RESOLVED (döngü üretimde tamamlandı), CFO-031 ✅ (3 SKU stoku Alperen teyidi; RF-037 RESOLVED); boyut 1: 10→13; gate 5/12→7/12 (H1, H12)"
+score_change: "65→67 — CFO-014 kısım 2 (RF-016): eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (boyut 7: 5→6); sayfa eşliği: eski motor manşet nakit/KMH yalnız şirket (= cfo_nakit_kapisi; /cfo boş KMH 2,71M → 1,36M, şahsi 1,35M ayrı satır) + AI CFO borç tahmini gümrükte takılmıyor (RF-020 RESOLVED) (boyut 2: 12→13)"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)
@@ -180,9 +180,9 @@ Ek: modül → girdi → çıktı → tüketici (özet)
 
 | Sayfa | Ana metrikler | Kaynak | Motor | Tutarlılık sorunu |
 |---|---|---|---|---|
-| `/cfo` | Kur, KMH %, net banka, boş KMH, kart, 30 gün nakit, alacak, servet/hedef, gümrük rezervi | `computeCfo` + `cfo_servet*` | ESKİ + görünüm | Kur rozet `cfo_settings` 49,20 ↔ servet kartı snapshot 48,98; nakit şahsi dahil ↔ motor hariç; servet GENİŞ ↔ hedef DAR |
+| `/cfo` | Kur, KMH %, net banka, boş KMH, kart, 30 gün nakit, alacak, servet/hedef, gümrük rezervi | `computeCfo` + `cfo_servet*` | ESKİ + görünüm | Kur rozet `cfo_settings` 49,20 ↔ servet kartı snapshot 48,98; nakit şahsi dahil ↔ motor hariç (✓ 2026-10-10: eski motor manşet nakit + boş KMH yalnız şirket = `cfo_nakit_kapisi`; şahsi ayrı satır); servet GENİŞ ↔ hedef DAR |
 | `/cfo/borclar` | KMH tablosu, kart, kredi, planlı ödeme | `computeCfo` | ESKİ | Satır faizi düz %4,5 ↔ toplam banka oranlı → **satırlar toplamı tutmuyor**; kredi `earlyPayoffTry` ↔ servet `remainingTry` |
-| `/cfo/nakit-akisi` | Ufuk tahmini, haftalık | `computeCfo` | ESKİ | Açılış nakdi şahsi dahil ↔ projeksiyon hariç |
+| `/cfo/nakit-akisi` | Ufuk tahmini, haftalık | `computeCfo` | ESKİ | Açılış nakdi şahsi dahil ↔ projeksiyon hariç (✓ 2026-10-10: açılış şirket nakdi, projeksiyonla aynı kural) |
 | `/cfo/alacaklar` | Kanal alacakları | `computeCfo` | ESKİ | Metin "ciro/4" eskimiş (motor `cfo_tahsilat_tahmini`) |
 | `/cfo/gumruk` | Rezerv, açık, faiz | `computeCfo` | ESKİ | Düz %4,5; ithalat maliyeti `cfo_settings.usdTryRate`; rezerv elle tek hedef/tarih ↔ takvim dilimleri (✓ 10.10 RF-020: rezerv ödeme takviminden, dilimli; parti tablosu hâlâ bayat `cfo_import_project`) |
 | `/cfo/sermaye` | Downside, KMH dilimleri, gelir kaldıraçları, sermaye tahsisi, seçenek karşılaştırması | `lib/cfo/*` + `buildAllocation` | YENİ + ESKİ | Aynı sayfada downside hesap oranlı ↔ seçenek karşılaştırması düz %4,5 |
@@ -194,7 +194,7 @@ Ek: modül → girdi → çıktı → tüketici (özet)
 | `/cfo/ayarlar` | Parametreler | `cfo_settings` | ESKİ | Ölü alanlar (`stockCostUsd`, `blockedStockUsd`); "KMH / kart aylık faiz" etiketi yanlış (kart kullanmıyor) |
 | `/cfo/calisan`, `/cfo/calisma-durumu` | İş akışı, hedefler, borç tahmini; kapsam | agent | AGENT | "aylık 100.000 USD" metinde sabit (✓ 10.10 CFO-023: `cfo_settings.monthlyRevenueTargetUsd`; `/cfo/sermaye` etiketi de) |
 | `/cfo/defter` | Notlar | `cfoNote` | — | — |
-| `/admin/ai-cfo` | Dünkü ciro, ticari nakit, min projeksiyon, bulgular, hedefler | snapshot, `fm_memory_goal` | AGENT | Ticari nakit (şahsi hariç) ↔ `/cfo` (şahsi dahil) |
+| `/admin/ai-cfo` | Dünkü ciro, ticari nakit, min projeksiyon, bulgular, hedefler | snapshot, `fm_memory_goal` | AGENT | Ticari nakit (şahsi hariç) ↔ `/cfo` (şahsi dahil) (✓ 2026-10-10: `/cfo` de şahsi hariç) |
 | `/admin/sermaye`, `/dashboard` | Toplam/kilitli/serbest sermaye, ROI, sağlık skoru | `lib/capital/health` | yok | Stok maliyetle ↔ servet NRV ile; marj liste fiyatı modeli |
 | `/marketplace/profit`, `/realized-margin`, `/trendyol/finans` | Marj, komisyon | policy, settlement | yok | 4. ve 5. marj modeli; komisyon 3 kaynak |
 

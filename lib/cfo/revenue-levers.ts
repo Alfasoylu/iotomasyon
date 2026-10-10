@@ -13,14 +13,14 @@ export type Lever = {
   capitalNeededTry: number;
   /** zaten harcanmış, bugün getirisiz duran sermaye (TL) */
   sunkCapitalTry: number;
-  /** ilk cirona kadar gün (yaklaşık) */
-  daysToRevenue: number;
+  /** ilk cirona kadar gün (yaklaşık); null = teslim süresi ayarda yok (BİLİNMİYOR — CFO-014, 67/22 gün varsayılmaz) */
+  daysToRevenue: number | null;
   confidence: number; basis: string; blocker: string;
   /** aylık brüt katkı / ek sermaye (ek sermaye 0 ise null = sınırsız) */
   grossPerCapital: number | null;
 };
 
-export function stockoutLever(rows: { sku: string; rev90: number; units90: number; unitCost: number | null }[], leadDays: number, coverDays: number): Lever | null {
+export function stockoutLever(rows: { sku: string; rev90: number; units90: number; unitCost: number | null }[], leadDays: number | null, coverDays: number): Lever | null {
   const known = rows.filter(r => r.unitCost != null && r.unitCost > 0);
   if (!rows.length) return null;
   const rev = rows.reduce((s, r) => s + r.rev90, 0) / 3;
@@ -44,7 +44,7 @@ export function newProductsLever(agg: { n: number; notInCatalog: number; grossLi
     blocker: "ürün kartı, görsel, kategori/marka eşleme — iş gücü; sermaye gerekmez", grossPerCapital: null };
 }
 
-export function scaleProtectLever(restockCapitalTry: number, protectedRevenueMonthlyTry: number, grossMonthlyTry: number, leadDays: number): Lever | null {
+export function scaleProtectLever(restockCapitalTry: number, protectedRevenueMonthlyTry: number, grossMonthlyTry: number, leadDays: number | null): Lever | null {
   if (restockCapitalTry <= 0) return null;
   return { key: "scale-restock", label: "Yıldız ürünlerin (SCALE) stoğunu tamamla — ciroyu koru", revenueMonthlyTry: Math.round(protectedRevenueMonthlyTry),
     grossMonthlyTry: Math.round(grossMonthlyTry), capitalNeededTry: Math.round(restockCapitalTry), sunkCapitalTry: 0, daysToRevenue: leadDays, confidence: 0.6,

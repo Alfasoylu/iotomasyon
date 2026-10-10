@@ -35,7 +35,8 @@ export async function loadRevenueLevers(q: SqlQuery) {
   // Son 90 günde hiç satış satırı yoksa bugünkü ciro BİLİNMİYOR (kaynak boş olabilir): plan 0 ile kurulur ama işaretlenir (CFO-014)
   const currentUnknown = cur == null || cur.rows === 0;
   const currentMonthlyTry = cur == null ? 0 : cur.inclTry / 3;
-  const sea = num(set[0]?.sea) ?? 67, air = num(set[0]?.air) ?? 22;
+  // Teslim süresi ayarda yoksa BİLİNMİYOR (67/22 gün varsayılmaz — CFO-014 kısım 2); kaldıraç yine sıralanır, süre "bilinmiyor"
+  const sea = num(set[0]?.sea), air = num(set[0]?.air);
   const scale = ce.skus.filter(s => s.cls === "SCALE");
   const levers = [
     // kur hiç yoksa ithal malın TL maliyeti bilinmez → kaldıraç hesaplanmaz (0 TL maliyet uydurulmaz)
