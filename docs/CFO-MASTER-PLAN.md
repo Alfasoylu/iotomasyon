@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:00 TR
-current_main_commit: 1d41775
+last_updated: 2026-10-10 04:40 TR
+current_main_commit: ed52e04
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kalan: 6 kanal + FBA oran belgesi / hakediş dökümü (Alperen → /cfo/belgeler) → CFO-027 Cowork belge okuma (11 belge kuyrukta) → CFO-030 (latent KMH kapasite ayrıştırması, migration onayı)"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 (bekletilen) üretime uygulanması — Alperen izni/uygulaması → CFO-008 tek ciro fonksiyonu → CFO-025 sabit kurlu maliyetler"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-028 EPTT tahmini komisyon kanal marjında (measured=false; son 30 gün kayıtlı 4.466 + tahmini 20.445 TL, cironun %13,4'ü); tahmin ölçülmemiş ve 6 kanal + FBA hâlâ UNKNOWN olduğu için marj boyutu (4) değişmedi; 2 belge kategorisi düzeltildi"
+score_change: "unchanged — CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR; /cfo rozeti işlem kuru) yayında; SQL kalanı (snapshot/servet/ciro hedefi TCMB, ithalat işlem kuru, 48,5 / 1 yedeği yok) migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)

@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:00 TR
-current_main_commit: 1d41775
+last_updated: 2026-10-10 04:40 TR
+current_main_commit: ed52e04
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kalan: 6 kanal + FBA oran belgesi / hakediş dökümü (Alperen → /cfo/belgeler) → CFO-027 Cowork belge okuma (11 belge kuyrukta) → CFO-030 (latent KMH kapasite ayrıştırması, migration onayı)"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 (bekletilen) üretime uygulanması — Alperen izni/uygulaması → CFO-008 tek ciro fonksiyonu → CFO-025 sabit kurlu maliyetler"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-028 EPTT tahmini komisyon kanal marjında (measured=false; son 30 gün kayıtlı 4.466 + tahmini 20.445 TL, cironun %13,4'ü); tahmin ölçülmemiş ve 6 kanal + FBA hâlâ UNKNOWN olduğu için marj boyutu (4) değişmedi; 2 belge kategorisi düzeltildi"
+score_change: "unchanged — CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR; /cfo rozeti işlem kuru) yayında; SQL kalanı (snapshot/servet/ciro hedefi TCMB, ithalat işlem kuru, 48,5 / 1 yedeği yok) migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır"
 ---
 
 # CFO SCORECARD
@@ -93,3 +93,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | bc29fdd | 58 | 5/12 | Değişmedi (bilinçli): PR #251 CFO-013 tek nakit yolu kodu (migration 110000 bekletilen, üretim DDL onayı bekliyor; eski motor ve hash geçişi yayında) üretim davranışını değiştirmedi; CFO-028 ölçümü salt-okunur. Likidite (CFO-013 uygulanınca) ve marj (CFO-028 kararıyla) boyutları yeniden puanlanacak |
 | 2026-10-10 | ff42814 | 59 | 5/12 | 58→59: CFO-013 tek nakit yolu üretimde (migration 110000, Alperen onayı; projeksiyon dibi = takvim dibi) + CFO-006 son parçası (ödeme kapasitesi tek kural) → likidite 11→12; RF-010 (HIGH) ve RF-015 RESOLVED. Gate'ler değişmedi (H2/H8 diğer metriklerde açık) |
 | 2026-10-10 | 1d41775 | 59 | 5/12 | Değişmedi (bilinçli): CFO-028 kararları — EPTT tahmini komisyon (oran × toplam, measured=false) kanal marjına girdi, SKU oran ölçümü değişmedi; 2 belge kategorisi düzeltildi. 6 kanal + FBA UNKNOWN kaldığı için marj boyutu aynı |
+| 2026-10-10 | ed52e04 | 59 | 5/12 | Değişmedi (bilinçli): CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR) yayında; SQL sabit kur yedekleri migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır |

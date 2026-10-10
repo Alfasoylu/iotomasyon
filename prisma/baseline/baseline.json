@@ -4,7 +4,8 @@
   "cutoffMigration": "20261006110000_cfo_google_lockdown",
   "notAppliedInProduction": [
     "20261007100000_market_scout_foundation",
-    "20261007200000_drop_legacy_backup_tables"
+    "20261007200000_drop_legacy_backup_tables",
+    "20261010120000_cfo_kur_tek_kaynak"
   ],
   "_note": "notAppliedInProduction: repo migrations deliberately NOT applied to production (pending an explicit approval). They are not registered by bootstrap and are not part of the production fingerprint; bootstrap reports them as pending.",
   "appliedAfterCapture": [

@@ -95,6 +95,9 @@ export interface CfoInput {
   imports: ImportRow[];
   /** cfo_tahsilat_tahmini (kanal temposu, alacak ufku dışı; cfo_nakit_projeksiyon ile aynı mekanizma). null = görünüm yok → eski last14/4 tahmini. */
   forecast?: { date: Date; amountTry: number }[] | null;
+  /** CFO-003: USD/TRY işlem kuru TEK kaynaktan (lib/fx/current.ts — cfo_kur → cfo_settings → elle aylık kur). usdTry null = BİLİNMİYOR
+   *  (kaynak "varsayılan" sabite düştüyse). Verilmezse yalnız cfo_settings.usdTryRate (> 0) okunur; eski `|| 1` yedeği (1 USD = 1 TL) yok. */
+  fx?: { usdTry: number | null; source: string };
   today?: Date;
 }
 
@@ -150,7 +153,9 @@ export interface MonthEndRow {
 
 export interface CfoOverview {
   today: Date;
-  usdTry: number;
+  /** USD/TRY işlem kuru (CFO-003); null = BİLİNMİYOR. Stratejik kur (hedefler) ayrı: lib/fx/strategic.ts. */
+  usdTry: number | null;
+  usdTrySource: string;
   /** KMH faizi KADEMELİ (CFO-005): hesap başına ölçülmüş oran; küresel cfo_settings oranı KULLANILMAZ. */
   kmh: { slices: KmhSlice[]; range: { minPct: number; maxPct: number; unmeasured: number } | null };
   /** kullanılan KMH'nin oranı ölçülmemiş hesaplara düşen kısmı (faizi bilinmiyor → kmhInterestMonthlyTry alt sınır) */
@@ -183,9 +188,9 @@ export interface CfoOverview {
   // Alacak & stok
   receivablesPendingTry: number;
   receivablesByChannel: Array<{ channel: string; amount: number; count: number }>;
-  sellableStockTry: number;
-  blockedStockTry: number;
-  inTransitStockTry: number;
+  sellableStockTry: number | null;
+  blockedStockTry: number | null;
+  inTransitStockTry: number | null;
 
   // Satış
   last14dRevenueTry: number | null;
@@ -213,8 +218,8 @@ export interface CfoOverview {
   } | null;
 
   // Net ticari servet
-  narrowWorthTry: number; narrowWorthUsd: number;
-  wideWorthTry: number; wideWorthUsd: number;
+  narrowWorthTry: number | null; narrowWorthUsd: number | null;
+  wideWorthTry: number | null; wideWorthUsd: number | null;
   target: { usd: number; remainingUsd: number; monthsLeft: number | null; requiredMonthlyUsd: number | null; progress: number } | null;
 
   // Aksiyon
@@ -228,7 +233,9 @@ export function computeCfo(input: CfoInput): CfoOverview {
   const today = startOfDay(input.today ?? new Date());
   const s = input.settings;
 
-  const usdTry = s ? num(s.usdTryRate) || 1 : 1;
+  // CFO-003: tek kur kaynağı; bilinmiyorsa null (USD'den türeyen eski alanlar da BİLİNMİYOR — 1 TL ya da 0 değil)
+  const usdTry: number | null = input.fx ? input.fx.usdTry : (s && num(s.usdTryRate) > 0 ? num(s.usdTryRate) : null);
+  const usdTrySource = input.fx ? input.fx.source : usdTry != null ? "cfo_settings" : "bilinmiyor";
   const cardMinPct = (s ? num(s.cardMinPct) : 20) / 100;
 
   // ── Bankalar ──
@@ -300,11 +307,11 @@ export function computeCfo(input: CfoInput): CfoOverview {
   // Gerçek stok değeri: `cfo_stok_deger` → `cfo_servet` (lib/cfo/wealth.ts).
   // Buradaki alanlar yalnız geriye dönük uyumluluk için duruyor; yeni bir yerde
   // kullanmadan önce wealth.ts'e bak.
-  const sellableStockTry = s ? num(s.stockCostUsd) * usdTry : 0;
-  const blockedStockTry = s ? num(s.blockedStockUsd) * usdTry : 0;
-  const inTransitStockTry = input.imports
-    .filter((i) => i.status === "YOLDA" || i.status === "GUMRUKTE")
-    .reduce((a, i) => a + num(i.totalCostUsd) * usdTry, 0);
+  const sellableStockTry = !s ? 0 : usdTry == null ? null : num(s.stockCostUsd) * usdTry;
+  const blockedStockTry = !s ? 0 : usdTry == null ? null : num(s.blockedStockUsd) * usdTry;
+  const inTransitImports = input.imports.filter((i) => i.status === "YOLDA" || i.status === "GUMRUKTE");
+  const inTransitStockTry = usdTry == null && inTransitImports.length ? null
+    : inTransitImports.reduce((a, i) => a + num(i.totalCostUsd) * (usdTry ?? 0), 0);
 
   // ── Satış ──
   const last14 = s ? numOrNull(s.last14dRevenueTry) : null;
@@ -416,13 +423,13 @@ export function computeCfo(input: CfoInput): CfoOverview {
   // dolayısıyla GERÇEK servet DEĞİLDİR. Kokpit ve snapshot artık cfo_servet
   // görünümünü okuyor. Bu alanlar silinmedi çünkü target/progress hesabı hâlâ
   // burada; ama hiçbir ekran bunları basmıyor.
-  const narrowWorthTry = netCashTry + receivablesPendingTry + sellableStockTry - cardDebtTry - loanEarlyPayoffTry;
-  const wideWorthTry = narrowWorthTry + inTransitStockTry + blockedStockTry;
-  const narrowWorthUsd = narrowWorthTry / usdTry;
-  const wideWorthUsd = wideWorthTry / usdTry;
+  const narrowWorthTry = sellableStockTry == null ? null : netCashTry + receivablesPendingTry + sellableStockTry - cardDebtTry - loanEarlyPayoffTry;
+  const wideWorthTry = narrowWorthTry == null || inTransitStockTry == null || blockedStockTry == null ? null : narrowWorthTry + inTransitStockTry + blockedStockTry;
+  const narrowWorthUsd = narrowWorthTry == null || usdTry == null ? null : narrowWorthTry / usdTry;
+  const wideWorthUsd = wideWorthTry == null || usdTry == null ? null : wideWorthTry / usdTry;
 
   let target: CfoOverview["target"] = null;
-  if (s && numOrNull(s.usdWealthTarget) != null) {
+  if (s && numOrNull(s.usdWealthTarget) != null && wideWorthUsd != null) {
     const t = num(s.usdWealthTarget);
     const monthsLeft = s.wealthTargetDate
       ? (startOfDay(new Date(s.wealthTargetDate)).getTime() - today.getTime()) / 86400000 / 30.4
@@ -461,7 +468,7 @@ export function computeCfo(input: CfoInput): CfoOverview {
   }
 
   return {
-    today, usdTry, kmh: { slices: kmhSlices, range: measuredRateRange(kmhSlices) }, kmhUsedWithoutRateTry,
+    today, usdTry, usdTrySource, kmh: { slices: kmhSlices, range: measuredRateRange(kmhSlices) }, kmhUsedWithoutRateTry,
     netCashTry, usedKmhTry, totalKmhLimitTry, freeKmhTry, kmhInterestMonthlyTry, banksMissingBalance,
     cardDebtTry, cardMinTotalTry, cardCarryCostTry, cardRevolvingTry: carry.revolvingTry, cardRevolvingWithoutRateTry: carry.revolvingWithoutRateTry,
     cardsUnknownRevolving: carry.unknownRevolvingCards,

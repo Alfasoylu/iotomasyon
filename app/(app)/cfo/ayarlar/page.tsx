@@ -62,7 +62,7 @@ export default async function CfoSettingsPage() {
             <tr key={s2.id}>
               <Td strong>{fmtDate(s2.takenAt)}</Td>
               <Td right>{fmtTry(num(s2.netWorthTry))}</Td>
-              <Td right>{fmtUsd(num(s2.netWorthUsd))}</Td>
+              <Td right>{s2.netWorthUsd != null ? fmtUsd(num(s2.netWorthUsd)) : "—"}</Td>
               <Td right>{s2.wideWorthUsd ? fmtUsd(num(s2.wideWorthUsd)) : "—"}</Td>
               <Td muted>{s2.note ?? "—"}</Td>
             </tr>

@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:00 TR
-current_main_commit: 1d41775
+last_updated: 2026-10-10 04:40 TR
+current_main_commit: ed52e04
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kalan: 6 kanal + FBA oran belgesi / hakediş dökümü (Alperen → /cfo/belgeler) → CFO-027 Cowork belge okuma (11 belge kuyrukta) → CFO-030 (latent KMH kapasite ayrıştırması, migration onayı)"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 (bekletilen) üretime uygulanması — Alperen izni/uygulaması → CFO-008 tek ciro fonksiyonu → CFO-025 sabit kurlu maliyetler"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-028 EPTT tahmini komisyon kanal marjında (measured=false; son 30 gün kayıtlı 4.466 + tahmini 20.445 TL, cironun %13,4'ü); tahmin ölçülmemiş ve 6 kanal + FBA hâlâ UNKNOWN olduğu için marj boyutu (4) değişmedi; 2 belge kategorisi düzeltildi"
+score_change: "unchanged — CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR; /cfo rozeti işlem kuru) yayında; SQL kalanı (snapshot/servet/ciro hedefi TCMB, ithalat işlem kuru, 48,5 / 1 yedeği yok) migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır"
 ---
 
 # CFO DECISION LOG
@@ -86,3 +86,4 @@ D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL**. 
 | 2026-10-10 | CFO-013 TEK NAKİT YOLU: nakit projeksiyonu = ödeme takvimi. Vadesi geçmiş ödenmemiş çıkış / tahsil edilmemiş alacak / diğer tahsilat BUGÜN vadeli sayılır (düşürülmez); diğer tahsilat (`inflowTry`) projeksiyona girer; takvim ve mutabakat açılışı şirket nakdi (`cfo_nakit_kapisi`, şahsi hariç). Eski motor aynı kural. AI CFO hash kapısı tanım değişikliklerinde geçiş listesi kullanır (kod önce, DDL sonra; eski hash üretim senkronunda silinir) | Claude Code (backlog CFO-013, RF-015; Alperen "sıradaki göreve geç kurallara sadık kalarak") — üretim DDL'i Alperen onayıyla | iki yol iki dip veriyordu (bugün 83 TL; vadesi geçmiş kalem olunca daha büyük) | migration 110000 öncesi tanımlar (baseline / 20261008170000 / 20260910000000) |
 | 2026-10-10 | CFO-013 ÜRETİMDE + CFO-006 KAPANIŞI: migration 110000 Alperen onayıyla uygulandı (dip eşitliği üretimde gözlendi). Şirket/şahsi kapsamı: likidite (dip, kapasite, mutabakat, ödeme takvimi) yalnız şirket hesapları; hedef metrikleri (net sermaye, borç) D-P03 gereği şahsi kart/KMH dahil, nakit simetrik dahil. `/cfo/odemeler` kapasitesi `cfo_hesap_sahsi` ile; bakiyesi bilinmeyen hesabın limiti kapasiteye girmez | Code (Alperen onayı "Onaylıyorum", 2026-10-10) | sayfa kendi `like` kuralı + şahsi bakiye dahil açılış (−83,29 TL fark) | migration 110000 geri alma (önceki tanımlar `prisma/baseline/2026-10-06.sql`); sayfa: git revert |
 | 2026-10-10 | CFO-028 KOMİSYON: EPTT'de tutar boşken Entegra oranı × KDV dahil toplam TAHMİNİ komisyon (measured=false) — kanal marjına girer, SKU oran ölçümüne girmez, ham kayıt değişmez. N11/Amazon/Pazarama/Koçtaş/Idefix/Temu/FBA oran belgesi ya da hakediş dökümü gelene kadar UNKNOWN; %20 yer tutucu (`MarketplacePlatformPolicy`) onaylı oran sayılmaz | Alperen ("Onaylıyorum", 2026-10-10) | EPTT'de bilinen sapma: oran gerçeğin ~0,4 puan altında (125 satır) | `ESTIMATED_COMMISSION_CHANNELS` boşaltılır (git revert) |
+| 2026-10-10 | CFO-003 KUR SINIFLAMASI (SQL): hedef ve servet ölçen USD dönüşümleri (snapshot USD alanları, `cfo_servet`, `cfo_ciro_hedef`) STRATEJİK kur (TCMB, D-P04); ithalat fiyatlama (`cfo_ithalat_oneri(_ozet)`) ve eski motor İŞLEM kuru (`lib/fx/current.ts` sırası). Kur yoksa NULL/BİLİNMİYOR — 48,5 ve 1 sabit yedeği yok | Code (D-P04 + CFO-003 kabul ölçütü) | ayar kuru 49,1976 ile cfo_kur 48,98 ve TCMB 48,5585 üç ayrı yerde kullanılıyordu | migration 120000 geri alma (baseline tanımları); kod git revert |

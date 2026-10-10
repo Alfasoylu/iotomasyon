@@ -30,7 +30,8 @@ const BASELINE_DEPENDENT = ["20261008160000_cfo_maliyet_kapsami", "2026100819000
   "20261009100000_cfo_kredi_kalan_anapara", "20261009140000_cfo_gumruk_dilim_capture", "20261009170000_cfo_metrik_net_sermaye",
   "20261009180000_cfo_metrik_borc", "20261009190000_cfo_net_sermaye_maliyet_kdv_haric",
   "20261010100000_cfo_sahiplik_tek_kural", // cfo_onucus_temel/cfo_kaynak_yeterliligi baseline nesnelerine bağlı
-  "20261010110000_cfo_tek_nakit_yolu"]; // CFO-013: cfo_nakit_kapisi (100000) + baseline görünümleri; üretimde (2026-10-10), cfo-tek-nakit-yolu testi doğrular
+  "20261010110000_cfo_tek_nakit_yolu", // CFO-013: cfo_nakit_kapisi (100000) + baseline görünümleri; üretimde (2026-10-10), cfo-tek-nakit-yolu testi doğrular
+  "20261010120000_cfo_kur_tek_kaynak"]; // CFO-003: cfo_servet / cfo_ciro_hedef / cfo_ithalat_oneri(_ozet) yalnız baseline'da; cfo-kur-tek-kaynak testi doğrular
 
 async function main() {
   const db = new PGlite({ extensions: { vector } });

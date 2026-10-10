@@ -76,7 +76,10 @@ export default async function CfoPage() {
         subtitle="Nakit, borç, alacak ve hedef tek ekranda. Tüm değerler son bilinen veriden hesaplanır."
         meta={
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="neutral">USD/TRY {o.usdTry.toLocaleString("tr-TR")}</Badge>
+            {/* CFO-003: işlem kuru (ithalat/maliyet; lib/fx/current.ts) — hedeflerin stratejik kuru (TCMB) servet kartında ayrı */}
+            <Badge variant={o.usdTry == null ? "warn" : "neutral"}>
+              İşlem kuru USD/TRY {o.usdTry == null ? "bilinmiyor" : `${o.usdTry.toLocaleString("tr-TR")} · ${o.usdTrySource}`}
+            </Badge>
             <Badge variant="neutral">KMH maliyeti {o.kmh.range ? `%${o.kmh.range.minPct.toFixed(2)}${o.kmh.range.maxPct !== o.kmh.range.minPct ? `–${o.kmh.range.maxPct.toFixed(2)}` : ""}/ay${o.kmh.range.unmeasured ? ` · ${o.kmh.range.unmeasured} hesap ölçülmedi` : ""}` : "oran ölçülmedi"}</Badge>
             {o.revenueDataAgeDays != null && (
               <Badge variant={o.revenueDataAgeDays > 21 ? "danger" : o.revenueDataAgeDays > 14 ? "warn" : "ok"}>
