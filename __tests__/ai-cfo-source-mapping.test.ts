@@ -359,7 +359,21 @@ async function main() {
     const realDup = await buildCfoAgentSnapshot({ db, now, config, compact: false });
     assert.equal(realDup.dataQuality.duplicateCanonicalRows, dupBefore + 2, "satır kimliği boş iki satır → ayırt edilemez, mükerrer");
     await pg.exec(`delete from "MarketplaceSalesRecord" where id in ('k1','k2','k3','k4')`);
-    console.log("AI CFO source mapping: kargo bands (toplam, measured fee once, 19.06 validity, Trendyol assumption for other channels), SET cost from cfo_set_fiyat, cash projection pozisyon (no overdraft), default reviewed profile + off switch passed");
+    // CFO-028 (Alperen 2026-10-10): EPTT tutarı boşken Entegra oranı × toplam = TAHMİNİ komisyon → kanal marjına girer (estimated),
+    // SKU oran ölçümüne girmez (commissionRate UNKNOWN kalır); tek satırda oran da yoksa kanal komisyonu bilinmiyor (0 değil).
+    await pg.exec(`insert into "MarketplaceSalesRecord" (id,channel,"orderNumber","orderDate",quantity,"modelNumber","totalAmountTry","commissionTry","commissionPct",status)
+      values ('pt1','EPTT','P-1','2026-09-30 10:00',1,'MD-X',500,null,15,'Teslim Edildi'),('pt2','EPTT','P-2','2026-09-30 11:00',1,'MD-X',400,60,15,'Teslim Edildi')`);
+    const eptt = await buildCfoAgentSnapshot({ db, now, config, compact: false });
+    const epttCh = eptt.channels.find(c => c.channel === "EPTT")?.profitability;
+    assert.deepEqual([epttCh?.commission.value, epttCh?.commission.estimated], [60 + 75, true], "EPTT: kayıtlı 60 + tahmini 500×%15 = 135, ölçülmemiş");
+    assert.equal(eptt.products.find(p => p.channel === "EPTT" && p.sku === "MD-X")?.commissionRate.value, null, "SKU oran ölçümüne girmez");
+    assert.ok(Math.abs(eptt.products.find(p => p.channel === "TRENDYOL" && p.sku === "MD-X")!.commissionRate.value! - 0.18) < 1e-9, "ölçülen kanal oranı değişmez");
+    await pg.exec(`insert into "MarketplaceSalesRecord" (id,channel,"orderNumber","orderDate",quantity,"modelNumber","totalAmountTry","commissionTry","commissionPct",status)
+      values ('pt3','EPTT','P-3','2026-09-30 12:00',1,'MD-X',300,null,null,'Teslim Edildi')`);
+    const epttGap = await buildCfoAgentSnapshot({ db, now, config, compact: false });
+    assert.equal(epttGap.channels.find(c => c.channel === "EPTT")?.profitability.commission.value, null, "oranı da olmayan satır → kanal komisyonu bilinmiyor");
+    await pg.exec(`delete from "MarketplaceSalesRecord" where id in ('pt1','pt2','pt3')`);
+    console.log("AI CFO source mapping: kargo bands (toplam, measured fee once, 19.06 validity, Trendyol assumption for other channels), SET cost from cfo_set_fiyat, EPTT estimated commission (channel only), cash projection pozisyon (no overdraft), default reviewed profile + off switch passed");
   } finally { await pg.close(); }
 }
 main().then(() => process.exit(process.exitCode ?? 0)).catch(e => { console.error(e); process.exit(1); });

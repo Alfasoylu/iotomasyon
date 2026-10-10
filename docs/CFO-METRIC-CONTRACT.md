@@ -1,9 +1,9 @@
 ---
-last_updated: 2026-10-10 03:30 TR
-current_main_commit: ff42814
+last_updated: 2026-10-10 04:00 TR
+current_main_commit: 1d41775
 current_phase: "Faz 1 — Metrik sözleşmesi (CFO-001) · PR-A: karar memosu + mutabakat ölçümü"
 current_score: 59/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kararlarının uygulanması (EPTT tahmini komisyon, 2 belge kategorisi; diğer kanallar oran belgesine kadar UNKNOWN) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kalan: 6 kanal + FBA oran belgesi / hakediş dökümü (Alperen → /cfo/belgeler) → CFO-027 Cowork belge okuma (11 belge kuyrukta) → CFO-030 (latent KMH kapasite ayrıştırması, migration onayı)"
 ---
 
 # CFO METRİK SÖZLEŞMESİ — karar memosu (CFO-001 PR-A)

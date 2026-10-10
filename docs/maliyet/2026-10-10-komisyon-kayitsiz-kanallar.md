@@ -70,3 +70,23 @@
 2. **Diğer kanallar:** Her kanal için oran belgesi (`/cfo/belgeler`, kategori `KOMISYON_ORANI`) ya da hakediş dökümü yüklensin.
    O gelene kadar UNKNOWN kalır. %20 yer tutucu kullanılmaz.
 3. **Belge kategorileri:** Yukarıdaki 2 belgenin kategorisi düzeltilsin. Onayla, günlüklü tek satır güncelleme.
+
+## 6. Uygulama (2026-10-10, karar 1)
+
+- Kural tek yerde: `lib/cfo/commission-estimate.ts`.
+  - `estimatedCommissionSql()`: `commissionTry` boş, kanal EPTT, `commissionPct` > 0 ve toplam biliniyorsa `round(toplam × oran / 100, 2)`, aksi halde NULL.
+  - `estimatedCommission()`: aynı kuralın TS aynası.
+- Kanal marjı (`lib/cfo-agent/snapshot.ts`):
+  - Ölçülmüş SKU oranı yoksa (EPTT her zaman) satır bazında kayıtlı tutar + tahmini tutar toplanır. Sonuç `estimated=true`, neden `eptt_entegra_rate_estimate`.
+  - Bir satırda oran da yoksa kanal komisyonu bilinmiyor sayılır (0 değil).
+  - SKU oran ölçümü (120 gün, adet_duz=1, guven=YUKSEK, ≥10) yalnız `commissionTry` okur. EPTT'nin SKU oranı UNKNOWN kalır, fiyat tabanı da hesaplanmaz.
+- `/cfo/belgeler`: kayıtsız kanal tablosuna "Tahmini (oran × ciro)" sütunu eklendi. Tahmini olan kanal "görünmeyen maliyet" (ölçülen kanal oranı × ciro) toplamına girmez.
+- Üretim, salt-okunur, EPTT:
+
+  | Dönem | Ciro (TL) | Kayıtlı komisyon | Tahmini komisyon | Toplam | Bilinmeyen satır |
+  |---|---:|---:|---:|---:|---:|
+  | 30 gün | 186.224 | 4.466 (30 satır) | 20.445 (91 satır) | 24.911 (%13,4) | 0 |
+  | 90 gün | 622.757 | 7.863 (53 satır) | 76.938 | 84.801 | 0 |
+- Testler:
+  - `__tests__/cfo-commission-estimate.test.ts` (CI): kural ve SQL = TS eşliği.
+  - `__tests__/ai-cfo-source-mapping.test.ts` EPTT bloğu: kanal komisyonu 60 kayıtlı + 75 tahmini = 135, tahmini işaretli. SKU oranı UNKNOWN, Trendyol ölçülen oranı değişmedi. Oranı boş satır olunca kanal komisyonu bilinmiyor.

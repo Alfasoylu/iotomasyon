@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### PttAVM komisyonu kanal kârlılığında görünüyor (tahmini) (2026-10-10)
+
+- Entegra'da PttAVM komisyon tutarı çoğu satırda boş; artık komisyon oranı × satış tutarı tahmini komisyon olarak kanal marjına giriyor ve "tahmini" işaretli. Son 30 günde ≈ 24.900 TL (cironun %13,4'ü).
+- Ürün bazında komisyon oranı ölçümü değişmedi; tahmin oraya girmiyor. N11, Amazon, Pazarama, Koçtaş, Idefix, Temu ve FBA'nın komisyonu, oran belgesi yüklenene kadar "bilinmiyor" kalıyor.
+- Belgeler sayfasında yanlış kategorideki 2 belge düzeltildi (Garanti kart ekstresi, Trendyol komisyon ekranı).
+
 ### Nakit projeksiyonu ile ödeme takvimi tek yol oldu; ödeme kapasitesi şahsi hesapları saymıyor (2026-10-10)
 
 - Vadesi geçmiş ödenmemiş ödemeler ve tahsil edilmemiş alacaklar nakit projeksiyonundan düşmüyor, bugüne taşınıyor; diğer tahsilatlar da projeksiyonda. Projeksiyonun ve ödeme takviminin nakit dibi artık aynı (−3.743.079 TL).

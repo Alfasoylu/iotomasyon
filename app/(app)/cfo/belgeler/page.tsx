@@ -9,6 +9,7 @@ import { FileText } from "lucide-react";
 import { requirePermission, checkPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { estimatedCommissionSql } from "@/lib/cfo/commission-estimate";
 import { fmtDate, fmtTry } from "@/lib/cfo/format";
 import { categoryLabel, maskSensitive } from "@/lib/cfo/documents";
 import { PageHeader } from "@/components/layout/page-header";
@@ -41,14 +42,17 @@ export default async function CfoDocumentsPage() {
   const [ready] = await prisma.$queryRaw<{ t: string | null }[]>`select to_regclass('public.cfo_belge')::text as t`;
   const docs = ready?.t ? await prisma.$queryRaw<Doc[]>`select id, kategori, baslik, aciklama, donem_baslangic::text, donem_bitis::text, gecerlilik_bitis::text,
       dosya_adi, boyut, yukleyen, yuklendi_at, ozet, ozet_durumu, cikarilan, celiski, arsiv_at from cfo_belge order by yuklendi_at desc limit 500` : [];
-  const gaps = await prisma.$queryRaw<{ channel: string; n: number; ciro: unknown; kom: unknown; bos: number }[]>`
+  // CFO-028 (2026-10-10): EPTT tutarı boşken Entegra oranı × toplam = TAHMİNİ komisyon (lib/cfo/commission-estimate.ts) — ayrı sütun;
+  // ölçülen kanal oranına (refRate) girmez, tahmini olan kanal "görünmeyen maliyet" toplamına da girmez. Sorgu sabit metin (girdi yok).
+  const gaps = await prisma.$queryRawUnsafe<{ channel: string; n: number; ciro: unknown; kom: unknown; bos: number; tahmini: unknown; tahmini_n: number }[]>(`
     select channel::text as channel, count(*)::int as n, sum("totalAmountTry") as ciro, sum(coalesce("commissionTry", 0)) as kom,
-           count(*) filter (where coalesce("commissionTry", 0) = 0)::int as bos
-      from "MarketplaceSalesRecord" where "orderDate" >= current_date - 30 group by 1 order by 3 desc`.catch(() => []);
+           count(*) filter (where coalesce("commissionTry", 0) = 0)::int as bos,
+           sum(${estimatedCommissionSql()}) as tahmini, count(${estimatedCommissionSql()})::int as tahmini_n
+      from "MarketplaceSalesRecord" where "orderDate" >= current_date - 30 group by 1 order by 3 desc`).catch(() => []);
   const missing = gaps.filter(g => !OWN_CHANNELS.has(g.channel) && g.bos / g.n >= 0.5);
   const measured = gaps.filter(g => !OWN_CHANNELS.has(g.channel) && g.bos / g.n < 0.5 && Number(g.ciro) > 0);
   const refRate = measured.length ? measured.reduce((a, g) => a + Number(g.kom), 0) / measured.reduce((a, g) => a + Number(g.ciro), 0) : null;
-  const missingCiro = missing.reduce((a, g) => a + Number(g.ciro), 0);
+  const missingCiro = missing.filter(g => g.tahmini_n === 0).reduce((a, g) => a + Number(g.ciro), 0);
 
   const active = docs.filter(d => !d.arsiv_at), archived = docs.filter(d => d.arsiv_at);
   const have = new Set(active.map(d => d.kategori));
@@ -80,14 +84,17 @@ export default async function CfoDocumentsPage() {
           <h2 className="mb-2 text-sm font-semibold text-[var(--text-primary)]">Komisyonu kayıtsız kanallar (son 30 gün)</h2>
           {missing.length === 0 ? <p className="text-sm text-[var(--text-muted)]">Yok.</p> : (
             <>
-              <CfoTable head={<tr><Th>Kanal</Th><Th right>Satır</Th><Th right>Ciro</Th><Th right>Kayıtlı komisyon</Th></tr>}>
+              <CfoTable head={<tr><Th>Kanal</Th><Th right>Satır</Th><Th right>Ciro</Th><Th right>Kayıtlı komisyon</Th><Th right>Tahmini (oran × ciro)</Th></tr>}>
                 {missing.map(g => (
-                  <tr key={g.channel}><Td strong>{g.channel}</Td><Td right>{g.bos}/{g.n}</Td><Td right>{fmtTry(Number(g.ciro))}</Td><Td right>{fmtTry(Number(g.kom))}</Td></tr>
+                  <tr key={g.channel}><Td strong>{g.channel}</Td><Td right>{g.bos}/{g.n}</Td><Td right>{fmtTry(Number(g.ciro))}</Td><Td right>{fmtTry(Number(g.kom))}</Td>
+                    <Td right>{g.tahmini_n > 0 ? `${fmtTry(Number(g.tahmini))} (${g.tahmini_n} satır)` : "bilinmiyor"}</Td></tr>
                 ))}
               </CfoTable>
               <p className="mt-2 text-[11px] text-[var(--text-muted)]">
                 Hiçbir pazaryeri komisyonsuz satış yaptırmaz — bu veri eksikliği. {refRate != null && <>Ölçülen kanalların oranı (%{(refRate * 100).toFixed(1)}) uygulanırsa
                 ayda ~{fmtTry(missingCiro * refRate)} görünmeyen maliyet (TAHMİNİ). </>}Motor bu kanalların komisyonunu 0 değil BİLİNMİYOR sayar; toplamı doğrudan okuyan raporlarda görünmez.
+                EPTT istisna (Alperen kararı 10.10): tutar boşken Entegra&apos;nın komisyon oranı × satır toplamı TAHMİNİ komisyon olarak kanal marjına girer
+                (ölçülmemiş; oran gerçeğin ~0,4 puan altında); SKU komisyon ölçümüne girmez.
                 Kanal başına komisyon oranı belgesi (<em>Pazaryeri komisyon oranları</em>) bu boşluğu kapatır.
               </p>
             </>
