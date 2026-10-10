@@ -11,6 +11,9 @@ import { readFileSync } from "node:fs";
 //      HEAD^1 (squash öncesi main), diğer dallarda/yerelde merge-base(HEAD, origin/main). GOVERNANCE_MAIN_SHA ile ezilebilir.
 //   3) open_critical / open_high = CFO-RED-FLAGS.md "Durum kaydı" tablosundan sayılan (RESOLVED dışı) CRITICAL / HIGH; kayıtta her
 //      RF kaydı var; bir "— güncelleme: RESOLVED" başlığı olan kayıt RESOLVED dışında olamaz.
+//   3b) Düz yazıdaki açık sayı özetleri (2026-10-10, Alperen: frontmatter 2+5 iken açıklamada eski 1+4 kalmıştı): CFO-RED-FLAGS
+//      "**Açık özet:**" satırı Durum kaydından sayılan CRITICAL/HIGH sayılarını ve açık RF kimliklerini BİREBİR taşır; beş belgede başka
+//      "N CRITICAL / HIGH N" sayı özeti ancak "tarihsel" etiketiyle durabilir (denetim anı gibi) — tarihli bölümler ve skor geçmişi hariç.
 //   4) current_score = CFO-SCORECARD.md puan tablosunun TOPLAM'ı ve boyut puanlarının toplamı; skor geçmişinin son satırı
 //      current_main_commit'i ve aynı skoru taşır.
 //   5) score_change: main'deki skora göre — değişmediyse "unchanged — <gerekçe>" (bilinçli olduğu kayıtlı), değiştiyse
@@ -45,6 +48,33 @@ export function redFlagRegister(md: string): Map<string, { severity: string; sta
 export function openCounts(reg: Map<string, { severity: string; status: string }>) {
   const open = [...reg.values()].filter(r => r.status !== "RESOLVED");
   return { critical: open.filter(r => r.severity === "CRITICAL").length, high: open.filter(r => r.severity === "HIGH").length };
+}
+
+const COUNT_RE = /(?<![-\w.])\d+\s*(?:CRITICAL|HIGH)\b|\b(?:CRITICAL|HIGH)\s*\d+\b/;
+/** Açık özet satırı Durum kaydıyla birebir; diğer sayı özetleri yalnız "tarihsel" etiketiyle. */
+export function summaryDrift(docs: Record<string, string>, reg: Map<string, { severity: string; status: string }>): string[] {
+  const errors: string[] = [];
+  const open = (sev: string) => [...reg].filter(([, r]) => r.status !== "RESOLVED" && r.severity === sev).map(([id]) => id).sort();
+  const crit = open("CRITICAL"), high = open("HIGH");
+  const lines = (docs["CFO-RED-FLAGS.md"] ?? "").split("\n").filter(l => l.startsWith("**Açık özet"));
+  if (lines.length !== 1) errors.push(`CFO-RED-FLAGS: tek bir "**Açık özet:**" satırı olmalı (${lines.length})`);
+  else {
+    const l = lines[0], n = (sev: string) => Number(l.match(new RegExp(`\\b${sev}\\s+(\\d+)`))?.[1] ?? NaN);
+    if (n("CRITICAL") !== crit.length || n("HIGH") !== high.length)
+      errors.push(`CFO-RED-FLAGS Açık özet CRITICAL ${n("CRITICAL")} · HIGH ${n("HIGH")} ≠ Durum kaydı ${crit.length} · ${high.length}`);
+    const ids = [...new Set([...l.matchAll(/RF-\d{8}-\d{3}/g)].map(m => m[0]))].sort();
+    if (ids.join() !== [...crit, ...high].sort().join()) errors.push(`CFO-RED-FLAGS Açık özet kimlikleri [${ids}] ≠ açık CRITICAL/HIGH [${[...crit, ...high].sort()}]`);
+  }
+  // Tarihli bölümler (## YYYY-AA-GG …) ve skor geçmişi satırları append-only kayıttır — o anın sayısını taşımaları doğru.
+  for (const [name, md] of Object.entries(docs)) {
+    let dated = false;
+    for (const l of md.replace(/^---\n[\s\S]*?\n---\n/, "").split("\n")) {
+      if (/^## /.test(l)) dated = /^## \d{4}-\d{2}-\d{2}\b/.test(l);
+      if (dated || /^\|\s*\d{4}-\d{2}-\d{2}\s*\|/.test(l)) continue;
+      if (COUNT_RE.test(l) && !l.startsWith("**Açık özet") && !/tarihsel/i.test(l)) errors.push(`${name}: etiketsiz açık sayı özeti (güncel değilse "tarihsel" yaz): ${l.slice(0, 120)}`);
+    }
+  }
+  return errors;
 }
 
 /** Puan tablosu: boyut satırları (| n | ad | ağırlık | **puan** |) ve TOPLAM satırı. */
@@ -102,6 +132,9 @@ function main() {
   const oc = openCounts(reg);
   if (String(oc.critical) !== g.open_critical) errors.push(`open_critical ${g.open_critical} ≠ Durum kaydı ${oc.critical}`);
   if (String(oc.high) !== g.open_high) errors.push(`open_high ${g.open_high} ≠ Durum kaydı ${oc.high}`);
+
+  // 3b) düz yazıdaki sayı özetleri
+  errors.push(...summaryDrift(docs, reg));
 
   // 4) skor = puan tablosu
   const score = scoreOf(g.current_score);

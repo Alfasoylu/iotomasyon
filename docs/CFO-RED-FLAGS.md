@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 11:03 TR
-current_main_commit: 19e4e78
+last_updated: 2026-10-10 11:25 TR
+current_main_commit: 7093c47
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
-next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen AÇIK onayı) → RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — RF-020 MITIGATED + CFO-018 kısım 1: gümrük rezervi elle tek hedef/tarih yerine ödeme takviminin dilimlerinden (tek nakit yolu); ödenmemiş gümrük borç/net sermaye sözleşmesinde yalnız bilgi satırı (üretimde doğrulandı); kalan veri farkları (ROMANYA-2408, bayat cfo_import_project) insanda"
+score_change: "unchanged — Durum kaydı mutabakatı: açık özet satırı (eski CRITICAL 1 · HIGH 4) Durum kaydından yeniden sayıldı (CRITICAL 2 · HIGH 5, kimlikleriyle) ve drift testine bağlandı; RF-006 otomasyonu kanıtlanmadı (ilk cron koşusu 13:xx UTC), RF-036 sanal stok hâlâ net sermayede (migration 130000 açık onay bekliyor) — skor bunlar kanıtlanınca yeniden değerlendirilir"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -14,7 +14,7 @@ score_change: "unchanged — RF-020 MITIGATED + CFO-018 kısım 1: gümrük reze
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-10):** CRITICAL 1 · HIGH 4 açık (RESOLVED dışı) — ayrıntı aşağıdaki **Durum kaydı** tablosunda (makine okunur).
+**Açık özet:** CRITICAL 2 (RF-20261008-001, RF-20261010-036) · HIGH 5 (RF-20261008-002, RF-20261008-003, RF-20261008-006, RF-20261008-009, RF-20261010-038) açık (RESOLVED dışı) — tek doğru kaynak aşağıdaki **Durum kaydı** tablosu; bu satır ve frontmatter `open_critical`/`open_high` CI'da (`cfo-governance-drift`) ondan yeniden sayılır.
 
 ---
 
@@ -29,7 +29,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-003 | HIGH | MITIGATED | TCMB tek stratejik kur (CFO-003); 10.10: eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR (`|| 1` kalktı) ✓; SQL 48,5 / 1 yedekleri + snapshot kur döngüsü → migration 120000 (bekletilen, üretim uygulaması bekliyor); 10.10 CFO-023: `/admin/yeni-urunler` marjı 48,5 sabiti → güncel kur ✓ |
 | RF-20261008-004 | HIGH | RESOLVED | 2026-10-09, 110000 + 160000 üretimde |
 | RF-20261008-005 | HIGH | RESOLVED | 2026-10-09, 100000 üretimde |
-| RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; 10.10: motorun kendi Vercel cron'u (03:xx/13:xx UTC) + çalışma döngüsü cron'u (06:xx UTC) — senkron zincirinde motor atlanıyordu; kalan: WhatsApp şablon/alıcı yapılandırması |
+| RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; 10.10: motorun kendi Vercel cron'u (03:xx/13:xx UTC) + çalışma döngüsü cron'u (06:xx UTC) — senkron zincirinde motor atlanıyordu; **otomasyon KANITLANMADI** (kod + CI ✓; 10.10 08:25 UTC'de son motor koşusu 09.10 23:48 UTC, bağımsız cron'dan henüz koşu yok; ilk beklenen 13:xx UTC, doğrulama 14:10 UTC ve 11.10 07:10 UTC); kalan: ilk iki gün cron koşuları + WhatsApp şablon/alıcı yapılandırması |
 | RF-20261008-007 | MEDIUM | RESOLVED | HIGH→MEDIUM; CFO-010 ✅ 2026-10-09 (ödeme durumu tek kaynak takvim) |
 | RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
 | RF-20261008-009 | HIGH | MITIGATED | 10.10 CFO-008: tek ciro kaynağı (Goal Engine satırları) tüm manşet ciro yüzeylerinde ✓; AI CFO satış dönemleri + REVENUE_DEVIATION aynı kaynaktan, yalnız tam günler ✓ kod; RESOLVED: ilk üretim AI CFO koşusunda gözlem |
@@ -59,7 +59,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261009-032 | MEDIUM | IN_PROGRESS | 10.10 karar (Alperen): EPTT tahmini komisyon kanal marjında (measured=false) ✓; 6 kanal + FBA oran belgesine kadar UNKNOWN (%20 yer tutucu yok); kalan: oran belgeleri / hakediş dökümleri (CFO-027 yolu) |
 | RF-20261010-034 | MEDIUM | RESOLVED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
 | RF-20261010-035 | LOW | OPEN | latent: eksi bakiyeli KMH hesabında "nakit/dip + boş KMH" kullanımı iki kez düşer (kaynak yeterliliği, ön uçuş, gümrük dilimi); bugün etki 0 → CFO-030 |
-| RF-20261010-036 | CRITICAL | OPEN | sanal stok (cfo_stok_istisna 40005100051) net sermayede 1.025.723 TL; düzeltme migration 130000 (CFO-031) bekletilen — Alperen onayı + beyan teyidi |
+| RF-20261010-036 | CRITICAL | OPEN | sanal stok (cfo_stok_istisna 40005100051) net sermayede 1.025.723 TL; 10.10 08:25 UTC yeniden ölçüldü: hâlâ `gercek_stok=true`, 2.513 adet, maliyet 1.230.867 TL, net sermaye 2.401.170,03 (düzeltilmiş ≈1.383.530) — düzeltme migration 130000 (CFO-031) bekletilen, AÇIK üretim onayı bekliyor |
 | RF-20261010-037 | MEDIUM | IN_PROGRESS | gerçek stok 4 kural; CFO-029 etki/alarm net sermaye kuralına hizalandı ✓ kod; kalan: 1.000–5.000 adetlik 3 SKU (1,18M TL) gerçek mi (AL-CAM03 10.07'den beri senkronsuz) — Alperen |
 | RF-20261010-038 | HIGH | MITIGATED | CFO çalışma döngüsü 09.10 02:34'ten beri bağlam aşamasında 3B001; düzeltme kodda (savepoint-source.ts, sorgular sıralı); RESOLVED: üretimde ilk tamamlanan döngü |
 
@@ -687,3 +687,15 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   kesin 400.000 (bilgi satırı 100.000 fazla); `cfo_import_project` 07.26sea durum/gümrük tahmini güncellenmeli ya da tüketicileri (borç
   tahmini `importsPaid`/gümrük eşleştirmesi, `/cfo/gumruk` parti tablosu) takvim/deftere taşınmalı (CFO-018).
 - Yeni red flag yok (taban ihlali zaten `floor_breach` alarmı + projeksiyon dibinde görünür).
+
+## 2026-10-10 — Durum kaydı mutabakatı (Alperen: sanal stok · otomasyon kanıtı · özet tutarsızlığı)
+
+- **Özet tutarsızlığı (düzeltildi):** frontmatter `open_critical: 2` / `open_high: 5` doğruydu; belge başındaki "Açık özet" satırı eski
+  "CRITICAL 1 · HIGH 4" idi. Durum kaydından yeniden sayıldı: CRITICAL 2 (RF-20261008-001 IN_PROGRESS, RF-20261010-036 OPEN), HIGH 5
+  (RF-20261008-002 IN_PROGRESS, RF-20261008-003 MITIGATED, RF-20261008-006 IN_PROGRESS, RF-20261008-009 MITIGATED, RF-20261010-038 MITIGATED).
+  Özet satırı artık kimlikleri de taşır ve tarih taşımaz. Kalıcı koruma: `cfo-governance-drift` 3b — Açık özet satırı Durum kaydıyla
+  sayı + kimlik olarak birebir; beş belgede başka sayı özeti ancak "tarihsel" etiketiyle (Master Plan'daki iki denetim-anı sayısı etiketlendi).
+  Eski özet satırıyla test FAIL verdiği doğrulandı.
+- **RF-20261008-006 — otomasyon kanıtlanmadı:** kod birleşti ve CI yeşil, fakat ilk gerçek zamanlanmış koşu henüz yok (yukarıdaki satır).
+  RESOLVED/MITIGATED'e geçiş yalnız `cfo_run`'da cron kaynaklı tamamlanmış motor koşusu + `cfo-cycle` tamamlanması gözlenince.
+- **RF-20261010-036 — sanal stok:** yeniden ölçüldü (yukarıdaki satır); migration 130000 yalnız Alperen'in açık üretim onayıyla uygulanır.
