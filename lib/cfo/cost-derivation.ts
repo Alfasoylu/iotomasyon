@@ -11,7 +11,7 @@
 //   RMB/USD tek kaynak lib/fx/current.ts (elle girilen aylık kur, sabit yedek yok); RMB bilinmiyor ya da USD/TRY "varsayılan" ise
 //   HİÇBİR ŞEY yazılmaz (kur_bilinmiyor). İthalatçı görünümü ve sermaye sağlığı aynı kuru kullanır.
 // Yuvarlama 2026-10-10 tek seferlik türetmeyle aynı: USD 4 hane, TL = round(toplam USD × kur, 2), gümrük % 1 hane.
-import { calcImportCost, DROPSHIP_STOCK_THRESHOLD } from "../importer-cost";
+import { calcImportCost } from "../importer-cost";
 
 export const COST_DERIVATION_SOURCE = "CFO-029 maliyet türetme";
 export const DOMESTIC_PREF = "IC_PIYASA";
@@ -29,6 +29,10 @@ export type CostRow = {
   /** cfo_gtip_tarife en uzun önek yükü (%; KDV + ÖTV dahil, 1 hane); GTİP ya da tarife yoksa null. */
   tariffBurdenPct: number | null;
   stock: number;
+  /** Net sermaye sözleşmesi bu ürünün stoğunu değerliyor mu (cfo_stok_deger.gercek_stok: kukla adet / >5000 / sanal stok istisnası
+   *  değil). RF-037: etki toplamı ve cost_jump alarmı net sermayeyle AYNI kuraldan — önceden "1–999" kuralı 1.194 adetlik M-BANYOMİX'i
+   *  (net sermayede −83.928 TL) görmüyordu. */
+  valuedStock: boolean;
 };
 export type CostFx = { usdTry: number; rmbPerUsd: number | null; usdTrySource: string; rmbSource: string };
 export type CostField = "customsRatePct" | "unitCostUsd" | "unitCostTry";
@@ -36,7 +40,7 @@ export type CostUpdate = {
   sku: string; kind: "ITHAL" | "YURTICI" | "USD"; method: "SEA" | "AIR" | null;
   old: Record<CostField, string | null>; next: Record<CostField, string | null>;
   changes: { field: CostField; old: string | null; new: string }[];
-  /** Değerlenen stok (1–999; ≥1000 dropship yer tutucusu sayılmaz) × TL farkı — KDV dahil. */
+  /** Net sermayenin değerlediği stok (valuedStock) × TL farkı — KDV dahil. */
   deltaStockTry: number; pct: number | null; stock: number;
 };
 export type CostDerivation = {
@@ -47,7 +51,7 @@ export type CostDerivation = {
 
 const num = (s: string | null) => (s == null || s.trim() === "" ? null : Number(s));
 const r = (v: number, d: number) => { const k = 10 ** d; return Math.round(v * k) / k; };
-const valuedStock = (s: number) => (s > 0 && s < DROPSHIP_STOCK_THRESHOLD ? s : 0);
+const valuedStock = (p: Pick<CostRow, "stock" | "valuedStock">) => (p.valuedStock && p.stock > 0 ? p.stock : 0);
 
 export function deriveUnitCosts(rows: CostRow[], fx: CostFx): CostDerivation {
   const out: CostDerivation = { status: "ok", fx, updates: [], skipped: [], unchanged: 0, deltaStockTry: 0, bigMovers: [] };
@@ -91,7 +95,7 @@ export function deriveUnitCosts(rows: CostRow[], fx: CostFx): CostDerivation {
     }
     if (!changes.length) { out.unchanged++; continue; }
     const oT = num(old.unitCostTry), nT = num(next.unitCostTry)!;
-    const stock = valuedStock(p.stock);
+    const stock = valuedStock(p);
     const u: CostUpdate = { sku: p.sku, kind, method, old, next, changes, stock,
       deltaStockTry: r(stock * (nT - (oT ?? 0)), 2), pct: oT != null && oT > 0 ? r((nT / oT - 1) * 100, 1) : null };
     out.updates.push(u);

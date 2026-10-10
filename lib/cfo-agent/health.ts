@@ -162,14 +162,15 @@ export function dutyGapSql(): string {
     from g`;
 }
 
-/** CFO-029: son 26 saatte otomatik türetmenin değiştirdiği birim TL maliyetleri (günlükten) — değerlenen stok 1–999. */
+/** CFO-029: son 26 saatte otomatik türetmenin değiştirdiği birim TL maliyetleri (günlükten) — net sermayenin değerlediği stok
+ *  (cfo_stok_deger.gercek_stok; RF-037: önceden "1–999" kuralı 1.000+ adetlik gerçek stoğu görmüyordu). */
 export function costJumpSql(): string {
   return `with c as (select left(l.item, length(l.item) - 12) as sku, l."oldValue"::numeric as o, l."newValue"::numeric as n, l."changedAt" as at
         from public.cfo_change_log l
        where l.source = '${COST_DERIVATION_SOURCE}' and l.item like '% unitCostTry' and l."changedAt" >= now() - interval '26 hours'
          and l."oldValue" ~ '^[0-9]+(\\.[0-9]+)?$' and l."newValue" ~ '^[0-9]+(\\.[0-9]+)?$'),
-    d as (select c.sku, c.o, c.n, c.at, case when p."stockQuantity" > 0 and p."stockQuantity" < 1000 then p."stockQuantity" else 0 end as stok
-        from c join public."Product" p on p.sku = c.sku)
+    d as (select c.sku, c.o, c.n, c.at, case when sd.gercek_stok then sd.stok else 0 end as stok
+        from c left join public.cfo_stok_deger sd on sd.sku = c.sku)
     select count(*) filter (where stok > 0 and o > 0 and abs(n / o - 1) * 100 >= ${COST_JUMP_PCT})::int as big,
       coalesce(sum(stok * (n - o)), 0) as delta,
       (select sku || ' ' || o::text || ' → ' || n::text || ' TL × ' || stok from d where stok > 0 order by abs(stok * (n - o)) desc limit 1) as worst,
