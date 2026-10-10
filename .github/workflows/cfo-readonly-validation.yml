@@ -114,6 +114,7 @@ jobs:
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-health.test.ts
       - run: node --conditions=react-server --import tsx __tests__/cfo-capacity.test.ts
       - run: node --import tsx __tests__/cfo-dead-stock-value.test.ts
+      - run: node --conditions=react-server --import tsx __tests__/cfo-cash-path.test.ts
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-context-blocks.test.ts
       - run: node --import tsx __tests__/ai-cfo-bank-rollforward.test.ts
       - run: node --conditions=react-server --import tsx __tests__/ai-cfo-store.test.ts

@@ -3,6 +3,7 @@ import { CreditCard } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { loadCfoData } from "@/lib/cfo/queries";
+import { loadCashHorizons } from "@/lib/cfo/cash-path";
 import { num, numOrNull, remainingInstallments } from "@/lib/cfo/engine";
 import { cardEffectiveMonthlyRate } from "@/lib/cfo/card-cost";
 import { isPersonalCard } from "@/lib/cfo/ownership";
@@ -30,11 +31,12 @@ export const dynamic = "force-dynamic";
 export default async function CfoDebtsPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
   const db = { query: <T extends Record<string, unknown>>(sql: string, ...params: unknown[]) => prisma.$queryRawUnsafe<T[]>(sql, ...params) };
-  const [{ raw, overview: o }, sozlesme, gate] = await Promise.all([
+  const [{ raw, overview: o }, sozlesme, gate, yol] = await Promise.all([
     loadCfoData(),
     // Finansal borcun tek tanımı (CFO-002): sira 1–3 bileşen, 90+ BİLGİ (toplama girmez), 100 toplam. Goal ve sipariş kapısı aynı sayıyı okur.
     prisma.$queryRaw<{ sira: number; tur: string; kalem: string; tutar: unknown; aciklama: string | null }[]>`select * from cfo_metrik_borc() order by sira`.catch(() => null),
     readOrderDebtGate(db, new Date()),
+    loadCashHorizons(),
   ]);
   const toplamBorc = sozlesme?.find((r) => r.sira === 100);
   const toplamTry = toplamBorc?.tutar == null ? null : Number(toplamBorc.tutar);
@@ -318,7 +320,7 @@ export default async function CfoDebtsPage() {
             <Th right>Net</Th><Th right>Nakit pozisyonu</Th><Th right>Kalan KMH kapasitesi</Th><Th>Durum</Th>
           </tr>
         }>
-          {o.monthEnds.map((m) => (
+          {yol.monthEnds.map((m) => (
             <tr key={m.label}>
               <Td strong>{m.label}</Td>
               <Td right muted>{m.days}</Td>
