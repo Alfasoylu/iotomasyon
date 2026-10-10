@@ -6,10 +6,12 @@ import { vector } from "@electric-sql/pglite/vector";
 import { bootstrap } from "../scripts/schema-baseline/bootstrap";
 import { computeCfo, buildDailyActions, type CfoInput } from "../lib/cfo/engine";
 import { REVIEWED_SOURCE_HASHES } from "../lib/cfo-agent/reviewed-sources";
+import { PAYMENT_CAPACITY_SQL } from "../lib/cfo/payment-capacity";
+import { loadDownside } from "../lib/cfo/downside-data";
 
 // CFO-013 (RF-20261008-015) TEK NAKİT YOLU — migration 20261010110000: nakit projeksiyonu = ödeme takvimi. Üretim kopyasında:
 // vadesi geçmiş ödenmemiş çıkış / tahsil edilmemiş alacak / diğer tahsilat projeksiyonda BUGÜNE taşınır, diğer tahsilat dahil,
-// takvim açılışı şahsi hariç (cfo_nakit_kapisi), her gün pozisyon = takvim gün sonu nakdi; yetkiler ve AI CFO hash geçişi.
+// takvim açılışı şahsi hariç (cfo_nakit_kapisi), her gün pozisyon = takvim gün sonu nakdi; yetkiler ve AI CFO incelenmiş hash'i.
 // Eski motor (lib/cfo/engine.ts) aynı kural. Çalıştır: node --conditions=react-server --import tsx __tests__/cfo-tek-nakit-yolu.test.ts
 
 // ── Eski motor: vadesi geçmiş kalem pencerede bugün vadeli; günlük eylem önce vadesi geçmiş ödemeyi söyler ──
@@ -34,21 +36,22 @@ async function main() {
       create role cfo_acceptance_reader login nosuperuser nobypassrls;`);
     const res = await bootstrap({ exec: (s: string) => pg.exec(s), query: <T,>(s: string, p?: unknown[]) => pg.query<T>(s, p) });
     const MIG = "20261010110000_cfo_tek_nakit_yolu";
-    assert.ok(res.pendingNotInProduction.includes(MIG), "üretime henüz uygulanmadı (bekletilen; açık onay)");
-    for (const m of res.pendingInProduction) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
+    assert.ok(res.pendingInProduction.includes(MIG) && !res.pendingNotInProduction.includes(MIG), "üretimde uygulandı (2026-10-10, Alperen onayı)");
+    for (const m of res.pendingInProduction.filter(x => x !== MIG)) await pg.exec(readFileSync(`prisma/migrations/${m}/migration.sql`, "utf8"));
     await pg.exec("set search_path = public");
     const q = async <T,>(s: string) => (await pg.query<T>(s)).rows;
     const defHash = async () => createHash("sha256").update((await q<{ d: string }>(`select pg_get_functiondef('public.cfo_nakit_projeksiyon(integer)'::regprocedure) d`))[0].d).digest("hex");
-    const accepted = REVIEWED_SOURCE_HASHES.cfo_nakit_projeksiyon as readonly string[];
-    assert.equal(await defHash(), accepted[1], "üretim kopyası: eski tanımın hash'i AI CFO'nun incelenmiş hash'iyle aynı (biçim üretimle birebir)");
+    // 110000 öncesi üretim tanımının (baseline 2026-10-06) hash'i: PGlite biçimi üretimle birebir
+    assert.equal(await defHash(), "3d5a2913aabf4835dd42fe4b28e1f6cdee130b1ee08716e31af1c622c4f17db2", "üretim kopyası: 110000 öncesi tanım");
 
     const sql = readFileSync(`prisma/migrations/${MIG}/migration.sql`, "utf8");
     await pg.exec(sql); await pg.exec(sql);
-    assert.equal(await defHash(), accepted[0], "yeni tanımın hash'i geçiş listesinde (deploy DDL'den önce olsa da profil kapanmaz)");
+    assert.equal(await defHash(), REVIEWED_SOURCE_HASHES.cfo_nakit_projeksiyon, "yeni tanımın hash'i AI CFO'nun incelenmiş hash'i (üretimde ölçülen 9f3b9b2e…)");
 
     await pg.exec(`delete from cfo_bank_account; delete from cfo_receivable; delete from cfo_cash_event;
-      insert into cfo_bank_account (id, name, "accountType", "balanceTry", "isActive", "updatedAt") values
-        ('b1','Şirket','Vadesiz + KMH',100000,true,now()), ('b2','Alp','Şahsi vadesiz',500,true,now());
+      insert into cfo_bank_account (id, name, "accountType", "balanceTry", "kmhLimitTry", "purposeLimitTry", "isActive", "updatedAt") values
+        ('b1','Şirket','Vadesiz + KMH',100000,200000,40000,true,now()), ('b2','Alp','vadesiz + kmh (şahsi)',500,30000,7000,true,now()),
+        ('b3','Bakiyesiz','Vadesiz + KMH',null,50000,null,true,now()), ('b4','Pasif','Vadesiz + KMH',9999,99999,null,false,now());
       insert into cfo_receivable (id, channel, "dueDate", "amountTry", "isCollected", "updatedAt") values
         ('r0','Trendyol', current_date - 3, 2000, false, now()), ('r1','Trendyol', current_date + 5, 5000, false, now()),
         ('r2','Trendyol', current_date - 20, 4000, true, now());
@@ -74,6 +77,16 @@ async function main() {
     }
     const [m] = await q<{ b: string }>(`select banka_nakit::text b from cfo_nakit_mutabakat`);
     assert.equal(Number(m.b), 100000, "mutabakat bankası takvimle aynı taban (şahsi hariç)");
+    // /cfo/odemeler kapasitesi (RF-010 son parça): açılış = şirket nakdi = takvim açılışı; bilinmeyen bakiyeli limit kapasiteye girmez
+    const [cap] = await q<Record<string, string | null>>(PAYMENT_CAPACITY_SQL);
+    const [kap] = await q<{ n: string }>(`select nakit_try::text n from cfo_nakit_kapisi`);
+    assert.deepEqual(["acilis", "ticari_kmh", "bilinmeyen_kmh", "sahsi_kmh", "amac_kmh"].map(c => Number(cap[c])), [100000, 200000, 50000, 30000, 40000],
+      "kapasite: şahsi (küçük harf 'şahsi' dahil) ve pasif hariç, bakiyesiz hesabın limiti ayrı");
+    assert.equal(Number(cap.acilis), Number(kap.n), "kapasite açılışı = cfo_nakit_kapisi = takvim açılışı");
+    // Aşağı yön senaryosu projeksiyonu bileşenlerine ayırır (lib/cfo/downside-data.ts): vadesi geçmiş + diğer tahsilat dahil eşlik bozulmaz
+    const down = await loadDownside(q);
+    assert.ok(down, "aşağı yön yüklenir");
+    assert.deepEqual([down!.parity.mismatchDays, down!.parity.days], [0, 121], "downside akışı = cfo_nakit_projeksiyon (her gün, CFO-013 kuralı)");
     assert.ok((await q(`select * from cfo_nakit_dibi`)).length > 0, "bağımlı görünüm çalışır");
 
     const pr = (await q<{ f: boolean; v: boolean; a: boolean }>(`select has_function_privilege('cfo_acceptance_reader','public.cfo_nakit_projeksiyon(integer)','execute') f,
@@ -82,5 +95,5 @@ async function main() {
   } finally { await pg.close(); }
 }
 
-main().then(() => console.log("CFO-013 tek nakit yolu: vadesi geçmiş bugüne, diğer tahsilat, şahsi hariç açılış, projeksiyon = takvim (her gün), mutabakat tabanı, yetkiler, hash geçişi, eski motor passed"),
+main().then(() => console.log("CFO-013 tek nakit yolu: vadesi geçmiş bugüne, diğer tahsilat, şahsi hariç açılış, projeksiyon = takvim (her gün), mutabakat tabanı, ödeme kapasitesi, aşağı yön eşliği, yetkiler, incelenmiş hash, eski motor passed"),
   e => { console.error(e); process.exitCode = 1; });

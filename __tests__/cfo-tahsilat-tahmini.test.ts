@@ -40,10 +40,11 @@ async function main() {
       [["Hepsiburada", 5, 6, (20000 / 30).toFixed(2)], ["N11", -1, 0, (9000 / 30).toFixed(2)], ["Trendyol", 10, 11, (140000 / 30).toFixed(2)]],
       "her kanal kendi ufkundan sonra; tahsil edilmiş kayıt tempoya girer; 30 günden eski kanal tahmin üretmez");
 
-    // 2) Projeksiyonla birebir: her gün giris = açık alacak + tahmin (projeksiyon günlük yuvarlar)
+    // 2) Projeksiyonla birebir: her gün giris = açık alacak + tahmin + diğer tahsilat (inflowTry — CFO-013, migration 110000; projeksiyon günlük yuvarlar)
     const fark = await q<{ tarih: string; giris: string; beklenen: string }>(`select p.tarih::text, p.giris::text,
         round(coalesce((select sum("amountTry") from cfo_receivable r where not "isCollected" and r."dueDate"::date = p.tarih),0)
-          + coalesce((select sum(tutar) from cfo_tahsilat_tahmini t where t.tarih = p.tarih),0))::text beklenen
+          + coalesce((select sum(tutar) from cfo_tahsilat_tahmini t where t.tarih = p.tarih),0)
+          + coalesce((select sum("inflowTry") from cfo_cash_event e where not "isSettled" and e."eventDate"::date = p.tarih),0))::text beklenen
       from cfo_nakit_projeksiyon(120) p`);
     assert.equal(fark.length, 121);
     assert.deepEqual(fark.filter(r => r.giris !== r.beklenen), [], "cfo_nakit_projeksiyon tah = cfo_tahsilat_tahmini (121 gün)");
@@ -68,17 +69,16 @@ async function main() {
     assert.equal((await q(`select 1 from cfo_yaklasan_odeme where id like 'tahmin:%' and tarih <= current_date + 10 and aciklama like '%Trendyol%'`)).length, 0,
       "Trendyol alacak ufku içinde tahmin yok (çift sayım yok)");
 
-    // 5) iki nesnenin dipleri artık aynı mekanizmadan: başlangıç nakdi eşitken pozisyonlar günlük yuvarlama farkı içinde
-    //    (projeksiyon gerçek inflowTry'ı okumaz — o fark ayrıca düşülür; kalan yalnız günlük yuvarlama)
-    const poz = await q<{ fark: string }>(`select max(abs(p.pozisyon - (o.gun_sonu_nakit - coalesce((select sum("inflowTry") from cfo_cash_event e
-        where not "isSettled" and e."eventDate"::date <= o.tarih), 0))))::text fark from cfo_nakit_projeksiyon(120) p
+    // 5) iki nesnenin dipleri aynı mekanizmadan: başlangıç nakdi eşitken pozisyonlar günlük yuvarlama farkı içinde
+    //    (CFO-013 sonrası projeksiyon diğer tahsilatı da okur → doğrudan eşit; kalan yalnız günlük yuvarlama)
+    const poz = await q<{ fark: string }>(`select max(abs(p.pozisyon - o.gun_sonu_nakit))::text fark from cfo_nakit_projeksiyon(120) p
       join cfo_odeme_gunluk o on o.tarih = p.tarih where (select nakit_try from cfo_nakit_kapisi) = (select sum("balanceTry") from cfo_bank_account where "isActive")`);
     assert.ok(poz[0].fark != null, "başlangıç nakdi iki nesnede eşit (fikstür)");
     assert.ok(Number(poz[0].fark) <= 61, `pozisyon farkı yalnız günlük yuvarlama: ${poz[0].fark}`);
 
     // 6) yeni görünüme anon/authenticated/PUBLIC erişemez
     assert.deepEqual(await q(`select grantee from information_schema.role_table_grants where table_name='cfo_tahsilat_tahmini' and grantee in ('anon','authenticated','PUBLIC')`), []);
-    console.log("cfo_tahsilat_tahmini: channel horizons + tempo, projection parity (121 days), cfo_odeme_gunluk = receivables + forecast + real inflow, view types/ids, no double count, ACL passed");
+    console.log("cfo_tahsilat_tahmini: channel horizons + tempo, projection parity incl. other inflows (121 days), cfo_odeme_gunluk = receivables + forecast + real inflow, view types/ids, no double count, ACL passed");
   } finally { await pg.close(); }
 }
 main().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });

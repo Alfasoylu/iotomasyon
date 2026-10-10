@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:20 TR
-current_main_commit: bc29fdd
+last_updated: 2026-10-10 03:30 TR
+current_main_commit: ff42814
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000, main'de bekletilen) → CFO-028 kararları (EPTT tahmini komisyon, diğer kanal oran belgeleri) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
+current_score: 59/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kararlarının uygulanması (EPTT tahmini komisyon, 2 belge kategorisi; diğer kanallar oran belgesine kadar UNKNOWN) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
 open_critical: 1
-open_high: 5
-score_change: "unchanged — CFO-013 kodu main'de (DDL bekletilen, onay bekliyor); CFO-028 salt-okunur ölçüm: EPTT komisyon oranı var tutar yok (≈308k TL/yıl görünmüyor), 6 kanal + FBA veri yok (≈290–390k TL/yıl) — karar Alperen'de; 4. boyut (marj) karar uygulanınca yeniden puanlanır"
+open_high: 4
+score_change: "58→59 — CFO-013 tek nakit yolu üretimde (migration 110000: projeksiyon dibi = takvim dibi, en büyük günlük fark 0,52 TL, her gün eşitlik testli) + CFO-006 son parçası (ödeme kapasitesi açılışı şahsi hariç, tek kural): likidite boyutu 11→12; RF-010 (HIGH) ve RF-015 RESOLVED"
 ---
 
 # CFO SCORECARD
@@ -52,12 +52,12 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 
 **Gate durumu: 5/12.** Skor 90'ı geçse bile gate'ler geçmeden sistem "mükemmel" sayılmaz.
 
-## Puan — güncel (2026-10-09 akşam; başlangıç 2026-10-08 = 48)
+## Puan — güncel (2026-10-10; başlangıç 2026-10-08 = 48)
 
 | # | Boyut | Ağırlık | Puan | Kanıt (artı) | Kanıt (eksi) |
 |---|---|---|---|---|---|
 | 1 | Financial accuracy & reconciliation | 20 | **9** | Kanonik satış + aylık mutabakat (`fm_sales_reconciliation_monthly`); maliyet kapsamı tek tanım + kova toplamı = ciro testi; projeksiyon eşlik testi (downside parity); mükerrer anahtar düzeltildi | Net sermaye ve borç tek tanım üretimde, v3 Goal doğrulaması 10.10 bekliyor; kur 4, ciro 7, marj 5 tanım; atıf kimliği bozuk (migration 230000 onay bekliyor) |
-| 2 | Cash / liquidity / debt | 15 | **11** | Ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik, ödeme takvimi | SQL görünümlerinde şirket/şahsi ifadeleri ayrı (bugün sonuç aynı; CFO-006 DDL onayı); takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş; vadesi geçmiş kalem projeksiyondan düşüyor (CFO-013) |
+| 2 | Cash / liquidity / debt | 15 | **12** | TEK NAKİT YOLU üretimde (CFO-013, 10.10: projeksiyon dibi = takvim dibi, günlük fark ≤0,52 TL, her gün eşitlik testli; vadesi geçmiş kalem bugüne); şirket/şahsi tek kural TS + SQL + ödeme kapasitesi (CFO-006 ✅); ödeme alarmı tek kaynak (takvim) + defter↔takvim boşluk ve mükerrer taksit alarmı (CFO-010); 120 gün projeksiyon, tek tahsilat mekanizması, kademeli faiz, kapasite alarmı, CASH_CRITICAL faizli tetik | takvimde mükerrer taksit (RF-029, veri); 8 limitin oranı ölçülmemiş (RF-018, veri); KMH kapasitesi iki ayrıştırma (RF-035 latent: kaynak yeterliliği eksi bakiyede kullanımı iki kez düşer; bugün etki 0) |
 | 3 | Capital allocation | 15 | **8** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
 | 4 | Revenue / profitability | 10 | **5** | KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); 7 ciro formülü; iade marja bağlı değil |
 | 5 | Inventory / procurement | 10 | **6** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam; GTİP 433/433 + yasal gümrük yükü ve `duty_gap` alarmı | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
@@ -66,7 +66,7 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; SAĞLIK alarmı (takılan/başarısız/bayat motor) kodda, üretimde migration 150000 bekliyor; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **3** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü, uygulama bypassrls ile bağlanıyor |
-| | **TOPLAM** | **100** | **58** | | |
+| | **TOPLAM** | **100** | **59** | | |
 
 ## Skor geçmişi
 
@@ -91,3 +91,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 6283500 | 58 | 5/12 | Değişmedi (bilinçli): CFO-029 kodu (motordan otomatik maliyet, GTİP gümrüğü, korumalı yazma, `cost_jump` alarmı) test edildi ama üretimde henüz koşmadı; 1./3. boyut ilk koşu kuru çalıştırmayla doğrulanınca yeniden puanlanır |
 | 2026-10-10 | 81ed6dc | 58 | 5/12 | Değişmedi (bilinçli): PR #250 — CFO-029 otomatik maliyet + RMB/USD tek kaynak (6,7, sabit yedek yok; 335 ürün düzeltildi, net sermaye +7.405,67 TL) üretimde, ilk otomatik koşu 10.10 05:00 TR; CFO-013 tek nakit yolu kodu hazır, DDL onayı bekliyor. 1./3. boyut ilk koşu ve CFO-013 uygulanınca yeniden puanlanır |
 | 2026-10-10 | bc29fdd | 58 | 5/12 | Değişmedi (bilinçli): PR #251 CFO-013 tek nakit yolu kodu (migration 110000 bekletilen, üretim DDL onayı bekliyor; eski motor ve hash geçişi yayında) üretim davranışını değiştirmedi; CFO-028 ölçümü salt-okunur. Likidite (CFO-013 uygulanınca) ve marj (CFO-028 kararıyla) boyutları yeniden puanlanacak |
+| 2026-10-10 | ff42814 | 59 | 5/12 | 58→59: CFO-013 tek nakit yolu üretimde (migration 110000, Alperen onayı; projeksiyon dibi = takvim dibi) + CFO-006 son parçası (ödeme kapasitesi tek kural) → likidite 11→12; RF-010 (HIGH) ve RF-015 RESOLVED. Gate'ler değişmedi (H2/H8 diğer metriklerde açık) |

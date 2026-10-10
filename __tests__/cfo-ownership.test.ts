@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite/vector";
 import { bootstrap } from "../scripts/schema-baseline/bootstrap";
@@ -14,6 +15,11 @@ const ACCOUNTS: [string, boolean][] = [
 const CARDS: [string | null, boolean][] = [
   ["Alp", true], [" alp ", true], ["ALP", true], ["Şirket", false], ["Alfa — Alperen (ana kart)", false], ["Alfa — Fatih (ek kart)", false], [null, false],
 ];
+
+// Kod tabanında şahsi hesap için kendi kalıbını kuran sorgu kalmaz (2026-10-10: /cfo/odemeler kapasitesi `like '%ŞAHSİ%'` idi → cfo_hesap_sahsi)
+const ownRules = execSync(`grep -rnE "(i?like|~\\*?) *'%?(ŞAHSİ|SAHSI|şahsi)" app lib services components || true`, { encoding: "utf8" })
+  .split("\n").filter(l => l && !/^[^:]+:\d+:\s*(\/\/|\*)/.test(l)).join("\n"); // yorum satırları hariç
+assert.equal(ownRules, "", `şahsi sınıflama tek kural (cfo_hesap_sahsi / personalAccountSql) dışında yazılmış:\n${ownRules}`);
 
 async function main() {
   // eski JS kuralı /ŞAHSİ/i küçük harf "şahsi"yi yakalamıyordu (İ'nin küçüğü "i̇") — yeni kural yakalar

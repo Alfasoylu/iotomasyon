@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:20 TR
-current_main_commit: bc29fdd
+last_updated: 2026-10-10 03:30 TR
+current_main_commit: ff42814
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000, main'de bekletilen) → CFO-028 kararları (EPTT tahmini komisyon, diğer kanal oran belgeleri) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
+current_score: 59/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kararlarının uygulanması (EPTT tahmini komisyon, 2 belge kategorisi; diğer kanallar oran belgesine kadar UNKNOWN) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
 open_critical: 1
-open_high: 5
-score_change: "unchanged — CFO-013 kodu main'de (DDL bekletilen, onay bekliyor); CFO-028 salt-okunur ölçüm: EPTT komisyon oranı var tutar yok (≈308k TL/yıl görünmüyor), 6 kanal + FBA veri yok (≈290–390k TL/yıl) — karar Alperen'de; 4. boyut (marj) karar uygulanınca yeniden puanlanır"
+open_high: 4
+score_change: "58→59 — CFO-013 tek nakit yolu üretimde (migration 110000: projeksiyon dibi = takvim dibi, en büyük günlük fark 0,52 TL, her gün eşitlik testli) + CFO-006 son parçası (ödeme kapasitesi açılışı şahsi hariç, tek kural): likidite boyutu 11→12; RF-010 (HIGH) ve RF-015 RESOLVED"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -14,7 +14,7 @@ score_change: "unchanged — CFO-013 kodu main'de (DDL bekletilen, onay bekliyor
 Kural: kayıtlar silinmez; çözülünce `status: RESOLVED (tarih, PR)` yazılır. Yeni göreve başlarken açık CRITICAL/HIGH'lar okunur.
 Severity: CRITICAL · HIGH · MEDIUM · LOW · INFO.
 
-**Açık özet (2026-10-09 akşam):** CRITICAL 1 · HIGH 5 açık (RESOLVED dışı) — ayrıntı aşağıdaki **Durum kaydı** tablosunda (makine okunur).
+**Açık özet (2026-10-10):** CRITICAL 1 · HIGH 4 açık (RESOLVED dışı) — ayrıntı aşağıdaki **Durum kaydı** tablosunda (makine okunur).
 
 ---
 
@@ -33,12 +33,12 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-007 | MEDIUM | RESOLVED | HIGH→MEDIUM; CFO-010 ✅ 2026-10-09 (ödeme durumu tek kaynak takvim) |
 | RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
 | RF-20261008-009 | HIGH | IN_PROGRESS | KDV hariç ciro + Alfashome üretimde; tek ciro fonksiyonu kalan (CFO-008) |
-| RF-20261008-010 | HIGH | MITIGATED | TS + SQL tek kural üretimde (migration 100000, 2026-10-10); kaynak yeterliliği çift sayımı düzeltildi; kalan ödeme takvimi açılışı (83 TL) → CFO-013 migration 110000 (hazır, onay bekliyor) |
+| RF-20261008-010 | HIGH | RESOLVED | 2026-10-10, CFO-006 ✅ — TS + SQL tek kural (100000), takvim/mutabakat açılışı şahsi hariç (110000), `/cfo/odemeler` kapasitesi `cfo_hesap_sahsi` |
 | RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017 migration 230000 üretimde (2026-10-09 akşam, kimlik farkı 0,00); ilk bileşenli snapshot 10.10 |
 | RF-20261008-012 | MEDIUM | IN_PROGRESS | yazma yolları yazma izni (PR #242); API anahtarı şifreleme, Cowork rolü kalan |
 | RF-20261008-013 | MEDIUM | OPEN | veri: 8 SKU maliyeti (CFO-011, Alperen) |
 | RF-20261008-014 | MEDIUM | OPEN | CFO-012 |
-| RF-20261008-015 | MEDIUM | FIX_READY | CFO-013 migration 110000 + test hazır (bekletilen); üretim DDL onayı bekliyor |
+| RF-20261008-015 | MEDIUM | RESOLVED | 2026-10-10, CFO-013 ✅ — migration 110000 üretimde; projeksiyon dibi = takvim dibi |
 | RF-20261008-016 | MEDIUM | IN_PROGRESS | CFO-014 kısım 1 (PR #240); eski motor kısmı CFO-018 |
 | RF-20261008-017 | MEDIUM | RESOLVED | 2026-10-09, CFO-019 |
 | RF-20261008-018 | MEDIUM | OPEN | veri: ölçülmemiş faiz oranları (CFO-015, Alperen) |
@@ -58,6 +58,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261010-033 | MEDIUM | MITIGATED | 335 + 8 üründe CFO maliyeti ithalat motorundan; CFO-029 otomatik türetme kodu hazır (Excel dışı 143 ürün dahil, ilk üretim koşusu 10.10 05:00 TR) — RESOLVED ilk koşu doğrulanınca |
 | RF-20261009-032 | MEDIUM | OPEN | 6 kanal + ePTT komisyonu kayıtsız; motor UNKNOWN, raporlar 0 (CFO-028; kanıt yolu CFO-027). 10.10 ölçüm: EPTT oran var tutar yok (≈308k TL/yıl), 6 kanal + FBA veri yok (≈290–390k TL/yıl); karar önerisi `docs/maliyet/2026-10-10-komisyon-kayitsiz-kanallar.md` |
 | RF-20261010-034 | MEDIUM | MITIGATED | RMB/USD dört değer (kural 6,7 · elle 6,8 · ayar 6,72 · kod 7,2/7,0) → tek kaynak MonthlyExchangeRate (6,7), sabit yedek yok; 335 ürün düzeltildi (+7.405,67 TL); kalan: 8 + 141 ürün CFO-029 ilk koşusu |
+| RF-20261010-035 | LOW | OPEN | latent: eksi bakiyeli KMH hesabında "nakit/dip + boş KMH" kullanımı iki kez düşer (kaynak yeterliliği, ön uçuş, gümrük dilimi); bugün etki 0 → CFO-030 |
 
 ## 2026-10-08 — İlk tam sistem denetimi (bağımsız dış denetçi bakışı)
 
@@ -489,3 +490,26 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 - `cfo_kart_karari` bugün en dibi −3.862.998 TL (2027-01-01) gösteriyor (08.10: −3.578.121, 01.12). Ufuk 120 gün kaydıkça Ocak ödemeleri girdi;
   ayrıca incelenecek (CFO-013 / RF-029 Yapı Kredi mükerrer satırları hâlâ projeksiyonda).
 
+## 2026-10-10 — Üretim senkronu (110000, CFO-013) + CFO-006 kapanışı RED FLAG PASS
+
+### RF-20261008-015 — güncelleme: RESOLVED (2026-10-10, CFO-013 ✅)
+- Migration `20261010110000_cfo_tek_nakit_yolu` üretimde (Claude Code, Alperen onayı; checksum dc105775…). Vadesi geçmiş ödenmemiş çıkış,
+  tahsil edilmemiş alacak ve diğer tahsilat projeksiyonda BUGÜN ("GECIKMIS"); eski motor aynı kural. Üretim: projeksiyon dibi −3.743.079 =
+  takvim dibi −3.743.078,66; 120 günde en büyük günlük fark 0,52 TL (tahmin kuruş yuvarlaması). Test `cfo-tek-nakit-yolu` her gün eşitliği doğrular.
+
+### RF-20261008-010 — güncelleme: RESOLVED (2026-10-10, CFO-006 ✅)
+- Bulgunun dört bileşeni: engine.ts (TS tek kural, 09.10) · `cfo_odeme_gunluk` açılışı şahsi dahil (110000 ile şirket nakdi) · `/cfo/odemeler`
+  kapasitesi (`like '%ŞAHSİ%'` + şahsi bakiye dahil açılış → `cfo_hesap_sahsi`, `lib/cfo/payment-capacity.ts`; bakiyesi bilinmeyen hesabın limiti
+  kapasiteye girmez) · `cfo_servet` nakdi şahsi dahil → bilinçli kapsam: net sermaye/borç hedef metrikleri D-P03 gereği şahsi kart/KMH'yi dahil
+  eder, nakit simetrik dahil (bugün 83,29 TL); likidite (dip, kapasite, mutabakat) yalnız şirket. Üretim taraması: şahsi kalıbını kendi kuran
+  görünüm/fonksiyon kalmadı; kod tabanında kalıp koruması `cfo-ownership` testinde (CI).
+
+### RF-20261010-035 — KMH kapasitesi iki ayrıştırma: eksi bakiyede kullanım iki kez düşer (YENİ, LOW, latent)
+- **date:** 2026-10-10 · **severity:** LOW (bugün etki 0) · **status:** OPEN
+- **finding:** `cfo_nakit_kapisi.nakit_try` banka bakiyelerinin toplamıdır (eksi bakiye dahil), `bos_kmh_try` = limit − kullanılan. `cfo_kaynak_yeterliligi`
+  ("GENEL TICARI KAYNAK" = nakit + boş KMH; "ACIK" = boş KMH + dip), `cfo_onucus_temel` ve `cfo_gumruk_dilim` ikisini toplar. Eksi bakiyeli hesapta
+  (ör. −200.000, limit 500.000) kullanılan KMH hem nakitte hem boş limitte düşer: kaynak 100.000 görünür, gerçek 300.000. `/cfo/odemeler` doğru
+  ayrıştırır (pozisyon + tam limit).
+- **evidence:** üretim 10.10 tanım taraması; bugün eksi bakiyeli şirket hesabı yok → fark 0.
+- **economic_risk:** yön temkinli (açık olduğundan derin) ama KMH kullanıldığı gün kaynak yeterliliği/ön uçuş gereksiz KIRMIZI verip siparişi durdurabilir.
+- **recommended_fix:** CFO-030 — kapasite tek ayrıştırma (pozisyon + tam limit) tek görünümde; tüketiciler oradan okur (migration, onay gerekir).

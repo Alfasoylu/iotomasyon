@@ -1,5 +1,11 @@
 # CFO-028 — Komisyonu kayıtsız kanallar: ölçüm ve karar önerisi (2026-10-10, salt-okunur)
 
+> **KARAR 2026-10-10 (Alperen: "Onaylıyorum" — §5'teki üç öneri):**
+> 1. EPTT tahmini komisyon = Entegra oranı × KDV dahil toplam, `measured=false`; SKU oran ölçümüne girmez; ham kayıt değişmez → uygulama aşağıda (§6).
+> 2. Diğer kanallar oran belgesi ya da hakediş dökümü gelene kadar UNKNOWN; %20 yer tutucu kullanılmaz.
+> 3. 2 belgenin kategorisi düzeltildi (üretim, 2026-10-10 ~00:40 UTC, korumalı tek işlem + `cfo_change_log` area `veri` kind `duzeltme` 2 satır):
+>    "Garanti bankası kredi kartı ekstresi" (Haziran) `KOMISYON_ORANI` → `KART_EKSTRESI`; "Trendyol konisyon indirim" (IMG_9502) `PLATFORM_FATURASI` → `KOMISYON_ORANI`.
+
 > Hiçbir veri yazılmadı. Kaynak: üretim `MarketplaceSalesRecord` (Entegra satış dışa aktarımı, `lib/entegra/parse.ts`:
 > "Komisyon Tutarı" → `commissionTry`, "Komisyon Oranı" → `commissionPct`), son 90 gün (2026-07-13 … 2026-10-05),
 > `cfo_belge` (CFO-027 belge kütüphanesi). Karar Alperen'de (motorun komisyon ölçüm kuralı 2026-10-06'da onaylandı:

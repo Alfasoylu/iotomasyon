@@ -4,7 +4,8 @@ import { isPersonalAccount } from "./ownership";
 
 // Aşağı yön senaryoları veri yükleyicisi (salt-okunur; /cfo/sermaye Prisma ile, AI CFO salt-okunur iş kaynağıyla çağırır).
 // Günlük akış cfo_nakit_projeksiyon(120) ile AYNI kurallarla, ama bileşenlerine ayrılmış okunur (fonksiyon yalnız toplam giriş
-// döndürüyor): defterdeki açık alacak / kanal temposundan tahmini tahsilat / çıkış / kur duyarlı çıkış (VERGI_GUMRUK).
+// döndürüyor): defterdeki açık alacak + diğer tahsilat / kanal temposundan tahmini tahsilat / çıkış / kur duyarlı çıkış (VERGI_GUMRUK).
+// Vadesi geçmiş kalemler bugüne taşınır (CFO-013, migration 110000 — fonksiyonla aynı).
 // Eşlik denetimi: her gün giriş ve çıkış fonksiyonla 1 TL içinde aynı olmalı; değilse `parity.mismatchDays` > 0 ve sonuç
 // "projeksiyonla uyuşmuyor" işaretlenir (fonksiyon değişmiş demektir — bu SQL güncellenmeli).
 // Kaynaklar: cfo_nakit_kapisi (nakit, boş genel KMH, amaca bağlı KMH), cfo_kaynak_yeterliligi ('Sahsi KMH' kalemi), taban Goal
@@ -21,10 +22,13 @@ with kanal as (
          coalesce(sum("amountTry") filter (where "dueDate" between current_date and current_date + 30), 0) / 30.0 gunluk
   from cfo_receivable where "dueDate" >= current_date - 30 group by channel),
 takvim as (select generate_series(current_date, current_date + ${HORIZON}, '1 day')::date d),
-gir as (select "dueDate"::date d, sum("amountTry") v from cfo_receivable
-        where not "isCollected" and "dueDate" between current_date and current_date + ${HORIZON} group by 1),
-cik as (select "eventDate"::date d, sum("outflowTry") v, sum("outflowTry") filter (where kind::text = 'VERGI_GUMRUK') fx from cfo_cash_event
-        where not "isSettled" and "eventDate" between current_date and current_date + ${HORIZON} group by 1),
+-- CFO-013 tek nakit yolu (migration 110000): vadesi geçmiş tahsil edilmemiş alacak / ödenmemiş çıkış / diğer tahsilat (inflowTry) BUGÜNE
+gir as (select greatest(x.d, current_date) d, sum(x.v) v from (
+          select "dueDate"::date d, "amountTry" v from cfo_receivable where not "isCollected" and "dueDate"::date <= current_date + ${HORIZON}
+          union all select "eventDate"::date, "inflowTry" from cfo_cash_event
+           where not "isSettled" and coalesce("inflowTry", 0) > 0 and "eventDate"::date <= current_date + ${HORIZON}) x group by 1),
+cik as (select greatest("eventDate"::date, current_date) d, sum("outflowTry") v, sum("outflowTry") filter (where kind::text = 'VERGI_GUMRUK') fx
+        from cfo_cash_event where not "isSettled" and coalesce("outflowTry", 0) > 0 and "eventDate"::date <= current_date + ${HORIZON} group by 1),
 tah as (select t.d, sum(k.gunluk) v from takvim t join kanal k on t.d > k.son_d and k.gunluk > 0 group by t.d)
 select t.d::text as date, coalesce(g.v, 0) as ledger_in, coalesce(th.v, 0) as forecast_in, coalesce(c.v, 0) as out, coalesce(c.fx, 0) as fx_out,
        p.giris as p_in, p.cikis as p_out

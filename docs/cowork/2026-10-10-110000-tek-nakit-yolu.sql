@@ -1,3 +1,4 @@
+-- UYGULANDI 2026-10-10 ~00:12 UTC (Claude Code, Alperen onayı "Onaylıyorum"): tek transaction; doğrulama sonuçları docs/CFO-BACKLOG.md CFO-013. TEKRAR ÇALIŞTIRMAYIN (idempotent ama _prisma_migrations satırı tekrar eklenir).
 -- Claude Code tek dosya — CFO-013 tek nakit yolu (migration 20261010110000_cfo_tek_nakit_yolu). ALPEREN'İN AÇIK ONAYIYLA uygulanır (üretim DDL).
 -- Tek transaction: migration gövdesi + _prisma_migrations kaydı (checksum dc1057756119a57215e172079cf4baf5240e88fdcd98e680f0d1289ba6233857). Ham veri değişmez: 3 görünüm + 1 fonksiyon tanımı.
 -- AI CFO incelenmiş kaynak hash'i: yeni tanım 9f3b9b2e… (PGlite'ta üretim biçimiyle ölçüldü; eski tanımın hash'i üretimle birebir) — kod geçiş listesinde.
