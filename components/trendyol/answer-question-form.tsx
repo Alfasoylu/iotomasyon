@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react";
 import { answerTrendyolQuestionAction } from "@/lib/actions/trendyol-question-actions";
 import { answerN11QuestionAction } from "@/lib/actions/n11-question-actions";
+import { answerKoctasMessageAction } from "@/lib/actions/koctas-message-actions";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   questionId: string;
   /** Hangi pazaryerine yanıt gider (varsayılan Trendyol). */
-  platform?: "TRENDYOL" | "N11";
+  platform?: "TRENDYOL" | "N11" | "KOCTAS";
   onSuccess?: () => void;
 }
 
@@ -21,7 +22,7 @@ export function AnswerQuestionForm({ questionId, platform = "TRENDYOL", onSucces
   function handleSubmit() {
     if (!text.trim()) return;
     startTransition(async () => {
-      const send = platform === "N11" ? answerN11QuestionAction : answerTrendyolQuestionAction;
+      const send = platform === "N11" ? answerN11QuestionAction : platform === "KOCTAS" ? answerKoctasMessageAction : answerTrendyolQuestionAction;
       const res = await send({ questionId, text: text.trim() });
       setResult(res);
       if (res.ok) {
