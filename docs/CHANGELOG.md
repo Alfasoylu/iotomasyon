@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### Nakit projeksiyonu ile ödeme takvimi tek yol oldu; ödeme kapasitesi şahsi hesapları saymıyor (2026-10-10)
+
+- Vadesi geçmiş ödenmemiş ödemeler ve tahsil edilmemiş alacaklar nakit projeksiyonundan düşmüyor, bugüne taşınıyor; diğer tahsilatlar da projeksiyonda. Projeksiyonun ve ödeme takviminin nakit dibi artık aynı (−3.743.079 TL).
+- Ödeme takvimi, mutabakat ve "Kullanılabilir kapasite" açılış bakiyesi yalnız şirket hesapları (şahsi 83 TL artık dahil değil). Bakiyesi girilmemiş hesabın KMH limiti kapasiteye sayılmıyor, ayrıca gösteriliyor.
+
 ### Çin alış kuru tek kaynağa bağlandı; Excel maliyetleri 6,7 ile düzeltildi (2026-10-10)
 
 - RMB/USD kuru artık yalnız aylık kur sayfasından okunuyor (Ekim 2026: 6,7). Kur girilmemişse maliyet hesaplanmıyor; 7,2 / 7,0 gibi sabit varsayımlar kaldırıldı.

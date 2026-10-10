@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:20 TR
-current_main_commit: bc29fdd
+last_updated: 2026-10-10 03:30 TR
+current_main_commit: ff42814
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000, main'de bekletilen) → CFO-028 kararları (EPTT tahmini komisyon, diğer kanal oran belgeleri) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
+current_score: 59/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kararlarının uygulanması (EPTT tahmini komisyon, 2 belge kategorisi; diğer kanallar oran belgesine kadar UNKNOWN) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
 open_critical: 1
-open_high: 5
-score_change: "unchanged — CFO-013 kodu main'de (DDL bekletilen, onay bekliyor); CFO-028 salt-okunur ölçüm: EPTT komisyon oranı var tutar yok (≈308k TL/yıl görünmüyor), 6 kanal + FBA veri yok (≈290–390k TL/yıl) — karar Alperen'de; 4. boyut (marj) karar uygulanınca yeniden puanlanır"
+open_high: 4
+score_change: "58→59 — CFO-013 tek nakit yolu üretimde (migration 110000: projeksiyon dibi = takvim dibi, en büyük günlük fark 0,52 TL, her gün eşitlik testli) + CFO-006 son parçası (ödeme kapasitesi açılışı şahsi hariç, tek kural): likidite boyutu 11→12; RF-010 (HIGH) ve RF-015 RESOLVED"
 ---
 
 # CFO DECISION LOG
@@ -84,3 +84,4 @@ D-P05 kanal kapsamı (2026-10-09, Alperen): **Alfashome cirosu hedefe DAHİL**. 
 | 2026-10-10 | CFO-029: CFO birim maliyeti her XML senkronunda (TCMB kurundan sonra) ithalat motorundan yeniden türetilir. Gümrük % GTİP tarifesinden ve elle girilen farklı oranın ÜSTÜNE yazar (tarife yoksa kayıtlı %, ikisi de yoksa ürün atlanır — varsayılan %30 maliyete girmez); yurt içi ürün TL = USD × kur; kur varsayılansa yazma yok; Türkçe tercih (deniz/hava) motorca tanınır; stoklu üründe %25+ ya da stok maliyetinde ±50.000 TL+ değişim `cost_jump` alarmı | Claude Code (Alperen: "sıradaki göreve geç", "tam yetkilisin"; CFO-029 backlog uygulaması) | maliyet tek seferlik türetilmişti; kur/GTİP/yol değişince bayatlıyordu ve 143 Excel dışı üründe eski varsayım kalmıştı | `xml-sync` after() adımı kaldırılır; değişiklikler `cfo_change_log` (source `CFO-029 maliyet türetme`) eski değerlerinden geri yazılır |
 | 2026-10-10 | RMB/USD TEK KAYNAK: CFO maliyeti, CFO-029, ithalatçı görünümü ve sermaye sağlığı RMB/USD'yi yalnız `MonthlyExchangeRate`'ten (RMB'si dolu en yeni ay) okur; kayıt yoksa maliyet hesaplanmaz (null) — `cfo_settings.usdRmbRate` ve kod sabitleri (7,2 / 7,0) kaldırıldı. Ekim 2026 değeri **6,7** (maliyet Excel'i kuralı); 335 ürün 6,8 → 6,7 düzeltildi (net sermaye +7.405,67 TL). Önceki satırdaki "RMB/6,8" bu kararla değişti | Alperen ("açık kural RMB/USD = 6,7 idi … tek kaynağa bağlanmalı; bilinmeyende hard-coded fallback kullanılmamalı") + Claude Code | dört farklı RMB değeri (6,7 / 6,8 / 6,72 / 7,2) maliyeti kuraldan saptırıyordu | `MonthlyExchangeRate` 2026-10 satırı silinir/güncellenir; 335 ürün `cfo_change_log` (source `Alperen (RMB/USD 6,7 kuralı) + Claude Code`) eski değerlerinden geri yazılır |
 | 2026-10-10 | CFO-013 TEK NAKİT YOLU: nakit projeksiyonu = ödeme takvimi. Vadesi geçmiş ödenmemiş çıkış / tahsil edilmemiş alacak / diğer tahsilat BUGÜN vadeli sayılır (düşürülmez); diğer tahsilat (`inflowTry`) projeksiyona girer; takvim ve mutabakat açılışı şirket nakdi (`cfo_nakit_kapisi`, şahsi hariç). Eski motor aynı kural. AI CFO hash kapısı tanım değişikliklerinde geçiş listesi kullanır (kod önce, DDL sonra; eski hash üretim senkronunda silinir) | Claude Code (backlog CFO-013, RF-015; Alperen "sıradaki göreve geç kurallara sadık kalarak") — üretim DDL'i Alperen onayıyla | iki yol iki dip veriyordu (bugün 83 TL; vadesi geçmiş kalem olunca daha büyük) | migration 110000 öncesi tanımlar (baseline / 20261008170000 / 20260910000000) |
+| 2026-10-10 | CFO-013 ÜRETİMDE + CFO-006 KAPANIŞI: migration 110000 Alperen onayıyla uygulandı (dip eşitliği üretimde gözlendi). Şirket/şahsi kapsamı: likidite (dip, kapasite, mutabakat, ödeme takvimi) yalnız şirket hesapları; hedef metrikleri (net sermaye, borç) D-P03 gereği şahsi kart/KMH dahil, nakit simetrik dahil. `/cfo/odemeler` kapasitesi `cfo_hesap_sahsi` ile; bakiyesi bilinmeyen hesabın limiti kapasiteye girmez | Code (Alperen onayı "Onaylıyorum", 2026-10-10) | sayfa kendi `like` kuralı + şahsi bakiye dahil açılış (−83,29 TL fark) | migration 110000 geri alma (önceki tanımlar `prisma/baseline/2026-10-06.sql`); sayfa: git revert |

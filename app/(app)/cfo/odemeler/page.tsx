@@ -20,6 +20,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { fmtTry } from "@/lib/cfo/format";
+import { PAYMENT_CAPACITY_SQL, type PaymentCapacity } from "@/lib/cfo/payment-capacity";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,13 +59,6 @@ type Hareket = {
 
 type Dip = { tarih_str: string; kalan_nakit: unknown; kalan_gun: number };
 
-type Kapasite = {
-  acilis: unknown;
-  ticari_kmh: unknown;
-  sahsi_kmh: unknown;
-  amac_kmh: unknown;
-  en_bayat_gun: number | null;
-};
 
 type AlacakBorc = {
   tur: string;
@@ -186,13 +180,8 @@ export default async function CfoPaymentsPage({
         from cfo_yaklasan_odeme
        where kalan_gun <= ${gun} order by tarih, yon desc, tutar desc`,
     prisma.$queryRaw<Dip[]>`select tarih_str, kalan_nakit, kalan_gun from cfo_nakit_dibi`,
-    prisma.$queryRaw<Kapasite[]>`
-      select coalesce(sum("balanceTry"), 0) as acilis,
-             coalesce(sum("kmhLimitTry") filter (where "accountType" not like '%ŞAHSİ%'), 0) as ticari_kmh,
-             coalesce(sum("kmhLimitTry") filter (where "accountType" like '%ŞAHSİ%'), 0) as sahsi_kmh,
-             coalesce(sum("purposeLimitTry"), 0) as amac_kmh,
-             max(current_date - "lastUpdatedAt"::date) as en_bayat_gun
-        from cfo_bank_account where "isActive"`,
+    // Şirket/şahsi tek kural (cfo_hesap_sahsi); açılış = takvim açılışı (şahsi hariç) — lib/cfo/payment-capacity.ts
+    prisma.$queryRawUnsafe<PaymentCapacity[]>(PAYMENT_CAPACITY_SQL),
     // Denetim STABLE (salt-okunur) — sayfa render'ında çağrılması güvenli.
     prisma.$queryRaw<DenetimSatiri[]>`select * from cfo_defter_denetim() order by sira`,
     prisma.$queryRaw<AlacakBorc[]>`
@@ -324,6 +313,9 @@ export default async function CfoPaymentsPage({
             </Badge>
           )}
           <Badge variant="neutral">Şahsi KMH {fmtTry(sahsiKmh)} (son çare)</Badge>
+          {n(k?.bilinmeyen_kmh) > 0 && (
+            <Badge variant="warn">Bakiyesi bilinmeyen hesap limiti {fmtTry(n(k?.bilinmeyen_kmh))} (kapasiteye girmez)</Badge>
+          )}
           {n(k?.amac_kmh) > 0 && (
             <Badge variant="neutral">Amaca bağlı limit {fmtTry(n(k?.amac_kmh))}</Badge>
           )}
@@ -547,7 +539,7 @@ export default async function CfoPaymentsPage({
 
       <p className="mt-6 text-[11px] text-[var(--text-muted)]">
         Kaynak: <code>cfo_yaklasan_odeme</code> görünümü. Açılış bakiyesi{" "}
-        {fmtTry(n(k?.acilis))} — aktif hesapların toplamı, en eskisi{" "}
+        {fmtTry(n(k?.acilis))} — şirket hesaplarının toplamı (şahsi hariç), en eskisi{" "}
         {k?.en_bayat_gun === 0 ? "bugün" : `${k?.en_bayat_gun} gün önce`} güncellenmiş.{" "}
         <strong>İşaretleme yürüyen bakiyeyi değiştirmez</strong> — yalnızca &quot;bu hareket
         oldu&quot; kaydıdır ve değişiklik günlüğüne yazılır. Rakamlar ancak gerçek banka bakiyesi

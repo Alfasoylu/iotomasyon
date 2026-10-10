@@ -9,10 +9,8 @@ import type { ReadSource } from "./sources";
 export const REVIEWED_SOURCE_HASHES: Record<string, string | readonly string[]> = {
   ...REVIEWED_CFO_VIEW_HASHES,
   cfo_nakit_kapisi: "56a943eedf652851e15a74bb5e19c7516938f3c57708eea436d117d5dbbb546f", // 2026-10-10 CFO-006: sahsi filtre cfo_hesap_sahsi() (uretimde olculdu)
-  cfo_nakit_projeksiyon: [
-    "9f3b9b2e877d154f6eeb7516b6e594e4d30772025bd075be8fa023aaf155ca6a", // CFO-013 tek nakit yolu (migration 20261010110000): vadesi gecmisler bugune, diger tahsilat dahil
-    "3d5a2913aabf4835dd42fe4b28e1f6cdee130b1ee08716e31af1c622c4f17db2", // onceki tanim (baseline 2026-10-06) — 110000 uygulaninca kaldirilir
-  ],
+  // 2026-10-10 CFO-013 tek nakit yolu (migration 20261010110000, uretimde olculdu): vadesi gecmisler bugune, diger tahsilat dahil
+  cfo_nakit_projeksiyon: "9f3b9b2e877d154f6eeb7516b6e594e4d30772025bd075be8fa023aaf155ca6a",
 };
 const hashes = REVIEWED_SOURCE_HASHES;
 export const ALFAS_SOURCE_PROFILE = "alfas_2026_10_04";

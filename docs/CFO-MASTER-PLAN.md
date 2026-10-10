@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:20 TR
-current_main_commit: bc29fdd
+last_updated: 2026-10-10 03:30 TR
+current_main_commit: ff42814
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000, main'de bekletilen) → CFO-028 kararları (EPTT tahmini komisyon, diğer kanal oran belgeleri) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
+current_score: 59/100
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-028 kararlarının uygulanması (EPTT tahmini komisyon, 2 belge kategorisi; diğer kanallar oran belgesine kadar UNKNOWN) → CFO-027 Cowork belge okuma (11 belge kuyrukta)"
 open_critical: 1
-open_high: 5
-score_change: "unchanged — CFO-013 kodu main'de (DDL bekletilen, onay bekliyor); CFO-028 salt-okunur ölçüm: EPTT komisyon oranı var tutar yok (≈308k TL/yıl görünmüyor), 6 kanal + FBA veri yok (≈290–390k TL/yıl) — karar Alperen'de; 4. boyut (marj) karar uygulanınca yeniden puanlanır"
+open_high: 4
+score_change: "58→59 — CFO-013 tek nakit yolu üretimde (migration 110000: projeksiyon dibi = takvim dibi, en büyük günlük fark 0,52 TL, her gün eşitlik testli) + CFO-006 son parçası (ödeme kapasitesi açılışı şahsi hariç, tek kural): likidite boyutu 11→12; RF-010 (HIGH) ve RF-015 RESOLVED"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)
