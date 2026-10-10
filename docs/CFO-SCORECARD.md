@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 17:40 TR
-current_main_commit: e863f1e
+last_updated: 2026-10-10 18:30 TR
+current_main_commit: 8536015
 current_phase: "Faz 2 — Veri kalitesi ve güvenlik (Faz 1 metrik sözleşmesi ✅ 10.10: net sermaye/borç/kur/KDV/ciro tek tanım üretimde doğrulandı)"
 current_score: 67/100
 next_action: "RF-006 / CFO-009 otomasyon + teslim kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü + WhatsApp teslimi (132001: iotomasyon WHATSAPP_PHONE_NUMBER_ID ↔ cfo_alarm şablonunun WABA’sı, Alperen) → CFO-017 2. v3 günü atıf (11.10 05:xx UTC snapshot) → CFO-020 50k/KPI eşikleri → CFO-018 eski motor → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 0
 open_high: 1
-score_change: "unchanged — PttAVM salt-okuma istemcisi + teşhis ucu (bağlantı henüz doğrulanmadı; CFO-028 EPTT komisyonu ölçüme bağlanınca boyut 4 yeniden değerlendirilir)"
+score_change: "unchanged — ölü stok eylem yapısı (Trendyol V2 + PttAVM yazma, insan onaylı, bayraklar kapalı); skor boyutlarını etkileyen ölçüm değişmedi"
 ---
 
 # CFO SCORECARD
@@ -110,3 +110,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | ccc0d2e | 65 | 7/12 | 62→65: 12:35 UTC üretim doğrulaması — CFO-001/002 ✅ (v3 net sermaye/borç = sözleşme fonksiyonu, Goal v3), CFO-008 ✅ (motor karşılaştırmaları kanonikle birebir), RF-038 döngü tamamlandı, CFO-031 ✅ (3 SKU teyidi); RF-001/002/009/037/038 RESOLVED; boyut 1: 10→13; H1 + H12 ✅ |
 | 2026-10-10 | 24f5f38 | 67 | 7/12 | 65→67: CFO-014 kısım 2 (RF-016) — eski motor bilinmeyeni 0 / gizli varsayılanla doldurmuyor (`cfo-engine-unknown`; boyut 7: 5→6; H3 ❌ kalır — cfo_servet_kalem COALESCE 0 migration). Sayfa eşliği: eski motor manşet nakit/KMH yalnız şirket (`/cfo` boş KMH 2,71M → 1,36M = sözleşme; `cfo-engine-sahsi`) + AI CFO borç tahmini gümrükte takılmıyor (RF-020 RESOLVED; `cfo-debt-forecast-customs`) — boyut 2: 12→13 |
 | 2026-10-10 | e863f1e | 67 | 7/12 | Değişmedi (bilinçli): PttAVM salt-okuma istemcisi (REST + SOAP) + teşhis ucu — bağlantı doğrulanınca EPTT komisyonu (CFO-028) satır komisyonundan ölçülebilir |
+| 2026-10-10 | 8536015 | 67 | 7/12 | Değişmedi (bilinçli): ölü stok eylem yapısı — Trendyol V2 + PttAVM yazma istemcileri, insan onaylı tek kapı, başabaş tabanı = maliyet / kalibre net oran; yazma bayrakları kapalı, ölçüm değişmedi |

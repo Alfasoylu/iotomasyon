@@ -12,6 +12,7 @@ import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { safeEnsureTcmbFx } from "@/lib/fm/tcmb-fx-auto";
 import { safeDeriveUnitCosts } from "@/lib/cfo/cost-derivation-data";
 import { safeMeasureDecisions } from "@/lib/cfo/decision-measure-job";
+import { safeSyncIndependentStock } from "@/lib/olu-stok/stock-sync";
 import { after, NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeCron } from "@/lib/cron-auth";
@@ -26,7 +27,8 @@ export async function GET(req: NextRequest) {
   // Stratejik kur (CFO-003): TCMB aylık bülteni eksikse ekle — motor koşusundan önce, ~1-2 sn.
   // Ardından CFO-029: birim maliyetler ithalat motorundan yeni kurla yeniden türetilir (korumalı, her alan cfo_change_log'da).
   // Ardından CFO-012: kontrol noktası gelen kararlar cfo_hamle_olcum'a ölçülür (yalnız ekleme; tekrar koşu yazmaz).
-  after(() => safeEnsureTcmbFx().then(() => safeDeriveUnitCosts()).then(() => safeMeasureDecisions()).then(() => undefined));
+  // Ardından ölü stok bağımsız ilanları: yalnız ALFOS-… barkodlara, yalnız stok adedi, taze XML'den (lib/olu-stok/stock-sync.ts).
+  after(() => safeEnsureTcmbFx().then(() => safeDeriveUnitCosts()).then(() => safeMeasureDecisions()).then(() => safeSyncIndependentStock()).then(() => undefined));
   scheduleCfoCycle("daily_xml", { engine: "sync_xml", maxDurationSec: maxDuration });
 
   const sources = await prisma.xmlSyncSource.findMany({

@@ -1,3 +1,4 @@
+# Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-10 ~15:30 UTC, read-only catalog SELECT) after Claude Code applied 20261010150000_olu_stok_bagimsiz_ilan (bad536ea…, Alperen approval "Önerilerini onaylıyorum"; acl/con/idx/rel:r/rls rows re-measured, others unchanged).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-10 ~10:30 UTC, read-only catalog SELECT) after Claude Code applied 20261010140000_cfo_kmh_kapasite_tek (c4e8595a…, Alperen explicit approval "Evet, uygula"; fn/view/rel:v rows re-measured — cfo_nakit_kapisi.kmh_limit_try; acl/fnacl unchanged).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-10 ~09:55 UTC, read-only catalog SELECT) after Claude Code applied 20261010120000_cfo_kur_tek_kaynak (28a1f877…, Alperen explicit approval "Evet, uygula"; fn/view/rel:r rows re-measured — netWorthUsd nullable; acl/fnacl unchanged).
 # Production-verified (Supabase frbxpodiostxuwlrubkt, 2026-10-10 ~08:55 UTC, read-only catalog SELECT) after Claude Code applied 20261010130000_cfo_sanal_stok_istisna (32b55afe…, Alperen explicit approval "Evet, uygula"; fn/view rows re-measured, acl/fnacl unchanged).
@@ -24,18 +25,18 @@
 # The 3 backup tables are still present (20261007200000_drop_legacy_backup_tables is held back in baseline.json until it runs).
 # A bootstrapped clean database (prisma/baseline/2026-10-06.sql + baseline.json pending/late migrations) must produce exactly these rows from scripts/schema-baseline/fingerprint.sql.
 # Columns: kind object_count short_md5. Regenerate ONLY by re-running fingerprint.sql on production (docs/BASELINE-CAPTURE.md).
-acl 352 6b9d2d684b
-con 351 bcebb0638a
+acl 354 b5ff96da6f
+con 359 d85fb45e4f
 enum 32 ac59222f85
 ext 1 56e042523e
 fn 42 2c7582d2d7
 fnacl 61 547cf26101
-idx 441 e3db641ec4
+idx 444 3d6bcd4217
 pol 82 c46b7cce18
 rel:m 1 0ad09bf43e
-rel:r 153 b6a95c4538
+rel:r 154 444d8dd6fc
 rel:v 61 c119538ba3
-rls 153 47e7fad678
+rls 154 5d40aac856
 schemaacl 3 45e3344ecd
 seq 15 cda7319017
 seqacl 15 40c6ef1c15

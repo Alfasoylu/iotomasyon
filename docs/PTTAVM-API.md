@@ -44,10 +44,16 @@ ilk gerçek veride doğrulanacak), `indirimPttavm` / `indirimTedarikci`, `coupon
 - **İade** ucu yok → iade yalnız satır durumunda: `iade`, `gondericisine_teslim_edildi`.
 - Marka, kategori özelliği, müşteri soruları, mağaza bilgisi ucu yok.
 
-## Bilinçli olarak KURULMAYANLAR (docs/AI-RULES.md — açık onayla bile yasak, Entegra'nın işi)
-`POST /products/stock-prices`, `POST /products/upsert`, `PUT /products/{id}/status`, `POST /orders/{id}/invoice`, kargo
-`create-barcode` / `update-no-shipping-order`; SOAP `StokGuncelle*`, `StokFiyatGuncelle*`, `UpdateProducts*`, `AktifYap`,
-`SaveInvoince`, `OlmayanUrunAdetleriSifirla`. İstemci yazma uçlarını kod düzeyinde reddeder (test `pttavm-client`).
+## Yazma — yalnız ölü stok istisnası (Alperen kararı 2026-10-10; docs/AI-RULES.md İstisna)
+`lib/pttavm/write.ts`: `POST /products/stock-prices` (fiyat/stok; ≤ 1000, KDV 0/1/10/20, fiyat > 1, indirim 0–70, stok 0–9999,
+aynı istek 5 dk içinde tekrarlanmaz), `PUT /products/{id}/status` (aktif/pasif), `POST /products/tracking-result/{id}` (sonuç).
+Yalnız REST anahtarları + `PTTAVM_WRITE_ENABLED=true` iken; tek çağıran `lib/actions/olu-stok-actions.ts` (insan onaylı,
+`/cfo/olu-stok/eylem`). Test `pttavm-write`.
+
+## Hâlâ KURULMAYANLAR
+`POST /products/upsert` (yeni ürün/içerik — sonraki adım), `POST /orders/{id}/invoice`, kargo `create-barcode` /
+`update-no-shipping-order`; SOAP yazma uçlarının tamamı (`StokGuncelle*`, `StokFiyatGuncelle*`, `UpdateProducts*`, `AktifYap`,
+`SaveInvoince`, `OlmayanUrunAdetleriSifirla`). Salt-okuma istemcisi (`client.ts`) yazma uçlarını reddetmeye devam eder (test `pttavm-client`).
 
 ## Teşhis
 Actions → "Pazaryeri API teşhisi" → kanal `pttavm`, gün 30 → `/api/cron/pttavm-tani`: bağlantı, son N gün sipariş özeti
