@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:00 TR
-current_main_commit: 6283500
+last_updated: 2026-10-10 03:15 TR
+current_main_commit: 81ed6dc
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu, RMB/USD tek kaynak 6,7) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000 hazır, bekletilen) → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — RMB/USD tek kaynağa bağlandı (MonthlyExchangeRate 6,7, sabit yedek yok) ve 335 Excel ürünü 6,8 → 6,7 düzeltildi (net sermaye +7.405,67 TL, ölçümle birebir); CFO-029 kodu test edildi, ilk koşu 05:00 TR. 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
+score_change: "unchanged — CFO-013 tek nakit yolu kodu + testi hazır (migration 110000 bekletilen, üretim DDL onayı bekliyor; bugünkü etki yalnız takvim açılışında 83,29 TL); PR #250 (CFO-029 + RMB tek kaynak) üretimde, ilk koşu doğrulanınca 1./3. boyut yeniden puanlanır"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -33,12 +33,12 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-007 | MEDIUM | RESOLVED | HIGH→MEDIUM; CFO-010 ✅ 2026-10-09 (ödeme durumu tek kaynak takvim) |
 | RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
 | RF-20261008-009 | HIGH | IN_PROGRESS | KDV hariç ciro + Alfashome üretimde; tek ciro fonksiyonu kalan (CFO-008) |
-| RF-20261008-010 | HIGH | MITIGATED | TS + SQL tek kural üretimde (migration 100000, 2026-10-10); kaynak yeterliliği çift sayımı düzeltildi; kalan ödeme takvimi açılışı (83 TL) → CFO-013 |
+| RF-20261008-010 | HIGH | MITIGATED | TS + SQL tek kural üretimde (migration 100000, 2026-10-10); kaynak yeterliliği çift sayımı düzeltildi; kalan ödeme takvimi açılışı (83 TL) → CFO-013 migration 110000 (hazır, onay bekliyor) |
 | RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017 migration 230000 üretimde (2026-10-09 akşam, kimlik farkı 0,00); ilk bileşenli snapshot 10.10 |
 | RF-20261008-012 | MEDIUM | IN_PROGRESS | yazma yolları yazma izni (PR #242); API anahtarı şifreleme, Cowork rolü kalan |
 | RF-20261008-013 | MEDIUM | OPEN | veri: 8 SKU maliyeti (CFO-011, Alperen) |
 | RF-20261008-014 | MEDIUM | OPEN | CFO-012 |
-| RF-20261008-015 | MEDIUM | OPEN | CFO-013 (DDL onayı) |
+| RF-20261008-015 | MEDIUM | FIX_READY | CFO-013 migration 110000 + test hazır (bekletilen); üretim DDL onayı bekliyor |
 | RF-20261008-016 | MEDIUM | IN_PROGRESS | CFO-014 kısım 1 (PR #240); eski motor kısmı CFO-018 |
 | RF-20261008-017 | MEDIUM | RESOLVED | 2026-10-09, CFO-019 |
 | RF-20261008-018 | MEDIUM | OPEN | veri: ölçülmemiş faiz oranları (CFO-015, Alperen) |

@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 03:00 TR
-current_main_commit: 6283500
+last_updated: 2026-10-10 03:15 TR
+current_main_commit: 81ed6dc
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 58/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (05:00 TR XML senkronu, RMB/USD tek kaynak 6,7) kuru çalıştırmayla karşılaştırma (10.10 06:00 UTC) → CFO-013 tek nakit yolu → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
+next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 06:00 UTC) → CFO-013 üretim DDL onayı (migration 110000 hazır, bekletilen) → CFO-027 Cowork belge okuma → CFO-028 komisyon belgeleri"
 open_critical: 1
 open_high: 5
-score_change: "unchanged — RMB/USD tek kaynağa bağlandı (MonthlyExchangeRate 6,7, sabit yedek yok) ve 335 Excel ürünü 6,8 → 6,7 düzeltildi (net sermaye +7.405,67 TL, ölçümle birebir); CFO-029 kodu test edildi, ilk koşu 05:00 TR. 1./3. boyut ilk koşu doğrulanınca yeniden puanlanır"
+score_change: "unchanged — CFO-013 tek nakit yolu kodu + testi hazır (migration 110000 bekletilen, üretim DDL onayı bekliyor; bugünkü etki yalnız takvim açılışında 83,29 TL); PR #250 (CFO-029 + RMB tek kaynak) üretimde, ilk koşu doğrulanınca 1./3. boyut yeniden puanlanır"
 ---
 
 # CFO BACKLOG
@@ -36,7 +36,7 @@ AI runtime maliyeti: tüm maddeler deterministik (SQL/TS) → **0** (LLM yok). U
 | 12 | CFO-015 | Ölçülmemiş KMH/gümrük/şahsi faiz oranlarını gir | P1 | G3 | 4 | 3 | 3 | 1 | 1 | 1 | **7** | S (veri) | BLOCKED (veri: Alperen) | 018 |
 | 13 | CFO-012 | Karar hafızası: beklenen değer zorunlu, `cfo_hamle_olcum` yazımı, kalibrasyon | P2 | tümü | 3 | 2 | 3 | 2 | 2 | 1 | **3** | M | VALIDATED | 014 |
 | 14 | CFO-014 | UNKNOWN→0 süpürmesi + measured bayrak düzeltmesi | P2 | tümü | 2 | 4 | 2 | 2 | 1 | 1 | **4** | M | VALIDATED | 016 |
-| 15 | CFO-013 | Vadesi geçmiş kalemler: tek nakit yolu (projeksiyon = takvim) | P2 | taban | 2 | 3 | 2 | 2 | 1 | 1 | **3** | S | VALIDATED | 015 |
+| 15 | CFO-013 | Vadesi geçmiş kalemler: tek nakit yolu (projeksiyon = takvim) | P2 | taban | 2 | 3 | 2 | 2 | 1 | 1 | **3** | S | IN_PROGRESS (kod + test ✓ 2026-10-10: migration 110000 bekletilen — üretim DDL onayı bekliyor; eski motor ✓) | 015 |
 | 16 | CFO-016 | Güvenlik: yazma izinleri, yetkisiz action, sunucu tarafı audit kaynağı, Cowork salt-okunur rol + görünüm izni | P2 | — | 2 | 4 | 1 | 2 | 1 | 2 | **2** | M | VALIDATED | 012 |
 | 17 | CFO-023 | Sayfa-motor eşlik testi (aynı metrik tüm sayfalarda aynı) | P2 | tümü | 3 | 4 | 2 | 3 | 1 | 1 | **4** | M | DISCOVERED | 001-010 |
 | 18 | CFO-017 | Atıf kimliği: tek snapshot yazarı, bileşenler toplamı = net sermaye | P2 | G2 | 2 | 3 | 3 | 2 | 1 | 1 | **4** | S | IN_PROGRESS (migration 230000 üretimde 2026-10-09 akşam; üretim kimlik farkı 0,00 TL; kalan: ilk bileşenli snapshot 10.10 + 2. v3 günü atıf) | 011 |
@@ -138,7 +138,8 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **uygulama:** yeni hamlede `beklenen_deger` + `olcum_metrigi` zorunlu; motor/sermaye önerileri hamle önerisi olarak kaydedilir (onay akışı); ölçüm `cfo_hamle_olcum`'a; kalibrasyon skoru. **durum:** VALIDATED
 
 ### CFO-013 — Tek nakit yolu
-- **uygulama:** vadesi geçmiş ödenmemiş kalemler projeksiyonda "bugün"e taşınır (ya da takvimden ayrı gösterilir); iki dip tek dip. **durum:** VALIDATED
+- **uygulama:** vadesi geçmiş ödenmemiş kalemler projeksiyonda "bugün"e taşınır (ya da takvimden ayrı gösterilir); iki dip tek dip. **durum:** IN_PROGRESS
+- **2026-10-10 — kod + test (Claude Code):** migration `20261010110000_cfo_tek_nakit_yolu` (bekletilen, `baseline.json notAppliedInProduction`): `cfo_nakit_projeksiyon` takvimin olay kümesini kullanır — vadesi geçmiş ödenmemiş çıkış / tahsil edilmemiş alacak / diğer tahsilat BUGÜNE ("GECIKMIS"), diğer tahsilat (`inflowTry`) eklendi; `cfo_yaklasan_odeme` / `cfo_odeme_gunluk` açılışı `cfo_nakit_kapisi` (şahsi hariç — CFO-006 kalanı 83,29 TL); `cfo_nakit_mutabakat` bankası da şahsi hariç. Eski motor (`lib/cfo/engine.ts`) pencereleri ve günlük eylem aynı kural ("VADESİ GEÇTİ"). AI CFO hash kapısı geçiş listesi (eski + yeni hash; DDL deploy'dan sonra da olsa profil kapanmaz). Test `__tests__/cfo-tek-nakit-yolu.test.ts`: her gün projeksiyon = takvim (±1 TL), eski tanım hash'i PGlite'ta üretimle birebir. Ölçüm (salt-okunur, 10.10): projeksiyon dibi −3.846.111 (01.01.2027), takvim dibi −3.846.027,98 — fark yalnız şahsi açılış 83,29 TL; vadesi geçmiş kalem ve diğer tahsilat yok → uygulama sonrası iki dip eşit, projeksiyon değişmez. Uygulama dosyası `docs/cowork/2026-10-10-110000-tek-nakit-yolu.sql`. **Kalan:** Alperen'in üretim DDL onayı → uygula → üretim senkronu PR'ı (bekletilen listeden çıkar, parmak izi, eski hash'i kaldır).
 
 ### CFO-014 — UNKNOWN→0 süpürmesi
 - **uygulama:** listelenen yollar (RF-016) UNKNOWN taşır; tahmin kanıtları `measured=false`. **durum:** IN_PROGRESS — kısım 1 (2026-10-09): eşik faiz %4 varsayılanı kalktı (`capital-efficiency` / `voi-data`: eşik yoksa büyüt/azalt kararı ve eşiğe dayalı bilgi değeri BİLİNMİYOR; FIX_PRICE/LIQUIDATE eşikten bağımsız; tasfiye nakdi en kötü indirimle); downside başlangıç nakdi yoksa stres testi yok (0 TL ile başlamaz), stres açığı taban/eşlik yoksa `null` ve `/cfo/sermaye` likidite açığı "bilinmiyor" + eksik nedeni; hedef atfı (`goal-attribution-data`) her metrikte yalnız en yeni tanım sürümü (v2/v3 karışmaz — yarınki ilk v3 satırıyla oluşacak hatayı önler) ve eksik bileşenli gün 0 değil atlanır; bugünkü ciro yoksa `currentUnknown` (kanıt ölçülmemiş, sayfa "bilinmiyor"); kanıt bayrakları: eski geniş servet/kur `measured=false`, `servet.dar_try` en yeni tanım sürümü, stokta bağlı sermaye satır yoksa null; `/cfo` "30 gün sonundaki nakit" projeksiyon yoksa "bilinmiyor". Üretim: eşik faiz bugün biliniyor (5 kredi + 5 kart oranlı) → sayılar değişmez; düzeltmeler gizli varsayılanları kaldırır. Kasıtlı korunan: `gunluk_hiz` null = 90 günde satış yok (görünüm `adet/90`, sol birleşim) → 0 doğru. **Kalan (kısım 2):** eski motor `engine.ts` (`num()` null→0, `usdTryRate || 1`, kart asgari %20, nakde dönüşüm %70, erken kapama) → CFO-018 ile; `revenue-levers` hedef 100000 yedeği ve teslim süresi varsayılanları (67/22 gün), `cfo_servet_kalem` COALESCE 0 (migration), alfashome/findings küçük `?? 0`'lar.
