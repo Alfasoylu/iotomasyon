@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 10:50 TR
-current_main_commit: e40f257
+last_updated: 2026-10-10 10:56 TR
+current_main_commit: cb66df1
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
 next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — RF-006 kısmı: CFO motoru kendi Vercel cron’unda (03:xx/13:xx UTC, tam 300 sn) ve yetim çalışma döngüsü cron’a bağlandı (06:xx UTC, sabah snapshot’ından sonra Goal v3); senkron zincirinde süre bütçesi yüzünden atlanıyordu — otomasyon boyutu (4/5) ilk cron koşuları gözlenince ve alarm teslimi (WhatsApp yapılandırması) tamamlanınca yeniden değerlendirilir"
+score_change: "unchanged — CFO-023 kısım 1: beş sayfa sabiti (ölü stok oran eşiği, kazananlar kapsam eşiği %85, yeni ürün marjında 48,5 kur, sermaye/çalışan sayfalarında 100.000 USD) motorun kaynağına bağlandı ve statik eşlik testiyle korunuyor; değer eşliği (aynı sayı her yüzeyde) CFO-001/002/008 üretim doğrulamalarıyla tamamlanınca tutarlılık yeniden değerlendirilir"
 ---
 
 # ALFAS CFO — MASTER PLAN (ana sözleşme)
@@ -188,11 +188,11 @@ Ek: modül → girdi → çıktı → tüketici (özet)
 | `/cfo/sermaye` | Downside, KMH dilimleri, gelir kaldıraçları, sermaye tahsisi, seçenek karşılaştırması | `lib/cfo/*` + `buildAllocation` | YENİ + ESKİ | Aynı sayfada downside hesap oranlı ↔ seçenek karşılaştırması düz %4,5 |
 | `/cfo/kararlar` | Karar durumu, kalibrasyon, net sermaye atfı | decision-memory, goal-attribution | YENİ | Atıf bileşenleri net sermayeyi tutmuyor (iki snapshot yazarı) |
 | `/cfo/sorular` | VOI, açık sorular | voi | YENİ | Sorular durum sözlüğü karışık (ACIK/OPEN, CEVAPLANDI/ANSWERED, KAPALI/KAPANDI) |
-| `/cfo/kazananlar` | Aylık kazananlar, ciro hedefi, ithalat önerisi | `cfo_ay_kazanan*`, `cfo_ciro_hedef` | görünüm | Ciro hedefi `cfo_settings.usdTryRate` + son tam ay (Goal Engine TCMB + MTD); kapsam eşiği yorumda %85 ↔ motor %95; maliyetsiz SKU'yu kârdan düşürür |
+| `/cfo/kazananlar` | Aylık kazananlar, ciro hedefi, ithalat önerisi | `cfo_ay_kazanan*`, `cfo_ciro_hedef` | görünüm | Ciro hedefi `cfo_settings.usdTryRate` + son tam ay (Goal Engine TCMB + MTD); kapsam eşiği yorumda %85 ↔ motor %95 (✓ 10.10 CFO-023: sayfa motorun `minCostCoveragePct`'ini okur); maliyetsiz SKU'yu kârdan düşürür |
 | `/cfo/odemeler` | Haftalık giriş/çıkış, dip, kapasite, alacak-borç net | `cfo_odeme_gunluk`, `cfo_yaklasan_odeme`, `cfo_nakit_dibi` | görünüm | Açılış şahsi dahil + vadesi geçmiş ödenmemişler dahil ↔ projeksiyon bugünden itibaren; kapasite tam ticari limit + bakiyesi bilinmeyen bankanın limiti |
-| `/cfo/olu-stok` | Ölü stok | `cfo_olu_stok*` | görünüm | Eşik `0.2` sayfada sabit ↔ `cfo_settings.deadStockSalesRatioPct`; 4 ayrı ölü stok kuralı |
+| `/cfo/olu-stok` | Ölü stok | `cfo_olu_stok*` | görünüm | Eşik `0.2` sayfada sabit ↔ `cfo_settings.deadStockSalesRatioPct` (✓ 10.10 CFO-023: görünümle aynı ifade); 4 ayrı ölü stok kuralı |
 | `/cfo/ayarlar` | Parametreler | `cfo_settings` | ESKİ | Ölü alanlar (`stockCostUsd`, `blockedStockUsd`); "KMH / kart aylık faiz" etiketi yanlış (kart kullanmıyor) |
-| `/cfo/calisan`, `/cfo/calisma-durumu` | İş akışı, hedefler, borç tahmini; kapsam | agent | AGENT | "aylık 100.000 USD" metinde sabit |
+| `/cfo/calisan`, `/cfo/calisma-durumu` | İş akışı, hedefler, borç tahmini; kapsam | agent | AGENT | "aylık 100.000 USD" metinde sabit (✓ 10.10 CFO-023: `cfo_settings.monthlyRevenueTargetUsd`; `/cfo/sermaye` etiketi de) |
 | `/cfo/defter` | Notlar | `cfoNote` | — | — |
 | `/admin/ai-cfo` | Dünkü ciro, ticari nakit, min projeksiyon, bulgular, hedefler | snapshot, `fm_memory_goal` | AGENT | Ticari nakit (şahsi hariç) ↔ `/cfo` (şahsi dahil) |
 | `/admin/sermaye`, `/dashboard` | Toplam/kilitli/serbest sermaye, ROI, sağlık skoru | `lib/capital/health` | yok | Stok maliyetle ↔ servet NRV ile; marj liste fiyatı modeli |
@@ -201,6 +201,10 @@ Ek: modül → girdi → çıktı → tüketici (özet)
 **CFO kullanıyor ama kullanıcı göremiyor:** kanal/dönem katkı marjı, iade oranı, komisyon kapsamı, maliyet kapsamı + kapatan liste,
 stockout riski, `minimumWithInterestTry`, 10 günlük giriş/çıkış. **Kullanıcı görüyor ama CFO kullanmıyor:** `computeCfo` çıktılarının
 tamamı (gümrük rezervi, borç servisi oranı, ay sonu nakdi), servet likiditesi, `cfo_alacak_borc`, kazananlar, `/admin/sermaye` sağlık skoru.
+
+**Eşlik koruması (CFO-023, 2026-10-10):** `__tests__/cfo-page-parity.test.ts` (CI) — sayfada ikinci sabit yasak (48,5 kur, "100.000 USD",
+`ORAN_ESIGI`, %80–99 kapsam literal'i; `/admin/yeni-urunler/[sku]` marjı da artık güncel kur tek kaynağından) ve eşik/kur/hedef tüketicileri
+kanonik kaynağı okuyor. Değer eşliği (aynı sayı her yüzeyde) CFO-001/002/008 üretim doğrulamalarıyla genişler.
 
 ## D. Data Utilization Matrix
 

@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import type { CapClass, SkuResult } from "@/lib/cfo/capital-efficiency";
 import { TIER_LABEL } from "@/lib/cfo/downside";
 import Link from "next/link";
-import { fmtTry, fmtPct } from "@/lib/cfo/format";
+import { fmtTry, fmtPct, fmtNum } from "@/lib/cfo/format";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -87,7 +87,7 @@ export default async function CfoAllocationPage() {
           {rv.targetUnknown || rv.fx == null ? (
             <>hedef <strong>bilinmiyor</strong> ({rv.fxLabel}) ·</>
           ) : (
-            <>hedef {fmtTry(rv.targetMonthlyTry)} (100.000 USD × {rv.fx.toFixed(4)}, {rv.fxLabel}) · açık <strong>{fmtTry(rv.gapMonthlyTry)}/ay</strong>.</>
+            <>hedef {fmtTry(rv.targetMonthlyTry)} ({fmtNum(rv.targetUsd)} USD × {rv.fx.toFixed(4)}, {rv.fxLabel}; hedef cfo_settings) · açık <strong>{fmtTry(rv.gapMonthlyTry)}/ay</strong>.</>
           )} Sıra: önce ek sermaye istemeyen (parası ödenmiş ama satılamayan), sonra aylık brüt katkı / ek sermaye.
           Güvenle ağırlıklı kaldıraçlar açığın ~%{Math.round(rv.coveredShare * 100)}&apos;ini kapatıyor.
         </p>

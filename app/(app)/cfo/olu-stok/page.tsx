@@ -86,11 +86,10 @@ type Released = { ay: Date; tutar: unknown; adet: bigint };
 const n = (v: unknown) => (v == null ? null : Number(v));
 
 /**
- * Ölü stok oran kuralı eşiği — 90 günlük satış, stok değerinin bu oranından
- * düşükse ürün listeye girer. Gerçek eşik `cfo_settings.deadStockSalesRatioPct`;
- * buradaki yalnız boyamak için, kapı veritabanındaki görünümde.
+ * Ölü stok oran kuralı eşiği — 90 günlük satış, stok değerinin bu oranından düşükse ürün listeye girer. Eşik görünümle AYNI ifadeden
+ * okunur (`cfo_settings.deadStockSalesRatioPct`, görünümün varsayılanı %20) — sayfada ayrı sabit yok (CFO-023 / RF-019).
  */
-const ORAN_ESIGI = 0.2;
+const ESIK_SQL = `select coalesce(max("deadStockSalesRatioPct"), 20) / 100.0 as oran from cfo_settings`;
 
 const DURUM_TR: Record<string, string> = {
   acik: "Açık",
@@ -103,7 +102,7 @@ const DURUM_TR: Record<string, string> = {
 export default async function CfoDeadStockPage() {
   await requirePermission(PERMISSIONS.CFO_READ);
 
-  const [rows, ozetRows, released] = await Promise.all([
+  const [rows, ozetRows, released, esik] = await Promise.all([
     prisma.$queryRaw<Row[]>`select * from cfo_olu_stok order by kontrol_gecikti desc nulls last, bagli_sermaye desc`,
     prisma.$queryRaw<Ozet[]>`select * from cfo_olu_stok_ozet`,
     prisma.$queryRaw<Released[]>`
@@ -112,7 +111,10 @@ export default async function CfoDeadStockPage() {
         from cfo_dead_stock_finding
        where status = 'kapandi' and released_capital_try is not null
        group by 1 order by 1 desc limit 12`,
+    prisma.$queryRawUnsafe<{ oran: unknown }[]>(ESIK_SQL),
   ]);
+  // Toplama sorgusu her zaman tek satır döner (ayar yoksa görünümün varsayılanı) — sayfada ikinci bir yedek sabit yok.
+  const ORAN_ESIGI = n(esik[0]?.oran);
 
   const o = ozetRows[0];
   const gecikmis = rows.filter((r) => r.kontrol_gecikti);
@@ -280,7 +282,7 @@ export default async function CfoDeadStockPage() {
                     "—"
                   ) : (
                     <>
-                      <span className={oran < ORAN_ESIGI ? "text-[var(--danger)]" : undefined}>
+                      <span className={ORAN_ESIGI != null && oran < ORAN_ESIGI ? "text-[var(--danger)]" : undefined}>
                         %{(oran * 100).toFixed(1)}
                       </span>
                       <br />

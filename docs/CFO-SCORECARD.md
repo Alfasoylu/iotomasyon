@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 10:50 TR
-current_main_commit: e40f257
+last_updated: 2026-10-10 10:56 TR
+current_main_commit: cb66df1
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
 next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — RF-006 kısmı: CFO motoru kendi Vercel cron’unda (03:xx/13:xx UTC, tam 300 sn) ve yetim çalışma döngüsü cron’a bağlandı (06:xx UTC, sabah snapshot’ından sonra Goal v3); senkron zincirinde süre bütçesi yüzünden atlanıyordu — otomasyon boyutu (4/5) ilk cron koşuları gözlenince ve alarm teslimi (WhatsApp yapılandırması) tamamlanınca yeniden değerlendirilir"
+score_change: "unchanged — CFO-023 kısım 1: beş sayfa sabiti (ölü stok oran eşiği, kazananlar kapsam eşiği %85, yeni ürün marjında 48,5 kur, sermaye/çalışan sayfalarında 100.000 USD) motorun kaynağına bağlandı ve statik eşlik testiyle korunuyor; değer eşliği (aynı sayı her yüzeyde) CFO-001/002/008 üretim doğrulamalarıyla tamamlanınca tutarlılık yeniden değerlendirilir"
 ---
 
 # CFO SCORECARD
@@ -100,3 +100,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | c1e8413 | 60 | 5/12 | 61→60: RF-036 (CRITICAL, yeni) — net sermaye sanal stok istisnasını uygulamıyordu (40005100051, 1.025.723 TL; düzeltme migration 130000 bekletilen) → finansal doğruluk 9→8; H1/H12 ❌ kalır. CFO-029 ilk üretim koşusu kuru çalıştırmayla tutarlı (153/440, +26.334 TL KDV dahil) ama net sermayeye gerçek etkisi −65.470 TL (M-BANYOMİX 1.194 adet, %120 elle gümrük → %52,6 yasal); etki toplamı/alarm net sermaye kuralına hizalandı (RF-037). RF-033/034 RESOLVED |
 | 2026-10-10 | 6d05a8e | 60 | 5/12 | Değişmedi (bilinçli): RF-038 (HIGH) — CFO çalışma döngüsü 09.10'dan beri bağlam aşamasında 3B001 ile düşüyordu; aynı PR'da düzeltildi (sorgular sıraya alındı, gerçek PostgreSQL regresyon testi). Otomasyon boyutu ilk başarılı üretim döngüsü gözlenince yeniden değerlendirilir |
 | 2026-10-10 | e40f257 | 60 | 5/12 | Değişmedi (bilinçli): RF-006 kısmı — motorun kendi Vercel cron'u (03:xx/13:xx UTC) ve çalışma döngüsü cron'u (06:xx UTC); senkron zincirinde motor süre bütçesine sığmıyordu (174–190 sn). Otomasyon boyutu ilk cron koşuları gözlenince ve WhatsApp alarm teslimi yapılandırılınca yeniden değerlendirilir |
+| 2026-10-10 | cb66df1 | 60 | 5/12 | Değişmedi (bilinçli): CFO-023 kısım 1 — beş sayfa sabiti motorun kaynağına bağlandı (`/cfo/olu-stok` eşiği `deadStockSalesRatioPct`, `/cfo/kazananlar` kapsam eşiği motorun `minCostCoveragePct`'i, `/admin/yeni-urunler` marjı güncel kur, `/cfo/sermaye` + `/cfo/calisan` hedefi `monthlyRevenueTargetUsd`) + statik eşlik testi `cfo-page-parity`; değer eşliği CFO-001/002/008 üretim doğrulamalarıyla tamamlanınca tutarlılık yeniden değerlendirilir |

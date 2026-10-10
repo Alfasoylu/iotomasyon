@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 10:50 TR
-current_main_commit: e40f257
+last_updated: 2026-10-10 10:56 TR
+current_main_commit: cb66df1
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
 next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — RF-006 kısmı: CFO motoru kendi Vercel cron’unda (03:xx/13:xx UTC, tam 300 sn) ve yetim çalışma döngüsü cron’a bağlandı (06:xx UTC, sabah snapshot’ından sonra Goal v3); senkron zincirinde süre bütçesi yüzünden atlanıyordu — otomasyon boyutu (4/5) ilk cron koşuları gözlenince ve alarm teslimi (WhatsApp yapılandırması) tamamlanınca yeniden değerlendirilir"
+score_change: "unchanged — CFO-023 kısım 1: beş sayfa sabiti (ölü stok oran eşiği, kazananlar kapsam eşiği %85, yeni ürün marjında 48,5 kur, sermaye/çalışan sayfalarında 100.000 USD) motorun kaynağına bağlandı ve statik eşlik testiyle korunuyor; değer eşliği (aynı sayı her yüzeyde) CFO-001/002/008 üretim doğrulamalarıyla tamamlanınca tutarlılık yeniden değerlendirilir"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -26,7 +26,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 |---|---|---|---|
 | RF-20261008-001 | CRITICAL | IN_PROGRESS | sözleşme üretimde (170000/190000); v3 Goal doğrulaması 10.10 |
 | RF-20261008-002 | HIGH | IN_PROGRESS | 180000 üretimde, 5M sabiti kalktı (PR #238); v3 doğrulaması 10.10 |
-| RF-20261008-003 | HIGH | MITIGATED | TCMB tek stratejik kur (CFO-003); 10.10: eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR (`|| 1` kalktı) ✓; SQL 48,5 / 1 yedekleri + snapshot kur döngüsü → migration 120000 (bekletilen, üretim uygulaması bekliyor) |
+| RF-20261008-003 | HIGH | MITIGATED | TCMB tek stratejik kur (CFO-003); 10.10: eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR (`|| 1` kalktı) ✓; SQL 48,5 / 1 yedekleri + snapshot kur döngüsü → migration 120000 (bekletilen, üretim uygulaması bekliyor); 10.10 CFO-023: `/admin/yeni-urunler` marjı 48,5 sabiti → güncel kur ✓ |
 | RF-20261008-004 | HIGH | RESOLVED | 2026-10-09, 110000 + 160000 üretimde |
 | RF-20261008-005 | HIGH | RESOLVED | 2026-10-09, 100000 üretimde |
 | RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; 10.10: motorun kendi Vercel cron'u (03:xx/13:xx UTC) + çalışma döngüsü cron'u (06:xx UTC) — senkron zincirinde motor atlanıyordu; kalan: WhatsApp şablon/alıcı yapılandırması |
@@ -42,7 +42,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-016 | MEDIUM | IN_PROGRESS | CFO-014 kısım 1 (PR #240); eski motor kısmı CFO-018 |
 | RF-20261008-017 | MEDIUM | RESOLVED | 2026-10-09, CFO-019 |
 | RF-20261008-018 | MEDIUM | OPEN | veri: ölçülmemiş faiz oranları (CFO-015, Alperen) |
-| RF-20261008-019 | MEDIUM | IN_PROGRESS | 5M + 100k yedeği + iki taban kalktı; ORAN_ESIGI / 50k / KPI eşikleri kalan |
+| RF-20261008-019 | MEDIUM | IN_PROGRESS | 5M + 100k yedeği + iki taban kalktı; 10.10 CFO-023: ORAN_ESIGI ayardan, "aylık 100.000 USD" metinleri ayardan, kazananlar kapsam eşiği = motor ✓; 50k / KPI eşikleri kalan |
 | RF-20261008-020 | MEDIUM | OPEN | yoldaki mal iki kaynak (CFO-018) |
 | RF-20261008-021 | LOW | RESOLVED | 2026-10-09, CFO-021 |
 | RF-20261008-022 | LOW | RESOLVED | 2026-10-09, CFO-021 |
@@ -652,3 +652,19 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   ≤300 sn, motor senkronlardan sonra).
 - **kalan:** WhatsApp şablon + alıcı yapılandırması (D-P07, Alperen); ilk cron koşularının üretimde gözlenmesi.
 
+## 2026-10-10 — CFO-023 sayfa-motor eşlik RED FLAG PASS
+
+### RF-20261008-019 — güncelleme (2026-10-10, CFO-023; MEDIUM, IN_PROGRESS kalır)
+- **düzeltme (kod):** `/cfo/olu-stok` `ORAN_ESIGI=0.2` → `cfo_settings.deadStockSalesRatioPct` (görünüm `cfo_olu_stok` ile aynı SQL ifadesi;
+  üretim ayarı %20, görünüm ayarı okuyor — salt-okunur doğrulandı); `/cfo/sermaye` gelir kaldıraçları etiketi ve `/cfo/calisan` hedef metni
+  "100.000 USD" → `cfo_settings.monthlyRevenueTargetUsd` (ayar yoksa bilinmiyor); `/cfo/kazananlar` maliyet kapsamı eşiği %85 → motorun
+  `getCfoConfig().minCostCoveragePct` (%95). Üretim etkisi (salt-okunur): 2026-05 (%87,1) ve 2026-03 (%86,2) artık "güvenilir" değil — motor bu
+  kapsamda marj/kâr kurallarını zaten susturuyordu; sayfa aynı ayı güvenilir gösteriyordu.
+- **koruma:** `__tests__/cfo-page-parity.test.ts` (CI) — sabit kalıntılar yorum dışı kodda yasak + 8 kaynak bağı; eski kodda 5 ihlalin hepsi yakalandı.
+- **kalan:** 50.000 TL uyarı (`/cfo/odemeler`), KPI renk eşikleri (`/cfo` boş KMH 1,5M / 750k) → CFO-020.
+
+### RF-20261008-003 — güncelleme (2026-10-10, CFO-023; HIGH, MITIGATED kalır)
+- `/admin/yeni-urunler/[sku]` tahmini marjı sabit 48,5 kurla hesaplıyordu ("Kur 48,50 varsayıldı") → güncel kur tek kaynağı (`lib/fx/current`
+  `getCurrentFx`, kaynak etiketi sayfada). app/ altında yorum dışı 48,5 kalmadı (eşlik testi korur). SQL tarafı 48,5 / 1 yedekleri migration 120000'de
+  (bekletilen) — RESOLVED onun üretim uygulamasıyla.
+- Yeni red flag yok.
