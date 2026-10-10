@@ -163,7 +163,7 @@ export async function searchProducts(cfg: PttavmConfig, page = 1, f: Fetch = fet
 }
 export async function getProductsByBarcodes(cfg: PttavmConfig, barcodes: string[], f: Fetch = fetch): Promise<unknown> {
   if (cfg.mode !== "rest") throw new Error("toplu barkod sorgusu yalnız REST'te");
-  return restPostRead(cfg, "/products/get-by-barcodes", barcodes, f);
+  return restPostRead(cfg, "/products/get-by-barcodes", { barcodes }, f);
 }
 export async function getWarehouses(cfg: PttavmConfig, f: Fetch = fetch): Promise<unknown> {
   if (cfg.mode !== "rest") throw new Error("depo listesi yalnız REST'te");
