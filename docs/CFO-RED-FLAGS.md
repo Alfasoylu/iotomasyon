@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 07:45 TR
-current_main_commit: 6d05a8e
+last_updated: 2026-10-10 10:50 TR
+current_main_commit: e40f257
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
-next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038 doğrulaması: 12:00 UTC trendyol-sync sonrası CFO çalışma döngüsü tamamlanıyor mu → CFO-001/CFO-002 v3 doğrulaması + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038/RF-006 doğrulaması: 12:00 UTC trendyol-sync döngüsü ve 13:xx UTC motor cron’u → CFO-001/CFO-002 v3 doğrulaması (Goal v3 ilk tazelemede) + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
 open_high: 5
-score_change: "unchanged — RF-038 (HIGH, yeni + aynı PR’da düzeltildi): CFO çalışma döngüsü 09.10 02:34’ten beri her senkronda bağlam aşamasında 3B001 ile düşüyordu (eşzamanlı sorgular savepoint’leri iç içe geçiriyordu); sorgular sıraya alındı, gerçek PostgreSQL’de yeniden üretilip düzeltildi — otomasyon boyutu (4/5) üretimde gözlenince yeniden değerlendirilir"
+score_change: "unchanged — RF-006 kısmı: CFO motoru kendi Vercel cron’unda (03:xx/13:xx UTC, tam 300 sn) ve yetim çalışma döngüsü cron’a bağlandı (06:xx UTC, sabah snapshot’ından sonra Goal v3); senkron zincirinde süre bütçesi yüzünden atlanıyordu — otomasyon boyutu (4/5) ilk cron koşuları gözlenince ve alarm teslimi (WhatsApp yapılandırması) tamamlanınca yeniden değerlendirilir"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -29,7 +29,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-003 | HIGH | MITIGATED | TCMB tek stratejik kur (CFO-003); 10.10: eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR (`|| 1` kalktı) ✓; SQL 48,5 / 1 yedekleri + snapshot kur döngüsü → migration 120000 (bekletilen, üretim uygulaması bekliyor) |
 | RF-20261008-004 | HIGH | RESOLVED | 2026-10-09, 110000 + 160000 üretimde |
 | RF-20261008-005 | HIGH | RESOLVED | 2026-10-09, 100000 üretimde |
-| RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; WhatsApp şablon/alıcı yapılandırması bekliyor |
+| RF-20261008-006 | HIGH | IN_PROGRESS | sağlık + WhatsApp Vercel cron zincirinde; 10.10: motorun kendi Vercel cron'u (03:xx/13:xx UTC) + çalışma döngüsü cron'u (06:xx UTC) — senkron zincirinde motor atlanıyordu; kalan: WhatsApp şablon/alıcı yapılandırması |
 | RF-20261008-007 | MEDIUM | RESOLVED | HIGH→MEDIUM; CFO-010 ✅ 2026-10-09 (ödeme durumu tek kaynak takvim) |
 | RF-20261008-008 | HIGH | RESOLVED | 2026-10-09, CFO-007 ✅ — 190000 üretimde (LCNRV KDV hariç), D-P06 |
 | RF-20261008-009 | HIGH | MITIGATED | 10.10 CFO-008: tek ciro kaynağı (Goal Engine satırları) tüm manşet ciro yüzeylerinde ✓; AI CFO satış dönemleri + REVENUE_DEVIATION aynı kaynaktan, yalnız tam günler ✓ kod; RESOLVED: ilk üretim AI CFO koşusunda gözlem |
@@ -638,4 +638,17 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
   Yerel PostgreSQL 16 + Prisma ile yeniden üretildi (eski sarmalayıcı: 3B001; yeni: 4 eşzamanlı sorgu doğru, hatalı sorgu yalnız kendini düşürür).
   Regresyon `cfo-workflow-postgres` (CI, gerçek PostgreSQL).
 - RESOLVED için: üretimde ilk tamamlanan döngü (12:00 UTC trendyol-sync ya da GitHub zamanlaması).
+
+## 2026-10-10 — CFO motoru ve çalışma döngüsü kendi cron'larında RED FLAG PASS
+
+### RF-20261008-006 — güncelleme (2026-10-10; HIGH, IN_PROGRESS)
+- **bulgu:** senkron sonrası `after()` zincirinde motor süre bütçesine sığmıyor: 09.10 12:20 (trendyol, senkron 190 sn) ve 10.10 02:33 (xml, 174 sn)
+  "CFO motoru atlandı (süre bütçesi)". RF-038 düzeltmesiyle döngü artık tamamlanacağından zincir daha da uzayacak → motor sabahları hiç koşmayacaktı.
+  GitHub zamanlaması saatlerce gecikiyor (09.10'daki "04:17" koşuları 11:20 / 16:31 / 18:45 UTC'de başladı). 10.10 sabahı motor koşusu yok.
+- **düzeltme (kod):** `/api/cron/cfo-engine` — motor + sağlık/WhatsApp alarmı (önce/sonra) kendi Vercel cron'unda, tam 300 sn: 03:xx UTC (xml-sync
+  sonrası, Cowork 08:00 TR okumasından önce) ve 13:xx UTC (trendyol-sync sonrası). Yetim `cfo-cycle` cron'a bağlandı: 06:xx UTC (sabah
+  snapshot'ından sonra Goal v3 aynı sabah). Hobby planı: proje başına 100 cron, her biri günde bir, ±59 dk (Vercel belgesi). Aynı saat
+  dilimindeki ikinci "scheduled" koşu runner dilim anahtarıyla tekrarlanmaz. Koruma testi `vercel-crons` (günlük ifade, route + CRON_SECRET,
+  ≤300 sn, motor senkronlardan sonra).
+- **kalan:** WhatsApp şablon + alıcı yapılandırması (D-P07, Alperen); ilk cron koşularının üretimde gözlenmesi.
 

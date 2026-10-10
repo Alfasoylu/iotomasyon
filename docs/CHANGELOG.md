@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### CFO motoru ve günlük çalışma planı kendi zamanlanmış görevlerinde (2026-10-10)
+
+- CFO motoru senkronlardan bağımsız, günde iki kez kendi zamanlanmış görevine alındı: sabah 06–07 ve öğleden sonra 16–17 (TR). Önceden senkronlardan sonra süre yetmediği için atlanıyordu.
+- Günlük CFO çalışma planı her sabah 09–10 (TR) arasında, sabah servet kaydından sonra çalışacak; hedef değerlendirmesi aynı sabah güncellenir.
+- Zamanlanmış görevlerin plan sınırına (günde bir) uyduğu ve korumalı olduğu otomatik testle denetleniyor.
+
 ### CFO çalışma döngüsü yeniden çalışıyor (2026-10-10)
 
 - Günlük CFO çalışma planı 9 Ekim'den beri her senkronda veri okuma aşamasında hata verip duruyordu. Aynı anda gönderilen sorgular veritabanı işlemini bozuyordu.
