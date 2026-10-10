@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { loadCfoAlarms, shouldNotify, type CfoAlarm } from "./health";
 import { istanbulPeriod } from "./period";
-import { sendAlarmWhatsapp, type AlarmSendResult } from "./alarm-whatsapp";
+import { sendAlarmWhatsapp, type AlarmSendDeps, type AlarmSendResult } from "./alarm-whatsapp";
 import { sendTemplate, whatsappConfigured } from "@/lib/whatsapp/client";
 import { parseRecipients } from "@/lib/whatsapp/phone";
 
@@ -14,6 +14,10 @@ import { parseRecipients } from "@/lib/whatsapp/phone";
 export type HealthNotifyResult = { alarms: CfoAlarm[]; notify: boolean; whatsapp: AlarmSendResult | null };
 type Opts = { now?: Date; before?: Date; skipLatest?: boolean; reminder?: boolean; alreadySent?: readonly string[] };
 
+/** Gerçek gönderim bağımlılıkları (resmî Cloud API istemcisi + ortam değişkenleri); alarm ve deneme gönderimi aynı yolu kullanır. */
+export const alarmSendDeps = (): AlarmSendDeps => ({ configured: whatsappConfigured, send: sendTemplate, parseRecipients,
+  env: { to: process.env.CFO_ALARM_WHATSAPP_TO, template: process.env.CFO_ALARM_WHATSAPP_TEMPLATE } });
+
 export async function checkHealthAndNotify(o: Opts = {}): Promise<HealthNotifyResult> {
   const now = o.now ?? new Date();
   const alarms = await loadCfoAlarms(now);
@@ -24,8 +28,7 @@ export async function checkHealthAndNotify(o: Opts = {}): Promise<HealthNotifyRe
   const prev = ref ? ((ref.triggerReasons as { alarms?: CfoAlarm[] } | null)?.alarms ?? []).map(a => a.key) : null;
   const hour = o.reminder === false ? -1 : Math.floor(istanbulPeriod(now).minutes / 60);
   const notify = shouldNotify(alarms, prev, hour, o.alreadySent);
-  const whatsapp = notify ? await sendAlarmWhatsapp(alarms, { configured: whatsappConfigured, send: sendTemplate, parseRecipients,
-    env: { to: process.env.CFO_ALARM_WHATSAPP_TO, template: process.env.CFO_ALARM_WHATSAPP_TEMPLATE } }) : null;
+  const whatsapp = notify ? await sendAlarmWhatsapp(alarms, alarmSendDeps()) : null;
   return { alarms, notify, whatsapp };
 }
 

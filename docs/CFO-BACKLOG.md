@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 13:16 TR
-current_main_commit: 5a1e46c
+last_updated: 2026-10-10 14:50 TR
+current_main_commit: 9979a79
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 62/100
 next_action: "RF-006 otomasyon kanıtı: 13:xx UTC motor cron’u (doğrulama 14:10 UTC) + 11.10 06:xx UTC döngü (doğrulama 07:10 UTC) → RF-038 + CFO-001/CFO-002/CFO-017 v3 doğrulaması (12:35 UTC; net sermaye 1.383.530,52) → CFO-031 kalanı: 1.000+ adetlik 3 SKU gerçekliği (Alperen) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 1
 open_high: 4
-score_change: "unchanged — CFO-030 ✅ / RF-035 RESOLVED (LOW): migration 140000 üretimde (Alperen açık onayı) — KMH kapasitesi pozisyon + tam limit (kaynak yeterliliği, ön uçuş, gümrük dilimi, kapasite alarmı, stres testi); bugün sayılar aynı (eksi bakiye yok), 14.10 sonrası kullanılan KMH iki kez düşmez — latent hata önlendi, ölçülen değer değişmediği için skor aynı"
+score_change: "unchanged — CFO-009 / D-P07: WhatsApp alarm kanalı deneme gönderim ucu (/api/cron/cfo-alarm-test, yalnız elle tetiklenen iş akışı; alarm üretmez, veritabanına yazmaz) — kanal kanıtı için; ölçülen finans değeri değişmedi"
 ---
 
 # CFO BACKLOG
@@ -136,6 +136,7 @@ BLOCKED değil "insan tarafında"; Code yalnız eksik listesini üretir (CFO-011
 - **kabul:** GitHub işi olmadan alarm üretilir; takılan koşu testi. **durum:** IN_PROGRESS — kısım 1 bitti 2026-10-09 (PR #216: `stuck_run` alarmı, kilit hatası `cfo_run` satırı, başarısız/takılı dilim yeniden denenir); kısım 2 kod 2026-10-09 (Cowork 09.10 bulgusu: xml-sync `after()` koşusu 300 sn sınırında öldü, 4+ saat `running`): ölü koşu süpürmesi (`sweepStuck` → `failed`/`killed_timeout`), senkron sonrası motor süre bütçesi (≥150 sn yoksa başlamaz, değişiklik günlüğüne iz), `cfo_gun_ozeti` SAĞLIK satırı ACİL (TAKILDI / BAŞARISIZ / BAYAT; migration `20261009150000`, Cowork uygulayacak). Kısım 3 kod 2026-10-09 (Cowork: 09.10 motor 197 dk askıda kaldı, hiç alarm üretilmedi): kök neden — GitHub `ai-cfo-schedule.yml` zamanlaması pratikte hiç tetiklenmiyor (tek zamanlanmış koşu), sağlık uç noktası otomatik çağrılmıyordu. Artık `lib/cfo-agent/health-notify.ts` Vercel cron `after()` zincirinde (xml-sync 02:00, trendyol-sync 12:00 UTC) motordan ÖNCE (takılan/bayat motor; motor yine takılsa da alarm gitmiş olur) ve SONRA (yeni alarmlar; aynı zincirde gönderilen anahtar tekrar gitmez) çalışır; `stuck_run` motor arızası sayılır (süregelse de bildirilir); bildirim olduğunda değişiklik günlüğüne iz (`cfo-health-notify`, numara yazılmaz). `/api/cron/ai-cfo-health` aynı modülü kullanır. Kalan: üretimde doğrulama (WhatsApp şablonu + `CFO_ALARM_WHATSAPP_TO` tanımlandıktan sonra ilk takılan/yeni alarmda iz), `cfo-cycle`.
 
 - **2026-10-10 — motor ve döngü kendi cron'larında (Claude Code):** senkron sonrası zincirde motor süre bütçesine sığmıyordu (174–190 sn → "motor atlandı"); GitHub zamanlaması saatlerce gecikiyor. `/api/cron/cfo-engine` (motor + sağlık/WhatsApp önce/sonra, `runEngineWithHealth`) Vercel cron'u 03:xx ve 13:xx UTC; yetim `/api/cron/cfo-cycle` 06:xx UTC (sabah snapshot'ından sonra Goal v3). Test `vercel-crons`. Kalan: WhatsApp şablon/alıcı (D-P07), ilk koşuların gözlemi.
+- **2026-10-10 — WhatsApp teslim kanalı (kısmi; Alperen + Claude Code):** `cfo_alarm` şablonu Meta'da aktif (Pazarlama, tr, 2 değişken), `CFO_ALARM_WHATSAPP_TO` Vercel'de (önceki kayıt 09.10 `alici_yok`). Kanal kanıtı için elle tetiklenen deneme gönderimi `/api/cron/cfo-alarm-test` + `cfo-alarm-test.yml` (alarm üretmez, DB'ye yazmaz). Günlük ödeme özeti (en yakın 5 ödeme, Alperen talebi) her sabah 05:xx UTC aynı şablonla (`/api/cron/cfo-odeme-ozeti`, günde bir). Kalan: ilk gerçek alarm teslimi gözlemi; gönderen Meta test numarası (≤5 doğrulanmış alıcı) → gerçek işletme numarası (Alperen).
 
 ### CFO-010 — Defter bakım yolu
 - **uygulama:** kredi/kart için ay dönümü devri (ödenen ay → sonraki vade), `currentMonthState` sıfırlama; alacak/ödeme girişi için kontrollü form veya içe aktarma; `cfo-actions.ts` bağlanır ya da silinir.

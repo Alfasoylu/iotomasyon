@@ -30,4 +30,5 @@ const [xml] = at("/api/cron/xml-sync"), [ty] = at("/api/cron/trendyol-sync");
 assert.deepEqual(at("/api/cron/cfo-engine"), [xml + 1, ty + 1], "motor her senkrondan bir saat sonra (kendi 300 sn bütçesiyle)");
 assert.ok(at("/api/cron/cfo-cycle")[0] >= 6, "çalışma döngüsü sabah snapshot'ından (~05:15 UTC) sonra");
 assert.match(readFileSync("app/api/cron/cfo-engine/route.ts", "utf8"), /runEngineWithHealth\("scheduled"\)/, "motor cron'u sağlık alarmıyla, scheduled dilim anahtarıyla");
+assert.deepEqual(at("/api/cron/cfo-odeme-ozeti"), [5], "günlük ödeme özeti WhatsApp 05:xx UTC (08:xx TR), günde bir");
 console.log(`Vercel crons: ${crons.length} günlük cron, route + CRON_SECRET + ≤300 sn; motor senkronlardan sonra (${at("/api/cron/cfo-engine").join(", ")} UTC), döngü ${at("/api/cron/cfo-cycle")} UTC passed`);

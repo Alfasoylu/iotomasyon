@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { alarmTemplateParams, sendAlarmWhatsapp, type AlarmSendDeps } from "../lib/cfo-agent/alarm-whatsapp";
+import { alarmTemplateParams, sendAlarmWhatsapp, sendTestAlarmWhatsapp, testAlarmParams, type AlarmSendDeps } from "../lib/cfo-agent/alarm-whatsapp";
 import { parseRecipients } from "../lib/whatsapp/phone";
 import type { CfoAlarm } from "../lib/cfo-agent/health";
 
@@ -33,6 +33,16 @@ async function main() {
   assert.equal(fail.status, "hata"); assert.match(fail.detail![0], /132001/); assert.ok(!fail.detail![0].includes("5490000000"), "numara loglarda maskeli");
   const partial = await sendAlarmWhatsapp(alarms, deps({ send: async to => ({ ok: to.endsWith("00") }) }, { to: "905490000000, 905490000011" }));
   assert.deepEqual([partial.status, partial.sent], ["kismen", 1]);
-  console.log("CFO alarm WhatsApp: şablon + 2 parametre, öncelik, yapılandırma eksikleri nedenle, numara maskeli, kısmi gönderim passed");
+
+  // Deneme gönderimi: aynı şablon + alıcı yolu, gerçek alarm olmadığı metinde yazılı, TR saati; yapılandırma eksikleri aynı nedenle.
+  const now = new Date("2026-10-10T11:40:00Z");
+  assert.deepEqual(testAlarmParams(now), ["DENEME (10.10.2026 14:40) — gerçek alarm değil", "WhatsApp alarm kanalı testi; işlem gerekmez"]);
+  sent.length = 0;
+  const test = await sendTestAlarmWhatsapp(deps(), now);
+  assert.deepEqual([test.status, test.sent, sent[0].template, sent[0].params], ["gonderildi", 1, "cfo_alarm", testAlarmParams(now)]);
+  assert.equal((await sendTestAlarmWhatsapp(deps({}, { to: "" }), now)).status, "alici_yok");
+  assert.equal((await sendTestAlarmWhatsapp(deps({ configured: () => false }), now)).status, "yapilandirilmadi");
+  assert.ok(testAlarmParams(now).every(p => !/[\n\t]/.test(p) && p.length <= 200), "Meta parametre kuralı: satır sonu/sekme yok");
+  console.log("CFO alarm WhatsApp: şablon + 2 parametre, öncelik, yapılandırma eksikleri nedenle, numara maskeli, kısmi gönderim, deneme gönderimi passed");
 }
 main().catch(e => { console.error(e); process.exitCode = 1; });
