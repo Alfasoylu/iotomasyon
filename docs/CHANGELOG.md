@@ -9,6 +9,12 @@
 
 ## 2026-10
 
+### Koçtaş bağlantısı: müşteri mesajları ve komisyon okuması (2026-10-10)
+
+- Koçtaş müşteri mesajları (sipariş ve ürün konuları) sitede listeleniyor ve yanıtlanabiliyor (Pazaryerleri → Koçtaş Mesajları); her yanıt kimin verdiğiyle kayda geçiyor.
+- Koçtaş siparişlerinden satır bazında komisyon tutarı ve ödeme hareketleri okunabiliyor (bugün Koçtaş komisyonu kayıtsız).
+- Koçtaş API anahtarı Vercel'e girilene kadar ekran "anahtar tanımlı değil" gösterir (birim testlerle doğrulandı; canlı bağlantı henüz yapılmadı).
+
 ### N11 bağlantısı: müşteri soruları ve komisyon okuması (2026-10-10)
 
 - N11 müşteri soruları sitede listeleniyor ve yanıtlanabiliyor (Pazaryerleri → N11 Soruları); her yanıt kimin verdiğiyle kayda geçiyor.

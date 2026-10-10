@@ -76,6 +76,7 @@ jobs:
       - run: node --import tsx __tests__/cfo-engine-sahsi.test.ts
       - run: node --import tsx __tests__/pttavm-client.test.ts
       - run: node --import tsx __tests__/n11-client.test.ts
+      - run: node --import tsx __tests__/koctas-client.test.ts
       - run: node --import tsx __tests__/pttavm-write.test.ts
       - run: node --import tsx __tests__/trendyol-write.test.ts
       - run: node --import tsx __tests__/olu-stok-plan.test.ts

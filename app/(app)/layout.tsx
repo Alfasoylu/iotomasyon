@@ -246,6 +246,13 @@ const ALL_NAV: Array<NavItem & { permission?: string; alsoRequires?: string[]; a
     section: "Pazaryerleri",
   },
   {
+    href: "/marketplace/koctas/messages",
+    label: "Koçtaş Mesajları",
+    iconKey: "help",
+    permission: PERMISSIONS.MARKETPLACE_QUESTIONS_READ,
+    section: "Pazaryerleri",
+  },
+  {
     href: "/marketplace/trendyol/returns",
     label: "İade Merkezi",
     iconKey: "undo",
