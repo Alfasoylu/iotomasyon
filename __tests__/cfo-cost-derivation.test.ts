@@ -62,6 +62,13 @@ assert.deepEqual([again.updates.length, again.unchanged], [0, 1]);
 const d4 = deriveUnitCosts([row({ sku: "IST", sourceCostRmb: null, weightKg: null, shippingMethodPref: "IC_PIYASA", unitCostUsd: "1.2", unitCostTry: "58.2", tariffBurdenPct: 39.8, stock: 93 })], fx);
 assert.deepEqual(d4.updates.map(u => [u.kind, u.changes.map(c => [c.field, c.new])]), [["YURTICI", [["unitCostTry", "58.78"]]]]);
 assert.equal(deriveUnitCosts([row({ sku: "IST0", shippingMethodPref: "IC_PIYASA", unitCostUsd: null })], fx).updates.length, 0, "USD'siz yurt içi ürüne dokunulmaz");
+// CFO-025: RMB/ağırlık yok ama USD var → TL = USD × güncel kur (sabit 48,50'de saklı TL kalmaz); USD de yoksa dokunulmaz
+const d4u = deriveUnitCosts([row({ sku: "CAM03", sourceCostRmb: null, weightKg: null, unitCostUsd: "10", unitCostTry: "485", stock: 1940 }),
+  row({ sku: "NONE", sourceCostRmb: null, weightKg: 0.5, unitCostUsd: null, unitCostTry: "100" })], fx);
+assert.deepEqual(d4u.updates.map(u => [u.sku, u.kind, u.changes.map(c => [c.field, c.new]), u.deltaStockTry]), [["CAM03", "USD", [["unitCostTry", "489.80"]], 0]],
+  "yalnız USD: TL = 10 × 48,98; stok ≥1000 dropship yer tutucusu → stok farkı 0");
+assert.match(derivationLog(d4u).rows[0].note, /Yalnız USD maliyet .*doğrulanmalı/);
+assert.match(derivationLog(d4u).summary, /1 yalnız USD/);
 
 // Büyük değişim: stoklu üründe ≥ %25; dropship yer tutucu (≥ 1000) değerlenmez
 const d5 = deriveUnitCosts([row({ sku: "BIG", unitCostUsd: "1", unitCostTry: "10", stock: 4 }), row({ sku: "DROP", unitCostUsd: "1", unitCostTry: "10", stock: 1500 })], fx);
@@ -69,7 +76,7 @@ assert.deepEqual(d5.bigMovers.map(u => u.sku), ["BIG"]);
 assert.equal(d5.updates.find(u => u.sku === "DROP")!.deltaStockTry, 0);
 const log = derivationLog(d5);
 assert.equal(log.rows.length, 6, "her ürün için gümrük + USD + TL");
-assert.match(log.summary, /^2 ürün \(2 ithal, 0 yurt içi\), 6 alan; .*%25\+ değişen stoklu ürün 1; .*USD\/TRY 48\.98 \(cfo_kur 2026-10\), RMB\/USD 6\.7 \(elle 2026-10\)/);
+assert.match(log.summary, /^2 ürün \(2 ithal, 0 yurt içi, 0 yalnız USD\), 6 alan; .*%25\+ değişen stoklu ürün 1; .*USD\/TRY 48\.98 \(cfo_kur 2026-10\), RMB\/USD 6\.7 \(elle 2026-10\)/);
 
 async function main() {
   const pg = new PGlite({ extensions: { vector } });
