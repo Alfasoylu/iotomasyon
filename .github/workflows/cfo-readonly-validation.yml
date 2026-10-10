@@ -72,6 +72,7 @@ jobs:
       - run: node --import tsx __tests__/cfo-alarm-whatsapp.test.ts
       - run: node --import tsx __tests__/cfo-payment-digest.test.ts
       - run: node --import tsx __tests__/cfo-engine-unknown.test.ts
+      - run: node --import tsx __tests__/cfo-debt-forecast-customs.test.ts
       - run: node --import tsx __tests__/fm-memory-schema.test.ts
       - run: node --import tsx __tests__/fm-sales-backfill.test.ts
       - run: node --import tsx __tests__/fm-tcmb-fx.test.ts

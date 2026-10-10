@@ -43,7 +43,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-017 | MEDIUM | RESOLVED | 2026-10-09, CFO-019 |
 | RF-20261008-018 | MEDIUM | OPEN | veri: ölçülmemiş faiz oranları (CFO-015, Alperen) |
 | RF-20261008-019 | MEDIUM | IN_PROGRESS | 5M + 100k yedeği + iki taban kalktı; 10.10 CFO-023: ORAN_ESIGI ayardan, "aylık 100.000 USD" metinleri ayardan, kazananlar kapsam eşiği = motor ✓; 50k / KPI eşikleri kalan |
-| RF-20261008-020 | MEDIUM | MITIGATED | 10.10: hedef/kapı şişmesi yok (ödenmemiş gümrük/navlun her iki sözleşmede yalnız bilgi satırı, D-P03 — üretimde doğrulandı); gümrük rezervi ödeme takviminden (CFO-018 kısım 1) ✓; kalan: `cfo_import_project` bayat (borç tahmini + parti tablosu), ROMANYA-2408 defter 500k ↔ takvim 400k (veri, insan); 2026-10-10 veri: `cfo_import_project` 07.26sea GUMRUKTE + gümrük tahmini 3.287.072,31, ROMANYA-2408 defter ödenmemiş vergi 500k → 400k (Alperen: "400k doğru"; takvimle aynı) |
+| RF-20261008-020 | MEDIUM | RESOLVED | 2026-10-10 — hedef/kapı şişmesi yok (ödenmemiş gümrük/navlun sözleşmede yalnız bilgi satırı, D-P03, üretimde doğrulandı); gümrük rezervi ödeme takviminden (CFO-018 kısım 1); AI CFO borç tahmini artık `cfo_import_project.customsEstimateTry` / eski `cfo_servet_kalem` etiketine dayanmıyor — gümrük çıkışı borç kapatmaz, eksik veri üretmez (testli); veri: 07.26sea GUMRUKTE 3.287.072,31 = takvim dilimleri, ROMANYA-2408 400k defter = takvim |
 | RF-20261008-021 | LOW | RESOLVED | 2026-10-09, CFO-021 |
 | RF-20261008-022 | LOW | RESOLVED | 2026-10-09, CFO-021 |
 | RF-20261008-023 | LOW | OPEN | latent |

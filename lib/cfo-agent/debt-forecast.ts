@@ -26,27 +26,20 @@ export async function readForecastInputs(db:ReadSource,snapshot:CfoAgentSnapshot
       }
     }
   }catch{ /* Missing verified finance budget remains unknown. */ }
-  let projects:Row[]=[];
-  try{const rows=await db.query<Row>(`select id,code,"totalCostUsd","paidUsd","customsEstimateTry" from cfo_import_project where status::text in ('YOLDA','GUMRUKTE')`);
-    projects=rows;
+  try{const rows=await db.query<Row>(`select id,code,"totalCostUsd","paidUsd" from cfo_import_project where status::text in ('YOLDA','GUMRUKTE')`);
     result.importsPaid=rows.every(r=>r.totalCostUsd!=null&&r.paidUsd!=null&&Number(r.paidUsd)>=Number(r.totalCostUsd));
   }catch{result.missing.push('Gelecek partilerin ödenmemiş tedarik bedeli');}
-  let customsIncluded=false;
-  try{const rows=await db.query<Row>(`select tutar,kaynak,kalem,tur from cfo_servet_kalem`);
-    const recorded=rows.filter(r=>/bor[cç]/i.test(String(r.tur))&&/cfo_yoldaki_mal|cfo_import_project/.test(String(r.kaynak))&&/g[uü]mr[uü]k/i.test(String(r.kalem)));
-    const total=projects.reduce((sum,r)=>sum+(r.customsEstimateTry==null?NaN:Number(r.customsEstimateTry)),0);
-    customsIncluded=total>0&&Number.isFinite(total)&&Math.abs(recorded.reduce((sum,r)=>sum+Number(r.tutar),0)-total)<0.01;
-  }catch{ /* Classification must be proven, not guessed from an event label. */ }
+  // Borç = cfo_metrik_borc() (D-P03: kredi kalan + kart toplam + kullanılan KMH); ödenmemiş gümrük/navlun sözleşmede yalnız bilgi
+  // satırı → gümrük/vergi çıkışı borcu KAPATMAZ, serbest nakitten düşen sıradan çıkıştır (2026-10-10). Eskiden "borçta sayılıyor mu"
+  // eski cfo_servet_kalem etiketinden ispat ediliyordu; dilimli gümrükte (07.26sea 2 dilim) hiç eşleşmediği için her gümrük olayı
+  // "eksik veri" üretip borç tahminini kalıcı olarak insufficient_data'ya düşürüyordu.
   try{const rows=await db.query<Row>(`select id,"eventDate", "outflowTry", kind::text,"relatedImport" from cfo_cash_event
     where not "isSettled" and "eventDate">=$1::timestamp order by "eventDate"`,snapshot.generatedAt);
     const max=rows.reduce((v,r)=>Math.max(v,Date.parse(String(r.eventDate))),0);
     result.horizonDays=Math.max(0,Math.min(365,Math.floor((max-Date.parse(snapshot.generatedAt))/86400000)));
     result.extraOutflows=rows.filter(r=>!['KREDI_TAKSITI','KART_ODEMESI','SABIT_GIDER','TAHSILAT'].includes(String(r.kind))).map(r=>{
-      const project=projects.find(p=>p.id===r.relatedImport||p.code===r.relatedImport);
       const amount=r.outflowTry==null?NaN:Number(r.outflowTry);
-      const debtSettlement=customsIncluded&&r.kind==='VERGI_GUMRUK'&&!!project&&project.customsEstimateTry!=null&&Number(project.customsEstimateTry)===amount&&rows.filter(e=>e.relatedImport===r.relatedImport&&e.kind==='VERGI_GUMRUK').length===1;
-      if(r.kind==='VERGI_GUMRUK'&&!debtSettlement)result.missing.push('Gümrük/vergi çıkışının toplam borçta zaten sayılıp sayılmadığı eşleştirilmeli');
-      return {date:new Date(String(r.eventDate)).toISOString(),amount,debtSettlement};
+      return {date:new Date(String(r.eventDate)).toISOString(),amount,debtSettlement:false};
     });
     if(result.extraOutflows.some(r=>!Number.isFinite(r.amount)||r.amount<0))result.missing.push('Takvimde tutarı bilinmeyen çıkış');
   }catch{result.missing.push('Gelecek ödeme takvimi');}
