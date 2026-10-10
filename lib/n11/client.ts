@@ -170,9 +170,19 @@ export async function listReturns(cfg: N11Config, from: Date, to: Date, status =
   return out;
 }
 
-/** Hakediş özeti (SettlementService; portalda yok — çalıştığı DOĞRULANMADI, tarih biçimi dd/MM/yyyy varsayımı). */
+/** Hakediş tarih biçimleri — üretim 10.10: dd/MM/yyyy "SELLER_API.invalidDate" döndü; belge biçim yazmıyor → sırayla denenir (salt-okuma). */
+export const SETTLEMENT_DATE_FORMATS: ((d: Date) => string)[] = [
+  d => istanbulYmd(d), d => ddmmyyyy(d).replace(/\//g, "."), d => `${istanbulYmd(d)}T00:00:00`, ddmmyyyy];
+function istanbulYmd(d: Date) { return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit", day: "2-digit" }).format(d); }
+
+/** Hakediş özeti (SettlementService; portalda yok). Geçersiz tarih hatasında bir sonraki biçim denenir; hepsi reddedilirse son hata. */
 export async function listSettlements(cfg: N11Config, from: Date, to: Date, f: Fetch = fetch) {
-  const resp = await soap(cfg, "GetSettlementList", { startDate: ddmmyyyy(from), endDate: ddmmyyyy(to), pagingData: { currentPage: 0, pageSize: 100 } }, f);
+  let resp: XmlNode | XmlNode[] | undefined; let last: unknown;
+  for (const fmt of SETTLEMENT_DATE_FORMATS) {
+    try { resp = await soap(cfg, "GetSettlementList", { startDate: fmt(from), endDate: fmt(to), pagingData: { currentPage: 0, pageSize: 100 } }, f); last = null; break; }
+    catch (e) { last = e; if (!(e instanceof Error) || !/invalidDate/i.test(e.message)) throw e; }
+  }
+  if (last) throw last;
   return asArray(pick(resp, "settlementListData", "settlementList") as XmlNode | XmlNode[] | undefined).map(x => ({
     settlementDate: str(pick(x, "settlementDate")), remittanceDate: str(pick(x, "remittanceDate")), status: str(pick(x, "status")),
     paymentAmount: num(pick(x, "paymentAmount")), deductionAmount: num(pick(x, "deductionAmount")), settlementAmount: num(pick(x, "settlementAmount")) }));

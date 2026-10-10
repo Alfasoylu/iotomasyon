@@ -184,22 +184,28 @@ export async function ping(cfg: PttavmConfig, f: Fetch = fetch): Promise<string>
 // ── Özet (kişisel veri yok) ──
 const n = (v: unknown) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
 export const RETURN_STATUSES = new Set(["iade", "gondericisine_teslim_edildi"]);
+/** Sipariş özeti (kişisel veri yok). `komisyon` satırda TUTAR DEĞİL, ORANDIR (%) — üretim 10.10: 161 satırda alan toplamı 2.324 ≈
+ *  161 × %14,4 (Entegra EPTT oranı %14,3–14,4). Komisyon tutarı = KDV dahil satır tutarı × oran; iptal ve iade satırları hariç. */
+export const CANCEL_STATUSES = new Set(["iptal"]);
 export function summarizeOrders(orders: PttavmOrder[]) {
   const byStatus: Record<string, number> = {};
-  let lines = 0, gross = 0, net = 0, commission = 0, discountPttavm = 0, discountSeller = 0, cargo = 0, returnLines = 0, returnGross = 0;
+  let lines = 0, gross = 0, net = 0, commission = 0, rated = 0, rateSum = 0, rateLines = 0, discountPttavm = 0, discountSeller = 0, cargo = 0, returnLines = 0, returnGross = 0;
   for (const o of orders) {
     cargo += n(o.kargoTutari);
     for (const l of o.siparisUrunler ?? []) {
       lines++;
       const st = String(l.siparisDurumu ?? "bilinmiyor");
       byStatus[st] = (byStatus[st] ?? 0) + 1;
-      gross += n(l.kdvDahilToplamTutar); net += n(l.kdvHaricToplamTutar); commission += n(l.komisyon);
+      gross += n(l.kdvDahilToplamTutar); net += n(l.kdvHaricToplamTutar);
       discountPttavm += n(l.indirimPttavm); discountSeller += n(l.indirimTedarikci);
-      if (RETURN_STATUSES.has(st)) { returnLines++; returnGross += n(l.kdvDahilToplamTutar); }
+      if (RETURN_STATUSES.has(st)) { returnLines++; returnGross += n(l.kdvDahilToplamTutar); continue; }
+      if (CANCEL_STATUSES.has(st) || l.komisyon == null || l.komisyon === "") continue;
+      const rate = n(l.komisyon);
+      commission += n(l.kdvDahilToplamTutar) * rate / 100; rated += n(l.kdvDahilToplamTutar); rateSum += rate; rateLines++;
     }
   }
   const r2 = (x: number) => Math.round(x * 100) / 100;
   return { orders: orders.length, lines, byStatus, grossInclVatTry: r2(gross), netExclVatTry: r2(net), commissionTry: r2(commission),
-    commissionPctOfGross: gross > 0 ? r2((commission / gross) * 100) : null, discountPttavmTry: r2(discountPttavm), discountSellerTry: r2(discountSeller),
-    cargoTry: r2(cargo), returnLines, returnGrossTry: r2(returnGross) };
+    commissionPctOfGross: rated > 0 ? r2((commission / rated) * 100) : null, avgCommissionRatePct: rateLines ? r2(rateSum / rateLines) : null,
+    discountPttavmTry: r2(discountPttavm), discountSellerTry: r2(discountSeller), cargoTry: r2(cargo), returnLines, returnGrossTry: r2(returnGross) };
 }

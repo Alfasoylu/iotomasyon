@@ -27,6 +27,6 @@ export async function GET(req: NextRequest) {
   const ok = connection.ok && orders.ok;
   return NextResponse.json({ ok, mode: cfg.mode, shopIdSet: Boolean(cfg.shopId), window: { from: from.toISOString(), to: to.toISOString(), days },
     connection, orders, products, cargoProfiles, categories,
-    note: "komisyon alanının birimi (tutar mı oran mı) dokümanda yazmıyor — commissionTry/commissionPctOfGross ilk gerçek veride doğrulanacak" },
+    note: "komisyon satırda ORAN (%) — tutar = KDV dahil satır × oran; iptal/iade hariç (üretim 10.10 doğrulaması)" },
     { status: ok ? 200 : 502, headers: { "Cache-Control": "private, no-store" } });
 }

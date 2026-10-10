@@ -9,6 +9,11 @@
 
 ## 2026-10
 
+### PttAVM, N11 ve Koçtaş bağlantıları canlıda doğrulandı (2026-10-10)
+
+- Üç pazaryerine bağlantı kuruldu ve son 30 günün verisi okundu: PttAVM 154 sipariş, N11 94 paket, Koçtaş 1 sipariş.
+- Komisyon oranları ölçüldü: N11 %15,9, Koçtaş %15,0, PttAVM %14,4. PttAVM'nin sipariş satırındaki komisyon alanının tutar değil oran olduğu bulundu ve özet buna göre düzeltildi.
+
 ### PttAVM fiyat/stok güncellemesi kullanıcı adı/şifreyle (2026-10-10)
 
 - PttAVM API anahtarı olmadan, mevcut API kullanıcı adı/şifresiyle ölü stok fiyat değişikliği ve bağımsız ilan stok güncellemesi yapılabiliyor; göndermeden önce ürünün güncel kaydı okunup yalnız istenen alan değiştiriliyor (birim testlerle doğrulandı; canlı gönderim henüz yapılmadı).

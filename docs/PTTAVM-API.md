@@ -61,7 +61,10 @@ Yönetimi → Entegrasyon Bilgileri'nde bir **entegratör** yetkilendirilince g�
 fiyat, KDV oranı, iskonto) → `StokFiyatGuncelle3(item: StokUrun)` yalnız istenen alan değişir, diğerleri AYNEN geri gönderilir
 (DataContract'ta gönderilmeyen alan sunucuda varsayılana — stok 0, pasif — düşebilir). Kayıt okunamaz/eşleşmez ya da ürün varyantlıysa
 gönderilmez; `Success=false` hata. Ölü stok fiyat değişikliği ve bağımsız ilan gece stok eşitlemesi SOAP modunda bunu kullanır.
-**Canlı doğrulanmadı** (alan adları WSDL + açık kaynak istemcilerden); ilk gönderimden sonra panelden kontrol edilmeli.
+**Yazma canlı doğrulanmadı** (alan adları WSDL + açık kaynak istemcilerden); ilk gönderimden sonra panelden kontrol edilmeli.
+
+**Bağlantı üretimde doğrulandı (2026-10-10, SOAP):** 30 günde 154 sipariş. Sipariş satırındaki `Komisyon` **oran (%)**, tutar değil
+(alan toplamı 2.324 / 161 satır = %14,4; Entegra EPTT %14,3) — özet tutarı KDV dahil satır × oran ile hesaplar.
 Yeni ilan / içerik (`/products/upsert`) REST anahtarı ister — SOAP modunda eylem açık mesajla reddeder.
 
 ## Hâlâ KURULMAYANLAR
