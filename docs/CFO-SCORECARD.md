@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 06:10 TR
-current_main_commit: c1e8413
+last_updated: 2026-10-10 07:45 TR
+current_main_commit: 6d05a8e
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
 current_score: 60/100
-next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → CFO-001/CFO-002 v3 doğrulaması + CFO-017 (10.10 sabahı) → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-031 kalan: 1.000+ adetlik stokların gerçekliği (AL-CAM03 10.07’den beri senkronsuz) Alperen → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
+next_action: "CFO-031 sanal stok düzeltmesi: migration 130000 üretime (Alperen onayı + 40005100051 sanal beyanının teyidi) → RF-038 doğrulaması: 12:00 UTC trendyol-sync sonrası CFO çalışma döngüsü tamamlanıyor mu → CFO-001/CFO-002 v3 doğrulaması + CFO-017 → CFO-008 kapanışı: AI CFO koşusunda tek kaynak gözlemi → CFO-003 SQL kalanı: migration 120000 (Alperen) → CFO-012 ilk otomatik ölçüm (31.10/01.11)"
 open_critical: 2
-open_high: 4
-score_change: "61→60 — RF-036 (CRITICAL, yeni): net sermaye sözleşmesi sanal stok istisnasını (cfo_stok_istisna 40005100051, beyan 9.700 TL) uygulamıyordu; 2.513 sanal adet 1.025.723 TL LCNRV olarak servette (net sermaye ≈%42 fazla); düzeltme migration 130000 bekletilen (Alperen onayı) → finansal doğruluk 9→8. CFO-029 ilk üretim koşusu doğrulandı (153 ürün / 440 alan / +26.334 TL), etki toplamı ve cost_jump net sermaye stok kuralına hizalandı (RF-037); RF-033 ve RF-034 RESOLVED"
+open_high: 5
+score_change: "unchanged — RF-038 (HIGH, yeni + aynı PR’da düzeltildi): CFO çalışma döngüsü 09.10 02:34’ten beri her senkronda bağlam aşamasında 3B001 ile düşüyordu (eşzamanlı sorgular savepoint’leri iç içe geçiriyordu); sorgular sıraya alındı, gerçek PostgreSQL’de yeniden üretilip düzeltildi — otomasyon boyutu (4/5) üretimde gözlenince yeniden değerlendirilir"
 ---
 
 # CFO SCORECARD
@@ -98,3 +98,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 80485f5 | 61 | 5/12 | 60→61: CFO-012 karar hafızası — beklenen SAYI'lı karar kaydı (form + doğrulama + eksik kayıt bayrağı), gece kontrol noktası ölçümü (`cfo_hamle_olcum`, yalnız ekleme), kalibrasyon skoru (isabet/hata/eğilim/kapsam), motor borç kapama önerisi → karar taslağı → karar hafızası 3→4. H6 gate ❌ kalır: ilk otomatik ölçüm 31.10/01.11'de gözlenecek, eski kararlar beklenen SAYI'sız |
 | 2026-10-10 | eb5595c | 61 | 5/12 | Değişmedi (bilinçli): CFO-008 kalanı — AI CFO satış dönemleri ve REVENUE_DEVIATION karşılaştırması tek ciro kaynağından (yalnız tam günler; tahmini gün tam sayılmaz). Gelir boyutu tek ciro adımında (0ffbb2c) sayıldı; ilk üretim AI CFO koşusu gözlenince RF-009 RESOLVED + H2 yeniden değerlendirilir |
 | 2026-10-10 | c1e8413 | 60 | 5/12 | 61→60: RF-036 (CRITICAL, yeni) — net sermaye sanal stok istisnasını uygulamıyordu (40005100051, 1.025.723 TL; düzeltme migration 130000 bekletilen) → finansal doğruluk 9→8; H1/H12 ❌ kalır. CFO-029 ilk üretim koşusu kuru çalıştırmayla tutarlı (153/440, +26.334 TL KDV dahil) ama net sermayeye gerçek etkisi −65.470 TL (M-BANYOMİX 1.194 adet, %120 elle gümrük → %52,6 yasal); etki toplamı/alarm net sermaye kuralına hizalandı (RF-037). RF-033/034 RESOLVED |
+| 2026-10-10 | 6d05a8e | 60 | 5/12 | Değişmedi (bilinçli): RF-038 (HIGH) — CFO çalışma döngüsü 09.10'dan beri bağlam aşamasında 3B001 ile düşüyordu; aynı PR'da düzeltildi (sorgular sıraya alındı, gerçek PostgreSQL regresyon testi). Otomasyon boyutu ilk başarılı üretim döngüsü gözlenince yeniden değerlendirilir |
