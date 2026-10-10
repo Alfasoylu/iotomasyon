@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:45 TR
-current_main_commit: 0ffbb2c
+last_updated: 2026-10-10 05:20 TR
+current_main_commit: 80485f5
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 60/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 sabit kurlu maliyetler"
+current_score: 61/100
+next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11 gözlem) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
 open_critical: 1
 open_high: 4
-score_change: "59→60 — CFO-008 tek ciro kaynağı: manşet ciro gösteren tüm CFO yüzeyleri (/cfo, /cfo/ayarlar, /cfo/sermaye gelir kaldıraçları, /cfo/kazananlar hedef kartı, /admin/sermaye, borç tahmini, AI CFO Alfashome kanıtı) Goal Engine satırlarından (fm_sales_canonical_snapshot), testli ve üretimde ölçüldü → gelir boyutu 5→6; AI CFO günlük satış karşılaştırması kalan"
+score_change: "60→61 — CFO-012 karar hafızası: yeni karar yalnız beklenen SAYI + başlangıç + ölçülebilir metrik + tarih ile kaydedilir (/cfo/kararlar formu, sunucuda doğrulama; kural tarihinden sonra eksik kayıt okuma tarafında bayraklı), kontrol noktası gelen kararlar her gece cfo_hamle_olcum'a ölçülür (borç/kamu/FBA o günün değeri, kart/KMH bugünkü bakiye; tekrar yazmaz), kalibrasyon skoru (isabet, hata, eğilim, kapsam) sayfada ve AI CFO kanıtında, sermaye motorunun borç kapama adımları onaya sunulan karar taslağı → karar hafızası boyutu 3→4; ilk otomatik ölçüm 31.10/01.11"
 ---
 
 # CFO SCORECARD
@@ -61,12 +61,12 @@ tutarlı, küçük boşluk · 80–100% doğru, tutarlı, testli, üretimde göz
 | 3 | Capital allocation | 15 | **8** | Eşik getiri (en pahalı kapatılabilir borç), SKU sınıfları, tasfiye başabaş, marjinal tahsis, stres açığı önceliği | kapsam %87,5; aynı sayfada eski `buildAllocation` düz oranla; öneriler kararlara bağlanmıyor |
 | 4 | Revenue / profitability | 10 | **6** | TEK CİRO KAYNAĞI (CFO-008, 10.10): manşet ciro tüm CFO yüzeylerinde Goal Engine satırlarından (`lib/cfo/revenue.ts`, tamlık sınırlı, testli); KDV hariç ciro üretimde ölçülüyor (not B, türetme kaynağı bayrakta); hedef hızı yalnız tam kaynaklı günlerden; ölçülmüş komisyon medyanı, kargo bant tarifesi, katkı marjı, gelir kaldıraçları; EPTT komisyonu kanal marjında (Entegra oranı × toplam, tahmini işaretli, CFO-028) | Marj kuralları susuyor (kapsam); marj henüz KDV hariç değil (D-P06); AI CFO günlük satış karşılaştırması ayrı tabanda (cfo_satis_siparis + API oran tahmini); iade marja bağlı değil; 6 kanal + FBA komisyonu UNKNOWN (oran belgesi yok); EPTT tahmini ölçülmemiş (~0,4 puan düşük) |
 | 5 | Inventory / procurement | 10 | **6** | XML stok hafızası + hız, stockout, ölü stok, ithalat önerisi, yoldaki kapsam; GTİP 433/433 + yasal gümrük yükü ve `duty_gap` alarmı | 4 ölü stok kuralı; 2 yoldaki mal kaynağı; 3 stok değerleme yöntemi |
-| 6 | Decision memory & calibration | 10 | **3** | `cfo_hamle` + beklenen/gerçekleşen ekranı; goal attribution | 3/15 karar ölçülebilir; ölçüm tablosu hiç yazılmıyor; atıf kimliği bozuk |
+| 6 | Decision memory & calibration | 10 | **4** | `cfo_hamle` + beklenen/gerçekleşen ekranı; goal attribution; CFO-012 (10.10): yeni karar yalnız beklenen SAYI + başlangıç + ölçülebilir metrik + tarih ile (form + sunucu doğrulaması; kural tarihinden sonra eksik kayıt "Beklenen değer eksik" bayrağı), kontrol noktası ölçümleri her gece `cfo_hamle_olcum`'a (o günün borç/kamu/FBA değeri, kart/KMH bugünkü bakiye; tekrar yazmaz; PGlite testli), kalibrasyon skoru (isabet, hata, eğilim, kapsam) sayfa + AI CFO kanıtında, sermaye motorunun borç kapama adımları karar taslağı (onayla kaydedilir) | Otomatik ölçüm üretimde henüz gözlenmedi (ilk kontrol noktası 31.10); eski 12 kararın beklenen SAYI'sı yok (kalibrasyon kapsamı 3/15); stok/likidite önerileri 6 metrikle ölçülemiyor; atıf kimliği bozuk |
 | 7 | Data quality / provenance | 7 | **5** | Motorda evidence + measured bayrağı, UNKNOWN disiplini, bayatlık kapısı (önemlilik eşikli), source_dead alarmları, şema parmak izi | Eski motorda UNKNOWN→0 (CFO-018; yan modüller kısım 1'de düzeldi); elle defterler; 66 açık soru, karışık durum sözlüğü |
 | 8 | Automation / observability | 5 | **4** | 2 güvenilir Vercel cron + 3×/gün GitHub; slot anahtarı/idempotency; `cfo_gun_ozeti` | Alarm teslimi GitHub e-postası; SAĞLIK alarmı (takılan/başarısız/bayat motor) kodda, üretimde migration 150000 bekliyor; yetim `cfo-cycle` |
 | 9 | Cost efficiency | 4 | **4** | Runtime LLM yok; deterministik; Vercel Hobby | — |
 | 10 | Security / operational safety | 4 | **3** | RLS + REVOKE kalıpları, salt-okunur okuyucu rol, CRON_SECRET sabit-zamanlı, yazma eylemlerinde CFO_WRITE | Düz metin API anahtarları, Cowork ayrıcalıklı yazma rolü, uygulama bypassrls ile bağlanıyor |
-| | **TOPLAM** | **100** | **60** | | |
+| | **TOPLAM** | **100** | **61** | | |
 
 ## Skor geçmişi
 
@@ -95,3 +95,4 @@ Kural (CFO-GOVERNANCE-DRIFT, 2026-10-09): her merge bir satır ekler — commit 
 | 2026-10-10 | 1d41775 | 59 | 5/12 | Değişmedi (bilinçli): CFO-028 kararları — EPTT tahmini komisyon (oran × toplam, measured=false) kanal marjına girdi, SKU oran ölçümü değişmedi; 2 belge kategorisi düzeltildi. 6 kanal + FBA UNKNOWN kaldığı için marj boyutu aynı |
 | 2026-10-10 | ed52e04 | 59 | 5/12 | Değişmedi (bilinçli): CFO-003 kod kalanı (eski motor kur tek kaynaktan, kur yoksa BİLİNMİYOR) yayında; SQL sabit kur yedekleri migration 120000 bekletilen — üretime uygulanınca RF-003 RESOLVED ve 1. boyut yeniden puanlanır |
 | 2026-10-10 | 0ffbb2c | 60 | 5/12 | 59→60: CFO-008 tek ciro kaynağı (Goal Engine satırları) /cfo, /cfo/ayarlar, gelir kaldıraçları, hedef kartı, /admin/sermaye, borç tahmini ve Alfashome kanıtında; üretim: Eylül 1.931.793 (eski kart 1.777.442), aylık 2.015.623 (eski 1.859.349), /admin/sermaye 90g 6.046.869 (eski yalnız Trendyol 4.104.926) → gelir boyutu 5→6. Gate'ler aynı (H2/H8 AI CFO günlük satış karşılaştırması ve SQL görünümleri nedeniyle açık) |
+| 2026-10-10 | 80485f5 | 61 | 5/12 | 60→61: CFO-012 karar hafızası — beklenen SAYI'lı karar kaydı (form + doğrulama + eksik kayıt bayrağı), gece kontrol noktası ölçümü (`cfo_hamle_olcum`, yalnız ekleme), kalibrasyon skoru (isabet/hata/eğilim/kapsam), motor borç kapama önerisi → karar taslağı → karar hafızası 3→4. H6 gate ❌ kalır: ilk otomatik ölçüm 31.10/01.11'de gözlenecek, eski kararlar beklenen SAYI'sız |

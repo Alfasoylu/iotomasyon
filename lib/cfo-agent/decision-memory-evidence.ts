@@ -7,12 +7,16 @@ import type { Evidence } from "./types";
 // AI CFO Blok B4j — Decision Memory (lib/cfo/decision-memory.ts). CFO kendi/Alperen'in geçmiş kararlarının sonucunu veriden görür:
 // ters yöndeki ve geride kalan kararlar sayıyla gelir → "itaat eden değil sorgulayan CFO" bu kanıta dayanarak itiraz eder.
 
+const p = (v: number | null, none: string) => (v == null ? none : `%${Math.round(v * 100)}`);
+
 export function decisionMemoryEvidence(dm: Awaited<ReturnType<typeof loadDecisionMemory>>, at: string): Evidence[] {
   const src = "cfo_hamle";
   const counts = Object.entries(dm.byStatus).map(([k, n]) => `${k}:${n}`).join(" ");
   const out = [evidence(src, "karar_hafizasi.durum_sayilari", counts || "kayıt yok", "text", at, true),
-    evidence(src, "karar_hafizasi.kalibrasyon (ölçülen/ölçülemeyen kapanmış karar, ort. hata)",
-      `${dm.calibration.measured}/${dm.calibration.unmeasurableClosed} · ${dm.calibration.meanError == null ? "hata ölçülemedi" : `%${Math.round(dm.calibration.meanError * 100)}`}`, "text", at, true)];
+    evidence(src, "karar_hafizasi.kalibrasyon (ölçülen / ölçülemeyen kapanmış karar, ort. hata, hedefe ulaşma, eğilim +iyimser, beklenen SAYI kapsamı)",
+      `${dm.calibration.measured}/${dm.calibration.unmeasurableClosed} · ${p(dm.calibration.meanError, "hata ölçülemedi")} · isabet ${p(dm.calibration.hitRate, "?")} · eğilim ${p(dm.calibration.bias, "?")} · kapsam ${p(dm.calibration.coverage, "?")}`, "text", at, true)];
+  for (const e of dm.evals.filter(x => x.status === "MISSING_EXPECTATION").slice(0, 3))
+    out.push(evidence(src, `karar_hafizasi.${e.kod}.MISSING_EXPECTATION (${e.baslik.slice(0, 60)})`, e.note, "text", at, true));
   for (const e of dm.evals.filter(x => x.status === "WRONG_DIRECTION" || x.status === "WORSENING" || x.status === "BEHIND").slice(0, 3))
     out.push(evidence(src, `karar_hafizasi.${e.kod}.${e.status} (${e.baslik.slice(0, 60)})`, e.note, "text", at, true));
   return out;

@@ -1,12 +1,12 @@
 ---
-last_updated: 2026-10-10 04:45 TR
-current_main_commit: 0ffbb2c
+last_updated: 2026-10-10 05:20 TR
+current_main_commit: 80485f5
 current_phase: "Faz 1 — Metrik sözleşmesi (net sermaye/borç tek tanım üretimde; v3 Goal doğrulaması 10.10)"
-current_score: 60/100
-next_action: "CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği + CFO-029 ilk otomatik maliyet koşusu (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 sabit kurlu maliyetler"
+current_score: 61/100
+next_action: "CFO-029 ilk otomatik maliyet koşusu doğrulaması + CFO-001/CFO-002 v3 doğrulaması + CFO-017 ilk bileşenli snapshot kimliği (10.10 sabahı) → CFO-003 SQL kalanı: migration 120000 üretime uygulanması (Alperen izni/uygulaması) → CFO-012 ilk otomatik karar ölçümü (31.10/01.11 gözlem) → CFO-008 kalan: AI CFO snapshot satış karşılaştırması tek kaynağa → CFO-025 10 yalnız-USD maliyetin teyidi (Alperen)"
 open_critical: 1
 open_high: 4
-score_change: "59→60 — CFO-008 tek ciro kaynağı: manşet ciro gösteren tüm CFO yüzeyleri (/cfo, /cfo/ayarlar, /cfo/sermaye gelir kaldıraçları, /cfo/kazananlar hedef kartı, /admin/sermaye, borç tahmini, AI CFO Alfashome kanıtı) Goal Engine satırlarından (fm_sales_canonical_snapshot), testli ve üretimde ölçüldü → gelir boyutu 5→6; AI CFO günlük satış karşılaştırması kalan"
+score_change: "60→61 — CFO-012 karar hafızası: yeni karar yalnız beklenen SAYI + başlangıç + ölçülebilir metrik + tarih ile kaydedilir (/cfo/kararlar formu, sunucuda doğrulama; kural tarihinden sonra eksik kayıt okuma tarafında bayraklı), kontrol noktası gelen kararlar her gece cfo_hamle_olcum'a ölçülür (borç/kamu/FBA o günün değeri, kart/KMH bugünkü bakiye; tekrar yazmaz), kalibrasyon skoru (isabet, hata, eğilim, kapsam) sayfada ve AI CFO kanıtında, sermaye motorunun borç kapama adımları onaya sunulan karar taslağı → karar hafızası boyutu 3→4; ilk otomatik ölçüm 31.10/01.11"
 ---
 
 # CFO RED FLAGS (append-only)
@@ -37,7 +37,7 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 | RF-20261008-011 | MEDIUM | IN_PROGRESS | CFO-017 migration 230000 üretimde (2026-10-09 akşam, kimlik farkı 0,00); ilk bileşenli snapshot 10.10 |
 | RF-20261008-012 | MEDIUM | IN_PROGRESS | yazma yolları yazma izni (PR #242); API anahtarı şifreleme, Cowork rolü kalan |
 | RF-20261008-013 | MEDIUM | OPEN | veri: 8 SKU maliyeti (CFO-011, Alperen) |
-| RF-20261008-014 | MEDIUM | OPEN | CFO-012 |
+| RF-20261008-014 | MEDIUM | IN_PROGRESS | CFO-012 kod ✓ 10.10 (beklenen SAYI zorunlu, gece ölçümü, kalibrasyon, öneri→taslak); RESOLVED: ilk otomatik ölçüm üretimde (31.10/01.11) |
 | RF-20261008-015 | MEDIUM | RESOLVED | 2026-10-10, CFO-013 ✅ — migration 110000 üretimde; projeksiyon dibi = takvim dibi |
 | RF-20261008-016 | MEDIUM | IN_PROGRESS | CFO-014 kısım 1 (PR #240); eski motor kısmı CFO-018 |
 | RF-20261008-017 | MEDIUM | RESOLVED | 2026-10-09, CFO-019 |
@@ -553,3 +553,20 @@ Kural: bir RF'nin durumu değişince BU tabloda güncellenir (metindeki tarihçe
 - Doğrulama: 1–9 Ekim tek kaynak 479.615,74 = Goal hafızası (`fm_memory_sales_company_day`) 479.615,74. Test `cfo-revenue` (CI).
 - RESOLVED için: AI CFO snapshot günlük satış karşılaştırması (REVENUE_DEVIATION, `/admin/ai-cfo` "Dün ciro") tek kaynağa; artık sayfa okumayan
   `cfo_ciro_hedef` görünümü kaldırılabilir (migration). Satır düzeyi kârlılık görünümleri (cfo_satis_birim_duz, cfo_aylik_urun_kar) bilinçli ayrı — manşet ciro değil.
+
+## 2026-10-10 — CFO-012 karar hafızası RED FLAG PASS
+
+### RF-20261008-014 — güncelleme (2026-10-10, CFO-012 kod; MEDIUM, OPEN → IN_PROGRESS)
+- **Beklenen değer zorunlu:** yeni karar yalnız `/cfo/kararlar` formu → `createHamleAction` (CFO_READ + CFO_WRITE) ile; `validateNewHamle` ölçülebilir
+  metrik + başlangıç + beklenen SAYI + tarih ister. Cowork doğrudan SQL ile yazarsa okuma tarafı yakalar: 10.10 sonrası açık karar eksikse
+  "Beklenen değer eksik" (listenin başında, AI CFO kanıtında).
+- **Ölçüm yazımı:** `safeMeasureDecisions` her gece (xml-sync after()) kontrol noktası gelen kararlar için `cfo_hamle_olcum`'a yalnız INSERT
+  (borç/kamu/FBA o günün değeri; kart/KMH bugünkü bakiye, notlu). Tekrar koşu yazmaz (NOT EXISTS + advisory kilit); kapalı/elle ölçülen karar ve
+  verisi olmayan gün atlanır (0 yazılmaz). Ham finansal veri değişmez; mevcut 14 ölçüm satırı ve karar satırları değişmez.
+- **Kalibrasyon skoru:** isabet / ortalama hata / eğilim (iyimser–temkinli) / kapsam; açık kararda hedef tarihindeki ölçümden.
+- **Motor önerileri:** sermaye planının borç kapama adımları onaylanınca beklenen değerli karar olarak kaydedilir (taslak; kaydedilmeyen öneri karar değil).
+- Bağımsız inceleme: aynı ölçüm iki kez yazılır mı? Hayır — kontrol noktası ve sonrası tarihli satır varsa yazılmaz; iki checkpoint aynı koşuda
+  ayrı satır. Canlı bakiye geçmiş tarihe yazılır mı? Hayır — tarih = ölçüm günü. Yetkisiz yazma? Form yazma izni ister (`rbac-write-paths`).
+  Kalan risk: eski 12 karar beklenen SAYI'sız (kalibrasyon kapsamı 3/15) — geriye dönük uydurulmaz.
+- RESOLVED için: ilk otomatik ölçümün üretimde gözlenmesi (H11 31.10 gecesi, H09/H10 01.11 gecesi).
+

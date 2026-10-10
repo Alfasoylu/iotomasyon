@@ -11,6 +11,7 @@
 import { scheduleCfoCycle } from "@/lib/cfo-agent/workflow-trigger";
 import { safeEnsureTcmbFx } from "@/lib/fm/tcmb-fx-auto";
 import { safeDeriveUnitCosts } from "@/lib/cfo/cost-derivation-data";
+import { safeMeasureDecisions } from "@/lib/cfo/decision-measure-job";
 import { after, NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeCron } from "@/lib/cron-auth";
@@ -24,7 +25,8 @@ export async function GET(req: NextRequest) {
   if (denied) return denied;
   // Stratejik kur (CFO-003): TCMB aylık bülteni eksikse ekle — motor koşusundan önce, ~1-2 sn.
   // Ardından CFO-029: birim maliyetler ithalat motorundan yeni kurla yeniden türetilir (korumalı, her alan cfo_change_log'da).
-  after(() => safeEnsureTcmbFx().then(() => safeDeriveUnitCosts()).then(() => undefined));
+  // Ardından CFO-012: kontrol noktası gelen kararlar cfo_hamle_olcum'a ölçülür (yalnız ekleme; tekrar koşu yazmaz).
+  after(() => safeEnsureTcmbFx().then(() => safeDeriveUnitCosts()).then(() => safeMeasureDecisions()).then(() => undefined));
   scheduleCfoCycle("daily_xml", { engine: "sync_xml", maxDurationSec: maxDuration });
 
   const sources = await prisma.xmlSyncSource.findMany({
