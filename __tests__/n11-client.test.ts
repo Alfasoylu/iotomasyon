@@ -65,3 +65,21 @@ async function main() {
   console.log("N11 istemcisi: 14 günlük dilim, REST başlık/izin listesi/sayfalama, komisyon özeti (kişisel veri yok), SOAP zarfı, soru listesi, yanıt doğrulama passed");
 }
 main().catch(e => { console.error(e); process.exitCode = 1; });
+
+// Hakediş: geçersiz tarih biçiminde sıradaki biçim denenir (üretim 10.10: dd/MM/yyyy reddedildi)
+import { listSettlements } from "../lib/n11/client";
+(async () => {
+  const cfg = { appKey: "k", appSecret: "s" };
+  const bodies: string[] = [];
+  const bad = `<Envelope><Body><GetSettlementListResponse><result><status>failure</status><errorCode>SELLER_API.invalidDate</errorCode><errorMessage>startDate alanındaki tarih geçersizdir.</errorMessage></result></GetSettlementListResponse></Body></Envelope>`;
+  const good = `<Envelope><Body><GetSettlementListResponse><result><status>success</status></result><settlementListData><settlementList><settlementDate>05/10/2026</settlementDate><status>PAID</status><paymentAmount>100</paymentAmount><deductionAmount>15</deductionAmount><settlementAmount>85</settlementAmount></settlementList></settlementListData></GetSettlementListResponse></Body></Envelope>`;
+  const f = (async (_u: string, init: RequestInit) => { bodies.push(String(init.body)); return new Response(bodies.length < 3 ? bad : good, { status: 200 }); }) as unknown as typeof fetch;
+  const r = await listSettlements(cfg, new Date("2026-09-10T12:00:00Z"), new Date("2026-10-10T12:00:00Z"), f);
+  assert.equal(bodies.length, 3);
+  assert.match(bodies[0], /<startDate>2026-09-10<\/startDate>/);
+  assert.match(bodies[1], /<startDate>10\.09\.2026<\/startDate>/);
+  assert.deepEqual(r, [{ settlementDate: "05/10/2026", remittanceDate: null, status: "PAID", paymentAmount: 100, deductionAmount: 15, settlementAmount: 85 }]);
+  const allBad = (async () => new Response(bad, { status: 200 })) as unknown as typeof fetch;
+  await assert.rejects(listSettlements(cfg, new Date(), new Date(), allBad), /invalidDate/);
+  console.log("N11 hakediş: geçersiz tarih biçiminde sıradaki biçim passed");
+})().catch(e => { console.error(e); process.exitCode = 1; });

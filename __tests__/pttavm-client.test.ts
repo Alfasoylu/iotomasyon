@@ -55,7 +55,7 @@ async function main() {
         <a:SiparisUrunler><a:SiparisUrun><a:SiparisDurumu>iade</a:SiparisDurumu><a:KdvDahilToplamTutar>50.5</a:KdvDahilToplamTutar><a:Komisyon>5</a:Komisyon></a:SiparisUrun></a:SiparisUrunler>
       </a:TedarikciSiparisKontrolV2>
       <a:TedarikciSiparisKontrolV2><a:SiparisNo>A2 &amp; B</a:SiparisNo><a:SiparisUrunler>
-        <a:SiparisUrun><a:SiparisDurumu>tamamlandi</a:SiparisDurumu><a:KdvDahilToplamTutar>100</a:KdvDahilToplamTutar></a:SiparisUrun>
+        <a:SiparisUrun><a:SiparisDurumu>tamamlandi</a:SiparisDurumu><a:KdvDahilToplamTutar>100</a:KdvDahilToplamTutar><a:Komisyon>14</a:Komisyon></a:SiparisUrun>
         <a:SiparisUrun><a:SiparisDurumu>tamamlandi</a:SiparisDurumu><a:KdvDahilToplamTutar>30</a:KdvDahilToplamTutar></a:SiparisUrun></a:SiparisUrunler>
       </a:TedarikciSiparisKontrolV2></SiparisKontrolListesiV2Result></SiparisKontrolListesiV2Response></s:Body></s:Envelope>`;
   const soapCalls: RequestInit[] = [];
@@ -64,7 +64,9 @@ async function main() {
   assert.equal((soapCalls[0].headers as Record<string, string>).SOAPAction, '"http://tempuri.org/IService/SiparisKontrolListesiV2"');
   assert.deepEqual(so.map(o => [o.siparisNo, o.eposta, o.siparisUrunler!.length]), [["A1", null, 1], ["A2 & B", undefined, 2]]);
   const s = summarizeOrders(so);
-  assert.deepEqual([s.orders, s.lines, s.byStatus, s.grossInclVatTry, s.returnLines, s.returnGrossTry, s.commissionTry], [2, 3, { iade: 1, tamamlandi: 2 }, 180.5, 1, 50.5, 5]);
+  assert.deepEqual([s.orders, s.lines, s.byStatus, s.grossInclVatTry, s.returnLines, s.returnGrossTry, s.commissionTry], [2, 3, { iade: 1, tamamlandi: 2 }, 180.5, 1, 50.5, 14]);
+  // Komisyon satırda ORAN (%): 100 TL × %14 = 14 TL; iade satırı (oran 5) ve oransız satır hariç (üretim 10.10: alan toplamı 2.324 / 161 satır ≈ %14,4)
+  assert.deepEqual([s.commissionPctOfGross, s.avgCommissionRatePct], [14, 14]);
   assert.ok(!JSON.stringify(s).includes("A1"), "özet sipariş no / kişisel veri taşımaz");
 
   // SOAP Fault → anlamlı hata

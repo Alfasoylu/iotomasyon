@@ -1,6 +1,7 @@
 # Koçtaş (Mirakl) API entegrasyonu
 
-Durum (2026-10-10): istemci + teşhis ucu + mesaj ekranı kuruldu; **bağlantı henüz doğrulanmadı** (Alperen Vercel'e `KOCTAS_API_KEY`
+Durum (2026-10-10): **bağlantı üretimde doğrulandı** (30 gün: 1 sipariş (iade), 3 mesaj yanıt bekliyor; TL02 komisyon
+179,93 / sipariş 1.199,50 = %15,0 KDV hariç). Önceki not: istemci + teşhis ucu + mesaj ekranı kuruldu (Alperen Vercel'e `KOCTAS_API_KEY`
 girecek — Koçtaş Satış Ortağım paneli → profil → API anahtarı; isteğe bağlı `KOCTAS_SHOP_ID`, `KOCTAS_BASE_URL` → Actions
 "Pazaryeri API teşhisi" kanal=koctas).
 

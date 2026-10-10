@@ -1,6 +1,7 @@
 # N11 API entegrasyonu
 
-Durum (2026-10-10): istemci + teşhis ucu + soru-cevap ekranı kuruldu; **bağlantı henüz doğrulanmadı** (Alperen Vercel'e
+Durum (2026-10-10): **bağlantı üretimde doğrulandı** (30 gün: 94 paket, 120.802 TL, etkin komisyon %15,88; 892 ürün; 2 açık soru;
+18 iade). Hakediş servisi dd/MM/yyyy tarihini reddetti → biçimler sırayla denenir. Önceki not: istemci + teşhis ucu + soru-cevap ekranı kuruldu (Alperen Vercel'e
 `N11_APP_KEY` / `N11_APP_SECRET` girecek → Actions "Pazaryeri API teşhisi" kanal=n11).
 
 Kaynak: https://developer.n11.com/documentation/ (portal) + public WSDL'ler (`https://api.n11.com/ws/<Servis>.wsdl`).
